@@ -7,6 +7,24 @@
       <mat-step [completed]="true">
         <ng-template matStepLabel>{{ t("overview") }}</ng-template>
         <app-confirm-sources></app-confirm-sources>
+        @if (projectsPendingUpdate.length > 0) {
+          @for (project of projectsPendingUpdate; track project.projectId) {
+            <app-notice icon="info" type="info" class="pending-updates">
+              <transloco
+                key="draft_generation_steps.pending_updates"
+                [params]="{
+                  projectName: project.name,
+                  syncUrl: { route: project.syncUrl }
+                }"
+              ></transloco>
+            </app-notice>
+          }
+        } @else if (!hasLoaded) {
+          <div class="loading">
+            <mat-spinner diameter="20" color="primary"></mat-spinner>
+            <div>{{ t("loading_projects") }}</div>
+          </div>
+        }
         <div class="button-strip">
           <button mat-stroked-button class="backout-button" (click)="cancel.emit()">
             <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
@@ -299,7 +317,7 @@
 
   @if (hasLoaded && allAvailableTranslateBooks.length <= 0) {
     <p>{{ t("no_available_books") }}</p>
-  } @else if (!hasLoaded) {
+  } @else if (!hasLoaded && allAvailableTranslateBooks.length === 0) {
     <div class="loading">
       <mat-spinner diameter="20" color="primary"></mat-spinner>
       <div>{{ t("loading") }}</div>

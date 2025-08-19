@@ -15,8 +15,10 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
+import { ParatextService } from '../../../core/paratext.service';
 import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from '../draft-sources.service';
@@ -33,6 +35,7 @@ describe('DraftGenerationStepsComponent', () => {
   const mockProgressService = mock(ProgressService);
   const mockOnlineStatusService = mock(OnlineStatusService);
   const mockNoticeService = mock(NoticeService);
+  const mockParatextService = mock(ParatextService);
   const mockDraftSourceService = mock(DraftSourcesService);
 
   when(mockActivatedProjectService.projectId).thenReturn('project01');
@@ -44,6 +47,7 @@ describe('DraftGenerationStepsComponent', () => {
       { provide: DraftSourcesService, useMock: mockDraftSourceService },
       { provide: FeatureFlagService, useMock: mockFeatureFlagService },
       { provide: NllbLanguageService, useMock: mockNllbLanguageService },
+      { provide: ParatextService, useMock: mockParatextService },
       { provide: ProgressService, useMock: mockProgressService },
       { provide: OnlineStatusService, useMock: mockOnlineStatusService },
       { provide: NoticeService, useMock: mockNoticeService },
@@ -1004,6 +1008,94 @@ describe('DraftGenerationStepsComponent', () => {
       expect(trainingGroups[1].ranges.length).toEqual(2);
       expect(trainingGroups[1].ranges[0]).toEqual('Deuteronomy');
       expect(trainingGroups[1].ranges[1]).toEqual('1 Samuel');
+    });
+  });
+
+  describe('pending updates', () => {
+    const availableBooks = [
+      { bookNum: 1 },
+      { bookNum: 2 },
+      { bookNum: 3 },
+      { bookNum: 4 },
+      { bookNum: 5 },
+      { bookNum: 9 }
+    ];
+    const allBooks = [...availableBooks, { bookNum: 7 }, { bookNum: 8 }];
+    const config = {
+      trainingSources: [
+        {
+          projectRef: 'source1',
+          shortName: 'sP1',
+          writingSystem: { tag: 'eng' },
+          texts: availableBooks
+        },
+        {
+          projectRef: 'source2',
+          shortName: 'sP2',
+          writingSystem: { tag: 'eng' },
+          texts: availableBooks
+        }
+      ] as [DraftSource, DraftSource],
+      trainingTargets: [
+        {
+          projectRef: mockActivatedProjectService.projectId,
+          shortName: 'tT',
+          writingSystem: { tag: 'nllb' },
+          texts: allBooks.filter(b => b.bookNum !== 7)
+        }
+      ] as [DraftSource],
+      draftingSources: [
+        {
+          projectRef: 'draftingSource',
+          shortName: 'dS',
+          writingSystem: { tag: 'eng' },
+          texts: availableBooks.concat({ bookNum: 7 })
+        }
+      ] as [DraftSource]
+    };
+
+    const mockTargetProjectDoc = {
+      data: createTestProjectProfile({
+        translateConfig: {
+          draftConfig: {
+            lastSelectedTrainingDataFiles: [],
+            lastSelectedTrainingScriptureRanges: [
+              { projectId: 'source1', scriptureRange: 'LEV;NUM;DEU;JOS' },
+              { projectId: 'source2', scriptureRange: 'DEU;JOS;1SA' }
+            ],
+            lastSelectedTranslationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'GEN;EXO' }]
+          }
+        }
+      })
+    } as SFProjectProfileDoc;
+
+    beforeEach(fakeAsync(() => {
+      when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
+      when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
+      when(mockActivatedProjectService.projectDoc$).thenReturn(
+        new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc)
+      );
+      when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
+      when(mockParatextService.getProjects()).thenResolve([
+        { projectId: null, hasUpdate: true, isConnected: true } as ParatextProject,
+        { projectId: 'source1', hasUpdate: false, isConnected: true, name: 'Source 1' } as ParatextProject,
+        { projectId: 'source1', hasUpdate: true, isConnected: false, name: 'Source 1' } as ParatextProject,
+        { projectId: 'source3', hasUpdate: true, isConnected: true, name: 'Source 3' } as ParatextProject,
+        { projectId: 'source1', hasUpdate: true, isConnected: true, name: 'Source 1' } as ParatextProject,
+        { projectId: 'source2', hasUpdate: true, isConnected: true, shortName: 'SRC' } as ParatextProject
+      ]);
+
+      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      tick();
+    }));
+
+    it('should show projects pending updates', () => {
+      expect(component.projectsPendingUpdate).toEqual([
+        { projectId: 'source1', name: 'Source 1', syncUrl: '/projects/source1/sync' },
+        { projectId: 'source2', name: 'SRC', syncUrl: '/projects/source2/sync' }
+      ]);
     });
   });
 });
