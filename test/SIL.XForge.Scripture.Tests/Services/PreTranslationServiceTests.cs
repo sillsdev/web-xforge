@@ -472,7 +472,11 @@ public class PreTranslationServiceTests
             Project01,
             40,
             2,
-            config: new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.Remove },
+            config: new DraftUsfmConfig
+            {
+                ParagraphBreakFormat = ParagraphBreakFormatOptions.Remove,
+                QuoteStyle = QuoteStyleOptions.Normalized,
+            },
             CancellationToken.None
         );
         await env
@@ -492,7 +496,7 @@ public class PreTranslationServiceTests
             Project01,
             40,
             2,
-            config: new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.BestGuess },
+            config: new DraftUsfmConfig { ParagraphBreakFormat = ParagraphBreakFormatOptions.BestGuess },
             CancellationToken.None
         );
         await env
@@ -512,7 +516,7 @@ public class PreTranslationServiceTests
             Project01,
             40,
             2,
-            config: new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.MoveToEnd },
+            config: new DraftUsfmConfig { ParagraphBreakFormat = ParagraphBreakFormatOptions.MoveToEnd },
             CancellationToken.None
         );
         await env

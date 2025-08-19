@@ -369,6 +369,7 @@ public class MachineApiController : ControllerBase
     /// <param name="chapterNum">The chapter number. This cannot be zero.</param>
     /// <param name="timestamp">The timestamp to return the pre-translations at. If not set, this is the current date and time.</param>
     /// <param name="paragraphFormat">If <c>true</c>, configure the draft delta to preserve paragraph markers.</param>
+    /// <param name="quoteFormat">The quote style to use for the draft delta.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <response code="200">The pre-translations were successfully queried for.</response>
     /// <response code="403">You do not have permission to retrieve the pre-translations for this project.</response>
@@ -383,25 +384,30 @@ public class MachineApiController : ControllerBase
         int chapterNum,
         [FromQuery] DateTime? timestamp,
         [FromQuery] string? paragraphFormat,
+        [FromQuery] string? quoteFormat,
         CancellationToken cancellationToken
     )
     {
         try
         {
             bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
-            DraftUsfmConfig? config = null;
-            if (paragraphFormat != null)
+            DraftUsfmConfig config = new DraftUsfmConfig
             {
-                string format = string.Empty;
-                format = paragraphFormat switch
+                ParagraphBreakFormat = paragraphFormat switch
                 {
-                    ParagraphBreakFormat.Remove => ParagraphBreakFormat.Remove,
-                    ParagraphBreakFormat.BestGuess => ParagraphBreakFormat.BestGuess,
-                    ParagraphBreakFormat.MoveToEnd => ParagraphBreakFormat.MoveToEnd,
-                    _ => ParagraphBreakFormat.MoveToEnd,
-                };
-                config = new DraftUsfmConfig { ParagraphFormat = format };
-            }
+                    ParagraphBreakFormatOptions.Remove => ParagraphBreakFormatOptions.Remove,
+                    ParagraphBreakFormatOptions.BestGuess => ParagraphBreakFormatOptions.BestGuess,
+                    ParagraphBreakFormatOptions.MoveToEnd => ParagraphBreakFormatOptions.MoveToEnd,
+                    _ => ParagraphBreakFormatOptions.MoveToEnd,
+                },
+                QuoteStyle = quoteFormat switch
+                {
+                    QuoteStyleOptions.Denormalized => QuoteStyleOptions.Denormalized,
+                    QuoteStyleOptions.Normalized => QuoteStyleOptions.Normalized,
+                    _ => QuoteStyleOptions.Normalized,
+                },
+            };
+            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(config));
             Snapshot<TextData> delta = await _machineApiService.GetPreTranslationDeltaAsync(
                 _userAccessor.UserId,
                 sfProjectId,

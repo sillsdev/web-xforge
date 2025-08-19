@@ -17,7 +17,7 @@ import { UserEmulator } from '../user-emulator.mts';
 
 type EngineMode = 'echo' | 'fast';
 
-const ENGINE_MODE: EngineMode = 'echo';
+const ENGINE_MODE: EngineMode = 'fast';
 const DRAFT_PROJECT_SHORT_NAME = 'SEEDSP2';
 
 export async function generateDraft(

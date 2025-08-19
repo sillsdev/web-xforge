@@ -3879,17 +3879,17 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project01);
         Assert.That(
-            project.TranslateConfig.DraftConfig.UsfmConfig.ParagraphFormat,
-            Is.EqualTo(ParagraphBreakFormat.BestGuess)
+            project.TranslateConfig.DraftConfig.UsfmConfig.ParagraphBreakFormat,
+            Is.EqualTo(ParagraphBreakFormatOptions.BestGuess)
         );
 
         // SUT
-        DraftUsfmConfig config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.Remove };
+        DraftUsfmConfig config = new DraftUsfmConfig { ParagraphBreakFormat = ParagraphBreakFormatOptions.Remove };
         await env.Service.SetUsfmConfigAsync(User01, Project01, config);
         project = env.GetProject(Project01);
         Assert.That(
-            project.TranslateConfig.DraftConfig.UsfmConfig.ParagraphFormat,
-            Is.EqualTo(ParagraphBreakFormat.Remove)
+            project.TranslateConfig.DraftConfig.UsfmConfig.ParagraphBreakFormat,
+            Is.EqualTo(ParagraphBreakFormatOptions.Remove)
         );
     }
 

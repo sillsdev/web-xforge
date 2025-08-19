@@ -914,7 +914,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat: ParagraphBreakFormatOptions.MoveToEnd,
+            quoteStyle: QuoteStyleOptions.Normalized,
             CancellationToken.None
         );
 
@@ -946,7 +947,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat: ParagraphBreakFormatOptions.MoveToEnd,
+            quoteStyle: QuoteStyleOptions.Normalized,
             CancellationToken.None
         );
 
@@ -976,7 +978,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat: ParagraphBreakFormatOptions.MoveToEnd,
+            quoteStyle: QuoteStyleOptions.Normalized,
             CancellationToken.None
         );
 
@@ -1006,7 +1009,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat: ParagraphBreakFormatOptions.MoveToEnd,
+            quoteStyle: QuoteStyleOptions.Normalized,
             CancellationToken.None
         );
 
@@ -1036,7 +1040,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat: ParagraphBreakFormatOptions.MoveToEnd,
+            quoteStyle: QuoteStyleOptions.Normalized,
             CancellationToken.None
         );
 
@@ -1067,7 +1072,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat: ParagraphBreakFormatOptions.MoveToEnd,
+            quoteStyle: QuoteStyleOptions.Normalized,
             CancellationToken.None
         );
 
@@ -1096,7 +1102,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat: ParagraphBreakFormatOptions.MoveToEnd,
+            quoteStyle: QuoteStyleOptions.Normalized,
             CancellationToken.None
         );
         Assert.IsInstanceOf<OkObjectResult>(result.Result);
@@ -1124,7 +1131,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat: ParagraphBreakFormatOptions.MoveToEnd,
+            quoteStyle: QuoteStyleOptions.Normalized,
             CancellationToken.None
         );
         Assert.IsInstanceOf<OkObjectResult>(result.Result);

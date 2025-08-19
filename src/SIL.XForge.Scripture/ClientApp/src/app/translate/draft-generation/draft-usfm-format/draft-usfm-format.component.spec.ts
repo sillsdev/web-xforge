@@ -101,7 +101,7 @@ describe('DraftUsfmFormatComponent', () => {
   it('should initialize and default to best guess and automatic quotes', fakeAsync(async () => {
     const env = new TestEnvironment();
     expect(env.component.paragraphFormat.value).toBe(ParagraphBreakFormat.BestGuess);
-    expect(env.component.quoteFormat.value).toBe(QuoteFormat.Automatic);
+    expect(env.component.quoteFormat.value).toBe(QuoteFormat.Denormalized);
     expect(await env.component.confirmLeave()).toBe(true);
   }));
 

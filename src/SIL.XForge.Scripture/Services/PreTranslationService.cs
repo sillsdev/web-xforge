@@ -187,23 +187,44 @@ public class PreTranslationService(
         // Ensure we have the parameters to retrieve the pre-translation
         (string? translationEngineId, string corpusId, bool _) = await GetPreTranslationParametersAsync(sfProjectId);
 
-        // Get the USFM
-        string usfm = await translationEnginesClient.GetPretranslatedUsfmAsync(
-            id: translationEngineId,
-            corpusId: corpusId,
-            textId: GetTextId(bookNum),
-            textOrigin: PretranslationUsfmTextOrigin.OnlyPretranslated,
-            template: PretranslationUsfmTemplate.Source,
-            paragraphMarkerBehavior: config.ParagraphFormat switch
-            {
-                // TODO: Update mappings to USFM marker behavior when available in serval
-                ParagraphBreakFormat.Remove => PretranslationUsfmMarkerBehavior.Strip,
-                ParagraphBreakFormat.BestGuess => PretranslationUsfmMarkerBehavior.Preserve,
-                ParagraphBreakFormat.MoveToEnd => PretranslationUsfmMarkerBehavior.Preserve,
-                _ => PretranslationUsfmMarkerBehavior.Preserve,
-            },
-            cancellationToken: cancellationToken
-        );
+        PretranslationUsfmMarkerBehavior paragraphMarkerBehavior = config.ParagraphBreakFormat switch
+        {
+            ParagraphBreakFormatOptions.Remove => PretranslationUsfmMarkerBehavior.Strip,
+            ParagraphBreakFormatOptions.BestGuess => PretranslationUsfmMarkerBehavior.PreservePosition,
+            ParagraphBreakFormatOptions.MoveToEnd => PretranslationUsfmMarkerBehavior.Preserve,
+            _ => PretranslationUsfmMarkerBehavior.Preserve,
+        };
+        // PretranslationNormalizationBehavior quoteNormalizationBehavior = config.QuoteStyle switch
+        // {
+        //     QuoteStyleOptions.Denormalized => PretranslationNormalizationBehavior.Denormalized,
+        //     QuoteStyleOptions.Normalized => PretranslationNormalizationBehavior.Normalized,
+        //     _ => PretranslationNormalizationBehavior.Normalized,
+        // };
+
+        Console.WriteLine($"paragraphMarkerBehavior: {paragraphMarkerBehavior}");
+        // Console.WriteLine($"quoteNormalizationBehavior: {quoteNormalizationBehavior}");
+
+        string usfm;
+
+        try
+        {
+            // Get the USFM
+            usfm = await translationEnginesClient.GetPretranslatedUsfmAsync(
+                id: translationEngineId,
+                corpusId: corpusId,
+                textId: GetTextId(bookNum),
+                textOrigin: PretranslationUsfmTextOrigin.OnlyPretranslated,
+                template: PretranslationUsfmTemplate.Source,
+                paragraphMarkerBehavior: paragraphMarkerBehavior,
+                quoteNormalizationBehavior: PretranslationNormalizationBehavior.Denormalized,
+                cancellationToken: cancellationToken
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error occurred while getting pre-translated USFM: {ex.Message}");
+            throw;
+        }
 
         // Return the entire book
         if (chapterNum == 0)

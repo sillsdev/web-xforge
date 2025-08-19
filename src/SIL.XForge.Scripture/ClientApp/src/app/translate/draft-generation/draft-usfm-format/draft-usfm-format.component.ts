@@ -66,7 +66,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   quoteStyleFormat = QuoteFormat;
 
   paragraphFormat = new FormControl<ParagraphBreakFormat>(ParagraphBreakFormat.BestGuess);
-  quoteFormat = new FormControl<QuoteFormat>(QuoteFormat.Automatic);
+  quoteFormat = new FormControl<QuoteFormat>(QuoteFormat.Denormalized);
   usfmFormatForm: FormGroup = new FormGroup({
     paragraphFormat: this.paragraphFormat,
     quoteFormat: this.quoteFormat
@@ -111,7 +111,8 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
 
   private get currentFormat(): DraftUsfmConfig | undefined {
     const paragraphFormat = this.paragraphFormat.value;
-    return paragraphFormat == null ? undefined : { paragraphFormat };
+    const quoteFormat = this.quoteFormat.value;
+    return paragraphFormat == null || quoteFormat == null ? undefined : { paragraphFormat, quoteFormat };
   }
 
   ngAfterViewInit(): void {
@@ -202,7 +203,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   private setUsfmConfig(config?: DraftUsfmConfig): void {
     this.usfmFormatForm.setValue({
       paragraphFormat: config?.paragraphFormat ?? ParagraphBreakFormat.BestGuess,
-      quoteFormat: QuoteFormat.Automatic
+      quoteFormat: config?.quoteFormat ?? QuoteFormat.Denormalized
     });
     this.lastSavedState = this.currentFormat;
 
