@@ -246,6 +246,8 @@
     "no_training_books": "No training books selected",
     "overview": "Overview",
     "reference_books": "Reference books",
+    "remote_changes": "The draft generation settings for this project have been modified, either by another user or in a separate window. Please review the latest configuration and try starting the draft again.",
+    "remote_changes_start_over": "Start over",
     "source_books_missing": "The reference text is missing one or more of the translated books in your project. Consider choosing a reference text that contains a match for all the translated books",
     "summary_header": "Summary",
     "summary_title": "Summary",
