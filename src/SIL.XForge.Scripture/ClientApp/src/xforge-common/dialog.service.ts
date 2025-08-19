@@ -22,15 +22,19 @@ export class DialogService {
 
   diagnosticOverlay: OverlayRef | undefined;
 
-  openMatDialog<T, D = any, R = any>(component: ComponentType<T>, config?: MatDialogConfig<D>): MatDialogRef<T, R> {
+  openMatDialog<T, D = any, R = any>(
+    component: ComponentType<T>,
+    config?: MatDialogConfig<D>,
+    disableClose: boolean = false
+  ): MatDialogRef<T, R> {
     const defaults: MatDialogConfig = { direction: this.i18n.direction, autoFocus: false };
     const dialogDefaults: MatDialogConfig = hasObjectProp(component, 'defaultMatDialogConfig')
       ? component.defaultMatDialogConfig
       : {};
-    return this.matDialog.open(component, { ...defaults, ...dialogDefaults, ...(config ?? {}) });
+    return this.matDialog.open(component, { ...defaults, ...dialogDefaults, ...(config ?? {}), disableClose });
   }
 
-  openGenericDialog<T>(options: GenericDialogOptions<T>): GenericDialogRef<T> {
+  openGenericDialog<T>(options: GenericDialogOptions<T>, disableClose: boolean = false): GenericDialogRef<T> {
     const dialogRef: MatDialogRef<GenericDialogComponent<T>, T> = this.matDialog.open<
       GenericDialogComponent<T>,
       GenericDialogOptions<T>,
@@ -38,7 +42,8 @@ export class DialogService {
     >(GenericDialogComponent, {
       direction: this.i18n.direction,
       autoFocus: false,
-      data: options
+      data: options,
+      disableClose
     });
 
     return {
@@ -50,25 +55,32 @@ export class DialogService {
   async confirm(
     question: I18nKey | Observable<string>,
     affirmative: I18nKey | Observable<string>,
-    negative?: I18nKey | Observable<string>
+    negative?: I18nKey | Observable<string>,
+    disableClose: boolean = false
   ): Promise<boolean> {
-    return await this.confirmWithOptions({ title: question, affirmative, negative });
+    return await this.confirmWithOptions({ title: question, affirmative, negative }, disableClose);
   }
 
-  async confirmWithOptions(options: {
-    title: I18nKey | Observable<string>;
-    message?: I18nKey | Observable<string>;
-    affirmative: I18nKey | Observable<string>;
-    negative?: I18nKey | Observable<string>;
-  }): Promise<boolean> {
-    const result: boolean | undefined = await this.openGenericDialog({
-      title: this.ensureLocalized(options.title),
-      message: options.message == null ? undefined : this.ensureLocalized(options.message),
-      options: [
-        { value: false, label: this.ensureLocalized(options.negative ?? 'dialog.cancel') },
-        { value: true, label: this.ensureLocalized(options.affirmative), highlight: true }
-      ]
-    }).result;
+  async confirmWithOptions(
+    options: {
+      title: I18nKey | Observable<string>;
+      message?: I18nKey | Observable<string>;
+      affirmative: I18nKey | Observable<string>;
+      negative?: I18nKey | Observable<string>;
+    },
+    disableClose: boolean = false
+  ): Promise<boolean> {
+    const result: boolean | undefined = await this.openGenericDialog(
+      {
+        title: this.ensureLocalized(options.title),
+        message: options.message == null ? undefined : this.ensureLocalized(options.message),
+        options: [
+          { value: false, label: this.ensureLocalized(options.negative ?? 'dialog.cancel') },
+          { value: true, label: this.ensureLocalized(options.affirmative), highlight: true }
+        ]
+      },
+      disableClose
+    ).result;
     return result === true;
   }
 
@@ -80,11 +92,18 @@ export class DialogService {
    * @param close (optional) May be an Observable<string>, or an I18nKey which will be used as a translation key. If not
    * provided the button will use a default label for the close button.
    */
-  async message(message: I18nKey | Observable<string>, close?: I18nKey | Observable<string>): Promise<void> {
-    return await this.openGenericDialog({
-      title: this.ensureLocalized(message),
-      options: [{ value: undefined, label: this.ensureLocalized(close ?? 'dialog.close'), highlight: true }]
-    }).result;
+  async message(
+    message: I18nKey | Observable<string>,
+    close?: I18nKey | Observable<string>,
+    disableClose: boolean = false
+  ): Promise<void> {
+    return await this.openGenericDialog(
+      {
+        title: this.ensureLocalized(message),
+        options: [{ value: undefined, label: this.ensureLocalized(close ?? 'dialog.close'), highlight: true }]
+      },
+      disableClose
+    ).result;
   }
 
   get openDialogCount(): number {
