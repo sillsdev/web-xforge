@@ -131,6 +131,7 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
             string value => new BsonString(value),
             decimal value => new BsonDecimal128(value),
             DateTime value => new BsonDateTime(value),
+            Uri value => new BsonString(value.ToString()),
             null => BsonNull.Value,
             _ => BsonDocument.Parse(JsonConvert.SerializeObject(objectValue)),
         };

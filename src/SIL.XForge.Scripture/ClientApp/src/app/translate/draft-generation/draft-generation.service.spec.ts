@@ -42,7 +42,8 @@ describe('DraftGenerationService', () => {
     translationScriptureRanges: [],
     trainingScriptureRanges: [],
     fastTraining: false,
-    useEcho: false
+    useEcho: false,
+    sendEmailOnBuildFinished: false
   };
   const buildDto: BuildDto = {
     id: 'testId',

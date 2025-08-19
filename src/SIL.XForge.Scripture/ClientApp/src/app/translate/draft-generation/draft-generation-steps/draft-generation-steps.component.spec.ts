@@ -11,10 +11,12 @@ import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
@@ -28,12 +30,13 @@ describe('DraftGenerationStepsComponent', () => {
   let loader: HarnessLoader;
 
   const mockActivatedProjectService = mock(ActivatedProjectService);
+  const mockDraftSourceService = mock(DraftSourcesService);
   const mockFeatureFlagService = mock(FeatureFlagService);
   const mockNllbLanguageService = mock(NllbLanguageService);
   const mockProgressService = mock(ProgressService);
   const mockOnlineStatusService = mock(OnlineStatusService);
   const mockNoticeService = mock(NoticeService);
-  const mockDraftSourceService = mock(DraftSourcesService);
+  const mockUserService = mock(UserService);
 
   when(mockActivatedProjectService.projectId).thenReturn('project01');
 
@@ -47,6 +50,7 @@ describe('DraftGenerationStepsComponent', () => {
       { provide: ProgressService, useMock: mockProgressService },
       { provide: OnlineStatusService, useMock: mockOnlineStatusService },
       { provide: NoticeService, useMock: mockNoticeService },
+      { provide: UserService, useMock: mockUserService },
       provideHttpClient(withInterceptorsFromDi()),
       provideHttpClientTesting()
     ]
@@ -506,7 +510,8 @@ describe('DraftGenerationStepsComponent', () => {
         ],
         translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'JDG' }],
         fastTraining: false,
-        useEcho: false
+        useEcho: false,
+        sendEmailOnBuildFinished: false
       } as DraftGenerationStepsResult);
       expect(component.isStepsCompleted).toBe(true);
     }));
@@ -548,7 +553,8 @@ describe('DraftGenerationStepsComponent', () => {
         trainingScriptureRanges: [{ projectId: 'source2', scriptureRange: 'EXO;JOS' }],
         translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'JDG' }],
         fastTraining: false,
-        useEcho: false
+        useEcho: false,
+        sendEmailOnBuildFinished: false
       } as DraftGenerationStepsResult);
       expect(component.isStepsCompleted).toBe(true);
     });
@@ -649,16 +655,19 @@ describe('DraftGenerationStepsComponent', () => {
           translateConfig: {
             draftConfig: {
               fastTraining: true,
-              useEcho: true
+              useEcho: true,
+              sendEmailOnBuildFinished: true
             }
           }
         })
       } as SFProjectProfileDoc;
+      const mockUserDoc: UserDoc = { data: { name: 'John', email: 'john@example.com' } } as UserDoc;
       when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
       when(mockActivatedProjectService.projectDoc$).thenReturn(of(mockTargetProjectDoc));
       when(mockActivatedProjectService.changes$).thenReturn(of(mockTargetProjectDoc));
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
       when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(true));
+      when(mockUserService.getCurrentUser()).thenResolve(mockUserDoc);
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
       loader = TestbedHarnessEnvironment.loader(fixture);
@@ -667,9 +676,10 @@ describe('DraftGenerationStepsComponent', () => {
       tick();
     }));
 
-    it('should set fast training and echo engine correctly', fakeAsync(() => {
+    it('should set fast training, echo engine and email me correctly', fakeAsync(() => {
       expect(component.fastTraining).toBe(true);
       expect(component.useEcho).toBe(true);
+      expect(component.sendEmailOnBuildFinished).toBe(true);
     }));
 
     it('should emit the fast training value if checked', async () => {
@@ -692,6 +702,9 @@ describe('DraftGenerationStepsComponent', () => {
       const echoHarness = await loader.getHarness(MatCheckboxHarness.with({ selector: '.use-echo' }));
       await echoHarness.uncheck();
 
+      const sendEmailOnBuildFinished = await loader.getHarness(MatCheckboxHarness.with({ selector: '.email-me' }));
+      await sendEmailOnBuildFinished.uncheck();
+
       // Click next on the final step to generate the draft
       fixture.detectChanges();
       const generateDraftButton: HTMLElement = fixture.nativeElement.querySelector('.advance-button');
@@ -704,7 +717,8 @@ describe('DraftGenerationStepsComponent', () => {
         trainingScriptureRanges: [{ projectId: 'source1', scriptureRange: 'LEV;1SA;2SA' }],
         translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'EXO' }],
         fastTraining: true,
-        useEcho: false
+        useEcho: false,
+        sendEmailOnBuildFinished: false
       } as DraftGenerationStepsResult);
       expect(generateDraftButton['disabled']).toBe(true);
     });
@@ -729,6 +743,9 @@ describe('DraftGenerationStepsComponent', () => {
       const echoHarness = await loader.getHarness(MatCheckboxHarness.with({ selector: '.use-echo' }));
       await echoHarness.check();
 
+      const sendEmailOnBuildFinished = await loader.getHarness(MatCheckboxHarness.with({ selector: '.email-me' }));
+      await sendEmailOnBuildFinished.uncheck();
+
       // Click next on the final step to generate the draft
       fixture.detectChanges();
       const generateDraftButton: HTMLElement = fixture.nativeElement.querySelector('.advance-button');
@@ -741,7 +758,49 @@ describe('DraftGenerationStepsComponent', () => {
         trainingScriptureRanges: [{ projectId: 'source1', scriptureRange: 'LEV;1SA;2SA' }],
         translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'EXO' }],
         fastTraining: false,
-        useEcho: true
+        useEcho: true,
+        sendEmailOnBuildFinished: false
+      } as DraftGenerationStepsResult);
+      expect(generateDraftButton['disabled']).toBe(true);
+    });
+
+    it('should emit the email me value if checked', async () => {
+      component.onTranslateBookSelect([2], config.draftingSources[0]);
+      component.onTranslatedBookSelect([3, 9, 10]);
+      component.onSourceTrainingBookSelect([3, 9, 10], config.trainingSources[0]);
+
+      spyOn(component.done, 'emit');
+
+      fixture.detectChanges();
+      const step = fixture.debugElement.queryAll(By.css('mat-step-header'));
+      step[3].nativeElement.click(); //click the next step
+      fixture.detectChanges();
+      component.tryAdvanceStep();
+
+      // Tick the echo checkbox
+      const fastTrainingHarness = await loader.getHarness(MatCheckboxHarness.with({ selector: '.fast-training' }));
+      await fastTrainingHarness.uncheck();
+
+      const echoHarness = await loader.getHarness(MatCheckboxHarness.with({ selector: '.use-echo' }));
+      await echoHarness.uncheck();
+
+      const sendEmailOnBuildFinished = await loader.getHarness(MatCheckboxHarness.with({ selector: '.email-me' }));
+      await sendEmailOnBuildFinished.check();
+
+      // Click next on the final step to generate the draft
+      fixture.detectChanges();
+      const generateDraftButton: HTMLElement = fixture.nativeElement.querySelector('.advance-button');
+      expect(generateDraftButton['disabled']).toBe(false);
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+
+      expect(component.done.emit).toHaveBeenCalledWith({
+        trainingDataFiles: [],
+        trainingScriptureRanges: [{ projectId: 'source1', scriptureRange: 'LEV;1SA;2SA' }],
+        translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'EXO' }],
+        fastTraining: false,
+        useEcho: false,
+        sendEmailOnBuildFinished: true
       } as DraftGenerationStepsResult);
       expect(generateDraftButton['disabled']).toBe(true);
     });
@@ -913,7 +972,8 @@ describe('DraftGenerationStepsComponent', () => {
         translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'LEV' }],
         trainingDataFiles: ['file1'],
         fastTraining: false,
-        useEcho: false
+        useEcho: false,
+        sendEmailOnBuildFinished: false
       });
     });
   });
