@@ -259,7 +259,7 @@ export class DraftGenerationStepsComponent implements OnInit {
 
           this.sendEmailOnBuildFinished =
             this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.sendEmailOnBuildFinished ?? false;
-          
+
           // See if the target and any of the sources need updating
           const projectIds: string[] = [
             ...trainingTargets.map(s => s.projectRef),
