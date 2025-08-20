@@ -1864,7 +1864,11 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         string? shareKey = null
     )
     {
-        if (!string.IsNullOrWhiteSpace(source?.ProjectRef) && !string.IsNullOrWhiteSpace(source?.ParatextId))
+        // If a source is missing, return silently without performing any action
+        if (source is null)
+            return;
+
+        if (!string.IsNullOrWhiteSpace(source.ProjectRef) && !string.IsNullOrWhiteSpace(source.ParatextId))
         {
             // Load the source project role from MongoDB
             IDocument<SFProject> sourceProjectDoc = await TryGetProjectDocAsync(source.ProjectRef, conn);

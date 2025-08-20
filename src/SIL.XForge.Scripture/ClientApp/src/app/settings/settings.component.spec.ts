@@ -414,7 +414,9 @@ describe('SettingsComponent', () => {
             shortName: 'PT2',
             languageTag: 'qaa',
             isConnectable: true,
-            isConnected: false
+            isConnected: false,
+            hasUserRoleChanged: false,
+            hasUpdate: false
           }
         ]);
         when(mockedParatextService.getResources()).thenResolve([]);
@@ -906,7 +908,9 @@ class TestEnvironment {
         shortName: 'PT1',
         languageTag: 'qaa',
         isConnectable: true,
-        isConnected: false
+        isConnected: false,
+        hasUserRoleChanged: false,
+        hasUpdate: false
       },
       {
         paratextId: 'paratextId02',
@@ -914,7 +918,9 @@ class TestEnvironment {
         shortName: 'PT2',
         languageTag: 'qaa',
         isConnectable: true,
-        isConnected: false
+        isConnected: false,
+        hasUserRoleChanged: false,
+        hasUpdate: false
       }
     ]);
     when(mockedParatextService.getResources()).thenResolve([

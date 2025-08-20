@@ -1137,6 +1137,7 @@ describe('DraftGenerationStepsComponent', () => {
       );
       when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
       when(mockParatextService.getProjects()).thenResolve([
+        // Include different combinations of hasUpdate and isConnected and missing sources so these will be filtered out
         { projectId: null, hasUpdate: true, isConnected: true } as ParatextProject,
         { projectId: 'source1', hasUpdate: false, isConnected: true, name: 'Source 1' } as ParatextProject,
         { projectId: 'source1', hasUpdate: true, isConnected: false, name: 'Source 1' } as ParatextProject,
