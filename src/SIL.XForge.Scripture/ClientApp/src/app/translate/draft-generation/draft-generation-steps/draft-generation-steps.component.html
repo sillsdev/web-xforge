@@ -279,6 +279,16 @@
             {{ selectedTranslateBooksAsString() }}
           </div>
         </mat-card>
+        <h2>{{ t("summary_notifications") }}</h2>
+        @if (currentUserEmail != null) {
+          <mat-card class="confirm-section mat-elevation-z2">
+            <div>
+              <mat-checkbox class="email-me" [(ngModel)]="sendEmailOnBuildFinished">
+                {{ t("email_me", { email: currentUserEmail }) }}
+              </mat-checkbox>
+            </div>
+          </mat-card>
+        }
 
         <div class="button-strip">
           <button mat-stroked-button matStepperPrevious>

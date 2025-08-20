@@ -52,9 +52,9 @@ public class EventMetricServiceTests
             pageSize: 10
         );
 
-        // Do not retrieve any projects, even the metric with no project identifier
-        Assert.IsEmpty(actual.Results);
-        Assert.Zero(actual.UnpagedCount);
+        // When no project is specified, only return events that have a project ID (excludes null project IDs)
+        Assert.AreEqual(3, actual.Results.Count());
+        Assert.AreEqual(3, actual.UnpagedCount);
     }
 
     [Test]
@@ -283,6 +283,7 @@ public class EventMetricServiceTests
         const long longInteger = 5678L;
         const float singleFloat = 90.12F;
         string[] stringArray = ["string1", "string2"];
+        Uri uri = new Uri("https://example.com", UriKind.Absolute);
         Dictionary<string, object> argumentsWithNames = new Dictionary<string, object>
         {
             { "projectId", Project01 },
@@ -295,6 +296,7 @@ public class EventMetricServiceTests
             { "longInteger", longInteger },
             { "singleFloat", singleFloat },
             { "stringArray", stringArray },
+            { "uri", uri },
             { "nullValue", null },
         };
         Dictionary<string, BsonValue> expectedPayload = new Dictionary<string, BsonValue>
@@ -309,6 +311,7 @@ public class EventMetricServiceTests
             { "longInteger", BsonInt64.Create(longInteger) },
             { "singleFloat", BsonDouble.Create(singleFloat) },
             { "stringArray", BsonArray.Create(stringArray) },
+            { "uri", BsonValue.Create(uri.ToString()) },
             { "nullValue", BsonNull.Value },
         };
         const bool result = true;

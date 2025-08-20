@@ -13,7 +13,6 @@ import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
-import { I18nService } from 'xforge-common/i18n.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -27,7 +26,6 @@ import { BookWithDraft, DraftPreviewBooksComponent } from './draft-preview-books
 
 const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedProjectService = mock(SFProjectService);
-const mockedI18nService = mock(I18nService);
 const mockedUserService = mock(UserService);
 const mockedDraftHandlingService = mock(DraftHandlingService);
 const mockedDialogService = mock(DialogService);
@@ -43,7 +41,6 @@ describe('DraftPreviewBooks', () => {
     providers: [
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: I18nService, useMock: mockedI18nService },
       { provide: UserService, useMock: mockedUserService },
       { provide: DraftHandlingService, useMock: mockedDraftHandlingService },
       { provide: DialogService, useMock: mockedDialogService },
@@ -371,15 +368,14 @@ class TestEnvironment {
   } as SFProjectProfileDoc;
 
   booksWithDrafts: BookWithDraft[] = [
-    { bookNumber: 1, canEdit: true, chaptersWithDrafts: [1, 2, 3], draftApplied: false },
-    { bookNumber: 2, canEdit: true, chaptersWithDrafts: [1], draftApplied: false },
-    { bookNumber: 3, canEdit: false, chaptersWithDrafts: [1, 2], draftApplied: false }
+    { bookNumber: 1, bookId: 'GEN', canEdit: true, chaptersWithDrafts: [1, 2, 3], draftApplied: false },
+    { bookNumber: 2, bookId: 'EXO', canEdit: true, chaptersWithDrafts: [1], draftApplied: false },
+    { bookNumber: 3, bookId: 'LEV', canEdit: false, chaptersWithDrafts: [1, 2], draftApplied: false }
   ];
 
   constructor(build: BuildDto | undefined = undefined) {
     when(mockedActivatedProjectService.changes$).thenReturn(of(this.mockProjectDoc));
     when(mockedActivatedProjectService.projectDoc).thenReturn(this.mockProjectDoc);
-    when(mockedI18nService.localizeBook(1)).thenReturn('Genesis');
     when(
       mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())
     ).thenResolve();

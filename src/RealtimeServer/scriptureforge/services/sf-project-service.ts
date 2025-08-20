@@ -320,6 +320,9 @@ export class SFProjectService extends ProjectService<SFProject> {
                   }
                 },
                 additionalProperties: false
+              },
+              sendEmailOnBuildFinished: {
+                bsonType: 'bool'
               }
             },
             additionalProperties: false

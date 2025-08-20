@@ -35,12 +35,6 @@
     "helps": "es"
   },
   {
-    "localName": "Română",
-    "englishName": "Romanian",
-    "tags": ["ro", "ro-RO"],
-    "production": true
-  },
-  {
     "localName": "Português",
     "englishName": "Portuguese",
     "tags": ["pt-BR"],
@@ -48,16 +42,9 @@
     "helps": "pt-BR"
   },
   {
-    "localName": "简体中文",
-    "englishName": "Chinese (Simplified)",
-    "tags": ["zh-CN", "zh"],
-    "production": true
-  },
-  {
-    "localName": "العربية",
-    "englishName": "Arabic",
-    "tags": ["ar", "ar-SA"],
-    "direction": "rtl",
+    "localName": "Română",
+    "englishName": "Romanian",
+    "tags": ["ro", "ro-RO"],
     "production": true
   },
   {
@@ -67,17 +54,30 @@
     "production": true
   },
   {
+    "localName": "Deutsch",
+    "englishName": "German",
+    "tags": ["de", "de-DE"],
+    "production": true,
+    "helps": "de"
+  },
+  {
+    "localName": "简体中文",
+    "englishName": "Chinese (Simplified)",
+    "tags": ["zh-CN", "zh"],
+    "production": true
+  },
+  {
     "localName": "Azərbaycanca",
     "englishName": "Azerbaijani",
     "tags": ["az", "az-AZ"],
     "production": true
   },
   {
-    "localName": "Deutsch",
-    "englishName": "German",
-    "tags": ["de", "de-DE"],
-    "production": true,
-    "helps": "de"
+    "localName": "العربية",
+    "englishName": "Arabic",
+    "tags": ["ar", "ar-SA"],
+    "direction": "rtl",
+    "production": true
   },
   {
     "localName": "ꤊꤢ꤬ꤛꤢ꤭ꤜꤟꤤ꤬",
@@ -101,6 +101,19 @@
     "localName": "ພາສາລາວ",
     "englishName": "Lao",
     "tags": ["lo", "lo-LA"],
+    "production": true
+  },
+  {
+    "localName": "हिन्दी",
+    "englishName": "Hindi",
+    "tags": ["hi", "hi-IN"],
+    "production": true
+  },
+  {
+    "localName": "فارسی",
+    "englishName": "Persian",
+    "tags": ["fa", "fa-IR"],
+    "direction": "rtl",
     "production": true
   }
 ]

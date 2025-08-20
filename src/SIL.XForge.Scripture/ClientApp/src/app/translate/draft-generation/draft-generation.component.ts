@@ -335,7 +335,8 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       trainingScriptureRanges: result.trainingScriptureRanges,
       translationScriptureRanges: result.translationScriptureRanges || [],
       fastTraining: result.fastTraining,
-      useEcho: result.useEcho
+      useEcho: result.useEcho,
+      sendEmailOnBuildFinished: result.sendEmailOnBuildFinished
     });
   }
 
