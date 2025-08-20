@@ -91,6 +91,7 @@ export class DialogService {
    * key.
    * @param close (optional) May be an Observable<string>, or an I18nKey which will be used as a translation key. If not
    * provided the button will use a default label for the close button.
+   * @param disableClose (optional) When true, prevents clicking outside the dialog from closing it. Default is false.
    */
   async message(
     message: I18nKey | Observable<string>,

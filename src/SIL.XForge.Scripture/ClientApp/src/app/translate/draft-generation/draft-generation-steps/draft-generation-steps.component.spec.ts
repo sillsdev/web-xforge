@@ -13,7 +13,6 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { DialogService } from 'xforge-common/dialog.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
-import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -43,7 +42,6 @@ describe('DraftGenerationStepsComponent', () => {
   const mockParatextService = mock(ParatextService);
   const mockUserService = mock(UserService);
   const mockDialogService = mock(DialogService);
-  const mockLocationService = mock(LocationService);
 
   when(mockActivatedProjectService.projectId).thenReturn('project01');
 
@@ -60,7 +58,6 @@ describe('DraftGenerationStepsComponent', () => {
       { provide: NoticeService, useMock: mockNoticeService },
       { provide: UserService, useMock: mockUserService },
       { provide: DialogService, useMock: mockDialogService },
-      { provide: LocationService, useMock: mockLocationService },
       provideHttpClient(withInterceptorsFromDi()),
       provideHttpClientTesting()
     ]
@@ -126,9 +123,9 @@ describe('DraftGenerationStepsComponent', () => {
         data: createTestProjectProfile({
           texts: [{ bookNum: 1 }],
           translateConfig: {
-            source: { projectRef: 'sourceProject', shortName: 'sP', writingSystem: { tag: 'xyz' } }
+            source: { projectRef: 'sourceProject', shortName: 'sP', writingSystem: { tag: 'eng' } }
           },
-          writingSystem: { tag: 'eng' }
+          writingSystem: { tag: 'xyz' }
         })
       } as SFProjectProfileDoc;
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
@@ -136,22 +133,18 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockActivatedProjectService.changes$).thenReturn(new BehaviorSubject(undefined));
     });
 
-    it('should show dialog and reload if sources change', fakeAsync(() => {
+    it('should show dialog and emit cancel if sources change', fakeAsync(() => {
+      let cancelFired = false;
       when(mockDialogService.openDialogCount).thenReturn(0);
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
       component = fixture.componentInstance;
+      component.cancel.subscribe(() => (cancelFired = true));
       fixture.detectChanges();
       tick();
       fixture.detectChanges();
 
-      const reload = new Error('RELOAD');
       expect(component['draftingSources'].length).toBe(1);
       verify(mockDialogService.message(anything(), anything(), anything())).never();
-      when(mockLocationService.reload()).thenCall(() => {
-        verify(mockDialogService.message(anything(), anything(), anything())).once();
-        verify(mockLocationService.reload()).once();
-        throw reload;
-      });
 
       // Simulate a remote change
       const newConfig: DraftSourcesAsArrays = {
@@ -159,19 +152,18 @@ describe('DraftGenerationStepsComponent', () => {
         draftingSources: [{ ...initialConfig.draftingSources[0], texts: [{ bookNum: 2 }] }]
       };
       draftSources$.next(newConfig);
+      tick();
 
-      try {
-        tick();
-        fail('tick() did not throw');
-      } catch (e: any) {
-        expect(e.rejection).toBe(reload);
-      }
+      verify(mockDialogService.message(anything(), anything(), anything())).once();
+      expect(cancelFired).toBe(true);
     }));
 
-    it('should not show dialog or reload if a dialog is already open', fakeAsync(() => {
+    it('should not show dialog or emit cancel if a dialog is already open', fakeAsync(() => {
+      let cancelFired = false;
       when(mockDialogService.openDialogCount).thenReturn(1);
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
       component = fixture.componentInstance;
+      component.cancel.subscribe(() => (cancelFired = true));
       fixture.detectChanges();
       tick();
       fixture.detectChanges();
@@ -185,7 +177,7 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
 
       verify(mockDialogService.message(anything(), anything(), anything())).never();
-      verify(mockLocationService.reload()).never();
+      expect(cancelFired).toBe(false);
     }));
   });
 
