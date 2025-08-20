@@ -343,7 +343,7 @@ class TestEnvironment {
     const mockedTextDoc = {
       getNonEmptyVerses: (): string[] => ['verse_1_1', 'verse_1_2', 'verse_1_3']
     } as TextDoc;
-    when(mockedProjectService.getText(anything())).thenResolve(mockedTextDoc);
+    when(mockedProjectService.getText(anything(), anything())).thenResolve(mockedTextDoc);
     when(mockedTextDocService.userHasGeneralEditRight(anything())).thenReturn(true);
   }
 }

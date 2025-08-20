@@ -47,17 +47,17 @@ describe('EditorResourceComponent', () => {
     component['initProjectDetails']();
 
     component.resourceText.editorCreated.next();
-    verify(mockSFProjectService.getProfile(anything())).never();
+    verify(mockSFProjectService.getProfile(anything(), anything())).never();
 
     component.projectId = 'test';
     component.bookNum = undefined;
     component.inputChanged$.next();
-    verify(mockSFProjectService.getProfile(anything())).never();
+    verify(mockSFProjectService.getProfile(anything(), anything())).never();
 
     component.bookNum = 1;
     component.chapter = undefined;
     component.inputChanged$.next();
-    verify(mockSFProjectService.getProfile(anything())).never();
+    verify(mockSFProjectService.getProfile(anything(), anything())).never();
   });
 
   it('should init when projectId, bookNum, and chapter are defined', fakeAsync(() => {
@@ -65,11 +65,11 @@ describe('EditorResourceComponent', () => {
     component.projectId = projectId;
     component.bookNum = 1;
     component.chapter = 1;
-    when(mockSFProjectService.getProfile(projectId)).thenReturn(Promise.resolve(projectDoc));
+    when(mockSFProjectService.getProfile(projectId, anything())).thenReturn(Promise.resolve(projectDoc));
     component['initProjectDetails']();
     component.resourceText.editorCreated.next();
     tick();
-    verify(mockSFProjectService.getProfile(projectId)).once();
+    verify(mockSFProjectService.getProfile(projectId, anything())).once();
     verify(mockFontService.getFontFamilyFromProject(projectDoc)).once();
   }));
 
@@ -82,7 +82,7 @@ describe('EditorResourceComponent', () => {
       id: projectId,
       data: createTestProjectProfile({ isRightToLeft: true })
     } as SFProjectProfileDoc;
-    when(mockSFProjectService.getProfile(projectId)).thenReturn(Promise.resolve(rtlProjectDoc));
+    when(mockSFProjectService.getProfile(projectId, anything())).thenReturn(Promise.resolve(rtlProjectDoc));
     component['initProjectDetails']();
     component.resourceText.editorCreated.next();
     tick();
@@ -98,7 +98,7 @@ describe('EditorResourceComponent', () => {
       id: projectId,
       data: createTestProjectProfile({ copyrightBanner: 'Test copyright', copyrightNotice: 'Test notice' })
     } as SFProjectProfileDoc;
-    when(mockSFProjectService.getProfile(projectId)).thenReturn(Promise.resolve(projectNoticeDoc));
+    when(mockSFProjectService.getProfile(projectId, anything())).thenReturn(Promise.resolve(projectNoticeDoc));
     component['initProjectDetails']();
     component.resourceText.editorCreated.next();
     tick();
@@ -112,7 +112,7 @@ describe('EditorResourceComponent', () => {
     component.projectId = projectId;
     component.bookNum = 1;
     component.chapter = 1;
-    when(mockSFProjectService.getProfile(projectId)).thenReturn(Promise.resolve(projectDoc));
+    when(mockSFProjectService.getProfile(projectId, anything())).thenReturn(Promise.resolve(projectDoc));
     component['initProjectDetails']();
     component.resourceText.editorCreated.next();
     tick();
