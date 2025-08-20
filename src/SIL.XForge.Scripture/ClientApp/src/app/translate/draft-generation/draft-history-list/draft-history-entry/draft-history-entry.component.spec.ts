@@ -98,6 +98,24 @@ describe('DraftHistoryEntryComponent', () => {
         }
       ]);
       expect(component.trainingConfigurationOpen).toBe(false);
+      expect(fixture.nativeElement.querySelector('.requested-label')).not.toBeNull();
+    }));
+
+    it('should state that the model did not have training configuration', fakeAsync(() => {
+      when(mockedI18nService.enumerateList(anything())).thenReturn('src');
+      const user = 'user-display-name';
+      const date = 'formatted-date';
+      const trainingBooks = [];
+      const translateBooks = ['GEN'];
+      const entry = getStandardBuildDto({ user, date, trainingBooks, translateBooks });
+
+      // SUT
+      component.entry = entry;
+      tick();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.no-training-configuration')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('.requested-label')).not.toBeNull();
     }));
 
     it('should show the USFM format option when the project is the latest draft', fakeAsync(() => {
@@ -321,7 +339,8 @@ describe('DraftHistoryEntryComponent', () => {
         dateGenerated: new Date().toISOString(),
         dateRequested: new Date().toISOString(),
         requestedByUserId: 'sf-user-id',
-        trainingScriptureRanges: [{ projectId: 'project02', scriptureRange: trainingBooks.join(';') }],
+        trainingScriptureRanges:
+          trainingBooks.length > 0 ? [{ projectId: 'project02', scriptureRange: trainingBooks.join(';') }] : [],
         translationScriptureRanges: [{ projectId: 'project02', scriptureRange: translateBooks.join(';') }]
       }
     } as BuildDto;
