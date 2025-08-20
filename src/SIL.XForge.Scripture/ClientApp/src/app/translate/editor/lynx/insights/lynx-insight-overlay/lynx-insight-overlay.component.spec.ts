@@ -3,6 +3,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testi
 import { By } from '@angular/platform-browser';
 import { TextDocId } from 'src/app/core/models/text-doc';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { I18nService } from 'xforge-common/i18n.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { LynxEditor, LynxTextModelConverter } from '../lynx-editor';
@@ -17,6 +18,7 @@ const mockLynxInsightOverlayService = mock(LynxInsightOverlayService);
 const mockLynxWorkspaceService = mock(LynxWorkspaceService);
 const mockLynxEditor = mock<LynxEditor>();
 const mockTextModelConverter = mock<LynxTextModelConverter>();
+const mockedI18nService = mock(I18nService);
 
 // Default insight config
 const defaultInsightConfig: LynxInsightConfig = {
@@ -51,13 +53,9 @@ describe('LynxInsightOverlayComponent', () => {
       { provide: LynxInsightStateService, useMock: mockLynxInsightStateService },
       { provide: LynxInsightOverlayService, useMock: mockLynxInsightOverlayService },
       { provide: LynxWorkspaceService, useMock: mockLynxWorkspaceService },
+      { provide: I18nService, useMock: mockedI18nService },
       { provide: EDITOR_INSIGHT_DEFAULTS, useValue: defaultInsightConfig }
     ]
-  }));
-
-  it('should create', fakeAsync(() => {
-    const env = new TestEnvironment();
-    expect(env.component).toBeTruthy();
   }));
 
   it('should update contents when primary action clicked', fakeAsync(() => {
@@ -68,6 +66,22 @@ describe('LynxInsightOverlayComponent', () => {
     verify(mockTextModelConverter.dataDeltaToEditorDelta(anything())).once();
     verify(mockLynxEditor.updateContents(anything(), 'user')).once();
     expect().nothing();
+  }));
+
+  it('should use rtl direction when i18n.direction is rtl', fakeAsync(() => {
+    when(mockedI18nService.direction).thenReturn('rtl');
+    const env = new TestEnvironment();
+
+    const menuTrigger = env.fixture.debugElement.query(By.css('.action-menu-trigger'));
+    expect(menuTrigger.nativeElement.getAttribute('dir')).toBe('rtl');
+  }));
+
+  it('should use ltr direction when i18n.direction is ltr', fakeAsync(() => {
+    when(mockedI18nService.direction).thenReturn('ltr');
+    const env = new TestEnvironment();
+
+    const menuTrigger = env.fixture.debugElement.query(By.css('.action-menu-trigger'));
+    expect(menuTrigger.nativeElement.getAttribute('dir')).toBe('ltr');
   }));
 });
 
@@ -89,7 +103,8 @@ class TestEnvironment {
     const textModelConverter = instance(mockTextModelConverter);
 
     const insight = this.createTestInsight();
-    const action = this.createTestAction(insight, true);
+    const primaryAction = this.createTestAction(insight, true);
+    const secondaryAction = this.createTestAction(insight, false);
 
     // Set up mocks for the editor root element
     const mockRoot = document.createElement('div');
@@ -97,7 +112,7 @@ class TestEnvironment {
     when(mockLynxEditor.focus()).thenReturn();
     when(mockLynxEditor.updateContents(anything(), anything())).thenReturn();
     when(mockTextModelConverter.dataDeltaToEditorDelta(anything())).thenCall(delta => delta);
-    when(mockLynxWorkspaceService.getActions(anything())).thenResolve([action]);
+    when(mockLynxWorkspaceService.getActions(anything())).thenResolve([primaryAction, secondaryAction]);
 
     this.hostComponent.insights = [insight];
     this.hostComponent.editor = editor;
