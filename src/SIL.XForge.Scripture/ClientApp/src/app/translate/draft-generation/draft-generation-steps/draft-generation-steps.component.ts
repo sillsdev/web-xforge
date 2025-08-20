@@ -11,7 +11,6 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { LocationService } from 'xforge-common/location.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -121,8 +120,7 @@ export class DraftGenerationStepsComponent implements OnInit {
     private readonly progressService: ProgressService,
     private readonly trainingFileService: TrainingDataService,
     private readonly userService: UserService,
-    private readonly dialogService: DialogService,
-    private readonly locationService: LocationService
+    private readonly dialogService: DialogService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -145,7 +143,7 @@ export class DraftGenerationStepsComponent implements OnInit {
               'draft_generation_steps.remote_changes_start_over',
               true
             );
-            this.locationService.reload();
+            this.cancel.emit();
           }
 
           // The null values will have been filtered above
