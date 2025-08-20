@@ -5,54 +5,13 @@
     <div class="step" [class.active]="step === 1">
       <div class="step-header" matRipple (click)="goToStep(1)">
         <div class="step-header-description">
-          <span class="step-title">{{ t("draft_source") }}</span>
-          <span class="step-subtitle">{{ sourceSubtitle }}</span>
+          <span class="step-title">{{ t("reference_projects") }}</span>
+          <span class="step-subtitle">{{ referencesSubtitle }}</span>
         </div>
         <mat-icon>{{ step === 1 ? "expand_less" : "expand_more" }}</mat-icon>
       </div>
       <div class="step-body">
-        <p>{{ t("select_project_to_translate") }}</p>
-        @for (source of draftingSources; track $index) {
-          <app-project-select
-            [isDisabled]="loading || !appOnline"
-            [projects]="projects"
-            [resources]="resources"
-            [nonSelectableProjects]="nonSelectableProjects"
-            [value]="source?.paratextId"
-            [hiddenParatextIds]="getHiddenParatextIds(draftingSources, source?.paratextId)"
-            (valueChange)="sourceSelected(draftingSources, $index, $event)"
-            [placeholder]="projectPlaceholder(source)"
-          ></app-project-select>
-        }
-
-        <ng-container *ngTemplateOutlet="navigationButtons"></ng-container>
-      </div>
-    </div>
-
-    <div class="step" [class.active]="step === 2">
-      <div class="step-header" matRipple (click)="goToStep(2)">
-        <div class="step-header-description">
-          <span class="step-title">{{ t("reference_projects") }}</span>
-          <span class="step-subtitle">{{ referencesSubtitle }}</span>
-        </div>
-        <mat-icon>{{ step === 2 ? "expand_less" : "expand_more" }}</mat-icon>
-      </div>
-      <div class="step-body">
-        <p>
-          {{ t("select_reference_project_considering_back_translation") }}
-
-          @if (sourceLanguageDisplayName) {
-            @for (portion of i18n.interpolateVariables("draft_sources.same_language_as_given_language"); track $index) {
-              @if (portion.id === "sourceLanguageDisplayName") {
-                <strong>{{ sourceLanguageDisplayName }}</strong>
-              }
-              <!-- prettier-ignore -->
-              @else {{{ portion.text }}}
-            }
-          } @else {
-            {{ t("same_language_as_source") }}
-          }
-        </p>
+        <p>{{ t("select_primary_reference") }}</p>
         @for (source of trainingSources; track $index) {
           <app-project-select
             [isDisabled]="loading || !appOnline"
@@ -67,6 +26,7 @@
         }
 
         @if (allowAddingATrainingSource) {
+          <p>{{ t("some_projects_use_back_translation") }}</p>
           <button
             mat-button
             (click)="trainingSources.push(undefined); $event.preventDefault()"
@@ -74,6 +34,33 @@
           >
             <mat-icon>add</mat-icon> {{ t("add_another_reference_project") }}
           </button>
+        }
+
+        <ng-container *ngTemplateOutlet="navigationButtons"></ng-container>
+      </div>
+    </div>
+
+    <div class="step" [class.active]="step === 2">
+      <div class="step-header" matRipple (click)="goToStep(2)">
+        <div class="step-header-description">
+          <span class="step-title">{{ t("draft_source") }}</span>
+          <span class="step-subtitle">{{ sourceSubtitle }}</span>
+        </div>
+        <mat-icon>{{ step === 2 ? "expand_less" : "expand_more" }}</mat-icon>
+      </div>
+      <div class="step-body">
+        <p>{{ t("select_project_to_translate") }}</p>
+        @for (source of draftingSources; track $index) {
+          <app-project-select
+            [isDisabled]="loading || !appOnline"
+            [projects]="projects"
+            [resources]="resources"
+            [nonSelectableProjects]="nonSelectableProjects"
+            [value]="source?.paratextId"
+            [hiddenParatextIds]="getHiddenParatextIds(draftingSources, source?.paratextId)"
+            (valueChange)="sourceSelected(draftingSources, $index, $event)"
+            [placeholder]="projectPlaceholder(source)"
+          ></app-project-select>
         }
 
         <ng-container *ngTemplateOutlet="navigationButtons"></ng-container>
@@ -131,7 +118,7 @@
         <mat-card-title>{{ t("training_language_model") }}</mat-card-title>
       </mat-card-header>
       <mat-card-content class="training-data">
-        <div class="sources" (click)="goToStep(2)" [class.active]="step === 2" matRipple>
+        <div class="sources" (click)="goToStep(1)" [class.active]="step === 1" matRipple>
           <h3>{{ t("overview_reference") }} {{ parentheses(referenceLanguageDisplayName) }}</h3>
           @for (project of trainingSources; track $index) {
             @if (project == null) {
@@ -163,7 +150,7 @@
         <mat-card-title>{{ t("generate_draft_from_language_model") }}</mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <div class="translation-data" (click)="goToStep(1)" [class.active]="step === 1" matRipple>
+        <div class="translation-data" (click)="goToStep(2)" [class.active]="step === 2" matRipple>
           <h3>{{ t("overview_source") }} {{ parentheses(sourceLanguageDisplayName) }}</h3>
           @for (project of draftingSources; track $index) {
             @if (project == null) {

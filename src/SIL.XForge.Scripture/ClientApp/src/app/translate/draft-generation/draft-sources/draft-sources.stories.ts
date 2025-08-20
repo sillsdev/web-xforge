@@ -226,20 +226,11 @@ export const SelectAllAndSave: Story = {
   ...Template,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    // Step 1: Draft source
-    // Select an English source and expect to see a warning that source and target languages are the same
+
+    // Step 1: Reference projects
+    // Select an English reference and expect to see a warning that source and target languages are the same
     await selectSource(canvasElement, 'P_EN');
     expect(await warning(canvasElement)).toContain('Source and target languages are both English');
-    // Switch to a Chinese source and expect the warning to disappear
-    await clearSource(canvasElement);
-    await selectSource(canvasElement, 'P_ZH');
-    expect(await warning(canvasElement)).toContain('Incorrect language codes will dramatically reduce draft quality.');
-
-    // Step 2: Reference projects
-    await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
-    // Select a English reference project and expect to see an error that sources are in different languages
-    await selectSource(canvasElement, 'R_EN');
-    expect(await warning(canvasElement)).toContain('All source and reference projects must be in the same language');
     // Switch to a Chinese reference project and expect the error to disappear
     await clearSource(canvasElement);
     await selectSource(canvasElement, 'R_ZH');
@@ -248,11 +239,21 @@ export const SelectAllAndSave: Story = {
     const additionalReferenceButton = canvas.getByRole('button', { name: /Add another reference project/ });
     await userEvent.click(additionalReferenceButton);
     await selectSource(canvasElement, 'P_ZH', 1);
+
+    // Step 2: Draft source
+    await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
+    // Select an English source project and expect to see an error that sources are in different languages
+    await selectSource(canvasElement, 'R_EN');
+    expect(await warning(canvasElement)).toContain('All source and reference projects must be in the same language');
+    // Switch to a Chinese source project and expect the error to disappear
+    await clearSource(canvasElement);
+    await selectSource(canvasElement, 'P_ZH');
+    expect(await warning(canvasElement)).toContain('Incorrect language codes will dramatically reduce draft quality.');
     await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
 
-    // Verify general information shown is correct
+    // Verify general information  shown is correct
     const stepSubTitles = Array.from(canvasElement.querySelectorAll('.step-subtitle')).map(e => e.textContent);
-    expect(stepSubTitles).toEqual(['P_ZH', 'R_ZH and P_ZH', 'P1']);
+    expect(stepSubTitles).toEqual(['R_ZH and P_ZH', 'P_ZH', 'P1']);
     const overviewHeadings = Array.from(canvasElement.querySelector('.overview')!.querySelectorAll('h3')).map(
       e => e.textContent
     );
@@ -299,8 +300,8 @@ export const NavigateAllSteps: Story = {
   ...PreExistingSettings,
   play: async ({ canvasElement }) => {
     const stepTitles = {
-      1: { stepper: 'Draft source', overview: 'Source' },
-      2: { stepper: 'Reference projects', overview: 'Reference' },
+      1: { stepper: 'Reference projects', overview: 'Reference' },
+      2: { stepper: 'Draft source', overview: 'Source' },
       3: { stepper: 'Target language data', overview: 'Translated project' }
     };
 
@@ -340,21 +341,10 @@ export const NavigateAllSteps: Story = {
   }
 };
 
-export const CannotSaveWithoutDraftingSource = {
-  ...PreExistingSettings,
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await clearSource(canvasElement);
-    await userEvent.click(canvas.getByRole('button', { name: /Save & sync/ }));
-    canvas.getByRole('heading', { name: 'Please select at least one source project before saving.' });
-  }
-};
-
 export const CannotSaveWithoutReferenceProject = {
   ...PreExistingSettings,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
     expect(canvas.getAllByRole('combobox').length).toBe(2);
     await clearSource(canvasElement);
     expect(canvas.getAllByRole('combobox').length).toBe(2);
@@ -365,13 +355,23 @@ export const CannotSaveWithoutReferenceProject = {
   }
 };
 
+export const CannotSaveWithoutDraftingSource = {
+  ...PreExistingSettings,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
+    await clearSource(canvasElement);
+    await userEvent.click(canvas.getByRole('button', { name: /Save & sync/ }));
+    canvas.getByRole('heading', { name: 'Please select at least one source project before saving.' });
+  }
+};
+
 export const CannotSelectSameProjectTwiceInOneStep: Story = {
   ...Default,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
     // Select English project
-    await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
     await selectSource(canvasElement, 'P_EN');
     await userEvent.click(canvas.getByRole('button', { name: /Add another reference project/ }));
     // Wait for the project select menu to fully close
@@ -395,13 +395,13 @@ export const CannotSelectTargetAsASource: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await userEvent.click(canvas.getByRole('combobox'));
+    await userEvent.click(canvas.getAllByRole('combobox')[1]);
     // Make sure current target Russian project can't be selected
     expect(canvas.queryByRole('option', { name: /P_ES/ })).not.toBeNull();
     expect(canvas.queryByRole('option', { name: /P_RU/ })).toBeNull();
     await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
 
-    await userEvent.click(canvas.getAllByRole('combobox')[0]);
+    await userEvent.click(canvas.getByRole('combobox'));
     // Make sure current target Russian project can't be selected
     expect(canvas.queryAllByRole('option', { name: /P_ES/ })).not.toBeNull();
     expect(canvas.queryByRole('option', { name: /P_RU/ })).toBeNull();
@@ -434,12 +434,12 @@ export const CannotSaveWithMultipleSourceLanguages: Story = {
     const canvas = within(canvasElement);
 
     // Select Portuguese along with Spanish on the source side
-    await selectSource(canvasElement, 'P_PT');
-    await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
     await selectSource(canvasElement, 'R_PT');
     const additionalReferenceButton = canvas.getByRole('button', { name: /Add another reference project/ });
     await userEvent.click(additionalReferenceButton);
     await selectSource(canvasElement, 'P_ES', 1);
+    await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
+    await selectSource(canvasElement, 'P_PT');
 
     // Expect an error with no checkbox to confirm language codes
     expect(await warning(canvasElement)).toContain('All source and reference projects must be in the same language');
@@ -461,10 +461,10 @@ export const CanHandleBackTranslationProjectsWithUnknownLanguage: Story = {
 
     // Select a training source that does not have a language code defined
     await selectSource(canvasElement, 'P_ES');
-    await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
-    await selectSource(canvasElement, 'R_ES');
     await userEvent.click(canvas.getByRole('button', { name: /Add another reference project/ }));
     await selectSource(canvasElement, 'UNK', 1);
+    await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
+    await selectSource(canvasElement, 'R_ES');
 
     expect(await warning(canvasElement)).toContain('Incorrect language codes will dramatically reduce draft quality.');
     await userEvent.click(await canvas.findByRole('checkbox'));
