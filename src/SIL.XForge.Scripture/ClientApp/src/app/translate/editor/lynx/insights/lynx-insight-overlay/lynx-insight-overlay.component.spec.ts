@@ -1,11 +1,11 @@
 import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { TextDocId } from 'src/app/core/models/text-doc';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { TextDocId } from '../../../../../core/models/text-doc';
 import { LynxEditor, LynxTextModelConverter } from '../lynx-editor';
 import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightAction, LynxInsightConfig } from '../lynx-insight';
 import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
