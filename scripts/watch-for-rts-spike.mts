@@ -162,7 +162,7 @@ class Program {
       Deno.exit(1);
     }
     if (parsed.help === true) {
-      Program.log(`Usage: watch-for-rts-spike.mts [--threshold-mib N] [--interval-seconds N]\n`);
+      Program.log(`Usage: watch-for-rts-spike.mts [--threshold-mib N] [--interval-seconds N]`);
       Program.log(`Defaults: ${JSON.stringify(parseOptions.default)}`);
       Deno.exit(0);
     }
