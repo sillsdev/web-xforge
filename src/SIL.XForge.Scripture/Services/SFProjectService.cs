@@ -2012,6 +2012,10 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             {
                 // The user does not have Paratext access
             }
+            catch (UnauthorizedAccessException)
+            {
+                // The user's refresh token is invalid
+            }
         }
 
         // If the project is created or the last sync was not successful, sync it unless explicitly skipped.

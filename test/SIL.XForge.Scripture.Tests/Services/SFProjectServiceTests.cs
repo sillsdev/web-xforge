@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
@@ -2554,6 +2555,60 @@ public class SFProjectServiceTests
             .MachineProjectService.DidNotReceive()
             .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
+    }
+
+    [Test]
+    public async Task UpdateSettingsAsync_ChangeAlternateTrainingSource_AnotherUserOnTheProjectCannotRefreshToken()
+    {
+        var env = new TestEnvironment();
+        const string newProjectParatextId = "changedId";
+        env.ParatextService.TryGetProjectRoleAsync(
+                Arg.Is<UserSecret>(u => u.Id == User02),
+                newProjectParatextId,
+                CancellationToken.None
+            )
+            .ThrowsAsync(new UnauthorizedAccessException());
+
+        // Ensure that the new project does not exist
+        Assert.That(
+            env.RealtimeService.GetRepository<SFProject>().Query().Any(p => p.ParatextId == newProjectParatextId),
+            Is.False
+        );
+
+        // SUT
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project01,
+            new SFProjectSettings { AlternateTrainingSourceParatextId = newProjectParatextId }
+        );
+
+        // Verify the alternate training source property of the target project
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateTrainingSource?.ProjectRef, Is.Not.Null);
+        Assert.That(
+            project.TranslateConfig.DraftConfig.AlternateTrainingSource?.ParatextId,
+            Is.EqualTo(newProjectParatextId)
+        );
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateTrainingSource?.Name, Is.EqualTo("NewSource"));
+        Assert.That(project.UserRoles, Contains.Key(User02));
+
+        // Verify the project document that was created for the alternate training source
+        SFProject alternateTrainingSourceProject = env.GetProject(
+            project.TranslateConfig.DraftConfig.AlternateTrainingSource!.ProjectRef
+        );
+        Assert.That(alternateTrainingSourceProject.ParatextId, Is.EqualTo(newProjectParatextId));
+        Assert.That(alternateTrainingSourceProject.Name, Is.EqualTo("NewSource"));
+        Assert.That(alternateTrainingSourceProject.UserRoles, Does.Not.ContainKey(User02));
+
+        // Verify that a sync is scheduled
+        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+
+        // Verify that the alternate training source project was created
+        Assert.That(
+            env.RealtimeService.GetRepository<SFProject>().Query().Any(p => p.ParatextId == newProjectParatextId),
+            Is.True
+        );
     }
 
     [Test]
