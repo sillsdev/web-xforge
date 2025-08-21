@@ -18,6 +18,7 @@
     "description": "Description",
     "edit_renderings": "Edit Renderings",
     "renderings": "Renderings",
+    "renderings_error": "Parentheses must have a match.",
     "renderings_hint": "If there is more than one rendering, type each one on a separate line.",
     "save": "Save",
     "term": "Term/Definition",
