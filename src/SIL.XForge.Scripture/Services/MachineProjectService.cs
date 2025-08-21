@@ -73,7 +73,10 @@ public class MachineProjectService(
     public async Task<string> AddSmtProjectAsync(string sfProjectId, CancellationToken cancellationToken)
     {
         // Load the project from the realtime service
-        Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(sfProjectId);
+        Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(
+            sfProjectId,
+            cancellationToken
+        );
         if (!attempt.TryResult(out SFProject project))
         {
             throw new DataNotFoundException("The project does not exist.");
@@ -134,7 +137,8 @@ public class MachineProjectService(
                     {
                         u.Unset(p => p.ServalData.TranslationQueuedAt);
                     }
-                }
+                },
+                cancellationToken: cancellationToken
             );
         }
         catch (ServalApiException e) when (e.StatusCode == 409)
@@ -154,7 +158,8 @@ public class MachineProjectService(
                         u.Unset(p => p.ServalData.TranslationJobId);
                         u.Unset(p => p.ServalData.TranslationQueuedAt);
                     }
-                }
+                },
+                cancellationToken: cancellationToken
             );
         }
         catch (DataNotFoundException e)
@@ -191,7 +196,8 @@ public class MachineProjectService(
                         u.Unset(p => p.ServalData.TranslationJobId);
                         u.Unset(p => p.ServalData.TranslationQueuedAt);
                     }
-                }
+                },
+                cancellationToken: cancellationToken
             );
         }
     }
@@ -213,7 +219,10 @@ public class MachineProjectService(
     )
     {
         // Load the project from the realtime service
-        Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(sfProjectId);
+        Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(
+            sfProjectId,
+            cancellationToken
+        );
         if (!attempt.TryResult(out SFProject project))
         {
             throw new DataNotFoundException("The project does not exist.");
@@ -244,7 +253,11 @@ public class MachineProjectService(
     )
     {
         // Load the target project secrets, so we can get the translation engine ID
-        if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
+        if (
+            !(await projectSecrets.TryGetAsync(sfProjectId, cancellationToken)).TryResult(
+                out SFProjectSecret projectSecret
+            )
+        )
         {
             throw new DataNotFoundException("The project secret cannot be found.");
         }
@@ -364,7 +377,8 @@ public class MachineProjectService(
 
                 // Remove all corpora that were deleted
                 u.RemoveAll(p => p.ServalData.CorpusFiles, p => corpusIdsToRemove.Contains(p.CorpusId));
-            }
+            },
+            cancellationToken: cancellationToken
         );
     }
 
@@ -519,7 +533,11 @@ public class MachineProjectService(
     )
     {
         // Load the target project secrets, so we can get the translation engine ID
-        if (!(await projectSecrets.TryGetAsync(buildConfig.ProjectId)).TryResult(out SFProjectSecret projectSecret))
+        if (
+            !(await projectSecrets.TryGetAsync(buildConfig.ProjectId, cancellationToken)).TryResult(
+                out SFProjectSecret projectSecret
+            )
+        )
         {
             throw new DataNotFoundException("The project secret cannot be found.");
         }
@@ -564,7 +582,7 @@ public class MachineProjectService(
         );
 
         // Get the updated project secret
-        projectSecret = await projectSecrets.GetAsync(buildConfig.ProjectId);
+        projectSecret = await projectSecrets.GetAsync(buildConfig.ProjectId, cancellationToken: cancellationToken);
 
         // Ensure we have the ServalData
         if (projectSecret.ServalData is null)
@@ -622,7 +640,8 @@ public class MachineProjectService(
                     u.Unset(p => p.ServalData.TranslationJobId);
                     u.Unset(p => p.ServalData.TranslationQueuedAt);
                 }
-            }
+            },
+            cancellationToken: cancellationToken
         );
 
         return translationBuild.Id;
@@ -727,7 +746,7 @@ public class MachineProjectService(
     )
     {
         // Get the existing project secret, so we can see how to create the engine and update the Serval data
-        SFProjectSecret projectSecret = await projectSecrets.GetAsync(sfProject.Id);
+        SFProjectSecret projectSecret = await projectSecrets.GetAsync(sfProject.Id, cancellationToken);
         string translationEngineId = GetTranslationEngineId(projectSecret, preTranslate);
         if (string.IsNullOrWhiteSpace(translationEngineId))
         {
@@ -757,7 +776,8 @@ public class MachineProjectService(
                 // Store the Pre-Translation Engine ID
                 await projectSecrets.UpdateAsync(
                     sfProject.Id,
-                    u => u.Set(p => p.ServalData.PreTranslationEngineId, translationEngineId)
+                    u => u.Set(p => p.ServalData.PreTranslationEngineId, translationEngineId),
+                    cancellationToken: cancellationToken
                 );
             }
             else if (projectSecret.ServalData is not null)
@@ -765,7 +785,8 @@ public class MachineProjectService(
                 // Store the Translation Engine ID
                 await projectSecrets.UpdateAsync(
                     sfProject.Id,
-                    u => u.Set(p => p.ServalData.TranslationEngineId, translationEngineId)
+                    u => u.Set(p => p.ServalData.TranslationEngineId, translationEngineId),
+                    cancellationToken: cancellationToken
                 );
             }
             else if (preTranslate)
@@ -777,7 +798,8 @@ public class MachineProjectService(
                         u.Set(
                             p => p.ServalData,
                             new ServalData { PreTranslationEngineId = translationEngineId, CorpusFiles = [] }
-                        )
+                        ),
+                    cancellationToken: cancellationToken
                 );
             }
             else
@@ -789,7 +811,8 @@ public class MachineProjectService(
                         u.Set(
                             p => p.ServalData,
                             new ServalData { TranslationEngineId = translationEngineId, CorpusFiles = [] }
-                        )
+                        ),
+                    cancellationToken: cancellationToken
                 );
             }
         }
@@ -913,7 +936,7 @@ public class MachineProjectService(
             )
             {
                 // Get the user secret
-                Attempt<UserSecret> userSecretAttempt = await userSecrets.TryGetAsync(curUserId);
+                Attempt<UserSecret> userSecretAttempt = await userSecrets.TryGetAsync(curUserId, cancellationToken);
                 if (!userSecretAttempt.TryResult(out UserSecret userSecret))
                 {
                     throw new DataNotFoundException("The user does not exist.");
@@ -987,7 +1010,8 @@ public class MachineProjectService(
                     {
                         u.Unset(p => p.ServalData.TranslationEngineId);
                     }
-                }
+                },
+                cancellationToken: cancellationToken
             );
 
             // Create the Serval project, and get the translation engine id
@@ -1333,7 +1357,8 @@ public class MachineProjectService(
                     {
                         u.Unset(p => p.ServalData.TranslationEngineId);
                     }
-                }
+                },
+                cancellationToken: cancellationToken
             );
 
             // Create the new translation engine id
@@ -1358,7 +1383,11 @@ public class MachineProjectService(
     )
     {
         // Load the target project secrets, so we can get the translation engine ID
-        if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
+        if (
+            !(await projectSecrets.TryGetAsync(sfProjectId, cancellationToken)).TryResult(
+                out SFProjectSecret projectSecret
+            )
+        )
         {
             throw new DataNotFoundException("The project secret cannot be found.");
         }
@@ -1410,13 +1439,21 @@ public class MachineProjectService(
             }
 
             // Remove our record of the corpus
-            await projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.Corpora[corpusId]));
+            await projectSecrets.UpdateAsync(
+                sfProjectId,
+                u => u.Unset(p => p.ServalData.Corpora[corpusId]),
+                cancellationToken: cancellationToken
+            );
         }
 
         // Remove the corpora property if it is empty
         if (projectSecret.ServalData?.Corpora?.Any(c => c.Value.PreTranslate != preTranslate) == false)
         {
-            await projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.Corpora));
+            await projectSecrets.UpdateAsync(
+                sfProjectId,
+                u => u.Unset(p => p.ServalData.Corpora),
+                cancellationToken: cancellationToken
+            );
         }
     }
 
@@ -1567,14 +1604,21 @@ public class MachineProjectService(
     )
     {
         // Load the project from the realtime service
-        Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(buildConfig.ProjectId);
+        Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(
+            buildConfig.ProjectId,
+            cancellationToken
+        );
         if (!attempt.TryResult(out SFProject project))
         {
             throw new DataNotFoundException("The project does not exist.");
         }
 
         // Load the project secrets, so we can get the corpus files
-        if (!(await projectSecrets.TryGetAsync(project.Id)).TryResult(out SFProjectSecret projectSecret))
+        if (
+            !(await projectSecrets.TryGetAsync(project.Id, cancellationToken)).TryResult(
+                out SFProjectSecret projectSecret
+            )
+        )
         {
             throw new DataNotFoundException("The project secret cannot be found.");
         }
@@ -1840,7 +1884,8 @@ public class MachineProjectService(
                 {
                     u.Set(p => p.ServalData.ParallelCorpusIdForSmt, translationParallelCorpusId);
                 }
-            }
+            },
+            cancellationToken: cancellationToken
         );
 
         return corporaSyncInfo;
