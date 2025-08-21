@@ -102,6 +102,14 @@ public static class DataAccessExtensions
             return queryable.Any(predicate);
     }
 
+    public static async Task<int> CountAsync<T>(this IQueryable<T> queryable)
+    {
+        if (queryable.Provider is IMongoQueryProvider)
+            return await MongoQueryable.CountAsync(queryable);
+        else
+            return queryable.Count();
+    }
+
     public static async Task<List<T>> ToListAsync<T>(
         this IQueryable<T> queryable,
         CancellationToken cancellationToken = default
