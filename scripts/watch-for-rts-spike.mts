@@ -44,7 +44,7 @@ class RtsMon {
 
       const aboveThreshold: boolean = memoryUsageMB >= this.options.thresholdMib;
       if (aboveThreshold === true) {
-        this.sendSignal(pid);
+        await this.sendSignal(pid);
         this.currentIntervalSeconds *= 2;
         Program.log(
           `RSS ${memoryUsageMB.toFixed(1)}MB >= threshold (${this.options.thresholdMib} MiB). Increasing interval to ${
@@ -52,6 +52,10 @@ class RtsMon {
           } s`
         );
       } else {
+        if (this.currentIntervalSeconds > this.options.intervalSeconds) {
+          // Memory usage came back down below the threshold since last check. Collect one more report.
+          await this.sendSignal(pid);
+        }
         Program.log(`RSS ${memoryUsageMB.toFixed(1)} MiB (below threshold ${this.options.thresholdMib} MiB).`);
         this.resetDelay();
       }
@@ -67,9 +71,9 @@ class RtsMon {
     this.currentIntervalSeconds = this.options.intervalSeconds;
   }
 
-  private sendSignal(pid: number): void {
+  private async sendSignal(pid: number): Promise<void> {
     try {
-      this.runCommand("kill", ["-SIGUSR2", String(pid)]);
+      await this.runCommand("kill", ["-SIGUSR2", String(pid)]);
       Program.log(`Sent SIGUSR2 to pid ${pid}`);
     } catch (e) {
       Program.logError(`Failed to send SIGUSR2 to pid ${pid}: ${(e as Error).message}`);
