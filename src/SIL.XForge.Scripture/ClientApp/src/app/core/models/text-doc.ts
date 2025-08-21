@@ -59,8 +59,8 @@ export class TextDoc extends RealtimeDoc<TextData, TextData, Range> {
         const op = this.data.ops[i];
         const nextOp = i < this.data.ops.length - 1 ? this.data.ops[i + 1] : undefined;
         if (op.attributes != null && op.attributes.segment != null) {
+          const segRef: string = op.attributes.segment as string;
           if ((op.insert as any).blank != null) {
-            const segRef: string = op.attributes.segment as string;
             if (
               nextOp == null ||
               nextOp.insert == null ||
@@ -69,7 +69,8 @@ export class TextDoc extends RealtimeDoc<TextData, TextData, Range> {
             ) {
               blank++;
             }
-          } else {
+          } else if (!segRef.startsWith('id_')) {
+            // Exclude the id segment from the translated count
             translated++;
           }
         }
