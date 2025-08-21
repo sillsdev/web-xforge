@@ -99,6 +99,7 @@ export class DraftPreviewBooksComponent {
   private applyChapters: number[] = [];
   private draftApplyBookNum: number = 0;
   private chaptersApplied: number[] = [];
+  private errorMessages: { chapter: number; message: string }[] = [];
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
@@ -151,24 +152,25 @@ export class DraftPreviewBooksComponent {
     await this.applyBookDraftAsync(bookWithDraft, result.projectId);
   }
 
-  private async applyBookDraftAsync(bookWithDraft: BookWithDraft, projectId: string): Promise<void> {
+  private async applyBookDraftAsync(bookWithDraft: BookWithDraft, targetProjectId: string): Promise<void> {
     this.applyChapters = bookWithDraft.chaptersWithDrafts;
     this.draftApplyBookNum = bookWithDraft.bookNumber;
     this.chaptersApplied = [];
+    this.errorMessages = [];
     this.updateProgress();
 
-    const promises: Promise<boolean>[] = [];
-    const project: SFProjectProfile = this.activatedProjectService.projectDoc!.data!;
+    const promises: Promise<string | undefined>[] = [];
+    const targetProject = (await this.projectService.getProfile(targetProjectId)).data!;
     for (const chapter of bookWithDraft.chaptersWithDrafts) {
       const draftTextDocId = new TextDocId(this.activatedProjectService.projectId!, bookWithDraft.bookNumber, chapter);
-      const targetTextDocId = new TextDocId(projectId, bookWithDraft.bookNumber, chapter);
-      promises.push(this.applyAndReportChapter(project, draftTextDocId, targetTextDocId));
+      const targetTextDocId = new TextDocId(targetProjectId, bookWithDraft.bookNumber, chapter);
+      promises.push(this.applyAndReportChapter(targetProject, draftTextDocId, targetTextDocId));
     }
 
     try {
       this.openProgressDialog();
-      const results: boolean[] = await Promise.all(promises);
-      if (results.some(result => !result)) {
+      const results: (string | undefined)[] = await Promise.all(promises);
+      if (results.some(result => result !== undefined)) {
         this.updateProgress(undefined, true);
         // The draft is in the legacy format. This can only be applied chapter by chapter.
         return;
@@ -200,7 +202,7 @@ export class DraftPreviewBooksComponent {
     project: SFProjectProfile,
     draftTextDocId: TextDocId,
     targetTextDocId: TextDocId
-  ): Promise<boolean> {
+  ): Promise<string | undefined> {
     let timestamp: Date | undefined = undefined;
     if (this.build?.additionalInfo?.dateGenerated != null) {
       timestamp = new Date(this.build.additionalInfo.dateGenerated);
@@ -208,20 +210,67 @@ export class DraftPreviewBooksComponent {
     return await this.draftHandlingService
       .getAndApplyDraftAsync(project, draftTextDocId, targetTextDocId, timestamp)
       .then(result => {
-        this.updateProgress(result ? targetTextDocId.chapterNum : undefined);
+        this.updateProgress(
+          result === undefined ? targetTextDocId.chapterNum : undefined,
+          undefined,
+          result === undefined ? undefined : { chapter: targetTextDocId.chapterNum, message: result }
+        );
         return result;
       });
   }
 
-  private updateProgress(bookCompleted?: number, completed?: boolean): void {
+  private updateProgress(
+    bookCompleted?: number,
+    completed?: boolean,
+    error?: { chapter: number; message: string }
+  ): void {
     if (bookCompleted != null) {
       this.chaptersApplied.push(bookCompleted);
     }
+    if (error != null) {
+      this.errorMessages.push(error);
+      this.errorMessages.sort((a, b) => a.chapter - b.chapter);
+    }
+
     this.draftApplyProgress$.next({
       bookNum: this.draftApplyBookNum,
       chapters: this.applyChapters,
       chaptersApplied: this.chaptersApplied,
-      completed: !!completed ? completed : this.chaptersApplied.length === this.applyChapters.length
+      completed: !!completed ? completed : this.chaptersApplied.length === this.applyChapters.length,
+      errorMessages: DraftPreviewBooksComponent.combineErrorMessages(this.errorMessages)
     });
+  }
+
+  private static combineErrorMessages(errorMessages: { chapter: number; message: string }[]): string[] {
+    const formattedErrors: string[] = [];
+    if (errorMessages.length > 0) {
+      let rangeStart = errorMessages[0].chapter;
+      let currentMessage = errorMessages[0].message;
+
+      for (let i = 1; i < errorMessages.length; i++) {
+        const prevChapter = errorMessages[i - 1].chapter;
+        const currentChapter = errorMessages[i].chapter;
+        const message = errorMessages[i].message;
+
+        if (message !== currentMessage || currentChapter !== prevChapter + 1) {
+          const rangeEnd = errorMessages[i - 1].chapter;
+          if (rangeStart === rangeEnd) {
+            formattedErrors.push(`${rangeStart}: ${currentMessage}`);
+          } else {
+            formattedErrors.push(`${rangeStart}-${rangeEnd}: ${currentMessage}`);
+          }
+          rangeStart = currentChapter;
+          currentMessage = message;
+        }
+      }
+
+      const lastError = errorMessages[errorMessages.length - 1];
+      if (rangeStart === lastError.chapter) {
+        formattedErrors.push(`${rangeStart}: ${currentMessage}`);
+      } else {
+        formattedErrors.push(`${rangeStart}-${lastError.chapter}: ${currentMessage}`);
+      }
+    }
+    return formattedErrors;
   }
 }

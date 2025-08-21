@@ -3,12 +3,10 @@
   max-width: 500px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  min-height: 0;
 
   .progress-container {
     width: 100%;
-    display: flex;
     flex-direction: column;
     align-items: center;
 
@@ -17,9 +15,16 @@
     }
   }
 
+  .result-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
   .error-result {
     display: flex;
     flex-direction: column;
+    min-height: 0;
 
     .mat-icon {
       flex-shrink: 0;
@@ -27,10 +32,14 @@
 
     .failed-chapters {
       text-indent: 1em;
-      font-weight: bold;
-      font-size: 2em;
       margin-top: 0.5em;
-      line-height: 1em;
+      line-height: 1.2em;
+    }
+
+    .error-content {
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
     }
   }
 
@@ -39,6 +48,12 @@
     column-gap: 8px;
     align-items: center;
   }
+}
+
+.hide-scroll {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .mat-mdc-dialog-actions {
