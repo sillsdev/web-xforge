@@ -40,7 +40,7 @@ export class ServalAdministrationComponent implements OnInit {
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { tab: this.availableTabs[index] },
-      queryParamsHandling: ''
+      queryParamsHandling: 'preserve'
     });
   }
 }
