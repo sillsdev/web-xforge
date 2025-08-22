@@ -231,7 +231,12 @@ describe('LynxInsightEditorObjectsComponent', () => {
 
 @Component({
   template: `
-    <app-lynx-insight-editor-objects [editor]="editor" [lynxTextModelConverter]="textModelConverter">
+    <app-lynx-insight-editor-objects
+      [editor]="editor"
+      [lynxTextModelConverter]="textModelConverter"
+      [autoCorrectionsEnabled]="autoCorrectionsEnabled"
+      [insightsEnabled]="insightsEnabled"
+    >
     </app-lynx-insight-editor-objects>
   `
 })
@@ -239,6 +244,8 @@ class HostComponent {
   @ViewChild(LynxInsightEditorObjectsComponent) component!: LynxInsightEditorObjectsComponent;
   editor?: LynxableEditor;
   textModelConverter?: LynxTextModelConverter;
+  autoCorrectionsEnabled: boolean = true;
+  insightsEnabled: boolean = true;
 }
 
 interface TestEnvArgs {
