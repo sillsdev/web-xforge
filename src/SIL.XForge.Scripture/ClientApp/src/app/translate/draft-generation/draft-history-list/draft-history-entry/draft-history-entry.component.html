@@ -92,6 +92,15 @@
               <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
               <tr mat-row *matRowDef="let row; columns: columnsToDisplay"></tr>
             </table>
+            @if (trainingDataFiles.length > 0) {
+              <p>
+                <span>{{ t("training_data_files_used") }}</span>
+                <br />
+                <span
+                  ><small>{{ trainingFilesString(trainingDataFiles) }}</small></span
+                >
+              </p>
+            }
             @if (buildRequestedAtDate != null && buildRequestedByUserName != null) {
               <p>
                 {{
