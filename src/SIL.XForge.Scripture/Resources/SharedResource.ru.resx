@@ -169,7 +169,7 @@
     <comment>Tool tip for the language selector</comment>
   </data>
   <data name="LearnMore" xml:space="preserve">
-    <value>Learn More</value>
+    <value>Подробнее</value>
     <comment>Link to the learn more page seen in the page footer and as button at the bottom of the home page</comment>
   </data>
   <data name="LogIn" xml:space="preserve">
@@ -199,23 +199,5 @@
   </data>
   <data name="UserMissing" xml:space="preserve">
     <value>Пользователя не существует.</value>
-  </data>
-  <data name="DraftCanceledEmailBody" xml:space="preserve">
-    <value>Your draft for {0} was canceled.</value>
-  </data>
-  <data name="DraftEmailMoreInformation" xml:space="preserve">
-    <value>For more information see {0}</value>
-  </data>
-  <data name="DraftFailedEmailBody" xml:space="preserve">
-    <value>Your draft for {0} did not generate successfully.</value>
-  </data>
-  <data name="DraftGeneratedEmailBody" xml:space="preserve">
-    <value>Your draft for {0} was generated successfully.</value>
-  </data>
-  <data name="DraftGeneratedEmailSubject" xml:space="preserve">
-    <value>{0} draft generated successfully</value>
-  </data>
-  <data name="DraftNotGeneratedEmailSubject" xml:space="preserve">
-    <value>{0} draft was not generated</value>
   </data>
 </root>

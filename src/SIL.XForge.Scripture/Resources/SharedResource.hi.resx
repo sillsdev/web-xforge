@@ -162,14 +162,14 @@
     <value>You've been invited to the project {0} on {1}</value>
   </data>
   <data name="Help" xml:space="preserve">
-    <value>Help</value>
+    <value>सहायता</value>
   </data>
   <data name="Language" xml:space="preserve">
-    <value>Language</value>
+    <value>भाषा</value>
     <comment>Tool tip for the language selector</comment>
   </data>
   <data name="LearnMore" xml:space="preserve">
-    <value>Learn More</value>
+    <value>अधिक जानें</value>
     <comment>Link to the learn more page seen in the page footer and as button at the bottom of the home page</comment>
   </data>
   <data name="LogIn" xml:space="preserve">
@@ -194,7 +194,7 @@
     <comment>Sign Up button label</comment>
   </data>
   <data name="Terms" xml:space="preserve">
-    <value>Terms</value>
+    <value>शब्दावली</value>
     <comment>Link to the Terms of service seen in the page footer</comment>
   </data>
   <data name="UserMissing" xml:space="preserve">

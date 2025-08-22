@@ -180,7 +180,7 @@
     <value>Let us know why you want to use Scripture Forge</value>
   </data>
   <data name="NameMissing" xml:space="preserve">
-    <value>Enter your name</value>
+    <value>तपाईंको नाम प्रविष्ट गर्नुहोस्</value>
   </data>
   <data name="Privacy" xml:space="preserve">
     <value>Privacy</value>
@@ -194,7 +194,7 @@
     <comment>Sign Up button label</comment>
   </data>
   <data name="Terms" xml:space="preserve">
-    <value>Terms</value>
+    <value>शब्‍दावलीहरू</value>
     <comment>Link to the Terms of service seen in the page footer</comment>
   </data>
   <data name="UserMissing" xml:space="preserve">

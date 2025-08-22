@@ -18,6 +18,7 @@
     "description": "Description",
     "edit_renderings": "Edit Renderings",
     "renderings": "Renderings",
+    "renderings_error": "Parentheses must have a match.",
     "renderings_hint": "If there is more than one rendering, type each one on a separate line.",
     "save": "ꤙꤢꤩ꤬ꤘꤝꤥ",
     "term": "Term/Definition",
@@ -160,8 +161,10 @@
   "draft_apply_progress-dialog": {
     "add_draft_to_book": "Adding draft to {{ bookName }}",
     "close": "ꤗꤟꤢꤩ꤬ꤙꤤ",
-    "failed_to_apply_chapters": "Failed to apply chapters",
-    "go_to_chapter": "Go to the chapter to try again.",
+    "failed_to_apply_chapters": "Failed to apply these chapters:",
+    "fail_cannot_edit": "The target chapter is not editable. View that chapter for more information.",
+    "fail_legacy_format": "Legacy draft format detected. Please apply chapter by chapter.",
+    "fail_unknown": "Unknown error. Please try again later. If the error persists, please report an issue.",
     "some_chapters_not_applied": "Drafts of one or more chapters could not be applied to {{ bookName }}",
     "successfully_applied_all_chapters": "Successfully applied all chapters to {{ bookName }}"
   },
@@ -228,7 +231,7 @@
     "books_are_hidden_hide_explanation": "{{ numBooks }} books are hidden. {{ underlineStart }}Hide explanation{{ underlineEnd }}",
     "books_are_hidden_show_why": "{{ numBooks }} books are hidden. {{ underlineStart }}Show why{{ underlineEnd }}",
     "choose_books_for_training_error": "No books selected. Select training books to continue.",
-    "choose_books_for_training_header": "Training",
+    "choose_books_for_training_header": "ꤒꤟꤢꤧ꤬ꤤ꤬ꤞꤛꤥ",
     "choose_books_for_training_no_books_error": "No books are available for training. Your project must have at least one translated book to use for training.",
     "choose_books_for_training_title": "Select books to train on",
     "choose_books_to_translate_error": "No books selected. Select books to translate to continue.",
@@ -237,17 +240,21 @@
     "configure_advanced_settings_header": "Advanced",
     "configure_advanced_settings_title": "Advanced settings",
     "confirm_codes_correct_to_continue": "Please confirm the language codes are correct before continuing",
+    "email_me": "Email me at {{ email }} when the draft is finished.",
     "fast_training_warning": "Enabling this will save time but greatly reduce accuracy.",
     "fast_training": "Enable Fast Training",
     "generate_draft": "Generate draft",
     "loading": "Loading...",
+    "loading_projects": "Loading project sync status...",
     "next": "ꤘꤣꤋꤛꤢꤩ꤭ꤕꤟꤥ",
     "no_available_books": "You have no books available for drafting.",
     "no_training_books": "No training books selected",
     "overview": "ꤗꤛꤢꤜꤟꤢꤪ꤭",
+    "pending_updates": "The project {{ projectName }} has pending updates from Paratext, which may affect draft generation. Please [link:syncUrl]sync {{ projectName }}[/link] before generating a draft.",
     "reference_books": "Reference books",
     "source_books_missing": "The reference text is missing one or more of the translated books in your project. Consider choosing a reference text that contains a match for all the translated books",
     "summary_header": "Summary",
+    "summary_notifications": "Notifications",
     "summary_title": "Summary",
     "summary_training_title": "Training the language model",
     "summary_training": "A language model will be created using the following example translations:",
@@ -317,16 +324,15 @@
     "previous": "ꤘꤣꤢ꤬ꤚꤟꤢꤩ",
     "project_always_used": "Your project ({{ currentProjectShortName }}) will always be used to train the language model.",
     "reference_projects": "Reference projects",
-    "same_language_as_given_language": "All these should be in the same language as the draft source ({{sourceLanguageDisplayName}}).",
-    "same_language_as_source": "All these should be in the same language as the draft source.",
     "save_and_sync": "Save & sync",
     "saving_draft_sources": "Saving draft sources",
     "saving": "Saving",
     "select_at_least_one_reference": "Please select at least one reference project before saving.",
     "select_at_least_one_source_and_reference": "Please select at least one source and one reference project before saving.",
     "select_at_least_one_source": "Please select at least one source project before saving.",
+    "select_primary_reference": "Select your primary reference project. This is the project that you refer to most often as you are translating.",
     "select_project_to_translate": "Select the project to translate.",
-    "select_reference_project_considering_back_translation": "Select projects that should be used on the source side when training the language model. Choosing a back translation often improves the model.",
+    "some_projects_use_back_translation": "Some projects get better results by adding a back translation as another reference.",
     "source_side_language_codes_differ": "All source and reference projects must be in the same language. Please select different source or reference projects.",
     "state_connecting": "Connecting",
     "state_sync_failed": "There was an error syncing",
@@ -336,7 +342,7 @@
     "target_language_data": "Target language data",
     "training_files_description": "Upload any further data that can be used to train the language model. These files must contain paired text in {{ sourceLanguageDisplayName }} and {{ targetLanguageDisplayName }} based on the projects selected.",
     "training_language_model": "Training the language model",
-    "unknown_language_code": "unknown"
+    "unknown_language_code": "ꤞꤢꤧꤑꤢꤩ꤭ꤒꤥ꤬"
   },
   "draft_usfm_format": {
     "cancel": "ꤗꤟꤢꤩ꤬ꤕꤜꤤ꤭ꤊꤛꤢ꤭",
@@ -376,7 +382,7 @@
     "text_has_been_deleted": "The book has been deleted or is no longer accessible.",
     "to_report_issue_email": "ꤜꤟꤢꤩꤘꤛꤢꤩꤜꤟꤌꤣ꤭ꤓꤛꤢ꤬ ꤒꤟꤢꤧ꤬ꤚꤤ꤬ꤒꤟꤢꤧ꤬ꤊꤛꤢ꤭, email {{ issueEmailLink }}.",
     "verse_too_long_for_suggestions": "ꤜꤟꤢꤩ ꤘꤛꤢꤩ ꤒꤟꤢꤧ꤬ꤘꤛꤢꤩꤞꤢꤧꤑꤢꤩ꤭ꤡꤝꤟꤥ ꤢ꤬ꤑꤢꤩ꤭ ꤜꤤ꤬ꤡꤢ꤭ꤏꤢꤧ꤭ꤗꤟꤢ꤭ ꤛꤢꤩ꤭ ꤗꤢ꤬ ꤢ꤬ꤓꤢꤨ꤭ꤏꤢꤦ꤬ꤜꤢꤦ꤭ ꤡꤢꤪ꤯ \n",
-    "your_comment": "Your comment"
+    "your_comment": "ꤔꤟꤢꤧ꤬ꤒꤟꤢꤧ꤬ꤒꤢ꤬ꤔꤟꤢꤩ꤬"
   },
   "editor_draft_tab": {
     "apply_to_project": "Add to project",
@@ -572,7 +578,7 @@
     "status_to_do": "To do",
     "team": "(Team)",
     "unassigned": "(Unassigned)",
-    "your_comment": "Your comment"
+    "your_comment": "ꤔꤟꤢꤧ꤬ꤒꤟꤢꤧ꤬ꤒꤢ꤬ꤔꤟꤢꤩ꤬"
   },
   "paginator": {
     "items_per_page": "Items per page",
@@ -786,9 +792,9 @@
     "uploading": "Uploading..."
   },
   "training_progress": {
-    "completed_successfully": "Completed successfully",
-    "training_completed_successfully": "Training completed successfully",
-    "training": "Training"
+    "completed_successfully": "ꤢ꤬ꤓꤌꤣ꤭ꤢ꤬ꤕꤜꤥ꤭ ꤜꤟꤢꤪ꤭ꤕꤜꤤ꤭ ꤟꤢꤪ",
+    "training_completed_successfully": "ꤒꤟꤢꤧ꤬ꤤ꤬ꤞꤛꤥ ꤢ꤬ꤓꤌꤣ꤭ꤢ꤬ꤕꤜꤥ꤭ ꤚꤛꤢ ꤊꤛꤢ꤭ ꤟꤢꤪ",
+    "training": "ꤒꤟꤢꤧ꤬ꤤ꤬ꤞꤛꤥ"
   },
   "translate_overview": {
     "cannot_train_suggestion_engine": "Translation suggestions are unavailable. Please select a source project that shares books in common with this project to get translation suggestions.",
