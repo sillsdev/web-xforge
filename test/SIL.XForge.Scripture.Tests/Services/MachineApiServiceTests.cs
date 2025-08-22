@@ -47,6 +47,7 @@ public class MachineApiServiceTests
     private const string Build01 = "build01";
     private const string ParallelCorpusId01 = "parallelCorpusId01";
     private const string TranslationEngine01 = "translationEngine01";
+    private const string TrainingDataId01 = "trainingDataId01";
     private const string User01 = "user01";
     private const string User02 = "user02";
     private const string Paratext01 = "paratext01";
@@ -735,6 +736,7 @@ public class MachineApiServiceTests
         Assert.IsNotNull(actual.AdditionalInfo.ParallelCorporaIds);
         Assert.AreEqual(parallelCorpusId1, actual.AdditionalInfo.ParallelCorporaIds!.ElementAt(0));
         Assert.AreEqual(parallelCorpusId2, actual.AdditionalInfo.ParallelCorporaIds.ElementAt(1));
+        Assert.AreEqual(TrainingDataId01, actual.AdditionalInfo.TrainingDataFileIds.Single());
     }
 
     [Test]
@@ -996,6 +998,7 @@ public class MachineApiServiceTests
                                                             ScriptureRange = translationScriptureRange,
                                                         },
                                                     ],
+                                                    TrainingDataFiles = [TrainingDataId01],
                                                 }
                                             )
                                         )
@@ -1031,6 +1034,15 @@ public class MachineApiServiceTests
         Assert.AreEqual(1, builds.Count);
         TestEnvironment.AssertCoreBuildProperties(translationBuild, builds[0]);
         Assert.NotNull(builds[0].AdditionalInfo);
+        Assert.AreEqual(
+            translationScriptureRange,
+            builds[0].AdditionalInfo.TranslationScriptureRanges.Single().ScriptureRange
+        );
+        Assert.AreEqual(
+            trainingScriptureRange,
+            builds[0].AdditionalInfo.TrainingScriptureRanges.Single().ScriptureRange
+        );
+        Assert.AreEqual(TrainingDataId01, builds[0].AdditionalInfo.TrainingDataFileIds.Single());
     }
 
     [Test]
@@ -4219,6 +4231,7 @@ public class MachineApiServiceTests
                                 LastSelectedTranslationScriptureRange = "GEN",
                                 LastSelectedTrainingScriptureRange = "EXO",
                                 UsfmConfig = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.MoveToEnd },
+                                LastSelectedTrainingDataFiles = [TrainingDataId01],
                             },
                         },
                         ParatextId = Paratext01,
