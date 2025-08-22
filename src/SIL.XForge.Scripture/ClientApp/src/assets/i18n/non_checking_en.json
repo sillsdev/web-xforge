@@ -288,7 +288,7 @@
     "requested_by": "Requested by {{ requestedByUserName }} at {{ requestedAtTime }}.",
     "show_model_training_configuration": "Show model training configuration",
     "training_books": "Training books",
-    "training_data_files_used": "Data files were used to train the model.",
+    "training_data_files_used": "The following data files were also used to train the model.",
     "training_model_description": "The language model was trained on this configuration:"
   },
   "draft_history_list": {

@@ -27,7 +27,8 @@ mat-panel-description {
   column-gap: 8px;
 }
 
-.subtitle {
+.subtitle,
+.training-files {
   font-size: 0.9em;
   color: var(--draft-history-entry-subtitle-color);
 }
