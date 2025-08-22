@@ -85,53 +85,53 @@ export async function localizedScreenshots(
 
   const homePageSignUpButtonLocator = page.locator('.login-buttons a').first();
 
-  for (const localeCode of preset.locales) {
-    console.log(`Taking screenshots of login process for locale ${localeCode}`);
+  // for (const localeCode of preset.locales) {
+  //   console.log(`Taking screenshots of login process for locale ${localeCode}`);
 
-    await page.goto(preset.rootUrl);
-    await switchToLocaleOnHomePage(page, localeCode);
-    await expect(homePageSignUpButtonLocator).toBeVisible();
-    if (preset.showArrow) await installMouseFollower(page);
+  //   await page.goto(preset.rootUrl);
+  //   await switchToLocaleOnHomePage(page, localeCode);
+  //   await expect(homePageSignUpButtonLocator).toBeVisible();
+  //   if (preset.showArrow) await installMouseFollower(page);
 
-    // Scripture Forge home page
-    const signUpButtonScreenshotClip = {
-      x: 0,
-      y: 0,
-      width: (await page.viewportSize())!.width,
-      height: 400
-    };
+  //   // Scripture Forge home page
+  //   const signUpButtonScreenshotClip = {
+  //     x: 0,
+  //     y: 0,
+  //     width: (await page.viewportSize())!.width,
+  //     height: 400
+  //   };
 
-    await user.hover(homePageSignUpButtonLocator, defaultArrowLocation);
-    await screenshot(
-      page,
-      { ...context, pageName: 'page_sign_up', locale: localeCode },
-      { clip: signUpButtonScreenshotClip }
-    );
+  //   await user.hover(homePageSignUpButtonLocator, defaultArrowLocation);
+  //   await screenshot(
+  //     page,
+  //     { ...context, pageName: 'page_sign_up', locale: localeCode },
+  //     { clip: signUpButtonScreenshotClip }
+  //   );
 
-    // Auth0 login page
-    await homePageSignUpButtonLocator.click();
-    await page.waitForSelector('.auth0-lock-social-button');
-    if (preset.showArrow) await installMouseFollower(page);
-    await user.hover(page.locator('.auth0-lock-social-button').first(), { x: 0.85, y: 0.6 });
-    await screenshotElements(page, [page.locator('.auth0-lock-widget-container')], {
-      ...context,
-      pageName: 'auth0_sign_up_with_pt',
-      locale: localeCode
-    });
-    await page.locator('.auth0-lock-social-button').first().click();
+  //   // Auth0 login page
+  //   await homePageSignUpButtonLocator.click();
+  //   await page.waitForSelector('.auth0-lock-social-button');
+  //   if (preset.showArrow) await installMouseFollower(page);
+  //   await user.hover(page.locator('.auth0-lock-social-button').first(), { x: 0.85, y: 0.6 });
+  //   await screenshotElements(page, [page.locator('.auth0-lock-widget-container')], {
+  //     ...context,
+  //     pageName: 'auth0_sign_up_with_pt',
+  //     locale: localeCode
+  //   });
+  //   await page.locator('.auth0-lock-social-button').first().click();
 
-    // Paratext login page
-    await expect(page.getByRole('heading', { name: 'Authorise Application' })).toBeVisible();
-    if (preset.showArrow) await installMouseFollower(page);
-    await page.getByRole('alert').getByText('Warning: This server is for').getByRole('button').click();
-    await page.locator('#email').fill('user@gmail.com');
-    await user.hover(page.locator('#password-group').getByRole('button'));
-    await screenshot(
-      page,
-      { ...context, pageName: 'pt_registry_login', locale: localeCode },
-      { animations: 'disabled' }
-    );
-  }
+  //   // Paratext login page
+  //   await expect(page.getByRole('heading', { name: 'Authorise Application' })).toBeVisible();
+  //   if (preset.showArrow) await installMouseFollower(page);
+  //   await page.getByRole('alert').getByText('Warning: This server is for').getByRole('button').click();
+  //   await page.locator('#email').fill('user@gmail.com');
+  //   await user.hover(page.locator('#password-group').getByRole('button'));
+  //   await screenshot(
+  //     page,
+  //     { ...context, pageName: 'pt_registry_login', locale: localeCode },
+  //     { animations: 'disabled' }
+  //   );
+  // }
 
   const shortName = 'SEEDSP2';
   await logInAsPTUser(page, credentials);
@@ -207,28 +207,38 @@ export async function localizedScreenshots(
     await screenshot(page, { ...context, pageName: 'configure_sources_button', locale });
   });
 
-  const originalViewportSize = await page.viewportSize();
+  await page.locator('[data-test-id="configure-button"]').click();
+
+  const originalViewportSize = await page.viewportSize()!;
   // Increase the height of the viewport to ensure all elements are visible
   await page.setViewportSize({ width: originalViewportSize.width, height: 1200 });
 
-  await page.locator('[data-test-id="configure-button"]').click();
+  await page.getByRole('combobox').fill('ntv');
+  await page.getByRole('option', { name: 'NTV - Nueva Traducción' }).click();
+
+  const addReference = page.locator('.add-another-project');
+  const nextButton = page.locator('.step-button-wrapper').getByRole('button').last();
+
   await forEachLocale(async locale => {
-    await page.getByRole('combobox').fill('ntv');
-    await user.hover(page.getByRole('option', { name: 'NTV - Nueva Traducción' }), defaultArrowLocation);
+    await user.hover(addReference);
     await screenshotElements(
       page,
       [page.locator('app-draft-sources > .draft-sources-stepper'), page.locator('app-draft-sources > .overview')],
-      { ...context, pageName: 'configure_sources_draft_source', locale },
+      { ...context, pageName: 'configure_sources_draft_reference', locale },
       { margin: 8 }
     );
   });
   await page.getByRole('combobox').fill('ntv');
   await page.getByRole('option', { name: 'NTV - Nueva Traducción' }).click();
-  await page.getByRole('button', { name: 'Next' }).click();
+  await user.click(addReference);
+  await page.getByRole('combobox').last().fill('dhh94');
+  await page.getByRole('option', { name: 'DHH94 - Spanish: Dios Habla' }).click();
+  await nextButton.click();
 
   await forEachLocale(async locale => {
-    await user.hover(await page.getByRole('combobox'), defaultArrowLocation);
-    await page.waitForTimeout(200); // Wait for the hover effect on the input
+    await page.getByRole('combobox').fill('ntv');
+    await page.getByRole('option', { name: 'NTV - Nueva Traducción' }).click();
+    await user.hover(nextButton);
     await screenshotElements(
       page,
       [page.locator('app-draft-sources > .draft-sources-stepper'), page.locator('app-draft-sources > .overview')],
@@ -239,10 +249,7 @@ export async function localizedScreenshots(
 
   await page.getByRole('combobox').fill('ntv');
   await page.getByRole('option', { name: 'NTV - Nueva Traducción' }).click();
-  await user.click(page.getByRole('button', { name: 'Add another reference project' }));
-  await page.getByRole('combobox').last().fill('dhh94');
-  await page.getByRole('option', { name: 'DHH94 - Spanish: Dios Habla' }).click();
-  await page.getByRole('button', { name: 'Next' }).click();
+  await nextButton.click();
 
   await forEachLocale(async locale => {
     await user.hover(await page.getByRole('checkbox'));
