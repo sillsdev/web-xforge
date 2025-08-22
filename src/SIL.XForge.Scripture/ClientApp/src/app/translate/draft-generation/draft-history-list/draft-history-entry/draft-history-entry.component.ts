@@ -1,21 +1,25 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, DestroyRef, Input } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { RouterModule } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
+import { TrainingDataDoc } from '../../../../core/models/training-data-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { BuildDto } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
 import { RIGHT_TO_LEFT_MARK } from '../../../../shared/utils';
 import { DraftDownloadButtonComponent } from '../../draft-download-button/draft-download-button.component';
 import { DraftPreviewBooksComponent } from '../../draft-preview-books/draft-preview-books.component';
+import { TrainingDataService } from '../../training-data/training-data.service';
 
 const STATUS_INFO: Record<BuildStates, { icons: string; text: string; color: string }> = {
   ACTIVE: { icons: 'hourglass_empty', text: 'draft_active', color: 'grey' },
@@ -133,6 +137,22 @@ export class DraftHistoryEntryComponent {
       })
     );
 
+    const trainingDataFiles: string[] = this._entry?.additionalInfo?.trainingDataFileIds ?? [];
+    if (this.activatedProjectService.projectId != null && trainingDataFiles.length > 0) {
+      this.dataFileQuery?.dispose();
+      this.trainingDataService
+        .queryTrainingDataAsync(this.activatedProjectService.projectId, this.destroyRef)
+        .then(query => {
+          this.dataFileQuery = query;
+          this.trainingDataFiles = [
+            ...trainingDataFiles
+              .map(fileId => query.docs.find(f => f.data?.dataId === fileId))
+              .filter(file => file?.data != null)
+              .map(file => file!.data!.title)
+          ];
+        });
+    }
+
     // Populate the exception details, if possible
     if (this._entry?.state === BuildStates.Faulted && this._entry.message != null) {
       this._buildFaulted = true;
@@ -244,14 +264,20 @@ export class DraftHistoryEntryComponent {
   @Input() isLatestBuild = false;
 
   trainingConfigurationOpen = false;
+  trainingDataFiles: string[] = [];
 
   readonly columnsToDisplay: string[] = ['scriptureRange', 'source', 'target'];
+
+  private dataFileQuery?: RealtimeQuery<TrainingDataDoc>;
 
   constructor(
     readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
-    readonly featureFlags: FeatureFlagService
+    private readonly trainingDataService: TrainingDataService,
+    private readonly activatedProjectService: ActivatedProjectService,
+    readonly featureFlags: FeatureFlagService,
+    private readonly destroyRef: DestroyRef
   ) {}
 
   formatDate(date?: string): string {
@@ -261,5 +287,9 @@ export class DraftHistoryEntryComponent {
 
   getStatus(state: BuildStates): { icons: string; text: string; color: string } {
     return STATUS_INFO[state] ?? { icons: 'help_outline', text: 'draft_unknown', color: 'grey' };
+  }
+
+  trainingFilesString(files: string[]): string {
+    return this.i18n.enumerateList(files);
   }
 }
