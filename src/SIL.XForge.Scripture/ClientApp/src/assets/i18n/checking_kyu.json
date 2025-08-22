@@ -2,7 +2,7 @@
   "audio_recorder_dialog": {
     "mic_access_denied": "ꤔꤟꤢꤧ꤬ ꤜꤟꤢꤩꤔꤟꤤꤘꤢ꤭ ꤔꤢ microphone ꤔꤌꤣ꤬ ꤢ꤬ꤙꤤ ꤕꤢ꤭꤯ ꤋꤛꤢꤞꤢꤧꤘꤥ꤭ ꤗꤟꤢꤩ꤬ ꤊꤟꤢꤦꤚꤟꤢꤩ enable the microphone ꤘꤣ ꤔꤟꤢꤧ꤬ browser ꤊꤢꤨ꤭ ꤔꤌꤣ꤬꤯ ",
     "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
-    "record": "Record",
+    "record": "ꤕꤟꤢꤦꤍꤟꤥ",
     "re_record": "Re-record",
     "save": "ꤙꤢꤩ꤬ꤘꤝꤥ ꤒꤟꤢꤧ꤬ꤟꤢꤩꤏꤢꤦ꤬ ",
     "stop_recording": "ꤥ꤬ꤊꤟꤌꤣ ꤊꤛꤢ꤭ ꤕꤟꤢꤦꤍꤟꤥ"
@@ -28,7 +28,7 @@
     "page_not_found": "ꤗꤛꤢꤓꤛꤢꤩ꤬ page ꤛꤢꤩ꤭ꤒꤥ꤬",
     "password_reset_email_sent": "ꤜꤟꤢꤩ ꤗꤟꤢꤩ꤬ꤕꤜꤤ꤭ꤊꤛꤢ꤭ ꤔꤟꤢꤧ꤬ password ꤢ꤬ꤑꤢꤩ꤭ ꤕꤟꤢꤧ꤬ ꤞꤢꤨ꤭ꤟꤛꤢ꤭ ꤓꤌꤣ꤭ꤟꤢꤪ ꤔꤟꤢꤧ꤬ email ꤟꤢꤪ꤯",
     "product_version": "ꤒꤟꤢ꤭ꤤ꤭ꤒꤟꤢꤧ꤬ version: v {{ version }}",
-    "project_has_been_deleted": "The project has been deleted or is no longer accessible.",
+    "project_has_been_deleted": "Project ꤛꤢꤩ꤭ ꤢꤨ꤭ ꤗꤟꤢꤩ꤬ꤕꤜꤤ꤭ꤊꤛꤢ꤭ ꤟꤢꤪ ꤜꤢꤨ꤭ ꤟꤢꤪ, ꤗꤟꤢꤒꤥ꤬ꤚꤢꤪ ꤔꤟꤢꤧ꤬ ꤙꤢꤗꤥ꤭ ꤜꤢꤨ꤭ ꤗꤢ꤬ ꤢ꤬ꤔꤟꤤ ꤕꤢ꤭ ꤒꤥ꤬ ꤟꤢꤪ꤯ ",
     "questions_answers": "Questions & answers",
     "redirecting_in_moments": "Redirecting in a few moments...",
     "refresh": "Refresh",

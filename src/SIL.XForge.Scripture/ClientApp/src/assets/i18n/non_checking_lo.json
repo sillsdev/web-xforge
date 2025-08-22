@@ -4,7 +4,7 @@
     "generate_draft": "Generate draft",
     "hangfire_dashboard": "Hangfire Dashboard",
     "manage_questions": "Manage questions",
-    "settings": "Settings",
+    "settings": "ການຕັ້ງຄ່າ",
     "synchronize": "Sync with Paratext",
     "serval_administration": "Serval Administration",
     "system_administration": "System Administration",
@@ -18,6 +18,7 @@
     "description": "Description",
     "edit_renderings": "Edit Renderings",
     "renderings": "Renderings",
+    "renderings_error": "Parentheses must have a match.",
     "renderings_hint": "If there is more than one rendering, type each one on a separate line.",
     "save": "ວັກທີ່ມີຄຳຖາມ",
     "term": "Term/Definition",
@@ -40,7 +41,7 @@
     "notes": "Notes",
     "offline": "Currently unavailable offline. Please connect to the internet to access Biblical Terms.",
     "renderings": "Renderings",
-    "settings": "Settings",
+    "settings": "ການຕັ້ງຄ່າ",
     "show": "Show",
     "term": "Term",
     "transliterate_terms": "Transliterate Terms",
@@ -63,7 +64,7 @@
   "checking_overview": {
     "add_chapter_audio": "Add chapter audio",
     "add_question": "Add Question",
-    "answer_count_label": "{{ count }} answers",
+    "answer_count_label": "{{ count }} ຄຳຕອບ",
     "archive_multiple": "Archive all questions in {{ location }}",
     "archive": "Archive",
     "archived_questions": "Archived Questions",
@@ -94,7 +95,7 @@
     "filter_users": "Filter users...",
     "guest_role_info": "Invited guests will have the roles you assign them in Scripture Forge.",
     "invitation_expired": "Invitation has expired for{{ newLine }}{{ email }}",
-    "me": "me",
+    "me": "ຂ້ອຍ",
     "member_role_info": "Project members will have the same roles in both Scripture Forge and Paratext.",
     "no_users_found": "No users found",
     "paratext_members": "Paratext Members",
@@ -136,7 +137,7 @@
     "delete_this_project": "Delete this project",
     "i_understand_the_consequences": "I understand the consequences, delete this project",
     "please_type_project_name": "Please type in the name of the project to confirm.",
-    "project_name": "Project Name"
+    "project_name": "ຊື່ໂຄງການ"
   },
   "draft_apply_dialog": {
     "add_to_project": "Add to project",
@@ -160,8 +161,10 @@
   "draft_apply_progress-dialog": {
     "add_draft_to_book": "Adding draft to {{ bookName }}",
     "close": "ປິດ",
-    "failed_to_apply_chapters": "Failed to apply chapters",
-    "go_to_chapter": "Go to the chapter to try again.",
+    "failed_to_apply_chapters": "Failed to apply these chapters:",
+    "fail_cannot_edit": "The target chapter is not editable. View that chapter for more information.",
+    "fail_legacy_format": "Legacy draft format detected. Please apply chapter by chapter.",
+    "fail_unknown": "Unknown error. Please try again later. If the error persists, please report an issue.",
     "some_chapters_not_applied": "Drafts of one or more chapters could not be applied to {{ bookName }}",
     "successfully_applied_all_chapters": "Successfully applied all chapters to {{ bookName }}"
   },
@@ -224,7 +227,7 @@
     "click_book_to_preview": "Click a book below to preview the draft and add it to your project."
   },
   "draft_generation_steps": {
-    "back": "Back",
+    "back": "ຄືນ",
     "books_are_hidden_hide_explanation": "{{ numBooks }} books are hidden. {{ underlineStart }}Hide explanation{{ underlineEnd }}",
     "books_are_hidden_show_why": "{{ numBooks }} books are hidden. {{ underlineStart }}Show why{{ underlineEnd }}",
     "choose_books_for_training_error": "No books selected. Select training books to continue.",
@@ -234,21 +237,25 @@
     "choose_books_to_translate_error": "No books selected. Select books to translate to continue.",
     "choose_books_to_translate_header": "Drafting",
     "choose_books_to_translate_title": "Select books to draft",
-    "configure_advanced_settings_header": "Advanced",
+    "configure_advanced_settings_header": "ຄວາມຄືບຫນ້າ",
     "configure_advanced_settings_title": "Advanced settings",
     "confirm_codes_correct_to_continue": "Please confirm the language codes are correct before continuing",
+    "email_me": "Email me at {{ email }} when the draft is finished.",
     "fast_training_warning": "Enabling this will save time but greatly reduce accuracy.",
     "fast_training": "Enable Fast Training",
     "generate_draft": "Generate draft",
     "loading": "Loading...",
+    "loading_projects": "Loading project sync status...",
     "next": "ຕໍ່ໄປ",
     "no_available_books": "You have no books available for drafting.",
     "no_training_books": "No training books selected",
     "overview": "Overview",
+    "pending_updates": "The project {{ projectName }} has pending updates from Paratext, which may affect draft generation. Please [link:syncUrl]sync {{ projectName }}[/link] before generating a draft.",
     "reference_books": "Reference books",
     "source_books_missing": "The reference text is missing one or more of the translated books in your project. Consider choosing a reference text that contains a match for all the translated books",
-    "summary_header": "Summary",
-    "summary_title": "Summary",
+    "summary_header": "ສະຫລຸບຄວາມ",
+    "summary_notifications": "Notifications",
+    "summary_title": "ສະຫລຸບຄວາມ",
     "summary_training_title": "Training the language model",
     "summary_training": "A language model will be created using the following example translations:",
     "summary_translate_title": "Drafting from [b]{{ draftingSourceProjectName }}[/b]",
@@ -317,16 +324,15 @@
     "previous": "ແຕ່ກ່ອນ",
     "project_always_used": "Your project ({{ currentProjectShortName }}) will always be used to train the language model.",
     "reference_projects": "Reference projects",
-    "same_language_as_given_language": "All these should be in the same language as the draft source ({{sourceLanguageDisplayName}}).",
-    "same_language_as_source": "All these should be in the same language as the draft source.",
     "save_and_sync": "Save & sync",
     "saving_draft_sources": "Saving draft sources",
     "saving": "Saving",
     "select_at_least_one_reference": "Please select at least one reference project before saving.",
     "select_at_least_one_source_and_reference": "Please select at least one source and one reference project before saving.",
     "select_at_least_one_source": "Please select at least one source project before saving.",
+    "select_primary_reference": "Select your primary reference project. This is the project that you refer to most often as you are translating.",
     "select_project_to_translate": "Select the project to translate.",
-    "select_reference_project_considering_back_translation": "Select projects that should be used on the source side when training the language model. Choosing a back translation often improves the model.",
+    "some_projects_use_back_translation": "Some projects get better results by adding a back translation as another reference.",
     "source_side_language_codes_differ": "All source and reference projects must be in the same language. Please select different source or reference projects.",
     "state_connecting": "Connecting",
     "state_sync_failed": "There was an error syncing",
@@ -349,7 +355,7 @@
     "option_best_guess_description": "Line breaks in the source will be placed at the best guess of where they should be in the draft. Recommended for most projects.",
     "option_end": "Move to end",
     "option_end_description": "Line breaks in the source will be moved to the end of the verse.",
-    "option_remove": "Remove",
+    "option_remove": "ລົບ",
     "option_remove_description": "Line breaks in the source will be omitted from the draft.",
     "line_breaks_description": "Scripture Forge translates complete verses, without line breaks, because this gives the best draft. Choose where to place the line breaks from the source.",
     "line_breaks_title": "Line breaks",
@@ -376,7 +382,7 @@
     "text_has_been_deleted": "The book has been deleted or is no longer accessible.",
     "to_report_issue_email": "To report an issue, email {{ issueEmailLink }}.",
     "verse_too_long_for_suggestions": "This verse is too long to generate suggestions.",
-    "your_comment": "Your comment"
+    "your_comment": "ຂໍ້ຄວາມເຈົ້າ"
   },
   "editor_draft_tab": {
     "apply_to_project": "Add to project",
@@ -548,7 +554,7 @@
     "filter_menu_sort_severity": "Severity",
     "filter_menu_sort_appearance": "Appearance in text",
     "scope_chapter": "Chapter",
-    "scope_book": "Book",
+    "scope_book": "ປື້ມບັນ",
     "scope_project": "Project"
   },
   "multi_viewer": {
@@ -572,7 +578,7 @@
     "status_to_do": "To do",
     "team": "(Team)",
     "unassigned": "(Unassigned)",
-    "your_comment": "Your comment"
+    "your_comment": "ຂໍ້ຄວາມເຈົ້າ"
   },
   "paginator": {
     "items_per_page": "Items per page",
@@ -674,7 +680,7 @@
     "select_project_or_resource": "Select the Paratext project or Digital Bible Library resource that your project is based on. If your project is based on a Paratext project, it's best to set it up as a daughter project in Paratext.",
     "serval_config": "Serval configuration (JSON)",
     "serval_config_description": "{{ boldStart }}Warning:{{ boldEnd }} The following configuration is for Serval technicians only:",
-    "settings": "Settings",
+    "settings": "ການຕັ້ງຄ່າ",
     "sharing_administrators": "Allow administrators to invite any guest role",
     "sharing_commenters": "Allow commenters to invite commenters",
     "sharing_community_checkers": "Allow community checkers to invite community checkers",
@@ -783,7 +789,7 @@
     "save": "ວັກທີ່ມີຄຳຖາມ",
     "upload_failed": "The training data file could not be uploaded. Please try again or use a different file.",
     "upload_training_data": "Upload Training Data",
-    "uploading": "Uploading..."
+    "uploading": "ການອັບໂຫລດ..."
   },
   "training_progress": {
     "completed_successfully": "Completed successfully",

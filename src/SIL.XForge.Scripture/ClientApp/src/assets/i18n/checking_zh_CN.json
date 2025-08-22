@@ -2,7 +2,7 @@
   "audio_recorder_dialog": {
     "mic_access_denied": "Access to your microphone was denied. Please enable the microphone from your browser.",
     "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
-    "record": "Record",
+    "record": "录制音频",
     "re_record": "Re-record",
     "save": "保存答案",
     "stop_recording": "停止录音"
@@ -25,13 +25,13 @@
     "online": "Online",
     "open_source_licenses": "Open source licenses",
     "overview": "总览",
-    "page_not_found": "Page not found",
+    "page_not_found": "未找到页面",
     "password_reset_email_sent": "重置密码的邮件已发送",
     "product_version": "产品版本：v {{ version }}",
     "project_has_been_deleted": "The project has been deleted or is no longer accessible.",
     "questions_answers": "Questions & answers",
     "redirecting_in_moments": "Redirecting in a few moments...",
-    "refresh": "Refresh",
+    "refresh": "刷新",
     "report_issue_email": "电子邮件{{ email }}",
     "report_issue": "报告问题",
     "scripture_checking_not_available": "圣经检查在该项目中不可用。",
@@ -192,13 +192,13 @@
     "question_filter_not_reviewed": "Unreviewed answers",
     "question_filter_resolved": "Answers marked resolved",
     "questions_on_chapters_no_audio": "Some questions are on chapters with no audio recordings. Please upload audio for these chapters.",
-    "question_scope_all": "All books",
-    "question_scope_book": "Current book",
-    "question_scope_chapter": "Current chapter",
+    "question_scope_all": "所有书卷",
+    "question_scope_book": "当前书卷",
+    "question_scope_chapter": "当前这章",
     "questions_range": "Questions range",
     "tooltip_questions_filter": "Filter questions",
     "unknown_author": "Unknown author",
-    "upload_audio_file": "Upload Audio",
+    "upload_audio_file": "上传音频",
     "view_questions": "显示问题"
   },
   "checking_answers": {
@@ -213,8 +213,8 @@
     "mark_for_export": "Flag for review",
     "no_scripture_selected": "尚未选择经文。",
     "record_question": "Record question",
-    "resolve": "Resolve",
-    "resolved": "Resolved",
+    "resolve": "解决",
+    "resolved": "已解决",
     "save_answer": "保存答案",
     "select_verses": "选择文本",
     "show_more_unread": "显示{{ count }} 个未读答案",
@@ -223,10 +223,10 @@
     "your_answer": "你的答案"
   },
   "chapter_audio_dialog": {
-    "audio": "Audio",
+    "audio": "音频",
     "audio_already_exists": "Audio already exists for this selection.",
     "audio_file_less_than_one_hundred_mb": "Audio files under 95MB only",
-    "browse_files": "Browse",
+    "browse_files": "浏览",
     "browse_files_tooltip": "Upload audio and timing files",
     "cancel": "取消",
     "delete": "Delete Audio...",
@@ -261,7 +261,7 @@
     "segment": "Segment"
   },
   "checking_audio_recorder": {
-    "delete": "Delete Recording",
+    "delete": "删除录音",
     "mic_access_denied": "Access to your microphone was denied. Please enable the microphone from your browser.",
     "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
     "not_available": "Your browser currently does not support audio recording. Please try using another supported browser.",
@@ -298,7 +298,7 @@
   "checking_questions": {
     "go_to": "Go to questions",
     "listen_to_question": "Listen to the question for {{ referenceForDisplay }}",
-    "loading": "Loading...",
+    "loading": "下载中……",
     "no_questions_found": "No questions found for the settings above.",
     "scripture_audio_label": "Listen to {{ referenceForDisplay }} to answer the question that follows.",
     "view_answers": "View answers"
@@ -338,7 +338,7 @@
     "firefox_private_browsing_or_no_space": "Something went wrong. Please check that you are not using Firefox in the unsupported private browsing mode and that your device has the recommended 500 MB of free space.",
     "network_request_failed": "A network request failed. Some functionality may be unavailable.",
     "out_of_space": "An error occurred because your device is out of storage space.",
-    "unknown_error": "Unknown error"
+    "unknown_error": "未知错误"
   },
   "file_service": {
     "failed_to_save": "Failed to save your changes. Please check that you have the recommended 500 MB of free space on your device.",
@@ -358,7 +358,7 @@
   "issue_email": {
     "heading": "Please explain the problem.",
     "technical_details": "Technical details",
-    "unknown": "Unknown"
+    "unknown": "未知"
   },
   "join": {
     "error_occurred_login": "An error occurred trying to join the project",
@@ -419,7 +419,7 @@
     "choose_verse": "选择经文"
   },
   "share": {
-    "share": "Share"
+    "share": "分享"
   },
   "share_control": {
     "copy_link": "复制链接",
@@ -427,7 +427,7 @@
     "email_sharing": "Send an email invite below or share a link using your preferred communication platform.",
     "email": "电子邮件",
     "invitation_language": "Invitation language",
-    "invitation_role": "Role",
+    "invitation_role": "角色",
     "invitation_sent": "邀请电子邮件已发送至 {{ email }}",
     "invite_people": "邀请人",
     "invite_people_intro": "You can invite people outside of Paratext to help contribute to your project.",
@@ -449,7 +449,7 @@
   "share_dialog": {
     "anyone": "Anyone with the link",
     "anyone_can": "Anyone with the link can",
-    "change": "change",
+    "change": "更改",
     "copy_link": "复制链接",
     "days_seven": "7 days",
     "days_fourteen": "14 days",
@@ -467,14 +467,14 @@
     "recipient": "One recipient",
     "recipient_can": "The recipient can",
     "recipient_only_notice": "Each link can only be used once and will expire after {{ shareExpiration }} days. Click the button again to generate and share a new link.",
-    "share": "Share",
+    "share": "分享",
     "share_project": "Share {{ project }}",
     "share_with_others": "与他人分享",
     "will_expire_in": "Link expires in [b]{{ count }} days[/b]"
   },
   "supported_browsers_dialog": {
     "audio_recording_not_supported": "Audio recording is not supported in this browser.",
-    "dismiss": "Dismiss",
+    "dismiss": "忽略",
     "browser_unsupported": "This browser is unsupported",
     "safari_for_audio_on_ios": "Audio recording on iPhone and iPad only works in Safari.",
     "some_features_may_not_work": "Some of the features of this website may not work correctly with your browser.",
@@ -484,7 +484,7 @@
   "text": {
     "book_does_not_exist": "This book does not exist.",
     "book_is_empty": "This book is empty. Add chapters in Paratext.",
-    "loading": "Loading...",
+    "loading": "下载中……",
     "not_available_offline": "This text is not available offline. Connect to the Internet to see the text.",
     "permission_denied": "You do not have permission to view this text. Please contact the project's administrator to get permission."
   },
