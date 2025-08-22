@@ -104,7 +104,8 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   @Input() multiSegmentSelection = false;
   @Input() subscribeToUpdates = true;
   @Input() selectableVerses: boolean = false;
-  @Input() showInsights: boolean = false;
+  @Input() lynxAutoCorrectionsEnabled: boolean = false;
+  @Input() lynxInsightsEnabled: boolean = false;
   @Output() updated = new EventEmitter<TextUpdatedEvent>(true);
   @Output() segmentRefChange = new EventEmitter<string>();
   @Output() loaded = new EventEmitter<boolean>(true);
@@ -1233,7 +1234,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   }
 
   private updateLocalCursor(): void {
-    if (this._editor == null || this._isReadOnly || !this.showInsights || this.localCursorElement == null) {
+    if (this._editor == null || this._isReadOnly || !this.lynxInsightsEnabled || this.localCursorElement == null) {
       return;
     }
 

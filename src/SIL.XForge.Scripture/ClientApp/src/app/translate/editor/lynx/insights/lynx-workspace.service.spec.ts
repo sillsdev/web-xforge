@@ -5,12 +5,12 @@ import { DiagnosticsChanged, DiagnosticSeverity, DocumentManager, Position, Work
 import { ScriptureDeltaDocument } from '@sillsdev/lynx-delta';
 import { Canon } from '@sillsdev/scripture';
 import Delta, { Op } from 'quill-delta';
+import { LynxConfig } from 'realtime-server/lib/esm/scriptureforge/models/lynx-config';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { anything, mock, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { RealtimeService } from 'xforge-common/realtime.service';
@@ -44,7 +44,6 @@ describe('LynxWorkspaceService', () => {
   const mockActivatedProjectService = mock<ActivatedProjectService>();
   const mockActivatedBookChapterService = mock<ActivatedBookChapterService>();
   const mockDestroyRef = mock<DestroyRef>();
-  const mockFeatureFlagService = mock<FeatureFlagService>();
   const mockWorkspace = mock<Workspace<Op>>();
   const mockDocumentManager = mock<DocumentManager<ScriptureDeltaDocument, Op, Delta>>();
   const mockTextDocReader = mock<TextDocReader>();
@@ -67,7 +66,6 @@ describe('LynxWorkspaceService', () => {
     }
 
     setupMocks(): void {
-      when(mockFeatureFlagService.enableLynxInsights).thenReturn(createTestFeatureFlag(true));
       when(mockI18nService.localeCode).thenReturn(defaultLocale.canonicalTag);
       when(mockI18nService.locale$).thenReturn(this.localeTestSubject$);
       when(mockActivatedProjectService.projectDoc$).thenReturn(this.projectDocTestSubject$);
@@ -154,7 +152,7 @@ describe('LynxWorkspaceService', () => {
       return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, id);
     }
 
-    createMockProjectDoc(id: string = PROJECT_ID): SFProjectProfileDoc {
+    createMockProjectDoc(id: string = PROJECT_ID, lynxConfig?: LynxConfig): SFProjectProfileDoc {
       const projectData = createTestProjectProfile({
         texts: [
           {
@@ -165,7 +163,8 @@ describe('LynxWorkspaceService', () => {
               { number: CHAPTER_NUM + 1, isValid: true, lastVerse: 25 }
             ]
           }
-        ]
+        ],
+        ...(lynxConfig && { lynxConfig })
       });
 
       this.realtimeService.addSnapshot(SFProjectProfileDoc.COLLECTION, {
@@ -231,8 +230,8 @@ describe('LynxWorkspaceService', () => {
       tick();
     }
 
-    triggerProjectChange(id: string): void {
-      this.projectDocTestSubject$.next(this.createMockProjectDoc(id));
+    triggerProjectChange(id: string, lynxConfig?: LynxConfig): void {
+      this.projectDocTestSubject$.next(this.createMockProjectDoc(id, lynxConfig));
       tick();
     }
 
@@ -292,7 +291,6 @@ describe('LynxWorkspaceService', () => {
     providers: [
       LynxWorkspaceService,
       { provide: SFProjectService, useMock: mockProjectService },
-      { provide: FeatureFlagService, useMock: mockFeatureFlagService },
       { provide: I18nService, useMock: mockI18nService },
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: ActivatedBookChapterService, useMock: mockActivatedBookChapterService },
@@ -464,10 +462,27 @@ describe('LynxWorkspaceService', () => {
   describe('Book chapter activation', () => {
     it('should fire document closed event when chapter changes', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.service['projectId'] = PROJECT_ID;
-      env.service['textDocId'] = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
+
+      // Create project with lynx features enabled so documents will be opened
+      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+        autoCorrectionsEnabled: true,
+        assessmentsEnabled: true
+      });
+      env.projectDocTestSubject$.next(projectDoc);
+      when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+      when(mockActivatedProjectService.projectId).thenReturn(PROJECT_ID);
+
+      // First, open a document by activating a chapter
+      env.triggerBookChapterChange(CHAPTER_NUM);
+      tick();
+
+      // Verify document was opened
+      verify(mockDocumentManager.fireOpened(anything(), anything())).once();
+
+      // Reset the mock to focus on the close operation
       resetCalls(mockDocumentManager);
 
+      // Now change to a different chapter - this should close the current document
       env.triggerBookChapterChange(CHAPTER_NUM + 1);
 
       verify(mockDocumentManager.fireClosed(anything())).once();
@@ -475,6 +490,15 @@ describe('LynxWorkspaceService', () => {
 
     it('should open document when chapter is activated', fakeAsync(() => {
       const env = new TestEnvironment();
+
+      // Create project with lynx features enabled so documents will be opened
+      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+        autoCorrectionsEnabled: true,
+        assessmentsEnabled: true
+      });
+      env.projectDocTestSubject$.next(projectDoc);
+      when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+
       env.service['projectId'] = PROJECT_ID;
       env.service['textDocId'] = undefined;
       when(mockActivatedProjectService.projectId).thenReturn(PROJECT_ID);
@@ -487,6 +511,15 @@ describe('LynxWorkspaceService', () => {
 
     it('should update textDocId when chapter changes', fakeAsync(() => {
       const env = new TestEnvironment();
+
+      // Set up project with lynx features enabled so documents will be opened
+      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+        autoCorrectionsEnabled: true,
+        assessmentsEnabled: true
+      });
+      env.projectDocTestSubject$.next(projectDoc);
+      when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+
       when(mockActivatedProjectService.projectId).thenReturn(PROJECT_ID);
 
       // First activate chapter 1
@@ -576,6 +609,15 @@ describe('LynxWorkspaceService', () => {
   describe('getOnTypeEdits', () => {
     it('should return edits for trigger characters', fakeAsync(() => {
       const env = new TestEnvironment();
+
+      // Set up project with auto-corrections enabled
+      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+        autoCorrectionsEnabled: true,
+        assessmentsEnabled: false
+      });
+      env.projectDocTestSubject$.next(projectDoc);
+      when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+
       env.service['textDocId'] = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
       const delta = new Delta().insert('Hello,');
       let result: Delta[] = [];
@@ -595,6 +637,15 @@ describe('LynxWorkspaceService', () => {
 
     it('should handle multiple trigger characters', fakeAsync(() => {
       const env = new TestEnvironment();
+
+      // Set up project with auto-corrections enabled
+      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+        autoCorrectionsEnabled: true,
+        assessmentsEnabled: false
+      });
+      env.projectDocTestSubject$.next(projectDoc);
+      when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+
       env.service['textDocId'] = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
       const delta = new Delta().insert('Hello, world.');
       let result: Delta[] = [];
@@ -621,6 +672,56 @@ describe('LynxWorkspaceService', () => {
       tick();
 
       expect(result).toEqual([]);
+    }));
+
+    it('should return empty array when auto-corrections are disabled', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.service['textDocId'] = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
+
+      // Create project with auto-corrections disabled
+      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+        autoCorrectionsEnabled: false,
+        assessmentsEnabled: false
+      });
+      env.projectDocTestSubject$.next(projectDoc);
+      when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+
+      const delta = new Delta().insert('Hello,');
+      let result: Delta[] = [];
+
+      env.service.getOnTypeEdits(delta).then(res => (result = res));
+      tick();
+
+      expect(result).toEqual([]);
+      // Verify workspace methods were not called since auto-corrections are disabled
+      verify(mockWorkspace.getOnTypeEdits(anything(), anything(), anything())).never();
+    }));
+
+    it('should return edits when auto-corrections are enabled', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.service['textDocId'] = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
+
+      // Create project with auto-corrections enabled
+      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+        autoCorrectionsEnabled: true,
+        assessmentsEnabled: false
+      });
+      env.projectDocTestSubject$.next(projectDoc);
+      when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+
+      const delta = new Delta().insert('Hello,');
+      let result: Delta[] = [];
+
+      when(mockWorkspace.getOnTypeEdits(anything(), anything(), anything())).thenResolve([
+        { retain: 5 },
+        { insert: ' ' }
+      ]);
+
+      env.service.getOnTypeEdits(delta).then(res => (result = res));
+      tick();
+
+      expect(result.length).toBe(1);
+      expect(result[0].ops).toEqual([{ retain: 5 }, { insert: ' ' }]);
     }));
   });
 

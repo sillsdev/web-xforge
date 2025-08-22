@@ -316,6 +316,43 @@
             </div>
           </mat-card-content>
         </mat-card>
+
+        <!-- Lynx Settings Card -->
+        <mat-card>
+          <mat-card-content>
+            <mat-card-title
+              >{{ t("lynx_settings_header") }}<span class="beta-tag">{{ t("beta_tag") }}</span></mat-card-title
+            >
+            <p class="helper-text">{{ t("lynx_settings_description") }}</p>
+            <app-notice type="info" icon="info" class="requirements">{{ t("lynx_latin_script_notice") }}</app-notice>
+            <div class="tool-setting">
+              <div class="tool-setting-field checkbox-field">
+                <mat-checkbox formControlName="lynxAssessmentsEnabled" id="checkbox-lynx-assessments">
+                  {{ t("lynx_assessments") }}
+                </mat-checkbox>
+                <app-info [text]="t('lynx_assessments_help')"></app-info>
+                <app-write-status
+                  [state]="getControlState('lynxAssessmentsEnabled')"
+                  [formGroup]="form"
+                  id="lynx-assessments-status"
+                ></app-write-status>
+              </div>
+            </div>
+            <div class="tool-setting">
+              <div class="tool-setting-field checkbox-field">
+                <mat-checkbox formControlName="lynxAutoCorrectionsEnabled" id="checkbox-lynx-auto-corrections">
+                  {{ t("lynx_auto_corrections") }}
+                </mat-checkbox>
+                <app-info [text]="t('lynx_auto_corrections_help')"></app-info>
+                <app-write-status
+                  [state]="getControlState('lynxAutoCorrectionsEnabled')"
+                  [formGroup]="form"
+                  id="lynx-auto-corrections-status"
+                ></app-write-status>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
       </form>
     </div>
 
