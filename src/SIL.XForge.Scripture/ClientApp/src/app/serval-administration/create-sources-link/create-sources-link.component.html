@@ -1,0 +1,44 @@
+<div class="create-sources-link">
+  <h3>Create Draft Sources Configuration Link</h3>
+  <p>Enter project short names to generate a link that pre-configures the draft sources component.</p>
+
+  <form [formGroup]="sourcesForm" class="sources-form">
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="form-field" [class.field-error]="!trainingSourcesValid">
+        <mat-label>Training Sources</mat-label>
+        <input
+          matInput
+          formControlName="trainingSources"
+          placeholder="Enter training project short names (comma-separated)"
+        />
+        @if (validatingTrainingSources) {
+          <mat-hint>Validating projects...</mat-hint>
+        } @else if (!trainingSourcesValid && sourcesForm.get("trainingSources")?.value?.trim()) {
+          <mat-error>One or more training sources not found</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="form-field" [class.field-error]="!draftingSourceValid">
+        <mat-label>Draft Source</mat-label>
+        <input matInput formControlName="draftingSources" placeholder="Enter draft project short name" />
+        @if (validatingDraftingSource) {
+          <mat-hint>Validating project...</mat-hint>
+        } @else if (!draftingSourceValid && sourcesForm.get("draftingSources")?.value?.trim()) {
+          <mat-error>Draft source not found</mat-error>
+        }
+      </mat-form-field>
+    </div>
+  </form>
+
+  @if (generatedLink) {
+    <div class="generated-link-section">
+      <h4>Generated Link</h4>
+      <div class="link-container">
+        <div class="link-text">{{ generatedLink }}</div>
+        <button mat-icon-button (click)="copyLink()" matTooltip="Copy link to clipboard" color="primary">
+          <mat-icon>content_copy</mat-icon>
+        </button>
+      </div>
+    </div>
+  }
+</div>

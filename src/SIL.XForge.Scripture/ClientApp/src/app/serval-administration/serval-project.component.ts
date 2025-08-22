@@ -23,6 +23,7 @@ import { DraftZipProgress } from '../translate/draft-generation/draft-generation
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { DraftInformationComponent } from '../translate/draft-generation/draft-information/draft-information.component';
 import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../translate/draft-generation/draft-utils';
+import { CreateSourcesLinkComponent } from './create-sources-link/create-sources-link.component';
 import { ServalAdministrationService } from './serval-administration.service';
 interface Row {
   id: string;
@@ -52,7 +53,8 @@ function projectType(project: TranslateSource | SFProjectProfile): string {
     SharedModule,
     UICommonModule,
     DraftInformationComponent,
-    MobileNotSupportedComponent
+    MobileNotSupportedComponent,
+    CreateSourcesLinkComponent
   ],
   standalone: true
 })
