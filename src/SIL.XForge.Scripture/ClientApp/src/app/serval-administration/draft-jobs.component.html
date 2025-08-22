@@ -13,8 +13,14 @@
 
     @if (currentProjectFilter) {
       <app-notice icon="filter_alt" mode="fill-dark">
-        Showing draft jobs for project <strong>{{ filteredProjectName || currentProjectFilter }}</strong
-        >.
+        <div class="filter-notice-content">
+          <span>
+            Showing draft jobs for project <strong>{{ filteredProjectName || currentProjectFilter }}</strong>
+          </span>
+          <button mat-icon-button class="clear-filter-btn" (click)="clearProjectFilter()">
+            <mat-icon>clear</mat-icon>
+          </button>
+        </div>
       </app-notice>
     }
 
@@ -26,18 +32,14 @@
           <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef>Status</th>
             <td mat-cell *matCellDef="let row">
-              <div
-                class="status-cell"
-                matTooltip="Broken does not indicate failure, but that the sequence of events is not creating a coherent picture."
-                [matTooltipDisabled]="row.job.status !== 'broken'"
-              >
+              <div class="status-cell">
                 <mat-icon
                   class="status-icon"
                   [class.successful]="row.job.status === 'success'"
                   [class.failed]="row.job.status === 'failed'"
                   [class.running]="row.job.status === 'running'"
                   [class.cancelled]="row.job.status === 'cancelled'"
-                  [class.broken]="row.job.status === 'broken'"
+                  [class.incomplete]="row.job.status === 'incomplete'"
                 >
                   @if (row.job.status === "success") {
                     check_circle
@@ -47,7 +49,7 @@
                     schedule
                   } @else if (row.job.status === "cancelled") {
                     cancel
-                  } @else if (row.job.status === "broken") {
+                  } @else if (row.job.status === "incomplete") {
                     warning
                   }
                 </mat-icon>
@@ -71,20 +73,48 @@
           <ng-container matColumnDef="trainingBooks">
             <th mat-header-cell *matHeaderCellDef>Training Books</th>
             <td mat-cell *matCellDef="let row">
-              @if (row.trainingBooksTooltip) {
-                <span [matTooltip]="row.trainingBooksTooltip">{{ row.trainingBooks }}</span>
+              @if (row.trainingBooks.length === 0) {
+                None
               } @else {
-                {{ row.trainingBooks }}
+                @for (projectBook of row.trainingBooks; track projectBook.projectId) {
+                  <div class="project-books-line">
+                    <a [routerLink]="['/serval-administration', projectBook.projectId]" class="project-link">{{
+                      getProjectShortName(projectBook.projectId)
+                    }}</a
+                    >:
+                    @if (projectBook.books.length <= 2) {
+                      {{ projectBook.books.join(", ") }}
+                    } @else {
+                      <span [matTooltip]="projectBook.books.join(', ')" class="book-count">
+                        {{ projectBook.books.length }} books
+                      </span>
+                    }
+                  </div>
+                }
               }
             </td>
           </ng-container>
           <ng-container matColumnDef="translationBooks">
             <th mat-header-cell *matHeaderCellDef>Translation Books</th>
             <td mat-cell *matCellDef="let row">
-              @if (row.translationBooksTooltip) {
-                <span [matTooltip]="row.translationBooksTooltip">{{ row.translationBooks }}</span>
+              @if (row.translationBooks.length === 0) {
+                None
               } @else {
-                {{ row.translationBooks }}
+                @for (projectBook of row.translationBooks; track projectBook.projectId) {
+                  <div class="project-books-line">
+                    <a [routerLink]="['/serval-administration', projectBook.projectId]" class="project-link">{{
+                      getProjectShortName(projectBook.projectId)
+                    }}</a
+                    >:
+                    @if (projectBook.books.length <= 2) {
+                      {{ projectBook.books.join(", ") }}
+                    } @else {
+                      <span [matTooltip]="projectBook.books.join(', ')" class="book-count">
+                        {{ projectBook.books.length }} books
+                      </span>
+                    }
+                  </div>
+                }
               }
             </td>
           </ng-container>
