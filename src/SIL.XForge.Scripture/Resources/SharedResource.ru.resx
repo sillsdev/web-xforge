@@ -169,7 +169,7 @@
     <comment>Tool tip for the language selector</comment>
   </data>
   <data name="LearnMore" xml:space="preserve">
-    <value>Learn More</value>
+    <value>Подробнее</value>
     <comment>Link to the learn more page seen in the page footer and as button at the bottom of the home page</comment>
   </data>
   <data name="LogIn" xml:space="preserve">

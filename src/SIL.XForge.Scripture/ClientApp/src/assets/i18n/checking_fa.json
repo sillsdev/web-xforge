@@ -2,9 +2,9 @@
   "audio_recorder_dialog": {
     "mic_access_denied": "Access to your microphone was denied. Please enable the microphone from your browser.",
     "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
-    "record": "Record",
+    "record": "ثبت و نگارش",
     "re_record": "Re-record",
-    "save": "Save",
+    "save": "ذخیره",
     "stop_recording": "Stop Recording"
   },
   "app": {
@@ -14,10 +14,10 @@
     "cannot_change_password": "Can't change password at this time. Try again later or report an issue in the Help menu.",
     "change_password": "Change password",
     "community_checking": "Community Checking",
-    "community_support": "Community Support",
-    "help": "Help",
+    "community_support": "پشتیبانی جامعه",
+    "help": "کمک، یاری",
     "install_on_device": "Install on device",
-    "language": "Language",
+    "language": "زبان",
     "log_out": "Log out",
     "logged_in_as": "Logged in as",
     "my_progress": "My progress",
@@ -25,13 +25,13 @@
     "online": "Online",
     "open_source_licenses": "Open source licenses",
     "overview": "Overview",
-    "page_not_found": "Page not found",
+    "page_not_found": "صفحه یافت نشد",
     "password_reset_email_sent": "We've just sent you an email to reset your password.",
     "product_version": "Product version: v{{ version }}",
     "project_has_been_deleted": "The project has been deleted or is no longer accessible.",
     "questions_answers": "Questions & answers",
     "redirecting_in_moments": "Redirecting in a few moments...",
-    "refresh": "Refresh",
+    "refresh": "نوسازی",
     "report_issue_email": "email {{ email }}",
     "report_issue": "Report an issue",
     "scripture_checking_not_available": "Scripture checking is not available in this project.",
@@ -178,10 +178,10 @@
     "input_required_before_saving": "Provide text or audio before saving",
     "manage_audio": "Manage audio",
     "me": "Me",
-    "next": "Next",
+    "next": "بعد",
     "play_chapter": "Play chapter",
-    "previous": "Previous",
-    "questions": "Questions",
+    "previous": "قبلی",
+    "questions": "سؤالات",
     "question_does_not_have_audio": "No audio recordings have been uploaded for this chapter. Contact the project administrator to upload audio.",
     "question_filter_none": "Show all",
     "question_filter_exportable": "Answers flagged for review",
@@ -192,9 +192,9 @@
     "question_filter_not_reviewed": "Unreviewed answers",
     "question_filter_resolved": "Answers marked resolved",
     "questions_on_chapters_no_audio": "Some questions are on chapters with no audio recordings. Please upload audio for these chapters.",
-    "question_scope_all": "All books",
-    "question_scope_book": "Current book",
-    "question_scope_chapter": "Current chapter",
+    "question_scope_all": "همه کتابها",
+    "question_scope_book": "کتاب فعلی",
+    "question_scope_chapter": "فصل فعلی",
     "questions_range": "Questions range",
     "tooltip_questions_filter": "Filter questions",
     "unknown_author": "Unknown author",
@@ -204,18 +204,18 @@
   "checking_answers": {
     "add_answer": "Add answer",
     "answers": "{{ count }} Answers",
-    "cancel": "Cancel",
+    "cancel": "لغو",
     "cannot_like_own_answer": "You cannot like your own answer.",
     "confirm_delete": "Are you sure you want to delete this answer?",
-    "delete": "Delete",
-    "edit": "Edit",
+    "delete": "حذف",
+    "edit": "ویرایش",
     "marked_for_export": "Flagged for review",
     "mark_for_export": "Flag for review",
     "no_scripture_selected": "No scripture selected yet.",
     "record_question": "Record question",
-    "resolve": "Resolve",
-    "resolved": "Resolved",
-    "save_answer": "Save",
+    "resolve": "برطرف کردن",
+    "resolved": "حل شده",
+    "save_answer": "ذخیره",
     "select_verses": "Select verses",
     "show_more_unread": "Show {{ count }} more unread answers",
     "tooltip_status_export": "Export to Paratext if configured in Settings",
@@ -226,9 +226,9 @@
     "audio": "Audio",
     "audio_already_exists": "Audio already exists for this selection.",
     "audio_file_less_than_one_hundred_mb": "Audio files under 95MB only",
-    "browse_files": "Browse",
+    "browse_files": "جستجو",
     "browse_files_tooltip": "Upload audio and timing files",
-    "cancel": "Cancel",
+    "cancel": "لغو",
     "delete": "Delete Audio...",
     "delete_audio": "Delete Audio",
     "delete_both": "Delete Both",
@@ -237,11 +237,11 @@
     "drag_and_drop_overlay": "Drop files to upload",
     "drag_and_drop_or_browse": "یا",
     "from_timing_past_to_timing": "One or more ending values end before their beginning values.",
-    "help": "Help",
+    "help": "کمک، یاری",
     "no_audio_file_uploaded": "No audio file uploaded",
     "no_timing_data_uploaded": "No timing data uploaded",
     "not_upload_audio_offline": "Audio files cannot be uploaded without connecting to the internet.",
-    "save": "Save",
+    "save": "ذخیره",
     "segments_found": "{{ segments }} segments found",
     "timing": "Timing",
     "timing_past_audio_length": "One or more timing values extend past the end of the audio file.",
@@ -270,53 +270,53 @@
   },
   "checking_input_form": {
     "attach": "Attach Scripture",
-    "cancel": "Cancel",
-    "save": "Save",
+    "cancel": "لغو",
+    "save": "ذخیره",
     "your_answer": "Your answer",
     "your_comment": "Your comment"
   },
   "checking_comments": {
     "add_a_comment": "Add a comment",
-    "delete": "Delete",
+    "delete": "حذف",
     "confirm_delete": "Are you sure you want to delete this comment?",
-    "edit": "Edit",
+    "edit": "ویرایش",
     "show_more_comments_and_unread": "Show {{ count }} more comments - {{ unread }} unread",
     "show_more_comments": "Show {{ count }} more comments"
   },
   "checking_overview": {
     "answers": "Answers",
-    "comments": "Comments",
+    "comments": "نظرات",
     "likes": "Likes",
     "loading_questions": "Loading questions...",
     "manage_questions": "Manage questions",
     "my_contributions": "My contributions",
     "my_progress": "My progress",
     "project_stats": "Project stats",
-    "questions": "Questions",
-    "tooltip_edit": "Edit"
+    "questions": "سؤالات",
+    "tooltip_edit": "ویرایش"
   },
   "checking_questions": {
     "go_to": "Go to questions",
     "listen_to_question": "Listen to the question for {{ referenceForDisplay }}",
-    "loading": "Loading...",
+    "loading": "در حال بارگیری...",
     "no_questions_found": "No questions found for the settings above.",
     "scripture_audio_label": "Listen to {{ referenceForDisplay }} to answer the question that follows.",
     "view_answers": "View answers"
   },
   "edit_name_dialog": {
-    "cancel": "Cancel",
+    "cancel": "لغو",
     "confirm_name": "Confirm the name that other people will see when you post answers and comments",
     "confirm_your_name": "Confirm your name",
-    "confirm": "Confirm",
+    "confirm": "تأیید کن",
     "connect_to_edit_name": "Please connect to the internet to edit your name",
     "enter_name": "Enter the name you want other people to see",
     "update_your_name": "Update your name",
-    "update": "Update",
-    "your_name": "Name"
+    "update": "به روز رسانی",
+    "your_name": "نام"
   },
   "error": {
     "chrome": "Chrome",
-    "close": "Close",
+    "close": "بستن",
     "error_id": "Error ID: {{ errorId }}",
     "error_occurred": "An error has occurred",
     "firefox": "Firefox",
@@ -338,7 +338,7 @@
     "firefox_private_browsing_or_no_space": "Something went wrong. Please check that you are not using Firefox in the unsupported private browsing mode and that your device has the recommended 500 MB of free space.",
     "network_request_failed": "A network request failed. Some functionality may be unavailable.",
     "out_of_space": "An error occurred because your device is out of storage space.",
-    "unknown_error": "Unknown error"
+    "unknown_error": "خطای ناشناخته"
   },
   "file_service": {
     "failed_to_save": "Failed to save your changes. Please check that you have the recommended 500 MB of free space on your device.",
@@ -349,7 +349,7 @@
     "text_size": "Text size"
   },
   "global_notices": {
-    "close": "Close",
+    "close": "بستن",
     "hour_range": "{{ min }} to {{ max }} hours",
     "learn_more": "Learn more",
     "minute_range": "{{ min }} to {{ max }} minutes",
@@ -358,7 +358,7 @@
   "issue_email": {
     "heading": "Please explain the problem.",
     "technical_details": "Technical details",
-    "unknown": "Unknown"
+    "unknown": "ناشناخته"
   },
   "join": {
     "error_occurred_login": "An error occurred trying to join the project",
@@ -372,11 +372,11 @@
     "please_connect_to_use_link": "Please connect to the internet to join a project using a link.",
     "project_link_is_invalid": "The project link is invalid. Please contact the person who sent you the link and ask for a new one.",
     "role_not_found": "The role you were assigned on this project is no longer available. Please contact the person who sent you the link and ask for a new one.",
-    "your_name": "Name"
+    "your_name": "نام"
   },
   "dialog": {
-    "cancel": "Cancel",
-    "close": "Close"
+    "cancel": "لغو",
+    "close": "بستن"
   },
   "my_projects": {
     "access_another_project": "If you don't see a project you are expecting, you may need to receive an invitation to the project. Or, if you use Paratext, you can log out and log back in using 'Log in with Paratext', and connect to your Paratext projects.",
@@ -399,7 +399,7 @@
     "offline": "You will need to connect to the internet to get started with a project.",
     "offline_update": "You will need to connect to the internet to update your project.",
     "offline-accessible": "Offline Access",
-    "open": "Open",
+    "open": "باز کردن",
     "problem_getting_pt_list": "There was a problem getting the list of available Paratext projects to connect to. If this continues to happen, and logging out and back in does not fix the problem, please report the issue for help.",
     "update_role": "Update role",
     "updated_roles": "Updated roles",
@@ -427,7 +427,7 @@
     "email_sharing": "Send an email invite below or share a link using your preferred communication platform.",
     "email": "Email",
     "invitation_language": "Invitation language",
-    "invitation_role": "Role",
+    "invitation_role": "نقش",
     "invitation_sent": "An invitation email has been sent to {{ email }}",
     "invite_people": "Invite people",
     "invite_people_intro": "You can invite people outside of Paratext to help contribute to your project.",
@@ -443,13 +443,13 @@
     "share_text_single": "Hello, I want to invite you to join the {{ projectName }} project on {{ siteName }}.\nJust click the link below, choose how to log in, and you will be ready to start.",
     "share_a_link": "Share a link",
     "share_title": "You've been invited to the project {{ projectName }} on {{ siteName }}",
-    "send": "Send",
+    "send": "فرستادن",
     "share_not_available_offline": "Inviting is unavailable while offline."
   },
   "share_dialog": {
     "anyone": "Anyone with the link",
     "anyone_can": "Anyone with the link can",
-    "change": "change",
+    "change": "تغییر دادن",
     "copy_link": "Copy link",
     "days_seven": "7 days",
     "days_fourteen": "14 days",
@@ -484,13 +484,13 @@
   "text": {
     "book_does_not_exist": "This book does not exist.",
     "book_is_empty": "This book is empty. Add chapters in Paratext.",
-    "loading": "Loading...",
+    "loading": "در حال بارگیری...",
     "not_available_offline": "This text is not available offline. Connect to the Internet to see the text.",
     "permission_denied": "You do not have permission to view this text. Please contact the project's administrator to get permission."
   },
   "text_chooser_dialog": {
-    "cancel": "Cancel",
-    "save": "Save",
+    "cancel": "لغو",
+    "save": "ذخیره",
     "select_scripture": "Select scripture to attach to your answer",
     "select_text_error_message": "Select verses to attach to your answer."
   }
