@@ -5622,7 +5622,8 @@ public class ParatextServiceTests
         string paratextId = env.PTProjectIds[env.Project01].ToString();
 
         // SUT
-        Assert.Throws<ForbiddenException>(() => env.Service.ConvertUsxToUsfm(userSecret, paratextId, 8, env.RuthBookUsx)
+        Assert.Throws<ForbiddenException>(() =>
+            env.Service.ConvertUsxToUsfm(userSecret, paratextId, 8, env.RuthBookUsx)
         );
     }
 
