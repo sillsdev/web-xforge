@@ -163,6 +163,7 @@ export function getEmptyChapterDoc(id: TextDocId, modelHasBlanks: boolean): Text
   if (modelHasBlanks) delta.insert({ blank: true }, { segment: 'p_2' });
   delta.insert({ verse: { number: '3', style: 'v' } });
   if (modelHasBlanks) delta.insert({ blank: true }, { segment: 'verse_1_3' });
+  // The double \n represents the blank segments for verse_1_3 and p_2
   delta.insert('\n\n', { para: { style: 'p' } });
   return delta;
 }
