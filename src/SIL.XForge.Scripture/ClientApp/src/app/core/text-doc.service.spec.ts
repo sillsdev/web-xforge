@@ -80,7 +80,6 @@ describe('TextDocService', () => {
     it('should return true if the project and user are correctly configured', () => {
       const env = new TestEnvironment();
       const project = createTestProjectProfile({
-        editingRequires: EditingRequires.ParatextEditingEnabled | EditingRequires.ViewModelBlankSupport,
         sync: { dataInSync: true },
         texts: [
           { bookNum: 1, chapters: [{ number: 1, isValid: true, permissions: { user01: TextInfoPermission.Write } }] }
@@ -106,7 +105,6 @@ describe('TextDocService', () => {
     it('should return false if user does not have general edit right', () => {
       const env = new TestEnvironment();
       const project = createTestProjectProfile({
-        editingRequires: EditingRequires.ParatextEditingEnabled | EditingRequires.ViewModelBlankSupport,
         sync: { dataInSync: true },
         texts: [
           { bookNum: 1, chapters: [{ number: 1, isValid: true, permissions: { user01: TextInfoPermission.Write } }] }
@@ -122,7 +120,6 @@ describe('TextDocService', () => {
     it('should return false if user does not have chapter edit permission', () => {
       const env = new TestEnvironment();
       const project = createTestProjectProfile({
-        editingRequires: EditingRequires.ParatextEditingEnabled | EditingRequires.ViewModelBlankSupport,
         sync: { dataInSync: true },
         texts: [
           { bookNum: 1, chapters: [{ number: 1, isValid: true, permissions: { user01: TextInfoPermission.Read } }] }
@@ -138,7 +135,6 @@ describe('TextDocService', () => {
     it('should return false if data is not in sync', () => {
       const env = new TestEnvironment();
       const project = createTestProjectProfile({
-        editingRequires: EditingRequires.ParatextEditingEnabled | EditingRequires.ViewModelBlankSupport,
         sync: { dataInSync: false },
         texts: [
           { bookNum: 1, chapters: [{ number: 1, isValid: true, permissions: { user01: TextInfoPermission.Write } }] }
@@ -170,7 +166,6 @@ describe('TextDocService', () => {
     it('should return true if all conditions are met', () => {
       const env = new TestEnvironment();
       const project = createTestProjectProfile({
-        editingRequires: EditingRequires.ParatextEditingEnabled | EditingRequires.ViewModelBlankSupport,
         sync: { dataInSync: true },
         texts: [
           { bookNum: 1, chapters: [{ number: 1, isValid: true, permissions: { user01: TextInfoPermission.Write } }] }
@@ -242,9 +237,7 @@ describe('TextDocService', () => {
 
     it('should return false if the project is editable', () => {
       const env = new TestEnvironment();
-      const project = createTestProjectProfile({
-        editingRequires: EditingRequires.ParatextEditingEnabled | EditingRequires.ViewModelBlankSupport
-      });
+      const project = createTestProjectProfile();
 
       // SUT
       const actual: boolean = env.textDocService.isEditingDisabled(project);
@@ -260,7 +253,7 @@ describe('TextDocService', () => {
       expect(actual).toBe(true);
     });
 
-    it('should return true if the project is has been upgraded to a version beyond the supported version', () => {
+    it('should return true if the project has been upgraded to a version beyond the supported version', () => {
       const env = new TestEnvironment();
       const project = createTestProjectProfile({
         editingRequires: Number.MAX_SAFE_INTEGER
@@ -271,7 +264,7 @@ describe('TextDocService', () => {
       expect(actual).toBe(true);
     });
 
-    it('should return true if the project is has not been upgraded to view model support', () => {
+    it('should return true if the project has not been upgraded to view model support', () => {
       const env = new TestEnvironment();
       const project = createTestProjectProfile({
         editingRequires: EditingRequires.ParatextEditingEnabled
