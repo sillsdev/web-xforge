@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -11,6 +12,7 @@ using Autofac.Extras.DynamicProxy;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
@@ -38,9 +40,11 @@ namespace SIL.XForge.Scripture.Services;
 public class MachineProjectService(
     ICorporaClient corporaClient,
     IDataFilesClient dataFilesClient,
+    IEmailService emailService,
     IWebHostEnvironment env,
     IExceptionHandler exceptionHandler,
     IFileSystemService fileSystemService,
+    IStringLocalizer<SharedResource> localizer,
     ILogger<MachineProjectService> logger,
     IParatextService paratextService,
     IRepository<SFProjectSecret> projectSecrets,
@@ -140,6 +144,18 @@ public class MachineProjectService(
                 },
                 cancellationToken: cancellationToken
             );
+
+            // Send the cancellation email, if specified
+            if (buildConfig.SendEmailOnBuildFinished)
+            {
+                await SendBuildCompletedEmailAsync(
+                    curUserId,
+                    buildConfig.ProjectId,
+                    buildId: null,
+                    buildState: nameof(JobState.Canceled),
+                    websiteUrl: new Uri(siteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+                );
+            }
         }
         catch (ServalApiException e) when (e.StatusCode == 409)
         {
@@ -161,10 +177,23 @@ public class MachineProjectService(
                 },
                 cancellationToken: cancellationToken
             );
+
+            // Send the cancellation email, if specified
+            if (buildConfig.SendEmailOnBuildFinished)
+            {
+                await SendBuildCompletedEmailAsync(
+                    curUserId,
+                    buildConfig.ProjectId,
+                    buildId: null,
+                    buildState: nameof(JobState.Canceled),
+                    websiteUrl: new Uri(siteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+                );
+            }
         }
         catch (DataNotFoundException e)
         {
-            // This will occur if the project is deleted while the job is running
+            // This will occur if the project is deleted while the job is running.
+            // Do not send a failure email, as the project will not exist for us to do that.
             string message =
                 $"Build DataNotFoundException occurred for project {buildConfig.ProjectId.Sanitize()}"
                 + " running in background job.";
@@ -199,6 +228,18 @@ public class MachineProjectService(
                 },
                 cancellationToken: cancellationToken
             );
+
+            // Send the failure email, if specified
+            if (buildConfig.SendEmailOnBuildFinished)
+            {
+                await SendBuildCompletedEmailAsync(
+                    curUserId,
+                    buildConfig.ProjectId,
+                    buildId: null,
+                    buildState: nameof(JobState.Faulted),
+                    websiteUrl: new Uri(siteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+                );
+            }
         }
     }
 
@@ -380,6 +421,53 @@ public class MachineProjectService(
             },
             cancellationToken: cancellationToken
         );
+    }
+
+    public async Task SendBuildCompletedEmailAsync(
+        string curUserId,
+        string sfProjectId,
+        string? buildId,
+        string buildState,
+        Uri websiteUrl
+    )
+    {
+        // Get the user who requested the build
+        await using IConnection conn = await realtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
+        IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
+        if (projectDoc.IsLoaded && userDoc.IsLoaded && emailService.ValidateEmail(userDoc.Data.Email))
+        {
+            // Set the locale for the email
+            CultureInfo.CurrentUICulture = new CultureInfo(userDoc.Data.InterfaceLanguage);
+
+            // Build the email
+            string resourceKeySubject =
+                buildState == nameof(JobState.Completed)
+                    ? SharedResource.Keys.DraftGeneratedEmailSubject
+                    : SharedResource.Keys.DraftNotGeneratedEmailSubject;
+            string subject = localizer[resourceKeySubject, siteOptions.Value.Name];
+            string resourceKeyBody = buildState switch
+            {
+                nameof(JobState.Completed) => SharedResource.Keys.DraftGeneratedEmailBody,
+                nameof(JobState.Canceled) => SharedResource.Keys.DraftCanceledEmailBody,
+                _ => SharedResource.Keys.DraftFailedEmailBody,
+            };
+            string url = $"{websiteUrl.ToString().TrimEnd('/')}/projects/{sfProjectId}/draft-generation";
+            string body =
+                $"<p>{localizer[resourceKeyBody, projectDoc.Data.ShortName]}</p>"
+                + $"<p>{localizer[SharedResource.Keys.DraftEmailMoreInformation, url]}</p>";
+            await emailService.SendEmailAsync(userDoc.Data.Email, subject, body);
+        }
+        else
+        {
+            logger.LogError(
+                "An email was requested for build {buildId} on project {projectId},"
+                    + " but the user {userId} was not found",
+                buildId?.Sanitize() ?? "N/A",
+                sfProjectId.Sanitize(),
+                curUserId.Sanitize()
+            );
+        }
     }
 
     /// <summary>
