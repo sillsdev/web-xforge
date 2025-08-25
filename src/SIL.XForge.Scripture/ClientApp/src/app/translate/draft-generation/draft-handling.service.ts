@@ -204,7 +204,15 @@ export class DraftHandlingService {
     const verseOps: DeltaOperation[] = draftDelta.ops.filter(
       op => typeof op.insert === 'object' && op.insert.verse != null
     );
-    const lastVerse: number = verseOps.length > 0 ? (verseOps[verseOps.length - 1].insert!['verse']['number'] ?? 0) : 0;
+
+    let lastVerse: number = 0;
+    if (verseOps.length > 0 && verseOps[verseOps.length - 1].insert!['verse']['number'] != null) {
+      let lastVerseStr: string = verseOps[verseOps.length - 1].insert!['verse']['number'].toString();
+      if (lastVerseStr.includes('-')) {
+        lastVerseStr = lastVerseStr.split('-')[1];
+      }
+      lastVerse = parseInt(lastVerseStr, 10);
+    }
     await this.projectService.onlineSetDraftApplied(
       textDocId.projectId,
       textDocId.bookNum,

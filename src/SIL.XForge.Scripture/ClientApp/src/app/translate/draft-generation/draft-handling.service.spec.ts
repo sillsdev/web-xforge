@@ -401,6 +401,48 @@ describe('DraftHandlingService', () => {
       ).once();
       expect().nothing();
     });
+
+    it('should apply draft to text doc with verse letter', async () => {
+      const textDocId = new TextDocId('project01', 1, 1);
+      const draftOps: DeltaOperation[] = [
+        { insert: { verse: { number: '1a' } } },
+        { insert: 'In the beginning', attributes: { segment: 'verse_1_1a' } }
+      ];
+      when(mockedTextDocService.canRestore(anything(), 1, 1)).thenReturn(true);
+      await service.applyChapterDraftAsync(textDocId, new Delta(draftOps));
+      verify(mockedTextDocService.overwrite(textDocId, anything(), 'Draft')).once();
+      verify(
+        mockedProjectService.onlineSetDraftApplied(
+          textDocId.projectId,
+          textDocId.bookNum,
+          textDocId.chapterNum,
+          true,
+          1
+        )
+      ).once();
+      expect().nothing();
+    });
+
+    it('should apply draft to text doc with verse range', async () => {
+      const textDocId = new TextDocId('project01', 1, 1);
+      const draftOps: DeltaOperation[] = [
+        { insert: { verse: { number: '1-2' } } },
+        { insert: 'In the beginning', attributes: { segment: 'verse_1_1-2' } }
+      ];
+      when(mockedTextDocService.canRestore(anything(), 1, 1)).thenReturn(true);
+      await service.applyChapterDraftAsync(textDocId, new Delta(draftOps));
+      verify(mockedTextDocService.overwrite(textDocId, anything(), 'Draft')).once();
+      verify(
+        mockedProjectService.onlineSetDraftApplied(
+          textDocId.projectId,
+          textDocId.bookNum,
+          textDocId.chapterNum,
+          true,
+          2
+        )
+      ).once();
+      expect().nothing();
+    });
   });
 
   describe('getAndApplyDraftAsync', () => {
