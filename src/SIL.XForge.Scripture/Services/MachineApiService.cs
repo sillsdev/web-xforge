@@ -1970,6 +1970,14 @@ public class MachineApiService(
                 new ProjectScriptureRange { ScriptureRange = draftConfig.LastSelectedTranslationScriptureRange }
             );
         }
+
+        // Add training data files
+        buildDto.AdditionalInfo.TrainingDataFileIds.Clear();
+        foreach (string trainingFileDataId in draftConfig.LastSelectedTrainingDataFiles)
+        {
+            buildDto.AdditionalInfo.TrainingDataFileIds.Add(trainingFileDataId);
+        }
+
         return buildDto;
     }
 
@@ -2018,6 +2026,13 @@ public class MachineApiService(
             buildDto.AdditionalInfo.TranslationScriptureRanges.Add(
                 new ProjectScriptureRange { ScriptureRange = buildConfig.TranslationScriptureRange }
             );
+        }
+
+        // Add training data files
+        buildDto.AdditionalInfo.TrainingDataFileIds.Clear();
+        foreach (string trainingFileDataId in buildConfig.TrainingDataFiles)
+        {
+            buildDto.AdditionalInfo.TrainingDataFileIds.Add(trainingFileDataId);
         }
 
         return buildDto;

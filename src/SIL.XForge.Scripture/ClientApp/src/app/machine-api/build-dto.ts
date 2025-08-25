@@ -23,5 +23,6 @@ export interface ServalBuildAdditionalInfo {
   trainingScriptureRanges: ProjectScriptureRange[];
   translationEngineId: string;
   translationScriptureRanges: ProjectScriptureRange[];
+  trainingDataFileIds: string[];
   requestedByUserId?: string;
 }
