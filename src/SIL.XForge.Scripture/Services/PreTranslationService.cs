@@ -202,6 +202,14 @@ public class PreTranslationService(
                 ParagraphBreakFormat.MoveToEnd => PretranslationUsfmMarkerBehavior.Preserve,
                 _ => PretranslationUsfmMarkerBehavior.Preserve,
             },
+            /*
+            quoteBehavior: config.QuoteFormat switch
+            {
+                QuoteStyle.Automatic => PretranslationQuoteFormat.Automatic,
+                QuoteStyle.Straight => PretranslationQuoteFormat.Straight,
+                _ => PretranslationQuoteFormat.Automatic,
+            },
+            */
             cancellationToken: cancellationToken
         );
 

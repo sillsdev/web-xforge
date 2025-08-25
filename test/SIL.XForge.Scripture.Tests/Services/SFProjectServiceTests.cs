@@ -3938,15 +3938,21 @@ public class SFProjectServiceTests
             project.TranslateConfig.DraftConfig.UsfmConfig.ParagraphFormat,
             Is.EqualTo(ParagraphBreakFormat.BestGuess)
         );
+        Assert.That(project.TranslateConfig.DraftConfig.UsfmConfig.QuoteFormat, Is.EqualTo(QuoteStyle.Automatic));
 
         // SUT
-        DraftUsfmConfig config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.Remove };
+        DraftUsfmConfig config = new DraftUsfmConfig
+        {
+            ParagraphFormat = ParagraphBreakFormat.Remove,
+            QuoteFormat = QuoteStyle.Straight,
+        };
         await env.Service.SetUsfmConfigAsync(User01, Project01, config);
         project = env.GetProject(Project01);
         Assert.That(
             project.TranslateConfig.DraftConfig.UsfmConfig.ParagraphFormat,
             Is.EqualTo(ParagraphBreakFormat.Remove)
         );
+        Assert.That(project.TranslateConfig.DraftConfig.UsfmConfig.QuoteFormat, Is.EqualTo(QuoteStyle.Straight));
     }
 
     [Test]
