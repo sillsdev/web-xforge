@@ -36,4 +36,8 @@ public class SFProjectSettings
     public bool? CheckingShareEnabled { get; set; }
     public string? CheckingAnswerExport { get; set; }
     public bool? HideCommunityCheckingText { get; set; }
+
+    // lynx settings
+    public bool? LynxAutoCorrectionsEnabled { get; set; }
+    public bool? LynxAssessmentsEnabled { get; set; }
 }

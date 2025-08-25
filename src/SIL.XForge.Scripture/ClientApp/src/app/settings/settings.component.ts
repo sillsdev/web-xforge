@@ -16,6 +16,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
+
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -48,6 +49,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   communityCheckersShareEnabled = new FormControl(false);
   commentersShareEnabled = new FormControl(false);
   viewersShareEnabled = new FormControl(false);
+  lynxAutoCorrectionsEnabled = new FormControl(false);
+  lynxAssessmentsEnabled = new FormControl(false);
 
   // Expose enums to the template
   CheckingAnswerExport = CheckingAnswerExport;
@@ -65,7 +68,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     translatorsShareEnabled: this.translatorsShareEnabled,
     communityCheckersShareEnabled: this.communityCheckersShareEnabled,
     commentersShareEnabled: this.commentersShareEnabled,
-    viewersShareEnabled: this.viewersShareEnabled
+    viewersShareEnabled: this.viewersShareEnabled,
+    lynxAutoCorrectionsEnabled: this.lynxAutoCorrectionsEnabled,
+    lynxAssessmentsEnabled: this.lynxAssessmentsEnabled
   });
 
   isActiveSourceProject: boolean = false;
@@ -358,6 +363,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.updateSharingSetting(newValue, 'communityCheckersShareEnabled', SFProjectRole.CommunityChecker);
     this.updateSharingSetting(newValue, 'commentersShareEnabled', SFProjectRole.Commenter);
     this.updateSharingSetting(newValue, 'viewersShareEnabled', SFProjectRole.Viewer);
+
+    // Update Lynx settings
+    this.updateLynxSettings(newValue);
   }
 
   private settingChanged(
@@ -420,6 +428,15 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     }
   }
 
+  private updateLynxSettings(newValue: SFProjectSettings): void {
+    if (this.settingChanged(newValue, 'lynxAutoCorrectionsEnabled')) {
+      this.updateSetting(newValue, 'lynxAutoCorrectionsEnabled');
+    }
+    if (this.settingChanged(newValue, 'lynxAssessmentsEnabled')) {
+      this.updateSetting(newValue, 'lynxAssessmentsEnabled');
+    }
+  }
+
   private checkUpdateStatus(setting: keyof SFProjectSettings, updatePromise: Promise<void>): void {
     this.controlStates.set(setting, ElementState.Submitting);
     updatePromise
@@ -455,7 +472,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
         this.projectDoc.data.rolePermissions[SFProjectRole.Viewer]?.includes(
           SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)
         ) === true,
-      checkingAnswerExport: this.projectDoc.data.checkingConfig.answerExportMethod ?? CheckingAnswerExport.All
+      checkingAnswerExport: this.projectDoc.data.checkingConfig.answerExportMethod ?? CheckingAnswerExport.All,
+      lynxAutoCorrectionsEnabled: this.projectDoc.data.lynxConfig.autoCorrectionsEnabled,
+      lynxAssessmentsEnabled: this.projectDoc.data.lynxConfig.assessmentsEnabled
     };
     this.form.reset(this.previousFormValues);
     this.setIndividualControlDisabledStates();
@@ -489,6 +508,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.controlStates.set('communityCheckersShareEnabled', ElementState.InSync);
     this.controlStates.set('commentersShareEnabled', ElementState.InSync);
     this.controlStates.set('viewersShareEnabled', ElementState.InSync);
+    this.controlStates.set('lynxAutoCorrectionsEnabled', ElementState.InSync);
+    this.controlStates.set('lynxAssessmentsEnabled', ElementState.InSync);
   }
 
   private updateNonSelectableProjects(): void {

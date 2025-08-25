@@ -453,6 +453,24 @@ class SFProjectMigration24 extends DocMigration {
   }
 }
 
+class SFProjectMigration25 extends DocMigration {
+  static readonly VERSION = 25;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops: Op[] = [];
+    if (doc.data.lynxConfig == null) {
+      ops.push({ p: ['lynxConfig'], oi: {} });
+    }
+    if (doc.data.lynxConfig?.autoCorrectionsEnabled == null) {
+      ops.push({ p: ['lynxConfig', 'autoCorrectionsEnabled'], oi: false });
+    }
+    if (doc.data.lynxConfig?.assessmentsEnabled == null) {
+      ops.push({ p: ['lynxConfig', 'assessmentsEnabled'], oi: false });
+    }
+    await submitMigrationOp(SFProjectMigration25.VERSION, doc, ops);
+  }
+}
+
 export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = monotonicallyIncreasingMigrationList([
   SFProjectMigration1,
   SFProjectMigration2,
@@ -477,5 +495,6 @@ export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = monotonicallyIncrea
   SFProjectMigration21,
   SFProjectMigration22,
   SFProjectMigration23,
-  SFProjectMigration24
+  SFProjectMigration24,
+  SFProjectMigration25
 ]);

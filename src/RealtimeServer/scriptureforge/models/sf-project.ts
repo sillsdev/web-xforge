@@ -4,6 +4,7 @@ import { WritingSystem } from '../../common/models/writing-system';
 import { obj } from '../../common/utils/obj-path';
 import { BiblicalTermsConfig } from './biblical-terms-config';
 import { CheckingConfig } from './checking-config';
+import { LynxConfig } from './lynx-config';
 import { NoteTag } from './note-tag';
 import { ParatextUserProfile } from './paratext-user-profile';
 import { Sync } from './sync';
@@ -38,6 +39,7 @@ export interface SFProjectProfile extends Project {
   translateConfig: TranslateConfig;
   checkingConfig: CheckingConfig;
   resourceConfig?: ResourceConfig;
+  lynxConfig: LynxConfig;
   texts: TextInfo[];
   noteTags?: NoteTag[];
   sync: Sync;

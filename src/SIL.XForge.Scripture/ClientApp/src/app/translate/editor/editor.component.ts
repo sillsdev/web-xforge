@@ -73,7 +73,6 @@ import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
@@ -219,7 +218,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   multiCursorViewers: MultiCursorViewer[] = [];
   target: TextComponent | undefined;
   draftTimestamp?: Date;
-  showInsights = false;
+  lynxInsightsEnabled = false;
+  lynxAutoCorrectionsEnabled = false;
 
   @ViewChild('source') source?: TextComponent;
   @ViewChild('fabButton', { read: ElementRef }) insertNoteFab?: ElementRef<HTMLElement>;
@@ -314,7 +314,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly breakpointObserver: BreakpointObserver,
     private readonly mediaBreakpointService: MediaBreakpointService,
     private readonly permissionsService: PermissionsService,
-    private readonly featureFlagService: FeatureFlagService,
     readonly editorInsightState: LynxInsightStateService
   ) {
     super(noticeService);
@@ -691,12 +690,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       )
       .subscribe();
 
-    // Show insights only if the feature flag is enabled and the user has chapter edit permissions
-    combineLatest([this.featureFlagService.enableLynxInsights.enabled$, this.hasChapterEditPermission$])
+    // Show insights only if the feature flag is enabled, user has chapter edit permissions and assessments are enabled
+    combineLatest([
+      this.hasChapterEditPermission$.pipe(filterNullish()),
+      this.activatedProject.changes$.pipe(map(projectDoc => projectDoc?.data?.lynxConfig))
+    ])
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(([ffEnabled, hasEditPermission]) => {
-        this.showInsights = ffEnabled && !!hasEditPermission && this.isUsfmValid;
-        return this.showInsights;
+      .subscribe(([hasEditPermission, lynxConfig]) => {
+        const canEdit: boolean = hasEditPermission && this.isUsfmValid;
+        this.lynxInsightsEnabled = canEdit && (lynxConfig?.assessmentsEnabled ?? false);
+        this.lynxAutoCorrectionsEnabled = canEdit && (lynxConfig?.autoCorrectionsEnabled ?? false);
       });
   }
 

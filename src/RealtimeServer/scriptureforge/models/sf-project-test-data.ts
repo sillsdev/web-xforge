@@ -44,6 +44,10 @@ function testProjectProfile(ordinal: number): SFProjectProfile {
       biblicalTermsEnabled: false,
       hasRenderings: false
     },
+    lynxConfig: {
+      autoCorrectionsEnabled: false,
+      assessmentsEnabled: false
+    },
     editable: true,
     defaultFontSize: 12,
     defaultFont: 'Charis SIL',

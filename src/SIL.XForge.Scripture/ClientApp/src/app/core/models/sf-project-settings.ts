@@ -26,4 +26,7 @@ export interface SFProjectSettings {
   communityCheckersShareEnabled?: boolean | null;
   commentersShareEnabled?: boolean | null;
   viewersShareEnabled?: boolean | null;
+
+  lynxAutoCorrectionsEnabled?: boolean | null;
+  lynxAssessmentsEnabled?: boolean | null;
 }

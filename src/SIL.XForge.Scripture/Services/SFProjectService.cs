@@ -556,6 +556,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             UpdateSetting(op, p => p.CheckingConfig.UsersSeeEachOthersResponses, settings.UsersSeeEachOthersResponses);
             UpdateSetting(op, p => p.CheckingConfig.AnswerExportMethod, settings.CheckingAnswerExport);
             UpdateSetting(op, p => p.CheckingConfig.HideCommunityCheckingText, settings.HideCommunityCheckingText);
+
+            UpdateSetting(op, p => p.LynxConfig.AutoCorrectionsEnabled, settings.LynxAutoCorrectionsEnabled);
+            UpdateSetting(op, p => p.LynxConfig.AssessmentsEnabled, settings.LynxAssessmentsEnabled);
         });
 
         bool suggestionsEnabledSet = settings.TranslationSuggestionsEnabled != null;
