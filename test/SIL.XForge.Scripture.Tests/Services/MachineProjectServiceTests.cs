@@ -8,7 +8,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using NSubstitute;
@@ -25,6 +27,7 @@ using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
+using Options = Microsoft.Extensions.Options.Options;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -359,6 +362,90 @@ public class MachineProjectServiceTests
         await env
             .Service.Received(1)
             .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task BuildProjectForBackgroundJobAsync_SendsEmailForBuildInProgressErrors()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        ServalApiException ex = ServalApiExceptions.BuildInProgress;
+        var buildConfig = new BuildConfig { ProjectId = Project01, SendEmailOnBuildFinished = true };
+        env.Service.Configure()
+            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .ThrowsAsync(ex);
+
+        // A pre-translation job has been queued
+        await env.SetupProjectSecretAsync(
+            Project01,
+            new ServalData { PreTranslationJobId = Job01, PreTranslationQueuedAt = DateTime.UtcNow }
+        );
+
+        // SUT
+        await env.Service.BuildProjectForBackgroundJobAsync(
+            User01,
+            buildConfig,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Test]
+    public async Task BuildProjectForBackgroundJobAsync_SendsEmailForTaskCancellationErrors()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var ex = new TaskCanceledException();
+        var buildConfig = new BuildConfig { ProjectId = Project01, SendEmailOnBuildFinished = true };
+        env.Service.Configure()
+            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .ThrowsAsync(ex);
+
+        // A pre-translation job has been queued
+        await env.SetupProjectSecretAsync(
+            Project01,
+            new ServalData { PreTranslationJobId = Job01, PreTranslationQueuedAt = DateTime.UtcNow }
+        );
+
+        // SUT
+        await env.Service.BuildProjectForBackgroundJobAsync(
+            User01,
+            buildConfig,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Test]
+    public async Task BuildProjectForBackgroundJobAsync_SendsEmailForUnexpectedErrors()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var ex = new NotSupportedException();
+        var buildConfig = new BuildConfig { ProjectId = Project01, SendEmailOnBuildFinished = true };
+        env.Service.Configure()
+            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .ThrowsAsync(ex);
+
+        // A pre-translation job has been queued
+        await env.SetupProjectSecretAsync(
+            Project01,
+            new ServalData { PreTranslationJobId = Job01, PreTranslationQueuedAt = DateTime.UtcNow }
+        );
+
+        // SUT
+        await env.Service.BuildProjectForBackgroundJobAsync(
+            User01,
+            buildConfig,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
     }
 
     [Test]
@@ -2727,6 +2814,70 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task SendBuildCompletedEmailAsync_InvalidEmail()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.EmailService.ValidateEmail(Arg.Any<string>()).Returns(false);
+
+        // SUT
+        await env.Service.SendBuildCompletedEmailAsync(
+            User01,
+            Project01,
+            Build01,
+            nameof(JobState.Completed),
+            new Uri(env.SiteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+        );
+        await env.EmailService.DidNotReceive().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.LogLevel == LogLevel.Error);
+    }
+
+    [Test]
+    public async Task SendBuildCompletedEmailAsync_OtherLanguage()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.Users.Get(User01).InterfaceLanguage = "ar";
+
+        // SUT
+        await env.Service.SendBuildCompletedEmailAsync(
+            User01,
+            Project01,
+            Build01,
+            nameof(JobState.Completed),
+            new Uri(env.SiteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+        );
+        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [TestCase(nameof(JobState.Canceled))]
+    [TestCase(nameof(JobState.Completed))]
+    [TestCase(nameof(JobState.Faulted))]
+    public async Task SendBuildCompletedEmailAsync_Success(string buildState)
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.Users.Add(
+            new User
+            {
+                Id = User01,
+                Email = "test@example.com",
+                InterfaceLanguage = "en",
+            }
+        );
+
+        // SUT
+        await env.Service.SendBuildCompletedEmailAsync(
+            User01,
+            Project01,
+            Build01,
+            buildState,
+            new Uri(env.SiteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+        );
+        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Test]
     public async Task SyncAdditionalTrainingData_RemoveAdditionalTrainingDataWithoutParallelCorpus()
     {
         // Set up test environment
@@ -4122,8 +4273,14 @@ public class MachineProjectServiceTests
                 ]
             );
 
-            var siteOptions = Substitute.For<IOptions<SiteOptions>>();
-            siteOptions.Value.Returns(new SiteOptions { SiteDir = "xForge" });
+            SiteOptions = Options.Create(
+                new SiteOptions
+                {
+                    Name = "Scripture Forge",
+                    Origin = "https://localhost:5000",
+                    SiteDir = "xForge",
+                }
+            );
             var userSecrets = new MemoryRepository<UserSecret>([new UserSecret { Id = User01 }]);
 
             Projects = new MemoryRepository<SFProject>(
@@ -4238,23 +4395,43 @@ public class MachineProjectServiceTests
 
             TrainingDataService = Substitute.For<ITrainingDataService>();
             TrainingData = new MemoryRepository<TrainingData>();
+            Users = new MemoryRepository<User>(
+                [
+                    new User
+                    {
+                        Id = User01,
+                        Email = "test@example.com",
+                        InterfaceLanguage = "en",
+                    },
+                ]
+            );
 
             RealtimeService = new SFMemoryRealtimeService();
             RealtimeService.AddRepository("sf_projects", OTType.Json0, Projects);
             RealtimeService.AddRepository("training_data", OTType.Json0, TrainingData);
+            RealtimeService.AddRepository("users", OTType.Json0, Users);
+
+            // Configure services for sending build emails
+            EmailService = Substitute.For<IEmailService>();
+            EmailService.ValidateEmail(Arg.Any<string>()).Returns(true);
+            var localizationOptions = Options.Create(new LocalizationOptions { ResourcesPath = "Resources" });
+            var factory = new ResourceManagerStringLocalizerFactory(localizationOptions, NullLoggerFactory.Instance);
+            Localizer = new StringLocalizer<SharedResource>(factory);
 
             // We use this so we can mock any virtual methods in the class
             Service = Substitute.ForPartsOf<MachineProjectService>(
                 CorporaClient,
                 DataFilesClient,
+                EmailService,
                 Environment,
                 ExceptionHandler,
                 FileSystemService,
+                Localizer,
                 MockLogger,
                 ParatextService,
                 ProjectSecrets,
                 RealtimeService,
-                siteOptions,
+                SiteOptions,
                 TrainingDataService,
                 TranslationEnginesClient,
                 userSecrets
@@ -4264,17 +4441,21 @@ public class MachineProjectServiceTests
         public MachineProjectService Service { get; }
         public ICorporaClient CorporaClient { get; }
         public IDataFilesClient DataFilesClient { get; }
+        public IEmailService EmailService { get; }
         public IWebHostEnvironment Environment { get; }
+        public IExceptionHandler ExceptionHandler { get; }
         public IFileSystemService FileSystemService { get; }
+        public IStringLocalizer<SharedResource> Localizer { get; }
+        public MockLogger<MachineProjectService> MockLogger { get; }
         public IParatextService ParatextService { get; }
-        public SFMemoryRealtimeService RealtimeService { get; }
-        public ITranslationEnginesClient TranslationEnginesClient { get; }
-        private MemoryRepository<TrainingData> TrainingData { get; }
-        public ITrainingDataService TrainingDataService { get; }
         public MemoryRepository<SFProject> Projects { get; }
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
-        public MockLogger<MachineProjectService> MockLogger { get; }
-        public IExceptionHandler ExceptionHandler { get; }
+        public SFMemoryRealtimeService RealtimeService { get; }
+        public IOptions<SiteOptions> SiteOptions { get; }
+        private MemoryRepository<TrainingData> TrainingData { get; }
+        public ITrainingDataService TrainingDataService { get; }
+        public ITranslationEnginesClient TranslationEnginesClient { get; }
+        public MemoryRepository<User> Users { get; }
 
         /// <summary>
         /// Asserts whether the correct API calls have bene made for SyncProjectCorporaAsync.

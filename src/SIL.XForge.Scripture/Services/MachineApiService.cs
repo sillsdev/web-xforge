@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -10,7 +9,6 @@ using System.Xml.Linq;
 using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
@@ -38,13 +36,12 @@ namespace SIL.XForge.Scripture.Services;
 public class MachineApiService(
     IBackgroundJobClient backgroundJobClient,
     IDeltaUsxMapper deltaUsxMapper,
-    IEmailService emailService,
     IEventMetricService eventMetricService,
     IExceptionHandler exceptionHandler,
     IHttpRequestAccessor httpRequestAccessor,
     IHubContext<NotificationHub, INotifier> hubContext,
-    IStringLocalizer<SharedResource> localizer,
     ILogger<MachineApiService> logger,
+    IMachineProjectService machineProjectService,
     IParatextService paratextService,
     IPreTranslationService preTranslationService,
     IRepository<SFProjectSecret> projectSecrets,
@@ -52,7 +49,6 @@ public class MachineApiService(
     ISFProjectService projectService,
     IRealtimeService realtimeService,
     IOptions<ServalOptions> servalOptions,
-    IOptions<SiteOptions> siteOptions,
     ISyncService syncService,
     ITranslationEnginesClient translationEnginesClient,
     ITranslationEngineTypesClient translationEngineTypesClient,
@@ -114,43 +110,13 @@ public class MachineApiService(
                 // Send the email if requested
                 if (buildConfig.SendEmailOnBuildFinished)
                 {
-                    // Get the user who requested the build
-                    await using IConnection conn = await realtimeService.ConnectAsync(eventMetric.UserId);
-                    IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
-                    IDocument<User> userDoc = await conn.FetchAsync<User>(eventMetric.UserId);
-                    if (projectDoc.IsLoaded && userDoc.IsLoaded && emailService.ValidateEmail(userDoc.Data.Email))
-                    {
-                        // Set the locale for the email
-                        CultureInfo.CurrentUICulture = new CultureInfo(userDoc.Data.InterfaceLanguage);
-
-                        // Build the email
-                        string resourceKeySubject =
-                            buildState == nameof(JobState.Completed)
-                                ? SharedResource.Keys.DraftGeneratedEmailSubject
-                                : SharedResource.Keys.DraftNotGeneratedEmailSubject;
-                        string subject = localizer[resourceKeySubject, siteOptions.Value.Name];
-                        string resourceKeyBody = buildState switch
-                        {
-                            nameof(JobState.Completed) => SharedResource.Keys.DraftGeneratedEmailBody,
-                            nameof(JobState.Canceled) => SharedResource.Keys.DraftCanceledEmailBody,
-                            _ => SharedResource.Keys.DraftFailedEmailBody,
-                        };
-                        string url = $"{websiteUrl.ToString().TrimEnd('/')}/projects/{sfProjectId}/draft-generation";
-                        string body =
-                            $"<p>{localizer[resourceKeyBody, projectDoc.Data.ShortName]}</p>"
-                            + $"<p>{localizer[SharedResource.Keys.DraftEmailMoreInformation, url]}</p>";
-                        await emailService.SendEmailAsync(userDoc.Data.Email, subject, body);
-                    }
-                    else
-                    {
-                        logger.LogError(
-                            "An email was requested for build {buildId} on project {projectId},"
-                                + " but the user {userId} was not found",
-                            buildId.Sanitize(),
-                            sfProjectId.Sanitize(),
-                            eventMetric.UserId.Sanitize()
-                        );
-                    }
+                    await machineProjectService.SendBuildCompletedEmailAsync(
+                        eventMetric.UserId,
+                        sfProjectId,
+                        buildId,
+                        buildState,
+                        websiteUrl
+                    );
                 }
             }
             else
