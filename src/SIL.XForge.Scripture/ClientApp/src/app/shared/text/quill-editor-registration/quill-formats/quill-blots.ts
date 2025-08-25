@@ -131,12 +131,20 @@ export class BlankEmbed extends QuillEmbedBlot {
 
   static create(value: boolean): Node {
     const node = super.create(value) as HTMLElement;
+    setUsxValue(node, value);
     node.innerText = NBSP.repeat(8);
     return node;
   }
 
-  static value(_node: HTMLElement): boolean {
-    return true;
+  static value(node: HTMLElement): boolean {
+    return getUsxValue(node);
+  }
+
+  value(): any {
+    // The base implementation will always return true, so we override it to allow { blank: false }
+    return {
+      [this.statics.blotName]: this.statics.value(this.domNode)
+    };
   }
 
   static formats(node: HTMLElement): any {

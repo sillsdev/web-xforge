@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { SimpleChange } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -145,6 +146,17 @@ describe('HistoryChooserComponent', () => {
     env.triggerNgOnChanges();
     env.wait();
     expect(env.revertHistoryButton).toBeNull();
+  }));
+
+  it('should not display the revert history button if snapshot is corrupt', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedParatextService.getSnapshot('project01', 'MAT', 1, 'date_here')).thenReject(
+      new HttpErrorResponse({ status: 409 })
+    );
+    env.triggerNgOnChanges();
+    env.wait();
+    expect(env.revertHistoryButton).toBeNull();
+    expect(env.component.selectedSnapshot).toBeUndefined();
   }));
 
   it('should revert to the snapshot', fakeAsync(() => {
