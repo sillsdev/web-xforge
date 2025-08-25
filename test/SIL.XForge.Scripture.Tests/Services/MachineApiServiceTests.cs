@@ -8,9 +8,7 @@ using Hangfire;
 using Hangfire.Common;
 using Hangfire.States;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using Newtonsoft.Json;
@@ -23,7 +21,6 @@ using Polly.CircuitBreaker;
 using Serval.Client;
 using SIL.Converters.Usj;
 using SIL.Scripture;
-using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.EventMetrics;
 using SIL.XForge.Models;
@@ -184,21 +181,12 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task BuildCompletedAsync_InvalidEmail()
+    public async Task BuildCompletedAsync_Success()
     {
         // Set up test environment
         var env = new TestEnvironment();
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
             .Returns(Task.FromResult(env.GetEventMetricsForBuildCompleted(true)));
-        env.EmailService.ValidateEmail(Arg.Any<string>()).Returns(false);
-        env.Users.Add(
-            new User
-            {
-                Id = User01,
-                Email = "test@example.com",
-                InterfaceLanguage = "en",
-            }
-        );
 
         // SUT
         await env.Service.BuildCompletedAsync(
@@ -207,57 +195,15 @@ public class MachineApiServiceTests
             nameof(JobState.Completed),
             env.HttpRequestAccessor.SiteRoot
         );
-        await env.EmailService.DidNotReceive().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
-        env.MockLogger.AssertHasEvent(logEvent => logEvent.LogLevel == LogLevel.Error);
-    }
-
-    [Test]
-    public async Task BuildCompletedAsync_OtherLanguage()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
-            .Returns(Task.FromResult(env.GetEventMetricsForBuildCompleted(true)));
-        env.Users.Add(
-            new User
-            {
-                Id = User01,
-                Email = "test@example.com",
-                InterfaceLanguage = "ar",
-            }
-        );
-
-        // SUT
-        await env.Service.BuildCompletedAsync(
-            Project01,
-            Build01,
-            nameof(JobState.Completed),
-            env.HttpRequestAccessor.SiteRoot
-        );
-        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
-    }
-
-    [TestCase(nameof(JobState.Canceled))]
-    [TestCase(nameof(JobState.Completed))]
-    [TestCase(nameof(JobState.Faulted))]
-    public async Task BuildCompletedAsync_Success(string buildState)
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
-            .Returns(Task.FromResult(env.GetEventMetricsForBuildCompleted(true)));
-        env.Users.Add(
-            new User
-            {
-                Id = User01,
-                Email = "test@example.com",
-                InterfaceLanguage = "en",
-            }
-        );
-
-        // SUT
-        await env.Service.BuildCompletedAsync(Project01, Build01, buildState, env.HttpRequestAccessor.SiteRoot);
-        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await env
+            .MachineProjectService.Received()
+            .SendBuildCompletedEmailAsync(
+                User01,
+                Project01,
+                Build01,
+                nameof(JobState.Completed),
+                env.HttpRequestAccessor.SiteRoot
+            );
     }
 
     [Test]
@@ -275,7 +221,15 @@ public class MachineApiServiceTests
             nameof(JobState.Completed),
             env.HttpRequestAccessor.SiteRoot
         );
-        await env.EmailService.DidNotReceive().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await env
+            .MachineProjectService.DidNotReceive()
+            .SendBuildCompletedEmailAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<Uri>()
+            );
     }
 
     [Test]
@@ -4173,16 +4127,12 @@ public class MachineApiServiceTests
             BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
             BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns(JobId);
             DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
-            EmailService = Substitute.For<IEmailService>();
-            EmailService.ValidateEmail(Arg.Any<string>()).Returns(true);
             EventMetricService = Substitute.For<IEventMetricService>();
             ExceptionHandler = Substitute.For<IExceptionHandler>();
             HttpRequestAccessor = Substitute.For<IHttpRequestAccessor>();
             HttpRequestAccessor.SiteRoot.Returns(new Uri("https://scriptureforge.org", UriKind.Absolute));
             var hubContext = Substitute.For<IHubContext<NotificationHub, INotifier>>();
-            var options = Options.Create(new LocalizationOptions { ResourcesPath = "Resources" });
-            var factory = new ResourceManagerStringLocalizerFactory(options, NullLoggerFactory.Instance);
-            Localizer = new StringLocalizer<SharedResource>(factory);
+            MachineProjectService = Substitute.For<IMachineProjectService>();
             MockLogger = new MockLogger<MachineApiService>();
             ParatextService = Substitute.For<IParatextService>();
             PreTranslationService = Substitute.For<IPreTranslationService>();
@@ -4265,7 +4215,6 @@ public class MachineApiServiceTests
                 ]
             );
             TextDocuments = new MemoryRepository<TextDocument>();
-            Users = new MemoryRepository<User>();
             ProjectRights = Substitute.For<ISFProjectRights>();
             ProjectRights
                 .HasRight(Arg.Any<SFProject>(), User01, SFProjectDomain.Drafts, Operation.Create)
@@ -4275,8 +4224,6 @@ public class MachineApiServiceTests
             RealtimeService = new SFMemoryRealtimeService();
             RealtimeService.AddRepository("sf_projects", OTType.Json0, Projects);
             RealtimeService.AddRepository("text_documents", OTType.Json0, TextDocuments);
-            RealtimeService.AddRepository("users", OTType.Json0, Users);
-            SiteOptions = Options.Create(new SiteOptions { Name = "Scripture Forge" });
             ServalOptions = Options.Create(new ServalOptions { WebhookSecret = "this_is_a_secret" });
             SyncService = Substitute.For<ISyncService>();
             SyncService.SyncAsync(Arg.Any<SyncConfig>()).Returns(Task.FromResult(JobId));
@@ -4306,13 +4253,12 @@ public class MachineApiServiceTests
             Service = Substitute.ForPartsOf<MachineApiService>(
                 BackgroundJobClient,
                 DeltaUsxMapper,
-                EmailService,
                 EventMetricService,
                 ExceptionHandler,
                 HttpRequestAccessor,
                 hubContext,
-                Localizer,
                 MockLogger,
+                MachineProjectService,
                 ParatextService,
                 PreTranslationService,
                 ProjectSecrets,
@@ -4320,7 +4266,6 @@ public class MachineApiServiceTests
                 ProjectService,
                 RealtimeService,
                 ServalOptions,
-                SiteOptions,
                 SyncService,
                 TranslationEnginesClient,
                 TranslationEngineTypesClient,
@@ -4330,11 +4275,10 @@ public class MachineApiServiceTests
 
         public IBackgroundJobClient BackgroundJobClient { get; }
         public IDeltaUsxMapper DeltaUsxMapper { get; }
-        public IEmailService EmailService { get; }
         public IEventMetricService EventMetricService { get; }
         public IExceptionHandler ExceptionHandler { get; }
         public IHttpRequestAccessor HttpRequestAccessor { get; }
-        public IStringLocalizer<SharedResource> Localizer { get; }
+        public IMachineProjectService MachineProjectService { get; }
         public MockLogger<MachineApiService> MockLogger { get; }
         public IParatextService ParatextService { get; }
         public IPreTranslationService PreTranslationService { get; }
@@ -4346,11 +4290,9 @@ public class MachineApiServiceTests
         public SFMemoryRealtimeService RealtimeService { get; }
         public MachineApiService Service { get; }
         public IOptions<ServalOptions> ServalOptions { get; }
-        public IOptions<SiteOptions> SiteOptions { get; }
         public ISyncService SyncService { get; }
         public ITranslationEnginesClient TranslationEnginesClient { get; }
         public ITranslationEngineTypesClient TranslationEngineTypesClient { get; }
-        public MemoryRepository<User> Users { get; }
         public MemoryRepository<UserSecret> UserSecrets { get; }
 
         public TranslationBuild ConfigureTranslationBuild(TranslationBuild? translationBuild = null)
