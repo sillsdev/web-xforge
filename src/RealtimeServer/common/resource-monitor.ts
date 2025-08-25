@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { mkdir } from 'fs/promises';
 import { jsonSizeOf } from 'json-sizeof';
 import * as path from 'path';
 import ShareDB, { Agent, PubSub } from 'sharedb';
@@ -126,6 +127,7 @@ export class ResourceMonitor {
   private readonly connectionInfoPath: string;
   private readonly agentInfoPath: string;
   private readonly pubSubInfoPath: string;
+  private readonly baseOutputPath: string;
 
   /** Singleton. */
   public static get instance(): ResourceMonitor {
@@ -133,18 +135,24 @@ export class ResourceMonitor {
   }
 
   private constructor() {
-    this.heapInfoPath = path.join(process.cwd(), 'heap-info.csv');
-    this.connectionInfoPath = path.join(process.cwd(), 'connection-info.csv');
-    this.agentInfoPath = path.join(process.cwd(), 'agent-info.csv');
-    this.pubSubInfoPath = path.join(process.cwd(), 'pubsub-info.csv');
+    const homePath: string = process.env['HOME'] ?? process.cwd();
+    const xdgDataHomeEnv: string | undefined = process.env['XDG_DATA_HOME'];
+    const xdgDataHomePath: string =
+      xdgDataHomeEnv != null && xdgDataHomeEnv !== '' ? xdgDataHomeEnv : path.join(homePath, '.local', 'share');
+    this.baseOutputPath = process.env['SF_RESOURCE_REPORTS_PATH'] ?? path.join(xdgDataHomePath, 'sf-resource-reports');
+
+    this.heapInfoPath = path.join(this.baseOutputPath, 'heap-info.csv');
+    this.connectionInfoPath = path.join(this.baseOutputPath, 'connection-info.csv');
+    this.agentInfoPath = path.join(this.baseOutputPath, 'agent-info.csv');
+    this.pubSubInfoPath = path.join(this.baseOutputPath, 'pubsub-info.csv');
     const minutes: number = 30;
     this.intervalMs = minutes * 60 * 1000;
   }
 
   /** Begin periodic recording. */
   public start(): void {
-    setInterval(() => this.record(), this.intervalMs);
-    this.record();
+    setInterval(() => void this.record(), this.intervalMs);
+    void this.record();
   }
 
   public startMonitoringConnection(connection: Connection): void {
@@ -176,28 +184,29 @@ export class ResourceMonitor {
   }
 
   /** Record current resource usage. */
-  public record(): void {
-    this.recordHeapUsage();
-    this.recordConnectionDiagnostics();
-    this.recordAgentDiagnostics();
-    this.recordPubSubDiagnostics();
+  public async record(): Promise<void> {
+    await this.prepareOutputDirectory();
+    await this.recordHeapUsage();
+    await this.recordConnectionDiagnostics();
+    await this.recordAgentDiagnostics();
+    await this.recordPubSubDiagnostics();
   }
 
-  private recordConnectionDiagnostics(): void {
+  private async recordConnectionDiagnostics(): Promise<void> {
     const connections = Array.from(this.connections.values());
     const report: ConnectionInfo[] = connections.map((connection: Connection) => this.reportOnConnection(connection));
-    void this.saveToCsv(this.connectionInfoPath, report);
+    await this.saveToCsv(this.connectionInfoPath, report);
   }
 
-  private recordAgentDiagnostics(): void {
+  private async recordAgentDiagnostics(): Promise<void> {
     const report: AgentInfo[] = Array.from(this.agents.values()).map(agent => this.reportOnAgent(agent));
-    void this.saveToCsv(this.agentInfoPath, report);
+    await this.saveToCsv(this.agentInfoPath, report);
   }
 
-  private recordPubSubDiagnostics(): void {
+  private async recordPubSubDiagnostics(): Promise<void> {
     if (this.pubSub === undefined) return;
     const report = this.reportOnPubSub(this.pubSub);
-    void this.saveToCsv(this.pubSubInfoPath, [report]);
+    await this.saveToCsv(this.pubSubInfoPath, [report]);
   }
 
   private reportOnConnection(connection: Connection): ConnectionInfo {
@@ -261,7 +270,7 @@ export class ResourceMonitor {
     return pubsubInfo;
   }
 
-  private recordHeapUsage(): void {
+  private async recordHeapUsage(): Promise<void> {
     // Measuring memory is more meaningful if garbage collection runs first. The NodeJS process must be started with
     // --expose-gc for this to work. Or we can temporarily switch it on and run gc, but with a context
     // [workaround](https://github.com/nodejs/node/issues/16595).
@@ -282,7 +291,7 @@ export class ResourceMonitor {
       arrayBuffersBytes: memoryUsage.arrayBuffers,
       availableMemoryBytes: process.availableMemory()
     };
-    void this.saveToCsv(this.heapInfoPath, [data]);
+    await this.saveToCsv(this.heapInfoPath, [data]);
   }
 
   /** Write data to a CSV file. If needed, create header row from the data's objects' keys. */
@@ -307,5 +316,9 @@ export class ResourceMonitor {
     } catch (error) {
       console.error(`Ignoring error writing to ${filePath}:`, error);
     }
+  }
+
+  private async prepareOutputDirectory(): Promise<void> {
+    await mkdir(this.baseOutputPath, { recursive: true });
   }
 }
