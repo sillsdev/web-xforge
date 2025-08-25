@@ -298,7 +298,8 @@ public class TrainingDataServiceTests
         env.FileSystemService.OpenFile(FileCsv, FileMode.Open).Returns(fileStream);
 
         // SUT
-        Assert.ThrowsAsync<FormatException>(() => env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileCsv)
+        Assert.ThrowsAsync<FormatException>(() =>
+            env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileCsv)
         );
     }
 
@@ -466,7 +467,8 @@ public class TrainingDataServiceTests
         env.FileSystemService.OpenFile(FileCsv, FileMode.Open).Returns(fileStream);
 
         // SUT
-        Assert.ThrowsAsync<FormatException>(() => env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileCsv)
+        Assert.ThrowsAsync<FormatException>(() =>
+            env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileCsv)
         );
     }
 

@@ -3790,7 +3790,8 @@ public class SFProjectServiceTests
         const int chapter = 1;
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.DeleteAudioTimingData(User05, Project01, book, chapter)
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.DeleteAudioTimingData(User05, Project01, book, chapter)
         );
     }
 
@@ -3978,7 +3979,8 @@ public class SFProjectServiceTests
         int[] chapters = [3];
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.AddChaptersAsync(User01, Project01, book, chapters)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.AddChaptersAsync(User01, Project01, book, chapters)
         );
     }
 

@@ -1193,7 +1193,8 @@ public class MachineProjectService(
                                 ScriptureRange =
                                     buildConfig
                                         .TranslationScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
-                                        ?.ScriptureRange ?? preTranslateScriptureRange,
+                                        ?.ScriptureRange
+                                    ?? preTranslateScriptureRange,
                             }),
                     ],
                 },
@@ -1213,7 +1214,8 @@ public class MachineProjectService(
                                 ScriptureRange =
                                     buildConfig
                                         .TrainingScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
-                                        ?.ScriptureRange ?? trainOnScriptureRange,
+                                        ?.ScriptureRange
+                                    ?? trainOnScriptureRange,
                             }),
                     ],
                     TargetFilters =
@@ -1226,7 +1228,8 @@ public class MachineProjectService(
                                 ScriptureRange =
                                     buildConfig
                                         .TrainingScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
-                                        ?.ScriptureRange ?? trainOnScriptureRange,
+                                        ?.ScriptureRange
+                                    ?? trainOnScriptureRange,
                             }),
                     ],
                 },
