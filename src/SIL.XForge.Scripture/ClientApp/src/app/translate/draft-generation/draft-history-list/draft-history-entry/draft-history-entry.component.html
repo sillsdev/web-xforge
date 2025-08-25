@@ -49,6 +49,20 @@
             <tr mat-row *matRowDef="let row; columns: ['heading', 'details']"></tr>
           </table>
         }
+        @if (buildRequestedAtDate != null && buildRequestedByUserName != null) {
+          <p class="requested-label">
+            {{
+              t("requested_by", {
+                requestedAtTime: buildRequestedAtDate,
+                requestedByUserName: buildRequestedByUserName
+              })
+            }}
+          </p>
+        } @else if (buildRequestedAtDate != null) {
+          <p class="requested-label">
+            {{ t("requested_at", { requestedAtTime: buildRequestedAtDate }) }}
+          </p>
+        }
         @if (hasTrainingConfiguration) {
           @if (canDownloadBuild) {
             <p>
@@ -92,21 +106,11 @@
               <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
               <tr mat-row *matRowDef="let row; columns: columnsToDisplay"></tr>
             </table>
-            @if (buildRequestedAtDate != null && buildRequestedByUserName != null) {
-              <p>
-                {{
-                  t("requested_by", {
-                    requestedAtTime: buildRequestedAtDate,
-                    requestedByUserName: buildRequestedByUserName
-                  })
-                }}
-              </p>
-            } @else if (buildRequestedAtDate != null) {
-              <p>
-                {{ t("requested_at", { requestedAtTime: buildRequestedAtDate }) }}
-              </p>
-            }
           }
+        } @else {
+          <p class="no-training-configuration">
+            {{ t("training_data_not_configured") }}
+          </p>
         }
       </div>
     </mat-expansion-panel>
