@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { TextSnapshot } from 'xforge-common/models/textsnapshot';
 import { PARATEXT_API_NAMESPACE } from 'xforge-common/url-constants';
+import { compareProjectsForSorting } from '../shared/utils';
 import { ParatextProject } from './models/paratext-project';
 import { TextDocSource } from './models/text-doc';
 
@@ -75,10 +76,11 @@ export class ParatextService {
   }
 
   /** Get list of projects a user has access to, whether or not the project is already at SF. */
-  getProjects(): Promise<ParatextProject[] | undefined> {
-    return firstValueFrom(
+  async getProjects(): Promise<ParatextProject[] | undefined> {
+    const projects = await firstValueFrom(
       this.http.get<ParatextProject[] | undefined>(`${PARATEXT_API_NAMESPACE}/projects`, { headers: this.headers })
     );
+    return projects?.sort(compareProjectsForSorting);
   }
 
   getResources(): Promise<SelectableProjectWithLanguageCode[] | undefined> {
