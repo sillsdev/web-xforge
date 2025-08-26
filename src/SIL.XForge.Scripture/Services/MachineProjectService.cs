@@ -162,7 +162,7 @@ public class MachineProjectService(
                 cancellationToken: cancellationToken
             );
         }
-        catch (DataNotFoundException e)
+        catch (DataNotFoundException e) when (e.Message.Contains("project"))
         {
             // This will occur if the project is deleted while the job is running
             string message =
