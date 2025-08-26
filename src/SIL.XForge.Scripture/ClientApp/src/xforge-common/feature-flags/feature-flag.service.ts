@@ -341,17 +341,24 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
+  readonly enableLynxInsights: FeatureFlag = new ServerOnlyFeatureFlag(
+    'EnableLynxInsights',
+    'Enable Lynx insights',
+    16,
+    this.featureFlagStore
+  );
+
   readonly newDraftHistory: FeatureFlag = new FeatureFlagFromStorage(
     'NewDraftHistory',
     'Preview new draft history interface',
-    16,
+    17,
     new StaticFeatureFlagStore(true)
   );
 
   readonly usfmFormat: ObservableFeatureFlag = new FeatureFlagFromStorage(
     'UsfmFormat',
     'USFM Format',
-    17,
+    18,
     this.featureFlagStore
   );
 
