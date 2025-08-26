@@ -31,13 +31,8 @@
   padding: 8px 0;
   row-gap: 8px;
 
-  span {
-    display: block;
-  }
-
   .description {
-    color: var(--sf-draft-usfm-format-description);
-    font-size: smaller;
+    display: block;
   }
 }
 
@@ -101,9 +96,26 @@ form {
 }
 
 .new {
-  background-color: green;
+  background-color: var(--new-indicator-background-color);
   color: white;
-  display: inline-block !important;
+  display: inline-block;
   border-radius: 50px;
   padding-inline: 6px;
+  margin-inline-start: 1em;
+}
+
+.option-title {
+  font-weight: 500;
+  line-height: 40px;
+}
+
+mat-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+// Vertically align radio buttons with the title of the label
+mat-radio-button ::ng-deep .mdc-form-field.mat-internal-form-field {
+  align-items: flex-start;
 }

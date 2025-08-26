@@ -30,7 +30,7 @@
             <app-draft-download-button [build]="entry" [flat]="true" />
             @if (featureFlags.usfmFormat.enabled && isLatestBuild) {
               <button mat-button class="format-usfm" [routerLink]="['format']">
-                <mat-icon>build</mat-icon> {{ t("format_draft") }}
+                <mat-icon>build</mat-icon> {{ t("formatting_options") }}
               </button>
             }
           </div>
