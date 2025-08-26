@@ -148,7 +148,7 @@ export class DraftGenerationStepsComponent implements OnInit {
         async ([{ trainingTargets, trainingSources, draftingSources }, projectId]) => {
           // Force refresh on remote changes
           if (this.draftingSources.length > 0 || this.trainingSources.length > 0 || this.trainingTargets.length > 0) {
-            if (this.dialogService.openDialogCount > 0) return;
+            if (this.dialogService.openDialogCount > 0 || this.isStepsCompleted) return;
             await this.dialogService.message(
               'draft_generation_steps.remote_changes',
               'draft_generation_steps.remote_changes_start_over',

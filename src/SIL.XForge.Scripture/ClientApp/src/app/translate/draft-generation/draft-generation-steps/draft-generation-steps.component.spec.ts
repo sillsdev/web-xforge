@@ -179,6 +179,30 @@ describe('DraftGenerationStepsComponent', () => {
       verify(mockDialogService.message(anything(), anything(), anything())).never();
       expect(cancelFired).toBe(false);
     }));
+
+    it('should not show dialog or emit cancel if the steps are completed', fakeAsync(() => {
+      let cancelFired = false;
+      when(mockDialogService.openDialogCount).thenReturn(1);
+      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      component = fixture.componentInstance;
+      component.cancel.subscribe(() => (cancelFired = true));
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      expect(component['draftingSources'].length).toBe(1);
+
+      component.isStepsCompleted = true;
+
+      // Simulate a remote change
+      const newConfig = { ...initialConfig, draftingSources: [] };
+      draftSources$.next(newConfig);
+      tick();
+      fixture.detectChanges();
+
+      verify(mockDialogService.message(anything(), anything(), anything())).never();
+      expect(cancelFired).toBe(false);
+    }));
   });
 
   describe('one training source', async () => {
