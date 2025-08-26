@@ -8,6 +8,8 @@ on:
     # Run an hour before release-qa.yml
     # For now this is just to determine how reliable this workflow is.
     - cron: "30 0 * * 0-1,3-6"
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
 
 jobs:
   prepare-realtimeserver-backend:
@@ -18,6 +20,10 @@ jobs:
         dotnet_version: ["8.0.x"]
         node_version: ["22.13.0"]
         npm_version: ["10.9.2"]
+    if: |
+      github.event_name != 'pull_request' ||
+      contains(github.event.pull_request.labels.*.name, 'e2e') ||
+      (github.event.action == 'labeled' && github.event.label.name == 'e2e')
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
