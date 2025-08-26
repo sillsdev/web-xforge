@@ -225,7 +225,7 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        var ex = new DataNotFoundException("Not Found");
+        var ex = new DataNotFoundException("project not found");
         var buildConfig = new BuildConfig { ProjectId = Project01 };
         env.Service.Configure()
             .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
@@ -241,6 +241,28 @@ public class MachineProjectServiceTests
 
         env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == ex && logEvent.LogLevel == LogLevel.Warning);
         env.ExceptionHandler.DidNotReceive().ReportException(Arg.Any<Exception>());
+    }
+
+    [Test]
+    public async Task BuildProjectForBackgroundJobAsync_MissingDirectoryDataNotFoundException()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var ex = new DataNotFoundException("directory not found");
+        var buildConfig = new BuildConfig { ProjectId = Project01 };
+        env.Service.Configure()
+            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .ThrowsAsync(ex);
+
+        // SUT
+        await env.Service.BuildProjectForBackgroundJobAsync(
+            User01,
+            buildConfig,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        env.ExceptionHandler.Received(1).ReportException(ex);
     }
 
     [Test]

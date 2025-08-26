@@ -190,7 +190,7 @@ public class MachineProjectService(
                 );
             }
         }
-        catch (DataNotFoundException e)
+        catch (DataNotFoundException e) when (e.Message.Contains("project"))
         {
             // This will occur if the project is deleted while the job is running.
             // Do not send a failure email, as the project will not exist for us to do that.
