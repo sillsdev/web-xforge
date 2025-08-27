@@ -3,6 +3,7 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
@@ -63,12 +64,18 @@ const mockedDialogService = mock(DialogService);
 const mockTrainingDataService = mock(TrainingDataService);
 const mockedFileService = mock(FileService);
 
-const mockTrainingDataQuery: RealtimeQuery<TrainingDataDoc> = mock(RealtimeQuery);
+const mockedActivatedRoute = mock(ActivatedRoute);
+const mockTrainingDataQuery = mock<RealtimeQuery<TrainingDataDoc>>();
 const trainingDataQueryLocalChanges$: Subject<void> = new Subject<void>();
 when(mockTrainingDataQuery.localChanges$).thenReturn(trainingDataQueryLocalChanges$);
 when(mockTrainingDataQuery.ready$).thenReturn(of(true));
 when(mockTrainingDataQuery.remoteChanges$).thenReturn(of());
 when(mockTrainingDataQuery.remoteDocChanges$).thenReturn(of());
+
+// Default mock for ActivatedRoute with no query parameters
+when(mockedActivatedRoute.snapshot).thenReturn({
+  queryParamMap: convertToParamMap({})
+} as any);
 
 describe('DraftSourcesComponent', () => {
   configureTestingModule(() => ({
@@ -92,7 +99,8 @@ describe('DraftSourcesComponent', () => {
       { provide: DialogService, useMock: mockedDialogService },
       { provide: TrainingDataService, useMock: mockTrainingDataService },
       { provide: ErrorReportingService, useMock: mock(ErrorReportingService) },
-      { provide: FileService, useMock: mockedFileService }
+      { provide: FileService, useMock: mockedFileService },
+      { provide: ActivatedRoute, useMock: mockedActivatedRoute }
     ]
   }));
 
@@ -111,6 +119,25 @@ describe('DraftSourcesComponent', () => {
     verify(mockedParatextService.getResources()).once();
     expect(env.component.projects).toBeDefined();
     expect(env.component.resources).toBeDefined();
+  }));
+
+  it('loads sources from query parameters when provided', fakeAsync(() => {
+    // Set up mock with query parameters
+    const mockSnapshot = {
+      queryParamMap: convertToParamMap({
+        trainingSources: 'P1,P2',
+        draftingSources: 'P3'
+      })
+    };
+    when(mockedActivatedRoute.snapshot).thenReturn(mockSnapshot as any);
+
+    const env = new TestEnvironment();
+    tick();
+    env.fixture.detectChanges();
+
+    // The sources should be loaded from query params, not from project defaults
+    expect(env.component.trainingSources.length).toBeGreaterThan(0);
+    expect(env.component.draftingSources.length).toBeGreaterThan(0);
   }));
 
   it('suppresses network errors', fakeAsync(() => {

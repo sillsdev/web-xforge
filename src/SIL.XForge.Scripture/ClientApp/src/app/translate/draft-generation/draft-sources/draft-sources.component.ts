@@ -7,7 +7,7 @@ import { MatRippleModule } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
@@ -108,6 +108,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
   private trainingDataQuerySubscription?: Subscription;
   private savedTrainingFiles?: Readonly<TrainingData>[];
 
+
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly destroyRef: DestroyRef,
@@ -117,6 +118,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
     private readonly userProjectsService: SFUserProjectsService,
     private readonly trainingDataService: TrainingDataService,
     private readonly router: Router,
+    private readonly route: ActivatedRoute,
     private readonly onlineStatus: OnlineStatusService,
     readonly i18n: I18nService,
     noticeService: NoticeService,
@@ -127,19 +129,18 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
 
     this.activatedProjectService.changes$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async projectDoc => {
       if (projectDoc?.data != null) {
-        const { trainingSources, trainingTargets, draftingSources } = projectToDraftSources(projectDoc.data);
-        if (trainingSources.length > 2) throw new Error('More than 2 training sources is not supported');
-        if (draftingSources.length > 1) throw new Error('More than 1 drafting source is not supported');
-        if (trainingTargets.length !== 1) throw new Error('Exactly 1 training target is required');
+        // Check for query parameters to override default project sources
+        const queryParams = this.route.snapshot.queryParamMap;
+        const trainingSourcesParam = queryParams.get('trainingSources');
+        const draftingSourcesParam = queryParams.get('draftingSources');
 
-        this.trainingSources = trainingSources.map(translateSourceToSelectableProjectWithLanguageTag);
-
-        this.trainingTargets = trainingTargets;
-        this.draftingSources = draftingSources.map(translateSourceToSelectableProjectWithLanguageTag);
-        this.nonSelectableProjects = [...this.trainingSources.filter(notNull), ...this.draftingSources.filter(notNull)];
-
-        if (this.draftingSources.length < 1) this.draftingSources.push(undefined);
-        if (this.trainingSources.length < 1) this.trainingSources.push(undefined);
+        if (trainingSourcesParam || draftingSourcesParam) {
+          // Use query parameters to set sources
+          await this.loadSourcesFromQueryParams(projectDoc, trainingSourcesParam, draftingSourcesParam);
+        } else {
+          // Use default project sources
+          await this.loadSourcesFromProject(projectDoc);
+        }
 
         await this.initializeTrainingFiles(projectDoc);
       }
@@ -158,6 +159,87 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
         filter(isOnline => isOnline)
       )
       .subscribe(() => this.loadProjects());
+  }
+
+  /** Load sources from the project's default configuration */
+  private async loadSourcesFromProject(projectDoc: SFProjectProfileDoc): Promise<void> {
+    if (!projectDoc.data) return;
+    
+    const { trainingSources, trainingTargets, draftingSources } = projectToDraftSources(projectDoc.data);
+    if (trainingSources.length > 2) throw new Error('More than 2 training sources is not supported');
+    if (draftingSources.length > 1) throw new Error('More than 1 drafting source is not supported');
+    if (trainingTargets.length !== 1) throw new Error('Exactly 1 training target is required');
+
+    this.trainingSources = trainingSources.map(translateSourceToSelectableProjectWithLanguageTag);
+    this.trainingTargets = trainingTargets;
+    this.draftingSources = draftingSources.map(translateSourceToSelectableProjectWithLanguageTag);
+    this.nonSelectableProjects = [...this.trainingSources.filter(notNull), ...this.draftingSources.filter(notNull)];
+
+    if (this.draftingSources.length < 1) this.draftingSources.push(undefined);
+    if (this.trainingSources.length < 1) this.trainingSources.push(undefined);
+  }
+
+  /** Load sources from query parameters */
+  private async loadSourcesFromQueryParams(
+    projectDoc: SFProjectProfileDoc, 
+    trainingSourcesParam: string | null, 
+    draftingSourcesParam: string | null
+  ): Promise<void> {
+    if (!projectDoc.data) return;
+
+    // Get all available projects and resources
+    const allResources = await this.paratextService.getResources() || [];
+    const userProjects = this.userConnectedProjectsAndResources.map(p => p.data).filter(notNull);
+    const allAvailable = [...userProjects, ...allResources];
+
+    // Reset arrays
+    this.trainingSources = [];
+    this.draftingSources = [];
+    this.trainingTargets = [projectDoc.data]; // Always use current project as training target
+
+    // Parse training sources from query parameter
+    if (trainingSourcesParam) {
+      const shortNames = trainingSourcesParam.split(',').map(s => s.trim()).filter(Boolean);
+      this.trainingSources = shortNames
+        .map(shortName => allAvailable.find(p => p.shortName === shortName))
+        .filter(notNull)
+        .map(project => this.convertToSelectableProjectWithLanguageCode(project))
+        .slice(0, 2); // Limit to 2 training sources
+    }
+
+    // Parse drafting sources from query parameter
+    if (draftingSourcesParam) {
+      const shortNames = draftingSourcesParam.split(',').map(s => s.trim()).filter(Boolean);
+      this.draftingSources = shortNames
+        .map(shortName => allAvailable.find(p => p.shortName === shortName))
+        .filter(notNull)
+        .map(project => this.convertToSelectableProjectWithLanguageCode(project))
+        .slice(0, 1); // Limit to 1 drafting source
+    }
+
+    this.nonSelectableProjects = [...this.trainingSources.filter(notNull), ...this.draftingSources.filter(notNull)];
+
+    // Ensure arrays have at least one slot for UI
+    if (this.draftingSources.length < 1) this.draftingSources.push(undefined);
+    if (this.trainingSources.length < 1) this.trainingSources.push(undefined);
+  }
+
+  /** Convert a project to SelectableProjectWithLanguageCode format */
+  private convertToSelectableProjectWithLanguageCode(
+    project: SelectableProjectWithLanguageCode | SFProjectProfile
+  ): SelectableProjectWithLanguageCode {
+    if ('languageTag' in project) {
+      // Already a SelectableProjectWithLanguageCode
+      return project;
+    } else {
+      // Convert from SFProjectProfile
+      return {
+        paratextId: project.paratextId,
+        name: project.name,
+        shortName: project.shortName,
+        languageTag: project.writingSystem.tag
+      };
+    }
   }
 
   private async initializeTrainingFiles(projectDoc: SFProjectProfileDoc): Promise<void> {
