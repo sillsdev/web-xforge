@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, OnChanges, ViewChild } from '@angular/core';
 import { MatSelectChange } from '@angular/material/select';
+import { Router } from '@angular/router';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DeltaOperation } from 'rich-text';
@@ -92,7 +93,8 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     private readonly projectService: SFProjectService,
     readonly onlineStatusService: OnlineStatusService,
     private readonly noticeService: NoticeService,
-    private errorReportingService: ErrorReportingService
+    private errorReportingService: ErrorReportingService,
+    private readonly router: Router
   ) {}
 
   ngOnChanges(): void {
@@ -235,6 +237,10 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       return false;
     }
     return this.draftHandlingService.canApplyDraft(this.targetProject, this.bookNum, this.chapter, this.draftDelta.ops);
+  }
+
+  navigateToFormatting(): void {
+    this.router.navigateByUrl(`/projects/${this.projectId}/draft-generation/format`);
   }
 
   async applyDraft(): Promise<void> {

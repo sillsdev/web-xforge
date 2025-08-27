@@ -1,4 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectChange, MatSelectModule } from '@angular/material/select';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -50,6 +51,7 @@ describe('EditorDraftComponent', () => {
     imports: [
       MatProgressBarModule,
       MatSelectModule,
+      MatIconModule,
       NoopAnimationsModule,
       SharedModule.forRoot(),
       TestOnlineStatusModule.forRoot(),
