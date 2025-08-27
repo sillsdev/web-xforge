@@ -42,6 +42,10 @@
         </mat-form-field>
       }
       <div class="apply-draft-button-container">
+        <button mat-button (click)="navigateToFormatting()">
+          <mat-icon>build</mat-icon>
+          <transloco key="editor_draft_tab.format_draft"></transloco>
+        </button>
         @if (userAppliedDraft) {
           <span class="draft-indicator">
             <mat-icon class="check-icon">check</mat-icon>
