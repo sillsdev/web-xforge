@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using Newtonsoft.Json;
@@ -93,7 +94,7 @@ public class MemoryRepository<T> : IRepository<T>
 
     public IQueryable<T> Query() => _entities.Select(kvp => DeserializeEntity(kvp.Key, kvp.Value)).AsQueryable();
 
-    public Task InsertAsync(T entity)
+    public Task InsertAsync(T entity, CancellationToken _ = default)
     {
         if (string.IsNullOrEmpty(entity.Id))
             entity.Id = ObjectId.GenerateNewId().ToString();
@@ -105,7 +106,7 @@ public class MemoryRepository<T> : IRepository<T>
         return Task.FromResult(true);
     }
 
-    public Task<bool> ReplaceAsync(T entity, bool upsert = false)
+    public Task<bool> ReplaceAsync(T entity, bool upsert = false, CancellationToken _ = default)
     {
         if (string.IsNullOrEmpty(entity.Id))
             entity.Id = ObjectId.GenerateNewId().ToString();
@@ -118,7 +119,12 @@ public class MemoryRepository<T> : IRepository<T>
         return Task.FromResult(false);
     }
 
-    public Task<T> UpdateAsync(Expression<Func<T, bool>> filter, Action<IUpdateBuilder<T>> update, bool upsert = false)
+    public Task<T> UpdateAsync(
+        Expression<Func<T, bool>> filter,
+        Action<IUpdateBuilder<T>> update,
+        bool upsert = false,
+        CancellationToken _ = default
+    )
     {
         Func<T, bool> filterFunc = filter.Compile();
         T entity = Query()
@@ -155,7 +161,7 @@ public class MemoryRepository<T> : IRepository<T>
                 original = Query().FirstOrDefault(filter);
             }
 
-            var builder = new MemoryUpdateBuilder<T>(filter, entity, isInsert);
+            var builder = new MemoryUpdateBuilder<T>(entity, isInsert);
             update(builder);
 
             if (CheckDuplicateKeys(entity, original))
@@ -166,7 +172,7 @@ public class MemoryRepository<T> : IRepository<T>
         return Task.FromResult(entity);
     }
 
-    public Task<T> DeleteAsync(Expression<Func<T, bool>> filter)
+    public Task<T> DeleteAsync(Expression<Func<T, bool>> filter, CancellationToken _ = default)
     {
         T entity = Query().FirstOrDefault(filter);
         if (entity != null)
@@ -174,7 +180,7 @@ public class MemoryRepository<T> : IRepository<T>
         return Task.FromResult(entity);
     }
 
-    public Task<long> DeleteAllAsync(Expression<Func<T, bool>> filter)
+    public Task<long> DeleteAllAsync(Expression<Func<T, bool>> filter, CancellationToken _ = default)
     {
         T[] entities = [.. Query().Where(filter)];
         foreach (T entity in entities)
@@ -182,7 +188,7 @@ public class MemoryRepository<T> : IRepository<T>
         return Task.FromResult(entities.LongLength);
     }
 
-    public Task<long> CountDocumentsAsync(Expression<Func<T, bool>> filter) =>
+    public Task<long> CountDocumentsAsync(Expression<Func<T, bool>> filter, CancellationToken _ = default) =>
         Task.FromResult(Query().Where(filter).LongCount());
 
     /// <param name="entity">the new or updated entity to be upserted</param>

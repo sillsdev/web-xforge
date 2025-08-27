@@ -115,7 +115,9 @@ function setUpMocks(args: DraftSourcesComponentStoryState): void {
     languageTag: languageCodes[i],
     projectId: null,
     isConnectable: true,
-    isConnected: true
+    isConnected: true,
+    hasUserRoleChanged: false,
+    hasUpdate: false
   }));
 
   // Add a project that has an unknown language code
@@ -126,7 +128,9 @@ function setUpMocks(args: DraftSourcesComponentStoryState): void {
     languageTag: '',
     projectId: null,
     isConnectable: true,
-    isConnected: false
+    isConnected: false,
+    hasUserRoleChanged: false,
+    hasUpdate: false
   });
 
   when(mockedParatextService.getResources()).thenResolve(resources);

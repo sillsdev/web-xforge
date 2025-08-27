@@ -1,5 +1,5 @@
 <ng-container *transloco="let t; read: 'draft_usfm_format'">
-  <h1>{{ t("draft_format_options") }}</h1>
+  <h1>{{ t("formatting_options") }}</h1>
   @if (!isOnline) {
     <p class="offline-text">{{ t("connect_to_the_internet") }}</p>
   }
@@ -7,50 +7,50 @@
     <div class="format-options">
       <form [formGroup]="usfmFormatForm" (change)="reloadText()">
         <p>{{ t("draft_format_description") }}</p>
+        <p>{{ t("available_for_each_draft") }}</p>
         <mat-card class="options">
-          <mat-card-header
-            ><mat-card-title>{{ t("line_breaks_title") }}</mat-card-title></mat-card-header
-          >
+          <mat-card-header>
+            <mat-card-title> {{ t("line_breaks_title") }} </mat-card-title>
+          </mat-card-header>
           <mat-card-content class="format-options">
             <span>{{ t("line_breaks_description") }}</span>
             <mat-radio-group formControlName="paragraphFormat">
               <mat-radio-button [value]="paragraphBreakFormat.BestGuess">
-                {{ t("option_best_guess") }}
-                <span class="new">{{ t("new") }}</span>
-                <span class="description">
-                  {{ t("option_best_guess_description") }}
-                </span>
+                <span class="option-title"> {{ t("option_best_guess") }} </span>
+                <span class="new"> {{ t("new") }} </span>
+                <span class="description"> {{ t("option_best_guess_description") }} </span>
               </mat-radio-button>
               <mat-radio-button [value]="paragraphBreakFormat.Remove">
-                {{ t("option_remove") }}
-                <span class="new">{{ t("new") }}</span>
-                <span class="description">
-                  {{ t("option_remove_description") }}
-                </span>
+                <span class="option-title"> {{ t("option_remove") }} </span>
+                <span class="new"> {{ t("new") }} </span>
+                <span class="description"> {{ t("option_remove_description") }} </span>
               </mat-radio-button>
               <mat-radio-button [value]="paragraphBreakFormat.MoveToEnd">
-                {{ t("option_end") }}
-                <span class="description">{{ t("option_end_description") }} </span>
+                <span class="option-title"> {{ t("option_end") }} </span>
+                <span class="description"> {{ t("option_end_description") }} </span>
               </mat-radio-button>
             </mat-radio-group>
           </mat-card-content>
         </mat-card>
         <mat-card class="options">
           <mat-card-header>
-            <mat-card-title>Quote style <small>[coming soon]</small></mat-card-title>
+            <mat-card-title> {{ t("quote_style") }} </mat-card-title>
           </mat-card-header>
           <mat-card-content class="format-options">
-            Choose how quotes should appear in the draft.
+            {{ t("choose_how_quotes_appear") }}
+
+            <!-- TODO make this notice conditional -->
+            <app-notice type="warning" mode="fill-dark"> {{ t("no_quote_convention_detected") }} </app-notice>
+
             <mat-radio-group formControlName="quoteFormat">
               <mat-radio-button [value]="quoteStyleFormat.Automatic">
-                Automatic quote style <span class="new">{{ t("new") }}</span>
-                <span class="description">
-                  Use the same quote style as the rest of the project, if possible. Recommended for most projects.
-                </span>
+                <span class="option-title"> {{ t("automatic_quote_style") }} </span>
+                <span class="new"> {{ t("new") }} </span>
+                <span class="description"> {{ t("automatic_quote_style_description") }} </span>
               </mat-radio-button>
               <mat-radio-button [value]="quoteStyleFormat.Straight">
-                Straight quotes
-                <span class="description"> Use only straight quotes in the draft.</span>
+                <span class="option-title"> {{ t("straight_quotes") }} </span>
+                <span class="description"> {{ t("straight_quotes_description") }} </span>
               </mat-radio-button>
             </mat-radio-group>
           </mat-card-content>
@@ -64,8 +64,7 @@
             <mat-spinner diameter="24"></mat-spinner>
           </div>
           <button mat-flat-button class="save" color="primary" (click)="saveChanges()">
-            <mat-icon>check</mat-icon>
-            {{ t("save_changes") }}
+            <mat-icon>check</mat-icon> {{ t("save_changes") }}
           </button>
         </div>
       </div>

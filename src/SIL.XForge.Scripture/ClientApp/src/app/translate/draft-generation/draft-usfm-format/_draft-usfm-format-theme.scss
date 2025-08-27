@@ -3,7 +3,7 @@
 @mixin color($theme) {
   $is-dark: mat.get-theme-type($theme) == dark;
 
-  --sf-draft-usfm-format-description: #{mat.get-theme-color($theme, neutral, if($is-dark, 70, 40))};
+  --new-indicator-background-color: #{mat.get-theme-color($theme, primary, if($is-dark, 70, 40))};
 }
 
 @mixin theme($theme) {

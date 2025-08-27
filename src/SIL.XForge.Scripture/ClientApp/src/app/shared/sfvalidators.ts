@@ -124,6 +124,34 @@ export class SFValidators {
       ? { startReferenceRequired: true }
       : null;
   }
+
+  /**
+   *
+   * @param control The control.
+   * @returns null when the parentheses are balanced, an object with unbalancedParentheses as true when not.
+   */
+  static balancedParentheses(control: AbstractControl | null): ValidationErrors | null {
+    const error = { unbalancedParentheses: true };
+    if (control?.value == null || control.value.length === 0) {
+      return null;
+    }
+
+    for (const line of control.value.split(/\r?\n/)) {
+      let depth = 0;
+      for (const char of line) {
+        if (char === '(') {
+          depth++;
+        } else if (char === ')') {
+          depth--;
+          if (depth < 0) return error;
+        }
+      }
+      if (depth !== 0) return error;
+    }
+
+    // All lines are balanced
+    return null;
+  }
 }
 
 /**

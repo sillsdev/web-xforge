@@ -76,6 +76,11 @@ public class ParatextProject
     public bool HasUserRoleChanged { get; init; }
 
     /// <summary>
+    /// If the project has an update pending on the send/receive server.
+    /// </summary>
+    public bool HasUpdate { get; init; }
+
+    /// <summary>
     /// A descriptive string of object's properties, for debugging.
     /// </summary>
     /// <returns>
@@ -100,6 +105,7 @@ public class ParatextProject
                 HasDraft.ToString(),
                 IsRightToLeft?.ToString(),
                 HasUserRoleChanged.ToString(),
+                HasUpdate.ToString(),
             }
         )
         {

@@ -985,7 +985,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     {
         await _hubContext.NotifySyncProgress(projectSFId, ProgressState.NotStarted);
         _logger.LogInformation($"Initializing sync for project {projectSFId} with sync metrics id {syncMetricsId}");
-        if (!(await _syncMetricsRepository.TryGetAsync(syncMetricsId)).TryResult(out _syncMetrics))
+        if (!(await _syncMetricsRepository.TryGetAsync(syncMetricsId, token)).TryResult(out _syncMetrics))
         {
             Log($"Could not find sync metrics.", syncMetricsId, userId);
             return false;
@@ -1010,7 +1010,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         _syncMetrics.ProductVersion = Product.Version;
         _syncMetrics.DateStarted = DateTime.UtcNow;
         _syncMetrics.Status = SyncStatus.Running;
-        if (!await _syncMetricsRepository.ReplaceAsync(_syncMetrics, true))
+        if (!await _syncMetricsRepository.ReplaceAsync(_syncMetrics, true, token))
         {
             Log("The sync metrics could not be updated in MongoDB");
         }
@@ -1030,7 +1030,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
         await NotifySyncProgress(SyncPhase.Phase1, 30.0);
 
-        if (!(await _projectSecrets.TryGetAsync(projectSFId)).TryResult(out _projectSecret))
+        if (!(await _projectSecrets.TryGetAsync(projectSFId, token)).TryResult(out _projectSecret))
         {
             Log($"Could not find project secret.", projectSFId, userId);
             return false;
@@ -1040,7 +1040,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             [.. _projectDoc.Data.UserRoles.Keys]
         );
 
-        if (!(await _userSecrets.TryGetAsync(userId)).TryResult(out _userSecret))
+        if (!(await _userSecrets.TryGetAsync(userId, token)).TryResult(out _userSecret))
         {
             Log($"Could not find user secret.", projectSFId, userId);
             return false;
@@ -1697,7 +1697,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             .QuerySnapshots<User>()
             .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
             .Select(u => new { UserId = u.Id, u.ParatextId })
-            .ToListAsync();
+            .ToListAsync(token);
 
         bool dataInSync = true;
         if (!successful)
@@ -1929,7 +1929,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     {
                         u.Remove(p => p.SyncMetricsIds, _syncMetrics?.Id);
                     }
-                }
+                },
+                cancellationToken: token
             );
         }
 
@@ -2008,7 +2009,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             }
 
             _syncMetrics.DateFinished = DateTime.UtcNow;
-            if (!await _syncMetricsRepository.ReplaceAsync(_syncMetrics, true))
+            if (!await _syncMetricsRepository.ReplaceAsync(_syncMetrics, true, token))
             {
                 Log("The sync metrics could not be updated in MongoDB");
             }
