@@ -897,6 +897,30 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task CreateZipFileFromParatextDirectoryAsync_DoesNotCrashWhenFileNotFound()
+    {
+        // Set up test environment with two files, one will be invalid
+        var env = new TestEnvironment();
+        MemoryStream outputStream = new MemoryStream();
+        env.FileSystemService.EnumerateFiles(Arg.Any<string>())
+            .Returns(callInfo =>
+                [Path.Join(callInfo.ArgAt<string>(0), "file"), Path.Join(callInfo.ArgAt<string>(0), "invalid_file")]
+            );
+        var ex = new FileNotFoundException();
+        env.FileSystemService.OpenFile(Arg.Is<string>(f => f.EndsWith("invalid_file")), FileMode.Open).Throws(ex);
+
+        // SUT
+        await env.Service.CreateZipFileFromParatextDirectoryAsync(Project01, outputStream, CancellationToken.None);
+
+        // Validate the zip file
+        outputStream.Seek(0, SeekOrigin.Begin);
+        using var archive = new ZipArchive(outputStream, ZipArchiveMode.Read);
+        Assert.AreEqual(1, archive.Entries.Count);
+        Assert.AreEqual("file", archive.Entries[0].FullName);
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == ex && logEvent.LogLevel == LogLevel.Warning);
+    }
+
+    [Test]
     public async Task CreateZipFileFromParatextDirectoryAsync_Success()
     {
         // Set up test environment

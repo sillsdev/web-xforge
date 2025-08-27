@@ -934,10 +934,18 @@ public class MachineProjectService(
         using var archive = new ZipArchive(outputStream, ZipArchiveMode.Create, leaveOpen: true);
         foreach (string filePath in fileSystemService.EnumerateFiles(path))
         {
-            await using Stream fileStream = fileSystemService.OpenFile(filePath, FileMode.Open);
-            ZipArchiveEntry entry = archive.CreateEntry(Path.GetFileName(filePath));
-            await using Stream entryStream = entry.Open();
-            await fileStream.CopyToAsync(entryStream, cancellationToken);
+            try
+            {
+                await using Stream fileStream = fileSystemService.OpenFile(filePath, FileMode.Open);
+                ZipArchiveEntry entry = archive.CreateEntry(Path.GetFileName(filePath));
+                await using Stream entryStream = entry.Open();
+                await fileStream.CopyToAsync(entryStream, cancellationToken);
+            }
+            catch (FileNotFoundException e)
+            {
+                // This  will be thrown by filenames that have unicode characters, which is not supported by Paratext
+                logger.LogWarning(e, "File not found when creating Paratext zip file");
+            }
         }
     }
 
