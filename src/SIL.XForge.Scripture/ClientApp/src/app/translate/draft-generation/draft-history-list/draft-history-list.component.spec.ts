@@ -2,7 +2,7 @@ import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
-import { mock, when } from 'ts-mockito';
+import { anything, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -237,6 +237,7 @@ describe('DraftHistoryListComponent', () => {
       when(mockedActivatedProjectService.projectId$).thenReturn(of(projectId));
       when(mockedActivatedProjectService.changes$).thenReturn(of(undefined)); // Required for DraftPreviewBooksComponent
       when(mockedDraftGenerationService.getBuildHistory(projectId)).thenReturn(new BehaviorSubject(buildHistory));
+      when(mockedI18nService.formatDate(anything())).thenCall(date => date.toLocaleString(['en']));
       when(mockedFeatureFlagsService.usfmFormat).thenReturn(createTestFeatureFlag(true));
 
       this.fixture = TestBed.createComponent(DraftHistoryListComponent);
