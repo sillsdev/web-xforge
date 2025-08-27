@@ -63,7 +63,7 @@
             {{ t("requested_at", { requestedAtTime: buildRequestedAtDate }) }}
           </p>
         }
-        @if (hasTrainingConfiguration) {
+        @if (hasTrainingConfiguration || hasTrainingDataFiles) {
           @if (canDownloadBuild) {
             <p>
               <a
@@ -82,7 +82,7 @@
               </a>
             </p>
           }
-          @if (trainingConfigurationOpen) {
+          @if (trainingConfigurationOpen && hasTrainingConfiguration) {
             <p>
               <strong>{{ t("training_model_description") }}</strong>
             </p>
@@ -106,13 +106,13 @@
               <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
               <tr mat-row *matRowDef="let row; columns: columnsToDisplay"></tr>
             </table>
-            @if (trainingDataFiles.length > 0) {
-              <p>
-                <span>{{ t("training_data_files_used") }}</span>
-                <br />
-                <span class="training-files">{{ trainingFilesString(trainingDataFiles) }}</span>
-              </p>
-            }
+          }
+          @if (trainingConfigurationOpen && hasTrainingDataFiles) {
+            <p>
+              <span>{{ t("training_data_files_used") }}</span>
+              <br />
+              <span class="training-files">{{ trainingFilesString(trainingDataFiles) }}</span>
+            </p>
           }
         } @else {
           <p class="no-training-configuration">

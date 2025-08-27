@@ -144,7 +144,7 @@ export class DraftHistoryEntryComponent {
         .queryTrainingDataAsync(this.activatedProjectService.projectId, this.destroyRef)
         .then(query => {
           this.dataFileQuery = query;
-          this.trainingDataFiles = [
+          this._trainingDataFiles = [
             ...trainingDataFiles
               .map(fileId => query.docs.find(f => f.data?.dataId === fileId))
               .filter(file => file?.data != null)
@@ -242,6 +242,15 @@ export class DraftHistoryEntryComponent {
     return this._trainingConfiguration;
   }
 
+  private _trainingDataFiles: string[] = [];
+  get trainingDataFiles(): string[] {
+    return this._trainingDataFiles;
+  }
+
+  get hasTrainingDataFiles(): boolean {
+    return this._trainingDataFiles.length > 0;
+  }
+
   private _canDownloadBuild: boolean | undefined;
   @Input() set canDownloadBuild(value: boolean) {
     this._canDownloadBuild = value;
@@ -264,7 +273,6 @@ export class DraftHistoryEntryComponent {
   @Input() isLatestBuild = false;
 
   trainingConfigurationOpen = false;
-  trainingDataFiles: string[] = [];
 
   readonly columnsToDisplay: string[] = ['scriptureRange', 'source', 'target'];
 
