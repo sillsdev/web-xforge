@@ -132,7 +132,8 @@ describe('DraftHistoryEntryComponent', () => {
       const date = 'formatted-date';
       const trainingBooks = [];
       const translateBooks = ['GEN'];
-      const entry = getStandardBuildDto({ user, date, trainingBooks, translateBooks });
+      const trainingDataFiles = [];
+      const entry = getStandardBuildDto({ user, date, trainingBooks, translateBooks, trainingDataFiles });
 
       // SUT
       component.entry = entry;
