@@ -208,6 +208,35 @@ public class TrainingDataServiceTests
     }
 
     [Test]
+    public async Task GetTextsAsync_UnmatchedDoubleQuote()
+    {
+        var env = new TestEnvironment();
+        string[] dataIds = [Data01];
+        List<ISFText> sourceTexts = [];
+        List<ISFText> targetTexts = [];
+
+        // Set up the training data files
+        byte[] buffer = Encoding.UTF8.GetBytes("first row\tis ok\ndata, 'valid quotes'\tbroken 'quote, \" test'");
+        await using var fileStream = new MemoryStream(buffer);
+        env.FileSystemService.OpenFile(Arg.Is<string>(p => p.Contains(Data01)), FileMode.Open).Returns(fileStream);
+
+        // SUT
+        await env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts);
+        Assert.AreEqual(1, sourceTexts.Count);
+        Assert.AreEqual(2, sourceTexts.First().Segments.Count());
+        Assert.AreEqual("001", sourceTexts.First().Segments.First().SegmentRef);
+        Assert.AreEqual("first row", sourceTexts.First().Segments.First().SegmentText);
+        Assert.AreEqual("002", sourceTexts.First().Segments.Last().SegmentRef);
+        Assert.AreEqual("data, 'valid quotes'", sourceTexts.First().Segments.Last().SegmentText);
+        Assert.AreEqual(1, targetTexts.Count);
+        Assert.AreEqual(2, targetTexts.First().Segments.Count());
+        Assert.AreEqual("001", targetTexts.First().Segments.First().SegmentRef);
+        Assert.AreEqual("is ok", targetTexts.First().Segments.First().SegmentText);
+        Assert.AreEqual("002", targetTexts.First().Segments.Last().SegmentRef);
+        Assert.AreEqual("broken 'quote, \" test'", targetTexts.First().Segments.Last().SegmentText);
+    }
+
+    [Test]
     public async Task SaveTrainingDataAsync_CorruptSpreadsheet()
     {
         var env = new TestEnvironment();
