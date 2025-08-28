@@ -8,6 +8,7 @@ import { ProjectScriptureRange, TranslateSource } from 'realtime-server/lib/esm/
 import { combineLatest, merge, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
@@ -129,7 +130,8 @@ export class DraftGenerationStepsComponent implements OnInit {
     private readonly paratextService: ParatextService,
     private readonly progressService: ProgressService,
     private readonly trainingFileService: TrainingDataService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly dialogService: DialogService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -144,6 +146,17 @@ export class DraftGenerationStepsComponent implements OnInit {
       .subscribe(
         // Build book lists
         async ([{ trainingTargets, trainingSources, draftingSources }, projectId]) => {
+          // Force refresh on remote changes
+          if (this.draftingSources.length > 0 || this.trainingSources.length > 0 || this.trainingTargets.length > 0) {
+            if (this.dialogService.openDialogCount > 0 || this.isStepsCompleted) return;
+            await this.dialogService.message(
+              'draft_generation_steps.remote_changes',
+              'draft_generation_steps.remote_changes_start_over',
+              true
+            );
+            this.cancel.emit();
+          }
+
           // The null values will have been filtered above
           const target = trainingTargets[0]!;
           const draftingSource = draftingSources[0]!;
