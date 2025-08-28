@@ -62,10 +62,10 @@ interface Row {
 }
 
 @Component({
-    selector: 'app-draft-jobs',
-    templateUrl: './draft-jobs.component.html',
-    styleUrls: ['./draft-jobs.component.scss'],
-    imports: [OwnerComponent, UICommonModule, RouterLink, NoticeComponent]
+  selector: 'app-draft-jobs',
+  templateUrl: './draft-jobs.component.html',
+  styleUrls: ['./draft-jobs.component.scss'],
+  imports: [OwnerComponent, UICommonModule, RouterLink, NoticeComponent]
 })
 export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
   columnsToDisplay: string[] = [
