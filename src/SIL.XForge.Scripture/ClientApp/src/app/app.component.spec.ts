@@ -911,8 +911,8 @@ class TestEnvironment {
     this.wait();
   }
 
-  updatePreTranslate(projectId: string): void {
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
+  async updatePreTranslate(projectId: string): Promise<void> {
+    const projectDoc: SFProjectProfileDoc = await this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       projectId,
       new DocSubscription('spec')
@@ -935,8 +935,8 @@ class TestEnvironment {
     this.wait();
   }
 
-  changeUserRole(projectId: string, userId: string, role: SFProjectRole): void {
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
+  async changeUserRole(projectId: string, userId: string, role: SFProjectRole): Promise<void> {
+    const projectDoc: SFProjectProfileDoc = await this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       projectId,
       new DocSubscription('spec')
