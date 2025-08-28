@@ -563,7 +563,7 @@ class TestEnvironment {
   }
 
   simulateTranslateSuggestionsEnabled(enabled: boolean = true): void {
-    const projectDoc: SFProjectProfileDoc = this.realtimeService.get(
+    const projectDoc: SFProjectProfileDoc = await this.realtimeService.get(
       SFProjectProfileDoc.COLLECTION,
       'project01',
       new DocSubscription('spec')

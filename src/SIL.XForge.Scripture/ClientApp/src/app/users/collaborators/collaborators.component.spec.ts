@@ -424,8 +424,8 @@ class TestEnvironment {
     when(mockedProjectService.onlineInvite(this.project01Id, anything(), anything(), anything())).thenResolve();
     when(mockedProjectService.onlineInvitedUsers(this.project01Id)).thenResolve([]);
     when(mockedNoticeService.show(anything())).thenResolve();
-    when(mockedUserService.getProfile(anything(), anything())).thenCall((userId, subscription) =>
-      this.realtimeService.get(UserProfileDoc.COLLECTION, userId, subscription)
+    when(mockedUserService.getProfile(anything(), anything())).thenCall(
+      (userId, subscription) => await this.realtimeService.get(UserProfileDoc.COLLECTION, userId, subscription)
     );
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedProjectService.subscribe(anything(), anything())).thenCall((projectId, subscription) =>

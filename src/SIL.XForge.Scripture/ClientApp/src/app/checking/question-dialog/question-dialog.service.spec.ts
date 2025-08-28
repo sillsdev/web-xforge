@@ -198,7 +198,7 @@ class TestEnvironment {
       id: this.PROJECT01,
       data: this.testProjectProfile
     });
-    this.projectProfileDoc = this.realtimeService.get<SFProjectProfileDoc>(
+    this.projectProfileDoc = await this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       this.PROJECT01,
       new DocSubscription('spec')
@@ -216,7 +216,7 @@ class TestEnvironment {
       id: getQuestionDocId(this.PROJECT01, question.dataId),
       data: question
     });
-    return this.realtimeService.get(
+    return await this.realtimeService.get(
       QUESTIONS_COLLECTION,
       getQuestionDocId(this.PROJECT01, question.dataId),
       new DocSubscription('spec')
@@ -249,7 +249,7 @@ class TestEnvironment {
   }
 
   updateUserRole(role: string): void {
-    const projectProfileDoc = this.realtimeService.get<SFProjectProfileDoc>(
+    const projectProfileDoc = await this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       this.PROJECT01,
       new DocSubscription('spec')

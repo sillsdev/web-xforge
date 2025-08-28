@@ -157,7 +157,11 @@ describe('LynxWorkspaceService', () => {
 
       when(mockProjectService.getText(anything(), anything())).thenCall(textDocId => {
         const id = typeof textDocId === 'string' ? textDocId : textDocId.toString();
-        const existingDoc = this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, id, new DocSubscription('spec'));
+        const existingDoc = await this.realtimeService.get<TextDoc>(
+          TextDoc.COLLECTION,
+          id,
+          new DocSubscription('spec')
+        );
         return Promise.resolve(existingDoc || this.createTextDoc());
       });
 

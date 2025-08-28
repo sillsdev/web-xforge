@@ -494,8 +494,9 @@ class TestEnvironment {
           subscriber
         )
     );
-    when(mockedProjectService.getProfile(anything(), anything())).thenCall((sfProjectId, subscriber) =>
-      this.realtimeService.get(SFProjectProfileDoc.COLLECTION, sfProjectId, subscriber)
+    when(mockedProjectService.getProfile(anything(), anything())).thenCall(
+      (sfProjectId, subscriber) =>
+        await this.realtimeService.get(SFProjectProfileDoc.COLLECTION, sfProjectId, subscriber)
     );
     when(mockedMatDialog.open(GenericDialogComponent, anything())).thenReturn(instance(this.mockedDialogRef));
     when(this.mockedDialogRef.afterClosed()).thenReturn(of());
@@ -555,7 +556,7 @@ class TestEnvironment {
   }
 
   getBiblicalTermDoc(projectId: string, dataId: string): BiblicalTermDoc {
-    return this.realtimeService.get(
+    return await this.realtimeService.get(
       BiblicalTermDoc.COLLECTION,
       getBiblicalTermDocId(projectId, dataId),
       new DocSubscription('spec')
@@ -563,7 +564,7 @@ class TestEnvironment {
   }
 
   getNoteThreadDoc(projectId: string, threadId: string): NoteThreadDoc {
-    return this.realtimeService.get<NoteThreadDoc>(
+    return await this.realtimeService.get<NoteThreadDoc>(
       NoteThreadDoc.COLLECTION,
       getNoteThreadDocId(projectId, threadId),
       new DocSubscription('spec')
@@ -572,7 +573,7 @@ class TestEnvironment {
 
   getProjectUserConfigDoc(projectId: string, userId: string): SFProjectUserConfigDoc {
     const id: string = getSFProjectUserConfigDocId(projectId, userId);
-    return this.realtimeService.get<SFProjectUserConfigDoc>(
+    return await this.realtimeService.get<SFProjectUserConfigDoc>(
       SFProjectUserConfigDoc.COLLECTION,
       id,
       new DocSubscription('spec')
