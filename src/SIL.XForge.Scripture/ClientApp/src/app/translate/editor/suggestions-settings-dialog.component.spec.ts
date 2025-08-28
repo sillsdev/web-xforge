@@ -47,38 +47,38 @@ describe('SuggestionsSettingsDialogComponent', () => {
     providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }]
   }));
 
-  it('update confidence threshold', fakeAsync(() => {
+  it('update confidence threshold', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.openDialog();
     expect(env.component!.confidenceThreshold).toEqual(50);
 
     env.updateConfidenceThresholdSlider(60);
     expect(env.component!.confidenceThreshold).toEqual(60);
-    const userConfigDoc = env.getProjectUserConfigDoc();
+    const userConfigDoc = await env.getProjectUserConfigDoc();
     expect(userConfigDoc.data!.confidenceThreshold).toEqual(0.6);
     env.closeDialog();
   }));
 
-  it('update suggestions enabled', fakeAsync(() => {
+  it('update suggestions enabled', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.openDialog();
     expect(env.component!.translationSuggestionsUserEnabled).toBe(true);
 
     env.clickSwitch(env.suggestionsEnabledSwitch);
     expect(env.component!.translationSuggestionsUserEnabled).toBe(false);
-    const userConfigDoc = env.getProjectUserConfigDoc();
+    const userConfigDoc = await env.getProjectUserConfigDoc();
     expect(userConfigDoc.data!.translationSuggestionsEnabled).toBe(false);
     env.closeDialog();
   }));
 
-  it('update num suggestions', fakeAsync(() => {
+  it('update num suggestions', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.openDialog();
     expect(env.component!.numSuggestions).toEqual('1');
 
     env.changeSelectValue(env.numSuggestionsSelect, 2);
     expect(env.component!.numSuggestions).toEqual('2');
-    const userConfigDoc = env.getProjectUserConfigDoc();
+    const userConfigDoc = await env.getProjectUserConfigDoc();
     expect(userConfigDoc.data!.numSuggestions).toEqual(2);
     env.closeDialog();
   }));
@@ -193,9 +193,9 @@ class TestEnvironment {
         getSFProjectUserConfigDocId('project01', 'user01'),
         new DocSubscription('spec')
       )
-      .then(projectUserConfigDoc => {
+      .then(async projectUserConfigDoc => {
         const viewContainerRef = this.fixture.componentInstance.childViewContainer;
-        const projectDoc = this.getProjectProfileDoc();
+        const projectDoc = await this.getProjectProfileDoc();
         const config: MatDialogConfig<SuggestionsSettingsDialogData> = {
           data: { projectDoc, projectUserConfigDoc },
           viewContainerRef
@@ -230,16 +230,16 @@ class TestEnvironment {
     });
   }
 
-  getProjectProfileDoc(): SFProjectProfileDoc {
-    return this.realtimeService.get<SFProjectProfileDoc>(
+  async getProjectProfileDoc(): Promise<SFProjectProfileDoc> {
+    return await this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       'project01',
       new DocSubscription('spec')
     );
   }
 
-  getProjectUserConfigDoc(): SFProjectUserConfigDoc {
-    return this.realtimeService.get<SFProjectUserConfigDoc>(
+  async getProjectUserConfigDoc(): Promise<SFProjectUserConfigDoc> {
+    return await this.realtimeService.get<SFProjectUserConfigDoc>(
       SFProjectUserConfigDoc.COLLECTION,
       getSFProjectUserConfigDocId('project01', 'user01'),
       new DocSubscription('spec')
