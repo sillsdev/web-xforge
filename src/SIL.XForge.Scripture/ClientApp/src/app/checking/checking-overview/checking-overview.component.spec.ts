@@ -990,7 +990,7 @@ class TestEnvironment {
     );
     when(mockedProjectService.onlineDeleteAudioTimingData(anything(), anything(), anything())).thenCall(
       (projectId, book, chapter) => {
-        const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
+        const projectDoc = await this.realtimeService.get<SFProjectProfileDoc>(
           SFProjectProfileDoc.COLLECTION,
           projectId,
           new DocSubscription('spec')
@@ -1164,7 +1164,7 @@ class TestEnvironment {
   }
 
   setSeeOtherUserResponses(isEnabled: boolean): void {
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
+    const projectDoc = await this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       'project01',
       new DocSubscription('spec')
@@ -1178,7 +1178,7 @@ class TestEnvironment {
 
   setCheckingEnabled(isEnabled: boolean): void {
     this.ngZone.run(() => {
-      const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
+      const projectDoc = await this.realtimeService.get<SFProjectProfileDoc>(
         SFProjectProfileDoc.COLLECTION,
         'project01',
         new DocSubscription('spec')
@@ -1242,7 +1242,7 @@ class TestEnvironment {
       ],
       permissions: {}
     };
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
+    const projectDoc = await this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       'project01',
       new DocSubscription('spec')

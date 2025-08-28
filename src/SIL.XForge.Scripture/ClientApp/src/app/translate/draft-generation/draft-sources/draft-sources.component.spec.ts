@@ -748,10 +748,10 @@ class TestEnvironment {
           )
         }) as SFProjectDoc
     )
-      .map(o => {
+      .map(async o => {
         // Run it into and out of realtime service so it has fields like `remoteChanges$`.
         this.realtimeService.addSnapshot(SFProjectDoc.COLLECTION, o);
-        return this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, o.id, new DocSubscription('spec'));
+        return await this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, o.id, new DocSubscription('spec'));
       })
       .filter(hasData)
       .map(o => ({

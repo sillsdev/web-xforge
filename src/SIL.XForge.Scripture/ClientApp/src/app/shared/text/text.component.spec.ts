@@ -1895,7 +1895,7 @@ class TestEnvironment {
   }
 
   getUserDoc(userId: string): UserDoc {
-    return this.realtimeService.get<UserDoc>(UserDoc.COLLECTION, userId, new DocSubscription('spec'));
+    return await this.realtimeService.get<UserDoc>(UserDoc.COLLECTION, userId, new DocSubscription('spec'));
   }
 
   getSegment(segmentRef: string): HTMLElement | null {

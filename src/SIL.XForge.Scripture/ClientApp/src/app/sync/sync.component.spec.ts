@@ -387,7 +387,7 @@ class TestEnvironment {
   }
 
   setQueuedCount(projectId: string): void {
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(
+    const projectDoc = await this.realtimeService.get<SFProjectDoc>(
       SFProjectDoc.COLLECTION,
       projectId,
       new DocSubscription('spec')
@@ -397,7 +397,7 @@ class TestEnvironment {
   }
 
   emitSyncComplete(successful: boolean, projectId: string): void {
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(
+    const projectDoc = await this.realtimeService.get<SFProjectDoc>(
       SFProjectDoc.COLLECTION,
       projectId,
       new DocSubscription('spec')
