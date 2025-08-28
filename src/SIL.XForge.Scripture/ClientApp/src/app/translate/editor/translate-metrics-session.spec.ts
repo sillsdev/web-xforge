@@ -474,8 +474,8 @@ class TestEnvironment {
     when(mockedSFProjectService.getText(anything(), anything())).thenCall((id, subscriber) =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), subscriber)
     );
-    when(mockedSFProjectService.getProfile(anything(), anything())).thenCall((id, subscriber) =>
-      this.realtimeService.get(SFProjectProfileDoc.COLLECTION, id.toString(), subscriber)
+    when(mockedSFProjectService.getProfile(anything(), anything())).thenCall(
+      (id, subscriber) => await this.realtimeService.get(SFProjectProfileDoc.COLLECTION, id.toString(), subscriber)
     );
     when(mockedUserService.getCurrentUser()).thenCall(() =>
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01', new DocSubscription('spec'))

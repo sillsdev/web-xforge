@@ -239,11 +239,11 @@ class TestEnvironment {
   }
 
   getBiblicalTermDoc(id: string): BiblicalTermDoc {
-    return this.realtimeService.get<BiblicalTermDoc>(BiblicalTermDoc.COLLECTION, id, new DocSubscription('spec'));
+    return await this.realtimeService.get<BiblicalTermDoc>(BiblicalTermDoc.COLLECTION, id, new DocSubscription('spec'));
   }
 
   getProjectDoc(id: string): SFProjectProfileDoc {
-    return this.realtimeService.get<SFProjectProfileDoc>(
+    return await this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       id,
       new DocSubscription('spec')
