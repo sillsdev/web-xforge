@@ -56,9 +56,10 @@ class Row {
 }
 
 @Component({
-  selector: 'app-sa-projects',
-  templateUrl: './sa-projects.component.html',
-  styleUrls: ['./sa-projects.component.scss']
+    selector: 'app-sa-projects',
+    templateUrl: './sa-projects.component.html',
+    styleUrls: ['./sa-projects.component.scss'],
+    standalone: false
 })
 export class SaProjectsComponent extends DataLoadingComponent implements OnInit {
   @HostBinding('class') classes = 'flex-column';

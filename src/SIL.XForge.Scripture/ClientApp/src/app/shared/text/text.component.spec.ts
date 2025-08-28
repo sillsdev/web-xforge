@@ -1676,15 +1676,16 @@ class MockQuill extends Quill {
 }
 
 @Component({
-  selector: 'app-host',
-  template: `<app-text
+    selector: 'app-host',
+    template: `<app-text
     [placeholder]="initialPlaceHolder"
     [id]="id"
     [isRightToLeft]="isTextRightToLeft"
     [isReadOnly]="isReadOnly"
     [enablePresence]="enablePresence"
     (presenceChange)="onPresenceChange($event)"
-  ></app-text>`
+  ></app-text>`,
+    standalone: false
 })
 class HostComponent {
   @ViewChild(TextComponent) textComponent!: TextComponent;

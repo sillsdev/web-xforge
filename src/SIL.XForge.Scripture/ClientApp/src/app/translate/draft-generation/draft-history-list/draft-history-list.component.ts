@@ -15,11 +15,10 @@ import { DraftGenerationService } from '../draft-generation.service';
 import { DraftHistoryEntryComponent } from './draft-history-entry/draft-history-entry.component';
 
 @Component({
-  selector: 'app-draft-history-list',
-  standalone: true,
-  imports: [MatIconModule, DraftHistoryEntryComponent, TranslocoModule, NoticeComponent],
-  templateUrl: './draft-history-list.component.html',
-  styleUrl: './draft-history-list.component.scss'
+    selector: 'app-draft-history-list',
+    imports: [MatIconModule, DraftHistoryEntryComponent, TranslocoModule, NoticeComponent],
+    templateUrl: './draft-history-list.component.html',
+    styleUrl: './draft-history-list.component.scss'
 })
 export class DraftHistoryListComponent {
   showOlderDraftsNotSupportedWarning: boolean = false;

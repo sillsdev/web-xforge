@@ -51,26 +51,25 @@ import { PreTranslationSignupUrlService } from './pretranslation-signup-url.serv
 import { SupportedBackTranslationLanguagesDialogComponent } from './supported-back-translation-languages-dialog/supported-back-translation-languages-dialog.component';
 
 @Component({
-  selector: 'app-draft-generation',
-  templateUrl: './draft-generation.component.html',
-  styleUrls: ['./draft-generation.component.scss'],
-  standalone: true,
-  imports: [
-    CommonModule,
-    UICommonModule,
-    RouterModule,
-    TranslocoModule,
-    TranslocoMarkupModule,
-    SharedModule,
-    L10nPercentPipe,
-    WorkingAnimatedIndicatorComponent,
-    DraftGenerationStepsComponent,
-    DraftInformationComponent,
-    ServalProjectComponent,
-    DraftDownloadButtonComponent,
-    DraftPreviewBooksComponent,
-    DraftHistoryListComponent
-  ]
+    selector: 'app-draft-generation',
+    templateUrl: './draft-generation.component.html',
+    styleUrls: ['./draft-generation.component.scss'],
+    imports: [
+        CommonModule,
+        UICommonModule,
+        RouterModule,
+        TranslocoModule,
+        TranslocoMarkupModule,
+        SharedModule,
+        L10nPercentPipe,
+        WorkingAnimatedIndicatorComponent,
+        DraftGenerationStepsComponent,
+        DraftInformationComponent,
+        ServalProjectComponent,
+        DraftDownloadButtonComponent,
+        DraftPreviewBooksComponent,
+        DraftHistoryListComponent
+    ]
 })
 export class DraftGenerationComponent extends DataLoadingComponent implements OnInit {
   @ViewChild(MatTabGroup) tabGroup?: MatTabGroup;

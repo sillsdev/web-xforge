@@ -26,7 +26,10 @@ import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { SharedModule } from '../shared/shared.module';
 import { MyProjectsComponent } from './my-projects.component';
-@Component({ template: '' })
+@Component({
+    template: '',
+    standalone: false
+})
 class EmptyComponent {}
 
 const mockedSFProjectService = mock(SFProjectService);

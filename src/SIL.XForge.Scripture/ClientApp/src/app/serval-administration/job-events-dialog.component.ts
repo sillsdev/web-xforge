@@ -25,11 +25,10 @@ const EVENT_TYPE_LABELS: {
  * This helps administrators understand how jobs are derived from event metrics.
  */
 @Component({
-  selector: 'app-job-events-dialog',
-  templateUrl: './job-events-dialog.component.html',
-  styleUrls: ['./job-events-dialog.component.scss'],
-  standalone: true,
-  imports: [CommonModule, MatDialogModule, UICommonModule]
+    selector: 'app-job-events-dialog',
+    templateUrl: './job-events-dialog.component.html',
+    styleUrls: ['./job-events-dialog.component.scss'],
+    imports: [CommonModule, MatDialogModule, UICommonModule]
 })
 export class JobEventsDialogComponent {
   constructor(
