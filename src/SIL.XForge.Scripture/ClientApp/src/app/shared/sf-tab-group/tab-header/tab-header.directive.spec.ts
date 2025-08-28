@@ -4,7 +4,8 @@ import { By } from '@angular/platform-browser';
 import { TabHeaderDirective } from './tab-header.directive';
 
 @Component({
-  template: ` <div sf-tab-header></div> `
+    template: ` <div sf-tab-header></div> `,
+    standalone: false
 })
 class TestComponent {}
 

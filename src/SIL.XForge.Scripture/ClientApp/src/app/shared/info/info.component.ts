@@ -2,9 +2,10 @@ import { Component, Input } from '@angular/core';
 import { ICONS_TO_MIRROR_RTL } from '../utils';
 
 @Component({
-  selector: 'app-info',
-  templateUrl: './info.component.html',
-  styleUrls: ['./info.component.scss']
+    selector: 'app-info',
+    templateUrl: './info.component.html',
+    styleUrls: ['./info.component.scss'],
+    standalone: false
 })
 export class InfoComponent {
   @Input() icon?: string = 'help';

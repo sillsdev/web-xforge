@@ -58,10 +58,11 @@ export interface QuestionChangedEvent {
 // time change detection is run, this component should be checked for changes instead of being skipped.
 
 @Component({
-  selector: 'app-checking-questions',
-  templateUrl: './checking-questions.component.html',
-  styleUrls: ['./checking-questions.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-checking-questions',
+    templateUrl: './checking-questions.component.html',
+    styleUrls: ['./checking-questions.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class CheckingQuestionsComponent implements OnInit, OnChanges {
   @Output() update = new EventEmitter<QuestionDoc>();

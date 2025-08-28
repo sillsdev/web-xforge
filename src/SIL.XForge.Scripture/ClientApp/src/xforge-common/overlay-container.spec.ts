@@ -20,8 +20,9 @@ describe('OverlayContainer', () => {
  * is only rendered as a <div> element whereas this test specifically needs access to the <app-root> element
  */
 @Component({
-  selector: 'app-host',
-  template: '<app-root #root></app-root>'
+    selector: 'app-host',
+    template: '<app-root #root></app-root>',
+    standalone: false
 })
 class HostComponent {
   @ViewChild('root') appRoot?: AppRootComponent;
@@ -31,8 +32,9 @@ class HostComponent {
   }
 }
 @Component({
-  selector: 'app-root',
-  template: '<ng-template #bottomSheet><div class="bottom-sheet-container">Opened</div></ng-template>'
+    selector: 'app-root',
+    template: '<ng-template #bottomSheet><div class="bottom-sheet-container">Opened</div></ng-template>',
+    standalone: false
 })
 class AppRootComponent {
   @ViewChild('bottomSheet') TemplateBottomSheet?: TemplateRef<any>;

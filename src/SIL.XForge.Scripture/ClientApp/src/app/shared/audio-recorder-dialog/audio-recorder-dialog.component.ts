@@ -47,11 +47,10 @@ export interface AudioRecorderDialogResult {
 }
 
 @Component({
-  standalone: true,
-  selector: 'app-audio-recorder-dialog',
-  templateUrl: './audio-recorder-dialog.component.html',
-  styleUrl: './audio-recorder-dialog.component.scss',
-  imports: [UICommonModule, CommonModule, SharedModule, TranslocoModule]
+    selector: 'app-audio-recorder-dialog',
+    templateUrl: './audio-recorder-dialog.component.html',
+    styleUrl: './audio-recorder-dialog.component.scss',
+    imports: [UICommonModule, CommonModule, SharedModule, TranslocoModule]
 })
 /* eslint-disable brace-style */
 export class AudioRecorderDialogComponent implements ControlValueAccessor, OnInit, OnDestroy {
