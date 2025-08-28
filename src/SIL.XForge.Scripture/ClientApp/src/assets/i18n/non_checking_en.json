@@ -358,6 +358,7 @@
     "draft_format_description": "The draft has been created. Here are some formatting options for the text. You can try each option to see the difference it makes.",
     "draft_format_options": "Format draft",
     "failed_to_save": "Failed to save changes. Try again later.",
+    "formatting_options": "Formatting options",
     "line_breaks_description": "Scripture Forge translates complete verses, without line breaks, because this gives the best draft. Choose where to place the line breaks from the source.",
     "line_breaks_title": "Line breaks",
     "new": "New",

@@ -483,7 +483,8 @@ public class PreTranslationServiceTests
                 "MAT",
                 Arg.Any<PretranslationUsfmTextOrigin>(),
                 Arg.Any<PretranslationUsfmTemplate>(),
-                PretranslationUsfmMarkerBehavior.Strip,
+                paragraphMarkerBehavior: PretranslationUsfmMarkerBehavior.Strip,
+                quoteNormalizationBehavior: PretranslationNormalizationBehavior.Denormalized,
                 cancellationToken: CancellationToken.None
             );
 
@@ -503,7 +504,8 @@ public class PreTranslationServiceTests
                 "MAT",
                 Arg.Any<PretranslationUsfmTextOrigin>(),
                 Arg.Any<PretranslationUsfmTemplate>(),
-                PretranslationUsfmMarkerBehavior.Preserve,
+                paragraphMarkerBehavior: PretranslationUsfmMarkerBehavior.PreservePosition,
+                quoteNormalizationBehavior: PretranslationNormalizationBehavior.Denormalized,
                 cancellationToken: CancellationToken.None
             );
 
@@ -516,19 +518,19 @@ public class PreTranslationServiceTests
             CancellationToken.None
         );
         await env
-            .TranslationEnginesClient.Received(2)
+            .TranslationEnginesClient.Received(1)
             .GetPretranslatedUsfmAsync(
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 "MAT",
                 Arg.Any<PretranslationUsfmTextOrigin>(),
                 Arg.Any<PretranslationUsfmTemplate>(),
-                PretranslationUsfmMarkerBehavior.Preserve,
+                paragraphMarkerBehavior: PretranslationUsfmMarkerBehavior.Preserve,
+                quoteNormalizationBehavior: PretranslationNormalizationBehavior.Denormalized,
                 cancellationToken: CancellationToken.None
             );
     }
 
-    // TODO: Update test when feature is on Serval
     [Test]
     public async Task GetPreTranslationUsfmAsync_QuoteFormatSpecified()
     {
@@ -553,8 +555,8 @@ public class PreTranslationServiceTests
                 "MAT",
                 Arg.Any<PretranslationUsfmTextOrigin>(),
                 Arg.Any<PretranslationUsfmTemplate>(),
-                PretranslationUsfmMarkerBehavior.Preserve,
-                // PretranslationUsfmQuoteFormat.Straight,
+                paragraphMarkerBehavior: PretranslationUsfmMarkerBehavior.PreservePosition,
+                quoteNormalizationBehavior: PretranslationNormalizationBehavior.Normalized,
                 cancellationToken: CancellationToken.None
             );
 
@@ -574,8 +576,8 @@ public class PreTranslationServiceTests
                 "MAT",
                 Arg.Any<PretranslationUsfmTextOrigin>(),
                 Arg.Any<PretranslationUsfmTemplate>(),
-                PretranslationUsfmMarkerBehavior.Preserve,
-                // PretranslationUsfmQuoteFormat.Automatic,
+                paragraphMarkerBehavior: PretranslationUsfmMarkerBehavior.PreservePosition,
+                quoteNormalizationBehavior: PretranslationNormalizationBehavior.Denormalized,
                 cancellationToken: CancellationToken.None
             );
     }
@@ -801,6 +803,7 @@ public class PreTranslationServiceTests
                     textOrigin: PretranslationUsfmTextOrigin.OnlyPretranslated,
                     template: PretranslationUsfmTemplate.Source,
                     paragraphMarkerBehavior: Arg.Any<PretranslationUsfmMarkerBehavior>(),
+                    quoteNormalizationBehavior: Arg.Any<PretranslationNormalizationBehavior>(),
                     cancellationToken: CancellationToken.None
                 )
                 .Returns(MatthewBookUsfm);

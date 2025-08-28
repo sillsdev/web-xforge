@@ -196,20 +196,17 @@ public class PreTranslationService(
             template: PretranslationUsfmTemplate.Source,
             paragraphMarkerBehavior: config.ParagraphFormat switch
             {
-                // TODO: Update mappings to USFM marker behavior when available in serval
                 ParagraphBreakFormat.Remove => PretranslationUsfmMarkerBehavior.Strip,
-                ParagraphBreakFormat.BestGuess => PretranslationUsfmMarkerBehavior.Preserve,
+                ParagraphBreakFormat.BestGuess => PretranslationUsfmMarkerBehavior.PreservePosition,
                 ParagraphBreakFormat.MoveToEnd => PretranslationUsfmMarkerBehavior.Preserve,
-                _ => PretranslationUsfmMarkerBehavior.Preserve,
+                _ => PretranslationUsfmMarkerBehavior.PreservePosition,
             },
-            /*
-            quoteBehavior: config.QuoteFormat switch
+            quoteNormalizationBehavior: config.QuoteFormat switch
             {
-                QuoteStyle.Automatic => PretranslationQuoteFormat.Automatic,
-                QuoteStyle.Straight => PretranslationQuoteFormat.Straight,
-                _ => PretranslationQuoteFormat.Automatic,
+                QuoteStyle.Automatic => PretranslationNormalizationBehavior.Denormalized,
+                QuoteStyle.Straight => PretranslationNormalizationBehavior.Normalized,
+                _ => PretranslationNormalizationBehavior.Denormalized,
             },
-            */
             cancellationToken: cancellationToken
         );
 

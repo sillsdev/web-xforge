@@ -2165,7 +2165,11 @@ public class MachineApiServiceTests
         env.ParatextService.ConvertUsxToUsfm(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, Arg.Any<XDocument>())
             .Returns(expected);
 
-        var config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.Remove };
+        var config = new DraftUsfmConfig
+        {
+            ParagraphFormat = ParagraphBreakFormat.Remove,
+            QuoteFormat = QuoteStyle.Straight,
+        };
 
         // SUT
         string usfm = await env.Service.GetPreTranslationUsfmAsync(
@@ -2185,7 +2189,9 @@ public class MachineApiServiceTests
                 Project01,
                 40,
                 1,
-                Arg.Is<DraftUsfmConfig>(d => d.ParagraphFormat == config.ParagraphFormat),
+                Arg.Is<DraftUsfmConfig>(d =>
+                    d.ParagraphFormat == config.ParagraphFormat && d.QuoteFormat == config.QuoteFormat
+                ),
                 CancellationToken.None
             );
     }
