@@ -176,7 +176,7 @@ describe('LynxWorkspaceService', () => {
       resetCalls(mockProjectService);
     }
 
-    createTextDoc(chapter: number = CHAPTER_NUM, content: Delta | string = TEST_CONTENT): TextDoc {
+    async createTextDoc(chapter: number = CHAPTER_NUM, content: Delta | string = TEST_CONTENT): Promise<TextDoc> {
       const textDocId = new TextDocId(PROJECT_ID, BOOK_NUM, chapter);
       const id = textDocId.toString();
       const delta = typeof content === 'string' ? new Delta().insert(content) : content;
@@ -187,10 +187,10 @@ describe('LynxWorkspaceService', () => {
         data: delta
       });
 
-      return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, id, new DocSubscription('spec'));
+      return await this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, id, new DocSubscription('spec'));
     }
 
-    createMockProjectDoc(id: string = PROJECT_ID, lynxConfig?: LynxConfig): SFProjectProfileDoc {
+    createMockProjectDoc(id: string = PROJECT_ID, lynxConfig?: LynxConfig): Promise<SFProjectProfileDoc> {
       const projectData = createTestProjectProfile({
         texts: [
           {
@@ -211,7 +211,7 @@ describe('LynxWorkspaceService', () => {
         data: projectData
       });
 
-      return this.realtimeService.get<SFProjectProfileDoc>(
+      return await this.realtimeService.get<SFProjectProfileDoc>(
         SFProjectProfileDoc.COLLECTION,
         id,
         new DocSubscription('spec')
@@ -272,7 +272,7 @@ describe('LynxWorkspaceService', () => {
       tick();
     }
 
-    triggerProjectChange(id: string, lynxConfig?: LynxConfig): void {
+    async triggerProjectChange(id: string, lynxConfig?: LynxConfig): Promise<void> {
       this.projectDocTestSubject$.next(this.createMockProjectDoc(id, lynxConfig));
       tick();
     }
