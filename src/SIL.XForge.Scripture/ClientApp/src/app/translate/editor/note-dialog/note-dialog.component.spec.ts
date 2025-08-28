@@ -1030,7 +1030,7 @@ class TestEnvironment {
     firstValueFrom(this.dialogRef.afterClosed()).then(result => (this.dialogResult = result));
 
     when(mockedUserService.getProfile(anything(), anything())).thenCall(
-      (id, subscriber) => await this.realtimeService.get(UserProfileDoc.COLLECTION, id, subscriber)
+      async (id, subscriber) => await this.realtimeService.get(UserProfileDoc.COLLECTION, id, subscriber)
     );
 
     when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
