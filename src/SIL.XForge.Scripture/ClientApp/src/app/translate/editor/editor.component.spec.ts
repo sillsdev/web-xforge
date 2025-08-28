@@ -4612,6 +4612,7 @@ class TestEnvironment {
       (id, bookNum, chapterNum, _) =>
         this.realtimeService.subscribeQuery(
           NoteThreadDoc.COLLECTION,
+          'spec',
           {
             [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
             [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo,
@@ -4624,6 +4625,7 @@ class TestEnvironment {
     when(mockedSFProjectService.queryBiblicalTermNoteThreads(anything(), anything())).thenCall(id =>
       this.realtimeService.subscribeQuery(
         NoteThreadDoc.COLLECTION,
+        'spec',
         {
           [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
           [obj<NoteThread>().pathStr(t => t.biblicalTermId)]: { $ne: null }
@@ -4634,6 +4636,7 @@ class TestEnvironment {
     when(mockedSFProjectService.queryBiblicalTerms(anything(), anything())).thenCall(id =>
       this.realtimeService.subscribeQuery(
         BiblicalTermDoc.COLLECTION,
+        'spec',
         {
           [obj<BiblicalTerm>().pathStr(t => t.projectRef)]: id
         },
@@ -4874,6 +4877,7 @@ class TestEnvironment {
       (id, bookNum, chapterNum, _) =>
         this.realtimeService.subscribeQuery(
           NoteThreadDoc.COLLECTION,
+          'spec',
           {
             [obj<NoteThread>().pathStr(t => t.publishedToSF)]: userId === 'user05',
             [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo,
