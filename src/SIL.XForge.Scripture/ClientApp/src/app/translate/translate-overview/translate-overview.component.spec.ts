@@ -562,7 +562,7 @@ class TestEnvironment {
     this.waitForProjectDocChanges();
   }
 
-  simulateTranslateSuggestionsEnabled(enabled: boolean = true): void {
+  async simulateTranslateSuggestionsEnabled(enabled: boolean = true): Promise<void> {
     const projectDoc: SFProjectProfileDoc = await this.realtimeService.get(
       SFProjectProfileDoc.COLLECTION,
       'project01',
