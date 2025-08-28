@@ -155,7 +155,7 @@ describe('LynxWorkspaceService', () => {
     init(): void {
       this.realtimeService = TestBed.inject<TestRealtimeService>(RealtimeService as any);
 
-      when(mockProjectService.getText(anything(), anything())).thenCall(textDocId => {
+      when(mockProjectService.getText(anything(), anything())).thenCall(async textDocId => {
         const id = typeof textDocId === 'string' ? textDocId : textDocId.toString();
         const existingDoc = await this.realtimeService.get<TextDoc>(
           TextDoc.COLLECTION,
