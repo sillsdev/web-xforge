@@ -3324,7 +3324,7 @@ class TestEnvironment {
   }
 
   getQuestionDoc(dataId: string): QuestionDoc {
-    return this.realtimeService.get(
+    return await this.realtimeService.get(
       QuestionDoc.COLLECTION,
       getQuestionDocId('project01', dataId),
       new DocSubscription('spec')

@@ -471,6 +471,6 @@ class TestEnvironment {
   }
 
   getTextDoc(textId: TextDocId): TextDoc {
-    return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString(), new DocSubscription('spec'));
+    return await this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString(), new DocSubscription('spec'));
   }
 }

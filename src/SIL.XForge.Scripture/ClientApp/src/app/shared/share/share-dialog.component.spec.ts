@@ -494,7 +494,7 @@ class TestEnvironment {
   }
 
   disableCheckingSharing(): void {
-    const projectDoc: SFProjectProfileDoc = this.realtimeService.get(
+    const projectDoc: SFProjectProfileDoc = await this.realtimeService.get(
       SFProjectProfileDoc.COLLECTION,
       'project01',
       new DocSubscription('spec')

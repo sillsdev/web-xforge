@@ -241,7 +241,7 @@ class TestEnvironment {
   }
 
   updateSyncProgress(percentCompleted: number, projectId: string): void {
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(
+    const projectDoc = await this.realtimeService.get<SFProjectDoc>(
       SFProjectDoc.COLLECTION,
       projectId,
       new DocSubscription('spec')
@@ -257,7 +257,7 @@ class TestEnvironment {
 
   emitSyncComplete(successful: boolean, projectId: string): void {
     this.host.syncProgress['updateProgressState'](projectId, new ProgressState(1));
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(
+    const projectDoc = await this.realtimeService.get<SFProjectDoc>(
       SFProjectDoc.COLLECTION,
       projectId,
       new DocSubscription('spec')

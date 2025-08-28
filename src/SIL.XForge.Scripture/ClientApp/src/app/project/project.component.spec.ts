@@ -277,7 +277,7 @@ class TestEnvironment {
 
   addUserToProject(projectIdSuffix: number): void {
     this.setProjectData({ memberProjectIdSuffixes: [projectIdSuffix] });
-    const userDoc: UserDoc = this.realtimeService.get(UserDoc.COLLECTION, 'user01', new DocSubscription('spec'));
+    const userDoc: UserDoc = await this.realtimeService.get(UserDoc.COLLECTION, 'user01', new DocSubscription('spec'));
     userDoc.submitJson0Op(op => op.set(u => u.sites, { sf: { projects: [`project${projectIdSuffix}`] } }), false);
     tick();
   }

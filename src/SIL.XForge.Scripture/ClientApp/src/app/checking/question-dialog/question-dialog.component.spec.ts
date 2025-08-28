@@ -605,7 +605,7 @@ class TestEnvironment {
         id: questionId,
         data: question
       });
-      questionDoc = this.realtimeService.get<QuestionDoc>(
+      questionDoc = await this.realtimeService.get<QuestionDoc>(
         QuestionDoc.COLLECTION,
         questionId,
         new DocSubscription('spec')
@@ -639,7 +639,7 @@ class TestEnvironment {
       id: 'project01',
       data: createTestProjectProfile({ texts: Object.values(textsByBookId) })
     });
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
+    const projectDoc = await this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       'project01',
       new DocSubscription('spec')
