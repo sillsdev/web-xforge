@@ -815,8 +815,8 @@ class TestEnvironment {
     return this.getElement('#sf-logo-button');
   }
 
-  get currentUserDoc(): UserDoc {
-    return this.realtimeService.get(UserDoc.COLLECTION, 'user01', new DocSubscription('spec'));
+  async getCurrentUserDoc(): Promise<UserDoc> {
+    return await this.realtimeService.get(UserDoc.COLLECTION, 'user01', new DocSubscription('spec'));
   }
 
   setCurrentUser(userId: string): void {
@@ -886,12 +886,12 @@ class TestEnvironment {
     flush(70);
   }
 
-  deleteProject(projectId: string, isLocal: boolean): void {
+  async deleteProject(projectId: string, isLocal: boolean): Promise<void> {
     if (isLocal) {
       when(mockedUserService.currentProjectId(anything())).thenReturn(undefined);
     }
-    this.ngZone.run(() => {
-      const projectDoc = this.realtimeService.get(
+    await this.ngZone.run(async () => {
+      const projectDoc = await this.realtimeService.get(
         SFProjectProfileDoc.COLLECTION,
         projectId,
         new DocSubscription('spec')
@@ -901,8 +901,8 @@ class TestEnvironment {
     this.wait();
   }
 
-  removeUserFromProject(projectId: string): void {
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
+  async removeUserFromProject(projectId: string): Promise<void> {
+    const projectDoc = await this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       projectId,
       new DocSubscription('spec')
@@ -921,14 +921,17 @@ class TestEnvironment {
     this.wait();
   }
 
-  addUserToProject(projectId: string): void {
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
+  async addUserToProject(projectId: string): Promise<void> {
+    const projectDoc = await this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       projectId,
       new DocSubscription('spec')
     );
     projectDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.CommunityChecker), false);
-    this.currentUserDoc.submitJson0Op(op => op.add<string>(u => u.sites['sf'].projects, 'project04'), false);
+    (await this.getCurrentUserDoc()).submitJson0Op(
+      op => op.add<string>(u => u.sites['sf'].projects, 'project04'),
+      false
+    );
     this.wait();
   }
 
