@@ -406,18 +406,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   startBuild(buildConfig: BuildConfig): void {
-    this.draftGenerationService
-      .getBuildProgress(buildConfig.projectId)
-      .pipe(quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(job => {
-        if (this.isDraftInProgress(job)) {
-          this.draftJob = job;
-          this.currentPage = 'initial';
-          this.dialogService.message('draft_generation.draft_already_running');
-          return;
-        }
-      });
-
     this.jobSubscription?.unsubscribe();
     this.jobSubscription = this.draftGenerationService
       .startBuildOrGetActiveBuild(buildConfig)
@@ -445,7 +433,11 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
         }),
         quietTakeUntilDestroyed(this.destroyRef)
       )
-      .subscribe((job?: BuildDto) => (this.draftJob = job));
+      .subscribe((job?: BuildDto) => {
+        if (job) {
+          this.draftJob = job;
+        }
+      });
   }
 
   projectLabel(project?: SelectableProject): string {
