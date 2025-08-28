@@ -438,8 +438,8 @@ class TestEnvironment {
       mockedProjectService.onlineGetLinkSharingKey(this.project01Id, anything(), anything(), anything())
     ).thenResolve('linkSharingKey01');
     when(mockedProjectService.onlineSetUserProjectPermissions(this.project01Id, 'user02', anything())).thenCall(
-      (projectId: string, userId: string, permissions: string[]) => {
-        const projectDoc: SFProjectDoc = this.realtimeService.get(
+      async (projectId: string, userId: string, permissions: string[]) => {
+        const projectDoc: SFProjectDoc = await this.realtimeService.get(
           SFProjectDoc.COLLECTION,
           projectId,
           new DocSubscription('spec')
@@ -581,8 +581,8 @@ class TestEnvironment {
     this.setupThisProjectData(this.project01Id, this.createProject(userRoles));
   }
 
-  updateCheckingProperties(config: CheckingConfig): Promise<boolean> {
-    const projectDoc: SFProjectDoc = this.realtimeService.get(
+  async updateCheckingProperties(config: CheckingConfig): Promise<boolean> {
+    const projectDoc: SFProjectDoc = await this.realtimeService.get(
       SFProjectDoc.COLLECTION,
       this.project01Id,
       new DocSubscription('spec')

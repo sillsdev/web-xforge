@@ -160,9 +160,13 @@ describe('RolesAndPermissionsComponent', () => {
     env.openDialog('ptTranslator');
 
     //prep for role change
-    when(mockedProjectService.onlineUpdateUserRole(anything(), anything(), anything())).thenCall((p, u, r) => {
+    when(mockedProjectService.onlineUpdateUserRole(anything(), anything(), anything())).thenCall(async (p, u, r) => {
       rolesByUser[u] = r;
-      const projectDoc: SFProjectDoc = env.realtimeService.get(SFProjectDoc.COLLECTION, p, new DocSubscription('spec'));
+      const projectDoc: SFProjectDoc = await env.realtimeService.get(
+        SFProjectDoc.COLLECTION,
+        p,
+        new DocSubscription('spec')
+      );
       projectDoc.submitJson0Op(op => {
         op.set(p => p.userRoles, rolesByUser);
         op.set(p => p.userPermissions, {
