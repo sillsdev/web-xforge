@@ -7,11 +7,11 @@ import { MatRippleModule } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Router, ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
-import { filter, merge, Subscription } from 'rxjs';
+import { merge, Subscription } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { isNetworkError } from 'xforge-common/command.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -88,9 +88,12 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
   availableTrainingFiles: Readonly<TrainingData>[] = [];
 
   projects?: SelectableProject[];
-  resources?: SelectableProject[];
+  resources?: SelectableProjectWithLanguageCode[];
   // Projects that can be an already selected value, but not necessarily given as an option in the menu
   nonSelectableProjects: SelectableProject[] = [];
+
+  /** Promise that resolves when resources are loaded for the first time */
+  private resourcesLoadedPromise?: Promise<void>;
 
   languageCodeConfirmationMessageIfUserTriesToContinue: I18nKeyForComponent<'draft_sources'> | null = null;
   clearLanguageCodeConfirmationCheckbox = new EventEmitter<void>();
@@ -107,7 +110,6 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
   private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
   private trainingDataQuerySubscription?: Subscription;
   private savedTrainingFiles?: Readonly<TrainingData>[];
-
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
@@ -127,21 +129,17 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
   ) {
     super(noticeService);
 
+    // Load projects and resources once during initialization
+    this.resourcesLoadedPromise = this.loadProjects();
+
     this.activatedProjectService.changes$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async projectDoc => {
       if (projectDoc?.data != null) {
         // Check for query parameters to override default project sources
-        const queryParams = this.route.snapshot.queryParamMap;
-        const trainingSourcesParam = queryParams.get('trainingSources');
-        const draftingSourcesParam = queryParams.get('draftingSources');
+        const queryParams = this.route.snapshot?.queryParamMap;
+        const trainingSourcesParam = queryParams?.get('trainingSources') || null;
+        const draftingSourcesParam = queryParams?.get('draftingSources') || null;
 
-        if (trainingSourcesParam || draftingSourcesParam) {
-          // Use query parameters to set sources
-          await this.loadSourcesFromQueryParams(projectDoc, trainingSourcesParam, draftingSourcesParam);
-        } else {
-          // Use default project sources
-          await this.loadSourcesFromProject(projectDoc);
-        }
-
+        await this.loadSources(projectDoc, trainingSourcesParam, draftingSourcesParam);
         await this.initializeTrainingFiles(projectDoc);
       }
     });
@@ -152,76 +150,124 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
         if (projects == null) return;
         this.userConnectedProjectsAndResources = projects.filter(project => project.data != null);
       });
-
-    this.onlineStatus.onlineStatus$
-      .pipe(
-        quietTakeUntilDestroyed(this.destroyRef),
-        filter(isOnline => isOnline)
-      )
-      .subscribe(() => this.loadProjects());
   }
 
-  /** Load sources from the project's default configuration */
-  private async loadSourcesFromProject(projectDoc: SFProjectProfileDoc): Promise<void> {
-    if (!projectDoc.data) return;
-    
-    const { trainingSources, trainingTargets, draftingSources } = projectToDraftSources(projectDoc.data);
-    if (trainingSources.length > 2) throw new Error('More than 2 training sources is not supported');
-    if (draftingSources.length > 1) throw new Error('More than 1 drafting source is not supported');
-    if (trainingTargets.length !== 1) throw new Error('Exactly 1 training target is required');
-
-    this.trainingSources = trainingSources.map(translateSourceToSelectableProjectWithLanguageTag);
-    this.trainingTargets = trainingTargets;
-    this.draftingSources = draftingSources.map(translateSourceToSelectableProjectWithLanguageTag);
-    this.nonSelectableProjects = [...this.trainingSources.filter(notNull), ...this.draftingSources.filter(notNull)];
-
-    if (this.draftingSources.length < 1) this.draftingSources.push(undefined);
-    if (this.trainingSources.length < 1) this.trainingSources.push(undefined);
-  }
-
-  /** Load sources from query parameters */
-  private async loadSourcesFromQueryParams(
-    projectDoc: SFProjectProfileDoc, 
-    trainingSourcesParam: string | null, 
+  /** Load sources either from query parameters or project defaults */
+  private async loadSources(
+    projectDoc: SFProjectProfileDoc,
+    trainingSourcesParam: string | null,
     draftingSourcesParam: string | null
   ): Promise<void> {
     if (!projectDoc.data) return;
 
-    // Get all available projects and resources
-    const allResources = await this.paratextService.getResources() || [];
-    const userProjects = this.userConnectedProjectsAndResources.map(p => p.data).filter(notNull);
-    const allAvailable = [...userProjects, ...allResources];
+    let shouldLoadFromDefaults = true;
+    let invalidProjects: string[] = [];
 
-    // Reset arrays
-    this.trainingSources = [];
-    this.draftingSources = [];
-    this.trainingTargets = [projectDoc.data]; // Always use current project as training target
+    // Try to load from query parameters if provided
+    if (trainingSourcesParam || draftingSourcesParam) {
+      invalidProjects = await this.loadSourcesFromQueryParams(projectDoc, trainingSourcesParam, draftingSourcesParam);
 
-    // Parse training sources from query parameter
-    if (trainingSourcesParam) {
-      const shortNames = trainingSourcesParam.split(',').map(s => s.trim()).filter(Boolean);
-      this.trainingSources = shortNames
-        .map(shortName => allAvailable.find(p => p.shortName === shortName))
-        .filter(notNull)
-        .map(project => this.convertToSelectableProjectWithLanguageCode(project))
-        .slice(0, 2); // Limit to 2 training sources
+      // Only use query parameter results if all projects were valid
+      if (invalidProjects.length === 0) {
+        shouldLoadFromDefaults = false;
+      }
     }
 
-    // Parse drafting sources from query parameter
-    if (draftingSourcesParam) {
-      const shortNames = draftingSourcesParam.split(',').map(s => s.trim()).filter(Boolean);
-      this.draftingSources = shortNames
-        .map(shortName => allAvailable.find(p => p.shortName === shortName))
-        .filter(notNull)
-        .map(project => this.convertToSelectableProjectWithLanguageCode(project))
-        .slice(0, 1); // Limit to 1 drafting source
+    // Load from project defaults (either no query params or fallback due to invalid projects)
+    if (shouldLoadFromDefaults) {
+      const { trainingSources, trainingTargets, draftingSources } = projectToDraftSources(projectDoc.data);
+      if (trainingSources.length > 2) throw new Error('More than 2 training sources is not supported');
+      if (draftingSources.length > 1) throw new Error('More than 1 drafting source is not supported');
+      if (trainingTargets.length !== 1) throw new Error('Exactly 1 training target is required');
+
+      this.trainingSources = trainingSources.map(translateSourceToSelectableProjectWithLanguageTag);
+      this.trainingTargets = trainingTargets;
+      this.draftingSources = draftingSources.map(translateSourceToSelectableProjectWithLanguageTag);
+
+      // Show error dialog if we're falling back due to invalid projects
+      if (invalidProjects.length > 0) {
+        const invalidProjectList = this.i18n.enumerateList(invalidProjects);
+        this.dialogService.message(
+          this.i18n.translate('draft_sources.invalid_configuration_message', { invalidProjects: invalidProjectList })
+        );
+      }
     }
 
+    // Common setup for both paths
     this.nonSelectableProjects = [...this.trainingSources.filter(notNull), ...this.draftingSources.filter(notNull)];
 
     // Ensure arrays have at least one slot for UI
     if (this.draftingSources.length < 1) this.draftingSources.push(undefined);
     if (this.trainingSources.length < 1) this.trainingSources.push(undefined);
+  }
+
+  /** Load sources from query parameters - returns list of invalid project short names */
+  private async loadSourcesFromQueryParams(
+    projectDoc: SFProjectProfileDoc,
+    trainingSourcesParam: string | null,
+    draftingSourcesParam: string | null
+  ): Promise<string[]> {
+    if (!projectDoc.data) return [];
+
+    // Ensure resources are loaded before proceeding
+    await this.resourcesLoadedPromise;
+
+    // Get all available projects and resources
+    const allResources = this.resources || [];
+    const userProjects = this.userConnectedProjectsAndResources.map(p => p.data).filter(notNull);
+    const allAvailable = [...userProjects, ...allResources];
+
+    // Track invalid project short names
+    const invalidProjects: string[] = [];
+
+    // Initialize arrays with current project as training target
+    this.trainingTargets = [projectDoc.data];
+
+    // Parse training sources from query parameter
+    if (trainingSourcesParam) {
+      const shortNames = trainingSourcesParam
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+      const foundProjects: SelectableProjectWithLanguageCode[] = [];
+
+      for (const shortName of shortNames) {
+        const project = allAvailable.find(p => p.shortName === shortName);
+        if (project) {
+          foundProjects.push(this.convertToSelectableProjectWithLanguageCode(project));
+        } else {
+          invalidProjects.push(shortName);
+        }
+      }
+
+      this.trainingSources = foundProjects.slice(0, 2); // Limit to 2 training sources
+    } else {
+      this.trainingSources = [];
+    }
+
+    // Parse drafting sources from query parameter
+    if (draftingSourcesParam) {
+      const shortNames = draftingSourcesParam
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+      const foundProjects: SelectableProjectWithLanguageCode[] = [];
+
+      for (const shortName of shortNames) {
+        const project = allAvailable.find(p => p.shortName === shortName);
+        if (project) {
+          foundProjects.push(this.convertToSelectableProjectWithLanguageCode(project));
+        } else {
+          invalidProjects.push(shortName);
+        }
+      }
+
+      this.draftingSources = foundProjects.slice(0, 1); // Limit to 1 drafting source
+    } else {
+      this.draftingSources = [];
+    }
+
+    return invalidProjects;
   }
 
   /** Convert a project to SelectableProjectWithLanguageCode format */
@@ -291,6 +337,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
   }
 
   get targetLanguageDisplayName(): string | undefined {
+    if (this.trainingTargets.length === 0) return undefined; // Not loaded yet
     if (this.trainingTargets.length !== 1) throw new Error('Multiple training targets not supported');
 
     return this.i18n.getLanguageDisplayName(this.trainingTargets[0]!.writingSystem.tag);
@@ -317,6 +364,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
   }
 
   get targetLanguageTag(): string {
+    if (this.trainingTargets.length === 0) return ''; // Not loaded yet
     return this.trainingTargets[0]!.writingSystem.tag;
   }
 
@@ -328,10 +376,14 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
   async loadProjects(): Promise<void> {
     this.loadingStarted();
     try {
-      [this.projects, this.resources] = await Promise.all([
+      // Load projects and resources once
+      const [projects, resources] = await Promise.all([
         this.paratextService.getProjects(),
         this.paratextService.getResources()
       ]);
+
+      this.projects = projects;
+      this.resources = resources;
     } catch (error) {
       if (!isNetworkError(error)) {
         this.errorReportingService.silentError(

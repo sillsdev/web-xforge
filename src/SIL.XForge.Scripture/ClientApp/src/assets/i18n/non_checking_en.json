@@ -344,7 +344,9 @@
     "target_language_data": "Target language data",
     "training_files_description": "Upload any further data that can be used to train the language model. These files must contain paired text in {{ sourceLanguageDisplayName }} and {{ targetLanguageDisplayName }} based on the projects selected.",
     "training_language_model": "Training the language model",
-    "unknown_language_code": "unknown"
+    "unknown_language_code": "unknown",
+    "invalid_configuration_title": "Invalid Configuration",
+    "invalid_configuration_message": "The configuration from the link could not be applied because the following projects were not found: {{ invalidProjects }}. Using the project's default settings instead."
   },
   "draft_usfm_format": {
     "automatic_quote_style_description": "Use the same quote style as the rest of the project, if possible. Recommended for most projects.",

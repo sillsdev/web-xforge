@@ -11,21 +11,11 @@
           formControlName="trainingSources"
           placeholder="Enter training project short names (comma-separated)"
         />
-        @if (validatingTrainingSources) {
-          <mat-hint>Validating projects...</mat-hint>
-        } @else if (!trainingSourcesValid && sourcesForm.get("trainingSources")?.value?.trim()) {
-          <mat-error>One or more training sources not found</mat-error>
-        }
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="form-field" [class.field-error]="!draftingSourceValid">
         <mat-label>Draft Source</mat-label>
         <input matInput formControlName="draftingSources" placeholder="Enter draft project short name" />
-        @if (validatingDraftingSource) {
-          <mat-hint>Validating project...</mat-hint>
-        } @else if (!draftingSourceValid && sourcesForm.get("draftingSources")?.value?.trim()) {
-          <mat-error>Draft source not found</mat-error>
-        }
       </mat-form-field>
     </div>
   </form>

@@ -140,6 +140,37 @@ describe('DraftSourcesComponent', () => {
     expect(env.component.draftingSources.length).toBeGreaterThan(0);
   }));
 
+  it('handles invalid projects in query parameters and shows error dialog', fakeAsync(() => {
+    // Set up mock with query parameters mixing valid and invalid project short names
+    const mockSnapshot = {
+      queryParamMap: convertToParamMap({
+        trainingSources: 'INVALID1,P1,INVALID2',
+        draftingSources: 'INVALID3,P3'
+      })
+    };
+    when(mockedActivatedRoute.snapshot).thenReturn(mockSnapshot as any);
+
+    const env = new TestEnvironment();
+    tick();
+    env.fixture.detectChanges();
+    tick(); // Additional tick to ensure async operations complete
+    env.fixture.detectChanges();
+
+    // Should fall back to project defaults (not use the valid P1/P3 projects)
+    expect(env.component.trainingSources.length).toBeGreaterThan(0);
+    expect(env.component.draftingSources.length).toBeGreaterThan(0);
+    // Should NOT contain the valid projects from the URL since there were invalid ones
+    expect(env.component.trainingSources.filter(s => s?.shortName === 'P1').length).toBe(0);
+    expect(env.component.draftingSources.filter(s => s?.shortName === 'P3').length).toBe(0);
+
+    // Should show error dialog with invalid project names
+    verify(mockedDialogService.message(anything())).once();
+    const [dialogMessage] = capture(mockedDialogService.message).last();
+    expect(dialogMessage).toContain('INVALID1');
+    expect(dialogMessage).toContain('INVALID2');
+    expect(dialogMessage).toContain('INVALID3');
+  }));
+
   it('suppresses network errors', fakeAsync(() => {
     const env = new TestEnvironment({ projectLoadSuccessful: false });
     tick();
@@ -886,6 +917,12 @@ class TestEnvironment {
     when(mockedSFUserProjectsService.projectDocs$).thenReturn(of(usersProjectsAndResourcesOnSF));
     when(mockedI18nService.getLanguageDisplayName(anything())).thenReturn('Test Language');
     when(mockedI18nService.enumerateList(anything())).thenCall(items => items.join(', '));
+    when(mockedI18nService.translate(anything(), anything())).thenCall((key, params) => {
+      if (key === 'draft_sources.invalid_configuration_message') {
+        return `Invalid configuration: ${params?.invalidProjects || 'unknown projects'}`;
+      }
+      return key;
+    });
     when(mockedActivatedProjectService.changes$).thenReturn(of(this.activatedProjectDoc));
     when(mockedActivatedProjectService.projectDoc).thenReturn(this.activatedProjectDoc);
     when(mockedActivatedProjectService.projectId).thenReturn(this.activatedProjectDoc.id);
