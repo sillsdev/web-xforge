@@ -5267,8 +5267,8 @@ class TestEnvironment {
     return thread!.classList.contains('note-thread-highlight');
   }
 
-  setDataInSync(projectId: string, isInSync: boolean, source?: any): void {
-    const projectDoc: SFProjectProfileDoc = this.getProjectDoc(projectId);
+  async setDataInSync(projectId: string, isInSync: boolean, source?: any): Promise<void> {
+    const projectDoc: SFProjectProfileDoc = await this.getProjectDoc(projectId);
     projectDoc.submitJson0Op(op => op.set(p => p.sync.dataInSync!, isInSync), source);
     tick();
     this.fixture.detectChanges();
@@ -5284,8 +5284,8 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  updateFontSize(projectId: string, size: number): void {
-    const projectDoc: SFProjectProfileDoc = this.getProjectDoc(projectId);
+  async updateFontSize(projectId: string, size: number): Promise<void> {
+    const projectDoc: SFProjectProfileDoc = await this.getProjectDoc(projectId);
     projectDoc.submitJson0Op(op => op.set(p => p.defaultFontSize, size), false);
     tick();
     this.fixture.detectChanges();
@@ -5326,8 +5326,8 @@ class TestEnvironment {
     this.wait();
   }
 
-  changeUserRole(projectId: string, userId: string, role: SFProjectRole): void {
-    const projectDoc: SFProjectProfileDoc = this.getProjectDoc(projectId);
+  async changeUserRole(projectId: string, userId: string, role: SFProjectRole): Promise<void> {
+    const projectDoc: SFProjectProfileDoc = await this.getProjectDoc(projectId);
     const userRoles = cloneDeep(this.userRolesOnProject);
     userRoles[userId] = role;
     projectDoc.submitJson0Op(op => op.set(p => p.userRoles, userRoles), false);
@@ -5551,14 +5551,14 @@ class TestEnvironment {
     });
   }
 
-  reattachNote(
+  async reattachNote(
     projectId: string,
     threadDataId: string,
     verseStr: string,
     position?: TextAnchor,
     doNotParseReattachedVerseStr: boolean = false
-  ): void {
-    const noteThreadDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadDataId);
+  ): Promise<void> {
+    const noteThreadDoc: NoteThreadDoc = await this.getNoteThreadDoc(projectId, threadDataId);
     const template: Note = noteThreadDoc.data!.notes[0];
     let reattached: string;
     if (doNotParseReattachedVerseStr || position == null) {
@@ -5597,8 +5597,8 @@ class TestEnvironment {
     });
   }
 
-  convertToConflictNote(projectId: string, threadDataId: string): void {
-    const noteThreadDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadDataId);
+  async convertToConflictNote(projectId: string, threadDataId: string): Promise<void> {
+    const noteThreadDoc: NoteThreadDoc = await this.getNoteThreadDoc(projectId, threadDataId);
     noteThreadDoc.submitJson0Op(op => {
       op.set<string>(nt => nt.notes[0].conflictType, NoteConflictType.VerseTextConflict);
       op.set<string>(nt => nt.notes[0].type, NoteType.Conflict);
@@ -5615,18 +5615,18 @@ class TestEnvironment {
     return noteEmbedCount;
   }
 
-  resolveNote(projectId: string, threadId: string): void {
-    const noteDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadId);
+  async resolveNote(projectId: string, threadId: string): Promise<void> {
+    const noteDoc: NoteThreadDoc = await this.getNoteThreadDoc(projectId, threadId);
     noteDoc.submitJson0Op(op => op.set(n => n.status, NoteStatus.Resolved));
     this.realtimeService.updateQueryAdaptersRemote();
     this.wait();
   }
 
-  deleteMostRecentNote(projectId: string, segmentRef: string, threadId: string): void {
+  async deleteMostRecentNote(projectId: string, segmentRef: string, threadId: string): Promise<void> {
     const noteThreadIconElem: HTMLElement = this.getNoteThreadIconElement(segmentRef, threadId)!;
     noteThreadIconElem.click();
     this.wait();
-    const noteDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadId);
+    const noteDoc: NoteThreadDoc = await this.getNoteThreadDoc(projectId, threadId);
     noteDoc.submitJson0Op(op => op.set(d => d.notes[0].deleted, true));
     this.mockNoteDialogRef.close({ deleted: true });
     this.realtimeService.updateQueryAdaptersRemote();
