@@ -130,15 +130,22 @@ export async function generateDraft(
   const startTime = Date.now();
   console.log('Draft started');
 
-  await expect(page.getByRole('paragraph')).toContainText('Your project is being synced before queuing the draft.');
-  await expect(page.getByRole('heading', { name: 'Draft initializing' })).toBeVisible();
+  const progressCard = page.locator('.draft-progress-card');
+  const progressCardHeader = progressCard.locator('mat-card-title');
+
+  // Initializing
+  await expect(progressCardHeader).toContainText('Draft initializing');
+  await expect(progressCardHeader).toContainText(bookToDraft);
   await screenshot(page, { pageName: 'generate_draft_initializing', ...context });
-  await expect(page.getByRole('heading', { name: 'Draft queued' })).toBeVisible({ timeout: 60_000 });
+
+  // Queued
+  await expect(progressCardHeader).toContainText('Draft queued', { timeout: 60_000 });
+  await expect(progressCardHeader).toContainText(bookToDraft);
   await screenshot(page, { pageName: 'generate_draft_queued', ...context });
 
   // The draft ready message shouldn't show up until after progress messages, but echo jobs can run too fast for
   // progress messages to appear.
-  const draftReadyLocator = page.getByText('Your draft is ready');
+  const draftReadyLocator = page.getByRole('heading', { name: 'The draft is ready' });
 
   // Wait for the draft to start - timeout is long because there can be another job in the queue
   const inProgressTimeout = ENGINE_MODE === 'echo' ? 3 * 60_000 : 15 * 60_000;
