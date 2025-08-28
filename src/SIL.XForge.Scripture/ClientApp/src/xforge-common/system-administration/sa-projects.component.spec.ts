@@ -253,6 +253,7 @@ class TestEnvironment {
             return from(
               this.realtimeService.onlineQuery<TestProjectDoc>(
                 TestProjectDoc.COLLECTION,
+                'spec',
                 merge(filters, queryParameters)
               )
             );

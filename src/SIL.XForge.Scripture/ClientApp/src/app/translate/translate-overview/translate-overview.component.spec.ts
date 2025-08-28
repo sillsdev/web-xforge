@@ -549,11 +549,11 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  addVerse(bookNum: number, chapter: number): void {
+  async addVerse(bookNum: number, chapter: number): Promise<void> {
     const delta = new Delta();
     delta.insert(`chapter ${chapter}, verse 22.`, { segment: `verse_${chapter}_22` });
 
-    const textDoc = this.realtimeService.get<TextDoc>(
+    const textDoc = await this.realtimeService.get<TextDoc>(
       TextDoc.COLLECTION,
       getTextDocId('project01', bookNum, chapter),
       new DocSubscription('spec')
