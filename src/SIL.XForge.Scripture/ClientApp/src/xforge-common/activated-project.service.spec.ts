@@ -6,7 +6,8 @@ import { ActiveProjectIdService } from './activated-project.service';
 import { configureTestingModule } from './test-utils';
 
 @Component({
-  template: '<div></div>'
+    template: '<div></div>',
+    standalone: false
 })
 class MockComponent {}
 

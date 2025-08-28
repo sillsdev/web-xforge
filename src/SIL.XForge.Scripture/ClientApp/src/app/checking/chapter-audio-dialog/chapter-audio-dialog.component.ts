@@ -42,9 +42,10 @@ export interface ChapterAudioDialogResult {
 }
 
 @Component({
-  selector: 'app-chapter-audio-dialog',
-  templateUrl: './chapter-audio-dialog.component.html',
-  styleUrls: ['./chapter-audio-dialog.component.scss']
+    selector: 'app-chapter-audio-dialog',
+    templateUrl: './chapter-audio-dialog.component.html',
+    styleUrls: ['./chapter-audio-dialog.component.scss'],
+    standalone: false
 })
 export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
   @ViewChild('dropzone') dropzone!: ElementRef<HTMLElement>;

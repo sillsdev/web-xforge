@@ -189,7 +189,8 @@ describe('LynxInsightStatusIndicatorComponent', () => {
 });
 
 @Component({
-  template: '<app-lynx-insight-status-indicator></app-lynx-insight-status-indicator>'
+    template: '<app-lynx-insight-status-indicator></app-lynx-insight-status-indicator>',
+    standalone: false
 })
 class HostComponent {
   @ViewChild(LynxInsightStatusIndicatorComponent) component!: LynxInsightStatusIndicatorComponent;
