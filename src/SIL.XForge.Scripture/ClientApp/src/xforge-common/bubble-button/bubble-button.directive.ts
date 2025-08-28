@@ -7,7 +7,8 @@ import { Directive, ElementRef, OnInit, Renderer2 } from '@angular/core';
  * with other styles or components that use `::before` or `::after` such as Angular Material components.
  */
 @Directive({
-  selector: '[sfBubbleButton]'
+  selector: '[sfBubbleButton]',
+  standalone: false
 })
 export class BubbleButtonDirective implements OnInit {
   cssInnerSpanStyleClass = 'sf-bubble-button-elements';
