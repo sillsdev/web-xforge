@@ -1,9 +1,11 @@
+import { DOCUMENT } from '@angular/common';
 import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
   DestroyRef,
   EventEmitter,
+  Inject,
   Input,
   OnDestroy,
   Output
@@ -18,9 +20,10 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { StringMap } from 'rich-text';
 import { fromEvent, Subject, Subscription, timer } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, tap } from 'rxjs/operators';
 import { LocalPresence, Presence } from 'sharedb/lib/sharedb';
 import tinyColor from 'tinycolor2';
+import { WINDOW } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
 import { LocaleDirection } from 'xforge-common/models/i18n-locale';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -110,11 +113,38 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   @Output() editorCreated = new EventEmitter<void>();
 
   lang: string = '';
+
+  /**
+   * Flag activated when user presses and holds keys that cause the cursor to move.
+   * A true value will cause the system cursor to be used instead of
+   * Quill custom local cursor in order to avoid cursor lag.
+   */
+  isCursorMoveKeyDown = false;
+
   // only use USX formats and not default Quill formats
   readonly allowedFormats: string[] = this.quillFormatRegistry.getRegisteredFormats();
   // allow for different CSS based on the browser engine
   readonly browserEngine: string = getBrowserEngine();
   readonly cursorColor: string;
+
+  /** Set of currently pressed keys that move the cursor. */
+  private readonly pressedCursorMoveKeys = new Set<string>();
+
+  /** Set of non-printable keys that move the cursor. */
+  private readonly nonPrintableCursorMoveKeys = new Set<string>([
+    'ArrowLeft',
+    'ArrowRight',
+    'ArrowUp',
+    'ArrowDown',
+    'Home',
+    'End',
+    'PageUp',
+    'PageDown',
+    'Tab'
+  ]);
+
+  private cursorMoveKeyHoldTimeout?: any;
+  private cursorMoveKeyHoldDelay: number = 500; // Press and hold ms delay before switching to system cursor
 
   private clickSubs: Map<string, Subscription[]> = new Map<string, Subscription[]>();
   private _isReadOnly: boolean = true;
@@ -263,6 +293,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   private presenceActiveEditor$: Subject<boolean> = new Subject<boolean>();
   private onPresenceDocReceive = (_presenceId: string, _range: Range | null): void => {};
   private onPresenceChannelReceive = (_presenceId: string, _presenceData: PresenceData | null): void => {};
+  private isShiftDown = false;
 
   constructor(
     private readonly destroyRef: DestroyRef,
@@ -274,7 +305,9 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     private readonly userService: UserService,
     readonly viewModel: TextViewModel,
     private readonly textDocService: TextDocService,
-    private readonly quillFormatRegistry: QuillFormatRegistryService
+    private readonly quillFormatRegistry: QuillFormatRegistryService,
+    @Inject(DOCUMENT) private document: Document,
+    @Inject(WINDOW) private window: Window
   ) {
     let localCursorColor = localStorage.getItem(this.cursorColorStorageKey);
     if (localCursorColor == null) {
@@ -520,10 +553,75 @@ export class TextComponent implements AfterViewInit, OnDestroy {
 
     // Listening to document 'selectionchange' event allows local cursor to change position on mousedown,
     // as opposed to quill 'onSelectionChange' event that doesn't fire until mouseup.
-    fromEvent<MouseEvent>(document, 'selectionchange')
+    fromEvent<MouseEvent>(this.document, 'selectionchange')
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.updateLocalCursor();
+      });
+
+    fromEvent<KeyboardEvent>(this.document, 'keydown')
+      .pipe(
+        quietTakeUntilDestroyed(this.destroyRef),
+        tap(event => (this.isShiftDown = event.shiftKey))
+      )
+      .subscribe(event => {
+        // Set flag to use system cursor when any key is down that would move the cursor (avoids cursor lag issue)
+        if (this.nonPrintableCursorMoveKeys.has(event.key) || event.key.length === 1) {
+          this.pressedCursorMoveKeys.add(event.key);
+
+          // Only set the flag when the user presses and holds (detect with a short timeout delay)
+          if (!this.isCursorMoveKeyDown && this.cursorMoveKeyHoldTimeout == null) {
+            this.cursorMoveKeyHoldTimeout = setTimeout(() => {
+              if (this.pressedCursorMoveKeys.size > 0) {
+                this.isCursorMoveKeyDown = true;
+              }
+
+              this.cursorMoveKeyHoldTimeout = undefined;
+            }, this.cursorMoveKeyHoldDelay);
+          }
+        }
+      });
+
+    fromEvent<KeyboardEvent>(this.document, 'keyup')
+      .pipe(
+        quietTakeUntilDestroyed(this.destroyRef),
+        tap(event => {
+          // Call 'update()' when shift key is released, as update is disabled while shift is down
+          // to prevent incorrect cursor position updates while selecting text.
+          if (this.isShiftDown && !event.shiftKey) {
+            this.update();
+          }
+
+          this.isShiftDown = event.shiftKey;
+        })
+      )
+      .subscribe(event => {
+        this.pressedCursorMoveKeys.delete(event.key);
+
+        // If set is empty, all cursor movement keys are released
+        if (this.pressedCursorMoveKeys.size === 0) {
+          if (this.cursorMoveKeyHoldTimeout) {
+            clearTimeout(this.cursorMoveKeyHoldTimeout);
+            this.cursorMoveKeyHoldTimeout = undefined;
+          }
+
+          // Helps to not yet show custom local cursor until it has caught up to system cursor that was just visible
+          requestAnimationFrame(() => {
+            this.isCursorMoveKeyDown = false;
+          });
+        }
+      });
+
+    fromEvent<FocusEvent>(this.window, 'blur')
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        // Treat window blur as releasing all modifiers
+        const wasShiftDown: boolean = this.isShiftDown === true;
+        if (wasShiftDown) {
+          this.update();
+        }
+
+        this.isShiftDown = false;
       });
   }
 
@@ -545,7 +643,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     fromEvent(this._editor.root, 'scroll')
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateHighlightMarkerVisibility());
-    fromEvent(window, 'resize')
+    fromEvent(this.window, 'resize')
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.setHighlightMarkerPosition());
     this.viewModel.editor = editor;
@@ -827,7 +925,13 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   }
 
   async onSelectionChanged(range: Range | null): Promise<void> {
-    this.update();
+    // During selection expansion (keyboard or mouse), avoid calling update()
+    // which can cause incorrect cursor position updates.
+    // Update will be called once the shift key is released.
+    if (!this.isShiftDown) {
+      this.update();
+    }
+
     this.submitLocalPresenceDoc(range);
   }
 
@@ -1119,7 +1223,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       const cursors: QuillCursors = this.editor.getModule('cursors') as QuillCursors;
       cursors.createCursor(this.presenceId, '', '');
 
-      this.localCursorElement = document.querySelector(`#ql-cursor-${this.presenceId}`);
+      this.localCursorElement = this.document.querySelector(`#ql-cursor-${this.presenceId}`);
 
       // Add a specific class to the local cursor
       if (this.localCursorElement != null) {
@@ -1133,7 +1237,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    const sel: Selection | null = window.getSelection();
+    const sel: Selection | null = this.window.getSelection();
     if (sel == null) {
       return;
     }
