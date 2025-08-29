@@ -69,7 +69,7 @@ describe('TrainingDataService', () => {
     await trainingDataService.createTrainingDataAsync(newTrainingData);
     tick();
 
-    const trainingDataDoc = realtimeService.get<TrainingDataDoc>(
+    const trainingDataDoc = await realtimeService.get<TrainingDataDoc>(
       TrainingDataDoc.COLLECTION,
       getTrainingDataId('project01', 'data03'),
       new DocSubscription('spec')
@@ -79,7 +79,7 @@ describe('TrainingDataService', () => {
 
   it('should delete a training data doc', fakeAsync(async () => {
     // Verify the document exists
-    const existingTrainingDataDoc = realtimeService.get<TrainingDataDoc>(
+    const existingTrainingDataDoc = await realtimeService.get<TrainingDataDoc>(
       TrainingDataDoc.COLLECTION,
       getTrainingDataId('project01', 'data01'),
       new DocSubscription('spec')
@@ -100,7 +100,7 @@ describe('TrainingDataService', () => {
     await trainingDataService.deleteTrainingDataAsync(trainingDataToDelete);
     tick();
 
-    const trainingDataDoc = realtimeService.get<TrainingDataDoc>(
+    const trainingDataDoc = await realtimeService.get<TrainingDataDoc>(
       TrainingDataDoc.COLLECTION,
       getTrainingDataId('project01', 'data01'),
       new DocSubscription('spec')

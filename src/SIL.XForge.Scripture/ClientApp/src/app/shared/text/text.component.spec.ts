@@ -1899,7 +1899,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  getUserDoc(userId: string): UserDoc {
+  async getUserDoc(userId: string): Promise<UserDoc> {
     return await this.realtimeService.get<UserDoc>(UserDoc.COLLECTION, userId, new DocSubscription('spec'));
   }
 

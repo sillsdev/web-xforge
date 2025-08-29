@@ -938,11 +938,11 @@ class TestEnvironment {
       }
     ]);
 
-    when(mockedSFProjectService.queryAudioText(anything(), anything())).thenCall(sfProjectId => {
+    when(mockedSFProjectService.queryAudioText(anything(), anything())).thenCall(async sfProjectId => {
       const queryParams: QueryParameters = {
         [obj<TextAudio>().pathStr(t => t.projectRef)]: sfProjectId
       };
-      return this.realtimeService.subscribeQuery(TextAudioDoc.COLLECTION, queryParams, noopDestroyRef);
+      return await this.realtimeService.subscribeQuery(TextAudioDoc.COLLECTION, 'spec', queryParams, noopDestroyRef);
     });
 
     this.fixture = TestBed.createComponent(SettingsComponent);

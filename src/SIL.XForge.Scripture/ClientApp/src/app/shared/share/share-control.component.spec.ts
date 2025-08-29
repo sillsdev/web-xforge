@@ -420,7 +420,7 @@ class TestEnvironment {
     this.wait();
   }
 
-  updateCheckingProperties(config: CheckingConfig): Promise<boolean> {
+  async updateCheckingProperties(config: CheckingConfig): Promise<boolean> {
     const projectDoc: SFProjectProfileDoc = await this.realtimeService.get(
       SFProjectProfileDoc.COLLECTION,
       'project01',
