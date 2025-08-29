@@ -471,14 +471,14 @@ class TestEnvironment {
       const parameters: QueryParameters = {
         [obj<BiblicalTerm>().pathStr(t => t.projectRef)]: sfProjectId
       };
-      return this.realtimeService.subscribeQuery(BiblicalTermDoc.COLLECTION, parameters, noopDestroyRef);
+      return this.realtimeService.subscribeQuery(BiblicalTermDoc.COLLECTION, 'spec', parameters, noopDestroyRef);
     });
     when(mockedProjectService.queryBiblicalTermNoteThreads(anything(), anything())).thenCall(sfProjectId => {
       const parameters: QueryParameters = {
         [obj<NoteThread>().pathStr(t => t.projectRef)]: sfProjectId,
         [obj<NoteThread>().pathStr(t => t.biblicalTermId)]: { $ne: null }
       };
-      return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, parameters, noopDestroyRef);
+      return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, 'spec', parameters, noopDestroyRef);
     });
     when(mockedProjectService.getBiblicalTerm(anything(), anything())).thenCall((id, subscriber) =>
       this.realtimeService.subscribe(BiblicalTermDoc.COLLECTION, id, subscriber)
@@ -495,7 +495,7 @@ class TestEnvironment {
         )
     );
     when(mockedProjectService.getProfile(anything(), anything())).thenCall(
-      (sfProjectId, subscriber) =>
+      async (sfProjectId, subscriber) =>
         await this.realtimeService.get(SFProjectProfileDoc.COLLECTION, sfProjectId, subscriber)
     );
     when(mockedMatDialog.open(GenericDialogComponent, anything())).thenReturn(instance(this.mockedDialogRef));
@@ -555,7 +555,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  getBiblicalTermDoc(projectId: string, dataId: string): BiblicalTermDoc {
+  async getBiblicalTermDoc(projectId: string, dataId: string): Promise<BiblicalTermDoc> {
     return await this.realtimeService.get(
       BiblicalTermDoc.COLLECTION,
       getBiblicalTermDocId(projectId, dataId),
@@ -563,7 +563,7 @@ class TestEnvironment {
     );
   }
 
-  getNoteThreadDoc(projectId: string, threadId: string): NoteThreadDoc {
+  async getNoteThreadDoc(projectId: string, threadId: string): Promise<NoteThreadDoc> {
     return await this.realtimeService.get<NoteThreadDoc>(
       NoteThreadDoc.COLLECTION,
       getNoteThreadDocId(projectId, threadId),
@@ -571,7 +571,7 @@ class TestEnvironment {
     );
   }
 
-  getProjectUserConfigDoc(projectId: string, userId: string): SFProjectUserConfigDoc {
+  async getProjectUserConfigDoc(projectId: string, userId: string): Promise<SFProjectUserConfigDoc> {
     const id: string = getSFProjectUserConfigDocId(projectId, userId);
     return await this.realtimeService.get<SFProjectUserConfigDoc>(
       SFProjectUserConfigDoc.COLLECTION,
