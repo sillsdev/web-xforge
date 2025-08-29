@@ -1050,7 +1050,12 @@ public class MachineApiControllerTests
     }
 
     [Test]
-    public async Task GetPreTranslationDeltaAsync_Success()
+    [TestCase("", "")]
+    [TestCase(null, null)]
+    [TestCase(ParagraphBreakFormatOptions.BestGuess, QuoteStyleOptions.Denormalized)]
+    [TestCase(ParagraphBreakFormatOptions.MoveToEnd, QuoteStyleOptions.Denormalized)]
+    [TestCase(ParagraphBreakFormatOptions.Remove, QuoteStyleOptions.Normalized)]
+    public async Task GetPreTranslationDeltaAsync_Success(string paragraphFormat, string quoteFormat)
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1072,8 +1077,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
-            quoteFormat: QuoteStyleOptions.Denormalized,
+            paragraphFormat,
+            quoteFormat,
             CancellationToken.None
         );
 
