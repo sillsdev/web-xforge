@@ -201,21 +201,21 @@
     <value>L'utilisateur n'existe pas encore.</value>
   </data>
   <data name="DraftCanceledEmailBody" xml:space="preserve">
-    <value>Your draft for {0} was canceled.</value>
+    <value>Votre ébauche pour {0} a été annulée.</value>
   </data>
   <data name="DraftEmailMoreInformation" xml:space="preserve">
-    <value>For more information see {0}</value>
+    <value>Pour plus d'informations, voir {0}</value>
   </data>
   <data name="DraftFailedEmailBody" xml:space="preserve">
-    <value>Your draft for {0} did not generate successfully.</value>
+    <value>Votre ébauche pour {0} n'a pas été générée avec succès.</value>
   </data>
   <data name="DraftGeneratedEmailBody" xml:space="preserve">
-    <value>Your draft for {0} was generated successfully.</value>
+    <value>Votre ébauche pour {0} a été générée avec succès.</value>
   </data>
   <data name="DraftGeneratedEmailSubject" xml:space="preserve">
-    <value>{0} draft generated successfully</value>
+    <value>L'ébauche {0} a été générée avec succès</value>
   </data>
   <data name="DraftNotGeneratedEmailSubject" xml:space="preserve">
-    <value>{0} draft was not generated</value>
+    <value>L'ébauche {0} a été générée</value>
   </data>
 </root>
