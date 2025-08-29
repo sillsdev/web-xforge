@@ -16,7 +16,7 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import {
   DraftUsfmConfig,
   ParagraphBreakFormat,
-  QuoteStyle
+  QuoteFormat
 } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, first, Subject, switchMap } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -63,10 +63,10 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   chapters: number[] = [];
   isInitializing: boolean = true;
   paragraphBreakFormat = ParagraphBreakFormat;
-  quoteStyle = QuoteStyle;
+  quoteStyle = QuoteFormat;
 
   paragraphFormat = new FormControl<ParagraphBreakFormat>(ParagraphBreakFormat.BestGuess);
-  quoteFormat = new FormControl<QuoteStyle>(QuoteStyle.Automatic);
+  quoteFormat = new FormControl<QuoteFormat>(QuoteFormat.Denormalize);
   usfmFormatForm: FormGroup = new FormGroup({
     paragraphFormat: this.paragraphFormat,
     quoteFormat: this.quoteFormat
@@ -210,7 +210,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   private setUsfmConfig(config?: DraftUsfmConfig): void {
     this.usfmFormatForm.setValue({
       paragraphFormat: config?.paragraphFormat ?? ParagraphBreakFormat.BestGuess,
-      quoteFormat: config?.quoteFormat ?? QuoteStyle.Automatic
+      quoteFormat: config?.quoteFormat ?? QuoteFormat.Denormalize
     });
     this.lastSavedState = this.currentFormat;
 
