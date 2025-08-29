@@ -20,7 +20,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { StringMap } from 'rich-text';
 import { fromEvent, Subject, Subscription, timer } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, tap } from 'rxjs/operators';
 import { LocalPresence, Presence } from 'sharedb/lib/sharedb';
 import tinyColor from 'tinycolor2';
 import { WINDOW } from 'xforge-common/browser-globals';
@@ -113,11 +113,38 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   @Output() editorCreated = new EventEmitter<void>();
 
   lang: string = '';
+
+  /**
+   * Flag activated when user presses and holds keys that cause the cursor to move.
+   * A true value will cause the system cursor to be used instead of
+   * Quill custom local cursor in order to avoid cursor lag.
+   */
+  isCursorMoveKeyDown = false;
+
   // only use USX formats and not default Quill formats
   readonly allowedFormats: string[] = this.quillFormatRegistry.getRegisteredFormats();
   // allow for different CSS based on the browser engine
   readonly browserEngine: string = getBrowserEngine();
   readonly cursorColor: string;
+
+  /** Set of currently pressed keys that move the cursor. */
+  private readonly pressedCursorMoveKeys = new Set<string>();
+
+  /** Set of non-printable keys that move the cursor. */
+  private readonly nonPrintableCursorMoveKeys = new Set<string>([
+    'ArrowLeft',
+    'ArrowRight',
+    'ArrowUp',
+    'ArrowDown',
+    'Home',
+    'End',
+    'PageUp',
+    'PageDown',
+    'Tab'
+  ]);
+
+  private cursorMoveKeyHoldTimeout?: any;
+  private cursorMoveKeyHoldDelay: number = 500; // Press and hold ms delay before switching to system cursor
 
   private clickSubs: Map<string, Subscription[]> = new Map<string, Subscription[]>();
   private _isReadOnly: boolean = true;
@@ -533,21 +560,56 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       });
 
     fromEvent<KeyboardEvent>(this.document, 'keydown')
-      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .pipe(
+        quietTakeUntilDestroyed(this.destroyRef),
+        tap(event => (this.isShiftDown = event.shiftKey))
+      )
       .subscribe(event => {
-        this.isShiftDown = event.shiftKey;
+        // Set flag to use system cursor when any key is down that would move the cursor (avoids cursor lag issue)
+        if (this.nonPrintableCursorMoveKeys.has(event.key) || event.key.length === 1) {
+          this.pressedCursorMoveKeys.add(event.key);
+
+          // Only set the flag when the user presses and holds (detect with a short timeout delay)
+          if (!this.isCursorMoveKeyDown && this.cursorMoveKeyHoldTimeout == null) {
+            this.cursorMoveKeyHoldTimeout = setTimeout(() => {
+              if (this.pressedCursorMoveKeys.size > 0) {
+                this.isCursorMoveKeyDown = true;
+              }
+
+              this.cursorMoveKeyHoldTimeout = undefined;
+            }, this.cursorMoveKeyHoldDelay);
+          }
+        }
       });
 
     fromEvent<KeyboardEvent>(this.document, 'keyup')
-      .pipe(quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(event => {
-        // Call 'update()' when shift key is released, as update is disabled while shift is down
-        // to prevent incorrect cursor position updates while selecting text.
-        if (this.isShiftDown && !event.shiftKey) {
-          this.update();
-        }
+      .pipe(
+        quietTakeUntilDestroyed(this.destroyRef),
+        tap(event => {
+          // Call 'update()' when shift key is released, as update is disabled while shift is down
+          // to prevent incorrect cursor position updates while selecting text.
+          if (this.isShiftDown && !event.shiftKey) {
+            this.update();
+          }
 
-        this.isShiftDown = event.shiftKey;
+          this.isShiftDown = event.shiftKey;
+        })
+      )
+      .subscribe(event => {
+        this.pressedCursorMoveKeys.delete(event.key);
+
+        // If set is empty, all cursor movement keys are released
+        if (this.pressedCursorMoveKeys.size === 0) {
+          if (this.cursorMoveKeyHoldTimeout) {
+            clearTimeout(this.cursorMoveKeyHoldTimeout);
+            this.cursorMoveKeyHoldTimeout = undefined;
+          }
+
+          // Helps to not yet show custom local cursor until it has caught up to system cursor that was just visible
+          requestAnimationFrame(() => {
+            this.isCursorMoveKeyDown = false;
+          });
+        }
       });
 
     fromEvent<FocusEvent>(this.window, 'blur')

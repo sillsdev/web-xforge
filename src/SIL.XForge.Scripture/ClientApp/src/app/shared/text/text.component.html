@@ -21,7 +21,7 @@
     rtl: isRtl,
     'mark-invalid': markInvalid,
     'selectable-verses': selectableVerses,
-    'custom-local-cursor': showInsights
+    'custom-local-cursor': showInsights && !isCursorMoveKeyDown
   }"
   [dir]="$any(textDirection)"
   [lang]="lang"
