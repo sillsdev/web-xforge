@@ -1,3 +1,5 @@
-<app-lynx-insight-status-indicator />
-<app-lynx-insight-scroll-position-indicator [editor]="editor" />
-<app-lynx-insight-action-prompt [editor]="editor" [lynxTextModelConverter]="lynxTextModelConverter" />
+@if (insightsEnabled) {
+  <app-lynx-insight-status-indicator />
+  <app-lynx-insight-scroll-position-indicator [editor]="editor" />
+  <app-lynx-insight-action-prompt [editor]="editor" [lynxTextModelConverter]="lynxTextModelConverter" />
+}

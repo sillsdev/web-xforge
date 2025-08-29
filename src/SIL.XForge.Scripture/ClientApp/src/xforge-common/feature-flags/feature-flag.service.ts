@@ -341,7 +341,7 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
-  readonly enableLynxInsights: ObservableFeatureFlag = new FeatureFlagFromStorage(
+  readonly enableLynxInsights: FeatureFlag = new ServerOnlyFeatureFlag(
     'EnableLynxInsights',
     'Enable Lynx insights',
     16,
