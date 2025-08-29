@@ -28,7 +28,8 @@ const TEXT_PATH_TEMPLATE = obj<SFProject>().pathTemplate(p => p.texts[ANY_INDEX]
 @Component({
   selector: 'app-translate-overview',
   templateUrl: './translate-overview.component.html',
-  styleUrls: ['./translate-overview.component.scss']
+  styleUrls: ['./translate-overview.component.scss'],
+  standalone: false
 })
 export class TranslateOverviewComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   trainingPercentage: number = 0;

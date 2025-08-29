@@ -65,7 +65,6 @@ interface Row {
   selector: 'app-draft-jobs',
   templateUrl: './draft-jobs.component.html',
   styleUrls: ['./draft-jobs.component.scss'],
-  standalone: true,
   imports: [OwnerComponent, UICommonModule, RouterLink, NoticeComponent]
 })
 export class DraftJobsComponent extends DataLoadingComponent implements OnInit {

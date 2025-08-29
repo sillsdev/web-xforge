@@ -118,10 +118,10 @@ mat-icon {
 }
 
 #delete-project {
-  border: 2px solid var(--sys-error);
+  border: 2px solid var(--mat-sys-error);
   .source-project-msg,
   .project-syncing-msg {
-    color: var(--sys-error);
+    color: var(---mat-sys-error);
   }
 }
 
@@ -131,8 +131,8 @@ mat-icon {
   color: rgba(0, 0, 0, 0.38);
 }
 #delete-btn:not(:disabled) {
-  background-color: var(--sys-error);
-  color: var(--sys-on-error);
+  background-color: var(--mat-sys-error);
+  color: var(--mat-sys-on-error);
 }
 
 mat-radio-group.tool-setting {

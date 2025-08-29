@@ -233,7 +233,8 @@ describe('LynxInsightEditorObjectsComponent', () => {
   template: `
     <app-lynx-insight-editor-objects [editor]="editor" [lynxTextModelConverter]="textModelConverter">
     </app-lynx-insight-editor-objects>
-  `
+  `,
+  standalone: false
 })
 class HostComponent {
   @ViewChild(LynxInsightEditorObjectsComponent) component!: LynxInsightEditorObjectsComponent;

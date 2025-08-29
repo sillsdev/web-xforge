@@ -7,7 +7,6 @@ import { NoticeMode, NoticeType } from './notice.types';
   selector: 'app-notice',
   templateUrl: './notice.component.html',
   styleUrls: ['./notice.component.scss'],
-  standalone: true,
   imports: [MatIconModule]
 })
 export class NoticeComponent implements OnChanges {

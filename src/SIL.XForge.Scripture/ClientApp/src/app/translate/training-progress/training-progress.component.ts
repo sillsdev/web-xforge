@@ -16,7 +16,8 @@ import { RemoteTranslationEngine } from '../../machine-api/remote-translation-en
 @Component({
   selector: 'app-training-progress',
   templateUrl: './training-progress.component.html',
-  styleUrls: ['./training-progress.component.scss']
+  styleUrls: ['./training-progress.component.scss'],
+  standalone: false
 })
 export class TrainingProgressComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   showTrainingProgress: boolean = false;

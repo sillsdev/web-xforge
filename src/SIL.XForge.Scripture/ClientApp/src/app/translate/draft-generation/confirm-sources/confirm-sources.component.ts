@@ -20,7 +20,6 @@ import { TrainingDataService } from '../training-data/training-data.service';
 
 @Component({
   selector: 'app-confirm-sources',
-  standalone: true,
   imports: [TranslocoModule, MatCheckboxModule, MatIconModule],
   templateUrl: './confirm-sources.component.html',
   styleUrl: './confirm-sources.component.scss'

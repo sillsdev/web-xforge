@@ -4,7 +4,8 @@ import { SF_TABS_CONFIG, SFTabsConfig } from '../sf-tabs-config';
 @Component({
   selector: 'app-tab-header',
   templateUrl: './tab-header.component.html',
-  styleUrls: ['./tab-header.component.scss']
+  styleUrls: ['./tab-header.component.scss'],
+  standalone: false
 })
 export class TabHeaderComponent {
   @HostBinding('class.closeable')

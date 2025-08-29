@@ -15,7 +15,6 @@ import { DraftGenerationService } from '../draft-generation.service';
   selector: 'app-draft-download-button',
   templateUrl: './draft-download-button.component.html',
   styleUrls: ['./draft-download-button.component.scss'],
-  standalone: true,
   imports: [CommonModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, TranslocoModule]
 })
 export class DraftDownloadButtonComponent {

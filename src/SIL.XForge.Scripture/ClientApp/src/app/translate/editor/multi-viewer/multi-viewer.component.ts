@@ -14,7 +14,8 @@ export interface MultiCursorViewer extends UserProfile {
 @Component({
   selector: 'app-multi-viewer',
   templateUrl: './multi-viewer.component.html',
-  styleUrls: ['./multi-viewer.component.scss']
+  styleUrls: ['./multi-viewer.component.scss'],
+  standalone: false
 })
 export class MultiViewerComponent implements OnInit {
   @Input() viewers: MultiCursorViewer[] = [];

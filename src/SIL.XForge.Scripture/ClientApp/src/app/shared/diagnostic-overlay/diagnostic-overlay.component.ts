@@ -21,7 +21,6 @@ const diagnosticOverlayCollapsedKey = 'DIAGNOSTIC_OVERLAY_COLLAPSED';
   selector: 'app-diagnostic-overlay',
   templateUrl: './diagnostic-overlay.component.html',
   styleUrl: './diagnostic-overlay.component.scss',
-  standalone: true,
   imports: [OverlayModule, CommonModule, UICommonModule]
 })
 export class DiagnosticOverlayComponent {

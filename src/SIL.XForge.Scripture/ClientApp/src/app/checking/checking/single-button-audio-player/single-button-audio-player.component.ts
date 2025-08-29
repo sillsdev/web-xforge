@@ -8,7 +8,8 @@ import { AudioSegmentPlayer } from '../../../shared/audio/audio-segment-player';
 @Component({
   selector: 'app-single-button-audio-player',
   templateUrl: './single-button-audio-player.component.html',
-  styleUrls: ['./single-button-audio-player.component.scss']
+  styleUrls: ['./single-button-audio-player.component.scss'],
+  standalone: false
 })
 export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent implements OnChanges, OnDestroy {
   private _source?: string;

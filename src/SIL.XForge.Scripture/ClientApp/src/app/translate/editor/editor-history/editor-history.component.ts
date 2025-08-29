@@ -25,7 +25,8 @@ import { HistoryChooserComponent, RevisionSelectEvent } from './history-chooser/
 @Component({
   selector: 'app-editor-history',
   templateUrl: './editor-history.component.html',
-  styleUrls: ['./editor-history.component.scss']
+  styleUrls: ['./editor-history.component.scss'],
+  standalone: false
 })
 export class EditorHistoryComponent implements OnChanges, OnInit, AfterViewInit {
   @Input() projectId?: string;

@@ -8,7 +8,8 @@ import { I18nService } from 'xforge-common/i18n.service';
 @Component({
   selector: 'app-book-chapter-chooser',
   templateUrl: './book-chapter-chooser.component.html',
-  styleUrls: ['./book-chapter-chooser.component.scss']
+  styleUrls: ['./book-chapter-chooser.component.scss'],
+  standalone: false
 })
 export class BookChapterChooserComponent {
   @Input() book?: number;

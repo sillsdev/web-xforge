@@ -5,7 +5,6 @@ import { MatIconModule } from '@angular/material/icon';
   selector: 'app-working-animated-indicator',
   templateUrl: './working-animated-indicator.component.html',
   styleUrls: ['./working-animated-indicator.component.scss'],
-  standalone: true,
   imports: [MatIconModule]
 })
 export class WorkingAnimatedIndicatorComponent {}
