@@ -5,6 +5,12 @@ import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import {
+  DraftUsfmConfig,
+  ParagraphBreakFormat,
+  QuoteFormat
+} from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { DeltaOperation } from 'rich-text';
 import { of } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { anything, mock, verify } from 'ts-mockito';
@@ -58,6 +64,33 @@ describe('DraftGenerationService', () => {
     state: BuildStates.Queued,
     queueDepth: 0
   };
+
+  function getTestDeltaOps(): DeltaOperation[] {
+    return [
+      {
+        insert: {
+          chapter: {
+            number: '1',
+            style: 'c'
+          }
+        }
+      },
+      {
+        insert: {
+          verse: {
+            number: '1',
+            style: 'v'
+          }
+        }
+      },
+      {
+        insert: 'Verse 1 Contents',
+        attributes: {
+          segment: 'verse_1_1'
+        }
+      }
+    ];
+  }
 
   beforeEach(() => {
     service = TestBed.inject(DraftGenerationService);
@@ -381,30 +414,7 @@ describe('DraftGenerationService', () => {
     it('should get the pre-translation ops for the specified book/chapter and return an observable', fakeAsync(() => {
       const book = 43;
       const chapter = 3;
-      const ops = [
-        {
-          insert: {
-            chapter: {
-              number: '1',
-              style: 'c'
-            }
-          }
-        },
-        {
-          insert: {
-            verse: {
-              number: '1',
-              style: 'v'
-            }
-          }
-        },
-        {
-          insert: 'Verse 1 Contents',
-          attributes: {
-            segment: 'verse_1_1'
-          }
-        }
-      ];
+      const ops = getTestDeltaOps();
       const preTranslationDeltaData = {
         id: `${projectId}:${Canon.bookNumberToId(book)}:${chapter}:target`,
         version: 0,
@@ -432,30 +442,7 @@ describe('DraftGenerationService', () => {
       const book = 43;
       const chapter = 3;
       const timestamp = new Date();
-      const ops = [
-        {
-          insert: {
-            chapter: {
-              number: '1',
-              style: 'c'
-            }
-          }
-        },
-        {
-          insert: {
-            verse: {
-              number: '1',
-              style: 'v'
-            }
-          }
-        },
-        {
-          insert: 'Verse 1 Contents',
-          attributes: {
-            segment: 'verse_1_1'
-          }
-        }
-      ];
+      const ops = getTestDeltaOps();
       const preTranslationDeltaData = {
         id: `${projectId}:${Canon.bookNumberToId(book)}:${chapter}:target`,
         version: 0,
@@ -472,6 +459,41 @@ describe('DraftGenerationService', () => {
 
       const queryParams = new URLSearchParams();
       queryParams.append('timestamp', timestamp.toISOString());
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta?${queryParams.toString()}`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(preTranslationDeltaData);
+      tick();
+    }));
+
+    it('should get the pretranslation ops with a specific USFM config and return an observable', fakeAsync(() => {
+      const book = 43;
+      const chapter = 3;
+      const ops = getTestDeltaOps();
+      const preTranslationDeltaData = {
+        id: `${projectId}:${Canon.bookNumberToId(book)}:${chapter}:target`,
+        version: 0,
+        data: {
+          ops
+        }
+      };
+
+      const config: DraftUsfmConfig = {
+        paragraphFormat: ParagraphBreakFormat.MoveToEnd,
+        quoteFormat: QuoteFormat.Normalized
+      };
+
+      // SUT
+      service.getGeneratedDraftDeltaOperations(projectId, book, chapter, undefined, config).subscribe(result => {
+        expect(result).toEqual(ops);
+      });
+      tick();
+
+      const queryParams = new URLSearchParams();
+      queryParams.append('paragraphFormat', config.paragraphFormat);
+      queryParams.append('quoteFormat', config.quoteFormat);
       // Setup the HTTP request
       const req = httpTestingController.expectOne(
         `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta?${queryParams.toString()}`

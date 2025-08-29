@@ -37,18 +37,18 @@
             <mat-card-title>{{ t("quote_style_title") }}</mat-card-title>
           </mat-card-header>
           <mat-card-content class="format-options">
-            {{ t("choose_how_quotes_appear") }}
+            {{ t("quote_style_description") }}
 
             <!-- TODO make this notice conditional -->
             <app-notice type="warning" mode="fill-dark"> {{ t("no_quote_convention_detected") }} </app-notice>
 
             <mat-radio-group formControlName="quoteFormat">
-              <mat-radio-button [value]="quoteStyle.Automatic">
+              <mat-radio-button [value]="quoteStyle.Denormalize">
                 <span class="option-title">{{ t("quote_style_automatic") }}</span>
                 <span class="new">{{ t("new") }}</span>
                 <span class="description">{{ t("quote_style_automatic_description") }}</span>
               </mat-radio-button>
-              <mat-radio-button [value]="quoteStyle.Straight">
+              <mat-radio-button [value]="quoteStyle.Normalized">
                 <span class="option-title">{{ t("quote_style_straight") }}</span>
                 <span class="description">{{ t("quote_style_straight_description") }}</span>
               </mat-radio-button>

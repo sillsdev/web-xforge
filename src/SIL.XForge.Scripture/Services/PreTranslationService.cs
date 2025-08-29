@@ -196,15 +196,15 @@ public class PreTranslationService(
             template: PretranslationUsfmTemplate.Source,
             paragraphMarkerBehavior: config.ParagraphFormat switch
             {
-                ParagraphBreakFormat.Remove => PretranslationUsfmMarkerBehavior.Strip,
-                ParagraphBreakFormat.BestGuess => PretranslationUsfmMarkerBehavior.PreservePosition,
-                ParagraphBreakFormat.MoveToEnd => PretranslationUsfmMarkerBehavior.Preserve,
+                ParagraphBreakFormatOptions.Remove => PretranslationUsfmMarkerBehavior.Strip,
+                ParagraphBreakFormatOptions.BestGuess => PretranslationUsfmMarkerBehavior.PreservePosition,
+                ParagraphBreakFormatOptions.MoveToEnd => PretranslationUsfmMarkerBehavior.Preserve,
                 _ => PretranslationUsfmMarkerBehavior.PreservePosition,
             },
             quoteNormalizationBehavior: config.QuoteFormat switch
             {
-                QuoteStyle.Automatic => PretranslationNormalizationBehavior.Denormalized,
-                QuoteStyle.Straight => PretranslationNormalizationBehavior.Normalized,
+                QuoteStyleOptions.Denormalized => PretranslationNormalizationBehavior.Denormalized,
+                QuoteStyleOptions.Normalized => PretranslationNormalizationBehavior.Normalized,
                 _ => PretranslationNormalizationBehavior.Denormalized,
             },
             cancellationToken: cancellationToken

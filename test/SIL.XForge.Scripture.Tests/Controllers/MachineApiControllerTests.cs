@@ -914,8 +914,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.BestGuess,
-            quoteFormat: QuoteStyle.Automatic,
+            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+            quoteFormat: QuoteStyleOptions.Denormalized,
             CancellationToken.None
         );
 
@@ -947,8 +947,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.BestGuess,
-            quoteFormat: QuoteStyle.Automatic,
+            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+            quoteFormat: QuoteStyleOptions.Denormalized,
             CancellationToken.None
         );
 
@@ -978,8 +978,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.BestGuess,
-            quoteFormat: QuoteStyle.Automatic,
+            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+            quoteFormat: QuoteStyleOptions.Denormalized,
             CancellationToken.None
         );
 
@@ -1009,8 +1009,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.BestGuess,
-            quoteFormat: QuoteStyle.Automatic,
+            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+            quoteFormat: QuoteStyleOptions.Denormalized,
             CancellationToken.None
         );
 
@@ -1040,8 +1040,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.BestGuess,
-            quoteFormat: QuoteStyle.Automatic,
+            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+            quoteFormat: QuoteStyleOptions.Denormalized,
             CancellationToken.None
         );
 
@@ -1072,8 +1072,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.BestGuess,
-            quoteFormat: QuoteStyle.Automatic,
+            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+            quoteFormat: QuoteStyleOptions.Denormalized,
             CancellationToken.None
         );
 
@@ -1102,8 +1102,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.BestGuess,
-            quoteFormat: QuoteStyle.Automatic,
+            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+            quoteFormat: QuoteStyleOptions.Denormalized,
             CancellationToken.None
         );
         Assert.IsInstanceOf<OkObjectResult>(result.Result);
@@ -1131,8 +1131,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.BestGuess,
-            quoteFormat: QuoteStyle.Automatic,
+            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+            quoteFormat: QuoteStyleOptions.Denormalized,
             CancellationToken.None
         );
         Assert.IsInstanceOf<OkObjectResult>(result.Result);
