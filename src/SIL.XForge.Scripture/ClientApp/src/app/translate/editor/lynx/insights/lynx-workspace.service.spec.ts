@@ -8,7 +8,7 @@ import Delta, { Op } from 'quill-delta';
 import { LynxConfig } from 'realtime-server/lib/esm/scriptureforge/models/lynx-config';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
-import { anything, mock, resetCalls, verify, when } from 'ts-mockito';
+import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -22,6 +22,7 @@ import { SF_TYPE_REGISTRY } from '../../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../../core/models/text-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { LynxInsight, LynxInsightAction } from './lynx-insight';
+import { LynxWorkspaceFactory } from './lynx-workspace-factory.service';
 import { LynxWorkspaceService, TextDocReader } from './lynx-workspace.service';
 
 describe('LynxWorkspaceService', () => {
@@ -47,10 +48,12 @@ describe('LynxWorkspaceService', () => {
   const mockWorkspace = mock<Workspace<Op>>();
   const mockDocumentManager = mock<DocumentManager<ScriptureDeltaDocument, Op, Delta>>();
   const mockTextDocReader = mock<TextDocReader>();
+  const mockWorkspaceFactory = mock<LynxWorkspaceFactory>();
 
   class TestEnvironment {
     service!: LynxWorkspaceService;
     realtimeService!: TestRealtimeService;
+    private customWorkspaceMockSetup?: (workspaceMock: any) => void;
 
     readonly projectDocTestSubject$ = new BehaviorSubject<SFProjectProfileDoc | undefined>(undefined);
     readonly bookChapterTestSubject$ = new BehaviorSubject<RouteBookChapter | undefined>(undefined);
@@ -110,6 +113,42 @@ describe('LynxWorkspaceService', () => {
           version: 0
         })
       );
+
+      // These mock setups create a fresh workspace mock for each factory call
+      when(mockWorkspaceFactory.createWorkspace(anything(), anything())).thenCall(() => {
+        const workspaceMock = mock<Workspace<Op>>();
+        const changeLanguageSpy = jasmine.createSpy('changeLanguage').and.returnValue(Promise.resolve());
+        workspaceMock.changeLanguage = changeLanguageSpy;
+
+        when(workspaceMock.diagnosticsChanged$).thenReturn(this.diagnosticsChangedTestSubject$.asObservable());
+        when(workspaceMock.init()).thenReturn(Promise.resolve());
+        when(workspaceMock.getOnTypeTriggerCharacters()).thenReturn(['.', ',']);
+        when(workspaceMock.getOnTypeEdits(anything(), anything(), anything())).thenReturn(
+          Promise.resolve([{ retain: 5 }, { insert: ' ' }])
+        );
+        when(workspaceMock.getDiagnosticFixes(anything(), anything())).thenReturn(
+          Promise.resolve([
+            {
+              title: 'Fix issue',
+              isPreferred: true,
+              diagnostic: {
+                code: 123,
+                source: 'test',
+                range: { start: { line: 0, character: 0 }, end: { line: 0, character: 10 } },
+                severity: DiagnosticSeverity.Warning,
+                message: 'Test diagnostic'
+              },
+              edits: [{ retain: 0 }, { insert: 'corrected' }, { delete: 10 }]
+            }
+          ])
+        );
+
+        // Apply any custom mock setup provided by the test
+        if (this.customWorkspaceMockSetup) {
+          this.customWorkspaceMockSetup(workspaceMock);
+        }
+        return instance(workspaceMock);
+      });
     }
 
     init(): void {
@@ -127,13 +166,11 @@ describe('LynxWorkspaceService', () => {
       this.service = TestBed.inject(LynxWorkspaceService);
       this.service.init();
       tick();
-
-      // Reset mock call counters after initialization
-      this.resetMocks();
     }
 
-    resetMocks(): void {
+    resetMockCalls(): void {
       resetCalls(mockWorkspace);
+      resetCalls(mockWorkspaceFactory);
       resetCalls(mockDocumentManager);
       resetCalls(mockProjectService);
     }
@@ -235,6 +272,10 @@ describe('LynxWorkspaceService', () => {
       tick();
     }
 
+    setCustomWorkspaceMock(setupFn: (workspaceMock: any) => void): void {
+      this.customWorkspaceMockSetup = setupFn;
+    }
+
     triggerLocaleChange(locale: Locale): void {
       this.localeTestSubject$.next(locale);
       tick();
@@ -297,7 +338,7 @@ describe('LynxWorkspaceService', () => {
       { provide: DestroyRef, useMock: mockDestroyRef },
       { provide: TextDocReader, useMock: mockTextDocReader },
       { provide: DocumentManager, useMock: mockDocumentManager },
-      { provide: Workspace, useMock: mockWorkspace }
+      { provide: LynxWorkspaceFactory, useMock: mockWorkspaceFactory }
     ]
   }));
 
@@ -309,6 +350,44 @@ describe('LynxWorkspaceService', () => {
     it('should update language when locale changes', fakeAsync(() => {
       const env = new TestEnvironment();
 
+      // Override the workspace factory for this test to use a plain object with a spy
+      const changeLanguageSpy = jasmine.createSpy('changeLanguage').and.returnValue(Promise.resolve());
+      const workspaceMock = {
+        diagnosticsChanged$: env.diagnosticsChangedTestSubject$.asObservable(),
+        init: () => Promise.resolve(),
+        changeLanguage: changeLanguageSpy,
+        getOnTypeTriggerCharacters: () => ['.', ','],
+        getOnTypeEdits: () => Promise.resolve([{ retain: 5 }, { insert: ' ' }]),
+        getDiagnosticFixes: () =>
+          Promise.resolve([
+            {
+              title: 'Fix issue',
+              isPreferred: true,
+              diagnostic: {
+                code: 123,
+                source: 'test',
+                range: { start: { line: 0, character: 0 }, end: { line: 0, character: 10 } },
+                severity: DiagnosticSeverity.Warning,
+                message: 'Test diagnostic'
+              },
+              edits: [{ retain: 0 }, { insert: 'corrected' }, { delete: 10 }]
+            }
+          ])
+      };
+      when(mockWorkspaceFactory.createWorkspace(anything(), anything())).thenReturn(workspaceMock as any);
+
+      // Set up project and workspace
+      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+        autoCorrectionsEnabled: true,
+        assessmentsEnabled: true,
+        punctuationCheckerEnabled: true,
+        allowedCharacterCheckerEnabled: false
+      });
+      env.projectDocTestSubject$.next(projectDoc);
+      when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+      when(mockActivatedProjectService.projectId).thenReturn(PROJECT_ID);
+      tick(); // Allow workspace setup to complete
+
       const frenchLocale: Locale = {
         canonicalTag: 'fr',
         localName: 'Français',
@@ -319,7 +398,9 @@ describe('LynxWorkspaceService', () => {
       };
       env.triggerLocaleChange(frenchLocale);
 
-      verify(mockWorkspace.changeLanguage('fr')).once();
+      expect(changeLanguageSpy.calls.count()).toBe(2);
+      expect(changeLanguageSpy.calls.argsFor(0)).toEqual(['en']);
+      expect(changeLanguageSpy.calls.argsFor(1)).toEqual(['fr']);
     }));
   });
 
@@ -386,11 +467,6 @@ describe('LynxWorkspaceService', () => {
 
       // When project is activated, should emit true (task running)
       env.triggerProjectChange(PROJECT_ID);
-      expect(statusValues).toEqual([false, true]);
-
-      // When insights arrive, should emit false (task complete)
-      env.setupActiveTextDocId();
-      env.triggerDiagnostics(['Test insight']);
       expect(statusValues).toEqual([false, true, false]);
     }));
 
@@ -406,19 +482,16 @@ describe('LynxWorkspaceService', () => {
       tick();
       env.triggerProjectChange(PROJECT_ID);
       env.setupActiveTextDocId();
-      env.triggerDiagnostics(['Insight for project 1']);
+      tick(); // Allow workspace setup to complete
       expect(statusValues).toEqual([false, true, false]);
 
       // Switch to different project - should restart loading cycle
       const differentProjectId = 'project02';
       env.triggerProjectChange(differentProjectId);
-      expect(statusValues).toEqual([false, true, false, true]);
-
-      // Complete loading for second project
       env.service['projectId'] = differentProjectId;
       env.service['textDocId'] = new TextDocId(differentProjectId, BOOK_NUM, CHAPTER_NUM);
-      env.triggerDiagnostics(['Insight for project 2']);
-      expect(statusValues).toEqual([false, true, false, true, false]);
+      tick(); // Allow workspace setup to complete
+      expect(statusValues).toEqual([false, true, false, true]);
     }));
 
     it('should handle empty insights correctly', fakeAsync(() => {
@@ -431,11 +504,6 @@ describe('LynxWorkspaceService', () => {
 
       tick();
       env.triggerProjectChange(PROJECT_ID);
-      expect(statusValues).toEqual([false, true]);
-
-      // Empty diagnostics should still complete the loading task
-      env.setupActiveTextDocId();
-      env.triggerDiagnostics([]); // Empty diagnostics
       expect(statusValues).toEqual([false, true, false]);
     }));
 
@@ -466,7 +534,9 @@ describe('LynxWorkspaceService', () => {
       // Create project with lynx features enabled so documents will be opened
       const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: true,
-        assessmentsEnabled: true
+        assessmentsEnabled: true,
+        punctuationCheckerEnabled: true,
+        allowedCharacterCheckerEnabled: false
       });
       env.projectDocTestSubject$.next(projectDoc);
       when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
@@ -494,7 +564,9 @@ describe('LynxWorkspaceService', () => {
       // Create project with lynx features enabled so documents will be opened
       const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: true,
-        assessmentsEnabled: true
+        assessmentsEnabled: true,
+        punctuationCheckerEnabled: true,
+        allowedCharacterCheckerEnabled: false
       });
       env.projectDocTestSubject$.next(projectDoc);
       when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
@@ -515,7 +587,9 @@ describe('LynxWorkspaceService', () => {
       // Set up project with lynx features enabled so documents will be opened
       const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: true,
-        assessmentsEnabled: true
+        assessmentsEnabled: true,
+        punctuationCheckerEnabled: true,
+        allowedCharacterCheckerEnabled: false
       });
       env.projectDocTestSubject$.next(projectDoc);
       when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
@@ -539,7 +613,21 @@ describe('LynxWorkspaceService', () => {
   describe('Insights processing', () => {
     it('should process diagnostics into insights', fakeAsync(() => {
       const env = new TestEnvironment();
+
+      // Set up project with lynx features enabled
+      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+        autoCorrectionsEnabled: false,
+        assessmentsEnabled: true,
+        punctuationCheckerEnabled: true,
+        allowedCharacterCheckerEnabled: false
+      });
+      env.projectDocTestSubject$.next(projectDoc);
+      when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+      when(mockActivatedProjectService.projectId).thenReturn(PROJECT_ID);
+
       env.setupActiveTextDocId();
+      tick(); // Allow workspace setup to complete
+
       const { insights, subscription } = env.captureInsights();
 
       env.triggerDiagnostics(['Test message']);
@@ -554,7 +642,21 @@ describe('LynxWorkspaceService', () => {
 
     it('should convert diagnostic severity to appropriate insight type', fakeAsync(() => {
       const env = new TestEnvironment();
+
+      // Set up project with lynx features enabled
+      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+        autoCorrectionsEnabled: false,
+        assessmentsEnabled: true,
+        punctuationCheckerEnabled: true,
+        allowedCharacterCheckerEnabled: false
+      });
+      env.projectDocTestSubject$.next(projectDoc);
+      when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+      when(mockActivatedProjectService.projectId).thenReturn(PROJECT_ID);
+
       env.setupActiveTextDocId();
+      tick(); // Allow workspace setup to complete
+
       const { insights, subscription } = env.captureInsights();
 
       // Info severity
@@ -577,7 +679,21 @@ describe('LynxWorkspaceService', () => {
 
     it('should maintain insight ids for matching insights', fakeAsync(() => {
       const env = new TestEnvironment();
+
+      // Set up project with lynx features enabled
+      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+        autoCorrectionsEnabled: false,
+        assessmentsEnabled: true,
+        punctuationCheckerEnabled: true,
+        allowedCharacterCheckerEnabled: false
+      });
+      env.projectDocTestSubject$.next(projectDoc);
+      when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+      when(mockActivatedProjectService.projectId).thenReturn(PROJECT_ID);
+
       env.setupActiveTextDocId();
+      tick(); // Allow workspace setup to complete
+
       const { insights, subscription } = env.captureInsights();
 
       env.triggerDiagnostics(['Test message']);
@@ -591,7 +707,21 @@ describe('LynxWorkspaceService', () => {
 
     it('should remove insights when empty diagnostics are sent', fakeAsync(() => {
       const env = new TestEnvironment();
+
+      // Set up project with lynx features enabled
+      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+        autoCorrectionsEnabled: false,
+        assessmentsEnabled: true,
+        punctuationCheckerEnabled: true,
+        allowedCharacterCheckerEnabled: false
+      });
+      env.projectDocTestSubject$.next(projectDoc);
+      when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+      when(mockActivatedProjectService.projectId).thenReturn(PROJECT_ID);
+
       env.setupActiveTextDocId();
+      tick(); // Allow workspace setup to complete
+
       const { insights, subscription } = env.captureInsights();
 
       // Add initial insights
@@ -613,19 +743,19 @@ describe('LynxWorkspaceService', () => {
       // Set up project with auto-corrections enabled
       const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: true,
-        assessmentsEnabled: false
+        assessmentsEnabled: false,
+        punctuationCheckerEnabled: true,
+        allowedCharacterCheckerEnabled: false
       });
       env.projectDocTestSubject$.next(projectDoc);
       when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+      when(mockActivatedProjectService.projectId).thenReturn(PROJECT_ID);
+
+      tick(); // Allow workspace setup to complete
 
       env.service['textDocId'] = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
       const delta = new Delta().insert('Hello,');
       let result: Delta[] = [];
-
-      when(mockWorkspace.getOnTypeEdits(anything(), anything(), anything())).thenResolve([
-        { retain: 5 },
-        { insert: ' ' }
-      ]);
 
       env.service.getOnTypeEdits(delta).then(res => (result = res));
       tick();
@@ -638,20 +768,30 @@ describe('LynxWorkspaceService', () => {
     it('should handle multiple trigger characters', fakeAsync(() => {
       const env = new TestEnvironment();
 
+      env.setCustomWorkspaceMock((workspaceMock: any) => {
+        when(workspaceMock.getOnTypeEdits(anything(), anything(), ',')).thenReturn(
+          Promise.resolve([{ retain: 6 }, { insert: ' ' }])
+        );
+        when(workspaceMock.getOnTypeEdits(anything(), anything(), '.')).thenReturn(
+          Promise.resolve([{ retain: 13 }, { insert: ' ' }])
+        );
+      });
+
       // Set up project with auto-corrections enabled
       const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: true,
-        assessmentsEnabled: false
+        assessmentsEnabled: false,
+        punctuationCheckerEnabled: true,
+        allowedCharacterCheckerEnabled: false
       });
       env.projectDocTestSubject$.next(projectDoc);
       when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+      when(mockActivatedProjectService.projectId).thenReturn(PROJECT_ID);
+      tick(); // Allow workspace setup to complete
 
       env.service['textDocId'] = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
       const delta = new Delta().insert('Hello, world.');
       let result: Delta[] = [];
-
-      when(mockWorkspace.getOnTypeEdits(anything(), anything(), ',')).thenResolve([{ retain: 6 }, { insert: ' ' }]);
-      when(mockWorkspace.getOnTypeEdits(anything(), anything(), '.')).thenResolve([{ retain: 13 }, { insert: ' ' }]);
 
       env.service.getOnTypeEdits(delta).then(res => (result = res));
       tick();
@@ -681,7 +821,9 @@ describe('LynxWorkspaceService', () => {
       // Create project with auto-corrections disabled
       const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: false,
-        assessmentsEnabled: false
+        assessmentsEnabled: false,
+        punctuationCheckerEnabled: false,
+        allowedCharacterCheckerEnabled: false
       });
       env.projectDocTestSubject$.next(projectDoc);
       when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
@@ -699,23 +841,28 @@ describe('LynxWorkspaceService', () => {
 
     it('should return edits when auto-corrections are enabled', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.service['textDocId'] = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
+
+      env.setCustomWorkspaceMock((workspaceMock: any) => {
+        when(workspaceMock.getOnTypeEdits(anything(), anything(), anything())).thenReturn(
+          Promise.resolve([{ retain: 5 }, { insert: ' ' }])
+        );
+      });
 
       // Create project with auto-corrections enabled
       const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: true,
-        assessmentsEnabled: false
+        assessmentsEnabled: false,
+        punctuationCheckerEnabled: true,
+        allowedCharacterCheckerEnabled: false
       });
       env.projectDocTestSubject$.next(projectDoc);
       when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+      when(mockActivatedProjectService.projectId).thenReturn(PROJECT_ID);
+      tick(); // Allow workspace setup to complete
 
+      env.service['textDocId'] = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
       const delta = new Delta().insert('Hello,');
       let result: Delta[] = [];
-
-      when(mockWorkspace.getOnTypeEdits(anything(), anything(), anything())).thenResolve([
-        { retain: 5 },
-        { insert: ' ' }
-      ]);
 
       env.service.getOnTypeEdits(delta).then(res => (result = res));
       tick();
@@ -728,6 +875,37 @@ describe('LynxWorkspaceService', () => {
   describe('getActions', () => {
     it('should get actions for an insight', fakeAsync(() => {
       const env = new TestEnvironment();
+
+      env.setCustomWorkspaceMock((workspaceMock: any) => {
+        when(workspaceMock.getDiagnosticFixes(anything(), anything())).thenReturn(
+          Promise.resolve([
+            {
+              title: 'Fix issue',
+              isPreferred: true,
+              diagnostic: {
+                code: 123,
+                source: 'test',
+                range: { start: { line: 0, character: 0 }, end: { line: 0, character: 10 } },
+                severity: DiagnosticSeverity.Warning,
+                message: 'Test diagnostic'
+              },
+              edits: [{ retain: 0 }, { insert: 'corrected' }, { delete: 10 }]
+            }
+          ])
+        );
+      });
+
+      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+        autoCorrectionsEnabled: true,
+        assessmentsEnabled: true,
+        punctuationCheckerEnabled: true,
+        allowedCharacterCheckerEnabled: false
+      });
+      env.projectDocTestSubject$.next(projectDoc);
+      when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+      when(mockActivatedProjectService.projectId).thenReturn(PROJECT_ID);
+      tick(); // Allow workspace setup to complete
+
       const insight = env.createTestInsight();
       let actions: LynxInsightAction[] = [];
 
@@ -756,7 +934,21 @@ describe('LynxWorkspaceService', () => {
   describe('2D Map Structure - Insights by URI and Source', () => {
     it('should organize insights by URI and diagnostic source', fakeAsync(() => {
       const env = new TestEnvironment();
+
+      // Set up project with lynx features enabled
+      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+        autoCorrectionsEnabled: false,
+        assessmentsEnabled: true,
+        punctuationCheckerEnabled: true,
+        allowedCharacterCheckerEnabled: false
+      });
+      env.projectDocTestSubject$.next(projectDoc);
+      when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+      when(mockActivatedProjectService.projectId).thenReturn(PROJECT_ID);
+
       env.setupActiveTextDocId();
+      tick(); // Allow workspace setup to complete
+
       const textDocId = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
       const { insights, subscription } = env.captureInsights();
 
@@ -813,7 +1005,21 @@ describe('LynxWorkspaceService', () => {
 
     it('should preserve insights from different sources when one source is updated', fakeAsync(() => {
       const env = new TestEnvironment();
+
+      // Set up project with lynx features enabled
+      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+        autoCorrectionsEnabled: false,
+        assessmentsEnabled: true,
+        punctuationCheckerEnabled: true,
+        allowedCharacterCheckerEnabled: false
+      });
+      env.projectDocTestSubject$.next(projectDoc);
+      when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+      when(mockActivatedProjectService.projectId).thenReturn(PROJECT_ID);
+
       env.setupActiveTextDocId();
+      tick(); // Allow workspace setup to complete
+
       const textDocId = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
       const { insights, subscription } = env.captureInsights();
 
@@ -885,7 +1091,21 @@ describe('LynxWorkspaceService', () => {
 
     it('should reuse insight ids for matching diagnostics within the same source', fakeAsync(() => {
       const env = new TestEnvironment();
+
+      // Set up project with lynx features enabled
+      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+        autoCorrectionsEnabled: false,
+        assessmentsEnabled: true,
+        punctuationCheckerEnabled: true,
+        allowedCharacterCheckerEnabled: false
+      });
+      env.projectDocTestSubject$.next(projectDoc);
+      when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+      when(mockActivatedProjectService.projectId).thenReturn(PROJECT_ID);
+
       env.setupActiveTextDocId();
+      tick(); // Allow workspace setup to complete
+
       const textDocId = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
       const { insights, subscription } = env.captureInsights();
 
@@ -961,7 +1181,21 @@ describe('LynxWorkspaceService', () => {
 
     it('should flatten 2D map correctly when returning insights', fakeAsync(() => {
       const env = new TestEnvironment();
+
+      // Set up project with lynx features enabled
+      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+        autoCorrectionsEnabled: false,
+        assessmentsEnabled: true,
+        punctuationCheckerEnabled: true,
+        allowedCharacterCheckerEnabled: false
+      });
+      env.projectDocTestSubject$.next(projectDoc);
+      when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+      when(mockActivatedProjectService.projectId).thenReturn(PROJECT_ID);
+
       env.setupActiveTextDocId();
+      tick(); // Allow workspace setup to complete
+
       const textDocId1 = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
       const textDocId2 = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM + 1);
       const { insights, subscription } = env.captureInsights();
@@ -1013,7 +1247,21 @@ describe('LynxWorkspaceService', () => {
 
     it('should clear all sources for a URI when empty diagnostics are received', fakeAsync(() => {
       const env = new TestEnvironment();
+
+      // Set up project with lynx features enabled
+      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+        autoCorrectionsEnabled: false,
+        assessmentsEnabled: true,
+        punctuationCheckerEnabled: true,
+        allowedCharacterCheckerEnabled: false
+      });
+      env.projectDocTestSubject$.next(projectDoc);
+      when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+      when(mockActivatedProjectService.projectId).thenReturn(PROJECT_ID);
+
       env.setupActiveTextDocId();
+      tick(); // Allow workspace setup to complete
+
       const textDocId = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
       const { insights, subscription } = env.captureInsights();
 

@@ -46,7 +46,9 @@ function testProjectProfile(ordinal: number): SFProjectProfile {
     },
     lynxConfig: {
       autoCorrectionsEnabled: false,
-      assessmentsEnabled: false
+      assessmentsEnabled: false,
+      punctuationCheckerEnabled: false,
+      allowedCharacterCheckerEnabled: false
     },
     editable: true,
     defaultFontSize: 12,
