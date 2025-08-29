@@ -16,7 +16,7 @@ export const environment = {
   scope: 'sf_data',
   siteId: 'sf',
   assets: '/assets/',
-  helps: 'https://github-action-preview--scriptureforgehelp.netlify.app',
+  helps: 'https://help.scriptureforge.org',
   bugsnagApiKey: 'b72a46a8924a3cd161d4c5534287923c',
   realtimePort: 5003,
   realtimeSecurePort: 5005,
