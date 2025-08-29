@@ -217,6 +217,8 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
         // Remember the snapshot so we can apply it
         this.selectedSnapshot = snapshot;
         this.revisionSelect.emit({ revision, snapshot });
-      });
+      })
+      // On error, do not emit the revision
+      .catch(() => {});
   }
 }
