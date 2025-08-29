@@ -32,6 +32,7 @@ public class TrainingDataService(
     public const string DirectoryName = "training-data";
     private static readonly CsvConfiguration _csvConfiguration = new CsvConfiguration(CultureInfo.InvariantCulture)
     {
+        BadDataFound = null,
         DetectColumnCountChanges = true,
         DetectDelimiter = true,
         HasHeaderRecord = false,
