@@ -40,4 +40,6 @@ public class SFProjectSettings
     // lynx settings
     public bool? LynxAutoCorrectionsEnabled { get; set; }
     public bool? LynxAssessmentsEnabled { get; set; }
+    public bool? LynxPunctuationCheckerEnabled { get; set; }
+    public bool? LynxAllowedCharacterCheckerEnabled { get; set; }
 }

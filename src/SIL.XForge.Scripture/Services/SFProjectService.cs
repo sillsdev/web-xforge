@@ -559,6 +559,12 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
             UpdateSetting(op, p => p.LynxConfig.AutoCorrectionsEnabled, settings.LynxAutoCorrectionsEnabled);
             UpdateSetting(op, p => p.LynxConfig.AssessmentsEnabled, settings.LynxAssessmentsEnabled);
+            UpdateSetting(op, p => p.LynxConfig.PunctuationCheckerEnabled, settings.LynxPunctuationCheckerEnabled);
+            UpdateSetting(
+                op,
+                p => p.LynxConfig.AllowedCharacterCheckerEnabled,
+                settings.LynxAllowedCharacterCheckerEnabled
+            );
         });
 
         bool suggestionsEnabledSet = settings.TranslationSuggestionsEnabled != null;
