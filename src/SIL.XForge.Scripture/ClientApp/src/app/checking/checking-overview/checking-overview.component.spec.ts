@@ -306,7 +306,9 @@ describe('CheckingOverviewComponent', () => {
       const env = new TestEnvironment();
       const delayPromise = new Promise<void>(resolve => setTimeout(resolve, 10 * 1000));
       when(mockedQuestionsService.queryQuestions(anything(), anything(), anything())).thenReturn(
-        delayPromise.then(() => env.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {}, noopDestroyRef))
+        delayPromise.then(
+          async () => await env.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, 'spec', {}, noopDestroyRef)
+        )
       );
 
       env.waitForQuestions();
@@ -419,7 +421,7 @@ describe('CheckingOverviewComponent', () => {
 
     it('should not display loading if user is offline', fakeAsync(async () => {
       const env = new TestEnvironment();
-      const questionDoc: QuestionDoc = env.realtimeService.get(
+      const questionDoc: QuestionDoc = await env.realtimeService.get(
         QuestionDoc.COLLECTION,
         getQuestionDocId('project01', 'q7Id'),
         new DocSubscription('spec')
@@ -985,11 +987,11 @@ class TestEnvironment {
         subscriber
       )
     );
-    when(mockedQuestionsService.queryQuestions('project01', anything(), anything())).thenCall(() =>
-      this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {}, noopDestroyRef)
+    when(mockedQuestionsService.queryQuestions('project01', anything(), anything())).thenCall(
+      async () => await this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, 'spec', {}, noopDestroyRef)
     );
     when(mockedProjectService.onlineDeleteAudioTimingData(anything(), anything(), anything())).thenCall(
-      (projectId, book, chapter) => {
+      async (projectId, book, chapter) => {
         const projectDoc = await this.realtimeService.get<SFProjectProfileDoc>(
           SFProjectProfileDoc.COLLECTION,
           projectId,
@@ -1163,7 +1165,7 @@ class TestEnvironment {
     this.waitForProjectDocChanges();
   }
 
-  setSeeOtherUserResponses(isEnabled: boolean): void {
+  async setSeeOtherUserResponses(isEnabled: boolean): Promise<void> {
     const projectDoc = await this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       'project01',
@@ -1177,7 +1179,7 @@ class TestEnvironment {
   }
 
   setCheckingEnabled(isEnabled: boolean): void {
-    this.ngZone.run(() => {
+    this.ngZone.run(async () => {
       const projectDoc = await this.realtimeService.get<SFProjectProfileDoc>(
         SFProjectProfileDoc.COLLECTION,
         'project01',
@@ -1232,7 +1234,7 @@ class TestEnvironment {
     });
   }
 
-  private addChapterAudio(): void {
+  private async addChapterAudio(): Promise<void> {
     const text: TextInfo = {
       bookNum: 43,
       hasSource: false,

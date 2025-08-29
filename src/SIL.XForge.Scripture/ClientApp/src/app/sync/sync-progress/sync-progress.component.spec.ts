@@ -239,7 +239,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  updateSyncProgress(percentCompleted: number, projectId: string): void {
+  async updateSyncProgress(percentCompleted: number, projectId: string): Promise<void> {
     const projectDoc = await this.realtimeService.get<SFProjectDoc>(
       SFProjectDoc.COLLECTION,
       projectId,
@@ -254,7 +254,7 @@ class TestEnvironment {
     tick();
   }
 
-  emitSyncComplete(successful: boolean, projectId: string): void {
+  async emitSyncComplete(successful: boolean, projectId: string): Promise<void> {
     this.host.syncProgress['updateProgressState'](projectId, new ProgressState(1));
     const projectDoc = await this.realtimeService.get<SFProjectDoc>(
       SFProjectDoc.COLLECTION,
