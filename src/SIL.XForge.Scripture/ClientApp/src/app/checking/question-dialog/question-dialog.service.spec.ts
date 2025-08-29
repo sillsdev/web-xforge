@@ -110,7 +110,7 @@ describe('QuestionDialogService', () => {
       audio: {}
     };
     when(env.mockedDialogRef.afterClosed()).thenReturn(of(result));
-    const questionDoc = env.addQuestion(env.getNewQuestion());
+    const questionDoc = await env.addQuestion(env.getNewQuestion());
     expect(questionDoc!.data!.text).toBe('question to be edited');
     await env.service.questionDialog(env.getQuestionDialogData(questionDoc));
     expect(questionDoc!.data!.text).toBe('question edited');
@@ -136,7 +136,7 @@ describe('QuestionDialogService', () => {
         anything()
       )
     ).thenResolve(undefined);
-    const questionDoc = env.addQuestion(env.getNewQuestion());
+    const questionDoc = await env.addQuestion(env.getNewQuestion());
     const editedQuestion = await env.service.questionDialog(env.getQuestionDialogData(questionDoc));
     expect(editedQuestion).toBeUndefined();
   });
@@ -150,7 +150,7 @@ describe('QuestionDialogService', () => {
     };
     when(env.mockedDialogRef.afterClosed()).thenReturn(of(result));
     const audioUrl = 'anAudioFile.mp3';
-    const questionDoc = env.addQuestion(env.getNewQuestion(audioUrl));
+    const questionDoc = await env.addQuestion(env.getNewQuestion(audioUrl));
     expect(questionDoc!.data!.audioUrl).toBe(audioUrl);
     await env.service.questionDialog(env.getQuestionDialogData(questionDoc));
     expect(questionDoc!.data!.audioUrl).toBeUndefined();
@@ -211,7 +211,7 @@ class TestEnvironment {
     );
   }
 
-  addQuestion(question: Question): QuestionDoc {
+  async addQuestion(question: Question): Promise<QuestionDoc> {
     this.realtimeService.addSnapshot<Question>(QUESTIONS_COLLECTION, {
       id: getQuestionDocId(this.PROJECT01, question.dataId),
       data: question
@@ -248,7 +248,7 @@ class TestEnvironment {
     };
   }
 
-  updateUserRole(role: string): void {
+  async updateUserRole(role: string): Promise<void> {
     const projectProfileDoc = await this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       this.PROJECT01,
