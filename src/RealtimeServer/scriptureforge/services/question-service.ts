@@ -238,9 +238,14 @@ export class QuestionService extends SFProjectDataService<Question> {
     ];
   }
 
-  protected onDelete(userId: string, docId: string, projectDomain: SFProjectDomain, entity: OwnedData): Promise<void> {
+  protected async onDelete(
+    userId: string,
+    docId: string,
+    projectDomain: SFProjectDomain,
+    entity: OwnedData
+  ): Promise<void> {
     if (projectDomain === SFProjectDomain.Answers || projectDomain === SFProjectDomain.AnswerComments) {
-      this.removeEntityReadRefs(userId, docId, projectDomain, entity);
+      await this.removeEntityReadRefs(userId, docId, projectDomain, entity);
     }
     return Promise.resolve();
   }
