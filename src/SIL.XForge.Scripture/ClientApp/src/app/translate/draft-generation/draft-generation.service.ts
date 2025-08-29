@@ -224,6 +224,7 @@ export class DraftGenerationService {
     }
     if (usfmConfig != null) {
       params.append('paragraphFormat', usfmConfig.paragraphFormat);
+      params.append('quoteFormat', usfmConfig.quoteFormat);
     }
     if (params.size > 0) {
       url += `?${params.toString()}`;
