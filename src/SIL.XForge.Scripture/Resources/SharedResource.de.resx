@@ -201,21 +201,21 @@
     <value>Der Benutzername existiert nicht.</value>
   </data>
   <data name="DraftCanceledEmailBody" xml:space="preserve">
-    <value>Your draft for {0} was canceled.</value>
+    <value>Dein Entwurf für {0} wurde abgebrochen.</value>
   </data>
   <data name="DraftEmailMoreInformation" xml:space="preserve">
-    <value>For more information see {0}</value>
+    <value>Für weitere Informationen siehe {0}</value>
   </data>
   <data name="DraftFailedEmailBody" xml:space="preserve">
-    <value>Your draft for {0} did not generate successfully.</value>
+    <value>Dein Entwurf für {0} konnte nicht erfolgreich generiert werden.</value>
   </data>
   <data name="DraftGeneratedEmailBody" xml:space="preserve">
-    <value>Your draft for {0} was generated successfully.</value>
+    <value>Dein Entwurf für {0} wurde erfolgreich generiert.</value>
   </data>
   <data name="DraftGeneratedEmailSubject" xml:space="preserve">
-    <value>{0} draft generated successfully</value>
+    <value>Entwurf {0} erfolgreich generiert</value>
   </data>
   <data name="DraftNotGeneratedEmailSubject" xml:space="preserve">
-    <value>{0} draft was not generated</value>
+    <value>Entwurf {0} konnte nicht generiert werden</value>
   </data>
 </root>
