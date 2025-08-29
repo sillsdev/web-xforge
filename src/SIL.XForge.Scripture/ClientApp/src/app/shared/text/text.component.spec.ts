@@ -753,14 +753,14 @@ describe('TextComponent', () => {
       expect(presenceChannelReceiveSpy).toHaveBeenCalledTimes(1);
     }));
 
-    it('should update presence if the user data changes', fakeAsync(() => {
+    it('should update presence if the user data changes', fakeAsync(async () => {
       const updatedAvatarUrl: string = 'https://example.com/avatar-updated.png';
       const env: TestEnvironment = new TestEnvironment();
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
       env.waitForEditor();
       const presenceChannelSubmit = spyOn<any>(env.localPresenceChannel, 'submit');
-      const userDoc: UserDoc = env.getUserDoc('user01');
+      const userDoc: UserDoc = await env.getUserDoc('user01');
       expect(userDoc.data?.avatarUrl).not.toEqual(updatedAvatarUrl);
 
       userDoc.submitJson0Op(op => op.set(u => u.avatarUrl, updatedAvatarUrl));
