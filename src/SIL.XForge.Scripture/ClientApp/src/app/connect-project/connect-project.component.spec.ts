@@ -484,7 +484,7 @@ class TestEnvironment {
     return element.nativeElement.querySelector('input') as HTMLInputElement;
   }
 
-  setQueuedCount(): void {
+  async setQueuedCount(): Promise<void> {
     const projectDoc = await this.realtimeService.get<SFProjectDoc>(
       SFProjectDoc.COLLECTION,
       'project01',
@@ -495,7 +495,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  emitSyncComplete(): void {
+  async emitSyncComplete(): Promise<void> {
     const projectDoc = await this.realtimeService.get<SFProjectDoc>(
       SFProjectDoc.COLLECTION,
       'project01',

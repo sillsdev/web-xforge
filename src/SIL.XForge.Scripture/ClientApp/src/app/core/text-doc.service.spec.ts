@@ -30,19 +30,19 @@ describe('TextDocService', () => {
     ]
   }));
 
-  it('should overwrite text doc', fakeAsync(() => {
+  it('should overwrite text doc', fakeAsync(async () => {
     const env = new TestEnvironment();
     const newDelta: Delta = getCombinedVerseTextDoc(env.textDocId) as Delta;
 
     env.textDocService.overwrite(env.textDocId, newDelta, 'Editor');
     tick();
 
-    expect(env.getTextDoc(env.textDocId).data?.ops).toEqual(newDelta.ops);
+    expect((await env.getTextDoc(env.textDocId)).data?.ops).toEqual(newDelta.ops);
   }));
 
-  it('should emit diff', fakeAsync(() => {
+  it('should emit diff', fakeAsync(async () => {
     const env = new TestEnvironment();
-    const origDelta: Delta = env.getTextDoc(env.textDocId).data as Delta;
+    const origDelta: Delta = (await env.getTextDoc(env.textDocId)).data as Delta;
     const newDelta: Delta = getPoetryVerseTextDoc(env.textDocId) as Delta;
     const diff: Delta = origDelta.diff(newDelta);
 
@@ -54,11 +54,11 @@ describe('TextDocService', () => {
     tick();
   }));
 
-  it('should submit the source', fakeAsync(() => {
+  it('should submit the source', fakeAsync(async () => {
     const env = new TestEnvironment();
     const newDelta: Delta = getPoetryVerseTextDoc(env.textDocId) as Delta;
 
-    const textDoc = env.getTextDoc(env.textDocId);
+    const textDoc = await env.getTextDoc(env.textDocId);
     textDoc.adapter.changes$.subscribe(() => {
       // overwrite() resets submitSource to false, so we check it when the op is submitted
       expect(textDoc.adapter.submitSource).toBe(true);
@@ -470,7 +470,7 @@ class TestEnvironment {
     when(mockUserService.currentUserId).thenReturn('user01');
   }
 
-  getTextDoc(textId: TextDocId): TextDoc {
+  async getTextDoc(textId: TextDocId): Promise<TextDoc> {
     return await this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString(), new DocSubscription('spec'));
   }
 }

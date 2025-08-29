@@ -605,7 +605,7 @@ describe('CheckingComponent', () => {
       flush(1000);
     }));
 
-    it('removes audio player when question audio deleted', fakeAsync(() => {
+    it('removes audio player when question audio deleted', fakeAsync(async () => {
       const env = new TestEnvironment({
         user: ADMIN_USER,
         projectBookRoute: 'JHN',
@@ -613,7 +613,7 @@ describe('CheckingComponent', () => {
         questionScope: 'chapter'
       });
       const questionId = 'q15Id';
-      const questionDoc = cloneDeep(env.getQuestionDoc(questionId));
+      const questionDoc = cloneDeep(await env.getQuestionDoc(questionId));
       questionDoc.submitJson0Op(op => {
         op.unset(qd => qd.audioUrl!);
       });
@@ -632,7 +632,7 @@ describe('CheckingComponent', () => {
       flush(1000);
     }));
 
-    it('uploads audio then updates audio url', fakeAsync(() => {
+    it('uploads audio then updates audio url', fakeAsync(async () => {
       const env = new TestEnvironment({
         user: ADMIN_USER,
         projectBookRoute: 'JHN',
@@ -642,7 +642,7 @@ describe('CheckingComponent', () => {
       });
       env.selectQuestion(14);
       const questionId = 'q14Id';
-      const questionDoc = cloneDeep(env.getQuestionDoc(questionId));
+      const questionDoc = cloneDeep(await env.getQuestionDoc(questionId));
       expect(env.component.answersPanel?.getFileSource(questionDoc.data?.audioUrl)).toBeUndefined();
       questionDoc.submitJson0Op(op => {
         op.set<string>(qd => qd.audioUrl!, 'anAudioFile.mp3');
@@ -967,7 +967,7 @@ describe('CheckingComponent', () => {
       flush(1000);
     }));
 
-    it('should reset filtering after a new question is added', fakeAsync(() => {
+    it('should reset filtering after a new question is added', fakeAsync(async () => {
       const env = new TestEnvironment({
         user: ADMIN_USER,
         projectBookRoute: 'JHN',
@@ -979,7 +979,7 @@ describe('CheckingComponent', () => {
       expect(env.questions.length).toEqual(1);
 
       // Technically this is an existing question returned but the test is to confirm the filter reset
-      const questionDoc = env.getQuestionDoc('q5Id');
+      const questionDoc = await env.getQuestionDoc('q5Id');
       when(mockedQuestionDialogService.questionDialog(anything())).thenResolve(questionDoc);
       env.clickButton(env.addQuestionButton);
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
@@ -1099,13 +1099,13 @@ describe('CheckingComponent', () => {
     }));
 
     describe('Question Filter', () => {
-      it('should filter out answered questions - "NoAnswers"', fakeAsync(() => {
+      it('should filter out answered questions - "NoAnswers"', fakeAsync(async () => {
         const env = new TestEnvironment({
           user: ADMIN_USER
         });
         env.component.activeQuestionFilter = QuestionFilter.NoAnswers;
 
-        const questionRemaining = env.getQuestionDoc('q1Id');
+        const questionRemaining = await env.getQuestionDoc('q1Id');
         const questionExcluded = {
           data: {},
           getAnswers: (_?: string) => {
@@ -1594,13 +1594,13 @@ describe('CheckingComponent', () => {
       discardPeriodicTasks();
     }));
 
-    it('saves the answer to the correct question when active question changed', fakeAsync(() => {
+    it('saves the answer to the correct question when active question changed', fakeAsync(async () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       const resolveUpload$: Subject<void> = env.resolveFileUploadSubject('uploadedFile.mp3');
       env.selectQuestion(1);
       env.answerQuestion('Answer with audio', 'audioFile.mp3');
       expect(env.answers.length).toEqual(0);
-      const question = env.getQuestionDoc('q1Id');
+      const question = await env.getQuestionDoc('q1Id');
       expect(env.saveAnswerButton).not.toBeNull();
       env.selectQuestion(2);
       resolveUpload$.next();
@@ -2255,18 +2255,18 @@ describe('CheckingComponent', () => {
       }));
     });
 
-    it('update answer audio cache when activating a question', fakeAsync(() => {
+    it('update answer audio cache when activating a question', fakeAsync(async () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
-      const questionDoc = spy(env.getQuestionDoc('q5Id'));
+      const questionDoc = spy(await env.getQuestionDoc('q5Id'));
       verify(questionDoc!.updateAnswerFileCache()).never();
       env.selectQuestion(5);
       verify(questionDoc!.updateAnswerFileCache()).once();
       expect().nothing();
     }));
 
-    it('update answer audio cache after save', fakeAsync(() => {
+    it('update answer audio cache after save', fakeAsync(async () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
-      const questionDoc = spy(env.getQuestionDoc('q6Id'));
+      const questionDoc = spy(await env.getQuestionDoc('q6Id'));
       env.selectQuestion(6);
       env.clickButton(env.getAnswerEditButton(0));
       env.waitForSliderUpdate();
@@ -2278,9 +2278,9 @@ describe('CheckingComponent', () => {
       flush(1000);
     }));
 
-    it('update answer audio cache on remote update to question', fakeAsync(() => {
+    it('update answer audio cache on remote update to question', fakeAsync(async () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
-      const questionDoc = spy(env.getQuestionDoc('q6Id'));
+      const questionDoc = spy(await env.getQuestionDoc('q6Id'));
       env.selectQuestion(6);
       verify(questionDoc!.updateAnswerFileCache()).times(1);
       env.simulateRemoteEditAnswer(0, 'Question 6 edited answer');
@@ -2290,9 +2290,9 @@ describe('CheckingComponent', () => {
       flush(1000);
     }));
 
-    it('update answer audio cache on remote removal of an answer', fakeAsync(() => {
+    it('update answer audio cache on remote removal of an answer', fakeAsync(async () => {
       const env = new TestEnvironment({ user: ADMIN_USER });
-      const questionDoc = spy(env.getQuestionDoc('q6Id'));
+      const questionDoc = spy(await env.getQuestionDoc('q6Id'));
       env.selectQuestion(6);
       verify(questionDoc!.updateAnswerFileCache()).times(1);
       env.simulateRemoteDeleteAnswer('q6Id', 0);
@@ -3165,8 +3165,8 @@ class TestEnvironment {
     });
   }
 
-  activateQuestion(dataId: string): void {
-    const questionDoc = this.getQuestionDoc(dataId);
+  async activateQuestion(dataId: string): Promise<void> {
+    const questionDoc = await this.getQuestionDoc(dataId);
     this.ngZone.run(() => this.component.questionsList!.activateQuestion(questionDoc));
     tick();
     this.waitForQuestionTimersToComplete();
@@ -3323,7 +3323,7 @@ class TestEnvironment {
     return this.getAnswerComments(answerIndex)[commentIndex].query(By.css('.comment-edit'));
   }
 
-  getQuestionDoc(dataId: string): QuestionDoc {
+  async getQuestionDoc(dataId: string): Promise<QuestionDoc> {
     return await this.realtimeService.get(
       QuestionDoc.COLLECTION,
       getQuestionDocId('project01', dataId),
@@ -3519,9 +3519,9 @@ class TestEnvironment {
     tick();
   }
 
-  simulateRemoteEditQuestionAudio(filename?: string, questionId?: string): void {
+  async simulateRemoteEditQuestionAudio(filename?: string, questionId?: string): Promise<void> {
     const questionDoc =
-      questionId != null ? this.getQuestionDoc(questionId) : this.component.questionsList!.activeQuestionDoc!;
+      questionId != null ? await this.getQuestionDoc(questionId) : this.component.questionsList!.activeQuestionDoc!;
     questionDoc.submitJson0Op(op => {
       if (filename != null) {
         op.set(q => q.audioUrl!, filename);
@@ -3533,8 +3533,8 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  simulateRemoteDeleteAnswer(questionId: string, answerIndex: number): void {
-    const questionDoc = this.getQuestionDoc(questionId);
+  async simulateRemoteDeleteAnswer(questionId: string, answerIndex: number): Promise<void> {
+    const questionDoc = await this.getQuestionDoc(questionId);
     questionDoc.submitJson0Op(op => op.set(q => q.answers[answerIndex].deleted, true), false);
     tick(this.questionReadTimer);
     this.fixture.detectChanges();
