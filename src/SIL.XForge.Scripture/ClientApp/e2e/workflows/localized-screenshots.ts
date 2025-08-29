@@ -242,7 +242,7 @@ export async function localizedScreenshots(
     await screenshotElements(
       page,
       [page.locator('app-draft-sources > .draft-sources-stepper'), page.locator('app-draft-sources > .overview')],
-      { ...context, pageName: 'configure_sources_draft_reference', locale },
+      { ...context, pageName: 'configure_sources_draft_source', locale },
       { margin: 8 }
     );
   });
