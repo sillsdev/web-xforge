@@ -3,25 +3,32 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { anything, mock, when } from 'ts-mockito';
+import { of } from 'rxjs';
+import { anything, instance, mock, when } from 'ts-mockito';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../../core/models/sf-type-registry';
+import { TrainingDataDoc } from '../../../../core/models/training-data-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { BuildDto } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
 import { DraftGenerationService } from '../../draft-generation.service';
+import { TrainingDataService } from '../../training-data/training-data.service';
 import { DraftHistoryEntryComponent } from './draft-history-entry.component';
 
 const mockedDraftGenerationService = mock(DraftGenerationService);
 const mockedI18nService = mock(I18nService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
+const mockedTrainingDataService = mock(TrainingDataService);
+const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedFeatureFlagsService = mock(FeatureFlagService);
 
 describe('DraftHistoryEntryComponent', () => {
@@ -40,12 +47,22 @@ describe('DraftHistoryEntryComponent', () => {
       { provide: I18nService, useMock: mockedI18nService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
+      { provide: TrainingDataService, useMock: mockedTrainingDataService },
+      { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: FeatureFlagService, useMock: mockedFeatureFlagsService }
     ]
   }));
 
   beforeEach(() => {
     when(mockedFeatureFlagsService.usfmFormat).thenReturn(createTestFeatureFlag(true));
+    when(mockedActivatedProjectService.projectId).thenReturn('project01');
+    const trainingDataQuery: RealtimeQuery<TrainingDataDoc> = mock(RealtimeQuery<TrainingDataDoc>);
+    when(trainingDataQuery.docs).thenReturn([
+      { id: 'doc01', data: { dataId: 'file01', title: 'training-data.txt' } } as TrainingDataDoc
+    ]);
+    when(mockedTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
+      instance(trainingDataQuery)
+    );
     fixture = TestBed.createComponent(DraftHistoryEntryComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -72,7 +89,14 @@ describe('DraftHistoryEntryComponent', () => {
       const date = 'formatted-date';
       const trainingBooks = ['EXO'];
       const translateBooks = ['GEN'];
-      const entry = getStandardBuildDto({ user, date, trainingBooks, translateBooks });
+      const trainingDataFiles: Map<string, string> = new Map([['file01', 'training-data.txt']]);
+      const entry = getStandardBuildDto({
+        user,
+        date,
+        trainingBooks,
+        translateBooks,
+        trainingDataFiles: Array.from(trainingDataFiles.keys())
+      });
 
       // SUT
       component.entry = entry;
@@ -97,6 +121,7 @@ describe('DraftHistoryEntryComponent', () => {
           target: 'tar'
         }
       ]);
+      expect(component.trainingDataFiles).toEqual(Array.from(trainingDataFiles.values()));
       expect(component.trainingConfigurationOpen).toBe(false);
       expect(fixture.nativeElement.querySelector('.requested-label')).not.toBeNull();
     }));
@@ -107,7 +132,8 @@ describe('DraftHistoryEntryComponent', () => {
       const date = 'formatted-date';
       const trainingBooks = [];
       const translateBooks = ['GEN'];
-      const entry = getStandardBuildDto({ user, date, trainingBooks, translateBooks });
+      const trainingDataFiles = [];
+      const entry = getStandardBuildDto({ user, date, trainingBooks, translateBooks, trainingDataFiles });
 
       // SUT
       component.entry = entry;
@@ -123,7 +149,8 @@ describe('DraftHistoryEntryComponent', () => {
       const date = 'formatted-date';
       const trainingBooks = ['EXO'];
       const translateBooks = ['GEN'];
-      const entry = getStandardBuildDto({ user, date, trainingBooks, translateBooks });
+      const trainingDataFiles = ['file01'];
+      const entry = getStandardBuildDto({ user, date, trainingBooks, translateBooks, trainingDataFiles });
 
       // SUT
       component.entry = entry;
@@ -191,6 +218,12 @@ describe('DraftHistoryEntryComponent', () => {
       when(mockedI18nService.formatAndLocalizeScriptureRange('EXO')).thenReturn('Exodus');
       const userDoc = { id: 'sf-user-id', data: undefined } as UserProfileDoc;
       when(mockedUserService.getProfile(anything())).thenResolve(userDoc);
+      const targetProjectDoc = {
+        id: 'project01',
+        data: createTestProjectProfile({ shortName: 'tar', writingSystem: { tag: 'en' } })
+      } as SFProjectProfileDoc;
+      when(mockedSFProjectService.getProfile('project01')).thenResolve(targetProjectDoc);
+      when(mockedActivatedProjectService.changes$).thenReturn(of(targetProjectDoc));
       const entry = {
         additionalInfo: {
           dateGenerated: new Date().toISOString(),
@@ -306,12 +339,14 @@ describe('DraftHistoryEntryComponent', () => {
     user,
     date,
     trainingBooks,
-    translateBooks
+    translateBooks,
+    trainingDataFiles
   }: {
     user: string;
     date: string;
     trainingBooks: string[];
     translateBooks: string[];
+    trainingDataFiles: string[];
   }): BuildDto {
     when(mockedI18nService.formatDate(anything())).thenReturn(date);
     when(mockedI18nService.formatAndLocalizeScriptureRange('GEN')).thenReturn('Genesis');
@@ -326,6 +361,7 @@ describe('DraftHistoryEntryComponent', () => {
       data: createTestProjectProfile({ shortName: 'tar', writingSystem: { tag: 'en' } })
     } as SFProjectProfileDoc;
     when(mockedSFProjectService.getProfile('project01')).thenResolve(targetProjectDoc);
+    when(mockedActivatedProjectService.changes$).thenReturn(of(targetProjectDoc));
     const sourceProjectDoc = {
       id: 'project02',
       data: createTestProjectProfile({ shortName: 'src', writingSystem: { tag: 'fr' } })
@@ -341,7 +377,8 @@ describe('DraftHistoryEntryComponent', () => {
         requestedByUserId: 'sf-user-id',
         trainingScriptureRanges:
           trainingBooks.length > 0 ? [{ projectId: 'project02', scriptureRange: trainingBooks.join(';') }] : [],
-        translationScriptureRanges: [{ projectId: 'project02', scriptureRange: translateBooks.join(';') }]
+        translationScriptureRanges: [{ projectId: 'project02', scriptureRange: translateBooks.join(';') }],
+        trainingDataFileIds: trainingDataFiles
       }
     } as BuildDto;
 
