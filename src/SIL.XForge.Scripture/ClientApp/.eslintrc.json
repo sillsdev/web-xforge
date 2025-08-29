@@ -53,7 +53,9 @@
             "format": ["PascalCase"]
           }
         ],
+        "@typescript-eslint/no-floating-promises": "warn",
         "@typescript-eslint/no-inferrable-types": "off",
+        "@typescript-eslint/no-misused-promises": "warn",
         "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/no-unused-vars": [
           "error",
@@ -106,6 +108,14 @@
         ],
         "deprecation/deprecation": "warn"
       }
+    },
+    {
+      "files": ["*.spec.ts"],
+      "rules": { "@typescript-eslint/no-floating-promises": "off", "@typescript-eslint/no-misused-promises": "off" }
+    },
+    {
+      "files": ["*.stories.ts"],
+      "rules": { "@typescript-eslint/no-floating-promises": "off", "@typescript-eslint/no-misused-promises": "off" }
     }
   ]
 }
