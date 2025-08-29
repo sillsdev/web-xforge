@@ -3936,23 +3936,29 @@ public class SFProjectServiceTests
         SFProject project = env.GetProject(Project01);
         Assert.That(
             project.TranslateConfig.DraftConfig.UsfmConfig.ParagraphFormat,
-            Is.EqualTo(ParagraphBreakFormat.BestGuess)
+            Is.EqualTo(ParagraphBreakFormatOptions.BestGuess)
         );
-        Assert.That(project.TranslateConfig.DraftConfig.UsfmConfig.QuoteFormat, Is.EqualTo(QuoteStyle.Automatic));
+        Assert.That(
+            project.TranslateConfig.DraftConfig.UsfmConfig.QuoteFormat,
+            Is.EqualTo(QuoteStyleOptions.Denormalized)
+        );
 
         // SUT
         DraftUsfmConfig config = new DraftUsfmConfig
         {
-            ParagraphFormat = ParagraphBreakFormat.Remove,
-            QuoteFormat = QuoteStyle.Straight,
+            ParagraphFormat = ParagraphBreakFormatOptions.Remove,
+            QuoteFormat = QuoteStyleOptions.Normalized,
         };
         await env.Service.SetUsfmConfigAsync(User01, Project01, config);
         project = env.GetProject(Project01);
         Assert.That(
             project.TranslateConfig.DraftConfig.UsfmConfig.ParagraphFormat,
-            Is.EqualTo(ParagraphBreakFormat.Remove)
+            Is.EqualTo(ParagraphBreakFormatOptions.Remove)
         );
-        Assert.That(project.TranslateConfig.DraftConfig.UsfmConfig.QuoteFormat, Is.EqualTo(QuoteStyle.Straight));
+        Assert.That(
+            project.TranslateConfig.DraftConfig.UsfmConfig.QuoteFormat,
+            Is.EqualTo(QuoteStyleOptions.Normalized)
+        );
     }
 
     [Test]

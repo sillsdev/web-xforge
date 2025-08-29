@@ -392,22 +392,20 @@ public class MachineApiController : ControllerBase
         {
             bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
             DraftUsfmConfig? config = null;
-            if (paragraphFormat != null)
+            if (paragraphFormat is not null || quoteFormat is not null)
             {
-                string paragraphConfig = string.Empty;
-                paragraphConfig = paragraphFormat switch
+                string paragraphConfig = paragraphFormat switch
                 {
-                    ParagraphBreakFormat.Remove => ParagraphBreakFormat.Remove,
-                    ParagraphBreakFormat.BestGuess => ParagraphBreakFormat.BestGuess,
-                    ParagraphBreakFormat.MoveToEnd => ParagraphBreakFormat.MoveToEnd,
-                    _ => ParagraphBreakFormat.BestGuess,
+                    ParagraphBreakFormatOptions.Remove => ParagraphBreakFormatOptions.Remove,
+                    ParagraphBreakFormatOptions.BestGuess => ParagraphBreakFormatOptions.BestGuess,
+                    ParagraphBreakFormatOptions.MoveToEnd => ParagraphBreakFormatOptions.MoveToEnd,
+                    _ => ParagraphBreakFormatOptions.BestGuess,
                 };
-                string quoteConfig = string.Empty;
-                quoteConfig = quoteFormat switch
+                string quoteConfig = quoteFormat switch
                 {
-                    QuoteStyle.Automatic => QuoteStyle.Automatic,
-                    QuoteStyle.Straight => QuoteStyle.Straight,
-                    _ => QuoteStyle.Automatic,
+                    QuoteStyleOptions.Denormalized => QuoteStyleOptions.Denormalized,
+                    QuoteStyleOptions.Normalized => QuoteStyleOptions.Normalized,
+                    _ => QuoteStyleOptions.Denormalized,
                 };
                 config = new DraftUsfmConfig { ParagraphFormat = paragraphConfig, QuoteFormat = quoteConfig };
             }
