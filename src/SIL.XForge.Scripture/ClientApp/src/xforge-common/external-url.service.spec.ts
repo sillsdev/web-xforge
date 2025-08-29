@@ -7,11 +7,11 @@ function stubbedI18nService(helpUrlPortion: string): any {
 describe('ExternalUrlService', () => {
   it('should provide the help URL for English', () => {
     const service = new ExternalUrlService(stubbedI18nService(''));
-    expect(service.helps).toEqual('https://github-action-preview--scriptureforgehelp.netlify.app');
+    expect(service.helps).toEqual('https://help.scriptureforge.org');
   });
 
   it('should provide the localized help URL', () => {
     const service = new ExternalUrlService(stubbedI18nService('es'));
-    expect(service.helps).toEqual('https://github-action-preview--scriptureforgehelp.netlify.app/es');
+    expect(service.helps).toEqual('https://help.scriptureforge.org/es');
   });
 });
