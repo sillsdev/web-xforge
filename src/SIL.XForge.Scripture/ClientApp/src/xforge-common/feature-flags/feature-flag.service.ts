@@ -202,7 +202,7 @@ class ServerOnlyFeatureFlag implements FeatureFlag {
     readonly key: string,
     readonly description: string,
     readonly position: number,
-    private readonly featureFlagStore: FeatureFlagStore
+    private readonly featureFlagStore: IFeatureFlagStore
   ) {}
 
   get readonly(): boolean {
@@ -348,11 +348,11 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
-  readonly newDraftHistory: ObservableFeatureFlag = new FeatureFlagFromStorage(
+  readonly newDraftHistory: FeatureFlag = new FeatureFlagFromStorage(
     'NewDraftHistory',
     'Preview new draft history interface',
     17,
-    this.featureFlagStore
+    new StaticFeatureFlagStore(true)
   );
 
   readonly usfmFormat: ObservableFeatureFlag = new FeatureFlagFromStorage(

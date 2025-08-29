@@ -401,15 +401,7 @@ export async function localizedScreenshots(
 
   // Go back to the draft generation page
   await navLocator(page, 'generate_draft').click();
-  await expect(page.getByText('Your draft is ready')).toBeVisible({ timeout: 180_000 });
-  await page.reload();
-  await installMouseFollower(page);
-  // When the page first loads it will say "Your draft is ready", but then switch to saying it's finishing. Wait for a
-  // few seconds for it to no longer say "Your draft is ready", and then wait for it to say it's ready again
-  await page.waitForTimeout(5_000);
-  await expect(page.getByText('Your draft is ready')).toBeVisible({ timeout: 10_000 });
-  await expect(page.getByText('No books have any drafts')).not.toBeVisible();
-  await expect(page.getByText('Draft is finishing')).not.toBeVisible();
+  await expect(page.getByText('The draft is ready')).toBeVisible({ timeout: 180_000 });
 
   await forEachLocale(async locale => {
     await user.hover(page.getByRole('radio').first(), defaultArrowLocation);
@@ -436,7 +428,7 @@ export async function localizedScreenshots(
 
   // Go back to the draft generation page
   await navLocator(page, 'generate_draft').click();
-  await expect(page.getByText('Your draft is ready')).toBeVisible();
+  await expect(page.getByText('The draft is ready')).toBeVisible();
 
   await forEachLocale(async locale => {
     await page.getByRole('radio').nth(1).click();
@@ -465,7 +457,7 @@ export async function localizedScreenshots(
     await user.hover(page.locator('[data-test-id="download-button"]'), defaultArrowLocation);
     await screenshotElements(
       page,
-      [page.locator('.draft-complete')],
+      [page.locator('app-draft-history-entry').first()],
       { ...context, pageName: 'download_usfm', locale },
       { margin: 8 }
     );

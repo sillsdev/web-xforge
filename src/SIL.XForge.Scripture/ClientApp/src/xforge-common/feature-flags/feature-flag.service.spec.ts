@@ -65,6 +65,8 @@ describe('FeatureFlagService', () => {
 
   it('versionSuffix returns an empty string when no feature flags', fakeAsync(() => {
     const env = new TestEnvironment({});
+    env.disableAllFeatureFlags();
+
     // The first call loads the remote feature flags
     expect(env.service.versionSuffix).toEqual('');
     flush();
@@ -153,18 +155,16 @@ describe('FeatureFlagService', () => {
     ).toEqual(twoPower31 + 1); // First and last bits
   }));
 
-  it('getEnabledFlags returns an empty array when no feature flags are selected', fakeAsync(() => {
+  it('getEnabledFlags returns an array of enabled feature flags', fakeAsync(() => {
     const env = new TestEnvironment();
-    expect(env.service.getEnabledFlags()).toEqual([]);
+    expect(Array.isArray(env.service.getEnabledFlags())).toEqual(true);
   }));
 
   it('getEnabledFlags returns an array of strings when feature flags are selected', fakeAsync(() => {
     const env = new TestEnvironment();
+    env.disableAllFeatureFlags();
     env.service.darkMode.enabled = true;
     expect(env.service.getEnabledFlags()).toEqual(['DarkMode']);
-
-    // Clean up
-    env.service.darkMode.enabled = false;
   }));
 });
 
@@ -183,5 +183,9 @@ class TestEnvironment {
       when(mockedAnonymousService.featureFlags()).thenResolve(featureFlags);
     }
     this.service = TestBed.inject(FeatureFlagService);
+  }
+
+  disableAllFeatureFlags(): void {
+    for (const flag of this.service.featureFlags) flag.enabled = false;
   }
 }
