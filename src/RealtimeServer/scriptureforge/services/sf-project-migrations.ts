@@ -467,6 +467,12 @@ class SFProjectMigration25 extends DocMigration {
     if (doc.data.lynxConfig?.assessmentsEnabled == null) {
       ops.push({ p: ['lynxConfig', 'assessmentsEnabled'], oi: false });
     }
+    if (doc.data.lynxConfig?.punctuationCheckerEnabled == null) {
+      ops.push({ p: ['lynxConfig', 'punctuationCheckerEnabled'], oi: false });
+    }
+    if (doc.data.lynxConfig?.allowedCharacterCheckerEnabled == null) {
+      ops.push({ p: ['lynxConfig', 'allowedCharacterCheckerEnabled'], oi: false });
+    }
     await submitMigrationOp(SFProjectMigration25.VERSION, doc, ops);
   }
 }

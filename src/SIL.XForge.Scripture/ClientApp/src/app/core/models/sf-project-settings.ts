@@ -29,4 +29,6 @@ export interface SFProjectSettings {
 
   lynxAutoCorrectionsEnabled?: boolean | null;
   lynxAssessmentsEnabled?: boolean | null;
+  lynxPunctuationCheckerEnabled?: boolean | null;
+  lynxAllowedCharacterCheckerEnabled?: boolean | null;
 }

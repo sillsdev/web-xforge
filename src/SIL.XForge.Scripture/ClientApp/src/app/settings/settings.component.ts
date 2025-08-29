@@ -16,7 +16,6 @@ import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
-
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -30,6 +29,7 @@ import { SFProjectSettings } from '../core/models/sf-project-settings';
 import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
+
 /** Allows user to configure high-level settings of how SF will use their Paratext project. */
 @Component({
   selector: 'app-settings',
@@ -51,6 +51,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   viewersShareEnabled = new FormControl(false);
   lynxAutoCorrectionsEnabled = new FormControl(false);
   lynxAssessmentsEnabled = new FormControl(false);
+  lynxPunctuationCheckerEnabled = new FormControl(false);
+  lynxAllowedCharacterCheckerEnabled = new FormControl(false);
 
   // Expose enums to the template
   CheckingAnswerExport = CheckingAnswerExport;
@@ -70,7 +72,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     commentersShareEnabled: this.commentersShareEnabled,
     viewersShareEnabled: this.viewersShareEnabled,
     lynxAutoCorrectionsEnabled: this.lynxAutoCorrectionsEnabled,
-    lynxAssessmentsEnabled: this.lynxAssessmentsEnabled
+    lynxAssessmentsEnabled: this.lynxAssessmentsEnabled,
+    lynxPunctuationCheckerEnabled: this.lynxPunctuationCheckerEnabled,
+    lynxAllowedCharacterCheckerEnabled: this.lynxAllowedCharacterCheckerEnabled
   });
 
   isActiveSourceProject: boolean = false;
@@ -133,6 +137,10 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   get isCheckingEnabled(): boolean {
     return this.checkingEnabled.value ?? false;
+  }
+
+  get isLynxAssessmentsEnabled(): boolean {
+    return this.lynxAssessmentsEnabled.value ?? false;
   }
 
   get showPreTranslationSettings(): boolean {
@@ -432,8 +440,41 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     if (this.settingChanged(newValue, 'lynxAutoCorrectionsEnabled')) {
       this.updateSetting(newValue, 'lynxAutoCorrectionsEnabled');
     }
+
     if (this.settingChanged(newValue, 'lynxAssessmentsEnabled')) {
       this.updateSetting(newValue, 'lynxAssessmentsEnabled');
+
+      // When 'assessments' is checked, auto-enable punctuation checker
+      if (newValue.lynxAssessmentsEnabled) {
+        this.lynxPunctuationCheckerEnabled.setValue(true, { emitEvent: false });
+        this.updateSetting({ ...newValue, lynxPunctuationCheckerEnabled: true }, 'lynxPunctuationCheckerEnabled');
+      } else {
+        // When 'assessments' is unchecked, auto-disable children
+        this.lynxPunctuationCheckerEnabled.setValue(false, { emitEvent: false });
+        this.updateSetting({ ...newValue, lynxPunctuationCheckerEnabled: false }, 'lynxPunctuationCheckerEnabled');
+        this.lynxAllowedCharacterCheckerEnabled.setValue(false, { emitEvent: false });
+        this.updateSetting(
+          { ...newValue, lynxAllowedCharacterCheckerEnabled: false },
+          'lynxAllowedCharacterCheckerEnabled'
+        );
+      }
+    } else {
+      // If both child settings are disabled, auto-disable assessments (parent setting)
+      if (
+        !newValue.lynxAllowedCharacterCheckerEnabled &&
+        !newValue.lynxPunctuationCheckerEnabled &&
+        newValue.lynxAssessmentsEnabled
+      ) {
+        this.lynxAssessmentsEnabled.setValue(false, { emitEvent: false });
+        this.updateSetting({ ...newValue, lynxAssessmentsEnabled: false }, 'lynxAssessmentsEnabled');
+      }
+
+      if (this.settingChanged(newValue, 'lynxPunctuationCheckerEnabled')) {
+        this.updateSetting(newValue, 'lynxPunctuationCheckerEnabled');
+      }
+      if (this.settingChanged(newValue, 'lynxAllowedCharacterCheckerEnabled')) {
+        this.updateSetting(newValue, 'lynxAllowedCharacterCheckerEnabled');
+      }
     }
   }
 
@@ -474,7 +515,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
         ) === true,
       checkingAnswerExport: this.projectDoc.data.checkingConfig.answerExportMethod ?? CheckingAnswerExport.All,
       lynxAutoCorrectionsEnabled: this.projectDoc.data.lynxConfig.autoCorrectionsEnabled,
-      lynxAssessmentsEnabled: this.projectDoc.data.lynxConfig.assessmentsEnabled
+      lynxAssessmentsEnabled: this.projectDoc.data.lynxConfig.assessmentsEnabled,
+      lynxPunctuationCheckerEnabled: this.projectDoc.data.lynxConfig.punctuationCheckerEnabled,
+      lynxAllowedCharacterCheckerEnabled: this.projectDoc.data.lynxConfig.allowedCharacterCheckerEnabled
     };
     this.form.reset(this.previousFormValues);
     this.setIndividualControlDisabledStates();
@@ -510,6 +553,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.controlStates.set('viewersShareEnabled', ElementState.InSync);
     this.controlStates.set('lynxAutoCorrectionsEnabled', ElementState.InSync);
     this.controlStates.set('lynxAssessmentsEnabled', ElementState.InSync);
+    this.controlStates.set('lynxPunctuationCheckerEnabled', ElementState.InSync);
+    this.controlStates.set('lynxAllowedCharacterCheckerEnabled', ElementState.InSync);
   }
 
   private updateNonSelectableProjects(): void {

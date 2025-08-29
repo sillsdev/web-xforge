@@ -400,6 +400,12 @@ export class SFProjectService extends ProjectService<SFProject> {
           },
           assessmentsEnabled: {
             bsonType: 'bool'
+          },
+          punctuationCheckerEnabled: {
+            bsonType: 'bool'
+          },
+          allowedCharacterCheckerEnabled: {
+            bsonType: 'bool'
           }
         },
         additionalProperties: false
