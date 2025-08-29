@@ -493,7 +493,7 @@ class TestEnvironment {
     tick();
   }
 
-  disableCheckingSharing(): void {
+  async disableCheckingSharing(): Promise<void> {
     const projectDoc: SFProjectProfileDoc = await this.realtimeService.get(
       SFProjectProfileDoc.COLLECTION,
       'project01',

@@ -386,7 +386,7 @@ class TestEnvironment {
     tick();
   }
 
-  setQueuedCount(projectId: string): void {
+  async setQueuedCount(projectId: string): Promise<void> {
     const projectDoc = await this.realtimeService.get<SFProjectDoc>(
       SFProjectDoc.COLLECTION,
       projectId,
@@ -396,7 +396,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  emitSyncComplete(successful: boolean, projectId: string): void {
+  async emitSyncComplete(successful: boolean, projectId: string): Promise<void> {
     const projectDoc = await this.realtimeService.get<SFProjectDoc>(
       SFProjectDoc.COLLECTION,
       projectId,

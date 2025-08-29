@@ -238,11 +238,11 @@ class TestEnvironment {
     tick(matDialogCloseDelay);
   }
 
-  getBiblicalTermDoc(id: string): BiblicalTermDoc {
+  async getBiblicalTermDoc(id: string): Promise<BiblicalTermDoc> {
     return await this.realtimeService.get<BiblicalTermDoc>(BiblicalTermDoc.COLLECTION, id, new DocSubscription('spec'));
   }
 
-  getProjectDoc(id: string): SFProjectProfileDoc {
+  async getProjectDoc(id: string): Promise<SFProjectProfileDoc> {
     return await this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       id,
