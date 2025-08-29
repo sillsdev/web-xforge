@@ -1,6 +1,6 @@
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flushMicrotasks, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { TranslocoService } from '@ngneat/transloco';
 import { User } from 'realtime-server/lib/esm/common/models/user';
@@ -176,6 +176,7 @@ describe('ProjectComponent', () => {
     verify(mockedRouter.navigate(anything(), anything())).never();
 
     env.addUserToProject(1);
+    flushMicrotasks();
     verify(mockedRouter.navigate(deepEqual(['projects', 'project1', 'translate', 'MAT']), anything())).once();
     expect().nothing();
   }));
@@ -275,7 +276,7 @@ class TestEnvironment {
     });
   }
 
-  addUserToProject(projectIdSuffix: number): void {
+  async addUserToProject(projectIdSuffix: number): Promise<void> {
     this.setProjectData({ memberProjectIdSuffixes: [projectIdSuffix] });
     const userDoc: UserDoc = await this.realtimeService.get(UserDoc.COLLECTION, 'user01', new DocSubscription('spec'));
     userDoc.submitJson0Op(op => op.set(u => u.sites, { sf: { projects: [`project${projectIdSuffix}`] } }), false);
