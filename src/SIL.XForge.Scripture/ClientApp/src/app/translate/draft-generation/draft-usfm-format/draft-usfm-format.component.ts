@@ -9,8 +9,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
+import { Canon } from '@sillsdev/scripture';
 import { Delta } from 'quill';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import {
@@ -79,6 +80,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
+    private readonly activatedRoute: ActivatedRoute,
     private readonly draftHandlingService: DraftHandlingService,
     private readonly projectService: SFProjectService,
     private readonly onlineStatusService: OnlineStatusService,
@@ -115,9 +117,10 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   }
 
   ngAfterViewInit(): void {
-    combineLatest([this.activatedProjectService.projectDoc$, this.draftText.editorCreated as EventEmitter<void>])
+    combineLatest([this.activatedRoute.params, this.draftText.editorCreated as EventEmitter<void>])
       .pipe(first(), quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(([projectDoc]) => {
+      .subscribe(([params]) => {
+        const projectDoc = this.activatedProjectService.projectDoc;
         if (projectDoc?.data == null) return;
         this.setUsfmConfig(projectDoc.data.translateConfig.draftConfig.usfmConfig);
         const texts: TextInfo[] = projectDoc.data.texts;
@@ -125,7 +128,19 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
 
         if (this.booksWithDrafts.length === 0) return;
         this.loadingStarted();
-        this.bookChanged(this.booksWithDrafts[0]);
+
+        let defaultBook = this.booksWithDrafts[0];
+        if (params['bookId'] !== undefined && this.booksWithDrafts.includes(Canon.bookIdToNumber(params['bookId']))) {
+          defaultBook = Canon.bookIdToNumber(params['bookId']);
+        }
+        let defaultChapter = 1;
+        this.chapters = texts.find(t => t.bookNum === defaultBook)?.chapters.map(c => c.number) ?? [];
+        if (params['chapter'] !== undefined && this.chapters.includes(Number(params['chapter']))) {
+          defaultChapter = Number(params['chapter']);
+        } else if (this.chapters.length > 0) {
+          defaultChapter = this.chapters[0];
+        }
+        this.bookChanged(defaultBook, defaultChapter);
       });
 
     this.updateDraftConfig$
@@ -150,11 +165,11 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     });
   }
 
-  bookChanged(bookNum: number): void {
+  bookChanged(bookNum: number, chapterNum?: number): void {
     this.bookNum = bookNum;
     const texts = this.activatedProjectService.projectDoc!.data!.texts;
     this.chapters = texts.find(t => t.bookNum === this.bookNum)?.chapters.map(c => c.number) ?? [];
-    this.chapterNum = this.chapters[0] ?? 1;
+    this.chapterNum = chapterNum ?? this.chapters[0] ?? 1;
     this.reloadText();
   }
 

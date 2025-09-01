@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, OnChanges, ViewChild } from '@angular/core';
 import { MatSelectChange } from '@angular/material/select';
 import { Router } from '@angular/router';
+import { Canon } from '@sillsdev/scripture';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DeltaOperation } from 'rich-text';
@@ -114,6 +115,10 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   async onSelectionChanged(e: MatSelectChange): Promise<void> {
     this.selectedRevision = e.value;
     this.selectedRevisionSubject.next(this.selectedRevision);
+  }
+
+  get bookId(): string {
+    return this.bookNum !== undefined ? Canon.bookNumberToId(this.bookNum) : '';
   }
 
   populateDraftTextInit(): void {
@@ -240,7 +245,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   }
 
   navigateToFormatting(): void {
-    this.router.navigateByUrl(`/projects/${this.projectId}/draft-generation/format`);
+    this.router.navigateByUrl(`/projects/${this.projectId}/draft-generation/format/${this.bookId}/${this.chapter}`);
   }
 
   async applyDraft(): Promise<void> {
