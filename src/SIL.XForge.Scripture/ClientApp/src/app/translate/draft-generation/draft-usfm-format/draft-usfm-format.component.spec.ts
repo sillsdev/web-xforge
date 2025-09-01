@@ -2,7 +2,7 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatRadioButtonHarness } from '@angular/material/radio/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import {
@@ -34,6 +34,7 @@ import { DraftUsfmFormatComponent } from './draft-usfm-format.component';
 
 const mockedDraftHandlingService = mock(DraftHandlingService);
 const mockedActivatedProjectService = mock(ActivatedProjectService);
+const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedServalAdministration = mock(ServalAdministrationService);
@@ -55,6 +56,7 @@ describe('DraftUsfmFormatComponent', () => {
     providers: [
       { provide: DraftHandlingService, useMock: mockedDraftHandlingService },
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
+      { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: ServalAdministrationService, useMock: mockedServalAdministration },
@@ -65,6 +67,10 @@ describe('DraftUsfmFormatComponent', () => {
       { provide: DialogService, useMock: mockedDialogService }
     ]
   }));
+
+  beforeEach(() => {
+    when(mockedActivatedRoute.params).thenReturn(of({}));
+  });
 
   it('shows message if user is not online', fakeAsync(async () => {
     const env = new TestEnvironment({ config: { paragraphFormat: ParagraphBreakFormat.MoveToEnd } });
@@ -77,6 +83,17 @@ describe('DraftUsfmFormatComponent', () => {
     expect(env.harnesses?.length).toEqual(5);
     const isDisabled: boolean = await env.harnesses![0].isDisabled();
     expect(isDisabled).toBe(true);
+  }));
+
+  it('navigates to book and chapter from route params', fakeAsync(() => {
+    when(mockedActivatedRoute.params).thenReturn(of({ bookId: 'EXO', chapter: '2' }));
+    const env = new TestEnvironment();
+    tick(EDITOR_READY_TIMEOUT);
+    env.fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+    expect(env.component.bookNum).toBe(2);
+    expect(env.component.chapterNum).toBe(2);
+    verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
   }));
 
   // Book and chapter changed
