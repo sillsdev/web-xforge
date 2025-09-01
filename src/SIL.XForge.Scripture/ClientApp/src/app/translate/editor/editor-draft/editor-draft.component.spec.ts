@@ -73,6 +73,8 @@ describe('EditorDraftComponent', () => {
   }));
 
   beforeEach(() => {
+    when(mockFeatureFlagService.usfmFormat).thenReturn(createTestFeatureFlag(true));
+
     fixture = TestBed.createComponent(EditorDraftComponent);
     component = fixture.componentInstance;
 
