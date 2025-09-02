@@ -1735,7 +1735,7 @@ public class MachineApiService(
         {
             Id = translationBuild.Id,
             Revision = translationBuild.Revision,
-            PercentCompleted = translationBuild.PercentCompleted ?? 0.0,
+            PercentCompleted = translationBuild.Progress ?? 0.0,
             Message = translationBuild.Message,
             QueueDepth = translationBuild.QueueDepth ?? 0,
             State = translationBuild.State.ToString().ToUpperInvariant(),

@@ -68,7 +68,7 @@ describe('DraftUsfmFormatComponent', () => {
 
   it('shows message if user is not online', fakeAsync(async () => {
     const env = new TestEnvironment({
-      config: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Denormalize }
+      config: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Denormalized }
     });
     expect(env.offlineMessage).toBeNull();
 
@@ -84,7 +84,7 @@ describe('DraftUsfmFormatComponent', () => {
   // Book and chapter changed
   it('navigates to a different book and chapter', fakeAsync(() => {
     const env = new TestEnvironment({
-      config: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Denormalize }
+      config: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Denormalized }
     });
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
     expect(env.component.chapters.length).toEqual(1);
@@ -105,7 +105,7 @@ describe('DraftUsfmFormatComponent', () => {
   it('should initialize and default to best guess and automatic quotes', fakeAsync(async () => {
     const env = new TestEnvironment();
     expect(env.component.paragraphFormat.value).toBe(ParagraphBreakFormat.BestGuess);
-    expect(env.component.quoteFormat.value).toBe(QuoteFormat.Denormalize);
+    expect(env.component.quoteFormat.value).toBe(QuoteFormat.Denormalized);
     expect(await env.component.confirmLeave()).toBe(true);
   }));
 
@@ -119,7 +119,7 @@ describe('DraftUsfmFormatComponent', () => {
 
   it('goes back if user chooses different configurations and then goes back', fakeAsync(async () => {
     const env = new TestEnvironment({
-      config: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Denormalize }
+      config: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Denormalized }
     });
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
     expect(env.harnesses?.length).toEqual(5);
@@ -140,7 +140,7 @@ describe('DraftUsfmFormatComponent', () => {
 
   it('should save changes to the draft format', fakeAsync(async () => {
     const env = new TestEnvironment({
-      config: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Denormalize }
+      config: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Denormalized }
     });
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
     expect(env.harnesses?.length).toEqual(5);
@@ -149,7 +149,7 @@ describe('DraftUsfmFormatComponent', () => {
     env.fixture.detectChanges();
     const config: DraftUsfmConfig = {
       paragraphFormat: ParagraphBreakFormat.BestGuess,
-      quoteFormat: QuoteFormat.Denormalize
+      quoteFormat: QuoteFormat.Denormalized
     };
     verify(mockedProjectService.onlineSetUsfmConfig(env.projectId, anything())).never();
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).twice();

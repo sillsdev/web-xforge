@@ -36,7 +36,7 @@ export enum ParagraphBreakFormat {
 }
 
 export enum QuoteFormat {
-  Denormalize = 'denormalize',
+  Denormalized = 'denormalized',
   Normalized = 'normalized'
 }
 
