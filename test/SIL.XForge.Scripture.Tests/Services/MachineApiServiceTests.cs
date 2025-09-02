@@ -1561,9 +1561,8 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
-        // Verify RetrievePreTranslationStatusAsync was called once
-        await env.Service.Received().RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
-
+        // Verify that a job was scheduled and the correct build was returned
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.IsNotNull(actual);
         Assert.AreEqual(message, actual.Message);
         Assert.AreEqual(percentCompleted, actual.PercentCompleted);
@@ -3031,7 +3030,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task RetrievePreTranslationStatusAsync_ReportsErrors()
+    public void RetrievePreTranslationStatusAsync_ReportsErrors()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -3039,7 +3038,9 @@ public class MachineApiServiceTests
         env.PreTranslationService.UpdatePreTranslationStatusAsync(Project01, CancellationToken.None).Throws(ex);
 
         // SUT
-        await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
+        Assert.ThrowsAsync<ServalApiException>(() =>
+            env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None)
+        );
 
         env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == ex);
         env.ExceptionHandler.Received().ReportException(ex);
