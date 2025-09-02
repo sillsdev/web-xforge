@@ -17,4 +17,5 @@ public class ServalBuildAdditionalInfo
     public HashSet<string> TrainingDataFileIds { get; init; } = [];
     public string TranslationEngineId { get; init; } = string.Empty;
     public HashSet<ProjectScriptureRange> TranslationScriptureRanges { get; init; } = [];
+    public bool QuotationDenormalizationPossible { get; set; } = false;
 }
