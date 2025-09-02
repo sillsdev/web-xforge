@@ -25,4 +25,5 @@ export interface ServalBuildAdditionalInfo {
   translationScriptureRanges: ProjectScriptureRange[];
   trainingDataFileIds: string[];
   requestedByUserId?: string;
+  quotationDenormalizationPossible: boolean;
 }
