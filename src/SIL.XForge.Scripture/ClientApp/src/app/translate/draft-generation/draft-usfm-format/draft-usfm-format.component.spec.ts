@@ -3,7 +3,7 @@ import { Location } from '@angular/common';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatRadioButtonHarness } from '@angular/material/radio/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import {
@@ -27,15 +27,16 @@ import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { QuotationDenormalization } from '../../../machine-api/quotation-denormalization';
 import { ServalAdministrationService } from '../../../serval-administration/serval-administration.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
 import { DraftHandlingService } from '../draft-handling.service';
 import { DraftUsfmFormatComponent } from './draft-usfm-format.component';
 
+const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedDraftHandlingService = mock(DraftHandlingService);
 const mockedActivatedProjectService = mock(ActivatedProjectService);
-const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedServalAdministration = mock(ServalAdministrationService);
@@ -55,6 +56,7 @@ describe('DraftUsfmFormatComponent', () => {
       SharedModule.forRoot()
     ],
     providers: [
+      { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: DraftHandlingService, useMock: mockedDraftHandlingService },
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
@@ -125,6 +127,7 @@ describe('DraftUsfmFormatComponent', () => {
     expect(env.component.paragraphFormat.value).toBe(ParagraphBreakFormat.BestGuess);
     expect(env.component.quoteFormat.value).toBe(QuoteFormat.Denormalized);
     expect(await env.component.confirmLeave()).toBe(true);
+    expect(env.quoteFormatWarning).toBeNull();
   }));
 
   it('should show the currently selected format options', fakeAsync(() => {
@@ -194,6 +197,21 @@ describe('DraftUsfmFormatComponent', () => {
     verify(mockedProjectService.onlineSetUsfmConfig(anything(), anything())).never();
     verify(mockedServalAdministration.onlineRetrievePreTranslationStatus(anything())).never();
   }));
+
+  it('shows a notice if unable to detect the quote convention for the project', fakeAsync(() => {
+    const env = new TestEnvironment({
+      activatedRouteQueryParams: { 'quotation-denormalization': QuotationDenormalization.Unsuccessful }
+    });
+    expect(env.quoteFormatWarning).not.toBeNull();
+  }));
+
+  it('hides notice if user has not selected automatic quote styles', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.component.quoteFormat.setValue(QuoteFormat.Normalized);
+    tick();
+    env.fixture.detectChanges();
+    expect(env.quoteFormatWarning).toBeNull();
+  }));
 });
 
 class TestEnvironment {
@@ -203,10 +221,11 @@ class TestEnvironment {
   readonly projectId = 'project01';
   onlineStatusService: TestOnlineStatusService;
 
-  constructor(args: { config?: DraftUsfmConfig } = {}) {
+  constructor(args: { config?: DraftUsfmConfig; activatedRouteQueryParams?: Params } = {}) {
     const userDoc = mock(UserDoc);
     this.onlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
 
+    when(mockedActivatedRoute.queryParams).thenReturn(of(args.activatedRouteQueryParams ?? {}));
     when(mockedUserService.getCurrentUser()).thenResolve(userDoc);
     when(mockedDraftHandlingService.getDraft(anything(), anything())).thenReturn(
       of([
@@ -215,6 +234,7 @@ class TestEnvironment {
         { insert: 'Verse 1 text.' }
       ])
     );
+    when(mockedDraftHandlingService.draftDataToOps(anything(), anything())).thenCall(ops => ops);
     this.onlineStatusService.setIsOnline(true);
     when(mockedNoticeService.show(anything())).thenResolve();
     when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(true);
@@ -238,6 +258,10 @@ class TestEnvironment {
 
   get offlineMessage(): HTMLElement | null {
     return this.fixture.nativeElement.querySelector('.offline-text');
+  }
+
+  get quoteFormatWarning(): HTMLElement | null {
+    return this.fixture.nativeElement.querySelector('.quote-format-warning');
   }
 
   setupProject(config?: DraftUsfmConfig): void {

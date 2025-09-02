@@ -16,6 +16,7 @@ import { TrainingDataDoc } from '../../../../core/models/training-data-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { BuildDto } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
+import { QuotationDenormalization } from '../../../../machine-api/quotation-denormalization';
 import { RIGHT_TO_LEFT_MARK } from '../../../../shared/utils';
 import { DraftDownloadButtonComponent } from '../../draft-download-button/draft-download-button.component';
 import { DraftPreviewBooksComponent } from '../../draft-preview-books/draft-preview-books.component';
@@ -153,6 +154,8 @@ export class DraftHistoryEntryComponent {
         });
     }
 
+    this._quotationsCanDenormalize = this._entry?.additionalInfo?.quotationDenormalizationPossible ?? false;
+
     // Populate the exception details, if possible
     if (this._entry?.state === BuildStates.Faulted && this._entry.message != null) {
       this._buildFaulted = true;
@@ -251,6 +254,11 @@ export class DraftHistoryEntryComponent {
     return this._trainingDataFiles.length > 0;
   }
 
+  private _quotationsCanDenormalize: boolean = false;
+  get quotationsDenormalize(): QuotationDenormalization {
+    return this._quotationsCanDenormalize ? QuotationDenormalization.Successful : QuotationDenormalization.Unsuccessful;
+  }
+
   private _canDownloadBuild: boolean | undefined;
   @Input() set canDownloadBuild(value: boolean) {
     this._canDownloadBuild = value;
@@ -266,6 +274,7 @@ export class DraftHistoryEntryComponent {
 
   private _translationSources: string[] = [];
   get translationSource(): string {
+    ``;
     if (this._translationSources.length === 0) return '';
     return this.i18n.enumerateList(this._translationSources) + ' \u2022'; // &bull; •
   }
