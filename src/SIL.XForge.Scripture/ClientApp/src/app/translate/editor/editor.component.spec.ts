@@ -3706,7 +3706,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.routeWithParams(navigationParams);
       env.wait();
-      expect(env.suggestionsSettingsButton).toBeTruthy();
+      expect(env.translatorSettingsButton).toBeTruthy();
       env.dispose();
     }));
 
@@ -3722,7 +3722,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.routeWithParams(navigationParams);
       env.wait();
-      expect(env.suggestionsSettingsButton).toBeFalsy();
+      expect(env.translatorSettingsButton).toBeFalsy();
       env.dispose();
     }));
 
@@ -3737,7 +3737,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.routeWithParams(navigationParams);
       env.wait();
-      expect(env.suggestionsSettingsButton).toBeFalsy();
+      expect(env.translatorSettingsButton).toBeFalsy();
       env.dispose();
     }));
 
@@ -4736,7 +4736,7 @@ class TestEnvironment {
     return Canon.bookNumberToEnglishName(this.component.bookNum!);
   }
 
-  get suggestionsSettingsButton(): DebugElement {
+  get translatorSettingsButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#settings-btn'));
   }
 

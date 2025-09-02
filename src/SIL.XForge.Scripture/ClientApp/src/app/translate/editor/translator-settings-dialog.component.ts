@@ -9,16 +9,16 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 export const CONFIDENCE_THRESHOLD_TIMEOUT = 500;
 
-export interface SuggestionsSettingsDialogData {
+export interface TranslatorSettingsDialogData {
   projectDoc: SFProjectProfileDoc;
   projectUserConfigDoc: SFProjectUserConfigDoc;
 }
 
 @Component({
-  templateUrl: './suggestions-settings-dialog.component.html',
-  styleUrls: ['./suggestions-settings-dialog.component.scss']
+  templateUrl: './translator-settings-dialog.component.html',
+  styleUrls: ['./translator-settings-dialog.component.scss']
 })
-export class SuggestionsSettingsDialogComponent {
+export class TranslatorSettingsDialogComponent {
   suggestionsEnabledSwitch = new UntypedFormControl({ disabled: !this.onlineStatusService.isOnline });
 
   private readonly projectDoc: SFProjectProfileDoc;
@@ -26,7 +26,7 @@ export class SuggestionsSettingsDialogComponent {
   private confidenceThreshold$ = new BehaviorSubject<number>(20);
 
   constructor(
-    @Inject(MAT_DIALOG_DATA) data: SuggestionsSettingsDialogData,
+    @Inject(MAT_DIALOG_DATA) data: TranslatorSettingsDialogData,
     readonly onlineStatusService: OnlineStatusService,
     private destroyRef: DestroyRef
   ) {
