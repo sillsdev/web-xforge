@@ -29,6 +29,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { QuotationDenormalization } from '../../../machine-api/quotation-denormalization';
 import { ServalAdministrationService } from '../../../serval-administration/serval-administration.service';
 import { ConfirmOnLeave } from '../../../shared/project-router.guard';
 import { SharedModule } from '../../../shared/shared.module';
@@ -63,6 +64,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   chapterNum: number = 1;
   chapters: number[] = [];
   isInitializing: boolean = true;
+  showQuoteFormatWarning: boolean = false;
   paragraphBreakFormat = ParagraphBreakFormat;
   quoteStyle = QuoteFormat;
 
@@ -79,8 +81,8 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   private lastSavedState?: DraftUsfmConfig;
 
   constructor(
-    private readonly activatedProjectService: ActivatedProjectService,
     private readonly activatedRoute: ActivatedRoute,
+    private readonly activatedProjectService: ActivatedProjectService,
     private readonly draftHandlingService: DraftHandlingService,
     private readonly projectService: SFProjectService,
     private readonly onlineStatusService: OnlineStatusService,
@@ -92,6 +94,11 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     private destroyRef: DestroyRef
   ) {
     super(noticeService);
+    this.activatedRoute.queryParams.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(params => {
+      if (params['quotation-denormalization'] === QuotationDenormalization.Unsuccessful) {
+        this.showQuoteFormatWarning = true;
+      }
+    });
   }
 
   get projectId(): string | undefined {

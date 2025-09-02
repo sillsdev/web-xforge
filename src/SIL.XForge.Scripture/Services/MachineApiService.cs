@@ -336,6 +336,16 @@ public class MachineApiService(
                 cancellationToken
             );
             buildDto = CreateDto(translationBuild);
+            if (buildDto is not null)
+            {
+                // Add the punctuation denormalization analysis
+                (await projectSecrets.TryGetAsync(sfProjectId, cancellationToken)).TryResult(
+                    out SFProjectSecret projectSecret
+                );
+                {
+                    buildDto = UpdateDto(buildDto, translationBuild, projectSecret);
+                }
+            }
         }
         catch (ServalApiException e)
         {
@@ -460,6 +470,16 @@ public class MachineApiService(
                         );
                     }
                 }
+            }
+
+            // Add the punctuation denormalization analysis
+            if (
+                (await projectSecrets.TryGetAsync(sfProjectId, cancellationToken)).TryResult(
+                    out SFProjectSecret projectSecret
+                )
+            )
+            {
+                UpdateDto(buildDto, translationBuild, projectSecret);
             }
 
             // Make sure the DTO conforms to the machine-api URLs
@@ -2001,6 +2021,22 @@ public class MachineApiService(
             buildDto.AdditionalInfo.TrainingDataFileIds.Add(trainingFileDataId);
         }
 
+        return buildDto;
+    }
+
+    private static ServalBuildDto UpdateDto(
+        ServalBuildDto buildDto,
+        TranslationBuild translationBuild,
+        SFProjectSecret projectSecret
+    )
+    {
+        {
+            ParallelCorpusAnalysis analysis = translationBuild.Analysis?.FirstOrDefault(a =>
+                a.ParallelCorpusRef == projectSecret.ServalData.ParallelCorpusIdForPreTranslate
+            );
+            buildDto.AdditionalInfo.QuotationDenormalizationPossible =
+                analysis is not null && !string.IsNullOrEmpty(analysis.TargetQuoteConvention);
+        }
         return buildDto;
     }
 

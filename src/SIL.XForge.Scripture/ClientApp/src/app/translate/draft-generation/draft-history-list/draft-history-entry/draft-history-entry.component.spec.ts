@@ -1,6 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { RouterModule } from '@angular/router';
+import { Route, Router, RouterModule, UrlTree } from '@angular/router';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
@@ -19,6 +19,7 @@ import { TrainingDataDoc } from '../../../../core/models/training-data-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { BuildDto } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
+import { QuotationDenormalization } from '../../../../machine-api/quotation-denormalization';
 import { DraftGenerationService } from '../../draft-generation.service';
 import { TrainingDataService } from '../../training-data/training-data.service';
 import { DraftHistoryEntryComponent } from './draft-history-entry.component';
@@ -34,13 +35,18 @@ const mockedFeatureFlagsService = mock(FeatureFlagService);
 describe('DraftHistoryEntryComponent', () => {
   let component: DraftHistoryEntryComponent;
   let fixture: ComponentFixture<DraftHistoryEntryComponent>;
+  let router: Router;
+
+  class MockComponent {}
+
+  const ROUTES: Route[] = [{ path: 'format', component: MockComponent }];
 
   configureTestingModule(() => ({
     imports: [
       NoopAnimationsModule,
       TestTranslocoModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      RouterModule.forRoot([])
+      RouterModule.forRoot(ROUTES)
     ],
     providers: [
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
@@ -64,6 +70,7 @@ describe('DraftHistoryEntryComponent', () => {
       instance(trainingDataQuery)
     );
     fixture = TestBed.createComponent(DraftHistoryEntryComponent);
+    router = TestBed.inject(Router);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
@@ -89,13 +96,15 @@ describe('DraftHistoryEntryComponent', () => {
       const date = 'formatted-date';
       const trainingBooks = ['EXO'];
       const translateBooks = ['GEN'];
+      const quotationDenormalization = false;
       const trainingDataFiles: Map<string, string> = new Map([['file01', 'training-data.txt']]);
       const entry = getStandardBuildDto({
         user,
         date,
         trainingBooks,
         translateBooks,
-        trainingDataFiles: Array.from(trainingDataFiles.keys())
+        trainingDataFiles: Array.from(trainingDataFiles.keys()),
+        quotationDenormalization
       });
 
       // SUT
@@ -133,7 +142,15 @@ describe('DraftHistoryEntryComponent', () => {
       const trainingBooks = [];
       const translateBooks = ['GEN'];
       const trainingDataFiles = [];
-      const entry = getStandardBuildDto({ user, date, trainingBooks, translateBooks, trainingDataFiles });
+      const quotationDenormalization = false;
+      const entry = getStandardBuildDto({
+        user,
+        date,
+        trainingBooks,
+        translateBooks,
+        trainingDataFiles,
+        quotationDenormalization
+      });
 
       // SUT
       component.entry = entry;
@@ -150,17 +167,68 @@ describe('DraftHistoryEntryComponent', () => {
       const trainingBooks = ['EXO'];
       const translateBooks = ['GEN'];
       const trainingDataFiles = ['file01'];
-      const entry = getStandardBuildDto({ user, date, trainingBooks, translateBooks, trainingDataFiles });
+      const quotationDenormalization = true;
+      const entry = getStandardBuildDto({
+        user,
+        date,
+        trainingBooks,
+        translateBooks,
+        trainingDataFiles,
+        quotationDenormalization
+      });
 
       // SUT
       component.entry = entry;
       component.isLatestBuild = true;
       tick();
       fixture.detectChanges();
+      const routerSpy = spyOn(router, 'navigateByUrl');
 
       expect(component.scriptureRange).toEqual('Genesis');
       expect(component.canDownloadBuild).toBe(true);
-      expect(fixture.nativeElement.querySelector('.format-usfm')).not.toBeNull();
+      const formatUsfmButton = fixture.nativeElement.querySelector('.format-usfm');
+      formatUsfmButton.click();
+      tick();
+      fixture.detectChanges();
+      expect(routerSpy).toHaveBeenCalled();
+      expect((routerSpy.calls.first().args[0] as UrlTree).queryParams).toEqual({
+        'quotation-denormalization': QuotationDenormalization.Successful
+      });
+    }));
+
+    it('should show the USFM format option and warn quotation denormalization not successful', fakeAsync(() => {
+      const user = 'user-display-name';
+      const date = 'formatted-date';
+      const trainingBooks = ['EXO'];
+      const translateBooks = ['GEN'];
+      const trainingDataFiles = ['file01'];
+      const quotationDenormalization = false;
+      const entry = getStandardBuildDto({
+        user,
+        date,
+        trainingBooks,
+        translateBooks,
+        trainingDataFiles,
+        quotationDenormalization
+      });
+
+      // SUT
+      component.entry = entry;
+      component.isLatestBuild = true;
+      tick();
+      fixture.detectChanges();
+      const routerSpy = spyOn(router, 'navigateByUrl');
+
+      expect(component.scriptureRange).toEqual('Genesis');
+      expect(component.canDownloadBuild).toBe(true);
+      const formatUsfmButton = fixture.nativeElement.querySelector('.format-usfm');
+      formatUsfmButton.click();
+      tick();
+      fixture.detectChanges();
+      expect(routerSpy).toHaveBeenCalled();
+      expect((routerSpy.calls.first().args[0] as UrlTree).queryParams).toEqual({
+        'quotation-denormalization': QuotationDenormalization.Unsuccessful
+      });
     }));
 
     it('should handle builds where the draft cannot be downloaded yet', fakeAsync(() => {
@@ -340,13 +408,15 @@ describe('DraftHistoryEntryComponent', () => {
     date,
     trainingBooks,
     translateBooks,
-    trainingDataFiles
+    trainingDataFiles,
+    quotationDenormalization
   }: {
     user: string;
     date: string;
     trainingBooks: string[];
     translateBooks: string[];
     trainingDataFiles: string[];
+    quotationDenormalization: boolean;
   }): BuildDto {
     when(mockedI18nService.formatDate(anything())).thenReturn(date);
     when(mockedI18nService.formatAndLocalizeScriptureRange('GEN')).thenReturn('Genesis');
@@ -378,7 +448,8 @@ describe('DraftHistoryEntryComponent', () => {
         trainingScriptureRanges:
           trainingBooks.length > 0 ? [{ projectId: 'project02', scriptureRange: trainingBooks.join(';') }] : [],
         translationScriptureRanges: [{ projectId: 'project02', scriptureRange: translateBooks.join(';') }],
-        trainingDataFileIds: trainingDataFiles
+        trainingDataFileIds: trainingDataFiles,
+        quotationDenormalizationPossible: quotationDenormalization
       }
     } as BuildDto;
 
