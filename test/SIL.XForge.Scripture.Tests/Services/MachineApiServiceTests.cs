@@ -101,7 +101,7 @@ public class MachineApiServiceTests
         Id = Build01,
         Engine = { Id = "engineId", Url = "https://example.com" },
         Message = "Completed",
-        PercentCompleted = 0,
+        Progress = 0,
         Revision = 43,
         State = JobState.Completed,
         DateFinished = DateTimeOffset.UtcNow,
@@ -608,7 +608,7 @@ public class MachineApiServiceTests
             Id = buildId,
             Engine = { Id = engineId, Url = "https://example.com" },
             Message = message,
-            PercentCompleted = percentCompleted,
+            Progress = percentCompleted,
             Revision = revision,
             State = state,
             DateFinished = dateFinished,
@@ -1411,7 +1411,7 @@ public class MachineApiServiceTests
             Id = Build01,
             Engine = { Id = "engineId", Url = "https://example.com" },
             Message = string.Empty,
-            PercentCompleted = 0,
+            Progress = 0,
             Revision = 0,
             State = JobState.Faulted,
         };
@@ -1523,7 +1523,7 @@ public class MachineApiServiceTests
                             Id = Build01,
                             Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
                             Message = message,
-                            PercentCompleted = percentCompleted,
+                            Progress = percentCompleted,
                             Revision = revision,
                             State = state,
                             DateFinished = DateTimeOffset.UtcNow,
@@ -1596,7 +1596,7 @@ public class MachineApiServiceTests
                             Id = Build01,
                             Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
                             Message = message,
-                            PercentCompleted = percentCompleted,
+                            Progress = percentCompleted,
                             Revision = revision,
                             State = state,
                             DateFinished = DateTimeOffset.UtcNow,
@@ -1653,7 +1653,7 @@ public class MachineApiServiceTests
                             Id = Build01,
                             Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
                             Message = message,
-                            PercentCompleted = percentCompleted,
+                            Progress = percentCompleted,
                             Revision = revision,
                             State = state,
                             DateFinished = DateTimeOffset.UtcNow,
@@ -1971,7 +1971,7 @@ public class MachineApiServiceTests
                             Id = Build01,
                             Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
                             Message = "Completed",
-                            PercentCompleted = 0,
+                            Progress = 0,
                             Revision = 43,
                             State = JobState.Completed,
                             DateFinished = dateFinished,
@@ -4329,7 +4329,7 @@ public class MachineApiServiceTests
                 Id = Build01,
                 Engine = { Id = "engineId", Url = "https://example.com" },
                 Message = message,
-                PercentCompleted = percentCompleted,
+                Progress = percentCompleted,
                 Revision = revision,
                 State = state,
             };
@@ -4468,7 +4468,7 @@ public class MachineApiServiceTests
             string buildDtoId = $"{Project01}.{translationBuild.Id}";
             Assert.IsNotNull(actual);
             Assert.AreEqual(translationBuild.Message, actual!.Message);
-            Assert.AreEqual(translationBuild.PercentCompleted, actual.PercentCompleted);
+            Assert.AreEqual(translationBuild.Progress, actual.PercentCompleted);
             Assert.AreEqual(translationBuild.Revision, actual.Revision);
             Assert.AreEqual(translationBuild.State.ToString().ToUpperInvariant(), actual.State);
             Assert.AreEqual(buildDtoId, actual.Id);

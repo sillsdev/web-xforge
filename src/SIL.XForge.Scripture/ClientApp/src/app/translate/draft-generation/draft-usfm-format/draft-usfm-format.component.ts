@@ -66,7 +66,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   quoteStyle = QuoteFormat;
 
   paragraphFormat = new FormControl<ParagraphBreakFormat>(ParagraphBreakFormat.BestGuess);
-  quoteFormat = new FormControl<QuoteFormat>(QuoteFormat.Denormalize);
+  quoteFormat = new FormControl<QuoteFormat>(QuoteFormat.Denormalized);
   usfmFormatForm: FormGroup = new FormGroup({
     paragraphFormat: this.paragraphFormat,
     quoteFormat: this.quoteFormat
@@ -210,7 +210,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   private setUsfmConfig(config?: DraftUsfmConfig): void {
     this.usfmFormatForm.setValue({
       paragraphFormat: config?.paragraphFormat ?? ParagraphBreakFormat.BestGuess,
-      quoteFormat: config?.quoteFormat ?? QuoteFormat.Denormalize
+      quoteFormat: config?.quoteFormat ?? QuoteFormat.Denormalized
     });
     this.lastSavedState = this.currentFormat;
 

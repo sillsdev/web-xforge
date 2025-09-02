@@ -319,7 +319,7 @@ export class SFProjectService extends ProjectService<SFProject> {
                     enum: ['best_guess', 'remove', 'move_to_end']
                   },
                   quoteFormat: {
-                    enum: ['automatic', 'straight']
+                    enum: ['denormalized', 'normalized']
                   }
                 },
                 additionalProperties: false
