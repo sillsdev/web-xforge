@@ -31,11 +31,11 @@ import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import {
   CONFIDENCE_THRESHOLD_TIMEOUT,
-  SuggestionsSettingsDialogComponent,
-  SuggestionsSettingsDialogData
-} from './suggestions-settings-dialog.component';
+  TranslatorSettingsDialogComponent,
+  TranslatorSettingsDialogData
+} from './translator-settings-dialog.component';
 
-describe('SuggestionsSettingsDialogComponent', () => {
+describe('TranslatorSettingsDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [
       DialogTestModule,
@@ -120,7 +120,7 @@ describe('SuggestionsSettingsDialogComponent', () => {
 
 @NgModule({
   imports: [UICommonModule, TestTranslocoModule],
-  declarations: [SuggestionsSettingsDialogComponent]
+  declarations: [TranslatorSettingsDialogComponent]
 })
 class DialogTestModule {}
 
@@ -130,7 +130,7 @@ interface TestEnvironmentConstructorArgs {
 
 class TestEnvironment {
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
-  component?: SuggestionsSettingsDialogComponent;
+  component?: TranslatorSettingsDialogComponent;
   readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
     OnlineStatusService
   ) as TestOnlineStatusService;
@@ -194,11 +194,11 @@ class TestEnvironment {
       .then(projectUserConfigDoc => {
         const viewContainerRef = this.fixture.componentInstance.childViewContainer;
         const projectDoc = this.getProjectProfileDoc();
-        const config: MatDialogConfig<SuggestionsSettingsDialogData> = {
+        const config: MatDialogConfig<TranslatorSettingsDialogData> = {
           data: { projectDoc, projectUserConfigDoc },
           viewContainerRef
         };
-        const dialogRef = TestBed.inject(MatDialog).open(SuggestionsSettingsDialogComponent, config);
+        const dialogRef = TestBed.inject(MatDialog).open(TranslatorSettingsDialogComponent, config);
         this.component = dialogRef.componentInstance;
       });
     this.wait();
