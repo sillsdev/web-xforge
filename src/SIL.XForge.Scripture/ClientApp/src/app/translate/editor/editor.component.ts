@@ -128,10 +128,6 @@ import { EditorHistoryService } from './editor-history/editor-history.service';
 import { LynxInsightStateService } from './lynx/insights/lynx-insight-state.service';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
-import {
-  SuggestionsSettingsDialogComponent,
-  SuggestionsSettingsDialogData
-} from './suggestions-settings-dialog.component';
 import { Suggestion } from './suggestions.component';
 import { EditorTabAddRequestService } from './tabs/editor-tab-add-request.service';
 import { EditorTabFactoryService } from './tabs/editor-tab-factory.service';
@@ -139,6 +135,10 @@ import { EditorTabMenuService } from './tabs/editor-tab-menu.service';
 import { EditorTabPersistenceService } from './tabs/editor-tab-persistence.service';
 import { EditorTabInfo } from './tabs/editor-tabs.types';
 import { TranslateMetricsSession } from './translate-metrics-session';
+import {
+  TranslatorSettingsDialogComponent,
+  TranslatorSettingsDialogData
+} from './translator-settings-dialog.component';
 
 export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
 
@@ -1142,13 +1142,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  openSuggestionsSettings(): void {
+  openTranslatorSettings(): void {
     if (this.projectDoc == null || this.projectUserConfigDoc == null) {
       return;
     }
 
-    const dialogRef = this.openMatDialog<SuggestionsSettingsDialogComponent, SuggestionsSettingsDialogData>(
-      SuggestionsSettingsDialogComponent,
+    const dialogRef = this.openMatDialog<TranslatorSettingsDialogComponent, TranslatorSettingsDialogData>(
+      TranslatorSettingsDialogComponent,
       {
         data: { projectDoc: this.projectDoc, projectUserConfigDoc: this.projectUserConfigDoc }
       }
