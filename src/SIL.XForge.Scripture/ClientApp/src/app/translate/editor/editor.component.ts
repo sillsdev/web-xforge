@@ -1913,7 +1913,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
     for (const segment of segments) {
-      const elements = this.target.getSegmentElement(segment)?.querySelectorAll('display-note');
+      // If a note is in the middle of a segment, the editor may have two segments with the same data-segment.
+      // This will not affect the text in the Realtime Server, as ShareDB will combine the segments together again.
+      const elements = this.target.editor?.container.querySelectorAll(
+        `usx-segment[data-segment="${segment}"] display-note`
+      );
       if (elements == null) {
         continue;
       }
