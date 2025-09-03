@@ -94,7 +94,6 @@ jobs:
         with:
           key: frontend-${{ runner.os }}-${{ hashFiles('src/SIL.XForge.Scripture/ClientApp/**') }}
           path: |
-            src/SIL.XForge.Scripture/ClientApp/dist
             src/SIL.XForge.Scripture/ClientApp/.angular/cache
             src/SIL.XForge.Scripture/ClientApp/node_modules
       - name: "Restore cached backend realtimeserver"
