@@ -176,7 +176,7 @@ jobs:
         id: cache-backend
         uses: actions/cache@v4
         with:
-          key: backend-${{ runner.os }}-${{ steps.dotnet-backend-source-hash.outputs.hash }}
+          key: backend-${{ runner.os }}-${{ steps.dotnet-backend-source-hash.outputs.hash }}-${{ github.run_id }}
           path: |
             ./src/SIL.Converters.Usj/obj
             ./src/SIL.Converters.Usj/bin
@@ -345,7 +345,7 @@ jobs:
         id: cache-restore-dotnet
         uses: actions/cache/restore@v4
         with:
-          key: backend-${{ runner.os }}-${{ steps.dotnet-backend-source-hash.outputs.hash }}
+          key: backend-${{ runner.os }}-${{ steps.dotnet-backend-source-hash.outputs.hash }}-${{ github.run_id }}
           # (Cache miss here means a mistake in workflow design.)
           fail-on-cache-miss: true
           path: |
