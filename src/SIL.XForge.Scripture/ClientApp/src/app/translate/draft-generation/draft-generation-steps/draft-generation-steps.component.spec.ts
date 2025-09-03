@@ -158,6 +158,30 @@ describe('DraftGenerationStepsComponent', () => {
       expect(cancelFired).toBe(true);
     }));
 
+    it('should not show dialog or emit cancel if sources are unchanged', fakeAsync(() => {
+      let cancelFired = false;
+      when(mockDialogService.openDialogCount).thenReturn(0);
+      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      component = fixture.componentInstance;
+      component.cancel.subscribe(() => (cancelFired = true));
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      // The component should be initialized after the first emission
+      expect(component['draftingSources'].length).toBe(1);
+      verify(mockDialogService.message(anything(), anything(), anything())).never();
+
+      // Simulate a remote emission with identical data
+      const newConfig: DraftSourcesAsArrays = { ...initialConfig }; // Create a new object with the same values
+      draftSources$.next(newConfig);
+      tick();
+
+      // The dialog should not be shown, and cancel should not be emitted
+      verify(mockDialogService.message(anything(), anything(), anything())).never();
+      expect(cancelFired).toBe(false);
+    }));
+
     it('should not show dialog or emit cancel if a dialog is already open', fakeAsync(() => {
       let cancelFired = false;
       when(mockDialogService.openDialogCount).thenReturn(1);

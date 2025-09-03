@@ -6,7 +6,7 @@ import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { ProjectScriptureRange, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, merge, Subscription } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { distinctUntilChanged, filter } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -141,7 +141,8 @@ export class DraftGenerationStepsComponent implements OnInit {
         filter(([{ trainingTargets, draftingSources }], projectId) => {
           this.setProjectDisplayNames(trainingTargets[0], draftingSources[0]);
           return trainingTargets[0] != null && draftingSources[0] != null && projectId != null;
-        })
+        }),
+        distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr))
       )
       .subscribe(
         // Build book lists
