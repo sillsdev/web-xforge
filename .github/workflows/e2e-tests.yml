@@ -92,8 +92,9 @@ jobs:
         id: cache-frontend
         uses: actions/cache@v4
         with:
-          key: frontend-${{ runner.os }}-${{ hashFiles('src/SIL.XForge.Scripture/ClientApp/**') }}
+          key: frontend-${{ runner.os }}-${{ hashFiles('src/SIL.XForge.Scripture/ClientApp/**') }}-${{ github.run_id }}
           path: |
+            src/SIL.XForge.Scripture/ClientApp/dist
             src/SIL.XForge.Scripture/ClientApp/.angular/cache
             src/SIL.XForge.Scripture/ClientApp/node_modules
       - name: "Restore cached backend realtimeserver"
@@ -332,7 +333,7 @@ jobs:
         id: cache-restore-frontend
         uses: actions/cache/restore@v4
         with:
-          key: frontend-${{ runner.os }}-${{ hashFiles('src/SIL.XForge.Scripture/ClientApp/**') }}
+          key: frontend-${{ runner.os }}-${{ hashFiles('src/SIL.XForge.Scripture/ClientApp/**') }}-${{ github.run_id }}
           # (Cache miss here means a mistake in workflow design.)
           fail-on-cache-miss: true
           path: |
