@@ -59,8 +59,8 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
     return this.onlineStatus.isOnline && this.onlineStatus.isBrowserOnline;
   }
 
-  async ngOnInit(): Promise<void> {
-    await this.getProjectsAndResources();
+  ngOnInit(): void {
+    void this.getProjectsAndResources();
   }
 
   onProjectSelected(_selectableProject: SelectableProject): void {

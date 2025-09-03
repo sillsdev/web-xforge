@@ -104,12 +104,12 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     this.inputChanged$.next();
   }
 
-  async ngAfterViewInit(): Promise<void> {
+  ngAfterViewInit(): void {
     this.generateDraftUrl = `/projects/${this.projectId}/draft-generation`;
     this.populateDraftTextInit();
   }
 
-  async onSelectionChanged(e: MatSelectChange): Promise<void> {
+  onSelectionChanged(e: MatSelectChange): void {
     this.selectedRevision = e.value;
     this.selectedRevisionSubject.next(this.selectedRevision);
   }

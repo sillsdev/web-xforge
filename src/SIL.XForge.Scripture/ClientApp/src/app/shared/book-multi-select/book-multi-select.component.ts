@@ -52,8 +52,8 @@ export class BookMultiSelectComponent implements OnChanges {
 
   constructor(private readonly progressService: ProgressService) {}
 
-  async ngOnChanges(): Promise<void> {
-    await this.initBookOptions();
+  ngOnChanges(): void {
+    void this.initBookOptions();
   }
 
   async initBookOptions(): Promise<void> {
