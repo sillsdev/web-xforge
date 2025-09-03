@@ -2,6 +2,7 @@ import { Component, DestroyRef, EventEmitter, OnInit, Output, ViewChild } from '
 import { MatStepper } from '@angular/material/stepper';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
+import { isEqual } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { ProjectScriptureRange, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
@@ -142,7 +143,7 @@ export class DraftGenerationStepsComponent implements OnInit {
           this.setProjectDisplayNames(trainingTargets[0], draftingSources[0]);
           return trainingTargets[0] != null && draftingSources[0] != null && projectId != null;
         }),
-        distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr))
+        distinctUntilChanged(isEqual)
       )
       .subscribe(
         // Build book lists
