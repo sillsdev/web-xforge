@@ -1,8 +1,9 @@
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
+import { Location } from '@angular/common';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatRadioButtonHarness } from '@angular/material/radio/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import {
@@ -38,7 +39,7 @@ const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedServalAdministration = mock(ServalAdministrationService);
-const mockedRouter = mock(Router);
+const mockedLocation = mock(Location);
 const mockI18nService = mock(I18nService);
 const mockedNoticeService = mock(NoticeService);
 const mockedDialogService = mock(DialogService);
@@ -60,7 +61,7 @@ describe('DraftUsfmFormatComponent', () => {
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: ServalAdministrationService, useMock: mockedServalAdministration },
-      { provide: Router, useMock: mockedRouter },
+      { provide: Location, useMock: mockedLocation },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: I18nService, useMock: mockI18nService },
       { provide: NoticeService, useMock: mockedNoticeService },
@@ -152,7 +153,7 @@ describe('DraftUsfmFormatComponent', () => {
     // user will be prompted that there are unsaved changes
     expect(await env.component.confirmLeave()).toBe(true);
     verify(mockedProjectService.onlineSetUsfmConfig(env.projectId, anything())).never();
-    verify(mockedRouter.navigate(deepEqual(['projects', env.projectId, 'draft-generation']))).once();
+    verify(mockedLocation.back()).once();
   }));
 
   it('should save changes to the draft format', fakeAsync(async () => {
@@ -177,7 +178,7 @@ describe('DraftUsfmFormatComponent', () => {
     env.fixture.detectChanges();
     verify(mockedProjectService.onlineSetUsfmConfig(env.projectId, deepEqual(config))).once();
     verify(mockedServalAdministration.onlineRetrievePreTranslationStatus(env.projectId)).once();
-    verify(mockedRouter.navigate(deepEqual(['projects', env.projectId, 'draft-generation']))).once();
+    verify(mockedLocation.back()).once();
   }));
 
   it('should not save if format is empty', fakeAsync(() => {
