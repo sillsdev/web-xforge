@@ -68,10 +68,10 @@ describe('DraftGenerationStepsComponent', () => {
     when(mockActivatedProjectService.projectId$).thenReturn(of('project01'));
     when(mockProgressService.isLoaded$).thenReturn(of(true));
     when(mockProgressService.texts).thenReturn([
-      { text: { bookNum: 1 }, translated: 100 } as TextProgress,
-      { text: { bookNum: 2 }, translated: 100 } as TextProgress,
+      { text: { bookNum: 1 }, translated: 100, percentage: 100 } as TextProgress,
+      { text: { bookNum: 2 }, translated: 100, percentage: 100 } as TextProgress,
       { text: { bookNum: 3 }, translated: 0 } as TextProgress,
-      { text: { bookNum: 6 }, translated: 20 } as TextProgress,
+      { text: { bookNum: 6 }, translated: 20, blank: 2, percentage: 90 } as TextProgress,
       { text: { bookNum: 7 }, translated: 0 } as TextProgress
     ]);
     when(mockOnlineStatusService.isOnline).thenReturn(true);
@@ -313,13 +313,13 @@ describe('DraftGenerationStepsComponent', () => {
     it('should set "availableTrainingBooks" correctly', fakeAsync(() => {
       expect(component.availableTrainingBooks).toEqual({
         project01: [
-          { number: 1, selected: false },
-          { number: 2, selected: false },
+          { number: 1, selected: true },
+          { number: 2, selected: true },
           { number: 3, selected: false }
         ],
         sourceProject: [
-          { number: 1, selected: false },
-          { number: 2, selected: false },
+          { number: 1, selected: true },
+          { number: 2, selected: true },
           { number: 3, selected: false }
         ]
       });
@@ -327,11 +327,14 @@ describe('DraftGenerationStepsComponent', () => {
 
     it('should set "selectableTrainingBooksByProj" correctly', fakeAsync(() => {
       expect(component.selectableTrainingBooksByProj('project01')).toEqual([
-        { number: 1, selected: false },
-        { number: 2, selected: false },
+        { number: 1, selected: true },
+        { number: 2, selected: true },
         { number: 3, selected: false }
       ]);
-      expect(component.selectableTrainingBooksByProj('sourceProject')).toEqual([]);
+      expect(component.selectableTrainingBooksByProj('sourceProject')).toEqual([
+        { number: 1, selected: true },
+        { number: 2, selected: true }
+      ]);
 
       component.onTranslatedBookSelect([1, 2]);
 
@@ -382,10 +385,11 @@ describe('DraftGenerationStepsComponent', () => {
     }));
 
     it('should allow selecting books from the training source project', () => {
-      component.onSourceTrainingBookSelect([2, 3], config.trainingSources[0]);
+      component.onSourceTrainingBookSelect([1, 2, 3], config.trainingSources[0]);
       fixture.detectChanges();
 
       expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([
+        { number: 1, selected: true },
         { number: 2, selected: true },
         { number: 3, selected: true }
       ]);
@@ -419,12 +423,14 @@ describe('DraftGenerationStepsComponent', () => {
     });
 
     it('clears selected reference books when translated book is unselected', () => {
-      component.onTranslatedBookSelect([2, 3]);
+      component.onTranslatedBookSelect([1, 2, 3]);
       expect(component.selectedTrainingBooksByProj('project01')).toEqual([
+        { number: 1, selected: true },
         { number: 2, selected: true },
         { number: 3, selected: true }
       ]);
       expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([
+        { number: 1, selected: true },
         { number: 2, selected: true },
         { number: 3, selected: true }
       ]);
@@ -588,20 +594,20 @@ describe('DraftGenerationStepsComponent', () => {
     it('should set "availableTrainingBooks" correctly and with canonical book order', fakeAsync(() => {
       expect(component.availableTrainingBooks).toEqual({
         source1: [
-          { number: 1, selected: false },
-          { number: 2, selected: false },
+          { number: 1, selected: true },
+          { number: 2, selected: true },
           { number: 3, selected: false }
         ],
         source2: [
-          { number: 2, selected: false },
+          { number: 2, selected: true },
           { number: 3, selected: false },
-          { number: 6, selected: false }
+          { number: 6, selected: true }
         ],
         project01: [
-          { number: 1, selected: false },
-          { number: 2, selected: false },
+          { number: 1, selected: true },
+          { number: 2, selected: true },
           { number: 3, selected: false },
-          { number: 6, selected: false }
+          { number: 6, selected: true }
         ]
       });
     }));
