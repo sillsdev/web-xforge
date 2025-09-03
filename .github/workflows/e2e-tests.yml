@@ -34,7 +34,7 @@ jobs:
         id: cache-realtimeserver-backend
         uses: actions/cache@v4
         with:
-          key: realtimeserver-backend-${{ runner.os }}-${{ hashFiles('src/RealtimeServer/**') }}
+          key: realtimeserver-backend-${{ runner.os }}-${{ hashFiles('src/RealtimeServer/**') }}-${{ github.run_id }}
           path: |
             src/RealtimeServer/lib
             src/RealtimeServer/node_modules
@@ -101,7 +101,7 @@ jobs:
         id: cache-restore-realtimeserver
         uses: actions/cache/restore@v4
         with:
-          key: realtimeserver-backend-${{ runner.os }}-${{ hashFiles('src/RealtimeServer/**') }}
+          key: realtimeserver-backend-${{ runner.os }}-${{ hashFiles('src/RealtimeServer/**') }}-${{ github.run_id }}
           # (Cache miss here means a mistake in workflow design.)
           fail-on-cache-miss: true
           path: |
@@ -199,7 +199,7 @@ jobs:
         id: cache-restore-realtimeserver
         uses: actions/cache/restore@v4
         with:
-          key: realtimeserver-backend-${{ runner.os }}-${{ hashFiles('src/RealtimeServer/**') }}
+          key: realtimeserver-backend-${{ runner.os }}-${{ hashFiles('src/RealtimeServer/**') }}-${{ github.run_id }}
           # (Cache miss here means a mistake in workflow design.)
           fail-on-cache-miss: true
           path: |
@@ -322,7 +322,7 @@ jobs:
         id: cache-restore-realtimeserver
         uses: actions/cache/restore@v4
         with:
-          key: realtimeserver-backend-${{ runner.os }}-${{ hashFiles('src/RealtimeServer/**') }}
+          key: realtimeserver-backend-${{ runner.os }}-${{ hashFiles('src/RealtimeServer/**') }}-${{ github.run_id }}
           # (Cache miss here means a mistake in workflow design.)
           fail-on-cache-miss: true
           path: |
