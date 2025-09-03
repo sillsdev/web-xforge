@@ -274,7 +274,6 @@ export class DraftHistoryEntryComponent {
 
   private _translationSources: string[] = [];
   get translationSource(): string {
-    ``;
     if (this._translationSources.length === 0) return '';
     return this.i18n.enumerateList(this._translationSources) + ' \u2022'; // &bull; •
   }
