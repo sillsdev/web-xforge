@@ -220,7 +220,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           this.downloadBooksProgress = draftZipProgress.current;
           this.downloadBooksTotal = draftZipProgress.total;
         },
-        error: (error: Error) => this.noticeService.showError(error.message)
+        error: (error: Error) => void this.noticeService.showError(error.message)
       });
   }
 
