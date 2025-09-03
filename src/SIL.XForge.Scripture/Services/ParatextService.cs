@@ -68,9 +68,9 @@ public class ParatextService : DisposableBase, IParatextService
     private readonly IJwtTokenHelper _jwtTokenHelper;
     private readonly IParatextDataHelper _paratextDataHelper;
     private readonly IGuidService _guidService;
-    private readonly string _dblServerUri = "https://pt-resources-adapter.library.bible/";
-    private readonly string _registryServerUri = "https://registry.paratext.org";
-    private readonly string _sendReceiveServerUri = InternetAccess.uriProduction;
+    private string _dblServerUri = "https://paratext.thedigitalbiblelibrary.org/";
+    private string _registryServerUri = "https://registry.paratext.org";
+    private string _sendReceiveServerUri = InternetAccess.uriProduction;
     private readonly IInternetSharedRepositorySourceProvider _internetSharedRepositorySourceProvider;
     private readonly ISFRestClientFactory _restClientFactory;
 
