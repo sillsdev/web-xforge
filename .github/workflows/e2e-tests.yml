@@ -72,6 +72,12 @@ jobs:
         run: cd src/RealtimeServer && (npm ci || (sleep 3m && npm ci))
       - name: "Build: RealtimeServer"
         run: cd src/RealtimeServer  && npm run build
+      - name: Check for cache problems
+        run: |
+          set -xueo pipefail
+          pwd
+          find -name \*OPHL7TCV\*
+          grep -RHn OPHL7TCV
 
   prepare-frontend:
     name: "Prepare frontend "
@@ -142,6 +148,12 @@ jobs:
       - name: "Build: Frontend"
         if: steps.cache-frontend.outputs.cache-hit != 'true'
         run: cd src/SIL.XForge.Scripture/ClientApp && npm run build
+      - name: Check for cache problems
+        run: |
+          set -xueo pipefail
+          pwd
+          find -name \*OPHL7TCV\*
+          grep -RHn OPHL7TCV
 
   prepare-dotnet-backend:
     name: "Prepare dotnet backend"
@@ -225,6 +237,12 @@ jobs:
       - name: "Build: dotnet Backend"
         if: steps.cache-backend.outputs.cache-hit != 'true'
         run: dotnet build xForge.sln
+      - name: Check for cache problems
+        run: |
+          set -xueo pipefail
+          pwd
+          find -name \*OPHL7TCV\*
+          grep -RHn OPHL7TCV
 
   prepare-e2e:
     name: "Prepare E2E"
@@ -285,6 +303,12 @@ jobs:
           set -xueo pipefail
           cd src/SIL.XForge.Scripture/ClientApp/e2e
           npx playwright install
+      - name: Check for cache problems
+        run: |
+          set -xueo pipefail
+          pwd
+          find -name \*OPHL7TCV\*
+          grep -RHn OPHL7TCV
 
   run_e2e_tests:
     name: "Run E2E tests"
@@ -479,6 +503,13 @@ jobs:
           cd src/SIL.XForge.Scripture/ClientApp/e2e
           sudo npx playwright install-deps
           npx playwright install
+
+      - name: Check for cache problems
+        run: |
+          set -xueo pipefail
+          pwd
+          find -name \*OPHL7TCV\*
+          grep -RHn OPHL7TCV
 
       - name: Run E2E tests
         env:
