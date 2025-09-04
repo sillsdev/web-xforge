@@ -1,4 +1,4 @@
-export enum QuotationDenormalization {
+export enum QuotationAnalysis {
   Successful = 'successful',
   Unsuccessful = 'unsuccessful'
 }
