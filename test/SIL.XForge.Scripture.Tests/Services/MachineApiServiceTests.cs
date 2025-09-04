@@ -935,6 +935,10 @@ public class MachineApiServiceTests
                 TargetQuoteConvention = "standard_english",
             },
         ];
+        translationBuild.Pretranslate =
+        [
+            new PretranslateCorpus { ParallelCorpus = new ResourceLink { Id = ParallelCorpusId01 } },
+        ];
         const string trainingScriptureRange = "GEN;EXO";
         const string translationScriptureRange = "LEV;NUM";
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
