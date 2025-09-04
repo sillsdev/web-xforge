@@ -39,7 +39,7 @@ jobs:
             src/RealtimeServer/lib
             src/RealtimeServer/node_modules
       - name: "Deps: Node"
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{matrix.node_version}}
           cache: "npm"
