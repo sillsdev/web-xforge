@@ -27,6 +27,17 @@ mat-panel-description {
   column-gap: 8px;
 }
 
+.formatting-options-container {
+  display: flex;
+  column-gap: 16px;
+  align-items: center;
+
+  ::ng-deep mat-icon {
+    display: flex;
+    flex-shrink: 0;
+  }
+}
+
 .subtitle,
 .training-files {
   font-size: 0.9em;

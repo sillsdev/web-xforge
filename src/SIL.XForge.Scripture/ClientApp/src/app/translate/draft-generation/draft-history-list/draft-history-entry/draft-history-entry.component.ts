@@ -270,7 +270,24 @@ export class DraftHistoryEntryComponent {
     return this.i18n.enumerateList(this._translationSources) + ' \u2022'; // &bull; •
   }
 
-  @Input() isLatestBuild = false;
+  private _requireSelectingFormattingOptions?: boolean;
+  get requireSelectingFormattingOptions(): boolean {
+    return this._requireSelectingFormattingOptions ?? false;
+  }
+
+  private _isLatestBuild: boolean = false;
+  @Input() set isLatestBuild(value: boolean) {
+    this._isLatestBuild = value;
+    if (this._requireSelectingFormattingOptions != null) return;
+    if (this.activatedProjectService.projectDoc != null) {
+      this._requireSelectingFormattingOptions =
+        this.activatedProjectService.projectDoc.data?.translateConfig.draftConfig.usfmConfig == null;
+    }
+  }
+
+  get isLatestBuild(): boolean {
+    return this._isLatestBuild;
+  }
 
   trainingConfigurationOpen = false;
 
