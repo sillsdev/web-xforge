@@ -336,16 +336,6 @@ public class MachineApiService(
                 cancellationToken
             );
             buildDto = CreateDto(translationBuild);
-            if (buildDto is not null)
-            {
-                // Add the punctuation denormalization analysis
-                (await projectSecrets.TryGetAsync(sfProjectId, cancellationToken)).TryResult(
-                    out SFProjectSecret projectSecret
-                );
-                {
-                    buildDto = UpdateDto(buildDto, translationBuild, projectSecret);
-                }
-            }
         }
         catch (ServalApiException e)
         {
@@ -470,16 +460,6 @@ public class MachineApiService(
                         );
                     }
                 }
-            }
-
-            // Add the punctuation denormalization analysis
-            if (
-                (await projectSecrets.TryGetAsync(sfProjectId, cancellationToken)).TryResult(
-                    out SFProjectSecret projectSecret
-                )
-            )
-            {
-                UpdateDto(buildDto, translationBuild, projectSecret);
             }
 
             // Make sure the DTO conforms to the machine-api URLs
@@ -1751,6 +1731,7 @@ public class MachineApiService(
     /// <returns>The build DTO.</returns>
     private static ServalBuildDto CreateDto(TranslationBuild translationBuild)
     {
+        string? parallelCorpusId = translationBuild.Pretranslate?.FirstOrDefault()?.ParallelCorpus?.Id;
         var buildDto = new ServalBuildDto
         {
             Id = translationBuild.Id,
@@ -1785,6 +1766,14 @@ public class MachineApiService(
                             .Where(id => !string.IsNullOrEmpty(id)) ?? [],
                     ]
                 ),
+                QuotationDenormalizationPossible =
+                    parallelCorpusId is not null
+                    && translationBuild.Analysis?.FirstOrDefault(a =>
+                        a.ParallelCorpusRef == parallelCorpusId
+                        && !string.IsNullOrEmpty(a.SourceQuoteConvention)
+                        && !string.IsNullOrEmpty(a.TargetQuoteConvention)
+                    )
+                        is not null,
                 DateFinished = translationBuild.DateFinished,
                 Step = translationBuild.Step,
                 TranslationEngineId = translationBuild.Engine.Id,
@@ -2021,22 +2010,6 @@ public class MachineApiService(
             buildDto.AdditionalInfo.TrainingDataFileIds.Add(trainingFileDataId);
         }
 
-        return buildDto;
-    }
-
-    private static ServalBuildDto UpdateDto(
-        ServalBuildDto buildDto,
-        TranslationBuild translationBuild,
-        SFProjectSecret projectSecret
-    )
-    {
-        {
-            ParallelCorpusAnalysis analysis = translationBuild.Analysis?.FirstOrDefault(a =>
-                a.ParallelCorpusRef == projectSecret.ServalData.ParallelCorpusIdForPreTranslate
-            );
-            buildDto.AdditionalInfo.QuotationDenormalizationPossible =
-                analysis is not null && !string.IsNullOrEmpty(analysis.TargetQuoteConvention);
-        }
         return buildDto;
     }
 
