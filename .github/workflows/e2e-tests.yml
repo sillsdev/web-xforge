@@ -97,7 +97,19 @@ jobs:
           cat out.txt
 
       - name: "Build: Frontend"
-        run: cd src/SIL.XForge.Scripture/ClientApp && npm run build && find dist
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run build
+
+      - name: "Investigate dist"
+        run: |
+          set -xueo pipefail
+          pwd
+          cd src/SIL.XForge.Scripture/ClientApp/dist
+          find  '(' -type d -name node_modules -o -name bin -o -name obj -o -name .git ')' -prune -o -type f -print0 |LC_ALL=C sort --zero-terminated |xargs --null md5sum >out1.txt
+          wc -l out1.txt
+          cat out1.txt
+          find -type f -print0 |LC_ALL=C sort --zero-terminated |xargs --null md5sum >out2.txt
+          wc -l out2.txt
+          cat out2.txt
 
       - name: Set up Deno
         uses: denoland/setup-deno@909cc5acb0fdd60627fb858598759246509fa755 # v2.0.2
