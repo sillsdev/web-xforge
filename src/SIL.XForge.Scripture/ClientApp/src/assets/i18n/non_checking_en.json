@@ -274,6 +274,7 @@
     "use_echo": "Use Echo Translation Engine"
   },
   "draft_history_entry": {
+    "change_line_breaks_and_quotation_marks": "You can change how line breaks and quotation marks are handled so the draft is easier to edit.",
     "click_book_to_preview": "Click a book below to preview the draft and add it to your project.",
     "download_zip": "Download draft as ZIP file",
     "draft_active": "Running",
@@ -286,8 +287,11 @@
     "finished_at": "Finished {{ finishedAtTime }}",
     "formatting_options": "Formatting options",
     "hide_model_training_configuration": "Hide model training configuration",
+    "new": "NEW!",
+    "options": "Options",
     "requested_at": "Requested {{ requestedAtTime }}.",
     "requested_by": "Requested by {{ requestedByUserName }} at {{ requestedAtTime }}.",
+    "select_formatting_options": "The draft has been created, and there are new formatting options to select. You will only need to do this once, but you can make changes for every new draft if you wish.",
     "show_model_training_configuration": "Show model training configuration",
     "training_books": "Training books",
     "training_data_files_used": "The following data files were used to train the model.",
