@@ -48,7 +48,7 @@ const mockI18nService = mock(I18nService);
 const mockedNoticeService = mock(NoticeService);
 const mockedDialogService = mock(DialogService);
 
-fdescribe('DraftUsfmFormatComponent', () => {
+describe('DraftUsfmFormatComponent', () => {
   configureTestingModule(() => ({
     imports: [
       DraftUsfmFormatComponent,
