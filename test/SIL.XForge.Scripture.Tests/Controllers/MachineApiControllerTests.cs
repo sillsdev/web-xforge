@@ -914,7 +914,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+            quoteFormat: QuoteStyleOptions.Denormalized,
             CancellationToken.None
         );
 
@@ -946,7 +947,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+            quoteFormat: QuoteStyleOptions.Denormalized,
             CancellationToken.None
         );
 
@@ -976,7 +978,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+            quoteFormat: QuoteStyleOptions.Denormalized,
             CancellationToken.None
         );
 
@@ -1006,7 +1009,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+            quoteFormat: QuoteStyleOptions.Denormalized,
             CancellationToken.None
         );
 
@@ -1036,7 +1040,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+            quoteFormat: QuoteStyleOptions.Denormalized,
             CancellationToken.None
         );
 
@@ -1045,7 +1050,12 @@ public class MachineApiControllerTests
     }
 
     [Test]
-    public async Task GetPreTranslationDeltaAsync_Success()
+    [TestCase("", "")]
+    [TestCase(null, null)]
+    [TestCase(ParagraphBreakFormatOptions.BestGuess, QuoteStyleOptions.Denormalized)]
+    [TestCase(ParagraphBreakFormatOptions.MoveToEnd, QuoteStyleOptions.Denormalized)]
+    [TestCase(ParagraphBreakFormatOptions.Remove, QuoteStyleOptions.Normalized)]
+    public async Task GetPreTranslationDeltaAsync_Success(string paragraphFormat, string quoteFormat)
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1067,7 +1077,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat,
+            quoteFormat,
             CancellationToken.None
         );
 
@@ -1096,7 +1107,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+            quoteFormat: QuoteStyleOptions.Denormalized,
             CancellationToken.None
         );
         Assert.IsInstanceOf<OkObjectResult>(result.Result);
@@ -1124,7 +1136,8 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+            quoteFormat: QuoteStyleOptions.Denormalized,
             CancellationToken.None
         );
         Assert.IsInstanceOf<OkObjectResult>(result.Result);

@@ -34,23 +34,23 @@
         </mat-card>
         <mat-card class="options">
           <mat-card-header>
-            <mat-card-title> {{ t("quote_style") }} </mat-card-title>
+            <mat-card-title>{{ t("quote_style_title") }}</mat-card-title>
           </mat-card-header>
           <mat-card-content class="format-options">
-            {{ t("choose_how_quotes_appear") }}
+            {{ t("quote_style_description") }}
 
             <!-- TODO make this notice conditional -->
             <app-notice type="warning" mode="fill-dark"> {{ t("no_quote_convention_detected") }} </app-notice>
 
             <mat-radio-group formControlName="quoteFormat">
-              <mat-radio-button [value]="quoteStyleFormat.Automatic">
-                <span class="option-title"> {{ t("automatic_quote_style") }} </span>
-                <span class="new"> {{ t("new") }} </span>
-                <span class="description"> {{ t("automatic_quote_style_description") }} </span>
+              <mat-radio-button [value]="quoteStyle.Denormalized">
+                <span class="option-title">{{ t("quote_style_automatic") }}</span>
+                <span class="new">{{ t("new") }}</span>
+                <span class="description">{{ t("quote_style_automatic_description") }}</span>
               </mat-radio-button>
-              <mat-radio-button [value]="quoteStyleFormat.Straight">
-                <span class="option-title"> {{ t("straight_quotes") }} </span>
-                <span class="description"> {{ t("straight_quotes_description") }} </span>
+              <mat-radio-button [value]="quoteStyle.Normalized">
+                <span class="option-title">{{ t("quote_style_straight") }}</span>
+                <span class="description">{{ t("quote_style_straight_description") }}</span>
               </mat-radio-button>
             </mat-radio-group>
           </mat-card-content>

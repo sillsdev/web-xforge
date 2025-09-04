@@ -472,7 +472,7 @@ public class PreTranslationServiceTests
             Project01,
             40,
             2,
-            config: new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.Remove },
+            config: new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormatOptions.Remove },
             CancellationToken.None
         );
         await env
@@ -483,7 +483,8 @@ public class PreTranslationServiceTests
                 "MAT",
                 Arg.Any<PretranslationUsfmTextOrigin>(),
                 Arg.Any<PretranslationUsfmTemplate>(),
-                PretranslationUsfmMarkerBehavior.Strip,
+                paragraphMarkerBehavior: PretranslationUsfmMarkerBehavior.Strip,
+                quoteNormalizationBehavior: PretranslationNormalizationBehavior.Denormalized,
                 cancellationToken: CancellationToken.None
             );
 
@@ -492,7 +493,7 @@ public class PreTranslationServiceTests
             Project01,
             40,
             2,
-            config: new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.BestGuess },
+            config: new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormatOptions.BestGuess },
             CancellationToken.None
         );
         await env
@@ -503,7 +504,8 @@ public class PreTranslationServiceTests
                 "MAT",
                 Arg.Any<PretranslationUsfmTextOrigin>(),
                 Arg.Any<PretranslationUsfmTemplate>(),
-                PretranslationUsfmMarkerBehavior.Preserve,
+                paragraphMarkerBehavior: PretranslationUsfmMarkerBehavior.PreservePosition,
+                quoteNormalizationBehavior: PretranslationNormalizationBehavior.Denormalized,
                 cancellationToken: CancellationToken.None
             );
 
@@ -512,18 +514,70 @@ public class PreTranslationServiceTests
             Project01,
             40,
             2,
-            config: new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.MoveToEnd },
+            config: new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormatOptions.MoveToEnd },
             CancellationToken.None
         );
         await env
-            .TranslationEnginesClient.Received(2)
+            .TranslationEnginesClient.Received(1)
             .GetPretranslatedUsfmAsync(
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 "MAT",
                 Arg.Any<PretranslationUsfmTextOrigin>(),
                 Arg.Any<PretranslationUsfmTemplate>(),
-                PretranslationUsfmMarkerBehavior.Preserve,
+                paragraphMarkerBehavior: PretranslationUsfmMarkerBehavior.Preserve,
+                quoteNormalizationBehavior: PretranslationNormalizationBehavior.Denormalized,
+                cancellationToken: CancellationToken.None
+            );
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsfmAsync_QuoteFormatSpecified()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { MockPreTranslationParameters = true, UseParatextZipFile = true }
+        );
+
+        // SUT
+        await env.Service.GetPreTranslationUsfmAsync(
+            Project01,
+            40,
+            2,
+            config: new DraftUsfmConfig { QuoteFormat = QuoteStyleOptions.Normalized },
+            CancellationToken.None
+        );
+        await env
+            .TranslationEnginesClient.Received(1)
+            .GetPretranslatedUsfmAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                "MAT",
+                Arg.Any<PretranslationUsfmTextOrigin>(),
+                Arg.Any<PretranslationUsfmTemplate>(),
+                paragraphMarkerBehavior: PretranslationUsfmMarkerBehavior.PreservePosition,
+                quoteNormalizationBehavior: PretranslationNormalizationBehavior.Normalized,
+                cancellationToken: CancellationToken.None
+            );
+
+        // SUT2
+        await env.Service.GetPreTranslationUsfmAsync(
+            Project01,
+            40,
+            2,
+            config: new DraftUsfmConfig { QuoteFormat = QuoteStyleOptions.Denormalized },
+            CancellationToken.None
+        );
+        await env
+            .TranslationEnginesClient.Received(1)
+            .GetPretranslatedUsfmAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                "MAT",
+                Arg.Any<PretranslationUsfmTextOrigin>(),
+                Arg.Any<PretranslationUsfmTemplate>(),
+                paragraphMarkerBehavior: PretranslationUsfmMarkerBehavior.PreservePosition,
+                quoteNormalizationBehavior: PretranslationNormalizationBehavior.Denormalized,
                 cancellationToken: CancellationToken.None
             );
     }
@@ -749,6 +803,7 @@ public class PreTranslationServiceTests
                     textOrigin: PretranslationUsfmTextOrigin.OnlyPretranslated,
                     template: PretranslationUsfmTemplate.Source,
                     paragraphMarkerBehavior: Arg.Any<PretranslationUsfmMarkerBehavior>(),
+                    quoteNormalizationBehavior: Arg.Any<PretranslationNormalizationBehavior>(),
                     cancellationToken: CancellationToken.None
                 )
                 .Returns(MatthewBookUsfm);

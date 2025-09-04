@@ -36,8 +36,8 @@ export enum ParagraphBreakFormat {
 }
 
 export enum QuoteFormat {
-  Automatic = 'automatic',
-  Straight = 'straight'
+  Denormalized = 'denormalized',
+  Normalized = 'normalized'
 }
 
 export interface BaseProject {
@@ -55,6 +55,7 @@ export interface ProjectScriptureRange {
 
 export interface DraftUsfmConfig {
   paragraphFormat: ParagraphBreakFormat;
+  quoteFormat: QuoteFormat;
 }
 
 export interface DraftConfig {
