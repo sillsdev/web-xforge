@@ -700,7 +700,7 @@ public class MachineApiServiceTests
         Assert.AreEqual(parallelCorpusId1, actual.AdditionalInfo.ParallelCorporaIds!.ElementAt(0));
         Assert.AreEqual(parallelCorpusId2, actual.AdditionalInfo.ParallelCorporaIds.ElementAt(1));
         Assert.AreEqual(TrainingDataId01, actual.AdditionalInfo.TrainingDataFileIds.Single());
-        Assert.IsTrue(actual.AdditionalInfo.QuotationDenormalizationPossible);
+        Assert.AreEqual(actual.AdditionalInfo.QuotationDenormalization, QuotationAnalysis.Successful);
     }
 
     [Test]
@@ -1020,7 +1020,7 @@ public class MachineApiServiceTests
             builds[0].AdditionalInfo.TrainingScriptureRanges.Single().ScriptureRange
         );
         Assert.AreEqual(TrainingDataId01, builds[0].AdditionalInfo.TrainingDataFileIds.Single());
-        Assert.IsTrue(builds[0].AdditionalInfo!.QuotationDenormalizationPossible);
+        Assert.AreEqual(builds[0].AdditionalInfo!.QuotationDenormalization, QuotationAnalysis.Successful);
     }
 
     [Test]
@@ -1062,7 +1062,7 @@ public class MachineApiServiceTests
             trainingScriptureRange,
             builds[0].AdditionalInfo?.TrainingScriptureRanges.Single().ScriptureRange
         );
-        Assert.IsFalse(builds[0].AdditionalInfo!.QuotationDenormalizationPossible);
+        Assert.AreEqual(builds[0].AdditionalInfo!.QuotationDenormalization, QuotationAnalysis.Unsuccessful);
     }
 
     [Test]
@@ -1114,7 +1114,7 @@ public class MachineApiServiceTests
             trainingScriptureRange,
             builds[0].AdditionalInfo?.TrainingScriptureRanges.Single().ScriptureRange
         );
-        Assert.IsFalse(builds[0].AdditionalInfo!.QuotationDenormalizationPossible);
+        Assert.AreEqual(builds[0].AdditionalInfo!.QuotationDenormalization, QuotationAnalysis.Unsuccessful);
     }
 
     [Test]
