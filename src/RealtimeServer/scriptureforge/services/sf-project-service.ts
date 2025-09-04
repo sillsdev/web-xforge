@@ -27,6 +27,7 @@ const SF_PROJECT_PROFILE_FIELDS: ShareDB.ProjectionFields = {
   isRightToLeft: true,
   biblicalTermsConfig: true,
   editable: true,
+  editingRequires: true,
   defaultFontSize: true,
   defaultFont: true,
   translateConfig: true,
@@ -519,6 +520,9 @@ export class SFProjectService extends ProjectService<SFProject> {
       },
       editable: {
         bsonType: 'bool'
+      },
+      editingRequires: {
+        bsonType: 'int'
       },
       defaultFontSize: {
         bsonType: 'int'
