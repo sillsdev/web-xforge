@@ -81,8 +81,7 @@
               "optimization": true,
               "outputHashing": "all",
               "namedChunks": true,
-              "aot": true,
-              "serviceWorker": "ngsw-config.json"
+              "aot": true
             },
             "staging": {
               "budgets": [
