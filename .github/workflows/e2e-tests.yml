@@ -89,7 +89,7 @@ jobs:
         run: dotnet build xForge.sln
 
       - name: "Build: Frontend"
-        run: cd src/SIL.XForge.Scripture/ClientApp && npm run build
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run build && find dist
 
       - name: Set up Deno
         uses: denoland/setup-deno@909cc5acb0fdd60627fb858598759246509fa755 # v2.0.2
