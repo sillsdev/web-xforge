@@ -88,6 +88,14 @@ jobs:
       - name: "Build: dotnet Backend"
         run: dotnet build xForge.sln
 
+      - name: "Investigate"
+        run: |
+          set -xueo pipefail
+          pwd
+          find -type f | sort | xargs md5sum > out.txt
+          wc -l out.txt
+          cat out.txt
+
       - name: "Build: Frontend"
         run: cd src/SIL.XForge.Scripture/ClientApp && npm run build && find dist
 
