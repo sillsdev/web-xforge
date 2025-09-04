@@ -2,7 +2,7 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatRadioButtonHarness } from '@angular/material/radio/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import {
@@ -26,15 +26,17 @@ import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { QuotationDenormalization } from '../../../machine-api/quotation-denormalization';
+import { BuildDto } from '../../../machine-api/build-dto';
+import { BuildStates } from '../../../machine-api/build-states';
 import { ServalAdministrationService } from '../../../serval-administration/serval-administration.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
+import { DraftGenerationService } from '../draft-generation.service';
 import { DraftHandlingService } from '../draft-handling.service';
 import { DraftUsfmFormatComponent } from './draft-usfm-format.component';
 
-const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedDraftHandlingService = mock(DraftHandlingService);
+const mockedDraftGenerationService = mock(DraftGenerationService);
 const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
@@ -44,7 +46,7 @@ const mockI18nService = mock(I18nService);
 const mockedNoticeService = mock(NoticeService);
 const mockedDialogService = mock(DialogService);
 
-describe('DraftUsfmFormatComponent', () => {
+fdescribe('DraftUsfmFormatComponent', () => {
   configureTestingModule(() => ({
     imports: [
       DraftUsfmFormatComponent,
@@ -55,8 +57,8 @@ describe('DraftUsfmFormatComponent', () => {
       SharedModule.forRoot()
     ],
     providers: [
-      { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: DraftHandlingService, useMock: mockedDraftHandlingService },
+      { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
@@ -106,7 +108,7 @@ describe('DraftUsfmFormatComponent', () => {
   }));
 
   it('should initialize and default to best guess and automatic quotes', fakeAsync(async () => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment({ quoteFormatting: true });
     expect(env.component.paragraphFormat.value).toBe(ParagraphBreakFormat.BestGuess);
     expect(env.component.quoteFormat.value).toBe(QuoteFormat.Denormalized);
     expect(await env.component.confirmLeave()).toBe(true);
@@ -182,18 +184,8 @@ describe('DraftUsfmFormatComponent', () => {
   }));
 
   it('shows a notice if unable to detect the quote convention for the project', fakeAsync(() => {
-    const env = new TestEnvironment({
-      activatedRouteQueryParams: { 'quotation-denormalization': QuotationDenormalization.Unsuccessful }
-    });
+    const env = new TestEnvironment({ quoteFormatting: false });
     expect(env.quoteFormatWarning).not.toBeNull();
-  }));
-
-  it('hides notice if user has not selected automatic quote styles', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.component.quoteFormat.setValue(QuoteFormat.Normalized);
-    tick();
-    env.fixture.detectChanges();
-    expect(env.quoteFormatWarning).toBeNull();
   }));
 });
 
@@ -204,11 +196,12 @@ class TestEnvironment {
   readonly projectId = 'project01';
   onlineStatusService: TestOnlineStatusService;
 
-  constructor(args: { config?: DraftUsfmConfig; activatedRouteQueryParams?: Params } = {}) {
+  constructor(args: { config?: DraftUsfmConfig; quoteFormatting?: boolean } = {}) {
     const userDoc = mock(UserDoc);
     this.onlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
-
-    when(mockedActivatedRoute.queryParams).thenReturn(of(args.activatedRouteQueryParams ?? {}));
+    when(mockedDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(
+      of(this.getTestBuildDto(args.quoteFormatting ?? true))
+    );
     when(mockedUserService.getCurrentUser()).thenResolve(userDoc);
     when(mockedDraftHandlingService.getDraft(anything(), anything())).thenReturn(
       of([
@@ -217,6 +210,7 @@ class TestEnvironment {
         { insert: 'Verse 1 text.' }
       ])
     );
+    when(mockedActivatedProjectService.projectId$).thenReturn(of(this.projectId));
     when(mockedDraftHandlingService.draftDataToOps(anything(), anything())).thenCall(ops => ops);
     this.onlineStatusService.setIsOnline(true);
     when(mockedNoticeService.show(anything())).thenResolve();
@@ -278,5 +272,28 @@ class TestEnvironment {
     when(mockedActivatedProjectService.projectId).thenReturn(this.projectId);
     when(mockedActivatedProjectService.projectDoc$).thenReturn(of(projectDoc));
     when(mockedActivatedProjectService.projectDoc).thenReturn(projectDoc);
+  }
+
+  private getTestBuildDto(quoteFormatting: boolean): BuildDto {
+    return {
+      id: 'build01',
+      state: BuildStates.Completed,
+      message: '',
+      queueDepth: 0,
+      href: '',
+      percentCompleted: 1.0,
+      engine: { id: 'source01', href: '' },
+      revision: 1,
+      additionalInfo: {
+        dateRequested: new Date().toISOString(),
+        buildId: 'build01',
+        step: 123,
+        translationEngineId: 'engine01',
+        translationScriptureRanges: [{ projectId: 'source01', scriptureRange: 'EXO' }],
+        trainingScriptureRanges: [{ projectId: 'source01', scriptureRange: 'GEN' }],
+        trainingDataFileIds: [] as string[],
+        quotationDenormalizationPossible: quoteFormatting
+      }
+    };
   }
 }

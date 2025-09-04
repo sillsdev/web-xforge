@@ -9,7 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Delta } from 'quill';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
@@ -18,14 +18,14 @@ import {
   ParagraphBreakFormat,
   QuoteFormat
 } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { combineLatest, first, Subject, switchMap } from 'rxjs';
+import { combineLatest, first, firstValueFrom, Subject, switchMap } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { QuotationDenormalization } from '../../../machine-api/quotation-denormalization';
@@ -33,6 +33,7 @@ import { ServalAdministrationService } from '../../../serval-administration/serv
 import { ConfirmOnLeave } from '../../../shared/project-router.guard';
 import { SharedModule } from '../../../shared/shared.module';
 import { TextComponent } from '../../../shared/text/text.component';
+import { DraftGenerationService } from '../draft-generation.service';
 import { DraftHandlingService } from '../draft-handling.service';
 
 @Component({
@@ -63,7 +64,6 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   chapterNum: number = 1;
   chapters: number[] = [];
   isInitializing: boolean = true;
-  showQuoteFormatWarning: boolean = false;
   paragraphBreakFormat = ParagraphBreakFormat;
   quoteStyle = QuoteFormat;
 
@@ -78,11 +78,12 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
 
   private updateDraftConfig$: Subject<DraftUsfmConfig | undefined> = new Subject<DraftUsfmConfig | undefined>();
   private lastSavedState?: DraftUsfmConfig;
+  private quotationDenormalization: QuotationDenormalization = QuotationDenormalization.Successful;
 
   constructor(
-    private readonly activatedRoute: ActivatedRoute,
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly draftHandlingService: DraftHandlingService,
+    private readonly draftGenerationService: DraftGenerationService,
     private readonly projectService: SFProjectService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly servalAdministration: ServalAdministrationService,
@@ -93,11 +94,14 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     private destroyRef: DestroyRef
   ) {
     super(noticeService);
-    this.activatedRoute.queryParams.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(params => {
-      if (params['quotation-denormalization'] === QuotationDenormalization.Unsuccessful) {
-        this.showQuoteFormatWarning = true;
-      }
-    });
+    this.activatedProjectService.projectId$
+      .pipe(filterNullish(), first(), quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(async projectId => {
+        const currentBuild = await firstValueFrom(this.draftGenerationService.getLastCompletedBuild(projectId));
+        this.quotationDenormalization = !!currentBuild?.additionalInfo?.quotationDenormalizationPossible
+          ? QuotationDenormalization.Successful
+          : QuotationDenormalization.Unsuccessful;
+      });
   }
 
   get projectId(): string | undefined {
@@ -115,6 +119,10 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
 
   get isOnline(): boolean {
     return this.onlineStatusService.isOnline;
+  }
+
+  get showQuoteFormatWarning(): boolean {
+    return this.quotationDenormalization !== QuotationDenormalization.Successful;
   }
 
   private get currentFormat(): DraftUsfmConfig | undefined {
