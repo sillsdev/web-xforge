@@ -324,7 +324,10 @@ public class Startup
     {
         string path = context.Request.Path.Value;
         if (path.Length <= 1)
+        {
+            Console.WriteLine("Startup.cs IsSpaRoute: Not an SPA route because path length <= 1: '{path}'", path);
             return false;
+        }
         int index = path.IndexOf("/", 1);
         if (index == -1)
             index = path.Length;
@@ -349,10 +352,14 @@ public class Startup
 
         if (isLazyChunkRoute)
         {
+            Console.WriteLine($"Startup.cs IsSpaRoute: Detected lazy chunk route: '{path}'");
             return true;
         }
 
-        return (context.Request.Method == HttpMethods.Get && SpaGetRoutes.Contains(prefix))
+        bool result =
+            (context.Request.Method == HttpMethods.Get && SpaGetRoutes.Contains(prefix))
             || (context.Request.Method == HttpMethods.Post && SpaPostRoutes.Contains(prefix));
+        Console.WriteLine($"Startup.cs IsSpaRoute: Detected SPA route: {result}: '{path}'");
+        return result;
     }
 }
