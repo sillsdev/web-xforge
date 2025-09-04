@@ -110,8 +110,8 @@ jobs:
           find -type f -print0 |LC_ALL=C sort --zero-terminated |xargs --null md5sum >out2.txt
           wc -l out2.txt
           cat out2.txt
-          ls -l dist/browser/{index.html,main-????????.js,main-????????.js.map,ngsw.json}
-          cat dist/browser/{index.html,main-????????.js,main-????????.js.map,ngsw.json}
+          ls -l ./browser/{index.html,main-????????.js,main-????????.js.map,ngsw.json}
+          cat ./browser/{index.html,main-????????.js,main-????????.js.map,ngsw.json}
 
       - name: Set up Deno
         uses: denoland/setup-deno@909cc5acb0fdd60627fb858598759246509fa755 # v2.0.2
