@@ -26,12 +26,12 @@ jobs:
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
 
       - name: "Deps: .NET"
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: ${{matrix.dotnet_version}}
           cache: true
@@ -139,12 +139,12 @@ jobs:
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
 
       - name: "Deps: .NET"
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: ${{matrix.dotnet_version}}
           cache: true
