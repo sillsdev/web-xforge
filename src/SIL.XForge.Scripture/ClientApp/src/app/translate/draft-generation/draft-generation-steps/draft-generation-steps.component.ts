@@ -139,10 +139,10 @@ export class DraftGenerationStepsComponent implements OnInit {
     combineLatest([this.draftSourcesService.getDraftProjectSources(), this.activatedProject.projectId$])
       .pipe(
         quietTakeUntilDestroyed(this.destroyRef),
-        filter(([{ trainingTargets, draftingSources }], projectId) => {
-          this.setProjectDisplayNames(trainingTargets[0], draftingSources[0]);
-          return trainingTargets[0] != null && draftingSources[0] != null && projectId != null;
-        }),
+        filter(
+          ([{ trainingTargets, draftingSources }], projectId) =>
+            trainingTargets[0] != null && draftingSources[0] != null && projectId != null
+        ),
         distinctUntilChanged(isEqual)
       )
       .subscribe(
@@ -158,6 +158,8 @@ export class DraftGenerationStepsComponent implements OnInit {
             );
             this.cancel.emit();
           }
+
+          this.setProjectDisplayNames(trainingTargets[0], draftingSources[0]);
 
           // The null values will have been filtered above
           const target = trainingTargets[0]!;
