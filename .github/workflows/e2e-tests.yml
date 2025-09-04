@@ -92,7 +92,7 @@ jobs:
         run: |
           set -xueo pipefail
           pwd
-          find  '(' -type d -name node_modules -o -name bin -o -name obj -o -name .git ')' -prune -o -type f -print0 |sort --stable --zero-terminated |xargs --null md5sum >out.txt
+          find  '(' -type d -name node_modules -o -name bin -o -name obj -o -name .git ')' -prune -o -type f -print0 |LC_ALL=C sort --zero-terminated |xargs --null md5sum >out.txt
           wc -l out.txt
           cat out.txt
 
