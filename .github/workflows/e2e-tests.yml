@@ -92,7 +92,7 @@ jobs:
         run: |
           set -xueo pipefail
           pwd
-          find -type f | sort | xargs md5sum > out.txt
+          find -type f -print0 |sort --zero-terminated |xargs --null md5sum >out.txt
           wc -l out.txt
           cat out.txt
 
