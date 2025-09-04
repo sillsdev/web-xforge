@@ -1913,7 +1913,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
     for (const segment of segments) {
-      const elements = this.target.getSegmentElement(segment)?.querySelectorAll('display-note');
+      // If a note is in the middle of a segment, the editor may have two segments with the same data-segment.
+      // This will not affect the text in the Realtime Server, as ShareDB will combine the segments together again.
+      const elements = this.target.editor?.container.querySelectorAll(
+        `usx-segment[data-segment="${segment}"] display-note`
+      );
       if (elements == null) {
         continue;
       }
@@ -2070,8 +2074,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private getFeaturedVerseRefInfo(threadDoc: NoteThreadDoc): FeaturedVerseRefInfo | undefined {
     const notes: Note[] = threadDoc.notesInOrderClone(threadDoc.data!.notes);
     let preview: string = notes[0].content != null ? stripHtml(notes[0].content.trim()) : '';
-    if (notes.length > 1) {
-      preview += '\n' + this.i18n.translateStatic('editor.more_notes', { count: notes.length - 1 });
+    const numberOfNotes: number = notes.filter(n => !n.deleted).length;
+    if (numberOfNotes > 1) {
+      preview += '\n' + this.i18n.translateStatic('editor.more_notes', { count: numberOfNotes - 1 });
     }
     const verseRef: VerseRef | undefined = threadDoc.currentVerseRef();
     if (threadDoc.data == null || verseRef == null) {
