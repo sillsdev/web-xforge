@@ -103,24 +103,24 @@ jobs:
           sudo npx playwright install-deps
           npx playwright install
 
-      - name: "Deps: Running SF"
-        run: |
-          set -xueo pipefail
+      # - name: "Deps: Running SF"
+      #   run: |
+      #     set -xueo pipefail
 
-          # Helper method to avoid failing from a network hiccup during provision
-          function tryharderto() {
-            i=0
-            until "$@"; do
-              ((++i <= 3))
-              echo >&2 "Retrying ${i}"
-              sleep 2m
-            done
-          }
+      #     # Helper method to avoid failing from a network hiccup during provision
+      #     function tryharderto() {
+      #       i=0
+      #       until "$@"; do
+      #         ((++i <= 3))
+      #         echo >&2 "Retrying ${i}"
+      #         sleep 2m
+      #       done
+      #     }
 
-          tryharderto sudo add-apt-repository --yes --update ppa:ansible/ansible
-          tryharderto sudo apt-get install --assume-yes ansible
-          cd deploy
-          ansible-playbook dev-server.playbook.yml --limit localhost --diff
+      #     tryharderto sudo add-apt-repository --yes --update ppa:ansible/ansible
+      #     tryharderto sudo apt-get install --assume-yes ansible
+      #     cd deploy
+      #     ansible-playbook dev-server.playbook.yml --limit localhost --diff
 
       - name: "Configure secrets"
         env:
