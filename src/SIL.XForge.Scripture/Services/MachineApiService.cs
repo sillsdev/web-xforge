@@ -1766,14 +1766,16 @@ public class MachineApiService(
                             .Where(id => !string.IsNullOrEmpty(id)) ?? [],
                     ]
                 ),
-                QuotationDenormalizationPossible =
+                QuotationDenormalization =
                     parallelCorpusId is not null
                     && translationBuild.Analysis?.FirstOrDefault(a =>
                         a.ParallelCorpusRef == parallelCorpusId
                         && !string.IsNullOrEmpty(a.SourceQuoteConvention)
                         && !string.IsNullOrEmpty(a.TargetQuoteConvention)
                     )
-                        is not null,
+                        is not null
+                        ? QuotationAnalysis.Successful
+                        : QuotationAnalysis.Unsuccessful,
                 DateFinished = translationBuild.DateFinished,
                 Step = translationBuild.Step,
                 TranslationEngineId = translationBuild.Engine.Id,
