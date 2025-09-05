@@ -124,9 +124,43 @@ public class StartupTests
         Assert.IsTrue(actual);
     }
 
+    [TestCase("/nope", new RunMode[] { RunMode.Development, RunMode.Production }, false)]
+    // Development case - expected=true
     [TestCase("/chunk-OPHL7TCV.js", new RunMode[] { RunMode.Development }, true)]
     [TestCase("/chunk-4ZGUQGYD.js", new RunMode[] { RunMode.Development }, true)]
-    [TestCase("/nope", new RunMode[] { RunMode.Development, RunMode.Production }, true)]
+    [TestCase("/polyfills.js", new RunMode[] { RunMode.Development }, true)]
+    [TestCase("/main.js", new RunMode[] { RunMode.Development }, true)]
+    [TestCase("/manifest.json", new RunMode[] { RunMode.Development }, true)]
+    [TestCase("/styles.css", new RunMode[] { RunMode.Development }, true)]
+    [TestCase("/assets/icons/sf-192x192.png", new RunMode[] { RunMode.Development }, true)]
+    [TestCase("/@vite/client", new RunMode[] { RunMode.Development }, true)]
+    [TestCase("/login?sign-up=true", new RunMode[] { RunMode.Development }, true)]
+    [TestCase("/login", new RunMode[] { RunMode.Development }, true)]
+    [TestCase(
+        "/@fs/home/user/web-xforge/src/SIL.XForge.Scripture/ClientApp/node_modules/vite/dist/client/env.mjs",
+        new RunMode[] { RunMode.Development },
+        true
+    )]
+    [TestCase("/assets/images/sf_logo_with_name_black.svg", new RunMode[] { RunMode.Development }, true)]
+    [TestCase("/worker-GCZANHET.js", new RunMode[] { RunMode.Development }, true)]
+    [TestCase("/en-GHIDLE4X.js", new RunMode[] { RunMode.Development }, true)]
+    [TestCase("/en-LPQIY5ZH.js", new RunMode[] { RunMode.Development }, true)]
+    [TestCase("/quill-QEGMXGGM.js", new RunMode[] { RunMode.Development }, true)]
+    // Development case - expected=false
+    [TestCase("/favicon.ico", new RunMode[] { RunMode.Development }, false)]
+    [TestCase(
+        "/lib/material-design-lite/css/material.sf_grey-pt_green.min.css",
+        new RunMode[] { RunMode.Development },
+        false
+    )]
+    [TestCase("/css/sf.min.css", new RunMode[] { RunMode.Development }, false)]
+    [TestCase("/images/multi-devices.svg", new RunMode[] { RunMode.Development }, false)]
+    [TestCase("/images/community-checking.svg", new RunMode[] { RunMode.Development }, false)]
+    [TestCase("/images/quoter.jpg", new RunMode[] { RunMode.Development }, false)]
+    [TestCase("/terms", new RunMode[] { RunMode.Development }, false)]
+    [TestCase("/privacy", new RunMode[] { RunMode.Development }, false)]
+    [TestCase("/lib/material-design-lite/js/material.min.js", new RunMode[] { RunMode.Development }, false)]
+    [TestCase("/_framework/aspnetcore-browser-refresh.js", new RunMode[] { RunMode.Development }, false)]
     public void IsSpaRoute_(string path, RunMode[] runModes, bool expected)
     {
         foreach (RunMode runMode in runModes)
