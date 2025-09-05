@@ -96,6 +96,20 @@ class SFProjectUserConfigMigration8 extends DocMigration {
   }
 }
 
+class SFProjectUserConfigMigration9 extends DocMigration {
+  static readonly VERSION = 9;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    if (doc.data.lynxUserConfig === undefined) {
+      const op: ObjectInsertOp = {
+        p: ['lynxUserConfig'],
+        oi: { assessmentsEnabled: true, autoCorrectionsEnabled: true }
+      };
+      await submitMigrationOp(SFProjectUserConfigMigration9.VERSION, doc, [op]);
+    }
+  }
+}
+
 export const SF_PROJECT_USER_CONFIG_MIGRATIONS: MigrationConstructor[] = monotonicallyIncreasingMigrationList([
   SFProjectUserConfigMigration1,
   SFProjectUserConfigMigration2,
@@ -104,5 +118,6 @@ export const SF_PROJECT_USER_CONFIG_MIGRATIONS: MigrationConstructor[] = monoton
   SFProjectUserConfigMigration5,
   SFProjectUserConfigMigration6,
   SFProjectUserConfigMigration7,
-  SFProjectUserConfigMigration8
+  SFProjectUserConfigMigration8,
+  SFProjectUserConfigMigration9
 ]);

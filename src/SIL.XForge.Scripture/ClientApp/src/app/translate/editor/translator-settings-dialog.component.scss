@@ -1,9 +1,49 @@
+$disabledTextOpacity: 0.6;
+
 mat-dialog-content {
   display: flex;
   flex-direction: column;
   gap: 2em;
   width: 400px;
   max-width: 100%;
+}
+
+mat-card:last-of-type {
+  margin-bottom: 0.1em; // Prevent card box shadow cutoff
+}
+
+.toggle-label {
+  margin-inline-start: 0.2rem;
+}
+
+.card-header-with-toggle {
+  margin-bottom: 1.5em;
+
+  .card-title {
+    font-size: 1.3em;
+    font-weight: 500;
+    line-height: normal;
+  }
+}
+
+.offline {
+  .card-title {
+    opacity: $disabledTextOpacity;
+  }
+}
+
+.settings-content {
+  padding-inline-start: 1em;
+}
+
+.lynx-sub-settings {
+  mat-slide-toggle {
+    margin-bottom: 0.8em;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
 }
 
 .slider-labels {
@@ -16,13 +56,18 @@ mat-dialog-content {
 .suggestions-confidence-field {
   display: flex;
   flex-direction: column;
+  margin-top: 1em;
 }
 
 .minor-header {
   font-size: 0.875rem;
   font-weight: 500;
+
+  &.disabled {
+    opacity: $disabledTextOpacity;
+  }
 }
 
-#suggestions-enabled-switch {
-  margin-block: 1em;
+app-notice {
+  margin-bottom: 1em;
 }

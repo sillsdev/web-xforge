@@ -67,7 +67,19 @@ import {
   Subscription,
   timer
 } from 'rxjs';
-import { debounceTime, filter, first, map, repeat, retry, switchMap, take, tap, throttleTime } from 'rxjs/operators';
+import {
+  debounceTime,
+  filter,
+  first,
+  map,
+  repeat,
+  retry,
+  startWith,
+  switchMap,
+  take,
+  tap,
+  throttleTime
+} from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -365,11 +377,18 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.projectDoc?.data?.translateConfig.translationSuggestionsEnabled === true;
   }
 
-  get suggestionsSettingsEnabled(): boolean {
+  get lynxProjectEnabled(): boolean {
+    return (
+      !!this.projectDoc?.data?.lynxConfig.assessmentsEnabled ||
+      !!this.projectDoc?.data?.lynxConfig.autoCorrectionsEnabled
+    );
+  }
+
+  get translatorSettingsEnabled(): boolean {
     return (
       this.hasSource &&
       this.hasSourceViewRight &&
-      this.translationSuggestionsProjectEnabled &&
+      (this.translationSuggestionsProjectEnabled || this.lynxProjectEnabled) &&
       this.userHasGeneralEditRight
     );
   }
@@ -689,18 +708,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         switchMap(doc => this.initEditorTabs(doc))
       )
       .subscribe();
-
-    // Show insights only if the feature flag is enabled, user has chapter edit permissions and assessments are enabled
-    combineLatest([
-      this.hasChapterEditPermission$.pipe(filterNullish()),
-      this.activatedProject.changes$.pipe(map(projectDoc => projectDoc?.data?.lynxConfig))
-    ])
-      .pipe(quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(([hasEditPermission, lynxConfig]) => {
-        const canEdit: boolean = hasEditPermission && this.isUsfmValid;
-        this.lynxInsightsEnabled = canEdit && (lynxConfig?.assessmentsEnabled ?? false);
-        this.lynxAutoCorrectionsEnabled = canEdit && (lynxConfig?.autoCorrectionsEnabled ?? false);
-      });
   }
 
   ngAfterViewInit(): void {
@@ -748,6 +755,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             projectId,
             this.userService.currentUserId
           );
+
+          this.initLynxFeatureStates(this.projectUserConfigDoc);
 
           this.sourceProjectDoc = await this.getSourceProjectDoc();
           if (this.projectUserConfigChangesSub != null) {
@@ -2588,5 +2597,31 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const minAdjustment: number = Math.max(fabBottom - bounds.height, 0);
 
     this.insertNoteFab.nativeElement.style.marginTop = `-${Math.max(fabTopAdjustment, minAdjustment)}px`;
+  }
+
+  /**
+   * Subscribes to project- and user-level lynx config changes and updates lynx feature states accordingly.
+   */
+  private initLynxFeatureStates(projectUserConfigDoc: SFProjectUserConfigDoc | undefined): void {
+    combineLatest([
+      this.hasChapterEditPermission$.pipe(filterNullish()),
+      this.activatedProject.changes$.pipe(map(projectDoc => projectDoc?.data?.lynxConfig)),
+      projectUserConfigDoc?.changes$.pipe(
+        startWith(projectUserConfigDoc),
+        map(() => projectUserConfigDoc?.data?.lynxUserConfig)
+      ) ?? of(undefined)
+    ])
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(([hasEditPermission, lynxProjectConfig, lynxUserConfig]) => {
+        const canEdit: boolean = hasEditPermission && this.isUsfmValid;
+
+        // Enable lynx features only if user can edit chapter and lynx is enabled in both project AND user settings
+        this.lynxInsightsEnabled =
+          canEdit && (lynxProjectConfig?.assessmentsEnabled ?? false) && (lynxUserConfig?.assessmentsEnabled ?? true);
+        this.lynxAutoCorrectionsEnabled =
+          canEdit &&
+          (lynxProjectConfig?.autoCorrectionsEnabled ?? false) &&
+          (lynxUserConfig?.autoCorrectionsEnabled ?? true);
+      });
   }
 }
