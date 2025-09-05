@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Hangfire;
@@ -34,31 +35,39 @@ public enum SpaDevServerStartup
 
 public class Startup
 {
+    /// <summary>
+    /// Routes that should be handled by SPA in development but not in production.
+    /// </summary>
     private static readonly HashSet<string> DevelopmentSpaGetRoutes =
     [
-        "runtime.js",
-        "runtime.js.map",
-        "polyfills.js",
-        "polyfills.js.map",
-        "styles.css",
-        "styles.css.map",
-        "styles.js",
-        "styles.js.map",
-        "vendor.js",
-        "vendor.js.map",
-        "main.js",
-        "main.js.map",
         "@vite",
         "@fs",
-        "sockjs-node",
         "3rdpartylicenses.txt",
+        // sockjs-node is related to communication during `ng serve`
+        "sockjs-node",
     ];
 
-    // examples of filenames are "main-es5.4e5295b95e4b6c37b696.js", "styles.a2f070be0b37085d72ba.css"
-    private static readonly HashSet<string> ProductionSpaGetRoutes = ["polyfills", "main", "chunk", "styles"];
+    /// <summary>
+    /// Routes that should be handled by SPA in production but not in development
+    /// </summary>
+    private static readonly HashSet<string> ProductionSpaGetRoutes = [];
+
+    /// <summary>
+    /// Routes that should be handled by SPA in both production and development.
+    /// </summary>
     private static readonly HashSet<string> SpaGetRoutes =
     [
+        "index.html",
+        "prerendered-routes.json",
+        "3rdpartylicenses",
+        // PWA files
+        "ngsw.json",
+        "ngsw-worker.js",
+        "offline.html",
+        "safety-worker.js",
+        "sf-service-worker.js",
         "manifest.json",
+        // Application routes
         "callback",
         "connect-project",
         "login",
@@ -66,15 +75,22 @@ public class Startup
         "join",
         "serval-administration",
         "system-administration",
-        "favicon.ico",
+        // Asset and build files
         "assets",
+        "polyfills",
+        "main",
+        "chunk",
+        "styles",
+        "en",
+        "quill",
+        // Lynx-related
+        "worker",
+        "node_modules_sillsdev_lynx",
     ];
 
     private static readonly HashSet<string> DevelopmentSpaPostRoutes = ["sockjs-node"];
     private static readonly HashSet<string> ProductionSpaPostRoutes = [];
     private static readonly HashSet<string> SpaPostRoutes = [];
-    private const string SpaGetRoutesLynxPrefix = "node_modules_sillsdev_lynx";
-    private const string SpaGetRoutesWorkerPrefix = "worker-";
 
     public Startup(IConfiguration configuration, IWebHostEnvironment env, ILoggerFactory loggerFactory)
     {
@@ -320,39 +336,42 @@ public class Startup
         appLifetime.ApplicationStopped.Register(() => ApplicationContainer.Dispose());
     }
 
+    /// <summary>Is the request something that should be handled by the Angular SPA, instead of by ASP.NET?</summary>
+    /// <remarks>
+    /// A production environment will serve ASP.NET files in wwwroot and SPA files in dist/browser. A development
+    /// environment will serve ASP.NET files in wwwroot, and potentially SPA files from dist or in-memory files from `ng
+    /// serve`. Note that `ng serve` will generate different looking files depending on whether caching+prebundling is
+    /// used or not. When testing this method, it is helpful to run curl against port 5000 vs 4200. This method is
+    /// written with the assumption that undefined behaviour for malformed routes is not a concern for security or
+    /// functionality.
+    /// </remarks>
     internal bool IsSpaRoute(HttpContext context)
     {
         string path = context.Request.Path.Value;
-        if (path.Length <= 1)
-            return false;
-        int index = path.IndexOf("/", 1);
-        if (index == -1)
-            index = path.Length;
-        string prefix = path[1..index];
-        if (
-            !IsDevelopmentEnvironment
-            && (
-                prefix.EndsWith(".js")
-                || prefix.EndsWith(".js.map")
-                || prefix.EndsWith(".css")
-                || prefix.EndsWith(".css.map")
-            )
-        )
-        {
-            int hashDelimiterIndex = path.IndexOf("-");
-            prefix = prefix[..(hashDelimiterIndex - 1)];
-        }
+        HashSet<string> spaRoutes =
+            context.Request.Method == HttpMethods.Get ? SpaGetRoutes
+            : context.Request.Method == HttpMethods.Post ? SpaPostRoutes
+            : [];
 
-        bool isLazyChunkRoute =
-            context.Request.Method == HttpMethods.Get
-            && (prefix.StartsWith(SpaGetRoutesLynxPrefix) || prefix.StartsWith(SpaGetRoutesWorkerPrefix));
+        // SPA-handled paths will have forms like
+        //   /some-route/my-page?a=b
+        //   /polyfills-C3D4E5F6.js.map
+        //   /safety-worker.js
+        //   /@vite/client
+        // Anything could conceivably contain a '?'.
 
-        if (isLazyChunkRoute)
-        {
+        // Look at what is after the first slash, and before the next slash or '?'. Match paths like /projects/123456789
+        // as "projects", /login?a=b as "login", and /safety-worker.js as "safety-worker.js".
+        string exact = path.Split('/', '?').ElementAtOrDefault(1) ?? "";
+        if (spaRoutes.Contains(exact))
             return true;
-        }
 
-        return (context.Request.Method == HttpMethods.Get && SpaGetRoutes.Contains(prefix))
-            || (context.Request.Method == HttpMethods.Post && SpaPostRoutes.Contains(prefix));
+        // Then look at what is before the first dash or dot. Match paths like /polyfills-C3D4E5F6.js.map and
+        // /polyfills.js as "polyfills".
+        string beginning = exact.Split(['-', '.']).FirstOrDefault();
+        if (spaRoutes.Contains(beginning))
+            return true;
+
+        return false;
     }
 }
