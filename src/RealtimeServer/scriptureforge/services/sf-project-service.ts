@@ -31,6 +31,7 @@ const SF_PROJECT_PROFILE_FIELDS: ShareDB.ProjectionFields = {
   defaultFont: true,
   translateConfig: true,
   checkingConfig: true,
+  lynxConfig: true,
   texts: true,
   syncDisabled: true,
   sync: true,
@@ -391,6 +392,24 @@ export class SFProjectService extends ProjectService<SFProject> {
         },
         additionalProperties: false
       },
+      lynxConfig: {
+        bsonType: 'object',
+        properties: {
+          autoCorrectionsEnabled: {
+            bsonType: 'bool'
+          },
+          assessmentsEnabled: {
+            bsonType: 'bool'
+          },
+          punctuationCheckerEnabled: {
+            bsonType: 'bool'
+          },
+          allowedCharacterCheckerEnabled: {
+            bsonType: 'bool'
+          }
+        },
+        additionalProperties: false
+      },
       resourceConfig: {
         bsonType: 'object',
         properties: {
@@ -586,6 +605,7 @@ export class SFProjectService extends ProjectService<SFProject> {
       this.pathTemplate(p => p.texts),
       this.pathTemplate(p => p.translateConfig),
       this.pathTemplate(p => p.checkingConfig),
+      this.pathTemplate(p => p.lynxConfig),
       this.pathTemplate(p => p.shortName),
       this.pathTemplate(p => p.writingSystem),
       this.pathTemplate(p => p.copyrightBanner),

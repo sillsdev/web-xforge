@@ -86,6 +86,10 @@ mat-icon {
   align-items: center;
 }
 
+.child-setting {
+  margin-inline-start: 24px;
+}
+
 #btn-log-in-settings {
   background-color: variables.$pt-button-green;
   color: white;
@@ -183,4 +187,19 @@ form {
   display: flex;
   flex-direction: column;
   row-gap: 16px;
+}
+
+.lynx-settings-title {
+  display: flex;
+  align-items: center;
+}
+
+.beta-tag {
+  font-size: 0.55em;
+  color: var(--sys-on-primary);
+  background-color: var(--sys-on-primary-container);
+  padding: 0.2em 0.6em;
+  border-radius: 1em;
+  margin-inline-start: 1.5em;
+  line-height: 1.2em;
 }

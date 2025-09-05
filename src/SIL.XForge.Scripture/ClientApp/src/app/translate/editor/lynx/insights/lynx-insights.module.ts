@@ -13,9 +13,8 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTreeModule } from '@angular/material/tree';
 import { TranslocoModule } from '@ngneat/transloco';
-import { DocumentManager, DocumentReader, Localizer, Workspace } from '@sillsdev/lynx';
-import { ScriptureDeltaDocument, ScriptureDeltaDocumentFactory, ScriptureDeltaEditFactory } from '@sillsdev/lynx-delta';
-import { StandardRuleSets } from '@sillsdev/lynx-punctuation-checker';
+import { DocumentManager, DocumentReader } from '@sillsdev/lynx';
+import { ScriptureDeltaDocument, ScriptureDeltaDocumentFactory } from '@sillsdev/lynx-delta';
 import Delta, { Op } from 'quill-delta';
 import { IncludesPipe } from 'xforge-common/includes.pipe';
 import { QuillFormatRegistryService } from '../../../../shared/text/quill-editor-registration/quill-format-registry.service';
@@ -75,11 +74,6 @@ export class LynxInsightsModule {
           deps: [TextDocReader]
         },
         {
-          provide: Workspace,
-          useFactory: createLynxWorkspace,
-          deps: [DocumentManager]
-        },
-        {
           provide: APP_INITIALIZER,
           useFactory: moduleInit,
           deps: [LynxWorkspaceService],
@@ -106,21 +100,6 @@ function createLynxDocumentManager(
 ): DocumentManager<ScriptureDeltaDocument, Op, Delta> {
   const documentFactory = new ScriptureDeltaDocumentFactory();
   return new DocumentManager<ScriptureDeltaDocument, Op, Delta>(documentFactory, documentReader);
-}
-
-function createLynxWorkspace(documentManager: DocumentManager<any, any, any>): Workspace<Op> {
-  const localizer = new Localizer();
-  const editFactory = new ScriptureDeltaEditFactory();
-
-  return new Workspace<Op>({
-    localizer,
-    diagnosticProviders: [
-      ...StandardRuleSets.English.createDiagnosticProviders(localizer, documentManager, editFactory, true)
-    ],
-    onTypeFormattingProviders: [
-      ...StandardRuleSets.English.createOnTypeFormattingProviders(documentManager, editFactory)
-    ]
-  });
 }
 
 function moduleInit(lynxWorkspaceService: LynxWorkspaceService): () => Promise<void> {

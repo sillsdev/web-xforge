@@ -12,6 +12,7 @@ public class SFProject : Project
     public bool? IsRightToLeft { get; set; }
     public TranslateConfig TranslateConfig { get; set; } = new TranslateConfig();
     public CheckingConfig CheckingConfig { get; set; } = new CheckingConfig();
+    public LynxConfig LynxConfig { get; set; } = new LynxConfig();
     public ResourceConfig? ResourceConfig { get; set; }
     public List<TextInfo> Texts { get; set; } = [];
     public Sync Sync { get; set; } = new Sync();

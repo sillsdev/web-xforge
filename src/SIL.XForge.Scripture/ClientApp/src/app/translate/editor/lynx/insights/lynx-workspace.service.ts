@@ -13,10 +13,12 @@ import { Canon } from '@sillsdev/scripture';
 import { groupBy } from 'lodash-es';
 import Delta, { Op } from 'quill-delta';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
+import { LynxConfig } from 'realtime-server/lib/esm/scriptureforge/models/lynx-config';
 import { LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import {
+  BehaviorSubject,
   debounceTime,
   distinctUntilChanged,
   map,
@@ -33,13 +35,13 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../../../core/models/text-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { LynxInsight, LynxInsightAction } from './lynx-insight';
+import { LynxWorkspaceFactory } from './lynx-workspace-factory.service';
 
 const TEXTS_PATH_TEMPLATE = obj<SFProjectProfile>().pathTemplate(p => p.texts);
 
@@ -49,11 +51,22 @@ const TEXTS_PATH_TEMPLATE = obj<SFProjectProfile>().pathTemplate(p => p.texts);
 export class LynxWorkspaceService {
   private projectId?: string;
   private textDocId?: TextDocId;
+  private currentBookChapter?: RouteBookChapter;
   private textDocChangeSubscription?: Subscription;
   private projectDocChangeSubscription?: Subscription;
   private readonly curInsightsByEventUriAndSource = new Map<string, Map<string, LynxInsight[]>>();
   private curInsightsFlattened: LynxInsight[] = [];
-  public readonly rawInsightSource$: Observable<LynxInsight[]>;
+
+  // Emits when workspace is recreated when project settings change
+  private rawInsightSourceSubject$ = new BehaviorSubject<Observable<LynxInsight[]> | null>(null);
+
+  // Switches to new insights streams when a new workspace is created
+  public rawInsightSource$: Observable<LynxInsight[]> = this.rawInsightSourceSubject$.pipe(
+    switchMap(source => source ?? of([]))
+  );
+
+  private lastLynxSettings?: LynxConfig;
+  private workspace?: Workspace<Op>;
 
   /** Emits `true` while a new project's insights are loading, and `false` once the first insights arrive. */
   public readonly taskRunningStatus$: Observable<boolean>;
@@ -65,9 +78,8 @@ export class LynxWorkspaceService {
     private readonly activatedBookChapterService: ActivatedBookChapterService,
     private readonly destroyRef: DestroyRef,
     private readonly documentReader: TextDocReader,
-    private readonly featureFlags: FeatureFlagService,
-    @Inject(DocumentManager) private readonly documentManager: DocumentManager<ScriptureDeltaDocument, Op, Delta>,
-    @Inject(Workspace) public readonly workspace: Workspace<Op>
+    private readonly workspaceFactory: LynxWorkspaceFactory,
+    @Inject(DocumentManager) private readonly documentManager: DocumentManager<ScriptureDeltaDocument, Op, Delta>
   ) {
     this.activatedProjectService.projectDoc$
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
@@ -75,14 +87,6 @@ export class LynxWorkspaceService {
     this.activatedBookChapterService.activatedBookChapter$
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(bookChapter => this.onBookChapterActivated(bookChapter));
-
-    this.rawInsightSource$ = this.workspace.diagnosticsChanged$.pipe(
-      // Group events by event URI, then switchMap within each group to handle the cancellation and processing
-      // of only the latest event for that URI.
-      rxjsGroupBy(event => event.uri),
-      mergeMap(group$ => group$.pipe(switchMap(event => this.onDiagnosticsChanged(event)))),
-      debounceTime(10) // Debouncing avoids emitting after each event URI when loading a new project
-    );
 
     // Task is running if new project activated and insights have not yet been emitted by rawInsightSource$
     this.taskRunningStatus$ = this.activatedProjectService.projectDoc$.pipe(
@@ -108,16 +112,17 @@ export class LynxWorkspaceService {
   }
 
   async init(): Promise<void> {
-    await this.workspace.init();
-    await this.workspace.changeLanguage(this.i18n.localeCode);
+    // Locale change handler for when a workspace is eventually created
     this.i18n.locale$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async locale => {
-      await this.workspace.changeLanguage(locale.canonicalTag);
+      if (this.workspace) {
+        await this.workspace.changeLanguage(locale.canonicalTag);
+      }
     });
   }
 
   async getActions(insight: LynxInsight): Promise<LynxInsightAction[]> {
     const doc: ScriptureDeltaDocument | undefined = await this.documentManager.get(insight.textDocId.toString());
-    if (doc == null) {
+    if (doc == null || this.workspace == null) {
       return [];
     }
     let severity: DiagnosticSeverity = DiagnosticSeverity.Information;
@@ -154,6 +159,17 @@ export class LynxWorkspaceService {
   }
 
   async getOnTypeEdits(delta: Delta): Promise<Delta[]> {
+    if (this.workspace == null) {
+      return [];
+    }
+
+    const { autoCorrectionsEnabled } = this.getLynxSettings(this.activatedProjectService.projectDoc);
+
+    // No edits if auto-corrections are not enabled
+    if (!autoCorrectionsEnabled) {
+      return [];
+    }
+
     const curDocUri: string | undefined = this.textDocId?.toString();
     if (curDocUri == null) {
       return [];
@@ -194,6 +210,30 @@ export class LynxWorkspaceService {
       }
     }
     return edits;
+  }
+
+  /**
+   * Reconfigures the workspace with new settings and re-initializes it.
+   */
+  private async reconfigureWorkspace(lynxSettings: LynxConfig): Promise<void> {
+    this.curInsightsByEventUriAndSource.clear();
+    this.curInsightsFlattened = [];
+
+    // Create a new workspace with the updated settings
+    this.workspace = this.workspaceFactory.createWorkspace(this.documentManager, lynxSettings);
+
+    const newInsightSource$ = this.workspace.diagnosticsChanged$.pipe(
+      // Group events by event URI, then switchMap within each group to handle the cancellation and processing
+      // of only the latest event for that URI.
+      rxjsGroupBy(event => event.uri),
+      mergeMap(group$ => group$.pipe(switchMap(event => this.onDiagnosticsChanged(event)))),
+      debounceTime(10) // Debouncing avoids emitting after each event URI when loading a new project
+    );
+
+    this.rawInsightSourceSubject$.next(newInsightSource$);
+
+    await this.workspace.init();
+    await this.workspace.changeLanguage(this.i18n.localeCode);
   }
 
   private async onDiagnosticsChanged(event: DiagnosticsChanged): Promise<LynxInsight[]> {
@@ -300,8 +340,14 @@ export class LynxWorkspaceService {
 
     this.projectId = projectDoc?.id;
     this.documentReader.textDocIds = getTextDocIds(projectDoc);
+    this.lastLynxSettings = this.getLynxSettings(projectDoc);
+
     await this.documentManager.reset();
+
     if (projectDoc != null) {
+      // Configure workspace for the new project's settings
+      await this.reconfigureWorkspace(this.lastLynxSettings);
+
       this.projectDocChangeSubscription = projectDoc.changes$
         .pipe(quietTakeUntilDestroyed(this.destroyRef))
         .subscribe(async ops => {
@@ -317,11 +363,34 @@ export class LynxWorkspaceService {
               await this.documentManager.fireDeleted(textDocId);
             }
           }
+
+          // Handle Lynx settings changes
+          const currentLynxSettings: LynxConfig = this.getLynxSettings(projectDoc);
+          const haveLynxSettingsChanged: boolean = this.lynxSettingsChanged(this.lastLynxSettings, currentLynxSettings);
+
+          if (haveLynxSettingsChanged) {
+            // Reconfigure workspace with new settings to enable/disable diagnostic providers
+            await this.reconfigureWorkspace(currentLynxSettings);
+          }
+
+          this.lastLynxSettings = currentLynxSettings;
+
+          // Re-evaluate whether documents should be opened/closed based on new settings
+          if (haveLynxSettingsChanged) {
+            await this.onBookChapterActivated(this.currentBookChapter);
+          }
         });
+    } else {
+      // No project - clean up workspace if it exists
+      this.workspace = undefined;
+      this.rawInsightSourceSubject$.next(null);
+      this.lastLynxSettings = undefined;
     }
   }
 
   private async onBookChapterActivated(bookChapter: RouteBookChapter | undefined): Promise<void> {
+    this.currentBookChapter = bookChapter;
+
     const textDocId: TextDocId | undefined =
       this.activatedProjectService.projectId == null || bookChapter?.bookId == null || bookChapter.chapter == null
         ? undefined
@@ -330,21 +399,33 @@ export class LynxWorkspaceService {
             Canon.bookIdToNumber(bookChapter.bookId),
             bookChapter?.chapter
           );
-    if (textDocId === this.textDocId) {
-      return;
-    }
 
-    if (this.textDocId != null) {
-      await this.documentManager.fireClosed(this.textDocId.toString());
-      this.textDocId = undefined;
-      if (this.textDocChangeSubscription != null) {
-        this.textDocChangeSubscription.unsubscribe();
-        this.textDocChangeSubscription = undefined;
+    const { assessmentsEnabled, autoCorrectionsEnabled } = this.getLynxSettings(
+      this.activatedProjectService.projectDoc
+    );
+    const shouldOpenDoc: boolean = assessmentsEnabled || autoCorrectionsEnabled;
+
+    // If textDocId hasn't changed but we need to re-evaluate document state (e.g., settings changed)
+    const isSameTextDoc = textDocId === this.textDocId;
+    const isDocCurrentlyOpen = this.textDocId != null && this.textDocChangeSubscription != null;
+
+    // Close document if it's open but no lynx feature is enabled or we are switching to a different document
+    if (isDocCurrentlyOpen && (!shouldOpenDoc || !isSameTextDoc)) {
+      await this.documentManager.fireClosed(this.textDocId!.toString());
+      this.textDocChangeSubscription!.unsubscribe();
+      this.textDocChangeSubscription = undefined;
+      if (!isSameTextDoc) {
+        this.textDocId = undefined;
       }
     }
 
+    // Early return if same document and state doesn't need to change
+    if (isSameTextDoc && isDocCurrentlyOpen === shouldOpenDoc) {
+      return;
+    }
+
     this.textDocId = textDocId;
-    if (this.textDocId != null) {
+    if (this.textDocId != null && shouldOpenDoc) {
       const uri: string = this.textDocId.toString();
       const textDoc = await this.projectService.getText(this.textDocId);
       await this.documentManager.fireOpened(uri, {
@@ -352,17 +433,54 @@ export class LynxWorkspaceService {
         version: textDoc.adapter.version,
         content: textDoc.data as Delta
       });
+
       this.textDocChangeSubscription = textDoc.changes$
         .pipe(quietTakeUntilDestroyed(this.destroyRef))
         .subscribe(async changes => {
-          if (this.featureFlags.enableLynxInsights.enabled) {
-            await this.documentManager.fireChanged(uri, {
-              contentChanges: changes.ops ?? [],
-              version: textDoc.adapter.version
-            });
-          }
+          await this.documentManager.fireChanged(uri, {
+            contentChanges: changes.ops ?? [],
+            version: textDoc.adapter.version
+          });
         });
     }
+  }
+
+  /**
+   * Extracts the Lynx configuration settings from a project profile document.
+   * @param projectDoc The project profile document to extract settings from
+   * @returns The Lynx configuration with default values of false if not set
+   */
+  private getLynxSettings(projectDoc: SFProjectProfileDoc | undefined): LynxConfig {
+    return {
+      autoCorrectionsEnabled: projectDoc?.data?.lynxConfig?.autoCorrectionsEnabled ?? false,
+      assessmentsEnabled: projectDoc?.data?.lynxConfig?.assessmentsEnabled ?? false,
+      punctuationCheckerEnabled: projectDoc?.data?.lynxConfig?.punctuationCheckerEnabled ?? false,
+      allowedCharacterCheckerEnabled: projectDoc?.data?.lynxConfig?.allowedCharacterCheckerEnabled ?? false
+    };
+  }
+
+  /**
+   * Compares two Lynx configuration objects to determine if any settings have changed.
+   * @param prev The previous Lynx configuration
+   * @param curr The current Lynx configuration
+   * @returns true if any settings have changed, false if settings are the same
+   */
+  private lynxSettingsChanged(prev: LynxConfig | undefined, curr: LynxConfig): boolean {
+    if (prev == null) {
+      return (
+        curr.autoCorrectionsEnabled ||
+        curr.assessmentsEnabled ||
+        curr.punctuationCheckerEnabled ||
+        curr.allowedCharacterCheckerEnabled
+      );
+    }
+
+    return (
+      curr.autoCorrectionsEnabled !== prev.autoCorrectionsEnabled ||
+      curr.assessmentsEnabled !== prev.assessmentsEnabled ||
+      curr.punctuationCheckerEnabled !== prev.punctuationCheckerEnabled ||
+      curr.allowedCharacterCheckerEnabled !== prev.allowedCharacterCheckerEnabled
+    );
   }
 }
 
