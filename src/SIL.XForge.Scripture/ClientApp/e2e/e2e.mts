@@ -25,7 +25,14 @@ for (const arg of args) {
 if (testScopes.length === 0) {
   for (const scope of availableTests) testScopes.push(scope as keyof typeof testCharacterization);
 }
-console.log(`Running tests: ${testScopes.join(", ")}`);
+console.log(`Running tests: ${testScopes.join(" ")}`);
+
+const results: {
+  [key in (typeof testScopes)[number]]?: {
+    success: boolean;
+    attempts: number;
+  };
+} = {};
 
 let failed = false;
 try {
@@ -34,28 +41,25 @@ try {
     const engine = availableEngines[engineName];
 
     for (const test of testScopes) {
-      const browser = await engine.launch({ headless: preset.headless });
-      const browserContext = await browser.newContext();
-      if (preset.trace) {
-        await browserContext.tracing.start({ screenshots: true, snapshots: true });
-        await browserContext.tracing.startChunk();
-      }
-
-      // Grant permission so share links can be copied and then read from clipboard
-      // Only supported in Chromium
-      if (engineName === "chromium") await browserContext.grantPermissions(["clipboard-read", "clipboard-write"]);
-
-      const page = await browserContext.newPage();
-
-      const screenshotContext: ScreenshotContext = { engine: engineName };
-
       const testFn = tests[test];
       if (testFn == null) throw new Error(`Test ${test} not found`);
       const attempts = Math.min(numberOfTimesToAttemptTest(test), preset.maxTries ?? Number.POSITIVE_INFINITY);
 
+      const screenshotContext: ScreenshotContext = { engine: engineName };
+
       console.log(`%cRunning test ${test} with up to ${attempts} attempts`, "color: blue");
-      let reRun = false;
-      for (let i = 0; i < attempts; i++) {
+
+      let testPassed = false;
+      for (let i = 0; i < attempts && !testPassed; i++) {
+        const browser = await engine.launch({ headless: preset.headless });
+        const browserContext = await browser.newContext();
+        if (preset.trace) await browserContext.tracing.start({ screenshots: true, snapshots: true });
+
+        // Grant permission so share links can be copied and then read from clipboard (only supported in Chromium)
+        if (engineName === "chromium") await browserContext.grantPermissions(["clipboard-read", "clipboard-write"]);
+
+        const page = await browserContext.newPage();
+
         try {
           const startTime = Date.now();
           await testFn(engine, page, screenshotContext);
@@ -64,7 +68,8 @@ try {
             `%c✔ Test ${test} passed in ${mins.toFixed(2)} minutes on attempt ${i + 1} of ${attempts}`,
             "color: green"
           );
-          break; // Test passed
+          testPassed = true;
+          results[test] = { success: true, attempts: i + 1 };
         } catch (e) {
           console.error(e);
           await screenshot(
@@ -79,33 +84,36 @@ try {
           if (i === attempts - 1) {
             console.error(`Test ${test} failed after ${attempts} attempts.`);
             failed = true;
+            results[test] = { success: false, attempts: i + 1 };
           } else {
-            reRun = true;
             console.log(`Retrying...`);
           }
         } finally {
           if (preset.trace) {
-            await browserContext.tracing.stopChunk({
+            await browserContext.tracing.stop({
               path: `${preset.outputDir}/${test}_attempt_${i + 1}_main_trace.zip`
             });
           }
-          if (reRun) {
-            await browserContext.tracing.startChunk();
-          }
-          if (i === attempts - 1) {
-            await browserContext.close();
-            await browser.close();
-          }
+          await browserContext.close();
+          await browser.close();
         }
       }
-      await browserContext.close();
-      await browser.close();
     }
   }
 } catch (error) {
   console.error(error);
 } finally {
   await logger.saveToFile();
+}
+
+console.log("Test results:");
+for (const test of Object.keys(results) as (typeof testScopes)[number][]) {
+  const result = results[test]!;
+  if (result?.success) {
+    console.log(`%c✔ ${test}: passed after ${result.attempts} attempts`, "color: green");
+  } else {
+    console.log(`%c✗ ${test}: failed after ${result.attempts} attempts`, "color: red");
+  }
 }
 
 Deno.exit(failed ? 1 : 0);
