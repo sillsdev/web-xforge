@@ -1282,6 +1282,13 @@ public class MachineApiService(
                 u => u.Unset(p => p.ServalData.PreTranslationsRetrieved),
                 cancellationToken: cancellationToken
             );
+
+            // Rethrow the exception so that Hangfire can run the job again,
+            // unless the exception is caused by missing data in Scripture Forge.
+            if (e is not DataNotFoundException)
+            {
+                throw;
+            }
         }
 
         return null;
