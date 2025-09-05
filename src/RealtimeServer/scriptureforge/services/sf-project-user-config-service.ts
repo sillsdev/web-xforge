@@ -145,6 +145,18 @@ export class SFProjectUserConfigService extends SFProjectDataService<SFProjectUs
           }
         },
         additionalProperties: false
+      },
+      lynxUserConfig: {
+        bsonType: 'object',
+        properties: {
+          assessmentsEnabled: {
+            bsonType: 'bool'
+          },
+          autoCorrectionsEnabled: {
+            bsonType: 'bool'
+          }
+        },
+        additionalProperties: false
       }
     },
     additionalProperties: false
