@@ -3518,6 +3518,120 @@ describe('EditorComponent', () => {
     }));
   });
 
+  describe('Translator settings enabled/disabled', () => {
+    it('shows translator settings when translation suggestions are enabled but lynx features are disabled', fakeAsync(() => {
+      const projectConfig = {
+        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: true },
+        lynxConfig: {
+          autoCorrectionsEnabled: false,
+          assessmentsEnabled: false
+        }
+      };
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
+
+      const env = new TestEnvironment();
+      env.setupProject(projectConfig);
+      env.setProjectUserConfig();
+      env.routeWithParams(navigationParams);
+      env.wait();
+      expect(env.translatorSettingsButton).toBeTruthy();
+      env.dispose();
+    }));
+
+    it('hides translator settings when suggestions are enabled for the project but user cant edit', fakeAsync(() => {
+      const projectConfig = {
+        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: true }
+      };
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
+
+      const env = new TestEnvironment();
+      env.setCurrentUser('user06'); //has read but not edit
+      env.setupProject(projectConfig);
+      env.setProjectUserConfig();
+      env.routeWithParams(navigationParams);
+      env.wait();
+      expect(env.translatorSettingsButton).toBeFalsy();
+      env.dispose();
+    }));
+
+    it('hides translator settings when both translation suggestions and lynx features are disabled', fakeAsync(() => {
+      const projectConfig = {
+        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
+        lynxConfig: {
+          autoCorrectionsEnabled: false,
+          assessmentsEnabled: false
+        }
+      };
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
+
+      const env = new TestEnvironment();
+      env.setupProject(projectConfig);
+      env.setProjectUserConfig();
+      env.routeWithParams(navigationParams);
+      env.wait();
+      expect(env.translatorSettingsButton).toBeFalsy();
+      env.dispose();
+    }));
+
+    it('hides translator settings when lynx features are enabled but user cant edit', fakeAsync(() => {
+      const projectConfig = {
+        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
+        lynxConfig: {
+          autoCorrectionsEnabled: true,
+          assessmentsEnabled: true
+        }
+      };
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
+
+      const env = new TestEnvironment();
+      env.setCurrentUser('user06'); //has read but not edit
+      env.setupProject(projectConfig);
+      env.setProjectUserConfig();
+      env.routeWithParams(navigationParams);
+      env.wait();
+      expect(env.translatorSettingsButton).toBeFalsy();
+      env.dispose();
+    }));
+
+    it('shows translator settings when suggestions are disabled but lynx features are enabled', fakeAsync(() => {
+      const projectConfig = {
+        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
+        lynxConfig: {
+          autoCorrectionsEnabled: true,
+          assessmentsEnabled: false
+        }
+      };
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
+
+      const env = new TestEnvironment();
+      env.setupProject(projectConfig);
+      env.setProjectUserConfig();
+      env.routeWithParams(navigationParams);
+      env.wait();
+      expect(env.translatorSettingsButton).toBeTruthy();
+      env.dispose();
+    }));
+
+    it('shows translator settings when both suggestions and lynx features are enabled', fakeAsync(() => {
+      const projectConfig = {
+        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: true },
+        lynxConfig: {
+          autoCorrectionsEnabled: true,
+          assessmentsEnabled: true
+        }
+      };
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
+
+      const env = new TestEnvironment();
+      env.setupProject(projectConfig);
+      env.setProjectUserConfig();
+      env.routeWithParams(navigationParams);
+      env.wait();
+      expect(env.translatorSettingsButton).toBeTruthy();
+      env.dispose();
+    }));
+  });
+
   describe('Translation Suggestions disabled', () => {
     it('start with no previous selection', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -3692,52 +3806,6 @@ describe('EditorComponent', () => {
       expect(env.component.hasEditRight).toBe(true);
       expect(env.component.canEdit).toBe(false);
       expect(env.corruptedWarning).not.toBeNull();
-      env.dispose();
-    }));
-
-    it('shows translator settings when suggestions are enabled for the project and user can edit project', fakeAsync(() => {
-      const projectConfig = {
-        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: true }
-      };
-      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
-
-      const env = new TestEnvironment();
-      env.setupProject(projectConfig);
-      env.setProjectUserConfig();
-      env.routeWithParams(navigationParams);
-      env.wait();
-      expect(env.translatorSettingsButton).toBeTruthy();
-      env.dispose();
-    }));
-
-    it('hides translator settings when suggestions are enabled for the project but user cant edit', fakeAsync(() => {
-      const projectConfig = {
-        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: true }
-      };
-      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
-
-      const env = new TestEnvironment();
-      env.setCurrentUser('user06'); //has read but not edit
-      env.setupProject(projectConfig);
-      env.setProjectUserConfig();
-      env.routeWithParams(navigationParams);
-      env.wait();
-      expect(env.translatorSettingsButton).toBeFalsy();
-      env.dispose();
-    }));
-
-    it('hides translator settings when suggestions are disabled for the project', fakeAsync(() => {
-      const projectConfig = {
-        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false }
-      };
-      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
-
-      const env = new TestEnvironment();
-      env.setupProject(projectConfig);
-      env.setProjectUserConfig();
-      env.routeWithParams(navigationParams);
-      env.wait();
-      expect(env.translatorSettingsButton).toBeFalsy();
       env.dispose();
     }));
 
@@ -4243,31 +4311,7 @@ describe('EditorComponent', () => {
       }));
     });
 
-    describe('lynx features', () => {
-      it('should not show lynx features when both are disabled in project settings', fakeAsync(async () => {
-        const env = new TestEnvironment();
-        const textDocService = TestBed.inject(TextDocService);
-        spyOn(textDocService, 'isUsfmValidForText').and.returnValue(true);
-
-        env.setupProject({
-          lynxConfig: {
-            autoCorrectionsEnabled: false,
-            assessmentsEnabled: false
-          }
-        });
-        env.setCurrentUser('user03');
-        env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2 });
-        env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
-        env.wait();
-
-        expect(env.component.hasChapterEditPermission).toBe(true);
-        expect(env.component.isUsfmValid).toBe(true);
-        expect(env.component.lynxInsightsEnabled).toBe(false);
-        expect(env.component.lynxAutoCorrectionsEnabled).toBe(false);
-
-        env.dispose();
-      }));
-
+    describe('lynx project-level settings', () => {
       it('should not show lynx features when user lacks edit prerequisites', fakeAsync(async () => {
         const env = new TestEnvironment();
         const textDocService = TestBed.inject(TextDocService);
@@ -4304,34 +4348,7 @@ describe('EditorComponent', () => {
         env.dispose();
       }));
 
-      it('should show both lynx features when both are enabled and prerequisites are met', fakeAsync(async () => {
-        const env = new TestEnvironment();
-        const textDocService = TestBed.inject(TextDocService);
-        spyOn(textDocService, 'isUsfmValidForText').and.returnValue(true);
-
-        env.setupProject({
-          lynxConfig: {
-            autoCorrectionsEnabled: true,
-            assessmentsEnabled: true
-          }
-        });
-        env.setCurrentUser('user03');
-        env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2 });
-        env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
-        env.wait();
-
-        env.fixture.detectChanges();
-        tick();
-
-        expect(env.component.hasChapterEditPermission).toBe(true);
-        expect(env.component.isUsfmValid).toBe(true);
-        expect(env.component.lynxInsightsEnabled).toBe(true);
-        expect(env.component.lynxAutoCorrectionsEnabled).toBe(true);
-
-        env.dispose();
-      }));
-
-      it('should show only insights when only assessments are enabled', fakeAsync(async () => {
+      it('should show only insights when only assessments are enabled in project', fakeAsync(async () => {
         const env = new TestEnvironment();
         const textDocService = TestBed.inject(TextDocService);
         spyOn(textDocService, 'isUsfmValidForText').and.returnValue(true);
@@ -4355,7 +4372,7 @@ describe('EditorComponent', () => {
         env.dispose();
       }));
 
-      it('should show only auto-corrections when only auto-corrections are enabled', fakeAsync(async () => {
+      it('should show only auto-corrections when only auto-corrections are enabled in project', fakeAsync(async () => {
         const env = new TestEnvironment();
         const textDocService = TestBed.inject(TextDocService);
         spyOn(textDocService, 'isUsfmValidForText').and.returnValue(true);
@@ -4368,6 +4385,163 @@ describe('EditorComponent', () => {
         });
         env.setCurrentUser('user03');
         env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2 });
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+        env.wait();
+
+        expect(env.component.hasChapterEditPermission).toBe(true);
+        expect(env.component.isUsfmValid).toBe(true);
+        expect(env.component.lynxInsightsEnabled).toBe(false);
+        expect(env.component.lynxAutoCorrectionsEnabled).toBe(true);
+
+        env.dispose();
+      }));
+    });
+
+    describe('lynx user-level settings', () => {
+      it('should respect user settings when both project and user settings are enabled', fakeAsync(async () => {
+        const env = new TestEnvironment();
+        const textDocService = TestBed.inject(TextDocService);
+        spyOn(textDocService, 'isUsfmValidForText').and.returnValue(true);
+
+        env.setupProject({
+          lynxConfig: {
+            autoCorrectionsEnabled: true,
+            assessmentsEnabled: true
+          }
+        });
+        env.setCurrentUser('user03');
+        env.setProjectUserConfig({
+          selectedBookNum: 42,
+          selectedChapterNum: 2,
+          lynxUserConfig: {
+            autoCorrectionsEnabled: true,
+            assessmentsEnabled: true
+          }
+        });
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+        env.wait();
+
+        expect(env.component.hasChapterEditPermission).toBe(true);
+        expect(env.component.isUsfmValid).toBe(true);
+        expect(env.component.lynxInsightsEnabled).toBe(true);
+        expect(env.component.lynxAutoCorrectionsEnabled).toBe(true);
+
+        env.dispose();
+      }));
+
+      it('should disable features when user disables them even if project enables them', fakeAsync(async () => {
+        const env = new TestEnvironment();
+        const textDocService = TestBed.inject(TextDocService);
+        spyOn(textDocService, 'isUsfmValidForText').and.returnValue(true);
+
+        env.setupProject({
+          lynxConfig: {
+            autoCorrectionsEnabled: true,
+            assessmentsEnabled: true
+          }
+        });
+        env.setCurrentUser('user03');
+        env.setProjectUserConfig({
+          selectedBookNum: 42,
+          selectedChapterNum: 2,
+          lynxUserConfig: {
+            autoCorrectionsEnabled: false,
+            assessmentsEnabled: false
+          }
+        });
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+        env.wait();
+
+        expect(env.component.hasChapterEditPermission).toBe(true);
+        expect(env.component.isUsfmValid).toBe(true);
+        expect(env.component.lynxInsightsEnabled).toBe(false);
+        expect(env.component.lynxAutoCorrectionsEnabled).toBe(false);
+
+        env.dispose();
+      }));
+
+      it('should disable features when project disables them regardless of user settings', fakeAsync(async () => {
+        const env = new TestEnvironment();
+        const textDocService = TestBed.inject(TextDocService);
+        spyOn(textDocService, 'isUsfmValidForText').and.returnValue(true);
+
+        env.setupProject({
+          lynxConfig: {
+            autoCorrectionsEnabled: false,
+            assessmentsEnabled: false
+          }
+        });
+        env.setCurrentUser('user03');
+        env.setProjectUserConfig({
+          selectedBookNum: 42,
+          selectedChapterNum: 2,
+          lynxUserConfig: {
+            autoCorrectionsEnabled: true,
+            assessmentsEnabled: true
+          }
+        });
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+        env.wait();
+
+        expect(env.component.hasChapterEditPermission).toBe(true);
+        expect(env.component.isUsfmValid).toBe(true);
+        expect(env.component.lynxInsightsEnabled).toBe(false);
+        expect(env.component.lynxAutoCorrectionsEnabled).toBe(false);
+
+        env.dispose();
+      }));
+
+      it('should allow user to enable only lynx assessments when project allows both', fakeAsync(async () => {
+        const env = new TestEnvironment();
+        const textDocService = TestBed.inject(TextDocService);
+        spyOn(textDocService, 'isUsfmValidForText').and.returnValue(true);
+
+        env.setupProject({
+          lynxConfig: {
+            autoCorrectionsEnabled: true,
+            assessmentsEnabled: true
+          }
+        });
+        env.setCurrentUser('user03');
+        env.setProjectUserConfig({
+          selectedBookNum: 42,
+          selectedChapterNum: 2,
+          lynxUserConfig: {
+            autoCorrectionsEnabled: false,
+            assessmentsEnabled: true
+          }
+        });
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+        env.wait();
+
+        expect(env.component.hasChapterEditPermission).toBe(true);
+        expect(env.component.isUsfmValid).toBe(true);
+        expect(env.component.lynxInsightsEnabled).toBe(true);
+        expect(env.component.lynxAutoCorrectionsEnabled).toBe(false);
+
+        env.dispose();
+      }));
+
+      it('should allow user to enable only lynx auto-corrections when project allows both', fakeAsync(async () => {
+        const env = new TestEnvironment();
+        const textDocService = TestBed.inject(TextDocService);
+        spyOn(textDocService, 'isUsfmValidForText').and.returnValue(true);
+
+        env.setupProject({
+          lynxConfig: {
+            autoCorrectionsEnabled: true,
+            assessmentsEnabled: true
+          }
+        });
+        env.setCurrentUser('user03');
+        env.setProjectUserConfig({
+          selectedBookNum: 42,
+          selectedChapterNum: 2,
+          lynxUserConfig: {
+            autoCorrectionsEnabled: true,
+            assessmentsEnabled: false
+          }
+        });
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
         env.wait();
 

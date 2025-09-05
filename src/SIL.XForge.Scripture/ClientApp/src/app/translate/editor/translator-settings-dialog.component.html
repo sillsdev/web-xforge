@@ -1,37 +1,100 @@
 <ng-container *transloco="let t; read: 'translator_settings_dialog'">
   <h1 mat-dialog-title>{{ t("translator_settings") }}</h1>
   <mat-dialog-content>
-    @if (!onlineStatusService.isOnline) {
-      <div class="offline-text">
-        {{ t("settings_not_available_offline") }}
-      </div>
+    @if (showSuggestionsSettings) {
+      <mat-card>
+        <mat-card-content [class.offline]="!onlineStatusService.isOnline">
+          @if (!onlineStatusService.isOnline) {
+            <app-notice type="info" icon="cloud_off">
+              {{ t("settings_not_available_offline") }}
+            </app-notice>
+          }
+
+          <div class="card-header-with-toggle">
+            <mat-slide-toggle
+              id="translation-suggestions-master-switch"
+              [formControl]="suggestionsEnabledSwitch"
+              (change)="setTranslationSettingsEnabled($event.checked)"
+            >
+              <span class="card-title toggle-label">{{ t("translation_suggestions_settings_title") }}</span>
+            </mat-slide-toggle>
+          </div>
+
+          <div class="settings-content">
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t("number_of_suggestions") }}</mat-label>
+              <mat-select
+                id="num-suggestions-select"
+                [disabled]="translationSuggestionsDisabled"
+                [(ngModel)]="numSuggestions"
+              >
+                @for (value of ["1", "2", "3", "4", "5"]; track value) {
+                  <mat-option [value]="value">{{ value }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <div class="suggestions-confidence-field">
+              <span class="minor-header" [class.disabled]="translationSuggestionsDisabled">{{
+                t("suggestion_confidence")
+              }}</span>
+              <div class="slider-labels">
+                <span>{{ t("more") }}</span>
+                <span>{{ confidenceThreshold }}%</span>
+                <span>{{ t("better") }}</span>
+              </div>
+              <mat-slider
+                id="confidence-threshold-slider"
+                [disabled]="translationSuggestionsDisabled"
+                [min]="0"
+                [max]="100"
+              >
+                <input
+                  matSliderThumb
+                  [(ngModel)]="confidenceThreshold"
+                  (dragEnd)="confidenceThreshold = $event.value"
+                />
+              </mat-slider>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
     }
-    <mat-slide-toggle
-      id="suggestions-enabled-switch"
-      [formControl]="suggestionsEnabledSwitch"
-      (change)="setTranslationSettingsEnabled($event.checked)"
-    >
-      {{ t("show_translation_suggestions") }}
-    </mat-slide-toggle>
-    <mat-form-field appearance="outline">
-      <mat-label>{{ t("number_of_suggestions") }}</mat-label>
-      <mat-select id="num-suggestions-select" [disabled]="translationSuggestionsDisabled" [(ngModel)]="numSuggestions">
-        @for (value of ["1", "2", "3", "4", "5"]; track value) {
-          <mat-option [value]="value">{{ value }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-    <div class="suggestions-confidence-field">
-      <span class="minor-header">{{ t("suggestion_confidence") }}</span>
-      <div class="slider-labels">
-        <span>{{ t("more") }}</span>
-        <span>{{ confidenceThreshold }}%</span>
-        <span>{{ t("better") }}</span>
-      </div>
-      <mat-slider id="confidence-threshold-slider" [disabled]="translationSuggestionsDisabled" [min]="0" [max]="100">
-        <input matSliderThumb [(ngModel)]="confidenceThreshold" (dragEnd)="confidenceThreshold = $event.value" />
-      </mat-slider>
-    </div>
+    @if (showLynxSettings) {
+      <mat-card>
+        <mat-card-content>
+          <div class="card-header-with-toggle">
+            <mat-slide-toggle
+              id="lynx-master-switch"
+              [formControl]="lynxMasterSwitch"
+              (change)="setLynxMasterEnabled($event.checked)"
+            >
+              <span class="card-title toggle-label">{{ t("lynx_settings_title") }}</span>
+            </mat-slide-toggle>
+          </div>
+
+          <div class="settings-content lynx-sub-settings">
+            @if (lynxAssessmentsProjectEnabled) {
+              <mat-slide-toggle
+                id="lynx-assessments-enabled"
+                [formControl]="lynxAssessmentsEnabled"
+                (change)="setLynxAssessmentsEnabled($event.checked)"
+              >
+                <span class="toggle-label">{{ t("lynx_enable_assessments") }}</span>
+              </mat-slide-toggle>
+            }
+            @if (lynxAutoCorrectProjectEnabled) {
+              <mat-slide-toggle
+                id="lynx-autocorrect-enabled"
+                [formControl]="lynxAutoCorrectEnabled"
+                (change)="setLynxAutoCorrectEnabled($event.checked)"
+              >
+                <span class="toggle-label">{{ t("lynx_enable_autocorrect") }}</span>
+              </mat-slide-toggle>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
   </mat-dialog-content>
   <mat-dialog-actions>
     <button mat-button mat-dialog-close>{{ t("close") }}</button>

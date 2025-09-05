@@ -743,11 +743,14 @@
   "translator_settings_dialog": {
     "better": "Better",
     "close": "Close",
+    "lynx_enable_assessments": "Show assessments",
+    "lynx_enable_autocorrect": "Allow auto-corrections",
+    "lynx_settings_title": "Lynx",
     "more": "More",
     "number_of_suggestions": "Number of suggestions",
-    "settings_not_available_offline": "These settings are not available while you are offline.",
+    "settings_not_available_offline": "Translation suggestion settings are not available while you are offline.",
     "suggestion_confidence": "Suggestion confidence",
-    "show_translation_suggestions": "Show translation suggestions",
+    "translation_suggestions_settings_title": "Translation suggestions",
     "translator_settings": "Translator settings"
   },
   "supported_back_translation_languages_dialog": {

@@ -13,8 +13,8 @@
           [(chapter)]="chapter"
           [chapters]="chapters"
         ></app-book-chapter-chooser>
-        @if (showSource || suggestionsSettingsEnabled) {
-          <div class="toolbar-separator" [ngClass]="{ 'hide-lt-sm': !suggestionsSettingsEnabled }">&nbsp;</div>
+        @if (showSource || translatorSettingsEnabled) {
+          <div class="toolbar-separator" [ngClass]="{ 'hide-lt-sm': !translatorSettingsEnabled }">&nbsp;</div>
           @if (showSource) {
             <button
               mat-icon-button
@@ -27,7 +27,7 @@
               <mat-icon>swap_horiz</mat-icon>
             </button>
           }
-          @if (suggestionsSettingsEnabled) {
+          @if (translatorSettingsEnabled) {
             <button
               mat-icon-button
               appBlurOnClick
