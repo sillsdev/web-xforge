@@ -597,7 +597,7 @@ public class MachineApiServiceTests
         const string corpusId2 = "corpusId2";
         const string corpusId3 = "corpusId3";
         const string corpusId4 = "corpusId4";
-        const string parallelCorpusId1 = "parallelCorpusId1";
+        const string parallelCorpusId1 = ParallelCorpusId01;
         const string parallelCorpusId2 = "parallelCorpusId2";
         const int step = 123;
 
@@ -655,6 +655,15 @@ public class MachineApiServiceTests
                 // Invalid corpus format
                 new TrainingCorpus(),
             ],
+            Analysis =
+            [
+                new ParallelCorpusAnalysis
+                {
+                    ParallelCorpusRef = parallelCorpusId1,
+                    SourceQuoteConvention = "standard_english",
+                    TargetQuoteConvention = "standard_english",
+                },
+            ],
         };
         env.ConfigureTranslationBuild(translationBuild);
 
@@ -691,6 +700,7 @@ public class MachineApiServiceTests
         Assert.AreEqual(parallelCorpusId1, actual.AdditionalInfo.ParallelCorporaIds!.ElementAt(0));
         Assert.AreEqual(parallelCorpusId2, actual.AdditionalInfo.ParallelCorporaIds.ElementAt(1));
         Assert.AreEqual(TrainingDataId01, actual.AdditionalInfo.TrainingDataFileIds.Single());
+        Assert.AreEqual(actual.AdditionalInfo.QuotationDenormalization, QuotationAnalysis.Successful);
     }
 
     [Test]
@@ -916,6 +926,19 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         TranslationBuild translationBuild = env.ConfigureTranslationBuild();
+        translationBuild.Analysis =
+        [
+            new ParallelCorpusAnalysis
+            {
+                ParallelCorpusRef = ParallelCorpusId01,
+                SourceQuoteConvention = "standard_english",
+                TargetQuoteConvention = "standard_english",
+            },
+        ];
+        translationBuild.Pretranslate =
+        [
+            new PretranslateCorpus { ParallelCorpus = new ResourceLink { Id = ParallelCorpusId01 } },
+        ];
         const string trainingScriptureRange = "GEN;EXO";
         const string translationScriptureRange = "LEV;NUM";
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
@@ -997,6 +1020,7 @@ public class MachineApiServiceTests
             builds[0].AdditionalInfo.TrainingScriptureRanges.Single().ScriptureRange
         );
         Assert.AreEqual(TrainingDataId01, builds[0].AdditionalInfo.TrainingDataFileIds.Single());
+        Assert.AreEqual(builds[0].AdditionalInfo!.QuotationDenormalization, QuotationAnalysis.Successful);
     }
 
     [Test]
@@ -1038,6 +1062,7 @@ public class MachineApiServiceTests
             trainingScriptureRange,
             builds[0].AdditionalInfo?.TrainingScriptureRanges.Single().ScriptureRange
         );
+        Assert.AreEqual(builds[0].AdditionalInfo!.QuotationDenormalization, QuotationAnalysis.Unsuccessful);
     }
 
     [Test]
@@ -1089,6 +1114,7 @@ public class MachineApiServiceTests
             trainingScriptureRange,
             builds[0].AdditionalInfo?.TrainingScriptureRanges.Single().ScriptureRange
         );
+        Assert.AreEqual(builds[0].AdditionalInfo!.QuotationDenormalization, QuotationAnalysis.Unsuccessful);
     }
 
     [Test]
