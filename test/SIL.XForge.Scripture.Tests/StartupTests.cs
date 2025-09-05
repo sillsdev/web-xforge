@@ -11,6 +11,15 @@ using NUnit.Framework;
 
 namespace SIL.XForge.Scripture;
 
+/// <summary>
+/// Represents what environment the application is running in.
+/// </summary>
+public enum RunMode
+{
+    Development,
+    Production,
+}
+
 [TestFixture]
 public class StartupTests
 {
@@ -113,6 +122,23 @@ public class StartupTests
         // SUT
         bool actual = env.Startup.IsSpaRoute(env.Context);
         Assert.IsTrue(actual);
+    }
+
+    [TestCase("/chunk-OPHL7TCV.js", new RunMode[] { RunMode.Development }, true)]
+    [TestCase("/chunk-4ZGUQGYD.js", new RunMode[] { RunMode.Development }, true)]
+    [TestCase("/nope", new RunMode[] { RunMode.Development, RunMode.Production }, true)]
+    public void IsSpaRoute_(string path, RunMode[] runModes, bool expected)
+    {
+        foreach (RunMode runMode in runModes)
+        {
+            var env = new TestEnvironment(runMode.ToString());
+            env.Context.Request.Method = HttpMethods.Get;
+            env.Context.Request.Path = new PathString(path);
+
+            // SUT
+            bool actual = env.Startup.IsSpaRoute(env.Context);
+            Assert.AreEqual(expected, actual, $"Failed for path {path}, runMode {runMode}.");
+        }
     }
 
     private class TestEnvironment
