@@ -168,12 +168,29 @@ jobs:
           dotnet user-secrets set "Serval:ClientSecret" "${SERVAL_CLIENT_SECRET}"
           base64 --decode - <<< "${E2E_SECRETS_JSON_BASE64}" > ./ClientApp/e2e/secrets.json
 
-      - name: Check for cache problems
+      - name: Investigate env1
+        run: |
+          set -x
+          printenv
+          echo $CI
+          echo $GITHUB_ACTIONS
+          echo $NODE_ENV
+
+      - name: "Investigate env2"
         run: |
           set -xueo pipefail
-          pwd
-          find -name \*OPHL7TCV\*
-          grep -RHn OPHL7TCV
+          echo "CI: ${CI:-unset}"
+          echo "GITHUB_ACTIONS: ${GITHUB_ACTIONS:-unset}"
+          echo "NODE_ENV: ${NODE_ENV:-unset}"
+          echo "NG_CLI_ANALYTICS: ${NG_CLI_ANALYTICS:-unset}"
+          echo "npm_config_cache: ${npm_config_cache:-unset}"
+          echo "=== Angular CLI version and config ==="
+          cd src/SIL.XForge.Scripture/ClientApp
+          npx ng version
+          echo "=== Angular CLI cache status ==="
+          npx ng cache info || echo "Cache info command failed"
+          echo "=== Check for .angular cache directory ==="
+          ls -la .angular/ 2>/dev/null || echo "No .angular directory found"
 
       - name: Run E2E tests
         env:
