@@ -32,9 +32,13 @@ mat-panel-description {
   column-gap: 16px;
   align-items: center;
 
-  ::ng-deep mat-icon {
+  button {
     display: flex;
     flex-shrink: 0;
+  }
+
+  .new-label {
+    color: var(--draft-history-entry-new-label);
   }
 }
 

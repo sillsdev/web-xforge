@@ -29,9 +29,13 @@
             <button mat-flat-button class="format-usfm" [routerLink]="['format']">
               <mat-icon>build</mat-icon>
               <div class="hide-lt-lg">{{ t("formatting_options") }}</div>
-              <div class="hide-gt-lg">{{ t("options") }}</div>
+              <div class="hide-gt-lg">{{ t("formatting") }}</div>
             </button>
-            <span>{{ t("new") }} {{ t("change_line_breaks_and_quotation_marks") }}</span>
+            <div>
+              <span class="new-label">{{ t("new") }}</span
+              >&nbsp;
+              <span>{{ t("change_line_breaks_and_quotation_marks") }}</span>
+            </div>
           </div>
         } @else {
           @if (canDownloadBuild) {
