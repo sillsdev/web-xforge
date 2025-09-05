@@ -1,5 +1,7 @@
 import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, OnChanges, ViewChild } from '@angular/core';
 import { MatSelectChange } from '@angular/material/select';
+import { Router } from '@angular/router';
+import { Canon } from '@sillsdev/scripture';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DeltaOperation } from 'rich-text';
@@ -92,7 +94,8 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     private readonly projectService: SFProjectService,
     readonly onlineStatusService: OnlineStatusService,
     private readonly noticeService: NoticeService,
-    private errorReportingService: ErrorReportingService
+    private errorReportingService: ErrorReportingService,
+    private readonly router: Router
   ) {}
 
   ngOnChanges(): void {
@@ -112,6 +115,10 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   onSelectionChanged(e: MatSelectChange): void {
     this.selectedRevision = e.value;
     this.selectedRevisionSubject.next(this.selectedRevision);
+  }
+
+  get bookId(): string {
+    return this.bookNum !== undefined ? Canon.bookNumberToId(this.bookNum) : '';
   }
 
   populateDraftTextInit(): void {
@@ -235,6 +242,17 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       return false;
     }
     return this.draftHandlingService.canApplyDraft(this.targetProject, this.bookNum, this.chapter, this.draftDelta.ops);
+  }
+
+  get doesLatestHaveDraft(): boolean {
+    return (
+      this.targetProject?.texts.find(t => t.bookNum === this.bookNum)?.chapters.find(c => c.number === this.chapter)
+        ?.hasDraft ?? false
+    );
+  }
+
+  navigateToFormatting(): void {
+    this.router.navigateByUrl(`/projects/${this.projectId}/draft-generation/format/${this.bookId}/${this.chapter}`);
   }
 
   async applyDraft(): Promise<void> {

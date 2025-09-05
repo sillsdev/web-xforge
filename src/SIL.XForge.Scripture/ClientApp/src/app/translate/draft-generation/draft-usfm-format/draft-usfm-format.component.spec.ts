@@ -1,8 +1,9 @@
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
+import { Location } from '@angular/common';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatRadioButtonHarness } from '@angular/material/radio/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import {
@@ -34,10 +35,11 @@ import { DraftUsfmFormatComponent } from './draft-usfm-format.component';
 
 const mockedDraftHandlingService = mock(DraftHandlingService);
 const mockedActivatedProjectService = mock(ActivatedProjectService);
+const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedServalAdministration = mock(ServalAdministrationService);
-const mockedRouter = mock(Router);
+const mockedLocation = mock(Location);
 const mockI18nService = mock(I18nService);
 const mockedNoticeService = mock(NoticeService);
 const mockedDialogService = mock(DialogService);
@@ -55,16 +57,21 @@ describe('DraftUsfmFormatComponent', () => {
     providers: [
       { provide: DraftHandlingService, useMock: mockedDraftHandlingService },
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
+      { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: ServalAdministrationService, useMock: mockedServalAdministration },
-      { provide: Router, useMock: mockedRouter },
+      { provide: Location, useMock: mockedLocation },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: I18nService, useMock: mockI18nService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: DialogService, useMock: mockedDialogService }
     ]
   }));
+
+  beforeEach(() => {
+    when(mockedActivatedRoute.params).thenReturn(of({}));
+  });
 
   it('shows message if user is not online', fakeAsync(async () => {
     const env = new TestEnvironment({
@@ -79,6 +86,17 @@ describe('DraftUsfmFormatComponent', () => {
     expect(env.harnesses?.length).toEqual(5);
     const isDisabled: boolean = await env.harnesses![0].isDisabled();
     expect(isDisabled).toBe(true);
+  }));
+
+  it('navigates to book and chapter from route params', fakeAsync(() => {
+    when(mockedActivatedRoute.params).thenReturn(of({ bookId: 'EXO', chapter: '2' }));
+    const env = new TestEnvironment();
+    tick(EDITOR_READY_TIMEOUT);
+    env.fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+    expect(env.component.bookNum).toBe(2);
+    expect(env.component.chapterNum).toBe(2);
+    verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
   }));
 
   // Book and chapter changed
@@ -135,7 +153,7 @@ describe('DraftUsfmFormatComponent', () => {
     // user will be prompted that there are unsaved changes
     expect(await env.component.confirmLeave()).toBe(true);
     verify(mockedProjectService.onlineSetUsfmConfig(env.projectId, anything())).never();
-    verify(mockedRouter.navigate(deepEqual(['projects', env.projectId, 'draft-generation']))).once();
+    verify(mockedLocation.back()).once();
   }));
 
   it('should save changes to the draft format', fakeAsync(async () => {
@@ -160,7 +178,7 @@ describe('DraftUsfmFormatComponent', () => {
     env.fixture.detectChanges();
     verify(mockedProjectService.onlineSetUsfmConfig(env.projectId, deepEqual(config))).once();
     verify(mockedServalAdministration.onlineRetrievePreTranslationStatus(env.projectId)).once();
-    verify(mockedRouter.navigate(deepEqual(['projects', env.projectId, 'draft-generation']))).once();
+    verify(mockedLocation.back()).once();
   }));
 
   it('should not save if format is empty', fakeAsync(() => {
