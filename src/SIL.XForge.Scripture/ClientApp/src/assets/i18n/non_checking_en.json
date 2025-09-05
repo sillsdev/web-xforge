@@ -405,6 +405,8 @@
     "draft_legacy_warning": "We have updated our drafting functionality. You can take advantage of this by [link:generateDraftUrl]generating a new draft[/link].",
     "error_applying_draft": "Failed to add the draft to the project. Try again later.",
     "format_draft": "Formatting options",
+    "format_draft_can": "Customize formatting options for the draft",
+    "format_draft_cannot": "You can only change formatting for books from the latest draft",
     "no_draft_notice": "{{ bookChapterName }} has no draft.",
     "offline_notice": "Generated drafts are not available offline.",
     "overwrite": "Adding the draft will overwrite the current chapter. Are you sure you want to continue?",

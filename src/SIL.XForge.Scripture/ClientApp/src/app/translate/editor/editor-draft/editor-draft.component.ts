@@ -244,6 +244,13 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     return this.draftHandlingService.canApplyDraft(this.targetProject, this.bookNum, this.chapter, this.draftDelta.ops);
   }
 
+  get doesLatestHaveDraft(): boolean {
+    return (
+      this.targetProject?.texts.find(t => t.bookNum === this.bookNum)?.chapters.find(c => c.number === this.chapter)
+        ?.hasDraft ?? false
+    );
+  }
+
   navigateToFormatting(): void {
     this.router.navigateByUrl(`/projects/${this.projectId}/draft-generation/format/${this.bookId}/${this.chapter}`);
   }

@@ -1,88 +1,95 @@
-@if (onlineStatusService.onlineStatus$ | async) {
-  @if (draftCheckState === "draft-unknown") {
-    <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
-  } @else if (draftCheckState === "draft-empty") {
-    <app-notice icon="info" type="primary" mode="outline">
-      {{ "editor_draft_tab.no_draft_notice" | transloco: { bookChapterName: this.getLocalizedBookChapter() } }}
-      <p>{{ "editor_draft_tab.click_book_to_preview" | transloco }}</p>
-      <app-draft-preview-books></app-draft-preview-books>
-    </app-notice>
-  } @else if (draftCheckState === "draft-legacy") {
-    <app-notice type="warning" icon="warning">
-      <transloco
-        key="editor_draft_tab.draft_legacy_warning"
-        [params]="{ generateDraftUrl: { route: generateDraftUrl } }"
-      ></transloco>
-    </app-notice>
-  }
+<ng-container *transloco="let t; read: 'editor_draft_tab'">
+  @if (onlineStatusService.onlineStatus$ | async) {
+    @if (draftCheckState === "draft-unknown") {
+      <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
+    } @else if (draftCheckState === "draft-empty") {
+      <app-notice icon="info" type="primary" mode="outline">
+        {{ "editor_draft_tab.no_draft_notice" | transloco: { bookChapterName: this.getLocalizedBookChapter() } }}
+        <p>{{ "editor_draft_tab.click_book_to_preview" | transloco }}</p>
+        <app-draft-preview-books></app-draft-preview-books>
+      </app-notice>
+    } @else if (draftCheckState === "draft-legacy") {
+      <app-notice type="warning" icon="warning">
+        <transloco
+          key="editor_draft_tab.draft_legacy_warning"
+          [params]="{ generateDraftUrl: { route: generateDraftUrl } }"
+        ></transloco>
+      </app-notice>
+    }
 
-  @if (isDraftReady) {
-    <div class="toolbar">
-      @if (featureFlags.newDraftHistory.enabled) {
-        <mat-form-field class="draft-select" appearance="outline">
-          <mat-select
-            [value]="selectedRevision"
-            (selectionChange)="onSelectionChanged($event)"
-            panelWidth="''"
-            panelClass="draft-select-panel"
-            [disabled]="isSelectDisabled$ | async"
-            hideSingleSelectionIndicator
-          >
-            <mat-select-trigger>
-              {{ selectedRevision ?? "" | revisionFormat }}
-            </mat-select-trigger>
-            @for (r of draftRevisions; track r) {
-              <mat-option [value]="r">
-                <div class="option-content">
-                  <span>{{ r | revisionFormat }}</span>
-                </div>
-              </mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-      }
-      <div class="apply-draft-button-container">
-        @if (featureFlags.usfmFormat.enabled) {
-          <button mat-button (click)="navigateToFormatting()">
-            <mat-icon>build</mat-icon>
-            <transloco key="editor_draft_tab.format_draft"></transloco>
-          </button>
+    @if (isDraftReady) {
+      <div class="toolbar">
+        @if (featureFlags.newDraftHistory.enabled) {
+          <mat-form-field class="draft-select" appearance="outline">
+            <mat-select
+              [value]="selectedRevision"
+              (selectionChange)="onSelectionChanged($event)"
+              panelWidth="''"
+              panelClass="draft-select-panel"
+              [disabled]="isSelectDisabled$ | async"
+              hideSingleSelectionIndicator
+            >
+              <mat-select-trigger>
+                {{ selectedRevision ?? "" | revisionFormat }}
+              </mat-select-trigger>
+              @for (r of draftRevisions; track r) {
+                <mat-option [value]="r">
+                  <div class="option-content">
+                    <span>{{ r | revisionFormat }}</span>
+                  </div>
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
         }
-        @if (userAppliedDraft) {
-          <span class="draft-indicator">
-            <mat-icon class="check-icon">check</mat-icon>
-            <transloco key="editor_draft_tab.draft_indicator_applied"></transloco>
-          </span>
-        }
-        @if (canApplyDraft) {
-          <button mat-flat-button color="primary" (click)="applyDraft()">
-            <mat-icon>auto_awesome</mat-icon>
-            @if (isDraftApplied) {
-              <transloco key="editor_draft_tab.reapply_to_project"></transloco>
-            } @else {
-              <transloco key="editor_draft_tab.apply_to_project"></transloco>
-            }
-          </button>
-        }
-        @if (!canApplyDraft) {
-          <app-notice icon="warning" type="warning" mode="fill-dark">
-            {{ "editor_draft_tab.cannot_import" | transloco }}
-          </app-notice>
-        }
+        <div class="apply-draft-button-container">
+          @if (featureFlags.usfmFormat.enabled) {
+            <span
+              [matTooltip]="t(doesLatestHaveDraft ? 'format_draft_can' : 'format_draft_cannot')"
+              [style.cursor]="doesLatestHaveDraft ? 'pointer' : 'not-allowed'"
+            >
+              <button mat-button (click)="navigateToFormatting()" [disabled]="!doesLatestHaveDraft">
+                <mat-icon>build</mat-icon>
+                <transloco key="editor_draft_tab.format_draft"></transloco>
+              </button>
+            </span>
+          }
+          @if (userAppliedDraft) {
+            <span class="draft-indicator">
+              <mat-icon class="check-icon">check</mat-icon>
+              <transloco key="editor_draft_tab.draft_indicator_applied"></transloco>
+            </span>
+          }
+          @if (canApplyDraft) {
+            <button mat-flat-button color="primary" (click)="applyDraft()">
+              <mat-icon>auto_awesome</mat-icon>
+              @if (isDraftApplied) {
+                <transloco key="editor_draft_tab.reapply_to_project"></transloco>
+              } @else {
+                <transloco key="editor_draft_tab.apply_to_project"></transloco>
+              }
+            </button>
+          }
+          @if (!canApplyDraft) {
+            <app-notice icon="warning" type="warning" mode="fill-dark">
+              {{ "editor_draft_tab.cannot_import" | transloco }}
+            </app-notice>
+          }
+        </div>
       </div>
-    </div>
+    }
+  } @else {
+    <app-notice icon="warning" type="warning">
+      {{ "editor_draft_tab.offline_notice" | transloco }}
+    </app-notice>
   }
-} @else {
-  <app-notice icon="warning" type="warning">
-    {{ "editor_draft_tab.offline_notice" | transloco }}
-  </app-notice>
-}
 
-<app-text
-  [isReadOnly]="true"
-  [subscribeToUpdates]="false"
-  [isRightToLeft]="isRightToLeft"
-  [fontSize]="fontSize"
-  [ngClass]="draftCheckState"
-  [style.--project-font]="fontService.getFontFamilyFromProject(targetProject)"
-></app-text>
+  <app-text
+    [isReadOnly]="true"
+    [subscribeToUpdates]="false"
+    [isRightToLeft]="isRightToLeft"
+    [fontSize]="fontSize"
+    [ngClass]="draftCheckState"
+    [style.--project-font]="fontService.getFontFamilyFromProject(targetProject)"
+  ></app-text>
+</ng-container>
