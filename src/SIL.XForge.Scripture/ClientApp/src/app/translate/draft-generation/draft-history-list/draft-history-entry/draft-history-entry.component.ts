@@ -270,12 +270,34 @@ export class DraftHistoryEntryComponent {
     return this.i18n.enumerateList(this._translationSources) + ' \u2022'; // &bull; •
   }
 
-  @Input() isLatestBuild = false;
+  private _requireSelectingFormattingOptions?: boolean;
+  get requireSelectingFormattingOptions(): boolean {
+    return (
+      !!this._requireSelectingFormattingOptions &&
+      this.featureFlags.usfmFormat.enabled &&
+      Date.now() < this.showSelectFormatNoticeExpireDate.getTime()
+    );
+  }
+
+  private _isLatestBuild: boolean = false;
+  @Input() set isLatestBuild(value: boolean) {
+    this._isLatestBuild = value;
+    if (this._requireSelectingFormattingOptions != null) return;
+    if (this.activatedProjectService.projectDoc != null) {
+      this._requireSelectingFormattingOptions =
+        this.activatedProjectService.projectDoc.data?.translateConfig.draftConfig.usfmConfig == null;
+    }
+  }
+
+  get isLatestBuild(): boolean {
+    return this._isLatestBuild;
+  }
 
   trainingConfigurationOpen = false;
 
   readonly columnsToDisplay: string[] = ['scriptureRange', 'source', 'target'];
 
+  private readonly showSelectFormatNoticeExpireDate = new Date('2025-12-01T12:00:00.000Z');
   private dataFileQuery?: RealtimeQuery<TrainingDataDoc>;
 
   constructor(
