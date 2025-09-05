@@ -143,7 +143,12 @@ describe('SaUsersComponent', () => {
 
     // First page
     expect(env.userRows.length).toEqual(2);
+    expect(env.nextPageButton.nativeElement.getAttribute('aria-disabled')).toBeNull();
+
     env.clickElement(env.nextPageButton);
+
+    expect(env.nextPageButton.nativeElement.getAttribute('aria-disabled')).toBe('true');
+
     // Second page
     expect(env.userRows.length).toEqual(1);
   }));

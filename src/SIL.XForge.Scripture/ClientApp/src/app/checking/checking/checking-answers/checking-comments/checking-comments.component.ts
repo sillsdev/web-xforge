@@ -26,7 +26,8 @@ export interface CommentAction {
 @Component({
   selector: 'app-checking-comments',
   templateUrl: './checking-comments.component.html',
-  styleUrls: ['./checking-comments.component.scss']
+  styleUrls: ['./checking-comments.component.scss'],
+  standalone: false
 })
 export class CheckingCommentsComponent extends SubscriptionDisposable implements OnInit {
   @ViewChild(CheckingInputFormComponent) inputComponent?: CheckingInputFormComponent;

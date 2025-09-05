@@ -15,7 +15,8 @@ import { TextAndAudioComponent } from '../text-and-audio/text-and-audio.componen
 @Component({
   selector: 'app-attach-audio',
   templateUrl: './attach-audio.component.html',
-  styleUrl: './attach-audio.component.scss'
+  styleUrl: './attach-audio.component.scss',
+  standalone: false
 })
 export class AttachAudioComponent {
   @ViewChild(SingleButtonAudioPlayerComponent) audioPlayer?: SingleButtonAudioPlayerComponent;

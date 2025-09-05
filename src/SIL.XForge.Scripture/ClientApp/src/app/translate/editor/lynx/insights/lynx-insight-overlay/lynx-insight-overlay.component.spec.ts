@@ -36,7 +36,8 @@ const defaultInsightConfig: LynxInsightConfig = {
     [insights]="insights"
     [editor]="editor"
     [textModelConverter]="textModelConverter"
-  ></app-lynx-insight-overlay>`
+  ></app-lynx-insight-overlay>`,
+  standalone: false
 })
 class HostComponent {
   @ViewChild('overlay') component!: LynxInsightOverlayComponent;

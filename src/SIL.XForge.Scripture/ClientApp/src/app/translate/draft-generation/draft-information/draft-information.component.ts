@@ -7,7 +7,6 @@ import { BuildDto } from '../../../machine-api/build-dto';
 
 @Component({
   selector: 'app-draft-information',
-  standalone: true,
   imports: [UICommonModule, CommonModule],
   templateUrl: './draft-information.component.html'
 })

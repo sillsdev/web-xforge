@@ -48,24 +48,17 @@ public class Startup
         "vendor.js.map",
         "main.js",
         "main.js.map",
-        "manifest.json",
+        "@vite",
+        "@fs",
         "sockjs-node",
         "3rdpartylicenses.txt",
     ];
 
     // examples of filenames are "main-es5.4e5295b95e4b6c37b696.js", "styles.a2f070be0b37085d72ba.css"
-    private static readonly HashSet<string> ProductionSpaGetRoutes =
-    [
-        "polyfills-es2015",
-        "polyfills-es5",
-        "runtime-es2015",
-        "runtime-es5",
-        "main-es2015",
-        "main-es5",
-        "styles",
-    ];
+    private static readonly HashSet<string> ProductionSpaGetRoutes = ["polyfills", "main", "chunk", "styles"];
     private static readonly HashSet<string> SpaGetRoutes =
     [
+        "manifest.json",
         "callback",
         "connect-project",
         "login",
@@ -81,7 +74,7 @@ public class Startup
     private static readonly HashSet<string> ProductionSpaPostRoutes = [];
     private static readonly HashSet<string> SpaPostRoutes = [];
     private const string SpaGetRoutesLynxPrefix = "node_modules_sillsdev_lynx";
-    private const string SpaGetRoutesWorkerSuffix = "worker_ts.js";
+    private const string SpaGetRoutesWorkerPrefix = "worker-";
 
     public Startup(IConfiguration configuration, IWebHostEnvironment env, ILoggerFactory loggerFactory)
     {
@@ -186,7 +179,7 @@ public class Startup
         if (SpaDevServerStartup == SpaDevServerStartup.None)
         {
             // In production, the Angular files will be served from this directory
-            services.AddSpaStaticFiles(configuration => configuration.RootPath = "ClientApp/dist");
+            services.AddSpaStaticFiles(configuration => configuration.RootPath = "ClientApp/dist/browser");
         }
 
         services.AddSFMachine(Configuration, Environment);
@@ -309,6 +302,9 @@ public class Startup
                             string npmScript = "start";
                             Console.WriteLine($"Info: SF is serving angular using script {npmScript}.");
                             spa.UseAngularCliServer(npmScript);
+                            // Note that dotnet will need to see and parse a line like
+                            // "open your browser on http://localhost:4200/ "
+                            // (https://stackoverflow.com/q/60189930).
                             break;
 
                         case SpaDevServerStartup.Listen:
@@ -328,7 +324,10 @@ public class Startup
     {
         string path = context.Request.Path.Value;
         if (path.Length <= 1)
+        {
+            Console.WriteLine("Startup.cs IsSpaRoute: Not an SPA route because path length <= 1: '{path}'", path);
             return false;
+        }
         int index = path.IndexOf("/", 1);
         if (index == -1)
             index = path.Length;
@@ -343,20 +342,24 @@ public class Startup
             )
         )
         {
-            int periodIndex = path.IndexOf(".");
-            prefix = prefix[..(periodIndex - 1)];
+            int hashDelimiterIndex = path.IndexOf("-");
+            prefix = prefix[..(hashDelimiterIndex - 1)];
         }
 
         bool isLazyChunkRoute =
             context.Request.Method == HttpMethods.Get
-            && (prefix.StartsWith(SpaGetRoutesLynxPrefix) || prefix.EndsWith(SpaGetRoutesWorkerSuffix));
+            && (prefix.StartsWith(SpaGetRoutesLynxPrefix) || prefix.StartsWith(SpaGetRoutesWorkerPrefix));
 
         if (isLazyChunkRoute)
         {
+            Console.WriteLine($"Startup.cs IsSpaRoute: Detected lazy chunk route: '{path}'");
             return true;
         }
 
-        return (context.Request.Method == HttpMethods.Get && SpaGetRoutes.Contains(prefix))
+        bool result =
+            (context.Request.Method == HttpMethods.Get && SpaGetRoutes.Contains(prefix))
             || (context.Request.Method == HttpMethods.Post && SpaPostRoutes.Contains(prefix));
+        Console.WriteLine($"Startup.cs IsSpaRoute: Detected SPA route: {result}: '{path}'");
+        return result;
     }
 }

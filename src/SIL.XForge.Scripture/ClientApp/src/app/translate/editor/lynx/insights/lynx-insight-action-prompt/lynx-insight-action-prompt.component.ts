@@ -24,7 +24,8 @@ import { getMostNestedInsight } from '../lynx-insight-util';
 @Component({
   selector: 'app-lynx-insight-action-prompt',
   templateUrl: './lynx-insight-action-prompt.component.html',
-  styleUrl: './lynx-insight-action-prompt.component.scss'
+  styleUrl: './lynx-insight-action-prompt.component.scss',
+  standalone: false
 })
 export class LynxInsightActionPromptComponent implements OnInit {
   @Input() set editor(value: LynxableEditor | undefined) {

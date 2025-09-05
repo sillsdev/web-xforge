@@ -30,7 +30,6 @@ export interface TrainingDataFileUpload {
 @Component({
   selector: 'app-training-data-upload-dialog',
   templateUrl: './training-data-upload-dialog.component.html',
-  standalone: true,
   imports: [
     CommonModule,
     MatButtonModule,

@@ -1,5 +1,5 @@
 @use 'src/breakpoints';
-@use 'src/variables';
+@use 'src/variables' as *;
 
 :host {
   height: 100%;

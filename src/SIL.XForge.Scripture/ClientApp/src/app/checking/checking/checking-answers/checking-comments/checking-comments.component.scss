@@ -1,4 +1,4 @@
-@import '../../checking-global-vars';
+@use '../../checking-global-vars' as *;
 
 .answer-comment:last-of-type {
   margin-bottom: 4px;

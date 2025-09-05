@@ -54,7 +54,6 @@ export interface ProjectStatus {
 /** Enables user to configure settings for drafting. */
 @Component({
   selector: 'app-draft-sources',
-  standalone: true,
   imports: [
     MatButtonModule,
     MatFormFieldModule,
