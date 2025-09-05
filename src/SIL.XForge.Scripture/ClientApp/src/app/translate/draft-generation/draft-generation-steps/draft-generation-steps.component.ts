@@ -2,11 +2,12 @@ import { Component, DestroyRef, EventEmitter, OnInit, Output, ViewChild } from '
 import { MatStepper } from '@angular/material/stepper';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
+import { isEqual } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { ProjectScriptureRange, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, merge, Subscription } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { distinctUntilChanged, filter } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -138,10 +139,11 @@ export class DraftGenerationStepsComponent implements OnInit {
     combineLatest([this.draftSourcesService.getDraftProjectSources(), this.activatedProject.projectId$])
       .pipe(
         quietTakeUntilDestroyed(this.destroyRef),
-        filter(([{ trainingTargets, draftingSources }], projectId) => {
-          this.setProjectDisplayNames(trainingTargets[0], draftingSources[0]);
-          return trainingTargets[0] != null && draftingSources[0] != null && projectId != null;
-        })
+        filter(
+          ([{ trainingTargets, draftingSources }], projectId) =>
+            trainingTargets[0] != null && draftingSources[0] != null && projectId != null
+        ),
+        distinctUntilChanged(isEqual)
       )
       .subscribe(
         // Build book lists
@@ -156,6 +158,8 @@ export class DraftGenerationStepsComponent implements OnInit {
             );
             this.cancel.emit();
           }
+
+          this.setProjectDisplayNames(trainingTargets[0], draftingSources[0]);
 
           // The null values will have been filtered above
           const target = trainingTargets[0]!;
