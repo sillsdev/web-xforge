@@ -36,26 +36,20 @@ public class Startup
 {
     private static readonly HashSet<string> DevelopmentSpaGetRoutes =
     [
-        "runtime.js",
-        "runtime.js.map",
-        "polyfills.js",
-        "polyfills.js.map",
-        "styles.css",
-        "styles.css.map",
-        "styles.js",
-        "styles.js.map",
-        "vendor.js",
-        "vendor.js.map",
-        "main.js",
-        "main.js.map",
+        // "runtime.js",
+        // "runtime.js.map",
+
+        // "vendor.js",
+        // "vendor.js.map",
+
         "@vite",
         "@fs",
         "sockjs-node",
         "3rdpartylicenses.txt",
     ];
 
-    // examples of filenames are "main-es5.4e5295b95e4b6c37b696.js", "styles.a2f070be0b37085d72ba.css"
-    private static readonly HashSet<string> ProductionSpaGetRoutes = ["polyfills", "main", "chunk", "styles"];
+    // ?   examples of filenames are "main-es5.4e5295b95e4b6c37b696.js", "styles.a2f070be0b37085d72ba.css"
+    private static readonly HashSet<string> ProductionSpaGetRoutes = [];
     private static readonly HashSet<string> SpaGetRoutes =
     [
         "manifest.json",
@@ -68,6 +62,13 @@ public class Startup
         "system-administration",
         "favicon.ico",
         "assets",
+        "polyfills",
+        "main",
+        "chunk",
+        "styles",
+        "worker",
+        "en",
+        "quill",
     ];
 
     private static readonly HashSet<string> DevelopmentSpaPostRoutes = ["sockjs-node"];
@@ -322,10 +323,11 @@ public class Startup
 
     internal bool IsSpaRoute(HttpContext context)
     {
+        Console.WriteLine($"Startup.cs IsSpaRoute: Checking if SPA route: '{context.Request.Path}'");
         string path = context.Request.Path.Value;
         if (path.Length <= 1)
         {
-            Console.WriteLine("Startup.cs IsSpaRoute: Not an SPA route because path length <= 1: '{path}'", path);
+            Console.WriteLine($"Startup.cs IsSpaRoute: Not an SPA route because path length <= 1: '{path}'");
             return false;
         }
         int index = path.IndexOf("/", 1);
@@ -333,8 +335,7 @@ public class Startup
             index = path.Length;
         string prefix = path[1..index];
         if (
-            !IsDevelopmentEnvironment
-            && (
+            (
                 prefix.EndsWith(".js")
                 || prefix.EndsWith(".js.map")
                 || prefix.EndsWith(".css")
@@ -343,7 +344,10 @@ public class Startup
         )
         {
             int hashDelimiterIndex = path.IndexOf("-");
-            prefix = prefix[..(hashDelimiterIndex - 1)];
+            if (hashDelimiterIndex >= 0)
+            {
+                prefix = prefix[..(hashDelimiterIndex - 1)];
+            }
         }
 
         bool isLazyChunkRoute =
