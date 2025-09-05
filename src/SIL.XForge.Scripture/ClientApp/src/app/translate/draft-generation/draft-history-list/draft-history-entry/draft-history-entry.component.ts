@@ -272,7 +272,11 @@ export class DraftHistoryEntryComponent {
 
   private _requireSelectingFormattingOptions?: boolean;
   get requireSelectingFormattingOptions(): boolean {
-    return this._requireSelectingFormattingOptions ?? false;
+    return (
+      !!this._requireSelectingFormattingOptions &&
+      this.featureFlags.usfmFormat.enabled &&
+      Date.now() < this.showSelectFormatNoticeExpireDate.getTime()
+    );
   }
 
   private _isLatestBuild: boolean = false;
@@ -293,6 +297,7 @@ export class DraftHistoryEntryComponent {
 
   readonly columnsToDisplay: string[] = ['scriptureRange', 'source', 'target'];
 
+  private readonly showSelectFormatNoticeExpireDate = new Date('2025-12-01T12:00:00.000Z');
   private dataFileQuery?: RealtimeQuery<TrainingDataDoc>;
 
   constructor(

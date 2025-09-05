@@ -7,6 +7,7 @@
   --draft-history-entry-green-color: #{if($is-dark, lightGreen, darkGreen)};
   --draft-history-entry-grey-color: #{if($is-dark, hsl(0 0% 60%), hsl(0 0% 45%))};
   --draft-history-entry-subtitle-color: #{if($is-dark, lightGrey, #666)};
+  --draft-history-entry-new-label: #{mat.get-theme-color($theme, primary, if($is-dark, 70, 40))};
 }
 
 @mixin theme($theme) {
