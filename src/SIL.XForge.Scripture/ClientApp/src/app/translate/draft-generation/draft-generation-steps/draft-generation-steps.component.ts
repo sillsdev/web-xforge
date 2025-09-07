@@ -102,6 +102,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   targetProjectName?: string;
 
   showBookSelectionError = false;
+  trainingBooksWereAutoSelected = false;
   isTrainingOptional = false;
 
   fastTraining: boolean = false;
@@ -212,6 +213,9 @@ export class DraftGenerationStepsComponent implements OnInit {
               this.trainingDataFiles = this.trainingDataQuery?.docs.map(doc => doc.data).filter(d => d != null) ?? [];
             });
 
+          // Reset the field that toggles a notice that books were automatically selected
+          this.trainingBooksWereAutoSelected = false;
+
           // If book exists in both target and source, add to available books.
           // Otherwise, add to unusable books.
           // Ensure books are displayed in ascending canonical order.
@@ -254,6 +258,9 @@ export class DraftGenerationStepsComponent implements OnInit {
               textProgress != null &&
               textProgress.translated > minimumTranslatedSegments &&
               (textProgress.percentage > 99 || textProgress.blank <= 3);
+
+            // If books were automatically selected, reflect this in the UI via a notice
+            this.trainingBooksWereAutoSelected ||= selected;
 
             // Training books
             let isPresentInASource = false;
@@ -584,6 +591,14 @@ export class DraftGenerationStepsComponent implements OnInit {
     for (const [, trainingBooks] of Object.entries(this.availableTrainingBooks)) {
       // set the selected state of any training book to false if it is selected for translation
       trainingBooks.forEach(b => (b.selected = booksForTranslation.includes(b.number) ? false : b.selected));
+    }
+
+    // If books were auto-selected for training, but none are selected now, clear the notice
+    if (
+      this.trainingBooksWereAutoSelected &&
+      !Object.values(this.availableTrainingBooks).some(books => books.some(book => book.selected))
+    ) {
+      this.trainingBooksWereAutoSelected = false;
     }
   }
 
