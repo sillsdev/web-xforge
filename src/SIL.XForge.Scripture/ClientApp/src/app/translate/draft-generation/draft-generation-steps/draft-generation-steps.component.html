@@ -110,6 +110,11 @@
         </ng-template>
         <h1>{{ t("choose_books_for_training_title") }}</h1>
         <h2>{{ t("translated_books") }}</h2>
+        @if (trainingBooksWereAutoSelected) {
+          <app-notice icon="info" mode="basic" type="info">{{
+            t("books_were_automatically_selected_for_training")
+          }}</app-notice>
+        }
         <app-book-multi-select
           [availableBooks]="selectableTrainingBooksByProj(activatedProject.projectId)"
           [selectedBooks]="selectedTrainingBooksByProj(activatedProject.projectId)"
