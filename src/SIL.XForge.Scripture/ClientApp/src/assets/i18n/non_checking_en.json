@@ -230,6 +230,7 @@
     "back": "Back",
     "books_are_hidden_hide_explanation": "{{ numBooks }} books are hidden. {{ underlineStart }}Hide explanation{{ underlineEnd }}",
     "books_are_hidden_show_why": "{{ numBooks }} books are hidden. {{ underlineStart }}Show why{{ underlineEnd }}",
+    "books_were_automatically_selected_for_training": "Completed books were automatically selected for training.",
     "choose_books_for_training_error": "No books selected. Select training books to continue.",
     "choose_books_for_training_header": "Training",
     "choose_books_for_training_no_books_error": "No books are available for training. Your project must have at least one translated book to use for training.",
