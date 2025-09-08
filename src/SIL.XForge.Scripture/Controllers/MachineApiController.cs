@@ -933,6 +933,48 @@ public class MachineApiController : ControllerBase
     }
 
     /// <summary>
+    /// Gets the count of chapters that have TextDocument objects.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="bookNum">The book number.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">The chapter count was retrieved successfully.</response>
+    /// <response code="403">You do not have permission to access this project.</response>
+    /// <response code="404">The project does not exist.</response>
+    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
+    [HttpGet(MachineApi.GetChaptersForBook)]
+    public async Task<ActionResult<int>> GetPretranslationChapterCountAsync(
+        string sfProjectId,
+        int bookNum,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            int count = await _machineApiService.GetPretranslationChapterCountAsync(
+                _userAccessor.UserId,
+                sfProjectId,
+                bookNum,
+                cancellationToken
+            );
+            return Ok(count);
+        }
+        catch (BrokenCircuitException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+    }
+
+    /// <summary>
     /// Translates a segment of text into the top N results.
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>

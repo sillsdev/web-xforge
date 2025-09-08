@@ -2670,6 +2670,12 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public void GetPretranslationChapterCountAsync_Success()
+    {
+        // TODO: Gets the number of documents
+    }
+
+    [Test]
     public void GetWordGraphAsync_NoPermission()
     {
         // Set up test environment
