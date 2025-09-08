@@ -352,6 +352,7 @@ public class Startup
             "/connect-project",
             "/callback",
             "/serval-administration",
+            "/node_modules_sillsdev_lynx",
         ];
 
         // List of prefixes that should return true for POST requests
