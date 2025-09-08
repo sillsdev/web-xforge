@@ -1,5 +1,6 @@
 import { ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BuildStates } from './build-states';
+import { QuotationAnalysis } from './quotation-denormalization';
 import { ResourceDto } from './resource-dto';
 
 export interface BuildDto extends ResourceDto {
@@ -25,5 +26,5 @@ export interface ServalBuildAdditionalInfo {
   translationScriptureRanges: ProjectScriptureRange[];
   trainingDataFileIds: string[];
   requestedByUserId?: string;
-  quotationDenormalization: string;
+  quotationDenormalization: QuotationAnalysis;
 }

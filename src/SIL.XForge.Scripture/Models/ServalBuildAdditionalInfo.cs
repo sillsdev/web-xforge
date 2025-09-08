@@ -17,11 +17,11 @@ public class ServalBuildAdditionalInfo
     public HashSet<string> TrainingDataFileIds { get; init; } = [];
     public string TranslationEngineId { get; init; } = string.Empty;
     public HashSet<ProjectScriptureRange> TranslationScriptureRanges { get; init; } = [];
-    public string QuotationDenormalization { get; set; } = QuotationAnalysis.Unsuccessful;
+    public QuotationAnalysis QuotationDenormalization { get; set; } = QuotationAnalysis.Unsuccessful;
 }
 
-public static class QuotationAnalysis
+public enum QuotationAnalysis
 {
-    public const string Successful = "successful";
-    public const string Unsuccessful = "unsuccessful";
+    Successful,
+    Unsuccessful,
 }
