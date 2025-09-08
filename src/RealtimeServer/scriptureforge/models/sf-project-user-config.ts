@@ -1,6 +1,5 @@
 import { PROJECT_DATA_INDEX_PATHS, ProjectData } from '../../common/models/project-data';
 import { EditorTabPersistData } from './editor-tab-persist-data';
-import { LynxUserConfig } from './lynx-config';
 import { LynxInsightUserData } from './lynx-insight-user-data';
 
 export const SF_PROJECT_USER_CONFIGS_COLLECTION = 'sf_project_user_configs';
@@ -31,5 +30,4 @@ export interface SFProjectUserConfig extends ProjectData {
   commentRefsRead: string[];
   editorTabsOpen: EditorTabPersistData[];
   lynxInsightState: LynxInsightUserData;
-  lynxUserConfig: LynxUserConfig;
 }

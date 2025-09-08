@@ -219,7 +219,7 @@ describe('TranslatorSettingsDialogComponent', () => {
       env.closeDialog();
     }));
 
-    it('should show only auto-correct switch when only auto-correct is enabled in project', fakeAsync(() => {
+    it('should show only auto-corrections switch when only auto-corrections is enabled in project', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setupProject({
         projectConfig: {
@@ -243,6 +243,12 @@ describe('TranslatorSettingsDialogComponent', () => {
     it('should update user lynx master setting when toggled', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setupProject({
+        userConfig: {
+          lynxInsightState: {
+            assessmentsEnabled: true,
+            autoCorrectionsEnabled: true
+          }
+        },
         projectConfig: {
           lynxConfig: {
             autoCorrectionsEnabled: true,
@@ -256,43 +262,16 @@ describe('TranslatorSettingsDialogComponent', () => {
 
       const lynxMasterToggle = await env.getLynxMasterToggle();
       expect(lynxMasterToggle).not.toBeNull();
-      expect(env.component!.lynxMasterSwitch.value).toBe(false);
-      expect(await env.isToggleChecked(lynxMasterToggle!)).toBe(false);
-
-      await env.toggleSlideToggle(lynxMasterToggle!);
       expect(env.component!.lynxMasterSwitch.value).toBe(true);
       expect(await env.isToggleChecked(lynxMasterToggle!)).toBe(true);
 
-      const userConfigDoc = env.getProjectUserConfigDoc();
-      expect(userConfigDoc.data!.lynxUserConfig?.autoCorrectionsEnabled).toBe(true);
-      expect(userConfigDoc.data!.lynxUserConfig?.assessmentsEnabled).toBe(true);
-      env.closeDialog();
-    }));
-
-    it('should update user lynx assessments setting when toggled', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      env.setupProject({
-        projectConfig: {
-          lynxConfig: {
-            autoCorrectionsEnabled: true,
-            assessmentsEnabled: true,
-            punctuationCheckerEnabled: false,
-            allowedCharacterCheckerEnabled: false
-          }
-        }
-      });
-      env.openDialog();
-
-      const lynxAssessmentsToggle = await env.getLynxAssessmentsToggle();
-      expect(env.component!.lynxAssessmentsEnabled.value).toBe(false);
-      expect(await env.isToggleChecked(lynxAssessmentsToggle!)).toBe(false);
-
-      await env.toggleSlideToggle(lynxAssessmentsToggle!);
-      expect(env.component!.lynxAssessmentsEnabled.value).toBe(true);
-      expect(await env.isToggleChecked(lynxAssessmentsToggle!)).toBe(true);
+      await env.toggleSlideToggle(lynxMasterToggle!);
+      expect(env.component!.lynxMasterSwitch.value).toBe(false);
+      expect(await env.isToggleChecked(lynxMasterToggle!)).toBe(false);
 
       const userConfigDoc = env.getProjectUserConfigDoc();
-      expect(userConfigDoc.data!.lynxUserConfig?.assessmentsEnabled).toBe(true);
+      expect(userConfigDoc.data!.lynxInsightState?.autoCorrectionsEnabled).toBe(false);
+      expect(userConfigDoc.data!.lynxInsightState?.assessmentsEnabled).toBe(false);
       env.closeDialog();
     }));
 
