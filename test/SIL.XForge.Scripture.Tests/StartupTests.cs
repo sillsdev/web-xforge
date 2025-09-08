@@ -147,6 +147,7 @@ public class StartupTests
     [TestCase("/en-LPQIY5ZH.js", new RunMode[] { RunMode.Development }, true)]
     [TestCase("/quill-QEGMXGGM.js", new RunMode[] { RunMode.Development }, true)]
     [TestCase("/3rdpartylicenses.txt", new RunMode[] { RunMode.Development }, true)]
+    [TestCase("/node_modules_sillsdev_lynx", new RunMode[] { RunMode.Development }, true)]
     // Development case - expected=false
     [TestCase("/favicon.ico", new RunMode[] { RunMode.Development }, false)]
     [TestCase(
