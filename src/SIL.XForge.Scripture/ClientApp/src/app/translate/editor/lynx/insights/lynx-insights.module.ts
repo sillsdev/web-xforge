@@ -1,7 +1,7 @@
 import { BidiModule } from '@angular/cdk/bidi';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { ModuleWithProviders, NgModule, inject, provideAppInitializer } from '@angular/core';
+import { inject, ModuleWithProviders, NgModule, provideAppInitializer } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatRippleModule } from '@angular/material/core';
 import { MatDividerModule } from '@angular/material/divider';
@@ -73,7 +73,6 @@ export class LynxInsightsModule {
           useFactory: createLynxDocumentManager,
           deps: [TextDocReader]
         },
-        {
         provideAppInitializer(() => {
           const initializerFn = moduleInit(inject(LynxWorkspaceService));
           return initializerFn();
