@@ -385,12 +385,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get translatorSettingsEnabled(): boolean {
-    return (
-      this.hasSource &&
-      this.hasSourceViewRight &&
-      (this.translationSuggestionsProjectEnabled || this.lynxProjectEnabled) &&
-      this.userHasGeneralEditRight
-    );
+    return (this.translationSuggestionsProjectEnabled || this.lynxProjectEnabled) && this.userHasGeneralEditRight;
   }
 
   get numSuggestions(): number {
