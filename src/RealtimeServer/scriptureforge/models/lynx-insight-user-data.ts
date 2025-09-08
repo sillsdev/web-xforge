@@ -1,6 +1,8 @@
 import { LynxInsightFilter, LynxInsightSortOrder } from './lynx-insight';
 
 export interface LynxInsightUserData {
+  autoCorrectionsEnabled?: boolean;
+  assessmentsEnabled?: boolean;
   panelData?: LynxInsightPanelUserData;
 }
 

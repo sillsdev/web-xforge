@@ -2608,20 +2608,20 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.activatedProject.changes$.pipe(map(projectDoc => projectDoc?.data?.lynxConfig)),
       projectUserConfigDoc?.changes$.pipe(
         startWith(projectUserConfigDoc),
-        map(() => projectUserConfigDoc?.data?.lynxUserConfig)
+        map(() => projectUserConfigDoc?.data?.lynxInsightState)
       ) ?? of(undefined)
     ])
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(([hasEditPermission, lynxProjectConfig, lynxUserConfig]) => {
+      .subscribe(([hasEditPermission, lynxProjectConfig, lynxInsightState]) => {
         const canEdit: boolean = hasEditPermission && this.isUsfmValid;
 
         // Enable lynx features only if user can edit chapter and lynx is enabled in both project AND user settings
         this.lynxInsightsEnabled =
-          canEdit && (lynxProjectConfig?.assessmentsEnabled ?? false) && (lynxUserConfig?.assessmentsEnabled ?? true);
+          canEdit && (lynxProjectConfig?.assessmentsEnabled ?? false) && (lynxInsightState?.assessmentsEnabled ?? true);
         this.lynxAutoCorrectionsEnabled =
           canEdit &&
           (lynxProjectConfig?.autoCorrectionsEnabled ?? false) &&
-          (lynxUserConfig?.autoCorrectionsEnabled ?? true);
+          (lynxInsightState?.autoCorrectionsEnabled ?? true);
       });
   }
 }

@@ -1,7 +1,6 @@
 import { Component, DestroyRef, Inject, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { LynxUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/lynx-config';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 import { debounceTime, map, skip, startWith } from 'rxjs/operators';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -97,11 +96,11 @@ export class TranslatorSettingsDialogComponent implements OnInit {
   }
 
   get lynxAssessmentsUserEnabled(): boolean {
-    return this.projectUserConfigDoc.data?.lynxUserConfig?.assessmentsEnabled ?? false;
+    return this.projectUserConfigDoc.data?.lynxInsightState?.assessmentsEnabled ?? true;
   }
 
   get lynxAutoCorrectUserEnabled(): boolean {
-    return this.projectUserConfigDoc.data?.lynxUserConfig?.autoCorrectionsEnabled ?? false;
+    return this.projectUserConfigDoc.data?.lynxInsightState?.autoCorrectionsEnabled ?? true;
   }
 
   get lynxAssessmentsProjectEnabled(): boolean {
@@ -140,33 +139,24 @@ export class TranslatorSettingsDialogComponent implements OnInit {
   }
 
   setLynxAssessmentsEnabled(value: boolean): void {
-    this.updateLynxUserConfig({ assessmentsEnabled: value });
+    this.updateLynxInsightState({ assessmentsEnabled: value });
   }
 
   setLynxAutoCorrectEnabled(value: boolean): void {
-    this.updateLynxUserConfig({ autoCorrectionsEnabled: value });
+    this.updateLynxInsightState({ autoCorrectionsEnabled: value });
   }
 
   setLynxMasterEnabled(value: boolean): void {
-    this.updateLynxUserConfig({
+    this.updateLynxInsightState({
       assessmentsEnabled: value,
       autoCorrectionsEnabled: value
     });
   }
 
-  private updateLynxUserConfig(updates: Partial<LynxUserConfig>): void {
+  private updateLynxInsightState(updates: { assessmentsEnabled?: boolean; autoCorrectionsEnabled?: boolean }): void {
     this.projectUserConfigDoc.submitJson0Op(op => {
-      const currentData = this.projectUserConfigDoc.data as any;
-      if (currentData?.lynxUserConfig == null) {
-        op.set(puc => puc.lynxUserConfig, {
-          assessmentsEnabled: true,
-          autoCorrectionsEnabled: true,
-          ...updates
-        });
-      } else {
-        for (const [key, value] of Object.entries(updates)) {
-          op.set(puc => puc.lynxUserConfig![key], value);
-        }
+      for (const [key, value] of Object.entries(updates)) {
+        op.set(puc => puc.lynxInsightState![key], value);
       }
     });
   }

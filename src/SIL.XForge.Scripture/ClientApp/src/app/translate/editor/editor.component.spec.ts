@@ -4413,7 +4413,7 @@ describe('EditorComponent', () => {
         env.setProjectUserConfig({
           selectedBookNum: 42,
           selectedChapterNum: 2,
-          lynxUserConfig: {
+          lynxInsightState: {
             autoCorrectionsEnabled: true,
             assessmentsEnabled: true
           }
@@ -4444,7 +4444,7 @@ describe('EditorComponent', () => {
         env.setProjectUserConfig({
           selectedBookNum: 42,
           selectedChapterNum: 2,
-          lynxUserConfig: {
+          lynxInsightState: {
             autoCorrectionsEnabled: false,
             assessmentsEnabled: false
           }
@@ -4475,7 +4475,7 @@ describe('EditorComponent', () => {
         env.setProjectUserConfig({
           selectedBookNum: 42,
           selectedChapterNum: 2,
-          lynxUserConfig: {
+          lynxInsightState: {
             autoCorrectionsEnabled: true,
             assessmentsEnabled: true
           }
@@ -4506,7 +4506,7 @@ describe('EditorComponent', () => {
         env.setProjectUserConfig({
           selectedBookNum: 42,
           selectedChapterNum: 2,
-          lynxUserConfig: {
+          lynxInsightState: {
             autoCorrectionsEnabled: false,
             assessmentsEnabled: true
           }
@@ -4537,7 +4537,7 @@ describe('EditorComponent', () => {
         env.setProjectUserConfig({
           selectedBookNum: 42,
           selectedChapterNum: 2,
-          lynxUserConfig: {
+          lynxInsightState: {
             autoCorrectionsEnabled: true,
             assessmentsEnabled: false
           }

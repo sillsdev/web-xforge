@@ -627,6 +627,26 @@ describe('SFProjectMigrations', () => {
       expect(projectDoc.data.translateConfig.draftConfig.additionalTrainingData).toBeUndefined();
     });
   });
+
+  describe('version 25', () => {
+    it('adds lynxConfig with default values', async () => {
+      const env = new TestEnvironment(24);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {});
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.lynxConfig).toBeUndefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.lynxConfig).toEqual({
+        autoCorrectionsEnabled: false,
+        assessmentsEnabled: false,
+        punctuationCheckerEnabled: false,
+        allowedCharacterCheckerEnabled: false
+      });
+    });
+  });
 });
 
 class TestEnvironment {

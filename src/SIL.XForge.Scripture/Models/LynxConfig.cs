@@ -18,10 +18,10 @@ public class LynxConfig
     /// <summary>
     /// Gets or sets whether Lynx punctuation checking is enabled (subset of assessments).
     /// </summary>
-    public bool PunctuationCheckerEnabled { get; set; } = true;
+    public bool PunctuationCheckerEnabled { get; set; }
 
     /// <summary>
     /// Gets or sets whether Lynx allowed character checking is enabled (subset of assessments).
     /// </summary>
-    public bool AllowedCharacterCheckerEnabled { get; set; } = false;
+    public bool AllowedCharacterCheckerEnabled { get; set; }
 }
