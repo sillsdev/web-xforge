@@ -33,6 +33,8 @@ public static class MachineApi
         "translation/engines/project:{sfProjectId}/actions/preTranslate/{bookNum}_{chapterNum}/usx";
     public const string GetLastCompletedPreTranslationBuild =
         "translation/engines/project:{sfProjectId}/actions/getLastCompletedPreTranslationBuild";
+    public const string GetChaptersForBook =
+        "translation/engines/project:{sfProjectId}/actions/preTranslate/{bookNum}/chapters";
 
     public static string GetBuildHref(string sfProjectId, string buildId)
     {
