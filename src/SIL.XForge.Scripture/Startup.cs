@@ -74,8 +74,6 @@ public class Startup
     private static readonly HashSet<string> DevelopmentSpaPostRoutes = ["sockjs-node"];
     private static readonly HashSet<string> ProductionSpaPostRoutes = [];
     private static readonly HashSet<string> SpaPostRoutes = [];
-    private const string SpaGetRoutesLynxPrefix = "node_modules_sillsdev_lynx";
-    private const string SpaGetRoutesWorkerPrefix = "worker-";
 
     public Startup(IConfiguration configuration, IWebHostEnvironment env, ILoggerFactory loggerFactory)
     {
@@ -331,96 +329,63 @@ public class Startup
             return false;
         }
 
-        // Handle special cases for paths that should return false in development
-        if (IsDevelopmentEnvironment)
+        // List of prefixes that should return true for GET requests
+        string[] getSpaRoutePrefixes =
+        [
+            "/chunk",
+            "/polyfills",
+            "/main",
+            "/manifest",
+            "/styles",
+            "/assets",
+            "/@vite",
+            "/login",
+            "/@fs",
+            "/worker",
+            "/en",
+            "/quill",
+            "/3rdpartylicenses",
+            "/system-administration",
+            "/sockjs-node",
+            "/projects",
+            "/join",
+            "/connect-project",
+            "/callback",
+            "/serval-administration",
+        ];
+
+        // List of prefixes that should return true for POST requests
+        string[] postSpaRoutePrefixes = ["/sockjs-node"];
+
+        // Check HTTP method and corresponding prefixes
+        if (context.Request.Method == HttpMethods.Get)
         {
-            HashSet<string> alwaysFalsePaths =
-            [
-                "/favicon.ico",
-                "/lib/material-design-lite/css/material.sf_grey-pt_green.min.css",
-                "/css/sf.min.css",
-                "/images/multi-devices.svg",
-                "/images/community-checking.svg",
-                "/images/quoter.jpg",
-                "/terms",
-                "/privacy",
-                "/lib/material-design-lite/js/material.min.js",
-                "/_framework/aspnetcore-browser-refresh.js",
-            ];
-
-            if (alwaysFalsePaths.Contains(path))
+            foreach (string prefix in getSpaRoutePrefixes)
             {
-                Console.WriteLine($"Startup.cs IsSpaRoute: Path in false list: '{path}'");
-                return false;
-            }
-        }
-
-        // Extract the first segment (prefix) from the path
-        // Remove query string first if present
-        string pathWithoutQuery = path;
-        int queryIndex = path.IndexOf('?');
-        if (queryIndex > 0)
-        {
-            pathWithoutQuery = path[..queryIndex];
-        }
-
-        int index = pathWithoutQuery.IndexOf("/", 1);
-        if (index == -1)
-            index = pathWithoutQuery.Length;
-        string prefix = pathWithoutQuery[1..index];
-
-        // Handle files with extensions and hash delimiters
-        if (
-            prefix.Contains('.')
-            && (
-                prefix.EndsWith(".js")
-                || prefix.EndsWith(".js.map")
-                || prefix.EndsWith(".css")
-                || prefix.EndsWith(".css.map")
-            )
-        )
-        {
-            int hashDelimiterIndex = prefix.IndexOf("-");
-            if (hashDelimiterIndex > 0)
-            {
-                prefix = prefix[..hashDelimiterIndex];
-            }
-            else
-            {
-                // Remove file extension for simple files like polyfills.js, main.js, styles.css
-                int dotIndex = prefix.LastIndexOf('.');
-                if (dotIndex > 0)
+                if (path.StartsWith(prefix))
                 {
-                    prefix = prefix[..dotIndex];
+                    Console.WriteLine(
+                        $"Startup.cs IsSpaRoute: Detected GET SPA route with prefix '{prefix}': '{path}'"
+                    );
+                    return true;
+                }
+            }
+        }
+        else if (context.Request.Method == HttpMethods.Post)
+        {
+            foreach (string prefix in postSpaRoutePrefixes)
+            {
+                if (path.StartsWith(prefix))
+                {
+                    Console.WriteLine(
+                        $"Startup.cs IsSpaRoute: Detected POST SPA route with prefix '{prefix}': '{path}'"
+                    );
+                    return true;
                 }
             }
         }
 
-        // Check for special Vite development paths
-        if (IsDevelopmentEnvironment)
-        {
-            if (path.StartsWith("/@vite/") || path.StartsWith("/@fs/"))
-            {
-                Console.WriteLine($"Startup.cs IsSpaRoute: Detected Vite development path: '{path}'");
-                return true;
-            }
-        }
-
-        // Check for lazy chunk routes (worker files with hashes)
-        bool isLazyChunkRoute =
-            context.Request.Method == HttpMethods.Get
-            && (prefix.StartsWith(SpaGetRoutesLynxPrefix) || prefix.StartsWith(SpaGetRoutesWorkerPrefix));
-
-        if (isLazyChunkRoute)
-        {
-            Console.WriteLine($"Startup.cs IsSpaRoute: Detected lazy chunk route: '{path}'");
-            return true;
-        }
-
-        bool result =
-            (context.Request.Method == HttpMethods.Get && SpaGetRoutes.Contains(prefix))
-            || (context.Request.Method == HttpMethods.Post && SpaPostRoutes.Contains(prefix));
-        Console.WriteLine($"Startup.cs IsSpaRoute: Detected SPA route: {result}: '{path}'");
-        return result;
+        Console.WriteLine($"Startup.cs IsSpaRoute: Not an SPA route: '{path}'");
+        return false;
     }
 }
