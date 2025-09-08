@@ -124,7 +124,7 @@ public class StartupTests
         Assert.IsTrue(actual);
     }
 
-    [TestCase("/nope", new RunMode[] { RunMode.Development, RunMode.Production }, false)]
+    [TestCase("/non-existent", new RunMode[] { RunMode.Development, RunMode.Production }, false)]
     // Development case - expected=true
     [TestCase("/chunk-OPHL7TCV.js", new RunMode[] { RunMode.Development }, true)]
     [TestCase("/chunk-4ZGUQGYD.js", new RunMode[] { RunMode.Development }, true)]
@@ -146,6 +146,7 @@ public class StartupTests
     [TestCase("/en-GHIDLE4X.js", new RunMode[] { RunMode.Development }, true)]
     [TestCase("/en-LPQIY5ZH.js", new RunMode[] { RunMode.Development }, true)]
     [TestCase("/quill-QEGMXGGM.js", new RunMode[] { RunMode.Development }, true)]
+    [TestCase("/3rdpartylicenses.txt", new RunMode[] { RunMode.Development }, true)]
     // Development case - expected=false
     [TestCase("/favicon.ico", new RunMode[] { RunMode.Development }, false)]
     [TestCase(
