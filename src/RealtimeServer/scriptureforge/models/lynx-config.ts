@@ -4,8 +4,3 @@ export interface LynxConfig {
   punctuationCheckerEnabled: boolean;
   allowedCharacterCheckerEnabled: boolean;
 }
-
-export interface LynxUserConfig {
-  autoCorrectionsEnabled?: boolean;
-  assessmentsEnabled?: boolean;
-}
