@@ -36,14 +36,9 @@ public class Startup
 {
     private static readonly HashSet<string> DevelopmentSpaGetRoutes =
     [
-        // "runtime.js",
-        // "runtime.js.map",
-
-        // "vendor.js",
-        // "vendor.js.map",
-
         "@vite",
         "@fs",
+        // sockjs-node is related to communication during `ng serve`
         "sockjs-node",
         "3rdpartylicenses.txt",
     ];
