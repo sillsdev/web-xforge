@@ -3630,6 +3630,27 @@ describe('EditorComponent', () => {
       expect(env.translatorSettingsButton).toBeTruthy();
       env.dispose();
     }));
+
+    it('shows translator settings when lynx features are enabled but no source access', fakeAsync(() => {
+      const projectConfig = {
+        translateConfig: { translationSuggestionsEnabled: false },
+        lynxConfig: {
+          autoCorrectionsEnabled: true,
+          assessmentsEnabled: false
+        }
+      };
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
+
+      const env = new TestEnvironment();
+      // Remove source from project to simulate no source access
+      delete env.testProjectProfile.translateConfig.source;
+      env.setupProject(projectConfig);
+      env.setProjectUserConfig();
+      env.routeWithParams(navigationParams);
+      env.wait();
+      expect(env.translatorSettingsButton).toBeTruthy();
+      env.dispose();
+    }));
   });
 
   describe('Translation Suggestions disabled', () => {
