@@ -330,12 +330,49 @@ public class Startup
             Console.WriteLine($"Startup.cs IsSpaRoute: Not an SPA route because path length <= 1: '{path}'");
             return false;
         }
-        int index = path.IndexOf("/", 1);
+
+        // Handle special cases for paths that should return false in development
+        if (IsDevelopmentEnvironment)
+        {
+            HashSet<string> alwaysFalsePaths =
+            [
+                "/favicon.ico",
+                "/lib/material-design-lite/css/material.sf_grey-pt_green.min.css",
+                "/css/sf.min.css",
+                "/images/multi-devices.svg",
+                "/images/community-checking.svg",
+                "/images/quoter.jpg",
+                "/terms",
+                "/privacy",
+                "/lib/material-design-lite/js/material.min.js",
+                "/_framework/aspnetcore-browser-refresh.js",
+            ];
+
+            if (alwaysFalsePaths.Contains(path))
+            {
+                Console.WriteLine($"Startup.cs IsSpaRoute: Path in false list: '{path}'");
+                return false;
+            }
+        }
+
+        // Extract the first segment (prefix) from the path
+        // Remove query string first if present
+        string pathWithoutQuery = path;
+        int queryIndex = path.IndexOf('?');
+        if (queryIndex > 0)
+        {
+            pathWithoutQuery = path[..queryIndex];
+        }
+
+        int index = pathWithoutQuery.IndexOf("/", 1);
         if (index == -1)
-            index = path.Length;
-        string prefix = path[1..index];
+            index = pathWithoutQuery.Length;
+        string prefix = pathWithoutQuery[1..index];
+
+        // Handle files with extensions and hash delimiters
         if (
-            (
+            prefix.Contains('.')
+            && (
                 prefix.EndsWith(".js")
                 || prefix.EndsWith(".js.map")
                 || prefix.EndsWith(".css")
@@ -343,13 +380,33 @@ public class Startup
             )
         )
         {
-            int hashDelimiterIndex = path.IndexOf("-");
-            if (hashDelimiterIndex >= 0)
+            int hashDelimiterIndex = prefix.IndexOf("-");
+            if (hashDelimiterIndex > 0)
             {
-                prefix = prefix[..(hashDelimiterIndex - 1)];
+                prefix = prefix[..hashDelimiterIndex];
+            }
+            else
+            {
+                // Remove file extension for simple files like polyfills.js, main.js, styles.css
+                int dotIndex = prefix.LastIndexOf('.');
+                if (dotIndex > 0)
+                {
+                    prefix = prefix[..dotIndex];
+                }
             }
         }
 
+        // Check for special Vite development paths
+        if (IsDevelopmentEnvironment)
+        {
+            if (path.StartsWith("/@vite/") || path.StartsWith("/@fs/"))
+            {
+                Console.WriteLine($"Startup.cs IsSpaRoute: Detected Vite development path: '{path}'");
+                return true;
+            }
+        }
+
+        // Check for lazy chunk routes (worker files with hashes)
         bool isLazyChunkRoute =
             context.Request.Method == HttpMethods.Get
             && (prefix.StartsWith(SpaGetRoutesLynxPrefix) || prefix.StartsWith(SpaGetRoutesWorkerPrefix));
