@@ -65,10 +65,6 @@
         ],
         "no-underscore-dangle": "off"
       }
-    },
-    {
-      "files": ["*.spec.ts"],
-      "rules": { "@typescript-eslint/no-floating-promises": "off", "@typescript-eslint/no-misused-promises": "off" }
     }
   ]
 }

@@ -116,14 +116,6 @@
         ],
         "deprecation/deprecation": "warn"
       }
-    },
-    {
-      "files": ["*.spec.ts"],
-      "rules": { "@typescript-eslint/no-floating-promises": "off", "@typescript-eslint/no-misused-promises": "off" }
-    },
-    {
-      "files": ["*.stories.ts"],
-      "rules": { "@typescript-eslint/no-floating-promises": "off", "@typescript-eslint/no-misused-promises": "off" }
     }
   ]
 }
