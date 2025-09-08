@@ -324,7 +324,6 @@
               >{{ t("lynx_settings_header") }}<span class="beta-tag">{{ t("beta_tag") }}</span></mat-card-title
             >
             <p class="helper-text">{{ t("lynx_settings_description") }}</p>
-            <app-notice type="info" icon="info" class="requirements">{{ t("lynx_latin_script_notice") }}</app-notice>
             <div class="tool-setting">
               <div class="tool-setting-field checkbox-field">
                 <mat-checkbox formControlName="lynxAutoCorrectionsEnabled" id="checkbox-lynx-auto-corrections">
@@ -343,7 +342,6 @@
                 <mat-checkbox formControlName="lynxAssessmentsEnabled" id="checkbox-lynx-assessments">
                   {{ t("lynx_assessments") }}
                 </mat-checkbox>
-                <app-info [text]="t('lynx_assessments_help')"></app-info>
                 <app-write-status
                   [state]="getControlState('lynxAssessmentsEnabled')"
                   [formGroup]="form"
@@ -355,7 +353,8 @@
               <div class="tool-setting">
                 <div class="tool-setting-field checkbox-field child-setting">
                   <mat-checkbox formControlName="lynxPunctuationCheckerEnabled" id="checkbox-lynx-punctuation-checker">
-                    {{ t("lynx_punctuation_checker") }}
+                    <span>{{ t("lynx_punctuation_checker") }}</span>
+                    <span class="description">{{ t("lynx_punctuation_checker_description") }}</span>
                   </mat-checkbox>
                   <app-info [text]="t('lynx_punctuation_checker_help')"></app-info>
                   <app-write-status
@@ -371,7 +370,8 @@
                     formControlName="lynxAllowedCharacterCheckerEnabled"
                     id="checkbox-lynx-allowed-character-checker"
                   >
-                    {{ t("lynx_allowed_character_checker") }}
+                    <span>{{ t("lynx_allowed_character_checker") }}</span>
+                    <span class="description">{{ t("lynx_allowed_character_checker_description") }}</span>
                   </mat-checkbox>
                   <app-info [text]="t('lynx_allowed_character_checker_help')"></app-info>
                   <app-write-status

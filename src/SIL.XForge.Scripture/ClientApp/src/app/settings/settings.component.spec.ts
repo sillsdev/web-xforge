@@ -41,7 +41,6 @@ import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { ProjectSelectComponent } from '../project-select/project-select.component';
 import { InfoComponent } from '../shared/info/info.component';
-import { NoticeComponent } from '../shared/notice/notice.component';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
 import { SettingsComponent } from './settings.component';
 
@@ -69,7 +68,6 @@ describe('SettingsComponent', () => {
       TranslocoMarkupModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       TestOnlineStatusModule.forRoot(),
-      NoticeComponent,
       NoopAnimationsModule
     ],
     declarations: [SettingsComponent, WriteStatusComponent, ProjectSelectComponent, InfoComponent],
