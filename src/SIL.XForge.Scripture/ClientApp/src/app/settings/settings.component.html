@@ -321,16 +321,15 @@
         <mat-card>
           <mat-card-content>
             <mat-card-title class="lynx-settings-title"
-              >{{ t("lynx_settings_header") }}<span class="beta-tag">{{ t("beta_tag") }}</span></mat-card-title
+              >{{ t("insights_settings_header") }}<span class="beta-tag">{{ t("beta_tag") }}</span></mat-card-title
             >
-            <p class="helper-text">{{ t("lynx_settings_description") }}</p>
-            <app-notice type="info" icon="info" class="requirements">{{ t("lynx_latin_script_notice") }}</app-notice>
+            <p class="helper-text">{{ t("insights_settings_description") }}</p>
             <div class="tool-setting">
               <div class="tool-setting-field checkbox-field">
                 <mat-checkbox formControlName="lynxAutoCorrectionsEnabled" id="checkbox-lynx-auto-corrections">
-                  {{ t("lynx_auto_corrections") }}
+                  {{ t("insights_auto_corrections") }}
                 </mat-checkbox>
-                <app-info [text]="t('lynx_auto_corrections_help')"></app-info>
+                <app-info [text]="t('insights_auto_corrections_help')"></app-info>
                 <app-write-status
                   [state]="getControlState('lynxAutoCorrectionsEnabled')"
                   [formGroup]="form"
@@ -341,9 +340,8 @@
             <div class="tool-setting">
               <div class="tool-setting-field checkbox-field">
                 <mat-checkbox formControlName="lynxAssessmentsEnabled" id="checkbox-lynx-assessments">
-                  {{ t("lynx_assessments") }}
+                  {{ t("insights_assessments") }}
                 </mat-checkbox>
-                <app-info [text]="t('lynx_assessments_help')"></app-info>
                 <app-write-status
                   [state]="getControlState('lynxAssessmentsEnabled')"
                   [formGroup]="form"
@@ -355,9 +353,10 @@
               <div class="tool-setting">
                 <div class="tool-setting-field checkbox-field child-setting">
                   <mat-checkbox formControlName="lynxPunctuationCheckerEnabled" id="checkbox-lynx-punctuation-checker">
-                    {{ t("lynx_punctuation_checker") }}
+                    <span>{{ t("insights_punctuation_checker") }}</span>
+                    <span class="description">{{ t("insights_punctuation_checker_description") }}</span>
                   </mat-checkbox>
-                  <app-info [text]="t('lynx_punctuation_checker_help')"></app-info>
+                  <app-info [text]="t('insights_punctuation_checker_help')"></app-info>
                   <app-write-status
                     [state]="getControlState('lynxPunctuationCheckerEnabled')"
                     [formGroup]="form"
@@ -371,9 +370,10 @@
                     formControlName="lynxAllowedCharacterCheckerEnabled"
                     id="checkbox-lynx-allowed-character-checker"
                   >
-                    {{ t("lynx_allowed_character_checker") }}
+                    <span>{{ t("insights_allowed_character_checker") }}</span>
+                    <span class="description">{{ t("insights_allowed_character_checker_description") }}</span>
                   </mat-checkbox>
-                  <app-info [text]="t('lynx_allowed_character_checker_help')"></app-info>
+                  <app-info [text]="t('insights_allowed_character_checker_help')"></app-info>
                   <app-write-status
                     [state]="getControlState('lynxAllowedCharacterCheckerEnabled')"
                     [formGroup]="form"
