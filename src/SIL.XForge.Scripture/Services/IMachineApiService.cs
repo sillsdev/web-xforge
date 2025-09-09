@@ -49,7 +49,7 @@ public interface IMachineApiService
         CancellationToken cancellationToken
     );
     Task<ServalEngineDto> GetEngineAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
-    Task<int> GetPretranslationChapterCountAsync(
+    Task<int[]> GetPretranslationChapterCountAsync(
         string curUserId,
         string sfProjectId,
         int bookNum,

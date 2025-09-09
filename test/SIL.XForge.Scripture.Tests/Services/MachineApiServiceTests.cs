@@ -2670,9 +2670,62 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetPretranslationChapterCountAsync_Success()
+    public void GetPretranslationChapterCountAsync_NoPermissions()
     {
-        // TODO: Gets the number of documents
+        var env = new TestEnvironment();
+        env.ProjectRights.HasRight(Arg.Any<Project>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+            .Throws(new ForbiddenException());
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.GetPretranslationChapterCountAsync(User01, Project01, 1, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public async Task GetPretranslationChapterCountAsync_NoChapters_Success()
+    {
+        var env = new TestEnvironment();
+        int[] chapters = await env.Service.GetPretranslationChapterCountAsync(
+            User01,
+            Project01,
+            1,
+            CancellationToken.None
+        );
+        Assert.That(chapters.Length, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task GetPretranslationChapterCountAsync_Success()
+    {
+        var env = new TestEnvironment();
+        int[] chaptersWithDrafts = [1, 2, 3];
+        int bookWithDrafts = 1;
+        int bookWithoutDrafts = 2;
+        foreach (int i in chaptersWithDrafts)
+        {
+            env.SetupTextDocument(
+                TextDocument.GetDocId(Project01, bookWithDrafts, i, TextDocument.Draft),
+                bookWithDrafts,
+                alreadyExists: true
+            );
+        }
+
+        // SUT
+        int[] chapters = await env.Service.GetPretranslationChapterCountAsync(
+            User01,
+            Project01,
+            bookWithDrafts,
+            CancellationToken.None
+        );
+        Assert.That(chapters, Is.EqualTo(chaptersWithDrafts));
+
+        // SUT 2
+        int[] chaptersDifferentBook = await env.Service.GetPretranslationChapterCountAsync(
+            User01,
+            Project01,
+            bookWithoutDrafts,
+            CancellationToken.None
+        );
+        Assert.That(chaptersDifferentBook.Length, Is.EqualTo(0));
     }
 
     [Test]

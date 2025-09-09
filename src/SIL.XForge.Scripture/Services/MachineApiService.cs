@@ -1167,7 +1167,7 @@ public class MachineApiService(
         }
     }
 
-    public async Task<int> GetPretranslationChapterCountAsync(
+    public async Task<int[]> GetPretranslationChapterCountAsync(
         string curUserId,
         string sfProjectId,
         int bookNum,
@@ -1186,7 +1186,9 @@ public class MachineApiService(
             .QuerySnapshots<TextDocument>()
             .Where(t => t.Id.StartsWith($"{sfProjectId}:{Canon.BookNumberToId(bookNum)}"))
             .ToListAsync(cancellationToken);
-        return textDocuments.Count;
+        List<int> chapters = [.. textDocuments.Select(t => t.GetChapterNumber()).Where(c => c != 0)];
+        chapters.Sort();
+        return [.. chapters];
     }
 
     public async Task<LanguageDto> IsLanguageSupportedAsync(string languageCode, CancellationToken cancellationToken)

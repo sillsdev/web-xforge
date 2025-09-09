@@ -940,10 +940,8 @@ public class MachineApiController : ControllerBase
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <response code="200">The chapter count was retrieved successfully.</response>
     /// <response code="403">You do not have permission to access this project.</response>
-    /// <response code="404">The project does not exist.</response>
-    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
     [HttpGet(MachineApi.GetChaptersForBook)]
-    public async Task<ActionResult<int>> GetPretranslationChapterCountAsync(
+    public async Task<ActionResult<int[]>> GetPretranslationChapterCountAsync(
         string sfProjectId,
         int bookNum,
         CancellationToken cancellationToken
@@ -951,22 +949,13 @@ public class MachineApiController : ControllerBase
     {
         try
         {
-            int count = await _machineApiService.GetPretranslationChapterCountAsync(
+            int[] chapters = await _machineApiService.GetPretranslationChapterCountAsync(
                 _userAccessor.UserId,
                 sfProjectId,
                 bookNum,
                 cancellationToken
             );
-            return Ok(count);
-        }
-        catch (BrokenCircuitException e)
-        {
-            _exceptionHandler.ReportException(e);
-            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
-        }
-        catch (DataNotFoundException)
-        {
-            return NotFound();
+            return Ok(chapters);
         }
         catch (ForbiddenException)
         {
