@@ -1,18 +1,19 @@
 import { CommonModule } from '@angular/common';
-import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, DestroyRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
-import { BehaviorSubject, map } from 'rxjs';
+import { BehaviorSubject, map, switchMap } from 'rxjs';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
-import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
@@ -23,15 +24,16 @@ import { ProjectSelectComponent } from '../../../project-select/project-select.c
 import { CustomValidatorState as CustomErrorState, SFValidators } from '../../../shared/sfvalidators';
 import { SharedModule } from '../../../shared/shared.module';
 import { compareProjectsForSorting } from '../../../shared/utils';
+import { DraftGenerationService } from '../draft-generation.service';
 
 export interface DraftApplyDialogResult {
   projectId: string;
+  chapters: number[];
 }
 
 export interface DraftApplyDialogConfig {
   initialParatextId?: string;
   bookNum: number;
-  chapters: number[];
 }
 
 @Component({
@@ -69,21 +71,25 @@ export class DraftApplyDialogComponent implements OnInit {
       bookName: this.bookName
     })
   };
+  isValid: boolean = false;
 
   // the project id to add the draft to
   private targetProjectId?: string;
   private paratextIdToProjectId: Map<string, string> = new Map<string, string>();
-  isValid: boolean = false;
+  private chaptersWithDrafts: number[] = [];
 
   constructor(
     @Inject(MAT_DIALOG_DATA) private data: DraftApplyDialogConfig,
     @Inject(MatDialogRef) private dialogRef: MatDialogRef<DraftApplyDialogComponent, DraftApplyDialogResult>,
     private readonly userProjectsService: SFUserProjectsService,
     private readonly projectService: SFProjectService,
+    private readonly activatedProjectService: ActivatedProjectService,
+    private readonly draftGenerationService: DraftGenerationService,
     private readonly textDocService: TextDocService,
     readonly i18n: I18nService,
     private readonly userService: UserService,
-    private readonly onlineStatusService: OnlineStatusService
+    private readonly onlineStatusService: OnlineStatusService,
+    private readonly destroyRef: DestroyRef
   ) {
     this.targetProject$.pipe(filterNullish()).subscribe(async project => {
       const chapters: number = await this.chaptersWithTextAsync(project);
@@ -149,6 +155,18 @@ export class DraftApplyDialogComponent implements OnInit {
         this._projects = projects;
         this.isLoading = false;
       });
+
+    this.activatedProjectService.projectId$
+      .pipe(
+        quietTakeUntilDestroyed(this.destroyRef),
+        filterNullish(),
+        switchMap(projectId => {
+          return this.draftGenerationService.getDraftChaptersForBook(projectId, this.data.bookNum);
+        })
+      )
+      .subscribe(draftChapters => {
+        this.chaptersWithDrafts = draftChapters ?? [];
+      });
   }
 
   addToProject(): void {
@@ -157,7 +175,7 @@ export class DraftApplyDialogComponent implements OnInit {
     if (!this.isAppOnline || !this.isFormValid || this.targetProjectId == null || !this.canEditProject) {
       return;
     }
-    this.dialogRef.close({ projectId: this.targetProjectId });
+    this.dialogRef.close({ projectId: this.targetProjectId, chapters: this.chaptersWithDrafts });
   }
 
   projectSelected(paratextId: string): void {
@@ -185,7 +203,7 @@ export class DraftApplyDialogComponent implements OnInit {
     const bookIsEmpty: boolean = targetBook?.chapters.length === 1 && targetBook?.chapters[0].lastVerse < 1;
     const targetBookChapters: number[] = targetBook?.chapters.map(c => c.number) ?? [];
     this.projectHasMissingChapters =
-      bookIsEmpty || this.data.chapters.filter(c => !targetBookChapters.includes(c)).length > 0;
+      bookIsEmpty || this.chaptersWithDrafts.filter(c => !targetBookChapters.includes(c)).length > 0;
     if (this.projectHasMissingChapters) {
       this.createChaptersControl.addValidators(Validators.requiredTrue);
       this.createChaptersControl.updateValueAndValidity();
