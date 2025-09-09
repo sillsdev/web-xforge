@@ -1,6 +1,8 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectChange, MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { cloneDeep } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
@@ -50,6 +52,8 @@ describe('EditorDraftComponent', () => {
     imports: [
       MatProgressBarModule,
       MatSelectModule,
+      MatIconModule,
+      MatTooltipModule,
       NoopAnimationsModule,
       SharedModule.forRoot(),
       TestOnlineStatusModule.forRoot(),
@@ -71,6 +75,8 @@ describe('EditorDraftComponent', () => {
   }));
 
   beforeEach(() => {
+    when(mockFeatureFlagService.usfmFormat).thenReturn(createTestFeatureFlag(true));
+
     fixture = TestBed.createComponent(EditorDraftComponent);
     component = fixture.componentInstance;
 
@@ -88,6 +94,7 @@ describe('EditorDraftComponent', () => {
     fixture.detectChanges();
     expect(component.draftCheckState).toEqual('draft-unknown');
     expect(component.draftText).not.toBeUndefined();
+    flush();
   }));
 
   it('should populate draft text correctly and then handle going offline/online', fakeAsync(() => {
@@ -128,6 +135,7 @@ describe('EditorDraftComponent', () => {
 
     fixture.detectChanges();
     tick(EDITOR_READY_TIMEOUT);
+    flush();
   }));
 
   it('should return ops and update the editor', fakeAsync(() => {
@@ -151,6 +159,7 @@ describe('EditorDraftComponent', () => {
     verify(mockDraftHandlingService.draftDataToOps(anything(), anything())).once();
     expect(component.draftCheckState).toEqual('draft-present');
     expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
+    flush();
   }));
 
   it('should support a timestamp earlier than the oldest draft', fakeAsync(() => {
@@ -179,6 +188,7 @@ describe('EditorDraftComponent', () => {
     verify(mockDraftHandlingService.draftDataToOps(anything(), anything())).once();
     expect(component.draftCheckState).toEqual('draft-present');
     expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
+    flush();
   }));
 
   it('should support a timestamp close to the oldest draft', fakeAsync(() => {
@@ -210,6 +220,7 @@ describe('EditorDraftComponent', () => {
     verify(mockDraftHandlingService.draftDataToOps(anything(), anything())).once();
     expect(component.draftCheckState).toEqual('draft-present');
     expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
+    flush();
   }));
 
   it('should show previous draft when history is enabled and not timestamp is provided', fakeAsync(() => {
@@ -235,6 +246,7 @@ describe('EditorDraftComponent', () => {
     verify(mockDraftHandlingService.draftDataToOps(anything(), anything())).once();
     expect(component.draftCheckState).toEqual('draft-present');
     expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
+    flush();
   }));
 
   it('should show draft empty when history is enabled and the draft does not have verse content', fakeAsync(() => {
@@ -259,6 +271,7 @@ describe('EditorDraftComponent', () => {
     verify(mockDraftHandlingService.getDraft(anything(), anything())).once();
     verify(mockDraftHandlingService.draftDataToOps(anything(), anything())).once();
     expect(component.draftCheckState).toEqual('draft-empty');
+    flush();
   }));
 
   it('should show draft empty if earlier draft exists but history is not enabled', fakeAsync(() => {
@@ -279,6 +292,7 @@ describe('EditorDraftComponent', () => {
     verify(mockDraftHandlingService.getDraft(anything(), anything())).never();
     verify(mockDraftHandlingService.draftDataToOps(anything(), anything())).never();
     expect(component.draftCheckState).toEqual('draft-empty');
+    flush();
   }));
 
   it('should return ops and update the editor when no revision', fakeAsync(() => {
@@ -302,6 +316,7 @@ describe('EditorDraftComponent', () => {
     verify(mockDraftHandlingService.draftDataToOps(anything(), anything())).once();
     expect(component.draftCheckState).toEqual('draft-present');
     expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
+    flush();
   }));
 
   it('should return ops and update the editor when the selected revision changes', fakeAsync(() => {
@@ -332,6 +347,7 @@ describe('EditorDraftComponent', () => {
     verify(mockDraftHandlingService.draftDataToOps(anything(), anything())).twice();
     expect(component.draftCheckState).toEqual('draft-present');
     expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
+    flush();
   }));
 
   describe('applyDraft', () => {
@@ -359,6 +375,7 @@ describe('EditorDraftComponent', () => {
 
       verify(mockDialogService.confirm(anything(), anything())).once();
       expect(component.isDraftApplied).toBe(true);
+      flush();
     }));
 
     it('should not show a prompt when applying if the target has no content', fakeAsync(() => {
@@ -384,12 +401,14 @@ describe('EditorDraftComponent', () => {
 
       verify(mockDialogService.confirm(anything(), anything())).never();
       expect(component.isDraftApplied).toBe(true);
+      flush();
     }));
 
     it('should throw error if there is no draft', fakeAsync(() => {
       component.applyDraft().catch(e => {
         expect(e).toEqual(new Error('No draft ops to apply.'));
       });
+      flush();
     }));
 
     it('should apply draft using draft viewer service', fakeAsync(() => {
@@ -417,6 +436,7 @@ describe('EditorDraftComponent', () => {
       expect(draftDelta.ops).toEqual(component['draftDelta']!.ops);
       verify(mockDraftHandlingService.applyChapterDraftAsync(component.textDocId!, component['draftDelta']!)).once();
       expect(component.isDraftApplied).toBe(true);
+      flush();
     }));
 
     it('should show snackbar if applying a draft fails', fakeAsync(() => {
@@ -456,6 +476,7 @@ describe('EditorDraftComponent', () => {
       verify(mockNoticeService.showError(anything())).twice();
       verify(mockErrorReportingService.silentError(anything(), anything())).once();
       expect(component.isDraftApplied).toBe(false);
+      flush();
     }));
   });
 

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { AfterViewInit, Component, DestroyRef, EventEmitter, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,8 +9,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
-import { Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
+import { Canon } from '@sillsdev/scripture';
 import { Delta } from 'quill';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import {
@@ -79,6 +80,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
+    private readonly activatedRoute: ActivatedRoute,
     private readonly draftHandlingService: DraftHandlingService,
     private readonly projectService: SFProjectService,
     private readonly onlineStatusService: OnlineStatusService,
@@ -86,7 +88,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     private readonly dialogService: DialogService,
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
-    private readonly router: Router,
+    private readonly location: Location,
     private destroyRef: DestroyRef
   ) {
     super(noticeService);
@@ -118,9 +120,10 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   }
 
   ngAfterViewInit(): void {
-    combineLatest([this.activatedProjectService.projectDoc$, this.draftText.editorCreated as EventEmitter<void>])
+    combineLatest([this.activatedRoute.params, this.draftText.editorCreated as EventEmitter<void>])
       .pipe(first(), quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(([projectDoc]) => {
+      .subscribe(([params]) => {
+        const projectDoc = this.activatedProjectService.projectDoc;
         if (projectDoc?.data == null) return;
         this.setUsfmConfig(projectDoc.data.translateConfig.draftConfig.usfmConfig);
         const texts: TextInfo[] = projectDoc.data.texts;
@@ -128,7 +131,19 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
 
         if (this.booksWithDrafts.length === 0) return;
         this.loadingStarted();
-        this.bookChanged(this.booksWithDrafts[0]);
+
+        let defaultBook = this.booksWithDrafts[0];
+        if (params['bookId'] !== undefined && this.booksWithDrafts.includes(Canon.bookIdToNumber(params['bookId']))) {
+          defaultBook = Canon.bookIdToNumber(params['bookId']);
+        }
+        let defaultChapter = 1;
+        this.chapters = texts.find(t => t.bookNum === defaultBook)?.chapters.map(c => c.number) ?? [];
+        if (params['chapter'] !== undefined && this.chapters.includes(Number(params['chapter']))) {
+          defaultChapter = Number(params['chapter']);
+        } else if (this.chapters.length > 0) {
+          defaultChapter = this.chapters[0];
+        }
+        this.bookChanged(defaultBook, defaultChapter);
       });
 
     this.updateDraftConfig$
@@ -153,11 +168,11 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     });
   }
 
-  bookChanged(bookNum: number): void {
+  bookChanged(bookNum: number, chapterNum?: number): void {
     this.bookNum = bookNum;
     const texts = this.activatedProjectService.projectDoc!.data!.texts;
     this.chapters = texts.find(t => t.bookNum === this.bookNum)?.chapters.map(c => c.number) ?? [];
-    this.chapterNum = this.chapters[0] ?? 1;
+    this.chapterNum = chapterNum ?? this.chapters[0] ?? 1;
     this.reloadText();
   }
 
@@ -167,7 +182,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   }
 
   close(): void {
-    this.router.navigate(['projects', this.projectId, 'draft-generation']);
+    this.location.back();
   }
 
   reloadText(): void {
@@ -184,7 +199,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
       this.lastSavedState = this.currentFormat;
       // The user is redirected to the draft generation page if the format is saved.
       await this.servalAdministration.onlineRetrievePreTranslationStatus(this.projectId);
-      this.router.navigate(['projects', this.projectId, 'draft-generation']);
+      this.close();
     } catch (err) {
       console.error('Error occurred while saving draft format', err);
       this.noticeService.showError(this.i18n.translateStatic('draft_usfm_format.failed_to_save'));
