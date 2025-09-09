@@ -1,4 +1,4 @@
 export enum QuotationAnalysis {
-  Successful,
-  Unsuccessful
+  Successful = 'successful',
+  Unsuccessful = 'unsuccessful'
 }
