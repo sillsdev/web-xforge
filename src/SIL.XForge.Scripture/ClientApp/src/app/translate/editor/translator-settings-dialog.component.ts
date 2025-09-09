@@ -66,8 +66,9 @@ export class TranslatorSettingsDialogComponent implements OnInit {
         map(value => value / 100),
         quietTakeUntilDestroyed(this.destroyRef)
       )
-      .subscribe(threshold =>
-        this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.confidenceThreshold, threshold))
+      .subscribe(
+        threshold =>
+          void this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.confidenceThreshold, threshold))
       );
   }
 
@@ -84,7 +85,7 @@ export class TranslatorSettingsDialogComponent implements OnInit {
   }
 
   set numSuggestions(value: string) {
-    this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.numSuggestions, parseInt(value, 10)));
+    void this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.numSuggestions, parseInt(value, 10)));
   }
 
   get confidenceThreshold(): number {
@@ -127,7 +128,9 @@ export class TranslatorSettingsDialogComponent implements OnInit {
   }
 
   setTranslationSettingsEnabled(value: boolean): void {
-    this.projectUserConfigDoc.submitJson0Op(op => op.set<boolean>(puc => puc.translationSuggestionsEnabled, value));
+    void this.projectUserConfigDoc.submitJson0Op(op =>
+      op.set<boolean>(puc => puc.translationSuggestionsEnabled, value)
+    );
   }
 
   updateTranslationSuggestionsSwitch(): void {
@@ -154,7 +157,7 @@ export class TranslatorSettingsDialogComponent implements OnInit {
   }
 
   private updateLynxInsightState(updates: { assessmentsEnabled?: boolean; autoCorrectionsEnabled?: boolean }): void {
-    this.projectUserConfigDoc.submitJson0Op(op => {
+    void this.projectUserConfigDoc.submitJson0Op(op => {
       for (const [key, value] of Object.entries(updates)) {
         op.set(puc => puc.lynxInsightState![key], value);
       }
