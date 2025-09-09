@@ -5,11 +5,10 @@ import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 type AvatarMode = 'image' | 'initials' | 'user_icon';
 
 @Component({
-  selector: 'app-avatar',
-  templateUrl: './avatar.component.html',
-  styleUrls: ['./avatar.component.scss'],
-  standalone: true,
-  imports: [MatIconModule]
+    selector: 'app-avatar',
+    templateUrl: './avatar.component.html',
+    styleUrls: ['./avatar.component.scss'],
+    imports: [MatIconModule]
 })
 export class AvatarComponent implements DoCheck, OnChanges {
   @Input() size: number = 32;

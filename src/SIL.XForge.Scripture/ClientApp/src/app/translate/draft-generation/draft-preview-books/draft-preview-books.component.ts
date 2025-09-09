@@ -40,11 +40,10 @@ export interface BookWithDraft {
 }
 
 @Component({
-  selector: 'app-draft-preview-books',
-  templateUrl: './draft-preview-books.component.html',
-  styleUrls: ['./draft-preview-books.component.scss'],
-  standalone: true,
-  imports: [CommonModule, UICommonModule, RouterModule, TranslocoModule]
+    selector: 'app-draft-preview-books',
+    templateUrl: './draft-preview-books.component.html',
+    styleUrls: ['./draft-preview-books.component.scss'],
+    imports: [CommonModule, UICommonModule, RouterModule, TranslocoModule]
 })
 export class DraftPreviewBooksComponent {
   @Input() build: BuildDto | undefined;

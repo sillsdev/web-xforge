@@ -18,11 +18,10 @@ export interface BookOption {
 type Scope = 'OT' | 'NT' | 'DC';
 
 @Component({
-  selector: 'app-book-multi-select',
-  templateUrl: './book-multi-select.component.html',
-  standalone: true,
-  imports: [UICommonModule, MatChipsModule, TranslocoModule, L10nPercentPipe],
-  styleUrls: ['./book-multi-select.component.scss']
+    selector: 'app-book-multi-select',
+    templateUrl: './book-multi-select.component.html',
+    imports: [UICommonModule, MatChipsModule, TranslocoModule, L10nPercentPipe],
+    styleUrls: ['./book-multi-select.component.scss']
 })
 export class BookMultiSelectComponent implements OnChanges {
   @Input() availableBooks: Book[] = [];

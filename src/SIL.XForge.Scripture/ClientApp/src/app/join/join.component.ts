@@ -36,9 +36,10 @@ export const KNOWN_ERROR_CODES: ObjectPaths<typeof en.join>[] = [
 ];
 
 @Component({
-  selector: 'app-join',
-  templateUrl: './join.component.html',
-  styleUrls: ['./join.component.scss']
+    selector: 'app-join',
+    templateUrl: './join.component.html',
+    styleUrls: ['./join.component.scss'],
+    standalone: false
 })
 export class JoinComponent extends DataLoadingComponent {
   name: FormControl<string | null> = new FormControl<string | null>('');

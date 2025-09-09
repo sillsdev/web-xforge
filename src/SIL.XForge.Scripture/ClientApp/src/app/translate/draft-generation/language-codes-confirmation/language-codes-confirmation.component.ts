@@ -13,11 +13,10 @@ import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { DraftSourcesAsSelectableProjectArrays, normalizeLanguageCodeToISO639_3 } from '../draft-utils';
 
 @Component({
-  selector: 'app-language-codes-confirmation',
-  standalone: true,
-  imports: [CommonModule, TranslocoModule, TranslocoMarkupComponent, UICommonModule, NoticeComponent],
-  templateUrl: './language-codes-confirmation.component.html',
-  styleUrl: './language-codes-confirmation.component.scss'
+    selector: 'app-language-codes-confirmation',
+    imports: [CommonModule, TranslocoModule, TranslocoMarkupComponent, UICommonModule, NoticeComponent],
+    templateUrl: './language-codes-confirmation.component.html',
+    styleUrl: './language-codes-confirmation.component.scss'
 })
 export class LanguageCodesConfirmationComponent {
   @Input() set sources(value: DraftSourcesAsSelectableProjectArrays) {

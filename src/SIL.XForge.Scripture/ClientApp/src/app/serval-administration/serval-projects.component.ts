@@ -62,11 +62,10 @@ class Row {
 }
 
 @Component({
-  selector: 'app-serval-projects',
-  templateUrl: './serval-projects.component.html',
-  styleUrls: ['./serval-projects.component.scss'],
-  standalone: true,
-  imports: [UICommonModule]
+    selector: 'app-serval-projects',
+    templateUrl: './serval-projects.component.html',
+    styleUrls: ['./serval-projects.component.scss'],
+    imports: [UICommonModule]
 })
 export class ServalProjectsComponent extends DataLoadingComponent implements OnInit {
   columnsToDisplay: string[] = ['name', 'preTranslate', 'source', 'draftingSource', 'trainingSource', 'actions'];

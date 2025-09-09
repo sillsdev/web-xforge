@@ -3,7 +3,8 @@ import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
 import { WINDOW } from './browser-globals';
 
 @Directive({
-  selector: '[appRouterLink]'
+    selector: '[appRouterLink]',
+    standalone: false
 })
 export class RouterLinkDirective {
   @Input() set appRouterLink(value: string | string[]) {

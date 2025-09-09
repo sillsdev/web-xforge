@@ -35,9 +35,10 @@ import {
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 @Component({
-  selector: 'app-checking-overview',
-  templateUrl: './checking-overview.component.html',
-  styleUrls: ['./checking-overview.component.scss']
+    selector: 'app-checking-overview',
+    templateUrl: './checking-overview.component.html',
+    styleUrls: ['./checking-overview.component.scss'],
+    standalone: false
 })
 export class CheckingOverviewComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   texts: TextInfo[] = [];

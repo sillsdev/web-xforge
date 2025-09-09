@@ -16,9 +16,10 @@ import { SFProjectService } from '../core/sf-project.service';
 type TaskType = 'translate' | 'checking';
 
 @Component({
-  selector: 'app-projects',
-  templateUrl: './project.component.html',
-  styleUrls: ['./project.component.scss']
+    selector: 'app-projects',
+    templateUrl: './project.component.html',
+    styleUrls: ['./project.component.scss'],
+    standalone: false
 })
 export class ProjectComponent extends DataLoadingComponent implements OnInit {
   constructor(
