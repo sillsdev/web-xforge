@@ -702,7 +702,7 @@ class TestEnvironment {
   }
 
   get quillEditor(): HTMLElement {
-    return <HTMLElement>document.getElementsByClassName('ql-container')[0];
+    return document.getElementsByClassName('ql-container')[0] as HTMLElement;
   }
 
   get saveButton(): HTMLButtonElement {

@@ -9,7 +9,7 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, EMPTY, of, Subject, throwError } from 'rxjs';
-import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -949,7 +949,8 @@ describe('DraftGenerationComponent', () => {
 
       expect(env.component.currentPage).toBe('initial');
       expect(env.component['draftJob']).not.toBeNull();
-      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).not.toHaveBeenCalledWith(anything());
+      // FIXME This assertion does nothing because it's misusing anything()
+      // expect(mockDraftGenerationService.startBuildOrGetActiveBuild).not.toHaveBeenCalledWith(anything());
       expect(mockDialogService.message).toHaveBeenCalledTimes(1);
     });
 
