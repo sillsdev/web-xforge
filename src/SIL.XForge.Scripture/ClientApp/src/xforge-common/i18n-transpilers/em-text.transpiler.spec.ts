@@ -60,8 +60,9 @@ describe('EmTextTranspiler', () => {
 });
 
 @Component({
-  selector: 'app-test',
-  template: `<transloco [key]="translation"></transloco>`
+    selector: 'app-test',
+    template: `<transloco [key]="translation"></transloco>`,
+    standalone: false
 })
 export class TestComponent {
   translation: string = '';

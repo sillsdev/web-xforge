@@ -10,9 +10,10 @@ interface InsightCount {
 }
 
 @Component({
-  selector: 'app-lynx-insight-status-indicator',
-  templateUrl: './lynx-insight-status-indicator.component.html',
-  styleUrl: './lynx-insight-status-indicator.component.scss'
+    selector: 'app-lynx-insight-status-indicator',
+    templateUrl: './lynx-insight-status-indicator.component.html',
+    styleUrl: './lynx-insight-status-indicator.component.scss',
+    standalone: false
 })
 export class LynxInsightStatusIndicatorComponent {
   isFilterHidingInsights$: Observable<boolean> = this.editorInsightState.filter$.pipe(

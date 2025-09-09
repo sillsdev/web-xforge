@@ -11,9 +11,10 @@ const permissions = rightsByRole;
  * allowing administrators to review permission settings and roles.
  */
 @Component({
-  selector: 'app-permissions-viewer',
-  templateUrl: './permissions-viewer.component.html',
-  styleUrls: ['./permissions-viewer.component.scss']
+    selector: 'app-permissions-viewer',
+    templateUrl: './permissions-viewer.component.html',
+    styleUrls: ['./permissions-viewer.component.scss'],
+    standalone: false
 })
 export class PermissionsViewerComponent implements OnInit {
   // All available roles

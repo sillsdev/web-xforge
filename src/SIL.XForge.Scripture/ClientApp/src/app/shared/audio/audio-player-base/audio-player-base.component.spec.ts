@@ -120,8 +120,9 @@ class TestEnvironment {
 }
 
 @Component({
-  selector: 'app-audio-player',
-  template: '<p>Mock Audio Player</p>'
+    selector: 'app-audio-player',
+    template: '<p>Mock Audio Player</p>',
+    standalone: false
 })
 class AudioTestComponent extends AudioPlayerBaseComponent {
   setAudio(audio: AudioPlayer): void {
@@ -133,7 +134,10 @@ class AudioTestComponent extends AudioPlayerBaseComponent {
   }
 }
 
-@Component({ selector: 'app-host', template: '' })
+@Component({
+    selector: 'app-host', template: '',
+    standalone: false
+})
 class HostComponent {
   @ViewChild(AudioTestComponent) baseComponent!: AudioTestComponent;
 }

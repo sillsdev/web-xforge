@@ -62,18 +62,17 @@ interface ProjectPendingUpdate {
 }
 
 @Component({
-  selector: 'app-draft-generation-steps',
-  templateUrl: './draft-generation-steps.component.html',
-  styleUrls: ['./draft-generation-steps.component.scss'],
-  standalone: true,
-  imports: [
-    SharedModule,
-    UICommonModule,
-    TranslocoModule,
-    TranslocoMarkupModule,
-    BookMultiSelectComponent,
-    ConfirmSourcesComponent
-  ]
+    selector: 'app-draft-generation-steps',
+    templateUrl: './draft-generation-steps.component.html',
+    styleUrls: ['./draft-generation-steps.component.scss'],
+    imports: [
+        SharedModule,
+        UICommonModule,
+        TranslocoModule,
+        TranslocoMarkupModule,
+        BookMultiSelectComponent,
+        ConfirmSourcesComponent
+    ]
 })
 export class DraftGenerationStepsComponent implements OnInit {
   @Output() readonly done = new EventEmitter<DraftGenerationStepsResult>();
