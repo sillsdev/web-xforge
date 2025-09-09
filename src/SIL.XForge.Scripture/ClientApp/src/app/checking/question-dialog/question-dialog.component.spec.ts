@@ -613,10 +613,10 @@ class DialogTestModule {}
 
 class TestEnvironment {
   fixture: ComponentFixture<ChildViewContainerComponent>;
-  _component: QuestionDialogComponent | undefined;
+  private _component: QuestionDialogComponent | undefined;
   dialogRef: MatDialogRef<QuestionDialogComponent> | undefined;
   afterCloseCallback: jasmine.Spy | undefined;
-  _dialogServiceSpy: DialogService | undefined;
+  private _dialogServiceSpy: DialogService | undefined;
 
   readonly mockedScriptureChooserMatDialogRef = mock(MatDialogRef);
 
