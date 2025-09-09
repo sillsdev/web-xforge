@@ -1,7 +1,7 @@
 import { BidiModule } from '@angular/cdk/bidi';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { APP_INITIALIZER, ModuleWithProviders, NgModule } from '@angular/core';
+import { ModuleWithProviders, NgModule, inject, provideAppInitializer } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatRippleModule } from '@angular/material/core';
 import { MatDividerModule } from '@angular/material/divider';
@@ -73,20 +73,16 @@ export class LynxInsightsModule {
           useFactory: createLynxDocumentManager,
           deps: [TextDocReader]
         },
-        {
-          provide: APP_INITIALIZER,
-          useFactory: moduleInit,
-          deps: [LynxWorkspaceService],
-          multi: true
-        },
-        {
-          provide: APP_INITIALIZER,
-          useFactory: (formatRegistry: QuillFormatRegistryService) => () => {
+        provideAppInitializer(() => {
+        const initializerFn = (moduleInit)(inject(LynxWorkspaceService));
+        return initializerFn();
+      }),
+        provideAppInitializer(() => {
+        const initializerFn = ((formatRegistry: QuillFormatRegistryService) => () => {
             formatRegistry.registerFormats(lynxInsightBlots);
-          },
-          deps: [QuillFormatRegistryService],
-          multi: true
-        },
+          })(inject(QuillFormatRegistryService));
+        return initializerFn();
+      }),
         { provide: EditorReadyService, useClass: QuillEditorReadyService },
         { provide: InsightRenderService, useClass: QuillInsightRenderService },
         { provide: EditorSegmentService, useClass: QuillEditorSegmentService }
