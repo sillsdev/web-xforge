@@ -33,12 +33,12 @@ mat-panel-description {
   align-items: center;
 
   button {
-    display: flex;
     flex-shrink: 0;
   }
 
   .new-label {
     color: var(--draft-history-entry-new-label);
+    font-weight: 500;
   }
 }
 
