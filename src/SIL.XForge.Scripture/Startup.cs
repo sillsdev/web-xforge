@@ -55,7 +55,7 @@ public class Startup
     /// <summary>
     /// Routes that should be handled by SPA in both production and development.
     /// </summary>
-    private static readonly HashSet<string> SpaGetRoutes =
+    private readonly HashSet<string> SpaGetRoutes =
     [
         "index.html",
         "prerendered-routes.json",
@@ -90,7 +90,7 @@ public class Startup
 
     private static readonly HashSet<string> DevelopmentSpaPostRoutes = ["sockjs-node"];
     private static readonly HashSet<string> ProductionSpaPostRoutes = [];
-    private static readonly HashSet<string> SpaPostRoutes = [];
+    private readonly HashSet<string> SpaPostRoutes = [];
 
     public Startup(IConfiguration configuration, IWebHostEnvironment env, ILoggerFactory loggerFactory)
     {
@@ -360,15 +360,15 @@ public class Startup
         //   /@vite/client
         // Anything could conceivably contain a '?'.
 
-        // Look at what is after the first slash, and before the next slash or '?'. Match paths like /projects/123456789
+        // Look at what is after starting slashes, and before the next slash or '?'. Match paths like /projects/123456789
         // as "projects", /login?a=b as "login", and /safety-worker.js as "safety-worker.js".
-        string exact = path.Split('/', '?').ElementAtOrDefault(1) ?? "";
+        string exact = path?.TrimStart('/').Split('/', '?').FirstOrDefault() ?? string.Empty;
         if (spaRoutes.Contains(exact))
             return true;
 
         // Then look at what is before the first dash or dot. Match paths like /polyfills-C3D4E5F6.js.map and
         // /polyfills.js as "polyfills".
-        string beginning = exact.Split(['-', '.']).FirstOrDefault();
+        string beginning = exact.Split('-', '.').FirstOrDefault();
         if (spaRoutes.Contains(beginning))
             return true;
 
