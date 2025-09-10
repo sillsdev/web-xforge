@@ -247,8 +247,7 @@ export class DraftGenerationStepsComponent implements OnInit {
             const draftConfig: DraftConfig | undefined =
               this.activatedProject.projectDoc?.data?.translateConfig.draftConfig;
             const hasPreviousTrainingRange: boolean =
-              draftConfig?.lastSelectedTrainingScriptureRange != null || // Old format
-              (draftConfig?.lastSelectedTrainingScriptureRanges ?? []).length > 0; // New format
+              (draftConfig?.lastSelectedTrainingScriptureRanges ?? []).length > 0;
 
             // Determine if this book should be auto selected. The requirements are:
             // 1. The project does not have any previous training selections made.
@@ -620,14 +619,6 @@ export class DraftGenerationStepsComponent implements OnInit {
     // Get the previously selected translation books from the target project
     const previousTranslation =
       this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRanges ?? [];
-
-    // Support old format
-    const oldStyleRange: string | undefined =
-      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRange;
-    if (previousTranslation.length === 0 && oldStyleRange !== undefined) {
-      previousTranslation.push({ projectId: this.draftingSources[0].projectRef, scriptureRange: oldStyleRange });
-    }
-
     for (const range of previousTranslation) {
       const source = this.draftingSources.find(s => s.projectRef === range.projectId);
       if (source !== undefined) {
@@ -645,14 +636,6 @@ export class DraftGenerationStepsComponent implements OnInit {
     // Get the previously selected training books from the target project
     const previousTraining =
       this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingScriptureRanges ?? [];
-
-    // Support old format
-    const oldStyleRange: string | undefined =
-      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingScriptureRange;
-    if (previousTraining.length === 0 && oldStyleRange !== undefined) {
-      previousTraining.push({ projectId: this.trainingSources[0].projectRef, scriptureRange: oldStyleRange });
-    }
-
     for (const range of previousTraining) {
       const source = this.trainingSources.find(s => s.projectRef === range.projectId);
       if (source !== undefined) {

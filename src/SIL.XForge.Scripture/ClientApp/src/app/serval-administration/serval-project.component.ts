@@ -159,14 +159,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
 
           // Setup the books
           this.trainingBooksByProject = [];
-          if (draftConfig.lastSelectedTrainingScriptureRange != null) {
-            this.trainingBooksByProject.push({
-              source: 'Source 1',
-              scriptureRange: this.i18n.formatAndLocalizeScriptureRange(
-                draftConfig.lastSelectedTrainingScriptureRange ?? ''
-              )
-            });
-          } else if (draftConfig.lastSelectedTrainingScriptureRanges != null) {
+          if (draftConfig.lastSelectedTrainingScriptureRanges != null) {
             let sourceCount = 1;
             for (const range of draftConfig.lastSelectedTrainingScriptureRanges) {
               this.trainingBooksByProject.push({
@@ -177,14 +170,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           }
           this.trainingFiles = draftConfig.lastSelectedTrainingDataFiles;
           this.translationBooksByProject = [];
-          if (draftConfig.lastSelectedTranslationScriptureRange != null) {
-            this.translationBooksByProject.push({
-              source: 'Source 1',
-              scriptureRange: this.i18n.formatAndLocalizeScriptureRange(
-                draftConfig.lastSelectedTranslationScriptureRange ?? ''
-              )
-            });
-          } else if (draftConfig.lastSelectedTranslationScriptureRanges != null) {
+          if (draftConfig.lastSelectedTranslationScriptureRanges != null) {
             let sourceCount = 1;
             for (const range of draftConfig.lastSelectedTranslationScriptureRanges) {
               this.translationBooksByProject.push({
