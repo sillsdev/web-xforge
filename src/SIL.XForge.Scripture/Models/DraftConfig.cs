@@ -10,12 +10,8 @@ public class DraftConfig
     public TranslateSource? AlternateSource { get; set; }
     public bool AlternateTrainingSourceEnabled { get; set; }
     public TranslateSource? AlternateTrainingSource { get; set; }
-    public IList<int> LastSelectedTrainingBooks { get; set; } = [];
-    public string? LastSelectedTrainingScriptureRange { get; set; }
     public IList<ProjectScriptureRange> LastSelectedTrainingScriptureRanges { get; set; } = [];
     public IList<string> LastSelectedTrainingDataFiles { get; set; } = [];
-    public IList<int> LastSelectedTranslationBooks { get; set; } = [];
-    public string? LastSelectedTranslationScriptureRange { get; set; }
     public IList<ProjectScriptureRange> LastSelectedTranslationScriptureRanges { get; set; } = [];
     public bool? FastTraining { get; set; }
     public bool? UseEcho { get; set; }
