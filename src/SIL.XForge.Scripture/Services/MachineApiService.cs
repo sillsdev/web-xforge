@@ -1347,62 +1347,6 @@ public class MachineApiService(
         CancellationToken cancellationToken
     )
     {
-        // Ensure that there are no errors in the build configuration for training
-        if (!string.IsNullOrWhiteSpace(buildConfig.TrainingScriptureRange) && buildConfig.TrainingBooks.Count > 0)
-        {
-            throw new DataNotFoundException(
-                $"You cannot specify both {nameof(buildConfig.TrainingScriptureRange)}"
-                    + $" and {nameof(buildConfig.TrainingBooks)}."
-            );
-        }
-
-        if (
-            !string.IsNullOrWhiteSpace(buildConfig.TrainingScriptureRange)
-            && buildConfig.TrainingScriptureRanges.Count > 0
-        )
-        {
-            throw new DataNotFoundException(
-                $"You cannot specify both {nameof(buildConfig.TrainingScriptureRange)}"
-                    + $" and {nameof(buildConfig.TrainingScriptureRanges)}."
-            );
-        }
-
-        if (buildConfig.TrainingScriptureRanges.Count > 0 && buildConfig.TrainingBooks.Count > 0)
-        {
-            throw new DataNotFoundException(
-                $"You cannot specify both {nameof(buildConfig.TrainingScriptureRanges)}"
-                    + $" and {nameof(buildConfig.TrainingBooks)}."
-            );
-        }
-
-        // Ensure that there are no errors in the build configuration for translation
-        if (!string.IsNullOrWhiteSpace(buildConfig.TranslationScriptureRange) && buildConfig.TranslationBooks.Count > 0)
-        {
-            throw new DataNotFoundException(
-                $"You cannot specify both {nameof(buildConfig.TranslationScriptureRange)}"
-                    + $" and {nameof(buildConfig.TranslationBooks)}."
-            );
-        }
-
-        if (
-            !string.IsNullOrWhiteSpace(buildConfig.TranslationScriptureRange)
-            && buildConfig.TranslationScriptureRanges.Count > 0
-        )
-        {
-            throw new DataNotFoundException(
-                $"You cannot specify both {nameof(buildConfig.TranslationScriptureRange)}"
-                    + $" and {nameof(buildConfig.TranslationScriptureRanges)}."
-            );
-        }
-
-        if (buildConfig.TranslationScriptureRanges.Count > 0 && buildConfig.TranslationBooks.Count > 0)
-        {
-            throw new DataNotFoundException(
-                $"You cannot specify both {nameof(buildConfig.TranslationScriptureRanges)}"
-                    + $" and {nameof(buildConfig.TranslationBooks)}."
-            );
-        }
-
         // Load the project from the realtime service
         await using IConnection conn = await realtimeService.ConnectAsync(curUserId);
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(buildConfig.ProjectId);
@@ -1421,32 +1365,14 @@ public class MachineApiService(
         await projectDoc.SubmitJson0OpAsync(op =>
         {
             op.Set(
-                p => p.TranslateConfig.DraftConfig.LastSelectedTrainingBooks,
-                [.. buildConfig.TrainingBooks],
-                _listIntComparer
-            );
-            op.Set(
                 p => p.TranslateConfig.DraftConfig.LastSelectedTrainingDataFiles,
                 [.. buildConfig.TrainingDataFiles],
                 _listStringComparer
             );
             op.Set(
-                p => p.TranslateConfig.DraftConfig.LastSelectedTrainingScriptureRange,
-                buildConfig.TrainingScriptureRange
-            );
-            op.Set(
                 p => p.TranslateConfig.DraftConfig.LastSelectedTrainingScriptureRanges,
                 [.. buildConfig.TrainingScriptureRanges],
                 _listProjectScriptureRangeComparer
-            );
-            op.Set(
-                p => p.TranslateConfig.DraftConfig.LastSelectedTranslationBooks,
-                [.. buildConfig.TranslationBooks],
-                _listIntComparer
-            );
-            op.Set(
-                p => p.TranslateConfig.DraftConfig.LastSelectedTranslationScriptureRange,
-                buildConfig.TranslationScriptureRange
             );
             op.Set(
                 p => p.TranslateConfig.DraftConfig.LastSelectedTranslationScriptureRanges,
@@ -1932,27 +1858,11 @@ public class MachineApiService(
             buildDto.AdditionalInfo.TrainingScriptureRanges.Add(scriptureRange);
         }
 
-        // Add the older training scripture range. We don't know what source project it came from
-        if (!string.IsNullOrWhiteSpace(draftConfig.LastSelectedTrainingScriptureRange))
-        {
-            buildDto.AdditionalInfo.TrainingScriptureRanges.Add(
-                new ProjectScriptureRange { ScriptureRange = draftConfig.LastSelectedTrainingScriptureRange }
-            );
-        }
-
         // Add the translation scripture ranges
         buildDto.AdditionalInfo.TranslationScriptureRanges.Clear();
         foreach (ProjectScriptureRange scriptureRange in draftConfig.LastSelectedTranslationScriptureRanges)
         {
             buildDto.AdditionalInfo.TranslationScriptureRanges.Add(scriptureRange);
-        }
-
-        // Add the older translation scripture range
-        if (!string.IsNullOrWhiteSpace(draftConfig.LastSelectedTranslationScriptureRange))
-        {
-            buildDto.AdditionalInfo.TranslationScriptureRanges.Add(
-                new ProjectScriptureRange { ScriptureRange = draftConfig.LastSelectedTranslationScriptureRange }
-            );
         }
 
         // Add training data files
@@ -1989,27 +1899,11 @@ public class MachineApiService(
             buildDto.AdditionalInfo.TrainingScriptureRanges.Add(scriptureRange);
         }
 
-        // Add the older training scripture range. We don't know what source project it came from
-        if (!string.IsNullOrWhiteSpace(buildConfig.TrainingScriptureRange))
-        {
-            buildDto.AdditionalInfo.TrainingScriptureRanges.Add(
-                new ProjectScriptureRange { ScriptureRange = buildConfig.TrainingScriptureRange }
-            );
-        }
-
         // Add the translation scripture ranges
         buildDto.AdditionalInfo.TranslationScriptureRanges.Clear();
         foreach (ProjectScriptureRange scriptureRange in buildConfig.TranslationScriptureRanges)
         {
             buildDto.AdditionalInfo.TranslationScriptureRanges.Add(scriptureRange);
-        }
-
-        // Add the older translation scripture range
-        if (!string.IsNullOrWhiteSpace(buildConfig.TranslationScriptureRange))
-        {
-            buildDto.AdditionalInfo.TranslationScriptureRanges.Add(
-                new ProjectScriptureRange { ScriptureRange = buildConfig.TranslationScriptureRange }
-            );
         }
 
         // Add training data files
