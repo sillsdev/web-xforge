@@ -24,6 +24,7 @@ import { SFProjectService } from './sf-project.service';
 const mockedUserService = mock(UserService);
 const mockedProjectService = mock(SFProjectService);
 const mockedProjectDoc = mock(SFProjectProfileDoc);
+
 describe('PermissionsService', () => {
   configureTestingModule(() => ({
     imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
@@ -251,8 +252,8 @@ class TestEnvironment {
   constructor(readonly checkingEnabled = true) {
     this.service = TestBed.inject(PermissionsService);
 
-    when(mockedProjectService.getProfile(anything(), anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, new DocSubscription('spec'))
+    when(mockedProjectService.getProfile(anything(), anything())).thenCall(
+      async id => await this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, new DocSubscription('spec'))
     );
 
     this.setProjectProfile();
@@ -300,8 +301,8 @@ class TestEnvironment {
 
   setCurrentUser(userId: string = 'user01'): void {
     when(mockedUserService.currentUserId).thenReturn(userId);
-    when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, userId, new DocSubscription('spec'))
+    when(mockedUserService.getCurrentUser()).thenCall(
+      async () => await this.realtimeService.subscribe(UserDoc.COLLECTION, userId, new DocSubscription('spec'))
     );
   }
 
