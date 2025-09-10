@@ -108,7 +108,7 @@ describe('SyncComponent', () => {
     expect(env.offlineMessage).toBeNull();
   }));
 
-  it('should sync project when the button is clicked', fakeAsync(() => {
+  it('should sync project when the button is clicked', fakeAsync(async () => {
     const env = new TestEnvironment();
     const previousLastSyncDate = env.component.lastSyncDate;
     verify(mockedProjectService.subscribe(env.projectId, anything())).once();
@@ -121,7 +121,7 @@ describe('SyncComponent', () => {
     expect(env.cancelButton).not.toBeNull();
     expect(env.logInButton).toBeNull();
     expect(env.syncButton).toBeNull();
-    env.emitSyncComplete(true, env.projectId);
+    await env.emitSyncComplete(true, env.projectId);
     expect(env.component.lastSyncDate!.getTime()).toBeGreaterThan(previousLastSyncDate!.getTime());
     verify(mockedNoticeService.show('Successfully synchronized Sync Test Project with Paratext.')).once();
   }));
@@ -139,7 +139,7 @@ describe('SyncComponent', () => {
     expect(env.component.syncActive).toBe(false);
   }));
 
-  it('should report error if sync has a problem', fakeAsync(() => {
+  it('should report error if sync has a problem', fakeAsync(async () => {
     const env = new TestEnvironment();
     verify(mockedProjectService.subscribe(env.projectId, anything())).once();
     env.clickElement(env.syncButton);
@@ -147,16 +147,16 @@ describe('SyncComponent', () => {
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).not.toBeNull();
     // Simulate sync in progress
-    env.setQueuedCount(env.projectId);
+    await env.setQueuedCount(env.projectId);
 
     // Simulate sync error
-    env.emitSyncComplete(false, env.projectId);
+    await env.emitSyncComplete(false, env.projectId);
 
     expect(env.component.syncActive).toBe(false);
     verify(mockedDialogService.message(anything())).once();
   }));
 
-  it('should report user permissions error if sync failed for that reason', fakeAsync(() => {
+  it('should report user permissions error if sync failed for that reason', fakeAsync(async () => {
     const env = new TestEnvironment({ lastSyncErrorCode: -1, lastSyncWasSuccessful: false });
     verify(mockedProjectService.subscribe(env.projectId, anything())).once();
     env.clickElement(env.syncButton);
@@ -164,10 +164,10 @@ describe('SyncComponent', () => {
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).not.toBeNull();
     // Simulate sync in progress
-    env.setQueuedCount(env.projectId);
+    await env.setQueuedCount(env.projectId);
 
     // Simulate sync error
-    env.emitSyncComplete(false, env.projectId);
+    await env.emitSyncComplete(false, env.projectId);
 
     expect(env.component.syncActive).toBe(false);
     expect(env.component.showSyncUserPermissionsFailureMessage).toBe(true);
@@ -226,7 +226,7 @@ describe('SyncComponent', () => {
     expect(env.syncDisabledMessage).toBeNull();
   }));
 
-  it('should not report if sync was cancelled', fakeAsync(() => {
+  it('should not report if sync was cancelled', fakeAsync(async () => {
     const env = new TestEnvironment();
     const previousLastSyncDate = env.component.lastSyncDate;
     verify(mockedProjectService.subscribe(env.projectId, anything())).once();
@@ -234,10 +234,10 @@ describe('SyncComponent', () => {
     verify(mockedProjectService.onlineSync(env.projectId)).once();
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).not.toBeNull();
-    env.setQueuedCount(env.projectId);
+    await env.setQueuedCount(env.projectId);
 
     env.clickElement(env.cancelButton);
-    env.emitSyncComplete(false, env.projectId);
+    await env.emitSyncComplete(false, env.projectId);
 
     expect(env.component.syncActive).toBe(false);
     expect(env.component.lastSyncDate).toEqual(previousLastSyncDate);
@@ -245,7 +245,7 @@ describe('SyncComponent', () => {
     verify(mockedDialogService.message(anything())).never();
   }));
 
-  it('should report success if sync was cancelled but had finished', fakeAsync(() => {
+  it('should report success if sync was cancelled but had finished', fakeAsync(async () => {
     const env = new TestEnvironment();
     verify(mockedProjectService.subscribe(env.projectId, anything())).once();
     env.clickElement(env.syncButton);
@@ -254,7 +254,7 @@ describe('SyncComponent', () => {
     expect(env.progressBar).not.toBeNull();
 
     env.clickElement(env.cancelButton);
-    env.emitSyncComplete(true, env.projectId);
+    await env.emitSyncComplete(true, env.projectId);
 
     verify(mockedNoticeService.show('Successfully synchronized Sync Test Project with Paratext.')).once();
     verify(mockedDialogService.message(anything())).never();
@@ -293,7 +293,7 @@ class TestEnvironment {
     const ptUsername = isParatextAccountConnected ? 'Paratext User01' : '';
     when(mockedParatextService.getParatextUsername()).thenReturn(of(ptUsername));
     when(mockedProjectService.onlineSync(anything()))
-      .thenCall(id => this.setQueuedCount(id))
+      .thenCall(async id => await this.setQueuedCount(id))
       .thenResolve();
     when(mockedNoticeService.loadingStarted(anything())).thenCall(() => (this.isLoading = true));
     when(mockedNoticeService.loadingFinished(anything())).thenCall(() => (this.isLoading = false));
@@ -316,8 +316,9 @@ class TestEnvironment {
       })
     });
 
-    when(mockedProjectService.subscribe(anyString(), anything())).thenCall(projectId =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId, new DocSubscription('spec'))
+    when(mockedProjectService.subscribe(anyString(), anything())).thenCall(
+      async projectId =>
+        await this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId, new DocSubscription('spec'))
     );
 
     this.fixture = TestBed.createComponent(SyncComponent);
