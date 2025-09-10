@@ -5,7 +5,11 @@ import { Canon } from '@sillsdev/scripture';
 import { isEqual } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
-import { ProjectScriptureRange, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import {
+  DraftConfig,
+  ProjectScriptureRange,
+  TranslateSource
+} from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, merge, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -30,6 +34,9 @@ import { NllbLanguageService } from '../../nllb-language.service';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
 import { DraftSource, DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataService } from '../training-data/training-data.service';
+
+// We consider books with more than 10 translated segments as translated
+const minimumTranslatedSegments: number = 10;
 
 export interface DraftGenerationStepsResult {
   trainingDataFiles: string[];
@@ -96,6 +103,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   targetProjectName?: string;
 
   showBookSelectionError = false;
+  trainingBooksWereAutoSelected = false;
   isTrainingOptional = false;
 
   fastTraining: boolean = false;
@@ -209,6 +217,9 @@ export class DraftGenerationStepsComponent implements OnInit {
               this.trainingDataFiles = this.trainingDataQuery?.docs.map(doc => doc.data).filter(d => d != null) ?? [];
             });
 
+          // Reset the field that toggles a notice that books were automatically selected
+          this.trainingBooksWereAutoSelected = false;
+
           // If book exists in both target and source, add to available books.
           // Otherwise, add to unusable books.
           // Ensure books are displayed in ascending canonical order.
@@ -232,27 +243,49 @@ export class DraftGenerationStepsComponent implements OnInit {
               this.unusableTranslateSourceBooks.push(bookNum);
             }
 
+            // See if there is an existing training scripture range
+            const draftConfig: DraftConfig | undefined =
+              this.activatedProject.projectDoc?.data?.translateConfig.draftConfig;
+            const hasPreviousTrainingRange: boolean =
+              draftConfig?.lastSelectedTrainingScriptureRange != null || // Old format
+              (draftConfig?.lastSelectedTrainingScriptureRanges ?? []).length > 0; // New format
+
+            // Determine if this book should be auto selected. The requirements are:
+            // 1. The project does not have any previous training selections made.
+            // 2. At least 10 verses have been translated.
+            // 3. At least 99 percent of the book has been translated or 3 or fewer blank segments.
+            const textProgress: TextProgress | undefined = this.progressService.texts.find(
+              t => t.text.bookNum === bookNum
+            );
+            const selected: boolean =
+              !hasPreviousTrainingRange &&
+              textProgress != null &&
+              textProgress.translated > minimumTranslatedSegments &&
+              (textProgress.percentage >= 99 || textProgress.blank <= 3);
+
+            // If books were automatically selected, reflect this in the UI via a notice
+            this.trainingBooksWereAutoSelected ||= selected;
+
             // Training books
             let isPresentInASource = false;
             if (trainingSourceBooks.has(bookNum)) {
-              this.availableTrainingBooks[trainingSources[0]!.projectRef].push({ number: bookNum, selected: false });
+              this.availableTrainingBooks[trainingSources[0]!.projectRef].push({ number: bookNum, selected: selected });
               isPresentInASource = true;
             } else {
               this.unusableTrainingSourceBooks.push(bookNum);
               const textProgress: TextProgress | undefined = this.progressService.texts.find(
                 t => t.text.bookNum === bookNum
               );
-              if (textProgress != null && textProgress.translated > 10) {
-                // we consider books with more than 10 translated segments as translated
+              if (textProgress != null && textProgress.translated > minimumTranslatedSegments) {
                 this.translatedBooksWithNoSource.push(bookNum);
               }
             }
             if (trainingSources[1] != null && additionalTrainingSourceBooks.has(bookNum)) {
-              this.availableTrainingBooks[trainingSources[1].projectRef].push({ number: bookNum, selected: false });
+              this.availableTrainingBooks[trainingSources[1].projectRef].push({ number: bookNum, selected: selected });
               isPresentInASource = true;
             }
             if (isPresentInASource) {
-              this.availableTrainingBooks[projectId!].push({ number: bookNum, selected: false });
+              this.availableTrainingBooks[projectId!].push({ number: bookNum, selected: selected });
             }
           }
 
@@ -562,6 +595,14 @@ export class DraftGenerationStepsComponent implements OnInit {
     for (const [, trainingBooks] of Object.entries(this.availableTrainingBooks)) {
       // set the selected state of any training book to false if it is selected for translation
       trainingBooks.forEach(b => (b.selected = booksForTranslation.includes(b.number) ? false : b.selected));
+    }
+
+    // If books were auto-selected for training, but none are selected now, clear the notice
+    if (
+      this.trainingBooksWereAutoSelected &&
+      !Object.values(this.availableTrainingBooks).some(books => books.some(book => book.selected))
+    ) {
+      this.trainingBooksWereAutoSelected = false;
     }
   }
 
