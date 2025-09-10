@@ -68,7 +68,7 @@
               [formControl]="lynxMasterSwitch"
               (change)="setLynxMasterEnabled($event.checked)"
             >
-              <span class="card-title toggle-label">{{ t("lynx_settings_title") }}</span>
+              <span class="card-title toggle-label">{{ t("insights_settings_title") }}</span>
             </mat-slide-toggle>
           </div>
 
@@ -79,7 +79,7 @@
                 [formControl]="lynxAssessmentsEnabled"
                 (change)="setLynxAssessmentsEnabled($event.checked)"
               >
-                <span class="toggle-label">{{ t("lynx_enable_assessments") }}</span>
+                <span class="toggle-label">{{ t("insights_enable_assessments") }}</span>
               </mat-slide-toggle>
             }
             @if (lynxAutoCorrectProjectEnabled) {
@@ -88,7 +88,7 @@
                 [formControl]="lynxAutoCorrectEnabled"
                 (change)="setLynxAutoCorrectEnabled($event.checked)"
               >
-                <span class="toggle-label">{{ t("lynx_enable_autocorrect") }}</span>
+                <span class="toggle-label">{{ t("insights_enable_autocorrect") }}</span>
               </mat-slide-toggle>
             }
           </div>
