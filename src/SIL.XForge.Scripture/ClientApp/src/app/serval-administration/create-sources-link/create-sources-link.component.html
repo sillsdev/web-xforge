@@ -1,0 +1,43 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>Create Draft Sources Configuration Link</mat-card-title>
+  </mat-card-header>
+
+  <mat-card-content>
+    <p>
+      Enter project short names to generate a link that configures the draft sources. Project short names are case
+      sensitive!
+    </p>
+
+    <form [formGroup]="sourcesForm">
+      <mat-form-field class="form-field">
+        <mat-label>Training Sources</mat-label>
+        <input
+          matInput
+          formControlName="trainingSources"
+          placeholder="Enter training project short names (comma-separated)"
+        />
+      </mat-form-field>
+
+      <mat-form-field class="form-field">
+        <mat-label>Draft Source</mat-label>
+        <input matInput formControlName="draftingSources" placeholder="Enter source short name" />
+      </mat-form-field>
+    </form>
+
+    @if (link) {
+      <div class="link-container">
+        <mat-form-field class="link-field">
+          <input matInput [value]="link" readonly (focus)="selectAllText($event)" />
+        </mat-form-field>
+        <button mat-icon-button (click)="copyLink()" matTooltip="Copy link to clipboard">
+          <mat-icon>content_copy</mat-icon>
+        </button>
+      </div>
+    }
+
+    @if (errorMessage) {
+      <app-notice type="error" icon="error" mode="fill-dark">{{ errorMessage }}</app-notice>
+    }
+  </mat-card-content>
+</mat-card>

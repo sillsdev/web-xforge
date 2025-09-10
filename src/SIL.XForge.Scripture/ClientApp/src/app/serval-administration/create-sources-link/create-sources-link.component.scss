@@ -1,0 +1,21 @@
+@use 'src/breakpoints';
+
+:host {
+  display: block;
+  margin-block: 2rem;
+}
+
+form {
+  display: flex;
+  gap: 1rem;
+}
+
+.form-field,
+.link-field {
+  flex-grow: 1;
+}
+
+.link-container {
+  display: flex;
+  gap: 1rem;
+}

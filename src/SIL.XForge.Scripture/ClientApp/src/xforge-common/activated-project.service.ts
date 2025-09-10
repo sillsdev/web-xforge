@@ -2,13 +2,14 @@ import { DestroyRef, Inject, Injectable } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivationEnd, Router } from '@angular/router';
 import ObjectID from 'bson-objectid';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, Observable, of } from 'rxjs';
 import { filter, map, startWith, switchMap } from 'rxjs/operators';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../app/core/models/sf-project-profile-doc';
 import { PermissionsService } from '../app/core/permissions.service';
 import { SFProjectService } from '../app/core/sf-project.service';
 import { CacheService } from '../app/shared/cache-service/cache.service';
+import { hasData, WithData } from '../type-utils';
 import { noopDestroyRef } from './realtime.service';
 interface IActiveProjectIdService {
   /** SF project id */
@@ -103,6 +104,11 @@ export class ActivatedProjectService {
       switchMap(projectDoc => projectDoc?.changes$.pipe(startWith(projectDoc)) ?? of(undefined)),
       map(() => this.projectDoc)
     );
+  }
+
+  /** Returns a promise for the current project document with data. */
+  currentProjectDocWithDataLoaded(): Promise<WithData<SFProjectProfileDoc>> {
+    return firstValueFrom(this.changes$.pipe(filter(hasData)));
   }
 
   private async selectProject(projectId: string | undefined): Promise<void> {

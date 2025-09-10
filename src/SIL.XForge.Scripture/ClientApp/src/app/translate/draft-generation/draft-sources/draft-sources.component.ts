@@ -7,11 +7,11 @@ import { MatRippleModule } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
-import { filter, merge, Subscription } from 'rxjs';
+import { merge, Subscription } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { isNetworkError } from 'xforge-common/command.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -80,15 +80,19 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
 
   step = 1;
 
-  trainingSources: (SelectableProjectWithLanguageCode | undefined)[] = [];
+  // trainingSources and draftingSources start with one undefined entry so an empty input will be shown while loading
+  trainingSources: (SelectableProjectWithLanguageCode | undefined)[] = [undefined];
   trainingTargets: SFProjectProfile[] = [];
-  draftingSources: (SelectableProjectWithLanguageCode | undefined)[] = [];
+  draftingSources: (SelectableProjectWithLanguageCode | undefined)[] = [undefined];
   availableTrainingFiles: Readonly<TrainingData>[] = [];
 
   projects?: SelectableProject[];
-  resources?: SelectableProject[];
+  resources?: SelectableProjectWithLanguageCode[];
   // Projects that can be an already selected value, but not necessarily given as an option in the menu
   nonSelectableProjects: SelectableProject[] = [];
+
+  /** Promise that resolves when resources are loaded for the first time */
+  private resourcesLoadedPromise?: Promise<void>;
 
   languageCodeConfirmationMessageIfUserTriesToContinue: I18nKeyForComponent<'draft_sources'> | null = null;
   clearLanguageCodeConfirmationCheckbox = new EventEmitter<void>();
@@ -115,6 +119,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
     private readonly userProjectsService: SFUserProjectsService,
     private readonly trainingDataService: TrainingDataService,
     private readonly router: Router,
+    private readonly route: ActivatedRoute,
     private readonly onlineStatus: OnlineStatusService,
     readonly i18n: I18nService,
     noticeService: NoticeService,
@@ -122,26 +127,12 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
     private readonly fileService: FileService
   ) {
     super(noticeService);
+    void this.init();
+  }
 
-    this.activatedProjectService.changes$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async projectDoc => {
-      if (projectDoc?.data != null) {
-        const { trainingSources, trainingTargets, draftingSources } = projectToDraftSources(projectDoc.data);
-        if (trainingSources.length > 2) throw new Error('More than 2 training sources is not supported');
-        if (draftingSources.length > 1) throw new Error('More than 1 drafting source is not supported');
-        if (trainingTargets.length !== 1) throw new Error('Exactly 1 training target is required');
-
-        this.trainingSources = trainingSources.map(translateSourceToSelectableProjectWithLanguageTag);
-
-        this.trainingTargets = trainingTargets;
-        this.draftingSources = draftingSources.map(translateSourceToSelectableProjectWithLanguageTag);
-        this.nonSelectableProjects = [...this.trainingSources.filter(notNull), ...this.draftingSources.filter(notNull)];
-
-        if (this.draftingSources.length < 1) this.draftingSources.push(undefined);
-        if (this.trainingSources.length < 1) this.trainingSources.push(undefined);
-
-        await this.initializeTrainingFiles(projectDoc);
-      }
-    });
+  private async init(): Promise<void> {
+    // Load projects and resources once during initialization
+    this.resourcesLoadedPromise = this.loadProjects();
 
     this.userProjectsService.projectDocs$
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
@@ -150,12 +141,94 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
         this.userConnectedProjectsAndResources = projects.filter(project => project.data != null);
       });
 
-    this.onlineStatus.onlineStatus$
-      .pipe(
-        quietTakeUntilDestroyed(this.destroyRef),
-        filter(isOnline => isOnline)
-      )
-      .subscribe(() => this.loadProjects());
+    const projectDoc = await this.activatedProjectService.currentProjectDocWithDataLoaded();
+
+    void this.loadSources(projectDoc);
+    void this.initializeTrainingFiles(projectDoc);
+  }
+
+  /** Load sources either from query parameters or project defaults */
+  private async loadSources(projectDoc: SFProjectProfileDoc): Promise<void> {
+    if (projectDoc?.data == null) return;
+
+    // Check for query parameters to override default project sources
+    const queryParams = this.route.snapshot?.queryParamMap;
+    const trainingSourcesParam = queryParams?.get('trainingSources')?.split(',').filter(Boolean) ?? [];
+    const draftingSourcesParam = queryParams?.get('draftingSources')?.split(',').filter(Boolean) ?? [];
+
+    let loadSourcesFromQueryParams = trainingSourcesParam.length > 0 || draftingSourcesParam.length > 0;
+
+    if (loadSourcesFromQueryParams) {
+      if (trainingSourcesParam.length > 2) throw new Error('More than 2 training sources is not supported');
+      if (draftingSourcesParam.length > 1) throw new Error('More than 1 drafting source is not supported');
+
+      // Ensure resources are loaded before proceeding
+      await this.resourcesLoadedPromise;
+
+      // Get all available projects and resources
+      const allResources = this.resources || [];
+      const userProjects = this.userConnectedProjectsAndResources
+        .map(p => p.data)
+        .filter(notNull)
+        .map(p => this.convertToSelectableProjectWithLanguageCode(p));
+      const allAvailable = [...userProjects, ...allResources];
+
+      // Ensure all projects actually exist
+      const missingProjects = [...trainingSourcesParam, ...draftingSourcesParam].filter(
+        s => !allAvailable.some(p => p.shortName === s)
+      );
+
+      if (missingProjects.length > 0) {
+        loadSourcesFromQueryParams = false;
+        void this.dialogService.message(
+          this.i18n.translate('draft_sources.invalid_configuration_message', {
+            invalidProjects: this.i18n.enumerateList([...new Set(missingProjects)])
+          })
+        );
+      }
+
+      this.trainingTargets = [projectDoc.data];
+      this.trainingSources = trainingSourcesParam.map(sn => allAvailable.find(p => p.shortName === sn));
+      this.draftingSources = draftingSourcesParam.map(sn => allAvailable.find(p => p.shortName === sn));
+
+      this.dialogService.message('draft_sources.sources_loaded_from_link');
+    }
+
+    // Load from project defaults (either no query params or fallback due to invalid projects)
+    if (!loadSourcesFromQueryParams) {
+      const { trainingSources, trainingTargets, draftingSources } = projectToDraftSources(projectDoc.data);
+      if (trainingSources.length > 2) throw new Error('More than 2 training sources is not supported');
+      if (draftingSources.length > 1) throw new Error('More than 1 drafting source is not supported');
+      if (trainingTargets.length !== 1) throw new Error('Exactly 1 training target is required');
+
+      this.trainingSources = trainingSources.map(translateSourceToSelectableProjectWithLanguageTag);
+      this.trainingTargets = trainingTargets;
+      this.draftingSources = draftingSources.map(translateSourceToSelectableProjectWithLanguageTag);
+    }
+
+    this.nonSelectableProjects = [...this.trainingSources.filter(notNull), ...this.draftingSources.filter(notNull)];
+
+    // Ensure arrays have at least one slot for UI
+    if (this.draftingSources.length < 1) this.draftingSources.push(undefined);
+    if (this.trainingSources.length < 1) this.trainingSources.push(undefined);
+  }
+
+  /** Convert a project to SelectableProjectWithLanguageCode format */
+  private convertToSelectableProjectWithLanguageCode(
+    project: SelectableProjectWithLanguageCode | SFProjectProfile
+  ): SelectableProjectWithLanguageCode {
+    if ('languageTag' in project) {
+      // Already a SelectableProjectWithLanguageCode
+      return project;
+    } else {
+      // Convert from SFProjectProfile
+      return {
+        paratextId: project.paratextId,
+        name: project.name,
+        shortName: project.shortName,
+        languageTag: project.writingSystem.tag
+      };
+    }
   }
 
   private async initializeTrainingFiles(projectDoc: SFProjectProfileDoc): Promise<void> {
@@ -207,6 +280,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
   }
 
   get targetLanguageDisplayName(): string | undefined {
+    if (this.trainingTargets.length === 0) return undefined; // Not loaded yet
     if (this.trainingTargets.length !== 1) throw new Error('Multiple training targets not supported');
 
     return this.i18n.getLanguageDisplayName(this.trainingTargets[0]!.writingSystem.tag);
@@ -239,11 +313,16 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
 
   async loadProjects(): Promise<void> {
     this.loadingStarted();
+    await this.onlineStatus.online;
     try {
-      [this.projects, this.resources] = await Promise.all([
+      // Load projects and resources once
+      const [projects, resources] = await Promise.all([
         this.paratextService.getProjects(),
         this.paratextService.getResources()
       ]);
+
+      this.projects = projects;
+      this.resources = resources;
     } catch (error) {
       if (!isNetworkError(error)) {
         this.errorReportingService.silentError(
