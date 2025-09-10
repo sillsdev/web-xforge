@@ -222,7 +222,7 @@ describe('EditorComponent', () => {
     env.dispose();
   }));
 
-  it('response to remote text deletion', fakeAsync(() => {
+  it('response to remote text deletion', fakeAsync(async () => {
     const env = new TestEnvironment();
     flush();
     env.routeWithParams({ projectId: 'project02', bookId: 'MAT' });
@@ -232,7 +232,7 @@ describe('EditorComponent', () => {
     env.setupDialogRef();
 
     const textDocId = new TextDocId('project02', 40, 1, 'target');
-    env.deleteText(textDocId.toString());
+    await env.deleteText(textDocId.toString());
     expect(dialogMessage).toHaveBeenCalledTimes(1);
     tick();
     expect(env.location.path()).toEqual('/projects/project02/translate');
@@ -251,7 +251,7 @@ describe('EditorComponent', () => {
 
     expect(env.component.target!.segmentRef).toEqual('verse_2_1');
     const projectUserConfigDoc: SFProjectUserConfigDoc = await env.getProjectUserConfigDoc();
-    projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.selectedSegment, <string>'verse_2_2'), false);
+    await projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.selectedSegment, <string>'verse_2_2'), false);
     env.wait();
     expect(env.component.target!.segmentRef).toEqual('verse_2_1');
 
@@ -961,7 +961,9 @@ describe('EditorComponent', () => {
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
       expect(env.component.target!.segment!.initialChecksum).toBe(0);
 
-      (await env.getProjectUserConfigDoc()).submitJson0Op(op => op.unset(puc => puc.selectedSegmentChecksum!), false);
+      await (
+        await env.getProjectUserConfigDoc()
+      ).submitJson0Op(op => op.unset(puc => puc.selectedSegmentChecksum!), false);
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
       expect(env.component.target!.segment!.initialChecksum).not.toBe(0);
@@ -1140,7 +1142,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('user can edit a chapter with permission', fakeAsync(() => {
+    it('user can edit a chapter with permission', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setCurrentUser('user03');
       env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2 });
@@ -1158,7 +1160,7 @@ describe('EditorComponent', () => {
       const sourceText = env.sourceTextEditorPlaceholder.getAttribute('data-placeholder');
       expect(sourceText).toEqual('This book is empty. Add chapters in Paratext.');
 
-      env.setDataInSync('project01', false);
+      await env.setDataInSync('project01', false);
       expect(env.component.canEdit).toBe(false);
       expect(env.outOfSyncWarning).not.toBeNull();
       env.dispose();
@@ -1225,9 +1227,9 @@ describe('EditorComponent', () => {
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
 
       // Change user role on the project and run a sync to force remote updates
-      env.changeUserRole(projectId, userId, SFProjectRole.Viewer);
-      env.setDataInSync(projectId, true, false);
-      env.setDataInSync(projectId, false, false);
+      await env.changeUserRole(projectId, userId, SFProjectRole.Viewer);
+      await env.setDataInSync(projectId, true, false);
+      await env.setDataInSync(projectId, false, false);
       env.wait();
       resetCalls(env.mockedRemoteTranslationEngine);
 
@@ -1245,7 +1247,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('uses default font size', fakeAsync(() => {
+    it('uses default font size', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setupProject({ defaultFontSize: 18 });
       env.setProjectUserConfig();
@@ -1255,10 +1257,10 @@ describe('EditorComponent', () => {
       expect(env.targetTextEditor.style.fontSize).toEqual(18 / ptToRem + 'rem');
       expect(env.sourceTextEditor.style.fontSize).toEqual(18 / ptToRem + 'rem');
 
-      env.updateFontSize('project01', 24);
+      await env.updateFontSize('project01', 24);
       expect(env.component.fontSize).toEqual(24 / ptToRem + 'rem');
       expect(env.targetTextEditor.style.fontSize).toEqual(24 / ptToRem + 'rem');
-      env.updateFontSize('project02', 24);
+      await env.updateFontSize('project02', 24);
       expect(env.sourceTextEditor.style.fontSize).toEqual(24 / ptToRem + 'rem');
       env.dispose();
     }));
@@ -1737,7 +1739,7 @@ describe('EditorComponent', () => {
       // active position of thread04 when reattached to verse 4
       const position: TextAnchor = { start: 19, length: 5 };
       // reattach thread04 from MAT 1:3 to MAT 1:4
-      env.reattachNote('project01', 'dataid04', 'MAT 1:4', position);
+      await env.reattachNote('project01', 'dataid04', 'MAT 1:4', position);
 
       // SUT
       env.wait();
@@ -1756,7 +1758,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       // invalid reattachment string
-      env.reattachNote('project01', 'dataid04', 'MAT 1:4  invalid note  error', undefined, true);
+      await env.reattachNote('project01', 'dataid04', 'MAT 1:4  invalid note  error', undefined, true);
 
       // SUT
       env.wait();
@@ -1769,10 +1771,10 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('does not display conflict notes', fakeAsync(() => {
+    it('does not display conflict notes', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
-      env.convertToConflictNote('project01', 'dataid02');
+      await env.convertToConflictNote('project01', 'dataid02');
       env.wait();
 
       expect(env.getNoteThreadIconElement('verse_1_3', 'dataid02')).toBeNull();
@@ -2469,7 +2471,7 @@ describe('EditorComponent', () => {
       textDoc.submit(insertDelta);
       const note1Doc: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid01');
       const anchor: TextAnchor = { start: 8 + insert.length, length: 12 };
-      note1Doc.submitJson0Op(op => op.set(nt => nt.position, anchor));
+      await note1Doc.submitJson0Op(op => op.set(nt => nt.position, anchor));
 
       // SUT 3
       env.wait();
@@ -2681,7 +2683,7 @@ describe('EditorComponent', () => {
       const index: number = noteThread.data!.notes.length - 1;
       const note: Note = noteThread.data!.notes[index];
       note.tagId = 2;
-      noteThread.submitJson0Op(op => op.insert(nt => nt.notes, index, note), false);
+      await noteThread.submitJson0Op(op => op.insert(nt => nt.notes, index, note), false);
       verse1Note = verse1Segment.querySelector('display-note') as HTMLElement;
       expect(verse1Note.getAttribute('style')).toEqual(`--icon-file: url(/assets/icons/TagIcons/${newIconTag}.png);`);
       env.dispose();
@@ -3380,7 +3382,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('should remove resolved notes after a remote update', fakeAsync(() => {
+    it('should remove resolved notes after a remote update', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
@@ -3389,7 +3391,7 @@ describe('EditorComponent', () => {
       let noteThreadEmbedCount = env.countNoteThreadEmbeds(contents.ops!);
       expect(noteThreadEmbedCount).toEqual(5);
 
-      env.resolveNote('project01', 'dataid01');
+      await env.resolveNote('project01', 'dataid01');
       contents = env.targetEditor.getContents();
       noteThreadEmbedCount = env.countNoteThreadEmbeds(contents.ops!);
       expect(noteThreadEmbedCount).toEqual(4);
@@ -3405,7 +3407,7 @@ describe('EditorComponent', () => {
       const segmentRef = 'verse_1_3';
       let thread2Elem: HTMLElement | null = env.getNoteThreadIconElement(segmentRef, threadId);
       expect(thread2Elem).not.toBeNull();
-      env.deleteMostRecentNote('project01', segmentRef, threadId);
+      await env.deleteMostRecentNote('project01', segmentRef, threadId);
       thread2Elem = env.getNoteThreadIconElement(segmentRef, threadId);
       expect(thread2Elem).toBeNull();
 
@@ -4208,15 +4210,14 @@ describe('EditorComponent', () => {
         });
       }));
 
-      it('should not throw exception on remote change when source is undefined', fakeAsync(() => {
+      it('should not throw exception on remote change when source is undefined', fakeAsync(async () => {
         const env = new TestEnvironment();
         env.setProjectUserConfig();
         env.wait();
 
         env.component.source = undefined;
-
-        expect(() => env.updateFontSize('project01', 24)).not.toThrow();
-
+        await expectAsync(env.updateFontSize('project01', 24)).not.toBeRejected();
+        flush();
         env.dispose();
       }));
     });
@@ -5269,7 +5270,7 @@ class TestEnvironment {
 
   async setDataInSync(projectId: string, isInSync: boolean, source?: any): Promise<void> {
     const projectDoc: SFProjectProfileDoc = await this.getProjectDoc(projectId);
-    projectDoc.submitJson0Op(op => op.set(p => p.sync.dataInSync!, isInSync), source);
+    await projectDoc.submitJson0Op(op => op.set(p => p.sync.dataInSync!, isInSync), source);
     tick();
     this.fixture.detectChanges();
   }
@@ -5286,7 +5287,7 @@ class TestEnvironment {
 
   async updateFontSize(projectId: string, size: number): Promise<void> {
     const projectDoc: SFProjectProfileDoc = await this.getProjectDoc(projectId);
-    projectDoc.submitJson0Op(op => op.set(p => p.defaultFontSize, size), false);
+    await projectDoc.submitJson0Op(op => op.set(p => p.defaultFontSize, size), false);
     tick();
     this.fixture.detectChanges();
   }
@@ -5330,7 +5331,7 @@ class TestEnvironment {
     const projectDoc: SFProjectProfileDoc = await this.getProjectDoc(projectId);
     const userRoles = cloneDeep(this.userRolesOnProject);
     userRoles[userId] = role;
-    projectDoc.submitJson0Op(op => op.set(p => p.userRoles, userRoles), false);
+    await projectDoc.submitJson0Op(op => op.set(p => p.userRoles, userRoles), false);
 
     this.wait();
   }
@@ -5591,7 +5592,7 @@ class TestEnvironment {
       reattached
     };
     const index: number = noteThreadDoc.data!.notes.length;
-    noteThreadDoc.submitJson0Op(op => {
+    await noteThreadDoc.submitJson0Op(op => {
       op.set(nt => nt.position, position);
       op.insert(nt => nt.notes, index, note);
     });
@@ -5599,7 +5600,7 @@ class TestEnvironment {
 
   async convertToConflictNote(projectId: string, threadDataId: string): Promise<void> {
     const noteThreadDoc: NoteThreadDoc = await this.getNoteThreadDoc(projectId, threadDataId);
-    noteThreadDoc.submitJson0Op(op => {
+    await noteThreadDoc.submitJson0Op(op => {
       op.set<string>(nt => nt.notes[0].conflictType, NoteConflictType.VerseTextConflict);
       op.set<string>(nt => nt.notes[0].type, NoteType.Conflict);
     });
@@ -5617,7 +5618,7 @@ class TestEnvironment {
 
   async resolveNote(projectId: string, threadId: string): Promise<void> {
     const noteDoc: NoteThreadDoc = await this.getNoteThreadDoc(projectId, threadId);
-    noteDoc.submitJson0Op(op => op.set(n => n.status, NoteStatus.Resolved));
+    await noteDoc.submitJson0Op(op => op.set(n => n.status, NoteStatus.Resolved));
     this.realtimeService.updateQueryAdaptersRemote();
     this.wait();
   }
@@ -5627,7 +5628,7 @@ class TestEnvironment {
     noteThreadIconElem.click();
     this.wait();
     const noteDoc: NoteThreadDoc = await this.getNoteThreadDoc(projectId, threadId);
-    noteDoc.submitJson0Op(op => op.set(d => d.notes[0].deleted, true));
+    await noteDoc.submitJson0Op(op => op.set(d => d.notes[0].deleted, true));
     this.mockNoteDialogRef.close({ deleted: true });
     this.realtimeService.updateQueryAdaptersRemote();
     this.wait();
