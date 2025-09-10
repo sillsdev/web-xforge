@@ -11,15 +11,6 @@ using NUnit.Framework;
 
 namespace SIL.XForge.Scripture;
 
-/// <summary>
-/// Represents what environment the application is running in.
-/// </summary>
-public enum RunMode
-{
-    Development,
-    Production,
-}
-
 [TestFixture]
 public class StartupTests
 {
@@ -177,10 +168,15 @@ public class StartupTests
     [TestCase("/connect-project")]
     [TestCase("/serval-administration")]
     [TestCase("/system-administration")]
+    // Handling '//login' may not be very important but would make sense to handle it as if it was normalized to
+    // '/login'.
+    [TestCase("//login")]
+    [TestCase("//login//")]
+    [TestCase("///login")]
     public void IsSpaRoute_ProductionAndDevelopment_True(string path)
     {
         RunMode[] runModes = [RunMode.Production, RunMode.Development];
-        bool expected = true;
+        const bool expected = true;
         IsSpaRoute_Helper(path, runModes, expected);
     }
 
@@ -195,7 +191,7 @@ public class StartupTests
     public void IsSpaRoute_Development_True(string path)
     {
         RunMode[] runModes = [RunMode.Development];
-        bool expected = true;
+        const bool expected = true;
         IsSpaRoute_Helper(path, runModes, expected);
     }
 
@@ -221,7 +217,9 @@ public class StartupTests
     [TestCase("/??/login")]
     [TestCase("/#login")]
     [TestCase("/#/login")]
-    // It may or may not be possible for the path to be the empty string. If it is, let's have ASP.NET handle it.
+    // It may or may not be possible in practice for the path to be null or empty. If it is, let's have ASP.NET handle
+    // it.
+    [TestCase(null)]
     [TestCase("")]
     // The paths "/", "/Index", and "/Status/Error" are handled by ASP.NET and don't even get to IsSpaRoute. If they did
     // for some reason, we'll have IsSpaRoute return false.
@@ -235,7 +233,7 @@ public class StartupTests
     public void IsSpaRoute_ProductionAndDevelopment_False(string path)
     {
         RunMode[] runModes = [RunMode.Production, RunMode.Development];
-        bool expected = false;
+        const bool expected = false;
         IsSpaRoute_Helper(path, runModes, expected);
     }
 
@@ -244,8 +242,17 @@ public class StartupTests
     public void IsSpaRoute_Development_False(string path)
     {
         RunMode[] runModes = [RunMode.Development];
-        bool expected = false;
+        const bool expected = false;
         IsSpaRoute_Helper(path, runModes, expected);
+    }
+
+    /// <summary>
+    /// Represents what environment the application is running in.
+    /// </summary>
+    private enum RunMode
+    {
+        Development,
+        Production,
     }
 
     private class TestEnvironment
