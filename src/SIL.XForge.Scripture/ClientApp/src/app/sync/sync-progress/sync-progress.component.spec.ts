@@ -62,11 +62,11 @@ describe('SyncProgressComponent', () => {
     const env = new TestEnvironment({ userId: 'user01', sourceProject: 'invalid_source' });
     env.setupProjectDoc();
     verify(mockedProjectService.onlineGetProjectRole('invalid_source')).once();
-    env.updateSyncProgress(0.5, 'testProject01');
+    await env.updateSyncProgress(0.5, 'testProject01');
     expect(env.host.inProgress).toBe(true);
     expect(await env.getPercent()).toEqual(50);
     expect(env.syncStatus).not.toBeNull();
-    env.emitSyncComplete(true, 'testProject01');
+    await env.emitSyncComplete(true, 'testProject01');
     expect(env.host.inProgress).toBe(false);
   }));
 
@@ -74,39 +74,39 @@ describe('SyncProgressComponent', () => {
     const env = new TestEnvironment({ userId: 'user01' });
     env.setupProjectDoc();
     // Simulate sync starting
-    env.updateSyncProgress(0, 'testProject01');
+    await env.updateSyncProgress(0, 'testProject01');
     expect(env.progressBar).not.toBeNull();
     expect(await env.getMode()).toBe('indeterminate');
     verify(mockedProjectService.onlineGetProjectRole('sourceProject02')).never();
     // Simulate sync in progress
-    env.updateSyncProgress(0.5, 'testProject01');
+    await env.updateSyncProgress(0.5, 'testProject01');
     expect(await env.getMode()).toBe('determinate');
     expect(env.syncStatus).not.toBeNull();
     // Simulate sync completed
-    env.emitSyncComplete(true, 'testProject01');
+    await env.emitSyncComplete(true, 'testProject01');
     tick();
   }));
 
-  it('show progress as source and target combined', fakeAsync(() => {
+  it('show progress as source and target combined', fakeAsync(async () => {
     const env = new TestEnvironment({
       userId: 'user01',
       sourceProject: 'sourceProject02',
       translationSuggestionsEnabled: true
     });
     env.setupProjectDoc();
-    env.checkCombinedProgress();
+    await env.checkCombinedProgress();
     expect(env.syncStatus).not.toBeNull();
     tick();
   }));
 
-  it('show source and target progress combined when translation suggestions disabled', fakeAsync(() => {
+  it('show source and target progress combined when translation suggestions disabled', fakeAsync(async () => {
     const env = new TestEnvironment({
       userId: 'user01',
       sourceProject: 'sourceProject02',
       translationSuggestionsEnabled: false
     });
     env.setupProjectDoc();
-    env.checkCombinedProgress();
+    await env.checkCombinedProgress();
     expect(env.syncStatus).not.toBeNull();
     tick();
   }));
@@ -114,14 +114,14 @@ describe('SyncProgressComponent', () => {
   it('does not access source project if user does not have a paratext role', fakeAsync(async () => {
     const env = new TestEnvironment({ userId: 'user02', sourceProject: 'sourceProject02' });
     env.setupProjectDoc();
-    env.updateSyncProgress(0, 'testProject01');
-    env.updateSyncProgress(0, 'sourceProject02');
+    await env.updateSyncProgress(0, 'testProject01');
+    await env.updateSyncProgress(0, 'sourceProject02');
     verify(mockedProjectService.subscribe('sourceProject02', anything())).never();
-    env.emitSyncComplete(true, 'sourceProject02');
-    env.updateSyncProgress(0.5, 'testProject01');
+    await env.emitSyncComplete(true, 'sourceProject02');
+    await env.updateSyncProgress(0.5, 'testProject01');
     expect(await env.getPercent()).toEqual(50);
     expect(env.syncStatus).not.toBeNull();
-    env.emitSyncComplete(true, 'testProject01');
+    await env.emitSyncComplete(true, 'testProject01');
   }));
 
   it('does not throw error if get project role times out', fakeAsync(() => {
@@ -280,29 +280,29 @@ class TestEnvironment {
   }
 
   async checkCombinedProgress(): Promise<void> {
-    this.updateSyncProgress(0, 'testProject01');
-    this.updateSyncProgress(0, 'sourceProject02');
+    await this.updateSyncProgress(0, 'testProject01');
+    await this.updateSyncProgress(0, 'sourceProject02');
     verify(mockedProjectService.onlineGetProjectRole('sourceProject02')).once();
     verify(mockedProjectService.subscribe('sourceProject02', anything())).once();
     expect(this.progressBar).not.toBeNull();
 
     expect(await this.getMode()).toBe('indeterminate');
-    this.updateSyncProgress(0.8, 'sourceProject02');
+    await this.updateSyncProgress(0.8, 'sourceProject02');
     expect(await this.getPercent()).toEqual(40);
     expect(await this.getMode()).toBe('determinate');
-    this.emitSyncComplete(true, 'sourceProject02');
+    await this.emitSyncComplete(true, 'sourceProject02');
     expect(await this.getPercent()).toEqual(50);
     expect(await this.getMode()).toBe('determinate');
-    this.updateSyncProgress(0.8, 'testProject01');
+    await this.updateSyncProgress(0.8, 'testProject01');
     expect(await this.getPercent()).toEqual(90);
-    this.emitSyncComplete(true, 'testProject01');
+    await this.emitSyncComplete(true, 'testProject01');
   }
 
   async getMode(): Promise<string> {
-    return firstValueFrom(this.host.syncProgress.syncProgressMode$);
+    return await firstValueFrom(this.host.syncProgress.syncProgressMode$);
   }
 
   async getPercent(): Promise<number> {
-    return firstValueFrom(this.host.syncProgress.syncProgressPercent$);
+    return await firstValueFrom(this.host.syncProgress.syncProgressPercent$);
   }
 }
