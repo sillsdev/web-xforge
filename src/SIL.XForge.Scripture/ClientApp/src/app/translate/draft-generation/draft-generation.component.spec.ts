@@ -177,8 +177,8 @@ describe('DraftGenerationComponent', () => {
               }
             },
             draftConfig: {
-              lastSelectedTrainingScriptureRange: preTranslate ? 'GEN' : undefined,
-              lastSelectedTranslationScriptureRange: preTranslate ? 'EXO' : undefined
+              lastSelectedTrainingScriptureRanges: [{ projectId: 'testSourceProjectId', scriptureRange: 'GEN' }],
+              lastSelectedTranslationScriptureRanges: [{ projectId: 'testSourceProjectId', scriptureRange: 'EXO' }]
             }
           },
           texts: [
@@ -1458,7 +1458,9 @@ describe('DraftGenerationComponent', () => {
 
       // Update the has draft flag for the project
       projectDoc.data!.texts[0].chapters[0].hasDraft = true;
-      projectDoc.data!.translateConfig.draftConfig.lastSelectedTranslationScriptureRange = 'GEN';
+      projectDoc.data!.translateConfig.draftConfig.lastSelectedTranslationScriptureRanges = [
+        { projectId: 'testSourceProjectId', scriptureRange: 'GEN' }
+      ];
       projectSubject.next(projectDoc);
       buildSubject.next({ ...buildDto, state: BuildStates.Completed });
       tick(500);

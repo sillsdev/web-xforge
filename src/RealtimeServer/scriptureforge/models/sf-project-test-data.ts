@@ -22,9 +22,7 @@ function testProjectProfile(ordinal: number): SFProjectProfile {
         additionalTrainingSourceEnabled: false,
         alternateSourceEnabled: false,
         alternateTrainingSourceEnabled: false,
-        lastSelectedTrainingBooks: [],
-        lastSelectedTrainingDataFiles: [],
-        lastSelectedTranslationBooks: []
+        lastSelectedTrainingDataFiles: []
       }
     },
     checkingConfig: {

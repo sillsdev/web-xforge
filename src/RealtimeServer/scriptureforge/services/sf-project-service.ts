@@ -250,20 +250,11 @@ export class SFProjectService extends ProjectService<SFProject> {
                 },
                 additionalProperties: false
               },
-              lastSelectedTrainingBooks: {
-                bsonType: 'array',
-                items: {
-                  bsonType: 'int'
-                }
-              },
               lastSelectedTrainingDataFiles: {
                 bsonType: 'array',
                 items: {
                   bsonType: 'string'
                 }
-              },
-              lastSelectedTrainingScriptureRange: {
-                bsonType: 'string'
               },
               lastSelectedTrainingScriptureRanges: {
                 bsonType: 'array',
@@ -279,15 +270,6 @@ export class SFProjectService extends ProjectService<SFProject> {
                   },
                   additionalProperties: false
                 }
-              },
-              lastSelectedTranslationBooks: {
-                bsonType: 'array',
-                items: {
-                  bsonType: 'int'
-                }
-              },
-              lastSelectedTranslationScriptureRange: {
-                bsonType: 'string'
               },
               lastSelectedTranslationScriptureRanges: {
                 bsonType: 'array',
