@@ -38,10 +38,11 @@
           </mat-card-header>
           <mat-card-content class="format-options">
             {{ t("quote_style_description") }}
-
-            <!-- TODO make this notice conditional -->
-            <app-notice type="warning" mode="fill-dark"> {{ t("no_quote_convention_detected") }} </app-notice>
-
+            @if (showQuoteFormatWarning) {
+              <app-notice class="quote-format-warning" type="warning" mode="fill-dark">
+                {{ t("no_quote_convention_detected") }}
+              </app-notice>
+            }
             <mat-radio-group formControlName="quoteFormat">
               <mat-radio-button [value]="quoteStyle.Denormalized">
                 <span class="option-title">{{ t("quote_style_automatic") }}</span>

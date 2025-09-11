@@ -27,15 +27,20 @@ import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { BuildDto } from '../../../machine-api/build-dto';
+import { BuildStates } from '../../../machine-api/build-states';
+import { QuotationAnalysis } from '../../../machine-api/quotation-denormalization';
 import { ServalAdministrationService } from '../../../serval-administration/serval-administration.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
+import { DraftGenerationService } from '../draft-generation.service';
 import { DraftHandlingService } from '../draft-handling.service';
 import { DraftUsfmFormatComponent } from './draft-usfm-format.component';
 
-const mockedDraftHandlingService = mock(DraftHandlingService);
-const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedActivatedRoute = mock(ActivatedRoute);
+const mockedDraftHandlingService = mock(DraftHandlingService);
+const mockedDraftGenerationService = mock(DraftGenerationService);
+const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedServalAdministration = mock(ServalAdministrationService);
@@ -56,6 +61,7 @@ describe('DraftUsfmFormatComponent', () => {
     ],
     providers: [
       { provide: DraftHandlingService, useMock: mockedDraftHandlingService },
+      { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: SFProjectService, useMock: mockedProjectService },
@@ -121,10 +127,11 @@ describe('DraftUsfmFormatComponent', () => {
   }));
 
   it('should initialize and default to best guess and automatic quotes', fakeAsync(async () => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment({ quotationAnalysis: QuotationAnalysis.Successful });
     expect(env.component.paragraphFormat.value).toBe(ParagraphBreakFormat.BestGuess);
     expect(env.component.quoteFormat.value).toBe(QuoteFormat.Denormalized);
     expect(await env.component.confirmLeave()).toBe(true);
+    expect(env.quoteFormatWarning).toBeNull();
   }));
 
   it('should show the currently selected format options', fakeAsync(() => {
@@ -194,6 +201,11 @@ describe('DraftUsfmFormatComponent', () => {
     verify(mockedProjectService.onlineSetUsfmConfig(anything(), anything())).never();
     verify(mockedServalAdministration.onlineRetrievePreTranslationStatus(anything())).never();
   }));
+
+  it('shows a notice if unable to detect the quote convention for the project', fakeAsync(() => {
+    const env = new TestEnvironment({ quotationAnalysis: QuotationAnalysis.Unsuccessful });
+    expect(env.quoteFormatWarning).not.toBeNull();
+  }));
 });
 
 class TestEnvironment {
@@ -203,10 +215,12 @@ class TestEnvironment {
   readonly projectId = 'project01';
   onlineStatusService: TestOnlineStatusService;
 
-  constructor(args: { config?: DraftUsfmConfig } = {}) {
+  constructor(args: { config?: DraftUsfmConfig; quotationAnalysis?: QuotationAnalysis } = {}) {
     const userDoc = mock(UserDoc);
     this.onlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
-
+    when(mockedDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(
+      of(this.getTestBuildDto(args.quotationAnalysis ?? QuotationAnalysis.Successful))
+    );
     when(mockedUserService.getCurrentUser()).thenResolve(userDoc);
     when(mockedDraftHandlingService.getDraft(anything(), anything())).thenReturn(
       of([
@@ -215,6 +229,8 @@ class TestEnvironment {
         { insert: 'Verse 1 text.' }
       ])
     );
+    when(mockedActivatedProjectService.projectId$).thenReturn(of(this.projectId));
+    when(mockedDraftHandlingService.draftDataToOps(anything(), anything())).thenCall(ops => ops);
     this.onlineStatusService.setIsOnline(true);
     when(mockedNoticeService.show(anything())).thenResolve();
     when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(true);
@@ -238,6 +254,10 @@ class TestEnvironment {
 
   get offlineMessage(): HTMLElement | null {
     return this.fixture.nativeElement.querySelector('.offline-text');
+  }
+
+  get quoteFormatWarning(): HTMLElement | null {
+    return this.fixture.nativeElement.querySelector('.quote-format-warning');
   }
 
   setupProject(config?: DraftUsfmConfig): void {
@@ -271,5 +291,28 @@ class TestEnvironment {
     when(mockedActivatedProjectService.projectId).thenReturn(this.projectId);
     when(mockedActivatedProjectService.projectDoc$).thenReturn(of(projectDoc));
     when(mockedActivatedProjectService.projectDoc).thenReturn(projectDoc);
+  }
+
+  private getTestBuildDto(quotationAnalysis: QuotationAnalysis): BuildDto {
+    return {
+      id: 'build01',
+      state: BuildStates.Completed,
+      message: '',
+      queueDepth: 0,
+      href: '',
+      percentCompleted: 1.0,
+      engine: { id: 'source01', href: '' },
+      revision: 1,
+      additionalInfo: {
+        dateRequested: new Date().toISOString(),
+        buildId: 'build01',
+        step: 123,
+        translationEngineId: 'engine01',
+        translationScriptureRanges: [{ projectId: 'source01', scriptureRange: 'EXO' }],
+        trainingScriptureRanges: [{ projectId: 'source01', scriptureRange: 'GEN' }],
+        trainingDataFileIds: [] as string[],
+        quotationDenormalization: quotationAnalysis
+      }
+    };
   }
 }

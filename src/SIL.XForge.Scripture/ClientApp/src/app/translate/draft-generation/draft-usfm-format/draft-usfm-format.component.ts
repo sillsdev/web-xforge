@@ -19,20 +19,22 @@ import {
   ParagraphBreakFormat,
   QuoteFormat
 } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { combineLatest, first, Subject, switchMap } from 'rxjs';
+import { combineLatest, first, firstValueFrom, Subject, switchMap } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { QuotationAnalysis } from '../../../machine-api/quotation-denormalization';
 import { ServalAdministrationService } from '../../../serval-administration/serval-administration.service';
 import { ConfirmOnLeave } from '../../../shared/project-router.guard';
 import { SharedModule } from '../../../shared/shared.module';
 import { TextComponent } from '../../../shared/text/text.component';
+import { DraftGenerationService } from '../draft-generation.service';
 import { DraftHandlingService } from '../draft-handling.service';
 
 @Component({
@@ -77,11 +79,13 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
 
   private updateDraftConfig$: Subject<DraftUsfmConfig | undefined> = new Subject<DraftUsfmConfig | undefined>();
   private lastSavedState?: DraftUsfmConfig;
+  private quotationDenormalization: QuotationAnalysis = QuotationAnalysis.Successful;
 
   constructor(
-    private readonly activatedProjectService: ActivatedProjectService,
     private readonly activatedRoute: ActivatedRoute,
+    private readonly activatedProjectService: ActivatedProjectService,
     private readonly draftHandlingService: DraftHandlingService,
+    private readonly draftGenerationService: DraftGenerationService,
     private readonly projectService: SFProjectService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly servalAdministration: ServalAdministrationService,
@@ -92,6 +96,15 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     private destroyRef: DestroyRef
   ) {
     super(noticeService);
+    this.activatedProjectService.projectId$
+      .pipe(filterNullish(), first(), quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(async projectId => {
+        const currentBuild = await firstValueFrom(this.draftGenerationService.getLastCompletedBuild(projectId));
+        this.quotationDenormalization =
+          currentBuild?.additionalInfo?.quotationDenormalization === QuotationAnalysis.Successful
+            ? QuotationAnalysis.Successful
+            : QuotationAnalysis.Unsuccessful;
+      });
   }
 
   get projectId(): string | undefined {
@@ -109,6 +122,10 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
 
   get isOnline(): boolean {
     return this.onlineStatusService.isOnline;
+  }
+
+  get showQuoteFormatWarning(): boolean {
+    return this.quotationDenormalization !== QuotationAnalysis.Successful;
   }
 
   private get currentFormat(): DraftUsfmConfig | undefined {
