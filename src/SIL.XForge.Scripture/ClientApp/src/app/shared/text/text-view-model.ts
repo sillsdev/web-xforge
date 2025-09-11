@@ -784,19 +784,17 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
           if ((op.insert as any)?.blank === false) {
             const position: number = curIndex + curSegment.length - 1;
             const id = `blank_${position}`;
-            let embedPosition: EmbedPosition | undefined = id == null ? undefined : embeddedElements.get(id);
-            if (embedPosition == null && id != null) {
+            let embedPosition: EmbedPosition | undefined = embeddedElements.get(id);
+            if (embedPosition == null) {
               embedPosition = { position };
               embeddedElements.set(id, embedPosition);
             } else {
-              if (embedPosition != null) {
-                if (embedPosition.duplicatePosition != null) {
-                  console.warn(
-                    'Warning: text-view-model.updateSegments() did not expect to encounter an embed with >2 positions'
-                  );
-                }
-                embedPosition.duplicatePosition = position;
+              if (embedPosition.duplicatePosition != null) {
+                console.warn(
+                  'Warning: text-view-model.updateSegments() did not expect to encounter an embed with >2 positions'
+                );
               }
+              embedPosition.duplicatePosition = position;
             }
           }
 
