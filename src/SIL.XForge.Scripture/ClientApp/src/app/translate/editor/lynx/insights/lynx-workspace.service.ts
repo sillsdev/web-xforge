@@ -222,6 +222,10 @@ export class LynxWorkspaceService {
     // Create a new workspace with the updated settings
     this.workspace = this.workspaceFactory.createWorkspace(this.documentManager, lynxSettings);
 
+    // Workspace init causes localizer init.  Important that this is done before emitting the new insight source.
+    await this.workspace.init();
+    await this.workspace.changeLanguage(this.i18n.localeCode);
+
     const newInsightSource$ = this.workspace.diagnosticsChanged$.pipe(
       // Group events by event URI, then switchMap within each group to handle the cancellation and processing
       // of only the latest event for that URI.
@@ -231,9 +235,6 @@ export class LynxWorkspaceService {
     );
 
     this.rawInsightSourceSubject$.next(newInsightSource$);
-
-    await this.workspace.init();
-    await this.workspace.changeLanguage(this.i18n.localeCode);
   }
 
   private async onDiagnosticsChanged(event: DiagnosticsChanged): Promise<LynxInsight[]> {
