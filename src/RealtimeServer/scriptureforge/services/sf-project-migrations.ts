@@ -477,6 +477,82 @@ class SFProjectMigration25 extends DocMigration {
   }
 }
 
+class SFProjectMigration26 extends DocMigration {
+  static readonly VERSION = 26;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops: Op[] = [];
+
+    // Remove the lastSelectedTrainingBooks
+    if (doc.data.translateConfig.draftConfig.lastSelectedTrainingBooks != null) {
+      ops.push({
+        p: ['translateConfig', 'draftConfig', 'lastSelectedTrainingBooks'],
+        od: doc.data.translateConfig.draftConfig.lastSelectedTrainingBooks
+      });
+    }
+
+    // Remove the lastSelectedTranslationBooks
+    if (doc.data.translateConfig.draftConfig.lastSelectedTranslationBooks != null) {
+      ops.push({
+        p: ['translateConfig', 'draftConfig', 'lastSelectedTranslationBooks'],
+        od: doc.data.translateConfig.draftConfig.lastSelectedTranslationBooks
+      });
+    }
+
+    // Migrate the lastSelectedTrainingScriptureRange
+    if (doc.data.translateConfig?.draftConfig?.lastSelectedTrainingScriptureRange != null) {
+      const scriptureRange: string = doc.data.translateConfig.draftConfig.lastSelectedTrainingScriptureRange;
+      if (
+        doc.data.translateConfig?.draftConfig?.lastSelectedTrainingScriptureRanges == null ||
+        doc.data.translateConfig?.draftConfig?.lastSelectedTrainingScriptureRanges.length == 0
+      ) {
+        const projectId: string =
+          doc.data.translateConfig.draftConfig.alternateTrainingSourceEnabled &&
+          doc.data.translateConfig.draftConfig.alternateTrainingSource?.projectRef != null
+            ? doc.data.translateConfig.draftConfig.alternateTrainingSource.projectRef
+            : doc.data.translateConfig.source?.projectRef;
+        ops.push({
+          p: ['translateConfig', 'draftConfig', 'lastSelectedTrainingScriptureRanges'],
+          oi: [{ projectId, scriptureRange }]
+        });
+      }
+
+      ops.push({
+        p: ['translateConfig', 'draftConfig', 'lastSelectedTrainingScriptureRange'],
+        od: scriptureRange
+      });
+    }
+
+    // Migrate the lastSelectedTranslationScriptureRange
+    if (doc.data.translateConfig?.draftConfig?.lastSelectedTranslationScriptureRange != null) {
+      const scriptureRange: string = doc.data.translateConfig.draftConfig.lastSelectedTranslationScriptureRange;
+      if (
+        doc.data.translateConfig?.draftConfig?.lastSelectedTranslationScriptureRanges == null ||
+        doc.data.translateConfig?.draftConfig?.lastSelectedTranslationScriptureRanges.length == 0
+      ) {
+        const projectId: string =
+          doc.data.translateConfig.draftConfig.alternateSourceEnabled &&
+          doc.data.translateConfig.draftConfig.alternateSource?.projectRef != null
+            ? doc.data.translateConfig.draftConfig.alternateSource.projectRef
+            : doc.data.translateConfig.source?.projectRef;
+        ops.push({
+          p: ['translateConfig', 'draftConfig', 'lastSelectedTranslationScriptureRanges'],
+          oi: [{ projectId, scriptureRange }]
+        });
+      }
+
+      ops.push({
+        p: ['translateConfig', 'draftConfig', 'lastSelectedTranslationScriptureRange'],
+        od: scriptureRange
+      });
+    }
+
+    if (ops.length > 0) {
+      await submitMigrationOp(SFProjectMigration26.VERSION, doc, ops);
+    }
+  }
+}
+
 export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = monotonicallyIncreasingMigrationList([
   SFProjectMigration1,
   SFProjectMigration2,
@@ -502,5 +578,6 @@ export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = monotonicallyIncrea
   SFProjectMigration22,
   SFProjectMigration23,
   SFProjectMigration24,
-  SFProjectMigration25
+  SFProjectMigration25,
+  SFProjectMigration26
 ]);

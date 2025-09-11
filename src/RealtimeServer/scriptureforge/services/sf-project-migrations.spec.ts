@@ -627,6 +627,264 @@ describe('SFProjectMigrations', () => {
       expect(projectDoc.data.translateConfig.draftConfig.additionalTrainingData).toBeUndefined();
     });
   });
+
+  describe('version 26', () => {
+    it('removes lastSelectedTrainingBooks from draftConfig', async () => {
+      const env = new TestEnvironment(25);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { draftConfig: { lastSelectedTrainingBooks: [40] } }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingBooks).toEqual([40]);
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingBooks).toBeUndefined();
+    });
+
+    it('removes lastSelectedTranslationBooks from draftConfig', async () => {
+      const env = new TestEnvironment(25);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { draftConfig: { lastSelectedTranslationBooks: [41] } }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationBooks).toEqual([41]);
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationBooks).toBeUndefined();
+    });
+
+    it('removes lastSelectedTrainingScriptureRange if lastSelectedTrainingScriptureRanges exists', async () => {
+      const env = new TestEnvironment(25);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: {
+          draftConfig: {
+            lastSelectedTrainingScriptureRange: 'GEN',
+            lastSelectedTrainingScriptureRanges: [{ scriptureRange: 'GEN;EXO' }]
+          }
+        }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingScriptureRange).toEqual('GEN');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingScriptureRanges).toEqual([
+        { scriptureRange: 'GEN;EXO' }
+      ]);
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingScriptureRange).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingScriptureRanges).toEqual([
+        { scriptureRange: 'GEN;EXO' }
+      ]);
+    });
+
+    it('removes lastSelectedTranslationScriptureRange if lastSelectedTranslationScriptureRanges exists', async () => {
+      const env = new TestEnvironment(25);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: {
+          draftConfig: {
+            lastSelectedTranslationScriptureRange: 'GEN',
+            lastSelectedTranslationScriptureRanges: [{ scriptureRange: 'GEN;EXO' }]
+          }
+        }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationScriptureRange).toEqual('GEN');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationScriptureRanges).toEqual([
+        { scriptureRange: 'GEN;EXO' }
+      ]);
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationScriptureRange).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationScriptureRanges).toEqual([
+        { scriptureRange: 'GEN;EXO' }
+      ]);
+    });
+
+    it('migrates lastSelectedTrainingScriptureRange with alternate training source enabled', async () => {
+      const env = new TestEnvironment(25);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: {
+          draftConfig: {
+            lastSelectedTrainingScriptureRange: 'GEN',
+            lastSelectedTrainingScriptureRanges: [],
+            alternateTrainingSource: { projectRef: 'project02' },
+            alternateTrainingSourceEnabled: true
+          }
+        }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.alternateTrainingSource.projectRef).toEqual('project02');
+      expect(projectDoc.data.translateConfig.draftConfig.alternateTrainingSourceEnabled).toBe(true);
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingScriptureRange).toEqual('GEN');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingScriptureRanges).toEqual([]);
+      expect(projectDoc.data.translateConfig.source).toBeUndefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingScriptureRange).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingScriptureRanges).toEqual([
+        { projectId: 'project02', scriptureRange: 'GEN' }
+      ]);
+    });
+
+    it('migrates lastSelectedTrainingScriptureRange with alternate training source disabled', async () => {
+      const env = new TestEnvironment(25);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: {
+          draftConfig: {
+            lastSelectedTrainingScriptureRange: 'GEN',
+            alternateTrainingSource: { projectRef: 'project02' },
+            alternateTrainingSourceEnabled: false
+          },
+          source: { projectRef: 'project03' }
+        }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.alternateTrainingSource.projectRef).toEqual('project02');
+      expect(projectDoc.data.translateConfig.draftConfig.alternateTrainingSourceEnabled).toBe(false);
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingScriptureRange).toEqual('GEN');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingScriptureRanges).toBeUndefined();
+      expect(projectDoc.data.translateConfig.source.projectRef).toEqual('project03');
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingScriptureRange).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingScriptureRanges).toEqual([
+        { projectId: 'project03', scriptureRange: 'GEN' }
+      ]);
+    });
+
+    it('migrates lastSelectedTrainingScriptureRange with alternate training source undefined', async () => {
+      const env = new TestEnvironment(25);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: {
+          draftConfig: {
+            lastSelectedTrainingScriptureRange: 'GEN',
+            alternateTrainingSource: null,
+            alternateTrainingSourceEnabled: true
+          },
+          source: { projectRef: 'project03' }
+        }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.alternateTrainingSource).toBeNull();
+      expect(projectDoc.data.translateConfig.draftConfig.alternateTrainingSourceEnabled).toBe(true);
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingScriptureRange).toEqual('GEN');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingScriptureRanges).toBeUndefined();
+      expect(projectDoc.data.translateConfig.source.projectRef).toEqual('project03');
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingScriptureRange).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingScriptureRanges).toEqual([
+        { projectId: 'project03', scriptureRange: 'GEN' }
+      ]);
+    });
+
+    it('migrates lastSelectedTranslationScriptureRange with alternate source enabled', async () => {
+      const env = new TestEnvironment(25);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: {
+          draftConfig: {
+            lastSelectedTranslationScriptureRange: 'GEN',
+            lastSelectedTranslationScriptureRanges: [],
+            alternateSource: { projectRef: 'project02' },
+            alternateSourceEnabled: true
+          }
+        }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.alternateSource.projectRef).toEqual('project02');
+      expect(projectDoc.data.translateConfig.draftConfig.alternateSourceEnabled).toBe(true);
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationScriptureRange).toEqual('GEN');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationScriptureRanges).toEqual([]);
+      expect(projectDoc.data.translateConfig.source).toBeUndefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationScriptureRange).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationScriptureRanges).toEqual([
+        { projectId: 'project02', scriptureRange: 'GEN' }
+      ]);
+    });
+
+    it('migrates lastSelectedTranslationScriptureRange with alternate source disabled', async () => {
+      const env = new TestEnvironment(25);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: {
+          draftConfig: {
+            lastSelectedTranslationScriptureRange: 'GEN',
+            alternateSource: { projectRef: 'project02' },
+            alternateSourceEnabled: false
+          },
+          source: { projectRef: 'project03' }
+        }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.alternateSource.projectRef).toEqual('project02');
+      expect(projectDoc.data.translateConfig.draftConfig.alternateSourceEnabled).toBe(false);
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationScriptureRange).toEqual('GEN');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationScriptureRanges).toBeUndefined();
+      expect(projectDoc.data.translateConfig.source.projectRef).toEqual('project03');
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationScriptureRange).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationScriptureRanges).toEqual([
+        { projectId: 'project03', scriptureRange: 'GEN' }
+      ]);
+    });
+
+    it('migrates lastSelectedTranslationScriptureRange with alternate source undefined', async () => {
+      const env = new TestEnvironment(25);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: {
+          draftConfig: {
+            lastSelectedTranslationScriptureRange: 'GEN',
+            alternateSource: null,
+            alternateSourceEnabled: true
+          },
+          source: { projectRef: 'project03' }
+        }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.alternateSource).toBeNull();
+      expect(projectDoc.data.translateConfig.draftConfig.alternateSourceEnabled).toBe(true);
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationScriptureRange).toEqual('GEN');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationScriptureRanges).toBeUndefined();
+      expect(projectDoc.data.translateConfig.source.projectRef).toEqual('project03');
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationScriptureRange).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationScriptureRanges).toEqual([
+        { projectId: 'project03', scriptureRange: 'GEN' }
+      ]);
+    });
+  });
 });
 
 class TestEnvironment {
