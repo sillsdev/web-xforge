@@ -8,6 +8,16 @@ namespace SIL.XForge.Scripture.Models;
 public class LynxInsightUserData
 {
     public LynxInsightPanelUserData? PanelData { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether Lynx auto-corrections (on-type edits) are enabled for this user.
+    /// </summary>
+    public bool? AutoCorrectionsEnabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether Lynx assessments (insights) are enabled for this user.
+    /// </summary>
+    public bool? AssessmentsEnabled { get; set; }
 }
 
 public class LynxInsightPanelUserData

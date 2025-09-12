@@ -67,7 +67,19 @@ import {
   Subscription,
   timer
 } from 'rxjs';
-import { debounceTime, filter, first, map, repeat, retry, switchMap, take, tap, throttleTime } from 'rxjs/operators';
+import {
+  debounceTime,
+  filter,
+  first,
+  map,
+  repeat,
+  retry,
+  startWith,
+  switchMap,
+  take,
+  tap,
+  throttleTime
+} from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -128,10 +140,6 @@ import { EditorHistoryService } from './editor-history/editor-history.service';
 import { LynxInsightStateService } from './lynx/insights/lynx-insight-state.service';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
-import {
-  SuggestionsSettingsDialogComponent,
-  SuggestionsSettingsDialogData
-} from './suggestions-settings-dialog.component';
 import { Suggestion } from './suggestions.component';
 import { EditorTabAddRequestService } from './tabs/editor-tab-add-request.service';
 import { EditorTabFactoryService } from './tabs/editor-tab-factory.service';
@@ -139,6 +147,10 @@ import { EditorTabMenuService } from './tabs/editor-tab-menu.service';
 import { EditorTabPersistenceService } from './tabs/editor-tab-persistence.service';
 import { EditorTabInfo } from './tabs/editor-tabs.types';
 import { TranslateMetricsSession } from './translate-metrics-session';
+import {
+  TranslatorSettingsDialogComponent,
+  TranslatorSettingsDialogData
+} from './translator-settings-dialog.component';
 
 export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
 
@@ -365,11 +377,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.projectDoc?.data?.translateConfig.translationSuggestionsEnabled === true;
   }
 
-  get suggestionsSettingsEnabled(): boolean {
+  get lynxProjectEnabled(): boolean {
     return (
-      this.hasSource &&
-      this.hasSourceViewRight &&
-      this.translationSuggestionsProjectEnabled &&
+      !!this.projectDoc?.data?.lynxConfig.assessmentsEnabled ||
+      !!this.projectDoc?.data?.lynxConfig.autoCorrectionsEnabled
+    );
+  }
+
+  get translatorSettingsEnabled(): boolean {
+    return (
+      ((this.hasSource && this.hasSourceViewRight && this.translationSuggestionsProjectEnabled) ||
+        this.lynxProjectEnabled) &&
       this.userHasGeneralEditRight
     );
   }
@@ -689,18 +707,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         switchMap(doc => this.initEditorTabs(doc))
       )
       .subscribe();
-
-    // Show insights only if the feature flag is enabled, user has chapter edit permissions and assessments are enabled
-    combineLatest([
-      this.hasChapterEditPermission$.pipe(filterNullish()),
-      this.activatedProject.changes$.pipe(map(projectDoc => projectDoc?.data?.lynxConfig))
-    ])
-      .pipe(quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(([hasEditPermission, lynxConfig]) => {
-        const canEdit: boolean = hasEditPermission && this.isUsfmValid;
-        this.lynxInsightsEnabled = canEdit && (lynxConfig?.assessmentsEnabled ?? false);
-        this.lynxAutoCorrectionsEnabled = canEdit && (lynxConfig?.autoCorrectionsEnabled ?? false);
-      });
   }
 
   ngAfterViewInit(): void {
@@ -748,6 +754,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             projectId,
             this.userService.currentUserId
           );
+
+          this.initLynxFeatureStates(this.projectUserConfigDoc);
 
           this.sourceProjectDoc = await this.getSourceProjectDoc();
           if (this.projectUserConfigChangesSub != null) {
@@ -1142,13 +1150,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  openSuggestionsSettings(): void {
+  openTranslatorSettings(): void {
     if (this.projectDoc == null || this.projectUserConfigDoc == null) {
       return;
     }
 
-    const dialogRef = this.openMatDialog<SuggestionsSettingsDialogComponent, SuggestionsSettingsDialogData>(
-      SuggestionsSettingsDialogComponent,
+    const dialogRef = this.openMatDialog<TranslatorSettingsDialogComponent, TranslatorSettingsDialogData>(
+      TranslatorSettingsDialogComponent,
       {
         data: { projectDoc: this.projectDoc, projectUserConfigDoc: this.projectUserConfigDoc }
       }
@@ -2588,5 +2596,31 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const minAdjustment: number = Math.max(fabBottom - bounds.height, 0);
 
     this.insertNoteFab.nativeElement.style.marginTop = `-${Math.max(fabTopAdjustment, minAdjustment)}px`;
+  }
+
+  /**
+   * Subscribes to project- and user-level lynx config changes and updates lynx feature states accordingly.
+   */
+  private initLynxFeatureStates(projectUserConfigDoc: SFProjectUserConfigDoc | undefined): void {
+    combineLatest([
+      this.hasChapterEditPermission$.pipe(filterNullish()),
+      this.activatedProject.changes$.pipe(map(projectDoc => projectDoc?.data?.lynxConfig)),
+      projectUserConfigDoc?.changes$.pipe(
+        startWith(projectUserConfigDoc),
+        map(() => projectUserConfigDoc?.data?.lynxInsightState)
+      ) ?? of(undefined)
+    ])
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(([hasEditPermission, lynxProjectConfig, lynxInsightState]) => {
+        const canEdit: boolean = hasEditPermission && this.isUsfmValid;
+
+        // Enable lynx features only if user can edit chapter and lynx is enabled in both project AND user settings
+        this.lynxInsightsEnabled =
+          canEdit && (lynxProjectConfig?.assessmentsEnabled ?? false) && (lynxInsightState?.assessmentsEnabled ?? true);
+        this.lynxAutoCorrectionsEnabled =
+          canEdit &&
+          (lynxProjectConfig?.autoCorrectionsEnabled ?? false) &&
+          (lynxInsightState?.autoCorrectionsEnabled ?? true);
+      });
   }
 }

@@ -207,7 +207,10 @@ export class LynxInsightStateService {
   }
 
   clearDisplayState(): void {
-    this.displayStateSource$.next({ activeInsightIds: [], cursorActiveInsightIds: [] });
+    this.displayStateSource$.next({
+      activeInsightIds: [],
+      cursorActiveInsightIds: []
+    });
   }
 
   togglePanelVisibility(): void {

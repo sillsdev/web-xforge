@@ -62,6 +62,63 @@ describe('LynxInsightEditorObjectsComponent', () => {
       verify(mockInsightRenderService.render(anything(), anything())).once();
     }));
 
+    it('should clear formatting and overlays when insights are disabled', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const testInsight = env.createTestInsight();
+
+      // Setup initial state with insights enabled
+      env.setEditorReady(true);
+      env.setFilteredInsights([testInsight]);
+      tick();
+      flush();
+
+      // Verify initial render occurred
+      verify(mockInsightRenderService.render(anything(), anything())).atLeast(1);
+
+      // Disable insights
+      env.setInsightsEnabled(false);
+      tick();
+      flush();
+
+      // Verify cleanup methods were called
+      verify(mockInsightRenderService.removeAllInsightFormatting(anything())).atLeast(1);
+      verify(mockOverlayService.close()).atLeast(1);
+      verify(mockInsightStateService.clearDisplayState()).atLeast(1);
+    }));
+
+    it('should not render insights when initially disabled', fakeAsync(() => {
+      const env = new TestEnvironment({ insightsEnabled: false });
+
+      env.setEditorReady(true);
+      env.setFilteredInsights([env.createTestInsight()]);
+      tick();
+      flush();
+
+      // Verify render was not called when insights are disabled
+      verify(mockInsightRenderService.render(anything(), anything())).never();
+    }));
+
+    it('should resume rendering when insights are re-enabled', fakeAsync(() => {
+      const env = new TestEnvironment({ insightsEnabled: false });
+      const testInsight = env.createTestInsight();
+
+      env.setEditorReady(true);
+      env.setFilteredInsights([testInsight]);
+      tick();
+      flush();
+
+      // Verify no rendering when disabled
+      verify(mockInsightRenderService.render(anything(), anything())).never();
+
+      // Re-enable insights
+      env.setInsightsEnabled(true);
+      tick();
+      flush();
+
+      // Verify rendering resumes
+      verify(mockInsightRenderService.render(anything(), anything())).once();
+    }));
+
     it('should close overlays when editor becomes ready', fakeAsync(() => {
       const env = new TestEnvironment({ initialEditorReady: false });
 
@@ -250,6 +307,7 @@ class HostComponent {
 
 interface TestEnvArgs {
   initialEditorReady?: boolean;
+  insightsEnabled?: boolean;
 }
 
 class TestEnvironment {
@@ -265,6 +323,7 @@ class TestEnvironment {
   constructor(args: TestEnvArgs = {}) {
     const textModelConverter = instance(mockTextModelConverter);
     const initialEditorReady = args.initialEditorReady ?? true;
+    const insightsEnabled = args.insightsEnabled ?? true;
 
     this.editorReadySubject = new BehaviorSubject<boolean>(initialEditorReady);
     this.filteredInsightsSubject = new BehaviorSubject<LynxInsight[]>([]);
@@ -303,6 +362,7 @@ class TestEnvironment {
     when(mockInsightStateService.filteredChapterInsights$).thenReturn(this.filteredInsightsSubject);
     when(mockInsightStateService.displayState$).thenReturn(this.displayStateSubject);
     when(mockInsightStateService.updateDisplayState(anything())).thenReturn();
+    when(mockInsightStateService.clearDisplayState()).thenReturn();
     when(mockInsightRenderService.render(anything(), anything())).thenResolve();
     when(mockInsightRenderService.renderActionOverlay(anything(), anything(), anything(), anything())).thenResolve();
     when(mockInsightRenderService.renderCursorActiveState(anything(), anything())).thenResolve();
@@ -321,6 +381,7 @@ class TestEnvironment {
     // Set the inputs before calling detectChanges to ensure they're available during ngOnInit
     this.hostComponent.editor = actualEditor;
     this.hostComponent.textModelConverter = textModelConverter;
+    this.hostComponent.insightsEnabled = insightsEnabled;
 
     this.fixture.detectChanges();
     this.component = this.hostComponent.component;
@@ -328,6 +389,11 @@ class TestEnvironment {
 
   setEditorReady(ready: boolean): void {
     this.editorReadySubject.next(ready);
+  }
+
+  setInsightsEnabled(enabled: boolean): void {
+    this.hostComponent.insightsEnabled = enabled;
+    this.fixture.detectChanges();
   }
 
   setFilteredInsights(insights: LynxInsight[]): void {
