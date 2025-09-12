@@ -1,3 +1,4 @@
+import { OverlayContainer } from '@angular/cdk/overlay';
 import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
@@ -50,11 +51,19 @@ describe('ShareDialogComponent', () => {
   }));
 
   let env: TestEnvironment;
+  let overlayContainer: OverlayContainer;
+
+  beforeEach(() => {
+    overlayContainer = TestBed.inject(OverlayContainer);
+  });
+
   afterEach(fakeAsync(() => {
     if (env.closeButton != null) {
       env.clickElement(env.closeButton);
     }
     flush();
+    // Prevents 'Error: Test did not clean up its overlay container content.'
+    overlayContainer.ngOnDestroy();
   }));
 
   it('shows share button when sharing API is supported', fakeAsync(() => {
