@@ -16,7 +16,6 @@ import { DraftHistoryEntryComponent } from './draft-history-entry/draft-history-
 
 @Component({
   selector: 'app-draft-history-list',
-  standalone: true,
   imports: [MatIconModule, DraftHistoryEntryComponent, TranslocoModule, NoticeComponent],
   templateUrl: './draft-history-list.component.html',
   styleUrl: './draft-history-list.component.scss'

@@ -44,7 +44,6 @@ interface TrainingConfigurationRow {
 
 @Component({
   selector: 'app-draft-history-entry',
-  standalone: true,
   imports: [
     CommonModule,
     DraftDownloadButtonComponent,

@@ -7,7 +7,6 @@ import { NoticeComponent } from '../notice/notice.component';
 
 @Component({
   selector: 'app-copyright-banner',
-  standalone: true,
   imports: [NoticeComponent],
   templateUrl: './copyright-banner.component.html',
   styleUrl: './copyright-banner.component.scss'

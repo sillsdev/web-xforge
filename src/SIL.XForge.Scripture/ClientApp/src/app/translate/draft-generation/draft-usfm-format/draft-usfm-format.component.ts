@@ -39,7 +39,6 @@ import { DraftHandlingService } from '../draft-handling.service';
 
 @Component({
   selector: 'app-draft-usfm-format',
-  standalone: true,
   imports: [
     MatButtonModule,
     MatCardModule,

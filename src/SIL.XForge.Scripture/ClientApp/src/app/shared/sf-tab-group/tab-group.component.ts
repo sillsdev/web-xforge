@@ -19,7 +19,8 @@ import { TabComponent } from './tab/tab.component';
 @Component({
   selector: 'app-tab-group [groupId]',
   templateUrl: './tab-group.component.html',
-  styleUrls: ['./tab-group.component.scss']
+  styleUrls: ['./tab-group.component.scss'],
+  standalone: false
 })
 export class TabGroupComponent implements OnChanges {
   @Input() groupId: string = '';
