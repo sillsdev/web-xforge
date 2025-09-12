@@ -811,8 +811,22 @@ public class MachineApiServiceTests
                                             JsonConvert.SerializeObject(
                                                 new BuildConfig
                                                 {
-                                                    TrainingScriptureRange = trainingScriptureRange,
-                                                    TranslationScriptureRange = translationScriptureRange,
+                                                    TrainingScriptureRanges =
+                                                    [
+                                                        new ProjectScriptureRange
+                                                        {
+                                                            ProjectId = Project02,
+                                                            ScriptureRange = trainingScriptureRange,
+                                                        },
+                                                    ],
+                                                    TranslationScriptureRanges =
+                                                    [
+                                                        new ProjectScriptureRange
+                                                        {
+                                                            ProjectId = Project03,
+                                                            ScriptureRange = translationScriptureRange,
+                                                        },
+                                                    ],
                                                     ProjectId = Project01,
                                                 }
                                             )
@@ -844,12 +858,12 @@ public class MachineApiServiceTests
         Assert.AreEqual(Project01, builds[0].Id);
         Assert.AreEqual(new DateTimeOffset(requestedDateTime, TimeSpan.Zero), builds[0].AdditionalInfo?.DateRequested);
         Assert.AreEqual(User01, builds[0].AdditionalInfo?.RequestedByUserId);
-        Assert.IsEmpty(builds[0].AdditionalInfo?.TrainingScriptureRanges.First().ProjectId);
+        Assert.AreEqual(Project02, builds[0].AdditionalInfo?.TrainingScriptureRanges.First().ProjectId);
         Assert.AreEqual(
             trainingScriptureRange,
             builds[0].AdditionalInfo?.TrainingScriptureRanges.First().ScriptureRange
         );
-        Assert.IsEmpty(builds[0].AdditionalInfo?.TranslationScriptureRanges.First().ProjectId);
+        Assert.AreEqual(Project03, builds[0].AdditionalInfo?.TranslationScriptureRanges.First().ProjectId);
         Assert.AreEqual(
             translationScriptureRange,
             builds[0].AdditionalInfo?.TranslationScriptureRanges.First().ScriptureRange
@@ -3295,145 +3309,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void StartPreTranslationBuildAsync_DoNotAllowTrainingScriptureRangeWithTrainingBooks()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.StartPreTranslationBuildAsync(
-                User01,
-                new BuildConfig
-                {
-                    ProjectId = Project01,
-                    TrainingScriptureRange = "GEN",
-                    TrainingBooks = [1],
-                },
-                CancellationToken.None
-            )
-        );
-    }
-
-    [Test]
-    public void StartPreTranslationBuildAsync_DoNotAllowTrainingScriptureRangesWithTrainingScriptureRange()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.StartPreTranslationBuildAsync(
-                User01,
-                new BuildConfig
-                {
-                    ProjectId = Project01,
-                    TrainingScriptureRange = "GEN",
-                    TrainingScriptureRanges =
-                    [
-                        new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = "GEN" },
-                    ],
-                },
-                CancellationToken.None
-            )
-        );
-    }
-
-    [Test]
-    public void StartPreTranslationBuildAsync_DoNotAllowTrainingScriptureRangesWithTrainingBooks()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.StartPreTranslationBuildAsync(
-                User01,
-                new BuildConfig
-                {
-                    ProjectId = Project01,
-                    TrainingBooks = [1],
-                    TrainingScriptureRanges =
-                    [
-                        new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = "GEN" },
-                    ],
-                },
-                CancellationToken.None
-            )
-        );
-    }
-
-    [Test]
-    public void StartPreTranslationBuildAsync_DoNotAllowTranslationScriptureRangeWithTranslationBooks()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.StartPreTranslationBuildAsync(
-                User01,
-                new BuildConfig
-                {
-                    ProjectId = Project01,
-                    TranslationScriptureRange = "GEN",
-                    TranslationBooks = [1],
-                },
-                CancellationToken.None
-            )
-        );
-    }
-
-    [Test]
-    public void StartPreTranslationBuildAsync_DoNotAllowTranslationScriptureRangesWithTranslationScriptureRange()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.StartPreTranslationBuildAsync(
-                User01,
-                new BuildConfig
-                {
-                    ProjectId = Project01,
-                    TranslationScriptureRange = "GEN",
-                    TranslationScriptureRanges =
-                    [
-                        new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = "GEN" },
-                    ],
-                },
-                CancellationToken.None
-            )
-        );
-    }
-
-    [Test]
-    public void StartPreTranslationBuildAsync_DoNotAllowTranslationScriptureRangesWithTranslationBooks()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.StartPreTranslationBuildAsync(
-                User01,
-                new BuildConfig
-                {
-                    ProjectId = Project01,
-                    TranslationBooks = [1],
-                    TranslationScriptureRanges =
-                    [
-                        new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = "GEN" },
-                    ],
-                },
-                CancellationToken.None
-            )
-        );
-    }
-
-    [Test]
-    public async Task StartPreTranslationBuildAsync_SuccessNoTrainingOrTranslationBooks()
+    public async Task StartPreTranslationBuildAsync_SuccessNoTrainingOrTranslationScriptureRanges()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -3450,75 +3326,9 @@ public class MachineApiServiceTests
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationErrorMessage);
-        Assert.IsEmpty(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingBooks);
+        Assert.IsEmpty(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingScriptureRanges);
         Assert.IsEmpty(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingDataFiles);
-        Assert.IsEmpty(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTranslationBooks);
-    }
-
-    [Test]
-    public async Task StartPreTranslationBuildAsync_SuccessWithTranslationBooks()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        await env.Service.StartPreTranslationBuildAsync(
-            User01,
-            new BuildConfig { ProjectId = Project01, TranslationBooks = { 1, 2 } },
-            CancellationToken.None
-        );
-
-        await env.ProjectService.Received(1).SyncAsync(User01, Project01);
-        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
-        Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
-        Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
-        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationErrorMessage);
-        SFProject project = env.Projects.Get(Project01);
-        Assert.IsTrue(project.TranslateConfig.PreTranslate);
-        Assert.AreEqual(0, project.TranslateConfig.DraftConfig.LastSelectedTrainingBooks.Count);
-        Assert.AreEqual(2, project.TranslateConfig.DraftConfig.LastSelectedTranslationBooks.Count);
-        Assert.AreEqual(1, project.TranslateConfig.DraftConfig.LastSelectedTranslationBooks.First());
-        Assert.AreEqual(2, project.TranslateConfig.DraftConfig.LastSelectedTranslationBooks.Last());
-    }
-
-    [Test]
-    public async Task StartPreTranslationBuildAsync_SuccessWithTrainingAndTranslationBooksAndDataFiles()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        await env.Service.StartPreTranslationBuildAsync(
-            User01,
-            new BuildConfig
-            {
-                ProjectId = Project01,
-                TrainingBooks = { 1, 2 },
-                TranslationBooks = { 3, 4 },
-                TrainingDataFiles = { Data01 },
-            },
-            CancellationToken.None
-        );
-
-        await env.ProjectService.Received(1).SyncAsync(User01, Project01);
-        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
-        Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
-        Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
-        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationErrorMessage);
-        Assert.AreEqual(2, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingBooks.Count);
-        Assert.AreEqual(1, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingBooks.First());
-        Assert.AreEqual(2, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingBooks.Last());
-        Assert.AreEqual(2, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTranslationBooks.Count);
-        Assert.AreEqual(
-            3,
-            env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTranslationBooks.First()
-        );
-        Assert.AreEqual(4, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTranslationBooks.Last());
-        Assert.AreEqual(1, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingDataFiles.Count);
-        Assert.AreEqual(
-            Data01,
-            env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingDataFiles.First()
-        );
+        Assert.IsEmpty(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTranslationScriptureRanges);
     }
 
     [Test]
@@ -3543,6 +3353,7 @@ public class MachineApiServiceTests
                 [
                     new ProjectScriptureRange { ProjectId = Project02, ScriptureRange = scriptureRange2 },
                 ],
+                TrainingDataFiles = { Data01 },
             },
             CancellationToken.None
         );
@@ -3583,6 +3394,10 @@ public class MachineApiServiceTests
             env.Projects.Get(Project01)
                 .TranslateConfig.DraftConfig.LastSelectedTranslationScriptureRanges.First()
                 .ScriptureRange
+        );
+        Assert.AreEqual(
+            Data01,
+            env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingDataFiles.First()
         );
     }
 
@@ -4211,8 +4026,14 @@ public class MachineApiServiceTests
                         {
                             DraftConfig = new DraftConfig
                             {
-                                LastSelectedTranslationScriptureRange = "GEN",
-                                LastSelectedTrainingScriptureRange = "EXO",
+                                LastSelectedTranslationScriptureRanges =
+                                [
+                                    new ProjectScriptureRange { ScriptureRange = "GEN" },
+                                ],
+                                LastSelectedTrainingScriptureRanges =
+                                [
+                                    new ProjectScriptureRange { ScriptureRange = "EXO" },
+                                ],
                                 UsfmConfig = new DraftUsfmConfig
                                 {
                                     ParagraphFormat = ParagraphBreakFormatOptions.MoveToEnd,

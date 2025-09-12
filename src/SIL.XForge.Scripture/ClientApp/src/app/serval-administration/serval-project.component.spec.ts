@@ -214,21 +214,10 @@ describe('ServalProjectComponent', () => {
       expect(translationSources[0].textContent).toEqual('None');
     }));
 
-    it('shows the last draft configs single training source', fakeAsync(() => {
-      const env = new TestEnvironment();
-      const trainingSources = env.trainingSources;
-      expect(trainingSources.length).toEqual(1);
-      expect(env.getTrainingSourceBookNames(trainingSources[0])).toEqual('Genesis - Exodus');
-      const translationSources = env.translationSources;
-      expect(translationSources.length).toEqual(1);
-      expect(env.getTranslationBookNames(translationSources[0])).toEqual('Leviticus - Numbers');
-    }));
-
     it('shows the last draft configs multiple training sources', fakeAsync(() => {
       const env = new TestEnvironment({
         preTranslate: true,
         draftConfig: {
-          lastSelectedTrainingScriptureRange: undefined,
           lastSelectedTrainingScriptureRanges: [
             { projectId: 'project04', scriptureRange: 'GEN;EXO' },
             { projectId: 'project05', scriptureRange: 'GEN' }
@@ -294,19 +283,7 @@ describe('ServalProjectComponent', () => {
                 shortName: 'P5',
                 writingSystem: { tag: 'en' }
               },
-              lastSelectedTrainingBooks: args.preTranslate ? [1, 2] : [],
-              lastSelectedTranslationBooks: args.preTranslate ? [3, 4] : [],
-              lastSelectedTrainingScriptureRange: args.preTranslate
-                ? args.draftConfig != null
-                  ? args.draftConfig.lastSelectedTrainingScriptureRange
-                  : 'GEN;EXO'
-                : undefined,
               lastSelectedTrainingScriptureRanges: args.draftConfig?.lastSelectedTrainingScriptureRanges ?? undefined,
-              lastSelectedTranslationScriptureRange: args.preTranslate
-                ? args.draftConfig != null
-                  ? args.draftConfig.lastSelectedTranslationScriptureRange
-                  : 'LEV;NUM'
-                : undefined,
               lastSelectedTranslationScriptureRanges:
                 args.draftConfig?.lastSelectedTranslationScriptureRanges ?? undefined
             },

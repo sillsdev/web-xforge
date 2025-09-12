@@ -499,8 +499,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   private hasStartedBuild(projectDoc: SFProjectProfileDoc): boolean {
     return (
       projectDoc.data?.translateConfig.preTranslate === true &&
-      (projectDoc.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRange != null ||
-        projectDoc.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRanges != null)
+      projectDoc.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRanges != null
     );
   }
 }

@@ -65,12 +65,8 @@ export interface DraftConfig {
   alternateSource?: TranslateSource;
   alternateTrainingSourceEnabled: boolean;
   alternateTrainingSource?: TranslateSource;
-  lastSelectedTrainingBooks: number[];
   lastSelectedTrainingDataFiles: string[];
-  lastSelectedTrainingScriptureRange?: string;
   lastSelectedTrainingScriptureRanges?: ProjectScriptureRange[];
-  lastSelectedTranslationBooks: number[];
-  lastSelectedTranslationScriptureRange?: string;
   lastSelectedTranslationScriptureRanges?: ProjectScriptureRange[];
   fastTraining?: boolean;
   useEcho?: boolean;

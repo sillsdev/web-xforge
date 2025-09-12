@@ -278,8 +278,7 @@ class TestEnvironment {
         { bookNum: 41, chapters: [{ number: 1, hasDraft: true }] }
       ],
       translateConfig: {
-        preTranslate: true,
-        draftConfig: { lastSelectedTranslationScriptureRange: 'MAT', lastSelectedTrainingScriptureRange: 'MRK' }
+        preTranslate: true
       },
       userRoles: TestEnvironment.rolesByUser,
       biblicalTermsConfig: { biblicalTermsEnabled: true }

@@ -17,7 +17,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using Serval.Client;
-using SIL.Scripture;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.EventMetrics;
@@ -1252,24 +1251,6 @@ public class MachineProjectService(
             options["max_steps"] = 20;
         }
 
-        // Get the scripture ranges
-        // These scripture ranges will be used if no per project configuration was used
-        string? trainOnScriptureRange = !string.IsNullOrWhiteSpace(buildConfig.TrainingScriptureRange)
-            ? buildConfig.TrainingScriptureRange
-            : string.Join(';', buildConfig.TrainingBooks.Select(Canon.BookNumberToId));
-        if (string.IsNullOrWhiteSpace(trainOnScriptureRange))
-        {
-            trainOnScriptureRange = null;
-        }
-
-        string? preTranslateScriptureRange = !string.IsNullOrWhiteSpace(buildConfig.TranslationScriptureRange)
-            ? buildConfig.TranslationScriptureRange
-            : string.Join(';', buildConfig.TranslationBooks.Select(Canon.BookNumberToId));
-        if (string.IsNullOrWhiteSpace(preTranslateScriptureRange))
-        {
-            preTranslateScriptureRange = null;
-        }
-
         // Create the build configuration
         var translationBuildConfig = new TranslationBuildConfig
         {
@@ -1286,11 +1267,9 @@ public class MachineProjectService(
                             .Select(s => new ParallelCorpusFilterConfig
                             {
                                 CorpusId = s.CorpusId,
-                                ScriptureRange =
-                                    buildConfig
-                                        .TranslationScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
-                                        ?.ScriptureRange
-                                    ?? preTranslateScriptureRange,
+                                ScriptureRange = buildConfig
+                                    .TranslationScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
+                                    ?.ScriptureRange,
                             }),
                     ],
                 },
@@ -1307,11 +1286,9 @@ public class MachineProjectService(
                             .Select(s => new ParallelCorpusFilterConfig
                             {
                                 CorpusId = s.CorpusId,
-                                ScriptureRange =
-                                    buildConfig
-                                        .TrainingScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
-                                        ?.ScriptureRange
-                                    ?? trainOnScriptureRange,
+                                ScriptureRange = buildConfig
+                                    .TrainingScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
+                                    ?.ScriptureRange,
                             }),
                     ],
                     TargetFilters =
@@ -1321,11 +1298,9 @@ public class MachineProjectService(
                             .Select(s => new ParallelCorpusFilterConfig
                             {
                                 CorpusId = s.CorpusId,
-                                ScriptureRange =
-                                    buildConfig
-                                        .TrainingScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
-                                        ?.ScriptureRange
-                                    ?? trainOnScriptureRange,
+                                ScriptureRange = buildConfig
+                                    .TrainingScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
+                                    ?.ScriptureRange,
                             }),
                     ],
                 },
