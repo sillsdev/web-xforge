@@ -35,7 +35,7 @@ export interface BookWithDraft {
   bookNumber: number;
   bookId: string;
   canEdit: boolean;
-  chaptersWithDrafts: number[];
+  existingChapters: number[];
   draftApplied: boolean;
 }
 
@@ -63,11 +63,11 @@ export class DraftPreviewBooksComponent {
             bookNumber: text.bookNum,
             bookId: Canon.bookNumberToId(text.bookNum),
             canEdit: text.permissions[this.userService.currentUserId] === TextInfoPermission.Write,
-            chaptersWithDrafts: text.chapters.filter(chapter => chapter.hasDraft).map(chapter => chapter.number),
+            existingChapters: text.chapters.filter(chapter => chapter.hasDraft).map(chapter => chapter.number),
             draftApplied: text.chapters.filter(chapter => chapter.hasDraft).every(chapter => chapter.draftApplied)
           }))
           .sort((a, b) => a.bookNumber - b.bookNumber)
-          .filter(book => book.chaptersWithDrafts.length > 0) as BookWithDraft[];
+          .filter(book => book.existingChapters.length > 0) as BookWithDraft[];
       } else {
         // TODO: Support books from multiple translation projects
         draftBooks = this.build.additionalInfo?.translationScriptureRanges
@@ -78,7 +78,7 @@ export class DraftPreviewBooksComponent {
               bookNumber: bookNum,
               bookId: Canon.bookNumberToId(bookNum),
               canEdit: text?.permissions?.[this.userService.currentUserId] === TextInfoPermission.Write,
-              chaptersWithDrafts: text?.chapters?.map(ch => ch.number) ?? [],
+              existingChapters: text?.chapters?.map(ch => ch.number) ?? [],
               draftApplied: text?.chapters?.filter(ch => ch.hasDraft).every(ch => ch.draftApplied) ?? false
             };
           })
@@ -123,15 +123,14 @@ export class DraftPreviewBooksComponent {
   async chooseProjectToAddDraft(bookWithDraft: BookWithDraft, paratextId?: string): Promise<void> {
     const dialogData: DraftApplyDialogData = {
       initialParatextId: paratextId,
-      bookNum: bookWithDraft.bookNumber,
-      chapters: bookWithDraft.chaptersWithDrafts
+      bookNum: bookWithDraft.bookNumber
     };
     const dialogRef: MatDialogRef<DraftApplyDialogComponent, DraftApplyDialogResult> = this.dialogService.openMatDialog(
       DraftApplyDialogComponent,
       { data: dialogData, width: '600px' }
     );
     const result: DraftApplyDialogResult | undefined = await firstValueFrom(dialogRef.afterClosed());
-    if (result == null || result.projectId == null) {
+    if (result == null || result.projectId == null || result.chapters == null) {
       return;
     }
 
@@ -141,7 +140,7 @@ export class DraftPreviewBooksComponent {
     )!;
 
     const projectChapters: number[] = projectTextInfo.chapters.map(c => c.number);
-    const missingChapters: number[] = bookWithDraft.chaptersWithDrafts.filter(c => !projectChapters.includes(c));
+    const missingChapters: number[] = result.chapters.filter(c => !projectChapters.includes(c));
     if (missingChapters.length > 0) {
       await this.projectService.onlineAddChapters(result.projectId, bookWithDraft.bookNumber, missingChapters);
       for (const chapter of missingChapters) {
@@ -149,21 +148,21 @@ export class DraftPreviewBooksComponent {
         await this.textDocService.createTextDoc(textDocId);
       }
     }
-    await this.applyBookDraftAsync(bookWithDraft, result.projectId);
+    await this.applyBookDraftAsync(bookWithDraft.bookNumber, result.chapters, result.projectId);
   }
 
-  private async applyBookDraftAsync(bookWithDraft: BookWithDraft, targetProjectId: string): Promise<void> {
-    this.applyChapters = bookWithDraft.chaptersWithDrafts;
-    this.draftApplyBookNum = bookWithDraft.bookNumber;
+  private async applyBookDraftAsync(bookNum: number, chapters: number[], targetProjectId: string): Promise<void> {
+    this.applyChapters = chapters;
+    this.draftApplyBookNum = bookNum;
     this.chaptersApplied = [];
     this.errorMessages = [];
     this.updateProgress();
 
     const promises: Promise<string | undefined>[] = [];
     const targetProject = (await this.projectService.getProfile(targetProjectId)).data!;
-    for (const chapter of bookWithDraft.chaptersWithDrafts) {
-      const draftTextDocId = new TextDocId(this.activatedProjectService.projectId!, bookWithDraft.bookNumber, chapter);
-      const targetTextDocId = new TextDocId(targetProjectId, bookWithDraft.bookNumber, chapter);
+    for (const chapter of chapters) {
+      const draftTextDocId = new TextDocId(this.activatedProjectService.projectId!, bookNum, chapter);
+      const targetTextDocId = new TextDocId(targetProjectId, bookNum, chapter);
       promises.push(this.applyAndReportChapter(targetProject, draftTextDocId, targetTextDocId));
     }
 
@@ -186,7 +185,7 @@ export class DraftPreviewBooksComponent {
   }
 
   navigate(book: BookWithDraft): void {
-    this.router.navigate(this.linkForBookAndChapter(book.bookId, book.chaptersWithDrafts[0]), {
+    this.router.navigate(this.linkForBookAndChapter(book.bookId, book.existingChapters[0]), {
       queryParams: { 'draft-active': true, 'draft-timestamp': this.build?.additionalInfo?.dateGenerated }
     });
   }

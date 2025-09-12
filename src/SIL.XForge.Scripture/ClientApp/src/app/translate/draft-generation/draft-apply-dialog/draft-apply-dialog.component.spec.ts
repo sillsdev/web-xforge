@@ -11,6 +11,7 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -22,11 +23,14 @@ import { TextDoc } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { CustomValidatorState } from '../../../shared/sfvalidators';
+import { DraftGenerationService } from '../draft-generation.service';
 import { DraftApplyDialogComponent } from './draft-apply-dialog.component';
 
+const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedUserProjectsService = mock(SFUserProjectsService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
+const mockedDraftGenerationService = mock(DraftGenerationService);
 const mockedDialogRef = mock(MatDialogRef);
 const mockedTextDocService = mock(TextDocService);
 
@@ -39,7 +43,7 @@ const ROUTES: Route[] = [{ path: 'projects', component: MockComponent }];
 
 let env: TestEnvironment;
 
-describe('DraftApplyDialogComponent', () => {
+fdescribe('DraftApplyDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [
       TestTranslocoModule,
@@ -48,9 +52,11 @@ describe('DraftApplyDialogComponent', () => {
       TestOnlineStatusModule.forRoot()
     ],
     providers: [
+      { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: SFUserProjectsService, useMock: mockedUserProjectsService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
+      { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
       { provide: TextDocService, useMock: mockedTextDocService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: MatDialogRef, useMock: mockedDialogRef },
@@ -343,7 +349,9 @@ class TestEnvironment {
     const mockedTextDoc = {
       getNonEmptyVerses: (): string[] => ['verse_1_1', 'verse_1_2', 'verse_1_3']
     } as TextDoc;
+    when(mockedActivatedProjectService.projectId$).thenReturn(of('project01'));
     when(mockedProjectService.getText(anything())).thenResolve(mockedTextDoc);
     when(mockedTextDocService.userHasGeneralEditRight(anything())).thenReturn(true);
+    when(mockedDraftGenerationService.getDraftChaptersForBook(anything(), anything())).thenReturn(of([1, 2]));
   }
 }

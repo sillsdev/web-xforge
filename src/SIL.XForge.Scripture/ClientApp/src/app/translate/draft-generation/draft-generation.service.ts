@@ -402,6 +402,23 @@ export class DraftGenerationService {
   }
 
   /**
+   * Gets the number of draft chapters for a specific book.
+   * @param projectId The SF project id for the target translation.
+   * @param bookNum The book number.
+   * @returns An observable containing the number of draft chapters or undefined if not found.
+   */
+  getDraftChaptersForBook(projectId: string, bookNum: number): Observable<number[] | undefined> {
+    return this.httpClient
+      .get<number[]>(`translation/engines/project:${projectId}/actions/pretranslate/${bookNum}/chapters`)
+      .pipe(
+        map(res => res.data),
+        catchError(_ => {
+          return of(undefined);
+        })
+      );
+  }
+
+  /**
    * Calls the machine api to start a pre-translation build job.
    * This should only be called if no build is currently active.
    * @param buildConfig The build configuration.

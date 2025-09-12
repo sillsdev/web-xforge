@@ -933,6 +933,37 @@ public class MachineApiController : ControllerBase
     }
 
     /// <summary>
+    /// Gets the count of chapters that have TextDocument objects.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="bookNum">The book number.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">The chapter count was retrieved successfully.</response>
+    /// <response code="403">You do not have permission to access this project.</response>
+    [HttpGet(MachineApi.GetChaptersForBook)]
+    public async Task<ActionResult<int[]>> GetPretranslationChapterCountAsync(
+        string sfProjectId,
+        int bookNum,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            int[] chapters = await _machineApiService.GetPretranslationChapterCountAsync(
+                _userAccessor.UserId,
+                sfProjectId,
+                bookNum,
+                cancellationToken
+            );
+            return Ok(chapters);
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+    }
+
+    /// <summary>
     /// Translates a segment of text into the top N results.
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
