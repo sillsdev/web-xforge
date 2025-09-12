@@ -120,13 +120,13 @@ describe('TranslateOverviewComponent', () => {
       discardPeriodicTasks();
     }));
 
-    it('should start training engine if not initially enabled', fakeAsync(() => {
+    it('should start training engine if not initially enabled', fakeAsync(async () => {
       const env = new TestEnvironment({ translationSuggestionsEnabled: false });
       env.wait();
 
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).never();
       expect(env.retrainButton).toBeNull();
-      env.simulateTranslateSuggestionsEnabled();
+      await env.simulateTranslateSuggestionsEnabled();
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
       expect(env.retrainButton).toBeTruthy();
 
@@ -209,12 +209,12 @@ describe('TranslateOverviewComponent', () => {
       discardPeriodicTasks();
     }));
 
-    it('should not create engine if no source text docs', fakeAsync(() => {
+    it('should not create engine if no source text docs', fakeAsync(async () => {
       const env = new TestEnvironment({ translationSuggestionsEnabled: false });
       when(mockedTranslationEngineService.checkHasSourceBooks(anything())).thenReturn(false);
       verify(mockedTranslationEngineService.createTranslationEngine(anything())).never();
       expect(env.translationSuggestionsInfoMessage).toBeFalsy();
-      env.simulateTranslateSuggestionsEnabled(true);
+      await env.simulateTranslateSuggestionsEnabled(true);
       verify(mockedTranslationEngineService.createTranslationEngine(anything())).never();
       expect(env.translationSuggestionsInfoMessage).toBeTruthy();
       env.clickRetrainButton();
@@ -337,8 +337,8 @@ class TestEnvironment {
 
   setCurrentUser(userId: string = 'user01'): void {
     when(mockedUserService.currentUserId).thenReturn(userId);
-    when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, userId, new DocSubscription('spec'))
+    when(mockedUserService.getCurrentUser()).thenCall(
+      async () => await this.realtimeService.subscribe(UserDoc.COLLECTION, userId, new DocSubscription('spec'))
     );
   }
 
@@ -558,7 +558,7 @@ class TestEnvironment {
       getTextDocId('project01', bookNum, chapter),
       new DocSubscription('spec')
     );
-    textDoc.submit({ ops: delta.ops });
+    await textDoc.submit({ ops: delta.ops });
     this.waitForProjectDocChanges();
   }
 
@@ -568,7 +568,7 @@ class TestEnvironment {
       'project01',
       new DocSubscription('spec')
     );
-    projectDoc.submitJson0Op(
+    await projectDoc.submitJson0Op(
       op => op.set<boolean>(p => p.translateConfig.translationSuggestionsEnabled, enabled),
       false
     );
