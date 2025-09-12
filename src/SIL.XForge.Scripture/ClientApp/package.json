@@ -90,6 +90,7 @@
     "zone.js": "^0.14.10"
   },
   "devDependencies": {
+    "@angular-builders/custom-webpack": "^18.0.0",
     "@angular-devkit/build-angular": "^18.2.8",
     "@angular-eslint/builder": "^18.3.1",
     "@angular-eslint/eslint-plugin": "^18.3.1",
@@ -101,6 +102,7 @@
     "@angular/compiler-cli": "^18.2.8",
     "@angular/language-service": "^18.2.8",
     "@babel/core": "^7.21.3",
+    "@codecov/webpack-plugin": "^1.9.1",
     "@compodoc/compodoc": "^1.1.19",
     "@playwright/test": "^1.51.1",
     "@storybook/addon-actions": "^8.5.8",
