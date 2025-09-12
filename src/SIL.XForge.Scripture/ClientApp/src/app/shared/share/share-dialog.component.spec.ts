@@ -283,21 +283,21 @@ describe('ShareDialogComponent', () => {
     expect(env.configLinkUsage).toBeTruthy();
   }));
 
-  it('should close dialog if project settings change and sharing becomes disabled', fakeAsync(() => {
+  it('should close dialog if project settings change and sharing becomes disabled', fakeAsync(async () => {
     env = new TestEnvironment({ userId: TestUsers.CommunityChecker, translateShareEnabled: false });
     expect(env.isDialogOpen).toBe(true);
-    env.disableCheckingSharing();
+    await env.disableCheckingSharing();
     expect(env.isDialogOpen).toBe(false);
   }));
 
-  it('should remove checking role as an option if remote project settings change', fakeAsync(() => {
+  it('should remove checking role as an option if remote project settings change', fakeAsync(async () => {
     env = new TestEnvironment({ userId: TestUsers.Admin });
     let roles: SFProjectRole[] = env.component.availableRoles;
     expect(roles).toContain(SFProjectRole.CommunityChecker);
     expect(roles).toContain(SFProjectRole.Viewer);
     expect(env.canChangeLinkUsage).toBe(true);
 
-    env.disableCheckingSharing();
+    await env.disableCheckingSharing();
 
     roles = env.component.availableRoles;
     expect(roles).not.toContain(SFProjectRole.CommunityChecker);
@@ -406,8 +406,9 @@ class TestEnvironment {
         return Promise.resolve(undefined);
       }
     } as Clipboard);
-    when(mockedProjectService.getProfile(anything(), anything())).thenCall((projectId, subscription) =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId, subscription)
+    when(mockedProjectService.getProfile(anything(), anything())).thenCall(
+      async (projectId, subscription) =>
+        await this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId, subscription)
     );
     when(mockedUserService.currentUserId).thenReturn(userId);
     when(mockedUserService.getCurrentUser()).thenResolve({ data: createTestUser() } as UserDoc);
@@ -499,7 +500,7 @@ class TestEnvironment {
       'project01',
       new DocSubscription('spec')
     );
-    projectDoc.submitJson0Op(
+    await projectDoc.submitJson0Op(
       op =>
         op.set(p => p.checkingConfig, {
           checkingEnabled: false,
