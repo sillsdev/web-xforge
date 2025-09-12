@@ -158,8 +158,12 @@ export class TranslatorSettingsDialogComponent implements OnInit {
 
   private updateLynxInsightState(updates: { assessmentsEnabled?: boolean; autoCorrectionsEnabled?: boolean }): void {
     void this.projectUserConfigDoc.submitJson0Op(op => {
+      if (this.projectUserConfigDoc.data?.lynxInsightState == null) {
+        op.set(puc => puc.lynxInsightState, {});
+      }
+
       for (const [key, value] of Object.entries(updates)) {
-        op.set(puc => puc.lynxInsightState![key], value);
+        op.set(puc => puc.lynxInsightState[key], value);
       }
     });
   }
