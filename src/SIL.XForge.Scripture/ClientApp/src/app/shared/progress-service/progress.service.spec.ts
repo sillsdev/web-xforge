@@ -44,7 +44,7 @@ describe('progress service', () => {
     expect(env.service.texts.length).toBeGreaterThan(0);
     let i = 0;
     for (const book of env.service.texts) {
-      expect(book.text.bookNum).toEqual(i++);
+      expect(book.text.bookNum).toEqual(++i);
       expect(book.text.chapters.length).toBeGreaterThan(0);
       let j = 0;
       for (const chapter of book.text.chapters) {
@@ -73,7 +73,7 @@ describe('progress service', () => {
   it('updates total progress when chapter content changes', fakeAsync(async () => {
     const env = new TestEnvironment();
     const changeEvent = new BehaviorSubject({});
-    when(mockSFProjectService.getText(deepEqual(new TextDocId('project01', 0, 2, 'target')))).thenCall(() => {
+    when(mockSFProjectService.getText(deepEqual(new TextDocId('project01', 1, 2, 'target')))).thenCall(() => {
       return {
         getSegmentCount: () => {
           return { translated: 12, blank: 2 };
@@ -86,7 +86,7 @@ describe('progress service', () => {
     tick();
 
     // mock a change
-    when(mockSFProjectService.getText(deepEqual(new TextDocId('project01', 0, 2, 'target')))).thenCall(() => {
+    when(mockSFProjectService.getText(deepEqual(new TextDocId('project01', 1, 2, 'target')))).thenCall(() => {
       return {
         getSegmentCount: () => {
           return { translated: 13, blank: 1 };
@@ -196,7 +196,7 @@ class TestEnvironment {
   }
 
   setUpGetText(projectId: string, translatedSegments: number, blankSegments: number): void {
-    for (let book = 0; book < this.numBooks; book++) {
+    for (let book = 1; book <= this.numBooks; book++) {
       for (let chapter = 0; chapter < this.numChapters; chapter++) {
         const translated = translatedSegments >= 9 ? 9 : translatedSegments;
         translatedSegments -= translated;
@@ -225,7 +225,7 @@ class TestEnvironment {
 
   createTexts(): TextInfo[] {
     const texts: TextInfo[] = [];
-    for (let book = 0; book < this.numBooks; book++) {
+    for (let book = 1; book <= this.numBooks; book++) {
       const chapters: Chapter[] = [];
       for (let chapter = 0; chapter < this.numChapters; chapter++) {
         chapters.push({ isValid: true, lastVerse: 1, number: chapter, permissions: {}, hasAudio: false });
