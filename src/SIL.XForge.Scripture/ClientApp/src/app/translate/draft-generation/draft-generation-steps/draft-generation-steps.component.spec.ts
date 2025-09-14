@@ -601,13 +601,13 @@ describe('DraftGenerationStepsComponent', () => {
         source2: [
           { number: 2, selected: true },
           { number: 3, selected: false },
-          { number: 6, selected: true }
+          { number: 6, selected: false }
         ],
         project01: [
           { number: 1, selected: true },
           { number: 2, selected: true },
           { number: 3, selected: false },
-          { number: 6, selected: true }
+          { number: 6, selected: false }
         ]
       });
     }));
