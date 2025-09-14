@@ -13,7 +13,7 @@
           <div class="progress" [title]="progressService.overallProgress.percentage">
             <app-donut-chart
               [colors]="['#b8d332', 'transparent']"
-              [data]="[progressService.overallProgress.translated, progressService.overallProgress.blank]"
+              [data]="[progressService.overallProgress.translated, progressService.overallProgress.notTranslated]"
               backgroundColor="#ececec"
               [innerThicknessDelta]="0"
               [thickness]="22"
@@ -37,7 +37,7 @@
               <div class="progress" matListItemMeta [title]="textProgress.percentage + '%'">
                 <app-donut-chart
                   [colors]="['#b8d332', 'transparent']"
-                  [data]="[textProgress.translated, textProgress.blank]"
+                  [data]="[textProgress.translated, textProgress.notTranslated]"
                   backgroundColor="#ececec"
                   [innerThicknessDelta]="0"
                   [thickness]="22"
