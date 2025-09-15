@@ -37,7 +37,7 @@
         }
         <span class="toolbar-spacer"></span>
         @if (isAppOnline) {
-          <button mat-icon-button [title]="t('language')" [matMenuTriggerFor]="localeMenu">
+          <button mat-icon-button [matTooltip]="t('language')" [matMenuTriggerFor]="localeMenu">
             <mat-icon>translate</mat-icon>
           </button>
         }
@@ -54,7 +54,7 @@
           }
         </mat-menu>
 
-        <button mat-icon-button [title]="t('help')" [matMenuTriggerFor]="helpMenu">
+        <button mat-icon-button [matTooltip]="t('help')" [matMenuTriggerFor]="helpMenu">
           <mat-icon class="mirror-rtl">help</mat-icon>
         </button>
         <mat-menu #helpMenu="matMenu" class="help-menu">
@@ -93,7 +93,7 @@
         @if (currentUser) {
           <button
             mat-icon-button
-            [title]="currentUser.displayName"
+            [matTooltip]="currentUser.displayName"
             [matMenuTriggerFor]="userMenu"
             (click)="dismissInstallIcon()"
             class="user-menu-btn"
