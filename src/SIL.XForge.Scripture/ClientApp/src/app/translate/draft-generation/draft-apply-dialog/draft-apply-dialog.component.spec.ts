@@ -43,7 +43,7 @@ const ROUTES: Route[] = [{ path: 'projects', component: MockComponent }];
 
 let env: TestEnvironment;
 
-fdescribe('DraftApplyDialogComponent', () => {
+describe('DraftApplyDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [
       TestTranslocoModule,
@@ -60,7 +60,7 @@ fdescribe('DraftApplyDialogComponent', () => {
       { provide: TextDocService, useMock: mockedTextDocService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: MatDialogRef, useMock: mockedDialogRef },
-      { provide: MAT_DIALOG_DATA, useValue: { bookNum: 1, chapters: [1, 2] } }
+      { provide: MAT_DIALOG_DATA, useValue: { bookNum: 1 } }
     ]
   }));
 
@@ -159,6 +159,7 @@ fdescribe('DraftApplyDialogComponent', () => {
       })
     } as SFProjectProfileDoc;
     env = new TestEnvironment({ projectDoc });
+    verify(mockedDraftGenerationService.getDraftChaptersForBook(projectDoc.id, 1)).once();
     env.selectParatextProject('paratextId3');
     expect(env.component['targetProjectId']).toBe('project03');
     tick();
@@ -349,7 +350,7 @@ class TestEnvironment {
     const mockedTextDoc = {
       getNonEmptyVerses: (): string[] => ['verse_1_1', 'verse_1_2', 'verse_1_3']
     } as TextDoc;
-    when(mockedActivatedProjectService.projectId$).thenReturn(of('project01'));
+    when(mockedActivatedProjectService.projectId$).thenReturn(of(projectDoc?.id));
     when(mockedProjectService.getText(anything())).thenResolve(mockedTextDoc);
     when(mockedTextDocService.userHasGeneralEditRight(anything())).thenReturn(true);
     when(mockedDraftGenerationService.getDraftChaptersForBook(anything(), anything())).thenReturn(of([1, 2]));
