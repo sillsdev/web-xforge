@@ -6,6 +6,7 @@ import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
+import { L10nPercentPipe } from '../../xforge-common/l10n-percent.pipe';
 import { CopyrightBannerComponent } from '../shared/copyright-banner/copyright-banner.component';
 import { SFTabsModule } from '../shared/sf-tab-group';
 import { SharedModule } from '../shared/shared.module';
@@ -63,7 +64,8 @@ import { TranslateRoutingModule } from './translate-routing.module';
     DraftPreviewBooksComponent,
     DraftApplyProgressDialogComponent,
     FontUnsupportedMessageComponent,
-    LynxInsightsModule
+    LynxInsightsModule,
+    L10nPercentPipe
   ]
 })
 export class TranslateModule {}
