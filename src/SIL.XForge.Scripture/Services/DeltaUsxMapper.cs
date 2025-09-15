@@ -67,6 +67,62 @@ public class DeltaUsxMapper(
         "id",
     ];
 
+    /// <summary>
+    /// All paragraph styles that are used in introductory material and outside of verses.
+    /// </summary>
+    private static readonly HashSet<string> TitleIntroductionStyles =
+    [
+        // Titles and sections
+        "mt",
+        "mte",
+        "cl",
+        "cd",
+        "ms",
+        "mr",
+        "s",
+        "sr",
+        "r",
+        "d",
+        "sp",
+        "sd",
+        // Introductory material
+        "imt",
+        "is",
+        "ip",
+        "ipi",
+        "im",
+        "imi",
+        "ipq",
+        "ipr",
+        "ipc",
+        "iq",
+        "ili",
+        "iot",
+        "io",
+        "iex",
+        "imte",
+        "ie",
+        // Identification
+        "ide",
+        "sts",
+        "rem",
+        "h",
+        "toc",
+        "toca",
+        // Should not contain verse text, but sometimes do
+        "ib",
+        // NOTE: When table support is added, add table USFM tags here
+    ];
+
+    /// <summary>
+    /// All paragraph styles that can contain text.
+    /// </summary>
+    private static readonly HashSet<string> AllParaTextStyles =
+    [
+        .. ParagraphPoetryListStyles,
+        .. TitleIntroductionStyles,
+    ];
+
     private class ParseState
     {
         public string? CurRef { get; set; }
@@ -93,7 +149,18 @@ public class DeltaUsxMapper(
         }
     }
 
-    public static bool CanParaContainVerseText(string? style)
+    public static bool CanParaContainText(string? style)
+    {
+        // an empty style indicates an improperly formatted paragraph which could contain verse text
+        if (string.IsNullOrEmpty(style))
+            return true;
+        if (char.IsDigit(style[^1]))
+            style = style[..^1];
+        // paragraph, poetry, and list styles are the only types of valid paras that can contain verse text
+        return AllParaTextStyles.Contains(style);
+    }
+
+    private static bool CanParaContainVerseText(string? style)
     {
         // an empty style indicates an improperly formatted paragraph which could contain verse text
         if (string.IsNullOrEmpty(style))

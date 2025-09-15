@@ -3478,7 +3478,7 @@ public class ParatextService : DisposableBase, IParatextService
     private static string GetVerseText(Delta delta, VerseRef verseRef)
     {
         string vref = string.IsNullOrEmpty(verseRef.Verse) ? verseRef.VerseNum.ToString() : verseRef.Verse;
-        return delta.TryConcatenateInserts(out string verseText, vref, DeltaUsxMapper.CanParaContainVerseText)
+        return delta.TryConcatenateInserts(out string verseText, vref, DeltaUsxMapper.CanParaContainText)
             ? verseText
             : string.Empty;
     }
