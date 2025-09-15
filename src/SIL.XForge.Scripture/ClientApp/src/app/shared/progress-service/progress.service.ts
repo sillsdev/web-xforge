@@ -13,7 +13,7 @@ import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 
 /**
- * The number of verses per book, calculated from the libpalaso versification files.
+ * The expected number of verses per book, calculated from the libpalaso versification files.
  */
 const verseCounts: Record<string, number> = {
   GEN: 1533,
@@ -153,25 +153,25 @@ export class Progress {
 }
 
 export class TextProgress extends Progress {
-  numberOfVerses: number = 0;
+  expectedNumberOfVerses: number = 0;
 
   constructor(public readonly text: TextInfo) {
     super();
-    this.numberOfVerses = this.getVerseCount(text.bookNum);
+    this.expectedNumberOfVerses = this.getVerseCount(text.bookNum);
   }
 
   get notTranslated(): number {
-    // This value will be the number of blanks unless useNumberOfVerses is true.
+    // This value will be the number of blanks unless useExpectedNumberOfVerses is true.
     return this.total - this.translated;
   }
 
   get total(): number {
-    return this.useNumberOfVerses ? this.numberOfVerses : super.total;
+    return this.useExpectedNumberOfVerses ? this.expectedNumberOfVerses : super.total;
   }
 
-  get useNumberOfVerses(): boolean {
-    // If the total calculated from segments is at least 2/3 of the number of verses possible, use the total.
-    return this.numberOfVerses > 0 && super.total < this.numberOfVerses * 0.66;
+  get useExpectedNumberOfVerses(): boolean {
+    // If the total calculated from segments is at least 2/3 of the expected number of verses possible, use the total.
+    return this.expectedNumberOfVerses > 0 && super.total < this.expectedNumberOfVerses * 0.66;
   }
 
   getVerseCount(bookNum: number): number {

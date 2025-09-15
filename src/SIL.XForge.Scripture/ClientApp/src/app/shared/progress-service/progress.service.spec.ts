@@ -34,7 +34,7 @@ describe('progress service', () => {
   it('populates progress and texts on construction', fakeAsync(() => {
     // Create segments for 20 chapters multiplied by 20 books
     const env = new TestEnvironment(3600, 2000);
-    // Override the verse counts to be less half the number created for each book
+    // Override the verse counts to be less than half of the number created for each book
     spyOn(TextProgress.prototype as any, 'getVerseCount').and.callFake(() => 200);
     const calculate = spyOn<any>(env.service, 'calculateProgress').and.callThrough();
 
@@ -49,8 +49,8 @@ describe('progress service', () => {
     let i = 0;
     for (const book of env.service.texts) {
       expect(book.text.bookNum).toEqual(++i);
-      expect(book.numberOfVerses).toEqual(200);
-      expect(book.useNumberOfVerses).toEqual(false);
+      expect(book.expectedNumberOfVerses).toEqual(200);
+      expect(book.useExpectedNumberOfVerses).toEqual(false);
       expect(book.blank).toEqual(100);
       expect(book.translated).toEqual(180);
       expect(book.total).toEqual(280);
@@ -115,20 +115,22 @@ describe('progress service', () => {
   }));
 
   it('uses the verse counts when there are too few segments', fakeAsync(() => {
-    const env = new TestEnvironment(5, 1);
+    const notTranslatedVerses = 17380;
+    const translatedVerses = 5;
+    const env = new TestEnvironment(translatedVerses, 1);
     tick();
 
-    expect(env.service.overallProgress.translated).toEqual(5);
-    expect(env.service.overallProgress.notTranslated).toEqual(17380);
-    expect(env.service.overallProgress.blank).toEqual(17380);
-    expect(env.service.overallProgress.total).toEqual(17385);
+    expect(env.service.overallProgress.translated).toEqual(translatedVerses);
+    expect(env.service.overallProgress.notTranslated).toEqual(notTranslatedVerses);
+    expect(env.service.overallProgress.blank).toEqual(notTranslatedVerses);
+    expect(env.service.overallProgress.total).toEqual(notTranslatedVerses + translatedVerses);
     expect(env.service.overallProgress.percentage).toEqual(0);
     expect(env.service.texts.length).toBeGreaterThan(0);
     let i = 0;
     for (const book of env.service.texts) {
       expect(book.text.bookNum).toEqual(++i);
-      expect(book.useNumberOfVerses).toEqual(true);
-      expect(book.total).toEqual(book.numberOfVerses);
+      expect(book.useExpectedNumberOfVerses).toEqual(true);
+      expect(book.total).toEqual(book.expectedNumberOfVerses);
       expect(book.text.chapters.length).toBeGreaterThan(0);
     }
 
