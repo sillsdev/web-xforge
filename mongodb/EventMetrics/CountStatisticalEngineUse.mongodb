@@ -1,0 +1,41 @@
+use('xforge')
+
+const metrics = db.event_metrics.aggregate([
+  {
+    $match: {
+      eventType: 'StartBuildAsync'
+    }
+  },
+  {
+    $group: {
+      _id: '$projectId',
+      count: { $sum: 1 },
+      timeStamps: { $push: '$timeStamp' }
+    }
+  },
+  {
+    $lookup: {
+      from: 'sf_projects',
+      localField: '_id',
+      foreignField: '_id',
+      as: 'project'
+    }
+  },
+  { $unwind: '$project' },
+  {
+    $project: {
+      _id: 1,
+      count: 1,
+      name: '$project.name',
+      shortName: '$project.shortName',
+      // only show the most recent timeStamp
+      latestTimeStamp: { $arrayElemAt: [{ $slice: ['$timeStamps', -1] }, 0] }
+    }
+  },
+  { $sort: { latestTimeStamp: -1 } },
+]).toArray()
+
+print('Project ID\tProject Name\tShort Name\tCount\tLatest TimeStamp')
+for (const metric of metrics) {
+  print(`${metric._id}\t${metric.name}\t${metric.shortName}\t${metric.count}\t${metric.latestTimeStamp.toISOString().slice(0, -1)}`)
+}
