@@ -1,6 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { fakeAsync, flush, TestBed } from '@angular/core/testing';
+import { fakeAsync, TestBed } from '@angular/core/testing';
 import { User } from '@bugsnag/js';
 import { cloneDeep } from 'lodash-es';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -9,12 +9,14 @@ import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
+import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from './models/sf-type-registry';
@@ -25,6 +27,7 @@ import { SFProjectService } from './sf-project.service';
 
 const mockedUserService = mock(UserService);
 const mockedProjectService = mock(SFProjectService);
+const mockedUserProjectsService = mock(SFUserProjectsService);
 const mockedProjectDoc = mock(SFProjectProfileDoc);
 
 describe('PermissionsService', () => {
@@ -34,7 +37,8 @@ describe('PermissionsService', () => {
       provideHttpClient(),
       provideHttpClientTesting(),
       { provide: UserService, useMock: mockedUserService },
-      { provide: SFProjectService, useMock: mockedProjectService }
+      { provide: SFProjectService, useMock: mockedProjectService },
+      { provide: SFUserProjectsService, useMock: mockedUserProjectsService }
     ]
   }));
 
@@ -270,37 +274,42 @@ class TestEnvironment {
     const projectId: string = 'project01';
     const permission: TextInfoPermission = textPermission ?? TextInfoPermission.Write;
 
-    this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
-      id: projectId,
-      data: createTestProjectProfile({
-        translateConfig: {},
-        userRoles: {
-          user01: SFProjectRole.ParatextTranslator,
-          user02: SFProjectRole.ParatextConsultant
-        },
-        texts: [
-          {
-            bookNum: 41,
-            chapters: [
-              {
-                number: 1,
-                lastVerse: 3,
-                isValid: true,
-                permissions: {
-                  user01: permission,
-                  user02: permission
+    const projectProfileDocs: SFProjectProfileDoc[] = [
+      {
+        id: projectId,
+        data: createTestProjectProfile({
+          translateConfig: {},
+          userRoles: {
+            user01: SFProjectRole.ParatextTranslator,
+            user02: SFProjectRole.ParatextConsultant
+          },
+          texts: [
+            {
+              bookNum: 41,
+              chapters: [
+                {
+                  number: 1,
+                  lastVerse: 3,
+                  isValid: true,
+                  permissions: {
+                    user01: permission,
+                    user02: permission
+                  }
                 }
+              ],
+              hasSource: true,
+              permissions: {
+                user01: permission,
+                user02: permission
               }
-            ],
-            hasSource: true,
-            permissions: {
-              user01: permission,
-              user02: permission
             }
-          }
-        ]
-      })
-    });
+          ]
+        })
+      }
+    ] as SFProjectProfileDoc[];
+
+    this.realtimeService.addSnapshots<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, projectProfileDocs);
+    when(mockedUserProjectsService.projectDocs$).thenReturn(of(projectProfileDocs));
   }
 
   setCurrentUser(userId: string = 'user01'): void {
