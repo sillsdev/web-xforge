@@ -9,6 +9,7 @@ import { AuthService, LoginResult } from './auth.service';
 import { DocSubscription } from './models/realtime-doc';
 import { UserDoc } from './models/user-doc';
 import { UserService } from './user.service';
+
 /** Service that maintains an up-to-date set of SF project docs that the current user has access to. */
 @Injectable({
   providedIn: 'root'
