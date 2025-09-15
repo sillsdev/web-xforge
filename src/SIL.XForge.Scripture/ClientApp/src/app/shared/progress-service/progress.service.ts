@@ -18,8 +18,12 @@ export class Progress {
     return this.translated + this.blank;
   }
 
+  get ratio(): number {
+    return this.total === 0 ? 0 : this.translated / this.total;
+  }
+
   get percentage(): number {
-    return Math.round((this.translated / this.total) * 100);
+    return Math.round(this.ratio * 100);
   }
 
   reset(): void {

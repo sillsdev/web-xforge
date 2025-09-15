@@ -127,7 +127,7 @@ describe('NoteDialogComponent', () => {
     expect(env.notes[0].nativeElement.querySelector('img').getAttribute('src'))
       .withContext('[n0] to do - src')
       .toEqual('/assets/icons/TagIcons/flag01.png');
-    expect(env.notes[0].nativeElement.querySelector('img').getAttribute('title'))
+    expect(env.notes[0].nativeElement.querySelector('img').getAttribute('ng-reflect-message'))
       .withContext('[n0] to do - title')
       .toEqual('To do');
 
@@ -135,13 +135,13 @@ describe('NoteDialogComponent', () => {
     expect(env.notes[1].nativeElement.querySelector('img').getAttribute('src'))
       .withContext('[n1] resolved - src')
       .toEqual('/assets/icons/TagIcons/flag05.png');
-    expect(env.notes[1].nativeElement.querySelector('img').getAttribute('title'))
+    expect(env.notes[1].nativeElement.querySelector('img').getAttribute('ng-reflect-message'))
       .withContext('[n1] resolved - title')
       .toEqual('Resolved');
     expect(env.notes[3].nativeElement.querySelector('img').getAttribute('src'))
       .withContext('[n3] resolved - src')
       .toEqual('/assets/icons/TagIcons/flag05.png');
-    expect(env.notes[3].nativeElement.querySelector('img').getAttribute('title'))
+    expect(env.notes[3].nativeElement.querySelector('img').getAttribute('ng-reflect-message'))
       .withContext('[n3] resolved - title')
       .toEqual('Resolved');
 
@@ -149,7 +149,7 @@ describe('NoteDialogComponent', () => {
     expect(env.notes[2].nativeElement.querySelector('img').getAttribute('src'))
       .withContext('[n2] blank - src')
       .toEqual('');
-    expect(env.notes[2].nativeElement.querySelector('img').getAttribute('title'))
+    expect(env.notes[2].nativeElement.querySelector('img').getAttribute('ng-reflect-message'))
       .withContext('[n2] blank - title')
       .toEqual('');
   }));
@@ -163,7 +163,7 @@ describe('NoteDialogComponent', () => {
     expect(reattachNote.querySelector('.content .text')!.textContent).toContain(verseText);
     expect(reattachNote.querySelector('.content .verse-reattached')!.textContent).toContain('Matthew 1:4');
     expect(reattachNote.querySelector('img')?.getAttribute('src')).toEqual(expectedSrc);
-    expect(reattachNote.querySelector('img')?.getAttribute('title')).toEqual('Note reattached');
+    expect(reattachNote.querySelector('img')?.getAttribute('ng-reflect-message')).toEqual('Note reattached');
   }));
 
   it('reattached note with content', fakeAsync(() => {
@@ -178,7 +178,7 @@ describe('NoteDialogComponent', () => {
     expect(reattachNote.querySelector('.content .verse-reattached')!.textContent).toContain('Matthew 1:4');
     expect(reattachNote.querySelector('.content .note-content')!.textContent).toContain(reattachedContent);
     expect(reattachNote.querySelector('img')?.getAttribute('src')).toEqual(expectedSrc);
-    expect(reattachNote.querySelector('img')?.getAttribute('title')).toEqual('To do');
+    expect(reattachNote.querySelector('img')?.getAttribute('ng-reflect-message')).toEqual('To do');
 
     // Check note with no status set
     reattachedContent = 'reattached02';
@@ -187,7 +187,7 @@ describe('NoteDialogComponent', () => {
     expect(reattachNote.querySelector('.content .verse-reattached')!.textContent).toContain('Matthew 1:4');
     expect(reattachNote.querySelector('.content .note-content')!.textContent).toContain(reattachedContent);
     expect(reattachNote.querySelector('img')?.getAttribute('src')).toEqual(expectedSrc);
-    expect(reattachNote.querySelector('img')?.getAttribute('title')).toEqual('Note reattached');
+    expect(reattachNote.querySelector('img')?.getAttribute('ng-reflect-message')).toEqual('Note reattached');
   }));
 
   it('invalid reattached note', fakeAsync(() => {
@@ -203,7 +203,7 @@ describe('NoteDialogComponent', () => {
     expect(reattachNote.querySelector('.content .verse-reattached')?.textContent).toBeUndefined();
     expect(reattachNote.querySelector('.content .note-content')!.textContent).toContain(reattachedContent);
     expect(reattachNote.querySelector('img')?.getAttribute('src')).toEqual(expectedSrc);
-    expect(reattachNote.querySelector('img')?.getAttribute('title')).toEqual('To do');
+    expect(reattachNote.querySelector('img')?.getAttribute('ng-reflect-message')).toEqual('To do');
 
     // Check note with no status set
     reattachedContent = 'reattached02';
@@ -212,7 +212,7 @@ describe('NoteDialogComponent', () => {
     expect(reattachNote.querySelector('.content .verse-reattached')?.textContent).toBeUndefined();
     expect(reattachNote.querySelector('.content .note-content')?.textContent).toContain(reattachedContent);
     expect(reattachNote.querySelector('img')?.getAttribute('src')).toEqual(expectedSrc);
-    expect(reattachNote.querySelector('img')?.getAttribute('title')).toEqual('Note reattached');
+    expect(reattachNote.querySelector('img')?.getAttribute('ng-reflect-message')).toEqual('Note reattached');
   }));
 
   it('shows assigned user', fakeAsync(() => {
