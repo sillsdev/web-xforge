@@ -1,6 +1,6 @@
 <div class="multi-viewer-container">
   @for (viewer of avatarViewers; track viewer) {
-    <div class="app-avatar-container" [title]="viewer.displayName">
+    <div class="app-avatar-container" [matTooltip]="viewer.displayName">
       <app-avatar
         [user]="viewer"
         [size]="32"
@@ -15,7 +15,7 @@
         mat-mini-fab
         [matMenuTriggerFor]="menu"
         class="mat-elevation-z"
-        [title]="otherViewersLabel"
+        [matTooltip]="otherViewersLabel"
         (click)="toggleMenu()"
       >
         @if (!isMenuOpen) {
