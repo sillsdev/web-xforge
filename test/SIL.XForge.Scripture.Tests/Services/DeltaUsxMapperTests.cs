@@ -4044,6 +4044,19 @@ public partial class DeltaUsxMapperTests
         Assert.IsFalse(result);
     }
 
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase("mt1")]
+    [TestCase("q1")]
+    [TestCase("p")]
+    [TestCase("id")]
+    public void CanParaContainText_True(string? style) => Assert.IsTrue(DeltaUsxMapper.CanParaContainText(style));
+
+    [TestCase("nd")]
+    [TestCase("tr")]
+    [TestCase("zimagecopyrights")]
+    public void CanParaContainText_False(string? style) => Assert.IsFalse(DeltaUsxMapper.CanParaContainText(style));
+
     private async Task RoundTripTestHelper(string projectZipFilename, string projectShortName)
     {
         string zipFilePath = Path.Join(GetPathToTestProject(), "SampleData", $"{projectZipFilename}.zip");
