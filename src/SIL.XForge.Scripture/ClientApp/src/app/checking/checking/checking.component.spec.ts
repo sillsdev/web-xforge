@@ -534,10 +534,10 @@ describe('CheckingComponent', () => {
       expect(question.classes['question-read']).toBe(true);
     }));
 
-    it('question status change to answered', fakeAsync(() => {
+    it('question status change to answered', fakeAsync(async () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       const question = env.selectQuestion(2);
-      env.answerQuestion('Answer question 2');
+      await env.answerQuestion('Answer question 2');
       tick(100);
       env.fixture.detectChanges();
       expect(question.classes['question-answered']).toBe(true);
@@ -1296,29 +1296,29 @@ describe('CheckingComponent', () => {
       discardPeriodicTasks();
     }));
 
-    it('can answer a question', fakeAsync(() => {
+    it('can answer a question', fakeAsync(async () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(2);
       // Checker user already has an answer on question 6 and 9
       expect(env.component.summary.answered).toEqual(2);
-      env.answerQuestion('Answer question 2');
+      await env.answerQuestion('Answer question 2');
       expect(env.answers.length).toEqual(1);
       expect(env.getAnswerText(0)).toBe('Answer question 2');
       expect(env.component.summary.answered).toEqual(3);
       flush(1000);
     }));
 
-    it('opens edit display name dialog if answering a question for the first time', fakeAsync(() => {
+    it('opens edit display name dialog if answering a question for the first time', fakeAsync(async () => {
       const env = new TestEnvironment({ user: CLEAN_CHECKER_USER });
       env.selectQuestion(2);
-      env.answerQuestion('Answering question 2 should pop up a dialog');
+      await env.answerQuestion('Answering question 2 should pop up a dialog');
       verify(mockedUserService.editDisplayName(true)).once();
       expect(env.answers.length).toEqual(1);
       expect(env.getAnswerText(0)).toBe('Answering question 2 should pop up a dialog');
       flush(1000);
     }));
 
-    it('does not open edit display name dialog if offline', fakeAsync(() => {
+    it('does not open edit display name dialog if offline', fakeAsync(async () => {
       const env = new TestEnvironment({
         user: CLEAN_CHECKER_USER,
         projectBookRoute: 'JHN',
@@ -1327,17 +1327,17 @@ describe('CheckingComponent', () => {
         hasConnection: false
       });
       env.selectQuestion(2);
-      env.answerQuestion('Answering question 2 offline');
+      await env.answerQuestion('Answering question 2 offline');
       verify(mockedUserService.editDisplayName(anything())).never();
       expect(env.answers.length).toEqual(1);
       expect(env.getAnswerText(0)).toBe('Answering question 2 offline');
       flush(1000);
     }));
 
-    it('inserts newer answer above older answers', fakeAsync(() => {
+    it('inserts newer answer above older answers', fakeAsync(async () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(7);
-      env.answerQuestion('Just added answer');
+      await env.answerQuestion('Just added answer');
       expect(env.answers.length).toEqual(2);
       expect(env.getAnswerText(0)).toBe('Just added answer');
       expect(env.getAnswerText(1)).toBe('Answer 7 on question');
@@ -1433,10 +1433,10 @@ describe('CheckingComponent', () => {
       flush(1000);
     }));
 
-    it('can edit a new answer', fakeAsync(() => {
+    it('can edit a new answer', fakeAsync(async () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(7);
-      env.answerQuestion('Answer question 7');
+      await env.answerQuestion('Answer question 7');
       const myAnswerIndex = 0;
       const otherAnswerIndex = 1;
       expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(true);
@@ -1515,10 +1515,10 @@ describe('CheckingComponent', () => {
       flush(1000);
     }));
 
-    it('still shows answers as read after canceling an edit', fakeAsync(() => {
+    it('still shows answers as read after canceling an edit', fakeAsync(async () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(7);
-      env.answerQuestion('Answer question 7');
+      await env.answerQuestion('Answer question 7');
       const myAnswerIndex = 0;
       const otherAnswerIndex = 1;
       expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(true);
@@ -1533,10 +1533,10 @@ describe('CheckingComponent', () => {
       flush(1000);
     }));
 
-    it('only my answer is highlighted after I add an answer', fakeAsync(() => {
+    it('only my answer is highlighted after I add an answer', fakeAsync(async () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(7);
-      env.answerQuestion('My answer');
+      await env.answerQuestion('My answer');
       expect(env.answers.length).withContext('setup problem').toBeGreaterThan(1);
       const myAnswerIndex = 0;
       const otherAnswerIndex = 1;
@@ -1545,14 +1545,14 @@ describe('CheckingComponent', () => {
       flush(1000);
     }));
 
-    it('can remove audio from answer', fakeAsync(() => {
+    it('can remove audio from answer', fakeAsync(async () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       const data: FileOfflineData = { id: 'a6Id', dataCollection: 'questions', blob: getAudioBlob() };
       when(mockedFileService.findOrUpdateCache(FileType.Audio, 'questions', 'a6Id', '/audio.mp3')).thenResolve(data);
       env.selectQuestion(6);
       env.clickButton(env.getAnswerEditButton(0));
       env.waitForSliderUpdate();
-      env.component.answersPanel!.submit({ text: 'Answer 6 on question', audio: { status: 'reset' } });
+      await env.component.answersPanel!.submit({ text: 'Answer 6 on question', audio: { status: 'reset' } });
       env.waitForSliderUpdate();
       verify(
         mockedFileService.deleteFile(FileType.Audio, 'project01', QuestionDoc.COLLECTION, 'a6Id', CHECKER_USER.id)
@@ -1561,7 +1561,7 @@ describe('CheckingComponent', () => {
       flush(1000);
     }));
 
-    it('saves audio answer offline and plays from cache', fakeAsync(() => {
+    it('saves audio answer offline and plays from cache', fakeAsync(async () => {
       const env = new TestEnvironment({
         user: CHECKER_USER,
         projectBookRoute: 'JHN',
@@ -1570,7 +1570,7 @@ describe('CheckingComponent', () => {
         hasConnection: false
       });
       const resolveUpload$: Subject<void> = env.resolveFileUploadSubject('blob://audio');
-      env.answerQuestion('An offline answer', 'audioFile.mp3');
+      await env.answerQuestion('An offline answer', 'audioFile.mp3');
       resolveUpload$.next();
       env.waitForSliderUpdate();
       verify(
@@ -1598,7 +1598,7 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       const resolveUpload$: Subject<void> = env.resolveFileUploadSubject('uploadedFile.mp3');
       env.selectQuestion(1);
-      env.answerQuestion('Answer with audio', 'audioFile.mp3');
+      await env.answerQuestion('Answer with audio', 'audioFile.mp3');
       expect(env.answers.length).toEqual(0);
       const question = await env.getQuestionDoc('q1Id');
       expect(env.saveAnswerButton).not.toBeNull();
@@ -1622,10 +1622,10 @@ describe('CheckingComponent', () => {
       flush(1000);
     }));
 
-    it('can delete correct answer after changing chapters', fakeAsync(() => {
+    it('can delete correct answer after changing chapters', fakeAsync(async () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(2);
-      env.answerQuestion('Answer question 2');
+      await env.answerQuestion('Answer question 2');
       env.component.chapter!++;
       env.clickButton(env.answerDeleteButton(0));
       env.waitForSliderUpdate();
@@ -1633,20 +1633,20 @@ describe('CheckingComponent', () => {
       flush(1000);
     }));
 
-    it('answers reset when changing questions', fakeAsync(() => {
+    it('answers reset when changing questions', fakeAsync(async () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(2);
-      env.answerQuestion('Answer question 2');
+      await env.answerQuestion('Answer question 2');
       expect(env.answers.length).toEqual(1);
       env.selectQuestion(1);
       expect(env.answers.length).toEqual(0);
       flush(1000);
     }));
 
-    it("checker user can like and unlike another's answer", fakeAsync(() => {
+    it("checker user can like and unlike another's answer", fakeAsync(async () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(7);
-      env.answerQuestion('Answer question 7');
+      await env.answerQuestion('Answer question 7');
       expect(env.getAnswerText(1)).toBe('Answer 7 on question');
       expect(env.getLikeTotal(1)).toBe(0);
       env.clickButton(env.likeButtons[1]);
@@ -1660,10 +1660,10 @@ describe('CheckingComponent', () => {
       flush(1000);
     }));
 
-    it('cannot like your own answer', fakeAsync(() => {
+    it('cannot like your own answer', fakeAsync(async () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(1);
-      env.answerQuestion('Answer question to be liked');
+      await env.answerQuestion('Answer question to be liked');
       expect(env.getLikeTotal(0)).toBe(0);
       env.clickButton(env.likeButtons[0]);
       env.waitForSliderUpdate();
@@ -1716,12 +1716,12 @@ describe('CheckingComponent', () => {
       expect(env.likeButtons.length).toEqual(1);
     }));
 
-    it('do not show answers until current user has submitted an answer', fakeAsync(() => {
+    it('do not show answers until current user has submitted an answer', fakeAsync(async () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       expect(env.getUnread(env.questions[6])).toEqual(0);
       env.selectQuestion(7);
       expect(env.answers.length).toBe(0);
-      env.answerQuestion('Answer from checker');
+      await env.answerQuestion('Answer from checker');
       expect(env.answers.length).toBe(2);
       flush(1000);
     }));
@@ -1733,7 +1733,7 @@ describe('CheckingComponent', () => {
       expect(env.answers.length).toBe(1);
       env.selectQuestion(7);
       expect(env.answers.length).toBe(0);
-      env.answerQuestion('Answer from checker');
+      await env.answerQuestion('Answer from checker');
       expect(env.answers.length).toBe(1);
       flush(1000);
     }));
@@ -1793,7 +1793,7 @@ describe('CheckingComponent', () => {
 
       env.selectQuestion(7);
       expect(env.totalAnswersMessageCount).withContext('setup').toBeNull();
-      env.answerQuestion('New answer from current user');
+      await env.answerQuestion('New answer from current user');
 
       // Answers count as displayed in HTML.
       expect(env.totalAnswersMessageCount).toEqual(2);
@@ -1902,7 +1902,7 @@ describe('CheckingComponent', () => {
       expect(env.totalAnswersMessageCount).toBeNull();
 
       // Current user adds her answer, and all answers show.
-      env.answerQuestion('New answer from current user');
+      await env.answerQuestion('New answer from current user');
       expect(env.showUnreadAnswersButton).toBeNull();
       expect(env.answers.length).toEqual(3);
       expect(env.component.answersPanel!.answers.length).toEqual(3);
@@ -1913,7 +1913,7 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(7);
       // User answers a question
-      env.answerQuestion('New answer from current user');
+      await env.answerQuestion('New answer from current user');
       expect(env.answers.length).withContext('setup').toEqual(2);
       expect(env.component.answersPanel!.answers.length).withContext('setup').toEqual(2);
       expect(env.showUnreadAnswersButton).toBeNull();
@@ -1941,7 +1941,7 @@ describe('CheckingComponent', () => {
       expect(env.totalAnswersMessageCount).toBeNull();
 
       // Adding an answer should result in seeing all answers, and no banner.
-      env.answerQuestion('New/replaced answer from current user');
+      await env.answerQuestion('New/replaced answer from current user');
       expect(env.answers.length).toEqual(3);
       expect(env.component.answersPanel!.answers.length).toEqual(3);
       expect(env.showUnreadAnswersButton).toBeNull();
@@ -1961,7 +1961,7 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(7);
       // User answers a question
-      env.answerQuestion('New answer from current user');
+      await env.answerQuestion('New answer from current user');
       expect(env.answers.length).withContext('setup').toEqual(2);
       expect(env.component.answersPanel!.answers.length).withContext('setup').toEqual(2);
       expect(env.showUnreadAnswersButton).toBeNull();
@@ -1984,7 +1984,7 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(7);
       // User answers a question
-      env.answerQuestion('New answer from current user');
+      await env.answerQuestion('New answer from current user');
       expect(env.showUnreadAnswersButton).withContext('setup').toBeNull();
       expect(env.answers.length).withContext('setup').toEqual(2);
       // A remote answer is added, but the current user does not click the banner to show the remote answer.
@@ -2015,7 +2015,7 @@ describe('CheckingComponent', () => {
         .toBe(false);
       env.selectQuestion(7);
       // User answers a question
-      env.answerQuestion('New answer from current user');
+      await env.answerQuestion('New answer from current user');
       expect(env.totalAnswersMessageText).withContext('setup').toEqual('Your answer');
 
       // A remote answer is added.
@@ -2045,24 +2045,24 @@ describe('CheckingComponent', () => {
     }));
 
     describe('Comments', () => {
-      it('can comment on an answer', fakeAsync(() => {
+      it('can comment on an answer', fakeAsync(async () => {
         const env = new TestEnvironment({ user: CHECKER_USER });
         env.selectQuestion(1);
-        env.answerQuestion('Answer question to be commented on');
-        env.commentOnAnswer(0, 'Response to answer');
+        await env.answerQuestion('Answer question to be commented on');
+        await env.commentOnAnswer(0, 'Response to answer');
         env.waitForSliderUpdate();
         expect(env.getAnswerComments(0).length).toBe(1);
         flush(1000);
       }));
 
-      it('can edit comment on an answer', fakeAsync(() => {
+      it('can edit comment on an answer', fakeAsync(async () => {
         const env = new TestEnvironment({ user: CHECKER_USER });
         // Answer a question in a chapter where chapters previous also have comments
         env.selectQuestion(14);
-        env.answerQuestion('Answer question to be commented on');
-        env.commentOnAnswer(0, 'Response to answer');
+        await env.answerQuestion('Answer question to be commented on');
+        await env.commentOnAnswer(0, 'Response to answer');
         env.waitForSliderUpdate();
-        env.commentOnAnswer(0, 'Second comment to answer');
+        await env.commentOnAnswer(0, 'Second comment to answer');
         env.waitForSliderUpdate();
         env.clickButton(env.getEditCommentButton(0, 0));
         expect(env.getYourCommentField(0)).not.toBeNull();
@@ -2075,11 +2075,11 @@ describe('CheckingComponent', () => {
         flush(1000);
       }));
 
-      it('can delete comment on an answer', fakeAsync(() => {
+      it('can delete comment on an answer', fakeAsync(async () => {
         const env = new TestEnvironment({ user: CHECKER_USER });
         env.selectQuestion(1);
-        env.answerQuestion('Answer question to be commented on');
-        env.commentOnAnswer(0, 'Response to answer');
+        await env.answerQuestion('Answer question to be commented on');
+        await env.commentOnAnswer(0, 'Response to answer');
         env.waitForSliderUpdate();
         expect(env.getAnswerComments(0).length).toBe(1);
         env.clickButton(env.getDeleteCommentButton(0, 0));
@@ -2088,12 +2088,12 @@ describe('CheckingComponent', () => {
         flush(1000);
       }));
 
-      it('can record audio for a comment', fakeAsync(() => {
+      it('can record audio for a comment', fakeAsync(async () => {
         const env = new TestEnvironment({ user: CHECKER_USER });
         env.selectQuestion(1);
-        env.answerQuestion('Answer question to be commented on');
+        await env.answerQuestion('Answer question to be commented on');
         const resolveUpload$: Subject<void> = env.resolveFileUploadSubject('blob://audio');
-        env.commentOnAnswer(0, '', 'audioFile.mp3');
+        await env.commentOnAnswer(0, '', 'audioFile.mp3');
         resolveUpload$.next();
         env.waitForSliderUpdate();
         expect(env.component.answersPanel!.answers[0].comments[0].audioUrl).toEqual('blob://audio');
@@ -2103,12 +2103,12 @@ describe('CheckingComponent', () => {
         flush(1000);
       }));
 
-      it('can remove audio from a comment', fakeAsync(() => {
+      it('can remove audio from a comment', fakeAsync(async () => {
         const env = new TestEnvironment({ user: CHECKER_USER });
         env.selectQuestion(1);
-        env.answerQuestion('Answer question to be commented on');
+        await env.answerQuestion('Answer question to be commented on');
         const resolveUpload$: Subject<void> = env.resolveFileUploadSubject('blob://audio');
-        env.commentOnAnswer(0, 'comment with audio', 'audioFile.mp3');
+        await env.commentOnAnswer(0, 'comment with audio', 'audioFile.mp3');
         resolveUpload$.next();
         env.waitForSliderUpdate();
         expect(env.component.answersPanel!.answers[0].comments[0].audioUrl).toEqual('blob://audio');
@@ -2124,12 +2124,12 @@ describe('CheckingComponent', () => {
         flush(1000);
       }));
 
-      it('will delete comment audio when comment is deleted', fakeAsync(() => {
+      it('will delete comment audio when comment is deleted', fakeAsync(async () => {
         const env = new TestEnvironment({ user: CHECKER_USER });
         env.selectQuestion(1);
         const resolveUpload$: Subject<void> = env.resolveFileUploadSubject('blob://audio');
-        env.answerQuestion('Answer question to be commented on');
-        env.commentOnAnswer(0, 'comment with audio', 'audioFile.mp3');
+        await env.answerQuestion('Answer question to be commented on');
+        await env.commentOnAnswer(0, 'comment with audio', 'audioFile.mp3');
         resolveUpload$.next();
         env.waitForSliderUpdate();
         expect(env.component.answersPanel!.answers[0].comments[0].audioUrl).toEqual('blob://audio');
@@ -2145,17 +2145,17 @@ describe('CheckingComponent', () => {
         flush(1000);
       }));
 
-      it('comments only appear on the relevant answer', fakeAsync(() => {
+      it('comments only appear on the relevant answer', fakeAsync(async () => {
         const env = new TestEnvironment({ user: CHECKER_USER });
         env.selectQuestion(1);
-        env.answerQuestion('Answer question to be commented on');
-        env.commentOnAnswer(0, 'First comment');
-        env.commentOnAnswer(0, 'Second comment');
+        await env.answerQuestion('Answer question to be commented on');
+        await env.commentOnAnswer(0, 'First comment');
+        await env.commentOnAnswer(0, 'Second comment');
         env.waitForSliderUpdate();
         expect(env.getAnswerComments(0).length).toBe(2);
         env.selectQuestion(2);
-        env.answerQuestion('Second answer question to be commented on');
-        env.commentOnAnswer(0, 'Third comment');
+        await env.answerQuestion('Second answer question to be commented on');
+        await env.commentOnAnswer(0, 'Third comment');
         env.waitForSliderUpdate();
         expect(env.getAnswerComments(0).length).toBe(1);
         expect(env.getAnswerCommentText(0, 0)).toBe('Third comment');
@@ -2201,9 +2201,9 @@ describe('CheckingComponent', () => {
       it('displays comments in real-time', fakeAsync(async () => {
         const env = new TestEnvironment({ user: CHECKER_USER });
         env.selectQuestion(1);
-        env.answerQuestion('Admin will add a comment to this');
+        await env.answerQuestion('Admin will add a comment to this');
         expect(env.getAnswerComments(0).length).toEqual(0);
-        const commentId: string = await env.commentOnAnswerRemotely(
+        const commentId: string = await await env.commentOnAnswerRemotely(
           'Comment left by admin',
           env.component.questionsList!.activeQuestionDoc!
         );
@@ -2218,13 +2218,13 @@ describe('CheckingComponent', () => {
       it('does not mark third comment read if fourth comment also added', fakeAsync(async () => {
         const env = new TestEnvironment({ user: CHECKER_USER });
         env.selectQuestion(1);
-        env.answerQuestion('Admin will add four comments');
-        env.commentOnAnswer(0, 'First comment');
+        await env.answerQuestion('Admin will add four comments');
+        await env.commentOnAnswer(0, 'First comment');
         const questionDoc: QuestionDoc = clone(env.component.questionsList!.activeQuestionDoc!);
         env.selectQuestion(2);
-        await env.commentOnAnswerRemotely('Comment #2', questionDoc);
-        await env.commentOnAnswerRemotely('Comment #3', questionDoc);
-        await env.commentOnAnswerRemotely('Comment #4', questionDoc);
+        await await env.commentOnAnswerRemotely('Comment #2', questionDoc);
+        await await env.commentOnAnswerRemotely('Comment #3', questionDoc);
+        await await env.commentOnAnswerRemotely('Comment #4', questionDoc);
         env.selectQuestion(1);
         expect(env.component.answersPanel!.answers.length).toEqual(1);
         expect(env.component.answersPanel!.answers[0].comments.length).toEqual(4);
@@ -3206,14 +3206,14 @@ class TestEnvironment {
     );
   }
 
-  answerQuestion(answer: string, audioFilename?: string): void {
+  async answerQuestion(answer: string, audioFilename?: string): Promise<void> {
     this.clickButton(this.addAnswerButton);
     const response: CheckingInput = { text: answer };
     const audio: AudioAttachment = { status: 'processed', blob: getAudioBlob(), fileName: audioFilename };
     if (audioFilename != null) {
       response.audio = audio;
     }
-    this.component.answersPanel?.submit(response);
+    await this.component.answersPanel?.submit(response);
     tick();
     this.fixture.detectChanges();
     this.waitForSliderUpdate();
@@ -3239,7 +3239,7 @@ class TestEnvironment {
     tick();
   }
 
-  commentOnAnswer(answerIndex: number, comment: string, audioFilename?: string): void {
+  async commentOnAnswer(answerIndex: number, comment: string, audioFilename?: string): Promise<void> {
     this.clickButton(this.getAddCommentButton(answerIndex));
     if (this.getYourCommentField(answerIndex) == null) return;
     this.setTextFieldValue(this.getYourCommentField(answerIndex), comment);
@@ -3249,7 +3249,7 @@ class TestEnvironment {
     }
     const commentsComponent = this.fixture.debugElement.query(By.css('#answer-comments'))!
       .componentInstance as CheckingCommentsComponent;
-    commentsComponent.submit({ text: comment, audio: commentAudio });
+    await commentsComponent.submit({ text: comment, audio: commentAudio });
     this.waitForSliderUpdate();
   }
 
