@@ -28,6 +28,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { L10nPercentPipe } from '../../../xforge-common/l10n-percent.pipe';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
@@ -55,7 +56,8 @@ describe('TranslateOverviewComponent', () => {
       TestTranslocoModule,
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      FontUnsupportedMessageComponent
+      FontUnsupportedMessageComponent,
+      L10nPercentPipe
     ],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
