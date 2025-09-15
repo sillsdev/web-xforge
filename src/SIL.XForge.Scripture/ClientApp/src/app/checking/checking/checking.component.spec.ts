@@ -818,21 +818,21 @@ describe('CheckingComponent', () => {
       env.waitForAudioPlayer();
     }));
 
-    it('respond to remote question audio added or removed', fakeAsync(() => {
+    it('respond to remote question audio added or removed', fakeAsync(async () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(1);
       expect(env.audioPlayerOnQuestion).toBeNull();
-      env.simulateRemoteEditQuestionAudio('filename.mp3');
+      await env.simulateRemoteEditQuestionAudio('filename.mp3');
       expect(env.audioPlayerOnQuestion).not.toBeNull();
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, 'q1Id', 'filename.mp3')).times(
         5
       );
       resetCalls(mockedFileService);
-      env.simulateRemoteEditQuestionAudio(undefined);
+      await env.simulateRemoteEditQuestionAudio(undefined);
       expect(env.audioPlayerOnQuestion).toBeNull();
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, 'q1Id', undefined)).times(5);
       env.selectQuestion(2);
-      env.simulateRemoteEditQuestionAudio('filename2.mp3');
+      await env.simulateRemoteEditQuestionAudio('filename2.mp3');
       env.waitForSliderUpdate();
       verify(
         mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, 'q2Id', 'filename2.mp3')
@@ -840,7 +840,7 @@ describe('CheckingComponent', () => {
       flush(1000);
     }));
 
-    it('question added to another book changes the route to that book and activates the question', fakeAsync(() => {
+    it('question added to another book changes the route to that book and activates the question', fakeAsync(async () => {
       const env = new TestEnvironment({ user: ADMIN_USER });
       const dateNow = new Date();
       const newQuestion: Question = {
@@ -855,9 +855,9 @@ describe('CheckingComponent', () => {
         dateModified: dateNow.toJSON()
       };
       env.insertQuestion(newQuestion);
-      env.activateQuestion(newQuestion.dataId);
+      await env.activateQuestion(newQuestion.dataId);
       expect(env.location.path()).toEqual('/projects/project01/checking/MAT/1?scope=book');
-      env.activateQuestion('q1Id');
+      await env.activateQuestion('q1Id');
       expect(env.location.path()).toEqual('/projects/project01/checking/JHN/1?scope=book');
       flush(1000);
     }));
@@ -1386,7 +1386,7 @@ describe('CheckingComponent', () => {
       flush(1000);
     }));
 
-    it('does not save the answer when storage quota exceeded', fakeAsync(() => {
+    it('does not save the answer when storage quota exceeded', fakeAsync(async () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       when(
         mockedFileService.uploadFile(
@@ -1415,7 +1415,7 @@ describe('CheckingComponent', () => {
           blob: getAudioBlob()
         }
       };
-      env.component.answerAction(answerAction);
+      await env.component.answerAction(answerAction);
       env.waitForSliderUpdate();
       const questionDoc = env.component.questionsList!.activeQuestionDoc!;
       expect(questionDoc.data!.answers.length).toEqual(0);
@@ -2295,7 +2295,7 @@ describe('CheckingComponent', () => {
       const questionDoc = spy(await env.getQuestionDoc('q6Id'));
       env.selectQuestion(6);
       verify(questionDoc!.updateAnswerFileCache()).times(1);
-      env.simulateRemoteDeleteAnswer('q6Id', 0);
+      await env.simulateRemoteDeleteAnswer('q6Id', 0);
       verify(questionDoc!.updateAnswerFileCache()).times(2);
       expect().nothing();
       tick();
@@ -2641,7 +2641,7 @@ describe('CheckingComponent', () => {
       discardPeriodicTasks();
     }));
 
-    it('notifies admin if chapter audio is absent and hide scripture text is enabled', fakeAsync(() => {
+    it('notifies admin if chapter audio is absent and hide scripture text is enabled', fakeAsync(async () => {
       const env = new TestEnvironment({
         user: ADMIN_USER,
         projectBookRoute: 'MAT',
@@ -2662,7 +2662,7 @@ describe('CheckingComponent', () => {
         });
       });
 
-      env.component.addAudioTimingData();
+      await env.component.addAudioTimingData();
       env.waitForQuestionTimersToComplete();
       env.fixture.detectChanges();
 
@@ -3585,8 +3585,8 @@ class TestEnvironment {
       }
     ]);
 
-    when(mockedProjectService.getProfile(anything(), anything())).thenCall((id, subscriber) =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id, subscriber)
+    when(mockedProjectService.getProfile(anything(), anything())).thenCall(
+      async (id, subscriber) => await this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id, subscriber)
     );
     when(mockedProjectService.isProjectAdmin(anything(), anything())).thenResolve(
       user.role === SFProjectRole.ParatextAdministrator
@@ -3618,12 +3618,13 @@ class TestEnvironment {
         data: this.consultantProjectUserConfig
       }
     ]);
-    when(mockedProjectService.getUserConfig(anything(), anything(), anything())).thenCall((id, userId, subscriber) =>
-      this.realtimeService.subscribe(
-        SFProjectUserConfigDoc.COLLECTION,
-        getSFProjectUserConfigDocId(id, userId),
-        subscriber
-      )
+    when(mockedProjectService.getUserConfig(anything(), anything(), anything())).thenCall(
+      async (id, userId, subscriber) =>
+        await this.realtimeService.subscribe(
+          SFProjectUserConfigDoc.COLLECTION,
+          getSFProjectUserConfigDocId(id, userId),
+          subscriber
+        )
     );
 
     this.realtimeService.addSnapshots<TextData>(TextDoc.COLLECTION, [
@@ -3653,8 +3654,8 @@ class TestEnvironment {
         type: RichText.type.name
       }
     ]);
-    when(mockedProjectService.getText(anything(), anything())).thenCall((id, subscriber) =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), subscriber)
+    when(mockedProjectService.getText(anything(), anything())).thenCall(
+      async (id, subscriber) => await this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), subscriber)
     );
     when(mockedActivatedRoute.params).thenReturn(this.params$);
     when(mockedActivatedRoute.queryParams).thenReturn(this.queryParams$);
@@ -3666,8 +3667,8 @@ class TestEnvironment {
         data: user.user
       }
     ]);
-    when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, user.id, new DocSubscription('spec'))
+    when(mockedUserService.getCurrentUser()).thenCall(
+      async () => await this.realtimeService.subscribe(UserDoc.COLLECTION, user.id, new DocSubscription('spec'))
     );
 
     this.realtimeService.addSnapshots<User>(UserProfileDoc.COLLECTION, [
