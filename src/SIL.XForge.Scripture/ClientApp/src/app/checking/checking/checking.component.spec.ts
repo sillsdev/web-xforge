@@ -652,7 +652,7 @@ describe('CheckingComponent', () => {
       // Simulate going online after the answer is edited
       resetCalls(mockedFileService);
       env.onlineStatus = true;
-      env.fileSyncComplete.next();
+      env.fileSyncComplete$.next();
       tick();
       env.fixture.detectChanges();
       expect(env.component.answersPanel?.getFileSource(questionDoc.data?.audioUrl)).toBeDefined();
@@ -2763,7 +2763,7 @@ class TestEnvironment {
   ) as TestOnlineStatusService;
 
   questionReadTimer: number = 2000;
-  fileSyncComplete: Subject<void> = new Subject();
+  fileSyncComplete$: Subject<void> = new Subject();
 
   private readonly params$: BehaviorSubject<Params>;
   private readonly queryParams$: BehaviorSubject<Params>;
@@ -2842,7 +2842,7 @@ class TestEnvironment {
     when(
       mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, anything(), undefined)
     ).thenResolve(undefined);
-    when(mockedFileService.fileSyncComplete$).thenReturn(this.fileSyncComplete);
+    when(mockedFileService.fileSyncComplete$).thenReturn(this.fileSyncComplete$);
 
     const query = mock(RealtimeQuery<TextAudioDoc>) as RealtimeQuery<TextAudioDoc>;
     when(query.remoteChanges$).thenReturn(new BehaviorSubject<void>(undefined));
@@ -3535,7 +3535,7 @@ class TestEnvironment {
 
   async simulateRemoteDeleteAnswer(questionId: string, answerIndex: number): Promise<void> {
     const questionDoc = await this.getQuestionDoc(questionId);
-    questionDoc.submitJson0Op(op => op.set(q => q.answers[answerIndex].deleted, true), false);
+    await questionDoc.submitJson0Op(op => op.set(q => q.answers[answerIndex].deleted, true), false);
     tick(this.questionReadTimer);
     this.fixture.detectChanges();
     tick();
