@@ -18,6 +18,7 @@ import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
+import { L10nPercentPipe } from 'xforge-common/l10n-percent.pipe';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -55,7 +56,8 @@ describe('TranslateOverviewComponent', () => {
       TestTranslocoModule,
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      FontUnsupportedMessageComponent
+      FontUnsupportedMessageComponent,
+      L10nPercentPipe
     ],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },

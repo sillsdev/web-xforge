@@ -21,7 +21,7 @@
               appBlurOnClick
               type="button"
               (click)="isTargetTextRight = !isTargetTextRight"
-              [title]="t('swap_source_and_target')"
+              [matTooltip]="t('swap_source_and_target')"
               class="hide-lt-sm"
             >
               <mat-icon>swap_horiz</mat-icon>
@@ -34,7 +34,7 @@
               type="button"
               id="settings-btn"
               (click)="openTranslatorSettings()"
-              [title]="t('configure_translation_suggestions')"
+              [matTooltip]="t('configure_translation_suggestions')"
             >
               <mat-icon>settings</mat-icon>
             </button>
@@ -236,7 +236,7 @@
                               #fabButton
                               class="insert-note-fab"
                               mat-mini-fab
-                              [title]="t('add_comment')"
+                              [matTooltip]="t('add_comment')"
                               (click)="insertNote()"
                             >
                               <mat-icon>add_comment</mat-icon>
