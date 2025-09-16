@@ -69,23 +69,6 @@
               }
             </div>
             <div class="tool-setting">
-              @if (isBasedOnProjectSet) {
-                <div class="tool-setting-field checkbox-field">
-                  <mat-checkbox formControlName="translationSuggestionsEnabled" id="checkbox-translation-suggestions">
-                    {{ t("translation_suggestions") }}
-                  </mat-checkbox>
-                  <app-info [text]="t('translations_will_be_suggested')"></app-info>
-                  <app-write-status
-                    [state]="getControlState('translationSuggestionsEnabled')"
-                    [formGroup]="form"
-                    id="translation-suggestions-status"
-                  ></app-write-status>
-                </div>
-              } @else {
-                <mat-hint>{{ t("translation_suggestions_require_source_text") }}</mat-hint>
-              }
-            </div>
-            <div class="tool-setting">
               <div class="tool-setting-field checkbox-field">
                 <mat-checkbox formControlName="biblicalTermsEnabled" id="checkbox-biblical-terms">
                   {{ t("biblical_terms") }}
@@ -106,6 +89,26 @@
                 </mat-error>
               }
             </div>
+            @if (isBasedOnProjectSet) {
+              <div class="tool-setting">
+                <div class="tool-setting-field checkbox-field">
+                  <mat-checkbox formControlName="translationSuggestionsEnabled" id="checkbox-translation-suggestions">
+                    {{ t("translation_suggestions") }}
+                  </mat-checkbox>
+                  <app-info [text]="t('translations_will_be_suggested')"></app-info>
+                  <app-write-status
+                    [state]="getControlState('translationSuggestionsEnabled')"
+                    [formGroup]="form"
+                    id="translation-suggestions-status"
+                  ></app-write-status>
+                </div>
+                <app-notice type="primary" mode="fill-dark">
+                  <p>{{ t("translation_suggestions_info_a") }}</p>
+                  <br />
+                  <p>{{ t("translation_suggestions_info_b") }}</p>
+                </app-notice>
+              </div>
+            }
           </mat-card-content>
         </mat-card>
 
