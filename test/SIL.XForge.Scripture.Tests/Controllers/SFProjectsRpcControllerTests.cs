@@ -40,6 +40,30 @@ public class SFProjectsRpcControllerTests
     private static readonly Uri WebsiteUrl = new Uri("https://scriptureforge.org", UriKind.Absolute);
 
     [Test]
+    public void ApplyPreTranslationToProject_Success()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        var result = env.Controller.ApplyPreTranslationToProject(Project01, "GEN-EXO", Project01, DateTime.UtcNow);
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        env.BackgroundJobClient.Received().Create(Arg.Any<Job>(), Arg.Any<IState>());
+    }
+
+    [Test]
+    public void ApplyPreTranslationToProject_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Throws(new ArgumentNullException());
+
+        // SUT
+        Assert.Throws<ArgumentNullException>(() =>
+            env.Controller.ApplyPreTranslationToProject(Project01, "GEN-EXO", Project01, DateTime.UtcNow)
+        );
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
     public async Task Delete_Success()
     {
         var env = new TestEnvironment();

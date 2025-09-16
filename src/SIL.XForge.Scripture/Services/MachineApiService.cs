@@ -23,9 +23,11 @@ using SIL.XForge.EventMetrics;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
+using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
+using Chapter = SIL.XForge.Scripture.Models.Chapter;
 using TextInfo = SIL.XForge.Scripture.Models.TextInfo;
 
 namespace SIL.XForge.Scripture.Services;
@@ -79,14 +81,308 @@ public class MachineApiService(
     /// </remarks>
     internal const string BuildStateFinishing = "FINISHING";
 
-    private static readonly IEqualityComparer<IList<int>> _listIntComparer = SequenceEqualityComparer.Create(
-        EqualityComparer<int>.Default
-    );
     private static readonly IEqualityComparer<IList<string>> _listStringComparer = SequenceEqualityComparer.Create(
         EqualityComparer<string>.Default
     );
     private static readonly IEqualityComparer<IList<ProjectScriptureRange>> _listProjectScriptureRangeComparer =
         SequenceEqualityComparer.Create(EqualityComparer<ProjectScriptureRange>.Default);
+
+    public async Task ApplyPreTranslationToProjectAsync(
+        string curUserId,
+        string sfProjectId,
+        string scriptureRange,
+        string targetProjectId,
+        DateTime timestamp,
+        CancellationToken cancellationToken
+    )
+    {
+        // Ensure that the user has permission to access the draft project
+        SFProject project = await EnsureProjectPermissionAsync(
+            curUserId,
+            sfProjectId,
+            isServalAdmin: false,
+            cancellationToken
+        );
+
+        // Connect to the realtime server
+        await using IConnection connection = await realtimeService.ConnectAsync(curUserId);
+
+        // Retrieve the chapter deltas
+        List<int> createdBooks = [];
+        Dictionary<int, List<int>> createdChapters = [];
+        List<(ChapterDelta chapterDelta, int bookNum)> chapterDeltas = [];
+        try
+        {
+            // Retrieve the user secret
+            Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(curUserId, cancellationToken);
+            if (!attempt.TryResult(out UserSecret userSecret))
+            {
+                throw new DataNotFoundException("The user does not exist.");
+            }
+
+            ScrVers versification =
+                paratextService.GetParatextSettings(userSecret, project.ParatextId)?.Versification
+                ?? VerseRef.defaultVersification;
+
+            // Parse the scripture range
+            ScriptureRangeParser scriptureRangeParser = new ScriptureRangeParser(versification);
+            Dictionary<string, List<int>> booksAndChapters = scriptureRangeParser.GetChapters(scriptureRange);
+
+            // Get the drafts for the scripture range
+            foreach ((string book, List<int> bookChapters) in booksAndChapters)
+            {
+                int bookNum = Canon.BookIdToNumber(book);
+
+                // Ensure that if chapters is blank, it contains every chapter in the book
+                List<int> chapters = bookChapters;
+                if (chapters.Count == 0)
+                {
+                    chapters = [.. Enumerable.Range(1, versification.GetLastChapter(bookNum))];
+                }
+
+                foreach (int chapterNum in chapters.Where(c => c > 0))
+                {
+                    // See if we have a draft locally
+                    string id = TextDocument.GetDocId(sfProjectId, bookNum, chapterNum, TextDocument.Draft);
+                    IDocument<TextDocument> textDocument = await connection.FetchAsync<TextDocument>(id);
+                    IUsj usj;
+                    if (textDocument.IsLoaded)
+                    {
+                        // Retrieve the snapshot if it exists, or use the latest available if none
+                        Snapshot<TextDocument> snapshot = await connection.FetchSnapshotAsync<TextDocument>(
+                            id,
+                            timestamp
+                        );
+                        usj = snapshot.Data ?? textDocument.Data;
+                    }
+                    else
+                    {
+                        // We do not have a draft locally, so we should retrieve it from Serval, and save it locally
+                        DraftUsfmConfig config =
+                            project.TranslateConfig.DraftConfig.UsfmConfig ?? new DraftUsfmConfig();
+                        string usfm = await preTranslationService.GetPreTranslationUsfmAsync(
+                            sfProjectId,
+                            bookNum,
+                            chapterNum,
+                            config,
+                            cancellationToken
+                        );
+
+                        // If the chapter is invalid, skip it
+                        if (string.IsNullOrWhiteSpace(usfm))
+                        {
+                            continue;
+                        }
+
+                        // Save the chapter to the realtime server
+                        string usx = paratextService.GetBookText(userSecret, project.ParatextId, bookNum, usfm);
+                        usj = UsxToUsj.UsxStringToUsj(usx);
+                        await SaveTextDocumentAsync(textDocument, usj);
+                    }
+
+                    // Then convert it to USX
+                    XDocument usxDoc = UsjToUsx.UsjToUsxXDocument(usj);
+
+                    // Then convert it to a Delta
+                    IEnumerable<ChapterDelta> deltas = deltaUsxMapper.ToChapterDeltas(usxDoc);
+
+                    // Ensure that the chapter was present in the USFM
+                    ChapterDelta chapterDelta = deltas.FirstOrDefault();
+                    if (chapterDelta is not null)
+                    {
+                        chapterDeltas.Add((chapterDelta, bookNum));
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            // Log the error and report to bugsnag
+            logger.LogError(
+                e,
+                "Apply pre-translation draft exception occurred for project {projectId} running in background job.",
+                sfProjectId.Sanitize()
+            );
+            exceptionHandler.ReportException(e);
+
+            // Do not proceed to save the draft to the project
+            return;
+        }
+
+        bool successful = false;
+        try
+        {
+            // Being the transaction
+            connection.BeginTransaction();
+
+            // Load the target project
+            IDocument<SFProject> projectDoc = await connection.FetchAsync<SFProject>(targetProjectId);
+            if (!projectDoc.IsLoaded)
+            {
+                throw new DataNotFoundException("The project does not exist");
+            }
+
+            // Begin a transaction, and update the project
+            foreach ((ChapterDelta chapterDelta, int bookNum) in chapterDeltas)
+            {
+                // Create the new chapter record
+                Chapter chapter = new Chapter
+                {
+                    DraftApplied = true,
+                    IsValid = chapterDelta.IsValid,
+                    Number = chapterDelta.Number,
+                    LastVerse = chapterDelta.LastVerse,
+                };
+
+                // Create or update the relevant book and chapter records in the project
+                int textIndex = projectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
+                if (textIndex == -1)
+                {
+                    // Create the new book record with the chapter
+                    TextInfo text = new TextInfo { BookNum = bookNum, Chapters = [chapter] };
+                    await projectDoc.SubmitJson0OpAsync(op => op.Add(pd => pd.Texts, text));
+
+                    // Record that the book and chapter were created
+                    createdBooks.Add(bookNum);
+                    createdChapters.Add(bookNum, [chapterDelta.Number]);
+                }
+                else
+                {
+                    int chapterIndex = projectDoc
+                        .Data.Texts[textIndex]
+                        .Chapters.FindIndex(c => c.Number == chapterDelta.Number);
+                    if (chapterIndex == -1)
+                    {
+                        // Create a new chapter record
+                        await projectDoc.SubmitJson0OpAsync(op => op.Add(pd => pd.Texts[textIndex].Chapters, chapter));
+
+                        // Record that the chapter was created
+                        if (createdChapters.TryGetValue(bookNum, out List<int> chapters))
+                        {
+                            chapters.Add(chapterDelta.Number);
+                        }
+                        else
+                        {
+                            createdChapters.Add(bookNum, [chapterDelta.Number]);
+                        }
+                    }
+                    else
+                    {
+                        // Update the existing chapter record
+                        await projectDoc.SubmitJson0OpAsync(op =>
+                        {
+                            op.Set(pd => pd.Texts[textIndex].Chapters[chapterIndex].DraftApplied, chapter.DraftApplied);
+                            op.Set(pd => pd.Texts[textIndex].Chapters[chapterIndex].IsValid, chapter.IsValid);
+                            op.Set(pd => pd.Texts[textIndex].Chapters[chapterIndex].LastVerse, chapter.LastVerse);
+                        });
+                    }
+                }
+            }
+
+            // Update the permissions
+            if (chapterDeltas.Count > 0)
+            {
+                await projectService.UpdatePermissionsAsync(curUserId, projectDoc, users: null, cancellationToken);
+            }
+
+            // Create the text data documents, using the permissions matrix calculated above for permissions
+            foreach ((ChapterDelta chapterDelta, int bookNum) in chapterDeltas)
+            {
+                // Ensure that the user has permission to write the book
+                int textIndex = projectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
+                if (textIndex == -1)
+                    continue;
+                bool canWriteBook =
+                    projectDoc.Data.Texts[textIndex].Permissions.TryGetValue(curUserId, out string bookPermission)
+                    && bookPermission == TextInfoPermission.Write;
+                if (!canWriteBook)
+                {
+                    // Remove the book from the project if we created it, and proceed to add the next chapter
+                    if (createdBooks.Contains(bookNum))
+                    {
+                        await projectDoc.SubmitJson0OpAsync(op => op.Remove(pd => pd.Texts, textIndex));
+                    }
+
+                    continue;
+                }
+
+                // Ensure that the user has permission to write the chapter
+                int chapterIndex = projectDoc
+                    .Data.Texts[textIndex]
+                    .Chapters.FindIndex(c => c.Number == chapterDelta.Number);
+                if (chapterIndex == -1)
+                    continue;
+                bool canWriteChapter =
+                    projectDoc
+                        .Data.Texts[textIndex]
+                        .Chapters[chapterIndex]
+                        .Permissions.TryGetValue(curUserId, out string chapterPermission)
+                    && chapterPermission == TextInfoPermission.Write;
+                if (!canWriteChapter)
+                {
+                    // Remove the chapter from the project if we created it, and proceed to add the next chapter
+                    if (
+                        createdChapters.TryGetValue(bookNum, out List<int> chapters)
+                        && chapters.Contains(chapterDelta.Number)
+                    )
+                    {
+                        await projectDoc.SubmitJson0OpAsync(op =>
+                            op.Remove(pd => pd.Texts[textIndex].Chapters, chapterIndex)
+                        );
+                    }
+
+                    continue;
+                }
+
+                // Create or update the chapter's text document
+                string id = TextData.GetTextDocId(projectDoc.Id, bookNum, chapterDelta.Number);
+                TextData newTextData = new TextData(chapterDelta.Delta);
+                IDocument<TextData> textDataDoc = connection.Get<TextData>(id);
+                await textDataDoc.FetchAsync();
+                if (textDataDoc.IsLoaded)
+                {
+                    // Update the existing text data document
+                    Delta diffDelta = textDataDoc.Data.Diff(newTextData);
+                    if (diffDelta.Ops.Count > 0)
+                    {
+                        await textDataDoc.SubmitOpAsync(diffDelta, OpSource.Draft);
+                    }
+                }
+                else
+                {
+                    // Create a new text data document
+                    await connection.CreateDocAsync(textDataDoc.Collection, id, newTextData, textDataDoc.OTTypeName);
+                }
+            }
+
+            // The draft has been applied
+            successful = true;
+        }
+        catch (Exception e)
+        {
+            // Log the error and report to bugsnag
+            logger.LogError(
+                e,
+                "Apply pre-translation draft exception occurred for project {projectId} running in background job.",
+                sfProjectId.Sanitize()
+            );
+            exceptionHandler.ReportException(e);
+
+            // Do not commit the transaction
+            successful = false;
+        }
+        finally
+        {
+            if (successful)
+            {
+                await connection.CommitTransactionAsync();
+            }
+            else
+            {
+                connection.RollbackTransaction();
+            }
+        }
+    }
 
     public async Task BuildCompletedAsync(string sfProjectId, string buildId, string buildState, Uri websiteUrl)
     {
