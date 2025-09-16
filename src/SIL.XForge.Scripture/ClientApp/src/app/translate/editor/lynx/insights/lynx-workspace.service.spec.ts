@@ -859,6 +859,8 @@ describe('LynxWorkspaceService', () => {
 
     it('should return empty array when auto-corrections are disabled', fakeAsync(async () => {
       const env = new TestEnvironment();
+      await env.init();
+      flush();
       env.service['textDocId'] = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
 
       // Create project with auto-corrections disabled
@@ -884,6 +886,8 @@ describe('LynxWorkspaceService', () => {
 
     it('should return edits when auto-corrections are enabled', fakeAsync(async () => {
       const env = new TestEnvironment();
+      await env.init();
+      flush();
 
       env.setCustomWorkspaceMock((workspaceMock: any) => {
         when(workspaceMock.getOnTypeEdits(anything(), anything(), anything())).thenReturn(
