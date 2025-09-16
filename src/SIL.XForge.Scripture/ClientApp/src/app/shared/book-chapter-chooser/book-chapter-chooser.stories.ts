@@ -50,8 +50,8 @@ ClickToLastChapter.args = {
   ...Ruth.args
 };
 ClickToLastChapter.play = async ({ canvasElement, args }) => {
-  const nextButton = await canvasElement.querySelector('[ng-reflect-message="Next chapter"]')!;
-  const prevButton = await canvasElement.querySelector('[ng-reflect-message="Previous chapter"]')!;
+  const nextButton = await canvasElement.querySelector('[data-test-id="next-chapter"]')!;
+  const prevButton = await canvasElement.querySelector('[data-test-id="previous-chapter"]')!;
   expect(prevButton).toBeDisabled();
   for (const _chapter of args.chapters.slice(1)) {
     expect(nextButton).not.toBeDisabled();
