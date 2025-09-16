@@ -2347,7 +2347,7 @@ describe('EditorComponent', () => {
       (insertDelta as any).push({ retain: remoteEditTextPos } as DeltaOperation);
       (insertDelta as any).push({ insert: 'abc' } as DeltaOperation);
       // Simulate remote changes coming in
-      textDoc.submit(insertDelta);
+      await textDoc.submit(insertDelta);
 
       // SUT 1
       env.wait();
@@ -2373,7 +2373,7 @@ describe('EditorComponent', () => {
       (insertDeleteDelta as any).push({ retain: remoteEditTextPos } as DeltaOperation);
       (insertDeleteDelta as any).push({ insert: 'defgh' } as DeltaOperation);
       (insertDeleteDelta as any).push({ delete: selectionLength } as DeltaOperation);
-      textDoc.submit(insertDeleteDelta);
+      await textDoc.submit(insertDeleteDelta);
 
       // SUT 2
       env.wait();
@@ -2388,7 +2388,7 @@ describe('EditorComponent', () => {
       (deleteDelta as any).push({ retain: remoteEditTextPos } as DeltaOperation);
       // the remote edit deletes 4, but locally it is expanded to 6 to include the 2 note embeds
       (deleteDelta as any).push({ delete: 4 } as DeltaOperation);
-      textDoc.submit(deleteDelta);
+      await textDoc.submit(deleteDelta);
 
       // SUT 3
       env.wait();
@@ -2437,7 +2437,7 @@ describe('EditorComponent', () => {
       let deltaOps: DeltaOperation[] = [{ retain: remoteEditTextPos }, { insert: insert }];
       const inSegmentDelta = new Delta(deltaOps);
       const textDoc: TextDoc = await env.getTextDoc(new TextDocId('project01', 40, 1));
-      textDoc.submit(inSegmentDelta);
+      await textDoc.submit(inSegmentDelta);
 
       // SUT 1
       env.wait();
@@ -2452,7 +2452,7 @@ describe('EditorComponent', () => {
       insert = 'def';
       deltaOps = [{ retain: remoteEditTextPos }, { insert: insert }];
       const outOfSegmentDelta = new Delta(deltaOps);
-      textDoc.submit(outOfSegmentDelta);
+      await textDoc.submit(outOfSegmentDelta);
 
       // SUT 2
       env.wait();
@@ -2468,7 +2468,7 @@ describe('EditorComponent', () => {
       insert = 'before';
       deltaOps = [{ retain: remoteEditTextPos }, { insert: insert }];
       const insertDelta = new Delta(deltaOps);
-      textDoc.submit(insertDelta);
+      await textDoc.submit(insertDelta);
       const note1Doc: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid01');
       const anchor: TextAnchor = { start: 8 + insert.length, length: 12 };
       await note1Doc.submitJson0Op(op => op.set(nt => nt.position, anchor));
@@ -2491,7 +2491,7 @@ describe('EditorComponent', () => {
       insert = 'ghi';
       deltaOps = [{ retain: remoteEditTextPos }, { insert: insert }];
       const insertAfterNoteDelta = new Delta(deltaOps);
-      textDoc.submit(insertAfterNoteDelta);
+      await textDoc.submit(insertAfterNoteDelta);
 
       // SUT 4
       env.wait();
@@ -5058,7 +5058,7 @@ class TestEnvironment {
   async deleteText(textId: string): Promise<void> {
     await this.ngZone.run(async () => {
       const textDoc = await this.realtimeService.get(TextDoc.COLLECTION, textId, new DocSubscription('spec'));
-      textDoc.delete();
+      await textDoc.delete();
     });
     this.wait();
   }

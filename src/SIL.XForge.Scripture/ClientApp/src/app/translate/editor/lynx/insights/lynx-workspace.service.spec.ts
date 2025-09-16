@@ -190,7 +190,7 @@ describe('LynxWorkspaceService', () => {
       return await this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, id, new DocSubscription('spec'));
     }
 
-    createMockProjectDoc(id: string = PROJECT_ID, lynxConfig?: LynxConfig): Promise<SFProjectProfileDoc> {
+    async createMockProjectDoc(id: string = PROJECT_ID, lynxConfig?: LynxConfig): Promise<SFProjectProfileDoc> {
       const projectData = createTestProjectProfile({
         texts: [
           {
@@ -273,7 +273,7 @@ describe('LynxWorkspaceService', () => {
     }
 
     async triggerProjectChange(id: string, lynxConfig?: LynxConfig): Promise<void> {
-      this.projectDocTestSubject$.next(this.createMockProjectDoc(id, lynxConfig));
+      this.projectDocTestSubject$.next(await this.createMockProjectDoc(id, lynxConfig));
       tick();
     }
 
@@ -384,7 +384,7 @@ describe('LynxWorkspaceService', () => {
       when(mockWorkspaceFactory.createWorkspace(anything(), anything())).thenReturn(workspaceMock as any);
 
       // Set up project and workspace
-      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+      const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: true,
         assessmentsEnabled: true,
         punctuationCheckerEnabled: true,
@@ -557,7 +557,7 @@ describe('LynxWorkspaceService', () => {
       flush();
 
       // Create project with lynx features enabled so documents will be opened
-      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+      const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: true,
         assessmentsEnabled: true,
         punctuationCheckerEnabled: true,
@@ -632,7 +632,7 @@ describe('LynxWorkspaceService', () => {
       flush();
 
       // Create project with lynx features enabled so documents will be opened
-      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+      const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: true,
         assessmentsEnabled: true,
         punctuationCheckerEnabled: true,
@@ -657,7 +657,7 @@ describe('LynxWorkspaceService', () => {
       flush();
 
       // Set up project with lynx features enabled so documents will be opened
-      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+      const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: true,
         assessmentsEnabled: true,
         punctuationCheckerEnabled: true,
@@ -689,7 +689,7 @@ describe('LynxWorkspaceService', () => {
       flush();
 
       // Set up project with lynx features enabled
-      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+      const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: false,
         assessmentsEnabled: true,
         punctuationCheckerEnabled: true,
@@ -720,7 +720,7 @@ describe('LynxWorkspaceService', () => {
       flush();
 
       // Set up project with lynx features enabled
-      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+      const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: false,
         assessmentsEnabled: true,
         punctuationCheckerEnabled: true,
@@ -759,7 +759,7 @@ describe('LynxWorkspaceService', () => {
       flush();
 
       // Set up project with lynx features enabled
-      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+      const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: false,
         assessmentsEnabled: true,
         punctuationCheckerEnabled: true,
@@ -789,7 +789,7 @@ describe('LynxWorkspaceService', () => {
       flush();
 
       // Set up project with lynx features enabled
-      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+      const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: false,
         assessmentsEnabled: true,
         punctuationCheckerEnabled: true,
@@ -823,7 +823,7 @@ describe('LynxWorkspaceService', () => {
       flush();
 
       // Set up project with auto-corrections enabled
-      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+      const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: true,
         assessmentsEnabled: false,
         punctuationCheckerEnabled: true,
@@ -862,7 +862,7 @@ describe('LynxWorkspaceService', () => {
       });
 
       // Set up project with auto-corrections enabled
-      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+      const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: true,
         assessmentsEnabled: false,
         punctuationCheckerEnabled: true,
@@ -900,12 +900,12 @@ describe('LynxWorkspaceService', () => {
       expect(result).toEqual([]);
     }));
 
-    it('should return empty array when auto-corrections are disabled', fakeAsync(() => {
+    it('should return empty array when auto-corrections are disabled', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.service['textDocId'] = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
 
       // Create project with auto-corrections disabled
-      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+      const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: false,
         assessmentsEnabled: false,
         punctuationCheckerEnabled: false,
@@ -925,7 +925,7 @@ describe('LynxWorkspaceService', () => {
       verify(mockWorkspace.getOnTypeEdits(anything(), anything(), anything())).never();
     }));
 
-    it('should return edits when auto-corrections are enabled', fakeAsync(() => {
+    it('should return edits when auto-corrections are enabled', fakeAsync(async () => {
       const env = new TestEnvironment();
 
       env.setCustomWorkspaceMock((workspaceMock: any) => {
@@ -935,7 +935,7 @@ describe('LynxWorkspaceService', () => {
       });
 
       // Create project with auto-corrections enabled
-      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+      const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: true,
         assessmentsEnabled: false,
         punctuationCheckerEnabled: true,
@@ -983,7 +983,7 @@ describe('LynxWorkspaceService', () => {
         );
       });
 
-      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+      const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: true,
         assessmentsEnabled: true,
         punctuationCheckerEnabled: true,
@@ -1028,7 +1028,7 @@ describe('LynxWorkspaceService', () => {
       flush();
 
       // Set up project with lynx features enabled
-      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+      const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: false,
         assessmentsEnabled: true,
         punctuationCheckerEnabled: true,
@@ -1101,7 +1101,7 @@ describe('LynxWorkspaceService', () => {
       flush();
 
       // Set up project with lynx features enabled
-      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+      const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: false,
         assessmentsEnabled: true,
         punctuationCheckerEnabled: true,
@@ -1189,7 +1189,7 @@ describe('LynxWorkspaceService', () => {
       flush();
 
       // Set up project with lynx features enabled
-      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+      const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: false,
         assessmentsEnabled: true,
         punctuationCheckerEnabled: true,
@@ -1281,7 +1281,7 @@ describe('LynxWorkspaceService', () => {
       flush();
 
       // Set up project with lynx features enabled
-      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+      const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: false,
         assessmentsEnabled: true,
         punctuationCheckerEnabled: true,
@@ -1349,7 +1349,7 @@ describe('LynxWorkspaceService', () => {
       flush();
 
       // Set up project with lynx features enabled
-      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+      const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: false,
         assessmentsEnabled: true,
         punctuationCheckerEnabled: true,
