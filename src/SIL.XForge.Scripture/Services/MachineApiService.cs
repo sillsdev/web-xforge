@@ -23,10 +23,14 @@ using SIL.XForge.EventMetrics;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
+using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
+using Chapter = SIL.XForge.Scripture.Models.Chapter;
 using TextInfo = SIL.XForge.Scripture.Models.TextInfo;
+
+#pragma warning disable CA2254
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -79,14 +83,477 @@ public class MachineApiService(
     /// </remarks>
     internal const string BuildStateFinishing = "FINISHING";
 
-    private static readonly IEqualityComparer<IList<int>> _listIntComparer = SequenceEqualityComparer.Create(
-        EqualityComparer<int>.Default
-    );
     private static readonly IEqualityComparer<IList<string>> _listStringComparer = SequenceEqualityComparer.Create(
         EqualityComparer<string>.Default
     );
     private static readonly IEqualityComparer<IList<ProjectScriptureRange>> _listProjectScriptureRangeComparer =
         SequenceEqualityComparer.Create(EqualityComparer<ProjectScriptureRange>.Default);
+
+    public async Task<DraftApplyResult> ApplyPreTranslationToProjectAsync(
+        string curUserId,
+        string sfProjectId,
+        string scriptureRange,
+        string targetProjectId,
+        DateTime timestamp,
+        CancellationToken cancellationToken
+    )
+    {
+        // Ensure that the user has permission to access the draft project
+        SFProject project = await EnsureProjectPermissionAsync(
+            curUserId,
+            sfProjectId,
+            isServalAdmin: false,
+            cancellationToken
+        );
+
+        // Connect to the realtime server
+        await using IConnection connection = await realtimeService.ConnectAsync(curUserId);
+
+        // Retrieve the chapter deltas
+        var result = new DraftApplyResult();
+        IDocument<SFProject> targetProjectDoc;
+        List<int> createdBooks = [];
+        Dictionary<int, List<int>> createdChapters = [];
+        List<(ChapterDelta chapterDelta, int bookNum)> chapterDeltas = [];
+        try
+        {
+            // Retrieve the user secret
+            Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(curUserId, cancellationToken);
+            if (!attempt.TryResult(out UserSecret userSecret))
+            {
+                throw new DataNotFoundException("The user does not exist.");
+            }
+
+            // Load the target project
+            targetProjectDoc = await connection.FetchAsync<SFProject>(targetProjectId);
+            if (!targetProjectDoc.IsLoaded)
+            {
+                throw new DataNotFoundException("The project does not exist");
+            }
+
+            // Get the draft project versification
+            ScrVers versification =
+                paratextService.GetParatextSettings(userSecret, project.ParatextId)?.Versification
+                ?? VerseRef.defaultVersification;
+
+            // Get the target project versification
+            ScrVers targetVersification =
+                paratextService.GetParatextSettings(userSecret, targetProjectDoc.Data.ParatextId)?.Versification
+                ?? VerseRef.defaultVersification;
+
+            // Parse the scripture range
+            ScriptureRangeParser scriptureRangeParser = new ScriptureRangeParser(versification);
+            Dictionary<string, List<int>> booksAndChapters = scriptureRangeParser.GetChapters(scriptureRange);
+
+            // Get the drafts for the scripture range
+            foreach ((string book, List<int> bookChapters) in booksAndChapters)
+            {
+                await hubContext.NotifyDraftApplyProgress(
+                    sfProjectId,
+                    new DraftApplyState { State = $"Retrieving draft for {Canon.BookIdToEnglishName(book)}." }
+                );
+                int bookNum = Canon.BookIdToNumber(book);
+
+                // Warn if the last chapter is different (this will affect chapter creation
+                int lastChapter = versification.GetLastChapter(bookNum);
+                int targetLastChapter = targetVersification.GetLastChapter(bookNum);
+                if (lastChapter != targetLastChapter)
+                {
+                    string message =
+                        $"The draft project ({project.ShortName.Sanitize()}) versification for {book} has {lastChapter} chapters,"
+                        + $" while the target project ({targetProjectDoc.Data.ShortName.Sanitize()}) has {targetLastChapter} chapters.";
+                    logger.LogWarning(message);
+                    result.Log += $"{message}\n";
+                    await hubContext.NotifyDraftApplyProgress(sfProjectId, new DraftApplyState { State = message });
+                }
+
+                // Ensure that if chapters is blank, it contains every chapter in the book
+                List<int> chapters = bookChapters;
+                if (chapters.Count == 0)
+                {
+                    chapters = [.. Enumerable.Range(1, lastChapter)];
+                }
+
+                // Store the USJ for each chapter, so if we download form Serval we only do it once per book
+                List<Usj> chapterUsj = [];
+                foreach (int chapterNum in chapters.Where(c => c > 0))
+                {
+                    // See if we have a draft locally
+                    string id = TextDocument.GetDocId(sfProjectId, bookNum, chapterNum, TextDocument.Draft);
+                    IDocument<TextDocument> textDocument = await connection.FetchAsync<TextDocument>(id);
+                    IUsj usj;
+                    if (textDocument.IsLoaded)
+                    {
+                        // Retrieve the snapshot if it exists, or use the latest available if none
+                        Snapshot<TextDocument> snapshot = await connection.FetchSnapshotAsync<TextDocument>(
+                            id,
+                            timestamp
+                        );
+                        usj = snapshot.Data ?? textDocument.Data;
+                    }
+                    else
+                    {
+                        // We do not have a draft locally, so we should retrieve it from Serval, and save it locally
+                        if (chapterUsj.Count < chapterNum)
+                        {
+                            DraftUsfmConfig config =
+                                project.TranslateConfig.DraftConfig.UsfmConfig ?? new DraftUsfmConfig();
+                            string usfm = await preTranslationService.GetPreTranslationUsfmAsync(
+                                sfProjectId,
+                                bookNum,
+                                chapterNum: 0,
+                                config,
+                                cancellationToken
+                            );
+
+                            // If the usfm is invalid, skip this book
+                            if (string.IsNullOrWhiteSpace(usfm))
+                            {
+                                await hubContext.NotifyDraftApplyProgress(
+                                    sfProjectId,
+                                    new DraftApplyState
+                                    {
+                                        State = $"No book number for {Canon.BookNumberToEnglishName(bookNum)}.",
+                                    }
+                                );
+                                break;
+                            }
+
+                            // If the book id is invalid, skip this book
+                            if (DeltaUsxMapper.ExtractBookId(usfm) != book)
+                            {
+                                // Only list the book failure once
+                                result.Failures.Add(book);
+                                await hubContext.NotifyDraftApplyProgress(
+                                    sfProjectId,
+                                    new DraftApplyState
+                                    {
+                                        State =
+                                            $"Could not retrieve draft for {Canon.BookNumberToEnglishName(bookNum)}.",
+                                    }
+                                );
+
+                                break;
+                            }
+
+                            // Get the USFM as a list of USJ chapters
+                            chapterUsj =
+                            [
+                                .. paratextService.GetChaptersAsUsj(userSecret, project.ParatextId, bookNum, usfm),
+                            ];
+
+                            // If the chapter is still not present, go to the next book
+                            if (chapterUsj.Count < chapterNum)
+                            {
+                                // Don't report an error here, as sometimes the versification will report more chapters than the USFM has
+                                break;
+                            }
+                        }
+
+                        // Get the chapter USJ
+                        usj = chapterUsj[chapterNum - 1];
+
+                        // If the chapter is invalid, skip it
+                        if (usj.Content.Count == 0)
+                        {
+                            // Likely a blank draft in the database
+                            continue;
+                        }
+
+                        // Save the chapter to the realtime server
+                        await SaveTextDocumentAsync(textDocument, usj);
+                    }
+
+                    // Then convert it to USX
+                    XDocument usxDoc = UsjToUsx.UsjToUsxXDocument(usj);
+
+                    // Then convert it to a Delta
+                    IEnumerable<ChapterDelta> deltas = deltaUsxMapper.ToChapterDeltas(usxDoc);
+
+                    // Ensure that the chapter was present in the USFM
+                    ChapterDelta chapterDelta = deltas.FirstOrDefault();
+                    if (chapterDelta is not null)
+                    {
+                        chapterDeltas.Add((chapterDelta, bookNum));
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            // Log the error, report to bugsnag, and report to the user via SignalR
+            string message =
+                $"Apply pre-translation draft exception occurred for project {sfProjectId.Sanitize()} running in background job.";
+            logger.LogError(e, message);
+            exceptionHandler.ReportException(e);
+            result.Log += $"{message}\n";
+            result.Log += $"{e}\n";
+            await hubContext.NotifyDraftApplyProgress(
+                sfProjectId,
+                new DraftApplyState { Failed = true, State = result.Log }
+            );
+
+            // Do not proceed to save the draft to the project
+            return result;
+        }
+
+        bool successful = false;
+        try
+        {
+            // Being the transaction
+            connection.BeginTransaction();
+
+            // Begin a transaction, and update the project
+            foreach ((ChapterDelta chapterDelta, int bookNum) in chapterDeltas)
+            {
+                // Create the new chapter record
+                Chapter chapter = new Chapter
+                {
+                    DraftApplied = true,
+                    IsValid = chapterDelta.IsValid,
+                    Number = chapterDelta.Number,
+                    LastVerse = chapterDelta.LastVerse,
+                };
+
+                // Create or update the relevant book and chapter records in the project
+                int textIndex = targetProjectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
+                if (textIndex == -1)
+                {
+                    // Create the new book record with the chapter
+                    TextInfo text = new TextInfo { BookNum = bookNum, Chapters = [chapter] };
+                    await targetProjectDoc.SubmitJson0OpAsync(op => op.Add(pd => pd.Texts, text));
+
+                    // Record that the book and chapter were created
+                    createdBooks.Add(bookNum);
+                    createdChapters.Add(bookNum, [chapterDelta.Number]);
+                }
+                else
+                {
+                    int chapterIndex = targetProjectDoc
+                        .Data.Texts[textIndex]
+                        .Chapters.FindIndex(c => c.Number == chapterDelta.Number);
+                    if (chapterIndex == -1)
+                    {
+                        // Create a new chapter record
+                        await targetProjectDoc.SubmitJson0OpAsync(op =>
+                            op.Add(pd => pd.Texts[textIndex].Chapters, chapter)
+                        );
+
+                        // Record that the chapter was created
+                        if (createdChapters.TryGetValue(bookNum, out List<int> chapters))
+                        {
+                            chapters.Add(chapterDelta.Number);
+                        }
+                        else
+                        {
+                            createdChapters.Add(bookNum, [chapterDelta.Number]);
+                        }
+                    }
+                    else
+                    {
+                        // Update the existing chapter record
+                        await targetProjectDoc.SubmitJson0OpAsync(op =>
+                        {
+                            op.Set(pd => pd.Texts[textIndex].Chapters[chapterIndex].DraftApplied, chapter.DraftApplied);
+                            op.Set(pd => pd.Texts[textIndex].Chapters[chapterIndex].IsValid, chapter.IsValid);
+                            op.Set(pd => pd.Texts[textIndex].Chapters[chapterIndex].LastVerse, chapter.LastVerse);
+                        });
+                    }
+                }
+            }
+
+            // Update the permissions
+            if (chapterDeltas.Count > 0)
+            {
+                await hubContext.NotifyDraftApplyProgress(
+                    sfProjectId,
+                    new DraftApplyState { State = "Loading permissions from Paratext." }
+                );
+                await projectService.UpdatePermissionsAsync(
+                    curUserId,
+                    targetProjectDoc,
+                    users: null,
+                    books: chapterDeltas.Select(c => c.bookNum).Distinct().ToList(),
+                    cancellationToken
+                );
+            }
+
+            // Create the text data documents, using the permissions matrix calculated above for permissions
+            foreach ((ChapterDelta chapterDelta, int bookNum) in chapterDeltas)
+            {
+                // Ensure that the user has permission to write the book
+                int textIndex = targetProjectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
+                if (textIndex == -1)
+                {
+                    string bookId = Canon.BookNumberToId(bookNum);
+                    if (result.Failures.LastOrDefault() != bookId)
+                    {
+                        // Only list the book failure once
+                        result.Failures.Add(bookId);
+                        await hubContext.NotifyDraftApplyProgress(
+                            sfProjectId,
+                            new DraftApplyState
+                            {
+                                State = $"Could not save draft for {Canon.BookNumberToEnglishName(bookNum)}.",
+                            }
+                        );
+                    }
+
+                    continue;
+                }
+
+                bool canWriteBook =
+                    targetProjectDoc.Data.Texts[textIndex].Permissions.TryGetValue(curUserId, out string bookPermission)
+                    && bookPermission == TextInfoPermission.Write;
+                if (!canWriteBook)
+                {
+                    // Remove the book from the project if we created it, and proceed to add the next chapter
+                    if (createdBooks.Contains(bookNum))
+                    {
+                        await targetProjectDoc.SubmitJson0OpAsync(op => op.Remove(pd => pd.Texts, textIndex));
+                    }
+
+                    string bookId = Canon.BookNumberToId(bookNum);
+                    if (result.Failures.LastOrDefault() != bookId)
+                    {
+                        // Only list the book failure once
+                        result.Failures.Add(bookId);
+                        await hubContext.NotifyDraftApplyProgress(
+                            sfProjectId,
+                            new DraftApplyState
+                            {
+                                State = $"Could not save draft for {Canon.BookNumberToEnglishName(bookNum)}.",
+                            }
+                        );
+                    }
+
+                    continue;
+                }
+
+                // Ensure that the user has permission to write the chapter
+                int chapterIndex = targetProjectDoc
+                    .Data.Texts[textIndex]
+                    .Chapters.FindIndex(c => c.Number == chapterDelta.Number);
+                if (chapterIndex == -1)
+                {
+                    result.Failures.Add($"{Canon.BookNumberToId(bookNum)} {chapterDelta.Number}");
+                    await hubContext.NotifyDraftApplyProgress(
+                        sfProjectId,
+                        new DraftApplyState
+                        {
+                            State =
+                                $"Could not save draft for {Canon.BookNumberToEnglishName(bookNum)} {chapterDelta.Number}.",
+                        }
+                    );
+                    continue;
+                }
+
+                bool canWriteChapter =
+                    targetProjectDoc
+                        .Data.Texts[textIndex]
+                        .Chapters[chapterIndex]
+                        .Permissions.TryGetValue(curUserId, out string chapterPermission)
+                    && chapterPermission == TextInfoPermission.Write;
+                if (!canWriteChapter)
+                {
+                    // Remove the chapter from the project if we created it, and proceed to add the next chapter
+                    if (
+                        createdChapters.TryGetValue(bookNum, out List<int> chapters)
+                        && chapters.Contains(chapterDelta.Number)
+                    )
+                    {
+                        await targetProjectDoc.SubmitJson0OpAsync(op =>
+                            op.Remove(pd => pd.Texts[textIndex].Chapters, chapterIndex)
+                        );
+                    }
+
+                    result.Failures.Add($"{Canon.BookNumberToId(bookNum)} {chapterDelta.Number}");
+                    await hubContext.NotifyDraftApplyProgress(
+                        sfProjectId,
+                        new DraftApplyState
+                        {
+                            State =
+                                $"Could not save draft for {Canon.BookNumberToEnglishName(bookNum)} {chapterDelta.Number}.",
+                        }
+                    );
+                    continue;
+                }
+
+                // Create or update the chapter's text document
+                string id = TextData.GetTextDocId(targetProjectDoc.Id, bookNum, chapterDelta.Number);
+                TextData newTextData = new TextData(chapterDelta.Delta);
+                IDocument<TextData> textDataDoc = connection.Get<TextData>(id);
+                await textDataDoc.FetchAsync();
+                if (textDataDoc.IsLoaded)
+                {
+                    // Update the existing text data document
+                    Delta diffDelta = textDataDoc.Data.Diff(newTextData);
+                    if (diffDelta.Ops.Count > 0)
+                    {
+                        await textDataDoc.SubmitOpAsync(diffDelta, OpSource.Draft);
+                    }
+                    await hubContext.NotifyDraftApplyProgress(
+                        sfProjectId,
+                        new DraftApplyState
+                        {
+                            State = $"Updating {Canon.BookNumberToEnglishName(bookNum)} {chapterDelta.Number}.",
+                        }
+                    );
+                }
+                else
+                {
+                    // Create a new text data document
+                    await textDataDoc.CreateAsync(newTextData);
+                    await hubContext.NotifyDraftApplyProgress(
+                        sfProjectId,
+                        new DraftApplyState
+                        {
+                            State = $"Creating {Canon.BookNumberToEnglishName(bookNum)} {chapterDelta.Number}.",
+                        }
+                    );
+                }
+
+                // A draft has been applied
+                successful = true;
+            }
+        }
+        catch (Exception e)
+        {
+            // Log the error and report to bugsnag
+            string message =
+                $"Apply pre-translation draft exception occurred for project {sfProjectId.Sanitize()} running in background job.";
+            logger.LogError(e, message);
+            exceptionHandler.ReportException(e);
+            result.Log += $"{message}\n";
+            result.Log += $"{e}\n";
+
+            // Do not commit the transaction
+            successful = false;
+        }
+        finally
+        {
+            if (successful)
+            {
+                await connection.CommitTransactionAsync();
+                await hubContext.NotifyDraftApplyProgress(
+                    sfProjectId,
+                    new DraftApplyState { Success = true, State = result.Log }
+                );
+            }
+            else
+            {
+                connection.RollbackTransaction();
+                await hubContext.NotifyDraftApplyProgress(
+                    sfProjectId,
+                    new DraftApplyState { Failed = true, State = result.Log }
+                );
+            }
+
+            result.ChangesSaved = successful;
+        }
+
+        return result;
+    }
 
     public async Task BuildCompletedAsync(string sfProjectId, string buildId, string buildState, Uri websiteUrl)
     {
