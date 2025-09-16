@@ -11,7 +11,6 @@ import { BehaviorSubject, firstValueFrom, map, Observable, tap } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
-import { I18nService } from 'xforge-common/i18n.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
@@ -34,6 +33,7 @@ import { DraftHandlingService } from '../draft-handling.service';
 
 export interface BookWithDraft {
   bookNumber: number;
+  bookId: string;
   canEdit: boolean;
   chaptersWithDrafts: number[];
   draftApplied: boolean;
@@ -61,6 +61,7 @@ export class DraftPreviewBooksComponent {
         draftBooks = projectDoc.data.texts
           .map(text => ({
             bookNumber: text.bookNum,
+            bookId: Canon.bookNumberToId(text.bookNum),
             canEdit: text.permissions[this.userService.currentUserId] === TextInfoPermission.Write,
             chaptersWithDrafts: text.chapters.filter(chapter => chapter.hasDraft).map(chapter => chapter.number),
             draftApplied: text.chapters.filter(chapter => chapter.hasDraft).every(chapter => chapter.draftApplied)
@@ -75,6 +76,7 @@ export class DraftPreviewBooksComponent {
             const text: TextInfo | undefined = projectDoc.data?.texts.find(t => t.bookNum === bookNum);
             return {
               bookNumber: bookNum,
+              bookId: Canon.bookNumberToId(bookNum),
               canEdit: text?.permissions?.[this.userService.currentUserId] === TextInfoPermission.Write,
               chaptersWithDrafts: text?.chapters?.map(ch => ch.number) ?? [],
               draftApplied: text?.chapters?.filter(ch => ch.hasDraft).every(ch => ch.draftApplied) ?? false
@@ -97,11 +99,11 @@ export class DraftPreviewBooksComponent {
   private applyChapters: number[] = [];
   private draftApplyBookNum: number = 0;
   private chaptersApplied: number[] = [];
+  private errorMessages: { chapter: number; message: string }[] = [];
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly projectService: SFProjectService,
-    private readonly i18n: I18nService,
     private readonly userService: UserService,
     private readonly draftHandlingService: DraftHandlingService,
     private readonly dialogService: DialogService,
@@ -114,22 +116,8 @@ export class DraftPreviewBooksComponent {
     return this.chaptersApplied.length;
   }
 
-  linkForBookAndChapter(bookNumber: number, chapterNumber: number): string[] {
-    return [
-      '/projects',
-      this.activatedProjectService.projectId!,
-      'translate',
-      this.bookNumberToBookId(bookNumber),
-      chapterNumber.toString()
-    ];
-  }
-
-  bookNumberToBookId(bookNumber: number): string {
-    return Canon.bookNumberToId(bookNumber);
-  }
-
-  bookNumberToName(bookNumber: number): string {
-    return this.i18n.localizeBook(bookNumber);
+  linkForBookAndChapter(bookId: string, chapterNumber: number): string[] {
+    return ['/projects', this.activatedProjectService.projectId!, 'translate', bookId, chapterNumber.toString()];
   }
 
   async chooseProjectToAddDraft(bookWithDraft: BookWithDraft, paratextId?: string): Promise<void> {
@@ -164,24 +152,25 @@ export class DraftPreviewBooksComponent {
     await this.applyBookDraftAsync(bookWithDraft, result.projectId);
   }
 
-  private async applyBookDraftAsync(bookWithDraft: BookWithDraft, projectId: string): Promise<void> {
+  private async applyBookDraftAsync(bookWithDraft: BookWithDraft, targetProjectId: string): Promise<void> {
     this.applyChapters = bookWithDraft.chaptersWithDrafts;
     this.draftApplyBookNum = bookWithDraft.bookNumber;
     this.chaptersApplied = [];
+    this.errorMessages = [];
     this.updateProgress();
 
-    const promises: Promise<boolean>[] = [];
-    const project: SFProjectProfile = this.activatedProjectService.projectDoc!.data!;
+    const promises: Promise<string | undefined>[] = [];
+    const targetProject = (await this.projectService.getProfile(targetProjectId)).data!;
     for (const chapter of bookWithDraft.chaptersWithDrafts) {
       const draftTextDocId = new TextDocId(this.activatedProjectService.projectId!, bookWithDraft.bookNumber, chapter);
-      const targetTextDocId = new TextDocId(projectId, bookWithDraft.bookNumber, chapter);
-      promises.push(this.applyAndReportChapter(project, draftTextDocId, targetTextDocId));
+      const targetTextDocId = new TextDocId(targetProjectId, bookWithDraft.bookNumber, chapter);
+      promises.push(this.applyAndReportChapter(targetProject, draftTextDocId, targetTextDocId));
     }
 
     try {
       this.openProgressDialog();
-      const results: boolean[] = await Promise.all(promises);
-      if (results.some(result => !result)) {
+      const results: (string | undefined)[] = await Promise.all(promises);
+      if (results.some(result => result !== undefined)) {
         this.updateProgress(undefined, true);
         // The draft is in the legacy format. This can only be applied chapter by chapter.
         return;
@@ -197,7 +186,7 @@ export class DraftPreviewBooksComponent {
   }
 
   navigate(book: BookWithDraft): void {
-    this.router.navigate(this.linkForBookAndChapter(book.bookNumber, book.chaptersWithDrafts[0]), {
+    this.router.navigate(this.linkForBookAndChapter(book.bookId, book.chaptersWithDrafts[0]), {
       queryParams: { 'draft-active': true, 'draft-timestamp': this.build?.additionalInfo?.dateGenerated }
     });
   }
@@ -213,7 +202,7 @@ export class DraftPreviewBooksComponent {
     project: SFProjectProfile,
     draftTextDocId: TextDocId,
     targetTextDocId: TextDocId
-  ): Promise<boolean> {
+  ): Promise<string | undefined> {
     let timestamp: Date | undefined = undefined;
     if (this.build?.additionalInfo?.dateGenerated != null) {
       timestamp = new Date(this.build.additionalInfo.dateGenerated);
@@ -221,20 +210,67 @@ export class DraftPreviewBooksComponent {
     return await this.draftHandlingService
       .getAndApplyDraftAsync(project, draftTextDocId, targetTextDocId, timestamp)
       .then(result => {
-        this.updateProgress(result ? targetTextDocId.chapterNum : undefined);
+        this.updateProgress(
+          result === undefined ? targetTextDocId.chapterNum : undefined,
+          undefined,
+          result === undefined ? undefined : { chapter: targetTextDocId.chapterNum, message: result }
+        );
         return result;
       });
   }
 
-  private updateProgress(bookCompleted?: number, completed?: boolean): void {
+  private updateProgress(
+    bookCompleted?: number,
+    completed?: boolean,
+    error?: { chapter: number; message: string }
+  ): void {
     if (bookCompleted != null) {
       this.chaptersApplied.push(bookCompleted);
     }
+    if (error != null) {
+      this.errorMessages.push(error);
+      this.errorMessages.sort((a, b) => a.chapter - b.chapter);
+    }
+
     this.draftApplyProgress$.next({
       bookNum: this.draftApplyBookNum,
       chapters: this.applyChapters,
       chaptersApplied: this.chaptersApplied,
-      completed: !!completed ? completed : this.chaptersApplied.length === this.applyChapters.length
+      completed: !!completed ? completed : this.chaptersApplied.length === this.applyChapters.length,
+      errorMessages: DraftPreviewBooksComponent.combineErrorMessages(this.errorMessages)
     });
+  }
+
+  private static combineErrorMessages(errorMessages: { chapter: number; message: string }[]): string[] {
+    const formattedErrors: string[] = [];
+    if (errorMessages.length > 0) {
+      let rangeStart = errorMessages[0].chapter;
+      let currentMessage = errorMessages[0].message;
+
+      for (let i = 1; i < errorMessages.length; i++) {
+        const prevChapter = errorMessages[i - 1].chapter;
+        const currentChapter = errorMessages[i].chapter;
+        const message = errorMessages[i].message;
+
+        if (message !== currentMessage || currentChapter !== prevChapter + 1) {
+          const rangeEnd = errorMessages[i - 1].chapter;
+          if (rangeStart === rangeEnd) {
+            formattedErrors.push(`${rangeStart}: ${currentMessage}`);
+          } else {
+            formattedErrors.push(`${rangeStart}-${rangeEnd}: ${currentMessage}`);
+          }
+          rangeStart = currentChapter;
+          currentMessage = message;
+        }
+      }
+
+      const lastError = errorMessages[errorMessages.length - 1];
+      if (rangeStart === lastError.chapter) {
+        formattedErrors.push(`${rangeStart}: ${currentMessage}`);
+      } else {
+        formattedErrors.push(`${rangeStart}-${lastError.chapter}: ${currentMessage}`);
+      }
+    }
+    return formattedErrors;
   }
 }

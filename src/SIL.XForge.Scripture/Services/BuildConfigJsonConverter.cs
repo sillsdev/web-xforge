@@ -24,40 +24,16 @@ public class BuildConfigJsonConverter : JsonConverter<BuildConfig>
 
         writer.WriteStartObject();
 
-        if (value.TrainingBooks.Count > 0)
-        {
-            writer.WritePropertyName(nameof(value.TrainingBooks));
-            serializer.Serialize(writer, value.TrainingBooks);
-        }
-
         if (value.TrainingDataFiles.Count > 0)
         {
             writer.WritePropertyName(nameof(value.TrainingDataFiles));
             serializer.Serialize(writer, value.TrainingDataFiles);
         }
 
-        if (!string.IsNullOrWhiteSpace(value.TrainingScriptureRange))
-        {
-            writer.WritePropertyName(nameof(value.TrainingScriptureRange));
-            serializer.Serialize(writer, value.TrainingScriptureRange);
-        }
-
         if (value.TrainingScriptureRanges.Count > 0)
         {
             writer.WritePropertyName(nameof(value.TrainingScriptureRanges));
             serializer.Serialize(writer, value.TrainingScriptureRanges);
-        }
-
-        if (value.TranslationBooks.Count > 0)
-        {
-            writer.WritePropertyName(nameof(value.TranslationBooks));
-            serializer.Serialize(writer, value.TranslationBooks);
-        }
-
-        if (!string.IsNullOrWhiteSpace(value.TranslationScriptureRange))
-        {
-            writer.WritePropertyName(nameof(value.TranslationScriptureRange));
-            serializer.Serialize(writer, value.TranslationScriptureRange);
         }
 
         if (value.TranslationScriptureRanges.Count > 0)
@@ -76,6 +52,12 @@ public class BuildConfigJsonConverter : JsonConverter<BuildConfig>
         {
             writer.WritePropertyName(nameof(value.UseEcho));
             serializer.Serialize(writer, value.UseEcho);
+        }
+
+        if (value.SendEmailOnBuildFinished)
+        {
+            writer.WritePropertyName(nameof(value.SendEmailOnBuildFinished));
+            serializer.Serialize(writer, value.SendEmailOnBuildFinished);
         }
 
         writer.WritePropertyName(nameof(value.ProjectId));

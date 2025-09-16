@@ -2,20 +2,30 @@ import { Component, DestroyRef, EventEmitter, OnInit, Output, ViewChild } from '
 import { MatStepper } from '@angular/material/stepper';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
+import { isEqual } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
-import { ProjectScriptureRange, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import {
+  DraftConfig,
+  ProjectScriptureRange,
+  TranslateSource
+} from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, merge, Subscription } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { distinctUntilChanged, filter } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { ParatextProject } from '../../../core/models/paratext-project';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
+import { ParatextService } from '../../../core/paratext.service';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
 import { SharedModule } from '../../../shared/shared.module';
@@ -24,12 +34,17 @@ import { NllbLanguageService } from '../../nllb-language.service';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
 import { DraftSource, DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataService } from '../training-data/training-data.service';
+
+// We consider books with more than 10 translated segments as translated
+const minimumTranslatedSegments: number = 10;
+
 export interface DraftGenerationStepsResult {
   trainingDataFiles: string[];
   trainingScriptureRanges: ProjectScriptureRange[];
   translationScriptureRanges?: ProjectScriptureRange[];
   fastTraining: boolean;
   useEcho: boolean;
+  sendEmailOnBuildFinished: boolean;
 }
 
 export interface Book {
@@ -45,6 +60,12 @@ export interface TrainingGroup extends TrainingPair {
 
 interface TrainingPair {
   sourceName: string;
+}
+
+interface ProjectPendingUpdate {
+  projectId: string;
+  name: string;
+  syncUrl: string;
 }
 
 @Component({
@@ -66,6 +87,8 @@ export class DraftGenerationStepsComponent implements OnInit {
   @Output() readonly cancel = new EventEmitter();
   @ViewChild(MatStepper) stepper!: MatStepper;
 
+  projectsPendingUpdate: ProjectPendingUpdate[] = [];
+
   allAvailableTranslateBooks: Book[] = []; // A flattened instance of the values from availableTranslateBooks
   availableTranslateBooks: { [projectRef: string]: Book[] } = {};
   availableTrainingBooks: { [projectRef: string]: Book[] } = {}; //books in both source and target
@@ -80,10 +103,12 @@ export class DraftGenerationStepsComponent implements OnInit {
   targetProjectName?: string;
 
   showBookSelectionError = false;
+  trainingBooksWereAutoSelected = false;
   isTrainingOptional = false;
 
   fastTraining: boolean = false;
   useEcho: boolean = false;
+  sendEmailOnBuildFinished: boolean = false;
 
   expandUnusableTranslateBooks = false;
   expandUnusableTrainingBooks = false;
@@ -100,6 +125,7 @@ export class DraftGenerationStepsComponent implements OnInit {
 
   private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
   private trainingDataQuerySubscription?: Subscription;
+  private currentUserDoc?: UserDoc;
 
   constructor(
     private readonly destroyRef: DestroyRef,
@@ -108,24 +134,41 @@ export class DraftGenerationStepsComponent implements OnInit {
     protected readonly featureFlags: FeatureFlagService,
     private readonly nllbLanguageService: NllbLanguageService,
     protected readonly i18n: I18nService,
-    private readonly onlineStatusService: OnlineStatusService,
     private readonly noticeService: NoticeService,
+    private readonly onlineStatusService: OnlineStatusService,
+    private readonly paratextService: ParatextService,
     private readonly progressService: ProgressService,
-    private readonly trainingFileService: TrainingDataService
+    private readonly trainingFileService: TrainingDataService,
+    private readonly userService: UserService,
+    private readonly dialogService: DialogService
   ) {}
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     combineLatest([this.draftSourcesService.getDraftProjectSources(), this.activatedProject.projectId$])
       .pipe(
         quietTakeUntilDestroyed(this.destroyRef),
-        filter(([{ trainingTargets, draftingSources }], projectId) => {
-          this.setProjectDisplayNames(trainingTargets[0], draftingSources[0]);
-          return trainingTargets[0] != null && draftingSources[0] != null && projectId != null;
-        })
+        filter(
+          ([{ trainingTargets, draftingSources }], projectId) =>
+            trainingTargets[0] != null && draftingSources[0] != null && projectId != null
+        ),
+        distinctUntilChanged(isEqual)
       )
       .subscribe(
         // Build book lists
         async ([{ trainingTargets, trainingSources, draftingSources }, projectId]) => {
+          // Force refresh on remote changes
+          if (this.draftingSources.length > 0 || this.trainingSources.length > 0 || this.trainingTargets.length > 0) {
+            if (this.dialogService.openDialogCount > 0 || this.isStepsCompleted) return;
+            await this.dialogService.message(
+              'draft_generation_steps.remote_changes',
+              'draft_generation_steps.remote_changes_start_over',
+              true
+            );
+            this.cancel.emit();
+          }
+
+          this.setProjectDisplayNames(trainingTargets[0], draftingSources[0]);
+
           // The null values will have been filtered above
           const target = trainingTargets[0]!;
           const draftingSource = draftingSources[0]!;
@@ -174,6 +217,9 @@ export class DraftGenerationStepsComponent implements OnInit {
               this.trainingDataFiles = this.trainingDataQuery?.docs.map(doc => doc.data).filter(d => d != null) ?? [];
             });
 
+          // Reset the field that toggles a notice that books were automatically selected
+          this.trainingBooksWereAutoSelected = false;
+
           // If book exists in both target and source, add to available books.
           // Otherwise, add to unusable books.
           // Ensure books are displayed in ascending canonical order.
@@ -197,27 +243,48 @@ export class DraftGenerationStepsComponent implements OnInit {
               this.unusableTranslateSourceBooks.push(bookNum);
             }
 
+            // See if there is an existing training scripture range
+            const draftConfig: DraftConfig | undefined =
+              this.activatedProject.projectDoc?.data?.translateConfig.draftConfig;
+            const hasPreviousTrainingRange: boolean =
+              (draftConfig?.lastSelectedTrainingScriptureRanges ?? []).length > 0;
+
+            // Determine if this book should be auto selected. The requirements are:
+            // 1. The project does not have any previous training selections made.
+            // 2. At least 10 verses have been translated.
+            // 3. At least 99 percent of the book has been translated or 3 or fewer blank segments.
+            const textProgress: TextProgress | undefined = this.progressService.texts.find(
+              t => t.text.bookNum === bookNum
+            );
+            const selected: boolean =
+              !hasPreviousTrainingRange &&
+              textProgress != null &&
+              textProgress.translated > minimumTranslatedSegments &&
+              (textProgress.percentage >= 99 || textProgress.blank <= 3);
+
+            // If books were automatically selected, reflect this in the UI via a notice
+            this.trainingBooksWereAutoSelected ||= selected;
+
             // Training books
             let isPresentInASource = false;
             if (trainingSourceBooks.has(bookNum)) {
-              this.availableTrainingBooks[trainingSources[0]!.projectRef].push({ number: bookNum, selected: false });
+              this.availableTrainingBooks[trainingSources[0]!.projectRef].push({ number: bookNum, selected: selected });
               isPresentInASource = true;
             } else {
               this.unusableTrainingSourceBooks.push(bookNum);
               const textProgress: TextProgress | undefined = this.progressService.texts.find(
                 t => t.text.bookNum === bookNum
               );
-              if (textProgress != null && textProgress.translated > 10) {
-                // we consider books with more than 10 translated segments as translated
+              if (textProgress != null && textProgress.translated > minimumTranslatedSegments) {
                 this.translatedBooksWithNoSource.push(bookNum);
               }
             }
             if (trainingSources[1] != null && additionalTrainingSourceBooks.has(bookNum)) {
-              this.availableTrainingBooks[trainingSources[1].projectRef].push({ number: bookNum, selected: false });
+              this.availableTrainingBooks[trainingSources[1].projectRef].push({ number: bookNum, selected: selected });
               isPresentInASource = true;
             }
             if (isPresentInASource) {
-              this.availableTrainingBooks[projectId!].push({ number: bookNum, selected: false });
+              this.availableTrainingBooks[projectId!].push({ number: bookNum, selected: selected });
             }
           }
 
@@ -239,9 +306,38 @@ export class DraftGenerationStepsComponent implements OnInit {
             this.useEcho = this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.useEcho ?? false;
           }
 
+          this.sendEmailOnBuildFinished =
+            this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.sendEmailOnBuildFinished ?? false;
+
+          // See if the target and any of the sources need updating
+          const projectIds: string[] = [
+            ...trainingTargets.map(s => s.projectRef),
+            ...trainingSources.map(s => s.projectRef),
+            ...draftingSources.map(s => s.projectRef)
+          ];
+          const projects: ParatextProject[] | undefined = await this.paratextService.getProjects();
+
+          // NOTE: Non-connected projects will show a warning on the primary generate draft page
+          this.projectsPendingUpdate = (projects ?? [])
+            .filter(p => p.projectId != null && projectIds.includes(p.projectId) && p.isConnected && p.hasUpdate)
+            .map(p => ({
+              projectId: p.projectId!,
+              name: p.name == null || p.name.length === 0 ? p.shortName : p.name,
+              syncUrl: `/projects/${p.projectId}/sync`
+            }));
+
           this.hasLoaded = true;
         }
       );
+    this.currentUserDoc = await this.userService.getCurrentUser();
+  }
+
+  get currentUserEmail(): string | undefined {
+    return this.currentUserDoc?.data?.email;
+  }
+
+  get firstTrainingSource(): string {
+    return this.trainingSources[0]?.shortName ?? '';
   }
 
   get trainingSourceBooksSelected(): boolean {
@@ -263,10 +359,6 @@ export class DraftGenerationStepsComponent implements OnInit {
       new Set<number>([...selectedInSource1, ...selectedInSource2].map(b => b.number))
     );
     return translatedBooksSelected.every(b => selectedInSources.includes(b.number));
-  }
-
-  get firstTrainingSource(): string {
-    return this.trainingSources[0]?.shortName ?? '';
   }
 
   private _booksToTranslate?: Book[];
@@ -483,7 +575,8 @@ export class DraftGenerationStepsComponent implements OnInit {
         trainingDataFiles: trainingFiles,
         translationScriptureRanges: translationData,
         fastTraining: this.fastTraining,
-        useEcho: this.useEcho
+        useEcho: this.useEcho,
+        sendEmailOnBuildFinished: this.sendEmailOnBuildFinished
       });
     }
   }
@@ -502,6 +595,14 @@ export class DraftGenerationStepsComponent implements OnInit {
       // set the selected state of any training book to false if it is selected for translation
       trainingBooks.forEach(b => (b.selected = booksForTranslation.includes(b.number) ? false : b.selected));
     }
+
+    // If books were auto-selected for training, but none are selected now, clear the notice
+    if (
+      this.trainingBooksWereAutoSelected &&
+      !Object.values(this.availableTrainingBooks).some(books => books.some(book => book.selected))
+    ) {
+      this.trainingBooksWereAutoSelected = false;
+    }
   }
 
   private validateCurrentStep(): boolean {
@@ -518,14 +619,6 @@ export class DraftGenerationStepsComponent implements OnInit {
     // Get the previously selected translation books from the target project
     const previousTranslation =
       this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRanges ?? [];
-
-    // Support old format
-    const oldStyleRange: string | undefined =
-      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRange;
-    if (previousTranslation.length === 0 && oldStyleRange !== undefined) {
-      previousTranslation.push({ projectId: this.draftingSources[0].projectRef, scriptureRange: oldStyleRange });
-    }
-
     for (const range of previousTranslation) {
       const source = this.draftingSources.find(s => s.projectRef === range.projectId);
       if (source !== undefined) {
@@ -543,14 +636,6 @@ export class DraftGenerationStepsComponent implements OnInit {
     // Get the previously selected training books from the target project
     const previousTraining =
       this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingScriptureRanges ?? [];
-
-    // Support old format
-    const oldStyleRange: string | undefined =
-      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingScriptureRange;
-    if (previousTraining.length === 0 && oldStyleRange !== undefined) {
-      previousTraining.push({ projectId: this.trainingSources[0].projectRef, scriptureRange: oldStyleRange });
-    }
-
     for (const range of previousTraining) {
       const source = this.trainingSources.find(s => s.projectRef === range.projectId);
       if (source !== undefined) {

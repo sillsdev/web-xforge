@@ -29,6 +29,7 @@ import { SFProjectSettings } from '../core/models/sf-project-settings';
 import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
+
 /** Allows user to configure high-level settings of how SF will use their Paratext project. */
 @Component({
   selector: 'app-settings',
@@ -48,6 +49,10 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   communityCheckersShareEnabled = new FormControl(false);
   commentersShareEnabled = new FormControl(false);
   viewersShareEnabled = new FormControl(false);
+  lynxAutoCorrectionsEnabled = new FormControl(false);
+  lynxAssessmentsEnabled = new FormControl(false);
+  lynxPunctuationCheckerEnabled = new FormControl(false);
+  lynxAllowedCharacterCheckerEnabled = new FormControl(false);
 
   // Expose enums to the template
   CheckingAnswerExport = CheckingAnswerExport;
@@ -65,7 +70,11 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     translatorsShareEnabled: this.translatorsShareEnabled,
     communityCheckersShareEnabled: this.communityCheckersShareEnabled,
     commentersShareEnabled: this.commentersShareEnabled,
-    viewersShareEnabled: this.viewersShareEnabled
+    viewersShareEnabled: this.viewersShareEnabled,
+    lynxAutoCorrectionsEnabled: this.lynxAutoCorrectionsEnabled,
+    lynxAssessmentsEnabled: this.lynxAssessmentsEnabled,
+    lynxPunctuationCheckerEnabled: this.lynxPunctuationCheckerEnabled,
+    lynxAllowedCharacterCheckerEnabled: this.lynxAllowedCharacterCheckerEnabled
   });
 
   isActiveSourceProject: boolean = false;
@@ -128,6 +137,10 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   get isCheckingEnabled(): boolean {
     return this.checkingEnabled.value ?? false;
+  }
+
+  get isLynxAssessmentsEnabled(): boolean {
+    return this.lynxAssessmentsEnabled.value ?? false;
   }
 
   get showPreTranslationSettings(): boolean {
@@ -358,6 +371,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.updateSharingSetting(newValue, 'communityCheckersShareEnabled', SFProjectRole.CommunityChecker);
     this.updateSharingSetting(newValue, 'commentersShareEnabled', SFProjectRole.Commenter);
     this.updateSharingSetting(newValue, 'viewersShareEnabled', SFProjectRole.Viewer);
+
+    // Update Lynx settings
+    this.updateLynxSettings(newValue);
   }
 
   private settingChanged(
@@ -420,6 +436,48 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     }
   }
 
+  private updateLynxSettings(newValue: SFProjectSettings): void {
+    if (this.settingChanged(newValue, 'lynxAutoCorrectionsEnabled')) {
+      this.updateSetting(newValue, 'lynxAutoCorrectionsEnabled');
+    }
+
+    if (this.settingChanged(newValue, 'lynxAssessmentsEnabled')) {
+      this.updateSetting(newValue, 'lynxAssessmentsEnabled');
+
+      // When 'assessments' is checked, auto-enable punctuation checker
+      if (newValue.lynxAssessmentsEnabled) {
+        this.lynxPunctuationCheckerEnabled.setValue(true, { emitEvent: false });
+        this.updateSetting({ ...newValue, lynxPunctuationCheckerEnabled: true }, 'lynxPunctuationCheckerEnabled');
+      } else {
+        // When 'assessments' is unchecked, auto-disable children
+        this.lynxPunctuationCheckerEnabled.setValue(false, { emitEvent: false });
+        this.updateSetting({ ...newValue, lynxPunctuationCheckerEnabled: false }, 'lynxPunctuationCheckerEnabled');
+        this.lynxAllowedCharacterCheckerEnabled.setValue(false, { emitEvent: false });
+        this.updateSetting(
+          { ...newValue, lynxAllowedCharacterCheckerEnabled: false },
+          'lynxAllowedCharacterCheckerEnabled'
+        );
+      }
+    } else {
+      // If both child settings are disabled, auto-disable assessments (parent setting)
+      if (
+        !newValue.lynxAllowedCharacterCheckerEnabled &&
+        !newValue.lynxPunctuationCheckerEnabled &&
+        newValue.lynxAssessmentsEnabled
+      ) {
+        this.lynxAssessmentsEnabled.setValue(false, { emitEvent: false });
+        this.updateSetting({ ...newValue, lynxAssessmentsEnabled: false }, 'lynxAssessmentsEnabled');
+      }
+
+      if (this.settingChanged(newValue, 'lynxPunctuationCheckerEnabled')) {
+        this.updateSetting(newValue, 'lynxPunctuationCheckerEnabled');
+      }
+      if (this.settingChanged(newValue, 'lynxAllowedCharacterCheckerEnabled')) {
+        this.updateSetting(newValue, 'lynxAllowedCharacterCheckerEnabled');
+      }
+    }
+  }
+
   private checkUpdateStatus(setting: keyof SFProjectSettings, updatePromise: Promise<void>): void {
     this.controlStates.set(setting, ElementState.Submitting);
     updatePromise
@@ -455,7 +513,11 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
         this.projectDoc.data.rolePermissions[SFProjectRole.Viewer]?.includes(
           SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)
         ) === true,
-      checkingAnswerExport: this.projectDoc.data.checkingConfig.answerExportMethod ?? CheckingAnswerExport.All
+      checkingAnswerExport: this.projectDoc.data.checkingConfig.answerExportMethod ?? CheckingAnswerExport.All,
+      lynxAutoCorrectionsEnabled: this.projectDoc.data.lynxConfig.autoCorrectionsEnabled,
+      lynxAssessmentsEnabled: this.projectDoc.data.lynxConfig.assessmentsEnabled,
+      lynxPunctuationCheckerEnabled: this.projectDoc.data.lynxConfig.punctuationCheckerEnabled,
+      lynxAllowedCharacterCheckerEnabled: this.projectDoc.data.lynxConfig.allowedCharacterCheckerEnabled
     };
     this.form.reset(this.previousFormValues);
     this.setIndividualControlDisabledStates();
@@ -489,6 +551,10 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.controlStates.set('communityCheckersShareEnabled', ElementState.InSync);
     this.controlStates.set('commentersShareEnabled', ElementState.InSync);
     this.controlStates.set('viewersShareEnabled', ElementState.InSync);
+    this.controlStates.set('lynxAutoCorrectionsEnabled', ElementState.InSync);
+    this.controlStates.set('lynxAssessmentsEnabled', ElementState.InSync);
+    this.controlStates.set('lynxPunctuationCheckerEnabled', ElementState.InSync);
+    this.controlStates.set('lynxAllowedCharacterCheckerEnabled', ElementState.InSync);
   }
 
   private updateNonSelectableProjects(): void {

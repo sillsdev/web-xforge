@@ -9,7 +9,7 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, EMPTY, of, Subject, throwError } from 'rxjs';
-import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -177,8 +177,8 @@ describe('DraftGenerationComponent', () => {
               }
             },
             draftConfig: {
-              lastSelectedTrainingScriptureRange: preTranslate ? 'GEN' : undefined,
-              lastSelectedTranslationScriptureRange: preTranslate ? 'EXO' : undefined
+              lastSelectedTrainingScriptureRanges: [{ projectId: 'testSourceProjectId', scriptureRange: 'GEN' }],
+              lastSelectedTranslationScriptureRanges: [{ projectId: 'testSourceProjectId', scriptureRange: 'EXO' }]
             }
           },
           texts: [
@@ -911,7 +911,8 @@ describe('DraftGenerationComponent', () => {
         translationScriptureRanges: [],
         fastTraining: false,
         useEcho: false,
-        projectId: projectId
+        projectId: projectId,
+        sendEmailOnBuildFinished: false
       });
       env.fixture.detectChanges();
       expect(env.component.currentPage).toBe('steps');
@@ -921,7 +922,8 @@ describe('DraftGenerationComponent', () => {
         trainingScriptureRanges: [],
         translationScriptureRanges: [],
         fastTraining: false,
-        useEcho: false
+        useEcho: false,
+        sendEmailOnBuildFinished: false
       });
       env.startedOrActiveBuild$.next(buildDto);
       env.fixture.detectChanges();
@@ -940,13 +942,15 @@ describe('DraftGenerationComponent', () => {
         translationScriptureRanges: [],
         fastTraining: false,
         useEcho: false,
-        projectId: projectId
+        projectId: projectId,
+        sendEmailOnBuildFinished: false
       });
       env.fixture.detectChanges();
 
       expect(env.component.currentPage).toBe('initial');
       expect(env.component['draftJob']).not.toBeNull();
-      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).not.toHaveBeenCalledWith(anything());
+      // FIXME This assertion does nothing because it's misusing anything()
+      // expect(mockDraftGenerationService.startBuildOrGetActiveBuild).not.toHaveBeenCalledWith(anything());
       expect(mockDialogService.message).toHaveBeenCalledTimes(1);
     });
 
@@ -962,7 +966,8 @@ describe('DraftGenerationComponent', () => {
         translationScriptureRanges: [],
         fastTraining: false,
         useEcho: false,
-        projectId: projectId
+        projectId: projectId,
+        sendEmailOnBuildFinished: false
       });
       env.startedOrActiveBuild$.next({ ...buildDto, state: BuildStates.Queued });
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
@@ -971,7 +976,8 @@ describe('DraftGenerationComponent', () => {
         trainingScriptureRanges: [],
         translationScriptureRanges: [],
         fastTraining: false,
-        useEcho: false
+        useEcho: false,
+        sendEmailOnBuildFinished: false
       });
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
@@ -989,7 +995,8 @@ describe('DraftGenerationComponent', () => {
         translationScriptureRanges: [],
         fastTraining: false,
         useEcho: false,
-        projectId: projectId
+        projectId: projectId,
+        sendEmailOnBuildFinished: false
       });
       env.startedOrActiveBuild$.next({ ...buildDto, state: BuildStates.Pending });
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
@@ -998,7 +1005,8 @@ describe('DraftGenerationComponent', () => {
         trainingScriptureRanges: [],
         translationScriptureRanges: [],
         fastTraining: false,
-        useEcho: false
+        useEcho: false,
+        sendEmailOnBuildFinished: false
       });
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
@@ -1016,7 +1024,8 @@ describe('DraftGenerationComponent', () => {
         translationScriptureRanges: [],
         fastTraining: false,
         useEcho: false,
-        projectId: projectId
+        projectId: projectId,
+        sendEmailOnBuildFinished: false
       });
       env.startedOrActiveBuild$.next({ ...buildDto, state: BuildStates.Active });
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
@@ -1025,7 +1034,8 @@ describe('DraftGenerationComponent', () => {
         trainingScriptureRanges: [],
         translationScriptureRanges: [],
         fastTraining: false,
-        useEcho: false
+        useEcho: false,
+        sendEmailOnBuildFinished: false
       });
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
@@ -1044,7 +1054,8 @@ describe('DraftGenerationComponent', () => {
         translationScriptureRanges: [],
         fastTraining: false,
         useEcho: false,
-        projectId: projectId
+        projectId: projectId,
+        sendEmailOnBuildFinished: false
       });
       env.startedOrActiveBuild$.next({ ...buildDto, state: BuildStates.Canceled });
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
@@ -1053,7 +1064,8 @@ describe('DraftGenerationComponent', () => {
         trainingScriptureRanges: [],
         translationScriptureRanges: [],
         fastTraining: false,
-        useEcho: false
+        useEcho: false,
+        sendEmailOnBuildFinished: false
       });
       verify(mockDialogRef.close()).once();
     });
@@ -1114,7 +1126,8 @@ describe('DraftGenerationComponent', () => {
         translationScriptureRanges: [],
         fastTraining: false,
         useEcho: false,
-        projectId: projectId
+        projectId: projectId,
+        sendEmailOnBuildFinished: false
       });
       tick();
 
@@ -1124,7 +1137,8 @@ describe('DraftGenerationComponent', () => {
         trainingScriptureRanges: [],
         translationScriptureRanges: [],
         fastTraining: false,
-        useEcho: false
+        useEcho: false,
+        sendEmailOnBuildFinished: false
       });
       expect(mockAuthService.requestParatextCredentialUpdate).toHaveBeenCalled();
     }));
@@ -1444,7 +1458,9 @@ describe('DraftGenerationComponent', () => {
 
       // Update the has draft flag for the project
       projectDoc.data!.texts[0].chapters[0].hasDraft = true;
-      projectDoc.data!.translateConfig.draftConfig.lastSelectedTranslationScriptureRange = 'GEN';
+      projectDoc.data!.translateConfig.draftConfig.lastSelectedTranslationScriptureRanges = [
+        { projectId: 'testSourceProjectId', scriptureRange: 'GEN' }
+      ];
       projectSubject.next(projectDoc);
       buildSubject.next({ ...buildDto, state: BuildStates.Completed });
       tick(500);

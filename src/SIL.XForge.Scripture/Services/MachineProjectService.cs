@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -11,11 +12,11 @@ using Autofac.Extras.DynamicProxy;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using Serval.Client;
-using SIL.Scripture;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.EventMetrics;
@@ -38,9 +39,11 @@ namespace SIL.XForge.Scripture.Services;
 public class MachineProjectService(
     ICorporaClient corporaClient,
     IDataFilesClient dataFilesClient,
+    IEmailService emailService,
     IWebHostEnvironment env,
     IExceptionHandler exceptionHandler,
     IFileSystemService fileSystemService,
+    IStringLocalizer<SharedResource> localizer,
     ILogger<MachineProjectService> logger,
     IParatextService paratextService,
     IRepository<SFProjectSecret> projectSecrets,
@@ -73,7 +76,10 @@ public class MachineProjectService(
     public async Task<string> AddSmtProjectAsync(string sfProjectId, CancellationToken cancellationToken)
     {
         // Load the project from the realtime service
-        Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(sfProjectId);
+        Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(
+            sfProjectId,
+            cancellationToken
+        );
         if (!attempt.TryResult(out SFProject project))
         {
             throw new DataNotFoundException("The project does not exist.");
@@ -134,8 +140,21 @@ public class MachineProjectService(
                     {
                         u.Unset(p => p.ServalData.TranslationQueuedAt);
                     }
-                }
+                },
+                cancellationToken: cancellationToken
             );
+
+            // Send the cancellation email, if specified
+            if (buildConfig.SendEmailOnBuildFinished)
+            {
+                await SendBuildCompletedEmailAsync(
+                    curUserId,
+                    buildConfig.ProjectId,
+                    buildId: null,
+                    buildState: nameof(JobState.Canceled),
+                    websiteUrl: new Uri(siteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+                );
+            }
         }
         catch (ServalApiException e) when (e.StatusCode == 409)
         {
@@ -154,12 +173,26 @@ public class MachineProjectService(
                         u.Unset(p => p.ServalData.TranslationJobId);
                         u.Unset(p => p.ServalData.TranslationQueuedAt);
                     }
-                }
+                },
+                cancellationToken: cancellationToken
             );
+
+            // Send the cancellation email, if specified
+            if (buildConfig.SendEmailOnBuildFinished)
+            {
+                await SendBuildCompletedEmailAsync(
+                    curUserId,
+                    buildConfig.ProjectId,
+                    buildId: null,
+                    buildState: nameof(JobState.Canceled),
+                    websiteUrl: new Uri(siteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+                );
+            }
         }
-        catch (DataNotFoundException e)
+        catch (DataNotFoundException e) when (e.Message.Contains("project"))
         {
-            // This will occur if the project is deleted while the job is running
+            // This will occur if the project is deleted while the job is running.
+            // Do not send a failure email, as the project will not exist for us to do that.
             string message =
                 $"Build DataNotFoundException occurred for project {buildConfig.ProjectId.Sanitize()}"
                 + " running in background job.";
@@ -191,8 +224,21 @@ public class MachineProjectService(
                         u.Unset(p => p.ServalData.TranslationJobId);
                         u.Unset(p => p.ServalData.TranslationQueuedAt);
                     }
-                }
+                },
+                cancellationToken: cancellationToken
             );
+
+            // Send the failure email, if specified
+            if (buildConfig.SendEmailOnBuildFinished)
+            {
+                await SendBuildCompletedEmailAsync(
+                    curUserId,
+                    buildConfig.ProjectId,
+                    buildId: null,
+                    buildState: nameof(JobState.Faulted),
+                    websiteUrl: new Uri(siteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+                );
+            }
         }
     }
 
@@ -213,7 +259,10 @@ public class MachineProjectService(
     )
     {
         // Load the project from the realtime service
-        Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(sfProjectId);
+        Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(
+            sfProjectId,
+            cancellationToken
+        );
         if (!attempt.TryResult(out SFProject project))
         {
             throw new DataNotFoundException("The project does not exist.");
@@ -244,7 +293,11 @@ public class MachineProjectService(
     )
     {
         // Load the target project secrets, so we can get the translation engine ID
-        if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
+        if (
+            !(await projectSecrets.TryGetAsync(sfProjectId, cancellationToken)).TryResult(
+                out SFProjectSecret projectSecret
+            )
+        )
         {
             throw new DataNotFoundException("The project secret cannot be found.");
         }
@@ -364,8 +417,56 @@ public class MachineProjectService(
 
                 // Remove all corpora that were deleted
                 u.RemoveAll(p => p.ServalData.CorpusFiles, p => corpusIdsToRemove.Contains(p.CorpusId));
-            }
+            },
+            cancellationToken: cancellationToken
         );
+    }
+
+    public async Task SendBuildCompletedEmailAsync(
+        string curUserId,
+        string sfProjectId,
+        string? buildId,
+        string buildState,
+        Uri websiteUrl
+    )
+    {
+        // Get the user who requested the build
+        await using IConnection conn = await realtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
+        IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
+        if (projectDoc.IsLoaded && userDoc.IsLoaded && emailService.ValidateEmail(userDoc.Data.Email))
+        {
+            // Set the locale for the email
+            CultureInfo.CurrentUICulture = new CultureInfo(userDoc.Data.InterfaceLanguage);
+
+            // Build the email
+            string resourceKeySubject =
+                buildState == nameof(JobState.Completed)
+                    ? SharedResource.Keys.DraftGeneratedEmailSubject
+                    : SharedResource.Keys.DraftNotGeneratedEmailSubject;
+            string subject = localizer[resourceKeySubject, siteOptions.Value.Name];
+            string resourceKeyBody = buildState switch
+            {
+                nameof(JobState.Completed) => SharedResource.Keys.DraftGeneratedEmailBody,
+                nameof(JobState.Canceled) => SharedResource.Keys.DraftCanceledEmailBody,
+                _ => SharedResource.Keys.DraftFailedEmailBody,
+            };
+            string url = $"{websiteUrl.ToString().TrimEnd('/')}/projects/{sfProjectId}/draft-generation";
+            string body =
+                $"<p>{localizer[resourceKeyBody, projectDoc.Data.ShortName]}</p>"
+                + $"<p>{localizer[SharedResource.Keys.DraftEmailMoreInformation, url]}</p>";
+            await emailService.SendEmailAsync(userDoc.Data.Email, subject, body);
+        }
+        else
+        {
+            logger.LogError(
+                "An email was requested for build {buildId} on project {projectId},"
+                    + " but the user {userId} was not found",
+                buildId?.Sanitize() ?? "N/A",
+                sfProjectId.Sanitize(),
+                curUserId.Sanitize()
+            );
+        }
     }
 
     /// <summary>
@@ -519,7 +620,11 @@ public class MachineProjectService(
     )
     {
         // Load the target project secrets, so we can get the translation engine ID
-        if (!(await projectSecrets.TryGetAsync(buildConfig.ProjectId)).TryResult(out SFProjectSecret projectSecret))
+        if (
+            !(await projectSecrets.TryGetAsync(buildConfig.ProjectId, cancellationToken)).TryResult(
+                out SFProjectSecret projectSecret
+            )
+        )
         {
             throw new DataNotFoundException("The project secret cannot be found.");
         }
@@ -564,7 +669,7 @@ public class MachineProjectService(
         );
 
         // Get the updated project secret
-        projectSecret = await projectSecrets.GetAsync(buildConfig.ProjectId);
+        projectSecret = await projectSecrets.GetAsync(buildConfig.ProjectId, cancellationToken: cancellationToken);
 
         // Ensure we have the ServalData
         if (projectSecret.ServalData is null)
@@ -622,7 +727,8 @@ public class MachineProjectService(
                     u.Unset(p => p.ServalData.TranslationJobId);
                     u.Unset(p => p.ServalData.TranslationQueuedAt);
                 }
-            }
+            },
+            cancellationToken: cancellationToken
         );
 
         return translationBuild.Id;
@@ -727,7 +833,7 @@ public class MachineProjectService(
     )
     {
         // Get the existing project secret, so we can see how to create the engine and update the Serval data
-        SFProjectSecret projectSecret = await projectSecrets.GetAsync(sfProject.Id);
+        SFProjectSecret projectSecret = await projectSecrets.GetAsync(sfProject.Id, cancellationToken);
         string translationEngineId = GetTranslationEngineId(projectSecret, preTranslate);
         if (string.IsNullOrWhiteSpace(translationEngineId))
         {
@@ -757,7 +863,8 @@ public class MachineProjectService(
                 // Store the Pre-Translation Engine ID
                 await projectSecrets.UpdateAsync(
                     sfProject.Id,
-                    u => u.Set(p => p.ServalData.PreTranslationEngineId, translationEngineId)
+                    u => u.Set(p => p.ServalData.PreTranslationEngineId, translationEngineId),
+                    cancellationToken: cancellationToken
                 );
             }
             else if (projectSecret.ServalData is not null)
@@ -765,7 +872,8 @@ public class MachineProjectService(
                 // Store the Translation Engine ID
                 await projectSecrets.UpdateAsync(
                     sfProject.Id,
-                    u => u.Set(p => p.ServalData.TranslationEngineId, translationEngineId)
+                    u => u.Set(p => p.ServalData.TranslationEngineId, translationEngineId),
+                    cancellationToken: cancellationToken
                 );
             }
             else if (preTranslate)
@@ -777,7 +885,8 @@ public class MachineProjectService(
                         u.Set(
                             p => p.ServalData,
                             new ServalData { PreTranslationEngineId = translationEngineId, CorpusFiles = [] }
-                        )
+                        ),
+                    cancellationToken: cancellationToken
                 );
             }
             else
@@ -789,7 +898,8 @@ public class MachineProjectService(
                         u.Set(
                             p => p.ServalData,
                             new ServalData { TranslationEngineId = translationEngineId, CorpusFiles = [] }
-                        )
+                        ),
+                    cancellationToken: cancellationToken
                 );
             }
         }
@@ -823,10 +933,18 @@ public class MachineProjectService(
         using var archive = new ZipArchive(outputStream, ZipArchiveMode.Create, leaveOpen: true);
         foreach (string filePath in fileSystemService.EnumerateFiles(path))
         {
-            await using Stream fileStream = fileSystemService.OpenFile(filePath, FileMode.Open);
-            ZipArchiveEntry entry = archive.CreateEntry(Path.GetFileName(filePath));
-            await using Stream entryStream = entry.Open();
-            await fileStream.CopyToAsync(entryStream, cancellationToken);
+            try
+            {
+                await using Stream fileStream = fileSystemService.OpenFile(filePath, FileMode.Open);
+                ZipArchiveEntry entry = archive.CreateEntry(Path.GetFileName(filePath));
+                await using Stream entryStream = entry.Open();
+                await fileStream.CopyToAsync(entryStream, cancellationToken);
+            }
+            catch (FileNotFoundException e)
+            {
+                // This  will be thrown by filenames that have unicode characters, which is not supported by Paratext
+                logger.LogWarning(e, "File not found when creating Paratext zip file");
+            }
         }
     }
 
@@ -913,7 +1031,7 @@ public class MachineProjectService(
             )
             {
                 // Get the user secret
-                Attempt<UserSecret> userSecretAttempt = await userSecrets.TryGetAsync(curUserId);
+                Attempt<UserSecret> userSecretAttempt = await userSecrets.TryGetAsync(curUserId, cancellationToken);
                 if (!userSecretAttempt.TryResult(out UserSecret userSecret))
                 {
                     throw new DataNotFoundException("The user does not exist.");
@@ -987,7 +1105,8 @@ public class MachineProjectService(
                     {
                         u.Unset(p => p.ServalData.TranslationEngineId);
                     }
-                }
+                },
+                cancellationToken: cancellationToken
             );
 
             // Create the Serval project, and get the translation engine id
@@ -1132,24 +1251,6 @@ public class MachineProjectService(
             options["max_steps"] = 20;
         }
 
-        // Get the scripture ranges
-        // These scripture ranges will be used if no per project configuration was used
-        string? trainOnScriptureRange = !string.IsNullOrWhiteSpace(buildConfig.TrainingScriptureRange)
-            ? buildConfig.TrainingScriptureRange
-            : string.Join(';', buildConfig.TrainingBooks.Select(Canon.BookNumberToId));
-        if (string.IsNullOrWhiteSpace(trainOnScriptureRange))
-        {
-            trainOnScriptureRange = null;
-        }
-
-        string? preTranslateScriptureRange = !string.IsNullOrWhiteSpace(buildConfig.TranslationScriptureRange)
-            ? buildConfig.TranslationScriptureRange
-            : string.Join(';', buildConfig.TranslationBooks.Select(Canon.BookNumberToId));
-        if (string.IsNullOrWhiteSpace(preTranslateScriptureRange))
-        {
-            preTranslateScriptureRange = null;
-        }
-
         // Create the build configuration
         var translationBuildConfig = new TranslationBuildConfig
         {
@@ -1166,10 +1267,9 @@ public class MachineProjectService(
                             .Select(s => new ParallelCorpusFilterConfig
                             {
                                 CorpusId = s.CorpusId,
-                                ScriptureRange =
-                                    buildConfig
-                                        .TranslationScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
-                                        ?.ScriptureRange ?? preTranslateScriptureRange,
+                                ScriptureRange = buildConfig
+                                    .TranslationScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
+                                    ?.ScriptureRange,
                             }),
                     ],
                 },
@@ -1186,10 +1286,9 @@ public class MachineProjectService(
                             .Select(s => new ParallelCorpusFilterConfig
                             {
                                 CorpusId = s.CorpusId,
-                                ScriptureRange =
-                                    buildConfig
-                                        .TrainingScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
-                                        ?.ScriptureRange ?? trainOnScriptureRange,
+                                ScriptureRange = buildConfig
+                                    .TrainingScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
+                                    ?.ScriptureRange,
                             }),
                     ],
                     TargetFilters =
@@ -1199,10 +1298,9 @@ public class MachineProjectService(
                             .Select(s => new ParallelCorpusFilterConfig
                             {
                                 CorpusId = s.CorpusId,
-                                ScriptureRange =
-                                    buildConfig
-                                        .TrainingScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
-                                        ?.ScriptureRange ?? trainOnScriptureRange,
+                                ScriptureRange = buildConfig
+                                    .TrainingScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
+                                    ?.ScriptureRange,
                             }),
                     ],
                 },
@@ -1333,7 +1431,8 @@ public class MachineProjectService(
                     {
                         u.Unset(p => p.ServalData.TranslationEngineId);
                     }
-                }
+                },
+                cancellationToken: cancellationToken
             );
 
             // Create the new translation engine id
@@ -1358,7 +1457,11 @@ public class MachineProjectService(
     )
     {
         // Load the target project secrets, so we can get the translation engine ID
-        if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
+        if (
+            !(await projectSecrets.TryGetAsync(sfProjectId, cancellationToken)).TryResult(
+                out SFProjectSecret projectSecret
+            )
+        )
         {
             throw new DataNotFoundException("The project secret cannot be found.");
         }
@@ -1410,13 +1513,21 @@ public class MachineProjectService(
             }
 
             // Remove our record of the corpus
-            await projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.Corpora[corpusId]));
+            await projectSecrets.UpdateAsync(
+                sfProjectId,
+                u => u.Unset(p => p.ServalData.Corpora[corpusId]),
+                cancellationToken: cancellationToken
+            );
         }
 
         // Remove the corpora property if it is empty
         if (projectSecret.ServalData?.Corpora?.Any(c => c.Value.PreTranslate != preTranslate) == false)
         {
-            await projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.Corpora));
+            await projectSecrets.UpdateAsync(
+                sfProjectId,
+                u => u.Unset(p => p.ServalData.Corpora),
+                cancellationToken: cancellationToken
+            );
         }
     }
 
@@ -1567,14 +1678,21 @@ public class MachineProjectService(
     )
     {
         // Load the project from the realtime service
-        Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(buildConfig.ProjectId);
+        Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(
+            buildConfig.ProjectId,
+            cancellationToken
+        );
         if (!attempt.TryResult(out SFProject project))
         {
             throw new DataNotFoundException("The project does not exist.");
         }
 
         // Load the project secrets, so we can get the corpus files
-        if (!(await projectSecrets.TryGetAsync(project.Id)).TryResult(out SFProjectSecret projectSecret))
+        if (
+            !(await projectSecrets.TryGetAsync(project.Id, cancellationToken)).TryResult(
+                out SFProjectSecret projectSecret
+            )
+        )
         {
             throw new DataNotFoundException("The project secret cannot be found.");
         }
@@ -1840,7 +1958,8 @@ public class MachineProjectService(
                 {
                     u.Set(p => p.ServalData.ParallelCorpusIdForSmt, translationParallelCorpusId);
                 }
-            }
+            },
+            cancellationToken: cancellationToken
         );
 
         return corporaSyncInfo;

@@ -73,7 +73,6 @@ import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
@@ -219,7 +218,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   multiCursorViewers: MultiCursorViewer[] = [];
   target: TextComponent | undefined;
   draftTimestamp?: Date;
-  showInsights = false;
+  lynxInsightsEnabled = false;
+  lynxAutoCorrectionsEnabled = false;
 
   @ViewChild('source') source?: TextComponent;
   @ViewChild('fabButton', { read: ElementRef }) insertNoteFab?: ElementRef<HTMLElement>;
@@ -314,7 +314,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly breakpointObserver: BreakpointObserver,
     private readonly mediaBreakpointService: MediaBreakpointService,
     private readonly permissionsService: PermissionsService,
-    private readonly featureFlagService: FeatureFlagService,
     readonly editorInsightState: LynxInsightStateService
   ) {
     super(noticeService);
@@ -691,12 +690,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       )
       .subscribe();
 
-    // Show insights only if the feature flag is enabled and the user has chapter edit permissions
-    combineLatest([this.featureFlagService.enableLynxInsights.enabled$, this.hasChapterEditPermission$])
+    // Show insights only if the feature flag is enabled, user has chapter edit permissions and assessments are enabled
+    combineLatest([
+      this.hasChapterEditPermission$.pipe(filterNullish()),
+      this.activatedProject.changes$.pipe(map(projectDoc => projectDoc?.data?.lynxConfig))
+    ])
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(([ffEnabled, hasEditPermission]) => {
-        this.showInsights = ffEnabled && !!hasEditPermission && this.isUsfmValid;
-        return this.showInsights;
+      .subscribe(([hasEditPermission, lynxConfig]) => {
+        const canEdit: boolean = hasEditPermission && this.isUsfmValid;
+        this.lynxInsightsEnabled = canEdit && (lynxConfig?.assessmentsEnabled ?? false);
+        this.lynxAutoCorrectionsEnabled = canEdit && (lynxConfig?.autoCorrectionsEnabled ?? false);
       });
   }
 
@@ -1913,7 +1916,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
     for (const segment of segments) {
-      const elements = this.target.getSegmentElement(segment)?.querySelectorAll('display-note');
+      // If a note is in the middle of a segment, the editor may have two segments with the same data-segment.
+      // This will not affect the text in the Realtime Server, as ShareDB will combine the segments together again.
+      const elements = this.target.editor?.container.querySelectorAll(
+        `usx-segment[data-segment="${segment}"] display-note`
+      );
       if (elements == null) {
         continue;
       }
@@ -2070,8 +2077,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private getFeaturedVerseRefInfo(threadDoc: NoteThreadDoc): FeaturedVerseRefInfo | undefined {
     const notes: Note[] = threadDoc.notesInOrderClone(threadDoc.data!.notes);
     let preview: string = notes[0].content != null ? stripHtml(notes[0].content.trim()) : '';
-    if (notes.length > 1) {
-      preview += '\n' + this.i18n.translateStatic('editor.more_notes', { count: notes.length - 1 });
+    const numberOfNotes: number = notes.filter(n => !n.deleted).length;
+    if (numberOfNotes > 1) {
+      preview += '\n' + this.i18n.translateStatic('editor.more_notes', { count: numberOfNotes - 1 });
     }
     const verseRef: VerseRef | undefined = threadDoc.currentVerseRef();
     if (threadDoc.data == null || verseRef == null) {

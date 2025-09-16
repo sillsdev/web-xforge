@@ -31,6 +31,7 @@ const SF_PROJECT_PROFILE_FIELDS: ShareDB.ProjectionFields = {
   defaultFont: true,
   translateConfig: true,
   checkingConfig: true,
+  lynxConfig: true,
   texts: true,
   syncDisabled: true,
   sync: true,
@@ -249,20 +250,11 @@ export class SFProjectService extends ProjectService<SFProject> {
                 },
                 additionalProperties: false
               },
-              lastSelectedTrainingBooks: {
-                bsonType: 'array',
-                items: {
-                  bsonType: 'int'
-                }
-              },
               lastSelectedTrainingDataFiles: {
                 bsonType: 'array',
                 items: {
                   bsonType: 'string'
                 }
-              },
-              lastSelectedTrainingScriptureRange: {
-                bsonType: 'string'
               },
               lastSelectedTrainingScriptureRanges: {
                 bsonType: 'array',
@@ -278,15 +270,6 @@ export class SFProjectService extends ProjectService<SFProject> {
                   },
                   additionalProperties: false
                 }
-              },
-              lastSelectedTranslationBooks: {
-                bsonType: 'array',
-                items: {
-                  bsonType: 'int'
-                }
-              },
-              lastSelectedTranslationScriptureRange: {
-                bsonType: 'string'
               },
               lastSelectedTranslationScriptureRanges: {
                 bsonType: 'array',
@@ -317,9 +300,15 @@ export class SFProjectService extends ProjectService<SFProject> {
                 properties: {
                   paragraphFormat: {
                     enum: ['best_guess', 'remove', 'move_to_end']
+                  },
+                  quoteFormat: {
+                    enum: ['denormalized', 'normalized']
                   }
                 },
                 additionalProperties: false
+              },
+              sendEmailOnBuildFinished: {
+                bsonType: 'bool'
               }
             },
             additionalProperties: false
@@ -380,6 +369,24 @@ export class SFProjectService extends ProjectService<SFProject> {
             bsonType: 'int'
           },
           hideCommunityCheckingText: {
+            bsonType: 'bool'
+          }
+        },
+        additionalProperties: false
+      },
+      lynxConfig: {
+        bsonType: 'object',
+        properties: {
+          autoCorrectionsEnabled: {
+            bsonType: 'bool'
+          },
+          assessmentsEnabled: {
+            bsonType: 'bool'
+          },
+          punctuationCheckerEnabled: {
+            bsonType: 'bool'
+          },
+          allowedCharacterCheckerEnabled: {
             bsonType: 'bool'
           }
         },
@@ -580,6 +587,7 @@ export class SFProjectService extends ProjectService<SFProject> {
       this.pathTemplate(p => p.texts),
       this.pathTemplate(p => p.translateConfig),
       this.pathTemplate(p => p.checkingConfig),
+      this.pathTemplate(p => p.lynxConfig),
       this.pathTemplate(p => p.shortName),
       this.pathTemplate(p => p.writingSystem),
       this.pathTemplate(p => p.copyrightBanner),

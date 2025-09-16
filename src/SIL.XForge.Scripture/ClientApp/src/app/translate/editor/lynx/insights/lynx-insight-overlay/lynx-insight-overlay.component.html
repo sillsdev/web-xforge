@@ -25,7 +25,12 @@
       }
       <div class="secondary-actions">
         @if (menuActions.length > 0) {
-          <mat-icon [matTooltip]="t('tooltip_actions')" [matMenuTriggerFor]="actionMenu" class="action-menu-trigger">
+          <mat-icon
+            [matTooltip]="t('tooltip_actions')"
+            [matMenuTriggerFor]="actionMenu"
+            [dir]="i18n.direction"
+            class="action-menu-trigger"
+          >
             more_horiz
           </mat-icon>
         }

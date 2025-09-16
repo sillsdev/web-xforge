@@ -206,34 +206,32 @@
           @if (isPreviewSupported) {
             @if (draftJob != null) {
               @if (isDraftInProgress(draftJob) && featureFlags.newDraftHistory.enabled) {
-                <mat-expansion-panel [expanded]="true" [hideToggle]="true" [disabled]="true">
-                  <mat-expansion-panel-header>
-                    <mat-panel-title>
+                <mat-card class="draft-progress-card">
+                  <mat-card-header>
+                    <mat-card-title>
                       @if (isDraftQueued(draftJob)) {
                         @if (isSyncing()) {
-                          <span class="title">{{ t("draft_syncing") }}</span>
+                          {{ t("draft_syncing") }}
                         } @else {
-                          <span class="title">{{ t("draft_queued_header") }}</span>
-                          @if (hasDraftQueueDepth(draftJob)) {
-                            <span class="subtitle">{{
-                              t("draft_queued_multiple", { count: draftJob.queueDepth })
-                            }}</span>
-                          }
+                          {{ t("draft_queued_header") }}
                         }
                       } @else if (isDraftActive(draftJob)) {
-                        <span class="title">{{ t("draft_active_header") }}</span>
-                        <span class="subtitle">{{
-                          t("draft_percent_complete", { percent: draftJob.percentCompleted | l10nPercent })
-                        }}</span>
+                        {{ t("draft_active_header") }}
                       } @else if (isDraftFinishing(draftJob)) {
-                        <span class="title"> {{ t("draft_finishing_header") }}</span>
+                        {{ t("draft_finishing_header") }}
                       }
-                    </mat-panel-title>
-                    <mat-panel-description>
+                      •
                       {{ getTranslationScriptureRange(draftJob) }}
-                    </mat-panel-description>
-                  </mat-expansion-panel-header>
-                  <div class="progress-wrapper">
+                    </mat-card-title>
+                    <mat-card-subtitle>
+                      @if (hasDraftQueueDepth(draftJob)) {
+                        {{ t("draft_queued_multiple", { count: draftJob.queueDepth }) }}
+                      } @else if (isDraftActive(draftJob)) {
+                        {{ t("draft_percent_complete", { percent: draftJob.percentCompleted | l10nPercent }) }}
+                      }
+                    </mat-card-subtitle>
+                  </mat-card-header>
+                  <mat-card-content class="progress-wrapper">
                     <mat-progress-bar
                       [mode]="
                         draftJob.percentCompleted === 0 && !isDraftActive(draftJob) ? 'indeterminate' : 'determinate'
@@ -245,8 +243,8 @@
                         {{ t("cancel_generation_button") }}
                       </button>
                     }
-                  </div>
-                </mat-expansion-panel>
+                  </mat-card-content>
+                </mat-card>
               } @else if (!featureFlags.newDraftHistory.enabled) {
                 @if (isDraftQueued(draftJob)) {
                   <section>

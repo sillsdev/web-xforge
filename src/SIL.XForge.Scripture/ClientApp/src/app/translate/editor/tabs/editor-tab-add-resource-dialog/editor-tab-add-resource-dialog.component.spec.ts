@@ -283,6 +283,8 @@ class TestEnvironment {
       projectId: `projectId${index}`,
       isConnectable: true,
       isConnected: false,
+      hasUserRoleChanged: false,
+      hasUpdate: false,
       ...overrides
     };
   }

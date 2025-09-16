@@ -1557,6 +1557,86 @@ describe('TextComponent', () => {
 
     TestEnvironment.waitForPresenceTimer();
   }));
+
+  describe('Text selection behavior', () => {
+    it('should track shift key state correctly', fakeAsync(() => {
+      const env: TestEnvironment = new TestEnvironment();
+
+      // Initially shift key should be false
+      expect((env.component as any).isShiftDown).toBe(false);
+
+      // Simulate shift key down
+      const keyDownEvent = new KeyboardEvent('keydown', { shiftKey: true });
+      document.dispatchEvent(keyDownEvent);
+      tick();
+
+      expect((env.component as any).isShiftDown).toBe(true);
+
+      // Simulate shift key up
+      const keyUpEvent = new KeyboardEvent('keyup', { shiftKey: false });
+      document.dispatchEvent(keyUpEvent);
+      tick();
+
+      expect((env.component as any).isShiftDown).toBe(false);
+    }));
+
+    it('should not call update() during selection expansion (shift down)', fakeAsync(() => {
+      const env: TestEnvironment = new TestEnvironment();
+      env.component.onEditorCreated(new MockQuill('quill-editor'));
+      env.waitForEditor();
+
+      spyOn(env.component, 'update' as any);
+
+      // Simulate shift key down
+      (env.component as any).isShiftDown = true;
+
+      // Call onSelectionChanged with a selection (length > 0)
+      const range: QuillRange = { index: 5, length: 3 };
+      env.component.onSelectionChanged(range);
+      tick();
+
+      // update() should not have been called
+      expect(env.component['update']).not.toHaveBeenCalled();
+    }));
+
+    it('should call update() when shift key is released', fakeAsync(() => {
+      const env: TestEnvironment = new TestEnvironment();
+      env.component.onEditorCreated(new MockQuill('quill-editor'));
+      env.waitForEditor();
+
+      spyOn(env.component, 'update' as any);
+
+      // Set shift key down initially
+      (env.component as any).isShiftDown = true;
+
+      // Simulate shift key release
+      const keyUpEvent = new KeyboardEvent('keyup', { shiftKey: false });
+      document.dispatchEvent(keyUpEvent);
+      tick();
+
+      // update() should have been called once
+      expect(env.component['update']).toHaveBeenCalledTimes(1);
+    }));
+
+    it('should call update() when no selection is active (cursor only)', fakeAsync(() => {
+      const env: TestEnvironment = new TestEnvironment();
+      env.component.onEditorCreated(new MockQuill('quill-editor'));
+      env.waitForEditor();
+
+      spyOn(env.component, 'update' as any);
+
+      // Simulate shift key not pressed
+      (env.component as any).isShiftDown = false;
+
+      // Call onSelectionChanged with cursor only (length = 0)
+      const range: QuillRange = { index: 5, length: 0 };
+      env.component.onSelectionChanged(range);
+      tick();
+
+      // update() should have been called
+      expect(env.component['update']).toHaveBeenCalledTimes(1);
+    }));
+  });
 });
 
 class MockDragEvent extends DragEvent {

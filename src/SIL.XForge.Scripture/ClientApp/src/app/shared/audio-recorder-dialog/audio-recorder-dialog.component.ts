@@ -121,7 +121,7 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
     }
   }
 
-  async ngOnInit(): Promise<void> {
+  ngOnInit(): void {
     this.mediaDevicesUnsupported =
       this.navigator.mediaDevices?.getUserMedia == null || typeof MediaRecorder === 'undefined';
   }

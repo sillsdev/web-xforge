@@ -39,7 +39,7 @@ const defaultPreset: TestPreset = {
   locales: ['en'],
   browsers: ['chromium'],
   skipScreenshots: false,
-  defaultUserDelay: 500,
+  defaultUserDelay: 0,
   showArrow: true,
   trace: true,
   outputDir: `test_output/${Utils.formatDate(new Date())}`,
@@ -48,14 +48,15 @@ const defaultPreset: TestPreset = {
 } as const;
 
 export const presets = {
-  default: defaultPreset,
-  fast: {
+  default: {
+    ...defaultPreset
+  },
+  user_speed: {
     ...defaultPreset,
-    defaultUserDelay: 0
+    defaultUserDelay: 500
   },
   localization: {
     ...defaultPreset,
-    defaultUserDelay: 0,
     locales: helpLocales,
     showArrow: true,
     outputDir: 'test_output/localized_screenshots'

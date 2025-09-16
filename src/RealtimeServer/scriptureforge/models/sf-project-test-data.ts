@@ -22,9 +22,7 @@ function testProjectProfile(ordinal: number): SFProjectProfile {
         additionalTrainingSourceEnabled: false,
         alternateSourceEnabled: false,
         alternateTrainingSourceEnabled: false,
-        lastSelectedTrainingBooks: [],
-        lastSelectedTrainingDataFiles: [],
-        lastSelectedTranslationBooks: []
+        lastSelectedTrainingDataFiles: []
       }
     },
     checkingConfig: {
@@ -43,6 +41,12 @@ function testProjectProfile(ordinal: number): SFProjectProfile {
     biblicalTermsConfig: {
       biblicalTermsEnabled: false,
       hasRenderings: false
+    },
+    lynxConfig: {
+      autoCorrectionsEnabled: false,
+      assessmentsEnabled: false,
+      punctuationCheckerEnabled: false,
+      allowedCharacterCheckerEnabled: false
     },
     editable: true,
     defaultFontSize: 12,

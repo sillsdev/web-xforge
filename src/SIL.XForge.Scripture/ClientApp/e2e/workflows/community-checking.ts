@@ -87,7 +87,7 @@ export async function communityChecking(
   await expect(
     page.getByRole('heading', { name: 'Are you sure you want to archive all the questions in John?' })
   ).toBeVisible();
-  await user.click(page.getByRole('button', { name: 'Archive' }));
+  await user.click(page.locator('mat-dialog-container').getByRole('button', { name: 'Archive' }));
 
   await user.click(page.getByRole('button', { name: 'Import' }));
   const fileChooserPromise = page.waitForEvent('filechooser');

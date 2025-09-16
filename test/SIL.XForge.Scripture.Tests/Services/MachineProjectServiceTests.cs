@@ -8,7 +8,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using NSubstitute;
@@ -25,6 +27,7 @@ using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
+using Options = Microsoft.Extensions.Options.Options;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -222,7 +225,7 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        var ex = new DataNotFoundException("Not Found");
+        var ex = new DataNotFoundException("project not found");
         var buildConfig = new BuildConfig { ProjectId = Project01 };
         env.Service.Configure()
             .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
@@ -238,6 +241,28 @@ public class MachineProjectServiceTests
 
         env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == ex && logEvent.LogLevel == LogLevel.Warning);
         env.ExceptionHandler.DidNotReceive().ReportException(Arg.Any<Exception>());
+    }
+
+    [Test]
+    public async Task BuildProjectForBackgroundJobAsync_MissingDirectoryDataNotFoundException()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var ex = new DataNotFoundException("directory not found");
+        var buildConfig = new BuildConfig { ProjectId = Project01 };
+        env.Service.Configure()
+            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .ThrowsAsync(ex);
+
+        // SUT
+        await env.Service.BuildProjectForBackgroundJobAsync(
+            User01,
+            buildConfig,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        env.ExceptionHandler.Received(1).ReportException(ex);
     }
 
     [Test]
@@ -359,6 +384,90 @@ public class MachineProjectServiceTests
         await env
             .Service.Received(1)
             .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task BuildProjectForBackgroundJobAsync_SendsEmailForBuildInProgressErrors()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        ServalApiException ex = ServalApiExceptions.BuildInProgress;
+        var buildConfig = new BuildConfig { ProjectId = Project01, SendEmailOnBuildFinished = true };
+        env.Service.Configure()
+            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .ThrowsAsync(ex);
+
+        // A pre-translation job has been queued
+        await env.SetupProjectSecretAsync(
+            Project01,
+            new ServalData { PreTranslationJobId = Job01, PreTranslationQueuedAt = DateTime.UtcNow }
+        );
+
+        // SUT
+        await env.Service.BuildProjectForBackgroundJobAsync(
+            User01,
+            buildConfig,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Test]
+    public async Task BuildProjectForBackgroundJobAsync_SendsEmailForTaskCancellationErrors()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var ex = new TaskCanceledException();
+        var buildConfig = new BuildConfig { ProjectId = Project01, SendEmailOnBuildFinished = true };
+        env.Service.Configure()
+            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .ThrowsAsync(ex);
+
+        // A pre-translation job has been queued
+        await env.SetupProjectSecretAsync(
+            Project01,
+            new ServalData { PreTranslationJobId = Job01, PreTranslationQueuedAt = DateTime.UtcNow }
+        );
+
+        // SUT
+        await env.Service.BuildProjectForBackgroundJobAsync(
+            User01,
+            buildConfig,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Test]
+    public async Task BuildProjectForBackgroundJobAsync_SendsEmailForUnexpectedErrors()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var ex = new NotSupportedException();
+        var buildConfig = new BuildConfig { ProjectId = Project01, SendEmailOnBuildFinished = true };
+        env.Service.Configure()
+            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .ThrowsAsync(ex);
+
+        // A pre-translation job has been queued
+        await env.SetupProjectSecretAsync(
+            Project01,
+            new ServalData { PreTranslationJobId = Job01, PreTranslationQueuedAt = DateTime.UtcNow }
+        );
+
+        // SUT
+        await env.Service.BuildProjectForBackgroundJobAsync(
+            User01,
+            buildConfig,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
     }
 
     [Test]
@@ -807,6 +916,30 @@ public class MachineProjectServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.CreateServalProjectAsync(project, preTranslate: true, useEcho: false, CancellationToken.None)
         );
+    }
+
+    [Test]
+    public async Task CreateZipFileFromParatextDirectoryAsync_DoesNotCrashWhenFileNotFound()
+    {
+        // Set up test environment with two files, one will be invalid
+        var env = new TestEnvironment();
+        MemoryStream outputStream = new MemoryStream();
+        env.FileSystemService.EnumerateFiles(Arg.Any<string>())
+            .Returns(callInfo =>
+                [Path.Join(callInfo.ArgAt<string>(0), "file"), Path.Join(callInfo.ArgAt<string>(0), "invalid_file")]
+            );
+        var ex = new FileNotFoundException();
+        env.FileSystemService.OpenFile(Arg.Is<string>(f => f.EndsWith("invalid_file")), FileMode.Open).Throws(ex);
+
+        // SUT
+        await env.Service.CreateZipFileFromParatextDirectoryAsync(Project01, outputStream, CancellationToken.None);
+
+        // Validate the zip file
+        outputStream.Seek(0, SeekOrigin.Begin);
+        using var archive = new ZipArchive(outputStream, ZipArchiveMode.Read);
+        Assert.AreEqual(1, archive.Entries.Count);
+        Assert.AreEqual("file", archive.Entries[0].FullName);
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == ex && logEvent.LogLevel == LogLevel.Warning);
     }
 
     [Test]
@@ -1761,81 +1894,6 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public void GetTranslationBuildConfig_ScriptureRangeAsString()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        var servalData = new ServalData
-        {
-            ParallelCorpusIdForPreTranslate = ParallelCorpus01,
-            ParallelCorpusIdForTrainOn = ParallelCorpus02,
-        };
-        const string trainingScriptureRange = "MAT;MRK";
-        const string translationScriptureRange = "LUK;JHN";
-        var buildConfig = new BuildConfig
-        {
-            TrainingScriptureRange = trainingScriptureRange,
-            TranslationScriptureRange = translationScriptureRange,
-        };
-        List<ServalCorpusSyncInfo> corporaSyncInfo =
-        [
-            new ServalCorpusSyncInfo
-            {
-                CorpusId = Corpus01,
-                IsSource = true,
-                ParallelCorpusId = ParallelCorpus01,
-            },
-            new ServalCorpusSyncInfo
-            {
-                CorpusId = Corpus02,
-                IsSource = false,
-                ParallelCorpusId = ParallelCorpus01,
-            },
-            new ServalCorpusSyncInfo
-            {
-                CorpusId = Corpus03,
-                IsSource = true,
-                ParallelCorpusId = ParallelCorpus02,
-            },
-            new ServalCorpusSyncInfo
-            {
-                CorpusId = Corpus04,
-                IsSource = false,
-                ParallelCorpusId = ParallelCorpus02,
-            },
-        ];
-
-        // SUT
-        TranslationBuildConfig actual = env.Service.GetTranslationBuildConfig(
-            servalData,
-            servalConfig: null,
-            buildConfig,
-            corporaSyncInfo
-        );
-        Assert.AreEqual(
-            translationScriptureRange,
-            actual
-                .Pretranslate!.Single(c => c.ParallelCorpusId == ParallelCorpus01)
-                .SourceFilters!.Single(f => f.CorpusId == Corpus01)
-                .ScriptureRange
-        );
-        Assert.AreEqual(
-            trainingScriptureRange,
-            actual
-                .TrainOn!.Single(c => c.ParallelCorpusId == ParallelCorpus02)
-                .SourceFilters!.Single(f => f.CorpusId == Corpus03)
-                .ScriptureRange
-        );
-        Assert.AreEqual(
-            trainingScriptureRange,
-            actual
-                .TrainOn!.Single(c => c.ParallelCorpusId == ParallelCorpus02)
-                .TargetFilters!.Single(f => f.CorpusId == Corpus04)
-                .ScriptureRange
-        );
-    }
-
-    [Test]
     public void GetTranslationBuildConfig_SpecifiesAdditionalTrainingData()
     {
         // Set up test environment
@@ -1858,78 +1916,6 @@ public class MachineProjectServiceTests
         Assert.IsTrue(actual.Pretranslate!.Any(c => c.ParallelCorpusId == ParallelCorpus01));
         Assert.IsTrue(actual.TrainOn!.Any(c => c.ParallelCorpusId == ParallelCorpus02));
         Assert.IsTrue(actual.TrainOn!.Any(c => c.ParallelCorpusId == ParallelCorpus03));
-    }
-
-    [Test]
-    public void GetTranslationBuildConfig_TranslationBooksAndTrainingBooks()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        var servalData = new ServalData
-        {
-            ParallelCorpusIdForPreTranslate = ParallelCorpus01,
-            ParallelCorpusIdForTrainOn = ParallelCorpus02,
-        };
-        // The training and translation books will correspond to these two strings
-        const string trainingScriptureRange = "MAT;MRK";
-        const string translationScriptureRange = "LUK;JHN";
-        var buildConfig = new BuildConfig { TrainingBooks = [40, 41], TranslationBooks = [42, 43] };
-        List<ServalCorpusSyncInfo> corporaSyncInfo =
-        [
-            new ServalCorpusSyncInfo
-            {
-                CorpusId = Corpus01,
-                IsSource = true,
-                ParallelCorpusId = ParallelCorpus01,
-            },
-            new ServalCorpusSyncInfo
-            {
-                CorpusId = Corpus02,
-                IsSource = false,
-                ParallelCorpusId = ParallelCorpus01,
-            },
-            new ServalCorpusSyncInfo
-            {
-                CorpusId = Corpus03,
-                IsSource = true,
-                ParallelCorpusId = ParallelCorpus02,
-            },
-            new ServalCorpusSyncInfo
-            {
-                CorpusId = Corpus04,
-                IsSource = false,
-                ParallelCorpusId = ParallelCorpus02,
-            },
-        ];
-
-        // SUT
-        TranslationBuildConfig actual = env.Service.GetTranslationBuildConfig(
-            servalData,
-            servalConfig: null,
-            buildConfig,
-            corporaSyncInfo
-        );
-        Assert.AreEqual(
-            translationScriptureRange,
-            actual
-                .Pretranslate!.Single(c => c.ParallelCorpusId == ParallelCorpus01)
-                .SourceFilters!.Single(f => f.CorpusId == Corpus01)
-                .ScriptureRange
-        );
-        Assert.AreEqual(
-            trainingScriptureRange,
-            actual
-                .TrainOn!.Single(c => c.ParallelCorpusId == ParallelCorpus02)
-                .SourceFilters!.Single(f => f.CorpusId == Corpus03)
-                .ScriptureRange
-        );
-        Assert.AreEqual(
-            trainingScriptureRange,
-            actual
-                .TrainOn!.Single(c => c.ParallelCorpusId == ParallelCorpus02)
-                .TargetFilters!.Single(f => f.CorpusId == Corpus04)
-                .ScriptureRange
-        );
     }
 
     [Test]
@@ -2724,6 +2710,70 @@ public class MachineProjectServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.RemoveProjectAsync("invalid_project_id", preTranslate: false, CancellationToken.None)
         );
+    }
+
+    [Test]
+    public async Task SendBuildCompletedEmailAsync_InvalidEmail()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.EmailService.ValidateEmail(Arg.Any<string>()).Returns(false);
+
+        // SUT
+        await env.Service.SendBuildCompletedEmailAsync(
+            User01,
+            Project01,
+            Build01,
+            nameof(JobState.Completed),
+            new Uri(env.SiteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+        );
+        await env.EmailService.DidNotReceive().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.LogLevel == LogLevel.Error);
+    }
+
+    [Test]
+    public async Task SendBuildCompletedEmailAsync_OtherLanguage()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.Users.Get(User01).InterfaceLanguage = "ar";
+
+        // SUT
+        await env.Service.SendBuildCompletedEmailAsync(
+            User01,
+            Project01,
+            Build01,
+            nameof(JobState.Completed),
+            new Uri(env.SiteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+        );
+        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [TestCase(nameof(JobState.Canceled))]
+    [TestCase(nameof(JobState.Completed))]
+    [TestCase(nameof(JobState.Faulted))]
+    public async Task SendBuildCompletedEmailAsync_Success(string buildState)
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.Users.Add(
+            new User
+            {
+                Id = User01,
+                Email = "test@example.com",
+                InterfaceLanguage = "en",
+            }
+        );
+
+        // SUT
+        await env.Service.SendBuildCompletedEmailAsync(
+            User01,
+            Project01,
+            Build01,
+            buildState,
+            new Uri(env.SiteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+        );
+        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
     }
 
     [Test]
@@ -4122,8 +4172,14 @@ public class MachineProjectServiceTests
                 ]
             );
 
-            var siteOptions = Substitute.For<IOptions<SiteOptions>>();
-            siteOptions.Value.Returns(new SiteOptions { SiteDir = "xForge" });
+            SiteOptions = Options.Create(
+                new SiteOptions
+                {
+                    Name = "Scripture Forge",
+                    Origin = "https://localhost:5000",
+                    SiteDir = "xForge",
+                }
+            );
             var userSecrets = new MemoryRepository<UserSecret>([new UserSecret { Id = User01 }]);
 
             Projects = new MemoryRepository<SFProject>(
@@ -4238,23 +4294,43 @@ public class MachineProjectServiceTests
 
             TrainingDataService = Substitute.For<ITrainingDataService>();
             TrainingData = new MemoryRepository<TrainingData>();
+            Users = new MemoryRepository<User>(
+                [
+                    new User
+                    {
+                        Id = User01,
+                        Email = "test@example.com",
+                        InterfaceLanguage = "en",
+                    },
+                ]
+            );
 
             RealtimeService = new SFMemoryRealtimeService();
             RealtimeService.AddRepository("sf_projects", OTType.Json0, Projects);
             RealtimeService.AddRepository("training_data", OTType.Json0, TrainingData);
+            RealtimeService.AddRepository("users", OTType.Json0, Users);
+
+            // Configure services for sending build emails
+            EmailService = Substitute.For<IEmailService>();
+            EmailService.ValidateEmail(Arg.Any<string>()).Returns(true);
+            var localizationOptions = Options.Create(new LocalizationOptions { ResourcesPath = "Resources" });
+            var factory = new ResourceManagerStringLocalizerFactory(localizationOptions, NullLoggerFactory.Instance);
+            Localizer = new StringLocalizer<SharedResource>(factory);
 
             // We use this so we can mock any virtual methods in the class
             Service = Substitute.ForPartsOf<MachineProjectService>(
                 CorporaClient,
                 DataFilesClient,
+                EmailService,
                 Environment,
                 ExceptionHandler,
                 FileSystemService,
+                Localizer,
                 MockLogger,
                 ParatextService,
                 ProjectSecrets,
                 RealtimeService,
-                siteOptions,
+                SiteOptions,
                 TrainingDataService,
                 TranslationEnginesClient,
                 userSecrets
@@ -4264,17 +4340,21 @@ public class MachineProjectServiceTests
         public MachineProjectService Service { get; }
         public ICorporaClient CorporaClient { get; }
         public IDataFilesClient DataFilesClient { get; }
+        public IEmailService EmailService { get; }
         public IWebHostEnvironment Environment { get; }
+        public IExceptionHandler ExceptionHandler { get; }
         public IFileSystemService FileSystemService { get; }
+        public IStringLocalizer<SharedResource> Localizer { get; }
+        public MockLogger<MachineProjectService> MockLogger { get; }
         public IParatextService ParatextService { get; }
-        public SFMemoryRealtimeService RealtimeService { get; }
-        public ITranslationEnginesClient TranslationEnginesClient { get; }
-        private MemoryRepository<TrainingData> TrainingData { get; }
-        public ITrainingDataService TrainingDataService { get; }
         public MemoryRepository<SFProject> Projects { get; }
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
-        public MockLogger<MachineProjectService> MockLogger { get; }
-        public IExceptionHandler ExceptionHandler { get; }
+        public SFMemoryRealtimeService RealtimeService { get; }
+        public IOptions<SiteOptions> SiteOptions { get; }
+        private MemoryRepository<TrainingData> TrainingData { get; }
+        public ITrainingDataService TrainingDataService { get; }
+        public ITranslationEnginesClient TranslationEnginesClient { get; }
+        public MemoryRepository<User> Users { get; }
 
         /// <summary>
         /// Asserts whether the correct API calls have bene made for SyncProjectCorporaAsync.

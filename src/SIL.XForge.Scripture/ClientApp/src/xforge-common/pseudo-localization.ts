@@ -26,6 +26,13 @@ function pseudoLocalizeString(input: string): string {
     if (bracketDepth === 0) output += pseudoLocalizeCharacter(char);
     else output += char;
   }
+
+  // If output contains a single word, add a space in the middle so word wrapping can be properly tested
+  if (/^[a-z]+$/i.test(output)) {
+    const insertIndex = Math.floor(output.length / 2);
+    output = output.slice(0, insertIndex) + ' ' + output.slice(insertIndex);
+  }
+
   return output;
 }
 

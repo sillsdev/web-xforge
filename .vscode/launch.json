@@ -130,10 +130,10 @@
       }
     },
     {
+      "name": "Attach to a node or deno process that used --inspect",
       "type": "node",
       "request": "attach",
-      "name": "Node",
-      "port": 9230
+      "port": 9229
     },
     {
       "name": "Launch Chromium and run and debug current spec",

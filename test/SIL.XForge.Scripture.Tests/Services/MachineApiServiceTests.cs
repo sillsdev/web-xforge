@@ -30,6 +30,7 @@ using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
+using Options = Microsoft.Extensions.Options.Options;
 using ServalOptions = SIL.XForge.Configuration.ServalOptions;
 
 namespace SIL.XForge.Scripture.Services;
@@ -43,6 +44,7 @@ public class MachineApiServiceTests
     private const string Build01 = "build01";
     private const string ParallelCorpusId01 = "parallelCorpusId01";
     private const string TranslationEngine01 = "translationEngine01";
+    private const string TrainingDataId01 = "trainingDataId01";
     private const string User01 = "user01";
     private const string User02 = "user02";
     private const string Paratext01 = "paratext01";
@@ -99,11 +101,137 @@ public class MachineApiServiceTests
         Id = Build01,
         Engine = { Id = "engineId", Url = "https://example.com" },
         Message = "Completed",
-        PercentCompleted = 0,
+        Progress = 0,
         Revision = 43,
         State = JobState.Completed,
         DateFinished = DateTimeOffset.UtcNow,
     };
+
+    [Test]
+    public async Task BuildCompletedAsync_EventMetricInvalid()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(
+                Task.FromResult(
+                    new QueryResults<EventMetric>
+                    {
+                        Results =
+                        [
+                            new EventMetric
+                            {
+                                EventType = nameof(MachineProjectService.BuildProjectAsync),
+                                ProjectId = Project01,
+                                Result = new BsonString(Build01),
+                                Scope = EventScope.Drafting,
+                                UserId = null,
+                            },
+                        ],
+                        UnpagedCount = 1,
+                    }
+                )
+            );
+
+        // SUT
+        await env.Service.BuildCompletedAsync(
+            Project01,
+            Build01,
+            nameof(JobState.Completed),
+            env.HttpRequestAccessor.SiteRoot
+        );
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.LogLevel == LogLevel.Information);
+    }
+
+    [Test]
+    public async Task BuildCompletedAsync_EventMetricMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
+
+        // SUT
+        await env.Service.BuildCompletedAsync(
+            Project01,
+            Build01,
+            nameof(JobState.Completed),
+            env.HttpRequestAccessor.SiteRoot
+        );
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.LogLevel == LogLevel.Information);
+    }
+
+    [Test]
+    public async Task BuildCompletedAsync_Exception()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        ServalApiException ex = ServalApiExceptions.Forbidden;
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .ThrowsAsync(ex);
+
+        // SUT
+        await env.Service.BuildCompletedAsync(
+            Project01,
+            Build01,
+            nameof(JobState.Completed),
+            env.HttpRequestAccessor.SiteRoot
+        );
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == ex);
+        env.ExceptionHandler.Received().ReportException(ex);
+    }
+
+    [Test]
+    public async Task BuildCompletedAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(env.GetEventMetricsForBuildCompleted(true)));
+
+        // SUT
+        await env.Service.BuildCompletedAsync(
+            Project01,
+            Build01,
+            nameof(JobState.Completed),
+            env.HttpRequestAccessor.SiteRoot
+        );
+        await env
+            .MachineProjectService.Received()
+            .SendBuildCompletedEmailAsync(
+                User01,
+                Project01,
+                Build01,
+                nameof(JobState.Completed),
+                env.HttpRequestAccessor.SiteRoot
+            );
+    }
+
+    [Test]
+    public async Task BuildCompletedAsync_UserDidNotRequestEmail()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(env.GetEventMetricsForBuildCompleted(false)));
+
+        // SUT
+        await env.Service.BuildCompletedAsync(
+            Project01,
+            Build01,
+            nameof(JobState.Completed),
+            env.HttpRequestAccessor.SiteRoot
+        );
+        await env
+            .MachineProjectService.DidNotReceive()
+            .SendBuildCompletedEmailAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<Uri>()
+            );
+    }
 
     [Test]
     public void CancelPreTranslationBuildAsync_NoPermission()
@@ -192,11 +320,23 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public void CalculateSignature_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string expected = "sha256=8C8E8C11165F748AFC6621F1DB213F79CE52759757D9BD6382C94E92C5B31063";
+
+        // SUT
+        string actual = env.Service.CalculateSignature(JsonPayload);
+        Assert.AreEqual(expected, actual);
+    }
+
+    [Test]
     public void ExecuteWebhook_InvalidSignature()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        const string signature = "sha256=A7B193B79CE717541B3EF2A306FDD441F2CE0DEAA674404F212E35AECC4F3EA3";
+        string signature = env.Service.CalculateSignature("{}");
 
         // SUT
         Assert.ThrowsAsync<ArgumentException>(() => env.Service.ExecuteWebhookAsync(JsonPayload, signature));
@@ -207,9 +347,12 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        const string json =
-            """{"event":"TranslationBuildFinished","payload":{"build":{"id":"65f0c455682bb17bc4066917","url":"/api/v1/translation/engines/65e66c70682bb17bc405e9ce/builds/65f0c455682bb17bc4066917"},"engine":{"id":"65e66c70682bb17bc405e9ce","url":"/api/v1/translation/engines/65e66c70682bb17bc405e9ce"},"buildState":"Completed","dateFinished":"2024-03-12T21:14:10.789Z"}}""";
-        const string signature = "sha256=24BBC1C61AEE03CEC0A100478A38FB16AAD7CCFDAC1D9B6170CB6AA2EFF82F81";
+
+        // Change payload.engine.id to "invalid_translation_id"
+        JObject payload = JObject.Parse(JsonPayload);
+        payload["payload"]!["engine"]!["id"] = "invalid_translation_id";
+        string json = payload.ToString();
+        string signature = env.Service.CalculateSignature(json);
 
         // SUT
         await env.Service.ExecuteWebhookAsync(json, signature);
@@ -221,9 +364,12 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        const string json =
-            """{"event":"TranslationBuildFinished","payload":{"build":{"id":"65f0c455682bb17bc4066917","url":"/api/v1/translation/engines/65e66c70682bb17bc405e9ce/builds/65f0c455682bb17bc4066917"},"buildState":"Completed","dateFinished":"2024-03-12T21:14:10.789Z"}}""";
-        const string signature = "sha256=A45F54207BF128799A7EE803B3822A9956A24B41E5134A0E9663E64D3FC9D9A3";
+
+        // Remove payload.engine
+        JObject payload = JObject.Parse(JsonPayload);
+        ((JObject)payload["payload"])!.Remove("engine");
+        string json = payload.ToString();
+        string signature = env.Service.CalculateSignature(json);
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.ExecuteWebhookAsync(json, signature));
@@ -234,13 +380,17 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        const string json =
-            """{"event":"TranslationBuildFinished","payload":{"build":{"id":"6668b63edb2383657780f934","url":"/api/v1/translation/engines/6657d17c593d597a09de8503/builds/6668b63edb2383657780f934"},"engine":{"id":"6657d17c593d597a09de8503","url":"/api/v1/translation/engines/6657d17c593d597a09de8503"},"buildState":"Faulted","dateFinished":"2024-06-11T21:47:05.295Z"}}""";
-        const string signature = "sha256=6B6D3E071C019D8012677EA9F5F9DA8E3DF9E870BFAFC3F8D2B8CA1B6CF517D7";
+
+        // Change payload.buildState to "Faulted"
+        JObject payload = JObject.Parse(JsonPayload);
+        payload["payload"]!["buildState"] = "Faulted";
+        string json = payload.ToString();
+        string signature = env.Service.CalculateSignature(json);
 
         // SUT
         await env.Service.ExecuteWebhookAsync(json, signature);
-        env.BackgroundJobClient.DidNotReceive().Create(Arg.Any<Job>(), Arg.Any<IState>());
+        // One job: BuildCompletedAsync
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
     }
 
     [Test]
@@ -248,9 +398,12 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        const string json =
-            """{"event":"TranslationBuildStarted","payload":{"build":{"id":"65d65811352b5d93e8a2c02d","url":"/api/v1/translation/engines/65c94648352b5d93e8a24538/builds/65d65811352b5d93e8a2c02d"},"engine":{"id":"65c94648352b5d93e8a24538","url":"/api/v1/translation/engines/65c94648352b5d93e8a24538"}}}""";
-        const string signature = "sha256=27F96A1483806939905686D944B9753AB4C023F6EFB07A9F91E3E1A208DADF32";
+        JObject payload = JObject.Parse(JsonPayload);
+
+        // Change event to "TranslationBuildStarted"
+        payload["event"] = "TranslationBuildStarted";
+        string json = payload.ToString();
+        string signature = env.Service.CalculateSignature(json);
 
         // SUT
         await env.Service.ExecuteWebhookAsync(json, signature);
@@ -262,11 +415,12 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        const string signature = "sha256=8C8E8C11165F748AFC6621F1DB213F79CE52759757D9BD6382C94E92C5B31063";
+        string signature = env.Service.CalculateSignature(JsonPayload);
 
         // SUT
         await env.Service.ExecuteWebhookAsync(JsonPayload, signature);
-        env.BackgroundJobClient.Received().Create(Arg.Any<Job>(), Arg.Any<IState>());
+        // Two jobs: BuildCompletedAsync & RetrievePreTranslationStatusAsync
+        env.BackgroundJobClient.Received(2).Create(Arg.Any<Job>(), Arg.Any<IState>());
     }
 
     [Test]
@@ -443,7 +597,7 @@ public class MachineApiServiceTests
         const string corpusId2 = "corpusId2";
         const string corpusId3 = "corpusId3";
         const string corpusId4 = "corpusId4";
-        const string parallelCorpusId1 = "parallelCorpusId1";
+        const string parallelCorpusId1 = ParallelCorpusId01;
         const string parallelCorpusId2 = "parallelCorpusId2";
         const int step = 123;
 
@@ -454,7 +608,7 @@ public class MachineApiServiceTests
             Id = buildId,
             Engine = { Id = engineId, Url = "https://example.com" },
             Message = message,
-            PercentCompleted = percentCompleted,
+            Progress = percentCompleted,
             Revision = revision,
             State = state,
             DateFinished = dateFinished,
@@ -501,6 +655,15 @@ public class MachineApiServiceTests
                 // Invalid corpus format
                 new TrainingCorpus(),
             ],
+            Analysis =
+            [
+                new ParallelCorpusAnalysis
+                {
+                    ParallelCorpusRef = parallelCorpusId1,
+                    SourceQuoteConvention = "standard_english",
+                    TargetQuoteConvention = "standard_english",
+                },
+            ],
         };
         env.ConfigureTranslationBuild(translationBuild);
 
@@ -536,6 +699,8 @@ public class MachineApiServiceTests
         Assert.IsNotNull(actual.AdditionalInfo.ParallelCorporaIds);
         Assert.AreEqual(parallelCorpusId1, actual.AdditionalInfo.ParallelCorporaIds!.ElementAt(0));
         Assert.AreEqual(parallelCorpusId2, actual.AdditionalInfo.ParallelCorporaIds.ElementAt(1));
+        Assert.AreEqual(TrainingDataId01, actual.AdditionalInfo.TrainingDataFileIds.Single());
+        Assert.AreEqual(actual.AdditionalInfo.QuotationDenormalization, QuotationAnalysis.Successful);
     }
 
     [Test]
@@ -646,8 +811,22 @@ public class MachineApiServiceTests
                                             JsonConvert.SerializeObject(
                                                 new BuildConfig
                                                 {
-                                                    TrainingScriptureRange = trainingScriptureRange,
-                                                    TranslationScriptureRange = translationScriptureRange,
+                                                    TrainingScriptureRanges =
+                                                    [
+                                                        new ProjectScriptureRange
+                                                        {
+                                                            ProjectId = Project02,
+                                                            ScriptureRange = trainingScriptureRange,
+                                                        },
+                                                    ],
+                                                    TranslationScriptureRanges =
+                                                    [
+                                                        new ProjectScriptureRange
+                                                        {
+                                                            ProjectId = Project03,
+                                                            ScriptureRange = translationScriptureRange,
+                                                        },
+                                                    ],
                                                     ProjectId = Project01,
                                                 }
                                             )
@@ -679,12 +858,12 @@ public class MachineApiServiceTests
         Assert.AreEqual(Project01, builds[0].Id);
         Assert.AreEqual(new DateTimeOffset(requestedDateTime, TimeSpan.Zero), builds[0].AdditionalInfo?.DateRequested);
         Assert.AreEqual(User01, builds[0].AdditionalInfo?.RequestedByUserId);
-        Assert.IsEmpty(builds[0].AdditionalInfo?.TrainingScriptureRanges.First().ProjectId);
+        Assert.AreEqual(Project02, builds[0].AdditionalInfo?.TrainingScriptureRanges.First().ProjectId);
         Assert.AreEqual(
             trainingScriptureRange,
             builds[0].AdditionalInfo?.TrainingScriptureRanges.First().ScriptureRange
         );
-        Assert.IsEmpty(builds[0].AdditionalInfo?.TranslationScriptureRanges.First().ProjectId);
+        Assert.AreEqual(Project03, builds[0].AdditionalInfo?.TranslationScriptureRanges.First().ProjectId);
         Assert.AreEqual(
             translationScriptureRange,
             builds[0].AdditionalInfo?.TranslationScriptureRanges.First().ScriptureRange
@@ -761,6 +940,19 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         TranslationBuild translationBuild = env.ConfigureTranslationBuild();
+        translationBuild.Analysis =
+        [
+            new ParallelCorpusAnalysis
+            {
+                ParallelCorpusRef = ParallelCorpusId01,
+                SourceQuoteConvention = "standard_english",
+                TargetQuoteConvention = "standard_english",
+            },
+        ];
+        translationBuild.Pretranslate =
+        [
+            new PretranslateCorpus { ParallelCorpus = new ResourceLink { Id = ParallelCorpusId01 } },
+        ];
         const string trainingScriptureRange = "GEN;EXO";
         const string translationScriptureRange = "LEV;NUM";
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
@@ -797,6 +989,7 @@ public class MachineApiServiceTests
                                                             ScriptureRange = translationScriptureRange,
                                                         },
                                                     ],
+                                                    TrainingDataFiles = [TrainingDataId01],
                                                 }
                                             )
                                         )
@@ -832,6 +1025,16 @@ public class MachineApiServiceTests
         Assert.AreEqual(1, builds.Count);
         TestEnvironment.AssertCoreBuildProperties(translationBuild, builds[0]);
         Assert.NotNull(builds[0].AdditionalInfo);
+        Assert.AreEqual(
+            translationScriptureRange,
+            builds[0].AdditionalInfo.TranslationScriptureRanges.Single().ScriptureRange
+        );
+        Assert.AreEqual(
+            trainingScriptureRange,
+            builds[0].AdditionalInfo.TrainingScriptureRanges.Single().ScriptureRange
+        );
+        Assert.AreEqual(TrainingDataId01, builds[0].AdditionalInfo.TrainingDataFileIds.Single());
+        Assert.AreEqual(builds[0].AdditionalInfo!.QuotationDenormalization, QuotationAnalysis.Successful);
     }
 
     [Test]
@@ -873,6 +1076,7 @@ public class MachineApiServiceTests
             trainingScriptureRange,
             builds[0].AdditionalInfo?.TrainingScriptureRanges.Single().ScriptureRange
         );
+        Assert.AreEqual(builds[0].AdditionalInfo!.QuotationDenormalization, QuotationAnalysis.Unsuccessful);
     }
 
     [Test]
@@ -924,6 +1128,7 @@ public class MachineApiServiceTests
             trainingScriptureRange,
             builds[0].AdditionalInfo?.TrainingScriptureRanges.Single().ScriptureRange
         );
+        Assert.AreEqual(builds[0].AdditionalInfo!.QuotationDenormalization, QuotationAnalysis.Unsuccessful);
     }
 
     [Test]
@@ -1246,7 +1451,7 @@ public class MachineApiServiceTests
             Id = Build01,
             Engine = { Id = "engineId", Url = "https://example.com" },
             Message = string.Empty,
-            PercentCompleted = 0,
+            Progress = 0,
             Revision = 0,
             State = JobState.Faulted,
         };
@@ -1358,7 +1563,7 @@ public class MachineApiServiceTests
                             Id = Build01,
                             Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
                             Message = message,
-                            PercentCompleted = percentCompleted,
+                            Progress = percentCompleted,
                             Revision = revision,
                             State = state,
                             DateFinished = DateTimeOffset.UtcNow,
@@ -1396,9 +1601,8 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
-        // Verify RetrievePreTranslationStatusAsync was called once
-        await env.Service.Received().RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
-
+        // Verify that a job was scheduled and the correct build was returned
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.IsNotNull(actual);
         Assert.AreEqual(message, actual.Message);
         Assert.AreEqual(percentCompleted, actual.PercentCompleted);
@@ -1431,7 +1635,7 @@ public class MachineApiServiceTests
                             Id = Build01,
                             Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
                             Message = message,
-                            PercentCompleted = percentCompleted,
+                            Progress = percentCompleted,
                             Revision = revision,
                             State = state,
                             DateFinished = DateTimeOffset.UtcNow,
@@ -1488,7 +1692,7 @@ public class MachineApiServiceTests
                             Id = Build01,
                             Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
                             Message = message,
-                            PercentCompleted = percentCompleted,
+                            Progress = percentCompleted,
                             Revision = revision,
                             State = state,
                             DateFinished = DateTimeOffset.UtcNow,
@@ -1726,7 +1930,7 @@ public class MachineApiServiceTests
         JToken token = JToken.Parse("{\"insert\": { \"chapter\": { \"number\": \"1\", \"style\": \"c\" } } }");
         Delta expected = new Delta([token]);
         env.DeltaUsxMapper.ToChapterDeltas(Arg.Any<XDocument>()).Returns([new ChapterDelta(1, 1, true, expected)]);
-        DraftUsfmConfig config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.Remove };
+        DraftUsfmConfig config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormatOptions.Remove };
 
         // SUT
         Snapshot<TextData> actual = await env.Service.GetPreTranslationDeltaAsync(
@@ -1762,7 +1966,7 @@ public class MachineApiServiceTests
         JToken token = JToken.Parse("{\"insert\": { \"chapter\": { \"number\": \"1\", \"style\": \"c\" } } }");
         Delta expected = new Delta([token]);
         env.DeltaUsxMapper.ToChapterDeltas(Arg.Any<XDocument>()).Returns([new ChapterDelta(1, 1, true, expected)]);
-        DraftUsfmConfig config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.Remove };
+        DraftUsfmConfig config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormatOptions.Remove };
 
         // SUT
         Snapshot<TextData> actual = await env.Service.GetPreTranslationDeltaAsync(
@@ -1806,7 +2010,7 @@ public class MachineApiServiceTests
                             Id = Build01,
                             Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
                             Message = "Completed",
-                            PercentCompleted = 0,
+                            Progress = 0,
                             Revision = 43,
                             State = JobState.Completed,
                             DateFinished = dateFinished,
@@ -2012,7 +2216,11 @@ public class MachineApiServiceTests
         env.ParatextService.ConvertUsxToUsfm(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, Arg.Any<XDocument>())
             .Returns(expected);
 
-        var config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.Remove };
+        var config = new DraftUsfmConfig
+        {
+            ParagraphFormat = ParagraphBreakFormatOptions.Remove,
+            QuoteFormat = QuoteStyleOptions.Normalized,
+        };
 
         // SUT
         string usfm = await env.Service.GetPreTranslationUsfmAsync(
@@ -2032,7 +2240,9 @@ public class MachineApiServiceTests
                 Project01,
                 40,
                 1,
-                Arg.Is<DraftUsfmConfig>(d => d.ParagraphFormat == config.ParagraphFormat),
+                Arg.Is<DraftUsfmConfig>(d =>
+                    d.ParagraphFormat == config.ParagraphFormat && d.QuoteFormat == config.QuoteFormat
+                ),
                 CancellationToken.None
             );
     }
@@ -2104,7 +2314,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        var config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.MoveToEnd };
+        var config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormatOptions.MoveToEnd };
         env.PreTranslationService.GetPreTranslationUsfmAsync(
                 Project01,
                 40,
@@ -2308,7 +2518,7 @@ public class MachineApiServiceTests
         };
         // Add a default document snapshot
         env.TextDocuments.Add(new TextDocument(id, usj));
-        var config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.Remove };
+        var config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormatOptions.Remove };
 
         // SUT
         IUsj actual = await env.Service.GetPreTranslationUsjAsync(
@@ -2473,7 +2683,7 @@ public class MachineApiServiceTests
             .Returns(Task.FromResult(usfm));
         env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, usfm).Returns(usx);
         string expected = UsjToUsx.UsjToUsxString(TestUsj);
-        var config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.Remove };
+        var config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormatOptions.Remove };
 
         // SUT
         string actual = await env.Service.GetPreTranslationUsxAsync(
@@ -2866,7 +3076,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task RetrievePreTranslationStatusAsync_ReportsErrors()
+    public void RetrievePreTranslationStatusAsync_ReportsErrors()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -2874,7 +3084,9 @@ public class MachineApiServiceTests
         env.PreTranslationService.UpdatePreTranslationStatusAsync(Project01, CancellationToken.None).Throws(ex);
 
         // SUT
-        await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
+        Assert.ThrowsAsync<ServalApiException>(() =>
+            env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None)
+        );
 
         env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == ex);
         env.ExceptionHandler.Received().ReportException(ex);
@@ -3097,145 +3309,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void StartPreTranslationBuildAsync_DoNotAllowTrainingScriptureRangeWithTrainingBooks()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.StartPreTranslationBuildAsync(
-                User01,
-                new BuildConfig
-                {
-                    ProjectId = Project01,
-                    TrainingScriptureRange = "GEN",
-                    TrainingBooks = [1],
-                },
-                CancellationToken.None
-            )
-        );
-    }
-
-    [Test]
-    public void StartPreTranslationBuildAsync_DoNotAllowTrainingScriptureRangesWithTrainingScriptureRange()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.StartPreTranslationBuildAsync(
-                User01,
-                new BuildConfig
-                {
-                    ProjectId = Project01,
-                    TrainingScriptureRange = "GEN",
-                    TrainingScriptureRanges =
-                    [
-                        new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = "GEN" },
-                    ],
-                },
-                CancellationToken.None
-            )
-        );
-    }
-
-    [Test]
-    public void StartPreTranslationBuildAsync_DoNotAllowTrainingScriptureRangesWithTrainingBooks()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.StartPreTranslationBuildAsync(
-                User01,
-                new BuildConfig
-                {
-                    ProjectId = Project01,
-                    TrainingBooks = [1],
-                    TrainingScriptureRanges =
-                    [
-                        new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = "GEN" },
-                    ],
-                },
-                CancellationToken.None
-            )
-        );
-    }
-
-    [Test]
-    public void StartPreTranslationBuildAsync_DoNotAllowTranslationScriptureRangeWithTranslationBooks()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.StartPreTranslationBuildAsync(
-                User01,
-                new BuildConfig
-                {
-                    ProjectId = Project01,
-                    TranslationScriptureRange = "GEN",
-                    TranslationBooks = [1],
-                },
-                CancellationToken.None
-            )
-        );
-    }
-
-    [Test]
-    public void StartPreTranslationBuildAsync_DoNotAllowTranslationScriptureRangesWithTranslationScriptureRange()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.StartPreTranslationBuildAsync(
-                User01,
-                new BuildConfig
-                {
-                    ProjectId = Project01,
-                    TranslationScriptureRange = "GEN",
-                    TranslationScriptureRanges =
-                    [
-                        new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = "GEN" },
-                    ],
-                },
-                CancellationToken.None
-            )
-        );
-    }
-
-    [Test]
-    public void StartPreTranslationBuildAsync_DoNotAllowTranslationScriptureRangesWithTranslationBooks()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.StartPreTranslationBuildAsync(
-                User01,
-                new BuildConfig
-                {
-                    ProjectId = Project01,
-                    TranslationBooks = [1],
-                    TranslationScriptureRanges =
-                    [
-                        new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = "GEN" },
-                    ],
-                },
-                CancellationToken.None
-            )
-        );
-    }
-
-    [Test]
-    public async Task StartPreTranslationBuildAsync_SuccessNoTrainingOrTranslationBooks()
+    public async Task StartPreTranslationBuildAsync_SuccessNoTrainingOrTranslationScriptureRanges()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -3252,75 +3326,9 @@ public class MachineApiServiceTests
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationErrorMessage);
-        Assert.IsEmpty(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingBooks);
+        Assert.IsEmpty(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingScriptureRanges);
         Assert.IsEmpty(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingDataFiles);
-        Assert.IsEmpty(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTranslationBooks);
-    }
-
-    [Test]
-    public async Task StartPreTranslationBuildAsync_SuccessWithTranslationBooks()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        await env.Service.StartPreTranslationBuildAsync(
-            User01,
-            new BuildConfig { ProjectId = Project01, TranslationBooks = { 1, 2 } },
-            CancellationToken.None
-        );
-
-        await env.ProjectService.Received(1).SyncAsync(User01, Project01);
-        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
-        Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
-        Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
-        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationErrorMessage);
-        SFProject project = env.Projects.Get(Project01);
-        Assert.IsTrue(project.TranslateConfig.PreTranslate);
-        Assert.AreEqual(0, project.TranslateConfig.DraftConfig.LastSelectedTrainingBooks.Count);
-        Assert.AreEqual(2, project.TranslateConfig.DraftConfig.LastSelectedTranslationBooks.Count);
-        Assert.AreEqual(1, project.TranslateConfig.DraftConfig.LastSelectedTranslationBooks.First());
-        Assert.AreEqual(2, project.TranslateConfig.DraftConfig.LastSelectedTranslationBooks.Last());
-    }
-
-    [Test]
-    public async Task StartPreTranslationBuildAsync_SuccessWithTrainingAndTranslationBooksAndDataFiles()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        await env.Service.StartPreTranslationBuildAsync(
-            User01,
-            new BuildConfig
-            {
-                ProjectId = Project01,
-                TrainingBooks = { 1, 2 },
-                TranslationBooks = { 3, 4 },
-                TrainingDataFiles = { Data01 },
-            },
-            CancellationToken.None
-        );
-
-        await env.ProjectService.Received(1).SyncAsync(User01, Project01);
-        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
-        Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
-        Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
-        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationErrorMessage);
-        Assert.AreEqual(2, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingBooks.Count);
-        Assert.AreEqual(1, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingBooks.First());
-        Assert.AreEqual(2, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingBooks.Last());
-        Assert.AreEqual(2, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTranslationBooks.Count);
-        Assert.AreEqual(
-            3,
-            env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTranslationBooks.First()
-        );
-        Assert.AreEqual(4, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTranslationBooks.Last());
-        Assert.AreEqual(1, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingDataFiles.Count);
-        Assert.AreEqual(
-            Data01,
-            env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingDataFiles.First()
-        );
+        Assert.IsEmpty(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTranslationScriptureRanges);
     }
 
     [Test]
@@ -3345,6 +3353,7 @@ public class MachineApiServiceTests
                 [
                     new ProjectScriptureRange { ProjectId = Project02, ScriptureRange = scriptureRange2 },
                 ],
+                TrainingDataFiles = { Data01 },
             },
             CancellationToken.None
         );
@@ -3385,6 +3394,10 @@ public class MachineApiServiceTests
             env.Projects.Get(Project01)
                 .TranslateConfig.DraftConfig.LastSelectedTranslationScriptureRanges.First()
                 .ScriptureRange
+        );
+        Assert.AreEqual(
+            Data01,
+            env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingDataFiles.First()
         );
     }
 
@@ -3485,6 +3498,30 @@ public class MachineApiServiceTests
         project = env.Projects.Get(Project02);
         Assert.IsTrue(project.TranslateConfig.DraftConfig.FastTraining);
         Assert.IsTrue(project.TranslateConfig.DraftConfig.UseEcho);
+    }
+
+    [Test]
+    public async Task StartPreTranslationBuildAsync_SavesSendEmailOnBuildFinished()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        SFProject project = env.Projects.Get(Project02);
+        Assert.IsNull(project.TranslateConfig.DraftConfig.SendEmailOnBuildFinished);
+
+        // SUT
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02, SendEmailOnBuildFinished = true },
+            CancellationToken.None
+        );
+
+        await env.SyncService.Received(1).SyncAsync(Arg.Any<SyncConfig>());
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
+        Assert.IsNotNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationQueuedAt);
+
+        project = env.Projects.Get(Project02);
+        Assert.IsTrue(project.TranslateConfig.DraftConfig.SendEmailOnBuildFinished);
     }
 
     [Test]
@@ -3952,7 +3989,10 @@ public class MachineApiServiceTests
             DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
             EventMetricService = Substitute.For<IEventMetricService>();
             ExceptionHandler = Substitute.For<IExceptionHandler>();
+            HttpRequestAccessor = Substitute.For<IHttpRequestAccessor>();
+            HttpRequestAccessor.SiteRoot.Returns(new Uri("https://scriptureforge.org", UriKind.Absolute));
             var hubContext = Substitute.For<IHubContext<NotificationHub, INotifier>>();
+            MachineProjectService = Substitute.For<IMachineProjectService>();
             MockLogger = new MockLogger<MachineApiService>();
             ParatextService = Substitute.For<IParatextService>();
             PreTranslationService = Substitute.For<IPreTranslationService>();
@@ -3981,13 +4021,24 @@ public class MachineApiServiceTests
                     new SFProject
                     {
                         Id = Project01,
+                        ShortName = "PR1",
                         TranslateConfig = new TranslateConfig
                         {
                             DraftConfig = new DraftConfig
                             {
-                                LastSelectedTranslationScriptureRange = "GEN",
-                                LastSelectedTrainingScriptureRange = "EXO",
-                                UsfmConfig = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.MoveToEnd },
+                                LastSelectedTranslationScriptureRanges =
+                                [
+                                    new ProjectScriptureRange { ScriptureRange = "GEN" },
+                                ],
+                                LastSelectedTrainingScriptureRanges =
+                                [
+                                    new ProjectScriptureRange { ScriptureRange = "EXO" },
+                                ],
+                                UsfmConfig = new DraftUsfmConfig
+                                {
+                                    ParagraphFormat = ParagraphBreakFormatOptions.MoveToEnd,
+                                },
+                                LastSelectedTrainingDataFiles = [TrainingDataId01],
                             },
                         },
                         ParatextId = Paratext01,
@@ -4043,8 +4094,7 @@ public class MachineApiServiceTests
             RealtimeService = new SFMemoryRealtimeService();
             RealtimeService.AddRepository("sf_projects", OTType.Json0, Projects);
             RealtimeService.AddRepository("text_documents", OTType.Json0, TextDocuments);
-
-            var servalOptions = Options.Create(new ServalOptions { WebhookSecret = "this_is_a_secret" });
+            ServalOptions = Options.Create(new ServalOptions { WebhookSecret = "this_is_a_secret" });
             SyncService = Substitute.For<ISyncService>();
             SyncService.SyncAsync(Arg.Any<SyncConfig>()).Returns(Task.FromResult(JobId));
             TranslationEnginesClient = Substitute.For<ITranslationEnginesClient>();
@@ -4075,15 +4125,17 @@ public class MachineApiServiceTests
                 DeltaUsxMapper,
                 EventMetricService,
                 ExceptionHandler,
+                HttpRequestAccessor,
                 hubContext,
                 MockLogger,
+                MachineProjectService,
                 ParatextService,
                 PreTranslationService,
                 ProjectSecrets,
                 ProjectRights,
                 ProjectService,
                 RealtimeService,
-                servalOptions,
+                ServalOptions,
                 SyncService,
                 TranslationEnginesClient,
                 TranslationEngineTypesClient,
@@ -4095,6 +4147,8 @@ public class MachineApiServiceTests
         public IDeltaUsxMapper DeltaUsxMapper { get; }
         public IEventMetricService EventMetricService { get; }
         public IExceptionHandler ExceptionHandler { get; }
+        public IHttpRequestAccessor HttpRequestAccessor { get; }
+        public IMachineProjectService MachineProjectService { get; }
         public MockLogger<MachineApiService> MockLogger { get; }
         public IParatextService ParatextService { get; }
         public IPreTranslationService PreTranslationService { get; }
@@ -4105,6 +4159,7 @@ public class MachineApiServiceTests
         public ISFProjectService ProjectService { get; }
         public SFMemoryRealtimeService RealtimeService { get; }
         public MachineApiService Service { get; }
+        public IOptions<ServalOptions> ServalOptions { get; }
         public ISyncService SyncService { get; }
         public ITranslationEnginesClient TranslationEnginesClient { get; }
         public ITranslationEngineTypesClient TranslationEngineTypesClient { get; }
@@ -4122,7 +4177,7 @@ public class MachineApiServiceTests
                 Id = Build01,
                 Engine = { Id = "engineId", Url = "https://example.com" },
                 Message = message,
-                PercentCompleted = percentCompleted,
+                Progress = percentCompleted,
                 Revision = revision,
                 State = state,
             };
@@ -4140,6 +4195,38 @@ public class MachineApiServiceTests
                 .Returns(Task.FromResult<IList<TranslationBuild>>([translationBuild]));
             return translationBuild;
         }
+
+        public QueryResults<EventMetric> GetEventMetricsForBuildCompleted(bool sendEmailOnBuildFinished) =>
+            new QueryResults<EventMetric>
+            {
+                Results =
+                [
+                    new EventMetric
+                    {
+                        EventType = nameof(MachineApiService.StartPreTranslationBuildAsync),
+                        Payload =
+                        {
+                            {
+                                "buildConfig",
+                                BsonDocument.Parse(
+                                    JsonConvert.SerializeObject(
+                                        new BuildConfig
+                                        {
+                                            ProjectId = Project01,
+                                            SendEmailOnBuildFinished = sendEmailOnBuildFinished,
+                                        }
+                                    )
+                                )
+                            },
+                        },
+                        ProjectId = Project01,
+                        Result = new BsonString(Build01),
+                        Scope = EventScope.Drafting,
+                        UserId = User01,
+                    },
+                ],
+                UnpagedCount = 1,
+            };
 
         public async Task QueueBuildAsync(
             string sfProjectId,
@@ -4229,7 +4316,7 @@ public class MachineApiServiceTests
             string buildDtoId = $"{Project01}.{translationBuild.Id}";
             Assert.IsNotNull(actual);
             Assert.AreEqual(translationBuild.Message, actual!.Message);
-            Assert.AreEqual(translationBuild.PercentCompleted, actual.PercentCompleted);
+            Assert.AreEqual(translationBuild.Progress, actual.PercentCompleted);
             Assert.AreEqual(translationBuild.Revision, actual.Revision);
             Assert.AreEqual(translationBuild.State.ToString().ToUpperInvariant(), actual.State);
             Assert.AreEqual(buildDtoId, actual.Id);

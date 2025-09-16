@@ -222,19 +222,22 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
     return applicableDomains;
   }
 
-  protected onDelete(userId: string, docId: string, projectDomain: string, entity: OwnedData): Promise<void> {
+  protected async onDelete(userId: string, docId: string, projectDomain: string, entity: OwnedData): Promise<void> {
     if (projectDomain === SFProjectDomain.Notes) {
-      this.removeEntityHaveReadRefs(userId, docId, projectDomain, entity);
+      await this.removeEntityHaveReadRefs(userId, docId, projectDomain, entity);
     }
-    return Promise.resolve();
   }
 
-  protected onBeforeDelete(userId: string, docId: string, projectDomain: string, entity: OwnedData): Promise<void> {
+  protected async onBeforeDelete(
+    userId: string,
+    docId: string,
+    projectDomain: string,
+    entity: OwnedData
+  ): Promise<void> {
     // Process an incoming deletion for a NoteThread before it happens so we can look at its list of notes.
     if (projectDomain === SFProjectDomain.PTNoteThreads) {
-      this.removeEntityHaveReadRefs(userId, docId, projectDomain, entity);
+      await this.removeEntityHaveReadRefs(userId, docId, projectDomain, entity);
     }
-    return Promise.resolve();
   }
 
   private async removeEntityHaveReadRefs(

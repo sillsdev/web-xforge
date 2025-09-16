@@ -10,13 +10,18 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { UserService } from 'xforge-common/user.service';
+import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
+import { ParatextService } from '../../../core/paratext.service';
 import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from '../draft-sources.service';
@@ -28,12 +33,15 @@ describe('DraftGenerationStepsComponent', () => {
   let loader: HarnessLoader;
 
   const mockActivatedProjectService = mock(ActivatedProjectService);
+  const mockDraftSourceService = mock(DraftSourcesService);
   const mockFeatureFlagService = mock(FeatureFlagService);
   const mockNllbLanguageService = mock(NllbLanguageService);
   const mockProgressService = mock(ProgressService);
   const mockOnlineStatusService = mock(OnlineStatusService);
   const mockNoticeService = mock(NoticeService);
-  const mockDraftSourceService = mock(DraftSourcesService);
+  const mockParatextService = mock(ParatextService);
+  const mockUserService = mock(UserService);
+  const mockDialogService = mock(DialogService);
 
   when(mockActivatedProjectService.projectId).thenReturn('project01');
 
@@ -44,9 +52,12 @@ describe('DraftGenerationStepsComponent', () => {
       { provide: DraftSourcesService, useMock: mockDraftSourceService },
       { provide: FeatureFlagService, useMock: mockFeatureFlagService },
       { provide: NllbLanguageService, useMock: mockNllbLanguageService },
+      { provide: ParatextService, useMock: mockParatextService },
       { provide: ProgressService, useMock: mockProgressService },
       { provide: OnlineStatusService, useMock: mockOnlineStatusService },
       { provide: NoticeService, useMock: mockNoticeService },
+      { provide: UserService, useMock: mockUserService },
+      { provide: DialogService, useMock: mockDialogService },
       provideHttpClient(withInterceptorsFromDi()),
       provideHttpClientTesting()
     ]
@@ -57,14 +68,166 @@ describe('DraftGenerationStepsComponent', () => {
     when(mockActivatedProjectService.projectId$).thenReturn(of('project01'));
     when(mockProgressService.isLoaded$).thenReturn(of(true));
     when(mockProgressService.texts).thenReturn([
-      { text: { bookNum: 1 }, translated: 100 } as TextProgress,
-      { text: { bookNum: 2 }, translated: 100 } as TextProgress,
+      { text: { bookNum: 1 }, translated: 100, percentage: 100 } as TextProgress,
+      { text: { bookNum: 2 }, translated: 100, percentage: 100 } as TextProgress,
       { text: { bookNum: 3 }, translated: 0 } as TextProgress,
-      { text: { bookNum: 6 }, translated: 20 } as TextProgress,
+      { text: { bookNum: 6 }, translated: 20, blank: 2, percentage: 90 } as TextProgress,
       { text: { bookNum: 7 }, translated: 0 } as TextProgress
     ]);
     when(mockOnlineStatusService.isOnline).thenReturn(true);
   }));
+
+  describe('ngOnInit', () => {
+    let draftSources$: BehaviorSubject<DraftSourcesAsArrays>;
+    const initialConfig: DraftSourcesAsArrays = {
+      trainingSources: [
+        {
+          projectRef: 'sourceProject',
+          paratextId: 'PT_SP',
+          name: 'Source Project',
+          shortName: 'sP',
+          writingSystem: { tag: 'eng' },
+          texts: [{ bookNum: 1 }]
+        }
+      ],
+      trainingTargets: [
+        {
+          projectRef: 'project01',
+          paratextId: 'PT_TT',
+          name: 'Target Project',
+          shortName: 'tT',
+          writingSystem: { tag: 'xyz' },
+          texts: [{ bookNum: 1 }]
+        }
+      ],
+      draftingSources: [
+        {
+          projectRef: 'sourceProject',
+          paratextId: 'PT_SP',
+          name: 'Source Project',
+          shortName: 'sP',
+          writingSystem: { tag: 'eng' },
+          texts: [{ bookNum: 1 }]
+        }
+      ]
+    };
+
+    beforeEach(() => {
+      draftSources$ = new BehaviorSubject<DraftSourcesAsArrays>(initialConfig);
+      when(mockDraftSourceService.getDraftProjectSources()).thenReturn(draftSources$);
+      when(mockDialogService.message(anything(), anything(), anything())).thenResolve();
+      when(mockNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(false);
+      when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
+      const mockTargetProjectDoc = {
+        id: 'project01',
+        data: createTestProjectProfile({
+          texts: [{ bookNum: 1 }],
+          translateConfig: {
+            source: { projectRef: 'sourceProject', shortName: 'sP', writingSystem: { tag: 'eng' } }
+          },
+          writingSystem: { tag: 'xyz' }
+        })
+      } as SFProjectProfileDoc;
+      when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
+      when(mockActivatedProjectService.projectDoc$).thenReturn(of(mockTargetProjectDoc));
+      when(mockActivatedProjectService.changes$).thenReturn(new BehaviorSubject(undefined));
+    });
+
+    it('should show dialog and emit cancel if sources change', fakeAsync(() => {
+      let cancelFired = false;
+      when(mockDialogService.openDialogCount).thenReturn(0);
+      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      component = fixture.componentInstance;
+      component.cancel.subscribe(() => (cancelFired = true));
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      expect(component['draftingSources'].length).toBe(1);
+      verify(mockDialogService.message(anything(), anything(), anything())).never();
+
+      // Simulate a remote change
+      const newConfig: DraftSourcesAsArrays = {
+        ...initialConfig,
+        draftingSources: [{ ...initialConfig.draftingSources[0], texts: [{ bookNum: 2 }] }]
+      };
+      draftSources$.next(newConfig);
+      tick();
+
+      verify(mockDialogService.message(anything(), anything(), anything())).once();
+      expect(cancelFired).toBe(true);
+    }));
+
+    it('should not show dialog or emit cancel if sources are unchanged', fakeAsync(() => {
+      let cancelFired = false;
+      when(mockDialogService.openDialogCount).thenReturn(0);
+      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      component = fixture.componentInstance;
+      component.cancel.subscribe(() => (cancelFired = true));
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      // The component should be initialized after the first emission
+      expect(component['draftingSources'].length).toBe(1);
+      verify(mockDialogService.message(anything(), anything(), anything())).never();
+
+      // Simulate a remote emission with identical data
+      const newConfig: DraftSourcesAsArrays = { ...initialConfig }; // Create a new object with the same values
+      draftSources$.next(newConfig);
+      tick();
+
+      // The dialog should not be shown, and cancel should not be emitted
+      verify(mockDialogService.message(anything(), anything(), anything())).never();
+      expect(cancelFired).toBe(false);
+    }));
+
+    it('should not show dialog or emit cancel if a dialog is already open', fakeAsync(() => {
+      let cancelFired = false;
+      when(mockDialogService.openDialogCount).thenReturn(1);
+      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      component = fixture.componentInstance;
+      component.cancel.subscribe(() => (cancelFired = true));
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      expect(component['draftingSources'].length).toBe(1);
+
+      // Simulate a remote change
+      const newConfig = { ...initialConfig, draftingSources: [] };
+      draftSources$.next(newConfig);
+      tick();
+      fixture.detectChanges();
+
+      verify(mockDialogService.message(anything(), anything(), anything())).never();
+      expect(cancelFired).toBe(false);
+    }));
+
+    it('should not show dialog or emit cancel if the steps are completed', fakeAsync(() => {
+      let cancelFired = false;
+      when(mockDialogService.openDialogCount).thenReturn(1);
+      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      component = fixture.componentInstance;
+      component.cancel.subscribe(() => (cancelFired = true));
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      expect(component['draftingSources'].length).toBe(1);
+
+      component.isStepsCompleted = true;
+
+      // Simulate a remote change
+      const newConfig = { ...initialConfig, draftingSources: [] };
+      draftSources$.next(newConfig);
+      tick();
+      fixture.detectChanges();
+
+      verify(mockDialogService.message(anything(), anything(), anything())).never();
+      expect(cancelFired).toBe(false);
+    }));
+  });
 
   describe('one training source', async () => {
     const availableBooks = [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }];
@@ -150,13 +313,13 @@ describe('DraftGenerationStepsComponent', () => {
     it('should set "availableTrainingBooks" correctly', fakeAsync(() => {
       expect(component.availableTrainingBooks).toEqual({
         project01: [
-          { number: 1, selected: false },
-          { number: 2, selected: false },
+          { number: 1, selected: true },
+          { number: 2, selected: true },
           { number: 3, selected: false }
         ],
         sourceProject: [
-          { number: 1, selected: false },
-          { number: 2, selected: false },
+          { number: 1, selected: true },
+          { number: 2, selected: true },
           { number: 3, selected: false }
         ]
       });
@@ -164,11 +327,14 @@ describe('DraftGenerationStepsComponent', () => {
 
     it('should set "selectableTrainingBooksByProj" correctly', fakeAsync(() => {
       expect(component.selectableTrainingBooksByProj('project01')).toEqual([
-        { number: 1, selected: false },
-        { number: 2, selected: false },
+        { number: 1, selected: true },
+        { number: 2, selected: true },
         { number: 3, selected: false }
       ]);
-      expect(component.selectableTrainingBooksByProj('sourceProject')).toEqual([]);
+      expect(component.selectableTrainingBooksByProj('sourceProject')).toEqual([
+        { number: 1, selected: true },
+        { number: 2, selected: true }
+      ]);
 
       component.onTranslatedBookSelect([1, 2]);
 
@@ -219,10 +385,11 @@ describe('DraftGenerationStepsComponent', () => {
     }));
 
     it('should allow selecting books from the training source project', () => {
-      component.onSourceTrainingBookSelect([2, 3], config.trainingSources[0]);
+      component.onSourceTrainingBookSelect([1, 2, 3], config.trainingSources[0]);
       fixture.detectChanges();
 
       expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([
+        { number: 1, selected: true },
         { number: 2, selected: true },
         { number: 3, selected: true }
       ]);
@@ -256,12 +423,14 @@ describe('DraftGenerationStepsComponent', () => {
     });
 
     it('clears selected reference books when translated book is unselected', () => {
-      component.onTranslatedBookSelect([2, 3]);
+      component.onTranslatedBookSelect([1, 2, 3]);
       expect(component.selectedTrainingBooksByProj('project01')).toEqual([
+        { number: 1, selected: true },
         { number: 2, selected: true },
         { number: 3, selected: true }
       ]);
       expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([
+        { number: 1, selected: true },
         { number: 2, selected: true },
         { number: 3, selected: true }
       ]);
@@ -425,20 +594,20 @@ describe('DraftGenerationStepsComponent', () => {
     it('should set "availableTrainingBooks" correctly and with canonical book order', fakeAsync(() => {
       expect(component.availableTrainingBooks).toEqual({
         source1: [
-          { number: 1, selected: false },
-          { number: 2, selected: false },
+          { number: 1, selected: true },
+          { number: 2, selected: true },
           { number: 3, selected: false }
         ],
         source2: [
-          { number: 2, selected: false },
+          { number: 2, selected: true },
           { number: 3, selected: false },
-          { number: 6, selected: false }
+          { number: 6, selected: true }
         ],
         project01: [
-          { number: 1, selected: false },
-          { number: 2, selected: false },
+          { number: 1, selected: true },
+          { number: 2, selected: true },
           { number: 3, selected: false },
-          { number: 6, selected: false }
+          { number: 6, selected: true }
         ]
       });
     }));
@@ -506,7 +675,8 @@ describe('DraftGenerationStepsComponent', () => {
         ],
         translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'JDG' }],
         fastTraining: false,
-        useEcho: false
+        useEcho: false,
+        sendEmailOnBuildFinished: false
       } as DraftGenerationStepsResult);
       expect(component.isStepsCompleted).toBe(true);
     }));
@@ -548,7 +718,8 @@ describe('DraftGenerationStepsComponent', () => {
         trainingScriptureRanges: [{ projectId: 'source2', scriptureRange: 'EXO;JOS' }],
         translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'JDG' }],
         fastTraining: false,
-        useEcho: false
+        useEcho: false,
+        sendEmailOnBuildFinished: false
       } as DraftGenerationStepsResult);
       expect(component.isStepsCompleted).toBe(true);
     });
@@ -649,16 +820,19 @@ describe('DraftGenerationStepsComponent', () => {
           translateConfig: {
             draftConfig: {
               fastTraining: true,
-              useEcho: true
+              useEcho: true,
+              sendEmailOnBuildFinished: true
             }
           }
         })
       } as SFProjectProfileDoc;
+      const mockUserDoc: UserDoc = { data: { name: 'John', email: 'john@example.com' } } as UserDoc;
       when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
       when(mockActivatedProjectService.projectDoc$).thenReturn(of(mockTargetProjectDoc));
       when(mockActivatedProjectService.changes$).thenReturn(of(mockTargetProjectDoc));
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
       when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(true));
+      when(mockUserService.getCurrentUser()).thenResolve(mockUserDoc);
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
       loader = TestbedHarnessEnvironment.loader(fixture);
@@ -667,9 +841,10 @@ describe('DraftGenerationStepsComponent', () => {
       tick();
     }));
 
-    it('should set fast training and echo engine correctly', fakeAsync(() => {
+    it('should set fast training, echo engine and email me correctly', fakeAsync(() => {
       expect(component.fastTraining).toBe(true);
       expect(component.useEcho).toBe(true);
+      expect(component.sendEmailOnBuildFinished).toBe(true);
     }));
 
     it('should emit the fast training value if checked', async () => {
@@ -692,6 +867,9 @@ describe('DraftGenerationStepsComponent', () => {
       const echoHarness = await loader.getHarness(MatCheckboxHarness.with({ selector: '.use-echo' }));
       await echoHarness.uncheck();
 
+      const sendEmailOnBuildFinished = await loader.getHarness(MatCheckboxHarness.with({ selector: '.email-me' }));
+      await sendEmailOnBuildFinished.uncheck();
+
       // Click next on the final step to generate the draft
       fixture.detectChanges();
       const generateDraftButton: HTMLElement = fixture.nativeElement.querySelector('.advance-button');
@@ -704,7 +882,8 @@ describe('DraftGenerationStepsComponent', () => {
         trainingScriptureRanges: [{ projectId: 'source1', scriptureRange: 'LEV;1SA;2SA' }],
         translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'EXO' }],
         fastTraining: true,
-        useEcho: false
+        useEcho: false,
+        sendEmailOnBuildFinished: false
       } as DraftGenerationStepsResult);
       expect(generateDraftButton['disabled']).toBe(true);
     });
@@ -729,6 +908,9 @@ describe('DraftGenerationStepsComponent', () => {
       const echoHarness = await loader.getHarness(MatCheckboxHarness.with({ selector: '.use-echo' }));
       await echoHarness.check();
 
+      const sendEmailOnBuildFinished = await loader.getHarness(MatCheckboxHarness.with({ selector: '.email-me' }));
+      await sendEmailOnBuildFinished.uncheck();
+
       // Click next on the final step to generate the draft
       fixture.detectChanges();
       const generateDraftButton: HTMLElement = fixture.nativeElement.querySelector('.advance-button');
@@ -741,7 +923,49 @@ describe('DraftGenerationStepsComponent', () => {
         trainingScriptureRanges: [{ projectId: 'source1', scriptureRange: 'LEV;1SA;2SA' }],
         translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'EXO' }],
         fastTraining: false,
-        useEcho: true
+        useEcho: true,
+        sendEmailOnBuildFinished: false
+      } as DraftGenerationStepsResult);
+      expect(generateDraftButton['disabled']).toBe(true);
+    });
+
+    it('should emit the email me value if checked', async () => {
+      component.onTranslateBookSelect([2], config.draftingSources[0]);
+      component.onTranslatedBookSelect([3, 9, 10]);
+      component.onSourceTrainingBookSelect([3, 9, 10], config.trainingSources[0]);
+
+      spyOn(component.done, 'emit');
+
+      fixture.detectChanges();
+      const step = fixture.debugElement.queryAll(By.css('mat-step-header'));
+      step[3].nativeElement.click(); //click the next step
+      fixture.detectChanges();
+      component.tryAdvanceStep();
+
+      // Tick the echo checkbox
+      const fastTrainingHarness = await loader.getHarness(MatCheckboxHarness.with({ selector: '.fast-training' }));
+      await fastTrainingHarness.uncheck();
+
+      const echoHarness = await loader.getHarness(MatCheckboxHarness.with({ selector: '.use-echo' }));
+      await echoHarness.uncheck();
+
+      const sendEmailOnBuildFinished = await loader.getHarness(MatCheckboxHarness.with({ selector: '.email-me' }));
+      await sendEmailOnBuildFinished.check();
+
+      // Click next on the final step to generate the draft
+      fixture.detectChanges();
+      const generateDraftButton: HTMLElement = fixture.nativeElement.querySelector('.advance-button');
+      expect(generateDraftButton['disabled']).toBe(false);
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+
+      expect(component.done.emit).toHaveBeenCalledWith({
+        trainingDataFiles: [],
+        trainingScriptureRanges: [{ projectId: 'source1', scriptureRange: 'LEV;1SA;2SA' }],
+        translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'EXO' }],
+        fastTraining: false,
+        useEcho: false,
+        sendEmailOnBuildFinished: true
       } as DraftGenerationStepsResult);
       expect(generateDraftButton['disabled']).toBe(true);
     });
@@ -913,7 +1137,8 @@ describe('DraftGenerationStepsComponent', () => {
         translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'LEV' }],
         trainingDataFiles: ['file1'],
         fastTraining: false,
-        useEcho: false
+        useEcho: false,
+        sendEmailOnBuildFinished: false
       });
     });
   });
@@ -1004,6 +1229,95 @@ describe('DraftGenerationStepsComponent', () => {
       expect(trainingGroups[1].ranges.length).toEqual(2);
       expect(trainingGroups[1].ranges[0]).toEqual('Deuteronomy');
       expect(trainingGroups[1].ranges[1]).toEqual('1 Samuel');
+    });
+  });
+
+  describe('pending updates', () => {
+    const availableBooks = [
+      { bookNum: 1 },
+      { bookNum: 2 },
+      { bookNum: 3 },
+      { bookNum: 4 },
+      { bookNum: 5 },
+      { bookNum: 9 }
+    ];
+    const allBooks = [...availableBooks, { bookNum: 7 }, { bookNum: 8 }];
+    const config = {
+      trainingSources: [
+        {
+          projectRef: 'source1',
+          shortName: 'sP1',
+          writingSystem: { tag: 'eng' },
+          texts: availableBooks
+        },
+        {
+          projectRef: 'source2',
+          shortName: 'sP2',
+          writingSystem: { tag: 'eng' },
+          texts: availableBooks
+        }
+      ] as [DraftSource, DraftSource],
+      trainingTargets: [
+        {
+          projectRef: mockActivatedProjectService.projectId,
+          shortName: 'tT',
+          writingSystem: { tag: 'nllb' },
+          texts: allBooks.filter(b => b.bookNum !== 7)
+        }
+      ] as [DraftSource],
+      draftingSources: [
+        {
+          projectRef: 'draftingSource',
+          shortName: 'dS',
+          writingSystem: { tag: 'eng' },
+          texts: availableBooks.concat({ bookNum: 7 })
+        }
+      ] as [DraftSource]
+    };
+
+    const mockTargetProjectDoc = {
+      data: createTestProjectProfile({
+        translateConfig: {
+          draftConfig: {
+            lastSelectedTrainingDataFiles: [],
+            lastSelectedTrainingScriptureRanges: [
+              { projectId: 'source1', scriptureRange: 'LEV;NUM;DEU;JOS' },
+              { projectId: 'source2', scriptureRange: 'DEU;JOS;1SA' }
+            ],
+            lastSelectedTranslationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'GEN;EXO' }]
+          }
+        }
+      })
+    } as SFProjectProfileDoc;
+
+    beforeEach(fakeAsync(() => {
+      when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
+      when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
+      when(mockActivatedProjectService.projectDoc$).thenReturn(
+        new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc)
+      );
+      when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
+      when(mockParatextService.getProjects()).thenResolve([
+        // Include different combinations of hasUpdate and isConnected and missing sources so these will be filtered out
+        { projectId: null, hasUpdate: true, isConnected: true } as ParatextProject,
+        { projectId: 'source1', hasUpdate: false, isConnected: true, name: 'Source 1' } as ParatextProject,
+        { projectId: 'source1', hasUpdate: true, isConnected: false, name: 'Source 1' } as ParatextProject,
+        { projectId: 'source3', hasUpdate: true, isConnected: true, name: 'Source 3' } as ParatextProject,
+        { projectId: 'source1', hasUpdate: true, isConnected: true, name: 'Source 1' } as ParatextProject,
+        { projectId: 'source2', hasUpdate: true, isConnected: true, shortName: 'SRC' } as ParatextProject
+      ]);
+
+      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      tick();
+    }));
+
+    it('should show projects pending updates', () => {
+      expect(component.projectsPendingUpdate).toEqual([
+        { projectId: 'source1', name: 'Source 1', syncUrl: '/projects/source1/sync' },
+        { projectId: 'source2', name: 'SRC', syncUrl: '/projects/source2/sync' }
+      ]);
     });
   });
 });

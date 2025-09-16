@@ -36,8 +36,8 @@ export enum ParagraphBreakFormat {
 }
 
 export enum QuoteFormat {
-  Automatic = 'automatic',
-  Straight = 'straight'
+  Denormalized = 'denormalized',
+  Normalized = 'normalized'
 }
 
 export interface BaseProject {
@@ -55,6 +55,7 @@ export interface ProjectScriptureRange {
 
 export interface DraftUsfmConfig {
   paragraphFormat: ParagraphBreakFormat;
+  quoteFormat: QuoteFormat;
 }
 
 export interface DraftConfig {
@@ -64,17 +65,14 @@ export interface DraftConfig {
   alternateSource?: TranslateSource;
   alternateTrainingSourceEnabled: boolean;
   alternateTrainingSource?: TranslateSource;
-  lastSelectedTrainingBooks: number[];
   lastSelectedTrainingDataFiles: string[];
-  lastSelectedTrainingScriptureRange?: string;
   lastSelectedTrainingScriptureRanges?: ProjectScriptureRange[];
-  lastSelectedTranslationBooks: number[];
-  lastSelectedTranslationScriptureRange?: string;
   lastSelectedTranslationScriptureRanges?: ProjectScriptureRange[];
   fastTraining?: boolean;
   useEcho?: boolean;
   servalConfig?: string;
   usfmConfig?: DraftUsfmConfig;
+  sendEmailOnBuildFinished?: boolean;
 }
 
 export interface TranslateConfig {

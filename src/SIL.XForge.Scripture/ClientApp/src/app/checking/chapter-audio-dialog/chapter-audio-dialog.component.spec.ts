@@ -64,7 +64,7 @@ describe('ChapterAudioDialogComponent', () => {
   it('should upload audio and return timing data on save', fakeAsync(async () => {
     const promiseForResult: Promise<ChapterAudioDialogResult> = firstValueFrom(env.dialogRef.afterClosed());
     await env.component.audioUpdate(env.audioFile);
-    await env.component.prepareTimingFileUpload(anything());
+    await env.component.prepareTimingFileUpload(env.timingFile);
     await env.component.save();
     await env.wait();
 
@@ -181,7 +181,7 @@ describe('ChapterAudioDialogComponent', () => {
     ]);
 
     await env.component.audioUpdate(env.audioFile);
-    await env.component.prepareTimingFileUpload(anything());
+    await env.component.prepareTimingFileUpload(env.timingFile);
     await env.wait();
 
     expect(env.component.timingErrorMessageKey).toContain('zero_segments');
@@ -192,7 +192,7 @@ describe('ChapterAudioDialogComponent', () => {
     when(mockedCsvService.parse(anything())).thenResolve([]);
 
     await env.component.audioUpdate(env.audioFile);
-    await env.component.prepareTimingFileUpload(anything());
+    await env.component.prepareTimingFileUpload(env.timingFile);
     await env.wait();
 
     expect(env.component.timingErrorMessageKey).toContain('zero_segments');
@@ -207,7 +207,7 @@ describe('ChapterAudioDialogComponent', () => {
     ]);
 
     await env.component.audioUpdate(env.audioFile);
-    await env.component.prepareTimingFileUpload(anything());
+    await env.component.prepareTimingFileUpload(env.timingFile);
     await env.wait();
 
     expect(env.component.timingErrorMessageKey).toContain('timing_past_audio_length');
@@ -222,7 +222,7 @@ describe('ChapterAudioDialogComponent', () => {
     ]);
 
     await env.component.audioUpdate(env.audioFile);
-    await env.component.prepareTimingFileUpload(anything());
+    await env.component.prepareTimingFileUpload(env.timingFile);
     await env.wait();
 
     expect(env.component.timingErrorMessageKey).toContain('unrecognized_timing_file_format');
@@ -236,7 +236,7 @@ describe('ChapterAudioDialogComponent', () => {
     ]);
 
     await env.component.audioUpdate(env.audioFile);
-    await env.component.prepareTimingFileUpload(anything());
+    await env.component.prepareTimingFileUpload(env.timingFile);
     await env.wait();
 
     expect(env.component.timingErrorMessageKey).toContain('unrecognized_time_format');
@@ -249,7 +249,7 @@ describe('ChapterAudioDialogComponent', () => {
     ]);
 
     await env.component.audioUpdate(env.audioFile);
-    await env.component.prepareTimingFileUpload(anything());
+    await env.component.prepareTimingFileUpload(env.timingFile);
     await env.wait();
 
     expect(env.component.timingErrorMessageKey).toContain('zero_segments');
@@ -263,7 +263,7 @@ describe('ChapterAudioDialogComponent', () => {
     ]);
 
     await env.component.audioUpdate(env.audioFile);
-    await env.component.prepareTimingFileUpload(anything());
+    await env.component.prepareTimingFileUpload(env.timingFile);
     await env.wait();
 
     expect(env.component.timingErrorMessageKey).toContain('zero_segments');
@@ -277,7 +277,7 @@ describe('ChapterAudioDialogComponent', () => {
     ]);
 
     await env.component.audioUpdate(env.audioFile);
-    await env.component.prepareTimingFileUpload(anything());
+    await env.component.prepareTimingFileUpload(env.timingFile);
     await env.wait();
 
     expect(env.component.timingErrorMessageKey).toContain('zero_segments');
@@ -291,7 +291,7 @@ describe('ChapterAudioDialogComponent', () => {
     ]);
 
     env.component.audioUpdate(env.audioFile);
-    env.component.prepareTimingFileUpload(anything());
+    env.component.prepareTimingFileUpload(env.timingFile);
 
     expect(env.component.timingErrorMessageKey).toEqual('');
   }));
@@ -303,7 +303,7 @@ describe('ChapterAudioDialogComponent', () => {
     ]);
 
     env.component.audioUpdate(env.audioFile);
-    env.component.prepareTimingFileUpload(anything());
+    env.component.prepareTimingFileUpload(env.timingFile);
 
     expect(env.component.timingErrorMessageKey).toEqual('');
   }));
@@ -318,7 +318,7 @@ describe('ChapterAudioDialogComponent', () => {
     ]);
 
     await env.component.audioUpdate(env.audioFile);
-    await env.component.prepareTimingFileUpload(anything());
+    await env.component.prepareTimingFileUpload(env.timingFile);
 
     expect(env.component.timingErrorMessageKey).toEqual('');
   }));
@@ -330,7 +330,7 @@ describe('ChapterAudioDialogComponent', () => {
     ]);
 
     await env.component.audioUpdate(env.audioFile);
-    await env.component.prepareTimingFileUpload(anything());
+    await env.component.prepareTimingFileUpload(env.timingFile);
 
     expect(env.component.timingErrorMessageKey).toEqual('');
   }));
@@ -342,7 +342,7 @@ describe('ChapterAudioDialogComponent', () => {
     ]);
 
     await env.component.audioUpdate(env.audioFile);
-    await env.component.prepareTimingFileUpload(anything());
+    await env.component.prepareTimingFileUpload(env.timingFile);
 
     expect(env.component.timingErrorMessageKey).toEqual('');
   }));
@@ -356,7 +356,7 @@ describe('ChapterAudioDialogComponent', () => {
 
     const promiseForResult: Promise<ChapterAudioDialogResult> = firstValueFrom(env.dialogRef.afterClosed());
     await env.component.audioUpdate(env.audioFile);
-    await env.component.prepareTimingFileUpload(anything());
+    await env.component.prepareTimingFileUpload(env.timingFile);
     await env.component.save();
     await env.wait();
     const result: ChapterAudioDialogResult = await promiseForResult;
@@ -369,7 +369,7 @@ describe('ChapterAudioDialogComponent', () => {
   }));
 
   it('will not save or upload if there is no audio', fakeAsync(() => {
-    env.component.prepareTimingFileUpload(anything());
+    env.component.prepareTimingFileUpload(env.timingFile);
     env.component.save();
     env.fixture.detectChanges();
 
@@ -387,7 +387,7 @@ describe('ChapterAudioDialogComponent', () => {
   }));
 
   it('can drag and drop to initiate an upload', fakeAsync(() => {
-    env.component.prepareTimingFileUpload(anything());
+    env.component.prepareTimingFileUpload(env.timingFile);
     env.fixture.detectChanges();
     const dataTransfer = new DataTransfer();
     for (const file of TestEnvironment.uploadFiles) {
@@ -401,7 +401,7 @@ describe('ChapterAudioDialogComponent', () => {
   }));
 
   it('can browse to upload files', fakeAsync(() => {
-    env.component.prepareTimingFileUpload(anything());
+    env.component.prepareTimingFileUpload(env.timingFile);
     env.fixture.detectChanges();
     const dataTransfer = new DataTransfer();
     for (const file of TestEnvironment.uploadFiles) {
@@ -417,7 +417,7 @@ describe('ChapterAudioDialogComponent', () => {
 
   // TODO: Enable once we have audio stub merged in
   xit('stop playing audio if a new audio file is uploaded', fakeAsync(() => {
-    env.component.prepareTimingFileUpload(anything());
+    env.component.prepareTimingFileUpload(env.timingFile);
     env.fixture.detectChanges();
     const dataTransfer = new DataTransfer();
     for (const file of TestEnvironment.uploadFiles) {
@@ -447,7 +447,7 @@ describe('ChapterAudioDialogComponent', () => {
     ]);
 
     await env.component.audioUpdate(env.audioFile);
-    await env.component.prepareTimingFileUpload(anything());
+    await env.component.prepareTimingFileUpload(env.timingFile);
     await env.wait();
 
     expect(env.component.timingErrorMessageKey).toContain('unrecognized_time_format');
@@ -466,7 +466,7 @@ describe('ChapterAudioDialogComponent', () => {
     ]);
 
     await env.component.audioUpdate(env.shortAudioFile);
-    await env.component.prepareTimingFileUpload(anything());
+    await env.component.prepareTimingFileUpload(env.timingFile);
     await env.wait();
 
     expect(env.component.timingErrorMessageKey).toContain('timing_past_audio_length');
@@ -482,7 +482,7 @@ describe('ChapterAudioDialogComponent', () => {
     env.onlineStatus = false;
     env.component.audioUpdate(env.audioFile);
     tick();
-    env.component.prepareTimingFileUpload(anything());
+    env.component.prepareTimingFileUpload(env.timingFile);
     tick();
 
     // SUT
@@ -499,7 +499,7 @@ describe('ChapterAudioDialogComponent', () => {
     env.onlineStatus = true;
     env.component.audioUpdate(env.audioFile);
     tick();
-    env.component.prepareTimingFileUpload(anything());
+    env.component.prepareTimingFileUpload(env.timingFile);
     tick();
 
     // SUT
@@ -521,7 +521,7 @@ describe('ChapterAudioDialogComponent', () => {
     env.onlineStatus = true;
     env.component.audioUpdate(env.audioFile);
     tick();
-    env.component.prepareTimingFileUpload(anything());
+    env.component.prepareTimingFileUpload(env.timingFile);
     tick();
 
     env.component.deleteAudioData();
@@ -590,7 +590,7 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.component.allFieldsValid).toEqual(true);
 
     await env.component.audioUpdate(env.audioFile);
-    await env.component.prepareTimingFileUpload(anything());
+    await env.component.prepareTimingFileUpload(env.timingFile);
     await env.component.save();
     await env.wait();
 
@@ -628,6 +628,10 @@ class TestEnvironment {
     [Canon.bookNumberToId(40)]: TestEnvironment.matthewText
   };
   static uploadFiles: File[] = [new File([], 'audio.mp3'), new File([], 'timing.csv')];
+
+  get timingFile(): File {
+    return TestEnvironment.uploadFiles[1]; // timing.csv
+  }
 
   readonly question1: QuestionDoc = {
     data: { text: 'Genesis 3:1 question', verseRef: { bookNum: 1, chapterNum: 3, verseNum: 1 } }

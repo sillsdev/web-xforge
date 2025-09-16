@@ -447,7 +447,7 @@ class TestEnvironment {
 
   /** Set have-read indications for specific notes. */
   async setHaveReadNoteRefs(conn: Connection): Promise<void> {
-    submitJson0Op<SFProjectUserConfig>(
+    await submitJson0Op<SFProjectUserConfig>(
       conn,
       SF_PROJECT_USER_CONFIGS_COLLECTION,
       getSFProjectUserConfigDocId('project01', this.projectAdminId),
@@ -458,7 +458,7 @@ class TestEnvironment {
         ops.add((puc: SFProjectUserConfig) => puc.noteRefsRead, 'noteThread02note01');
       }
     );
-    submitJson0Op<SFProjectUserConfig>(
+    await submitJson0Op<SFProjectUserConfig>(
       conn,
       SF_PROJECT_USER_CONFIGS_COLLECTION,
       getSFProjectUserConfigDocId('project01', this.checkerId),

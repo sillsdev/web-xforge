@@ -13,7 +13,6 @@ import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
-import { I18nService } from 'xforge-common/i18n.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -27,7 +26,6 @@ import { BookWithDraft, DraftPreviewBooksComponent } from './draft-preview-books
 
 const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedProjectService = mock(SFProjectService);
-const mockedI18nService = mock(I18nService);
 const mockedUserService = mock(UserService);
 const mockedDraftHandlingService = mock(DraftHandlingService);
 const mockedDialogService = mock(DialogService);
@@ -43,7 +41,6 @@ describe('DraftPreviewBooks', () => {
     providers: [
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: I18nService, useMock: mockedI18nService },
       { provide: UserService, useMock: mockedUserService },
       { provide: DraftHandlingService, useMock: mockedDraftHandlingService },
       { provide: DialogService, useMock: mockedDialogService },
@@ -54,7 +51,7 @@ describe('DraftPreviewBooks', () => {
   }));
 
   afterEach(() => {
-    env.progressSubscription?.unsubscribe();
+    env?.progressSubscription?.unsubscribe();
   });
 
   it('should show books for a build', fakeAsync(() => {
@@ -114,8 +111,8 @@ describe('DraftPreviewBooks', () => {
     setupDialog('project01');
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything()))
       .thenReject(new Error('Draft error'))
-      .thenResolve(true)
-      .thenResolve(false);
+      .thenResolve(undefined)
+      .thenResolve('error');
     expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
     env.component.chooseProjectToAddDraft(bookWithDraft);
     tick();
@@ -132,7 +129,7 @@ describe('DraftPreviewBooks', () => {
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
     setupDialog('project01');
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).thenResolve(
-      true
+      undefined
     );
     expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
     env.component.chooseProjectToAddDraft(bookWithDraft);
@@ -149,7 +146,7 @@ describe('DraftPreviewBooks', () => {
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[1];
     setupDialog('project01');
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).thenResolve(
-      true
+      undefined
     );
     expect(env.getBookButtonAtIndex(1).querySelector('.book-more')).toBeTruthy();
     env.component.chooseProjectToAddDraft(bookWithDraft);
@@ -169,7 +166,7 @@ describe('DraftPreviewBooks', () => {
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[1];
     setupDialog('project01');
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).thenResolve(
-      true
+      undefined
     );
     expect(env.getBookButtonAtIndex(1).querySelector('.book-more')).toBeTruthy();
     env.component.chooseProjectToAddDraft(bookWithDraft);
@@ -279,7 +276,7 @@ describe('DraftPreviewBooks', () => {
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
     setupDialog('project01');
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).thenResolve(
-      false
+      'error: legacy format'
     );
     expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
     env.component.chooseProjectToAddDraft(bookWithDraft);
@@ -294,11 +291,11 @@ describe('DraftPreviewBooks', () => {
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
     setupDialog('project01');
     const resolveSubject$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-    const promise: Promise<boolean> = new Promise<boolean>(resolve => {
-      resolveSubject$.pipe(filter(value => value)).subscribe(() => resolve(true));
+    const promise: Promise<string | undefined> = new Promise<string | undefined>(resolve => {
+      resolveSubject$.pipe(filter(value => value)).subscribe(() => resolve(undefined));
     });
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything()))
-      .thenReturn(Promise.resolve(true))
+      .thenResolve(undefined)
       .thenReturn(promise);
     expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
     env.component.chooseProjectToAddDraft(bookWithDraft);
@@ -313,6 +310,82 @@ describe('DraftPreviewBooks', () => {
     env.fixture.detectChanges();
     expect(env.component.numChaptersApplied).toEqual(3);
   }));
+
+  describe('combineErrorMessages', () => {
+    it('should return an empty array if there are no error messages', () => {
+      const errorMessages: { chapter: number; message: string }[] = [];
+      const result = DraftPreviewBooksComponent['combineErrorMessages'](errorMessages);
+      expect(result).toEqual([]);
+    });
+
+    it('should format a single error message', () => {
+      const errorMessages = [{ chapter: 1, message: 'Error message' }];
+      const result = DraftPreviewBooksComponent['combineErrorMessages'](errorMessages);
+      expect(result).toEqual(['1: Error message']);
+    });
+
+    it('should format multiple error messages for non-consecutive chapters', () => {
+      const errorMessages = [
+        { chapter: 1, message: 'Error message' },
+        { chapter: 3, message: 'Another error message' }
+      ];
+      const result = DraftPreviewBooksComponent['combineErrorMessages'](errorMessages);
+      expect(result).toEqual(['1: Error message', '3: Another error message']);
+    });
+
+    it('should group consecutive chapters with the same error message', () => {
+      const errorMessages = [
+        { chapter: 1, message: 'Error message' },
+        { chapter: 2, message: 'Error message' },
+        { chapter: 3, message: 'Error message' }
+      ];
+      const result = DraftPreviewBooksComponent['combineErrorMessages'](errorMessages);
+      expect(result).toEqual(['1-3: Error message']);
+    });
+
+    it('should handle a mix of single and ranged error messages', () => {
+      const errorMessages = [
+        { chapter: 1, message: 'Error message' },
+        { chapter: 2, message: 'Error message' },
+        { chapter: 4, message: 'Another error message' }
+      ];
+      const result = DraftPreviewBooksComponent['combineErrorMessages'](errorMessages);
+      expect(result).toEqual(['1-2: Error message', '4: Another error message']);
+    });
+
+    it('should handle multiple ranges', () => {
+      const errorMessages = [
+        { chapter: 1, message: 'Error message' },
+        { chapter: 2, message: 'Error message' },
+        { chapter: 4, message: 'Another error message' },
+        { chapter: 5, message: 'Another error message' }
+      ];
+      const result = DraftPreviewBooksComponent['combineErrorMessages'](errorMessages);
+      expect(result).toEqual(['1-2: Error message', '4-5: Another error message']);
+    });
+
+    it('should handle ranges and singletons with different messages', () => {
+      const errorMessages = [
+        { chapter: 1, message: 'Error message 1' },
+        { chapter: 2, message: 'Error message 1' },
+        { chapter: 3, message: 'Error message 2' },
+        { chapter: 4, message: 'Error message 1' },
+        { chapter: 5, message: 'Error message 1' }
+      ];
+      const result = DraftPreviewBooksComponent['combineErrorMessages'](errorMessages);
+      expect(result).toEqual(['1-2: Error message 1', '3: Error message 2', '4-5: Error message 1']);
+    });
+
+    it('should handle a single error at the end of a range', () => {
+      const errorMessages = [
+        { chapter: 1, message: 'Error message 1' },
+        { chapter: 2, message: 'Error message 1' },
+        { chapter: 3, message: 'Error message 2' }
+      ];
+      const result = DraftPreviewBooksComponent['combineErrorMessages'](errorMessages);
+      expect(result).toEqual(['1-2: Error message 1', '3: Error message 2']);
+    });
+  });
 
   function setupDialog(projectId?: string): void {
     const mockedDialogRef: MatDialogRef<DraftApplyDialogComponent> = mock(MatDialogRef<DraftApplyDialogComponent>);
@@ -371,15 +444,14 @@ class TestEnvironment {
   } as SFProjectProfileDoc;
 
   booksWithDrafts: BookWithDraft[] = [
-    { bookNumber: 1, canEdit: true, chaptersWithDrafts: [1, 2, 3], draftApplied: false },
-    { bookNumber: 2, canEdit: true, chaptersWithDrafts: [1], draftApplied: false },
-    { bookNumber: 3, canEdit: false, chaptersWithDrafts: [1, 2], draftApplied: false }
+    { bookNumber: 1, bookId: 'GEN', canEdit: true, chaptersWithDrafts: [1, 2, 3], draftApplied: false },
+    { bookNumber: 2, bookId: 'EXO', canEdit: true, chaptersWithDrafts: [1], draftApplied: false },
+    { bookNumber: 3, bookId: 'LEV', canEdit: false, chaptersWithDrafts: [1, 2], draftApplied: false }
   ];
 
   constructor(build: BuildDto | undefined = undefined) {
     when(mockedActivatedProjectService.changes$).thenReturn(of(this.mockProjectDoc));
     when(mockedActivatedProjectService.projectDoc).thenReturn(this.mockProjectDoc);
-    when(mockedI18nService.localizeBook(1)).thenReturn('Genesis');
     when(
       mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())
     ).thenResolve();

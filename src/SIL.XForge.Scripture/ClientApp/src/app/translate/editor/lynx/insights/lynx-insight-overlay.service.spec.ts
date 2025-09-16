@@ -3,6 +3,7 @@ import { ComponentPortal } from '@angular/cdk/portal';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
+import { I18nService } from 'xforge-common/i18n.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { LynxEditor, LynxTextModelConverter } from './lynx-editor';
 import { LynxInsight } from './lynx-insight';
@@ -11,13 +12,15 @@ import { LynxInsightOverlayComponent } from './lynx-insight-overlay/lynx-insight
 
 const mockOverlay = mock(Overlay);
 const mockScrollDispatcher = mock(ScrollDispatcher);
+const mockedI18nService = mock(I18nService);
 
 describe('LynxInsightOverlayService', () => {
   configureTestingModule(() => ({
     providers: [
       LynxInsightOverlayService,
       { provide: Overlay, useMock: mockOverlay },
-      { provide: ScrollDispatcher, useMock: mockScrollDispatcher }
+      { provide: ScrollDispatcher, useMock: mockScrollDispatcher },
+      { provide: I18nService, useMock: mockedI18nService }
     ]
   }));
 
@@ -155,6 +158,28 @@ describe('LynxInsightOverlayService', () => {
       env.simulateClick('.lynx-insight-action-menu');
 
       expect(env.service.close).not.toHaveBeenCalled();
+    }));
+  });
+
+  describe('direction handling', () => {
+    it('should use rtl i18n direction when creating overlay config', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(mockedI18nService.direction).thenReturn('rtl');
+
+      env.openOverlay();
+
+      const capturedConfig = env.captureOverlayConfig();
+      expect(capturedConfig.direction).toBe('rtl');
+    }));
+
+    it('should use ltr i18n direction when creating overlay config', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(mockedI18nService.direction).thenReturn('ltr');
+
+      env.openOverlay();
+
+      const capturedConfig = env.captureOverlayConfig();
+      expect(capturedConfig.direction).toBe('ltr');
     }));
   });
 });
@@ -343,6 +368,11 @@ class TestEnvironment {
   captureAttachedPortal(): ComponentPortal<LynxInsightOverlayComponent> {
     const portalCaptor = capture<ComponentPortal<LynxInsightOverlayComponent>>(this.overlayRefs[0].mock.attach);
     return portalCaptor.last()[0];
+  }
+
+  captureOverlayConfig(): any {
+    const configCaptor = capture(mockOverlay.create);
+    return configCaptor.last()[0];
   }
 
   /**

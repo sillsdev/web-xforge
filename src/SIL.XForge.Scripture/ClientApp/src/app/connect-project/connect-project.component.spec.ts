@@ -296,7 +296,9 @@ class TestEnvironment {
       shortName: 'ENG',
       languageTag: 'en',
       isConnectable: true,
-      isConnected: false
+      isConnected: false,
+      hasUserRoleChanged: false,
+      hasUpdate: false
     },
     {
       paratextId: 'pt02',
@@ -305,7 +307,9 @@ class TestEnvironment {
       shortName: 'MRI',
       languageTag: 'mri',
       isConnectable: false,
-      isConnected: true
+      isConnected: true,
+      hasUserRoleChanged: false,
+      hasUpdate: false
     },
     {
       paratextId: 'pt04',
@@ -313,7 +317,9 @@ class TestEnvironment {
       shortName: 'ESP',
       languageTag: 'es',
       isConnectable: false,
-      isConnected: false
+      isConnected: false,
+      hasUserRoleChanged: false,
+      hasUpdate: false
     },
     {
       paratextId: 'pt03',
@@ -322,7 +328,9 @@ class TestEnvironment {
       shortName: 'THA',
       languageTag: 'th',
       isConnectable: true,
-      isConnected: true
+      isConnected: true,
+      hasUserRoleChanged: false,
+      hasUpdate: false
     }
   ];
 

@@ -158,7 +158,12 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   get isGenerationSupported(): boolean {
-    return this.isPreviewSupported && this.canAccessDraftSourceIfAvailable(this.trainingSource);
+    return (
+      this.isPreviewSupported &&
+      this.canAccessDraftSourceIfAvailable(this.trainingSource) &&
+      this.canAccessDraftSourceIfAvailable(this.source) &&
+      this.canAccessDraftSourceIfAvailable(this.additionalTrainingSource)
+    );
   }
 
   get isPreviewSupported(): boolean {
@@ -335,7 +340,8 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       trainingScriptureRanges: result.trainingScriptureRanges,
       translationScriptureRanges: result.translationScriptureRanges || [],
       fastTraining: result.fastTraining,
-      useEcho: result.useEcho
+      useEcho: result.useEcho,
+      sendEmailOnBuildFinished: result.sendEmailOnBuildFinished
     });
   }
 
@@ -493,8 +499,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   private hasStartedBuild(projectDoc: SFProjectProfileDoc): boolean {
     return (
       projectDoc.data?.translateConfig.preTranslate === true &&
-      (projectDoc.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRange != null ||
-        projectDoc.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRanges != null)
+      projectDoc.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRanges != null
     );
   }
 }

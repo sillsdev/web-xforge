@@ -53,13 +53,13 @@ export class QuillInsightRenderService extends InsightRenderService implements O
   /**
    * Renders the insights in the editor, applying formatting, action menus, and attention (opacity overlay).
    */
-  render(insights: LynxInsight[], editor: Quill | undefined): void {
+  async render(insights: LynxInsight[], editor: Quill | undefined): Promise<void> {
     // Ensure text is more than just '\n'
     if (editor == null || editor.getLength() <= 1) {
       return;
     }
 
-    this.refreshInsightFormatting(insights, editor);
+    await this.refreshInsightFormatting(insights, editor);
   }
 
   /**

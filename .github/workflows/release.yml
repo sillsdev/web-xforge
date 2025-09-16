@@ -116,13 +116,13 @@ jobs:
           install --mode=600 /dev/stdin ~/.ssh/known_hosts <<< "${SECRETS_DEPLOY_KNOWN_HOSTS}"
           install --mode=600 /dev/stdin ~/.ssh/deploy_key <<< "${SECRETS_DEPLOY_SSH_PRIVATE_KEY}"
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: true
           ref: ${{inputs.build_commit}}
           fetch-depth: "0"
       - name: "Deps: .NET"
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: ${{inputs.dotnet_version}}
           cache: true

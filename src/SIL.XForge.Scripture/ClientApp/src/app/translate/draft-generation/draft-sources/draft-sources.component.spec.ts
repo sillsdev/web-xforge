@@ -759,7 +759,9 @@ class TestEnvironment {
           ...translateSourceToSelectableProjectWithLanguageTag(o.data),
           projectId: o.id,
           isConnectable: false,
-          isConnected: true
+          isConnected: true,
+          hasUserRoleChanged: false,
+          hasUpdate: false
         },
         selectableProjectWithLanguageCode: translateSourceToSelectableProjectWithLanguageTag(o.data),
         translateSource: {
@@ -783,7 +785,9 @@ class TestEnvironment {
         languageTag: 'en',
         projectId: undefined,
         isConnectable: true,
-        isConnected: false
+        isConnected: false,
+        hasUserRoleChanged: false,
+        hasUpdate: false
       })).map((o: ParatextProject) => ({
         paratextProject: o,
         selectableProjectWithLanguageCode: o,
@@ -802,7 +806,9 @@ class TestEnvironment {
         languageTag: 'en',
         projectId: undefined,
         isConnectable: true,
-        isConnected: false
+        isConnected: false,
+        hasUserRoleChanged: false,
+        hasUpdate: false
       })).map((o: ParatextProject) => ({
         paratextProject: o,
         selectableProjectWithLanguageCode: o,

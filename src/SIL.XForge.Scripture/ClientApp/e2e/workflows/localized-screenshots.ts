@@ -207,28 +207,20 @@ export async function localizedScreenshots(
     await screenshot(page, { ...context, pageName: 'configure_sources_button', locale });
   });
 
-  const originalViewportSize = await page.viewportSize();
+  await page.locator('[data-test-id="configure-button"]').click();
+
+  const originalViewportSize = await page.viewportSize()!;
   // Increase the height of the viewport to ensure all elements are visible
   await page.setViewportSize({ width: originalViewportSize.width, height: 1200 });
 
-  await page.locator('[data-test-id="configure-button"]').click();
-  await forEachLocale(async locale => {
-    await page.getByRole('combobox').fill('ntv');
-    await user.hover(page.getByRole('option', { name: 'NTV - Nueva Traducción' }), defaultArrowLocation);
-    await screenshotElements(
-      page,
-      [page.locator('app-draft-sources > .draft-sources-stepper'), page.locator('app-draft-sources > .overview')],
-      { ...context, pageName: 'configure_sources_draft_source', locale },
-      { margin: 8 }
-    );
-  });
   await page.getByRole('combobox').fill('ntv');
   await page.getByRole('option', { name: 'NTV - Nueva Traducción' }).click();
-  await page.getByRole('button', { name: 'Next' }).click();
+
+  const addReference = page.locator('.add-another-project');
+  const nextButton = page.locator('.step-button-wrapper').getByRole('button').last();
 
   await forEachLocale(async locale => {
-    await user.hover(await page.getByRole('combobox'), defaultArrowLocation);
-    await page.waitForTimeout(200); // Wait for the hover effect on the input
+    await user.hover(addReference);
     await screenshotElements(
       page,
       [page.locator('app-draft-sources > .draft-sources-stepper'), page.locator('app-draft-sources > .overview')],
@@ -236,13 +228,28 @@ export async function localizedScreenshots(
       { margin: 8 }
     );
   });
+  await page.getByRole('combobox').fill('ntv');
+  await page.getByRole('option', { name: 'NTV - Nueva Traducción' }).click();
+  await user.click(addReference);
+  await page.getByRole('combobox').last().fill('dhh94');
+  await page.getByRole('option', { name: 'DHH94 - Spanish: Dios Habla' }).click();
+  await nextButton.click();
+
+  await forEachLocale(async locale => {
+    await page.getByRole('combobox').fill('ntv');
+    await page.getByRole('option', { name: 'NTV - Nueva Traducción' }).click();
+    await user.hover(nextButton);
+    await screenshotElements(
+      page,
+      [page.locator('app-draft-sources > .draft-sources-stepper'), page.locator('app-draft-sources > .overview')],
+      { ...context, pageName: 'configure_sources_draft_source', locale },
+      { margin: 8 }
+    );
+  });
 
   await page.getByRole('combobox').fill('ntv');
   await page.getByRole('option', { name: 'NTV - Nueva Traducción' }).click();
-  await user.click(page.getByRole('button', { name: 'Add another reference project' }));
-  await page.getByRole('combobox').last().fill('dhh94');
-  await page.getByRole('option', { name: 'DHH94 - Spanish: Dios Habla' }).click();
-  await page.getByRole('button', { name: 'Next' }).click();
+  await nextButton.click();
 
   await forEachLocale(async locale => {
     await user.hover(await page.getByRole('checkbox'));
@@ -394,15 +401,7 @@ export async function localizedScreenshots(
 
   // Go back to the draft generation page
   await navLocator(page, 'generate_draft').click();
-  await expect(page.getByText('Your draft is ready')).toBeVisible({ timeout: 180_000 });
-  await page.reload();
-  await installMouseFollower(page);
-  // When the page first loads it will say "Your draft is ready", but then switch to saying it's finishing. Wait for a
-  // few seconds for it to no longer say "Your draft is ready", and then wait for it to say it's ready again
-  await page.waitForTimeout(5_000);
-  await expect(page.getByText('Your draft is ready')).toBeVisible({ timeout: 10_000 });
-  await expect(page.getByText('No books have any drafts')).not.toBeVisible();
-  await expect(page.getByText('Draft is finishing')).not.toBeVisible();
+  await expect(page.getByText('The draft is ready')).toBeVisible({ timeout: 180_000 });
 
   await forEachLocale(async locale => {
     await user.hover(page.getByRole('radio').first(), defaultArrowLocation);
@@ -429,7 +428,7 @@ export async function localizedScreenshots(
 
   // Go back to the draft generation page
   await navLocator(page, 'generate_draft').click();
-  await expect(page.getByText('Your draft is ready')).toBeVisible();
+  await expect(page.getByText('The draft is ready')).toBeVisible();
 
   await forEachLocale(async locale => {
     await page.getByRole('radio').nth(1).click();
@@ -458,7 +457,7 @@ export async function localizedScreenshots(
     await user.hover(page.locator('[data-test-id="download-button"]'), defaultArrowLocation);
     await screenshotElements(
       page,
-      [page.locator('.draft-complete')],
+      [page.locator('app-draft-history-entry').first()],
       { ...context, pageName: 'download_usfm', locale },
       { margin: 8 }
     );

@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -8,17 +9,25 @@ namespace SIL.XForge.Realtime;
 
 public static class RealtimeExtensions
 {
-    public static async Task<Attempt<T>> TryGetSnapshotAsync<T>(this IRealtimeService realtimeService, string id)
+    public static async Task<Attempt<T>> TryGetSnapshotAsync<T>(
+        this IRealtimeService realtimeService,
+        string id,
+        CancellationToken cancellationToken = default
+    )
         where T : IIdentifiable
     {
-        T entity = await realtimeService.QuerySnapshots<T>().FirstOrDefaultAsync(e => e.Id == id);
+        T entity = await realtimeService.QuerySnapshots<T>().FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
         return new Attempt<T>(entity != null, entity);
     }
 
-    public static async Task<T> GetSnapshotAsync<T>(this IRealtimeService realtimeService, string id)
+    public static async Task<T> GetSnapshotAsync<T>(
+        this IRealtimeService realtimeService,
+        string id,
+        CancellationToken cancellationToken = default
+    )
         where T : IIdentifiable
     {
-        Attempt<T> attempt = await realtimeService.TryGetSnapshotAsync<T>(id);
+        Attempt<T> attempt = await realtimeService.TryGetSnapshotAsync<T>(id, cancellationToken);
         if (attempt.Success)
             return attempt.Result;
         return default;

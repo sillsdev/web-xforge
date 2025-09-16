@@ -183,7 +183,8 @@
                             [highlightSegment]="targetFocused && canEdit"
                             [enablePresence]="true"
                             [markInvalid]="true"
-                            [showInsights]="showInsights"
+                            [lynxInsightsEnabled]="lynxInsightsEnabled"
+                            [lynxAutoCorrectionsEnabled]="lynxAutoCorrectionsEnabled"
                             [isRightToLeft]="isTargetRightToLeft"
                             [fontSize]="fontSize"
                             [selectableVerses]="showAddCommentUI"
@@ -244,7 +245,7 @@
                         </div>
                       </as-split-area>
 
-                      @if (showInsights) {
+                      @if (lynxInsightsEnabled) {
                         <as-split-area
                           [visible]="(editorInsightState.insightPanelVisible$ | async) === true"
                           [size]="20"

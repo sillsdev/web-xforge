@@ -133,7 +133,8 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
     // update offline data when the op has been acknowledged
     this.adapter.submitOp(ops, source).then(() => this.updateOfflineData());
     // update offline data when the op is first submitted
-    await this.updateOfflineData();
+    // we force the offline update, so if the client is offline, the pending ops will be stored in IndexedDB
+    await this.updateOfflineData(true);
     await this.realtimeService.onLocalDocUpdate(this);
   }
 

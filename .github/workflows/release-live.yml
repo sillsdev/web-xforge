@@ -35,7 +35,7 @@ jobs:
       build_commit: "${{ steps.get_commit.outputs.build_commit }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
           fetch-depth: "0"

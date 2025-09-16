@@ -13,6 +13,11 @@
         [readonly]="!canEdit()"
       ></textarea>
       <mat-hint>{{ t("renderings_hint") }}</mat-hint>
+      @if (renderings.hasError("unbalancedParentheses")) {
+        <mat-error>
+          {{ t("renderings_error") }}
+        </mat-error>
+      }
     </mat-form-field>
     <mat-form-field [formGroup]="form" appearance="outline">
       <mat-label>{{ t("description") }}</mat-label>

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { AfterViewInit, Component, DestroyRef, EventEmitter, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,8 +9,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
-import { Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
+import { Canon } from '@sillsdev/scripture';
 import { Delta } from 'quill';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import {
@@ -18,20 +19,22 @@ import {
   ParagraphBreakFormat,
   QuoteFormat
 } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { combineLatest, first, Subject, switchMap } from 'rxjs';
+import { combineLatest, first, firstValueFrom, Subject, switchMap } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { QuotationAnalysis } from '../../../machine-api/quotation-denormalization';
 import { ServalAdministrationService } from '../../../serval-administration/serval-administration.service';
 import { ConfirmOnLeave } from '../../../shared/project-router.guard';
 import { SharedModule } from '../../../shared/shared.module';
 import { TextComponent } from '../../../shared/text/text.component';
+import { DraftGenerationService } from '../draft-generation.service';
 import { DraftHandlingService } from '../draft-handling.service';
 
 @Component({
@@ -63,10 +66,10 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   chapters: number[] = [];
   isInitializing: boolean = true;
   paragraphBreakFormat = ParagraphBreakFormat;
-  quoteStyleFormat = QuoteFormat;
+  quoteStyle = QuoteFormat;
 
   paragraphFormat = new FormControl<ParagraphBreakFormat>(ParagraphBreakFormat.BestGuess);
-  quoteFormat = new FormControl<QuoteFormat>(QuoteFormat.Automatic);
+  quoteFormat = new FormControl<QuoteFormat>(QuoteFormat.Denormalized);
   usfmFormatForm: FormGroup = new FormGroup({
     paragraphFormat: this.paragraphFormat,
     quoteFormat: this.quoteFormat
@@ -76,20 +79,32 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
 
   private updateDraftConfig$: Subject<DraftUsfmConfig | undefined> = new Subject<DraftUsfmConfig | undefined>();
   private lastSavedState?: DraftUsfmConfig;
+  private quotationDenormalization: QuotationAnalysis = QuotationAnalysis.Successful;
 
   constructor(
+    private readonly activatedRoute: ActivatedRoute,
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly draftHandlingService: DraftHandlingService,
+    private readonly draftGenerationService: DraftGenerationService,
     private readonly projectService: SFProjectService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly servalAdministration: ServalAdministrationService,
     private readonly dialogService: DialogService,
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
-    private readonly router: Router,
+    private readonly location: Location,
     private destroyRef: DestroyRef
   ) {
     super(noticeService);
+    this.activatedProjectService.projectId$
+      .pipe(filterNullish(), first(), quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(async projectId => {
+        const currentBuild = await firstValueFrom(this.draftGenerationService.getLastCompletedBuild(projectId));
+        this.quotationDenormalization =
+          currentBuild?.additionalInfo?.quotationDenormalization === QuotationAnalysis.Successful
+            ? QuotationAnalysis.Successful
+            : QuotationAnalysis.Unsuccessful;
+      });
   }
 
   get projectId(): string | undefined {
@@ -109,15 +124,23 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     return this.onlineStatusService.isOnline;
   }
 
+  get showQuoteFormatWarning(): boolean {
+    return this.quotationDenormalization !== QuotationAnalysis.Successful;
+  }
+
   private get currentFormat(): DraftUsfmConfig | undefined {
     const paragraphFormat = this.paragraphFormat.value;
-    return paragraphFormat == null ? undefined : { paragraphFormat };
+    const quoteFormat = this.quoteFormat.value;
+    // both values must be set to be valid
+    if (paragraphFormat == null || quoteFormat == null) return undefined;
+    return { paragraphFormat, quoteFormat };
   }
 
   ngAfterViewInit(): void {
-    combineLatest([this.activatedProjectService.projectDoc$, this.draftText.editorCreated as EventEmitter<void>])
+    combineLatest([this.activatedRoute.params, this.draftText.editorCreated as EventEmitter<void>])
       .pipe(first(), quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(([projectDoc]) => {
+      .subscribe(([params]) => {
+        const projectDoc = this.activatedProjectService.projectDoc;
         if (projectDoc?.data == null) return;
         this.setUsfmConfig(projectDoc.data.translateConfig.draftConfig.usfmConfig);
         const texts: TextInfo[] = projectDoc.data.texts;
@@ -125,7 +148,19 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
 
         if (this.booksWithDrafts.length === 0) return;
         this.loadingStarted();
-        this.bookChanged(this.booksWithDrafts[0]);
+
+        let defaultBook = this.booksWithDrafts[0];
+        if (params['bookId'] !== undefined && this.booksWithDrafts.includes(Canon.bookIdToNumber(params['bookId']))) {
+          defaultBook = Canon.bookIdToNumber(params['bookId']);
+        }
+        let defaultChapter = 1;
+        this.chapters = texts.find(t => t.bookNum === defaultBook)?.chapters.map(c => c.number) ?? [];
+        if (params['chapter'] !== undefined && this.chapters.includes(Number(params['chapter']))) {
+          defaultChapter = Number(params['chapter']);
+        } else if (this.chapters.length > 0) {
+          defaultChapter = this.chapters[0];
+        }
+        this.bookChanged(defaultBook, defaultChapter);
       });
 
     this.updateDraftConfig$
@@ -150,11 +185,11 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     });
   }
 
-  bookChanged(bookNum: number): void {
+  bookChanged(bookNum: number, chapterNum?: number): void {
     this.bookNum = bookNum;
     const texts = this.activatedProjectService.projectDoc!.data!.texts;
     this.chapters = texts.find(t => t.bookNum === this.bookNum)?.chapters.map(c => c.number) ?? [];
-    this.chapterNum = this.chapters[0] ?? 1;
+    this.chapterNum = chapterNum ?? this.chapters[0] ?? 1;
     this.reloadText();
   }
 
@@ -164,7 +199,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   }
 
   close(): void {
-    this.router.navigate(['projects', this.projectId, 'draft-generation']);
+    this.location.back();
   }
 
   reloadText(): void {
@@ -181,7 +216,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
       this.lastSavedState = this.currentFormat;
       // The user is redirected to the draft generation page if the format is saved.
       await this.servalAdministration.onlineRetrievePreTranslationStatus(this.projectId);
-      this.router.navigate(['projects', this.projectId, 'draft-generation']);
+      this.close();
     } catch (err) {
       console.error('Error occurred while saving draft format', err);
       this.noticeService.showError(this.i18n.translateStatic('draft_usfm_format.failed_to_save'));
@@ -191,7 +226,12 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   }
 
   async confirmLeave(): Promise<boolean> {
-    if (this.lastSavedState?.paragraphFormat === this.currentFormat?.paragraphFormat) return true;
+    if (
+      this.lastSavedState?.paragraphFormat === this.currentFormat?.paragraphFormat &&
+      this.lastSavedState?.quoteFormat === this.currentFormat?.quoteFormat
+    ) {
+      return true;
+    }
     return this.dialogService.confirm(
       this.i18n.translate('draft_sources.discard_changes_confirmation'),
       this.i18n.translate('draft_sources.leave_and_discard'),
@@ -202,7 +242,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   private setUsfmConfig(config?: DraftUsfmConfig): void {
     this.usfmFormatForm.setValue({
       paragraphFormat: config?.paragraphFormat ?? ParagraphBreakFormat.BestGuess,
-      quoteFormat: QuoteFormat.Automatic
+      quoteFormat: config?.quoteFormat ?? QuoteFormat.Denormalized
     });
     this.lastSavedState = this.currentFormat;
 

@@ -242,9 +242,11 @@ public class ProjectServiceTests
     public void RemoveUserAsync_BadArguments()
     {
         var env = new TestEnvironment();
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.RemoveUserAsync(null, "projectId", "projectUserId")
+        Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Service.RemoveUserAsync(null, "projectId", "projectUserId")
         );
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.RemoveUserAsync("curUserId", null, "projectUserId")
+        Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Service.RemoveUserAsync("curUserId", null, "projectUserId")
         );
         Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.RemoveUserAsync("curUserId", "projectId", null));
     }

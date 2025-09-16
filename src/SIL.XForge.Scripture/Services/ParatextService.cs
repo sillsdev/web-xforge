@@ -46,6 +46,7 @@ using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
+using StringUtils = SIL.XForge.Utils.StringUtils;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -67,9 +68,9 @@ public class ParatextService : DisposableBase, IParatextService
     private readonly IJwtTokenHelper _jwtTokenHelper;
     private readonly IParatextDataHelper _paratextDataHelper;
     private readonly IGuidService _guidService;
-    private string _dblServerUri = "https://paratext.thedigitalbiblelibrary.org/";
-    private string _registryServerUri = "https://registry.paratext.org";
-    private string _sendReceiveServerUri = InternetAccess.uriProduction;
+    private readonly string _dblServerUri = "https://pt-resources-adapter.library.bible/";
+    private readonly string _registryServerUri = "https://registry.paratext.org";
+    private readonly string _sendReceiveServerUri = InternetAccess.uriProduction;
     private readonly IInternetSharedRepositorySourceProvider _internetSharedRepositorySourceProvider;
     private readonly ISFRestClientFactory _restClientFactory;
 
@@ -763,7 +764,7 @@ public class ParatextService : DisposableBase, IParatextService
                 }
                 else
                 {
-                    projectUserSecret = await _userSecretRepository.GetAsync(user.Id);
+                    projectUserSecret = await _userSecretRepository.GetAsync(user.Id, token);
                 }
 
                 // Get the PT role
@@ -2415,6 +2416,12 @@ public class ParatextService : DisposableBase, IParatextService
                 isDraftingEnabled
                 && correspondingSfProject?.Texts.Any(t => t.Chapters.Any(c => c.HasDraft == true)) == true;
 
+            // Determine if the project has an update pending
+            bool hasUpdate =
+                correspondingSfProject?.Sync.SyncedToRepositoryVersion != null
+                && StringUtils.ConvertToTipId(correspondingSfProject.Sync.SyncedToRepositoryVersion)
+                    != remotePtProject.TipId;
+
             paratextProjects.Add(
                 new ParatextProject
                 {
@@ -2430,6 +2437,7 @@ public class ParatextService : DisposableBase, IParatextService
                     IsDraftingEnabled = isDraftingEnabled,
                     HasDraft = hasDraft,
                     HasUserRoleChanged = hasUserRoleChanged,
+                    HasUpdate = hasUpdate,
                 }
             );
         }
@@ -3562,7 +3570,7 @@ public class ParatextService : DisposableBase, IParatextService
         await semaphore.WaitAsync(token);
         try
         {
-            Attempt<UserSecret> attempt = await _userSecretRepository.TryGetAsync(sfUserId);
+            Attempt<UserSecret> attempt = await _userSecretRepository.TryGetAsync(sfUserId, token);
             if (!attempt.TryResult(out UserSecret userSecret))
             {
                 throw new DataNotFoundException("Could not find user secrets for SF user id " + sfUserId);
@@ -3590,7 +3598,7 @@ public class ParatextService : DisposableBase, IParatextService
 
                     // Get the tokens from auth0, and make sure they are up-to-date
                     // If they cannot be refreshed, an exception will throw
-                    Attempt<User> userAttempt = await _realtimeService.TryGetSnapshotAsync<User>(sfUserId);
+                    Attempt<User> userAttempt = await _realtimeService.TryGetSnapshotAsync<User>(sfUserId, token);
                     if (!userAttempt.TryResult(out User user))
                     {
                         throw;
@@ -3612,7 +3620,8 @@ public class ParatextService : DisposableBase, IParatextService
 
                 userSecret = await _userSecretRepository.UpdateAsync(
                     sfUserId,
-                    b => b.Set(u => u.ParatextTokens, refreshedUserTokens)
+                    b => b.Set(u => u.ParatextTokens, refreshedUserTokens),
+                    cancellationToken: token
                 );
             }
 

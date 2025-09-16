@@ -11,6 +11,7 @@ export interface DraftApplyProgress {
   chapters: number[];
   chaptersApplied: number[];
   completed: boolean;
+  errorMessages: string[];
 }
 
 @Component({

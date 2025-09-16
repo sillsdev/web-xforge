@@ -200,4 +200,22 @@
   <data name="UserMissing" xml:space="preserve">
     <value>L'utilisateur n'existe pas encore.</value>
   </data>
+  <data name="DraftCanceledEmailBody" xml:space="preserve">
+    <value>Votre ébauche pour {0} a été annulée.</value>
+  </data>
+  <data name="DraftEmailMoreInformation" xml:space="preserve">
+    <value>Pour plus d'informations, voir {0}</value>
+  </data>
+  <data name="DraftFailedEmailBody" xml:space="preserve">
+    <value>Votre ébauche pour {0} n'a pas été générée avec succès.</value>
+  </data>
+  <data name="DraftGeneratedEmailBody" xml:space="preserve">
+    <value>Votre ébauche pour {0} a été générée avec succès.</value>
+  </data>
+  <data name="DraftGeneratedEmailSubject" xml:space="preserve">
+    <value>L'ébauche {0} a été générée avec succès</value>
+  </data>
+  <data name="DraftNotGeneratedEmailSubject" xml:space="preserve">
+    <value>L'ébauche {0} a été générée</value>
+  </data>
 </root>

@@ -5,6 +5,10 @@
   display: block;
 }
 
+#draft-jobs-table tr:nth-child(odd) {
+  background-color: white;
+}
+
 app-owner,
 .details-button {
   white-space: nowrap;
@@ -38,7 +42,7 @@ app-owner,
   color: sfColors.$greyLight;
 }
 
-.status-icon.broken {
+.status-icon.incomplete {
   color: sfColors.$orange;
 }
 
@@ -68,5 +72,44 @@ app-owner,
 
   mat-form-field {
     min-width: 150px;
+  }
+}
+
+.project-link {
+  color: #1976d2;
+  text-decoration: none;
+  font-weight: 500;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.book-count {
+  cursor: help;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  color: #666;
+}
+
+.filter-notice-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.clear-filter-btn {
+  margin-left: 8px;
+  opacity: 0.8;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
   }
 }

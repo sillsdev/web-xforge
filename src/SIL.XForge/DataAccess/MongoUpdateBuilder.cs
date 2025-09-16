@@ -10,14 +10,8 @@ namespace SIL.XForge.DataAccess;
 public class MongoUpdateBuilder<T> : IUpdateBuilder<T>
     where T : IIdentifiable
 {
-    private readonly UpdateDefinitionBuilder<T> _builder;
-    private readonly List<UpdateDefinition<T>> _defs;
-
-    public MongoUpdateBuilder()
-    {
-        _builder = Builders<T>.Update;
-        _defs = [];
-    }
+    private readonly UpdateDefinitionBuilder<T> _builder = Builders<T>.Update;
+    private readonly List<UpdateDefinition<T>> _defs = [];
 
     public IUpdateBuilder<T> Set<TField>(Expression<Func<T, TField>> field, TField value)
     {
@@ -72,5 +66,5 @@ public class MongoUpdateBuilder<T> : IUpdateBuilder<T>
     }
 
     private static FieldDefinition<T, TField> ToFieldDefinition<TField>(Expression<Func<T, TField>> field) =>
-        new XFFieldDefinition<T, TField>(field);
+        new ExpressionFieldDefinition<T, TField>(field);
 }

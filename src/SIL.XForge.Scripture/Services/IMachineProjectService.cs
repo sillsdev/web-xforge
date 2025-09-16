@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,6 +19,14 @@ public interface IMachineProjectService
     );
     Task<string> GetProjectZipAsync(string sfProjectId, Stream outputStream, CancellationToken cancellationToken);
     Task RemoveProjectAsync(string sfProjectId, bool preTranslate, CancellationToken cancellationToken);
+
+    Task SendBuildCompletedEmailAsync(
+        string curUserId,
+        string sfProjectId,
+        string? buildId,
+        string buildState,
+        Uri websiteUrl
+    );
 
     [Mutex]
     Task UpdateTranslationSourcesAsync(string curUserId, string sfProjectId);

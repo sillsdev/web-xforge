@@ -8,8 +8,8 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import {
   MatDialogLaunchComponent,
-  MatDialogStoryConfig,
-  matDialogStory
+  matDialogStory,
+  MatDialogStoryConfig
 } from '../../../../../../.storybook/util/mat-dialog-launch';
 import { ParatextProject } from '../../../../core/models/paratext-project';
 import { ParatextService } from '../../../../core/paratext.service';
@@ -38,6 +38,8 @@ function createTestParatextProject(index: number, overrides?: Partial<ParatextPr
     projectId: `projectId${index}`,
     isConnectable: true,
     isConnected: false,
+    hasUserRoleChanged: false,
+    hasUpdate: false,
     ...overrides
   };
 }
