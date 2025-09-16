@@ -33,6 +33,7 @@
       (click)="prevChapter()"
       [disabled]="isPrevChapterDisabled()"
       [matTooltip]="t('previous_chapter')"
+      data-test-id="previous-chapter"
       class="hide-lt-sm"
     >
       <mat-icon>keyboard_arrow_{{ i18n.backwardDirectionWord }}</mat-icon>
@@ -42,6 +43,7 @@
       (click)="nextChapter()"
       [disabled]="isNextChapterDisabled()"
       [matTooltip]="t('next_chapter')"
+      data-test-id="next-chapter"
       class="hide-lt-sm"
     >
       <mat-icon>keyboard_arrow_{{ i18n.forwardDirectionWord }}</mat-icon>
