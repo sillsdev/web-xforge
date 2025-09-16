@@ -949,10 +949,9 @@ class TestEnvironment {
       op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.CommunityChecker),
       false
     );
-    (await this.getCurrentUserDoc()).submitJson0Op(
-      op => op.add<string>(u => u.sites['sf'].projects, 'project04'),
-      false
-    );
+    await (
+      await this.getCurrentUserDoc()
+    ).submitJson0Op(op => op.add<string>(u => u.sites['sf'].projects, 'project04'), false);
     this.wait();
   }
 
