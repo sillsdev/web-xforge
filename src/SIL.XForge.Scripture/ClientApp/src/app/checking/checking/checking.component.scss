@@ -97,7 +97,7 @@ header {
     margin: 0;
     z-index: 7;
     overflow: hidden;
-    background: #fff;
+    background: var(--mat-app-background-color);
     transition: height 0.4s cubic-bezier(0.68, -0.6, 0.265, 1.6); // Snap back effect
 
     &.overlay-visible {
