@@ -196,7 +196,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
             filterNullish(),
             tap(projectDoc => {
               this.targetProject = projectDoc.data;
-              console.log(this.targetProject);
               this.hasFormattingSelected = projectDoc.data?.translateConfig.draftConfig.usfmConfig != null;
             }),
             distinctUntilChanged(),
