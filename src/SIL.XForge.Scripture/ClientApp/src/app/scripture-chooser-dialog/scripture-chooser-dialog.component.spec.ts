@@ -518,7 +518,7 @@ describe('ScriptureChooserDialog', () => {
     }
 
     get highlightedButton(): DebugElement {
-      return this.fixture.debugElement.query(By.css('.mat-flat-button'));
+      return this.fixture.debugElement.query(By.css('[mat-flat-button]'));
     }
 
     click(element: DebugElement): void {

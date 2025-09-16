@@ -2,8 +2,10 @@
   padding: 1em;
 }
 
-.upperBookSet {
-  padding-bottom: 1em;
+[mat-dialog-content] {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
 }
 
 .dialog-container {
