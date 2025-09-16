@@ -168,7 +168,12 @@ export class DraftPreviewBooksComponent {
     this.updateProgress();
 
     const promises: Promise<string | undefined>[] = [];
-    const targetProject = (await this.projectService.getProfile(targetProjectId)).data!;
+    const targetProject = (
+      await this.projectService.getProfile(
+        targetProjectId,
+        new DocSubscription('DraftPreviewBooksComponent', this.destroyRef)
+      )
+    ).data!;
     for (const chapter of bookWithDraft.chaptersWithDrafts) {
       const draftTextDocId = new TextDocId(this.activatedProjectService.projectId!, bookWithDraft.bookNumber, chapter);
       const targetTextDocId = new TextDocId(targetProjectId, bookWithDraft.bookNumber, chapter);

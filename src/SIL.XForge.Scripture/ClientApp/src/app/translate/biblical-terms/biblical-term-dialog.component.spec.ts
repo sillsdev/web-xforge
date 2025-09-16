@@ -145,7 +145,7 @@ describe('BiblicalTermDialogComponent', () => {
     expect(biblicalTerm.data?.description).toBe('');
   }));
 
-  it('should not save renderings with unbalanced parentheses', fakeAsync(() => {
+  it('should not save renderings with unbalanced parentheses', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setupProjectData('en');
     env.wait();
@@ -154,12 +154,12 @@ describe('BiblicalTermDialogComponent', () => {
     env.setTextFieldValue(env.renderings, '(');
     env.click(env.submitButton);
     env.wait();
-    const biblicalTerm = env.getBiblicalTermDoc('id01');
+    const biblicalTerm = await env.getBiblicalTermDoc('id01');
     expect(biblicalTerm.data?.renderings).toEqual(['rendering01']);
     env.closeDialog();
   }));
 
-  it('should save renderings with balanced parentheses', fakeAsync(() => {
+  it('should save renderings with balanced parentheses', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setupProjectData('en');
     env.wait();
@@ -168,7 +168,7 @@ describe('BiblicalTermDialogComponent', () => {
     env.setTextFieldValue(env.renderings, '()');
     env.click(env.submitButton);
     env.wait();
-    const biblicalTerm = env.getBiblicalTermDoc('id01');
+    const biblicalTerm = await env.getBiblicalTermDoc('id01');
     expect(biblicalTerm.data?.renderings).toEqual(['()']);
   }));
 

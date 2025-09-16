@@ -15,6 +15,7 @@ import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
+import { DocSubscription } from '../../../../../xforge-common/models/realtime-doc';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../../core/models/sf-type-registry';
 import { TrainingDataDoc } from '../../../../core/models/training-data-doc';
@@ -235,7 +236,7 @@ describe('DraftHistoryEntryComponent', () => {
         id: 'project01',
         data: createTestProjectProfile({ shortName: 'tar', writingSystem: { tag: 'en' } })
       } as SFProjectProfileDoc;
-      when(mockedSFProjectService.getProfile('project01')).thenResolve(targetProjectDoc);
+      when(mockedSFProjectService.getProfile('project01', new DocSubscription('spec'))).thenResolve(targetProjectDoc);
       when(mockedActivatedProjectService.changes$).thenReturn(of(targetProjectDoc));
       const entry = {
         additionalInfo: {
