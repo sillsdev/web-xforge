@@ -64,6 +64,7 @@
             }
           }
         ],
+        "@typescript-eslint/no-floating-promises": "warn",
         "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/no-unused-vars": [
           "error",
@@ -116,6 +117,7 @@
         ],
         "deprecation/deprecation": "warn"
       }
-    }
+    },
+    { "files": ["*.spec.ts", "*.stories.ts"], "rules": { "@typescript-eslint/no-floating-promises": "off" } }
   ]
 }
