@@ -1400,6 +1400,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         string curUserId,
         IDocument<SFProject> projectDoc,
         IReadOnlyList<ParatextProjectUser>? users = null,
+        IReadOnlyList<int>? books = null,
         CancellationToken token = default
     )
     {
@@ -1410,7 +1411,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
 
         string paratextId = projectDoc.Data.ParatextId;
-        HashSet<int> booksInProject = [.. _paratextService.GetBookList(userSecret, paratextId)];
+        HashSet<int> booksInProject = [.. books ?? _paratextService.GetBookList(userSecret, paratextId)];
         users ??= await _paratextService.GetParatextUsersAsync(userSecret, projectDoc.Data, token);
         IReadOnlyDictionary<string, string> ptUsernameMapping = users
             .Where(u => !string.IsNullOrWhiteSpace(u.Id) && !string.IsNullOrWhiteSpace(u.Username))
