@@ -2292,13 +2292,13 @@ describe('CheckingComponent', () => {
 
     it('update answer audio cache on remote removal of an answer', fakeAsync(async () => {
       const env = new TestEnvironment({ user: ADMIN_USER });
-      const questionDoc = spy(await env.getQuestionDoc('q6Id'));
+      const questionDoc = await env.getQuestionDoc('q6Id');
+      spyOn(questionDoc, 'updateAnswerFileCache').and.callThrough();
       env.selectQuestion(6);
-      verify(questionDoc!.updateAnswerFileCache()).times(1);
+      expect(questionDoc.updateAnswerFileCache).toHaveBeenCalledTimes(1);
+      // SUT
       await env.simulateRemoteDeleteAnswer('q6Id', 0);
-      verify(questionDoc!.updateAnswerFileCache()).times(2);
-      expect().nothing();
-      tick();
+      expect(questionDoc.updateAnswerFileCache).toHaveBeenCalledTimes(2);
       flush(1000);
     }));
 
