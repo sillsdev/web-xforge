@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using System.Xml.Schema;
 using Microsoft.Extensions.Logging;
@@ -11,7 +12,7 @@ using SIL.XForge.Realtime.RichText;
 
 namespace SIL.XForge.Scripture.Services;
 
-public class DeltaUsxMapper(
+public partial class DeltaUsxMapper(
     IGuidService guidService,
     ILogger<DeltaUsxMapper> logger,
     IExceptionHandler exceptionHandler
@@ -169,6 +170,15 @@ public class DeltaUsxMapper(
             style = style[..^1];
         // paragraph, poetry, and list styles are the only types of valid paras that can contain verse text
         return ParagraphPoetryListStyles.Contains(style);
+    }
+
+    [GeneratedRegex(@"\\id\s+(\w+)", RegexOptions.Compiled)]
+    private static partial Regex BookIdRegex();
+
+    public static string ExtractBookId(string usfm)
+    {
+        string firstLine = usfm.Split('\n').FirstOrDefault()?.Trim() ?? string.Empty;
+        return BookIdRegex().Match(firstLine).Groups[1].Value;
     }
 
     /// <summary>

@@ -64,6 +64,7 @@ public interface ISFProjectService : IProjectService
         string curUserId,
         IDocument<SFProject> projectDoc,
         IReadOnlyList<ParatextProjectUser>? users = null,
+        IReadOnlyList<int>? books = null,
         CancellationToken token = default
     );
     Task EnsureWritingSystemTagIsSetAsync(string curUserId, string projectId);
