@@ -118,6 +118,22 @@ describe('SFProjectUserConfigMigrations', () => {
       expect(userConfigDoc.version).toBe(1);
     });
   });
+
+  describe('version 8', () => {
+    it('adds the lynxInsightState property', async () => {
+      const env = new TestEnvironment(7);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01', {});
+      let userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      expect(userConfigDoc.data.lynxInsightState).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      expect(userConfigDoc.data.lynxInsightState).toBeDefined();
+      expect(userConfigDoc.data.lynxInsightState).toEqual({});
+    });
+  });
 });
 
 class TestEnvironment {
