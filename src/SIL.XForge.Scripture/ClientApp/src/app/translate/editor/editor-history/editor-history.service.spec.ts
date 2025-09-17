@@ -34,6 +34,12 @@ describe('EditorHistoryService', () => {
     expect(obj.subObj).toBeNull();
   });
 
+  it('should remove blanks', () => {
+    const delta = new Delta().insert('Hello ').insert({ blank: true }).insert({ blank: false }).insert('World');
+    const result = service.removeBlanks(delta);
+    expect(result).toEqual(new Delta().insert('Hello World'));
+  });
+
   describe('formatTimestamp', () => {
     it('should return "Invalid Date" if timestamp is null or empty', () => {
       expect(service.formatTimestamp(null)).toBe('Invalid Date');

@@ -264,14 +264,22 @@ describe('TextComponent', () => {
     env.id = new TextDocId('project01', 40, 1);
     env.waitForEditor();
     expect(env.component.editor?.getText()).withContext('setup').toContain('chapter 1, verse 6.');
-    expect(env.component.editor?.getContents().ops?.length).withContext('setup').toEqual(25);
+    expect(env.component.editor?.getContents().ops?.length).withContext('setup').toEqual(27);
 
-    env.component.editor?.updateContents(new Delta().retain(109).retain(31, { para: null }));
+    // Check the update's validity
+    const updateDelta = new Delta().retain(109).retain(31, { para: null });
+    const preUpdateOps = env.component.editor?.getContents().ops!;
+    expect(preUpdateOps[16].attributes).not.toBeUndefined();
+    const postUpdateOps = new Delta(preUpdateOps).compose(updateDelta).ops;
+    expect(postUpdateOps[16].attributes).toBeUndefined();
+
+    // Perform the update
+    env.component.editor?.updateContents(updateDelta);
     flush();
 
     const ops = env.component.editor?.getContents().ops;
     if (ops != null) {
-      const lastPara = ops[18];
+      const lastPara = ops[16];
       expect(lastPara.attributes).not.toBeNull();
     } else {
       fail('should not get here if test is working properly!');
@@ -333,8 +341,9 @@ describe('TextComponent', () => {
     env.fixture.detectChanges();
     expect(env.isSegmentHighlighted(1, '1')).toBe(true);
     expect(env.isSegmentHighlighted(1, '1/q_1')).toBe(true);
-    expect(env.isSegmentHighlighted(1, '1/q_2')).toBe(true);
+    expect(env.isSegmentHighlighted(1, '1/b_2')).toBe(true);
     expect(env.isSegmentHighlighted(1, '1/q_3')).toBe(true);
+    expect(env.isSegmentHighlighted(1, '1/q_4')).toBe(true);
 
     TestEnvironment.waitForPresenceTimer();
   }));
@@ -406,8 +415,8 @@ describe('TextComponent', () => {
     env.waitForEditor();
 
     const verseSegments: string[] = env.component.getVerseSegments(new VerseRef('LUK 1:1'));
-    expect(verseSegments).toEqual(['verse_1_1', 'verse_1_1/q_1', 'verse_1_1/q_2', 'verse_1_1/q_3']);
-    const segmentText = env.component.getSegmentText('verse_1_1/q_2');
+    expect(verseSegments).toEqual(['verse_1_1', 'verse_1_1/q_1', 'verse_1_1/b_2', 'verse_1_1/q_3', 'verse_1_1/q_4']);
+    const segmentText = env.component.getSegmentText('verse_1_1/q_3');
     expect(segmentText).toEqual('Poetry third line');
   }));
 
@@ -431,44 +440,46 @@ describe('TextComponent', () => {
     TestEnvironment.waitForPresenceTimer();
   }));
 
-  it('keeps verse selection after user undoes edits', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.fixture.detectChanges();
-    env.id = new TextDocId('project01', 43, 1);
-    env.waitForEditor();
+  [true, false].forEach(modelHasBlanks => {
+    it('keeps verse selection after user undoes edits', fakeAsync(() => {
+      const env = new TestEnvironment({ modelHasBlanks });
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 43, 1);
+      env.waitForEditor();
 
-    const range: QuillRange = env.component.getSegmentRange('verse_1_1')!;
-    env.component.toggleVerseSelection(new VerseRef('JHN 1:1'));
-    env.component.editor!.setSelection(range.index + 1, 'user');
-    tick();
-    env.fixture.detectChanges();
-    let contents: Delta = env.component.getSegmentContents('verse_1_1')!;
-    expect(contents.ops![0].attributes!['commenter-selection']).toBe(true);
-    expect((contents.ops![0].insert as any).blank).toBe(true);
-    const formats = getAttributesAtPosition(env.component.editor!, range.index);
-    // use apply delta to control the formatting
-    env.applyDelta(new Delta().retain(range.index).insert('text', formats).delete(1), 'user');
-    contents = env.component.getSegmentContents('verse_1_1')!;
-    expect(contents.ops![0].attributes!['commenter-selection']).toBe(true);
-    const verse2Range: QuillRange = env.component.getSegmentRange('verse_1_2')!;
-    env.component.editor!.setSelection(verse2Range.index + 1, 'user');
-    env.component.toggleVerseSelection(new VerseRef('JHN 1:2'));
-    env.component.toggleVerseSelection(new VerseRef('JHN 1:1'));
-    tick();
-    env.fixture.detectChanges();
-    contents = env.component.getSegmentContents('verse_1_1')!;
-    expect(contents.ops![0].attributes!['commenter-selection']).toBeUndefined();
+      const range: QuillRange = env.component.getSegmentRange('verse_1_1')!;
+      env.component.toggleVerseSelection(new VerseRef('JHN 1:1'));
+      env.component.editor!.setSelection(range.index + 1, 'user');
+      tick();
+      env.fixture.detectChanges();
+      let contents: Delta = env.component.getSegmentContents('verse_1_1')!;
+      expect(contents.ops![0].attributes!['commenter-selection']).toBe(true);
+      expect((contents.ops![0].insert as any).blank).toBe(modelHasBlanks);
+      const formats = getAttributesAtPosition(env.component.editor!, range.index);
+      // use apply delta to control the formatting
+      env.applyDelta(new Delta().retain(range.index).insert('text', formats).delete(1), 'user');
+      contents = env.component.getSegmentContents('verse_1_1')!;
+      expect(contents.ops![0].attributes!['commenter-selection']).toBe(true);
+      const verse2Range: QuillRange = env.component.getSegmentRange('verse_1_2')!;
+      env.component.editor!.setSelection(verse2Range.index + 1, 'user');
+      env.component.toggleVerseSelection(new VerseRef('JHN 1:2'));
+      env.component.toggleVerseSelection(new VerseRef('JHN 1:1'));
+      tick();
+      env.fixture.detectChanges();
+      contents = env.component.getSegmentContents('verse_1_1')!;
+      expect(contents.ops![0].attributes!['commenter-selection']).toBeUndefined();
 
-    // SUT
-    env.triggerUndo();
-    env.component.toggleVerseSelection(new VerseRef('JHN 1:2'));
-    env.component.toggleVerseSelection(new VerseRef('JHN 1:1'));
-    contents = env.component.getSegmentContents('verse_1_1')!;
-    expect(contents.ops![0].attributes!['commenter-selection']).toBe(true);
-    expect((contents.ops![0].insert as any).blank).toBe(true);
+      // SUT
+      env.triggerUndo();
+      env.component.toggleVerseSelection(new VerseRef('JHN 1:2'));
+      env.component.toggleVerseSelection(new VerseRef('JHN 1:1'));
+      contents = env.component.getSegmentContents('verse_1_1')!;
+      expect(contents.ops![0].attributes!['commenter-selection']).toBe(true);
+      expect((contents.ops![0].insert as any).blank).toBe(modelHasBlanks);
 
-    TestEnvironment.waitForPresenceTimer();
-  }));
+      TestEnvironment.waitForPresenceTimer();
+    }));
+  });
 
   it('pastes text with proper attributes', fakeAsync(() => {
     const env = new TestEnvironment();
@@ -1241,46 +1252,6 @@ describe('TextComponent', () => {
     expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
   }));
 
-  it('does not add blank embeds while offline', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.fixture.detectChanges();
-    env.component.id = new TextDocId('project01', 40, 1);
-    env.onlineStatus = false;
-    env.waitForEditor();
-
-    let range: QuillRange = env.component.getSegmentRange('verse_1_1')!;
-    let verse1Contents: Delta = env.component.getSegmentContents('verse_1_1')!;
-    expect(verse1Contents.ops!.length).toBe(1);
-    env.component.editor!.setSelection(range.index + range.length, 'user');
-    tick();
-    env.fixture.detectChanges();
-    // delete all the text in the verse
-    env.applyDelta(new Delta().retain(range.index).delete(range.length), 'user');
-    tick();
-    env.fixture.detectChanges();
-    verse1Contents = env.component.getSegmentContents('verse_1_1')!;
-    // no content exists, not even a blank
-    expect(verse1Contents.ops!.length).toBe(0);
-
-    env.onlineStatus = true;
-    tick();
-    env.fixture.detectChanges();
-    range = env.component.getSegmentRange('verse_1_3')!;
-    let verse3Contents: Delta = env.component.getSegmentContents('verse_1_3')!;
-    expect(verse3Contents.ops!.length).toBe(1);
-    // delete all the text in the verse
-    env.applyDelta(new Delta().retain(range.index).delete(range.length), 'user');
-    tick();
-    env.fixture.detectChanges();
-    verse3Contents = env.component.getSegmentContents('verse_1_3')!;
-    // blank exists
-    expect(verse3Contents.ops![0].insert).toEqual({ blank: true });
-    verse1Contents = env.component.getSegmentContents('verse_1_1')!;
-    // blank restored to verse 1
-    expect(verse1Contents.ops![0].insert).toEqual({ blank: true });
-    TestEnvironment.waitForPresenceTimer();
-  }));
-
   it('can display footnote dialog', fakeAsync(() => {
     const chapterNum = 2;
     const segmentRef: string = `verse_${chapterNum}_1`;
@@ -1720,13 +1691,15 @@ class TestEnvironment {
     chapterNum,
     presenceEnabled = true,
     callback,
-    placeholderInput
+    placeholderInput,
+    modelHasBlanks = false
   }: {
     textDoc?: RichText.DeltaOperation[];
     chapterNum?: number;
     presenceEnabled?: boolean;
     callback?: (env: TestEnvironment) => void;
     placeholderInput?: string;
+    modelHasBlanks?: boolean;
   } = {}) {
     when(mockedTranslocoService.translate<string>(anything())).thenCall(
       (translationStringKey: string) => translationStringKey
@@ -1782,20 +1755,24 @@ class TestEnvironment {
     this.realtimeService.addSnapshots<TextData>(TextDoc.COLLECTION, [
       {
         id: this.matTextDocId.toString(),
-        data: getTextDoc(this.matTextDocId),
+        data: getTextDoc(this.matTextDocId, modelHasBlanks),
         type: RichText.type.name
       },
       {
         id: this.mrkTextDocId.toString(),
-        data: getCombinedVerseTextDoc(this.mrkTextDocId),
+        data: getCombinedVerseTextDoc(this.mrkTextDocId, modelHasBlanks),
         type: RichText.type.name
       },
       {
         id: this.lukTextDocId.toString(),
-        data: getPoetryVerseTextDoc(this.lukTextDocId),
+        data: getPoetryVerseTextDoc(this.lukTextDocId, modelHasBlanks),
         type: RichText.type.name
       },
-      { id: this.jhnTextDocId.toString(), data: getEmptyChapterDoc(this.jhnTextDocId), type: RichText.type.name }
+      {
+        id: this.jhnTextDocId.toString(),
+        data: getEmptyChapterDoc(this.jhnTextDocId, modelHasBlanks),
+        type: RichText.type.name
+      }
     ]);
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
       id: 'user01',

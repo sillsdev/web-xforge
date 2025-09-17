@@ -216,6 +216,12 @@ public class ParatextController : ControllerBase
         {
             return Ok(await _paratextService.GetSnapshotAsync(userSecret, projectId, book, chapter, timestamp));
         }
+        catch (ArgumentException e)
+        {
+            // We want to report this exception for further investigation ("The delta is not a document.")
+            _exceptionHandler.ReportException(e);
+            return Conflict();
+        }
         catch (DataNotFoundException)
         {
             return NotFound();
