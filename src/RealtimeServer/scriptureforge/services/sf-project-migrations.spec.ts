@@ -629,7 +629,7 @@ describe('SFProjectMigrations', () => {
   });
 
   describe('version 25', () => {
-    it('adds lynxConfig property', async () => {
+    it('adds lynxConfig with default values', async () => {
       const env = new TestEnvironment(24);
       const conn = env.server.connect();
       await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {});

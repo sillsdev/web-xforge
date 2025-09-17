@@ -142,6 +142,12 @@ export class SFProjectUserConfigService extends SFProjectDataService<SFProjectUs
                 bsonType: 'string'
               }
             }
+          },
+          assessmentsEnabled: {
+            bsonType: 'bool'
+          },
+          autoCorrectionsEnabled: {
+            bsonType: 'bool'
           }
         },
         additionalProperties: false
