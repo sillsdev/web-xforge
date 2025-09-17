@@ -2547,7 +2547,7 @@ describe('EditorComponent', () => {
       const insert: string = 'abc';
       const deltaOps: DeltaOperation[] = [{ retain: remoteEditTextPos }, { insert: insert }];
       const textDoc: TextDoc = await env.getTextDoc(new TextDocId('project01', 40, 1));
-      textDoc.submit(new Delta(deltaOps));
+      await textDoc.submit(new Delta(deltaOps));
 
       env.wait();
       expect(env.getNoteThreadEditorPosition('dataid02')).toEqual(notePosition);

@@ -104,13 +104,13 @@ describe('MyProjectsComponent', () => {
     expect(env.router.url).toEqual('/projects/sf-cbntt');
   }));
 
-  it('user cannot join a project while offline', fakeAsync(() => {
+  it('user cannot join a project while offline', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.waitUntilLoaded();
     env.onlineStatus = false;
     expect(env.messageOffline).not.toBeNull();
     expect(env.buttonForUnconnectedProject('pt-connButNotThisUser').nativeElement.disabled).toBe(true);
-    env.component.joinProject('sf-cbntt');
+    await env.component.joinProject('sf-cbntt');
     tick();
     env.fixture.detectChanges();
     verify(mockedNoticeService.show(anything())).once();

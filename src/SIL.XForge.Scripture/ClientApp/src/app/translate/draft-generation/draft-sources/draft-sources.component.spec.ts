@@ -174,7 +174,7 @@ describe('DraftSourcesComponent', () => {
       verify(mockedDialogService.confirm(anything(), anything(), anything())).never();
 
       // SUT
-      env.component.save();
+      await env.component.save();
       tick();
       verify(mockedSFProjectService.onlineUpdateSettings(env.activatedProjectDoc.id, anything())).once();
       const actualSettingsChangeRequest: SFProjectSettings = capture(
@@ -219,7 +219,7 @@ describe('DraftSourcesComponent', () => {
       verify(mockedDialogService.confirm(anything(), anything(), anything())).once();
 
       // SUT
-      env.component.save();
+      await env.component.save();
       tick();
       verify(mockedSFProjectService.onlineUpdateSettings(env.activatedProjectDoc.id, anything())).once();
       const actualSettingsChangeRequest: SFProjectSettings = capture(
@@ -262,7 +262,7 @@ describe('DraftSourcesComponent', () => {
       tick();
 
       // SUT
-      env.component.save();
+      await env.component.save();
       tick();
       verify(mockedSFProjectService.onlineUpdateSettings(env.activatedProjectDoc.id, anything())).once();
       const actualSettingsChangeRequest: SFProjectSettings = capture(
@@ -291,7 +291,7 @@ describe('DraftSourcesComponent', () => {
       );
 
       // SUT
-      env.component.save();
+      await env.component.save();
       tick();
       verify(mockedSFProjectService.onlineUpdateSettings(env.activatedProjectDoc.id, anything())).once();
     }));
@@ -339,7 +339,7 @@ describe('DraftSourcesComponent', () => {
 
       env.component.onTrainingDataSelect([{ dataId: 'test1' } as TrainingData, { dataId: 'test2' } as TrainingData]);
 
-      env.component.save();
+      await env.component.save();
       tick();
       verify(mockedSFProjectService.onlineUpdateSettings(env.activatedProjectDoc.id, anything())).once();
       const actualSettingsChangeRequest: SFProjectSettings = capture(
@@ -363,7 +363,7 @@ describe('DraftSourcesComponent', () => {
 
       const newFile = { dataId: 'test1' } as TrainingData;
       env.component.onTrainingDataSelect([newFile]);
-      env.component.save();
+      await env.component.save();
 
       verify(mockTrainingDataService.createTrainingDataAsync(newFile)).once();
     }));
@@ -387,7 +387,7 @@ describe('DraftSourcesComponent', () => {
       expect(env.component.availableTrainingFiles.length).toEqual(2);
 
       env.component.onTrainingDataSelect([savedFile1]);
-      env.component.save();
+      await env.component.save();
       tick();
 
       verify(mockTrainingDataService.deleteTrainingDataAsync(savedFile2)).once();

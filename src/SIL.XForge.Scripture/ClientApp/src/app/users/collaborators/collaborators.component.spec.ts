@@ -95,7 +95,7 @@ describe('CollaboratorsComponent', () => {
     expect(env.noUsersLabel).not.toBeNull();
   }));
 
-  it('should display users', fakeAsync(() => {
+  it('should display users', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setupProjectData();
     env.fixture.detectChanges();
@@ -122,10 +122,10 @@ describe('CollaboratorsComponent', () => {
     env.clickElement(env.userRowMoreMenuElement(2));
     expect(env.removeUserItemOnRow(2)).toBeTruthy();
     expect(env.cancelInviteItemOnRow(2)).toBeFalsy();
-    env.cleanup();
+    await env.cleanup();
   }));
 
-  it('displays invited users', fakeAsync(() => {
+  it('displays invited users', fakeAsync(async () => {
     const env = new TestEnvironment();
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
       { email: 'alice@a.aa', role: 'sf_community_checker', expired: false },
@@ -155,7 +155,7 @@ describe('CollaboratorsComponent', () => {
     env.clickElement(env.userRowMoreMenuElement(inviteeRow));
     expect(env.removeUserItemOnRow(inviteeRow)).toBeFalsy();
     expect(env.cancelInviteItemOnRow(inviteeRow)).toBeTruthy();
-    env.cleanup();
+    await env.cleanup();
   }));
 
   it('handle error from invited users query, when user is not on project', fakeAsync(() => {
@@ -327,7 +327,7 @@ describe('CollaboratorsComponent', () => {
     expect(env.userRows.length).toEqual(2);
   }));
 
-  it('should disable collaborators if not connected', fakeAsync(() => {
+  it('should disable collaborators if not connected', fakeAsync(async () => {
     const env = new TestEnvironment(false);
     env.setupProjectData();
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
@@ -353,10 +353,10 @@ describe('CollaboratorsComponent', () => {
     env.clickElement(env.userRowMoreMenuElement(inviteeRow));
     expect(env.removeUserItemOnRow(inviteeRow)).toBeNull();
     expect(env.cancelInviteItemOnRow(inviteeRow).attributes['disabled']).toBe('true');
-    env.cleanup();
+    await env.cleanup();
   }));
 
-  it('should enable editing roles and permissions for non-admins', fakeAsync(() => {
+  it('should enable editing roles and permissions for non-admins', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setupProjectData();
     env.fixture.detectChanges();
@@ -366,10 +366,10 @@ describe('CollaboratorsComponent', () => {
     env.clickElement(env.userRowMoreMenuElement(1));
     expect(env.rolesAndPermissionsItem().nativeElement.disabled).toBe(false);
 
-    env.cleanup();
+    await env.cleanup();
   }));
 
-  it('should disable editing roles and permissions for admins', fakeAsync(() => {
+  it('should disable editing roles and permissions for admins', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setupProjectData();
     env.fixture.detectChanges();
@@ -379,10 +379,10 @@ describe('CollaboratorsComponent', () => {
     env.clickElement(env.userRowMoreMenuElement(0));
     expect(env.rolesAndPermissionsItem().nativeElement.disabled).toBe(true);
 
-    env.cleanup();
+    await env.cleanup();
   }));
 
-  it('should disable editing roles and permissions for pending invitees', fakeAsync(() => {
+  it('should disable editing roles and permissions for pending invitees', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setupProjectData();
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
@@ -398,7 +398,7 @@ describe('CollaboratorsComponent', () => {
     env.clickElement(env.userRowMoreMenuElement(4));
     expect(env.rolesAndPermissionsItem().nativeElement.disabled).toBe(true);
 
-    env.cleanup();
+    await env.cleanup();
   }));
 });
 
@@ -592,12 +592,11 @@ class TestEnvironment {
     });
   }
 
-  cleanup(): void {
-    this.loader.getAllHarnesses(MatMenuHarness).then(harnesses => {
-      for (const harness of harnesses) {
-        harness.close();
-      }
-    });
+  async cleanup(): Promise<void> {
+    const harnesses = await this.loader.getAllHarnesses(MatMenuHarness);
+    for (const harness of harnesses) {
+      harness.close();
+    }
     flush();
     this.fixture.detectChanges();
   }
