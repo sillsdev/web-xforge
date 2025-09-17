@@ -41,6 +41,10 @@ mat-panel-description {
     color: var(--draft-history-entry-new-label-color);
     font-weight: 500;
   }
+
+  .new-arrow {
+    flex-shrink: 0;
+  }
 }
 
 .subtitle,
@@ -90,4 +94,9 @@ strong {
 /* Styling for the error details table */
 .mat-column-heading {
   font-weight: bolder;
+}
+
+.new-formatting-options-notice {
+  display: flex;
+  gap: 0.5rem;
 }
