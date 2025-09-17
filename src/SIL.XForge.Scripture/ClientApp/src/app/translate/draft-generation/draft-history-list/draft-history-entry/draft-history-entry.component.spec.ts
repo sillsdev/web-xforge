@@ -2,7 +2,9 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { ParagraphBreakFormat, QuoteFormat } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of } from 'rxjs';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -56,6 +58,17 @@ describe('DraftHistoryEntryComponent', () => {
   beforeEach(() => {
     when(mockedFeatureFlagsService.usfmFormat).thenReturn(createTestFeatureFlag(true));
     when(mockedActivatedProjectService.projectId).thenReturn('project01');
+    const targetProjectDoc = {
+      id: 'project01',
+      data: createTestProjectProfile({
+        translateConfig: {
+          draftConfig: {
+            usfmConfig: { paragraphFormat: ParagraphBreakFormat.BestGuess, quoteFormat: QuoteFormat.Denormalized }
+          }
+        }
+      })
+    } as SFProjectProfileDoc;
+    when(mockedActivatedProjectService.projectDoc).thenReturn(targetProjectDoc);
     const trainingDataQuery: RealtimeQuery<TrainingDataDoc> = mock(RealtimeQuery<TrainingDataDoc>);
     when(trainingDataQuery.docs).thenReturn([
       { id: 'doc01', data: { dataId: 'file01', title: 'training-data.txt' } } as TrainingDataDoc
@@ -313,6 +326,33 @@ describe('DraftHistoryEntryComponent', () => {
     });
   });
 
+  describe('setDraftFormat', () => {
+    it('should show set draft format UI', fakeAsync(() => {
+      when(mockedActivatedProjectService.projectDoc).thenReturn(getProjectProfileDoc());
+      component.entry = { id: 'build01', state: BuildStates.Completed, message: 'Completed' } as BuildDto;
+      component.isLatestBuild = true;
+      tick();
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.require-formatting-options')).not.toBeNull();
+    }));
+
+    it('should hide draft format UI', fakeAsync(() => {
+      component.entry = { id: 'build01', state: BuildStates.Completed, message: 'Completed' } as BuildDto;
+      component.isLatestBuild = true;
+      tick();
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.require-formatting-options')).toBeNull();
+    }));
+
+    it('should hide draft format UI if not the latest build', fakeAsync(() => {
+      component.entry = { id: 'build01', state: BuildStates.Completed, message: 'Completed' } as BuildDto;
+      component.isLatestBuild = false;
+      tick();
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.require-formatting-options')).toBeNull();
+    }));
+  });
+
   describe('formatDate', () => {
     it('should handle undefined values', () => {
       expect(component.formatDate(undefined)).toBe('');
@@ -383,5 +423,13 @@ describe('DraftHistoryEntryComponent', () => {
     } as BuildDto;
 
     return entry;
+  }
+
+  function getProjectProfileDoc(args: Partial<SFProjectProfile> = {}): SFProjectProfileDoc {
+    const targetProjectDoc = {
+      id: 'project01',
+      data: createTestProjectProfile({ ...args })
+    } as SFProjectProfileDoc;
+    return targetProjectDoc;
   }
 });

@@ -260,7 +260,7 @@ export class DraftGenerationStepsComponent implements OnInit {
               !hasPreviousTrainingRange &&
               textProgress != null &&
               textProgress.translated > minimumTranslatedSegments &&
-              (textProgress.percentage >= 99 || textProgress.blank <= 3);
+              (textProgress.percentage >= 99 || textProgress.notTranslated <= 3);
 
             // If books were automatically selected, reflect this in the UI via a notice
             this.trainingBooksWereAutoSelected ||= selected;

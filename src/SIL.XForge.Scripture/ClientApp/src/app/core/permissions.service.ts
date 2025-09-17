@@ -76,8 +76,10 @@ export class PermissionsService {
         .find(t => t.bookNum === textDocId.bookNum)
         ?.chapters.find(c => c.number === textDocId.chapterNum);
       if (chapter != null) {
-        const chapterPermission: string = chapter.permissions[this.userService.currentUserId];
-        return chapterPermission === TextInfoPermission.Write || chapterPermission === TextInfoPermission.Read;
+        const chapterPermission: string | undefined = chapter.permissions[this.userService.currentUserId];
+        // If there is no chapter permission, they will have access to the chapter as they have access to the project.
+        // We should only deny access if there is an explicit "None" permission.
+        return chapterPermission !== TextInfoPermission.None;
       }
     }
 

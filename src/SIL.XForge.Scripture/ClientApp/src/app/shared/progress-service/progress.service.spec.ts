@@ -13,7 +13,7 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
-import { ProgressService } from '../../shared/progress-service/progress.service';
+import { ProgressService, TextProgress } from './progress.service';
 
 const mockSFProjectService = mock(SFProjectService);
 const mockNoticeService = mock(NoticeService);
@@ -32,19 +32,28 @@ describe('progress service', () => {
   }));
 
   it('populates progress and texts on construction', fakeAsync(() => {
-    const env = new TestEnvironment(100, 50);
+    // Create segments for 20 chapters multiplied by 20 books
+    const env = new TestEnvironment(3600, 2000);
+    // Override the verse counts to be less than half of the number created for each book
+    spyOn(TextProgress.prototype as any, 'getVerseCount').and.callFake(() => 200);
     const calculate = spyOn<any>(env.service, 'calculateProgress').and.callThrough();
 
     tick();
 
-    expect(env.service.overallProgress.translated).toEqual(100);
-    expect(env.service.overallProgress.blank).toEqual(50);
-    expect(env.service.overallProgress.total).toEqual(150);
-    expect(env.service.overallProgress.percentage).toEqual(67);
+    expect(env.service.overallProgress.translated).toEqual(3600);
+    expect(env.service.overallProgress.notTranslated).toEqual(2000);
+    expect(env.service.overallProgress.blank).toEqual(2000);
+    expect(env.service.overallProgress.total).toEqual(5600);
+    expect(env.service.overallProgress.percentage).toEqual(64);
     expect(env.service.texts.length).toBeGreaterThan(0);
     let i = 0;
     for (const book of env.service.texts) {
-      expect(book.text.bookNum).toEqual(i++);
+      expect(book.text.bookNum).toEqual(++i);
+      expect(book.expectedNumberOfVerses).toEqual(200);
+      expect(book.useExpectedNumberOfVerses).toEqual(false);
+      expect(book.blank).toEqual(100);
+      expect(book.translated).toEqual(180);
+      expect(book.total).toEqual(280);
       expect(book.text.chapters.length).toBeGreaterThan(0);
       let j = 0;
       for (const chapter of book.text.chapters) {
@@ -73,7 +82,7 @@ describe('progress service', () => {
   it('updates total progress when chapter content changes', fakeAsync(async () => {
     const env = new TestEnvironment();
     const changeEvent = new BehaviorSubject({});
-    when(mockSFProjectService.getText(deepEqual(new TextDocId('project01', 0, 2, 'target')))).thenCall(() => {
+    when(mockSFProjectService.getText(deepEqual(new TextDocId('project01', 1, 2, 'target')))).thenCall(() => {
       return {
         getSegmentCount: () => {
           return { translated: 12, blank: 2 };
@@ -86,7 +95,7 @@ describe('progress service', () => {
     tick();
 
     // mock a change
-    when(mockSFProjectService.getText(deepEqual(new TextDocId('project01', 0, 2, 'target')))).thenCall(() => {
+    when(mockSFProjectService.getText(deepEqual(new TextDocId('project01', 1, 2, 'target')))).thenCall(() => {
       return {
         getSegmentCount: () => {
           return { translated: 13, blank: 1 };
@@ -102,6 +111,29 @@ describe('progress service', () => {
     changeEvent.next({});
 
     expect(env.service.overallProgress.translated).toEqual(originalProgress + 1);
+    discardPeriodicTasks();
+  }));
+
+  it('uses the verse counts when there are too few segments', fakeAsync(() => {
+    const notTranslatedVerses = 17380;
+    const translatedVerses = 5;
+    const env = new TestEnvironment(translatedVerses, 1);
+    tick();
+
+    expect(env.service.overallProgress.translated).toEqual(translatedVerses);
+    expect(env.service.overallProgress.notTranslated).toEqual(notTranslatedVerses);
+    expect(env.service.overallProgress.blank).toEqual(notTranslatedVerses);
+    expect(env.service.overallProgress.total).toEqual(notTranslatedVerses + translatedVerses);
+    expect(env.service.overallProgress.percentage).toEqual(0);
+    expect(env.service.texts.length).toBeGreaterThan(0);
+    let i = 0;
+    for (const book of env.service.texts) {
+      expect(book.text.bookNum).toEqual(++i);
+      expect(book.useExpectedNumberOfVerses).toEqual(true);
+      expect(book.total).toEqual(book.expectedNumberOfVerses);
+      expect(book.text.chapters.length).toBeGreaterThan(0);
+    }
+
     discardPeriodicTasks();
   }));
 
@@ -155,7 +187,6 @@ class TestEnvironment {
 
   readonly mockProject = mock(SFProjectProfileDoc);
   readonly project$ = new BehaviorSubject(instance(this.mockProject));
-  // readonly projectChange$ = new BehaviorSubject<OtJson0Op[]>([]);
 
   constructor(
     private readonly translatedSegments: number = 1000,
@@ -196,7 +227,7 @@ class TestEnvironment {
   }
 
   setUpGetText(projectId: string, translatedSegments: number, blankSegments: number): void {
-    for (let book = 0; book < this.numBooks; book++) {
+    for (let book = 1; book <= this.numBooks; book++) {
       for (let chapter = 0; chapter < this.numChapters; chapter++) {
         const translated = translatedSegments >= 9 ? 9 : translatedSegments;
         translatedSegments -= translated;
@@ -225,7 +256,7 @@ class TestEnvironment {
 
   createTexts(): TextInfo[] {
     const texts: TextInfo[] = [];
-    for (let book = 0; book < this.numBooks; book++) {
+    for (let book = 1; book <= this.numBooks; book++) {
       const chapters: Chapter[] = [];
       for (let chapter = 0; chapter < this.numChapters; chapter++) {
         chapters.push({ isValid: true, lastVerse: 1, number: chapter, permissions: {}, hasAudio: false });
