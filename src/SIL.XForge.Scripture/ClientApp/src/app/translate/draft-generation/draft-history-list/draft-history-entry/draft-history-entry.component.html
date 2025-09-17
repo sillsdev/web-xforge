@@ -32,10 +32,9 @@
               <span class="hide-gt-lg">{{ t("formatting") }}</span>
             </button>
             @if (timeframeForSelectFormatNotice) {
-              <div>
-                <span class="new-label">{{ t("new") }}</span
-                >&nbsp;
-                <span>{{ t("options_for_line_breaks_and_quotation_marks") }}</span>
+              <div class="new-formatting-options-notice">
+                <mat-icon>{{ i18n.isRtl ? "east" : "west" }}</mat-icon>
+                <span class="new-label">{{ t("new") }}</span> {{ t("options_for_line_breaks_and_quotation_marks") }}
               </div>
             }
           </div>
