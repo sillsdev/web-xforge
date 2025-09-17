@@ -342,13 +342,24 @@ export = {
     }
 
     // Build the ops from a diff
-    // NOTE: We do not use diff-patch-match, as that may result in
-    // op conflicts when ops are submitted from multiple sources.
-    // diff-patch-match mutates the string, but we want to replace it.
-    const ops = json0OtDiff(doc.data, data);
+    let ops: any;
+    let hasOps: boolean;
+    if (doc.type?.name == OTJson0.type.name) {
+      // NOTE: We do not use diff-patch-match, as that may result in
+      // op conflicts when ops are submitted from multiple sources.
+      // diff-patch-match mutates the string, but we want to replace it.
+      ops = json0OtDiff(doc.data, data);
+      hasOps = ops.length > 0;
+    } else if (doc.type?.name == RichText.type.name) {
+      ops = new RichText.Delta(doc.data.ops).diff(new RichText.Delta(data.ops));
+      hasOps = ops.ops.length > 0;
+    } else {
+      callback(new Error('Unsupported document type.'));
+      return;
+    }
 
     // Submit the ops
-    if (ops.length > 0) {
+    if (hasOps) {
       const options: any = {};
       doc.submitSource = source != null;
       if (source != null) {
