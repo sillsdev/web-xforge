@@ -796,7 +796,7 @@ describe('LynxWorkspaceService', () => {
       const delta = new Delta().insert('Hello,');
       let result: Delta[] = [];
 
-      env.service.getOnTypeEdits(delta).then(res => (result = res));
+      result = await env.service.getOnTypeEdits(delta);
       tick();
 
       expect(result.length).toBe(1);
@@ -834,7 +834,7 @@ describe('LynxWorkspaceService', () => {
       const delta = new Delta().insert('Hello, world.');
       let result: Delta[] = [];
 
-      env.service.getOnTypeEdits(delta).then(res => (result = res));
+      result = await env.service.getOnTypeEdits(delta);
       tick();
 
       expect(result.length).toBe(2);
@@ -851,7 +851,7 @@ describe('LynxWorkspaceService', () => {
       const delta = new Delta().insert('Hello,');
       let result: Delta[] = [];
 
-      env.service.getOnTypeEdits(delta).then(res => (result = res));
+      result = await env.service.getOnTypeEdits(delta);
       tick();
 
       expect(result).toEqual([]);
@@ -876,7 +876,7 @@ describe('LynxWorkspaceService', () => {
       const delta = new Delta().insert('Hello,');
       let result: Delta[] = [];
 
-      env.service.getOnTypeEdits(delta).then(res => (result = res));
+      result = await env.service.getOnTypeEdits(delta);
       tick();
 
       expect(result).toEqual([]);
@@ -911,7 +911,7 @@ describe('LynxWorkspaceService', () => {
       const delta = new Delta().insert('Hello,');
       let result: Delta[] = [];
 
-      env.service.getOnTypeEdits(delta).then(res => (result = res));
+      result = await env.service.getOnTypeEdits(delta);
       tick();
 
       expect(result.length).toBe(1);
@@ -958,7 +958,7 @@ describe('LynxWorkspaceService', () => {
       const insight = env.createTestInsight();
       let actions: LynxInsightAction[] = [];
 
-      env.service.getActions(insight).then(res => (actions = res));
+      actions = await env.service.getActions(insight);
       tick();
 
       expect(actions.length).toBe(1);
@@ -975,7 +975,7 @@ describe('LynxWorkspaceService', () => {
       const insight = env.createTestInsight();
       let actions: LynxInsightAction[] = [];
 
-      env.service.getActions(insight).then(res => (actions = res));
+      actions = await env.service.getActions(insight);
       tick();
 
       expect(actions).toEqual([]);

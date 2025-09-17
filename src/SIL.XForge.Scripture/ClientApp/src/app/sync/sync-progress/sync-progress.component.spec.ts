@@ -51,7 +51,7 @@ describe('SyncProgressComponent', () => {
 
   it('does not initialize if app is offline', fakeAsync(async () => {
     const env = new TestEnvironment({ userId: 'user01' });
-    env.setupProjectDoc();
+    await env.setupProjectDoc();
     env.onlineStatus = false;
     verify(mockedProjectService.subscribe('sourceProject02', anything())).never();
     expect(await env.getMode()).toBe('indeterminate');
@@ -60,7 +60,7 @@ describe('SyncProgressComponent', () => {
   it('ignores source if source project is invalid', fakeAsync(async () => {
     when(mockedProjectService.onlineGetProjectRole('invalid_source')).thenResolve(SFProjectRole.None);
     const env = new TestEnvironment({ userId: 'user01', sourceProject: 'invalid_source' });
-    env.setupProjectDoc();
+    await env.setupProjectDoc();
     verify(mockedProjectService.onlineGetProjectRole('invalid_source')).once();
     await env.updateSyncProgress(0.5, 'testProject01');
     expect(env.host.inProgress).toBe(true);
@@ -72,7 +72,7 @@ describe('SyncProgressComponent', () => {
 
   it('should show progress when sync is active', fakeAsync(async () => {
     const env = new TestEnvironment({ userId: 'user01' });
-    env.setupProjectDoc();
+    await env.setupProjectDoc();
     // Simulate sync starting
     await env.updateSyncProgress(0, 'testProject01');
     expect(env.progressBar).not.toBeNull();
@@ -93,7 +93,7 @@ describe('SyncProgressComponent', () => {
       sourceProject: 'sourceProject02',
       translationSuggestionsEnabled: true
     });
-    env.setupProjectDoc();
+    await env.setupProjectDoc();
     await env.checkCombinedProgress();
     expect(env.syncStatus).not.toBeNull();
     tick();
@@ -105,7 +105,7 @@ describe('SyncProgressComponent', () => {
       sourceProject: 'sourceProject02',
       translationSuggestionsEnabled: false
     });
-    env.setupProjectDoc();
+    await env.setupProjectDoc();
     await env.checkCombinedProgress();
     expect(env.syncStatus).not.toBeNull();
     tick();
@@ -113,7 +113,7 @@ describe('SyncProgressComponent', () => {
 
   it('does not access source project if user does not have a paratext role', fakeAsync(async () => {
     const env = new TestEnvironment({ userId: 'user02', sourceProject: 'sourceProject02' });
-    env.setupProjectDoc();
+    await env.setupProjectDoc();
     await env.updateSyncProgress(0, 'testProject01');
     await env.updateSyncProgress(0, 'sourceProject02');
     verify(mockedProjectService.subscribe('sourceProject02', anything())).never();
@@ -124,10 +124,10 @@ describe('SyncProgressComponent', () => {
     await env.emitSyncComplete(true, 'testProject01');
   }));
 
-  it('does not throw error if get project role times out', fakeAsync(() => {
+  it('does not throw error if get project role times out', fakeAsync(async () => {
     const env = new TestEnvironment({ userId: 'user01', sourceProject: 'sourceProject02' });
     when(mockedProjectService.onlineGetProjectRole('sourceProject02')).thenReject(new Error('504: Gateway Timeout'));
-    env.setupProjectDoc();
+    await env.setupProjectDoc();
     verify(mockedProjectService.onlineGetProjectRole('sourceProject02')).once();
     verify(mockedProjectService.subscribe('sourceProject02', anything())).never();
     verify(mockedErrorReportingService.silentError(anything(), anything())).once();
@@ -147,8 +147,8 @@ class HostComponent {
 
   constructor(private readonly projectService: SFProjectService) {}
 
-  setProjectDoc(): void {
-    this.projectService.subscribe('testProject01', new DocSubscription('spec')).then(doc => (this.projectDoc = doc));
+  async setProjectDoc(): Promise<void> {
+    this.projectDoc = await this.projectService.subscribe('testProject01', new DocSubscription('spec'));
   }
 }
 
@@ -272,8 +272,8 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  setupProjectDoc(): void {
-    this.host.setProjectDoc();
+  async setupProjectDoc(): Promise<void> {
+    await this.host.setProjectDoc();
     tick();
     this.fixture.detectChanges();
     tick();
