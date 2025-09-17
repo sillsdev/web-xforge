@@ -1,4 +1,5 @@
 import { DestroyRef, Injectable, OnDestroy } from '@angular/core';
+import { Canon } from '@sillsdev/scripture';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { asyncScheduler, merge, startWith, Subscription, tap, throttleTime } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -10,6 +11,121 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
+
+/**
+ * The expected number of verses per book, calculated from the libpalaso versification files.
+ */
+const verseCounts: Record<string, number> = {
+  GEN: 1533,
+  EXO: 1213,
+  LEV: 859,
+  NUM: 1289,
+  DEU: 959,
+  JOS: 658,
+  JDG: 618,
+  RUT: 85,
+  '1SA': 811,
+  '2SA': 695,
+  '1KI': 817,
+  '2KI': 719,
+  '1CH': 943,
+  '2CH': 822,
+  EZR: 280,
+  NEH: 405,
+  EST: 167,
+  JOB: 1070,
+  PSA: 2527,
+  PRO: 915,
+  ECC: 222,
+  SNG: 117,
+  ISA: 1291,
+  JER: 1364,
+  LAM: 154,
+  EZK: 1273,
+  DAN: 357,
+  HOS: 197,
+  JOL: 73,
+  AMO: 146,
+  OBA: 21,
+  JON: 48,
+  MIC: 105,
+  NAM: 47,
+  HAB: 56,
+  ZEP: 53,
+  HAG: 38,
+  ZEC: 211,
+  MAL: 55,
+  MAT: 1071,
+  MRK: 678,
+  LUK: 1151,
+  JHN: 879,
+  ACT: 1006,
+  ROM: 433,
+  '1CO': 437,
+  '2CO': 256,
+  GAL: 149,
+  EPH: 155,
+  PHP: 104,
+  COL: 95,
+  '1TH': 89,
+  '2TH': 47,
+  '1TI': 113,
+  '2TI': 83,
+  TIT: 46,
+  PHM: 25,
+  HEB: 303,
+  JAS: 108,
+  '1PE': 105,
+  '2PE': 61,
+  '1JN': 105,
+  '2JN': 13,
+  '3JN': 15,
+  JUD: 25,
+  REV: 405,
+  TOB: 248,
+  JDT: 340,
+  ESG: 267,
+  WIS: 435,
+  SIR: 1401,
+  BAR: 141,
+  LJE: 72,
+  S3Y: 67,
+  SUS: 64,
+  BEL: 42,
+  '1MA': 924,
+  '2MA': 555,
+  '3MA': 228,
+  '4MA': 482,
+  '1ES': 434,
+  '2ES': 944,
+  MAN: 15,
+  PS2: 7,
+  ODA: 275,
+  PSS: 293,
+  JSA: 658,
+  JDB: 618,
+  TBS: 248,
+  SST: 64,
+  DNT: 424,
+  BLT: 42,
+  '3ES': 944,
+  EZA: 715,
+  '5EZ': 88,
+  '6EZ': 141,
+  DAG: 424,
+  PS3: 49,
+  '2BA': 613,
+  LBA: 82,
+  JUB: 1217,
+  ENO: 1563,
+  '1MQ': 756,
+  '2MQ': 396,
+  '3MQ': 208,
+  REP: 160,
+  '4BA': 184,
+  LAO: 20
+};
+
 export class Progress {
   translated: number = 0;
   blank: number = 0;
@@ -22,6 +138,14 @@ export class Progress {
     return Math.round((this.translated / this.total) * 100);
   }
 
+  get notTranslated(): number {
+    return this.blank;
+  }
+
+  set notTranslated(value: number) {
+    this.blank = value;
+  }
+
   reset(): void {
     this.translated = 0;
     this.blank = 0;
@@ -29,8 +153,29 @@ export class Progress {
 }
 
 export class TextProgress extends Progress {
+  expectedNumberOfVerses: number = 0;
+
   constructor(public readonly text: TextInfo) {
     super();
+    this.expectedNumberOfVerses = this.getVerseCount(text.bookNum);
+  }
+
+  get notTranslated(): number {
+    // This value will be the number of blanks unless useExpectedNumberOfVerses is true.
+    return this.total - this.translated;
+  }
+
+  get total(): number {
+    return this.useExpectedNumberOfVerses ? this.expectedNumberOfVerses : super.total;
+  }
+
+  get useExpectedNumberOfVerses(): boolean {
+    // If the total calculated from segments is at least 2/3 of the expected number of verses possible, use the total.
+    return this.expectedNumberOfVerses > 0 && super.total < this.expectedNumberOfVerses * 0.66;
+  }
+
+  getVerseCount(bookNum: number): number {
+    return verseCounts[Canon.bookNumberToId(bookNum)] ?? 0;
   }
 }
 
@@ -141,8 +286,6 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
       const { translated, blank } = chapterText.getSegmentCount();
       book.translated += translated;
       book.blank += blank;
-      this.overallProgress.translated += translated;
-      this.overallProgress.blank += blank;
 
       // If translation suggestions are enabled, collect the number of segment pairs up to the minimum required
       // We don't go any further so we don't load all of the source texts while this is running
@@ -172,5 +315,9 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
         }
       }
     }
+
+    // Add the book to the overall progress
+    this.overallProgress.translated += book.translated;
+    this.overallProgress.notTranslated += book.notTranslated;
   }
 }
