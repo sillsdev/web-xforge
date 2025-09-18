@@ -8,9 +8,9 @@
   <div class="card-wrapper">
     <mat-card class="books-card">
       <mat-card-header id="translate-overview-title" class="books-card-title">
-        <mat-card-title class="progress-header"
-          >{{ t("progress") }}
-          <div class="progress" [title]="progressService.overallProgress.percentage">
+        <mat-card-title class="progress-header">
+          {{ t("progress") }}
+          <div class="progress" [matTooltip]="progressService.overallProgress.ratio | l10nPercent">
             <app-donut-chart
               [colors]="['#b8d332', 'transparent']"
               [data]="[progressService.overallProgress.translated, progressService.overallProgress.notTranslated]"
@@ -34,7 +34,7 @@
                   total: (textProgress.total | l10nNumber)
                 })
               }}</span>
-              <div class="progress" matListItemMeta [title]="textProgress.percentage + '%'">
+              <div class="progress" matListItemMeta [matTooltip]="textProgress.ratio | l10nPercent">
                 <app-donut-chart
                   [colors]="['#b8d332', 'transparent']"
                   [data]="[textProgress.translated, textProgress.notTranslated]"
@@ -62,7 +62,7 @@
         </mat-card-header>
         <mat-card-content class="engine-card-content">
           <div class="engine-card-quality">
-            <div class="engine-card-quality-stars mirror-rtl" [title]="(engineConfidence | l10nNumber) + ' BLEU'">
+            <div class="engine-card-quality-stars mirror-rtl" [matTooltip]="(engineConfidence | l10nNumber) + ' BLEU'">
               @for (star of engineQualityStars; track $index) {
                 <mat-icon>{{
                   engineQuality >= star + 1 ? "star" : engineQuality === star + 0.5 ? "star_half" : "star_border"

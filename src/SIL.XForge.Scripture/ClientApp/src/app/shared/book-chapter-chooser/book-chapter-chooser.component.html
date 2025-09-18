@@ -32,7 +32,8 @@
       mat-icon-button
       (click)="prevChapter()"
       [disabled]="isPrevChapterDisabled()"
-      [title]="t('previous_chapter')"
+      [matTooltip]="t('previous_chapter')"
+      data-test-id="previous-chapter"
       class="hide-lt-sm"
     >
       <mat-icon>keyboard_arrow_{{ i18n.backwardDirectionWord }}</mat-icon>
@@ -41,7 +42,8 @@
       mat-icon-button
       (click)="nextChapter()"
       [disabled]="isNextChapterDisabled()"
-      [title]="t('next_chapter')"
+      [matTooltip]="t('next_chapter')"
+      data-test-id="next-chapter"
       class="hide-lt-sm"
     >
       <mat-icon>keyboard_arrow_{{ i18n.forwardDirectionWord }}</mat-icon>
