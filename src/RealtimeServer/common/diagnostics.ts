@@ -53,5 +53,5 @@ function createHeapSnapshot() {
 
 function recordResourceUsage() {
   console.log('Recording resource usage');
-  ResourceMonitor.instance.record();
+  void ResourceMonitor.instance.record();
 }
