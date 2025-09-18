@@ -57,7 +57,7 @@ public class MachineApiServiceTests
     private const string JsonPayload =
         """{"event":"TranslationBuildFinished","payload":{"build":{"id":"65f0c455682bb17bc4066917","url":"/api/v1/translation/engines/translationEngine01/builds/65f0c455682bb17bc4066917"},"engine":{"id":"translationEngine01","url":"/api/v1/translation/engines/translationEngine01"},"buildState":"Completed","dateFinished":"2024-03-12T21:14:10.789Z"}}""";
 
-    private const string TestUsfm = "\\c 1 \\v1 Verse 1";
+    private const string TestUsfm = "\\c 1 \\v 1 Verse 1";
     private const string TestUsx =
         "<usx version=\"3.0\"><book code=\"MAT\" style=\"id\"></book><chapter number=\"1\" style=\"c\" />"
         + "<verse number=\"1\" style=\"v\" />Verse 1</usx>";
@@ -106,6 +106,133 @@ public class MachineApiServiceTests
         State = JobState.Completed,
         DateFinished = DateTimeOffset.UtcNow,
     };
+
+    [Test]
+    public async Task ApplyPreTranslationToProjectAsync_LocalDraftExists()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ConfigureDraft(
+            Project01,
+            bookNum: 1,
+            numberOfChapters: 50,
+            bookExists: true,
+            draftExists: true,
+            canWriteBook: true,
+            canWriteChapter: true
+        );
+
+        // SUT
+        await env.Service.ApplyPreTranslationToProjectAsync(
+            User01,
+            Project01,
+            scriptureRange: "GEN",
+            Project02,
+            DateTime.UtcNow,
+            CancellationToken.None
+        );
+
+        await env
+            .ProjectService.Received()
+            .UpdatePermissionsAsync(User01, Arg.Any<IDocument<SFProject>>(), users: null, CancellationToken.None);
+        env.ExceptionHandler.DidNotReceive().ReportException(Arg.Any<Exception>());
+    }
+
+    [Test]
+    public async Task ApplyPreTranslationToProjectAsync_RequestEarlierThanLocalDraft()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ConfigureDraft(
+            Project01,
+            bookNum: 1,
+            numberOfChapters: 50,
+            bookExists: true,
+            draftExists: true,
+            canWriteBook: true,
+            canWriteChapter: true
+        );
+
+        // SUT
+        await env.Service.ApplyPreTranslationToProjectAsync(
+            User01,
+            Project01,
+            scriptureRange: "GEN",
+            Project02,
+            DateTime.MinValue,
+            CancellationToken.None
+        );
+
+        await env
+            .ProjectService.Received()
+            .UpdatePermissionsAsync(User01, Arg.Any<IDocument<SFProject>>(), users: null, CancellationToken.None);
+
+        // TODO: other test checks
+        env.ExceptionHandler.DidNotReceive().ReportException(Arg.Any<Exception>());
+    }
+
+    [Test]
+    public async Task ApplyPreTranslationToProjectAsync_MissingTargetProject()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.ApplyPreTranslationToProjectAsync(
+            User01,
+            Project01,
+            scriptureRange: "GEN",
+            targetProjectId: "invalid_project_id",
+            DateTime.UtcNow,
+            CancellationToken.None
+        );
+
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception?.GetType() == typeof(DataNotFoundException));
+        env.ExceptionHandler.Received()
+            .ReportException(Arg.Is<DataNotFoundException>(e => e.Message.Contains("project")));
+    }
+
+    [Test]
+    public async Task ApplyPreTranslationToProjectAsync_MissingUserSecret()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.UserSecrets.DeleteAllAsync(_ => true);
+
+        // SUT
+        await env.Service.ApplyPreTranslationToProjectAsync(
+            User01,
+            Project01,
+            scriptureRange: "GEN",
+            Project02,
+            DateTime.UtcNow,
+            CancellationToken.None
+        );
+
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception?.GetType() == typeof(DataNotFoundException));
+        env.ExceptionHandler.Received().ReportException(Arg.Is<DataNotFoundException>(e => e.Message.Contains("user")));
+    }
+
+    [Test]
+    public async Task ApplyPreTranslationToProjectAsync_NoChapterDeltas()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.ApplyPreTranslationToProjectAsync(
+            User01,
+            Project01,
+            scriptureRange: "GEN",
+            Project02,
+            DateTime.UtcNow,
+            CancellationToken.None
+        );
+
+        await env
+            .ProjectService.DidNotReceive()
+            .UpdatePermissionsAsync(User01, Arg.Any<IDocument<SFProject>>(), users: null, CancellationToken.None);
+    }
 
     [Test]
     public async Task BuildCompletedAsync_EventMetricInvalid()
@@ -1551,8 +1678,6 @@ public class MachineApiServiceTests
         const double percentCompleted = 0;
         const int revision = 43;
         const JobState state = JobState.Completed;
-        env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
-            .Returns(new ParatextSettings { Versification = ScrVers.English });
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(
                 Task.FromResult<IList<TranslationBuild>>(
@@ -1623,8 +1748,6 @@ public class MachineApiServiceTests
         const double percentCompleted = 0;
         const int revision = 43;
         const JobState state = JobState.Completed;
-        env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
-            .Returns(new ParatextSettings { Versification = ScrVers.English });
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(
                 Task.FromResult<IList<TranslationBuild>>(
@@ -1680,8 +1803,6 @@ public class MachineApiServiceTests
         const double percentCompleted = 0;
         const int revision = 43;
         const JobState state = JobState.Completed;
-        env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
-            .Returns(new ParatextSettings { Versification = ScrVers.English });
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(
                 Task.FromResult<IList<TranslationBuild>>(
@@ -3995,6 +4116,9 @@ public class MachineApiServiceTests
             MachineProjectService = Substitute.For<IMachineProjectService>();
             MockLogger = new MockLogger<MachineApiService>();
             ParatextService = Substitute.For<IParatextService>();
+            ParatextService
+                .GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
+                .Returns(new ParatextSettings { Versification = ScrVers.English });
             PreTranslationService = Substitute.For<IPreTranslationService>();
             ProjectSecrets = new MemoryRepository<SFProjectSecret>(
                 [
@@ -4085,6 +4209,7 @@ public class MachineApiServiceTests
                 ]
             );
             TextDocuments = new MemoryRepository<TextDocument>();
+            Texts = new MemoryRepository<TextData>();
             ProjectRights = Substitute.For<ISFProjectRights>();
             ProjectRights
                 .HasRight(Arg.Any<SFProject>(), User01, SFProjectDomain.Drafts, Operation.Create)
@@ -4094,6 +4219,7 @@ public class MachineApiServiceTests
             RealtimeService = new SFMemoryRealtimeService();
             RealtimeService.AddRepository("sf_projects", OTType.Json0, Projects);
             RealtimeService.AddRepository("text_documents", OTType.Json0, TextDocuments);
+            RealtimeService.AddRepository("texts", OTType.RichText, Texts);
             ServalOptions = Options.Create(new ServalOptions { WebhookSecret = "this_is_a_secret" });
             SyncService = Substitute.For<ISyncService>();
             SyncService.SyncAsync(Arg.Any<SyncConfig>()).Returns(Task.FromResult(JobId));
@@ -4155,6 +4281,7 @@ public class MachineApiServiceTests
         public MemoryRepository<SFProject> Projects { get; }
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
         public MemoryRepository<TextDocument> TextDocuments { get; }
+        public MemoryRepository<TextData> Texts { get; }
         public ISFProjectRights ProjectRights { get; }
         public ISFProjectService ProjectService { get; }
         public SFMemoryRealtimeService RealtimeService { get; }
@@ -4164,6 +4291,160 @@ public class MachineApiServiceTests
         public ITranslationEnginesClient TranslationEnginesClient { get; }
         public ITranslationEngineTypesClient TranslationEngineTypesClient { get; }
         public MemoryRepository<UserSecret> UserSecrets { get; }
+
+        public void ConfigureDraft(
+            string projectId,
+            int bookNum,
+            int numberOfChapters,
+            bool bookExists,
+            bool draftExists,
+            bool canWriteBook,
+            bool canWriteChapter
+        )
+        {
+            List<ChapterDelta> chapterDeltas = [];
+            for (int chapterNum = 1; chapterNum <= numberOfChapters; chapterNum++)
+            {
+                // Return USFM for the chapter
+                PreTranslationService
+                    .GetPreTranslationUsfmAsync(
+                        projectId,
+                        bookNum,
+                        chapterNum,
+                        Arg.Any<DraftUsfmConfig>(),
+                        CancellationToken.None
+                    )
+                    .Returns(
+                        Task.FromResult($@"\c {chapterNum} \p \v 1 First verse \v 2 Second verse, same as the first")
+                    );
+
+                // Return chapter deltas for that USFM
+                JToken draftToken1 = JToken.Parse(
+                    $"{{\"insert\": {{ \"chapter\": {{ \"number\": \"{chapterNum}\", \"style\": \"c\" }} }} }}"
+                );
+                JToken draftToken2 = JToken.Parse(
+                    "{\"insert\": { \"verse\": { \"number\": \"1\", \"style\": \"v\" } } }"
+                );
+                JToken draftToken3 = JToken.Parse(
+                    "{\"insert\": \"New verse 1 text\", \"attributes\": { \"segment\": \"verse_1_1\" } }"
+                );
+                JToken draftToken4 = JToken.Parse(
+                    "{\"insert\": { \"verse\": { \"number\": \"2\", \"style\": \"v\" } } }"
+                );
+                JToken draftToken5 = JToken.Parse(
+                    "{\"insert\": \"New verse 2 text\"," + "\"attributes\": { \"segment\": \"verse_1_2\" } }"
+                );
+                var chapterDelta = new ChapterDelta(
+                    chapterNum,
+                    2,
+                    true,
+                    new Delta([draftToken1, draftToken2, draftToken3, draftToken4, draftToken5])
+                );
+                chapterDeltas.Add(chapterDelta);
+
+                // Create the book in the realtime server if required
+                if (bookExists)
+                {
+                    JToken textToken1 = JToken.Parse(
+                        $"{{\"insert\": {{ \"chapter\": {{ \"number\": \"{chapterNum}\", \"style\": \"c\" }} }} }}"
+                    );
+                    JToken textToken2 = JToken.Parse(
+                        "{\"insert\": { \"verse\": { \"number\": \"1\", \"style\": \"v\" } } }"
+                    );
+                    JToken textToken3 = JToken.Parse(
+                        "{\"insert\": { \"blank\": true }, \"attributes\": { \"segment\": \"verse_1_1\" } }"
+                    );
+                    JToken textToken4 = JToken.Parse(
+                        "{\"insert\": { \"verse\": { \"number\": \"2\", \"style\": \"v\" } } }"
+                    );
+                    JToken textToken5 = JToken.Parse(
+                        "{\"insert\": \"Old verse 2 text\"," + "\"attributes\": { \"segment\": \"verse_1_2\" } }"
+                    );
+
+                    TextData textData = new TextData(
+                        new Delta([textToken1, textToken2, textToken3, textToken4, textToken5])
+                    )
+                    {
+                        Id = TextData.GetTextDocId(projectId, bookNum, chapterNum),
+                    };
+                    Texts.Add(textData);
+                }
+
+                // Create a local copy of the draft in the realtime server if required
+                if (draftExists)
+                {
+                    TextDocument textDocument = new TextDocument
+                    {
+                        Id = TextDocument.GetDocId(projectId, bookNum, chapterNum, TextDocument.Draft),
+                        Type = Usj.UsjType,
+                        Version = Usj.UsjVersion,
+                        Content =
+                        [
+                            new UsjMarker
+                            {
+                                Type = "book",
+                                Marker = "id",
+                                Code = Canon.BookNumberToId(bookNum),
+                            },
+                            new UsjMarker
+                            {
+                                Type = "chapter",
+                                Marker = "c",
+                                Number = chapterNum.ToString(),
+                            },
+                            new UsjMarker
+                            {
+                                Type = "verse",
+                                Marker = "v",
+                                Number = "1",
+                            },
+                            "Previous verse 1 draft",
+                        ],
+                    };
+                    TextDocuments.Add(textDocument);
+                }
+            }
+
+            // Return the chapter deltas for the specific chapter
+            DeltaUsxMapper
+                .ToChapterDeltas(Arg.Any<XDocument>())
+                .Returns(callInfo =>
+                {
+                    var usxDoc = callInfo.Arg<XDocument>();
+                    string chapterNumber = usxDoc.Descendants("chapter").First().Attribute("number")!.Value;
+                    return new[] { chapterDeltas.Single(c => c.Number == int.Parse(chapterNumber)) };
+                });
+
+            // Update the permissions for the user applying the draft
+            ProjectService
+                .When(x =>
+                    x.UpdatePermissionsAsync(
+                        Arg.Any<string>(),
+                        Arg.Any<IDocument<SFProject>>(),
+                        users: null,
+                        CancellationToken.None
+                    )
+                )
+                .Do(callInfo =>
+                {
+                    string userId = callInfo.ArgAt<string>(0);
+                    var projectDoc = callInfo.ArgAt<IDocument<SFProject>>(1);
+                    foreach (var text in projectDoc.Data.Texts)
+                    {
+                        text.Permissions.TryAdd(
+                            userId,
+                            canWriteBook ? TextInfoPermission.Write : TextInfoPermission.Read
+                        );
+                        foreach (var chapter in text.Chapters)
+                        {
+                            chapter.Permissions.TryAdd(
+                                userId,
+                                canWriteChapter ? TextInfoPermission.Write : TextInfoPermission.Read
+                            );
+                        }
+                    }
+                });
+        }
 
         public TranslationBuild ConfigureTranslationBuild(TranslationBuild? translationBuild = null)
         {
