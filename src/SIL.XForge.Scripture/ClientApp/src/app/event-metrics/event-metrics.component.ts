@@ -6,7 +6,6 @@ import { EventMetricsLogComponent } from './event-metrics-log.component';
   selector: 'app-event-metrics',
   templateUrl: './event-metrics.component.html',
   styleUrls: ['./event-metrics.component.scss'],
-  standalone: true,
   imports: [EventMetricsLogComponent, TranslocoModule]
 })
 export class EventMetricsComponent {}

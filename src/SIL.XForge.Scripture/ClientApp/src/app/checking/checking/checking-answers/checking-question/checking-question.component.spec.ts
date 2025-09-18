@@ -32,7 +32,8 @@ const mockedSFProjectUserConfigDoc = mock(SFProjectUserConfigDoc);
     #question
     [questionDoc]="questionDoc"
     (audioPlayed)="played = true"
-  ></app-checking-question>`
+  ></app-checking-question>`,
+  standalone: false
 })
 class MockComponent {
   @ViewChild('question') question!: CheckingQuestionComponent;

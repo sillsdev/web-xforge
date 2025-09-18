@@ -24,7 +24,7 @@ export class L10nNumberFormatService {
 }
 
 @Injectable({ providedIn: 'root' })
-@Pipe({ name: 'l10nNumber', standalone: true, pure: false })
+@Pipe({ name: 'l10nNumber', pure: false })
 export class L10nNumberPipe implements PipeTransform {
   constructor(private readonly formatter: L10nNumberFormatService) {}
 

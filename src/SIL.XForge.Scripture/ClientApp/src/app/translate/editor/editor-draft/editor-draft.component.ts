@@ -44,7 +44,8 @@ import { DraftHandlingService } from '../../draft-generation/draft-handling.serv
 @Component({
   selector: 'app-editor-draft',
   templateUrl: './editor-draft.component.html',
-  styleUrls: ['./editor-draft.component.scss']
+  styleUrls: ['./editor-draft.component.scss'],
+  standalone: false
 })
 export class EditorDraftComponent implements AfterViewInit, OnChanges {
   @Input() projectId?: string;

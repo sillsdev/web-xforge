@@ -28,7 +28,8 @@ export interface ScriptureChooserDialogData {
 @Component({
   selector: 'app-scripture-reference-chooser',
   templateUrl: './scripture-chooser-dialog.component.html',
-  styleUrls: ['./scripture-chooser-dialog.component.scss']
+  styleUrls: ['./scripture-chooser-dialog.component.scss'],
+  standalone: false
 })
 export class ScriptureChooserDialogComponent implements OnInit {
   showing: 'books' | 'chapters' | 'verses' | 'rangeEnd' = 'books';

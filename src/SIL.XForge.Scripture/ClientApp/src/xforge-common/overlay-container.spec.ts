@@ -21,7 +21,8 @@ describe('OverlayContainer', () => {
  */
 @Component({
   selector: 'app-host',
-  template: '<app-root #root></app-root>'
+  template: '<app-root #root></app-root>',
+  standalone: false
 })
 class HostComponent {
   @ViewChild('root') appRoot?: AppRootComponent;
@@ -32,7 +33,8 @@ class HostComponent {
 }
 @Component({
   selector: 'app-root',
-  template: '<ng-template #bottomSheet><div class="bottom-sheet-container">Opened</div></ng-template>'
+  template: '<ng-template #bottomSheet><div class="bottom-sheet-container">Opened</div></ng-template>',
+  standalone: false
 })
 class AppRootComponent {
   @ViewChild('bottomSheet') TemplateBottomSheet?: TemplateRef<any>;

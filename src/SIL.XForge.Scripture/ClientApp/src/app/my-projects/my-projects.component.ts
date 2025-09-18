@@ -23,7 +23,8 @@ import { SFProjectService } from '../core/sf-project.service';
 @Component({
   selector: 'app-my-projects',
   templateUrl: './my-projects.component.html',
-  styleUrls: ['./my-projects.component.scss']
+  styleUrls: ['./my-projects.component.scss'],
+  standalone: false
 })
 export class MyProjectsComponent implements OnInit {
   /** PT projects that the user can access. */

@@ -5,7 +5,8 @@ import { ElementState } from '../models/element-state';
 @Component({
   selector: 'app-write-status',
   templateUrl: './write-status.component.html',
-  styleUrls: ['./write-status.component.scss']
+  styleUrls: ['./write-status.component.scss'],
+  standalone: false
 })
 export class WriteStatusComponent {
   @Input() state?: ElementState;

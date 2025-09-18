@@ -5,7 +5,8 @@ import { I18nService } from 'xforge-common/i18n.service';
 
 @Component({
   templateUrl: 'delete-project-dialog.component.html',
-  styleUrls: ['delete-project-dialog.component.scss']
+  styleUrls: ['delete-project-dialog.component.scss'],
+  standalone: false
 })
 export class DeleteProjectDialogComponent {
   static defaultMatDialogConfig: MatDialogConfig = { autoFocus: true };

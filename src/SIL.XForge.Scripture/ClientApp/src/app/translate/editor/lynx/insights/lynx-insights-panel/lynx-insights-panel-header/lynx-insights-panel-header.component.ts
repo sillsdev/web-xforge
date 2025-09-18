@@ -15,7 +15,8 @@ import { LynxInsightStateService } from '../../lynx-insight-state.service';
 @Component({
   selector: 'app-lynx-insights-panel-header',
   templateUrl: './lynx-insights-panel-header.component.html',
-  styleUrl: './lynx-insights-panel-header.component.scss'
+  styleUrl: './lynx-insights-panel-header.component.scss',
+  standalone: false
 })
 export class LynxInsightsPanelHeaderComponent implements OnInit {
   @ViewChild(MatMenuTrigger) menuTrigger?: MatMenuTrigger;

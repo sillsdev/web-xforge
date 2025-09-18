@@ -210,13 +210,13 @@ const UNSUPPORTED_LANGUAGE_CODES = [
   selector: 'app-editor',
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.scss'],
-
   providers: [
     TabStateService<EditorTabGroupType, EditorTabInfo>,
     { provide: TabFactoryService, useClass: EditorTabFactoryService },
     { provide: TabMenuService, useClass: EditorTabMenuService },
     { provide: TabAddRequestService, useClass: EditorTabAddRequestService }
-  ]
+  ],
+  standalone: false
 })
 export class EditorComponent extends DataLoadingComponent implements OnDestroy, OnInit, AfterViewInit {
   addingMobileNote: boolean = false;

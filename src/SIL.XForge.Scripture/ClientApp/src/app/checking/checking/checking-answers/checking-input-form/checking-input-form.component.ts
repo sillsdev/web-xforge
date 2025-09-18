@@ -35,7 +35,8 @@ function isAnswer(value: Answer | Comment | undefined): value is Answer {
 @Component({
   selector: 'app-checking-input-form',
   templateUrl: './checking-input-form.component.html',
-  styleUrls: ['./checking-input-form.component.scss']
+  styleUrls: ['./checking-input-form.component.scss'],
+  standalone: false
 })
 export class CheckingInputFormComponent {
   @Input() project?: SFProjectProfile;

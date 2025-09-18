@@ -50,11 +50,11 @@ $toolbar-height: 56px;
       flex: 1;
       padding: 14px 20px;
       height: 100%;
+      display: flex;
+      flex-direction: column;
       @include breakpoints.media-breakpoint-only(xs) {
         padding: 10px;
       }
-      display: flex;
-      flex-direction: column;
     }
   }
 }

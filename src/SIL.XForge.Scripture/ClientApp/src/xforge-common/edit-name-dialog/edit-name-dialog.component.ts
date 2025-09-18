@@ -12,7 +12,8 @@ export interface EditNameDialogResult {
 @Component({
   selector: 'app-edit-name-dialog',
   styleUrls: ['./edit-name-dialog.component.scss'],
-  templateUrl: './edit-name-dialog.component.html'
+  templateUrl: './edit-name-dialog.component.html',
+  standalone: false
 })
 export class EditNameDialogComponent {
   static defaultMatDialogConfig: MatDialogConfig = { autoFocus: true };

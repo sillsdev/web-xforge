@@ -7,7 +7,8 @@ module.exports = {
   },
   docs: {},
   staticDirs: [
-    { from: '../src/assets', to: '/assets' },
-    { from: '../src/app/checking/checking/test-audio', to: '/assets/audio/' }
+    // Note that 'embedded' directories appear to need to be higher, not lower.
+    { from: '../src/app/checking/checking/test-audio', to: '/assets/audio' },
+    { from: '../src/assets', to: '/assets' }
   ]
 };

@@ -201,7 +201,8 @@ describe('ProjectSelectComponent', () => {
       [nonSelectableProjects]="nonSelectableProjects"
       [isDisabled]="isDisabled"
     ></app-project-select>
-  </form>`
+  </form>`,
+  standalone: false
 })
 class HostComponent {
   readonly sourceParatextId = new UntypedFormControl(undefined);

@@ -67,7 +67,8 @@ type DialogStatus = 'initial' | 'no_questions' | 'filter' | 'loading' | 'progres
 
 @Component({
   templateUrl: './import-questions-dialog.component.html',
-  styleUrls: ['./import-questions-dialog.component.scss']
+  styleUrls: ['./import-questions-dialog.component.scss'],
+  standalone: false
 })
 export class ImportQuestionsDialogComponent implements OnDestroy {
   questionSource: null | 'transcelerator' | 'csv_file' = null;

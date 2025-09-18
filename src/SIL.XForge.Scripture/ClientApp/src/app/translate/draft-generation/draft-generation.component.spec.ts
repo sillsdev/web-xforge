@@ -41,15 +41,11 @@ describe('DraftGenerationComponent', () => {
   let mockDialogService: jasmine.SpyObj<DialogService>;
   let mockDraftGenerationService: jasmine.SpyObj<DraftGenerationService>;
   let mockDraftSourcesService: jasmine.SpyObj<DraftSourcesService>;
-  let mockDraftHandlingService: jasmine.SpyObj<DraftHandlingService>;
   let mockActivatedProjectService: jasmine.SpyObj<ActivatedProjectService>;
-  let mockProjectService: jasmine.SpyObj<SFProjectService>;
   let mockUserService: jasmine.SpyObj<UserService>;
-  let mockTextDocService: jasmine.SpyObj<TextDocService>;
   let mockNoticeService: jasmine.SpyObj<NoticeService>;
   let mockNllbLanguageService: jasmine.SpyObj<NllbLanguageService>;
   let mockTrainingDataService: jasmine.SpyObj<TrainingDataService>;
-  let mockProgressService: jasmine.SpyObj<ProgressService>;
   let mockFeatureFlagService: jasmine.SpyObj<FeatureFlagService>;
 
   const buildDto: BuildDto = {
@@ -87,17 +83,17 @@ describe('DraftGenerationComponent', () => {
           { provide: AuthService, useValue: mockAuthService },
           { provide: DraftGenerationService, useValue: mockDraftGenerationService },
           { provide: DraftSourcesService, useValue: mockDraftSourcesService },
-          { provide: DraftHandlingService, useValue: mockDraftHandlingService },
+          { provide: DraftHandlingService, useValue: undefined },
           { provide: ActivatedProjectService, useValue: mockActivatedProjectService },
-          { provide: SFProjectService, useValue: mockProjectService },
+          { provide: SFProjectService, useValue: undefined },
           { provide: UserService, useValue: mockUserService },
-          { provide: TextDocService, useValue: mockTextDocService },
+          { provide: TextDocService, useValue: undefined },
           { provide: DialogService, useValue: mockDialogService },
           { provide: NoticeService, useValue: mockNoticeService },
           { provide: NllbLanguageService, useValue: mockNllbLanguageService },
           { provide: OnlineStatusService, useClass: TestOnlineStatusService },
           { provide: TrainingDataService, useValue: mockTrainingDataService },
-          { provide: ProgressService, useValue: mockProgressService },
+          { provide: ProgressService, useValue: undefined },
           { provide: FeatureFlagService, useValue: mockFeatureFlagService }
         ]
       });

@@ -96,7 +96,8 @@ export interface EmbedsByVerse {
   selector: 'app-text',
   templateUrl: './text.component.html',
   styleUrls: ['./text.component.scss'],
-  providers: [TextViewModel] // New instance for each text component
+  providers: [TextViewModel], // New instance for each text component
+  standalone: false
 })
 export class TextComponent implements AfterViewInit, OnDestroy {
   @Input() enablePresence: boolean = false;

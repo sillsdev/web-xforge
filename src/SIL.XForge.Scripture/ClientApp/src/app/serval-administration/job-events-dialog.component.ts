@@ -28,7 +28,6 @@ const EVENT_TYPE_LABELS: {
   selector: 'app-job-events-dialog',
   templateUrl: './job-events-dialog.component.html',
   styleUrls: ['./job-events-dialog.component.scss'],
-  standalone: true,
   imports: [CommonModule, MatDialogModule, UICommonModule]
 })
 export class JobEventsDialogComponent {

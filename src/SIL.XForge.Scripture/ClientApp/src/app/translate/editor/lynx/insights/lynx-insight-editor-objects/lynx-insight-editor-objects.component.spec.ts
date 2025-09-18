@@ -295,7 +295,8 @@ describe('LynxInsightEditorObjectsComponent', () => {
       [insightsEnabled]="insightsEnabled"
     >
     </app-lynx-insight-editor-objects>
-  `
+  `,
+  standalone: false
 })
 class HostComponent {
   @ViewChild(LynxInsightEditorObjectsComponent) component!: LynxInsightEditorObjectsComponent;

@@ -30,7 +30,8 @@ import { SingleButtonAudioPlayerComponent } from '../../single-button-audio-play
 @Component({
   selector: 'app-checking-question',
   templateUrl: './checking-question.component.html',
-  styleUrls: ['./checking-question.component.scss']
+  styleUrls: ['./checking-question.component.scss'],
+  standalone: false
 })
 export class CheckingQuestionComponent extends SubscriptionDisposable implements OnChanges, OnDestroy {
   @Output() audioPlayed: EventEmitter<void> = new EventEmitter<void>();

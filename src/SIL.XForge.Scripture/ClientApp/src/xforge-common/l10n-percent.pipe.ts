@@ -24,7 +24,7 @@ export class L10nPercentFormatService {
 }
 
 @Injectable({ providedIn: 'root' })
-@Pipe({ name: 'l10nPercent', standalone: true, pure: false })
+@Pipe({ name: 'l10nPercent', pure: false })
 export class L10nPercentPipe implements PipeTransform {
   constructor(private readonly formatter: L10nPercentFormatService) {}
 

@@ -18,7 +18,8 @@ export interface EditedQuestion {
 
 @Component({
   templateUrl: './import-questions-confirmation-dialog.component.html',
-  styleUrls: ['./import-questions-confirmation-dialog.component.scss']
+  styleUrls: ['./import-questions-confirmation-dialog.component.scss'],
+  standalone: false
 })
 export class ImportQuestionsConfirmationDialogComponent {
   questions: EditedQuestion[];

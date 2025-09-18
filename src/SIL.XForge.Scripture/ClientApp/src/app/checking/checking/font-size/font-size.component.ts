@@ -3,7 +3,8 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 @Component({
   selector: 'app-font-size',
   templateUrl: './font-size.component.html',
-  styleUrls: ['./font-size.component.scss']
+  styleUrls: ['./font-size.component.scss'],
+  standalone: false
 })
 export class FontSizeComponent implements OnInit {
   @Input() min: number = 1;

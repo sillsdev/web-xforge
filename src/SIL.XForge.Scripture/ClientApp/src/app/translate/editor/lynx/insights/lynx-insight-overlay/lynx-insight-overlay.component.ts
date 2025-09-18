@@ -15,7 +15,8 @@ import { LynxWorkspaceService } from '../lynx-workspace.service';
   selector: 'app-lynx-insight-overlay',
   templateUrl: './lynx-insight-overlay.component.html',
   styleUrl: './lynx-insight-overlay.component.scss',
-  providers: [{ provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: { showDelay: 500 } }]
+  providers: [{ provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: { showDelay: 500 } }],
+  standalone: false
 })
 export class LynxInsightOverlayComponent implements OnInit {
   showMoreInfo = false;

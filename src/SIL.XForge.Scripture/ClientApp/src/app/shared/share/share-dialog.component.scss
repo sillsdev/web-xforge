@@ -1,4 +1,4 @@
-@import 'src/variables';
+@use 'src/variables' as *;
 
 .mat-mdc-dialog-title {
   margin-bottom: 0.25em;

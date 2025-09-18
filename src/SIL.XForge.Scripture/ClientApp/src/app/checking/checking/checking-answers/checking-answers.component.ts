@@ -87,7 +87,8 @@ enum LikeAnswerResponse {
 @Component({
   selector: 'app-checking-answers',
   templateUrl: './checking-answers.component.html',
-  styleUrls: ['./checking-answers.component.scss']
+  styleUrls: ['./checking-answers.component.scss'],
+  standalone: false
 })
 export class CheckingAnswersComponent implements OnInit {
   @ViewChild(CheckingInputFormComponent) answerInput?: CheckingInputFormComponent;

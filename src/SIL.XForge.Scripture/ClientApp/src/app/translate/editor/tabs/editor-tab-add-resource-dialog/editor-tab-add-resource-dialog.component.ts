@@ -17,7 +17,8 @@ export interface EditorTabAddResourceDialogData {
 @Component({
   selector: 'app-editor-tab-add-resource-dialog',
   templateUrl: './editor-tab-add-resource-dialog.component.html',
-  styleUrls: ['./editor-tab-add-resource-dialog.component.scss']
+  styleUrls: ['./editor-tab-add-resource-dialog.component.scss'],
+  standalone: false
 })
 export class EditorTabAddResourceDialogComponent implements OnInit {
   projects?: ParatextProject[];

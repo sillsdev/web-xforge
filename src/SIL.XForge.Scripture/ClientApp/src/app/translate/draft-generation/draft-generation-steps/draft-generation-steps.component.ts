@@ -72,7 +72,6 @@ interface ProjectPendingUpdate {
   selector: 'app-draft-generation-steps',
   templateUrl: './draft-generation-steps.component.html',
   styleUrls: ['./draft-generation-steps.component.scss'],
-  standalone: true,
   imports: [
     SharedModule,
     UICommonModule,

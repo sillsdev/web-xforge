@@ -63,7 +63,8 @@ type SaveOption = 'save' | 'resolve';
 // TODO: Refactor to have a Biblical Term Note Dialog subclass (will require spec.ts refactoring too)
 @Component({
   templateUrl: './note-dialog.component.html',
-  styleUrls: ['./note-dialog.component.scss']
+  styleUrls: ['./note-dialog.component.scss'],
+  standalone: false
 })
 export class NoteDialogComponent implements OnInit {
   showSegmentText: boolean = false;

@@ -266,7 +266,8 @@ class TestModule {}
 @Component({
   template: `
     <app-share-control [projectId]="projectId" [defaultRole]="defaultRole" (invited)="onInvited()"></app-share-control>
-  `
+  `,
+  standalone: false
 })
 class TestHostComponent {
   @ViewChild(ShareControlComponent) component!: ShareControlComponent;

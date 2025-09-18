@@ -36,7 +36,6 @@ export interface DraftApplyDialogConfig {
 
 @Component({
   selector: 'app-draft-apply-dialog',
-  standalone: true,
   imports: [UICommonModule, XForgeCommonModule, TranslocoModule, CommonModule, SharedModule],
   templateUrl: './draft-apply-dialog.component.html',
   styleUrl: './draft-apply-dialog.component.scss'

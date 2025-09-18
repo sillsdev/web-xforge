@@ -43,7 +43,6 @@ export interface BookWithDraft {
   selector: 'app-draft-preview-books',
   templateUrl: './draft-preview-books.component.html',
   styleUrls: ['./draft-preview-books.component.scss'],
-  standalone: true,
   imports: [CommonModule, UICommonModule, RouterModule, TranslocoModule]
 })
 export class DraftPreviewBooksComponent {

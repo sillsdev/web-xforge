@@ -21,7 +21,6 @@ import {
 @Component({
   selector: 'app-training-data-multi-select',
   templateUrl: './training-data-multi-select.component.html',
-  standalone: true,
   imports: [CommonModule, MatButtonModule, MatIconModule, SharedModule, TranslocoModule, MatListModule],
   styleUrls: ['./training-data-multi-select.component.scss']
 })

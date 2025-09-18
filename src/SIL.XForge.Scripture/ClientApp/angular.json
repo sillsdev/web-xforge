@@ -19,14 +19,14 @@
       },
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser",
+          "builder": "@angular-devkit/build-angular:application",
           "options": {
             "outputPath": "dist",
             "index": "src/index.html",
-            "main": "src/main.ts",
+            "browser": "src/main.ts",
             "tsConfig": "src/tsconfig.app.json",
             "progress": true,
-            "polyfills": "src/polyfills.ts",
+            "polyfills": ["src/polyfills.ts"],
             "assets": [
               "src/favicon.ico",
               "src/assets",
@@ -36,7 +36,7 @@
             ],
             "styles": ["src/styles.scss", "src/material-styles.scss", "src/themes/themes.scss"],
             "stylePreprocessorOptions": {
-              "includePaths": ["node_modules"]
+              "includePaths": ["node_modules", "."]
             },
             "allowedCommonJsDependencies": [
               "@bugsnag/browser",
@@ -58,9 +58,7 @@
             ],
             "scripts": [],
             "aot": false,
-            "vendorChunk": true,
             "extractLicenses": true,
-            "buildOptimizer": false,
             "sourceMap": true,
             "optimization": false,
             "namedChunks": true,
@@ -84,9 +82,7 @@
               "outputHashing": "all",
               "namedChunks": true,
               "aot": true,
-              "vendorChunk": false,
-              "buildOptimizer": true,
-              "serviceWorker": true
+              "serviceWorker": "ngsw-config.json"
             },
             "staging": {
               "budgets": [
@@ -105,9 +101,7 @@
               "outputHashing": "all",
               "namedChunks": true,
               "aot": true,
-              "vendorChunk": false,
-              "buildOptimizer": true,
-              "serviceWorker": true
+              "serviceWorker": "ngsw-config.json"
             },
             "pwaTest": {
               "fileReplacements": [
@@ -118,8 +112,7 @@
               ],
               "outputHashing": "all",
               "namedChunks": true,
-              "vendorChunk": false,
-              "serviceWorker": true
+              "serviceWorker": "ngsw-config.json"
             },
             "development": {}
           },
@@ -133,7 +126,6 @@
               "buildTarget": "SIL.XForge.Scripture:build:production"
             },
             "development": {
-              "publicHost": "localhost:4200",
               "buildTarget": "SIL.XForge.Scripture:build:development"
             }
           },

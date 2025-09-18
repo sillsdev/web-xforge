@@ -11,7 +11,6 @@ import { UserService } from '../user.service';
   selector: 'app-owner',
   templateUrl: './owner.component.html',
   styleUrls: ['./owner.component.scss'],
-  standalone: true,
   imports: [AvatarComponent, CommonModule]
 })
 export class OwnerComponent implements OnInit {

@@ -37,7 +37,8 @@ import { QuestionDialogService } from '../question-dialog/question-dialog.servic
 @Component({
   selector: 'app-checking-overview',
   templateUrl: './checking-overview.component.html',
-  styleUrls: ['./checking-overview.component.scss']
+  styleUrls: ['./checking-overview.component.scss'],
+  standalone: false
 })
 export class CheckingOverviewComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   texts: TextInfo[] = [];

@@ -9,7 +9,6 @@ import { NoticeComponent } from '../notice/notice.component';
 
 @Component({
   selector: 'app-global-notices',
-  standalone: true,
   imports: [CommonModule, NoticeComponent, MatIconModule, MatButtonModule, MatTooltipModule, TranslocoModule],
   templateUrl: './global-notices.component.html',
   styleUrl: './global-notices.component.scss'

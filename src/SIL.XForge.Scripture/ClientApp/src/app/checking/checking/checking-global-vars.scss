@@ -1,4 +1,5 @@
-@import 'src/variables';
+@use 'sass:color';
+@use 'src/variables' as *;
 
 $questionReadBGColor: #fcfdff;
 $questionReadTextColor: #555;
@@ -6,7 +7,7 @@ $questionSelectedColor: #726e77;
 $questionUnread: $sf_grey;
 $questionAnswered: $theme-secondary;
 $questionsLoadingTextColor: #777;
-$attention: lighten($theme-secondary, 20%);
+$attention: color.scale($theme-secondary, $lightness: 20%);
 $answerResolved: $greenLight;
 $answerExportable: $purpleLight;
 $commentUnread: $attention;

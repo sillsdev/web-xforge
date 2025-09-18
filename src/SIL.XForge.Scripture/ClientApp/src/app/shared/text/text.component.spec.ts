@@ -1525,6 +1525,10 @@ describe('TextComponent', () => {
     } as unknown as SFProjectProfileDoc);
     env.fixture.detectChanges();
     env.id = new TextDocId('project01', 40, 1);
+    expect(() => {
+      // projectHasText is called via onEditorCreated
+      tick(EDITOR_READY_TIMEOUT);
+    }).toThrowError();
     tick();
     env.fixture.detectChanges();
 
@@ -1684,7 +1688,8 @@ class MockQuill extends Quill {
     [isReadOnly]="isReadOnly"
     [enablePresence]="enablePresence"
     (presenceChange)="onPresenceChange($event)"
-  ></app-text>`
+  ></app-text>`,
+  standalone: false
 })
 class HostComponent {
   @ViewChild(TextComponent) textComponent!: TextComponent;

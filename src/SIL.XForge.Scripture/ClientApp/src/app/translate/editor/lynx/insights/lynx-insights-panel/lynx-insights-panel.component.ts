@@ -62,7 +62,8 @@ interface LynxInsightWithText extends LynxInsight {
 @Component({
   selector: 'app-lynx-insights-panel',
   templateUrl: './lynx-insights-panel.component.html',
-  styleUrl: './lynx-insights-panel.component.scss'
+  styleUrl: './lynx-insights-panel.component.scss',
+  standalone: false
 })
 export class LynxInsightsPanelComponent implements AfterViewInit {
   @ViewChild(MatTree) tree?: MatTree<InsightPanelNode>;

@@ -20,7 +20,8 @@ export interface Suggestion {
 @Component({
   selector: 'app-suggestions',
   templateUrl: './suggestions.component.html',
-  styleUrls: ['./suggestions.component.scss']
+  styleUrls: ['./suggestions.component.scss'],
+  standalone: false
 })
 export class SuggestionsComponent {
   @Output() selected = new EventEmitter<SuggestionSelectedEvent>();

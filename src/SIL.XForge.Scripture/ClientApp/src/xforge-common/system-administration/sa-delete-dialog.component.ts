@@ -8,7 +8,8 @@ export interface SaDeleteUserDialogData {
 
 @Component({
   templateUrl: './sa-delete-dialog.component.html',
-  styleUrls: ['./sa-delete-dialog.component.scss']
+  styleUrls: ['./sa-delete-dialog.component.scss'],
+  standalone: false
 })
 export class SaDeleteDialogComponent {
   constructor(@Inject(MAT_DIALOG_DATA) public data: SaDeleteUserDialogData) {}

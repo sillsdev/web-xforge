@@ -14,7 +14,6 @@ import { DraftSourcesAsSelectableProjectArrays, normalizeLanguageCodeToISO639_3 
 
 @Component({
   selector: 'app-language-codes-confirmation',
-  standalone: true,
   imports: [CommonModule, TranslocoModule, TranslocoMarkupComponent, UICommonModule, NoticeComponent],
   templateUrl: './language-codes-confirmation.component.html',
   styleUrl: './language-codes-confirmation.component.scss'

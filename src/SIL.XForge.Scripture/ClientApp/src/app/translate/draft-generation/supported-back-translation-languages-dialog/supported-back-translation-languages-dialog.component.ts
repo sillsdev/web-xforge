@@ -8,7 +8,6 @@ import { NLLB_LANGUAGES, NllbLanguage, NllbLanguageDict } from '../../nllb-langu
 
 @Component({
   selector: 'app-supported-back-translation-languages-dialog',
-  standalone: true,
   imports: [MatIconModule, MatDialogModule, MatButtonModule, TranslocoModule],
   templateUrl: './supported-back-translation-languages-dialog.component.html',
   styleUrls: ['./supported-back-translation-languages-dialog.component.scss'],

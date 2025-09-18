@@ -34,7 +34,8 @@ enum SyncPhase {
 @Component({
   selector: 'app-sync-progress',
   templateUrl: './sync-progress.component.html',
-  styleUrl: '../sync.component.scss'
+  styleUrl: '../sync.component.scss',
+  standalone: false
 })
 export class SyncProgressComponent {
   @Input() showSyncStatus: boolean = true;

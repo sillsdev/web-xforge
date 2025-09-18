@@ -8,7 +8,8 @@ import { AudioPlayerBaseComponent } from '../audio-player-base/audio-player-base
 @Component({
   selector: 'app-audio-player',
   templateUrl: './audio-player.component.html',
-  styleUrls: ['./audio-player.component.scss']
+  styleUrls: ['./audio-player.component.scss'],
+  standalone: false
 })
 export class AudioPlayerComponent extends AudioPlayerBaseComponent implements OnDestroy {
   private _currentTime: number = 0;

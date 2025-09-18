@@ -17,7 +17,8 @@ export interface TranslatorSettingsDialogData {
 
 @Component({
   templateUrl: './translator-settings-dialog.component.html',
-  styleUrls: ['./translator-settings-dialog.component.scss']
+  styleUrls: ['./translator-settings-dialog.component.scss'],
+  standalone: false
 })
 export class TranslatorSettingsDialogComponent implements OnInit {
   suggestionsEnabledSwitch = new FormControl<boolean>({ value: false, disabled: !this.onlineStatusService.isOnline });

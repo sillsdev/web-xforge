@@ -10,7 +10,8 @@ export enum BrowserIssue {
 
 @Component({
   selector: 'app-supported-browsers-dialog',
-  templateUrl: './supported-browsers-dialog.component.html'
+  templateUrl: './supported-browsers-dialog.component.html',
+  standalone: false
 })
 export class SupportedBrowsersDialogComponent {
   constructor(

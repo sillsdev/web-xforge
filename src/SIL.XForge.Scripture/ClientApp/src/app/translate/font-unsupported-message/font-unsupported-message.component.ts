@@ -12,7 +12,6 @@ import { NoticeComponent } from '../../shared/notice/notice.component';
 
 @Component({
   selector: 'app-font-unsupported-message',
-  standalone: true,
   imports: [CommonModule, NoticeComponent, TranslocoModule],
   templateUrl: './font-unsupported-message.component.html',
   styleUrl: './font-unsupported-message.component.scss'

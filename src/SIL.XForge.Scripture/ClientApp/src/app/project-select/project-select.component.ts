@@ -22,7 +22,8 @@ export const PROJECT_SELECT_VALUE_ACCESSOR: any = {
   selector: 'app-project-select',
   templateUrl: 'project-select.component.html',
   styleUrls: ['project-select.component.scss'],
-  providers: [PROJECT_SELECT_VALUE_ACCESSOR]
+  providers: [PROJECT_SELECT_VALUE_ACCESSOR],
+  standalone: false
 })
 export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
   @Output() valueChange: EventEmitter<string | undefined> = new EventEmitter<string | undefined>(true);

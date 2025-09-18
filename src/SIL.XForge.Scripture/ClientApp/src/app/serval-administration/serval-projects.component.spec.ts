@@ -100,8 +100,9 @@ describe('ServalProjectsComponent', () => {
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
-
+    expect(env.nextButton.nativeElement.getAttribute('aria-disabled')).toBeNull();
     env.clickButton(env.nextButton);
+    expect(env.nextButton.nativeElement.getAttribute('aria-disabled')).toBe('true');
 
     expect(env.rows.length).toEqual(1);
   }));
