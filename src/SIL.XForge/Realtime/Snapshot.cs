@@ -1,3 +1,5 @@
+using SIL.XForge.Models;
+
 namespace SIL.XForge.Realtime;
 
 /// <summary>
@@ -5,6 +7,7 @@ namespace SIL.XForge.Realtime;
 /// </summary>
 /// <typeparam name="T">The document type.</typeparam>
 public class Snapshot<T>
+    where T : IIdentifiable
 {
     /// <summary>
     /// The document identifier.
