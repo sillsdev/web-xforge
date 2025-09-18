@@ -91,7 +91,7 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.scriptureRange).toEqual('');
       expect(component.buildRequestedByUserName).toBeUndefined();
       expect(component.buildRequestedAtDate).toBe('');
-      expect(component.canDownloadBuild).toBe(false);
+      expect(component.draftIsAvailable).toBe(false);
       expect(component.hasDetails).toBe(false);
       expect(component.entry).toBeUndefined();
     });
@@ -120,7 +120,7 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.translationSource).toEqual('src \u2022');
       expect(component.buildRequestedByUserName).toBe(user);
       expect(component.buildRequestedAtDate).toBe(date);
-      expect(component.canDownloadBuild).toBe(true);
+      expect(component.draftIsAvailable).toBe(true);
       expect(fixture.nativeElement.querySelector('.format-usfm')).toBeNull();
       expect(component.columnsToDisplay).toEqual(['scriptureRange', 'source', 'target']);
       expect(component.hasDetails).toBe(true);
@@ -172,7 +172,7 @@ describe('DraftHistoryEntryComponent', () => {
       fixture.detectChanges();
 
       expect(component.scriptureRange).toEqual('Genesis');
-      expect(component.canDownloadBuild).toBe(true);
+      expect(component.draftIsAvailable).toBe(true);
       expect(fixture.nativeElement.querySelector('.format-usfm')).not.toBeNull();
     }));
 
@@ -208,7 +208,7 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.translationSource).toEqual('');
       expect(component.buildRequestedByUserName).toBeUndefined();
       expect(component.buildRequestedAtDate).toBe('');
-      expect(component.canDownloadBuild).toBe(false);
+      expect(component.draftIsAvailable).toBe(false);
       expect(fixture.nativeElement.querySelector('.format-usfm')).toBeNull();
       expect(component.columnsToDisplay).toEqual(['scriptureRange', 'source', 'target']);
       expect(component.hasDetails).toBe(true);
@@ -255,7 +255,7 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.scriptureRange).toEqual('Genesis');
       expect(component.buildRequestedByUserName).toBeUndefined();
       expect(component.buildRequestedAtDate).toBe('formatted-date');
-      expect(component.canDownloadBuild).toBe(true);
+      expect(component.draftIsAvailable).toBe(true);
       expect(fixture.nativeElement.querySelector('.format-usfm')).not.toBeNull();
       expect(component.hasDetails).toBe(true);
       expect(component.entry).toBe(entry);
@@ -268,7 +268,7 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.scriptureRange).toEqual('');
       expect(component.buildRequestedByUserName).toBeUndefined();
       expect(component.buildRequestedAtDate).toBe('');
-      expect(component.canDownloadBuild).toBe(false);
+      expect(component.draftIsAvailable).toBe(false);
       expect(fixture.nativeElement.querySelector('.format-usfm')).toBeNull();
       expect(component.hasDetails).toBe(false);
       expect(component.entry).toBe(entry);
@@ -280,7 +280,7 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.scriptureRange).toEqual('');
       expect(component.buildRequestedByUserName).toBeUndefined();
       expect(component.buildRequestedAtDate).toBe('');
-      expect(component.canDownloadBuild).toBe(false);
+      expect(component.draftIsAvailable).toBe(false);
       expect(component.hasDetails).toBe(false);
       expect(component.entry).toBe(entry);
     });
@@ -301,7 +301,7 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.scriptureRange).toEqual('');
       expect(component.buildRequestedByUserName).toBeUndefined();
       expect(component.buildRequestedAtDate).toBe('');
-      expect(component.canDownloadBuild).toBe(false);
+      expect(component.draftIsAvailable).toBe(false);
       expect(component.hasDetails).toBe(true);
       expect(component.entry).toBe(entry);
       expect(component.buildFaulted).toBe(true);
@@ -318,7 +318,7 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.scriptureRange).toEqual('');
       expect(component.buildRequestedByUserName).toBeUndefined();
       expect(component.buildRequestedAtDate).toBe('');
-      expect(component.canDownloadBuild).toBe(false);
+      expect(component.draftIsAvailable).toBe(false);
       expect(component.hasDetails).toBe(true);
       expect(component.entry).toBe(entry);
       expect(component.buildFaulted).toBe(true);
@@ -327,26 +327,65 @@ describe('DraftHistoryEntryComponent', () => {
   });
 
   describe('setDraftFormat', () => {
+    beforeEach(() => {
+      const projectDoc = getProjectProfileDoc();
+      when(mockedActivatedProjectService.projectDoc).thenReturn(projectDoc);
+      when(mockedActivatedProjectService.changes$).thenReturn(of(projectDoc));
+    });
+
     it('should show set draft format UI', fakeAsync(() => {
-      when(mockedActivatedProjectService.projectDoc).thenReturn(getProjectProfileDoc());
-      component.entry = { id: 'build01', state: BuildStates.Completed, message: 'Completed' } as BuildDto;
+      component.entry = {
+        id: 'build01',
+        state: BuildStates.Completed,
+        message: 'Completed',
+        additionalInfo: { dateGenerated: '2025-09-01' }
+      } as BuildDto;
       component.isLatestBuild = true;
+      component.draftIsAvailable = true;
       tick();
       fixture.detectChanges();
       expect(fixture.nativeElement.querySelector('.require-formatting-options')).not.toBeNull();
     }));
 
-    it('should hide draft format UI', fakeAsync(() => {
-      component.entry = { id: 'build01', state: BuildStates.Completed, message: 'Completed' } as BuildDto;
+    it('should hide draft format UI when feature not enabled', fakeAsync(() => {
+      when(mockedFeatureFlagsService.usfmFormat).thenReturn(createTestFeatureFlag(false));
+      component.entry = {
+        id: 'build01',
+        state: BuildStates.Completed,
+        message: 'Completed',
+        additionalInfo: {
+          dateGenerated: '2025-09-01',
+          translationScriptureRanges: [{ projectId: 'source01', scriptureRange: 'EXO' }]
+        }
+      } as BuildDto;
       component.isLatestBuild = true;
+      component.draftIsAvailable = true;
       tick();
       fixture.detectChanges();
       expect(fixture.nativeElement.querySelector('.require-formatting-options')).toBeNull();
     }));
 
     it('should hide draft format UI if not the latest build', fakeAsync(() => {
-      component.entry = { id: 'build01', state: BuildStates.Completed, message: 'Completed' } as BuildDto;
+      component.entry = {
+        id: 'build01',
+        state: BuildStates.Completed,
+        message: 'Completed',
+        additionalInfo: {
+          dateGenerated: '2025-09-01',
+          translationScriptureRanges: [{ projectId: 'source01', scriptureRange: 'EXO' }]
+        }
+      } as BuildDto;
       component.isLatestBuild = false;
+      component.draftIsAvailable = true;
+      tick();
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.require-formatting-options')).toBeNull();
+    }));
+
+    it('should hide draft format UI if the draft is not completed', fakeAsync(() => {
+      component.entry = { id: 'build01', state: BuildStates.Canceled, message: 'Cancelled' } as BuildDto;
+      component.isLatestBuild = true;
+      component.draftIsAvailable = false;
       tick();
       fixture.detectChanges();
       expect(fixture.nativeElement.querySelector('.require-formatting-options')).toBeNull();
