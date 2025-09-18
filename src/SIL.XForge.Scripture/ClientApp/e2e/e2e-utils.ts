@@ -281,7 +281,7 @@ export async function enableFeatureFlag(page: Page, flag: string): Promise<void>
 }
 
 export async function enableDeveloperMode(page: Page, options = { closeMenu: false }): Promise<void> {
-  await page.getByRole('button', { name: 'Help' }).click();
+  await page.getByRole('button').filter({ hasText: 'help' }).click();
 
   // Playwright refuses to click the version number because it's disabled. We override this with force: true. However,
   // this sometimes fails to enable developer mode, probably because the click event was fired before the menu was fully
