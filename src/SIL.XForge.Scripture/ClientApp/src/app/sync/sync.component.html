@@ -49,7 +49,7 @@
               {{ t("cancel") }}
             </button>
           } @else {
-            <mat-hint [title]="lastSyncDisplayDate" id="date-last-sync">
+            <mat-hint [matTooltip]="lastSyncDisplayDate" id="date-last-sync">
               {{ lastSyncNotice }}
             </mat-hint>
           }

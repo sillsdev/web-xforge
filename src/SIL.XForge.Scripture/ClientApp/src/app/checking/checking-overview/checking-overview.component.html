@@ -63,7 +63,7 @@
                     <button
                       mat-icon-button
                       (click)="$event.stopPropagation(); setArchiveStatusForQuestionsInBook(text, true)"
-                      [title]="t('archive_multiple', { location: getBookName(text) })"
+                      [matTooltip]="t('archive_multiple', { location: getBookName(text) })"
                       class="archive-btn"
                     >
                       <mat-icon>archive</mat-icon>
@@ -87,7 +87,7 @@
                           <span class="book-chapter-heading flex"
                             >{{ getBookName(text) + " " + chapter?.number }}
                             @if (chapter.hasAudio) {
-                              <mat-icon [title]="t('chapter_audio_attached')" class="material-icons-outlined">
+                              <mat-icon [matTooltip]="t('chapter_audio_attached')" class="material-icons-outlined">
                                 audio_file
                               </mat-icon>
                             }
@@ -105,7 +105,9 @@
                                 (click)="
                                   $event.stopPropagation(); setArchiveStatusForQuestionsInChapter(text, chapter, true)
                                 "
-                                [title]="t('archive_multiple', { location: getBookName(text) + ' ' + chapter.number })"
+                                [matTooltip]="
+                                  t('archive_multiple', { location: getBookName(text) + ' ' + chapter.number })
+                                "
                                 class="archive-btn"
                               >
                                 <mat-icon>archive</mat-icon>
@@ -143,7 +145,7 @@
                                   <button
                                     mat-icon-button
                                     (click)="setQuestionArchiveStatus(questionDoc, true)"
-                                    [title]="t('archive')"
+                                    [matTooltip]="t('archive')"
                                     class="archive-btn"
                                   >
                                     <mat-icon>archive</mat-icon>
@@ -266,7 +268,7 @@
                     <button
                       mat-icon-button
                       (click)="$event.stopPropagation(); setArchiveStatusForQuestionsInBook(text, false)"
-                      [title]="t('republish_multiple', { location: getBookName(text) })"
+                      [matTooltip]="t('republish_multiple', { location: getBookName(text) })"
                       class="publish-btn"
                     >
                       <mat-icon>public</mat-icon>
@@ -293,7 +295,9 @@
                               (click)="
                                 $event.stopPropagation(); setArchiveStatusForQuestionsInChapter(text, chapter, false)
                               "
-                              [title]="t('republish_multiple', { location: getBookName(text) + ' ' + chapter.number })"
+                              [matTooltip]="
+                                t('republish_multiple', { location: getBookName(text) + ' ' + chapter.number })
+                              "
                               class="publish-btn"
                             >
                               <mat-icon>public</mat-icon>
@@ -322,7 +326,7 @@
                                 <button
                                   mat-icon-button
                                   (click)="setQuestionArchiveStatus(questionDoc, false)"
-                                  [title]="t('republish')"
+                                  [matTooltip]="t('republish')"
                                   class="publish-btn"
                                 >
                                   <mat-icon>public</mat-icon>

@@ -68,7 +68,7 @@
                 }
               </div>
             </div>
-            <img [src]="noteInfo.icon" alt="" [title]="noteInfo.title" />
+            <img [src]="noteInfo.icon" alt="" [matTooltip]="noteInfo.title" />
             <div class="note-user">
               <div class="user-name">{{ noteInfo.userName }}</div>
               <small class="date-created">{{ noteInfo.dateCreated }}</small>
