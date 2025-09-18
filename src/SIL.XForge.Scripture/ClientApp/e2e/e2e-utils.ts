@@ -193,14 +193,14 @@ export async function createShareLinksAsAdmin(
   await page.getByRole('link', { name: 'Users' }).click();
   await page.getByRole('button', { name: 'Share' }).click();
 
-  await page.getByTitle('Change invitation language').click();
+  await page.getByText('Invitation will be shared in').getByText('(change)').click();
   await page.getByRole('option', { name: 'English (US)' }).click();
 
   const roleToLink: { [role: string]: string } = {};
 
   let optionCount = Number.POSITIVE_INFINITY;
   for (let i = 0; i < optionCount; i++) {
-    await page.getByTitle('Change invitation role').click();
+    await page.getByText('Anyone with the link can').getByText('(change)').click();
     const options = await page.getByRole('option').all();
     optionCount = options.length;
 
@@ -281,7 +281,7 @@ export async function enableFeatureFlag(page: Page, flag: string): Promise<void>
 }
 
 export async function enableDeveloperMode(page: Page, options = { closeMenu: false }): Promise<void> {
-  await page.getByRole('button', { name: 'Help' }).click();
+  await page.getByRole('button').filter({ hasText: 'help' }).click();
 
   // Playwright refuses to click the version number because it's disabled. We override this with force: true. However,
   // this sometimes fails to enable developer mode, probably because the click event was fired before the menu was fully

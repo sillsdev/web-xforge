@@ -88,7 +88,7 @@ export async function editTranslation(
   // FIXME(application-bug) We have to click a *different* verse and then back to the one we want to add a note to
   await user.click(getSegment(page, 'target', chapter, verse + 1));
   await user.click(segment);
-  await user.click(page.getByRole('button', { name: 'Add Comment' }));
+  await user.click(page.getByRole('button').filter({ hasText: 'add_comment' }));
   await page.getByRole('textbox', { name: 'Your comment' }).click();
   await page.getByRole('textbox', { name: 'Your comment' }).fill('How do you like my translation of this verse?');
   await user.click(page.getByRole('radio', { name: 'Save' }));
@@ -124,7 +124,7 @@ export async function editTranslation(
   await user.click(page.getByRole('button', { name: 'Select' }));
 
   // Swap the source and target sides
-  await user.click(page.getByRole('button', { name: 'Swap source and target' }));
+  await user.click(page.getByRole('button').filter({ hasText: 'swap_horiz' }));
 
   // Delete the project so edits don't persist and cloud the history
   await deleteProject(page, DEFAULT_PROJECT_SHORTNAME);
