@@ -273,6 +273,10 @@ export class DraftHistoryEntryComponent {
     return this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.usfmConfig != null;
   }
 
+  get buildStateIsCompleted(): boolean {
+    return this._entry?.state === BuildStates.Completed;
+  }
+
   @Input() isLatestBuild: boolean = false;
   trainingConfigurationOpen = false;
 

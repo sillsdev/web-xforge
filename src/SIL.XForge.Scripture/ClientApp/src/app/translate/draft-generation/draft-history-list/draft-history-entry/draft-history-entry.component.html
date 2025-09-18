@@ -21,7 +21,9 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <div class="draft-entry-body">
-        @if (this.featureFlags.usfmFormat.enabled && !formattingOptionsSelected && isLatestBuild) {
+        @if (
+          this.featureFlags.usfmFormat.enabled && !formattingOptionsSelected && isLatestBuild && buildStateIsCompleted
+        ) {
           <p class="require-formatting-options">
             {{ t("select_formatting_options") }}
           </p>

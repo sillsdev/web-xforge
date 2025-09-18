@@ -327,8 +327,9 @@ describe('DraftHistoryEntryComponent', () => {
   });
 
   describe('setDraftFormat', () => {
+    beforeEach(() => when(mockedActivatedProjectService.projectDoc).thenReturn(getProjectProfileDoc()));
+
     it('should show set draft format UI', fakeAsync(() => {
-      when(mockedActivatedProjectService.projectDoc).thenReturn(getProjectProfileDoc());
       component.entry = { id: 'build01', state: BuildStates.Completed, message: 'Completed' } as BuildDto;
       component.isLatestBuild = true;
       tick();
@@ -336,7 +337,8 @@ describe('DraftHistoryEntryComponent', () => {
       expect(fixture.nativeElement.querySelector('.require-formatting-options')).not.toBeNull();
     }));
 
-    it('should hide draft format UI', fakeAsync(() => {
+    it('should hide draft format UI when feature not enabled', fakeAsync(() => {
+      when(mockedFeatureFlagsService.usfmFormat).thenReturn(createTestFeatureFlag(false));
       component.entry = { id: 'build01', state: BuildStates.Completed, message: 'Completed' } as BuildDto;
       component.isLatestBuild = true;
       tick();
@@ -347,6 +349,14 @@ describe('DraftHistoryEntryComponent', () => {
     it('should hide draft format UI if not the latest build', fakeAsync(() => {
       component.entry = { id: 'build01', state: BuildStates.Completed, message: 'Completed' } as BuildDto;
       component.isLatestBuild = false;
+      tick();
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.require-formatting-options')).toBeNull();
+    }));
+
+    it('should hide draft format UI if the draft is not completed', fakeAsync(() => {
+      component.entry = { id: 'build01', state: BuildStates.Canceled, message: 'Cancelled' } as BuildDto;
+      component.isLatestBuild = true;
       tick();
       fixture.detectChanges();
       expect(fixture.nativeElement.querySelector('.require-formatting-options')).toBeNull();
