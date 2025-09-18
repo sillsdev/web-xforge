@@ -24,7 +24,23 @@ mat-panel-description {
 
 .draft-options {
   display: flex;
-  column-gap: 8px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.formatting-options-container {
+  display: flex;
+  column-gap: 16px;
+  align-items: center;
+
+  button {
+    flex-shrink: 0;
+  }
+
+  .new-label {
+    color: var(--draft-history-entry-new-label-color);
+    font-weight: 500;
+  }
 }
 
 .subtitle,

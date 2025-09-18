@@ -128,6 +128,10 @@ export class LynxInsightEditorObjectsComponent implements OnChanges, OnInit, OnD
             distinctUntilChanged(),
             switchMap(show => {
               if (!show) {
+                // Clear any existing blots and overlays when insights are disabled
+                this.insightRenderService.removeAllInsightFormatting(this.editor!);
+                this.overlayService.close();
+                this.insightState.clearDisplayState();
                 return EMPTY;
               }
 

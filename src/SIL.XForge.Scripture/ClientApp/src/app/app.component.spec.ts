@@ -44,7 +44,7 @@ import { SF_TYPE_REGISTRY } from './core/models/sf-type-registry';
 import { SFProjectService } from './core/sf-project.service';
 import { NavigationComponent } from './navigation/navigation.component';
 import { GlobalNoticesComponent } from './shared/global-notices/global-notices.component';
-import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
+import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
 import { paratextUsersFromRoles } from './shared/test-utils';
 
 const mockedAuthService = mock(AuthService);
@@ -52,6 +52,7 @@ const mockedUserService = mock(UserService);
 const mockedSettingsAuthGuard = mock(SettingsAuthGuard);
 const mockedSyncAuthGuard = mock(SyncAuthGuard);
 const mockedUsersAuthGuard = mock(UsersAuthGuard);
+const mockedNmtDraftAuthGuard = mock(NmtDraftAuthGuard);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedCookieService = mock(CookieService);
 const mockedLocationService = mock(LocationService);
@@ -103,6 +104,7 @@ describe('AppComponent', () => {
       { provide: SettingsAuthGuard, useMock: mockedSettingsAuthGuard },
       { provide: SyncAuthGuard, useMock: mockedSyncAuthGuard },
       { provide: UsersAuthGuard, useMock: mockedUsersAuthGuard },
+      { provide: NmtDraftAuthGuard, useMock: mockedNmtDraftAuthGuard },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: LocationService, useMock: mockedLocationService },
@@ -130,9 +132,20 @@ describe('AppComponent', () => {
 
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project01');
-    // Translate | Overview | Edit & review | Community Checking | Manage questions | Questions & answers |
-    // Synchronize | Users | Settings
-    expect(env.menuLength).toEqual(9);
+
+    const expectedMenuItemCount = [
+      'Translate',
+      'Overview',
+      'Edit & review',
+      'Generate draft',
+      'Community Checking',
+      'My progress',
+      'Questions & answers',
+      'Sync with Paratext',
+      'Users',
+      'Settings'
+    ].length;
+    expect(env.menuLength).toEqual(expectedMenuItemCount);
     verify(mockedUserService.setCurrentProjectId(anything(), 'project01')).once();
     tick();
   }));
@@ -144,8 +157,15 @@ describe('AppComponent', () => {
 
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project02');
-    // Expect: Community Checking | Manage Questions | Overview | Sync | Settings | Users
-    expect(env.menuLength).toEqual(6);
+    const expectedMenuItemCount: number = [
+      'Community Checking',
+      'My progress',
+      'Overview',
+      'Sync with Paratext',
+      'Settings',
+      'Users'
+    ].length;
+    expect(env.menuLength).toEqual(expectedMenuItemCount);
     verify(mockedUserService.setCurrentProjectId(anything(), 'project02')).once();
     discardPeriodicTasks();
   }));
@@ -701,6 +721,7 @@ class TestEnvironment {
     when(mockedSettingsAuthGuard.allowTransition(anything())).thenReturn(this.canSeeSettings$);
     when(mockedSyncAuthGuard.allowTransition(anything())).thenReturn(this.canSync$);
     when(mockedUsersAuthGuard.allowTransition(anything())).thenReturn(this.canSeeUsers$);
+    when(mockedNmtDraftAuthGuard.allowTransition(anything())).thenReturn(this.canSeeGenerateDraft$);
     when(mockedI18nService.localeCode).thenReturn('en');
     when(mockedUrlService.helps).thenReturn('helps');
     when(mockedUrlService.announcementPage).thenReturn('community-announcements');

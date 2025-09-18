@@ -35,6 +35,7 @@ export class ScriptureChooserDialogComponent implements OnInit {
   showing: 'books' | 'chapters' | 'verses' | 'rangeEnd' = 'books';
   otBooks: string[] = [];
   ntBooks: string[] = [];
+  dcBooks: string[] = [];
   chapters: number[] = [];
   verses: number[] = [];
   closeFocuses: number = 0;
@@ -60,10 +61,13 @@ export class ScriptureChooserDialogComponent implements OnInit {
     const books = Object.keys(this.data.booksAndChaptersToShow);
     this.otBooks = books
       .filter(book => Canon.isBookOT(book))
-      .sort((a, b) => this.data.booksAndChaptersToShow[a].bookNum - this.data.booksAndChaptersToShow[b].bookNum);
+      .sort((a, b) => Canon.bookIdToNumber(a) - Canon.bookIdToNumber(b));
     this.ntBooks = books
-      .filter(book => !Canon.isBookOT(book))
-      .sort((a, b) => this.data.booksAndChaptersToShow[a].bookNum - this.data.booksAndChaptersToShow[b].bookNum);
+      .filter(book => Canon.isBookNT(book))
+      .sort((a, b) => Canon.bookIdToNumber(a) - Canon.bookIdToNumber(b));
+    this.dcBooks = books
+      .filter(book => Canon.isBookDC(book))
+      .sort((a, b) => Canon.bookIdToNumber(a) - Canon.bookIdToNumber(b));
 
     if (this.data.rangeStart != null) {
       const rangeStart = this.data.rangeStart;

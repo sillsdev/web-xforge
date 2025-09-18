@@ -269,13 +269,19 @@ export class DraftHistoryEntryComponent {
     return this.i18n.enumerateList(this._translationSources) + ' \u2022'; // &bull; •
   }
 
-  @Input() isLatestBuild = false;
+  get formattingOptionsSelected(): boolean {
+    return this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.usfmConfig != null;
+  }
 
+  @Input() isLatestBuild: boolean = false;
   trainingConfigurationOpen = false;
 
   readonly columnsToDisplay: string[] = ['scriptureRange', 'source', 'target'];
 
+  private readonly showSelectFormatNoticeExpireDate = new Date('2025-12-01T12:00:00.000Z');
   private dataFileQuery?: RealtimeQuery<TrainingDataDoc>;
+
+  readonly timeframeForSelectFormatNotice: boolean = Date.now() < this.showSelectFormatNoticeExpireDate.getTime();
 
   constructor(
     readonly i18n: I18nService,

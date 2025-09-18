@@ -15,25 +15,18 @@
             <span>{{ t("choose_book") }}</span>
           </h1>
           <div mat-dialog-content>
-            <div class="upperBookSet">
-              @for (book of otBooks; track book) {
-                <button
-                  mat-button
-                  [ngClass]="{ 'mat-flat-button': data.input?.book === book }"
-                  (click)="onClickBook(book)"
-                >
-                  {{ i18n.localizeBook(book) }}
-                </button>
+            @for (list of [otBooks, ntBooks, dcBooks]; track $index) {
+              @if (list.length > 0) {
+                <div class="book-list">
+                  @for (book of list; track book) {
+                    @if (data.input?.book === book) {
+                      <button mat-flat-button (click)="onClickBook(book)">{{ i18n.localizeBook(book) }}</button>
+                    } @else {
+                      <button mat-button (click)="onClickBook(book)">{{ i18n.localizeBook(book) }}</button>
+                    }
+                  }
+                </div>
               }
-            </div>
-            @for (book of ntBooks; track book) {
-              <button
-                mat-button
-                [ngClass]="{ 'mat-flat-button': data.input?.book === book }"
-                (click)="onClickBook(book)"
-              >
-                {{ i18n.localizeBook(book) }}
-              </button>
             }
           </div>
         </div>
@@ -49,16 +42,11 @@
           <div mat-dialog-content>
             <div class="reference">{{ getBookName(selection.book) }}</div>
             @for (chapter of chaptersOf(selection.book); track chapter) {
-              <button
-                mat-button
-                [ngClass]="{
-                  'mat-flat-button':
-                    data.input?.book === selection.book && getNumOrNaN(data.input?.chapterNum) === +chapter
-                }"
-                (click)="onClickChapter(chapter)"
-              >
-                {{ chapter }}
-              </button>
+              @if (data.input?.book === selection.book && getNumOrNaN(data.input?.chapterNum) === +chapter) {
+                <button mat-flat-button (click)="onClickChapter(chapter)">{{ chapter }}</button>
+              } @else {
+                <button mat-button (click)="onClickChapter(chapter)">{{ chapter }}</button>
+              }
             }
           </div>
         </div>
@@ -74,18 +62,15 @@
           <div mat-dialog-content>
             <div class="reference">{{ getBookName(selection.book) }} {{ selection.chapter }}</div>
             @for (verse of versesOf(selection.book, selection.chapter); track verse) {
-              <button
-                mat-button
-                [ngClass]="{
-                  'mat-flat-button':
-                    data.input?.book === selection.book &&
-                    data.input?.chapter === selection.chapter &&
-                    getNumOrNaN(data.input?.verseNum) === +verse
-                }"
-                (click)="onClickVerse(verse)"
-              >
-                {{ verse }}
-              </button>
+              @if (
+                data.input?.book === selection.book &&
+                data.input?.chapter === selection.chapter &&
+                getNumOrNaN(data.input?.verseNum) === +verse
+              ) {
+                <button mat-flat-button (click)="onClickVerse(verse)">{{ verse }}</button>
+              } @else {
+                <button mat-button (click)="onClickVerse(verse)">{{ verse }}</button>
+              }
             }
           </div>
         </div>
@@ -109,18 +94,15 @@
               verse of versesOf(data.rangeStart?.book, data.rangeStart?.chapter, data.rangeStart?.verseNum);
               track verse
             ) {
-              <button
-                mat-button
-                [ngClass]="{
-                  'mat-flat-button':
-                    data.input?.book === data.rangeStart?.book &&
-                    data.input?.chapter === data.rangeStart?.chapter &&
-                    getNumOrNaN(data.input?.verseNum) === +verse
-                }"
-                (click)="onClickVerse(verse)"
-              >
-                {{ verse }}
-              </button>
+              @if (
+                data.input?.book === data.rangeStart?.book &&
+                data.input?.chapter === data.rangeStart?.chapter &&
+                getNumOrNaN(data.input?.verseNum) === +verse
+              ) {
+                <button mat-flat-button (click)="onClickVerse(verse)">{{ verse }}</button>
+              } @else {
+                <button mat-button (click)="onClickVerse(verse)">{{ verse }}</button>
+              }
             }
           </div>
         </div>

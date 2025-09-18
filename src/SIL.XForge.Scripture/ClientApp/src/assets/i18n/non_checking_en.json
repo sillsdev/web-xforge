@@ -285,10 +285,14 @@
     "draft_unknown": "Unknown",
     "error_details": "Please include these details when contacting support for assistance",
     "finished_at": "Finished {{ finishedAtTime }}",
+    "formatting": "Formatting",
     "formatting_options": "Formatting options",
     "hide_model_training_configuration": "Hide model training configuration",
+    "new": "NEW!",
+    "options_for_line_breaks_and_quotation_marks": "Options for line-breaks and quotation marks to make editing easier",
     "requested_at": "Requested {{ requestedAtTime }}.",
     "requested_by": "Requested by {{ requestedByUserName }} at {{ requestedAtTime }}.",
+    "select_formatting_options": "The draft has been created, and there are new formatting options to select. You will only need to do this once, but you can make changes for every new draft if you wish.",
     "show_model_training_configuration": "Show model training configuration",
     "training_books": "Training books",
     "training_data_files_used": "The following data files were used to train the model.",
@@ -744,14 +748,17 @@
     "cancel": "Cancel",
     "select": "Select"
   },
-  "suggestions_settings_dialog": {
+  "translator_settings_dialog": {
     "better": "Better",
     "close": "Close",
+    "insights_enable_assessments": "Show assessments",
+    "insights_enable_autocorrect": "Allow auto-corrections",
+    "insights_settings_title": "Insights",
     "more": "More",
     "number_of_suggestions": "Number of suggestions",
-    "settings_not_available_offline": "These settings are not available while you are offline.",
+    "settings_not_available_offline": "Translation suggestion settings are not available while you are offline.",
     "suggestion_confidence": "Suggestion confidence",
-    "show_translation_suggestions": "Show translation suggestions",
+    "translation_suggestions_settings_title": "Translation suggestions",
     "translator_settings": "Translator settings"
   },
   "supported_back_translation_languages_dialog": {
