@@ -33,8 +33,11 @@
             </button>
             @if (timeframeForSelectFormatNotice) {
               <div class="new-formatting-options-notice">
-                <mat-icon class="new-arrow">{{ i18n.isRtl ? "east" : "west" }}</mat-icon>
-                <span class="new-label">{{ t("new") }}</span> {{ t("options_for_line_breaks_and_quotation_marks") }}
+                <div class="new-and-arrow-wrapper">
+                  <mat-icon class="new-arrow">{{ i18n.isRtl ? "east" : "west" }}</mat-icon>
+                  <span class="new-label">{{ t("new") }}</span>
+                </div>
+                {{ t("options_for_line_breaks_and_quotation_marks") }}
               </div>
             }
           </div>
