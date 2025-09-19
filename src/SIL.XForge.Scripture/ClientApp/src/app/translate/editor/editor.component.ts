@@ -286,17 +286,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private readonly fabDiameter = 40;
   readonly fabVerticalCushion = 5;
 
-  /**
-   * Determines whether the user has permission to edit the currently active chapter.
-   * Returns undefined if the necessary data is not yet available.
-   */
-  hasChapterEditPermission: boolean | undefined = undefined;
-  private readonly hasChapterEditPermission$: Observable<boolean | undefined> = combineLatest([
+  /**  Determines whether the user can edit the current text.  Combines all permissions and chapter validity checks. */
+  canEdit: boolean = false;
+  private readonly canEdit$: Observable<boolean | undefined> = combineLatest([
     this.activatedProject.changes$.pipe(filterNullish()),
     this.chapter$
   ]).pipe(
-    map(([_, chapterNum]) => this.textDocService.hasChapterEditPermissionForText(this.text, chapterNum)),
-    tap(hasPermission => (this.hasChapterEditPermission = hasPermission)) // Cache for non-reactive access
+    map(
+      ([projectDoc, chapterNum]) =>
+        this.textDocService.canEdit(projectDoc.data, this.bookNum, chapterNum) && !this.target?.areOpsCorrupted
+    ),
+    tap(canEdit => (this.canEdit = canEdit)) // Cache for non-reactive access
   );
 
   constructor(
@@ -455,6 +455,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.textDocService.userHasGeneralEditRight(this.projectDoc?.data);
   }
 
+  /**
+   * Determines whether the user has permission to edit the currently active chapter.
+   * Returns undefined if the necessary data is not yet available.
+   */
+  get hasChapterEditPermission(): boolean | undefined {
+    return this.textDocService.hasChapterEditPermissionForText(this.text, this.chapter);
+  }
+
   get showNoEditPermissionMessage(): boolean {
     return this.userHasGeneralEditRight && this.hasChapterEditPermission === false;
   }
@@ -483,12 +491,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     return this.isParatextUserRole;
-  }
-
-  get canEdit(): boolean {
-    return (
-      this.textDocService.canEdit(this.projectDoc?.data, this.bookNum, this.chapter) && !this.target?.areOpsCorrupted
-    );
   }
 
   get canInsertNote(): boolean {
@@ -2603,7 +2605,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
    */
   private initLynxFeatureStates(projectUserConfigDoc: SFProjectUserConfigDoc | undefined): void {
     combineLatest([
-      this.hasChapterEditPermission$.pipe(filterNullish()),
+      this.canEdit$.pipe(map(canEdit => canEdit ?? false)),
       this.activatedProject.changes$.pipe(map(projectDoc => projectDoc?.data?.lynxConfig)),
       projectUserConfigDoc?.changes$.pipe(
         startWith(projectUserConfigDoc),
@@ -2611,9 +2613,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       ) ?? of(undefined)
     ])
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(([hasEditPermission, lynxProjectConfig, lynxInsightState]) => {
-        const canEdit: boolean = hasEditPermission && this.isUsfmValid;
-
+      .subscribe(([canEdit, lynxProjectConfig, lynxInsightState]) => {
         // Enable lynx features only if user can edit chapter and lynx is enabled in both project AND user settings
         this.lynxInsightsEnabled =
           canEdit && (lynxProjectConfig?.assessmentsEnabled ?? false) && (lynxInsightState?.assessmentsEnabled ?? true);
