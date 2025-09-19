@@ -285,10 +285,14 @@
     "draft_unknown": "Inconnu",
     "error_details": "Veuillez inclure ces informations lorsque vous contactez le support pour obtenir de l'aide",
     "finished_at": "Terminé {{ finishedAtTime }}",
+    "formatting": "Mise en forme",
     "formatting_options": "Options de formatage",
     "hide_model_training_configuration": "Masquer la configuration de l'apprentissage du modèle",
+    "new": "NOUVEAU !",
+    "options_for_line_breaks_and_quotation_marks": "Options pour les sauts de ligne et les guillemets pour faciliter l'édition",
     "requested_at": "Demandé {{ requestedAtTime }}.",
     "requested_by": "Demandé par {{ requestedByUserName }} à {{ requestedAtTime }}.",
+    "select_formatting_options": "The draft has been created, and there are new formatting options to select. You will only need to do this once, but you can change them whenever you wish.",
     "show_model_training_configuration": "Afficher la configuration de l'entraînement au modèle",
     "training_books": "Livres de formation",
     "training_data_files_used": "Les fichiers de données suivants ont été utilisés pour former le modèle.",
@@ -351,7 +355,6 @@
     "unknown_language_code": "inconnu"
   },
   "draft_usfm_format": {
-    "available_for_each_draft": "Vous pouvez le faire pour chaque nouvelle ébauche si vous le souhaitez.",
     "cancel": "Annuler",
     "connect_to_the_internet": "Veuillez vous connecter à internet pour modifier le format USFM de votre ébauche",
     "draft_format_description": "L'ébauche a été créée. Voici quelques options de mise en forme pour le texte. Vous pouvez essayer chaque option pour voir la différence qu'elle apporte.",
@@ -744,14 +747,17 @@
     "cancel": "Annuler",
     "select": "Sélectionner"
   },
-  "suggestions_settings_dialog": {
+  "translator_settings_dialog": {
     "better": "Meilleures",
     "close": "Fermer",
+    "insights_enable_assessments": "Show assessments",
+    "insights_enable_autocorrect": "Allow auto-corrections",
+    "insights_settings_title": "Aperçus",
     "more": "Plus",
     "number_of_suggestions": "Nombre de suggestions",
-    "settings_not_available_offline": "Ces paramètres ne sont pas disponibles lorsque vous êtes hors connexion.",
+    "settings_not_available_offline": "Translation suggestion settings are not available while you are offline.",
     "suggestion_confidence": "Confiance dans les suggestions",
-    "show_translation_suggestions": "Suggestions de traduction",
+    "translation_suggestions_settings_title": "Suggestions de traduction",
     "translator_settings": "Paramètres du traducteur"
   },
   "supported_back_translation_languages_dialog": {
