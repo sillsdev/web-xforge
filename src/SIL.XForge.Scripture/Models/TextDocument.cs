@@ -55,4 +55,10 @@ public class TextDocument : Json0Snapshot, IUsj
     /// The USJ spec version.
     /// </summary>
     public string Version { get; set; } = Usj.UsjVersion;
+
+    public int GetChapterNumber()
+    {
+        string[] parts = Id.Split(':');
+        return parts.Length >= 3 && int.TryParse(parts[2], out int chapter) ? chapter : 0;
+    }
 }
