@@ -2,7 +2,9 @@ import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { DiagnosticOverlayService } from 'xforge-common/diagnostic-overlay.service';
+import { L10nNumberPipe } from 'xforge-common/l10n-number.pipe';
 import { LocalSettingsService } from 'xforge-common/local-settings.service';
+import { RealtimeDocLifecycleMonitorService } from 'xforge-common/models/realtime-doc-lifecycle-monitor';
 import { NoticeService } from 'xforge-common/notice.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -26,24 +28,49 @@ const diagnosticOverlayCollapsedKey = 'DIAGNOSTIC_OVERLAY_COLLAPSED';
 export class DiagnosticOverlayComponent {
   isExpanded: boolean = true;
   isOpen: boolean = true;
+  tab = 0;
+  digestCycles = 0;
+
+  recreateTimeThreshold: number = 250;
+  recreateCountThreshold: number = 1;
 
   constructor(
     private readonly realtimeService: RealtimeService,
     private readonly diagnosticOverlayService: DiagnosticOverlayService,
     readonly noticeService: NoticeService,
-    private readonly localSettings: LocalSettingsService
+    public readonly docLifecycleMonitor: RealtimeDocLifecycleMonitorService,
+    private readonly localSettings: LocalSettingsService,
+    private readonly l10nNumber: L10nNumberPipe
   ) {
+    docLifecycleMonitor.setMonitoringEnabled(true);
     if (this.localSettings.get<boolean>(diagnosticOverlayCollapsedKey) === false) {
       this.isExpanded = false;
     }
   }
 
-  get docCountsByCollection(): { [key: string]: { docs: number; subscribers: number; queries: number } } {
+  get docCountsByCollection(): {
+    [key: string]: { docs: number; subscribers: number; activeDocSubscriptionsCount: number };
+  } {
     return this.realtimeService.docsCountByCollection;
+  }
+
+  get queriesByCollection(): { [key: string]: number } {
+    return this.realtimeService.queriesByCollection;
+  }
+
+  get subscriberCountsByContext(): { [key: string]: { [key: string]: { all: number; active: number } } } {
+    return this.realtimeService.subscriberCountsByContext;
   }
 
   get totalDocsCount(): number {
     return this.realtimeService.totalDocCount;
+  }
+
+  get digestCycleCounter(): string {
+    this.digestCycles++;
+    const displayElement = document.getElementById('digest-cycles');
+    if (displayElement) displayElement.textContent = this.l10nNumber.transform(this.digestCycles);
+    return '';
   }
 
   toggle(): void {

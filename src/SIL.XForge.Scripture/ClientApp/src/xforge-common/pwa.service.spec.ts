@@ -51,7 +51,7 @@ describe('PwaService', () => {
     env.dispose();
   }));
 
-  it('can install', fakeAsync(() => {
+  it('can install', fakeAsync(async () => {
     const env = new TestEnvironment();
     let canInstall = false;
     env.pwaService.canInstall$.subscribe((_install: boolean) => {
@@ -60,7 +60,7 @@ describe('PwaService', () => {
     mockedWindow.dispatchEvent(new Event('beforeinstallprompt'));
     TestEnvironment.isRunningInstalledApp$.next(true);
     expect(canInstall).toEqual(true);
-    env.pwaService.install();
+    await env.pwaService.install();
     mockedWindow.dispatchEvent(new Event('appinstalled'));
     tick();
     expect(canInstall).toEqual(false);

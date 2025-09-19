@@ -18,6 +18,7 @@ import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { NONE_ROLE, ProjectRoleInfo } from 'xforge-common/models/project-role-info';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -94,7 +95,7 @@ describe('CollaboratorsComponent', () => {
     expect(env.noUsersLabel).not.toBeNull();
   }));
 
-  it('should display users', fakeAsync(() => {
+  it('should display users', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setupProjectData();
     env.fixture.detectChanges();
@@ -121,10 +122,10 @@ describe('CollaboratorsComponent', () => {
     env.clickElement(env.userRowMoreMenuElement(2));
     expect(env.removeUserItemOnRow(2)).toBeTruthy();
     expect(env.cancelInviteItemOnRow(2)).toBeFalsy();
-    env.cleanup();
+    await env.cleanup();
   }));
 
-  it('displays invited users', fakeAsync(() => {
+  it('displays invited users', fakeAsync(async () => {
     const env = new TestEnvironment();
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
       { email: 'alice@a.aa', role: 'sf_community_checker', expired: false },
@@ -154,7 +155,7 @@ describe('CollaboratorsComponent', () => {
     env.clickElement(env.userRowMoreMenuElement(inviteeRow));
     expect(env.removeUserItemOnRow(inviteeRow)).toBeFalsy();
     expect(env.cancelInviteItemOnRow(inviteeRow)).toBeTruthy();
-    env.cleanup();
+    await env.cleanup();
   }));
 
   it('handle error from invited users query, when user is not on project', fakeAsync(() => {
@@ -326,7 +327,7 @@ describe('CollaboratorsComponent', () => {
     expect(env.userRows.length).toEqual(2);
   }));
 
-  it('should disable collaborators if not connected', fakeAsync(() => {
+  it('should disable collaborators if not connected', fakeAsync(async () => {
     const env = new TestEnvironment(false);
     env.setupProjectData();
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
@@ -352,10 +353,10 @@ describe('CollaboratorsComponent', () => {
     env.clickElement(env.userRowMoreMenuElement(inviteeRow));
     expect(env.removeUserItemOnRow(inviteeRow)).toBeNull();
     expect(env.cancelInviteItemOnRow(inviteeRow).attributes['disabled']).toBe('true');
-    env.cleanup();
+    await env.cleanup();
   }));
 
-  it('should enable editing roles and permissions for non-admins', fakeAsync(() => {
+  it('should enable editing roles and permissions for non-admins', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setupProjectData();
     env.fixture.detectChanges();
@@ -365,10 +366,10 @@ describe('CollaboratorsComponent', () => {
     env.clickElement(env.userRowMoreMenuElement(1));
     expect(env.rolesAndPermissionsItem().nativeElement.disabled).toBe(false);
 
-    env.cleanup();
+    await env.cleanup();
   }));
 
-  it('should disable editing roles and permissions for admins', fakeAsync(() => {
+  it('should disable editing roles and permissions for admins', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setupProjectData();
     env.fixture.detectChanges();
@@ -378,10 +379,10 @@ describe('CollaboratorsComponent', () => {
     env.clickElement(env.userRowMoreMenuElement(0));
     expect(env.rolesAndPermissionsItem().nativeElement.disabled).toBe(true);
 
-    env.cleanup();
+    await env.cleanup();
   }));
 
-  it('should disable editing roles and permissions for pending invitees', fakeAsync(() => {
+  it('should disable editing roles and permissions for pending invitees', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setupProjectData();
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
@@ -397,7 +398,7 @@ describe('CollaboratorsComponent', () => {
     env.clickElement(env.userRowMoreMenuElement(4));
     expect(env.rolesAndPermissionsItem().nativeElement.disabled).toBe(true);
 
-    env.cleanup();
+    await env.cleanup();
   }));
 });
 
@@ -423,22 +424,26 @@ class TestEnvironment {
     when(mockedProjectService.onlineInvite(this.project01Id, anything(), anything(), anything())).thenResolve();
     when(mockedProjectService.onlineInvitedUsers(this.project01Id)).thenResolve([]);
     when(mockedNoticeService.show(anything())).thenResolve();
-    when(mockedUserService.getProfile(anything())).thenCall(userId =>
-      this.realtimeService.subscribe(UserProfileDoc.COLLECTION, userId)
+    when(mockedUserService.getProfile(anything(), anything())).thenCall(
+      async (userId, subscription) => await this.realtimeService.get(UserProfileDoc.COLLECTION, userId, subscription)
     );
     when(mockedUserService.currentUserId).thenReturn('user01');
-    when(mockedProjectService.get(anything())).thenCall(projectId =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
+    when(mockedProjectService.subscribe(anything(), anything())).thenCall((projectId, subscription) =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId, subscription)
     );
-    when(mockedProjectService.getProfile(anything())).thenCall(projectId =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
+    when(mockedProjectService.getProfile(anything(), anything())).thenCall((projectId, subscriber) =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId, subscriber)
     );
     when(
       mockedProjectService.onlineGetLinkSharingKey(this.project01Id, anything(), anything(), anything())
     ).thenResolve('linkSharingKey01');
     when(mockedProjectService.onlineSetUserProjectPermissions(this.project01Id, 'user02', anything())).thenCall(
-      (projectId: string, userId: string, permissions: string[]) => {
-        const projectDoc: SFProjectDoc = this.realtimeService.get(SFProjectDoc.COLLECTION, projectId);
+      async (projectId: string, userId: string, permissions: string[]) => {
+        const projectDoc: SFProjectDoc = await this.realtimeService.get(
+          SFProjectDoc.COLLECTION,
+          projectId,
+          new DocSubscription('spec')
+        );
         return projectDoc.submitJson0Op(op => op.set(p => p.userPermissions[userId], permissions));
       }
     );
@@ -576,19 +581,22 @@ class TestEnvironment {
     this.setupThisProjectData(this.project01Id, this.createProject(userRoles));
   }
 
-  updateCheckingProperties(config: CheckingConfig): Promise<boolean> {
-    const projectDoc: SFProjectDoc = this.realtimeService.get(SFProjectDoc.COLLECTION, this.project01Id);
+  async updateCheckingProperties(config: CheckingConfig): Promise<boolean> {
+    const projectDoc: SFProjectDoc = await this.realtimeService.get(
+      SFProjectDoc.COLLECTION,
+      this.project01Id,
+      new DocSubscription('spec')
+    );
     return projectDoc.submitJson0Op(op => {
       op.set(p => p.checkingConfig, config);
     });
   }
 
-  cleanup(): void {
-    this.loader.getAllHarnesses(MatMenuHarness).then(harnesses => {
-      for (const harness of harnesses) {
-        harness.close();
-      }
-    });
+  async cleanup(): Promise<void> {
+    const harnesses = await this.loader.getAllHarnesses(MatMenuHarness);
+    for (const harness of harnesses) {
+      harness.close();
+    }
     flush();
     this.fixture.detectChanges();
   }

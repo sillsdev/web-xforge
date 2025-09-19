@@ -15,6 +15,7 @@ import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
+import { DocSubscription } from '../../../../../xforge-common/models/realtime-doc';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../../core/models/sf-type-registry';
 import { TrainingDataDoc } from '../../../../core/models/training-data-doc';
@@ -183,11 +184,11 @@ describe('DraftHistoryEntryComponent', () => {
       const targetProjectDoc = {
         id: 'project01'
       } as SFProjectProfileDoc;
-      when(mockedSFProjectService.getProfile('project01')).thenResolve(targetProjectDoc);
+      when(mockedSFProjectService.getProfile('project01', anything())).thenResolve(targetProjectDoc);
       const sourceProjectDoc = {
         id: 'project02'
       } as SFProjectProfileDoc;
-      when(mockedSFProjectService.getProfile('project02')).thenResolve(sourceProjectDoc);
+      when(mockedSFProjectService.getProfile('project02', anything())).thenResolve(sourceProjectDoc);
       const entry = {
         engine: {
           id: 'project01'
@@ -230,12 +231,12 @@ describe('DraftHistoryEntryComponent', () => {
       when(mockedI18nService.formatAndLocalizeScriptureRange('GEN')).thenReturn('Genesis');
       when(mockedI18nService.formatAndLocalizeScriptureRange('EXO')).thenReturn('Exodus');
       const userDoc = { id: 'sf-user-id', data: undefined } as UserProfileDoc;
-      when(mockedUserService.getProfile(anything())).thenResolve(userDoc);
+      when(mockedUserService.getProfile(anything(), anything())).thenResolve(userDoc);
       const targetProjectDoc = {
         id: 'project01',
         data: createTestProjectProfile({ shortName: 'tar', writingSystem: { tag: 'en' } })
       } as SFProjectProfileDoc;
-      when(mockedSFProjectService.getProfile('project01')).thenResolve(targetProjectDoc);
+      when(mockedSFProjectService.getProfile('project01', new DocSubscription('spec'))).thenResolve(targetProjectDoc);
       when(mockedActivatedProjectService.changes$).thenReturn(of(targetProjectDoc));
       const entry = {
         additionalInfo: {
@@ -395,18 +396,18 @@ describe('DraftHistoryEntryComponent', () => {
       id: 'sf-user-id',
       data: createTestUserProfile({ displayName: user })
     } as UserProfileDoc;
-    when(mockedUserService.getProfile('sf-user-id')).thenResolve(userDoc);
+    when(mockedUserService.getProfile('sf-user-id', anything())).thenResolve(userDoc);
     const targetProjectDoc = {
       id: 'project01',
       data: createTestProjectProfile({ shortName: 'tar', writingSystem: { tag: 'en' } })
     } as SFProjectProfileDoc;
-    when(mockedSFProjectService.getProfile('project01')).thenResolve(targetProjectDoc);
+    when(mockedSFProjectService.getProfile('project01', anything())).thenResolve(targetProjectDoc);
     when(mockedActivatedProjectService.changes$).thenReturn(of(targetProjectDoc));
     const sourceProjectDoc = {
       id: 'project02',
       data: createTestProjectProfile({ shortName: 'src', writingSystem: { tag: 'fr' } })
     } as SFProjectProfileDoc;
-    when(mockedSFProjectService.getProfile('project02')).thenResolve(sourceProjectDoc);
+    when(mockedSFProjectService.getProfile('project02', anything())).thenResolve(sourceProjectDoc);
     const entry = {
       engine: {
         id: 'project01'

@@ -16,6 +16,7 @@ import { LocalPresence } from 'sharedb/lib/sharedb';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { MockConsole } from 'xforge-common/mock-console';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -63,7 +64,7 @@ describe('TextComponent', () => {
     mockedConsole.reset();
   });
 
-  it('shows proper placeholder messages for situations', fakeAsync(() => {
+  it('shows proper placeholder messages for situations', fakeAsync(async () => {
     // Suppose a user comes to a page with a text component, which has no content to show. The placeholder will be a
     // 'no-content' indication, or that specified as a placeholder Input. Here we will not specify the placeholder
     // input.
@@ -84,7 +85,7 @@ describe('TextComponent', () => {
 
     // The user goes to a location. The id input is set to a particular location. The text component is now expected to
     // have content, so the placeholder should be 'loading'.
-    env.runWithDelayedGetText(env.matTextDocId, () => {
+    await env.runWithDelayedGetText(env.matTextDocId, () => {
       env.id = env.matTextDocId;
       env.waitForEditor();
       expect(env.component.placeholder).toEqual('text.loading');
@@ -94,7 +95,7 @@ describe('TextComponent', () => {
     // why they can't see the content if and while it has not loaded yet.
     env.onlineStatus = false;
     env.waitForEditor();
-    env.runWithDelayedGetText(env.lukTextDocId, () => {
+    await env.runWithDelayedGetText(env.lukTextDocId, () => {
       env.id = env.lukTextDocId;
       env.waitForEditor();
       expect(env.component.placeholder).toEqual('text.not_available_offline');
@@ -106,7 +107,7 @@ describe('TextComponent', () => {
     });
 
     // The user goes to a location that the project does not have. The placeholder should indicate 'no-content'.
-    env.runWithDelayedGetText(env.notPresentTextDocId, () => {
+    await env.runWithDelayedGetText(env.notPresentTextDocId, () => {
       env.id = env.notPresentTextDocId;
       env.waitForEditor();
       expect(env.component.placeholder).toEqual('text.book_does_not_exist');
@@ -118,7 +119,7 @@ describe('TextComponent', () => {
     env.waitForEditor();
     env.onlineStatus = false;
     env.waitForEditor();
-    env.runWithDelayedGetText(env.notPresentTextDocId, () => {
+    await env.runWithDelayedGetText(env.notPresentTextDocId, () => {
       env.id = env.notPresentTextDocId;
       env.waitForEditor();
       expect(env.component.placeholder).toEqual('text.book_does_not_exist');
@@ -149,7 +150,7 @@ describe('TextComponent', () => {
         data: createTestUser({}, 2)
       });
       when(mockedUserService.getCurrentUser()).thenCall(() =>
-        env.realtimeService.subscribe(UserDoc.COLLECTION, 'user02')
+        env.realtimeService.subscribe(UserDoc.COLLECTION, 'user02', new DocSubscription('spec'))
       );
     };
     const env2: TestEnvironment = new TestEnvironment({ callback });
@@ -159,7 +160,7 @@ describe('TextComponent', () => {
     expect(env2.component.placeholder).toEqual('text.permission_denied');
   }));
 
-  it('placeholder uses specified placeholder input', fakeAsync(() => {
+  it('placeholder uses specified placeholder input', fakeAsync(async () => {
     // TextComponent allows a placeholder to be specified to override the default no-content message.
 
     // Suppose a user comes to a page with a text component, which has no content to show. The placeholder will be the
@@ -181,14 +182,14 @@ describe('TextComponent', () => {
 
     // The user goes to a location. The id input is set to a particular location. The text component is now expected to
     // have content, so the placeholder should be 'loading'.
-    env.runWithDelayedGetText(env.matTextDocId, () => {
+    await env.runWithDelayedGetText(env.matTextDocId, () => {
       env.id = env.matTextDocId;
       env.waitForEditor();
       expect(env.component.placeholder).toEqual('text.loading');
     });
 
     // The user goes to a location that the project does not have. The placeholder should indicate 'no-content'.
-    env.runWithDelayedGetText(env.notPresentTextDocId, () => {
+    await env.runWithDelayedGetText(env.notPresentTextDocId, () => {
       env.id = env.notPresentTextDocId;
       env.waitForEditor();
       expect(env.component.placeholder).toEqual('my custom no-content message');
@@ -201,7 +202,7 @@ describe('TextComponent', () => {
     expect(env.component.placeholder).toEqual('my custom no-content message');
   }));
 
-  it('shows book is empty placeholder messages', fakeAsync(() => {
+  it('shows book is empty placeholder messages', fakeAsync(async () => {
     // Suppose the user navigates to a text location. We fetch the text, but some aspect of the received TextDoc
     // indicates that it is considered "empty". The placeholder will indicate this.
 
@@ -212,18 +213,16 @@ describe('TextComponent', () => {
 
     const textDocIdWithEmpty: TextDocId = env.matTextDocId;
 
-    let textDocBeingGotten: TextDoc = {} as TextDoc;
-    instance(mockedProjectService)
-      .getText(textDocIdWithEmpty.toString())
-      .then((value: TextDoc) => {
-        textDocBeingGotten = value;
-      });
+    const textDocBeingGotten: TextDoc = await instance(mockedProjectService).getText(
+      textDocIdWithEmpty.toString(),
+      new DocSubscription('spec')
+    );
     tick();
     // The textdoc will have an undefined data field.
     Object.defineProperty(textDocBeingGotten, 'data', {
       get: () => undefined
     });
-    when(mockedProjectService.getText(textDocIdWithEmpty)).thenResolve(textDocBeingGotten);
+    when(mockedProjectService.getText(textDocIdWithEmpty, anything())).thenResolve(textDocBeingGotten);
 
     // The user goes to a location that has an 'empty' textdoc. The placeholder indicates empty.
     env.id = textDocIdWithEmpty;
@@ -602,7 +601,7 @@ describe('TextComponent', () => {
           data: createTestUser({ displayName: '', sites: { sf: { projects: ['project01'] } } }, 2)
         });
         when(mockedUserService.getCurrentUser()).thenCall(() =>
-          env.realtimeService.subscribe(UserDoc.COLLECTION, 'user02')
+          env.realtimeService.subscribe(UserDoc.COLLECTION, 'user02', new DocSubscription('spec'))
         );
       };
       const env: TestEnvironment = new TestEnvironment({ callback });
@@ -752,14 +751,14 @@ describe('TextComponent', () => {
       expect(presenceChannelReceiveSpy).toHaveBeenCalledTimes(1);
     }));
 
-    it('should update presence if the user data changes', fakeAsync(() => {
+    it('should update presence if the user data changes', fakeAsync(async () => {
       const updatedAvatarUrl: string = 'https://example.com/avatar-updated.png';
       const env: TestEnvironment = new TestEnvironment();
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
       env.waitForEditor();
       const presenceChannelSubmit = spyOn<any>(env.localPresenceChannel, 'submit');
-      const userDoc: UserDoc = env.getUserDoc('user01');
+      const userDoc: UserDoc = await env.getUserDoc('user01');
       expect(userDoc.data?.avatarUrl).not.toEqual(updatedAvatarUrl);
 
       userDoc.submitJson0Op(op => op.set(u => u.avatarUrl, updatedAvatarUrl));
@@ -1458,48 +1457,39 @@ describe('TextComponent', () => {
     expect(wasLoaded).toBeUndefined();
   }));
 
-  it('knows if project has book with chapter', fakeAsync(() => {
+  it('knows if project has book with chapter', fakeAsync(async () => {
     const env: TestEnvironment = new TestEnvironment();
     env.fixture.detectChanges();
     env.id = new TextDocId('project01', 40, 1);
     tick();
     env.fixture.detectChanges();
 
-    let result: boolean | undefined;
-    env.component.projectHasText().then(res => {
-      result = res;
-    });
+    const result: boolean = await env.component.projectHasText();
     tick();
     expect(result).toBe(true);
   }));
 
-  it('knows if project does not have chapter', fakeAsync(() => {
+  it('knows if project does not have chapter', fakeAsync(async () => {
     const env: TestEnvironment = new TestEnvironment();
     env.fixture.detectChanges();
     env.id = new TextDocId('project01', 40, 99); // Non-existent chapter
     tick();
     env.fixture.detectChanges();
 
-    let result: boolean | undefined;
-    env.component.projectHasText().then(res => {
-      result = res;
-    });
+    const result: boolean = await env.component.projectHasText();
     tick();
 
     expect(result).toBe(false);
   }));
 
-  it('knows if project does not have book', fakeAsync(() => {
+  it('knows if project does not have book', fakeAsync(async () => {
     const env: TestEnvironment = new TestEnvironment();
     env.fixture.detectChanges();
     env.id = new TextDocId('project01', 3, 1); // Non-existent book
     tick();
     env.fixture.detectChanges();
 
-    let result: boolean | undefined;
-    env.component.projectHasText().then(res => {
-      result = res;
-    });
+    const result: boolean = await env.component.projectHasText();
     tick();
 
     expect(result).toBe(false);
@@ -1520,7 +1510,7 @@ describe('TextComponent', () => {
 
   it('should throw error if profile data is null', fakeAsync(() => {
     const env: TestEnvironment = new TestEnvironment();
-    when(mockedProjectService.getProfile(anything())).thenResolve({
+    when(mockedProjectService.getProfile(anything(), anything())).thenResolve({
       data: null
     } as unknown as SFProjectProfileDoc);
     env.fixture.detectChanges();
@@ -1816,14 +1806,14 @@ class TestEnvironment {
       )
     });
 
-    when(mockedProjectService.getText(anything())).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+    when(mockedProjectService.getText(anything(), anything())).thenCall(id =>
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), new DocSubscription('spec'))
     );
-    when(mockedProjectService.getProfile(anything())).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01')
+    when(mockedProjectService.getProfile(anything(), anything())).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01', new DocSubscription('spec'))
     );
     when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
+      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01', new DocSubscription('spec'))
     );
 
     if (callback != null) {
@@ -1898,8 +1888,8 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  getUserDoc(userId: string): UserDoc {
-    return this.realtimeService.get<UserDoc>(UserDoc.COLLECTION, userId);
+  async getUserDoc(userId: string): Promise<UserDoc> {
+    return await this.realtimeService.get<UserDoc>(UserDoc.COLLECTION, userId, new DocSubscription('spec'));
   }
 
   getSegment(segmentRef: string): HTMLElement | null {
@@ -2060,16 +2050,14 @@ class TestEnvironment {
 
   /** Run the specified code while waiting for getText() to resolve. This allows the placeholder to be examined while
    * waiting for getText(), rather than examining the placeholder after getText() finishes. */
-  runWithDelayedGetText(textDocId: TextDocId, code: () => void): void {
+  async runWithDelayedGetText(textDocId: TextDocId, code: () => void): Promise<void> {
     let resolver: (_: TextDoc) => void = _ => {};
-    let textDocBeingGotten: TextDoc = {} as TextDoc;
-    instance(mockedProjectService)
-      .getText(textDocId.toString())
-      .then((value: TextDoc) => {
-        textDocBeingGotten = value;
-      });
+    const textDocBeingGotten: TextDoc = await instance(mockedProjectService).getText(
+      textDocId.toString(),
+      new DocSubscription('spec')
+    );
     tick();
-    when(mockedProjectService.getText(textDocId)).thenReturn(
+    when(mockedProjectService.getText(textDocId, anything())).thenReturn(
       new Promise(resolve => {
         // (Don't resolve until we manually cause it.)
         resolver = resolve;

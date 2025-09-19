@@ -27,6 +27,7 @@ import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { noopDestroyRef } from 'xforge-common/realtime.service';
@@ -127,7 +128,7 @@ describe('BiblicalTermsComponent', () => {
     expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category03_en');
   }));
 
-  it('should filter biblical terms by category', fakeAsync(() => {
+  it('should filter biblical terms by category', fakeAsync(async () => {
     const env = new TestEnvironment('project01', 1, 1, '1');
     env.setupProjectData('en');
     env.wait();
@@ -138,12 +139,12 @@ describe('BiblicalTermsComponent', () => {
     expect(env.biblicalTermsTerm.length).toBe(1);
     expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId04');
     expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category04_en');
-    const projectUserConfig = env.getProjectUserConfigDoc('project01', 'user01').data;
+    const projectUserConfig = (await env.getProjectUserConfigDoc('project01', 'user01')).data;
     expect(projectUserConfig?.selectedBiblicalTermsFilter).toBe('current_book');
     expect(projectUserConfig?.selectedBiblicalTermsCategory).toBe('category04_en');
   }));
 
-  it('should filter biblical terms by book', fakeAsync(() => {
+  it('should filter biblical terms by book', fakeAsync(async () => {
     const env = new TestEnvironment('project01', 1, 1, '1');
     env.setupProjectData('en');
     env.wait();
@@ -156,10 +157,12 @@ describe('BiblicalTermsComponent', () => {
     expect((env.biblicalTermsCategory[1] as HTMLElement).innerText).toBe('category04_en');
     expect((env.biblicalTermsTerm[2] as HTMLElement).innerText).toBe('termId05');
     expect((env.biblicalTermsCategory[2] as HTMLElement).innerText).toBe('category05_en');
-    expect(env.getProjectUserConfigDoc('project01', 'user01').data?.selectedBiblicalTermsFilter).toBe('current_book');
+    expect((await env.getProjectUserConfigDoc('project01', 'user01')).data?.selectedBiblicalTermsFilter).toBe(
+      'current_book'
+    );
   }));
 
-  it('should filter biblical terms by chapter', fakeAsync(() => {
+  it('should filter biblical terms by chapter', fakeAsync(async () => {
     const env = new TestEnvironment('project01', 1, 1, '1');
     env.setupProjectData('en');
     env.wait();
@@ -170,7 +173,7 @@ describe('BiblicalTermsComponent', () => {
     expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category01_en');
     expect((env.biblicalTermsTerm[1] as HTMLElement).innerText).toBe('termId04');
     expect((env.biblicalTermsCategory[1] as HTMLElement).innerText).toBe('category04_en');
-    expect(env.getProjectUserConfigDoc('project01', 'user01').data?.selectedBiblicalTermsFilter).toBe(
+    expect((await env.getProjectUserConfigDoc('project01', 'user01')).data?.selectedBiblicalTermsFilter).toBe(
       'current_chapter'
     );
   }));
@@ -297,7 +300,7 @@ describe('BiblicalTermsComponent', () => {
     expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('transliteration01');
   }));
 
-  it('can save a new note thread for a biblical term', fakeAsync(() => {
+  it('can save a new note thread for a biblical term', fakeAsync(async () => {
     const projectId = 'project01';
     const env = new TestEnvironment(projectId, 2, 2, '2');
     env.setupProjectData('en');
@@ -315,9 +318,9 @@ describe('BiblicalTermsComponent', () => {
     const biblicalTermId: string = (config as MatDialogConfig).data!.biblicalTermId;
     expect(biblicalTermId.toString()).toEqual('dataId02');
 
-    const biblicalTerm = env.getBiblicalTermDoc(projectId, biblicalTermId);
+    const biblicalTerm = await env.getBiblicalTermDoc(projectId, biblicalTermId);
     const verseData: VerseRefData = fromVerseRef(new VerseRef(biblicalTerm.data!.references[0]));
-    verify(mockedProjectService.createNoteThread(projectId, anything())).once();
+    verify(mockedProjectService.createNoteThread(projectId, anything(), anything())).once();
     const [, noteThread] = capture(mockedProjectService.createNoteThread).last();
     expect(noteThread.verseRef).toEqual(verseData);
     expect(noteThread.originalSelectedText).toEqual('');
@@ -325,11 +328,11 @@ describe('BiblicalTermsComponent', () => {
     expect(noteThread.notes[0].ownerRef).toEqual('user01');
     expect(noteThread.notes[0].content).toEqual(XmlUtils.encodeForXml(noteContent));
     expect(noteThread.notes[0].tagId).toEqual(BIBLICAL_TERM_TAG_ID);
-    const projectUserConfigDoc: SFProjectUserConfigDoc = env.getProjectUserConfigDoc('project01', 'user01');
+    const projectUserConfigDoc: SFProjectUserConfigDoc = await env.getProjectUserConfigDoc('project01', 'user01');
     expect(projectUserConfigDoc.data!.noteRefsRead).not.toContain(noteThread.notes[0].dataId);
   }));
 
-  it('can save a note for an existing biblical term', fakeAsync(() => {
+  it('can save a note for an existing biblical term', fakeAsync(async () => {
     const projectId = 'project01';
     const noteDataId = 'dataId01';
     const env = new TestEnvironment(projectId, 1, 1);
@@ -348,20 +351,20 @@ describe('BiblicalTermsComponent', () => {
     const biblicalTermId: string = (config as MatDialogConfig).data!.biblicalTermId;
     expect(biblicalTermId.toString()).toEqual(noteDataId);
 
-    const biblicalTerm = env.getBiblicalTermDoc(projectId, biblicalTermId);
+    const biblicalTerm = await env.getBiblicalTermDoc(projectId, biblicalTermId);
     const verseData: VerseRefData = fromVerseRef(new VerseRef(biblicalTerm.data!.references[0]));
-    const noteThread = env.getNoteThreadDoc(projectId, 'threadId01').data!;
+    const noteThread = (await env.getNoteThreadDoc(projectId, 'threadId01')).data!;
     expect(noteThread.verseRef).toEqual(verseData);
     expect(noteThread.originalSelectedText).toEqual('');
     expect(noteThread.publishedToSF).toBe(true);
     expect(noteThread.notes[1].ownerRef).toEqual('user01');
     expect(noteThread.notes[1].content).toEqual(noteContent);
     expect(noteThread.notes[1].tagId).toEqual(BIBLICAL_TERM_TAG_ID);
-    const projectUserConfigDoc: SFProjectUserConfigDoc = env.getProjectUserConfigDoc('project01', 'user01');
+    const projectUserConfigDoc: SFProjectUserConfigDoc = await env.getProjectUserConfigDoc('project01', 'user01');
     expect(projectUserConfigDoc.data!.noteRefsRead).toContain(noteThread.notes[1].dataId);
   }));
 
-  it('can resolve a note for a biblical term', fakeAsync(() => {
+  it('can resolve a note for a biblical term', fakeAsync(async () => {
     const projectId = 'project01';
     const env = new TestEnvironment(projectId, 1, 1);
     env.setupProjectData('en');
@@ -374,7 +377,7 @@ describe('BiblicalTermsComponent', () => {
     env.wait();
 
     verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
-    const noteThread: NoteThread = env.getNoteThreadDoc(projectId, 'threadId01').data!;
+    const noteThread: NoteThread = (await env.getNoteThreadDoc(projectId, 'threadId01')).data!;
     expect(noteThread.status).toBe(NoteStatus.Resolved);
     expect(noteThread.notes[1].content).toBeUndefined();
     expect(noteThread.notes[1].status).toBe(NoteStatus.Resolved);
@@ -388,7 +391,7 @@ describe('BiblicalTermsComponent', () => {
     env.wait();
 
     // Make the note editable
-    const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc(projectId, 'threadId01');
+    const noteThreadDoc: NoteThreadDoc = await env.getNoteThreadDoc(projectId, 'threadId01');
     await noteThreadDoc.submitJson0Op(op => op.set(nt => nt.notes[0].editable, true));
 
     // SUT
@@ -398,13 +401,13 @@ describe('BiblicalTermsComponent', () => {
     env.wait();
 
     verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
-    const noteThread: NoteThread = env.getNoteThreadDoc(projectId, 'threadId01').data!;
+    const noteThread: NoteThread = (await env.getNoteThreadDoc(projectId, 'threadId01')).data!;
     expect(noteThread.status).toBe(NoteStatus.Resolved);
     expect(noteThread.notes[0].content).toBe(newContent);
     expect(noteThread.notes[0].status).toBe(NoteStatus.Resolved);
   }));
 
-  it('cannot resolve a non-editable note for a biblical term', fakeAsync(() => {
+  it('cannot resolve a non-editable note for a biblical term', fakeAsync(async () => {
     const projectId = 'project01';
     const env = new TestEnvironment(projectId, 1, 1);
     env.setupProjectData('en');
@@ -420,7 +423,7 @@ describe('BiblicalTermsComponent', () => {
     env.wait();
 
     verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
-    const noteThread: NoteThread = env.getNoteThreadDoc(projectId, 'threadId01').data!;
+    const noteThread: NoteThread = (await env.getNoteThreadDoc(projectId, 'threadId01')).data!;
     expect(noteThread.status).toEqual(NoteStatus.Todo);
     expect(noteThread.notes.length).toBe(1);
     expect(dialogMessage).toHaveBeenCalledTimes(1);
@@ -470,26 +473,32 @@ class TestEnvironment {
       const parameters: QueryParameters = {
         [obj<BiblicalTerm>().pathStr(t => t.projectRef)]: sfProjectId
       };
-      return this.realtimeService.subscribeQuery(BiblicalTermDoc.COLLECTION, parameters, noopDestroyRef);
+      return this.realtimeService.subscribeQuery(BiblicalTermDoc.COLLECTION, 'spec', parameters, noopDestroyRef);
     });
     when(mockedProjectService.queryBiblicalTermNoteThreads(anything(), anything())).thenCall(sfProjectId => {
       const parameters: QueryParameters = {
         [obj<NoteThread>().pathStr(t => t.projectRef)]: sfProjectId,
         [obj<NoteThread>().pathStr(t => t.biblicalTermId)]: { $ne: null }
       };
-      return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, parameters, noopDestroyRef);
+      return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, 'spec', parameters, noopDestroyRef);
     });
-    when(mockedProjectService.getBiblicalTerm(anything())).thenCall(id =>
-      this.realtimeService.subscribe(BiblicalTermDoc.COLLECTION, id)
+    when(mockedProjectService.getBiblicalTerm(anything(), anything())).thenCall((id, subscriber) =>
+      this.realtimeService.subscribe(BiblicalTermDoc.COLLECTION, id, subscriber)
     );
-    when(mockedProjectService.getNoteThread(anything())).thenCall(id =>
-      this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, id)
+    when(mockedProjectService.getNoteThread(anything(), anything())).thenCall((id, subscriber) =>
+      this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, id, subscriber)
     );
-    when(mockedProjectService.getUserConfig(anything(), anything())).thenCall((projectId, userId) =>
-      this.realtimeService.get(SFProjectUserConfigDoc.COLLECTION, getSFProjectUserConfigDocId(projectId, userId))
+    when(mockedProjectService.getUserConfig(anything(), anything(), anything())).thenCall(
+      (projectId, userId, subscriber) =>
+        this.realtimeService.subscribe(
+          SFProjectUserConfigDoc.COLLECTION,
+          getSFProjectUserConfigDocId(projectId, userId),
+          subscriber
+        )
     );
-    when(mockedProjectService.getProfile(anything())).thenCall(sfProjectId =>
-      this.realtimeService.get(SFProjectProfileDoc.COLLECTION, sfProjectId)
+    when(mockedProjectService.getProfile(anything(), anything())).thenCall(
+      async (sfProjectId, subscriber) =>
+        await this.realtimeService.get(SFProjectProfileDoc.COLLECTION, sfProjectId, subscriber)
     );
     when(mockedMatDialog.open(GenericDialogComponent, anything())).thenReturn(instance(this.mockedDialogRef));
     when(this.mockedDialogRef.afterClosed()).thenReturn(of());
@@ -548,17 +557,29 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  getBiblicalTermDoc(projectId: string, dataId: string): BiblicalTermDoc {
-    return this.realtimeService.get(BiblicalTermDoc.COLLECTION, getBiblicalTermDocId(projectId, dataId));
+  async getBiblicalTermDoc(projectId: string, dataId: string): Promise<BiblicalTermDoc> {
+    return await this.realtimeService.get(
+      BiblicalTermDoc.COLLECTION,
+      getBiblicalTermDocId(projectId, dataId),
+      new DocSubscription('spec')
+    );
   }
 
-  getNoteThreadDoc(projectId: string, threadId: string): NoteThreadDoc {
-    return this.realtimeService.get<NoteThreadDoc>(NoteThreadDoc.COLLECTION, getNoteThreadDocId(projectId, threadId));
+  async getNoteThreadDoc(projectId: string, threadId: string): Promise<NoteThreadDoc> {
+    return await this.realtimeService.get<NoteThreadDoc>(
+      NoteThreadDoc.COLLECTION,
+      getNoteThreadDocId(projectId, threadId),
+      new DocSubscription('spec')
+    );
   }
 
-  getProjectUserConfigDoc(projectId: string, userId: string): SFProjectUserConfigDoc {
+  async getProjectUserConfigDoc(projectId: string, userId: string): Promise<SFProjectUserConfigDoc> {
     const id: string = getSFProjectUserConfigDocId(projectId, userId);
-    return this.realtimeService.get<SFProjectUserConfigDoc>(SFProjectUserConfigDoc.COLLECTION, id);
+    return await this.realtimeService.get<SFProjectUserConfigDoc>(
+      SFProjectUserConfigDoc.COLLECTION,
+      id,
+      new DocSubscription('spec')
+    );
   }
 
   setLanguage(language: string): void {
