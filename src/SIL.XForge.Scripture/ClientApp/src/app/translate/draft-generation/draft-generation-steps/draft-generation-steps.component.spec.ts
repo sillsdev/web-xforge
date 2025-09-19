@@ -22,6 +22,7 @@ import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { ParatextService } from '../../../core/paratext.service';
+import { SFProjectService } from '../../../core/sf-project.service';
 import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from '../draft-sources.service';
@@ -34,6 +35,7 @@ describe('DraftGenerationStepsComponent', () => {
 
   const mockActivatedProjectService = mock(ActivatedProjectService);
   const mockDraftSourceService = mock(DraftSourcesService);
+  const mockProjectService = mock(SFProjectService);
   const mockFeatureFlagService = mock(FeatureFlagService);
   const mockNllbLanguageService = mock(NllbLanguageService);
   const mockProgressService = mock(ProgressService);
@@ -50,6 +52,7 @@ describe('DraftGenerationStepsComponent', () => {
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: DraftSourcesService, useMock: mockDraftSourceService },
+      { provide: SFProjectService, useMock: mockProjectService },
       { provide: FeatureFlagService, useMock: mockFeatureFlagService },
       { provide: NllbLanguageService, useMock: mockNllbLanguageService },
       { provide: ParatextService, useMock: mockParatextService },
@@ -79,10 +82,11 @@ describe('DraftGenerationStepsComponent', () => {
 
   describe('ngOnInit', () => {
     let draftSources$: BehaviorSubject<DraftSourcesAsArrays>;
+    const sourceProjectId = 'sourceProject';
     const initialConfig: DraftSourcesAsArrays = {
       trainingSources: [
         {
-          projectRef: 'sourceProject',
+          projectRef: sourceProjectId,
           paratextId: 'PT_SP',
           name: 'Source Project',
           shortName: 'sP',
@@ -102,7 +106,7 @@ describe('DraftGenerationStepsComponent', () => {
       ],
       draftingSources: [
         {
-          projectRef: 'sourceProject',
+          projectRef: sourceProjectId,
           paratextId: 'PT_SP',
           name: 'Source Project',
           shortName: 'sP',
@@ -123,7 +127,7 @@ describe('DraftGenerationStepsComponent', () => {
         data: createTestProjectProfile({
           texts: [{ bookNum: 1 }],
           translateConfig: {
-            source: { projectRef: 'sourceProject', shortName: 'sP', writingSystem: { tag: 'eng' } }
+            source: { projectRef: sourceProjectId, shortName: 'sP', writingSystem: { tag: 'eng' } }
           },
           writingSystem: { tag: 'xyz' }
         })
@@ -131,6 +135,7 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
       when(mockActivatedProjectService.projectDoc$).thenReturn(of(mockTargetProjectDoc));
       when(mockActivatedProjectService.changes$).thenReturn(new BehaviorSubject(undefined));
+      setupProjectProfileMock(sourceProjectId, [1]);
     });
 
     it('should show dialog and emit cancel if sources change', fakeAsync(() => {
@@ -230,17 +235,19 @@ describe('DraftGenerationStepsComponent', () => {
   });
 
   describe('one training source', async () => {
-    const availableBooks = [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }];
+    const sourceProjectId = 'sourceProject';
+    const availableBooks = [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 5 }];
     const allBooks = [...availableBooks, { bookNum: 6 }, { bookNum: 7 }];
+    const sourceBooks = allBooks.filter(b => b.bookNum !== 6);
     const config: DraftSourcesAsArrays = {
       trainingSources: [
         {
-          projectRef: 'sourceProject',
+          projectRef: sourceProjectId,
           paratextId: 'PT_SP',
           name: 'Source Project',
           shortName: 'sP',
           writingSystem: { tag: 'eng' },
-          texts: allBooks.filter(b => b.bookNum !== 6)
+          texts: sourceBooks
         }
       ],
       trainingTargets: [
@@ -255,12 +262,12 @@ describe('DraftGenerationStepsComponent', () => {
       ],
       draftingSources: [
         {
-          projectRef: 'sourceProject',
+          projectRef: sourceProjectId,
           paratextId: 'PT_SP',
           name: 'Source Project',
           shortName: 'sP',
           writingSystem: { tag: 'eng' },
-          texts: allBooks.filter(b => b.bookNum !== 6)
+          texts: sourceBooks
         }
       ]
     };
@@ -271,16 +278,22 @@ describe('DraftGenerationStepsComponent', () => {
         data: createTestProjectProfile({
           texts: allBooks,
           translateConfig: {
-            source: { projectRef: 'sourceProject', shortName: 'sP', writingSystem: { tag: 'xyz' } }
+            source: { projectRef: sourceProjectId, shortName: 'sP', writingSystem: { tag: 'xyz' } }
           },
           writingSystem: { tag: 'eng' }
         })
       } as SFProjectProfileDoc;
       const targetProjectDoc$ = new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc);
+      const emptyBookNums = [5];
 
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
       when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
       when(mockActivatedProjectService.changes$).thenReturn(targetProjectDoc$);
+      setupProjectProfileMock(
+        sourceProjectId,
+        sourceBooks.map(b => b.bookNum),
+        emptyBookNums
+      );
       when(mockNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(true);
       when(mockNllbLanguageService.isNllbLanguageAsync('xyz')).thenResolve(false);
       when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
@@ -296,7 +309,8 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.allAvailableTranslateBooks).toEqual([
         { number: 1, selected: false },
         { number: 2, selected: false },
-        { number: 3, selected: false }
+        { number: 3, selected: false },
+        { number: 5, selected: false }
       ]);
     }));
 
@@ -315,12 +329,14 @@ describe('DraftGenerationStepsComponent', () => {
         project01: [
           { number: 1, selected: true },
           { number: 2, selected: true },
-          { number: 3, selected: false }
+          { number: 3, selected: false },
+          { number: 5, selected: false }
         ],
         sourceProject: [
           { number: 1, selected: true },
           { number: 2, selected: true },
-          { number: 3, selected: false }
+          { number: 3, selected: false },
+          { number: 5, selected: false }
         ]
       });
     }));
@@ -329,16 +345,17 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.selectableTrainingBooksByProj('project01')).toEqual([
         { number: 1, selected: true },
         { number: 2, selected: true },
-        { number: 3, selected: false }
+        { number: 3, selected: false },
+        { number: 5, selected: false }
       ]);
-      expect(component.selectableTrainingBooksByProj('sourceProject')).toEqual([
+      expect(component.selectableTrainingBooksByProj(sourceProjectId)).toEqual([
         { number: 1, selected: true },
         { number: 2, selected: true }
       ]);
 
       component.onTranslatedBookSelect([1, 2]);
 
-      expect(component.selectableTrainingBooksByProj('sourceProject')).toEqual([
+      expect(component.selectableTrainingBooksByProj(sourceProjectId)).toEqual([
         { number: 1, selected: true },
         { number: 2, selected: true }
       ]);
@@ -349,6 +366,10 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.unusableTrainingSourceBooks).toEqual([6]);
       // warn when translated book has no source
       expect(fixture.nativeElement.querySelector('.warn-source-books-missing')).not.toBeNull();
+    }));
+
+    it('should set "emptyTranslateSourceBooks"', fakeAsync(() => {
+      expect(component.emptyTranslateSourceBooks).toEqual([5]);
     }));
 
     it('should set "unusableTranslateTargetBooks" and "unusableTrainingTargetBooks" correctly', fakeAsync(() => {
@@ -473,7 +494,10 @@ describe('DraftGenerationStepsComponent', () => {
       component.tryAdvanceStep();
       fixture.detectChanges();
       component.onTranslatedBookSelect([1]);
-      expect(component.selectableTrainingBooksByProj('project01')).toEqual([{ number: 1, selected: true }]);
+      expect(component.selectableTrainingBooksByProj('project01')).toEqual([
+        { number: 1, selected: true },
+        { number: 5, selected: false }
+      ]);
       expect(component.selectedTrainingBooksByProj('project01')).toEqual([{ number: 1, selected: true }]);
       expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([{ number: 1, selected: true }]);
       component.stepper.selectedIndex = 1;
@@ -485,11 +509,82 @@ describe('DraftGenerationStepsComponent', () => {
       // Exodus becomes a selectable training book
       expect(component.selectableTrainingBooksByProj('project01')).toEqual([
         { number: 1, selected: true },
-        { number: 2, selected: false }
+        { number: 2, selected: false },
+        { number: 5, selected: false }
       ]);
       expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([{ number: 1, selected: true }]);
       expect(component.selectedTrainingBooksByProj('project01')).toEqual([{ number: 1, selected: true }]);
     });
+  });
+
+  describe('one training source error handling', () => {
+    const sourceProjectId = 'sourceProject';
+    const availableBooks = [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }];
+    const allBooks = [...availableBooks, { bookNum: 6 }, { bookNum: 7 }];
+    const sourceBooks = allBooks.filter(b => b.bookNum !== 6);
+    const config: DraftSourcesAsArrays = {
+      trainingSources: [
+        {
+          projectRef: sourceProjectId,
+          paratextId: 'PT_SP',
+          name: 'Source Project',
+          shortName: 'sP',
+          writingSystem: { tag: 'eng' },
+          texts: sourceBooks
+        }
+      ],
+      trainingTargets: [
+        {
+          projectRef: mockActivatedProjectService.projectId!,
+          paratextId: 'PT_TT',
+          name: 'Target Project',
+          shortName: 'tT',
+          writingSystem: { tag: 'xyz' },
+          texts: allBooks.filter(b => b.bookNum !== 7)
+        }
+      ],
+      draftingSources: [
+        {
+          projectRef: sourceProjectId,
+          paratextId: 'PT_SP',
+          name: 'Source Project',
+          shortName: 'sP',
+          writingSystem: { tag: 'eng' },
+          texts: sourceBooks
+        }
+      ]
+    };
+    beforeEach(fakeAsync(() => {
+      when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
+      const mockTargetProjectDoc = {
+        id: 'project01',
+        data: createTestProjectProfile({
+          texts: allBooks,
+          translateConfig: {
+            source: { projectRef: sourceProjectId, shortName: 'sP', writingSystem: { tag: 'xyz' } }
+          },
+          writingSystem: { tag: 'eng' }
+        })
+      } as SFProjectProfileDoc;
+      const targetProjectDoc$ = new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc);
+
+      when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
+      when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
+      when(mockActivatedProjectService.changes$).thenReturn(targetProjectDoc$);
+      setupProjectProfileMock(
+        sourceProjectId,
+        sourceBooks.map(b => b.bookNum)
+      );
+      when(mockNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(true);
+      when(mockNllbLanguageService.isNllbLanguageAsync('xyz')).thenResolve(false);
+      when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
+
+      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+    }));
 
     it('shows error when project has no translated books', () => {
       component.tryAdvanceStep();
@@ -523,6 +618,8 @@ describe('DraftGenerationStepsComponent', () => {
   describe('additional training source', () => {
     const availableBooks = [{ bookNum: 2 }, { bookNum: 3 }];
     const allBooks = [{ bookNum: 1 }, ...availableBooks, { bookNum: 6 }, { bookNum: 7 }, { bookNum: 8 }];
+    const draftingSourceBooks = availableBooks.concat({ bookNum: 7 });
+    const draftingSourceId = 'draftingSource';
     const config = {
       trainingSources: [
         {
@@ -550,10 +647,10 @@ describe('DraftGenerationStepsComponent', () => {
       ] as [DraftSource],
       draftingSources: [
         {
-          projectRef: 'draftingSource',
+          projectRef: draftingSourceId,
           shortName: 'dS',
           writingSystem: { tag: 'eng' },
-          texts: availableBooks.concat({ bookNum: 7 })
+          texts: draftingSourceBooks
         }
       ] as [DraftSource]
     };
@@ -563,6 +660,10 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockActivatedProjectService.projectDoc$).thenReturn(of({} as any));
       when(mockActivatedProjectService.changes$).thenReturn(of({} as any));
       when(mockActivatedProjectService.projectDoc).thenReturn({} as any);
+      setupProjectProfileMock(
+        draftingSourceId,
+        draftingSourceBooks.map(b => b.bookNum)
+      );
       when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
       when(mockNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(true);
       when(mockNllbLanguageService.isNllbLanguageAsync('xyz')).thenResolve(false);
@@ -779,6 +880,8 @@ describe('DraftGenerationStepsComponent', () => {
   describe('show developer tools feature flag is enabled', () => {
     const availableBooks = [{ bookNum: 2 }, { bookNum: 3 }, { bookNum: 9 }, { bookNum: 10 }];
     const allBooks = [{ bookNum: 1 }, ...availableBooks, { bookNum: 6 }, { bookNum: 7 }, { bookNum: 8 }];
+    const draftingSourceBooks = availableBooks.concat({ bookNum: 7 });
+    const draftingSourceId = 'draftingSource';
     const config: DraftSourcesAsArrays = {
       trainingSources: [
         {
@@ -802,12 +905,12 @@ describe('DraftGenerationStepsComponent', () => {
       ],
       draftingSources: [
         {
-          projectRef: 'draftingSource',
+          projectRef: draftingSourceId,
           paratextId: 'PT_DS',
           name: 'Drafting Source',
           shortName: 'dS',
           writingSystem: { tag: 'eng' },
-          texts: availableBooks.concat({ bookNum: 7 })
+          texts: draftingSourceBooks
         }
       ]
     };
@@ -831,6 +934,10 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockActivatedProjectService.projectDoc$).thenReturn(of(mockTargetProjectDoc));
       when(mockActivatedProjectService.changes$).thenReturn(of(mockTargetProjectDoc));
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
+      setupProjectProfileMock(
+        draftingSourceId,
+        draftingSourceBooks.map(b => b.bookNum)
+      );
       when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(true));
       when(mockUserService.getCurrentUser()).thenResolve(mockUserDoc);
 
@@ -974,6 +1081,8 @@ describe('DraftGenerationStepsComponent', () => {
   describe('target contains previously selected books', () => {
     const availableBooks = [{ bookNum: 2 }, { bookNum: 3 }, { bookNum: 9 }, { bookNum: 10 }];
     const allBooks = [{ bookNum: 1 }, ...availableBooks, { bookNum: 7 }, { bookNum: 8 }];
+    const draftingSourceBooks = availableBooks.concat({ bookNum: 7 });
+    const draftingSourceId = 'draftingSource';
     const config = {
       trainingSources: [
         {
@@ -999,10 +1108,10 @@ describe('DraftGenerationStepsComponent', () => {
       ] as [DraftSource],
       draftingSources: [
         {
-          projectRef: 'draftingSource',
+          projectRef: draftingSourceId,
           shortName: 'dS',
           writingSystem: { tag: 'eng' },
-          texts: availableBooks.concat({ bookNum: 7 })
+          texts: draftingSourceBooks
         }
       ] as [DraftSource]
     };
@@ -1028,6 +1137,10 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
       when(mockActivatedProjectService.projectDoc$).thenReturn(of(mockTargetProjectDoc));
+      setupProjectProfileMock(
+        draftingSourceId,
+        draftingSourceBooks.map(b => b.bookNum)
+      );
       when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
@@ -1057,6 +1170,7 @@ describe('DraftGenerationStepsComponent', () => {
 
   describe('can add additional training data', () => {
     const availableBooks = [{ bookNum: 2 }, { bookNum: 3 }];
+    const draftingSourceId = 'draftingSource';
     const config: DraftSourcesAsArrays = {
       trainingSources: [
         {
@@ -1080,7 +1194,7 @@ describe('DraftGenerationStepsComponent', () => {
       ],
       draftingSources: [
         {
-          projectRef: 'draftingSource',
+          projectRef: draftingSourceId,
           paratextId: 'PT_DS',
           name: 'Drafting Source',
           shortName: 'dS',
@@ -1108,6 +1222,10 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
       when(mockActivatedProjectService.changes$).thenReturn(targetProjectDoc$);
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
+      setupProjectProfileMock(
+        draftingSourceId,
+        availableBooks.map(b => b.bookNum)
+      );
       when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
@@ -1153,6 +1271,8 @@ describe('DraftGenerationStepsComponent', () => {
       { bookNum: 9 }
     ];
     const allBooks = [...availableBooks, { bookNum: 7 }, { bookNum: 8 }];
+    const draftingSourceBooks = availableBooks.concat({ bookNum: 7 });
+    const draftingSourceId = 'draftingSource';
     const config = {
       trainingSources: [
         {
@@ -1178,10 +1298,10 @@ describe('DraftGenerationStepsComponent', () => {
       ] as [DraftSource],
       draftingSources: [
         {
-          projectRef: 'draftingSource',
+          projectRef: draftingSourceId,
           shortName: 'dS',
           writingSystem: { tag: 'eng' },
-          texts: availableBooks.concat({ bookNum: 7 })
+          texts: draftingSourceBooks
         }
       ] as [DraftSource]
     };
@@ -1206,6 +1326,10 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
       when(mockActivatedProjectService.projectDoc$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc)
+      );
+      setupProjectProfileMock(
+        draftingSourceId,
+        draftingSourceBooks.map(b => b.bookNum)
       );
       when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
 
@@ -1242,6 +1366,7 @@ describe('DraftGenerationStepsComponent', () => {
       { bookNum: 9 }
     ];
     const allBooks = [...availableBooks, { bookNum: 7 }, { bookNum: 8 }];
+    const draftingSourceId = 'draftingSource';
     const config = {
       trainingSources: [
         {
@@ -1267,7 +1392,7 @@ describe('DraftGenerationStepsComponent', () => {
       ] as [DraftSource],
       draftingSources: [
         {
-          projectRef: 'draftingSource',
+          projectRef: draftingSourceId,
           shortName: 'dS',
           writingSystem: { tag: 'eng' },
           texts: availableBooks.concat({ bookNum: 7 })
@@ -1296,6 +1421,10 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockActivatedProjectService.projectDoc$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc)
       );
+      setupProjectProfileMock(
+        draftingSourceId,
+        availableBooks.concat({ bookNum: 7 }).map(b => b.bookNum)
+      );
       when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
       when(mockParatextService.getProjects()).thenResolve([
         // Include different combinations of hasUpdate and isConnected and missing sources so these will be filtered out
@@ -1320,4 +1449,15 @@ describe('DraftGenerationStepsComponent', () => {
       ]);
     });
   });
+
+  function setupProjectProfileMock(projectId: string, texts: number[], emptyBooks: number[] = []): void {
+    const profileDoc = {
+      id: projectId,
+      data: createTestProjectProfile({
+        texts: texts.map(b => ({ bookNum: b, chapters: [{ number: 1, lastVerse: emptyBooks.includes(b) ? 0 : 10 }] }))
+      })
+    } as SFProjectProfileDoc;
+
+    when(mockProjectService.getProfile(projectId)).thenResolve(profileDoc);
+  }
 });

@@ -4,12 +4,14 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { isEqual } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import {
   DraftConfig,
   ProjectScriptureRange,
   TranslateSource
 } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { TextInfo } from 'realtime-server/scriptureforge/models/text-info';
 import { combineLatest, merge, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -24,8 +26,10 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { ParatextProject } from '../../../core/models/paratext-project';
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { ParatextService } from '../../../core/paratext.service';
+import { SFProjectService } from '../../../core/sf-project.service';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
 import { SharedModule } from '../../../shared/shared.module';
@@ -95,6 +99,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   // Unusable books do not exist in the target or corresponding drafting/training source project
   unusableTranslateSourceBooks: number[] = [];
   unusableTranslateTargetBooks: number[] = [];
+  emptyTranslateSourceBooks: number[] = [];
   unusableTrainingSourceBooks: number[] = [];
   unusableTrainingTargetBooks: number[] = [];
 
@@ -129,6 +134,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   constructor(
     private readonly destroyRef: DestroyRef,
     protected readonly activatedProject: ActivatedProjectService,
+    private readonly projectService: SFProjectService,
     private readonly draftSourcesService: DraftSourcesService,
     protected readonly featureFlags: FeatureFlagService,
     private readonly nllbLanguageService: NllbLanguageService,
@@ -183,6 +189,9 @@ export class DraftGenerationStepsComponent implements OnInit {
 
           // TODO: When implementing multiple drafting sources, this will need to be updated to handle multiple sources
           const draftingSourceBooks = new Set<number>();
+          const draftingSourceProfileDoc: SFProjectProfileDoc = await this.projectService.getProfile(
+            draftingSource.projectRef
+          );
           for (const text of draftingSource.texts) {
             draftingSourceBooks.add(text.bookNum);
           }
@@ -236,8 +245,12 @@ export class DraftGenerationStepsComponent implements OnInit {
             // TODO: When implementing multiple drafting sources, this should be updated to handle multiple sources
             if (draftingSourceBooks.has(bookNum)) {
               const book: Book = { number: bookNum, selected: false };
-              this.availableTranslateBooks[draftingSources[0]!.projectRef].push(book);
               this.allAvailableTranslateBooks.push(book);
+              if (this.sourceBookHasContent(draftingSourceProfileDoc.data, bookNum)) {
+                this.availableTranslateBooks[draftingSources[0]!.projectRef].push(book);
+              } else {
+                this.emptyTranslateSourceBooks.push(bookNum);
+              }
             } else {
               this.unusableTranslateSourceBooks.push(bookNum);
             }
@@ -652,6 +665,11 @@ export class DraftGenerationStepsComponent implements OnInit {
         }
       }
     }
+  }
+
+  private sourceBookHasContent(project: SFProjectProfile | undefined, bookNum: number): boolean {
+    const sourceProjectText: TextInfo | undefined = project?.texts.find(t => t.bookNum === bookNum);
+    return (sourceProjectText?.chapters ?? []).some(c => c.lastVerse > 0);
   }
 
   private setProjectDisplayNames(target: DraftSource | undefined, draftingSource: DraftSource | undefined): void {
