@@ -31,15 +31,9 @@ mat-panel-description {
 .formatting-options-container {
   display: flex;
   column-gap: 16px;
-  align-items: center;
 
   button {
     flex-shrink: 0;
-  }
-
-  .new-label {
-    color: var(--draft-history-entry-new-label-color);
-    font-weight: 500;
   }
 }
 
@@ -90,4 +84,23 @@ strong {
 /* Styling for the error details table */
 .mat-column-heading {
   font-weight: bolder;
+}
+
+.new-formatting-options-notice {
+  margin-top: 7px;
+}
+
+.new-and-arrow-wrapper {
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.new-arrow {
+  padding-right: 0.5rem;
+  align-self: end;
+}
+
+.new-label {
+  color: var(--draft-history-entry-new-label-color);
+  font-weight: 500;
 }
