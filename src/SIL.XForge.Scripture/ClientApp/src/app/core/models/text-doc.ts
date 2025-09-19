@@ -43,6 +43,8 @@ export class TextDoc extends RealtimeDoc<TextData, TextData, Range> {
   static readonly COLLECTION = TEXTS_COLLECTION;
   static readonly INDEX_PATHS = TEXT_INDEX_PATHS;
 
+  private readonly blank_tags = ['ie_', '/b_'];
+
   constructor(
     protected readonly realtimeService: RealtimeService,
     public readonly adapter: RealtimeDocAdapter
@@ -60,7 +62,7 @@ export class TextDoc extends RealtimeDoc<TextData, TextData, Range> {
         const nextOp = i < this.data.ops.length - 1 ? this.data.ops[i + 1] : undefined;
         if (op.attributes != null && op.attributes.segment != null) {
           const segRef: string = op.attributes.segment as string;
-          if ((op.insert as any).blank != null) {
+          if ((op.insert as any).blank != null && !this.blank_tags.some(t => segRef.includes(t))) {
             if (
               nextOp == null ||
               nextOp.insert == null ||
