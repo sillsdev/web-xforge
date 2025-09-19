@@ -44,15 +44,24 @@
         }
         <div class="apply-draft-button-container">
           @if (featureFlags.usfmFormat.enabled) {
-            <span
-              [matTooltip]="t(doesLatestHaveDraft ? 'format_draft_can' : 'format_draft_cannot')"
-              [style.cursor]="doesLatestHaveDraft ? 'pointer' : 'not-allowed'"
-            >
-              <button mat-button (click)="navigateToFormatting()" [disabled]="!doesLatestHaveDraft">
+            @if (mustChooseFormattingOptions) {
+              <button mat-flat-button (click)="navigateToFormatting()">
                 <mat-icon>build</mat-icon>
-                <transloco key="editor_draft_tab.format_draft"></transloco>
+                <transloco class="hide-lt-md" key="editor_draft_tab.format_draft"></transloco>
+                <transloco class="hide-gt-md" key="editor_draft_tab.formatting"></transloco>
               </button>
-            </span>
+            } @else {
+              <span
+                [matTooltip]="t(doesLatestHaveDraft ? 'format_draft_can' : 'format_draft_cannot')"
+                [style.cursor]="doesLatestHaveDraft ? 'pointer' : 'not-allowed'"
+              >
+                <button mat-button (click)="navigateToFormatting()" [disabled]="!doesLatestHaveDraft">
+                  <mat-icon>build</mat-icon>
+                  <transloco class="hide-lt-md" key="editor_draft_tab.format_draft"></transloco>
+                  <transloco class="hide-gt-md" key="editor_draft_tab.formatting"></transloco>
+                </button>
+              </span>
+            }
           }
           @if (userAppliedDraft) {
             <span class="draft-indicator">
@@ -61,16 +70,20 @@
             </span>
           }
           @if (canApplyDraft) {
-            <button mat-flat-button color="primary" (click)="applyDraft()">
-              <mat-icon>auto_awesome</mat-icon>
-              @if (isDraftApplied) {
-                <transloco key="editor_draft_tab.reapply_to_project"></transloco>
-              } @else {
-                <transloco key="editor_draft_tab.apply_to_project"></transloco>
-              }
-            </button>
-          }
-          @if (!canApplyDraft) {
+            <span
+              [matTooltip]="t(mustChooseFormattingOptions ? 'format_draft_before' : 'add_chapter_to_project')"
+              [style.cursor]="mustChooseFormattingOptions ? 'not-allowed' : 'pointer'"
+            >
+              <button mat-flat-button color="primary" (click)="applyDraft()" [disabled]="mustChooseFormattingOptions">
+                <mat-icon>auto_awesome</mat-icon>
+                @if (isDraftApplied) {
+                  <transloco key="editor_draft_tab.reapply_to_project"></transloco>
+                } @else {
+                  <transloco key="editor_draft_tab.apply_to_project"></transloco>
+                }
+              </button>
+            </span>
+          } @else {
             <app-notice icon="warning" type="warning" mode="fill-dark">
               {{ "editor_draft_tab.cannot_import" | transloco }}
             </app-notice>
