@@ -288,16 +288,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   /**  Determines whether the user can edit the current text.  Combines all permissions and chapter validity checks. */
   canEdit: boolean = false;
-  private readonly canEdit$: Observable<boolean | undefined> = combineLatest([
-    this.activatedProject.changes$.pipe(filterNullish()),
-    this.chapter$
-  ]).pipe(
-    map(
-      ([projectDoc, chapterNum]) =>
-        this.textDocService.canEdit(projectDoc.data, this.bookNum, chapterNum) && !this.target?.areOpsCorrupted
-    ),
-    tap(canEdit => (this.canEdit = canEdit)) // Cache for non-reactive access
-  );
+  private canEdit$ = new BehaviorSubject<boolean>(false);
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -723,8 +714,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.targetTextComponent!.changes
     ])
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(async ([params, components]) => {
-        this.target = components.first;
+      .subscribe(async ([params, targetViewChildren]) => {
+        this.target = targetViewChildren.first;
         this.showSuggestions = false;
         this.sourceLoaded = false;
         this.targetLoaded = false;
@@ -849,6 +840,25 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           }
         }
       });
+
+    combineLatest([
+      this.activatedProject.changes$.pipe(filterNullish()),
+      this.chapter$,
+      this.targetEditorLoaded$ // Wait for target to load to detect corrupted ops
+    ])
+      .pipe(
+        quietTakeUntilDestroyed(this.destroyRef),
+        map(([projectDoc, chapterNum]) => {
+          return (
+            this.textDocService.canEdit(projectDoc.data, this.bookNum, chapterNum) && !this.target?.areOpsCorrupted
+          );
+        }),
+        tap(canEdit => {
+          this.canEdit = canEdit; // Cache for non-reactive access
+          this.canEdit$.next(canEdit);
+        })
+      )
+      .subscribe();
 
     // Throttle bursts of sync scroll requests
     this.syncScrollRequested$
