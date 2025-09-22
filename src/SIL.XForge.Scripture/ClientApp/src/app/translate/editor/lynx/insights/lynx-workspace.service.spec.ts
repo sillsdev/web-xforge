@@ -558,6 +558,49 @@ describe('LynxWorkspaceService', () => {
       verify(mockDocumentManager.fireClosed(anything())).once();
     }));
 
+    it('should handle book chapters with undefined chapter number', fakeAsync(() => {
+      const env = new TestEnvironment();
+
+      // Create project with lynx features enabled
+      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+        autoCorrectionsEnabled: true,
+        assessmentsEnabled: true,
+        punctuationCheckerEnabled: true,
+        allowedCharacterCheckerEnabled: false
+      });
+      env.projectDocTestSubject$.next(projectDoc);
+      when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+      when(mockActivatedProjectService.projectId).thenReturn(PROJECT_ID);
+
+      // First establish a valid document state
+      env.triggerBookChapterChange(CHAPTER_NUM);
+      tick();
+
+      // Verify document was opened initially
+      verify(mockDocumentManager.fireOpened(anything(), anything())).once();
+      expect(env.service['textDocId']).toBeDefined();
+
+      env.resetMockCalls();
+
+      // Now navigate to a book chapter with an undefined chapter number.
+      // This can happen when navigating to a book that doesn't have a first chapter.
+      // With the null check, this should return early and not perform any operations.
+      env.bookChapterTestSubject$.next({
+        bookId: Canon.bookNumberToId(BOOK_NUM),
+        chapter: undefined
+      });
+      tick();
+
+      // With the null check, no document operations should occur.
+      // The method returns early when textDocId is undefined.
+      verify(mockDocumentManager.fireOpened(anything(), anything())).never();
+      verify(mockDocumentManager.fireClosed(anything())).never();
+      verify(mockDocumentManager.fireChanged(anything(), anything())).never();
+
+      // Verify that the service handled the undefined chapter gracefully
+      expect(() => env.service['textDocId']).not.toThrow();
+    }));
+
     it('should open document when chapter is activated', fakeAsync(() => {
       const env = new TestEnvironment();
 

@@ -401,6 +401,12 @@ export class LynxWorkspaceService {
             bookChapter?.chapter
           );
 
+    // 'textDocId' will be undefined if bookChapter has no chapter specified.
+    // This can happen when navigating to a book that doesn't have a first chapter.
+    if (textDocId == null) {
+      return;
+    }
+
     const { assessmentsEnabled, autoCorrectionsEnabled } = this.getLynxSettings(
       this.activatedProjectService.projectDoc
     );
