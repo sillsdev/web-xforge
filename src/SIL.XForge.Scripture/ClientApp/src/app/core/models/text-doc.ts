@@ -43,7 +43,7 @@ export class TextDoc extends RealtimeDoc<TextData, TextData, Range> {
   static readonly COLLECTION = TEXTS_COLLECTION;
   static readonly INDEX_PATHS = TEXT_INDEX_PATHS;
 
-  private readonly blank_tags = ['ie_', '/b_'];
+  private readonly blank_tags = ['ib_', 'ie_', 'imte_', '/b_'];
 
   constructor(
     protected readonly realtimeService: RealtimeService,
