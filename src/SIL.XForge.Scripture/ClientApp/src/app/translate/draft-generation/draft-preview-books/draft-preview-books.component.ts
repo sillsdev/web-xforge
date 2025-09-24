@@ -14,10 +14,8 @@ import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { TextDocService } from '../../../core/text-doc.service';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { booksFromScriptureRange } from '../../../shared/utils';
 import {
@@ -106,7 +104,6 @@ export class DraftPreviewBooksComponent {
     private readonly userService: UserService,
     private readonly draftHandlingService: DraftHandlingService,
     private readonly dialogService: DialogService,
-    private readonly textDocService: TextDocService,
     private readonly errorReportingService: ErrorReportingService,
     private readonly router: Router
   ) {}
@@ -134,7 +131,19 @@ export class DraftPreviewBooksComponent {
       return;
     }
 
-    const projectDoc: SFProjectProfileDoc = await this.projectService.getProfile(result.projectId);
+    const timestamp: Date =
+      this.build?.additionalInfo?.dateGenerated != null
+        ? new Date(this.build.additionalInfo.dateGenerated)
+        : new Date();
+
+    await this.projectService.onlineApplyPreTranslationToProject(
+      this.activatedProjectService.projectId!,
+      Canon.bookNumberToId(bookWithDraft.bookNumber),
+      result.projectId,
+      timestamp
+    );
+
+    /*const projectDoc: SFProjectProfileDoc = await this.projectService.getProfile(result.projectId);
     const projectTextInfo: TextInfo = projectDoc.data?.texts.find(
       t => t.bookNum === bookWithDraft.bookNumber && t.chapters
     )!;
@@ -148,10 +157,11 @@ export class DraftPreviewBooksComponent {
         await this.textDocService.createTextDoc(textDocId);
       }
     }
-    await this.applyBookDraftAsync(bookWithDraft, result.projectId);
+    await this.applyBookDraftAsync(bookWithDraft, result.projectId);*/
   }
 
-  private async applyBookDraftAsync(bookWithDraft: BookWithDraft, targetProjectId: string): Promise<void> {
+  // TODO: Remove?
+  public async applyBookDraftAsync(bookWithDraft: BookWithDraft, targetProjectId: string): Promise<void> {
     this.applyChapters = bookWithDraft.chaptersWithDrafts;
     this.draftApplyBookNum = bookWithDraft.bookNumber;
     this.chaptersApplied = [];
