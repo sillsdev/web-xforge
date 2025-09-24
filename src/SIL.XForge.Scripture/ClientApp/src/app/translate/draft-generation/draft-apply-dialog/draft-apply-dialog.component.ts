@@ -5,20 +5,17 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { BehaviorSubject, map } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
-import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { TextDocService } from '../../../core/text-doc.service';
 import { ProjectSelectComponent } from '../../../project-select/project-select.component';
 import { CustomValidatorState as CustomErrorState, SFValidators } from '../../../shared/sfvalidators';
 import { SharedModule } from '../../../shared/shared.module';
@@ -52,7 +49,6 @@ export class DraftApplyDialogComponent implements OnInit {
   });
   /** An observable that emits the number of chapters in the target project that have some text. */
   targetChapters$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
-  canEditProject: boolean = true;
   targetBookExists: boolean = true;
   projectHasMissingChapters: boolean = false;
   addToProjectClicked: boolean = false;
@@ -62,8 +58,6 @@ export class DraftApplyDialogComponent implements OnInit {
   );
   invalidMessageMapper: { [key: string]: string } = {
     invalidProject: this.i18n.translateStatic('draft_apply_dialog.please_select_valid_project'),
-    bookNotFound: this.i18n.translateStatic('draft_apply_dialog.book_does_not_exist', { bookName: this.bookName }),
-    noWritePermissions: this.i18n.translateStatic('draft_apply_dialog.no_write_permissions'),
     missingChapters: this.i18n.translateStatic('draft_apply_dialog.project_has_chapters_missing', {
       bookName: this.bookName
     })
@@ -79,9 +73,7 @@ export class DraftApplyDialogComponent implements OnInit {
     @Inject(MatDialogRef) private dialogRef: MatDialogRef<DraftApplyDialogComponent, DraftApplyDialogResult>,
     private readonly userProjectsService: SFUserProjectsService,
     private readonly projectService: SFProjectService,
-    private readonly textDocService: TextDocService,
     readonly i18n: I18nService,
-    private readonly userService: UserService,
     private readonly onlineStatusService: OnlineStatusService
   ) {
     this.targetProject$.pipe(filterNullish()).subscribe(async project => {
@@ -153,7 +145,7 @@ export class DraftApplyDialogComponent implements OnInit {
   addToProject(): void {
     this.addToProjectClicked = true;
     this.validateProject();
-    if (!this.isAppOnline || !this.isFormValid || this.targetProjectId == null || !this.canEditProject) {
+    if (!this.isAppOnline || !this.isFormValid || this.targetProjectId == null) {
       return;
     }
     this.dialogRef.close({ projectId: this.targetProjectId });
@@ -166,7 +158,6 @@ export class DraftApplyDialogComponent implements OnInit {
     }
     const project: SFProjectProfile | undefined = this.projects.find(p => p.paratextId === paratextId);
     if (project == null) {
-      this.canEditProject = false;
       this.targetBookExists = false;
       this.targetProject$.next(undefined);
       this.validateProject();
@@ -176,9 +167,6 @@ export class DraftApplyDialogComponent implements OnInit {
     this.targetProjectId = this.paratextIdToProjectId.get(paratextId);
     const targetBook: TextInfo | undefined = project.texts.find(t => t.bookNum === this.data.bookNum);
     this.targetBookExists = targetBook != null;
-    this.canEditProject =
-      this.textDocService.userHasGeneralEditRight(project) &&
-      targetBook?.permissions[this.userService.currentUserId] === TextInfoPermission.Write;
 
     // also check if this is an empty book
     const bookIsEmpty: boolean = targetBook?.chapters.length === 1 && targetBook?.chapters[0].lastVerse < 1;
@@ -193,11 +181,7 @@ export class DraftApplyDialogComponent implements OnInit {
       this.createChaptersControl.updateValueAndValidity();
     }
     // emit the project profile document
-    if (this.canEditProject) {
-      this.targetProject$.next(project);
-    } else {
-      this.targetProject$.next(undefined);
-    }
+    this.targetProject$.next(project);
     this.validateProject();
   }
 
@@ -233,12 +217,6 @@ export class DraftApplyDialogComponent implements OnInit {
   private getCustomErrorState(): CustomErrorState {
     if (!this.projectSelectValid) {
       return CustomErrorState.InvalidProject;
-    }
-    if (!this.targetBookExists) {
-      return CustomErrorState.BookNotFound;
-    }
-    if (!this.canEditProject) {
-      return CustomErrorState.NoWritePermissions;
     }
     return CustomErrorState.None;
   }

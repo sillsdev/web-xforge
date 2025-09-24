@@ -140,7 +140,6 @@
   },
   "draft_apply_dialog": {
     "add_to_project": "Add to project",
-    "book_does_not_exist": "{{ bookName }} on the selected project does not exist",
     "book_is_empty": "{{ bookName }} in {{ projectName }} project is empty.",
     "cancel": "Cancel",
     "confirm_create_chapters": "Please confirm you want to create missing chapters in the book.",
@@ -150,7 +149,6 @@
     "i_understand_overwrite_book": "I understand the draft will overwrite {{ bookName }} in {{ projectName }} project",
     "i_understand_missing_chapters_are_created": "I understand the draft will create missing chapters in {{ bookName }} in {{ projectName }} project",
     "looking_for_unlisted_project": "Looking for a project that is not listed? Connect it on {{ underlineStart }}the projects page{{ underlineEnd }} first.",
-    "no_write_permissions": "You do not have permission to write to this book on this project. Contact the project's administrator to get permission.",
     "please_select_valid_project": "Please select a valid project",
     "project_has_chapters_missing": "{{ bookName }} in this project has chapters missing. Please add the missing chapters in Paratext",
     "project_has_text_in_chapters": "{{ bookName }} in {{ projectName }} has text in {{ numChapters }} chapters",
