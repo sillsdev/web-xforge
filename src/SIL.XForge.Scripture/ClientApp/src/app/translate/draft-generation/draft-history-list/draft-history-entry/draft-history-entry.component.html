@@ -21,7 +21,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <div class="draft-entry-body">
-        @if (this.featureFlags.usfmFormat.enabled && !formattingOptionsSelected && isLatestBuild) {
+        @if (this.featureFlags.usfmFormat.enabled && !formattingOptionsSelected && isLatestBuild && draftIsAvailable) {
           <p class="require-formatting-options">
             {{ t("select_formatting_options") }}
           </p>
@@ -42,7 +42,7 @@
             }
           </div>
         } @else {
-          @if (canDownloadBuild) {
+          @if (draftIsAvailable) {
             <p>{{ t("click_book_to_preview") }}</p>
             <p class="book-buttons">
               <app-draft-preview-books [build]="entry" />
@@ -85,7 +85,7 @@
             </p>
           }
           @if (hasTrainingConfiguration || hasTrainingDataFiles) {
-            @if (canDownloadBuild) {
+            @if (draftIsAvailable) {
               <p>
                 <a
                   href="javascript:;"

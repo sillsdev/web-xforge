@@ -64,8 +64,8 @@ export class DraftHistoryEntryComponent {
     this._entry = value;
 
     // Only set if a draft can be downloaded if it is not set externally
-    if (this._canDownloadBuild == null) {
-      this.canDownloadBuild = this._entry?.additionalInfo?.dateGenerated != null;
+    if (this._draftIsAvailable == null) {
+      this.draftIsAvailable = this._entry?.additionalInfo?.dateGenerated != null;
     }
 
     // Get the user who requested the build
@@ -114,7 +114,7 @@ export class DraftHistoryEntryComponent {
       this._trainingConfiguration = trainingConfiguration;
 
       // If we can only show training data, expand the training configuration
-      if (!this.canDownloadBuild && this.hasTrainingConfiguration) {
+      if (!this.draftIsAvailable && this.hasTrainingConfiguration) {
         this.trainingConfigurationOpen = true;
       }
     });
@@ -219,7 +219,7 @@ export class DraftHistoryEntryComponent {
   }
 
   get hasDetails(): boolean {
-    return this.hasTrainingConfiguration || this.canDownloadBuild || this.buildFaulted;
+    return this.hasTrainingConfiguration || this.draftIsAvailable || this.buildFaulted;
   }
 
   get hasTrainingConfiguration(): boolean {
@@ -250,12 +250,12 @@ export class DraftHistoryEntryComponent {
     return this._trainingDataFiles.length > 0;
   }
 
-  private _canDownloadBuild: boolean | undefined;
-  @Input() set canDownloadBuild(value: boolean) {
-    this._canDownloadBuild = value;
+  private _draftIsAvailable: boolean | undefined;
+  @Input() set draftIsAvailable(value: boolean) {
+    this._draftIsAvailable = value;
   }
-  get canDownloadBuild(): boolean {
-    return this._canDownloadBuild ?? false;
+  get draftIsAvailable(): boolean {
+    return this._draftIsAvailable ?? false;
   }
 
   private _scriptureRange?: string = undefined;
@@ -271,6 +271,10 @@ export class DraftHistoryEntryComponent {
 
   get formattingOptionsSelected(): boolean {
     return this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.usfmConfig != null;
+  }
+
+  get buildStateIsCompleted(): boolean {
+    return this._entry?.state === BuildStates.Completed;
   }
 
   @Input() isLatestBuild: boolean = false;
