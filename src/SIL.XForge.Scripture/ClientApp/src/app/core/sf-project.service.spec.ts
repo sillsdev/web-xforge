@@ -74,6 +74,19 @@ describe('SFProjectService', () => {
     }));
   });
 
+  describe('onlineApplyPreTranslationToProject', () => {
+    it('should invoke the command service', fakeAsync(async () => {
+      const env = new TestEnvironment();
+      const projectId = 'project01';
+      const scriptureRange = 'GEN-REV';
+      const targetProjectId = 'project01';
+      const timestamp = new Date();
+      await env.service.onlineApplyPreTranslationToProject(projectId, scriptureRange, targetProjectId, timestamp);
+      verify(mockedCommandService.onlineInvoke(anything(), 'applyPreTranslationToProject', anything())).once();
+      expect().nothing();
+    }));
+  });
+
   class TestEnvironment {
     readonly httpTestingController: HttpTestingController;
     readonly service: SFProjectService;
