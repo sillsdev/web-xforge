@@ -119,7 +119,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   }
 
   get mustChooseFormattingOptions(): boolean {
-    return this.featureFlags.usfmFormat.enabled && !this.hasFormattingSelected;
+    return this.featureFlags.usfmFormat.enabled && !this.hasFormattingSelected && this.doesLatestHaveDraft;
   }
 
   ngOnChanges(): void {

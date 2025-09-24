@@ -7,6 +7,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { cloneDeep } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { Delta } from 'quill';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { ParagraphBreakFormat, QuoteFormat } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of } from 'rxjs';
@@ -355,6 +356,12 @@ describe('EditorDraftComponent', () => {
     it('should allow user to apply draft when formatting selected', fakeAsync(() => {
       const testProjectDoc: SFProjectProfileDoc = {
         data: createTestProjectProfile({
+          texts: [
+            {
+              bookNum: 1,
+              chapters: [{ number: 1, permissions: { user01: SFProjectRole.ParatextAdministrator }, hasDraft: true }]
+            }
+          ],
           translateConfig: {
             draftConfig: {
               usfmConfig: { paragraphFormat: ParagraphBreakFormat.BestGuess, quoteFormat: QuoteFormat.Denormalized }
@@ -381,7 +388,14 @@ describe('EditorDraftComponent', () => {
 
     it('should guide user to select formatting options when formatting not selected', fakeAsync(() => {
       const testProjectDoc: SFProjectProfileDoc = {
-        data: createTestProjectProfile()
+        data: createTestProjectProfile({
+          texts: [
+            {
+              bookNum: 1,
+              chapters: [{ number: 1, permissions: { user01: SFProjectRole.ParatextAdministrator }, hasDraft: true }]
+            }
+          ]
+        })
       } as SFProjectProfileDoc;
       when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
       when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
