@@ -57,7 +57,9 @@ mat-icon {
   .mat-mdc-list-item {
     --mat-badge-background-color: var(--sf-community-checking-badge-background-color);
     --mat-badge-text-color: var(--sf-community-checking-badge-text-color);
+    --mat-badge-small-size-container-size: var(--sf-community-checking-badge-container-size);
     --mat-badge-small-size-text-size: var(--sf-community-checking-badge-text-size);
+    --mat-badge-small-size-line-height: var(--sf-community-checking-badge-line-height);
 
     cursor: pointer;
     height: auto;

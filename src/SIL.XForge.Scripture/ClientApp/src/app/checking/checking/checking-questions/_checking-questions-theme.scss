@@ -6,6 +6,8 @@
   --sf-community-checking-badge-background-color: #{mat.get-theme-color($theme, tertiary, if($is-dark, 60, 20))};
   --sf-community-checking-badge-text-color: #{mat.get-theme-color($theme, primary, 98)};
   --sf-community-checking-badge-text-size: 9px;
+  --sf-community-checking-badge-container-size: 16px;
+  --sf-community-checking-badge-line-height: 16px;
   --sf-community-checking-question-list-hover-background: #{mat.get-theme-color($theme, primary, if($is-dark, 10, 95))};
   --sf-community-checking-question-list-selected-background: #{mat.get-theme-color(
       $theme,
