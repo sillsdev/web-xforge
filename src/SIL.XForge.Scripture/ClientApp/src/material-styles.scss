@@ -82,7 +82,7 @@
 
   @include mat.dialog-overrides(
     (
-      container-max-width: initial,
+      container-max-width: 80vw,
       container-color: mat.get-theme-color($theme, neutral, if($is-dark, 20, 100))
     )
   );
