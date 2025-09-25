@@ -70,20 +70,24 @@
               >
               </span>
               @if (expandUnusableTranslateBooks) {
-                <h4 class="explanation">
-                  <transloco
-                    key="draft_generation_steps.these_source_books_are_blank"
-                    [params]="{ draftingSourceProjectName }"
-                  ></transloco>
-                </h4>
-                <span class="book-names">{{ bookNames(emptyTranslateSourceBooks) }}</span>
-                <h4 class="explanation">
-                  <transloco
-                    key="draft_generation_steps.these_source_books_cannot_be_used_for_translating"
-                    [params]="{ draftingSourceProjectName }"
-                  ></transloco>
-                </h4>
-                <span class="book-names">{{ bookNames(unusableTranslateSourceBooks) }}</span>
+                @if (emptyTranslateSourceBooks.length > 0) {
+                  <h4 class="explanation">
+                    <transloco
+                      key="draft_generation_steps.these_source_books_are_blank"
+                      [params]="{ draftingSourceProjectName }"
+                    ></transloco>
+                  </h4>
+                  <span class="book-names">{{ bookNames(emptyTranslateSourceBooks) }}</span>
+                }
+                @if (unusableTranslateSourceBooks.length > 0) {
+                  <h4 class="explanation">
+                    <transloco
+                      key="draft_generation_steps.these_source_books_cannot_be_used_for_translating"
+                      [params]="{ draftingSourceProjectName }"
+                    ></transloco>
+                  </h4>
+                  <span class="book-names">{{ bookNames(unusableTranslateSourceBooks) }}</span>
+                }
               }
             </div>
           </app-notice>
