@@ -217,7 +217,6 @@ jobs:
           lsb_release -a
           which dotnet
           dotnet --version
-          dpkg -l dotnet\*
           dotnet --list-sdks
           dotnet --list-runtimes
       - name: "Deps: Backend nuget"
@@ -411,7 +410,6 @@ jobs:
           lsb_release -a
           which dotnet
           dotnet --version
-          dpkg -l dotnet\*
           dotnet --list-sdks
           dotnet --list-runtimes
           which node
