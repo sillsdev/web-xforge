@@ -31,6 +31,7 @@ import Quill, { Delta, EmitterSource, Range } from 'quill';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { WritingSystem } from 'realtime-server/lib/esm/common/models/writing-system';
+import { Json0OpBuilder } from 'realtime-server/lib/esm/common/utils/json0-op-builder';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { RecursivePartial } from 'realtime-server/lib/esm/common/utils/type-utils';
 import { BiblicalTerm } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
@@ -70,6 +71,7 @@ import { CONSOLE } from 'xforge-common/browser-globals';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -3373,7 +3375,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('should remove resolved notes after a remote update', fakeAsync(() => {
+    it('should remove resolved notes after a remote update', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
@@ -3382,7 +3384,7 @@ describe('EditorComponent', () => {
       let noteThreadEmbedCount = env.countNoteThreadEmbeds(contents.ops!);
       expect(noteThreadEmbedCount).toEqual(5);
 
-      env.resolveNote('project01', 'dataid01');
+      await env.resolveNote('project01', 'dataid01', 'remote');
       contents = env.targetEditor.getContents();
       noteThreadEmbedCount = env.countNoteThreadEmbeds(contents.ops!);
       expect(noteThreadEmbedCount).toEqual(4);
@@ -5594,10 +5596,19 @@ class TestEnvironment {
     return noteEmbedCount;
   }
 
-  resolveNote(projectId: string, threadId: string): void {
+  async resolveNote(projectId: string, threadId: string, origin: 'local' | 'remote'): Promise<void> {
     const noteDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadId);
-    noteDoc.submitJson0Op(op => op.set(n => n.status, NoteStatus.Resolved));
-    this.realtimeService.updateQueryAdaptersRemote();
+    const ops = op => op.set(n => n.status, NoteStatus.Resolved);
+
+    if (origin === 'remote') {
+      const docAdapter: MemoryRealtimeDocAdapter = noteDoc.adapter as MemoryRealtimeDocAdapter;
+      const builder = new Json0OpBuilder(noteDoc.data);
+      ops(builder);
+      const operations = builder.op;
+      this.realtimeService.simulateRemoteChange(docAdapter, operations);
+    } else {
+      await noteDoc.submitJson0Op(ops);
+    }
     this.wait();
   }
 
