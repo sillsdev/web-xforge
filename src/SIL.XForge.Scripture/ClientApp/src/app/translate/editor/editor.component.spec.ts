@@ -1370,6 +1370,7 @@ describe('EditorComponent', () => {
       expect(element.classList).not.toContain('highlight-segment');
 
       env.setCurrentUser('user01');
+      env.component['targetEditorLoaded$'].next(); // Trigger 'canEdit' check
       env.wait();
       element = env.targetTextEditor.querySelector('usx-segment[data-segment="verse_1_1"]')!;
       expect(element.classList).toContain('highlight-segment');
