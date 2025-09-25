@@ -33,6 +33,8 @@ export class TestRealtimeService extends RealtimeService {
     }
   }
 
+  /** Write a realtime doc into the store, for a given collection. An existing realtime doc with the same id is
+   * overwritten. */
   addSnapshot<T>(collection: string, snapshot: Partial<Snapshot<T>>, addToOfflineStore: boolean = false): void {
     const completeSnapshot = addSnapshotDefaults(snapshot);
     (this.remoteStore as MemoryRealtimeRemoteStore).addSnapshot(collection, completeSnapshot);
