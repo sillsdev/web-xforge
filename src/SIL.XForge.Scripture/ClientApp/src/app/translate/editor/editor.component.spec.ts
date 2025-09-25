@@ -3373,7 +3373,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('should remove resolved notes after a remote update', fakeAsync(() => {
+    it('should remove resolved notes after a remote update', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
@@ -3382,7 +3382,7 @@ describe('EditorComponent', () => {
       let noteThreadEmbedCount = env.countNoteThreadEmbeds(contents.ops!);
       expect(noteThreadEmbedCount).toEqual(5);
 
-      env.resolveNote('project01', 'dataid01');
+      await env.resolveNote('project01', 'dataid01');
       contents = env.targetEditor.getContents();
       noteThreadEmbedCount = env.countNoteThreadEmbeds(contents.ops!);
       expect(noteThreadEmbedCount).toEqual(4);
@@ -5594,10 +5594,9 @@ class TestEnvironment {
     return noteEmbedCount;
   }
 
-  resolveNote(projectId: string, threadId: string): void {
+  async resolveNote(projectId: string, threadId: string): Promise<void> {
     const noteDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadId);
-    noteDoc.submitJson0Op(op => op.set(n => n.status, NoteStatus.Resolved));
-    this.realtimeService.updateQueryAdaptersRemote();
+    await this.realtimeService.simulateRemoteChangeJson0Op(noteDoc, op => op.set(n => n.status, NoteStatus.Resolved));
     this.wait();
   }
 
