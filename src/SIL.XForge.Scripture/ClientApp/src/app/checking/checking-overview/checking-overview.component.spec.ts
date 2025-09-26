@@ -1066,7 +1066,10 @@ class TestEnvironment {
         );
         const textIndex: number = projectDoc.data!.texts.findIndex(t => t.bookNum === book);
         const chapterIndex: number = projectDoc.data!.texts[textIndex].chapters.findIndex(c => c.number === chapter);
-        projectDoc.submitJson0Op(op => op.set(p => p.texts[textIndex].chapters[chapterIndex].hasAudio, false), false);
+        await projectDoc.submitJson0Op(
+          op => op.set(p => p.texts[textIndex].chapters[chapterIndex].hasAudio, false),
+          false
+        );
       }
     );
     this.setCurrentUser(this.adminUser);
@@ -1247,22 +1250,10 @@ class TestEnvironment {
       'project01',
       new DocSubscription('spec')
     );
-    projectDoc.submitJson0Op(
+    await projectDoc.submitJson0Op(
       op => op.set<boolean>(p => p.checkingConfig.usersSeeEachOthersResponses, isEnabled),
       false
     );
-    this.waitForProjectDocChanges();
-  }
-
-  setCheckingEnabled(isEnabled: boolean): void {
-    this.ngZone.run(async () => {
-      const projectDoc = await this.realtimeService.get<SFProjectProfileDoc>(
-        SFProjectProfileDoc.COLLECTION,
-        'project01',
-        new DocSubscription('spec')
-      );
-      projectDoc.submitJson0Op(op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, isEnabled), false);
-    });
     this.waitForProjectDocChanges();
   }
 
@@ -1326,7 +1317,7 @@ class TestEnvironment {
       new DocSubscription('spec')
     );
     const index: number = projectDoc.data!.texts.length - 1;
-    projectDoc.submitJson0Op(op => op.insert(p => p.texts, index, text), false);
+    await projectDoc.submitJson0Op(op => op.insert(p => p.texts, index, text), false);
     this.addQuestion({
       dataId: 'q9Id',
       projectRef: 'project01',
