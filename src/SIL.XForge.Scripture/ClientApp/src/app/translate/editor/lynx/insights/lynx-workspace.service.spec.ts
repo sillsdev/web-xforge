@@ -585,6 +585,8 @@ describe('LynxWorkspaceService', () => {
 
     it('should handle book chapters with undefined chapter number', fakeAsync(async () => {
       const env = new TestEnvironment();
+      await env.init();
+      flush();
 
       // Create project with lynx features enabled
       const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
