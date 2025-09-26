@@ -3,6 +3,7 @@ import Quill, { Delta, Op, Range } from 'quill';
 import { QuillLynxEditorAdapter } from './quill-services/quill-lynx-editor-adapter';
 
 export type LynxableEditor = Quill; // Add future editor as union type
+export type LynxCountToOffsetFunc = (offset: number) => number;
 
 export interface LynxEditor {
   getEditor(): LynxableEditor;
@@ -36,6 +37,13 @@ export interface LynxTextModelConverter {
    * @returns The corresponding editor model delta.
    */
   dataDeltaToEditorDelta(dataDelta: Delta): Delta;
+
+  /**
+   * Gets a function that takes an offset in the data model and returns
+   * the number of embeds preceding that offset in the editor model.
+   * Useful when embeds that are present only in the editor model may affect position offsets from Lynx.
+   */
+  getEmbedCountsToOffsetFunc(): LynxCountToOffsetFunc;
 }
 
 @Injectable({ providedIn: 'root' })
