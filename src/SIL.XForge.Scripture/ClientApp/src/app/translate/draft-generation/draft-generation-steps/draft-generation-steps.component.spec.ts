@@ -18,6 +18,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
+import { DocSubscription } from '../../../../xforge-common/models/realtime-doc';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
@@ -1458,6 +1459,6 @@ describe('DraftGenerationStepsComponent', () => {
       })
     } as SFProjectProfileDoc;
 
-    when(mockProjectService.getProfile(projectId)).thenResolve(profileDoc);
+    when(mockProjectService.getProfile(projectId, new DocSubscription('spec'))).thenResolve(profileDoc);
   }
 });

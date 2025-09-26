@@ -25,6 +25,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { DocSubscription } from '../../../../xforge-common/models/realtime-doc';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
@@ -190,7 +191,8 @@ export class DraftGenerationStepsComponent implements OnInit {
           // TODO: When implementing multiple drafting sources, this will need to be updated to handle multiple sources
           const draftingSourceBooks = new Set<number>();
           const draftingSourceProfileDoc: SFProjectProfileDoc = await this.projectService.getProfile(
-            draftingSource.projectRef
+            draftingSource.projectRef,
+            new DocSubscription('DraftGenerationStepsComponent', this.destroyRef)
           );
           for (const text of draftingSource.texts) {
             draftingSourceBooks.add(text.bookNum);

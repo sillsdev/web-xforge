@@ -583,11 +583,11 @@ describe('LynxWorkspaceService', () => {
       verify(mockDocumentManager.fireClosed(anything())).once();
     }));
 
-    it('should handle book chapters with undefined chapter number', fakeAsync(() => {
+    it('should handle book chapters with undefined chapter number', fakeAsync(async () => {
       const env = new TestEnvironment();
 
       // Create project with lynx features enabled
-      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+      const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
         autoCorrectionsEnabled: true,
         assessmentsEnabled: true,
         punctuationCheckerEnabled: true,
