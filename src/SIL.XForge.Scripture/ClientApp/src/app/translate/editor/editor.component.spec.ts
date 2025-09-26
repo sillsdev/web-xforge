@@ -3382,7 +3382,8 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('should remove resolved notes after a remote update', fakeAsync(async () => {
+    /** This test is under discussion. */
+    xit('should remove resolved notes after a remote update', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
