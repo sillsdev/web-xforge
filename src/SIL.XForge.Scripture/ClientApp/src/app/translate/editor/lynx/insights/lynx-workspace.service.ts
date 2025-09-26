@@ -6,6 +6,7 @@ import {
   DocumentData,
   DocumentManager,
   DocumentReader,
+  Position,
   Workspace
 } from '@sillsdev/lynx';
 import { ScriptureDeltaDocument } from '@sillsdev/lynx-delta';
@@ -40,6 +41,7 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../../../core/models/text-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
+import { LynxCountToOffsetFunc } from './lynx-editor';
 import { LynxInsight, LynxInsightAction } from './lynx-insight';
 import { LynxWorkspaceFactory } from './lynx-workspace-factory.service';
 
@@ -160,7 +162,7 @@ export class LynxWorkspaceService {
     }));
   }
 
-  async getOnTypeEdits(delta: Delta): Promise<Delta[]> {
+  async getOnTypeEdits(delta: Delta, embedCountsToOffset: LynxCountToOffsetFunc): Promise<Delta[]> {
     if (this.workspace == null) {
       return [];
     }
@@ -220,7 +222,8 @@ export class LynxWorkspaceService {
         while (startIndex < text.length) {
           const chIndex: number = text.indexOf(ch, startIndex);
           if (chIndex >= 0) {
-            const position = doc.positionAt(offset + chIndex + 1);
+            const adjustedOffset: number = offset + chIndex + 1 - embedCountsToOffset(offset);
+            const position: Position = doc.positionAt(adjustedOffset);
             const chEdits: Op[] | undefined = await this.workspace.getOnTypeEdits(curDocUri, position, ch);
 
             // Check sequence number again after each async operation
