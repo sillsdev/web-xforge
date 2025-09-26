@@ -12,7 +12,6 @@ import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -1459,6 +1458,6 @@ describe('DraftGenerationStepsComponent', () => {
       })
     } as SFProjectProfileDoc;
 
-    when(mockProjectService.getProfile(projectId, new DocSubscription('spec'))).thenResolve(profileDoc);
+    when(mockProjectService.getProfile(projectId, anything())).thenResolve(profileDoc);
   }
 });
