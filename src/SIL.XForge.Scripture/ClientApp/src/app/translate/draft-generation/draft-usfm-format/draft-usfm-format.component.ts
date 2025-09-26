@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { AfterViewInit, Component, DestroyRef, EventEmitter, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,7 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { Delta } from 'quill';
@@ -91,7 +91,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     private readonly dialogService: DialogService,
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
-    private readonly router: Router,
+    private readonly location: Location,
     private destroyRef: DestroyRef
   ) {
     super(noticeService);
@@ -197,8 +197,8 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     this.reloadText();
   }
 
-  async close(): Promise<void> {
-    await this.router.navigate(['..'], { relativeTo: this.activatedRoute });
+  close(): void {
+    this.location.back();
   }
 
   reloadText(): void {
@@ -215,10 +215,10 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
       this.lastSavedState = this.currentFormat;
       // The user is redirected to the draft generation page if the format is saved.
       await this.servalAdministration.onlineRetrievePreTranslationStatus(this.projectId);
-      await this.close();
+      this.close();
     } catch (err) {
       console.error('Error occurred while saving draft format', err);
-      await this.noticeService.showError(this.i18n.translateStatic('draft_usfm_format.failed_to_save'));
+      this.noticeService.showError(this.i18n.translateStatic('draft_usfm_format.failed_to_save'));
     } finally {
       this.saving = false;
     }
