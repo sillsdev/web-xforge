@@ -67,7 +67,7 @@ export async function isProjectConnected(page: Page, shortName: string): Promise
   const goToProjectButtonLocator = page.locator('.user-connected-project').filter({ hasText: shortName });
   const unconnectedProjectLocator = page.locator('.user-unconnected-project').filter({ hasText: shortName });
 
-  await expect(goToProjectButtonLocator.or(unconnectedProjectLocator)).toBeVisible();
+  await expect(goToProjectButtonLocator.or(unconnectedProjectLocator)).toBeVisible({ timeout: 15_000 });
 
   if (await goToProjectButtonLocator.isVisible()) {
     return true;

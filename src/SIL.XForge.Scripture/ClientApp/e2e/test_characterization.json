@@ -4,7 +4,7 @@
     "failure": 0
   },
   "home_and_login": {
-    "success": 50,
+    "success": 13,
     "failure": 0
   },
   "generate_draft": {
@@ -13,14 +13,14 @@
   },
   "community_checking": {
     "success": 13,
-    "failure": 1
+    "failure": 0
   },
   "localized_screenshots": {
-    "success": 43,
-    "failure": 3
-  },
-  "edit_translation": {
     "success": 13,
     "failure": 0
+  },
+  "edit_translation": {
+    "success": 33,
+    "failure": 3
   }
 }
