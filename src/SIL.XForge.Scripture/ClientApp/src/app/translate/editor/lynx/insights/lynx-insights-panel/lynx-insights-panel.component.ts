@@ -181,17 +181,16 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
   isExpandableNodePredicate = (_index: number, node: InsightPanelNode): boolean => this.hasChildren(node);
 
   // Handle clicks on leaf nodes (insights) to navigate to the chapter of the insight and show the overlay
-  onLeafNodeClick(node: InsightPanelNode): void {
+  async onLeafNodeClick(node: InsightPanelNode): Promise<void> {
     if (node.insight != null) {
       const insight: LynxInsight = node.insight;
 
-      // Show action menu overlay in editor
-      this.navInsight(insight).then(() => {
-        this.editorInsightState.updateDisplayState({
-          activeInsightIds: [insight.id],
-          promptActive: false,
-          actionOverlayActive: true
-        });
+      // Nav if needed, then show action menu overlay in editor
+      await this.navInsight(insight);
+      this.editorInsightState.updateDisplayState({
+        activeInsightIds: [insight.id],
+        promptActive: false,
+        actionOverlayActive: true
       });
     }
   }
@@ -1091,7 +1090,7 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
       }
 
       const { node, insight } = batch[index++];
-      this.processNodeAsync(node, insight).then(() => {
+      void this.processNodeAsync(node, insight).then(() => {
         this.updateProgressForNode(node);
 
         // Schedule the next node
@@ -1107,7 +1106,7 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
    * Process nodes in parallel for better performance.
    */
   private processNodeBatchParallel(batch: Array<{ node: InsightPanelNode; insight: LynxInsight }>): void {
-    Promise.all(
+    void Promise.all(
       batch.map(item =>
         this.processNodeAsync(item.node, item.insight).then(() => {
           this.updateProgressForNode(item.node);
