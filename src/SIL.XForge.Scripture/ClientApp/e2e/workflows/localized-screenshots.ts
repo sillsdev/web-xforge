@@ -198,6 +198,7 @@ export async function localizedScreenshots(
   });
 
   await enableDraftingOnProjectAsServalAdmin(siteAdminBrowser.page, shortName);
+  await siteAdminBrowser.browser.close();
 
   await expect(page.getByRole('button', { name: 'Configure sources' })).toBeVisible();
   if (preset.showArrow) await installMouseFollower(page);
@@ -220,7 +221,7 @@ export async function localizedScreenshots(
   const nextButton = page.locator('.step-button-wrapper').getByRole('button').last();
 
   await forEachLocale(async locale => {
-    await user.hover(addReference);
+    await user.hover(addReference, defaultArrowLocation);
     await screenshotElements(
       page,
       [page.locator('app-draft-sources > .draft-sources-stepper'), page.locator('app-draft-sources > .overview')],
@@ -238,7 +239,7 @@ export async function localizedScreenshots(
   await forEachLocale(async locale => {
     await page.getByRole('combobox').fill('ntv');
     await page.getByRole('option', { name: 'NTV - Nueva Traducción' }).click();
-    await user.hover(nextButton);
+    await user.hover(nextButton, defaultArrowLocation);
     await screenshotElements(
       page,
       [page.locator('app-draft-sources > .draft-sources-stepper'), page.locator('app-draft-sources > .overview')],
@@ -280,6 +281,7 @@ export async function localizedScreenshots(
 
   // FIXME(application-bug) This sometimes fails when "You have no books available for drafting." is shown
   await expect(page.getByRole('heading', { name: 'Review draft setup' })).toBeVisible();
+  await expect(page.getByText('Loading project sync status...')).not.toBeVisible();
   await forEachLocale(async locale => {
     await user.hover(
       page.locator('app-draft-generation-steps .button-strip').getByRole('button').last(),
@@ -322,7 +324,16 @@ export async function localizedScreenshots(
 
   await page.getByRole('button', { name: 'Next' }).click();
 
+  // Replace test email address with user@example.com on the page for the screenshot
+  const emailLocator = page.getByText(credentials.email);
+  await expect(emailLocator).toBeVisible();
+  await emailLocator.evaluate(
+    (element, email) => (element.textContent = element.textContent.replace(email, 'user@example.com')),
+    credentials.email
+  );
+
   await forEachLocale(async locale => {
+    await expect(emailLocator).not.toBeVisible();
     await user.hover(page.getByRole('button').last(), defaultArrowLocation);
     await screenshotElements(
       page,
@@ -402,6 +413,13 @@ export async function localizedScreenshots(
   // Go back to the draft generation page
   await navLocator(page, 'generate_draft').click();
   await expect(page.getByText('The draft is ready')).toBeVisible({ timeout: 180_000 });
+  // Leave and come back
+  await navLocator(page, 'settings').click();
+  await navLocator(page, 'generate_draft').click();
+  await expect(page.getByText('The draft is ready')).toBeVisible();
+  // Wait for the draft to finalize
+  await expect(page.getByText('Draft is Finishing')).toBeVisible();
+  await expect(page.getByText('Draft is Finishing')).not.toBeVisible({ timeout: 15_000 });
 
   await forEachLocale(async locale => {
     await user.hover(page.getByRole('radio').first(), defaultArrowLocation);
@@ -463,6 +481,5 @@ export async function localizedScreenshots(
     );
   });
 
-  await siteAdminBrowser.browser.close();
   await logOut(page);
 }

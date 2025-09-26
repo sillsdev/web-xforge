@@ -43,6 +43,7 @@ export async function generateDraft(
   const siteAdminBrowser = await getNewBrowserForSideWork();
   await logInAsSiteAdmin(siteAdminBrowser.page);
   await enableDraftingOnProjectAsServalAdmin(siteAdminBrowser.page, DRAFT_PROJECT_SHORT_NAME);
+  await siteAdminBrowser.browser.close();
 
   // Configure sources page
   await user.click(page.getByRole('button', { name: 'Configure sources' }));
@@ -186,6 +187,16 @@ export async function generateDraft(
   // (including GitHub actions) while attempting to click on the name of the book to draft.
   // The reload also serves to trigger the update of the draft status
   await page.reload();
+
+  // Wait for draft to finalize. In some cases it may already have finalized, so if it doesn't show up, skip it
+  let finishing: boolean;
+  try {
+    await expect(page.getByText('Draft is Finishing')).toBeVisible({ timeout: 15_000 });
+    finishing = true;
+  } catch {
+    finishing = false;
+  }
+  if (finishing) await expect(page.getByText('Draft is Finishing')).not.toBeVisible({ timeout: 15_000 });
 
   // Preview and apply chapter 1
   await user.click(page.getByRole('radio', { name: bookToDraft }));
