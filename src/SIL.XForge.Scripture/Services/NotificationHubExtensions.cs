@@ -12,6 +12,12 @@ public static class NotificationHubExtensions
         ServalBuildState buildState
     ) => hubContext.Clients.Groups(projectId).NotifyBuildProgress(projectId, buildState);
 
+    public static Task NotifyDraftApplyProgress(
+        this IHubContext<NotificationHub, INotifier> hubContext,
+        string projectId,
+        DraftApplyState draftApplyState
+    ) => hubContext.Clients.Groups(projectId).NotifyDraftApplyProgress(projectId, draftApplyState);
+
     public static Task NotifySyncProgress(
         this IHubContext<NotificationHub, INotifier> hubContext,
         string projectId,

@@ -180,6 +180,20 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.onlineInvoke('cancelSync', { projectId: id });
   }
 
+  onlineApplyPreTranslationToProject(
+    projectId: string,
+    scriptureRange: string,
+    targetProjectId: string,
+    timestamp: Date
+  ): Promise<void> {
+    return this.onlineInvoke<void>('applyPreTranslationToProject', {
+      projectId,
+      scriptureRange,
+      targetProjectId,
+      timestamp: timestamp.toISOString()
+    });
+  }
+
   onlineSetPreTranslate(projectId: string, preTranslate: boolean): Promise<void> {
     return this.onlineInvoke<void>('setPreTranslate', {
       projectId,

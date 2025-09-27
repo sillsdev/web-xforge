@@ -447,7 +447,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             if (!_paratextService.IsResource(targetParatextId) || resourceNeedsUpdating)
             {
                 LogMetric("Updating permissions");
-                await _projectService.UpdatePermissionsAsync(userId, _projectDoc, _paratextUsers, token);
+                await _projectService.UpdatePermissionsAsync(userId, _projectDoc, users: _paratextUsers, token: token);
             }
 
             await NotifySyncProgress(SyncPhase.Phase9, 40.0);

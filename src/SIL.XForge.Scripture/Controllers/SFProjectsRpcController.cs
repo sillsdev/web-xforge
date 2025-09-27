@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router.Abstractions;
@@ -33,6 +34,44 @@ public class SFProjectsRpcController(
 
     // Keep a reference in this class to prevent duplicate allocation (Warning CS9107)
     private readonly IExceptionHandler _exceptionHandler = exceptionHandler;
+
+    public IRpcMethodResult ApplyPreTranslationToProject(
+        string projectId,
+        string scriptureRange,
+        string targetProjectId,
+        DateTime timestamp
+    )
+    {
+        try
+        {
+            // Run the background job
+            backgroundJobClient.Enqueue<IMachineApiService>(r =>
+                r.ApplyPreTranslationToProjectAsync(
+                    UserId,
+                    projectId,
+                    scriptureRange,
+                    targetProjectId,
+                    timestamp,
+                    CancellationToken.None
+                )
+            );
+            return Ok();
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", "ApplyPreTranslationToProject" },
+                    { "projectId", projectId },
+                    { "scriptureRange", scriptureRange },
+                    { "targetProjectId", targetProjectId },
+                    { "timestamp", timestamp.ToString(CultureInfo.InvariantCulture) },
+                }
+            );
+            throw;
+        }
+    }
 
     public async Task<IRpcMethodResult> Create(SFProjectCreateSettings settings)
     {

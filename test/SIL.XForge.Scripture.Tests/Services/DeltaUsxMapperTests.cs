@@ -19,7 +19,7 @@ using SIL.XForge.Scripture.Models;
 namespace SIL.XForge.Scripture.Services;
 
 [TestFixture]
-public partial class DeltaUsxMapperTests
+public class DeltaUsxMapperTests
 {
     private TestGuidService _mapperGuidService;
     private TestGuidService _testGuidService;
@@ -4091,19 +4091,9 @@ public partial class DeltaUsxMapperTests
     private void AssertRoundtrips(string bookUsfm) =>
         Assert.That(DoesRoundtrip(bookUsfm, out string errorMessage), Is.True, errorMessage);
 
-    [GeneratedRegex(@"\\id\s+(\w+)", RegexOptions.Compiled)]
-    private static partial Regex BookCodeRegex();
-
-    private static string ExtractBookCode(string bookUsfm)
-    {
-        string firstLine = bookUsfm.Split('\n').FirstOrDefault()?.Trim() ?? string.Empty;
-        string bookCode = BookCodeRegex().Match(firstLine).Groups[1].Value;
-        return bookCode;
-    }
-
     private bool DoesRoundtrip(string bookUsfm, out string errorMessage)
     {
-        string bookCode = ExtractBookCode(bookUsfm);
+        string bookCode = DeltaUsxMapper.ExtractBookId(bookUsfm);
 
         XmlDocument bookUsxLoading = UsfmToUsx.ConvertToXmlDocument(
             _scrText,

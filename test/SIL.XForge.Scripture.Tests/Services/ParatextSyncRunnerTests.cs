@@ -663,6 +663,7 @@ public class ParatextSyncRunnerTests
                     sfProjDoc.Data.Id == "project01" && sfProjDoc.Data.ParatextId == "target"
                 ),
                 Arg.Any<IReadOnlyList<ParatextProjectUser>>(),
+                Arg.Any<IReadOnlyList<int>>(),
                 Arg.Any<CancellationToken>()
             );
     }
@@ -2396,6 +2397,7 @@ public class ParatextSyncRunnerTests
                     sfProjDoc.Data.Id == "project01" && sfProjDoc.Data.ParatextId == "target"
                 ),
                 Arg.Any<IReadOnlyList<ParatextProjectUser>>(),
+                Arg.Any<IReadOnlyList<int>>(),
                 Arg.Any<CancellationToken>()
             );
     }
@@ -2445,6 +2447,7 @@ public class ParatextSyncRunnerTests
                     sfProjDoc.Data.Id == "project01" && sfProjDoc.Data.ParatextId == "target"
                 ),
                 Arg.Any<IReadOnlyList<ParatextProjectUser>>(),
+                Arg.Any<IReadOnlyList<int>>(),
                 Arg.Any<CancellationToken>()
             );
     }
