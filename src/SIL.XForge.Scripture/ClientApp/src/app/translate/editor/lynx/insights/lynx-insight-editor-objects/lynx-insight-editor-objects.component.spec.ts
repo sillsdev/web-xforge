@@ -3,6 +3,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { Delta } from 'quill';
 import { BehaviorSubject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { TextDocId } from '../../../../../core/models/text-doc';
 import { EditorReadyService } from '../base-services/editor-ready.service';
@@ -21,6 +22,7 @@ const mockInsightStateService = mock(LynxInsightStateService);
 const mockEditorReadyService = mock(QuillEditorReadyService);
 const mockOverlayService = mock(LynxInsightOverlayService);
 const mockLynxWorkspaceService = mock(LynxWorkspaceService);
+const mockActivatedBookChapterService = mock(ActivatedBookChapterService);
 const mockDestroyRef = mock(DestroyRef);
 const mockTextModelConverter = mock<LynxTextModelConverter>();
 
@@ -33,6 +35,7 @@ describe('LynxInsightEditorObjectsComponent', () => {
       { provide: EditorReadyService, useMock: mockEditorReadyService },
       { provide: LynxInsightOverlayService, useMock: mockOverlayService },
       { provide: LynxWorkspaceService, useMock: mockLynxWorkspaceService },
+      { provide: ActivatedBookChapterService, useMock: mockActivatedBookChapterService },
       { provide: DestroyRef, useMock: mockDestroyRef }
     ],
     schemas: [NO_ERRORS_SCHEMA]
@@ -274,6 +277,60 @@ describe('LynxInsightEditorObjectsComponent', () => {
     }));
   });
 
+  describe('book/chapter navigation', () => {
+    it('should clear display state when changing chapters', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const testInsight = env.createTestInsight();
+
+      env.setEditorReady(true);
+      env.setFilteredInsights([testInsight]);
+      tick();
+      flush();
+
+      // Set some display state (simulate active insights)
+      env.setDisplayState({
+        activeInsightIds: [testInsight.id],
+        actionOverlayActive: true,
+        promptActive: true,
+        cursorActiveInsightIds: [testInsight.id]
+      });
+      tick();
+
+      // Trigger chapter change
+      env.changeBookChapter('MAT', 2);
+      tick();
+
+      // Verify clearDisplayState was called on chapter change
+      verify(mockInsightStateService.clearDisplayState()).atLeast(1);
+    }));
+
+    it('should clear display state when changing books', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const testInsight = env.createTestInsight();
+
+      env.setEditorReady(true);
+      env.setFilteredInsights([testInsight]);
+      tick();
+      flush();
+
+      // Set some display state (simulate active insights)
+      env.setDisplayState({
+        activeInsightIds: [testInsight.id],
+        actionOverlayActive: true,
+        promptActive: true,
+        cursorActiveInsightIds: [testInsight.id]
+      });
+      tick();
+
+      // Trigger book change
+      env.changeBookChapter('MRK', 1);
+      tick();
+
+      // Verify clearDisplayState was called on book change
+      verify(mockInsightStateService.clearDisplayState()).atLeast(1);
+    }));
+  });
+
   describe('cleanup', () => {
     it('should remove all insight formatting on destroy', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -320,6 +377,7 @@ class TestEnvironment {
   private editorReadySubject: BehaviorSubject<boolean>;
   private filteredInsightsSubject: BehaviorSubject<LynxInsight[]>;
   private displayStateSubject: BehaviorSubject<LynxInsightDisplayState>;
+  private activatedBookChapterSubject: BehaviorSubject<RouteBookChapter | undefined>;
 
   constructor(args: TestEnvArgs = {}) {
     const textModelConverter = instance(mockTextModelConverter);
@@ -333,6 +391,11 @@ class TestEnvironment {
       actionOverlayActive: false,
       promptActive: false,
       cursorActiveInsightIds: []
+    });
+
+    this.activatedBookChapterSubject = new BehaviorSubject<RouteBookChapter | undefined>({
+      bookId: 'MAT',
+      chapter: 1
     });
 
     // Create mock editor
@@ -362,6 +425,7 @@ class TestEnvironment {
     when(mockEditorReadyService.listenEditorReadyState(anything())).thenReturn(this.editorReadySubject);
     when(mockInsightStateService.filteredChapterInsights$).thenReturn(this.filteredInsightsSubject);
     when(mockInsightStateService.displayState$).thenReturn(this.displayStateSubject);
+    when(mockActivatedBookChapterService.activatedBookChapter$).thenReturn(this.activatedBookChapterSubject);
     when(mockInsightStateService.updateDisplayState(anything())).thenReturn();
     when(mockInsightStateService.clearDisplayState()).thenReturn();
     when(mockInsightRenderService.render(anything(), anything())).thenResolve();
@@ -410,6 +474,10 @@ class TestEnvironment {
     };
     const fullState = { ...defaultState, ...state };
     this.displayStateSubject.next(fullState);
+  }
+
+  changeBookChapter(bookId: string, chapter: number): void {
+    this.activatedBookChapterSubject.next({ bookId, chapter });
   }
 
   triggerSelectionChange(selection: LynxInsightRange | undefined): void {
