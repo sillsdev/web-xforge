@@ -2,7 +2,7 @@
   @for (book of booksWithDrafts$ | async; track book.bookId) {
     <mat-button-toggle-group
       class="draft-book-option"
-      [disabled]="book.chaptersWithDrafts.length === 0"
+      [disabled]="book.existingChapters.length === 0"
       (change)="$event.source.checked = false"
     >
       <mat-button-toggle class="book-name" (click)="navigate(book)">
