@@ -894,8 +894,8 @@ class TestEnvironment {
     when(mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();
     when(mockedSFProjectService.onlineSetServalConfig('project01', anything())).thenResolve();
     when(mockedSFProjectService.onlineSetRoleProjectPermissions('project01', anything(), anything())).thenResolve();
-    when(mockedSFProjectService.get('project01')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
+    when(mockedSFProjectService.subscribe('project01', anything())).thenCall((id, subscription) =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01', subscription)
     );
     this.testOnlineStatusService.setIsOnline(hasConnection);
 
@@ -938,11 +938,11 @@ class TestEnvironment {
       }
     ]);
 
-    when(mockedSFProjectService.queryAudioText(anything(), anything())).thenCall(sfProjectId => {
+    when(mockedSFProjectService.queryAudioText(anything(), anything())).thenCall(async sfProjectId => {
       const queryParams: QueryParameters = {
         [obj<TextAudio>().pathStr(t => t.projectRef)]: sfProjectId
       };
-      return this.realtimeService.subscribeQuery(TextAudioDoc.COLLECTION, queryParams, noopDestroyRef);
+      return await this.realtimeService.subscribeQuery(TextAudioDoc.COLLECTION, 'spec', queryParams, noopDestroyRef);
     });
 
     this.fixture = TestBed.createComponent(SettingsComponent);

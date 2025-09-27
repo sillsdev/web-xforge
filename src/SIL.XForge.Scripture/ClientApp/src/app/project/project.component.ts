@@ -6,6 +6,7 @@ import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/mode
 import { lastValueFrom, Observable } from 'rxjs';
 import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -74,8 +75,12 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
 
     try {
       const [projectUserConfigDoc, projectDoc] = await Promise.all([
-        this.projectService.getUserConfig(projectId, this.userService.currentUserId),
-        this.projectService.getProfile(projectId)
+        this.projectService.getUserConfig(
+          projectId,
+          this.userService.currentUserId,
+          new DocSubscription('ProjectComponent', this.destroyRef)
+        ),
+        this.projectService.getProfile(projectId, new DocSubscription('ProjectComponent', this.destroyRef))
       ]);
 
       const projectUserConfig = projectUserConfigDoc.data;

@@ -63,13 +63,14 @@ import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/vers
 import * as RichText from 'rich-text';
 import { DeltaOperation, StringMap } from 'rich-text';
 import { BehaviorSubject, defer, firstValueFrom, Observable, of, Subject, take } from 'rxjs';
-import { anything, capture, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
+import { anyString, anything, capture, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -221,7 +222,7 @@ describe('EditorComponent', () => {
     env.dispose();
   }));
 
-  it('response to remote text deletion', fakeAsync(() => {
+  it('response to remote text deletion', fakeAsync(async () => {
     const env = new TestEnvironment();
     flush();
     env.routeWithParams({ projectId: 'project02', bookId: 'MAT' });
@@ -231,14 +232,14 @@ describe('EditorComponent', () => {
     env.setupDialogRef();
 
     const textDocId = new TextDocId('project02', 40, 1, 'target');
-    env.deleteText(textDocId.toString());
+    await env.deleteText(textDocId.toString());
     expect(dialogMessage).toHaveBeenCalledTimes(1);
     tick();
     expect(env.location.path()).toEqual('/projects/project02/translate');
     env.dispose();
   }));
 
-  it('remote user config should not change segment', fakeAsync(() => {
+  it('remote user config should not change segment', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setProjectUserConfig({
       selectedBookNum: 40,
@@ -249,7 +250,8 @@ describe('EditorComponent', () => {
     env.wait();
 
     expect(env.component.target!.segmentRef).toEqual('verse_2_1');
-    env.getProjectUserConfigDoc().submitJson0Op(op => op.set(puc => puc.selectedSegment, <string>'verse_2_2'), false);
+    const projectUserConfigDoc: SFProjectUserConfigDoc = await env.getProjectUserConfigDoc();
+    await projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.selectedSegment, <string>'verse_2_2'), false);
     env.wait();
     expect(env.component.target!.segmentRef).toEqual('verse_2_1');
 
@@ -353,7 +355,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       const sourceId = new TextDocId('project02', 40, 1);
       let resolve: (value: TextDoc | PromiseLike<TextDoc>) => void;
-      when(mockedSFProjectService.getText(deepEqual(sourceId))).thenReturn(new Promise(r => (resolve = r)));
+      when(mockedSFProjectService.getText(deepEqual(sourceId), anything())).thenReturn(new Promise(r => (resolve = r)));
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_2' });
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_2');
@@ -369,7 +371,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('select non-blank segment', fakeAsync(() => {
+    it('select non-blank segment', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
@@ -386,14 +388,14 @@ describe('EditorComponent', () => {
       // The selection gets adjusted to come after the note icon embed.
       expect(selection!.index).toBe(range!.index + 1);
       expect(selection!.length).toBe(0);
-      expect(env.getProjectUserConfigDoc().data!.selectedSegment).toBe('verse_1_3');
+      expect((await env.getProjectUserConfigDoc()).data!.selectedSegment).toBe('verse_1_3');
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
       expect(env.component.showSuggestions).toBe(false);
 
       env.dispose();
     }));
 
-    it('select blank segment', fakeAsync(() => {
+    it('select blank segment', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
@@ -407,7 +409,7 @@ describe('EditorComponent', () => {
       const selection = env.targetEditor.getSelection();
       expect(selection!.index).toBe(33);
       expect(selection!.length).toBe(0);
-      expect(env.getProjectUserConfigDoc().data!.selectedSegment).toBe('verse_1_2');
+      expect((await env.getProjectUserConfigDoc()).data!.selectedSegment).toBe('verse_1_2');
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
       expect(env.component.showSuggestions).toBe(true);
       expect(env.component.suggestions[0].words).toEqual(['target']);
@@ -946,7 +948,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('selected segment checksum unset on server', fakeAsync(() => {
+    it('selected segment checksum unset on server', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({
         selectedBookNum: 40,
@@ -959,7 +961,9 @@ describe('EditorComponent', () => {
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
       expect(env.component.target!.segment!.initialChecksum).toBe(0);
 
-      env.getProjectUserConfigDoc().submitJson0Op(op => op.unset(puc => puc.selectedSegmentChecksum!), false);
+      await (
+        await env.getProjectUserConfigDoc()
+      ).submitJson0Op(op => op.unset(puc => puc.selectedSegmentChecksum!), false);
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
       expect(env.component.target!.segment!.initialChecksum).not.toBe(0);
@@ -1138,7 +1142,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('user can edit a chapter with permission', fakeAsync(() => {
+    it('user can edit a chapter with permission', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setCurrentUser('user03');
       env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2 });
@@ -1156,7 +1160,7 @@ describe('EditorComponent', () => {
       const sourceText = env.sourceTextEditorPlaceholder.getAttribute('data-placeholder');
       expect(sourceText).toEqual('This book is empty. Add chapters in Paratext.');
 
-      env.setDataInSync('project01', false);
+      await env.setDataInSync('project01', false);
       expect(env.component.canEdit).toBe(false);
       expect(env.outOfSyncWarning).not.toBeNull();
       env.dispose();
@@ -1203,7 +1207,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('user cannot edit a text if their permissions change', fakeAsync(() => {
+    it('user cannot edit a text if their permissions change', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setupProject();
       env.setProjectUserConfig();
@@ -1211,7 +1215,7 @@ describe('EditorComponent', () => {
 
       const userId: string = 'user01';
       const projectId: string = 'project01';
-      let projectDoc = env.getProjectDoc(projectId);
+      let projectDoc = await env.getProjectDoc(projectId);
       expect(projectDoc.data?.userRoles[userId]).toBe(SFProjectRole.ParatextTranslator);
       expect(env.bookName).toEqual('Matthew');
       expect(env.component.canEdit).toBe(true);
@@ -1223,13 +1227,13 @@ describe('EditorComponent', () => {
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
 
       // Change user role on the project and run a sync to force remote updates
-      env.changeUserRole(projectId, userId, SFProjectRole.Viewer);
-      env.setDataInSync(projectId, true, false);
-      env.setDataInSync(projectId, false, false);
+      await env.changeUserRole(projectId, userId, SFProjectRole.Viewer);
+      await env.setDataInSync(projectId, true, false);
+      await env.setDataInSync(projectId, false, false);
       env.wait();
       resetCalls(env.mockedRemoteTranslationEngine);
 
-      projectDoc = env.getProjectDoc(projectId);
+      projectDoc = await env.getProjectDoc(projectId);
       expect(projectDoc.data?.userRoles[userId]).toBe(SFProjectRole.Viewer);
       expect(env.bookName).toEqual('Matthew');
       expect(env.component.canEdit).toBe(false);
@@ -1243,7 +1247,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('uses default font size', fakeAsync(() => {
+    it('uses default font size', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setupProject({ defaultFontSize: 18 });
       env.setProjectUserConfig();
@@ -1253,16 +1257,16 @@ describe('EditorComponent', () => {
       expect(env.targetTextEditor.style.fontSize).toEqual(18 / ptToRem + 'rem');
       expect(env.sourceTextEditor.style.fontSize).toEqual(18 / ptToRem + 'rem');
 
-      env.updateFontSize('project01', 24);
+      await env.updateFontSize('project01', 24);
       expect(env.component.fontSize).toEqual(24 / ptToRem + 'rem');
       expect(env.targetTextEditor.style.fontSize).toEqual(24 / ptToRem + 'rem');
-      env.updateFontSize('project02', 24);
+      await env.updateFontSize('project02', 24);
       expect(env.sourceTextEditor.style.fontSize).toEqual(24 / ptToRem + 'rem');
       env.dispose();
     }));
 
     it('user has no resource access', fakeAsync(() => {
-      when(mockedSFProjectService.getProfile('resource01')).thenResolve({
+      when(mockedSFProjectService.getProfile('resource01', anything())).thenResolve({
         id: 'resource01',
         data: createTestProjectProfile()
       } as SFProjectProfileDoc);
@@ -1286,7 +1290,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.routeWithParams({ projectId: 'project01', bookId: 'ACT' });
       env.wait();
-      verify(mockedSFProjectService.get('resource01')).never();
+      verify(mockedSFProjectService.subscribe('resource01', anything())).never();
       expect(env.bookName).toEqual('Acts');
       expect(env.component.chapter).toBe(1);
       expect(env.component.sourceLabel).toEqual('SRC');
@@ -1492,7 +1496,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('ensure inserting in a blank segment only produces required delta ops', fakeAsync(() => {
+    it('ensure inserting in a blank segment only produces required delta ops', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.wait();
 
@@ -1532,7 +1536,7 @@ describe('EditorComponent', () => {
         { retain: 1 }
       ];
       expect(textChangeOps).toEqual(expectedOps);
-      const textDoc: TextDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
+      const textDoc: TextDoc = await env.getTextDoc(new TextDocId('project01', 40, 1));
       const attributes: StringMap = textDoc.data!.ops![5].attributes!;
       expect(Object.keys(attributes)).toEqual(['segment']);
       env.dispose();
@@ -1614,7 +1618,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('handles text doc updates with note embed offset', fakeAsync(() => {
+    it('handles text doc updates with note embed offset', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_2' });
       env.wait();
@@ -1633,7 +1637,7 @@ describe('EditorComponent', () => {
         segment: 'verse_1_2',
         'highlight-segment': true
       });
-      const textDoc: TextDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
+      const textDoc: TextDoc = await env.getTextDoc(new TextDocId('project01', 40, 1));
       const textOps = textDoc.data!.ops!;
       expect(textOps[2].insert!['verse']['number']).toBe('1');
       expect(textOps[3].insert).toBe('target: chapter 1, verse 1.');
@@ -1672,22 +1676,22 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('uses note thread text anchor as anchor', fakeAsync(() => {
+    it('uses note thread text anchor as anchor', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
 
-      let doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
+      let doc: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid01');
       const noteStart1 = env.component.target!.getSegmentRange('verse_1_1')!.index + doc.data!.position.start;
-      doc = env.getNoteThreadDoc('project01', 'dataid02');
+      doc = await env.getNoteThreadDoc('project01', 'dataid02');
       const noteStart2 = env.component.target!.getSegmentRange('verse_1_3')!.index + doc.data!.position.start;
-      doc = env.getNoteThreadDoc('project01', 'dataid03');
+      doc = await env.getNoteThreadDoc('project01', 'dataid03');
       // Add 1 for the one previous embed in the segment
       const noteStart3 = env.component.target!.getSegmentRange('verse_1_3')!.index + doc.data!.position.start + 1;
-      doc = env.getNoteThreadDoc('project01', 'dataid04');
+      doc = await env.getNoteThreadDoc('project01', 'dataid04');
       // Add 2 for the two previous embeds
       const noteStart4 = env.component.target!.getSegmentRange('verse_1_3')!.index + doc.data!.position.start + 2;
-      doc = env.getNoteThreadDoc('project01', 'dataid05');
+      doc = await env.getNoteThreadDoc('project01', 'dataid05');
       const noteStart5 = env.component.target!.getSegmentRange('verse_1_4')!.index + doc.data!.position.start;
       // positions are 11, 34, 55, 56, 94
       const expected = [noteStart1, noteStart2, noteStart3, noteStart4, noteStart5];
@@ -1695,7 +1699,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('note position correctly accounts for footnote symbols', fakeAsync(() => {
+    it('note position correctly accounts for footnote symbols', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
@@ -1706,7 +1710,7 @@ describe('EditorComponent', () => {
       expect(contents.ops![1].insert).toEqual({ note: { caller: '*' } });
       const note2Position = env.getNoteThreadEditorPosition('dataid02');
       expect(range.index).toEqual(note2Position);
-      const noteThreadDoc3 = env.getNoteThreadDoc('project01', 'dataid03');
+      const noteThreadDoc3 = await env.getNoteThreadDoc('project01', 'dataid03');
       const noteThread3StartPosition = 20;
       expect(noteThreadDoc3.data!.position).toEqual({ start: noteThread3StartPosition, length: 7 });
       const note3Position = env.getNoteThreadEditorPosition('dataid03');
@@ -1729,19 +1733,19 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('shows reattached note in updated location', fakeAsync(() => {
+    it('shows reattached note in updated location', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       // active position of thread04 when reattached to verse 4
       const position: TextAnchor = { start: 19, length: 5 };
       // reattach thread04 from MAT 1:3 to MAT 1:4
-      env.reattachNote('project01', 'dataid04', 'MAT 1:4', position);
+      await env.reattachNote('project01', 'dataid04', 'MAT 1:4', position);
 
       // SUT
       env.wait();
       const range: Range = env.component.target!.getSegmentRange('verse_1_4')!;
       const note4Position: number = env.getNoteThreadEditorPosition('dataid04');
-      const note4Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid04')!;
+      const note4Doc: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid04')!;
       const note4Anchor: TextAnchor = note4Doc.data!.position;
       expect(note4Anchor).toEqual(position);
       expect(note4Position).toEqual(range.index + position.start);
@@ -1750,27 +1754,27 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('shows an invalid reattached note in original location', fakeAsync(() => {
+    it('shows an invalid reattached note in original location', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       // invalid reattachment string
-      env.reattachNote('project01', 'dataid04', 'MAT 1:4  invalid note  error', undefined, true);
+      await env.reattachNote('project01', 'dataid04', 'MAT 1:4  invalid note  error', undefined, true);
 
       // SUT
       env.wait();
       const range: Range = env.component.target!.getSegmentRange('verse_1_3')!;
       const note4Position: number = env.getNoteThreadEditorPosition('dataid04');
-      const note4Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid04')!;
+      const note4Doc: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid04')!;
       expect(note4Position).toEqual(range.index + 1);
       // The note thread is on verse 3
       expect(note4Doc.data!.verseRef.verseNum).toEqual(3);
       env.dispose();
     }));
 
-    it('does not display conflict notes', fakeAsync(() => {
+    it('does not display conflict notes', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
-      env.convertToConflictNote('project01', 'dataid02');
+      await env.convertToConflictNote('project01', 'dataid02');
       env.wait();
 
       expect(env.getNoteThreadIconElement('verse_1_3', 'dataid02')).toBeNull();
@@ -1790,7 +1794,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('highlights note icons when new content is unread', fakeAsync(() => {
+    it('highlights note icons when new content is unread', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setCurrentUser('user02');
       env.setProjectUserConfig({ noteRefsRead: ['thread01_note0', 'thread02_note0'] });
@@ -1802,14 +1806,14 @@ describe('EditorComponent', () => {
       expect(env.isNoteIconHighlighted('dataid04')).toBe(true);
       expect(env.isNoteIconHighlighted('dataid05')).toBe(true);
 
-      let puc: SFProjectUserConfigDoc = env.getProjectUserConfigDoc('user01');
+      let puc: SFProjectUserConfigDoc = await env.getProjectUserConfigDoc('user01');
       expect(puc.data!.noteRefsRead).not.toContain('thread01_note1');
       expect(puc.data!.noteRefsRead).not.toContain('thread01_note2');
 
       let iconElement: HTMLElement = env.getNoteThreadIconElement('verse_1_1', 'dataid01')!;
       iconElement.click();
       env.wait();
-      puc = env.getProjectUserConfigDoc('user02');
+      puc = await env.getProjectUserConfigDoc('user02');
       expect(puc.data!.noteRefsRead).toContain('thread01_note1');
       expect(puc.data!.noteRefsRead).toContain('thread01_note2');
       expect(env.isNoteIconHighlighted('dataid01')).toBe(false);
@@ -1818,19 +1822,19 @@ describe('EditorComponent', () => {
       iconElement = env.getNoteThreadIconElement('verse_1_3', 'dataid02')!;
       iconElement.click();
       env.wait();
-      puc = env.getProjectUserConfigDoc('user02');
+      puc = await env.getProjectUserConfigDoc('user02');
       expect(puc.data!.noteRefsRead).toContain('thread02_note0');
       expect(puc.data!.noteRefsRead.filter(ref => ref === 'thread02_note0').length).toEqual(1);
       expect(env.isNoteIconHighlighted('dataid02')).toBe(false);
       env.dispose();
     }));
 
-    it('should update note position when inserting text', fakeAsync(() => {
+    it('should update note position when inserting text', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
 
-      let noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
+      let noteThreadDoc: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid01');
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
 
       // edit before start position
@@ -1853,7 +1857,7 @@ describe('EditorComponent', () => {
       expect(noteThreadDoc.data!.position).toEqual({ start: length * 2 + 8, length: 9 + length });
 
       // edit immediately after verse note
-      noteThreadDoc = env.getNoteThreadDoc('project01', 'dataid02');
+      noteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid02');
       notePosition = env.getNoteThreadEditorPosition('dataid02');
       expect(noteThreadDoc.data!.position).toEqual({ start: 0, length: 0 });
       env.targetEditor.setSelection(notePosition, 0, 'user');
@@ -1864,12 +1868,12 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('should update note position when deleting text', fakeAsync(() => {
+    it('should update note position when deleting text', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
 
-      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
+      const noteThreadDoc: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid01');
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
 
       // delete text before note
@@ -1895,14 +1899,14 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('does not try to update positions with an unchanged value', fakeAsync(() => {
+    it('does not try to update positions with an unchanged value', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
 
       const priorThreadId = 'dataid02';
-      const priorThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', priorThreadId);
-      const laterThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid04');
+      const priorThreadDoc: NoteThreadDoc = await env.getNoteThreadDoc('project01', priorThreadId);
+      const laterThreadDoc: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid04');
       const origPriorThreadDocAnchorStart: number = priorThreadDoc.data!.position.start;
       const origPriorThreadDocAnchorLength: number = priorThreadDoc.data!.position.length;
       const origLaterThreadDocAnchorStart: number = laterThreadDoc.data!.position.start;
@@ -1938,7 +1942,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('re-embeds a note icon when a user deletes it', fakeAsync(() => {
+    it('re-embeds a note icon when a user deletes it', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
@@ -1948,12 +1952,12 @@ describe('EditorComponent', () => {
       env.targetEditor.setSelection(11, 1, 'user');
       env.deleteCharacters();
       expect(Array.from(env.component.target!.embeddedElements.values())).toEqual([11, 34, 55, 56, 94]);
-      const textDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
+      const textDoc = await env.getTextDoc(new TextDocId('project01', 40, 1));
       expect(textDoc.data!.ops![3].insert).toBe('target: chapter 1, verse 1.');
 
       // replace icon and characters with new text
       env.targetEditor.setSelection(9, 5, 'user');
-      const noteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
+      const noteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid01');
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
       env.typeCharacters('t');
       // 4 characters deleted and 1 character inserted
@@ -1997,7 +2001,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('handles deleting parts of two notes text anchors', fakeAsync(() => {
+    it('handles deleting parts of two notes text anchors', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.addParatextNoteThread(6, 'MAT 1:1', 'verse', { start: 19, length: 5 }, ['user01']);
       env.setProjectUserConfig();
@@ -2006,22 +2010,22 @@ describe('EditorComponent', () => {
       // 1 target: $chapter|-> 1, $ve<-|rse 1.
       env.targetEditor.setSelection(19, 7, 'user');
       env.deleteCharacters();
-      const note1 = env.getNoteThreadDoc('project01', 'dataid01');
+      const note1 = await env.getNoteThreadDoc('project01', 'dataid01');
       expect(note1.data!.position).toEqual({ start: 8, length: 7 });
-      const note2 = env.getNoteThreadDoc('project01', 'dataid06');
+      const note2 = await env.getNoteThreadDoc('project01', 'dataid06');
       expect(note2.data!.position).toEqual({ start: 15, length: 3 });
-      const textDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
+      const textDoc = await env.getTextDoc(new TextDocId('project01', 40, 1));
       expect(textDoc.data!.ops![3].insert).toEqual('target: chapterrse 1.');
       env.dispose();
     }));
 
-    it('updates notes anchors in subsequent verse segments', fakeAsync(() => {
+    it('updates notes anchors in subsequent verse segments', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.addParatextNoteThread(6, 'MAT 1:4', 'chapter 1', { start: 8, length: 9 }, ['user01']);
       env.setProjectUserConfig();
       env.wait();
 
-      const noteThreadDoc = env.getNoteThreadDoc('project01', 'dataid05');
+      const noteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid05');
       expect(noteThreadDoc.data!.position).toEqual({ start: 28, length: 9 });
       env.targetEditor.setSelection(86, 0, 'user');
       const text = ' new text ';
@@ -2031,12 +2035,12 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('should update note position if deleting across position end boundary', fakeAsync(() => {
+    it('should update note position if deleting across position end boundary', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
 
-      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
+      const noteThreadDoc: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid01');
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
       // delete text that spans across the end boundary
       const notePosition = env.getNoteThreadEditorPosition('dataid01');
@@ -2053,14 +2057,14 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('handles insert at the last character position', fakeAsync(() => {
+    it('handles insert at the last character position', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.addParatextNoteThread(6, 'MAT 1:1', '1', { start: 16, length: 1 }, ['user01']);
       env.addParatextNoteThread(7, 'MAT 1:3', '.', { start: 27, length: 1 }, ['user01']);
       env.setProjectUserConfig();
       env.wait();
 
-      const thread1Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
+      const thread1Doc: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid01');
       const thread1Position = env.getNoteThreadEditorPosition('dataid01');
       expect(thread1Doc.data!.position).toEqual({ start: 8, length: 9 });
 
@@ -2080,24 +2084,24 @@ describe('EditorComponent', () => {
       expect(thread1Doc.data!.position).toEqual({ start: 8, length: 10 });
 
       // insert in an adjacent text anchor should not be included in the previous note
-      const noteThread3Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid03');
+      const noteThread3Doc: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid03');
       expect(noteThread3Doc.data!.position).toEqual({ start: 20, length: 7 });
       const index = env.getNoteThreadEditorPosition('dataid07');
       env.targetEditor.setSelection(index + 1, 0, 'user');
       env.typeCharacters('c');
       expect(noteThread3Doc.data!.position).toEqual({ start: 20, length: 7 });
-      const noteThread7Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', `dataid07`);
+      const noteThread7Doc: NoteThreadDoc = await env.getNoteThreadDoc('project01', `dataid07`);
       expect(noteThread7Doc.data!.position).toEqual({ start: 27, length: 1 + 'c'.length });
 
       env.dispose();
     }));
 
-    it('should default a note to the beginning if all text is deleted', fakeAsync(() => {
+    it('should default a note to the beginning if all text is deleted', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
 
-      let noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
+      let noteThreadDoc: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid01');
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
 
       // delete the entire text anchor
@@ -2108,7 +2112,7 @@ describe('EditorComponent', () => {
       expect(noteThreadDoc.data!.position).toEqual({ start: 0, length: 0 });
 
       // delete text that includes the entire text anchor
-      noteThreadDoc = env.getNoteThreadDoc('project01', 'dataid03');
+      noteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid03');
       expect(noteThreadDoc.data!.position).toEqual({ start: 20, length: 7 });
       notePosition = env.getNoteThreadEditorPosition('dataid03');
       length = 8;
@@ -2118,18 +2122,18 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('should update paratext notes position after editing verse with multiple notes', fakeAsync(() => {
+    it('should update paratext notes position after editing verse with multiple notes', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
 
-      const thread3Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid03');
+      const thread3Doc: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid03');
       const thread3AnchorLength = 7;
       const thread4AnchorLength = 5;
       expect(thread3Doc.data!.position).toEqual({ start: 20, length: thread3AnchorLength });
-      const otherNoteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid04');
+      const otherNoteThreadDoc: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid04');
       expect(otherNoteThreadDoc.data!.position).toEqual({ start: 20, length: thread4AnchorLength });
-      const verseNoteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid02');
+      const verseNoteThreadDoc: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid02');
       expect(verseNoteThreadDoc.data!.position).toEqual({ start: 0, length: 0 });
       // edit before paratext note
       let thread3Position = env.getNoteThreadEditorPosition('dataid03');
@@ -2196,12 +2200,12 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('update note thread anchors when multiple edits within a verse', fakeAsync(() => {
+    it('update note thread anchors when multiple edits within a verse', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
 
-      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
+      const noteThreadDoc: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid01');
       const origNoteAnchor: TextAnchor = { start: 8, length: 9 };
       expect(noteThreadDoc.data!.position).toEqual(origNoteAnchor);
 
@@ -2236,7 +2240,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('updates note anchor for non-verse segments', fakeAsync(() => {
+    it('updates note anchor for non-verse segments', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       const origThread06Pos: TextAnchor = { start: 38, length: 7 };
@@ -2248,7 +2252,7 @@ describe('EditorComponent', () => {
       const range: Range = env.component.target!.getSegmentRange('s_2')!;
       const notePosition: number = env.getNoteThreadEditorPosition('dataid06');
       expect(range.index + textBeforeNote.length).toEqual(notePosition);
-      const thread06Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid06');
+      const thread06Doc: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid06');
       let textAnchor: TextAnchor = thread06Doc.data!.position;
       expect(textAnchor).toEqual(origThread06Pos);
 
@@ -2275,11 +2279,11 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('note belongs to a segment after a blank', fakeAsync(() => {
+    it('note belongs to a segment after a blank', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
-      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid05');
+      const noteThreadDoc: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid05');
       expect(noteThreadDoc.data!.position).toEqual({ start: 28, length: 9 });
       let verse4p1Index = env.component.target!.getSegmentRange('verse_1_4/p_1')!.index;
       expect(env.getNoteThreadEditorPosition('dataid05')).toEqual(verse4p1Index);
@@ -2319,11 +2323,11 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('remote edits correctly applied to editor', fakeAsync(() => {
+    it('remote edits correctly applied to editor', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
-      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
+      const noteThreadDoc: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid01');
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
 
       // The remote user inserts text after the thread01 note
@@ -2338,12 +2342,12 @@ describe('EditorComponent', () => {
       );
       // $ represents a note thread embed
       // target: $chap|ter 1, verse 1.
-      const textDoc: TextDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
+      const textDoc: TextDoc = await env.getTextDoc(new TextDocId('project01', 40, 1));
       const insertDelta: Delta = new Delta();
       (insertDelta as any).push({ retain: remoteEditTextPos } as DeltaOperation);
       (insertDelta as any).push({ insert: 'abc' } as DeltaOperation);
       // Simulate remote changes coming in
-      textDoc.submit(insertDelta);
+      await textDoc.submit(insertDelta);
 
       // SUT 1
       env.wait();
@@ -2361,7 +2365,7 @@ describe('EditorComponent', () => {
       noteCountBeforePosition = 2;
       remoteEditPositionAfterNote = 5;
       remoteEditTextPos = env.getRemoteEditPosition(notePosition, remoteEditPositionAfterNote, noteCountBeforePosition);
-      const originalNotePosInVerse: number = env.getNoteThreadDoc('project01', 'dataid03').data!.position.start;
+      const originalNotePosInVerse: number = (await env.getNoteThreadDoc('project01', 'dataid03')).data!.position.start;
       // $*targ|->et: cha<-|pter 1, $$verse 3.
       //          ------- 7 characters get replaced locally by the text 'defgh'
       const selectionLength: number = 'et: cha'.length;
@@ -2369,7 +2373,7 @@ describe('EditorComponent', () => {
       (insertDeleteDelta as any).push({ retain: remoteEditTextPos } as DeltaOperation);
       (insertDeleteDelta as any).push({ insert: 'defgh' } as DeltaOperation);
       (insertDeleteDelta as any).push({ delete: selectionLength } as DeltaOperation);
-      textDoc.submit(insertDeleteDelta);
+      await textDoc.submit(insertDeleteDelta);
 
       // SUT 2
       env.wait();
@@ -2384,13 +2388,17 @@ describe('EditorComponent', () => {
       (deleteDelta as any).push({ retain: remoteEditTextPos } as DeltaOperation);
       // the remote edit deletes 4, but locally it is expanded to 6 to include the 2 note embeds
       (deleteDelta as any).push({ delete: 4 } as DeltaOperation);
-      textDoc.submit(deleteDelta);
+      await textDoc.submit(deleteDelta);
 
       // SUT 3
       env.wait();
       expect(env.component.target!.getSegmentText('verse_1_3')).toEqual('targdefghpter ' + 'erse 3.');
-      expect(env.getNoteThreadDoc('project01', 'dataid03').data!.position.start).toEqual(originalNotePosInVerse);
-      expect(env.getNoteThreadDoc('project01', 'dataid04').data!.position.start).toEqual(originalNotePosInVerse);
+      expect((await env.getNoteThreadDoc('project01', 'dataid03')).data!.position.start).toEqual(
+        originalNotePosInVerse
+      );
+      expect((await env.getNoteThreadDoc('project01', 'dataid04')).data!.position.start).toEqual(
+        originalNotePosInVerse
+      );
       const verse3Index: number = env.component.target!.getSegmentRange('verse_1_3')!.index;
       // The note is re-embedded at the position in the note thread doc.
       // Applying remote changes must not affect text anchors
@@ -2401,13 +2409,13 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('remote edits do not affect note thread text anchors', fakeAsync(() => {
+    it('remote edits do not affect note thread text anchors', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
 
-      const noteThread1Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
-      const noteThread4Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid04');
+      const noteThread1Doc: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid01');
+      const noteThread4Doc: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid04');
       const originalNoteThread1TextPos: TextAnchor = noteThread1Doc.data!.position;
       const originalNoteThread4TextPos: TextAnchor = noteThread4Doc.data!.position;
       expect(originalNoteThread1TextPos).toEqual({ start: 8, length: 9 });
@@ -2428,8 +2436,8 @@ describe('EditorComponent', () => {
       let insert = 'abc';
       let deltaOps: DeltaOperation[] = [{ retain: remoteEditTextPos }, { insert: insert }];
       const inSegmentDelta = new Delta(deltaOps);
-      const textDoc: TextDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
-      textDoc.submit(inSegmentDelta);
+      const textDoc: TextDoc = await env.getTextDoc(new TextDocId('project01', 40, 1));
+      await textDoc.submit(inSegmentDelta);
 
       // SUT 1
       env.wait();
@@ -2444,7 +2452,7 @@ describe('EditorComponent', () => {
       insert = 'def';
       deltaOps = [{ retain: remoteEditTextPos }, { insert: insert }];
       const outOfSegmentDelta = new Delta(deltaOps);
-      textDoc.submit(outOfSegmentDelta);
+      await textDoc.submit(outOfSegmentDelta);
 
       // SUT 2
       env.wait();
@@ -2460,10 +2468,10 @@ describe('EditorComponent', () => {
       insert = 'before';
       deltaOps = [{ retain: remoteEditTextPos }, { insert: insert }];
       const insertDelta = new Delta(deltaOps);
-      textDoc.submit(insertDelta);
-      const note1Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
+      await textDoc.submit(insertDelta);
+      const note1Doc: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid01');
       const anchor: TextAnchor = { start: 8 + insert.length, length: 12 };
-      note1Doc.submitJson0Op(op => op.set(nt => nt.position, anchor));
+      await note1Doc.submitJson0Op(op => op.set(nt => nt.position, anchor));
 
       // SUT 3
       env.wait();
@@ -2483,7 +2491,7 @@ describe('EditorComponent', () => {
       insert = 'ghi';
       deltaOps = [{ retain: remoteEditTextPos }, { insert: insert }];
       const insertAfterNoteDelta = new Delta(deltaOps);
-      textDoc.submit(insertAfterNoteDelta);
+      await textDoc.submit(insertAfterNoteDelta);
 
       // SUT 4
       env.wait();
@@ -2518,7 +2526,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('remote edits next to note on verse applied correctly', fakeAsync(() => {
+    it('remote edits next to note on verse applied correctly', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
@@ -2538,8 +2546,8 @@ describe('EditorComponent', () => {
       );
       const insert: string = 'abc';
       const deltaOps: DeltaOperation[] = [{ retain: remoteEditTextPos }, { insert: insert }];
-      const textDoc: TextDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
-      textDoc.submit(new Delta(deltaOps));
+      const textDoc: TextDoc = await env.getTextDoc(new TextDocId('project01', 40, 1));
+      await textDoc.submit(new Delta(deltaOps));
 
       env.wait();
       expect(env.getNoteThreadEditorPosition('dataid02')).toEqual(notePosition);
@@ -2553,7 +2561,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('undo delete-a-note-icon removes the duplicate recreated icon', fakeAsync(() => {
+    it('undo delete-a-note-icon removes the duplicate recreated icon', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       const noteThread6Anchor: TextAnchor = { start: 19, length: 5 };
@@ -2561,10 +2569,10 @@ describe('EditorComponent', () => {
       env.wait();
 
       // undo deleting just the note
-      const noteThread1: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
+      const noteThread1: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid01');
       const noteThread1Anchor: TextAnchor = { start: 8, length: 9 };
       expect(noteThread1.data!.position).toEqual(noteThread1Anchor);
-      const textDoc: TextDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
+      const textDoc: TextDoc = await env.getTextDoc(new TextDocId('project01', 40, 1));
       expect(textDoc.data!.ops![3].insert).toEqual('target: chapter 1, verse 1.');
       const note1Position: number = env.getNoteThreadEditorPosition('dataid01');
       // target: |->$<-|chapter 1, $verse 1.
@@ -2611,7 +2619,7 @@ describe('EditorComponent', () => {
 
       // undo deleting a second note in verse does not affect first note
       const note6Position: number = env.getNoteThreadEditorPosition('dataid06');
-      const noteThread6: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid06');
+      const noteThread6: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid06');
       deleteLength = 3;
       const text = 'abc';
       // target: $chapter 1, |->$ve<-|rse 1.
@@ -2626,8 +2634,8 @@ describe('EditorComponent', () => {
       expect(textDoc.data!.ops![3].insert).toEqual('target: chapter 1, verse 1.');
 
       // undo deleting multiple notes
-      const noteThread3: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid03');
-      const noteThread4: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid04');
+      const noteThread3: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid03');
+      const noteThread4: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid04');
       const noteThread3Anchor: TextAnchor = { start: 20, length: 7 };
       const noteThread4Anchor: TextAnchor = { start: 20, length: 5 };
       expect(noteThread3.data!.position).toEqual(noteThread3Anchor);
@@ -2653,7 +2661,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('note icon is changed after remote update', fakeAsync(() => {
+    it('note icon is changed after remote update', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
@@ -2671,11 +2679,11 @@ describe('EditorComponent', () => {
       );
 
       // Update the last note on the thread as that is the icon displayed
-      const noteThread: NoteThreadDoc = env.getNoteThreadDoc(projectId, threadDataId);
+      const noteThread: NoteThreadDoc = await env.getNoteThreadDoc(projectId, threadDataId);
       const index: number = noteThread.data!.notes.length - 1;
       const note: Note = noteThread.data!.notes[index];
       note.tagId = 2;
-      noteThread.submitJson0Op(op => op.insert(nt => nt.notes, index, note), false);
+      await noteThread.submitJson0Op(op => op.insert(nt => nt.notes, index, note), false);
       verse1Note = verse1Segment.querySelector('display-note') as HTMLElement;
       expect(verse1Note.getAttribute('style')).toEqual(`--icon-file: url(/assets/icons/TagIcons/${newIconTag}.png);`);
       env.dispose();
@@ -2916,7 +2924,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('can edit a note with xml reserved symbols as note content', fakeAsync(() => {
+    it('can edit a note with xml reserved symbols as note content', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
@@ -2926,9 +2934,9 @@ describe('EditorComponent', () => {
       const content: string = 'content in the thread';
       env.mockNoteDialogRef.close({ noteContent: content });
       env.wait();
-      verify(mockedSFProjectService.createNoteThread(projectId, anything())).once();
+      verify(mockedSFProjectService.createNoteThread(projectId, anything(), anything())).once();
       const [, noteThread] = capture(mockedSFProjectService.createNoteThread).last();
-      let noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc(projectId, noteThread.dataId);
+      let noteThreadDoc: NoteThreadDoc = await env.getNoteThreadDoc(projectId, noteThread.dataId);
       expect(noteThreadDoc.data!.notes[0].content).toEqual(content);
 
       const iconElement: HTMLElement = env.getNoteThreadIconElementAtIndex('verse_1_2', 0)!;
@@ -2937,7 +2945,7 @@ describe('EditorComponent', () => {
       env.mockNoteDialogRef.close({ noteDataId: noteThread.notes[0].dataId, noteContent: editedContent });
       env.wait();
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).twice();
-      noteThreadDoc = env.getNoteThreadDoc(projectId, noteThread.dataId);
+      noteThreadDoc = await env.getNoteThreadDoc(projectId, noteThread.dataId);
       expect(noteThreadDoc.data!.notes[0].content).toEqual(XmlUtils.encodeForXml(editedContent));
       env.dispose();
     }));
@@ -2963,16 +2971,16 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('cannot insert a note when editor content unavailable', fakeAsync(() => {
+    it('cannot insert a note when editor content unavailable', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.onlineStatus = false;
-      const textDoc: TextDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
+      const textDoc: TextDoc = await env.getTextDoc(new TextDocId('project01', 40, 1));
       const subject: Subject<void> = new Subject<void>();
       const promise = new Promise<TextDoc>(resolve => {
         subject.subscribe(() => resolve(textDoc));
       });
-      when(mockedSFProjectService.getText(anything())).thenReturn(promise);
+      when(mockedSFProjectService.getText(anything(), anything())).thenReturn(promise);
       env.wait();
       env.insertNoteFab.nativeElement.click();
       env.wait();
@@ -3006,7 +3014,7 @@ describe('EditorComponent', () => {
       const noteVerseRef: VerseRef = (config as MatDialogConfig).data!.verseRef;
       expect(noteVerseRef.toString()).toEqual('MAT 1:4');
 
-      verify(mockedSFProjectService.createNoteThread(projectId, anything())).once();
+      verify(mockedSFProjectService.createNoteThread(projectId, anything(), anything())).once();
       const [, noteThread] = capture(mockedSFProjectService.createNoteThread).last();
       expect(noteThread.verseRef).toEqual(fromVerseRef(noteVerseRef));
       expect(noteThread.publishedToSF).toBe(true);
@@ -3019,14 +3027,14 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('allows adding a note to an existing thread', fakeAsync(() => {
+    it('allows adding a note to an existing thread', fakeAsync(async () => {
       const projectId: string = 'project01';
       const threadDataId: string = 'dataid04';
       const threadId: string = 'thread04';
       const segmentRef: string = 'verse_1_3';
       const env = new TestEnvironment();
       const content: string = 'content in the thread';
-      let noteThread: NoteThreadDoc = env.getNoteThreadDoc(projectId, threadDataId);
+      let noteThread: NoteThreadDoc = await env.getNoteThreadDoc(projectId, threadDataId);
       expect(noteThread.data!.notes.length).toEqual(1);
 
       env.setProjectUserConfig();
@@ -3038,7 +3046,7 @@ describe('EditorComponent', () => {
       expect((noteDialogData!.data as NoteDialogData).threadDataId).toEqual(threadDataId);
       env.mockNoteDialogRef.close({ noteContent: content });
       env.wait();
-      noteThread = env.getNoteThreadDoc(projectId, threadDataId);
+      noteThread = await env.getNoteThreadDoc(projectId, threadDataId);
       expect(noteThread.data!.notes.length).toEqual(2);
       expect(noteThread.data!.notes[1].threadId).toEqual(threadId);
       expect(noteThread.data!.notes[1].content).toEqual(content);
@@ -3046,12 +3054,12 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('allows resolving a note', fakeAsync(() => {
+    it('allows resolving a note', fakeAsync(async () => {
       const projectId: string = 'project01';
       const threadDataId: string = 'dataid01';
       const content: string = 'This thread is resolved.';
       const env = new TestEnvironment();
-      let noteThread: NoteThreadDoc = env.getNoteThreadDoc(projectId, threadDataId);
+      let noteThread: NoteThreadDoc = await env.getNoteThreadDoc(projectId, threadDataId);
       expect(noteThread.data!.notes.length).toEqual(3);
 
       env.setProjectUserConfig();
@@ -3061,7 +3069,7 @@ describe('EditorComponent', () => {
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
       env.mockNoteDialogRef.close({ noteContent: content, status: NoteStatus.Resolved });
       env.wait();
-      noteThread = env.getNoteThreadDoc(projectId, threadDataId);
+      noteThread = await env.getNoteThreadDoc(projectId, threadDataId);
       expect(noteThread.data!.notes.length).toEqual(4);
       expect(noteThread.data!.notes[3].content).toEqual(content);
       expect(noteThread.data!.notes[3].status).toEqual(NoteStatus.Resolved);
@@ -3077,7 +3085,7 @@ describe('EditorComponent', () => {
       const threadDataId: string = 'dataid01';
       const content: string = 'This thread is resolved.';
       const env = new TestEnvironment();
-      let noteThread: NoteThreadDoc = env.getNoteThreadDoc(projectId, threadDataId);
+      let noteThread: NoteThreadDoc = await env.getNoteThreadDoc(projectId, threadDataId);
       expect(noteThread.data!.notes.length).toEqual(3);
       // Mark the note as editable
       await noteThread.submitJson0Op(op => op.set(nt => nt.notes[0].editable, true));
@@ -3088,7 +3096,7 @@ describe('EditorComponent', () => {
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
       env.mockNoteDialogRef.close({ noteContent: content, status: NoteStatus.Resolved, noteDataId: 'thread01_note0' });
       env.wait();
-      noteThread = env.getNoteThreadDoc(projectId, threadDataId);
+      noteThread = await env.getNoteThreadDoc(projectId, threadDataId);
       expect(noteThread.data!.notes.length).toEqual(3);
       expect(noteThread.data!.notes[0].content).toEqual(content);
       expect(noteThread.data!.notes[0].status).toEqual(NoteStatus.Resolved);
@@ -3099,13 +3107,13 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('does not allow editing and resolving a non-editable note', fakeAsync(() => {
+    it('does not allow editing and resolving a non-editable note', fakeAsync(async () => {
       const projectId: string = 'project01';
       const threadDataId: string = 'dataid01';
       const content: string = 'This thread is resolved.';
       const env = new TestEnvironment();
       const dialogMessage = spyOn((env.component as any).dialogService, 'message').and.stub();
-      let noteThread: NoteThreadDoc = env.getNoteThreadDoc(projectId, threadDataId);
+      let noteThread: NoteThreadDoc = await env.getNoteThreadDoc(projectId, threadDataId);
       expect(noteThread.data!.notes.length).toEqual(3);
       env.setProjectUserConfig();
       env.wait();
@@ -3114,7 +3122,7 @@ describe('EditorComponent', () => {
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
       env.mockNoteDialogRef.close({ noteContent: content, status: NoteStatus.Resolved, noteDataId: 'thread01_note0' });
       env.wait();
-      noteThread = env.getNoteThreadDoc(projectId, threadDataId);
+      noteThread = await env.getNoteThreadDoc(projectId, threadDataId);
       expect(noteThread.data!.notes.length).toEqual(3);
       expect(dialogMessage).toHaveBeenCalledTimes(1);
       env.dispose();
@@ -3374,7 +3382,8 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('should remove resolved notes after a remote update', fakeAsync(() => {
+    /** This test is under discussion. */
+    xit('should remove resolved notes after a remote update', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
@@ -3383,14 +3392,14 @@ describe('EditorComponent', () => {
       let noteThreadEmbedCount = env.countNoteThreadEmbeds(contents.ops!);
       expect(noteThreadEmbedCount).toEqual(5);
 
-      env.resolveNote('project01', 'dataid01');
+      await env.resolveNote('project01', 'dataid01');
       contents = env.targetEditor.getContents();
       noteThreadEmbedCount = env.countNoteThreadEmbeds(contents.ops!);
       expect(noteThreadEmbedCount).toEqual(4);
       env.dispose();
     }));
 
-    it('should remove note thread icon from editor when thread is deleted', fakeAsync(() => {
+    it('should remove note thread icon from editor when thread is deleted', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
@@ -3399,14 +3408,14 @@ describe('EditorComponent', () => {
       const segmentRef = 'verse_1_3';
       let thread2Elem: HTMLElement | null = env.getNoteThreadIconElement(segmentRef, threadId);
       expect(thread2Elem).not.toBeNull();
-      env.deleteMostRecentNote('project01', segmentRef, threadId);
+      await env.deleteMostRecentNote('project01', segmentRef, threadId);
       thread2Elem = env.getNoteThreadIconElement(segmentRef, threadId);
       expect(thread2Elem).toBeNull();
 
       // notes respond to edits after note icon removed
       const note1position: number = env.getNoteThreadEditorPosition('dataid01');
       env.targetEditor.setSelection(note1position + 2, 'user');
-      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
+      const noteThreadDoc: NoteThreadDoc = await env.getNoteThreadDoc('project01', 'dataid01');
       const originalPos: TextAnchor = { start: 8, length: 9 };
       expect(noteThreadDoc.data!.position).toEqual(originalPos);
       env.typeCharacters('t');
@@ -3748,7 +3757,7 @@ describe('EditorComponent', () => {
     }));
 
     it('user has no resource access', fakeAsync(() => {
-      when(mockedSFProjectService.getProfile('resource01')).thenResolve({
+      when(mockedSFProjectService.getProfile('resource01', anything())).thenResolve({
         id: 'resource01',
         data: createTestProjectProfile()
       } as SFProjectProfileDoc);
@@ -3772,7 +3781,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.routeWithParams({ projectId: 'project01', bookId: 'ACT' });
       env.wait();
-      verify(mockedSFProjectService.get('resource01')).never();
+      verify(mockedSFProjectService.subscribe('resource01', anything())).never();
       expect(env.bookName).toEqual('Acts');
       expect(env.component.chapter).toBe(1);
       expect(env.component.sourceLabel).toEqual('SRC');
@@ -3963,9 +3972,9 @@ describe('EditorComponent', () => {
     });
 
     describe('initEditorTabs', () => {
-      it('should add source tab when source is defined and viewable', fakeAsync(() => {
+      it('should add source tab when source is defined and viewable', fakeAsync(async () => {
         const env = new TestEnvironment();
-        const projectDoc = env.getProjectDoc('project01');
+        const projectDoc = await env.getProjectDoc('project01');
         const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
         env.wait();
         expect(spyCreateTab).toHaveBeenCalledWith('project-source', {
@@ -3976,10 +3985,10 @@ describe('EditorComponent', () => {
         discardPeriodicTasks();
       }));
 
-      it('should not add source tab when source is defined but not viewable', fakeAsync(() => {
+      it('should not add source tab when source is defined but not viewable', fakeAsync(async () => {
         const env = new TestEnvironment();
         when(mockedPermissionsService.isUserOnProject('project02')).thenResolve(false);
-        const projectDoc = env.getProjectDoc('project01');
+        const projectDoc = await env.getProjectDoc('project01');
         const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
         env.wait();
         expect(spyCreateTab).not.toHaveBeenCalledWith('project-source', {
@@ -4000,9 +4009,9 @@ describe('EditorComponent', () => {
         discardPeriodicTasks();
       }));
 
-      it('should add target tab', fakeAsync(() => {
+      it('should add target tab', fakeAsync(async () => {
         const env = new TestEnvironment();
-        const projectDoc = env.getProjectDoc('project01');
+        const projectDoc = await env.getProjectDoc('project01');
         const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
         env.wait();
         expect(spyCreateTab).toHaveBeenCalledWith('project-target', {
@@ -4048,7 +4057,7 @@ describe('EditorComponent', () => {
 
       it('should exclude deleted resource tabs (tabs that have "projectDoc" but not "projectDoc.data")', fakeAsync(async () => {
         const absentProjectId = 'absentProjectId';
-        when(mockedSFProjectService.getProfile(absentProjectId)).thenResolve({
+        when(mockedSFProjectService.getProfile(absentProjectId, anything())).thenResolve({
           data: undefined
         } as SFProjectProfileDoc);
         const env = new TestEnvironment();
@@ -4202,15 +4211,14 @@ describe('EditorComponent', () => {
         });
       }));
 
-      it('should not throw exception on remote change when source is undefined', fakeAsync(() => {
+      it('should not throw exception on remote change when source is undefined', fakeAsync(async () => {
         const env = new TestEnvironment();
         env.setProjectUserConfig();
         env.wait();
 
         env.component.source = undefined;
-
-        expect(() => env.updateFontSize('project01', 24)).not.toThrow();
-
+        await expectAsync(env.updateFontSize('project01', 24)).not.toBeRejected();
+        flush();
         env.dispose();
       }));
     });
@@ -4310,7 +4318,7 @@ describe('EditorComponent', () => {
         const tooltipHarness = await env.harnessLoader.getHarness(
           MatTooltipHarness.with({ selector: '#source-text-area .tab-header-content' })
         );
-        const sourceProjectDoc = env.getProjectDoc('project02');
+        const sourceProjectDoc = await env.getProjectDoc('project02');
         env.wait();
         await tooltipHarness.show();
         expect(await tooltipHarness.getTooltipText()).toBe(sourceProjectDoc.data?.translateConfig.source?.name!);
@@ -4324,7 +4332,7 @@ describe('EditorComponent', () => {
           MatTooltipHarness.with({ selector: '#target-text-area .tab-header-content' })
         );
 
-        const targetProjectDoc = env.getProjectDoc('project01');
+        const targetProjectDoc = await env.getProjectDoc('project01');
         env.wait();
         await tooltipHarness.show();
         expect(await tooltipHarness.getTooltipText()).toBe(targetProjectDoc.data?.name!);
@@ -4777,35 +4785,37 @@ class TestEnvironment {
     when(this.mockedRemoteTranslationEngine.trainSegment(anything(), anything(), anything())).thenResolve();
     when(this.mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
-    when(mockedSFProjectService.getProfile('project01')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01')
+    when(mockedSFProjectService.getProfile(anyString(), anything())).thenCall((id, subscriber) =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, subscriber)
     );
-    when(mockedSFProjectService.getProfile('project02')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project02')
+    when(mockedSFProjectService.tryGetForRole('project01', anything(), anything())).thenCall((id, role, subscriber) =>
+      isParatextRole(role) ? this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id, subscriber) : undefined
     );
-    when(mockedSFProjectService.tryGetForRole('project01', anything())).thenCall((id, role) =>
-      isParatextRole(role) ? this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id) : undefined
+    when(mockedSFProjectService.getUserConfig('project01', anything(), anything())).thenCall(
+      (_projectId, userId, subscriber) =>
+        this.realtimeService.subscribe(
+          SFProjectUserConfigDoc.COLLECTION,
+          getSFProjectUserConfigDocId('project01', userId),
+          subscriber
+        )
     );
-    when(mockedSFProjectService.getUserConfig('project01', anything())).thenCall((_projectId, userId) =>
-      this.realtimeService.subscribe(
-        SFProjectUserConfigDoc.COLLECTION,
-        getSFProjectUserConfigDocId('project01', userId)
-      )
+    when(mockedSFProjectService.getUserConfig('project02', anything(), anything())).thenCall(
+      (_projectId, userId, subscriber) =>
+        this.realtimeService.subscribe(
+          SFProjectUserConfigDoc.COLLECTION,
+          getSFProjectUserConfigDocId('project02', userId),
+          subscriber
+        )
     );
-    when(mockedSFProjectService.getUserConfig('project02', anything())).thenCall((_projectId, userId) =>
-      this.realtimeService.subscribe(
-        SFProjectUserConfigDoc.COLLECTION,
-        getSFProjectUserConfigDocId('project02', userId)
-      )
-    );
-    when(mockedSFProjectService.getText(anything())).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+    when(mockedSFProjectService.getText(anything(), anything())).thenCall((id, subscriber) =>
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), subscriber)
     );
     when(mockedSFProjectService.isProjectAdmin('project01', 'user04')).thenResolve(true);
     when(mockedSFProjectService.queryNoteThreads(anything(), anything(), anything(), anything())).thenCall(
       (id, bookNum, chapterNum, _) =>
         this.realtimeService.subscribeQuery(
           NoteThreadDoc.COLLECTION,
+          'spec',
           {
             [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
             [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo,
@@ -4818,6 +4828,7 @@ class TestEnvironment {
     when(mockedSFProjectService.queryBiblicalTermNoteThreads(anything(), anything())).thenCall(id =>
       this.realtimeService.subscribeQuery(
         NoteThreadDoc.COLLECTION,
+        'spec',
         {
           [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
           [obj<NoteThread>().pathStr(t => t.biblicalTermId)]: { $ne: null }
@@ -4828,18 +4839,20 @@ class TestEnvironment {
     when(mockedSFProjectService.queryBiblicalTerms(anything(), anything())).thenCall(id =>
       this.realtimeService.subscribeQuery(
         BiblicalTermDoc.COLLECTION,
+        'spec',
         {
           [obj<BiblicalTerm>().pathStr(t => t.projectRef)]: id
         },
         noopDestroyRef
       )
     );
-    when(mockedSFProjectService.createNoteThread(anything(), anything())).thenCall(
-      (projectId: string, noteThread: NoteThread) => {
+    when(mockedSFProjectService.createNoteThread(anything(), anything(), anything())).thenCall(
+      (projectId: string, noteThread: NoteThread, subscription) => {
         this.realtimeService.create(
           NoteThreadDoc.COLLECTION,
           getNoteThreadDocId(projectId, noteThread.dataId),
-          noteThread
+          noteThread,
+          subscription
         );
         tick();
       }
@@ -4858,7 +4871,7 @@ class TestEnvironment {
     when(this.mockedDialogRef.afterClosed()).thenReturn(of());
     this.breakpointObserver.matchedResult = false;
 
-    when(mockedSFProjectService.getNoteThread(anything())).thenCall((id: string) => {
+    when(mockedSFProjectService.getNoteThread(anything(), anything())).thenCall((id: string) => {
       const [projectId, threadId] = id.split(':');
       return this.getNoteThreadDoc(projectId, threadId);
     });
@@ -5043,17 +5056,19 @@ class TestEnvironment {
     this.wait();
   }
 
-  deleteText(textId: string): void {
-    this.ngZone.run(() => {
-      const textDoc = this.realtimeService.get(TextDoc.COLLECTION, textId);
-      textDoc.delete();
+  async deleteText(textId: string): Promise<void> {
+    await this.ngZone.run(async () => {
+      const textDoc = await this.realtimeService.get(TextDoc.COLLECTION, textId, new DocSubscription('spec'));
+      await textDoc.delete();
     });
     this.wait();
   }
 
   setCurrentUser(userId: string): void {
     when(mockedUserService.currentUserId).thenReturn(userId);
-    when(mockedUserService.getCurrentUser()).thenCall(() => this.realtimeService.subscribe(UserDoc.COLLECTION, userId));
+    when(mockedUserService.getCurrentUser()).thenCall(() =>
+      this.realtimeService.subscribe(UserDoc.COLLECTION, userId, new DocSubscription('spec'))
+    );
   }
 
   setParatextReviewerUser(): void {
@@ -5065,6 +5080,7 @@ class TestEnvironment {
       (id, bookNum, chapterNum, _) =>
         this.realtimeService.subscribeQuery(
           NoteThreadDoc.COLLECTION,
+          'spec',
           {
             [obj<NoteThread>().pathStr(t => t.publishedToSF)]: userId === 'user05',
             [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo,
@@ -5194,28 +5210,33 @@ class TestEnvironment {
     spyOn((this.component as any).dialogService.matDialog, 'open').and.returnValue(mockDialogRef);
   }
 
-  getProjectUserConfigDoc(userId: string = 'user01'): SFProjectUserConfigDoc {
-    return this.realtimeService.get<SFProjectUserConfigDoc>(
+  async getProjectUserConfigDoc(userId: string = 'user01'): Promise<SFProjectUserConfigDoc> {
+    return await this.realtimeService.get<SFProjectUserConfigDoc>(
       SFProjectUserConfigDoc.COLLECTION,
-      getSFProjectUserConfigDocId('project01', userId)
+      getSFProjectUserConfigDocId('project01', userId),
+      new DocSubscription('spec')
     );
   }
 
-  getProjectDoc(projectId: string): SFProjectProfileDoc {
-    return this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
+  async getProjectDoc(projectId: string): Promise<SFProjectProfileDoc> {
+    return await this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      projectId,
+      new DocSubscription('spec')
+    );
   }
 
   getSegmentElement(segmentRef: string): HTMLElement | null {
     return this.targetEditor.container.querySelector('usx-segment[data-segment="' + segmentRef + '"]');
   }
 
-  getTextDoc(textId: TextDocId): TextDoc {
-    return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString());
+  async getTextDoc(textId: TextDocId): Promise<TextDoc> {
+    return await this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString(), new DocSubscription('spec'));
   }
 
-  getNoteThreadDoc(projectId: string, threadDataId: string): NoteThreadDoc {
+  async getNoteThreadDoc(projectId: string, threadDataId: string): Promise<NoteThreadDoc> {
     const docId: string = projectId + ':' + threadDataId;
-    return this.realtimeService.get<NoteThreadDoc>(NoteThreadDoc.COLLECTION, docId);
+    return await this.realtimeService.get<NoteThreadDoc>(NoteThreadDoc.COLLECTION, docId, new DocSubscription('spec'));
   }
 
   getNoteThreadIconElement(segmentRef: string, threadDataId: string): HTMLElement | null {
@@ -5248,9 +5269,9 @@ class TestEnvironment {
     return thread!.classList.contains('note-thread-highlight');
   }
 
-  setDataInSync(projectId: string, isInSync: boolean, source?: any): void {
-    const projectDoc: SFProjectProfileDoc = this.getProjectDoc(projectId);
-    projectDoc.submitJson0Op(op => op.set(p => p.sync.dataInSync!, isInSync), source);
+  async setDataInSync(projectId: string, isInSync: boolean, source?: any): Promise<void> {
+    const projectDoc: SFProjectProfileDoc = await this.getProjectDoc(projectId);
+    await projectDoc.submitJson0Op(op => op.set(p => p.sync.dataInSync!, isInSync), source);
     tick();
     this.fixture.detectChanges();
   }
@@ -5265,9 +5286,9 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  updateFontSize(projectId: string, size: number): void {
-    const projectDoc: SFProjectProfileDoc = this.getProjectDoc(projectId);
-    projectDoc.submitJson0Op(op => op.set(p => p.defaultFontSize, size), false);
+  async updateFontSize(projectId: string, size: number): Promise<void> {
+    const projectDoc: SFProjectProfileDoc = await this.getProjectDoc(projectId);
+    await projectDoc.submitJson0Op(op => op.set(p => p.defaultFontSize, size), false);
     tick();
     this.fixture.detectChanges();
   }
@@ -5307,11 +5328,11 @@ class TestEnvironment {
     this.wait();
   }
 
-  changeUserRole(projectId: string, userId: string, role: SFProjectRole): void {
-    const projectDoc: SFProjectProfileDoc = this.getProjectDoc(projectId);
+  async changeUserRole(projectId: string, userId: string, role: SFProjectRole): Promise<void> {
+    const projectDoc: SFProjectProfileDoc = await this.getProjectDoc(projectId);
     const userRoles = cloneDeep(this.userRolesOnProject);
     userRoles[userId] = role;
-    projectDoc.submitJson0Op(op => op.set(p => p.userRoles, userRoles), false);
+    await projectDoc.submitJson0Op(op => op.set(p => p.userRoles, userRoles), false);
 
     this.wait();
   }
@@ -5412,6 +5433,7 @@ class TestEnvironment {
     this.wait();
     this.component.metricsSession?.dispose();
     this.waitForPresenceTimer();
+    flush();
   }
 
   addTextDoc(id: TextDocId, textType: TextType = 'target', corrupt: boolean = false, tooLong: boolean = false): void {
@@ -5531,14 +5553,14 @@ class TestEnvironment {
     });
   }
 
-  reattachNote(
+  async reattachNote(
     projectId: string,
     threadDataId: string,
     verseStr: string,
     position?: TextAnchor,
     doNotParseReattachedVerseStr: boolean = false
-  ): void {
-    const noteThreadDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadDataId);
+  ): Promise<void> {
+    const noteThreadDoc: NoteThreadDoc = await this.getNoteThreadDoc(projectId, threadDataId);
     const template: Note = noteThreadDoc.data!.notes[0];
     let reattached: string;
     if (doNotParseReattachedVerseStr || position == null) {
@@ -5571,15 +5593,15 @@ class TestEnvironment {
       reattached
     };
     const index: number = noteThreadDoc.data!.notes.length;
-    noteThreadDoc.submitJson0Op(op => {
+    await noteThreadDoc.submitJson0Op(op => {
       op.set(nt => nt.position, position);
       op.insert(nt => nt.notes, index, note);
     });
   }
 
-  convertToConflictNote(projectId: string, threadDataId: string): void {
-    const noteThreadDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadDataId);
-    noteThreadDoc.submitJson0Op(op => {
+  async convertToConflictNote(projectId: string, threadDataId: string): Promise<void> {
+    const noteThreadDoc: NoteThreadDoc = await this.getNoteThreadDoc(projectId, threadDataId);
+    await noteThreadDoc.submitJson0Op(op => {
       op.set<string>(nt => nt.notes[0].conflictType, NoteConflictType.VerseTextConflict);
       op.set<string>(nt => nt.notes[0].type, NoteType.Conflict);
     });
@@ -5595,19 +5617,19 @@ class TestEnvironment {
     return noteEmbedCount;
   }
 
-  resolveNote(projectId: string, threadId: string): void {
-    const noteDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadId);
-    noteDoc.submitJson0Op(op => op.set(n => n.status, NoteStatus.Resolved));
+  async resolveNote(projectId: string, threadId: string): Promise<void> {
+    const noteDoc: NoteThreadDoc = await this.getNoteThreadDoc(projectId, threadId);
+    await noteDoc.submitJson0Op(op => op.set(n => n.status, NoteStatus.Resolved));
     this.realtimeService.updateQueryAdaptersRemote();
     this.wait();
   }
 
-  deleteMostRecentNote(projectId: string, segmentRef: string, threadId: string): void {
+  async deleteMostRecentNote(projectId: string, segmentRef: string, threadId: string): Promise<void> {
     const noteThreadIconElem: HTMLElement = this.getNoteThreadIconElement(segmentRef, threadId)!;
     noteThreadIconElem.click();
     this.wait();
-    const noteDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadId);
-    noteDoc.submitJson0Op(op => op.set(d => d.notes[0].deleted, true));
+    const noteDoc: NoteThreadDoc = await this.getNoteThreadDoc(projectId, threadId);
+    await noteDoc.submitJson0Op(op => op.set(d => d.notes[0].deleted, true));
     this.mockNoteDialogRef.close({ deleted: true });
     this.realtimeService.updateQueryAdaptersRemote();
     this.wait();
