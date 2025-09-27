@@ -259,7 +259,7 @@ describe('LynxInsightEditorObjectsComponent', () => {
       const delta = new Delta([{ insert: 'test' }]);
       const editDelta = new Delta([{ insert: 'edited' }]);
 
-      when(mockLynxWorkspaceService.getOnTypeEdits(anything())).thenResolve([editDelta]);
+      when(mockLynxWorkspaceService.getOnTypeEdits(anything(), anything())).thenResolve([editDelta]);
       when(mockTextModelConverter.dataDeltaToEditorDelta(anything())).thenReturn(editDelta);
 
       env.setEditorReady(true);
@@ -269,7 +269,7 @@ describe('LynxInsightEditorObjectsComponent', () => {
       tick(); // Process text change event
       flush();
 
-      verify(mockLynxWorkspaceService.getOnTypeEdits(delta)).once();
+      verify(mockLynxWorkspaceService.getOnTypeEdits(delta, anything())).once();
       expect(env.hostComponent.editor!.updateContents).toHaveBeenCalledWith(editDelta, 'user');
     }));
   });
@@ -370,7 +370,7 @@ class TestEnvironment {
     when(mockInsightRenderService.removeAllInsightFormatting(anything())).thenResolve();
     when(mockOverlayService.close()).thenResolve();
     when(mockOverlayService.isOpen).thenReturn(false);
-    when(mockLynxWorkspaceService.getOnTypeEdits(anything())).thenResolve([]);
+    when(mockLynxWorkspaceService.getOnTypeEdits(anything(), anything())).thenResolve([]);
     when(mockTextModelConverter.dataDeltaToEditorDelta(anything())).thenCall((delta: Delta) => delta);
 
     // Setup text model converter to return ranges as-is (prevents null range issues)

@@ -6,6 +6,7 @@ import {
   DocumentData,
   DocumentManager,
   DocumentReader,
+  Position,
   Workspace
 } from '@sillsdev/lynx';
 import { ScriptureDeltaDocument } from '@sillsdev/lynx-delta';
@@ -40,6 +41,7 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../../../core/models/text-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
+import { LynxCountToOffsetFunc } from './lynx-editor';
 import { LynxInsight, LynxInsightAction } from './lynx-insight';
 import { LynxWorkspaceFactory } from './lynx-workspace-factory.service';
 
@@ -56,6 +58,8 @@ export class LynxWorkspaceService {
   private projectDocChangeSubscription?: Subscription;
   private readonly curInsightsByEventUriAndSource = new Map<string, Map<string, LynxInsight[]>>();
   private curInsightsFlattened: LynxInsight[] = [];
+  private onTypeEditsSequence = 0;
+  private onTypeEditsActiveDelta?: Delta;
 
   // Emits when workspace is recreated when project settings change
   private rawInsightSourceSubject$ = new BehaviorSubject<Observable<LynxInsight[]> | null>(null);
@@ -158,7 +162,7 @@ export class LynxWorkspaceService {
     }));
   }
 
-  async getOnTypeEdits(delta: Delta): Promise<Delta[]> {
+  async getOnTypeEdits(delta: Delta, embedCountsToOffset: LynxCountToOffsetFunc): Promise<Delta[]> {
     if (this.workspace == null) {
       return [];
     }
@@ -174,42 +178,76 @@ export class LynxWorkspaceService {
     if (curDocUri == null) {
       return [];
     }
-    const ops: Op[] = delta.ops;
-    let offset: number;
-    let text: string;
-    if (ops.length === 1 && typeof ops[0].insert === 'string') {
-      offset = 0;
-      text = ops[0].insert;
-    } else if (ops.length === 2 && typeof ops[0].retain === 'number' && typeof ops[1].insert === 'string') {
-      offset = ops[0].retain;
-      text = ops[1].insert;
-    } else {
-      return [];
-    }
 
-    const doc: ScriptureDeltaDocument | undefined = await this.documentManager.get(curDocUri);
-    if (doc == null) {
-      return [];
-    }
-    const edits: Delta[] = [];
-    for (const ch of this.workspace.getOnTypeTriggerCharacters()) {
-      let startIndex: number = 0;
-      while (startIndex < text.length) {
-        const chIndex: number = text.indexOf(ch, startIndex);
-        if (chIndex >= 0) {
-          const position = doc.positionAt(offset + chIndex + 1);
-          const chEdits: Op[] | undefined = await this.workspace.getOnTypeEdits(curDocUri, position, ch);
+    // Increment sequence number for this call
+    const currentSequence = ++this.onTypeEditsSequence;
+    let isAborted = false;
 
-          if (chEdits != null && chEdits.length > 0) {
-            edits.push(new Delta(chEdits));
-          }
-          startIndex = chIndex + ch.length;
-        } else {
+    // Compose with any existing active delta
+    this.onTypeEditsActiveDelta = this.onTypeEditsActiveDelta?.compose(delta) ?? delta;
+
+    try {
+      const ops: Op[] = this.onTypeEditsActiveDelta.ops;
+      let offset: number = 0;
+      let text: string = '';
+
+      for (let i = 0; i < ops.length; i++) {
+        if (typeof ops[i].insert === 'string') {
+          text = ops[i].insert as string;
           break;
+        } else if (typeof ops[i].retain === 'number') {
+          offset += ops[i].retain as number;
+          continue;
+        } else {
+          return [];
         }
       }
+
+      const doc: ScriptureDeltaDocument | undefined = await this.documentManager.get(curDocUri);
+
+      // 'offset' may be stale here. For example, a blank embed may have been auto-deleted while awaiting the doc.
+      // Check if a newer call has superseded this one while we were awaiting the document.
+      if (currentSequence !== this.onTypeEditsSequence) {
+        isAborted = true;
+        return []; // Abort - a newer call is handling this
+      }
+
+      if (doc == null) {
+        return [];
+      }
+
+      const edits: Delta[] = [];
+      for (const ch of this.workspace.getOnTypeTriggerCharacters()) {
+        let startIndex: number = 0;
+        while (startIndex < text.length) {
+          const chIndex: number = text.indexOf(ch, startIndex);
+          if (chIndex >= 0) {
+            const adjustedOffset: number = offset + chIndex + 1 - embedCountsToOffset(offset);
+            const position: Position = doc.positionAt(adjustedOffset);
+            const chEdits: Op[] | undefined = await this.workspace.getOnTypeEdits(curDocUri, position, ch);
+
+            // Check sequence number again after each async operation
+            if (currentSequence !== this.onTypeEditsSequence) {
+              isAborted = true;
+              return []; // Abort - a newer call is handling this
+            }
+
+            if (chEdits != null && chEdits.length > 0) {
+              edits.push(new Delta(chEdits));
+            }
+            startIndex = chIndex + ch.length;
+          } else {
+            break;
+          }
+        }
+      }
+      return edits;
+    } finally {
+      // Clear active delta if this call finished without aborting
+      if (!isAborted) {
+        this.onTypeEditsActiveDelta = undefined;
+      }
     }
-    return edits;
   }
 
   /**

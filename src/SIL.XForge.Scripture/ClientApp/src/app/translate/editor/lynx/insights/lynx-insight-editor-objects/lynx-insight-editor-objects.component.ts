@@ -84,7 +84,7 @@ export class LynxInsightEditorObjectsComponent implements OnChanges, OnInit, OnD
       )
       .subscribe(([delta]) => {
         if (this.autoCorrectionsEnabled) {
-          this.handleTextChange(delta);
+          void this.handleTextChange(delta);
         }
       });
 
@@ -277,7 +277,10 @@ export class LynxInsightEditorObjectsComponent implements OnChanges, OnInit, OnD
       return;
     }
 
-    const edits = await this.lynxWorkspaceService.getOnTypeEdits(delta);
+    const edits: Delta[] = await this.lynxWorkspaceService.getOnTypeEdits(
+      delta,
+      this.lynxTextModelConverter.getEmbedCountsToOffsetFunc()
+    );
     for (const edit of edits) {
       this.editor.updateContents(this.lynxTextModelConverter.dataDeltaToEditorDelta(edit), 'user');
     }

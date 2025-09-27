@@ -798,9 +798,10 @@ describe('LynxWorkspaceService', () => {
 
       env.service['textDocId'] = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
       const delta = new Delta().insert('Hello,');
+      const mockEmbedCountsToOffset = (_offset: number): number => 0; // No embeds in this test
       let result: Delta[] = [];
 
-      env.service.getOnTypeEdits(delta).then(res => (result = res));
+      env.service.getOnTypeEdits(delta, mockEmbedCountsToOffset).then(res => (result = res));
       tick();
 
       expect(result.length).toBe(1);
@@ -834,9 +835,10 @@ describe('LynxWorkspaceService', () => {
 
       env.service['textDocId'] = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
       const delta = new Delta().insert('Hello, world.');
+      const mockEmbedCountsToOffset = (_offset: number): number => 0; // No embeds in this test
       let result: Delta[] = [];
 
-      env.service.getOnTypeEdits(delta).then(res => (result = res));
+      env.service.getOnTypeEdits(delta, mockEmbedCountsToOffset).then(res => (result = res));
       tick();
 
       expect(result.length).toBe(2);
@@ -849,9 +851,10 @@ describe('LynxWorkspaceService', () => {
       env.service['textDocId'] = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
       when(mockDocumentManager.get(anything())).thenReturn(Promise.resolve(undefined));
       const delta = new Delta().insert('Hello,');
+      const mockEmbedCountsToOffset = (_offset: number): number => 0; // No embeds in this test
       let result: Delta[] = [];
 
-      env.service.getOnTypeEdits(delta).then(res => (result = res));
+      env.service.getOnTypeEdits(delta, mockEmbedCountsToOffset).then(res => (result = res));
       tick();
 
       expect(result).toEqual([]);
@@ -872,9 +875,10 @@ describe('LynxWorkspaceService', () => {
       when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
 
       const delta = new Delta().insert('Hello,');
+      const mockEmbedCountsToOffset = (_offset: number): number => 0; // No embeds in this test
       let result: Delta[] = [];
 
-      env.service.getOnTypeEdits(delta).then(res => (result = res));
+      env.service.getOnTypeEdits(delta, mockEmbedCountsToOffset).then(res => (result = res));
       tick();
 
       expect(result).toEqual([]);
@@ -905,13 +909,58 @@ describe('LynxWorkspaceService', () => {
 
       env.service['textDocId'] = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
       const delta = new Delta().insert('Hello,');
+      const mockEmbedCountsToOffset = (_offset: number): number => 0; // No embeds in this test
       let result: Delta[] = [];
 
-      env.service.getOnTypeEdits(delta).then(res => (result = res));
+      env.service.getOnTypeEdits(delta, mockEmbedCountsToOffset).then(res => (result = res));
       tick();
 
       expect(result.length).toBe(1);
       expect(result[0].ops).toEqual([{ retain: 5 }, { insert: ' ' }]);
+    }));
+
+    it('should adjust offset for note embeds when getting on-type edits', fakeAsync(() => {
+      const env = new TestEnvironment();
+
+      let capturedPosition: Position | undefined;
+      env.setCustomWorkspaceMock((workspaceMock: any) => {
+        when(workspaceMock.getOnTypeEdits(anything(), anything(), anything())).thenCall(
+          (uri: string, position: Position, _ch: string) => {
+            capturedPosition = position;
+            return Promise.resolve([{ retain: 5 }, { insert: ' ' }]);
+          }
+        );
+      });
+
+      // Create project with auto-corrections enabled
+      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+        autoCorrectionsEnabled: true,
+        assessmentsEnabled: false,
+        punctuationCheckerEnabled: true,
+        allowedCharacterCheckerEnabled: false
+      });
+      env.projectDocTestSubject$.next(projectDoc);
+      when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+      when(mockActivatedProjectService.projectId).thenReturn(PROJECT_ID);
+      tick(); // Allow workspace setup to complete
+
+      env.service['textDocId'] = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
+
+      // Delta with text insertion at offset 10
+      const delta = new Delta().retain(10).insert(',');
+
+      // Mock embed counter that reports 2 embeds before offset 10
+      const mockEmbedCountsToOffset = jasmine.createSpy('embedCountsToOffset').and.callFake((offset: number) => {
+        return offset >= 10 ? 2 : 0; // 2 note embeds before position 10
+      });
+
+      let result: Delta[] = [];
+      env.service.getOnTypeEdits(delta, mockEmbedCountsToOffset).then(res => (result = res));
+      tick();
+
+      expect(mockEmbedCountsToOffset).toHaveBeenCalledWith(10);
+      expect(capturedPosition).toEqual({ line: 0, character: 9 }); // (10<offset> + 1<ch> - 2<note embeds> = 9)
+      expect(result.length).toBe(1);
     }));
   });
 
