@@ -177,8 +177,8 @@ public partial class DeltaUsxMapper(
 
     public static string ExtractBookId(string usfm)
     {
-        string firstLine = usfm.Split('\n').FirstOrDefault()?.Trim() ?? string.Empty;
-        return BookIdRegex().Match(firstLine).Groups[1].Value;
+        Match match = BookIdRegex().Match(usfm);
+        return match.Success ? match.Groups[1].Value : string.Empty;
     }
 
     /// <summary>

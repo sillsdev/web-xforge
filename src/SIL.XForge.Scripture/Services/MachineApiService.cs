@@ -30,6 +30,7 @@ using SIL.XForge.Utils;
 using Chapter = SIL.XForge.Scripture.Models.Chapter;
 using TextInfo = SIL.XForge.Scripture.Models.TextInfo;
 
+// Disable notice "The logging message template should not vary between calls to..."
 #pragma warning disable CA2254
 
 namespace SIL.XForge.Scripture.Services;
@@ -167,7 +168,9 @@ public class MachineApiService(
                     await hubContext.NotifyDraftApplyProgress(sfProjectId, new DraftApplyState { State = message });
                 }
 
-                // Ensure that if chapters is blank, it contains every chapter in the book
+                // Ensure that if chapters is blank, it contains every chapter in the book.
+                // ScriptureRangeParser will return no chapters, meaning all chapters,
+                // if the scripture range just specifies a book without chapter numbers.
                 List<int> chapters = bookChapters;
                 if (chapters.Count == 0)
                 {
