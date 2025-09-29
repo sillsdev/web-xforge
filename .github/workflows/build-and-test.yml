@@ -105,10 +105,10 @@ jobs:
       # Run the tests while making sure none of the common/known warnings are printed
       - name: "Test: Frontend"
         run: |
-          set -euo pipefail
+          set -xeuo pipefail
           cd src/SIL.XForge.Scripture/ClientApp
-          npm run test:gha | tee test_output.log
-          ! grep -P 'NG\d+|ERROR:|WARN:|LOG:|INFO:' test_output.log
+          npm run test:gha |& tee test_output.log
+          ! grep --perl-regex 'NG\d+|ERROR:|WARN:|LOG:|INFO:' test_output.log
 
       - name: "Coverage: Backend"
         run: |
