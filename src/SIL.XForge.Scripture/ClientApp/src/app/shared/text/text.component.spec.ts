@@ -817,7 +817,7 @@ describe('TextComponent', () => {
       // Override the Chromium point-to-index method behavior, since the unit test isn't really dragging the mouse
       // to an element.
       const startContainer: Node = targetElement!.childNodes[0] as Node;
-      // eslint-disable-next-line deprecation/deprecation
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       document.caretRangeFromPoint = (_x: number, _y: number) =>
         ({ startOffset: desiredIndexInSegment, startContainer }) as Range;
 
