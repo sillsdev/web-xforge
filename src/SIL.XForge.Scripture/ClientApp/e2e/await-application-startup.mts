@@ -4,7 +4,7 @@
 // or exits with a failure if it hasn't started in 5 minutes.
 
 const pollUrl = 'http://localhost:5000/projects';
-const pollInterval = 1000;
+const pollInterval = 17000;
 const timeout = 5 * 60_000;
 
 setTimeout(() => {
