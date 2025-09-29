@@ -10,7 +10,7 @@ import { Delta } from 'quill';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { ParagraphBreakFormat, QuoteFormat } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
@@ -27,6 +27,8 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { Revision } from '../../../core/paratext.service';
+import { BuildDto } from '../../../machine-api/build-dto';
+import { BuildStates } from '../../../machine-api/build-states';
 import { SharedModule } from '../../../shared/shared.module';
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
 import { DraftSegmentMap } from '../../draft-generation/draft-generation';
@@ -48,6 +50,7 @@ describe('EditorDraftComponent', () => {
   let fixture: ComponentFixture<EditorDraftComponent>;
   let component: EditorDraftComponent;
   let testOnlineStatus: TestOnlineStatusService;
+  const buildProgress$ = new BehaviorSubject<BuildDto | undefined>(undefined);
 
   configureTestingModule(() => ({
     declarations: [EditorDraftComponent, HistoryRevisionFormatPipe],
@@ -78,6 +81,8 @@ describe('EditorDraftComponent', () => {
 
   beforeEach(() => {
     when(mockFeatureFlagService.usfmFormat).thenReturn(createTestFeatureFlag(true));
+    when(mockDraftGenerationService.pollBuildProgress(anything())).thenReturn(buildProgress$.asObservable());
+    buildProgress$.next({ state: BuildStates.Completed } as BuildDto);
 
     fixture = TestBed.createComponent(EditorDraftComponent);
     component = fixture.componentInstance;
@@ -95,6 +100,41 @@ describe('EditorDraftComponent', () => {
     testOnlineStatus.setIsOnline(false);
     fixture.detectChanges();
     expect(component.draftCheckState).toEqual('draft-unknown');
+    expect(component.draftText).not.toBeUndefined();
+    flush();
+  }));
+
+  it('should handle build is finishing', fakeAsync(() => {
+    buildProgress$.next({ state: BuildStates.Finishing } as BuildDto);
+    const testProjectDoc: SFProjectProfileDoc = {
+      data: createTestProjectProfile()
+    } as SFProjectProfileDoc;
+    when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(true));
+    when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
+    when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
+      of(draftHistory)
+    );
+    when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
+    when(mockDraftHandlingService.getDraft(anything(), anything())).thenReturn(of(cloneDeep(draftDelta.ops!)));
+    when(mockDraftHandlingService.draftDataToOps(anything(), anything())).thenReturn(draftDelta.ops!);
+    when(mockDraftHandlingService.isDraftSegmentMap(anything())).thenReturn(false);
+
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+
+    verify(mockDraftHandlingService.getDraft(anything(), anything())).never();
+    verify(mockDraftHandlingService.draftDataToOps(anything(), anything())).never();
+    expect(component.draftCheckState).toEqual('draft-unknown');
+    expect(component.draftText).not.toBeUndefined();
+
+    buildProgress$.next({ state: BuildStates.Completed } as BuildDto);
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+
+    verify(mockDraftHandlingService.getDraft(anything(), anything())).once();
+    verify(mockDraftHandlingService.draftDataToOps(anything(), anything())).once();
+    expect(component.draftCheckState).toEqual('draft-present');
     expect(component.draftText).not.toBeUndefined();
     flush();
   }));

@@ -38,6 +38,7 @@ import { isString } from '../../../../type-utils';
 import { TextDocId } from '../../../core/models/text-doc';
 import { Revision } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { BuildStates } from '../../../machine-api/build-states';
 import { TextComponent } from '../../../shared/text/text.component';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { DraftHandlingService } from '../../draft-generation/draft-handling.service';
@@ -144,12 +145,13 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   populateDraftTextInit(): void {
     combineLatest([
       this.onlineStatusService.onlineStatus$,
+      this.draftGenerationService.pollBuildProgress(this.textDocId!.projectId),
       this.draftText.editorCreated as EventEmitter<any>,
       this.inputChanged$.pipe(startWith(undefined))
     ])
       .pipe(
         quietTakeUntilDestroyed(this.destroyRef),
-        filter(([isOnline]) => isOnline),
+        filter(([isOnline, build]) => isOnline && build != null && build.state !== BuildStates.Finishing),
         tap(() => this.setInitialState()),
         switchMap(() =>
           combineLatest([
