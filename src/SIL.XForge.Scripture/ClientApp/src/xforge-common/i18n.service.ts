@@ -232,7 +232,7 @@ export class I18nService {
     if (typeof book === 'number') {
       book = Canon.bookNumberToId(book);
     }
-    return this.transloco.translate(`canon.book_names.${book}`);
+    return this.transloco.translate(`canon.book_names.${book}`, {}, this.localeCode);
   }
 
   localizeBookChapter(book: number | string, chapter: number): string {

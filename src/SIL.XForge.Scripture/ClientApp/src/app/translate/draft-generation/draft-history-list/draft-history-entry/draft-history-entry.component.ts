@@ -11,6 +11,7 @@ import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.ser
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserService } from 'xforge-common/user.service';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { TrainingDataDoc } from '../../../../core/models/training-data-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
@@ -71,7 +72,7 @@ export class DraftHistoryEntryComponent {
     // Get the user who requested the build
     this._buildRequestedByUserName = undefined;
     if (this._entry?.additionalInfo?.requestedByUserId != null) {
-      this.userService.getProfile(this._entry.additionalInfo.requestedByUserId).then(user => {
+      void this.userService.getProfile(this._entry.additionalInfo.requestedByUserId).then(user => {
         if (user.data != null) {
           this._buildRequestedByUserName = user.data.displayName;
         }
@@ -85,7 +86,7 @@ export class DraftHistoryEntryComponent {
 
     // Get the books used in the training configuration
     const trainingScriptureRanges = this._entry?.additionalInfo?.trainingScriptureRanges ?? [];
-    Promise.all(
+    void Promise.all(
       trainingScriptureRanges.map(async r => {
         // The engine ID is the target project ID
         let target: SFProjectProfileDoc | undefined = undefined;
@@ -125,7 +126,7 @@ export class DraftHistoryEntryComponent {
       translationScriptureRanges.map(item => item.scriptureRange).join(';')
     );
     this._translationSources = [];
-    Promise.all(
+    void Promise.all(
       translationScriptureRanges.map(async r => {
         const source =
           r.projectId === '' || r.projectId === value?.engine?.id
@@ -139,7 +140,7 @@ export class DraftHistoryEntryComponent {
     const trainingDataFiles: string[] = this._entry?.additionalInfo?.trainingDataFileIds ?? [];
     if (this.activatedProjectService.projectId != null && trainingDataFiles.length > 0) {
       this.dataFileQuery?.dispose();
-      this.trainingDataService
+      void this.trainingDataService
         .queryTrainingDataAsync(this.activatedProjectService.projectId, this.destroyRef)
         .then(query => {
           this.dataFileQuery = query;
@@ -295,7 +296,11 @@ export class DraftHistoryEntryComponent {
     private readonly activatedProjectService: ActivatedProjectService,
     readonly featureFlags: FeatureFlagService,
     private readonly destroyRef: DestroyRef
-  ) {}
+  ) {
+    this.i18n.locale$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (this._entry != null) this.entry = this._entry;
+    });
+  }
 
   formatDate(date?: string): string {
     const formattedDate = date == null ? '' : this.i18n.formatDate(new Date(date));
