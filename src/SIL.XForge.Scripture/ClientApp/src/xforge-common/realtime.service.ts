@@ -108,7 +108,7 @@ export class RealtimeService {
 
     // Handle documents that currently exist but are in the process of being disposed.
     if (doc != null && this.disposingDocIds.has(doc.id)) {
-      console.log(`Waiting for document ${key} to be disposed before recreating it.`);
+      // Waiting for document to be disposed before recreating it.
       await lastValueFrom(this.disposingDocIds.get(doc.id)!);
       // Recursively call this method so if multiple callers are waiting for the same document to be disposed, they will
       // all get the same instance.

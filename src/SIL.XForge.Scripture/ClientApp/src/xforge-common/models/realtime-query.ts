@@ -203,8 +203,6 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
   }
 
   private async onInsert(index: number, docIds: string[]): Promise<void> {
-    // if (this.name === 'query_questions {"bookNum":1,"chapterNum":1,"sort":true,"activeOnly":true}') debugger;
-    console.log(`Inserting ${docIds.length} docs into query ${this.name}`);
     const newDocs: T[] = [];
     const promises: Promise<void>[] = [];
     for (const docId of docIds) {
@@ -229,7 +227,6 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
     if (docIds.length === 30) {
       debugger;
     }
-    console.log(`Removing ${docIds.length} docs from query ${this.name}`);
     const removedDocs = this._docs.splice(index, docIds.length);
     for (const doc of removedDocs) {
       doc.onRemovedFromSubscribeQuery();
