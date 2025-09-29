@@ -120,7 +120,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   cancelDialogRef?: MatDialogRef<any>;
 
-  readonly draftDurationHours = 2.5;
+  readonly draftDurationHours = 1.5;
   /** Duration to throttle large amounts of incoming project changes. 500 is a guess for what may be useful. */
   private readonly projectChangeThrottlingMs = 500;
 
