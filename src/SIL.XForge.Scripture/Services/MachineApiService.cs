@@ -84,6 +84,14 @@ public class MachineApiService(
     /// </remarks>
     internal const string BuildStateFinishing = "FINISHING";
 
+    /// <summary>
+    /// The Completed build state.
+    /// </summary>
+    /// <remarks>
+    /// SF returns this state when the build is completed.
+    /// </remarks>
+    internal const string BuildStateCompleted = "COMPLETED";
+
     private static readonly IEqualityComparer<IList<string>> _listStringComparer = SequenceEqualityComparer.Create(
         EqualityComparer<string>.Default
     );
@@ -1421,51 +1429,38 @@ public class MachineApiService(
         // Ensure that the user has permission
         await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin, cancellationToken);
 
-        await using IConnection connection = await realtimeService.ConnectAsync(curUserId);
-        string id = TextDocument.GetDocId(sfProjectId, bookNum, chapterNum, TextDocument.Draft);
-        Op[] ops = await connection.GetOpsAsync<TextDocument>(id);
+        IReadOnlyList<ServalBuildDto> builds = await GetBuildsAsync(
+            curUserId,
+            sfProjectId,
+            preTranslate: true,
+            isServalAdmin,
+            cancellationToken
+        );
+        ServalBuildDto[] buildsForBook =
+        [
+            .. builds.Where(b =>
+                b.State == BuildStateCompleted
+                && (
+                    b.AdditionalInfo?.TranslationScriptureRanges.Any(r =>
+                        r.ScriptureRange.Contains(Canon.BookNumberToId(bookNum))
+                    ) ?? false
+                )
+            ),
+        ];
 
-        // If there are no ops, just get the most recent revision from Serval
-        if (ops.Length == 0)
+        foreach (ServalBuildDto build in buildsForBook)
         {
-            ServalBuildDto? build = await GetLastCompletedPreTranslationBuildAsync(
-                curUserId,
-                sfProjectId,
-                isServalAdmin,
-                cancellationToken
-            );
-            if (build is not null)
-            {
-                revisions.Add(
-                    new DocumentRevision
-                    {
-                        Source = OpSource.Draft,
-                        Timestamp = build.AdditionalInfo?.DateFinished?.UtcDateTime ?? DateTime.UtcNow,
-                    }
-                );
-            }
-        }
-        else
-        {
-            // Draft Ops are not user created, so we do not need to milestone them,
-            // like we do in ParatextService.GetRevisionHistoryAsync()
-            foreach (Op op in ops)
-            {
-                // Allow cancellation
-                if (cancellationToken.IsCancellationRequested)
+            DateTimeOffset? date = build.AdditionalInfo.DateFinished;
+            if (date is null)
+                continue;
+
+            revisions.Add(
+                new DocumentRevision
                 {
-                    break;
+                    Source = OpSource.Draft,
+                    Timestamp = build.AdditionalInfo.DateFinished?.UtcDateTime ?? DateTime.UtcNow,
                 }
-
-                revisions.Add(
-                    new DocumentRevision
-                    {
-                        Source = op.Metadata.Source ?? OpSource.Draft,
-                        Timestamp = op.Metadata.Timestamp,
-                        UserId = op.Metadata.UserId,
-                    }
-                );
-            }
+            );
         }
 
         // Display the revisions in descending order to match the history API endpoint
@@ -1547,6 +1542,15 @@ public class MachineApiService(
         await using IConnection connection = await realtimeService.ConnectAsync(userId);
         string id = TextDocument.GetDocId(sfProjectId, bookNum, chapterNum, TextDocument.Draft);
 
+        DateTime latestTimestampForRevision = await LatestTimestampForRevision(
+            curUserId,
+            sfProjectId,
+            bookNum,
+            isServalAdmin,
+            timestamp,
+            cancellationToken
+        );
+
         // First, see if the document exists in the realtime service, if the chapter is not 0
         IDocument<TextDocument>? textDocument = null;
         if (chapterNum != 0 && draftUsfmConfig is null)
@@ -1555,7 +1559,10 @@ public class MachineApiService(
             if (textDocument.IsLoaded)
             {
                 // Retrieve the snapshot if it exists
-                Snapshot<TextDocument> snapshot = await connection.FetchSnapshotAsync<TextDocument>(id, timestamp);
+                Snapshot<TextDocument> snapshot = await connection.FetchSnapshotAsync<TextDocument>(
+                    id,
+                    latestTimestampForRevision
+                );
                 if (snapshot.Data is not null)
                 {
                     return snapshot.Data;
@@ -2261,6 +2268,47 @@ public class MachineApiService(
         }
 
         return translationEngineId;
+    }
+
+    private async Task<DateTime> LatestTimestampForRevision(
+        string curUserId,
+        string sfProjectId,
+        int bookNum,
+        bool isServalAdmin,
+        DateTime timestamp,
+        CancellationToken cancellationToken
+    )
+    {
+        IReadOnlyList<ServalBuildDto> builds = await GetBuildsAsync(
+            curUserId,
+            sfProjectId,
+            preTranslate: true,
+            isServalAdmin,
+            cancellationToken
+        );
+
+        // TODO: What if the TranslationScriptureRange is in the form EXO-DEU?
+        ServalBuildDto[] buildsWithBook =
+        [
+            .. builds.Where(b =>
+                b.State == BuildStateCompleted
+                && (
+                    b.AdditionalInfo?.TranslationScriptureRanges.Any(r =>
+                        r.ScriptureRange.Contains(Canon.BookNumberToId(bookNum))
+                    ) ?? false
+                )
+            ),
+        ];
+
+        DateTimeOffset? time = buildsWithBook
+            .FirstOrDefault(b => b.AdditionalInfo?.DateRequested > timestamp)
+            ?.AdditionalInfo?.DateRequested;
+
+        time ??= buildsWithBook
+            .LastOrDefault(b => b.AdditionalInfo?.DateRequested < timestamp)
+            ?.AdditionalInfo?.DateRequested;
+        // Return the timestamp, or the time of the draft that immediate follows the intended draft.
+        return time is not null ? time.Value.UtcDateTime : timestamp;
     }
 
     /// <summary>
