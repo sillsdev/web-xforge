@@ -352,8 +352,7 @@ interface TestEnvironmentArgs {
 }
 
 @NgModule({
-  imports: [TestTranslocoModule],
-  declarations: [ShareDialogComponent]
+  imports: [TestTranslocoModule]
 })
 class DialogTestModule {}
 
