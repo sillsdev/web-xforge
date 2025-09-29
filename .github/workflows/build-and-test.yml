@@ -108,7 +108,10 @@ jobs:
           set -euo pipefail
           cd src/SIL.XForge.Scripture/ClientApp
           npm run test:gha | tee test_output.log
-          ! grep -P 'NG\d+|ERROR:|WARN:|LOG:|INFO:' test_output.log
+          if grep --perl-regex 'NG\d+|ERROR:|WARN:|LOG:|INFO:' test_output.log; then
+            echo "Error: Disallowed token found in test run output, as shown above.";
+            exit 1;
+          fi
 
       - name: "Coverage: Backend"
         run: |
