@@ -245,7 +245,6 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
       this.docSubscriptions.delete(docSubscription);
 
       if (this.activeDocSubscriptionsCount === 0) {
-        console.log(`No active subscribers for ${this.collection}:${this.id}. Disposing.`);
         this.dispose();
       }
     });
