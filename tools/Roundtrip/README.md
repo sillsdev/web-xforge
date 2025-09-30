@@ -28,6 +28,12 @@ Or, to export all of the files that the tool roundtrips:
 dotnet run /var/lib/scriptureforge/sync/ --output-all
 ```
 
+You can also validate the USX to ensure that Scripture Forge supports the USFM files:
+
+```sh
+dotnet run /var/lib/scriptureforge/sync/ --validate-usx
+```
+
 ## Notes
 
 - Unlike **ServalDownloader**, this tool does not utilize the user secrets you have configured for Scripture Forge.

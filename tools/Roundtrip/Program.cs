@@ -1,5 +1,6 @@
 using System.Xml;
 using System.Xml.Linq;
+using System.Xml.Schema;
 using System.Xml.XPath;
 using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Extensions.Configuration;
@@ -29,6 +30,12 @@ if (outputAllFiles)
 {
     Directory.CreateDirectory("output");
 }
+
+// See if we are validating the USX and outputting any error
+bool validateUsx = args.Length > 1 && args[1] == "--validate-usx";
+var schemas = new XmlSchemaSet();
+schemas.Add(string.Empty, "usx-sf.xsd");
+schemas.Compile();
 
 // Setup Paratext
 RegistrationInfo.Implementation = new TestRegistrationInfo();
@@ -231,6 +238,23 @@ void Roundtrip(string usfm, string fileName, string path, RoundtripMethod roundt
         using XmlNodeReader nodeReader = new XmlNodeReader(usx);
         nodeReader.MoveToContent();
         actualUsx = XDocument.Load(nodeReader);
+
+        // Validate the USX if requested
+        if (validateUsx)
+        {
+            actualUsx.Validate(
+                schemas,
+                (o, e) =>
+                {
+                    Console.WriteLine("============================================================");
+                    Console.WriteLine($"Validation Error in: {Path.Combine(path, fileName)}");
+                    XNode? node = o is XAttribute attr ? attr.Parent : o as XNode;
+                    Console.WriteLine(node);
+                    Console.WriteLine(e.Exception);
+                },
+                true
+            );
+        }
     }
     else
     {
