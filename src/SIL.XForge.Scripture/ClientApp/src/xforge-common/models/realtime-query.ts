@@ -72,6 +72,10 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
     return this._ready$;
   }
 
+  /** Emitted when a document in the query results is changed remotely. Note that because remote document changes, and
+   * remote query results changes, are not announced or applied in sync, `docs` might not be up-to-date when
+   * `remoteDocChanges$` is emitted.
+   */
   get remoteDocChanges$(): Observable<any> {
     return this._remoteDocChanges$.asObservable();
   }
