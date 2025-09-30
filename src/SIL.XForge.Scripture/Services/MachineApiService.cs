@@ -939,9 +939,6 @@ public class MachineApiService(
         CancellationToken cancellationToken
     )
     {
-        // Set up the list of revisions to be returned
-        List<DocumentRevision> revisions = [];
-
         // Ensure that the user has permission
         await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin, cancellationToken);
 
@@ -952,32 +949,19 @@ public class MachineApiService(
             isServalAdmin,
             cancellationToken
         );
-        ServalBuildDto[] buildsForBook =
+        builds = FilterBuildsByBook(builds, bookNum);
+
+        // Set up the list of revisions to be returned
+        List<DocumentRevision> revisions =
         [
-            .. builds.Where(b =>
-                b.State == BuildStateCompleted
-                && (
-                    b.AdditionalInfo?.TranslationScriptureRanges.Any(r =>
-                        r.ScriptureRange.Contains(Canon.BookNumberToId(bookNum))
-                    ) ?? false
-                )
-            ),
-        ];
-
-        foreach (ServalBuildDto build in buildsForBook)
-        {
-            DateTimeOffset? date = build.AdditionalInfo.DateFinished;
-            if (date is null)
-                continue;
-
-            revisions.Add(
-                new DocumentRevision
+            .. builds
+                .Where(b => b.AdditionalInfo?.DateFinished is not null)
+                .Select(build => new DocumentRevision
                 {
                     Source = OpSource.Draft,
-                    Timestamp = build.AdditionalInfo.DateFinished?.UtcDateTime ?? DateTime.UtcNow,
-                }
-            );
-        }
+                    Timestamp = build.AdditionalInfo?.DateFinished?.UtcDateTime ?? DateTime.UtcNow,
+                }),
+        ];
 
         // Display the revisions in descending order to match the history API endpoint
         revisions.Reverse();
@@ -1802,29 +1786,40 @@ public class MachineApiService(
             isServalAdmin,
             cancellationToken
         );
+        builds = FilterBuildsByBook(builds, bookNum);
 
-        // TODO: What if the TranslationScriptureRange is in the form EXO-DEU?
-        ServalBuildDto[] buildsWithBook =
+        DateTimeOffset? time = builds
+            .FirstOrDefault(b => b.AdditionalInfo?.DateRequested?.UtcDateTime > timestamp)
+            ?.AdditionalInfo?.DateRequested;
+
+        time ??= builds
+            .LastOrDefault(b => b.AdditionalInfo?.DateRequested?.UtcDateTime < timestamp)
+            ?.AdditionalInfo?.DateRequested;
+        // Return the timestamp, or the time of the draft that immediate follows the intended draft.
+        return time?.UtcDateTime ?? timestamp;
+    }
+
+    /// <summary>
+    /// Filters a list of builds to only those that contain the specified book number in their translation scripture ranges.
+    /// </summary>
+    /// <param name="builds">The builds.</param>
+    /// <param name="bookNum">The book number.</param>
+    /// <returns>The builds containing the specified book.</returns>
+    private static IReadOnlyList<ServalBuildDto> FilterBuildsByBook(IReadOnlyList<ServalBuildDto> builds, int bookNum)
+    {
+        // As we are only parsing books, we do not need to set the versification
+        ScriptureRangeParser scriptureRangeParser = new ScriptureRangeParser();
+        return
         [
             .. builds.Where(b =>
                 b.State == BuildStateCompleted
                 && (
                     b.AdditionalInfo?.TranslationScriptureRanges.Any(r =>
-                        r.ScriptureRange.Contains(Canon.BookNumberToId(bookNum))
+                        scriptureRangeParser.GetChapters(r.ScriptureRange).ContainsKey(Canon.BookNumberToId(bookNum))
                     ) ?? false
                 )
             ),
         ];
-
-        DateTimeOffset? time = buildsWithBook
-            .FirstOrDefault(b => b.AdditionalInfo?.DateRequested > timestamp)
-            ?.AdditionalInfo?.DateRequested;
-
-        time ??= buildsWithBook
-            .LastOrDefault(b => b.AdditionalInfo?.DateRequested < timestamp)
-            ?.AdditionalInfo?.DateRequested;
-        // Return the timestamp, or the time of the draft that immediate follows the intended draft.
-        return time is not null ? time.Value.UtcDateTime : timestamp;
     }
 
     /// <summary>
