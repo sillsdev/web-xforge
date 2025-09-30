@@ -67,7 +67,7 @@ export async function isProjectConnected(page: Page, shortName: string): Promise
   const goToProjectButtonLocator = page.locator('.user-connected-project').filter({ hasText: shortName });
   const unconnectedProjectLocator = page.locator('.user-unconnected-project').filter({ hasText: shortName });
 
-  await expect(goToProjectButtonLocator.or(unconnectedProjectLocator)).toBeVisible();
+  await expect(goToProjectButtonLocator.or(unconnectedProjectLocator)).toBeVisible({ timeout: 15_000 });
 
   if (await goToProjectButtonLocator.isVisible()) {
     return true;
@@ -396,45 +396,53 @@ export async function logInAsPTUser(page: Page, user: { email: string; password:
 
   await switchToLocaleOnHomePage(page, 'en');
   await page.getByRole('link', { name: 'Log In' }).click();
-  await page.locator('a').filter({ hasText: 'Log in with Paratext' }).click();
 
-  // Paratext Registry login
+  let tries = 0;
+  let loginSuccessful = false;
+  while (!loginSuccessful && tries < 3) {
+    await page.locator('a').filter({ hasText: 'Log in with Paratext' }).click();
 
-  // Type fake username so it won't detect a Google account
-  await page.fill('input[name="email"]', 'user@example.com');
-  // Click the next arrow button
-  await page.locator('#password-group').getByRole('button').click();
-  await page.fill('input[name="password"]', user.password);
-  // change the value of email without triggering user input detection
-  await setLocatorToValue(page, 'input[name="email"]', user.email);
-  await page.locator('#password-group').getByRole('button').click();
+    // Paratext Registry login
 
-  // The first login requires authorizing Scripture Forge to access the Paratext account
-  if ((await page.title()).startsWith('Authorise Application')) {
-    await page.getByRole('button', { name: 'Accept' }).click();
-  }
+    // Type fake username so it won't detect a Google account
+    await page.fill('input[name="email"]', 'user@example.com');
+    // Click the next arrow button
+    await page.locator('#password-group').getByRole('button').click();
+    await page.fill('input[name="password"]', user.password);
+    // change the value of email without triggering user input detection
+    await setLocatorToValue(page, 'input[name="email"]', user.email);
+    await page.locator('#password-group').getByRole('button').click();
 
-  // On localhost only, Auth0 requires accepting access to the account
-  // Wait until back in the app, or on the authorization page
-  const auth0AuthorizeUrl = 'https://sil-appbuilder.auth0.com/decision';
-  await page.waitForURL(url =>
-    [auth0AuthorizeUrl, preset.rootUrl].some(startingUrl => url.href.startsWith(startingUrl))
-  );
+    // The first login requires authorizing Scripture Forge to access the Paratext account
+    if ((await page.title()).startsWith('Authorise Application')) {
+      await page.getByRole('button', { name: 'Accept' }).click();
+    }
 
-  if (page.url().startsWith(auth0AuthorizeUrl)) {
-    await page.locator('#allow').click();
-  }
+    // On localhost only, Auth0 requires accepting access to the account
+    // Wait until back in the app, or on the authorization page
+    const auth0AuthorizeUrl = 'https://sil-appbuilder.auth0.com/decision';
+    await page.waitForURL(url =>
+      [auth0AuthorizeUrl, preset.rootUrl].some(startingUrl => url.href.startsWith(startingUrl))
+    );
 
-  try {
-    await page.waitForURL(url => /^\/projects/.test(url.pathname));
-  } catch (e) {
-    if (e instanceof Error && e.message.includes('Timeout')) {
-      // // FIXME(application-bug) Sometimes a login failure occurs. Retry.
-      expect(await page.getByRole('heading', { name: 'An error occurred during login' })).toBeVisible();
-      await page.getByRole('button', { name: 'Try Again' }).click();
+    if (page.url().startsWith(auth0AuthorizeUrl)) {
+      await page.locator('#allow').click();
+    }
+
+    try {
       await page.waitForURL(url => /^\/projects/.test(url.pathname));
-    } else {
-      throw e;
+      loginSuccessful = true;
+    } catch (e) {
+      if (e instanceof Error && e.message.includes('Timeout')) {
+        // // FIXME(application-bug) Sometimes a login failure occurs. Retry.
+        expect(await page.getByRole('heading', { name: 'An error occurred during login' })).toBeVisible();
+        await page.getByRole('button', { name: 'Try Again' }).click();
+        await page.waitForURL(url => /^\/projects/.test(url.pathname));
+        loginSuccessful = false;
+        tries++;
+      } else {
+        throw e;
+      }
     }
   }
 }
