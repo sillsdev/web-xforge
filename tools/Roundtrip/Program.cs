@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using Paratext.Data;
 using Paratext.Data.Languages;
 using Paratext.Data.Users;
+using PtxUtils;
 using Roundtrip;
 using SIL.Converters.Usj;
 using SIL.XForge.Configuration;
@@ -39,9 +40,11 @@ schemas.Compile();
 
 // Setup Paratext
 RegistrationInfo.Implementation = new TestRegistrationInfo();
-ICUDllLocator.Initialize();
+ICUDllLocator.Initialize(confineICUVersion: false);
 WritingSystemRepository.Initialize();
-ScrTextCollection.Initialize();
+Alert.Implementation = new TestAlert();
+RegistryU.Implementation = new TestRegistryU();
+ScrTextCollection.Initialize(Environment.GetEnvironmentVariable("PARATEXT_PROJECTS"));
 using var scrText = new DummyScrText(useFakeStylesheet: false);
 ScrTextCollection.Add(scrText);
 ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());

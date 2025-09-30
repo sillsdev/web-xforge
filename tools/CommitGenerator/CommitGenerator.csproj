@@ -29,6 +29,9 @@
     <None Include="..\..\src\SIL.XForge.Scripture\changedChapter.py" Link="changedChapter.py">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="..\..\src\SIL.XForge.Scripture\icu.net.dll.config" Link="icu.net.dll.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="..\..\src\SIL.XForge.Scripture\ParatextMerge.py" Link="ParatextMerge.py">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
