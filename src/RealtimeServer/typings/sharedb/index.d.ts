@@ -5,9 +5,7 @@
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 2.1
 
-// eslint-disable-next-line import/no-unresolved
 import { Connection, Query } from './lib/client';
-// eslint-disable-next-line import/no-unresolved
 import * as common from './lib/common';
 
 interface PubSubOptions {
