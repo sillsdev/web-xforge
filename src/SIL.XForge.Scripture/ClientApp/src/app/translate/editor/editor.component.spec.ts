@@ -95,6 +95,8 @@ import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
+import { BuildDto } from '../../machine-api/build-dto';
+import { BuildStates } from '../../machine-api/build-states';
 import { HttpClient } from '../../machine-api/http-client';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 import { CopyrightBannerComponent } from '../../shared/copyright-banner/copyright-banner.component';
@@ -4864,6 +4866,9 @@ class TestEnvironment {
     });
     when(mockedDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of({} as any));
     when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(of({}));
+    when(mockedDraftGenerationService.pollBuildProgress(anything())).thenReturn(
+      of({ state: BuildStates.Completed } as BuildDto)
+    );
     when(
       mockedDraftGenerationService.getGeneratedDraftDeltaOperations(
         anything(),

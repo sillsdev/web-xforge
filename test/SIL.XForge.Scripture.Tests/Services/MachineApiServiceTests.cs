@@ -2399,7 +2399,6 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        string textDocumentId = TextDocument.GetDocId(Project01, 2, 1, TextDocument.Draft);
         env.SetupEventMetrics("EXO", "GEN", DateTime.UtcNow.AddMinutes(-30));
         string[] buildIds = [Build01, Build02];
         env.TranslationEnginesClient.GetAllBuildsAsync(Arg.Any<string>(), CancellationToken.None)
@@ -2453,7 +2452,6 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        string textDocumentId = TextDocument.GetDocId(Project01, 2, 1, TextDocument.Draft);
         env.SetupEventMetrics("EXO", "GEN", DateTime.UtcNow.AddMinutes(-30));
         string[] buildIds = [Build01, Build02];
         env.TranslationEnginesClient.GetAllBuildsAsync(Arg.Any<string>(), CancellationToken.None)
