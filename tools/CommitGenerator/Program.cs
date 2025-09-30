@@ -6,6 +6,7 @@ using System.Text;
 using Paratext.Data;
 using Paratext.Data.Languages;
 using Paratext.Data.Repository;
+using PtxUtils;
 using SIL.Scripture;
 
 #nullable enable
@@ -63,8 +64,10 @@ string hgMerge = Path.Join(assemblyDirectory, "ParatextMerge.py");
 Hg.Default = new Hg(customHgPath, hgMerge, assemblyDirectory);
 
 // Setup Paratext
-ICUDllLocator.Initialize();
+ICUDllLocator.Initialize(confineICUVersion: false);
 WritingSystemRepository.Initialize();
+Alert.Implementation = new TestAlert();
+RegistryU.Implementation = new TestRegistryU();
 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 ScrTextCollection.Initialize(Environment.GetEnvironmentVariable("PARATEXT_PROJECTS"));
 ScrTextCollection.RefreshScrTexts(allowMigration: false);
