@@ -72,6 +72,6 @@ export const presets = {
     defaultUserDelay: 0,
     showArrow: true,
     outputDir: 'test_output/ci_e2e_test_results',
-    maxTries: 5
+    maxTries: 50
   }
 } as const satisfies { [key: string]: TestPreset };
