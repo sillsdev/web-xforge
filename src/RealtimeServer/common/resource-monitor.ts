@@ -302,7 +302,7 @@ export class ResourceMonitor {
       // Create the file with headers.
       try {
         await writeFile(filePath, columnHeadings + '\n', { flag: 'wx' });
-      } catch (_error) {
+      } catch {
         // The file already exists, so we did not write headers. Or there was another problem.
       }
 

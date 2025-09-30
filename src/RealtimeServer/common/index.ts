@@ -66,7 +66,7 @@ async function startServer(options: RealtimeServerOptions): Promise<void> {
 
   try {
     const RealtimeServerType: RealtimeServerConstructor =
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require(`../${options.appModuleName}/realtime-server`).default;
 
     const DBType = MetadataDB(ShareDBMongo);
