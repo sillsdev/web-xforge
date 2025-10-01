@@ -15,6 +15,7 @@ import {
   tap
 } from 'rxjs';
 import { distinctUntilChanged, map, observeOn, scan } from 'rxjs/operators';
+import { ActivatedBookChapterService } from 'xforge-common/activated-book-chapter.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { EditorReadyService } from '../base-services/editor-ready.service';
 import { InsightRenderService } from '../base-services/insight-render.service';
@@ -50,6 +51,7 @@ export class LynxInsightEditorObjectsComponent implements OnChanges, OnInit, OnD
     private readonly editorReadyService: EditorReadyService,
     private readonly overlayService: LynxInsightOverlayService,
     private readonly lynxWorkspaceService: LynxWorkspaceService,
+    private readonly activatedBookChapterService: ActivatedBookChapterService,
     @Inject(DOCUMENT) private readonly document: Document
   ) {}
 
@@ -108,6 +110,14 @@ export class LynxInsightEditorObjectsComponent implements OnChanges, OnInit, OnD
         if (this.insightsEnabled) {
           this.handleMouseOver(event.target as HTMLElement);
         }
+      });
+
+    this.activatedBookChapterService.activatedBookChapter$
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        // Clear display state when changing chapters.
+        // This happens before active insights are assigned from the problems panel.
+        this.insightState.clearDisplayState();
       });
 
     this.editorReadyService
