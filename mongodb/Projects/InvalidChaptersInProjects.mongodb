@@ -1,0 +1,58 @@
+// This script gets a list of invalid chapters in all projects that are not resources and lists them as CSV.
+// To see the invalid ops, run the script ../Texts/InvalidOps.mongodb
+use("xforge");
+
+const projects = db.sf_projects
+  .aggregate([
+    { $match: { resourceConfig: null } },
+    {
+      $project: {
+        _id: 1,
+        paratextId: 1,
+        texts: 1
+      }
+    },
+    { $unwind: { path: "$texts" } },
+    { $unwind: { path: "$texts.chapters" } },
+    {
+      $match: {
+        "texts.chapters.isValid": false,
+        $and: [
+          {
+            "texts.bookNum": {
+              $not: { $gte: 93, $lte: 102 }
+            }
+          },
+          {
+            "texts.bookNum": {
+              $not: { $gte: 107, $lte: 111 }
+            }
+          }
+        ]
+      }
+    },
+    {
+      $project: {
+        projectId: "$_id",
+        paratextId: 1,
+        bookNumber: "$texts.bookNum",
+        chapterNumber: "$texts.chapters.number"
+      }
+    }
+  ])
+  .toArray();
+
+if (projects.length > 0) {
+  console.log("projectId,paratextId,bookNumber,chapterNumber");
+  console.log(
+    projects
+      .map(
+        project => project.projectId + "," + project.paratextId + "," + project.bookNumber + "," + project.chapterNumber
+      )
+      .join("\n")
+  );
+} else {
+  console.log("none");
+}
+
+projects;
