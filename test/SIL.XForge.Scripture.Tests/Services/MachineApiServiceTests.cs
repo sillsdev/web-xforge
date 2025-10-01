@@ -101,7 +101,7 @@ public class MachineApiServiceTests
         Url = "https://example.com",
         Id = Build01,
         Engine = { Id = "engineId", Url = "https://example.com" },
-        Message = "Completed",
+        Message = MachineApiService.BuildStateCompleted,
         Progress = 0,
         Revision = 43,
         State = JobState.Completed,
@@ -1548,7 +1548,6 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         const string buildDtoId = $"{Project01}.{Build01}";
-        const string message = "Completed";
         const double percentCompleted = 0;
         const int revision = 43;
         const JobState state = JobState.Completed;
@@ -1563,7 +1562,7 @@ public class MachineApiServiceTests
                             Url = "https://example.com",
                             Id = Build01,
                             Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
-                            Message = message,
+                            Message = MachineApiService.BuildStateCompleted,
                             Progress = percentCompleted,
                             Revision = revision,
                             State = state,
@@ -1605,7 +1604,7 @@ public class MachineApiServiceTests
         // Verify that a job was scheduled and the correct build was returned
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.IsNotNull(actual);
-        Assert.AreEqual(message, actual.Message);
+        Assert.AreEqual(MachineApiService.BuildStateCompleted, actual.Message);
         Assert.AreEqual(percentCompleted, actual.PercentCompleted);
         Assert.AreEqual(revision, actual.Revision);
         Assert.AreEqual(state.ToString().ToUpperInvariant(), actual.State);
@@ -1620,7 +1619,6 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        const string message = "Completed";
         const double percentCompleted = 0;
         const int revision = 43;
         const JobState state = JobState.Completed;
@@ -1635,7 +1633,7 @@ public class MachineApiServiceTests
                             Url = "https://example.com",
                             Id = Build01,
                             Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
-                            Message = message,
+                            Message = MachineApiService.BuildStateCompleted,
                             Progress = percentCompleted,
                             Revision = revision,
                             State = state,
@@ -1677,7 +1675,6 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        const string message = "Completed";
         const double percentCompleted = 0;
         const int revision = 43;
         const JobState state = JobState.Completed;
@@ -1692,7 +1689,7 @@ public class MachineApiServiceTests
                             Url = "https://example.com",
                             Id = Build01,
                             Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
-                            Message = message,
+                            Message = MachineApiService.BuildStateCompleted,
                             Progress = percentCompleted,
                             Revision = revision,
                             State = state,
@@ -2011,7 +2008,7 @@ public class MachineApiServiceTests
                             Url = "https://example.com",
                             Id = Build01,
                             Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
-                            Message = "Completed",
+                            Message = MachineApiService.BuildStateCompleted,
                             Progress = 0,
                             Revision = 43,
                             State = JobState.Completed,
@@ -2086,7 +2083,7 @@ public class MachineApiServiceTests
                             Url = "https://example.com",
                             Id = buildId,
                             Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
-                            Message = "Completed",
+                            Message = MachineApiService.BuildStateCompleted,
                             Progress = 0,
                             Revision = 43,
                             State = JobState.Completed,
@@ -2139,7 +2136,7 @@ public class MachineApiServiceTests
                             Url = "https://example.com",
                             Id = buildId,
                             Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
-                            Message = "Completed",
+                            Message = MachineApiService.BuildStateCompleted,
                             Progress = 0,
                             Revision = 43,
                             State = JobState.Completed,
@@ -3241,6 +3238,143 @@ public class MachineApiServiceTests
         LanguageDto actual = await env.Service.IsLanguageSupportedAsync(languageCode, CancellationToken.None);
         Assert.AreEqual(internalCode, actual.LanguageCode);
         Assert.IsTrue(actual.IsSupported);
+    }
+
+    [Test]
+    public async Task LatestTimestampForRevisionAsync_BuildAfterTimestamp()
+    {
+        var env = new TestEnvironment();
+        DateTime timestamp = DateTime.UtcNow;
+        DateTime buildRequested = timestamp.AddHours(1);
+        var build = new ServalBuildDto
+        {
+            State = MachineApiService.BuildStateCompleted,
+            AdditionalInfo = new ServalBuildAdditionalInfo(),
+        };
+        build.AdditionalInfo.DateRequested = new DateTimeOffset(buildRequested);
+        build.AdditionalInfo.TranslationScriptureRanges.Add(new ProjectScriptureRange { ScriptureRange = "GEN-DEU" });
+        env.Service.Configure()
+            .GetBuildsAsync(User01, Project01, preTranslate: true, isServalAdmin: true, CancellationToken.None)
+            .Returns(Task.FromResult<IReadOnlyList<ServalBuildDto>>([build]));
+
+        // SUT
+        DateTime actual = await env.Service.LatestTimestampForRevisionAsync(
+            User01,
+            Project01,
+            bookNum: 2,
+            isServalAdmin: true,
+            timestamp,
+            CancellationToken.None
+        );
+        Assert.AreEqual(actual, buildRequested);
+    }
+
+    [Test]
+    public async Task LatestTimestampForRevisionAsync_BuildBeforeTimestamp()
+    {
+        var env = new TestEnvironment();
+        DateTime timestamp = DateTime.UtcNow;
+        DateTime buildRequested = timestamp.AddHours(-1);
+        var build = new ServalBuildDto
+        {
+            State = MachineApiService.BuildStateCompleted,
+            AdditionalInfo = new ServalBuildAdditionalInfo(),
+        };
+        build.AdditionalInfo.DateRequested = new DateTimeOffset(buildRequested);
+        build.AdditionalInfo.TranslationScriptureRanges.Add(new ProjectScriptureRange { ScriptureRange = "GEN-DEU" });
+        env.Service.Configure()
+            .GetBuildsAsync(User01, Project01, preTranslate: true, isServalAdmin: true, CancellationToken.None)
+            .Returns(Task.FromResult<IReadOnlyList<ServalBuildDto>>([build]));
+
+        // SUT
+        DateTime actual = await env.Service.LatestTimestampForRevisionAsync(
+            User01,
+            Project01,
+            bookNum: 2,
+            isServalAdmin: true,
+            timestamp,
+            CancellationToken.None
+        );
+        Assert.AreEqual(actual, buildRequested);
+    }
+
+    [Test]
+    public async Task LatestTimestampForRevisionAsync_BuildFinishing()
+    {
+        var env = new TestEnvironment();
+        DateTime timestamp = DateTime.UtcNow;
+        DateTime buildRequested = timestamp.AddHours(-1);
+        var build = new ServalBuildDto
+        {
+            State = MachineApiService.BuildStateFinishing,
+            AdditionalInfo = new ServalBuildAdditionalInfo(),
+        };
+        build.AdditionalInfo.DateRequested = new DateTimeOffset(buildRequested);
+        build.AdditionalInfo.TranslationScriptureRanges.Add(new ProjectScriptureRange { ScriptureRange = "GEN-DEU" });
+        env.Service.Configure()
+            .GetBuildsAsync(User01, Project01, preTranslate: true, isServalAdmin: true, CancellationToken.None)
+            .Returns(Task.FromResult<IReadOnlyList<ServalBuildDto>>([build]));
+
+        // SUT
+        DateTime actual = await env.Service.LatestTimestampForRevisionAsync(
+            User01,
+            Project01,
+            bookNum: 2,
+            isServalAdmin: true,
+            timestamp,
+            CancellationToken.None
+        );
+        Assert.AreEqual(actual, timestamp);
+    }
+
+    [Test]
+    public async Task LatestTimestampForRevisionAsync_BuildsDoNotContainBook()
+    {
+        var env = new TestEnvironment();
+        DateTime timestamp = DateTime.UtcNow;
+        DateTime buildRequested = timestamp.AddHours(-1);
+        var build = new ServalBuildDto
+        {
+            State = MachineApiService.BuildStateFinishing,
+            AdditionalInfo = new ServalBuildAdditionalInfo(),
+        };
+        build.AdditionalInfo.DateRequested = new DateTimeOffset(buildRequested);
+        build.AdditionalInfo.TranslationScriptureRanges.Add(new ProjectScriptureRange { ScriptureRange = "LEV-DEU" });
+        env.Service.Configure()
+            .GetBuildsAsync(User01, Project01, preTranslate: true, isServalAdmin: true, CancellationToken.None)
+            .Returns(Task.FromResult<IReadOnlyList<ServalBuildDto>>([build]));
+
+        // SUT
+        DateTime actual = await env.Service.LatestTimestampForRevisionAsync(
+            User01,
+            Project01,
+            bookNum: 2,
+            isServalAdmin: true,
+            timestamp,
+            CancellationToken.None
+        );
+        Assert.AreEqual(actual, timestamp);
+    }
+
+    [Test]
+    public async Task LatestTimestampForRevisionAsync_NoBuilds()
+    {
+        var env = new TestEnvironment();
+        DateTime timestamp = DateTime.UtcNow;
+        env.Service.Configure()
+            .GetBuildsAsync(User01, Project01, preTranslate: true, isServalAdmin: true, CancellationToken.None)
+            .Returns(Task.FromResult<IReadOnlyList<ServalBuildDto>>([]));
+
+        // SUT
+        DateTime actual = await env.Service.LatestTimestampForRevisionAsync(
+            User01,
+            Project01,
+            bookNum: 2,
+            isServalAdmin: true,
+            timestamp,
+            CancellationToken.None
+        );
+        Assert.AreEqual(actual, timestamp);
     }
 
     [Test]

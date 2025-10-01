@@ -83,13 +83,10 @@ public class MachineApiService(
     /// The Completed build state.
     /// </summary>
     /// <remarks>
-    /// SF returns this state when the build is completed.
+    /// Serval returns this state when the build is completed.
     /// </remarks>
     internal const string BuildStateCompleted = "COMPLETED";
 
-    private static readonly IEqualityComparer<IList<int>> _listIntComparer = SequenceEqualityComparer.Create(
-        EqualityComparer<int>.Default
-    );
     private static readonly IEqualityComparer<IList<string>> _listStringComparer = SequenceEqualityComparer.Create(
         EqualityComparer<string>.Default
     );
@@ -360,7 +357,17 @@ public class MachineApiService(
         return buildDto;
     }
 
-    public async Task<IReadOnlyList<ServalBuildDto>> GetBuildsAsync(
+    /// <summary>
+    /// Gets the builds for the specified project.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="preTranslate">If <c>true</c>, return NMT builds only; otherwise, return SMT builds.</param>
+    /// <param name="isServalAdmin">If <c>true</c>, the current user is a Serval Administrator.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The builds.</returns>
+    /// <remarks>This function is virtual to allow mocking in unit tests.</remarks>
+    public virtual async Task<IReadOnlyList<ServalBuildDto>> GetBuildsAsync(
         string curUserId,
         string sfProjectId,
         bool preTranslate,
@@ -1042,7 +1049,7 @@ public class MachineApiService(
         await using IConnection connection = await realtimeService.ConnectAsync(userId);
         string id = TextDocument.GetDocId(sfProjectId, bookNum, chapterNum, TextDocument.Draft);
 
-        DateTime latestTimestampForRevision = await LatestTimestampForRevision(
+        DateTime latestTimestampForRevision = await LatestTimestampForRevisionAsync(
             curUserId,
             sfProjectId,
             bookNum,
@@ -1770,7 +1777,18 @@ public class MachineApiService(
         return translationEngineId;
     }
 
-    private async Task<DateTime> LatestTimestampForRevision(
+    /// <summary>
+    /// Retrieves the latest timestamp for the revision corresponding to the specified timestamp.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="bookNum">The book number.</param>
+    /// <param name="isServalAdmin">If <c>true</c>, the current user is a Serval Administrator.</param>
+    /// <param name="timestamp">The timestamp to retrieve the timestamp of the closest revision for.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The timestamp of the draft that immediate follows the intended draft revision.</returns>
+    /// <remarks>This function is internal so it can be unit tests.</remarks>
+    internal async Task<DateTime> LatestTimestampForRevisionAsync(
         string curUserId,
         string sfProjectId,
         int bookNum,
@@ -1788,13 +1806,16 @@ public class MachineApiService(
         );
         builds = FilterBuildsByBook(builds, bookNum);
 
+        // See if there is a build that was requested after the timestamp
         DateTimeOffset? time = builds
             .FirstOrDefault(b => b.AdditionalInfo?.DateRequested?.UtcDateTime > timestamp)
             ?.AdditionalInfo?.DateRequested;
 
+        // If not, then if there is a build that was requested before the timestamp
         time ??= builds
             .LastOrDefault(b => b.AdditionalInfo?.DateRequested?.UtcDateTime < timestamp)
             ?.AdditionalInfo?.DateRequested;
+
         // Return the timestamp, or the time of the draft that immediate follows the intended draft.
         return time?.UtcDateTime ?? timestamp;
     }
@@ -1971,9 +1992,9 @@ public class MachineApiService(
     /// Ensures that the user has permission to access Serval and the project.
     /// </summary>
     /// <param name="curUserId">The current user identifier.</param>
-    /// <param name="sfProjectId"></param>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="isServalAdmin">If <c>true</c>, the current user is a Serval Administrator.</param>
-    /// <param name="cancellationToken">The cancellatioon token.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The project.</returns>
     /// <exception cref="DataNotFoundException">The project does not exist.</exception>
     /// <exception cref="ForbiddenException">
