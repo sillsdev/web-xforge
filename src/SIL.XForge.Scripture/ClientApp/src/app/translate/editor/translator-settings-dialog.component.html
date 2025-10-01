@@ -26,7 +26,8 @@
               <mat-select
                 id="num-suggestions-select"
                 [disabled]="translationSuggestionsDisabled"
-                [(ngModel)]="numSuggestions"
+                [ngModel]="numSuggestions"
+                (ngModelChange)="setNumSuggestions($event)"
               >
                 @for (value of ["1", "2", "3", "4", "5"]; track value) {
                   <mat-option [value]="value">{{ value }}</mat-option>
@@ -39,7 +40,7 @@
               }}</span>
               <div class="slider-labels">
                 <span>{{ t("more") }}</span>
-                <span>{{ confidenceThreshold }}%</span>
+                <span>{{ confidenceThreshold$ | async }}%</span>
                 <span>{{ t("better") }}</span>
               </div>
               <mat-slider
@@ -50,8 +51,9 @@
               >
                 <input
                   matSliderThumb
-                  [(ngModel)]="confidenceThreshold"
-                  (dragEnd)="confidenceThreshold = $event.value"
+                  [ngModel]="confidenceThreshold$ | async"
+                  (ngModelChange)="setConfidenceThreshold($event)"
+                  (dragEnd)="setConfidenceThreshold($event.value)"
                 />
               </mat-slider>
             </div>

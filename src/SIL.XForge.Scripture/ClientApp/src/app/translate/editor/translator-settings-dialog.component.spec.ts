@@ -1,5 +1,6 @@
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
+import { CommonModule } from '@angular/common';
 import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
@@ -53,10 +54,10 @@ describe('TranslatorSettingsDialogComponent', () => {
   it('update confidence threshold', fakeAsync(() => {
     const env = new TestEnvironment();
     env.openDialog();
-    expect(env.component!.confidenceThreshold).toEqual(50);
+    expect(env.component!.confidenceThreshold$.value).toEqual(50);
 
     env.updateConfidenceThresholdSlider(60);
-    expect(env.component!.confidenceThreshold).toEqual(60);
+    expect(env.component!.confidenceThreshold$.value).toEqual(60);
     const userConfigDoc = env.getProjectUserConfigDoc();
     expect(userConfigDoc.data!.confidenceThreshold).toEqual(0.6);
     env.closeDialog();
@@ -65,14 +66,14 @@ describe('TranslatorSettingsDialogComponent', () => {
   it('update suggestions enabled', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.openDialog();
-    expect(env.component!.translationSuggestionsUserEnabled).toBe(true);
+    expect(env.component!['translationSuggestionsUserEnabled']).toBe(true);
 
     const suggestionsToggle = await env.getSuggestionsEnabledToggle();
     expect(suggestionsToggle).not.toBeNull();
     expect(await env.isToggleChecked(suggestionsToggle!)).toBe(true);
 
     await env.toggleSlideToggle(suggestionsToggle!);
-    expect(env.component!.translationSuggestionsUserEnabled).toBe(false);
+    expect(env.component!['translationSuggestionsUserEnabled']).toBe(false);
     expect(await env.isToggleChecked(suggestionsToggle!)).toBe(false);
 
     const userConfigDoc = env.getProjectUserConfigDoc();
@@ -95,7 +96,7 @@ describe('TranslatorSettingsDialogComponent', () => {
   it('shows correct confidence threshold even when suggestions disabled', fakeAsync(() => {
     const env = new TestEnvironment({ translationSuggestionsEnabled: false });
     env.openDialog();
-    expect(env.component?.confidenceThreshold).toEqual(50);
+    expect(env.component?.confidenceThreshold$.value).toEqual(50);
     env.closeDialog();
   }));
 
@@ -312,7 +313,7 @@ describe('TranslatorSettingsDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [UICommonModule, TestTranslocoModule, NoticeComponent],
+  imports: [CommonModule, UICommonModule, TestTranslocoModule, NoticeComponent],
   declarations: [TranslatorSettingsDialogComponent]
 })
 class DialogTestModule {}
@@ -426,7 +427,7 @@ class TestEnvironment {
   }
 
   updateConfidenceThresholdSlider(value: number): void {
-    this.component!.confidenceThreshold = value;
+    this.component!.confidenceThreshold$.next(value);
     tick(CONFIDENCE_THRESHOLD_TIMEOUT);
     this.fixture.detectChanges();
   }
