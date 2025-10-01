@@ -1,7 +1,7 @@
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { fakeAsync, TestBed } from '@angular/core/testing';
-import { anything, mock, verify } from 'ts-mockito';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { CommandService } from 'xforge-common/command.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
@@ -71,6 +71,28 @@ describe('SFProjectService', () => {
       await env.service.onlineEventMetrics(projectId, pageIndex, pageSize);
       verify(mockedCommandService.onlineInvoke(anything(), 'eventMetrics', anything())).once();
       expect().nothing();
+    }));
+  });
+
+  describe('onlineApplyPreTranslationToProject', () => {
+    it('should invoke the command service', fakeAsync(async () => {
+      const jobId: string = 'job01';
+      const env = new TestEnvironment();
+      when(mockedCommandService.onlineInvoke(anything(), 'applyPreTranslationToProject', anything())).thenReturn(
+        Promise.resolve(jobId)
+      );
+      const projectId = 'project01';
+      const scriptureRange = 'GEN-REV';
+      const targetProjectId = 'project01';
+      const timestamp = new Date();
+      const actual = await env.service.onlineApplyPreTranslationToProject(
+        projectId,
+        scriptureRange,
+        targetProjectId,
+        timestamp
+      );
+      verify(mockedCommandService.onlineInvoke(anything(), 'applyPreTranslationToProject', anything())).once();
+      expect(actual).toBe(jobId);
     }));
   });
 
