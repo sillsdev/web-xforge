@@ -594,6 +594,10 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
     return this.addEmbeddedElementsToDelta(dataDelta);
   }
 
+  getEmbedCountsToOffsetFunc(): (offset: number) => number {
+    return (offset: number) => this.getEmbedsInEditorRange(0, offset);
+  }
+
   private countSequentialEmbedsStartingAt(startEditorPosition: number): number {
     const embedEditorPositions = this.embedPositions;
     // add up the leading embeds
