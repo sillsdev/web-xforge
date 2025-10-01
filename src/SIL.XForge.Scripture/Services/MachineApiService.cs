@@ -151,7 +151,7 @@ public class MachineApiService(
             {
                 await hubContext.NotifyDraftApplyProgress(
                     sfProjectId,
-                    new DraftApplyState { State = $"Retrieving draft for {Canon.BookIdToEnglishName(book)}." }
+                    new DraftApplyState { State = $"Retrieving draft for {book}." }
                 );
                 int bookNum = Canon.BookIdToNumber(book);
 
@@ -212,11 +212,12 @@ public class MachineApiService(
                             // If the usfm is invalid, skip this book
                             if (string.IsNullOrWhiteSpace(usfm))
                             {
+                                result.Failures.Add(book);
                                 await hubContext.NotifyDraftApplyProgress(
                                     sfProjectId,
                                     new DraftApplyState
                                     {
-                                        State = $"No book number for {Canon.BookNumberToEnglishName(bookNum)}.",
+                                        State = $"No draft available for {Canon.BookNumberToId(bookNum)}.",
                                     }
                                 );
                                 break;
@@ -231,7 +232,7 @@ public class MachineApiService(
                                     new DraftApplyState
                                     {
                                         State =
-                                            $"Could not retrieve draft for {Canon.BookNumberToEnglishName(bookNum)}.",
+                                            $"Could not retrieve a valid draft for {Canon.BookNumberToId(bookNum)}.",
                                     }
                                 );
 
@@ -265,7 +266,7 @@ public class MachineApiService(
                                 new DraftApplyState
                                 {
                                     State =
-                                        $"Could not retrieve draft for {Canon.BookNumberToEnglishName(bookNum)} {chapterNum}.",
+                                        $"Could not retrieve draft for {Canon.BookNumberToId(bookNum)} {chapterNum}.",
                                 }
                             );
                             continue;
@@ -284,8 +285,7 @@ public class MachineApiService(
                             sfProjectId,
                             new DraftApplyState
                             {
-                                State =
-                                    $"Could not retrieve draft for {Canon.BookNumberToEnglishName(bookNum)} {chapterNum}.",
+                                State = $"Could not retrieve draft for {Canon.BookNumberToId(bookNum)} {chapterNum}.",
                             }
                         );
                         continue;
@@ -327,7 +327,7 @@ public class MachineApiService(
         bool successful = false;
         try
         {
-            // Being the transaction
+            // Begin the transaction
             connection.BeginTransaction();
 
             // Begin a transaction, and update the project
@@ -413,16 +413,12 @@ public class MachineApiService(
                 if (textIndex == -1)
                 {
                     string bookId = Canon.BookNumberToId(bookNum);
-                    if (result.Failures.LastOrDefault() != bookId)
+                    if (result.Failures.Add(bookId))
                     {
-                        // Only list the book failure once
-                        result.Failures.Add(bookId);
+                        // Only notify the book failure once per book
                         await hubContext.NotifyDraftApplyProgress(
                             sfProjectId,
-                            new DraftApplyState
-                            {
-                                State = $"Could not save draft for {Canon.BookNumberToEnglishName(bookNum)}.",
-                            }
+                            new DraftApplyState { State = $"Could not save draft for {Canon.BookNumberToId(bookNum)}." }
                         );
                     }
 
@@ -441,16 +437,12 @@ public class MachineApiService(
                     }
 
                     string bookId = Canon.BookNumberToId(bookNum);
-                    if (result.Failures.LastOrDefault() != bookId)
+                    if (result.Failures.Add(bookId))
                     {
-                        // Only list the book failure once
-                        result.Failures.Add(bookId);
+                        // Only notify the book failure once per book
                         await hubContext.NotifyDraftApplyProgress(
                             sfProjectId,
-                            new DraftApplyState
-                            {
-                                State = $"Could not save draft for {Canon.BookNumberToEnglishName(bookNum)}.",
-                            }
+                            new DraftApplyState { State = $"Could not save draft for {Canon.BookNumberToId(bookNum)}." }
                         );
                     }
 
@@ -468,8 +460,7 @@ public class MachineApiService(
                         sfProjectId,
                         new DraftApplyState
                         {
-                            State =
-                                $"Could not save draft for {Canon.BookNumberToEnglishName(bookNum)} {chapterDelta.Number}.",
+                            State = $"Could not save draft for {Canon.BookNumberToId(bookNum)} {chapterDelta.Number}.",
                         }
                     );
                     continue;
@@ -499,8 +490,7 @@ public class MachineApiService(
                         sfProjectId,
                         new DraftApplyState
                         {
-                            State =
-                                $"Could not save draft for {Canon.BookNumberToEnglishName(bookNum)} {chapterDelta.Number}.",
+                            State = $"Could not save draft for {Canon.BookNumberToId(bookNum)} {chapterDelta.Number}.",
                         }
                     );
                     continue;
@@ -523,7 +513,7 @@ public class MachineApiService(
                         sfProjectId,
                         new DraftApplyState
                         {
-                            State = $"Updating {Canon.BookNumberToEnglishName(bookNum)} {chapterDelta.Number}.",
+                            State = $"Updating {Canon.BookNumberToId(bookNum)} {chapterDelta.Number}.",
                         }
                     );
                 }
@@ -535,7 +525,7 @@ public class MachineApiService(
                         sfProjectId,
                         new DraftApplyState
                         {
-                            State = $"Creating {Canon.BookNumberToEnglishName(bookNum)} {chapterDelta.Number}.",
+                            State = $"Creating {Canon.BookNumberToId(bookNum)} {chapterDelta.Number}.",
                         }
                     );
                 }

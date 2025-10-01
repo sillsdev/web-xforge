@@ -185,8 +185,8 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     scriptureRange: string,
     targetProjectId: string,
     timestamp: Date
-  ): Promise<void> {
-    return this.onlineInvoke<void>('applyPreTranslationToProject', {
+  ): Promise<string | undefined> {
+    return this.onlineInvoke<string>('applyPreTranslationToProject', {
       projectId,
       scriptureRange,
       targetProjectId,

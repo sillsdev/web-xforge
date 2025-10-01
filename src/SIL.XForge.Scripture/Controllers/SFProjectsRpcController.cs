@@ -45,7 +45,7 @@ public class SFProjectsRpcController(
         try
         {
             // Run the background job
-            backgroundJobClient.Enqueue<IMachineApiService>(r =>
+            string jobId = backgroundJobClient.Enqueue<IMachineApiService>(r =>
                 r.ApplyPreTranslationToProjectAsync(
                     UserId,
                     projectId,
@@ -55,7 +55,7 @@ public class SFProjectsRpcController(
                     CancellationToken.None
                 )
             );
-            return Ok();
+            return Ok(jobId);
         }
         catch (Exception)
         {

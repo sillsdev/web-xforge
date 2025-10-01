@@ -13,9 +13,9 @@ public class DraftApplyResult
     public bool ChangesSaved { get; set; }
 
     /// <summary>
-    /// A list of any chapters that failed to apply in the format "GEN 1".
+    /// A list of any books and chapters that failed to apply in the format "GEN" and "GEN 1".
     /// </summary>
-    public List<string> Failures = [];
+    public HashSet<string> Failures = [];
 
     /// <summary>
     /// A log containing any warnings or errors that occurred while applying the draft.
