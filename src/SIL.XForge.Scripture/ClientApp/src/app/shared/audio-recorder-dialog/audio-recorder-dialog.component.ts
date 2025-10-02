@@ -52,7 +52,6 @@ export interface AudioRecorderDialogResult {
   styleUrl: './audio-recorder-dialog.component.scss',
   imports: [UICommonModule, CommonModule, SharedModule, TranslocoModule]
 })
-/* eslint-disable brace-style */
 export class AudioRecorderDialogComponent implements ControlValueAccessor, OnInit, OnDestroy {
   @ViewChild(SingleButtonAudioPlayerComponent) audioPlayer?: SingleButtonAudioPlayerComponent;
   @Output() status = new EventEmitter<AudioAttachment>();

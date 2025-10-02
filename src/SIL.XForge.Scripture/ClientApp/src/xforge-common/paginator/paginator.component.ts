@@ -5,7 +5,6 @@ import { Subscription } from 'rxjs';
 
 // Decorator required by Angular compiler
 @Directive()
-// eslint-disable-next-line @angular-eslint/directive-class-suffix
 export class Paginator extends MatPaginatorIntl implements OnDestroy {
   itemsPerPageLabel = '';
   nextPageLabel = '';

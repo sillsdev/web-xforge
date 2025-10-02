@@ -1,4 +1,3 @@
-/* eslint-disable brace-style */
 import { Injectable } from '@angular/core';
 import { Observable, of, Subscription, timer } from 'rxjs';
 import { map, takeWhile } from 'rxjs/operators';
