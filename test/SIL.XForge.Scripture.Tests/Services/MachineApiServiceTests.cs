@@ -3619,7 +3619,7 @@ public class MachineApiServiceTests
             timestamp,
             CancellationToken.None
         );
-        Assert.AreEqual(actual, buildRequested);
+        Assert.GreaterOrEqual(actual, timestamp);
     }
 
     [Test]

@@ -2298,12 +2298,12 @@ public class MachineApiService(
             .FirstOrDefault(b => b.AdditionalInfo?.DateRequested?.UtcDateTime > timestamp)
             ?.AdditionalInfo?.DateRequested;
 
-        // If not, then if there is a build that was requested before the timestamp
-        time ??= builds
-            .LastOrDefault(b => b.AdditionalInfo?.DateRequested?.UtcDateTime < timestamp)
-            ?.AdditionalInfo?.DateRequested;
+        // If not, search for a build that comes before the timestamp and use the current time if the build exists
+        time ??= builds.LastOrDefault(b => b.AdditionalInfo?.DateRequested?.UtcDateTime < timestamp) is not null
+            ? DateTime.UtcNow
+            : null;
 
-        // Return the timestamp, or the time of the draft that immediate follows the intended draft.
+        // Return the latest time to access a draft, or the original timestamp is none is found
         return time?.UtcDateTime ?? timestamp;
     }
 
