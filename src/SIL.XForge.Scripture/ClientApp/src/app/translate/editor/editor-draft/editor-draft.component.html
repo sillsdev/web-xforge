@@ -50,7 +50,7 @@
                 <transloco class="hide-lt-md" key="editor_draft_tab.format_draft"></transloco>
                 <transloco class="hide-gt-md" key="editor_draft_tab.formatting"></transloco>
               </button>
-            } @else {
+            } @else if (formattingOptionsPossible) {
               <span
                 [matTooltip]="t(doesLatestHaveDraft ? 'format_draft_can' : 'format_draft_cannot')"
                 [style.cursor]="doesLatestHaveDraft ? 'pointer' : 'not-allowed'"
