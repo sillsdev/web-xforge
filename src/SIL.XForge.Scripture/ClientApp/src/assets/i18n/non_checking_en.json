@@ -415,6 +415,7 @@
     "format_draft_before": "Select formatting options before adding it to your project.",
     "format_draft_can": "Customize formatting options for the draft",
     "format_draft_cannot": "You can only change formatting for books from the latest draft",
+    "format_draft_outdated_draft": "This draft is outdated and formatting options cannot be applied",
     "no_draft_notice": "{{ bookChapterName }} has no draft.",
     "offline_notice": "Generated drafts are not available offline.",
     "overwrite": "Adding the draft will overwrite the current chapter. Are you sure you want to continue?",
