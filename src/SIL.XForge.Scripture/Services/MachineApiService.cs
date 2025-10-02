@@ -844,6 +844,41 @@ public class MachineApiService(
         return buildDto;
     }
 
+    public async Task<TranslationBuild?> GetRawBuildAsync(
+        string curUserId,
+        string sfProjectId,
+        string buildId,
+        long? minRevision,
+        bool preTranslate,
+        bool isServalAdmin,
+        CancellationToken cancellationToken
+    )
+    {
+        // Ensure that the user has permission
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin, cancellationToken);
+
+        TranslationBuild? translationBuild = null;
+
+        // Execute on Serval, if it is enabled
+        string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate);
+
+        try
+        {
+            translationBuild = await translationEnginesClient.GetBuildAsync(
+                translationEngineId,
+                buildId,
+                minRevision,
+                cancellationToken
+            );
+        }
+        catch (ServalApiException e)
+        {
+            ProcessServalApiException(e);
+        }
+
+        return translationBuild;
+    }
+
     /// <summary>
     /// Gets the builds for the specified project.
     /// </summary>

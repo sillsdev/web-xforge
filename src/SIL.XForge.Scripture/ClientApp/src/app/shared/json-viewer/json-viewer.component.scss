@@ -1,0 +1,48 @@
+:host {
+  display: block;
+  border-radius: 8px;
+  overflow-x: auto;
+  padding: 16px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: nowrap;
+
+  // JSON syntax highlighting using CSS custom properties
+  .json-key {
+    color: var(--json-viewer-key-color);
+    font-weight: 500;
+  }
+
+  .json-string {
+    color: var(--json-viewer-string-color);
+  }
+
+  .json-number {
+    color: var(--json-viewer-number-color);
+  }
+
+  .json-boolean {
+    color: var(--json-viewer-boolean-color);
+  }
+
+  .json-null {
+    color: var(--json-viewer-null-color);
+    font-style: italic;
+  }
+
+  .json-brace,
+  .json-bracket {
+    color: var(--json-viewer-brace-color);
+    font-weight: 600;
+  }
+
+  .json-colon,
+  .json-comma {
+    color: var(--json-viewer-punctuation-color);
+  }
+
+  .json-indent {
+    white-space: pre;
+  }
+}
