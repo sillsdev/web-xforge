@@ -134,7 +134,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       );
       navEndEvent$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(e => {
         if (this.isAppOnline) {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
           gtag('config', 'UA-22170471-15', { page_path: e.urlAfterRedirects });
         }
       });
