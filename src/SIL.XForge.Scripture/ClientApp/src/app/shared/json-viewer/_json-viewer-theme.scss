@@ -1,0 +1,29 @@
+@use '@angular/material' as mat;
+
+@mixin color($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
+
+  @if $is-dark {
+    --json-viewer-key-color: #9cdcfe; // Light blue for property names
+    --json-viewer-string-color: #ce9178; // Light orange for strings
+    --json-viewer-number-color: #b5cea8; // Light green for numbers
+    --json-viewer-boolean-color: #569cd6; // Medium blue for booleans
+    --json-viewer-null-color: #808080; // Gray for null
+    --json-viewer-brace-color: #d4d4d4; // Light gray for braces/brackets
+    --json-viewer-punctuation-color: #cccccc; // Light gray for colons/commas
+  } @else {
+    --json-viewer-key-color: #0451a5; // Blue for property names
+    --json-viewer-string-color: #a31515; // Red for strings
+    --json-viewer-number-color: #098658; // Green for numbers
+    --json-viewer-boolean-color: #0000ff; // Blue for booleans
+    --json-viewer-null-color: #808080; // Gray for null
+    --json-viewer-brace-color: #000000; // Black for braces/brackets
+    --json-viewer-punctuation-color: #808080; // Gray for colons/commas
+  }
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}

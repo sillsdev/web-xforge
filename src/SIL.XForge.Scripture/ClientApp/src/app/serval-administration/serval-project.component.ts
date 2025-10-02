@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { saveAs } from 'file-saver';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DraftConfig, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { catchError, lastValueFrom, Observable, of, Subscription, switchMap, throwError } from 'rxjs';
+import { catchError, firstValueFrom, lastValueFrom, Observable, of, Subscription, switchMap, throwError } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -15,6 +15,7 @@ import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { BuildDto } from '../machine-api/build-dto';
+import { JsonViewerComponent } from '../shared/json-viewer/json-viewer.component';
 import { MobileNotSupportedComponent } from '../shared/mobile-not-supported/mobile-not-supported.component';
 import { NoticeComponent } from '../shared/notice/notice.component';
 import { SharedModule } from '../shared/shared.module';
@@ -52,7 +53,8 @@ function projectType(project: TranslateSource | SFProjectProfile): string {
     SharedModule,
     UICommonModule,
     DraftInformationComponent,
-    MobileNotSupportedComponent
+    MobileNotSupportedComponent,
+    JsonViewerComponent
   ]
 })
 export class ServalProjectComponent extends DataLoadingComponent implements OnInit {
@@ -74,6 +76,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   draftConfig: Object | undefined;
   draftJob$: Observable<BuildDto | undefined> = new Observable<BuildDto | undefined>();
   lastCompletedBuild: BuildDto | undefined;
+  rawLastCompletedBuild: any;
   zipSubscription: Subscription | undefined;
 
   constructor(
@@ -191,8 +194,11 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
         }),
         quietTakeUntilDestroyed(this.destroyRef)
       )
-      .subscribe((build: BuildDto | undefined) => {
+      .subscribe(async (build: BuildDto | undefined) => {
         this.lastCompletedBuild = build;
+        if (build?.id != null) {
+          this.rawLastCompletedBuild = await firstValueFrom(this.draftGenerationService.getRawBuild(build.id));
+        }
       });
   }
 
@@ -255,23 +261,6 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
         tab: 'draft-jobs'
       }
     });
-  }
-
-  keys(obj: Object): string[] {
-    return Object.keys(obj);
-  }
-
-  stringify(value: any): string {
-    if (Array.isArray(value)) {
-      return this.arrayToString(value);
-    }
-    return JSON.stringify(value, (_key, value) => (Array.isArray(value) ? this.arrayToString(value) : value), 2);
-  }
-
-  arrayToString(value: any): string {
-    const isObject = typeof value[0] === 'object';
-    const contents = isObject ? value.map(x => this.stringify(x)).join(', ') : value.join(', ');
-    return '[' + contents + ']';
   }
 
   private getDraftJob(projectId: string): Observable<BuildDto | undefined> {
