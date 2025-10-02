@@ -9,14 +9,10 @@
         <pre>{{ data.eventType }}</pre>
       </div>
       <h3>{{ t("parameters") }}</h3>
-      <div>
-        <pre>{{ data.payload | json }}</pre>
-      </div>
+      <app-json-viewer [data]="data.payload"></app-json-viewer>
       @if (data.result != null) {
         <h3>{{ t("result") }}</h3>
-        <div>
-          <pre>{{ data.result }}</pre>
-        </div>
+        <app-json-viewer [data]="data.result"></app-json-viewer>
       }
       @if (data.exception != null) {
         <h3>{{ t("exception") }}</h3>

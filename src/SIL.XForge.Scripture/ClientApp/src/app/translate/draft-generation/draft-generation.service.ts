@@ -131,6 +131,16 @@ export class DraftGenerationService {
       );
   }
 
+  getRawBuild(buildId: string): Observable<Object | undefined> {
+    if (!this.onlineStatusService.isOnline) {
+      return of(undefined);
+    }
+    return this.httpClient.get<Object>(`translation/rawBuilds/id:${buildId}?pretranslate=true`).pipe(
+      map(res => res.data),
+      catchError(() => of(undefined))
+    );
+  }
+
   /**
    * Starts a pre-translation build job if one is not already active.
    * @param buildConfig The build configuration.

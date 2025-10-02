@@ -9,6 +9,7 @@
 @use 'src/app/navigation/navigation-theme' as sf-navigation;
 @use 'src/app/shared/sf-tab-group/sf-tab-group-theme' as sf-tab-group;
 @use 'src/app/shared/book-multi-select/book-multi-select-theme' as sf-book-multi-select;
+@use 'src/app/shared/json-viewer/json-viewer-theme' as sf-json-viewer;
 @use 'src/app/translate/draft-generation/draft-generation-steps/draft-generation-steps-theme' as
   sf-draft-generation-steps;
 @use 'src/app/translate/draft-generation/confirm-sources/confirm-sources-theme' as sf-confirm-sources;
@@ -46,6 +47,7 @@
   @include sf-draft-usfm-format.theme($theme);
   @include sf-editor.theme($theme);
   @include sf-editor-draft.theme($theme);
+  @include sf-json-viewer.theme($theme);
   @include sf-my-projects.theme($theme);
   @include sf-navigation.theme($theme);
   @include sf-note-dialog.theme($theme);
