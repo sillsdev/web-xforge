@@ -84,6 +84,14 @@ public class MachineApiService(
     /// </remarks>
     internal const string BuildStateFinishing = "FINISHING";
 
+    /// <summary>
+    /// The Completed build state.
+    /// </summary>
+    /// <remarks>
+    /// Serval returns this state when the build is completed.
+    /// </remarks>
+    internal const string BuildStateCompleted = "COMPLETED";
+
     private static readonly IEqualityComparer<IList<string>> _listStringComparer = SequenceEqualityComparer.Create(
         EqualityComparer<string>.Default
     );
@@ -836,7 +844,17 @@ public class MachineApiService(
         return buildDto;
     }
 
-    public async Task<IReadOnlyList<ServalBuildDto>> GetBuildsAsync(
+    /// <summary>
+    /// Gets the builds for the specified project.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="preTranslate">If <c>true</c>, return NMT builds only; otherwise, return SMT builds.</param>
+    /// <param name="isServalAdmin">If <c>true</c>, the current user is a Serval Administrator.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The builds.</returns>
+    /// <remarks>This function is virtual to allow mocking in unit tests.</remarks>
+    public virtual async Task<IReadOnlyList<ServalBuildDto>> GetBuildsAsync(
         string curUserId,
         string sfProjectId,
         bool preTranslate,
@@ -1415,58 +1433,29 @@ public class MachineApiService(
         CancellationToken cancellationToken
     )
     {
-        // Set up the list of revisions to be returned
-        List<DocumentRevision> revisions = [];
-
         // Ensure that the user has permission
         await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin, cancellationToken);
 
-        await using IConnection connection = await realtimeService.ConnectAsync(curUserId);
-        string id = TextDocument.GetDocId(sfProjectId, bookNum, chapterNum, TextDocument.Draft);
-        Op[] ops = await connection.GetOpsAsync<TextDocument>(id);
+        IReadOnlyList<ServalBuildDto> builds = await GetBuildsAsync(
+            curUserId,
+            sfProjectId,
+            preTranslate: true,
+            isServalAdmin,
+            cancellationToken
+        );
+        builds = FilterBuildsByBook(builds, bookNum);
 
-        // If there are no ops, just get the most recent revision from Serval
-        if (ops.Length == 0)
-        {
-            ServalBuildDto? build = await GetLastCompletedPreTranslationBuildAsync(
-                curUserId,
-                sfProjectId,
-                isServalAdmin,
-                cancellationToken
-            );
-            if (build is not null)
-            {
-                revisions.Add(
-                    new DocumentRevision
-                    {
-                        Source = OpSource.Draft,
-                        Timestamp = build.AdditionalInfo?.DateFinished?.UtcDateTime ?? DateTime.UtcNow,
-                    }
-                );
-            }
-        }
-        else
-        {
-            // Draft Ops are not user created, so we do not need to milestone them,
-            // like we do in ParatextService.GetRevisionHistoryAsync()
-            foreach (Op op in ops)
-            {
-                // Allow cancellation
-                if (cancellationToken.IsCancellationRequested)
+        // Set up the list of revisions to be returned
+        List<DocumentRevision> revisions =
+        [
+            .. builds
+                .Where(b => b.AdditionalInfo?.DateFinished is not null)
+                .Select(build => new DocumentRevision
                 {
-                    break;
-                }
-
-                revisions.Add(
-                    new DocumentRevision
-                    {
-                        Source = op.Metadata.Source ?? OpSource.Draft,
-                        Timestamp = op.Metadata.Timestamp,
-                        UserId = op.Metadata.UserId,
-                    }
-                );
-            }
-        }
+                    Source = OpSource.Draft,
+                    Timestamp = build.AdditionalInfo?.DateFinished?.UtcDateTime ?? DateTime.UtcNow,
+                }),
+        ];
 
         // Display the revisions in descending order to match the history API endpoint
         revisions.Reverse();
@@ -1547,6 +1536,15 @@ public class MachineApiService(
         await using IConnection connection = await realtimeService.ConnectAsync(userId);
         string id = TextDocument.GetDocId(sfProjectId, bookNum, chapterNum, TextDocument.Draft);
 
+        DateTime latestTimestampForRevision = await LatestTimestampForRevisionAsync(
+            curUserId,
+            sfProjectId,
+            bookNum,
+            isServalAdmin,
+            timestamp,
+            cancellationToken
+        );
+
         // First, see if the document exists in the realtime service, if the chapter is not 0
         IDocument<TextDocument>? textDocument = null;
         if (chapterNum != 0 && draftUsfmConfig is null)
@@ -1555,7 +1553,10 @@ public class MachineApiService(
             if (textDocument.IsLoaded)
             {
                 // Retrieve the snapshot if it exists
-                Snapshot<TextDocument> snapshot = await connection.FetchSnapshotAsync<TextDocument>(id, timestamp);
+                Snapshot<TextDocument> snapshot = await connection.FetchSnapshotAsync<TextDocument>(
+                    id,
+                    latestTimestampForRevision
+                );
                 if (snapshot.Data is not null)
                 {
                     return snapshot.Data;
@@ -2264,6 +2265,72 @@ public class MachineApiService(
     }
 
     /// <summary>
+    /// Retrieves the latest timestamp for the revision corresponding to the specified timestamp.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="bookNum">The book number.</param>
+    /// <param name="isServalAdmin">If <c>true</c>, the current user is a Serval Administrator.</param>
+    /// <param name="timestamp">The timestamp to retrieve the timestamp of the closest revision for.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The timestamp of the draft that immediate follows the intended draft revision.</returns>
+    /// <remarks>This function is internal so it can be unit tests.</remarks>
+    internal async Task<DateTime> LatestTimestampForRevisionAsync(
+        string curUserId,
+        string sfProjectId,
+        int bookNum,
+        bool isServalAdmin,
+        DateTime timestamp,
+        CancellationToken cancellationToken
+    )
+    {
+        IReadOnlyList<ServalBuildDto> builds = await GetBuildsAsync(
+            curUserId,
+            sfProjectId,
+            preTranslate: true,
+            isServalAdmin,
+            cancellationToken
+        );
+        builds = FilterBuildsByBook(builds, bookNum);
+
+        // See if there is a build that was requested after the timestamp
+        DateTimeOffset? time = builds
+            .FirstOrDefault(b => b.AdditionalInfo?.DateRequested?.UtcDateTime > timestamp)
+            ?.AdditionalInfo?.DateRequested;
+
+        // If not, search for a build that comes before the timestamp and use the current time if the build exists
+        time ??= builds.LastOrDefault(b => b.AdditionalInfo?.DateRequested?.UtcDateTime < timestamp) is not null
+            ? DateTime.UtcNow
+            : null;
+
+        // Return the latest time to access a draft, or the original timestamp is none is found
+        return time?.UtcDateTime ?? timestamp;
+    }
+
+    /// <summary>
+    /// Filters a list of builds to only those that contain the specified book number in their translation scripture ranges.
+    /// </summary>
+    /// <param name="builds">The builds.</param>
+    /// <param name="bookNum">The book number.</param>
+    /// <returns>The builds containing the specified book.</returns>
+    private static IReadOnlyList<ServalBuildDto> FilterBuildsByBook(IReadOnlyList<ServalBuildDto> builds, int bookNum)
+    {
+        // As we are only parsing books, we do not need to set the versification
+        ScriptureRangeParser scriptureRangeParser = new ScriptureRangeParser();
+        return
+        [
+            .. builds.Where(b =>
+                b.State == BuildStateCompleted
+                && (
+                    b.AdditionalInfo?.TranslationScriptureRanges.Any(r =>
+                        scriptureRangeParser.GetChapters(r.ScriptureRange).ContainsKey(Canon.BookNumberToId(bookNum))
+                    ) ?? false
+                )
+            ),
+        ];
+    }
+
+    /// <summary>
     /// This method maps Serval API exceptions to the exceptions that Machine.js understands.
     /// </summary>
     /// <param name="e">The Serval API Exception</param>>
@@ -2412,9 +2479,9 @@ public class MachineApiService(
     /// Ensures that the user has permission to access Serval and the project.
     /// </summary>
     /// <param name="curUserId">The current user identifier.</param>
-    /// <param name="sfProjectId"></param>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="isServalAdmin">If <c>true</c>, the current user is a Serval Administrator.</param>
-    /// <param name="cancellationToken">The cancellatioon token.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The project.</returns>
     /// <exception cref="DataNotFoundException">The project does not exist.</exception>
     /// <exception cref="ForbiddenException">
