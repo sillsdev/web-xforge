@@ -42,6 +42,7 @@ import { BuildStates } from '../../../machine-api/build-states';
 import { TextComponent } from '../../../shared/text/text.component';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { DraftHandlingService } from '../../draft-generation/draft-handling.service';
+import { FORMATTING_OPTIONS_SUPPORTED_DATE } from '../../draft-generation/draft-utils';
 @Component({
   selector: 'app-editor-draft',
   templateUrl: './editor-draft.component.html',
@@ -60,7 +61,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
   inputChanged$ = new Subject<void>();
   draftCheckState: 'draft-unknown' | 'draft-present' | 'draft-legacy' | 'draft-empty' = 'draft-unknown';
-  draftRevisions: Revision[] = [];
   selectedRevision: Revision | undefined;
   generateDraftUrl?: string;
   targetProject?: SFProjectProfile;
@@ -69,9 +69,12 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   isDraftApplied = false;
   userAppliedDraft = false;
   hasFormattingSelected = true;
+  formattingOptionsSupported = true;
 
   private selectedRevisionSubject = new BehaviorSubject<Revision | undefined>(undefined);
   private selectedRevision$ = this.selectedRevisionSubject.asObservable();
+
+  private _draftRevisions: Revision[] = [];
 
   // 'asyncScheduler' prevents ExpressionChangedAfterItHasBeenCheckedError
   private loading$ = new BehaviorSubject<boolean>(false);
@@ -112,7 +115,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     return this.draftHandlingService.canApplyDraft(this.targetProject, this.bookNum, this.chapter, this.draftDelta.ops);
   }
 
-  get doesLatestHaveDraft(): boolean {
+  get doesLatestBuildHaveDraft(): boolean {
     return (
       this.targetProject?.texts.find(t => t.bookNum === this.bookNum)?.chapters.find(c => c.number === this.chapter)
         ?.hasDraft ?? false
@@ -120,7 +123,21 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   }
 
   get mustChooseFormattingOptions(): boolean {
-    return this.featureFlags.usfmFormat.enabled && !this.hasFormattingSelected && this.doesLatestHaveDraft;
+    return (
+      this.featureFlags.usfmFormat.enabled &&
+      !this.hasFormattingSelected &&
+      this.formattingOptionsSupported &&
+      this.doesLatestBuildHaveDraft
+    );
+  }
+
+  set draftRevisions(value: Revision[]) {
+    this._draftRevisions = value;
+    this.formattingOptionsSupported = value.some(rev => new Date(rev.timestamp) > FORMATTING_OPTIONS_SUPPORTED_DATE);
+  }
+
+  get draftRevisions(): Revision[] {
+    return this._draftRevisions;
   }
 
   ngOnChanges(): void {

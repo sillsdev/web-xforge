@@ -50,12 +50,12 @@
                 <transloco class="hide-lt-md" key="editor_draft_tab.format_draft"></transloco>
                 <transloco class="hide-gt-md" key="editor_draft_tab.formatting"></transloco>
               </button>
-            } @else {
+            } @else if (formattingOptionsSupported) {
               <span
-                [matTooltip]="t(doesLatestHaveDraft ? 'format_draft_can' : 'format_draft_cannot')"
-                [style.cursor]="doesLatestHaveDraft ? 'pointer' : 'not-allowed'"
+                [matTooltip]="t(doesLatestBuildHaveDraft ? 'format_draft_can' : 'format_draft_cannot')"
+                [style.cursor]="doesLatestBuildHaveDraft ? 'pointer' : 'not-allowed'"
               >
-                <button mat-button (click)="navigateToFormatting()" [disabled]="!doesLatestHaveDraft">
+                <button mat-button (click)="navigateToFormatting()" [disabled]="!doesLatestBuildHaveDraft">
                   <mat-icon>build</mat-icon>
                   <transloco class="hide-lt-md" key="editor_draft_tab.format_draft"></transloco>
                   <transloco class="hide-gt-md" key="editor_draft_tab.formatting"></transloco>
