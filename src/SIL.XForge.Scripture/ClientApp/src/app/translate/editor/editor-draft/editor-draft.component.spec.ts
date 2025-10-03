@@ -426,7 +426,7 @@ describe('EditorDraftComponent', () => {
       flush();
     }));
 
-    it('should not guide user to select formatting options before specified date', fakeAsync(() => {
+    it('should hide formatting options of drafts before supported date', fakeAsync(() => {
       const testProjectDoc: SFProjectProfileDoc = {
         data: createTestProjectProfile({
           texts: [

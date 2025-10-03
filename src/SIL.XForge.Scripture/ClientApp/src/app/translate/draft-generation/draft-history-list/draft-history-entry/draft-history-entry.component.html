@@ -21,7 +21,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <div class="draft-entry-body">
-        @if (this.featureFlags.usfmFormat.enabled && !formattingOptionsSelected && isLatestBuild && draftIsAvailable) {
+        @if (formattingOptionsSupported && !formattingOptionsSelected && isLatestBuild && draftIsAvailable) {
           <p class="require-formatting-options">
             {{ t("select_formatting_options") }}
           </p>
@@ -49,7 +49,7 @@
             </p>
             <div class="draft-options">
               <app-draft-download-button [build]="entry" [flat]="true" />
-              @if (featureFlags.usfmFormat.enabled && formattingOptionsPossible && isLatestBuild) {
+              @if (formattingOptionsSupported && isLatestBuild) {
                 <button mat-button class="format-usfm" [routerLink]="['format']">
                   <mat-icon>build</mat-icon> {{ t("formatting_options") }}
                 </button>
