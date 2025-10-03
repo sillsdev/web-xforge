@@ -169,7 +169,9 @@ describe('I18nService', () => {
   });
 
   it('should localize references', () => {
-    when(mockedTranslocoService.translate<string>('canon.book_names.GEN')).thenReturn('Genesis');
+    when(mockedTranslocoService.translate<string>('canon.book_names.GEN', anything(), anything())).thenReturn(
+      'Genesis'
+    );
     const service = getI18nService();
     expect(service.localizeReference(new VerseRef('GEN 1:2-3'))).toBe('Genesis 1:2-3');
     service.setLocale('ar');
@@ -219,8 +221,10 @@ describe('I18nService', () => {
 
   describe('localizeBookChapter', () => {
     it('should localize book and chapter references', () => {
-      when(mockedTranslocoService.translate<string>('canon.book_names.GEN')).thenReturn('Genesis');
-      when(mockedTranslocoService.translate<string>('canon.book_names.MRK')).thenReturn('Mark');
+      when(mockedTranslocoService.translate<string>('canon.book_names.GEN', anything(), anything())).thenReturn(
+        'Genesis'
+      );
+      when(mockedTranslocoService.translate<string>('canon.book_names.MRK', anything(), anything())).thenReturn('Mark');
 
       const service = getI18nService();
 
@@ -236,9 +240,13 @@ describe('I18nService', () => {
 
   describe('formatAndLocalizeScriptureRange', () => {
     it('should localize sequential and non-sequential books', () => {
-      when(mockedTranslocoService.translate<string>('canon.book_names.GEN')).thenReturn('Genesis');
-      when(mockedTranslocoService.translate<string>('canon.book_names.EXO')).thenReturn('Exodus');
-      when(mockedTranslocoService.translate<string>('canon.book_names.MRK')).thenReturn('Mark');
+      when(mockedTranslocoService.translate<string>('canon.book_names.GEN', anything(), anything())).thenReturn(
+        'Genesis'
+      );
+      when(mockedTranslocoService.translate<string>('canon.book_names.EXO', anything(), anything())).thenReturn(
+        'Exodus'
+      );
+      when(mockedTranslocoService.translate<string>('canon.book_names.MRK', anything(), anything())).thenReturn('Mark');
 
       const service = getI18nService();
 
@@ -247,13 +255,19 @@ describe('I18nService', () => {
     });
 
     it('should localize multiple sequences of books', () => {
-      when(mockedTranslocoService.translate<string>('canon.book_names.GEN')).thenReturn('Genesis');
-      when(mockedTranslocoService.translate<string>('canon.book_names.JOB')).thenReturn('Job');
-      when(mockedTranslocoService.translate<string>('canon.book_names.PSA')).thenReturn('Psalms');
-      when(mockedTranslocoService.translate<string>('canon.book_names.MAT')).thenReturn('Matthew');
-      when(mockedTranslocoService.translate<string>('canon.book_names.MRK')).thenReturn('Mark');
-      when(mockedTranslocoService.translate<string>('canon.book_names.LUK')).thenReturn('Luke');
-      when(mockedTranslocoService.translate<string>('canon.book_names.JHN')).thenReturn('John');
+      when(mockedTranslocoService.translate<string>('canon.book_names.GEN', anything(), anything())).thenReturn(
+        'Genesis'
+      );
+      when(mockedTranslocoService.translate<string>('canon.book_names.JOB', anything(), anything())).thenReturn('Job');
+      when(mockedTranslocoService.translate<string>('canon.book_names.PSA', anything(), anything())).thenReturn(
+        'Psalms'
+      );
+      when(mockedTranslocoService.translate<string>('canon.book_names.MAT', anything(), anything())).thenReturn(
+        'Matthew'
+      );
+      when(mockedTranslocoService.translate<string>('canon.book_names.MRK', anything(), anything())).thenReturn('Mark');
+      when(mockedTranslocoService.translate<string>('canon.book_names.LUK', anything(), anything())).thenReturn('Luke');
+      when(mockedTranslocoService.translate<string>('canon.book_names.JHN', anything(), anything())).thenReturn('John');
 
       const service = getI18nService();
 
@@ -264,7 +278,7 @@ describe('I18nService', () => {
     });
 
     it('should localize one book name', () => {
-      when(mockedTranslocoService.translate<string>('canon.book_names.MRK')).thenReturn('Mark');
+      when(mockedTranslocoService.translate<string>('canon.book_names.MRK', anything(), anything())).thenReturn('Mark');
 
       const service = getI18nService();
 
@@ -273,7 +287,7 @@ describe('I18nService', () => {
     });
 
     it('should ignore invalid book codes', () => {
-      when(mockedTranslocoService.translate<string>('canon.book_names.MRK')).thenReturn('Mark');
+      when(mockedTranslocoService.translate<string>('canon.book_names.MRK', anything(), anything())).thenReturn('Mark');
 
       const service = getI18nService();
 

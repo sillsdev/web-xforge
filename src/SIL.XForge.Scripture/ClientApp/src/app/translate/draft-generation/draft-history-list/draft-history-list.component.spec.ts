@@ -6,6 +6,7 @@ import { anything, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { Locale } from 'xforge-common/models/i18n-locale';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
@@ -230,13 +231,15 @@ describe('DraftHistoryListComponent', () => {
   }));
 
   class TestEnvironment {
-    component: DraftHistoryListComponent;
-    fixture: ComponentFixture<DraftHistoryListComponent>;
+    readonly component: DraftHistoryListComponent;
+    readonly fixture: ComponentFixture<DraftHistoryListComponent>;
+    readonly locale$: BehaviorSubject<Locale> = new BehaviorSubject<Locale>({} as Locale);
 
     constructor(buildHistory: BuildDto[] | undefined, projectId: string = 'project01') {
       when(mockedActivatedProjectService.projectId$).thenReturn(of(projectId));
       when(mockedActivatedProjectService.changes$).thenReturn(of(undefined)); // Required for DraftPreviewBooksComponent
       when(mockedDraftGenerationService.getBuildHistory(projectId)).thenReturn(new BehaviorSubject(buildHistory));
+      when(mockedI18nService.locale$).thenReturn(this.locale$);
       when(mockedI18nService.formatDate(anything())).thenCall(date => date.toLocaleString(['en']));
       when(mockedFeatureFlagsService.usfmFormat).thenReturn(createTestFeatureFlag(true));
 

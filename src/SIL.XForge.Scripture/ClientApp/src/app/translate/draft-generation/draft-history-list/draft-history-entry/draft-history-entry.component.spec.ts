@@ -5,11 +5,12 @@ import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/use
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { ParagraphBreakFormat, QuoteFormat } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { Locale } from 'xforge-common/models/i18n-locale';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -36,6 +37,7 @@ const mockedFeatureFlagsService = mock(FeatureFlagService);
 describe('DraftHistoryEntryComponent', () => {
   let component: DraftHistoryEntryComponent;
   let fixture: ComponentFixture<DraftHistoryEntryComponent>;
+  const locale$: BehaviorSubject<Locale> = new BehaviorSubject<Locale>({} as Locale);
 
   configureTestingModule(() => ({
     imports: [
@@ -57,6 +59,7 @@ describe('DraftHistoryEntryComponent', () => {
 
   beforeEach(() => {
     when(mockedFeatureFlagsService.usfmFormat).thenReturn(createTestFeatureFlag(true));
+    when(mockedI18nService.locale$).thenReturn(locale$);
     when(mockedActivatedProjectService.projectId).thenReturn('project01');
     const targetProjectDoc = {
       id: 'project01',
