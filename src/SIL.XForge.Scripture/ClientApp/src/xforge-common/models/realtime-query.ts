@@ -1,6 +1,7 @@
 import arrayDiff, { InsertDiff, MoveDiff, RemoveDiff } from 'arraydiff';
 import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { RealtimeQueryAdapter } from '../realtime-remote-store';
 import { RealtimeService } from '../realtime.service';
 import { RealtimeDoc } from './realtime-doc';
@@ -24,7 +25,8 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
 
   constructor(
     private readonly realtimeService: RealtimeService,
-    public readonly adapter: RealtimeQueryAdapter
+    public readonly adapter: RealtimeQueryAdapter,
+    public readonly name: string
   ) {
     this.adapter.ready$.pipe(takeUntil(this.unsubscribe$)).subscribe(() => this.onReady());
     this.adapter.remoteChanges$
@@ -147,7 +149,11 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
       await this.onChange(true, this.adapter.docIds, this.adapter.count, this.adapter.unpagedCount);
       this._ready$.next(true);
     } else {
-      this._docs = this.adapter.docIds.map(id => this.realtimeService.get<T>(this.collection, id));
+      this._docs = await Promise.all<T>(
+        this.adapter.docIds.map(id =>
+          this.realtimeService.get(this.collection, id, new DocSubscription('RealtimeQuery', this.unsubscribe$))
+        )
+      );
       this._count = this.adapter.count;
       this._unpagedCount = this.adapter.unpagedCount;
     }
@@ -204,7 +210,11 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
     const newDocs: T[] = [];
     const promises: Promise<void>[] = [];
     for (const docId of docIds) {
-      const newDoc = this.realtimeService.get<T>(this.collection, docId);
+      const newDoc = await this.realtimeService.get<T>(
+        this.collection,
+        docId,
+        new DocSubscription('RealtimeQuery', this.unsubscribe$)
+      );
       promises.push(newDoc.onAddedToSubscribeQuery());
       newDocs.push(newDoc);
       const docSubscription = newDoc.remoteChanges$.subscribe(() => {
@@ -218,6 +228,9 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
   }
 
   private onRemove(index: number, docIds: string[]): void {
+    if (docIds.length === 30) {
+      debugger;
+    }
     const removedDocs = this._docs.splice(index, docIds.length);
     for (const doc of removedDocs) {
       doc.onRemovedFromSubscribeQuery();

@@ -37,6 +37,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../../../core/models/text-doc';
@@ -472,7 +473,10 @@ export class LynxWorkspaceService {
     this.textDocId = textDocId;
     if (this.textDocId != null && shouldOpenDoc) {
       const uri: string = this.textDocId.toString();
-      const textDoc = await this.projectService.getText(this.textDocId);
+      const textDoc = await this.projectService.getText(
+        this.textDocId,
+        new DocSubscription('LynxWorkspaceService', this.destroyRef)
+      );
       await this.documentManager.fireOpened(uri, {
         format: 'scripture-delta',
         version: textDoc.adapter.version,
@@ -535,14 +539,17 @@ export class LynxWorkspaceService {
 export class TextDocReader implements DocumentReader<Delta> {
   public textDocIds: Set<string> = new Set();
 
-  constructor(private readonly projectService: SFProjectService) {}
+  constructor(
+    private readonly projectService: SFProjectService,
+    private readonly destroyRef: DestroyRef
+  ) {}
 
   keys(): Promise<string[]> {
     return Promise.resolve([...this.textDocIds]);
   }
 
   async read(uri: string): Promise<DocumentData<Delta>> {
-    const textDoc = await this.projectService.getText(uri);
+    const textDoc = await this.projectService.getText(uri, new DocSubscription('TextDocReader', this.destroyRef));
     return {
       format: 'scripture-delta',
       content: textDoc.data as Delta,

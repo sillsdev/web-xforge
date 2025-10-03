@@ -1,3 +1,4 @@
+import { OverlayContainer } from '@angular/cdk/overlay';
 import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
@@ -10,6 +11,7 @@ import { firstValueFrom } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { Locale } from 'xforge-common/models/i18n-locale';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -49,11 +51,19 @@ describe('ShareDialogComponent', () => {
   }));
 
   let env: TestEnvironment;
+  let overlayContainer: OverlayContainer;
+
+  beforeEach(() => {
+    overlayContainer = TestBed.inject(OverlayContainer);
+  });
+
   afterEach(fakeAsync(() => {
     if (env.closeButton != null) {
       env.clickElement(env.closeButton);
     }
     flush();
+    // Prevents 'Error: Test did not clean up its overlay container content.'
+    overlayContainer.ngOnDestroy();
   }));
 
   it('shows share button when sharing API is supported', fakeAsync(() => {
@@ -282,21 +292,21 @@ describe('ShareDialogComponent', () => {
     expect(env.configLinkUsage).toBeTruthy();
   }));
 
-  it('should close dialog if project settings change and sharing becomes disabled', fakeAsync(() => {
+  it('should close dialog if project settings change and sharing becomes disabled', fakeAsync(async () => {
     env = new TestEnvironment({ userId: TestUsers.CommunityChecker, translateShareEnabled: false });
     expect(env.isDialogOpen).toBe(true);
-    env.disableCheckingSharing();
+    await env.disableCheckingSharing();
     expect(env.isDialogOpen).toBe(false);
   }));
 
-  it('should remove checking role as an option if remote project settings change', fakeAsync(() => {
+  it('should remove checking role as an option if remote project settings change', fakeAsync(async () => {
     env = new TestEnvironment({ userId: TestUsers.Admin });
     let roles: SFProjectRole[] = env.component.availableRoles;
     expect(roles).toContain(SFProjectRole.CommunityChecker);
     expect(roles).toContain(SFProjectRole.Viewer);
     expect(env.canChangeLinkUsage).toBe(true);
 
-    env.disableCheckingSharing();
+    await env.disableCheckingSharing();
 
     roles = env.component.availableRoles;
     expect(roles).not.toContain(SFProjectRole.CommunityChecker);
@@ -405,8 +415,9 @@ class TestEnvironment {
         return Promise.resolve(undefined);
       }
     } as Clipboard);
-    when(mockedProjectService.getProfile(anything())).thenCall(projectId =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
+    when(mockedProjectService.getProfile(anything(), anything())).thenCall(
+      async (projectId, subscription) =>
+        await this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId, subscription)
     );
     when(mockedUserService.currentUserId).thenReturn(userId);
     when(mockedUserService.getCurrentUser()).thenResolve({ data: createTestUser() } as UserDoc);
@@ -492,9 +503,13 @@ class TestEnvironment {
     tick();
   }
 
-  disableCheckingSharing(): void {
-    const projectDoc: SFProjectProfileDoc = this.realtimeService.get(SFProjectProfileDoc.COLLECTION, 'project01');
-    projectDoc.submitJson0Op(
+  async disableCheckingSharing(): Promise<void> {
+    const projectDoc: SFProjectProfileDoc = await this.realtimeService.get(
+      SFProjectProfileDoc.COLLECTION,
+      'project01',
+      new DocSubscription('spec')
+    );
+    await projectDoc.submitJson0Op(
       op =>
         op.set(p => p.checkingConfig, {
           checkingEnabled: false,

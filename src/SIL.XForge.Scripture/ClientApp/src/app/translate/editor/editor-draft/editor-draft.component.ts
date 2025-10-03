@@ -31,6 +31,7 @@ import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -347,7 +348,9 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   }
 
   private getTargetOps(): Observable<DeltaOperation[]> {
-    return from(this.projectService.getText(this.textDocId!)).pipe(
+    return from(
+      this.projectService.getText(this.textDocId!, new DocSubscription('EditorDraftComponent', this.destroyRef))
+    ).pipe(
       switchMap(textDoc =>
         textDoc.changes$.pipe(
           startWith(undefined),

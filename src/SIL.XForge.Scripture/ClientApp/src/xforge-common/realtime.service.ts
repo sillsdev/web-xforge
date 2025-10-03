@@ -1,8 +1,9 @@
 import { DestroyRef, Injectable, Optional } from '@angular/core';
-import { filter, race, take, timer } from 'rxjs';
+import { filter, lastValueFrom, race, Subject, take, timer } from 'rxjs';
 import { AppError } from 'xforge-common/exception-handling.service';
 import { FileService } from './file.service';
-import { RealtimeDoc } from './models/realtime-doc';
+import { DocSubscription, RealtimeDoc } from './models/realtime-doc';
+import { RealtimeDocLifecycleMonitorService } from './models/realtime-doc-lifecycle-monitor';
 import { RealtimeQuery } from './models/realtime-query';
 import { OfflineStore } from './offline-store';
 import { QueryParameters } from './query-parameters';
@@ -11,6 +12,10 @@ import { TypeRegistry } from './type-registry';
 
 function getDocKey(collection: string, id: string): string {
   return `${collection}:${id}`;
+}
+
+export function getCollectionFromId(id: string): string {
+  return id.split(':')[0];
 }
 
 /**
@@ -31,10 +36,12 @@ export const noopDestroyRef: DestroyRef = {
 })
 export class RealtimeService {
   protected readonly docs = new Map<string, RealtimeDoc>();
+  protected readonly disposingDocIds = new Map<string, Subject<void>>();
   protected readonly subscribeQueries = new Map<string, Set<RealtimeQuery>>();
 
   constructor(
     private readonly typeRegistry: TypeRegistry,
+    public readonly docLifecycleMonitor: RealtimeDocLifecycleMonitorService,
     public readonly remoteStore: RealtimeRemoteStore,
     public readonly offlineStore: OfflineStore,
     @Optional() public readonly fileService?: FileService
@@ -55,24 +62,59 @@ export class RealtimeService {
     return this.docs.size;
   }
 
-  get docsCountByCollection(): { [key: string]: { docs: number; subscribers: number; queries: number } } {
-    const countsByCollection: { [key: string]: { docs: number; subscribers: number; queries: number } } = {};
-    for (const [id, doc] of this.docs.entries()) {
-      const collection = id.split(':')[0];
-      countsByCollection[collection] ??= { docs: 0, subscribers: 0, queries: 0 };
-      countsByCollection[collection].docs++;
-      countsByCollection[collection].subscribers += doc.subscriberCount;
-    }
+  get queriesByCollection(): { [key: string]: number } {
+    const queriesByCollection: { [key: string]: number } = {};
     for (const [collection, queries] of this.subscribeQueries.entries()) {
-      countsByCollection[collection] ??= { docs: 0, subscribers: 0, queries: 0 };
-      countsByCollection[collection].queries += queries.size;
+      queriesByCollection[collection] = queries.size;
+    }
+    return queriesByCollection;
+  }
+
+  get docsCountByCollection(): {
+    [key: string]: { docs: number; subscribers: number; activeDocSubscriptionsCount: number };
+  } {
+    const countsByCollection: {
+      [key: string]: { docs: number; subscribers: number; activeDocSubscriptionsCount: number };
+    } = {};
+    for (const [id, doc] of this.docs.entries()) {
+      const collection = getCollectionFromId(id);
+      countsByCollection[collection] ??= { docs: 0, subscribers: 0, activeDocSubscriptionsCount: 0 };
+      countsByCollection[collection].docs++;
+      countsByCollection[collection].subscribers += doc.docSubscriptionsCount;
+      countsByCollection[collection].activeDocSubscriptionsCount += doc.activeDocSubscriptionsCount;
     }
     return countsByCollection;
   }
 
-  get<T extends RealtimeDoc>(collection: string, id: string): T {
+  get subscriberCountsByContext(): { [key: string]: { [key: string]: { all: number; active: number } } } {
+    const countsByContext: { [key: string]: { [key: string]: { all: number; active: number } } } = {};
+    for (const [id, doc] of this.docs.entries()) {
+      const collection = getCollectionFromId(id);
+      countsByContext[collection] ??= {};
+      for (const subscriber of doc.docSubscriptions) {
+        countsByContext[collection][subscriber.callerContext] ??= { all: 0, active: 0 };
+        countsByContext[collection][subscriber.callerContext].all++;
+        if (!subscriber.isUnsubscribed$.getValue()) {
+          countsByContext[collection][subscriber.callerContext].active++;
+        }
+      }
+    }
+    return countsByContext;
+  }
+
+  async get<T extends RealtimeDoc>(collection: string, id: string, subscriber: DocSubscription): Promise<T> {
     const key = getDocKey(collection, id);
     let doc = this.docs.get(key);
+
+    // Handle documents that currently exist but are in the process of being disposed.
+    if (doc != null && this.disposingDocIds.has(doc.id)) {
+      // Waiting for document to be disposed before recreating it.
+      await lastValueFrom(this.disposingDocIds.get(doc.id)!);
+      // Recursively call this method so if multiple callers are waiting for the same document to be disposed, they will
+      // all get the same instance.
+      return await this.get<T>(collection, id, subscriber);
+    }
+
     if (doc == null) {
       const RealtimeDocType = this.typeRegistry.getDocType(collection);
       if (RealtimeDocType == null) {
@@ -86,12 +128,15 @@ export class RealtimeService {
         });
       }
       this.docs.set(key, doc);
+      this.docLifecycleMonitor.docCreated(getDocKey(collection, id), subscriber.callerContext);
     }
+    doc.addSubscriber(subscriber);
+
     return doc as T;
   }
 
-  createQuery<T extends RealtimeDoc>(collection: string, parameters: QueryParameters): RealtimeQuery<T> {
-    return new RealtimeQuery<T>(this, this.remoteStore.createQueryAdapter(collection, parameters));
+  createQuery<T extends RealtimeDoc>(collection: string, name: string, parameters: QueryParameters): RealtimeQuery<T> {
+    return new RealtimeQuery<T>(this, this.remoteStore.createQueryAdapter(collection, parameters), name);
   }
 
   isSet(collection: string, id: string): boolean {
@@ -105,14 +150,14 @@ export class RealtimeService {
    * @param {string} id The id.
    * @returns {Promise<T>} The real-time doc.
    */
-  async subscribe<T extends RealtimeDoc>(collection: string, id: string): Promise<T> {
-    const doc = this.get<T>(collection, id);
+  async subscribe<T extends RealtimeDoc>(collection: string, id: string, subscriber: DocSubscription): Promise<T> {
+    const doc = await this.get<T>(collection, id, subscriber);
     await doc.subscribe();
     return doc;
   }
 
-  async onlineFetch<T extends RealtimeDoc>(collection: string, id: string): Promise<T> {
-    const doc = this.get<T>(collection, id);
+  async onlineFetch<T extends RealtimeDoc>(collection: string, id: string, subscriber: DocSubscription): Promise<T> {
+    const doc = await this.get<T>(collection, id, subscriber);
     await doc.onlineFetch();
     return doc;
   }
@@ -125,8 +170,14 @@ export class RealtimeService {
    * @param {*} data The initial data.
    * @returns {Promise<T>} The newly created real-time doc.
    */
-  async create<T extends RealtimeDoc>(collection: string, id: string, data: any, type?: string): Promise<T> {
-    const doc = this.get<T>(collection, id);
+  async create<T extends RealtimeDoc>(
+    collection: string,
+    id: string,
+    data: any,
+    subscriber: DocSubscription,
+    type?: string
+  ): Promise<T> {
+    const doc = await this.get<T>(collection, id, subscriber);
     await doc.create(data, type);
     return doc;
   }
@@ -143,10 +194,11 @@ export class RealtimeService {
    */
   async subscribeQuery<T extends RealtimeDoc>(
     collection: string,
+    name: string,
     parameters: QueryParameters,
     destroyRef: DestroyRef
   ): Promise<RealtimeQuery<T>> {
-    const query = this.createQuery<T>(collection, parameters);
+    const query = this.createQuery<T>(collection, name, parameters);
     return this.manageQuery(
       query.subscribe().then(() => query),
       destroyRef
@@ -161,8 +213,12 @@ export class RealtimeService {
    * See https://github.com/share/sharedb-mongo#queries.
    * @returns {Promise<RealtimeQuery<T>>} The query.
    */
-  async onlineQuery<T extends RealtimeDoc>(collection: string, parameters: QueryParameters): Promise<RealtimeQuery<T>> {
-    const query = this.createQuery<T>(collection, parameters);
+  async onlineQuery<T extends RealtimeDoc>(
+    collection: string,
+    name: string,
+    parameters: QueryParameters
+  ): Promise<RealtimeQuery<T>> {
+    const query = this.createQuery<T>(collection, name, parameters);
     await query.fetch();
     return query;
   }
@@ -194,10 +250,24 @@ export class RealtimeService {
     }
   }
 
+  onDocDisposeStarted(doc: RealtimeDoc): void {
+    this.disposingDocIds.set(doc.id, new Subject<void>());
+    this.docLifecycleMonitor.docDestroyed(getDocKey(doc.collection, doc.id));
+    this.docs.delete(getDocKey(doc.collection, doc.id));
+  }
+
   async onLocalDocDispose(doc: RealtimeDoc): Promise<void> {
     if (this.isSet(doc.collection, doc.id)) {
       await this.offlineStore.delete(doc.collection, doc.id);
-      this.docs.delete(getDocKey(doc.collection, doc.id));
+    }
+  }
+
+  onDocDisposeFinished(doc: RealtimeDoc): void {
+    const disposingDocId = this.disposingDocIds.get(doc.id);
+    if (disposingDocId != null) {
+      disposingDocId.next();
+      disposingDocId.complete();
+      this.disposingDocIds.delete(doc.id);
     }
   }
 

@@ -18,6 +18,7 @@ import {
   SFProjectUserConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -51,21 +52,21 @@ describe('TranslatorSettingsDialogComponent', () => {
     providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }]
   }));
 
-  it('update confidence threshold', fakeAsync(() => {
+  it('update confidence threshold', fakeAsync(async () => {
     const env = new TestEnvironment();
-    env.openDialog();
+    await env.openDialog();
     expect(env.component!.confidenceThreshold$.value).toEqual(50);
 
     env.updateConfidenceThresholdSlider(60);
     expect(env.component!.confidenceThreshold$.value).toEqual(60);
-    const userConfigDoc = env.getProjectUserConfigDoc();
+    const userConfigDoc = await env.getProjectUserConfigDoc();
     expect(userConfigDoc.data!.confidenceThreshold).toEqual(0.6);
     env.closeDialog();
   }));
 
   it('update suggestions enabled', fakeAsync(async () => {
     const env = new TestEnvironment();
-    env.openDialog();
+    await env.openDialog();
     expect(env.component!['translationSuggestionsUserEnabled']).toBe(true);
 
     const suggestionsToggle = await env.getSuggestionsEnabledToggle();
@@ -76,33 +77,33 @@ describe('TranslatorSettingsDialogComponent', () => {
     expect(env.component!['translationSuggestionsUserEnabled']).toBe(false);
     expect(await env.isToggleChecked(suggestionsToggle!)).toBe(false);
 
-    const userConfigDoc = env.getProjectUserConfigDoc();
+    const userConfigDoc = await env.getProjectUserConfigDoc();
     expect(userConfigDoc.data!.translationSuggestionsEnabled).toBe(false);
     env.closeDialog();
   }));
 
-  it('update num suggestions', fakeAsync(() => {
+  it('update num suggestions', fakeAsync(async () => {
     const env = new TestEnvironment();
-    env.openDialog();
+    await env.openDialog();
     expect(env.component!.numSuggestions).toEqual('1');
 
     env.changeSelectValue(env.numSuggestionsSelect, 2);
     expect(env.component!.numSuggestions).toEqual('2');
-    const userConfigDoc = env.getProjectUserConfigDoc();
+    const userConfigDoc = await env.getProjectUserConfigDoc();
     expect(userConfigDoc.data!.numSuggestions).toEqual(2);
     env.closeDialog();
   }));
 
-  it('shows correct confidence threshold even when suggestions disabled', fakeAsync(() => {
+  it('shows correct confidence threshold even when suggestions disabled', fakeAsync(async () => {
     const env = new TestEnvironment({ translationSuggestionsEnabled: false });
-    env.openDialog();
+    await env.openDialog();
     expect(env.component?.confidenceThreshold$.value).toEqual(50);
     env.closeDialog();
   }));
 
-  it('disables settings when offline', fakeAsync(() => {
+  it('disables settings when offline', fakeAsync(async () => {
     const env = new TestEnvironment();
-    env.openDialog();
+    await env.openDialog();
 
     expect(env.offlineAppNotice == null).toBeTrue();
     expect(env.suggestionsEnabledCheckbox.disabled).toBe(false);
@@ -120,7 +121,7 @@ describe('TranslatorSettingsDialogComponent', () => {
 
   it('should hide translation suggestions section when project has translation suggestions disabled', fakeAsync(async () => {
     const env = new TestEnvironment();
-    const projectDoc = env.getProjectProfileDoc();
+    const projectDoc = await env.getProjectProfileDoc();
 
     env.setupProject({
       userConfig: {
@@ -132,7 +133,7 @@ describe('TranslatorSettingsDialogComponent', () => {
     });
     env.fixture.detectChanges();
 
-    env.openDialog();
+    await env.openDialog();
 
     expect(env.component!.showSuggestionsSettings).toBe(false);
     expect(env.suggestionsSection == null).toBeTrue();
@@ -141,7 +142,7 @@ describe('TranslatorSettingsDialogComponent', () => {
 
   it('should show translation suggestions section when project has translation suggestions enabled', fakeAsync(async () => {
     const env = new TestEnvironment();
-    env.openDialog();
+    await env.openDialog();
 
     expect(env.component!.showSuggestionsSettings).toBe(true);
     expect(env.suggestionsSection == null).toBeFalse();
@@ -151,7 +152,7 @@ describe('TranslatorSettingsDialogComponent', () => {
   it('the suggestions toggle is switched on when the dialog opens while offline', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.isOnline = false;
-    env.openDialog();
+    await env.openDialog();
 
     const suggestionsToggle = await env.getSuggestionsEnabledToggle();
     expect(await env.isToggleDisabled(suggestionsToggle!)).toBe(true);
@@ -160,7 +161,7 @@ describe('TranslatorSettingsDialogComponent', () => {
   }));
 
   describe('Lynx Settings', () => {
-    it('should show Lynx settings when both project features are enabled', fakeAsync(() => {
+    it('should show Lynx settings when both project features are enabled', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setupProject({
         projectConfig: {
@@ -172,7 +173,7 @@ describe('TranslatorSettingsDialogComponent', () => {
           }
         }
       });
-      env.openDialog();
+      await env.openDialog();
 
       expect(env.lynxSettingsSection == null).toBeFalse();
       expect(env.lynxMasterSwitch == null).toBeFalse();
@@ -181,7 +182,7 @@ describe('TranslatorSettingsDialogComponent', () => {
       env.closeDialog();
     }));
 
-    it('should hide Lynx settings when project features are disabled', fakeAsync(() => {
+    it('should hide Lynx settings when project features are disabled', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setupProject({
         projectConfig: {
@@ -193,13 +194,13 @@ describe('TranslatorSettingsDialogComponent', () => {
           }
         }
       });
-      env.openDialog();
+      await env.openDialog();
 
       expect(env.lynxSettingsSection == null).toBeTrue();
       env.closeDialog();
     }));
 
-    it('should show only assessments switch when only assessments is enabled in project', fakeAsync(() => {
+    it('should show only assessments switch when only assessments is enabled in project', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setupProject({
         projectConfig: {
@@ -211,7 +212,7 @@ describe('TranslatorSettingsDialogComponent', () => {
           }
         }
       });
-      env.openDialog();
+      await env.openDialog();
 
       expect(env.lynxSettingsSection == null).toBeFalse();
       expect(env.lynxMasterSwitch == null).toBeFalse();
@@ -220,7 +221,7 @@ describe('TranslatorSettingsDialogComponent', () => {
       env.closeDialog();
     }));
 
-    it('should show only auto-corrections switch when only auto-corrections is enabled in project', fakeAsync(() => {
+    it('should show only auto-corrections switch when only auto-corrections is enabled in project', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.setupProject({
         projectConfig: {
@@ -232,7 +233,7 @@ describe('TranslatorSettingsDialogComponent', () => {
           }
         }
       });
-      env.openDialog();
+      await env.openDialog();
 
       expect(env.lynxSettingsSection == null).toBeFalse();
       expect(env.lynxMasterSwitch == null).toBeFalse();
@@ -259,7 +260,7 @@ describe('TranslatorSettingsDialogComponent', () => {
           }
         }
       });
-      env.openDialog();
+      await env.openDialog();
 
       const lynxMasterToggle = await env.getLynxMasterToggle();
       expect(lynxMasterToggle).not.toBeNull();
@@ -270,7 +271,7 @@ describe('TranslatorSettingsDialogComponent', () => {
       expect(env.component!.lynxMasterSwitch.value).toBe(false);
       expect(await env.isToggleChecked(lynxMasterToggle!)).toBe(false);
 
-      const userConfigDoc = env.getProjectUserConfigDoc();
+      const userConfigDoc = await env.getProjectUserConfigDoc();
       expect(userConfigDoc.data!.lynxInsightState?.autoCorrectionsEnabled).toBe(false);
       expect(userConfigDoc.data!.lynxInsightState?.assessmentsEnabled).toBe(false);
       env.closeDialog();
@@ -289,7 +290,7 @@ describe('TranslatorSettingsDialogComponent', () => {
         }
       });
       env.isOnline = false;
-      env.openDialog();
+      await env.openDialog();
 
       const lynxMasterToggle = await env.getLynxMasterToggle();
       const lynxAssessmentsToggle = await env.getLynxAssessmentsToggle();
@@ -406,23 +407,21 @@ class TestEnvironment {
     tick(matDialogCloseDelay);
   }
 
-  openDialog(): void {
-    this.realtimeService
-      .subscribe<SFProjectUserConfigDoc>(
-        SF_PROJECT_USER_CONFIGS_COLLECTION,
-        getSFProjectUserConfigDocId('project01', 'user01')
-      )
-      .then(projectUserConfigDoc => {
-        const viewContainerRef = this.fixture.componentInstance.childViewContainer;
-        const projectDoc = this.getProjectProfileDoc();
-        const config: MatDialogConfig<TranslatorSettingsDialogData> = {
-          data: { projectDoc, projectUserConfigDoc },
-          viewContainerRef
-        };
-        const dialogRef = TestBed.inject(MatDialog).open(TranslatorSettingsDialogComponent, config);
-        this.component = dialogRef.componentInstance;
-        this.loader = TestbedHarnessEnvironment.documentRootLoader(this.fixture);
-      });
+  async openDialog(): Promise<void> {
+    const projectUserConfigDoc = await this.realtimeService.subscribe<SFProjectUserConfigDoc>(
+      SF_PROJECT_USER_CONFIGS_COLLECTION,
+      getSFProjectUserConfigDocId('project01', 'user01'),
+      new DocSubscription('spec')
+    );
+    const viewContainerRef = this.fixture.componentInstance.childViewContainer;
+    const projectDoc = await this.getProjectProfileDoc();
+    const config: MatDialogConfig<TranslatorSettingsDialogData> = {
+      data: { projectDoc, projectUserConfigDoc },
+      viewContainerRef
+    };
+    const dialogRef = TestBed.inject(MatDialog).open(TranslatorSettingsDialogComponent, config);
+    this.component = dialogRef.componentInstance;
+    this.loader = TestbedHarnessEnvironment.documentRootLoader(this.fixture);
     this.wait();
   }
 
@@ -486,14 +485,19 @@ class TestEnvironment {
     });
   }
 
-  getProjectProfileDoc(): SFProjectProfileDoc {
-    return this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01');
+  async getProjectProfileDoc(): Promise<SFProjectProfileDoc> {
+    return await this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      'project01',
+      new DocSubscription('spec')
+    );
   }
 
-  getProjectUserConfigDoc(): SFProjectUserConfigDoc {
-    return this.realtimeService.get<SFProjectUserConfigDoc>(
+  async getProjectUserConfigDoc(): Promise<SFProjectUserConfigDoc> {
+    return await this.realtimeService.get<SFProjectUserConfigDoc>(
       SFProjectUserConfigDoc.COLLECTION,
-      getSFProjectUserConfigDocId('project01', 'user01')
+      getSFProjectUserConfigDocId('project01', 'user01'),
+      new DocSubscription('spec')
     );
   }
 

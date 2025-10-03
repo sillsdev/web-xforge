@@ -89,6 +89,7 @@ import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
 import { LocaleDirection } from 'xforge-common/models/i18n-locale';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -732,11 +733,18 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
         const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
         if (projectId !== prevProjectId) {
-          this.projectDoc = await this.projectService.getProfile(projectId);
+          this.projectDoc = await this.projectService.getProfile(
+            projectId,
+            new DocSubscription('EditorComponent', this.destroyRef)
+          );
 
           const userRole: string | undefined = this.userRole;
           if (userRole != null) {
-            const projectDoc: SFProjectDoc | undefined = await this.projectService.tryGetForRole(projectId, userRole);
+            const projectDoc: SFProjectDoc | undefined = await this.projectService.tryGetForRole(
+              projectId,
+              userRole,
+              new DocSubscription('EditorComponent', this.destroyRef)
+            );
             if (projectDoc?.data?.paratextUsers != null) {
               this.paratextUsers = projectDoc.data.paratextUsers;
             }
@@ -745,7 +753,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.isParatextUserRole = isParatextRole(this.userRole);
           this.projectUserConfigDoc = await this.projectService.getUserConfig(
             projectId,
-            this.userService.currentUserId
+            this.userService.currentUserId,
+            new DocSubscription('EditorComponent', this.destroyRef)
           );
 
           this.initLynxFeatureStates(this.projectUserConfigDoc);
@@ -1285,7 +1294,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           persistedTabs.map(async tabData => {
             let projectDoc: SFProjectProfileDoc | undefined = undefined;
             if (tabData.projectId != null) {
-              projectDoc = await this.projectService.getProfile(tabData.projectId);
+              projectDoc = await this.projectService.getProfile(
+                tabData.projectId,
+                new DocSubscription('EditorComponent', this.destroyRef)
+              );
             }
 
             return {
@@ -1440,10 +1452,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         status: NoteStatus.Todo,
         publishedToSF: true
       };
-      await this.projectService.createNoteThread(this.projectId, noteThread);
+      await this.projectService.createNoteThread(
+        this.projectId,
+        noteThread,
+        new DocSubscription('EditorComponent', this.destroyRef)
+      );
     } else {
       const threadDoc: NoteThreadDoc = await this.projectService.getNoteThread(
-        getNoteThreadDocId(this.projectId, params.threadDataId)
+        getNoteThreadDocId(this.projectId, params.threadDataId),
+        new DocSubscription('EditorComponent', this.destroyRef)
       );
       const noteIndex: number = threadDoc.data!.notes.findIndex(n => n.dataId === params.dataId);
       if (noteIndex >= 0) {
@@ -1740,7 +1757,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     this.target.id = targetId;
     this.setSegment();
-    const textDoc = await this.projectService.getText(targetId);
+    const textDoc = await this.projectService.getText(
+      targetId,
+      new DocSubscription('EditorComponent', this.destroyRef)
+    );
 
     if (this.onTargetDeleteSub != null) {
       this.onTargetDeleteSub.unsubscribe();
@@ -1995,7 +2015,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     // Only get the project doc if the user is on the project to avoid an error.
     if (this.sourceProjectId == null) return undefined;
     if (this.currentUser?.sites[environment.siteId].projects.includes(this.sourceProjectId) !== true) return undefined;
-    return await this.projectService.getProfile(this.sourceProjectId);
+    return await this.projectService.getProfile(
+      this.sourceProjectId,
+      new DocSubscription('EditorComponent', this.destroyRef)
+    );
   }
 
   private async loadNoteThreadDocs(sfProjectId: string, bookNum: number, chapterNum: number): Promise<void> {

@@ -174,6 +174,7 @@ async function joinAsChecker(
     // Give time for the last answer to be saved
     await page.waitForTimeout(500);
   } catch (e) {
+    if (preset.pauseOnFailure) await page.pause();
     console.error('Error running tests for checker ' + userNumber);
     console.error(e);
     await screenshot(

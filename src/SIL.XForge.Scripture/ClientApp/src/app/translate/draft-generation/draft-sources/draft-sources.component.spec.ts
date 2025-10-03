@@ -17,6 +17,7 @@ import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -105,23 +106,25 @@ describe('DraftSourcesComponent', () => {
     overlayContainer.ngOnDestroy();
   });
 
-  it('loads projects and resources on init', fakeAsync(() => {
+  it('loads projects and resources on init', fakeAsync(async () => {
     const env = new TestEnvironment();
+    await env.init();
     verify(mockedParatextService.getProjects()).once();
     verify(mockedParatextService.getResources()).once();
     expect(env.component.projects).toBeDefined();
     expect(env.component.resources).toBeDefined();
   }));
 
-  it('suppresses network errors', fakeAsync(() => {
-    const env = new TestEnvironment({ projectLoadSuccessful: false });
-    tick();
+  it('suppresses network errors', fakeAsync(async () => {
+    const env = new TestEnvironment();
+    await env.init({ projectLoadSuccessful: false });
     env.fixture.detectChanges();
     expect(env.component.projects).toBeUndefined();
   }));
 
-  it('loads projects and resources when returning online', fakeAsync(() => {
-    const env = new TestEnvironment({ isOnline: false });
+  it('loads projects and resources when returning online', fakeAsync(async () => {
+    const env = new TestEnvironment();
+    await env.init({ isOnline: false });
     verify(mockedParatextService.getProjects()).never();
     verify(mockedParatextService.getResources()).never();
     expect(env.component.projects).toBeUndefined();
@@ -138,9 +141,9 @@ describe('DraftSourcesComponent', () => {
   }));
 
   describe('save', () => {
-    it('should save the settings', fakeAsync(() => {
+    it('should save the settings', fakeAsync(async () => {
       const env = new TestEnvironment();
-      tick();
+      await env.init();
       env.fixture.detectChanges();
       expect(env.component['changesMade']).toBe(false);
       env.clickLanguageCodesConfirmationCheckbox();
@@ -167,7 +170,7 @@ describe('DraftSourcesComponent', () => {
       verify(mockedDialogService.confirm(anything(), anything(), anything())).never();
 
       // SUT
-      env.component.save();
+      await env.component.save();
       tick();
       verify(mockedSFProjectService.onlineUpdateSettings(env.activatedProjectDoc.id, anything())).once();
       const actualSettingsChangeRequest: SFProjectSettings = capture(
@@ -176,9 +179,9 @@ describe('DraftSourcesComponent', () => {
       expect(actualSettingsChangeRequest).toEqual(expectedSettingsChangeRequest);
     }));
 
-    it('clearing second training source works', fakeAsync(() => {
+    it('clearing second training source works', fakeAsync(async () => {
       const env = new TestEnvironment();
-      tick();
+      await env.init();
       env.fixture.detectChanges();
       env.clickLanguageCodesConfirmationCheckbox();
       expect(env.component['changesMade']).toBe(false);
@@ -211,7 +214,7 @@ describe('DraftSourcesComponent', () => {
       verify(mockedDialogService.confirm(anything(), anything(), anything())).once();
 
       // SUT
-      env.component.save();
+      await env.component.save();
       tick();
       verify(mockedSFProjectService.onlineUpdateSettings(env.activatedProjectDoc.id, anything())).once();
       const actualSettingsChangeRequest: SFProjectSettings = capture(
@@ -220,9 +223,9 @@ describe('DraftSourcesComponent', () => {
       expect(actualSettingsChangeRequest).toEqual(expectedSettingsChangeRequest);
     }));
 
-    it('clearing first training source works', fakeAsync(() => {
+    it('clearing first training source works', fakeAsync(async () => {
       const env = new TestEnvironment();
-      tick();
+      await env.init();
       env.fixture.detectChanges();
       expect(env.component['changesMade']).toBe(false);
       env.clickLanguageCodesConfirmationCheckbox();
@@ -253,7 +256,7 @@ describe('DraftSourcesComponent', () => {
       tick();
 
       // SUT
-      env.component.save();
+      await env.component.save();
       tick();
       verify(mockedSFProjectService.onlineUpdateSettings(env.activatedProjectDoc.id, anything())).once();
       const actualSettingsChangeRequest: SFProjectSettings = capture(
@@ -262,9 +265,9 @@ describe('DraftSourcesComponent', () => {
       expect(actualSettingsChangeRequest).toEqual(expectedSettingsChangeRequest);
     }));
 
-    it('fails to save and sync', fakeAsync(() => {
+    it('fails to save and sync', fakeAsync(async () => {
       const env = new TestEnvironment();
-      tick();
+      await env.init();
       env.fixture.detectChanges();
       env.clickLanguageCodesConfirmationCheckbox();
 
@@ -281,14 +284,14 @@ describe('DraftSourcesComponent', () => {
       );
 
       // SUT
-      env.component.save();
+      await env.component.save();
       tick();
       verify(mockedSFProjectService.onlineUpdateSettings(env.activatedProjectDoc.id, anything())).once();
     }));
 
-    it('can edit second source after first is cleared', fakeAsync(() => {
+    it('can edit second source after first is cleared', fakeAsync(async () => {
       const env = new TestEnvironment();
-      tick();
+      await env.init();
       env.fixture.detectChanges();
       env.clickLanguageCodesConfirmationCheckbox();
 
@@ -306,9 +309,9 @@ describe('DraftSourcesComponent', () => {
       expect(env.component.trainingSources.length).toEqual(2);
     }));
 
-    it('saves the selected training files', fakeAsync(() => {
+    it('saves the selected training files', fakeAsync(async () => {
       const env = new TestEnvironment();
-      tick();
+      await env.init();
       env.fixture.detectChanges();
       env.clickLanguageCodesConfirmationCheckbox();
 
@@ -327,7 +330,7 @@ describe('DraftSourcesComponent', () => {
 
       env.component.onTrainingDataSelect([{ dataId: 'test1' } as TrainingData, { dataId: 'test2' } as TrainingData]);
 
-      env.component.save();
+      await env.component.save();
       tick();
       verify(mockedSFProjectService.onlineUpdateSettings(env.activatedProjectDoc.id, anything())).once();
       const actualSettingsChangeRequest: SFProjectSettings = capture(
@@ -336,9 +339,9 @@ describe('DraftSourcesComponent', () => {
       expect(actualSettingsChangeRequest).toEqual(expectedSettingsChangeRequest);
     }));
 
-    it('creates training data for added files', fakeAsync(() => {
+    it('creates training data for added files', fakeAsync(async () => {
       const env = new TestEnvironment();
-      tick();
+      await env.init();
       env.fixture.detectChanges();
       env.clickLanguageCodesConfirmationCheckbox();
 
@@ -350,14 +353,14 @@ describe('DraftSourcesComponent', () => {
 
       const newFile = { dataId: 'test1' } as TrainingData;
       env.component.onTrainingDataSelect([newFile]);
-      env.component.save();
+      await env.component.save();
 
       verify(mockTrainingDataService.createTrainingDataAsync(newFile)).once();
     }));
 
-    it('deletes training data for removed files', fakeAsync(() => {
+    it('deletes training data for removed files', fakeAsync(async () => {
       const env = new TestEnvironment();
-      tick();
+      await env.init();
       env.fixture.detectChanges();
       env.clickLanguageCodesConfirmationCheckbox();
 
@@ -373,7 +376,7 @@ describe('DraftSourcesComponent', () => {
       expect(env.component.availableTrainingFiles.length).toEqual(2);
 
       env.component.onTrainingDataSelect([savedFile1]);
-      env.component.save();
+      await env.component.save();
       tick();
 
       verify(mockTrainingDataService.deleteTrainingDataAsync(savedFile2)).once();
@@ -381,9 +384,9 @@ describe('DraftSourcesComponent', () => {
       verify(mockTrainingDataService.createTrainingDataAsync(anything())).never();
     }));
 
-    it('deletes added files on discard from confirmLeave', fakeAsync(() => {
+    it('deletes added files on discard from confirmLeave', fakeAsync(async () => {
       const env = new TestEnvironment();
-      tick();
+      await env.init();
       env.fixture.detectChanges();
       env.clickLanguageCodesConfirmationCheckbox();
       when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(true);
@@ -426,9 +429,9 @@ describe('DraftSourcesComponent', () => {
       verify(mockTrainingDataService.deleteTrainingDataAsync(anything())).never();
     }));
 
-    it('preserves unsaved training file changes when query updates', fakeAsync(() => {
+    it('preserves unsaved training file changes when query updates', fakeAsync(async () => {
       const env = new TestEnvironment();
-      tick();
+      await env.init();
       env.fixture.detectChanges();
 
       const initialFile1 = { dataId: 'file1' } as TrainingData;
@@ -674,8 +677,9 @@ describe('DraftSourcesComponent', () => {
       });
     });
 
-    it('should disable save and sync button and display offline message when offline', fakeAsync(() => {
+    it('should disable save and sync button and display offline message when offline', fakeAsync(async () => {
       const env = new TestEnvironment();
+      await env.init();
       env.testOnlineStatusService.setIsOnline(false);
       env.fixture.detectChanges();
       tick();
@@ -687,8 +691,9 @@ describe('DraftSourcesComponent', () => {
       expect(saveButton.attributes.disabled).toBe('true');
     }));
 
-    it('should enable save & sync button and not display offline message when online', fakeAsync(() => {
+    it('should enable save & sync button and not display offline message when online', fakeAsync(async () => {
       const env = new TestEnvironment();
+      await env.init();
       env.testOnlineStatusService.setIsOnline(true);
       env.fixture.detectChanges();
       tick();
@@ -703,55 +708,61 @@ describe('DraftSourcesComponent', () => {
 });
 
 class TestEnvironment {
-  readonly component: DraftSourcesComponent;
-  readonly fixture: ComponentFixture<DraftSourcesComponent>;
-  readonly realtimeService: TestRealtimeService;
-  readonly activatedProjectDoc: WithData<SFProjectDoc>;
-  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
-    OnlineStatusService
-  ) as TestOnlineStatusService;
-
+  private _component: DraftSourcesComponent | undefined;
+  private _fixture: ComponentFixture<DraftSourcesComponent> | undefined;
+  realtimeService: TestRealtimeService;
+  private _activatedProjectDoc: WithData<SFProjectDoc> | undefined;
+  testOnlineStatusService: TestOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
   private projectsLoaded$: Subject<void> = new Subject<void>();
 
-  constructor(
+  constructor() {
+    this.realtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
+  }
+
+  async init(
     args: { isOnline?: boolean; projectLoadSuccessful?: boolean } = { isOnline: true, projectLoadSuccessful: true }
-  ) {
+  ): Promise<void> {
     const userSFProjectsAndResourcesCount: number = 6;
     const userNonSFProjectsCount: number = 3;
     const userNonSFResourcesCount: number = 3;
 
-    this.realtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
-
     // Make some projects and resources, already on SF, that the user has access to. These will be available as a
     // variety of types.
 
-    const projects: MultiTypeProjectDescription[] = Array.from(
-      { length: userSFProjectsAndResourcesCount },
-      (_, i) =>
-        ({
-          id: `sf-id-${i}`,
-          data: createTestProject(
-            {
-              paratextId: `pt-id-${i}`,
-              resourceConfig:
-                i < userSFProjectsAndResourcesCount / 2
-                  ? undefined
-                  : {
-                      createdTimestamp: new Date(),
-                      manifestChecksum: '1234',
-                      permissionsChecksum: '2345',
-                      revision: 1
-                    }
-            },
-            i
-          )
-        }) as SFProjectDoc
+    const projects: MultiTypeProjectDescription[] = (
+      await Promise.all(
+        Array.from(
+          { length: userSFProjectsAndResourcesCount },
+          (_, i) =>
+            ({
+              id: `sf-id-${i}`,
+              data: createTestProject(
+                {
+                  paratextId: `pt-id-${i}`,
+                  resourceConfig:
+                    i < userSFProjectsAndResourcesCount / 2
+                      ? undefined
+                      : {
+                          createdTimestamp: new Date(),
+                          manifestChecksum: '1234',
+                          permissionsChecksum: '2345',
+                          revision: 1
+                        }
+                },
+                i
+              )
+            }) as SFProjectDoc
+        ).map(async o => {
+          // Run it into and out of realtime service so it has fields like `remoteChanges$`.
+          this.realtimeService.addSnapshot(SFProjectDoc.COLLECTION, o);
+          return await this.realtimeService.get<SFProjectDoc>(
+            SFProjectDoc.COLLECTION,
+            o.id,
+            new DocSubscription('spec')
+          );
+        })
+      )
     )
-      .map(o => {
-        // Run it into and out of realtime service so it has fields like `remoteChanges$`.
-        this.realtimeService.addSnapshot(SFProjectDoc.COLLECTION, o);
-        return this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, o.id);
-      })
       .filter(hasData)
       .map(o => ({
         sfProjectDoc: o,
@@ -827,7 +838,7 @@ class TestEnvironment {
       .map(o => o.translateSource)
       .filter(notNull);
 
-    this.activatedProjectDoc = usersProjectsAndResourcesOnSF[0];
+    this._activatedProjectDoc = usersProjectsAndResourcesOnSF[0];
 
     // Now that various projects and resources are defined with known SF project ids, and as various needed types, write
     // the sf project 0's translate config values.
@@ -870,8 +881,8 @@ class TestEnvironment {
     );
     when(mockTrainingDataQuery.docs).thenReturn([]);
 
-    this.fixture = TestBed.createComponent(DraftSourcesComponent);
-    this.component = this.fixture.componentInstance;
+    this._fixture = TestBed.createComponent(DraftSourcesComponent);
+    this._component = this.fixture.componentInstance;
     this.fixture.detectChanges();
     tick();
 
@@ -880,6 +891,21 @@ class TestEnvironment {
     }
     tick();
     this.fixture.detectChanges();
+  }
+
+  get component(): DraftSourcesComponent {
+    if (this._component == null) throw new Error('Uninitialized');
+    return this._component;
+  }
+
+  get fixture(): ComponentFixture<DraftSourcesComponent> {
+    if (this._fixture == null) throw new Error('Uninitialized');
+    return this._fixture;
+  }
+
+  get activatedProjectDoc(): WithData<SFProjectDoc> {
+    if (this._activatedProjectDoc == null) throw new Error('Uninitialized');
+    return this._activatedProjectDoc;
   }
 
   clickLanguageCodesConfirmationCheckbox(): void {
