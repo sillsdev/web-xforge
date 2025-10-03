@@ -150,7 +150,7 @@ export class AudioPlayer extends SubscriptionDisposable {
       this.audio.load();
     }
 
-    this.audio.play();
+    void this.audio.play();
     AudioPlayer.lastPlayedAudio = this.audio;
   }
 

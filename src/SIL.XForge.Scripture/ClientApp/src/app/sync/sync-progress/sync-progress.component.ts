@@ -94,7 +94,7 @@ export class SyncProgressComponent {
       return;
     }
     this._projectDoc = doc;
-    this.initialize();
+    void this.initialize();
   }
 
   async initialize(): Promise<void> {

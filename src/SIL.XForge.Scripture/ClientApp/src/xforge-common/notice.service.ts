@@ -85,7 +85,7 @@ export class NoticeService {
 
     this.messageOnDisplay = message;
 
-    firstValueFrom(snackBarRef.afterDismissed()).then(() => (this.messageOnDisplay = undefined));
+    void firstValueFrom(snackBarRef.afterDismissed()).then(() => (this.messageOnDisplay = undefined));
   }
 
   private setAppLoadingAsync(value: boolean): void {

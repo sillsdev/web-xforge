@@ -66,7 +66,7 @@ export class ParatextService {
   ) {}
 
   linkParatext(returnUrl: string): void {
-    this.authService.linkParatext(returnUrl);
+    void this.authService.linkParatext(returnUrl);
   }
 
   getParatextUsername(): Observable<string | undefined> {

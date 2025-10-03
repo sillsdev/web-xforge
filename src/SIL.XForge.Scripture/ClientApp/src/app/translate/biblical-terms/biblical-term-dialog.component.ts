@@ -63,7 +63,7 @@ export class BiblicalTermDialogComponent {
       .filter((rendering: string) => rendering !== '');
     const renderingsChanged: boolean = renderings.join('\n') !== this.biblicalTermDoc?.data?.renderings.join('\n');
     const description: string = this.description.value;
-    this.biblicalTermDoc?.submitJson0Op(op => {
+    void this.biblicalTermDoc?.submitJson0Op(op => {
       op.set<string>(b => b.description, description);
       if (renderingsChanged) {
         op.set<string[]>(b => b.renderings, renderings);

@@ -120,7 +120,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       // Check authentication when coming back online
       // This is also run on first load when the websocket connects for the first time
       if (status && !this.isAppLoading) {
-        this.authService.checkOnlineAuth();
+        void this.authService.checkOnlineAuth();
       }
     });
 
@@ -279,7 +279,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         if (this._selectedProjectDoc == null || !this._selectedProjectDoc.isLoaded) {
           return;
         }
-        this.userService.setCurrentProjectId(this.currentUserDoc!, this._selectedProjectDoc.id);
+        void this.userService.setCurrentProjectId(this.currentUserDoc!, this._selectedProjectDoc.id);
         this.projectUserConfigDoc = await this.projectService.getUserConfig(
           this._selectedProjectDoc.id,
           this.currentUserDoc!.id
@@ -291,7 +291,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
           // handle remotely deleted project
           const userDoc = this.currentUserDoc;
           if (userDoc != null && this.userService.currentProjectId(userDoc) != null) {
-            this.showProjectDeletedDialog();
+            void this.showProjectDeletedDialog();
           }
         });
 
@@ -311,8 +311,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
             // See if the user was removed from the project
             if (!(this.currentUserDoc.id in this._selectedProjectDoc.data.userRoles)) {
               // The user has been removed from the project
-              this.showProjectDeletedDialog();
-              this.projectService.localDelete(this._selectedProjectDoc.id);
+              void this.showProjectDeletedDialog();
+              void this.projectService.localDelete(this._selectedProjectDoc.id);
             }
 
             if (this.projectUserConfigDoc != null) {
@@ -348,31 +348,31 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   setLocale(locale: string): void {
     this.i18n.setLocale(locale);
-    this.authService.updateInterfaceLanguage(locale);
+    void this.authService.updateInterfaceLanguage(locale);
   }
 
   changePassword(): void {
     if (this.currentUser == null) {
       return;
     } else if (!this.isAppOnline) {
-      this.noticeService.show(this.i18n.translateStatic('app.action_not_available_offline'));
+      void this.noticeService.show(this.i18n.translateStatic('app.action_not_available_offline'));
     } else {
-      this.authService
+      void this.authService
         .changePassword(this.currentUser.email)
         .then(() => {
-          this.noticeService.show(this.i18n.translateStatic('app.password_reset_email_sent'));
+          void this.noticeService.show(this.i18n.translateStatic('app.password_reset_email_sent'));
         })
         .catch(() => {
-          this.dialogService.message('app.cannot_change_password');
+          void this.dialogService.message('app.cannot_change_password');
         });
     }
   }
 
   editName(): void {
     if (this.isAppOnline) {
-      this.userService.editDisplayName(false);
+      void this.userService.editDisplayName(false);
     } else {
-      this.noticeService.show(this.i18n.translateStatic('app.action_not_available_offline'));
+      void this.noticeService.show(this.i18n.translateStatic('app.action_not_available_offline'));
     }
   }
 
@@ -393,11 +393,11 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   installOnDevice(): void {
-    this.pwaService.install();
+    void this.pwaService.install();
   }
 
   logOut(): void {
-    this.authService.logOut();
+    void this.authService.logOut();
   }
 
   collapseDrawer(): void {

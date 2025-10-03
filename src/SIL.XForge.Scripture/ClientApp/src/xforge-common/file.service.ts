@@ -66,7 +66,7 @@ export class FileService {
     this.realtimeService = realtimeService;
     this.onlineStatusService.onlineStatus$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(isOnline => {
       if (isOnline) {
-        this.syncFiles();
+        void this.syncFiles();
       }
     });
   }

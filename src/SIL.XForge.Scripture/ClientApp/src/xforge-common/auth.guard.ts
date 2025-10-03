@@ -20,7 +20,7 @@ export class AuthGuard {
         if (!isLoggedIn) {
           const signUp = route.queryParams['sign-up'] === 'true';
           const locale: string = route.queryParams['locale'];
-          this.authService.logIn({
+          void this.authService.logIn({
             returnUrl: this.locationService.pathname + this.locationService.search,
             signUp,
             locale

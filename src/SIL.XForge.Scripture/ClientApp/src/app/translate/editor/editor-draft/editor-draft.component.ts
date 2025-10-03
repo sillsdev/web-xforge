@@ -278,7 +278,9 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   }
 
   navigateToFormatting(): void {
-    this.router.navigateByUrl(`/projects/${this.projectId}/draft-generation/format/${this.bookId}/${this.chapter}`);
+    void this.router.navigateByUrl(
+      `/projects/${this.projectId}/draft-generation/format/${this.bookId}/${this.chapter}`
+    );
   }
 
   async applyDraft(): Promise<void> {
@@ -299,7 +301,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       this.isDraftApplied = true;
       this.userAppliedDraft = true;
     } catch (err) {
-      this.noticeService.showError(this.i18n.translateStatic('editor_draft_tab.error_applying_draft'));
+      void this.noticeService.showError(this.i18n.translateStatic('editor_draft_tab.error_applying_draft'));
       if (!isNetworkError(err)) {
         this.errorReportingService.silentError(
           'Error applying a draft to a chapter',
