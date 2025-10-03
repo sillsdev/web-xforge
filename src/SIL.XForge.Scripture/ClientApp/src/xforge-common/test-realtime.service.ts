@@ -1,9 +1,15 @@
 import { Injectable } from '@angular/core';
 import { merge } from 'lodash-es';
 import * as OTJson0 from 'ot-json0';
+import { Json0OpBuilder } from 'realtime-server/lib/esm/common/utils/json0-op-builder';
 import { MemoryOfflineStore } from './memory-offline-store';
-import { MemoryRealtimeQueryAdapter, MemoryRealtimeRemoteStore } from './memory-realtime-remote-store';
+import {
+  MemoryRealtimeDocAdapter,
+  MemoryRealtimeQueryAdapter,
+  MemoryRealtimeRemoteStore
+} from './memory-realtime-remote-store';
 import { FileOfflineData, FileType } from './models/file-offline-data';
+import { RealtimeDoc } from './models/realtime-doc';
 import { Snapshot } from './models/snapshot';
 import { RealtimeService } from './realtime.service';
 import { objectId } from './utils';
@@ -33,6 +39,8 @@ export class TestRealtimeService extends RealtimeService {
     }
   }
 
+  /** Write a realtime doc into the store, for a given collection. An existing realtime doc with the same id is
+   * overwritten. */
   addSnapshot<T>(collection: string, snapshot: Partial<Snapshot<T>>, addToOfflineStore: boolean = false): void {
     const completeSnapshot = addSnapshotDefaults(snapshot);
     (this.remoteStore as MemoryRealtimeRemoteStore).addSnapshot(collection, completeSnapshot);
@@ -55,6 +63,48 @@ export class TestRealtimeService extends RealtimeService {
         (query.adapter as MemoryRealtimeQueryAdapter).updateResults();
       }
     }
+  }
+
+  /** Intended to do the same thing as `updateQueryAdaptersRemote` but without remoteChanges$ emitting, which can be
+   * done in follow up. */
+  updateQueryAdaptersRemoteQuietly(): MemoryRealtimeQueryAdapter[] {
+    const adaptersToEmit: MemoryRealtimeQueryAdapter[] = [];
+    for (const collectionQueries of this.subscribeQueries.values()) {
+      for (const query of collectionQueries) {
+        const adapter = query.adapter as MemoryRealtimeQueryAdapter;
+        if ((adapter as any).performQuery()) {
+          adaptersToEmit.push(adapter);
+        }
+      }
+    }
+    return adaptersToEmit;
+  }
+
+  /** Simulate a change happening externally. The MemoryRealtimeDocAdapter data and MemoryRealtimeQueryAdapter results
+   * are updated before changes are announced, so when changes begin to be announced, the docs and queries are all
+   * up-to-date. The order of emits, and presence or absence of RealtimeQuery.remoteDocChanges$, may be different than
+   * when running the app. */
+  async simulateRemoteChange(doc: RealtimeDoc, ops: any): Promise<void> {
+    const docAdapter: MemoryRealtimeDocAdapter = doc.adapter as MemoryRealtimeDocAdapter;
+    // Submitting ops to the realtime doc adapter to simulate writing data on a remote server may seem backwards but
+    // is getting the job done.
+    docAdapter.submitOpWithoutEmitting(ops);
+    const queryAdaptersToEmit: MemoryRealtimeQueryAdapter[] = this.updateQueryAdaptersRemoteQuietly();
+    docAdapter.emitChange(ops);
+    docAdapter.emitRemoteChange(ops);
+    for (const adapter of queryAdaptersToEmit) {
+      adapter.remoteChanges$.next();
+    }
+  }
+
+  async simulateRemoteChangeJson0Op<T>(
+    doc: RealtimeDoc<T>,
+    build: (builder: Json0OpBuilder<T>) => void
+  ): Promise<void> {
+    if (doc.data == null) throw new Error('Cannot simulate remote change on document with null data');
+    const builder = new Json0OpBuilder(doc.data) as Json0OpBuilder<T>;
+    build(builder);
+    if (builder.op.length > 0) await this.simulateRemoteChange(doc, builder.op);
   }
 
   async updateQueriesLocal(): Promise<void> {
