@@ -39,7 +39,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     // Redirect old sharing links
     if ((this.route.snapshot.queryParams['sharing'] as string) === 'true') {
       const shareKey = this.route.snapshot.queryParams['shareKey'] as string;
-      this.router.navigateByUrl(`/join/${shareKey}`, { replaceUrl: true });
+      void this.router.navigateByUrl(`/join/${shareKey}`, { replaceUrl: true });
       return;
     }
     const projectId$ = this.route.params.pipe(
@@ -64,7 +64,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
 
     navigateToProject$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async projectId => {
       if (userDoc.data?.sites[environment.siteId].projects?.includes(projectId)) {
-        this.navigateToProject(projectId);
+        void this.navigateToProject(projectId);
       }
     });
   }
@@ -130,13 +130,13 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
       }
     }
 
-    this.router.navigate(routePath, { replaceUrl: true });
+    void this.router.navigate(routePath, { replaceUrl: true });
   }
 
   private async navigateToChecking(projectId: string, task: TaskType = 'checking'): Promise<void> {
     const defaultCheckingLink: string[] = ['/projects', projectId, task];
     const link = await lastValueFrom(this.resumeCheckingService.resumeLink$.pipe(first()));
 
-    this.router.navigate(link ?? defaultCheckingLink, { replaceUrl: true });
+    void this.router.navigate(link ?? defaultCheckingLink, { replaceUrl: true });
   }
 }

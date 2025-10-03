@@ -134,7 +134,7 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
     if (this.metrics != null && this.metrics.type === 'edit') {
       this.metrics.editEndEvent = 'task-exit';
     }
-    this.sendMetrics(this.target == null ? undefined : this.target.segment);
+    void this.sendMetrics(this.target == null ? undefined : this.target.segment);
   }
 
   onSuggestionShown(): void {
@@ -283,7 +283,7 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
       if (activity.event.type === 'click') {
         this.decrementMetric('mouseClickCount');
       }
-      this.sendMetrics(this.target.segment);
+      void this.sendMetrics(this.target.segment);
       this.createMetrics('edit');
       if (activity.event.type === 'click') {
         this.incrementMetric('mouseClickCount');
@@ -294,7 +294,7 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
   private endEditIfNecessary(editEndEvent: EditEndEvent, segment: Segment | undefined): void {
     if (this.metrics.type === 'edit') {
       this.metrics.editEndEvent = editEndEvent;
-      this.sendMetrics(segment);
+      void this.sendMetrics(segment);
       this.createMetrics('navigate');
       this.navigateSuggestionShown = false;
     }

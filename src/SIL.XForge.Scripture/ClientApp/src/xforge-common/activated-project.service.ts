@@ -88,7 +88,7 @@ export class ActivatedProjectService {
     if (this.projectDoc !== projectDoc) {
       this._projectDoc$.next(projectDoc);
       if (this.projectDoc !== undefined) {
-        this.cacheService.cache(this.projectDoc);
+        void this.cacheService.cache(this.projectDoc);
       }
     }
   }

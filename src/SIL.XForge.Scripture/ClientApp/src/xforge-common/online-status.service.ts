@@ -66,7 +66,7 @@ export class OnlineStatusService {
    */
   get online(): Promise<void> {
     return new Promise<void>(resolve => {
-      firstValueFrom(
+      void firstValueFrom(
         this.onlineStatus$.pipe(
           filter(isOnline => isOnline),
           take(1)

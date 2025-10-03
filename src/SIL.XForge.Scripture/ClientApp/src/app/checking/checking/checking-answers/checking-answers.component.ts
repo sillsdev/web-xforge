@@ -169,14 +169,14 @@ export class CheckingAnswersComponent implements OnInit {
     if (questionDoc == null) {
       return;
     }
-    this.updateQuestionDocAudioUrls();
+    void this.updateQuestionDocAudioUrls();
     if (this.questionChangeSubscription != null) {
       this.questionChangeSubscription!.unsubscribe();
     }
     this.questionChangeSubscription = questionDoc.remoteChanges$
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(ops => {
-        this.updateQuestionDocAudioUrls();
+        void this.updateQuestionDocAudioUrls();
         // If the user hasn't added an answer yet and is able to, then
         // don't hold back any incoming answers from appearing right away
         // as soon as the user adds their answer.
@@ -367,7 +367,7 @@ export class CheckingAnswersComponent implements OnInit {
     };
     const dialogResponseDoc: QuestionDoc | undefined = await this.questionDialogService.questionDialog(data);
     if (dialogResponseDoc?.data != null) {
-      this.updateQuestionDocAudioUrls();
+      void this.updateQuestionDocAudioUrls();
       this.action.emit({ action: 'edit', questionDoc: dialogResponseDoc });
     }
   }
@@ -396,7 +396,7 @@ export class CheckingAnswersComponent implements OnInit {
         result.audio.fileName
       );
       if (urlResult != null) {
-        this.questionDoc.submitJson0Op(op => op.set(q => q.audioUrl, urlResult));
+        void this.questionDoc.submitJson0Op(op => op.set(q => q.audioUrl, urlResult));
       }
     }
   }
@@ -454,9 +454,9 @@ export class CheckingAnswersComponent implements OnInit {
         answer
       });
     } else if (likeAnswerResponse === LikeAnswerResponse.DeniedOwnAnswer) {
-      this.noticeService.show(this.i18n.translateStatic('checking_answers.cannot_like_own_answer'));
+      void this.noticeService.show(this.i18n.translateStatic('checking_answers.cannot_like_own_answer'));
     } else if (likeAnswerResponse === LikeAnswerResponse.DeniedNoPermission) {
-      this.noticeService.show(this.i18n.translateStatic('checking_answers.no_permission_to_like'));
+      void this.noticeService.show(this.i18n.translateStatic('checking_answers.no_permission_to_like'));
     }
   }
 
@@ -548,9 +548,9 @@ export class CheckingAnswersComponent implements OnInit {
     if (this.questionDoc?.data == null) {
       return;
     }
-    this.cacheFileSource(this.questionDoc, this.questionDoc.data.dataId, this.questionDoc.data.audioUrl);
+    void this.cacheFileSource(this.questionDoc, this.questionDoc.data.dataId, this.questionDoc.data.audioUrl);
     for (const answer of this.questionDoc.getAnswers()) {
-      this.cacheFileSource(this.questionDoc, answer.dataId, answer.audioUrl);
+      void this.cacheFileSource(this.questionDoc, answer.dataId, answer.audioUrl);
     }
   }
 
@@ -590,7 +590,7 @@ export class CheckingAnswersComponent implements OnInit {
         this.hideAnswerForm();
         this.submittingAnswer = false;
         this.justEditedAnswer = true;
-        this.updateQuestionDocAudioUrls();
+        void this.updateQuestionDocAudioUrls();
       }
     });
   }
@@ -599,7 +599,7 @@ export class CheckingAnswersComponent implements OnInit {
     if (this.projectId == null) {
       return;
     }
-    this.projectService.isProjectAdmin(this.projectId, this.userService.currentUserId).then(isProjectAdmin => {
+    void this.projectService.isProjectAdmin(this.projectId, this.userService.currentUserId).then(isProjectAdmin => {
       this.isProjectAdmin = isProjectAdmin;
     });
   }

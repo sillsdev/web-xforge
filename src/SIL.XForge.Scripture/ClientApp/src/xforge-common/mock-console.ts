@@ -204,6 +204,6 @@ export class MockConsole extends AbstractFunctionLogger {
       this.originalConsole.log('The following was logged:');
       this.logs.forEach(this.originalConsole.log);
     }
-    expect(this.logs.length).withContext(context).toEqual(0);
+    void expect(this.logs.length).withContext(context).toEqual(0);
   }
 }

@@ -147,7 +147,7 @@ export class LynxInsightOverlayComponent implements OnInit {
       return;
     }
 
-    this.lynxWorkspaceService.getActions(insight).then(actions => {
+    void this.lynxWorkspaceService.getActions(insight).then(actions => {
       const menuActions: LynxInsightAction[] = [];
 
       for (const action of actions) {

@@ -120,7 +120,7 @@ export class TrainingDataUploadDialogComponent implements AfterViewInit {
     );
     this._isUploading = false;
     if (fileUrl == null) {
-      this.dialogService.message('training_data_upload_dialog.upload_failed');
+      void this.dialogService.message('training_data_upload_dialog.upload_failed');
       return;
     }
 

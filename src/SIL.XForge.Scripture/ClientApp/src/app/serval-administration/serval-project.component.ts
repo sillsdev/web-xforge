@@ -229,7 +229,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
 
     // If the blob is undefined, display an error
     if (blob == null) {
-      this.noticeService.showError('The project was never synced successfully and does not exist on disk.');
+      void this.noticeService.showError('The project was never synced successfully and does not exist on disk.');
       return;
     }
 
@@ -249,7 +249,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   }
 
   navigateToDraftJobs(): void {
-    this.router.navigate(['/serval-administration'], {
+    void this.router.navigate(['/serval-administration'], {
       queryParams: {
         projectId: this.activatedProjectService.projectId!,
         tab: 'draft-jobs'

@@ -86,7 +86,7 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
       });
     this.setProjectAdmin();
 
-    this.questionsService
+    void this.questionsService
       .queryFirstUnansweredQuestion(projectProfileDoc.id, this.userService.currentUserId, this.destroyRef)
       .then(query => {
         this._firstUnansweredQuestion = query;
@@ -325,7 +325,7 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
       return;
     }
 
-    this._projectUserConfigDoc
+    void this._projectUserConfigDoc
       .submitJson0Op(op => {
         if (questionDoc != null && questionDoc.data != null && !this.hasUserReadQuestion(questionDoc)) {
           op.add(puc => puc.questionRefsRead, questionDoc.data.dataId);
@@ -406,7 +406,7 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
     this.activeQuestionDoc = questionDoc;
 
     if (verseRef != null) {
-      this.storeMostRecentQuestion().then(() => {
+      void this.storeMostRecentQuestion().then(() => {
         // Only emit if not a filter to avoid duplicate emission, as an emit from filter is called elsewhere
         if (!actionSource?.isQuestionListChange) {
           this.changed.emit({ questionDoc, actionSource, clearFilter });
@@ -459,7 +459,7 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
     if (this.projectId == null) {
       return;
     }
-    this.projectService.isProjectAdmin(this.projectId, this.userService.currentUserId).then(isProjectAdmin => {
+    void this.projectService.isProjectAdmin(this.projectId, this.userService.currentUserId).then(isProjectAdmin => {
       this.isProjectAdmin = isProjectAdmin;
     });
   }

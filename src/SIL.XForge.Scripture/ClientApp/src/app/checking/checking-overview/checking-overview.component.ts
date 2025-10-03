@@ -333,7 +333,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   setQuestionArchiveStatus(questionDoc: QuestionDoc, archiveStatus: boolean): void {
-    questionDoc.submitJson0Op(op => {
+    void questionDoc.submitJson0Op(op => {
       op.set(q => q.isArchived, archiveStatus);
       if (archiveStatus) {
         op.set(q => q.dateArchived!, new Date().toJSON());
