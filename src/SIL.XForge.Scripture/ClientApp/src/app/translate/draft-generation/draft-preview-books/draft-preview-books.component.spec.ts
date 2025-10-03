@@ -21,6 +21,7 @@ import { TextDocService } from '../../../core/text-doc.service';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { DraftApplyDialogComponent } from '../draft-apply-dialog/draft-apply-dialog.component';
 import { DraftApplyProgress } from '../draft-apply-progress-dialog/draft-apply-progress-dialog.component';
+import { DraftGenerationService } from '../draft-generation.service';
 import { DraftHandlingService } from '../draft-handling.service';
 import { BookWithDraft, DraftPreviewBooksComponent } from './draft-preview-books.component';
 
@@ -28,6 +29,7 @@ const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedDraftHandlingService = mock(DraftHandlingService);
+const mockedDraftGenerationService = mock(DraftGenerationService);
 const mockedDialogService = mock(DialogService);
 const mockedTextService = mock(TextDocService);
 const mockedErrorReportingService = mock(ErrorReportingService);
@@ -43,6 +45,7 @@ describe('DraftPreviewBooks', () => {
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: DraftHandlingService, useMock: mockedDraftHandlingService },
+      { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
       { provide: DialogService, useMock: mockedDialogService },
       { provide: TextDocService, useMock: mockedTextService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
@@ -108,7 +111,7 @@ describe('DraftPreviewBooks', () => {
   it('notifies user if applying a draft failed due to an error', fakeAsync(() => {
     env = new TestEnvironment();
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
-    setupDialog('project01');
+    setupDialog('project01', [1, 2, 3]);
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything()))
       .thenReject(new Error('Draft error'))
       .thenResolve(undefined)
@@ -127,7 +130,7 @@ describe('DraftPreviewBooks', () => {
   it('can apply all chapters of a draft to a book', fakeAsync(() => {
     env = new TestEnvironment();
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
-    setupDialog('project01');
+    setupDialog('project01', [1, 2, 3]);
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).thenResolve(
       undefined
     );
@@ -144,7 +147,8 @@ describe('DraftPreviewBooks', () => {
   it('can apply chapters with drafts and skips chapters without drafts', fakeAsync(() => {
     env = new TestEnvironment();
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[1];
-    setupDialog('project01');
+    const chaptersWithDrafts = [1, 3];
+    setupDialog('project01', chaptersWithDrafts);
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).thenResolve(
       undefined
     );
@@ -153,7 +157,9 @@ describe('DraftPreviewBooks', () => {
     tick();
     env.fixture.detectChanges();
     verify(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).once();
-    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).times(1);
+    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).times(
+      chaptersWithDrafts.length
+    );
   }));
 
   it('can apply a historic draft', fakeAsync(() => {
@@ -164,7 +170,7 @@ describe('DraftPreviewBooks', () => {
       }
     } as BuildDto);
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[1];
-    setupDialog('project01');
+    setupDialog('project01', [1]);
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).thenResolve(
       undefined
     );
@@ -180,7 +186,8 @@ describe('DraftPreviewBooks', () => {
     env = new TestEnvironment();
     expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
     const mockedDialogRef: MatDialogRef<DraftApplyDialogComponent> = mock(MatDialogRef<DraftApplyDialogComponent>);
-    when(mockedDialogRef.afterClosed()).thenReturn(of({ projectId: 'project01' }));
+    const chaptersWithDrafts = [1, 2, 3];
+    when(mockedDialogRef.afterClosed()).thenReturn(of({ projectId: 'project01', chapters: chaptersWithDrafts }));
     when(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).thenReturn(
       instance(mockedDialogRef)
     );
@@ -190,7 +197,7 @@ describe('DraftPreviewBooks', () => {
     env.fixture.detectChanges();
     verify(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).once();
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).times(
-      env.booksWithDrafts[0].chaptersWithDrafts.length
+      chaptersWithDrafts.length
     );
     verify(mockedProjectService.onlineAddChapters('project01', anything(), anything())).never();
   }));
@@ -199,7 +206,8 @@ describe('DraftPreviewBooks', () => {
     env = new TestEnvironment();
     expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
     const mockedDialogRef: MatDialogRef<DraftApplyDialogComponent> = mock(MatDialogRef<DraftApplyDialogComponent>);
-    when(mockedDialogRef.afterClosed()).thenReturn(of({ projectId: 'otherProject' }));
+    const chaptersWithDrafts = [1, 2, 3];
+    when(mockedDialogRef.afterClosed()).thenReturn(of({ projectId: 'otherProject', chapters: chaptersWithDrafts }));
     when(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).thenReturn(
       instance(mockedDialogRef)
     );
@@ -208,7 +216,7 @@ describe('DraftPreviewBooks', () => {
     env.fixture.detectChanges();
     verify(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).once();
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).times(
-      env.booksWithDrafts[0].chaptersWithDrafts.length
+      chaptersWithDrafts.length
     );
     verify(mockedProjectService.onlineAddChapters('otherProject', anything(), anything())).never();
   }));
@@ -244,7 +252,8 @@ describe('DraftPreviewBooks', () => {
     expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
     const projectEmptyBook = 'projectEmptyBook';
     const mockedDialogRef: MatDialogRef<DraftApplyDialogComponent> = mock(MatDialogRef<DraftApplyDialogComponent>);
-    when(mockedDialogRef.afterClosed()).thenReturn(of({ projectId: projectEmptyBook }));
+    const chaptersWithDrafts = [1, 2, 3];
+    when(mockedDialogRef.afterClosed()).thenReturn(of({ projectId: projectEmptyBook, chapters: chaptersWithDrafts }));
     when(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).thenReturn(
       instance(mockedDialogRef)
     );
@@ -267,14 +276,15 @@ describe('DraftPreviewBooks', () => {
     // needs to create 2 texts
     verify(mockedTextService.createTextDoc(anything())).twice();
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).times(
-      env.booksWithDrafts[0].chaptersWithDrafts.length
+      chaptersWithDrafts.length
     );
   }));
 
   it('shows message to generate a new draft if legacy USFM draft', fakeAsync(() => {
     env = new TestEnvironment();
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
-    setupDialog('project01');
+    const chaptersWithDrafts = [1, 2, 3];
+    setupDialog('project01', chaptersWithDrafts);
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).thenResolve(
       'error: legacy format'
     );
@@ -283,13 +293,16 @@ describe('DraftPreviewBooks', () => {
     tick();
     env.fixture.detectChanges();
     verify(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).once();
-    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).times(3);
+    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).times(
+      chaptersWithDrafts.length
+    );
   }));
 
   it('can track progress of chapters applied', fakeAsync(() => {
     env = new TestEnvironment();
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
-    setupDialog('project01');
+    const chaptersWithDrafts = [1, 2, 3];
+    setupDialog('project01', chaptersWithDrafts);
     const resolveSubject$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
     const promise: Promise<string | undefined> = new Promise<string | undefined>(resolve => {
       resolveSubject$.pipe(filter(value => value)).subscribe(() => resolve(undefined));
@@ -302,7 +315,9 @@ describe('DraftPreviewBooks', () => {
     tick();
     env.fixture.detectChanges();
     verify(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).once();
-    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).times(3);
+    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).times(
+      chaptersWithDrafts.length
+    );
     expect(env.component.numChaptersApplied).toEqual(1);
     resolveSubject$.next(true);
     resolveSubject$.complete();
@@ -387,9 +402,9 @@ describe('DraftPreviewBooks', () => {
     });
   });
 
-  function setupDialog(projectId?: string): void {
+  function setupDialog(projectId?: string, chapters?: number[]): void {
     const mockedDialogRef: MatDialogRef<DraftApplyDialogComponent> = mock(MatDialogRef<DraftApplyDialogComponent>);
-    when(mockedDialogRef.afterClosed()).thenReturn(of(projectId ? { projectId } : undefined));
+    when(mockedDialogRef.afterClosed()).thenReturn(of(projectId ? { projectId, chapters } : undefined));
     when(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).thenReturn(
       instance(mockedDialogRef)
     );
@@ -444,9 +459,9 @@ class TestEnvironment {
   } as SFProjectProfileDoc;
 
   booksWithDrafts: BookWithDraft[] = [
-    { bookNumber: 1, bookId: 'GEN', canEdit: true, chaptersWithDrafts: [1, 2, 3], draftApplied: false },
-    { bookNumber: 2, bookId: 'EXO', canEdit: true, chaptersWithDrafts: [1], draftApplied: false },
-    { bookNumber: 3, bookId: 'LEV', canEdit: false, chaptersWithDrafts: [1, 2], draftApplied: false }
+    { bookNumber: 1, bookId: 'GEN', canEdit: true, existingChapters: [1, 2, 3], draftApplied: false },
+    { bookNumber: 2, bookId: 'EXO', canEdit: true, existingChapters: [1], draftApplied: false },
+    { bookNumber: 3, bookId: 'LEV', canEdit: false, existingChapters: [1, 2], draftApplied: false }
   ];
 
   constructor(build: BuildDto | undefined = undefined) {
