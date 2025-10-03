@@ -71,7 +71,7 @@ export class DraftHistoryEntryComponent {
     // Get the user who requested the build
     this._buildRequestedByUserName = undefined;
     if (this._entry?.additionalInfo?.requestedByUserId != null) {
-      this.userService.getProfile(this._entry.additionalInfo.requestedByUserId).then(user => {
+      void this.userService.getProfile(this._entry.additionalInfo.requestedByUserId).then(user => {
         if (user.data != null) {
           this._buildRequestedByUserName = user.data.displayName;
         }
@@ -85,7 +85,7 @@ export class DraftHistoryEntryComponent {
 
     // Get the books used in the training configuration
     const trainingScriptureRanges = this._entry?.additionalInfo?.trainingScriptureRanges ?? [];
-    Promise.all(
+    void Promise.all(
       trainingScriptureRanges.map(async r => {
         // The engine ID is the target project ID
         let target: SFProjectProfileDoc | undefined = undefined;
@@ -125,7 +125,7 @@ export class DraftHistoryEntryComponent {
       translationScriptureRanges.map(item => item.scriptureRange).join(';')
     );
     this._translationSources = [];
-    Promise.all(
+    void Promise.all(
       translationScriptureRanges.map(async r => {
         const source =
           r.projectId === '' || r.projectId === value?.engine?.id
@@ -139,7 +139,7 @@ export class DraftHistoryEntryComponent {
     const trainingDataFiles: string[] = this._entry?.additionalInfo?.trainingDataFileIds ?? [];
     if (this.activatedProjectService.projectId != null && trainingDataFiles.length > 0) {
       this.dataFileQuery?.dispose();
-      this.trainingDataService
+      void this.trainingDataService
         .queryTrainingDataAsync(this.activatedProjectService.projectId, this.destroyRef)
         .then(query => {
           this.dataFileQuery = query;

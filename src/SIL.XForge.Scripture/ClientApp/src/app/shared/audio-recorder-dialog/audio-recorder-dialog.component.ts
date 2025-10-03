@@ -116,7 +116,7 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
   ngOnDestroy(): void {
     this.destroyed = true;
     if (this.isRecording) {
-      this.stopRecording();
+      void this.stopRecording();
     }
   }
 
@@ -233,9 +233,9 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
     this.audio = { status: 'denied' };
 
     if (error.code === DOMException.NOT_FOUND_ERR) {
-      this.noticeService.show(this.i18n.translateStatic('checking_audio_recorder.mic_not_found'));
+      void this.noticeService.show(this.i18n.translateStatic('checking_audio_recorder.mic_not_found'));
     } else {
-      this.noticeService.show(this.i18n.translateStatic('checking_audio_recorder.mic_access_denied'));
+      void this.noticeService.show(this.i18n.translateStatic('checking_audio_recorder.mic_access_denied'));
     }
   }
 

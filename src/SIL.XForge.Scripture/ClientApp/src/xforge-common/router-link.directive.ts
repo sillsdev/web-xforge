@@ -43,7 +43,7 @@ export class RouterLinkDirective {
     if (event.ctrlKey || event.metaKey) {
       this.window.open(this.url, '_blank', 'noopener');
     } else {
-      this.router.navigate(this.route, this.routerOptions);
+      void this.router.navigate(this.route, this.routerOptions);
     }
   }
 

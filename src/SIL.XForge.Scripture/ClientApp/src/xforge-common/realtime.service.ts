@@ -229,7 +229,7 @@ export class RealtimeService {
       );
     } catch {
       // If 'onDestroy' callback registration fails (view already destroyed), dispose immediately
-      queryPromise.then(query => query.dispose());
+      void queryPromise.then(query => query.dispose());
     }
 
     return queryPromise;
