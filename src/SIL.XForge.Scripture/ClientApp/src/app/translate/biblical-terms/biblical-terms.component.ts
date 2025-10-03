@@ -261,8 +261,8 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     if (this.selectedCategory !== value) {
       // Store the default dropdown value of show_all as undefined in the database
       if (value === '' || value === 'show_all') value = undefined;
-      this.projectUserConfigDoc?.submitJson0Op(op => op.set(puc => puc.selectedBiblicalTermsCategory, value));
-      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
+      void this.projectUserConfigDoc?.submitJson0Op(op => op.set(puc => puc.selectedBiblicalTermsCategory, value));
+      void this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
     }
   }
 
@@ -274,8 +274,8 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     if (this.selectedRangeFilter !== value) {
       // Store the default dropdown value of submitJson0Op as undefined in the database
       if (value === '' || value === 'current_verse') value = undefined;
-      this.projectUserConfigDoc?.submitJson0Op(op => op.set(puc => puc.selectedBiblicalTermsFilter, value));
-      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
+      void this.projectUserConfigDoc?.submitJson0Op(op => op.set(puc => puc.selectedBiblicalTermsFilter, value));
+      void this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
     }
   }
 
@@ -284,7 +284,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   }
 
   set transliterateBiblicalTerms(value: boolean) {
-    this.projectUserConfigDoc?.submitJson0Op(op => op.set<boolean>(puc => puc.transliterateBiblicalTerms, value));
+    void this.projectUserConfigDoc?.submitJson0Op(op => op.set<boolean>(puc => puc.transliterateBiblicalTerms, value));
   }
 
   get selectedReferenceForCaption(): string {
@@ -614,7 +614,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
             op.set(t => t.status, noteStatus);
           });
         } else {
-          this.dialogService.message('biblical_terms.cannot_edit_note_paratext');
+          void this.dialogService.message('biblical_terms.cannot_edit_note_paratext');
         }
       } else {
         note.threadId = threadDoc.data!.threadId;
@@ -642,7 +642,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
         return;
       }
 
-      this.projectUserConfigDoc.submitJson0Op(op => {
+      void this.projectUserConfigDoc.submitJson0Op(op => {
         for (const noteId of notesRead) {
           op.add(puc => puc.noteRefsRead, noteId);
         }

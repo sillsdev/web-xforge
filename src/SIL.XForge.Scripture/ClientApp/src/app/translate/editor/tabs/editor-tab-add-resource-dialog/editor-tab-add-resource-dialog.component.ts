@@ -174,7 +174,7 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
 
   private cancelSync(): void {
     if (this.selectedProjectDoc?.id != null && this.isSyncActive) {
-      this.projectService.onlineCancelSync(this.selectedProjectDoc.id);
+      void this.projectService.onlineCancelSync(this.selectedProjectDoc.id);
     }
 
     this.isSyncActive = false;

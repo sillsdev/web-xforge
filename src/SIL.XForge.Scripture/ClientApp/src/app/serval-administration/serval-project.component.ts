@@ -262,7 +262,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   }
 
   navigateToDraftJobs(): void {
-    this.router.navigate(['/serval-administration'], {
+    void this.router.navigate(['/serval-administration'], {
       queryParams: {
         projectId: this.activatedProjectService.projectId!,
         tab: 'draft-jobs'

@@ -80,7 +80,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     if (newValue !== undefined) {
       // If we are automatically showing the Scripture audio player because hide-text is enabled, don't auto-play.
       if (this.hideChapterText) return;
-      Promise.resolve(null).then(() => this._scriptureAudioPlayer?.play());
+      void Promise.resolve(null).then(() => this._scriptureAudioPlayer?.play());
     }
   }
   @ViewChild('questionsPanel') questionsPanel?: ElementRef;
@@ -627,7 +627,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             }
 
             // TODO (scripture audio) Only fetch the timing data for the currently active chapter
-            this.projectService.queryAudioText(routeProjectId, this.destroyRef).then(query => {
+            void this.projectService.queryAudioText(routeProjectId, this.destroyRef).then(query => {
               this.textAudioQuery = query;
               this.audioChangedSub = merge(this.textAudioQuery.remoteChanges$, this.textAudioQuery.localChanges$)
                 .pipe(quietTakeUntilDestroyed(this.destroyRef))
@@ -649,7 +649,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                 }
 
                 if (this.onlineStatusService.isOnline) {
-                  qd.updateFileCache();
+                  void qd.updateFileCache();
                 }
               });
 
@@ -927,7 +927,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         break;
       case 'show-comments':
         if (this.projectUserConfigDoc != null) {
-          this.projectUserConfigDoc.submitJson0Op(op => {
+          void this.projectUserConfigDoc.submitJson0Op(op => {
             if (commentAction.answer != null) {
               for (const comm of commentAction.answer.comments.filter(comment => !comment.deleted)) {
                 if (!this.questionsList!.hasUserReadComment(comm)) {
@@ -993,7 +993,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       this.refreshSummary();
 
       if (this.onlineStatusService.isOnline) {
-        questionDoc.updateAnswerFileCache();
+        void questionDoc.updateAnswerFileCache();
       }
       if (!this.hideChapterText && !(actionSource?.isQuestionListChange ?? false)) {
         this.toggleAudio(true);
@@ -1288,13 +1288,13 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     }
     const answerIndex = this.getAnswerIndex(answer);
     if (answerIndex >= 0) {
-      activeQuestionDoc
+      void activeQuestionDoc
         .submitJson0Op(op => {
           op.set(q => q.answers[answerIndex].deleted, true);
         })
         .then(() => {
           if (this.projectDoc != null) {
-            activeQuestionDoc.deleteFile(FileType.Audio, answer.dataId, answer.ownerRef);
+            void activeQuestionDoc.deleteFile(FileType.Audio, answer.dataId, answer.ownerRef);
           }
         });
       this.refreshSummary();
@@ -1347,14 +1347,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
           .set(q => q.answers[answerIndex].dateModified, newAnswer.dateModified)
       );
       if (deleteAudio) {
-        submitPromise.then(() => {
+        void submitPromise.then(() => {
           if (this.projectDoc != null) {
-            questionDoc.deleteFile(FileType.Audio, oldAnswer.dataId, oldAnswer.ownerRef);
+            void questionDoc.deleteFile(FileType.Audio, oldAnswer.dataId, oldAnswer.ownerRef);
           }
         });
       }
     } else {
-      questionDoc.submitJson0Op(op => op.insert(q => q.answers, 0, answers[0]));
+      void questionDoc.submitJson0Op(op => op.insert(q => q.answers, 0, answers[0]));
     }
 
     this.questionsList.updateElementsRead(questionDoc);
@@ -1381,10 +1381,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
           .set(q => q.answers[answerIndex].comments[commentIndex].dateModified, comment.dateModified)
       );
       if (deleteAudio) {
-        submitPromise.then(() => activeQuestionDoc.deleteFile(FileType.Audio, comment.dataId, comment.ownerRef));
+        void submitPromise.then(
+          () => void activeQuestionDoc.deleteFile(FileType.Audio, comment.dataId, comment.ownerRef)
+        );
       }
     } else {
-      activeQuestionDoc.submitJson0Op(op => op.insert(q => q.answers[answerIndex].comments, 0, comment));
+      void activeQuestionDoc.submitJson0Op(op => op.insert(q => q.answers[answerIndex].comments, 0, comment));
     }
   }
 
@@ -1400,9 +1402,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     const answerIndex = this.getAnswerIndex(answer);
     const commentIndex = answer.comments.findIndex(c => c.dataId === comment.dataId);
     if (commentIndex >= 0) {
-      activeQuestionDoc
+      void activeQuestionDoc
         .submitJson0Op(op => op.set(q => q.answers[answerIndex].comments[commentIndex].deleted, true))
-        .then(() => activeQuestionDoc.deleteFile(FileType.Audio, comment.dataId, comment.ownerRef));
+        .then(() => void activeQuestionDoc.deleteFile(FileType.Audio, comment.dataId, comment.ownerRef));
     }
   }
 
@@ -1420,9 +1422,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     const answerIndex = this.getAnswerIndex(answer);
 
     if (likeIndex >= 0) {
-      activeQuestionDoc.submitJson0Op(op => op.remove(q => q.answers[answerIndex].likes, likeIndex));
+      void activeQuestionDoc.submitJson0Op(op => op.remove(q => q.answers[answerIndex].likes, likeIndex));
     } else {
-      activeQuestionDoc.submitJson0Op(op =>
+      void activeQuestionDoc.submitJson0Op(op =>
         op.insert(q => q.answers[answerIndex].likes, 0, {
           ownerRef: currentUserId
         })
@@ -1675,7 +1677,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       }
     }
 
-    this.router.navigate(['projects', projectId, 'checking', ...bookChapterPathTokens], {
+    void this.router.navigate(['projects', projectId, 'checking', ...bookChapterPathTokens], {
       ...navigationExtras,
       queryParams: { scope: scope },
       queryParamsHandling: 'merge'
@@ -1683,7 +1685,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   private navigateScope(scope: QuestionScope, navigationExtras?: NavigationBehaviorOptions | undefined): void {
-    this.router.navigate([], {
+    void this.router.navigate([], {
       ...navigationExtras,
       relativeTo: this.activatedRoute,
       queryParams: { scope },
