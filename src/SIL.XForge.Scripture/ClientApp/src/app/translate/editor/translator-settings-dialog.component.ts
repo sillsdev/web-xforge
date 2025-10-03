@@ -1,7 +1,7 @@
 import { Component, DestroyRef, Inject, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { BehaviorSubject, combineLatest } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { debounceTime, map, skip, startWith } from 'rxjs/operators';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -21,44 +21,46 @@ export interface TranslatorSettingsDialogData {
   standalone: false
 })
 export class TranslatorSettingsDialogComponent implements OnInit {
-  suggestionsEnabledSwitch = new FormControl<boolean>({ value: false, disabled: !this.onlineStatusService.isOnline });
-  lynxMasterSwitch = new FormControl<boolean>(false);
-  lynxAssessmentsEnabled = new FormControl<boolean>(false);
-  lynxAutoCorrectEnabled = new FormControl<boolean>(false);
+  readonly suggestionsEnabledSwitch = new FormControl<boolean>({
+    value: false,
+    disabled: !this.onlineStatusService.isOnline
+  });
+  readonly lynxMasterSwitch = new FormControl<boolean>(false);
+  readonly lynxAssessmentsEnabled = new FormControl<boolean>(false);
+  readonly lynxAutoCorrectEnabled = new FormControl<boolean>(false);
+
+  showSuggestionsSettings = false;
+  showLynxSettings = false;
+  translationSuggestionsDisabled = false;
+  lynxAssessmentsProjectEnabled = false;
+  lynxAutoCorrectProjectEnabled = false;
+  numSuggestions = '1';
+
+  readonly confidenceThreshold$ = new BehaviorSubject<number>(20);
 
   private readonly projectDoc: SFProjectProfileDoc = this.data.projectDoc;
   private readonly projectUserConfigDoc: SFProjectUserConfigDoc = this.data.projectUserConfigDoc;
-  private confidenceThreshold$ = new BehaviorSubject<number>(20);
 
   constructor(
     @Inject(MAT_DIALOG_DATA) private readonly data: TranslatorSettingsDialogData,
     readonly onlineStatusService: OnlineStatusService,
-    private destroyRef: DestroyRef
+    private readonly destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
-    if (this.projectUserConfigDoc.data != null) {
-      const percent = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
-      this.confidenceThreshold$.next(percent);
-    }
+    this.updateComponentState();
 
-    this.suggestionsEnabledSwitch.setValue(this.translationSuggestionsUserEnabled);
-    this.lynxAssessmentsEnabled.setValue(this.lynxAssessmentsUserEnabled);
-    this.lynxAutoCorrectEnabled.setValue(this.lynxAutoCorrectUserEnabled);
-    this.lynxMasterSwitch.setValue(this.lynxMasterEnabled);
-
-    combineLatest([this.onlineStatusService.onlineStatus$, this.projectDoc.changes$.pipe(startWith(null))])
+    this.onlineStatusService.onlineStatus$
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.updateTranslationSuggestionsSwitch();
-      });
+      .subscribe(() => this.onOnlineStatusChange());
 
-    this.projectUserConfigDoc.changes$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      this.updateTranslationSuggestionsSwitch();
-      this.lynxAssessmentsEnabled.setValue(this.lynxAssessmentsUserEnabled, { emitEvent: false });
-      this.lynxAutoCorrectEnabled.setValue(this.lynxAutoCorrectUserEnabled, { emitEvent: false });
-      this.lynxMasterSwitch.setValue(this.lynxMasterEnabled, { emitEvent: false });
-    });
+    this.projectDoc.changes$
+      .pipe(startWith(null), quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.updateComponentState());
+
+    this.projectUserConfigDoc.changes$
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.updateComponentState());
 
     this.confidenceThreshold$
       .pipe(
@@ -73,73 +75,19 @@ export class TranslatorSettingsDialogComponent implements OnInit {
       );
   }
 
-  get translationSuggestionsDisabled(): boolean {
-    return !this.translationSuggestionsUserEnabled || !this.onlineStatusService.isOnline;
-  }
-
-  get translationSuggestionsUserEnabled(): boolean {
-    return this.projectUserConfigDoc.data == null ? true : this.projectUserConfigDoc.data.translationSuggestionsEnabled;
-  }
-
-  get numSuggestions(): string {
-    return this.projectUserConfigDoc.data == null ? '1' : this.projectUserConfigDoc.data.numSuggestions.toString();
-  }
-
-  set numSuggestions(value: string) {
-    void this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.numSuggestions, parseInt(value, 10)));
-  }
-
-  get confidenceThreshold(): number {
-    return this.confidenceThreshold$.value;
-  }
-
-  set confidenceThreshold(value: number) {
+  setConfidenceThreshold(value: number): void {
     this.confidenceThreshold$.next(value);
   }
 
-  get lynxAssessmentsUserEnabled(): boolean {
-    return this.projectUserConfigDoc.data?.lynxInsightState?.assessmentsEnabled ?? true;
-  }
-
-  get lynxAutoCorrectUserEnabled(): boolean {
-    return this.projectUserConfigDoc.data?.lynxInsightState?.autoCorrectionsEnabled ?? true;
-  }
-
-  get lynxAssessmentsProjectEnabled(): boolean {
-    return !!this.projectDoc.data?.lynxConfig?.assessmentsEnabled;
-  }
-
-  get lynxAutoCorrectProjectEnabled(): boolean {
-    return !!this.projectDoc.data?.lynxConfig?.autoCorrectionsEnabled;
-  }
-
-  get lynxMasterEnabled(): boolean {
-    return (
-      (this.lynxAssessmentsProjectEnabled && this.lynxAssessmentsUserEnabled) ||
-      (this.lynxAutoCorrectProjectEnabled && this.lynxAutoCorrectUserEnabled)
-    );
-  }
-
-  get showSuggestionsSettings(): boolean {
-    return !!this.projectDoc.data?.translateConfig.translationSuggestionsEnabled;
-  }
-
-  get showLynxSettings(): boolean {
-    return this.lynxAssessmentsProjectEnabled || this.lynxAutoCorrectProjectEnabled;
+  setNumSuggestions(value: string): void {
+    this.numSuggestions = value;
+    void this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.numSuggestions, parseInt(value, 10)));
   }
 
   setTranslationSettingsEnabled(value: boolean): void {
     void this.projectUserConfigDoc.submitJson0Op(op =>
       op.set<boolean>(puc => puc.translationSuggestionsEnabled, value)
     );
-  }
-
-  updateTranslationSuggestionsSwitch(): void {
-    if (this.onlineStatusService.isOnline) {
-      this.suggestionsEnabledSwitch.enable();
-    } else {
-      this.suggestionsEnabledSwitch.disable();
-    }
   }
 
   setLynxAssessmentsEnabled(value: boolean): void {
@@ -155,6 +103,54 @@ export class TranslatorSettingsDialogComponent implements OnInit {
       assessmentsEnabled: value,
       autoCorrectionsEnabled: value
     });
+  }
+  private get translationSuggestionsUserEnabled(): boolean {
+    return this.projectUserConfigDoc.data?.translationSuggestionsEnabled ?? true;
+  }
+
+  private get lynxAssessmentsUserEnabled(): boolean {
+    return this.projectUserConfigDoc.data?.lynxInsightState?.assessmentsEnabled ?? true;
+  }
+
+  private get lynxAutoCorrectUserEnabled(): boolean {
+    return this.projectUserConfigDoc.data?.lynxInsightState?.autoCorrectionsEnabled ?? true;
+  }
+
+  private get lynxMasterEnabled(): boolean {
+    return (
+      (this.lynxAssessmentsProjectEnabled && this.lynxAssessmentsUserEnabled) ||
+      (this.lynxAutoCorrectProjectEnabled && this.lynxAutoCorrectUserEnabled)
+    );
+  }
+
+  private onOnlineStatusChange(): void {
+    if (this.onlineStatusService.isOnline) {
+      this.suggestionsEnabledSwitch.enable();
+      this.translationSuggestionsDisabled = !this.translationSuggestionsUserEnabled;
+    } else {
+      this.suggestionsEnabledSwitch.disable();
+      this.translationSuggestionsDisabled = true;
+    }
+  }
+
+  private updateComponentState(): void {
+    this.showSuggestionsSettings = !!this.projectDoc.data?.translateConfig.translationSuggestionsEnabled;
+    this.lynxAssessmentsProjectEnabled = !!this.projectDoc.data?.lynxConfig?.assessmentsEnabled;
+    this.lynxAutoCorrectProjectEnabled = !!this.projectDoc.data?.lynxConfig?.autoCorrectionsEnabled;
+    this.showLynxSettings = this.lynxAssessmentsProjectEnabled || this.lynxAutoCorrectProjectEnabled;
+    this.translationSuggestionsDisabled = !this.translationSuggestionsUserEnabled || !this.onlineStatusService.isOnline;
+
+    if (this.projectUserConfigDoc.data != null) {
+      const percent = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
+      this.numSuggestions = this.projectUserConfigDoc.data.numSuggestions.toString();
+      this.confidenceThreshold$.next(percent);
+    }
+
+    // Update form control state
+    this.suggestionsEnabledSwitch.setValue(this.translationSuggestionsUserEnabled, { emitEvent: false });
+    this.lynxAssessmentsEnabled.setValue(this.lynxAssessmentsUserEnabled, { emitEvent: false });
+    this.lynxAutoCorrectEnabled.setValue(this.lynxAutoCorrectUserEnabled, { emitEvent: false });
+    this.lynxMasterSwitch.setValue(this.lynxMasterEnabled, { emitEvent: false });
   }
 
   private updateLynxInsightState(updates: { assessmentsEnabled?: boolean; autoCorrectionsEnabled?: boolean }): void {
