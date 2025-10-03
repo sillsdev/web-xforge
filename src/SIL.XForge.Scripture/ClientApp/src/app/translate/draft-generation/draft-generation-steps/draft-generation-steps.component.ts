@@ -544,7 +544,7 @@ export class DraftGenerationStepsComponent implements OnInit {
       this.stepper.next();
     } else {
       if (!this.onlineStatusService.isOnline) {
-        this.noticeService.show(this.i18n.translateStatic('draft_generation.offline_message'));
+        void this.noticeService.show(this.i18n.translateStatic('draft_generation.offline_message'));
         return;
       }
 

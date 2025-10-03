@@ -121,9 +121,9 @@ export class MyProjectsComponent implements OnInit {
       this.noticeService.loadingStarted(this.constructor.name);
       this.joiningProjects.push(projectId);
       await this.projectService.onlineAddCurrentUser(projectId);
-      this.router.navigate(['projects', projectId]);
+      void this.router.navigate(['projects', projectId]);
     } catch {
-      this.noticeService.show(this.i18n.translateStatic('my_projects.failed_to_join_project'));
+      void this.noticeService.show(this.i18n.translateStatic('my_projects.failed_to_join_project'));
     } finally {
       this.noticeService.loadingFinished(this.constructor.name);
       this.joiningProjects.pop();
@@ -134,11 +134,11 @@ export class MyProjectsComponent implements OnInit {
     try {
       this.noticeService.loadingStarted(this.constructor.name);
       await this.projectService.onlineSyncUserRole(projectId);
-      this.noticeService.show(this.i18n.translateStatic('my_projects.user_role_updated'));
+      void this.noticeService.show(this.i18n.translateStatic('my_projects.user_role_updated'));
       const project = this.userParatextProjects.find(project => project.projectId === projectId);
       if (project != null) project.hasUserRoleChanged = false;
     } catch {
-      this.noticeService.showError(this.i18n.translateStatic('my_projects.failed_to_update_user_role'));
+      void this.noticeService.showError(this.i18n.translateStatic('my_projects.failed_to_update_user_role'));
     } finally {
       this.noticeService.loadingFinished(this.constructor.name);
     }

@@ -87,7 +87,7 @@ export class PwaService extends SubscriptionDisposable {
   }
 
   activateUpdates(): void {
-    this.updates.activateUpdate();
+    void this.updates.activateUpdate();
     this.locationService.reload();
   }
 
