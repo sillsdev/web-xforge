@@ -32,7 +32,6 @@ export class CopyrightBannerComponent {
     // allowing non-null assertion for this.notice as the link to open the dialog is only shown when
     // this.notice is defined (this.showMoreInfo)
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     let copyrightNotice = this.notice!.trim();
     if (copyrightNotice[0] !== '<') {
       // If copyright is plain text, remove the first line and add paragraph markers.

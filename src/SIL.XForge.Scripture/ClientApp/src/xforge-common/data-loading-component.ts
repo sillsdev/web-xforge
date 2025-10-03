@@ -9,7 +9,6 @@ import { NoticeService } from './notice.service';
  */
 // Decorator required by Angular compiler
 @Directive()
-// eslint-disable-next-line @angular-eslint/directive-class-suffix
 export abstract class DataLoadingComponent implements OnDestroy {
   private _isLoading$ = new BehaviorSubject<boolean>(false);
   private _isLoaded$ = new BehaviorSubject<boolean>(false);
