@@ -115,7 +115,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     return this.draftHandlingService.canApplyDraft(this.targetProject, this.bookNum, this.chapter, this.draftDelta.ops);
   }
 
-  get doesLatestHaveDraft(): boolean {
+  get doesLatestBuildHaveDraft(): boolean {
     return (
       this.targetProject?.texts.find(t => t.bookNum === this.bookNum)?.chapters.find(c => c.number === this.chapter)
         ?.hasDraft ?? false
@@ -127,14 +127,13 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       this.featureFlags.usfmFormat.enabled &&
       !this.hasFormattingSelected &&
       this.formattingOptionsSupported &&
-      this.doesLatestHaveDraft
+      this.doesLatestBuildHaveDraft
     );
   }
 
   set draftRevisions(value: Revision[]) {
     this._draftRevisions = value;
-    const latestRevisionDate = value.length > 0 ? new Date(value[0].timestamp) : new Date(0);
-    this.formattingOptionsSupported = latestRevisionDate > FORMATTING_OPTIONS_SUPPORTED_DATE;
+    this.formattingOptionsSupported = value.some(rev => new Date(rev.timestamp) > FORMATTING_OPTIONS_SUPPORTED_DATE);
   }
 
   get draftRevisions(): Revision[] {

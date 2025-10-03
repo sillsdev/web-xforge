@@ -22,6 +22,7 @@ import { SFProjectService } from '../../../../core/sf-project.service';
 import { BuildDto } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
 import { DraftGenerationService } from '../../draft-generation.service';
+import { FORMATTING_OPTIONS_SUPPORTED_DATE } from '../../draft-utils';
 import { TrainingDataService } from '../../training-data/training-data.service';
 import { DraftHistoryEntryComponent } from './draft-history-entry.component';
 
@@ -33,8 +34,9 @@ const mockedTrainingDataService = mock(TrainingDataService);
 const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedFeatureFlagsService = mock(FeatureFlagService);
 
-const dateBeforeFormattingSupported = '2025-09-01T12:00:00.000Z';
-const dateAfterFormattingSupported = '2025-10-01T12:00:00.000Z';
+const oneDay = 1000 * 60 * 60 * 24;
+const dateBeforeFormattingSupported = new Date(FORMATTING_OPTIONS_SUPPORTED_DATE.getTime() - oneDay).toISOString();
+const dateAfterFormattingSupported = new Date(FORMATTING_OPTIONS_SUPPORTED_DATE.getTime() + oneDay).toISOString();
 
 describe('DraftHistoryEntryComponent', () => {
   let component: DraftHistoryEntryComponent;
@@ -404,7 +406,7 @@ describe('DraftHistoryEntryComponent', () => {
       expect(fixture.nativeElement.querySelector('.require-formatting-options')).toBeNull();
     }));
 
-    it('should not show the USFM format option for drafts before the supported date', fakeAsync(() => {
+    it('should not show the USFM format option for drafts created before the supported date', fakeAsync(() => {
       const user = 'user-display-name';
       const date = dateBeforeFormattingSupported;
       const trainingBooks = ['EXO'];
