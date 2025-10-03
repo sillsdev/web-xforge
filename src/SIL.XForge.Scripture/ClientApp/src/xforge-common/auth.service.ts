@@ -134,7 +134,7 @@ export class AuthService {
       )
       .subscribe(() => this.locationService.go('/'));
 
-    this.tryLogIn().then(loginResult => {
+    void this.tryLogIn().then(loginResult => {
       this._loggedInState$.next(loginResult);
     });
   }
@@ -299,18 +299,20 @@ export class AuthService {
       await this.offlineStore.deleteDB();
       this.localSettings.clear();
       this.unscheduleRenewal();
-      this.auth0.logout({ logoutParams: { returnTo: this.locationService.origin + '/' } } as LogoutOptions);
+      void this.auth0.logout({ logoutParams: { returnTo: this.locationService.origin + '/' } } as LogoutOptions);
     }
   }
 
   requestParatextCredentialUpdate(cancelCallback?: () => void): void {
-    this.dialogService.confirm('warnings.paratext_credentials_expired', 'warnings.logout').then((logOut: boolean) => {
-      if (logOut) {
-        this.logOut();
-      } else if (cancelCallback != null) {
-        cancelCallback();
-      }
-    });
+    void this.dialogService
+      .confirm('warnings.paratext_credentials_expired', 'warnings.logout')
+      .then((logOut: boolean) => {
+        if (logOut) {
+          void this.logOut();
+        } else if (cancelCallback != null) {
+          cancelCallback();
+        }
+      });
   }
 
   /**
@@ -521,7 +523,7 @@ export class AuthService {
           console.error(err);
           return false;
         }
-        this.dialogService
+        void this.dialogService
           .message(
             this.i18n.translate('connect_project.paratext_account_linked_to_another_user', {
               email: authDetails.idToken?.email
@@ -551,9 +553,9 @@ export class AuthService {
     }
     // Ensure the return URL is one we want to return the user to
     if (this.isValidReturnUrl(state.returnUrl)) {
-      this.router.navigateByUrl(state.returnUrl!, { replaceUrl: true });
+      void this.router.navigateByUrl(state.returnUrl!, { replaceUrl: true });
     } else {
-      this.router.navigateByUrl('/projects', { replaceUrl: true });
+      void this.router.navigateByUrl('/projects', { replaceUrl: true });
     }
     return true;
   }
@@ -631,7 +633,7 @@ export class AuthService {
       }
     })
       .catch(() => {
-        this.logIn({ returnUrl: this.locationService.pathname + this.locationService.search });
+        void this.logIn({ returnUrl: this.locationService.pathname + this.locationService.search });
       })
       .then(() => {
         this.renewTokenPromise = undefined;

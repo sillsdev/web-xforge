@@ -142,7 +142,7 @@ export class CheckingAuthGuard extends RouterGuard {
     if (this.permissions.canAccessCommunityChecking(projectDoc)) {
       return true;
     }
-    this.router.navigate(['/projects', projectDoc.id], { replaceUrl: true });
+    void this.router.navigate(['/projects', projectDoc.id], { replaceUrl: true });
     return false;
   }
 }
@@ -164,7 +164,7 @@ export class TranslateAuthGuard extends RouterGuard {
     if (this.permissions.canAccessTranslate(projectDoc)) {
       return true;
     }
-    this.router.navigate(['/projects', projectDoc.id], { replaceUrl: true });
+    void this.router.navigate(['/projects', projectDoc.id], { replaceUrl: true });
     return false;
   }
 }

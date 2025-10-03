@@ -169,7 +169,7 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
           }
         }
         if (commentIdsToMarkRead.length) {
-          this.projectUserConfigDoc.submitJson0Op(op => {
+          void this.projectUserConfigDoc.submitJson0Op(op => {
             for (const commentId of commentIdsToMarkRead) {
               op.add(puc => puc.commentRefsRead, commentId);
             }

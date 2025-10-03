@@ -218,7 +218,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
       this.close();
     } catch (err) {
       console.error('Error occurred while saving draft format', err);
-      this.noticeService.showError(this.i18n.translateStatic('draft_usfm_format.failed_to_save'));
+      void this.noticeService.showError(this.i18n.translateStatic('draft_usfm_format.failed_to_save'));
     } finally {
       this.saving = false;
     }

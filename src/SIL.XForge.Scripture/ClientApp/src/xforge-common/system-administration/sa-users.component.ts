@@ -125,7 +125,7 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
       .afterClosed()
       .subscribe(confirmation => {
         if (confirmation) {
-          this.deleteUser(userId);
+          void this.deleteUser(userId);
         }
       });
   }
