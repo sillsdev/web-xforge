@@ -42,7 +42,7 @@ import { BuildStates } from '../../../machine-api/build-states';
 import { TextComponent } from '../../../shared/text/text.component';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { DraftHandlingService } from '../../draft-generation/draft-handling.service';
-import { FORMATTING_OPTIONS_RELEASE_DATE } from '../../draft-generation/draft-utils';
+import { FORMATTING_OPTIONS_SUPPORTED_DATE } from '../../draft-generation/draft-utils';
 @Component({
   selector: 'app-editor-draft',
   templateUrl: './editor-draft.component.html',
@@ -69,7 +69,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   isDraftApplied = false;
   userAppliedDraft = false;
   hasFormattingSelected = true;
-  formattingOptionsPossible = true;
+  formattingOptionsSupported = true;
 
   private selectedRevisionSubject = new BehaviorSubject<Revision | undefined>(undefined);
   private selectedRevision$ = this.selectedRevisionSubject.asObservable();
@@ -126,7 +126,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     return (
       this.featureFlags.usfmFormat.enabled &&
       !this.hasFormattingSelected &&
-      this.formattingOptionsPossible &&
+      this.formattingOptionsSupported &&
       this.doesLatestHaveDraft
     );
   }
@@ -134,7 +134,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   set draftRevisions(value: Revision[]) {
     this._draftRevisions = value;
     const latestRevisionDate = value.length > 0 ? new Date(value[0].timestamp) : new Date(0);
-    this.formattingOptionsPossible = latestRevisionDate > FORMATTING_OPTIONS_RELEASE_DATE;
+    this.formattingOptionsSupported = latestRevisionDate > FORMATTING_OPTIONS_SUPPORTED_DATE;
   }
 
   get draftRevisions(): Revision[] {

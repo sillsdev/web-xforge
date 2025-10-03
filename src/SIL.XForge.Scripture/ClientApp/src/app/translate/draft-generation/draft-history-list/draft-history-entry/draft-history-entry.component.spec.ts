@@ -33,6 +33,9 @@ const mockedTrainingDataService = mock(TrainingDataService);
 const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedFeatureFlagsService = mock(FeatureFlagService);
 
+const dateBeforeFormattingSupported = '2025-09-01T12:00:00.000Z';
+const dateAfterFormattingSupported = '2025-10-01T12:00:00.000Z';
+
 describe('DraftHistoryEntryComponent', () => {
   let component: DraftHistoryEntryComponent;
   let fixture: ComponentFixture<DraftHistoryEntryComponent>;
@@ -99,7 +102,7 @@ describe('DraftHistoryEntryComponent', () => {
     it('should handle builds with additional info', fakeAsync(() => {
       when(mockedI18nService.enumerateList(anything())).thenReturn('src');
       const user = 'user-display-name';
-      const date = new Date().toISOString();
+      const date = dateAfterFormattingSupported;
       const trainingBooks = ['EXO'];
       const translateBooks = ['GEN'];
       const trainingDataFiles: Map<string, string> = new Map([['file01', 'training-data.txt']]);
@@ -142,7 +145,7 @@ describe('DraftHistoryEntryComponent', () => {
     it('should state that the model did not have training configuration', fakeAsync(() => {
       when(mockedI18nService.enumerateList(anything())).thenReturn('src');
       const user = 'user-display-name';
-      const date = new Date().toISOString();
+      const date = dateAfterFormattingSupported;
       const trainingBooks = [];
       const translateBooks = ['GEN'];
       const trainingDataFiles = [];
@@ -159,7 +162,7 @@ describe('DraftHistoryEntryComponent', () => {
 
     it('should show the USFM format option when the project is the latest draft', fakeAsync(() => {
       const user = 'user-display-name';
-      const date = new Date().toISOString();
+      const date = dateAfterFormattingSupported;
       const trainingBooks = ['EXO'];
       const translateBooks = ['GEN'];
       const trainingDataFiles = ['file01'];
@@ -239,9 +242,9 @@ describe('DraftHistoryEntryComponent', () => {
       when(mockedActivatedProjectService.changes$).thenReturn(of(targetProjectDoc));
       const entry = {
         additionalInfo: {
-          dateGenerated: new Date().toISOString(),
-          dateRequested: new Date().toISOString(),
-          dateFinished: new Date().toISOString(),
+          dateGenerated: dateAfterFormattingSupported,
+          dateRequested: dateAfterFormattingSupported,
+          dateFinished: dateAfterFormattingSupported,
           requestedByUserId: 'sf-user-id',
           translationScriptureRanges: [{ projectId: 'project01', scriptureRange: 'GEN' }]
         }
@@ -332,11 +335,11 @@ describe('DraftHistoryEntryComponent', () => {
       const projectDoc = getProjectProfileDoc();
       when(mockedActivatedProjectService.projectDoc).thenReturn(projectDoc);
       when(mockedActivatedProjectService.changes$).thenReturn(of(projectDoc));
+      when(mockedI18nService.formatDate(anything())).thenReturn('formatted-date');
     });
 
     it('should show set draft format UI', fakeAsync(() => {
-      const date = new Date().toISOString();
-      when(mockedI18nService.formatDate(anything())).thenReturn('formatted-date');
+      const date = dateAfterFormattingSupported;
       component.entry = {
         id: 'build01',
         state: BuildStates.Completed,
@@ -357,7 +360,8 @@ describe('DraftHistoryEntryComponent', () => {
         state: BuildStates.Completed,
         message: 'Completed',
         additionalInfo: {
-          dateGenerated: '2025-09-01',
+          dateGenerated: dateAfterFormattingSupported,
+          dateFinished: dateAfterFormattingSupported,
           translationScriptureRanges: [{ projectId: 'source01', scriptureRange: 'EXO' }]
         }
       } as BuildDto;
@@ -374,7 +378,8 @@ describe('DraftHistoryEntryComponent', () => {
         state: BuildStates.Completed,
         message: 'Completed',
         additionalInfo: {
-          dateGenerated: '2025-09-01',
+          dateGenerated: dateAfterFormattingSupported,
+          dateFinished: dateAfterFormattingSupported,
           translationScriptureRanges: [{ projectId: 'source01', scriptureRange: 'EXO' }]
         }
       } as BuildDto;
@@ -386,7 +391,12 @@ describe('DraftHistoryEntryComponent', () => {
     }));
 
     it('should hide draft format UI if the draft is not completed', fakeAsync(() => {
-      component.entry = { id: 'build01', state: BuildStates.Canceled, message: 'Cancelled' } as BuildDto;
+      component.entry = {
+        id: 'build01',
+        state: BuildStates.Canceled,
+        message: 'Cancelled',
+        additionalInfo: { dateGenerated: dateAfterFormattingSupported, dateFinished: dateAfterFormattingSupported }
+      } as BuildDto;
       component.isLatestBuild = true;
       component.draftIsAvailable = false;
       tick();
@@ -394,9 +404,9 @@ describe('DraftHistoryEntryComponent', () => {
       expect(fixture.nativeElement.querySelector('.require-formatting-options')).toBeNull();
     }));
 
-    it('should not show the USFM format option before a specified date', fakeAsync(() => {
+    it('should not show the USFM format option for drafts before the supported date', fakeAsync(() => {
       const user = 'user-display-name';
-      const date = '2025-09-01T12:00:00.000Z';
+      const date = dateBeforeFormattingSupported;
       const trainingBooks = ['EXO'];
       const translateBooks = ['GEN'];
       const trainingDataFiles = ['file01'];
@@ -411,6 +421,7 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.scriptureRange).toEqual('Genesis');
       expect(component.draftIsAvailable).toBe(true);
       expect(fixture.nativeElement.querySelector('.format-usfm')).toBeNull();
+      expect(component.formattingOptionsSupported).toBe(false);
     }));
   });
 
