@@ -1,4 +1,5 @@
 // Find projects that have a text doc that is "invalid" (not the same as corrupted)
+// For a greater granularity, see the script InvalidChaptersInProjects.mongodb
 use("xforge");
 
 const invalidProjects = db.sf_projects.countDocuments({

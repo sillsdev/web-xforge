@@ -1,0 +1,39 @@
+// This script searches for ops in texts that are invalid because Scripture Forge does not yet support them.
+//
+// The list generated will be an excellent starting point for missing USFM tags to implement in the XSD and Quill.
+// For speed reasons, invalid ops inside footnotes are not matched.
+use("xforge");
+
+const texts = db.texts
+  .aggregate([
+    {
+      $match: {
+        ops: {
+          $elemMatch: {
+            $or: [{ "attributes.invalid-inline": true }, { "attributes.invalid-block": true }]
+          }
+        }
+      }
+    },
+    { $unwind: "$ops" },
+    {
+      $match: {
+        $or: [{ "ops.attributes.invalid-inline": true }, { "ops.attributes.invalid-block": true }]
+      }
+    },
+    {
+      $project: {
+        _id: 1,
+        op: "$ops"
+      }
+    }
+  ])
+  .toArray();
+
+if (texts.length > 0) {
+  console.log(texts.map(text => JSON.stringify(text)).join("\n"));
+} else {
+  console.log("none");
+}
+
+texts;

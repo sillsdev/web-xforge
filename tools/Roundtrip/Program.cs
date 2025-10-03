@@ -1,5 +1,6 @@
 using System.Xml;
 using System.Xml.Linq;
+using System.Xml.Schema;
 using System.Xml.XPath;
 using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Extensions.Configuration;
@@ -8,6 +9,7 @@ using Newtonsoft.Json;
 using Paratext.Data;
 using Paratext.Data.Languages;
 using Paratext.Data.Users;
+using PtxUtils;
 using Roundtrip;
 using SIL.Converters.Usj;
 using SIL.XForge.Configuration;
@@ -30,11 +32,19 @@ if (outputAllFiles)
     Directory.CreateDirectory("output");
 }
 
+// See if we are validating the USX and outputting any error
+bool validateUsx = args.Length > 1 && args[1] == "--validate-usx";
+var schemas = new XmlSchemaSet();
+schemas.Add(string.Empty, "usx-sf.xsd");
+schemas.Compile();
+
 // Setup Paratext
 RegistrationInfo.Implementation = new TestRegistrationInfo();
-ICUDllLocator.Initialize();
+ICUDllLocator.Initialize(confineICUVersion: false);
 WritingSystemRepository.Initialize();
-ScrTextCollection.Initialize();
+Alert.Implementation = new TestAlert();
+RegistryU.Implementation = new TestRegistryU();
+ScrTextCollection.Initialize(Environment.GetEnvironmentVariable("PARATEXT_PROJECTS"));
 using var scrText = new DummyScrText(useFakeStylesheet: false);
 ScrTextCollection.Add(scrText);
 ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
@@ -231,6 +241,23 @@ void Roundtrip(string usfm, string fileName, string path, RoundtripMethod roundt
         using XmlNodeReader nodeReader = new XmlNodeReader(usx);
         nodeReader.MoveToContent();
         actualUsx = XDocument.Load(nodeReader);
+
+        // Validate the USX if requested
+        if (validateUsx)
+        {
+            actualUsx.Validate(
+                schemas,
+                (o, e) =>
+                {
+                    Console.WriteLine("============================================================");
+                    Console.WriteLine($"Validation Error in: {Path.Combine(path, fileName)}");
+                    XNode? node = o is XAttribute attr ? attr.Parent : o as XNode;
+                    Console.WriteLine(node);
+                    Console.WriteLine(e.Exception);
+                },
+                true
+            );
+        }
     }
     else
     {
