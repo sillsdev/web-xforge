@@ -116,7 +116,8 @@ describe('DraftHistoryEntryComponent', () => {
       tick();
       fixture.detectChanges();
 
-      expect(component.scriptureRange).toEqual('Genesis');
+      expect(component.scriptureRange).toEqual('GEN');
+      expect(fixture.nativeElement.querySelector('.title').innerText).toBe('Genesis');
       expect(component.translationSource).toEqual('src \u2022');
       expect(component.buildRequestedByUserName).toBe(user);
       expect(component.buildRequestedAtDate).toBe(date);
@@ -129,13 +130,14 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.targetLanguage).toBe('en');
       expect(component.trainingConfiguration).toEqual([
         {
-          scriptureRange: 'Exodus',
+          scriptureRange: 'EXO',
           source: 'src',
           target: 'tar'
         }
       ]);
       expect(component.trainingDataFiles).toEqual(Array.from(trainingDataFiles.values()));
       expect(component.trainingConfigurationOpen).toBe(false);
+      expect(fixture.nativeElement.querySelector('.scriptureRange')).toBeNull();
       expect(fixture.nativeElement.querySelector('.requested-label')).not.toBeNull();
     }));
 
@@ -171,7 +173,8 @@ describe('DraftHistoryEntryComponent', () => {
       tick();
       fixture.detectChanges();
 
-      expect(component.scriptureRange).toEqual('Genesis');
+      expect(component.scriptureRange).toEqual('GEN');
+      expect(fixture.nativeElement.querySelector('.title').innerText).toBe('Genesis');
       expect(component.draftIsAvailable).toBe(true);
       expect(fixture.nativeElement.querySelector('.format-usfm')).not.toBeNull();
     }));
@@ -204,7 +207,8 @@ describe('DraftHistoryEntryComponent', () => {
       tick();
       fixture.detectChanges();
 
-      expect(component.scriptureRange).toEqual('Genesis');
+      expect(component.scriptureRange).toEqual('GEN');
+      expect(fixture.nativeElement.querySelector('.title').innerText).toBe('Genesis');
       expect(component.translationSource).toEqual('');
       expect(component.buildRequestedByUserName).toBeUndefined();
       expect(component.buildRequestedAtDate).toBe('');
@@ -217,12 +221,13 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.targetLanguage).toBe('');
       expect(component.trainingConfiguration).toEqual([
         {
-          scriptureRange: 'Exodus',
+          scriptureRange: 'EXO',
           source: 'Unknown',
           target: 'Unknown'
         }
       ]);
       expect(component.trainingConfigurationOpen).toBe(true);
+      expect(fixture.nativeElement.querySelector('.scriptureRange').innerText).toBe('Exodus');
     }));
 
     it('should handle builds with additional info referencing a deleted user', fakeAsync(() => {
@@ -252,7 +257,8 @@ describe('DraftHistoryEntryComponent', () => {
       tick();
       fixture.detectChanges();
 
-      expect(component.scriptureRange).toEqual('Genesis');
+      expect(component.scriptureRange).toEqual('GEN');
+      expect(fixture.nativeElement.querySelector('.title').innerText).toBe('Genesis');
       expect(component.buildRequestedByUserName).toBeUndefined();
       expect(component.buildRequestedAtDate).toBe('formatted-date');
       expect(component.draftIsAvailable).toBe(true);

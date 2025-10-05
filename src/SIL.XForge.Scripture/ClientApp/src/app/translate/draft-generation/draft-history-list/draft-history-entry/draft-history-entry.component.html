@@ -7,7 +7,7 @@
     >
       <mat-expansion-panel-header [collapsedHeight]="'auto'" [expandedHeight]="'auto'">
         <mat-panel-title>
-          <span class="title">{{ scriptureRange }}</span>
+          <span class="title">{{ i18n.formatAndLocalizeScriptureRange(scriptureRange) }}</span>
           <span class="subtitle">
             {{ translationSource }}
             {{ t("finished_at", { finishedAtTime: formatDate(entry.additionalInfo?.dateFinished) }) }}
@@ -110,7 +110,9 @@
               <table mat-table [dataSource]="trainingConfiguration">
                 <ng-container matColumnDef="scriptureRange">
                   <th mat-header-cell *matHeaderCellDef>{{ t("training_books") }}</th>
-                  <td mat-cell *matCellDef="let element">{{ element.scriptureRange }}</td>
+                  <td mat-cell *matCellDef="let element" class="scriptureRange">
+                    {{ i18n.formatAndLocalizeScriptureRange(element.scriptureRange) }}
+                  </td>
                 </ng-container>
                 <ng-container matColumnDef="source">
                   <th mat-header-cell *matHeaderCellDef>
