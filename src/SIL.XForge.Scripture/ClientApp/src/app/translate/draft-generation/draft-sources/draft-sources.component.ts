@@ -76,7 +76,6 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
   static readonly projectSettingValueUnset = 'unset';
 
   // Expose ElementState enum to template.
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   ElementState = ElementState;
 
   step = 1;
