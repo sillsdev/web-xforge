@@ -1,5 +1,5 @@
-using System.Text;
-using Ionic.Zip;
+using System.IO;
+using ICSharpCode.SharpZipLib.Zip;
 using Paratext.Data;
 using Paratext.Data.Languages;
 using Paratext.Data.ProjectFileAccess;
@@ -15,6 +15,7 @@ public class MockResourceScrText : ResourceScrText
 {
     private readonly ScrLanguage _language;
     private readonly ProjectSettings _settings;
+    private MemoryStream? _zipFileStream;
 
     public MockResourceScrText(
         ProjectName name,
@@ -38,17 +39,21 @@ public class MockResourceScrText : ResourceScrText
         }
     }
 
-    public ZipFile ZipFile { get; } = new ZipFile(new UTF8Encoding());
+    public ZipFile? ZipFile { get; private set; }
 
-    protected override ProjectFileManager CreateFileManager() =>
-        new MockZippedProjectFileManager(ZipFile, loadDblSettings: true, Name);
+    protected override ProjectFileManager CreateFileManager()
+    {
+        _zipFileStream ??= new MemoryStream();
+        ZipFile ??= new ZipFile(_zipFileStream);
+        return new MockZippedProjectFileManager(ZipFile, loadDblSettings: true, Name);
+    }
 
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
         if (disposing)
         {
-            ZipFile.Dispose();
+            _zipFileStream?.Dispose();
         }
     }
 
