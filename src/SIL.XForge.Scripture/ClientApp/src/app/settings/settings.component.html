@@ -109,62 +109,6 @@
           </mat-card-content>
         </mat-card>
 
-        <!-- Pre-Translation Settings Card -->
-        @if (showPreTranslationSettings) {
-          <mat-card>
-            <mat-card-content>
-              <mat-card-title>{{ t("pre_translation_drafting") }}</mat-card-title>
-              <div>
-                @if (mainSettingsLoaded) {
-                  @if (showDraftGenerationSettingsMovedMessage) {
-                    <ng-template #templateDraftSettingsRelocatedMessage>
-                      @for (part of draftSettingsRelocatedMessage | async; track part) {
-                        <!-- To not have whitespace around the text, -->
-                        <!-- prettier-ignore -->
-                        @if (part.id == null) {{{ part.text }}}
-                        @else if (part.id === 1) {
-                          <a [appRouterLink]="['/projects', projectId, 'draft-generation']">{{ part.text }}</a>
-                        }
-                      }
-                    </ng-template>
-
-                    @if (showHighlightedDraftGenerationSettingsMovedMessage) {
-                      <app-notice icon="info" mode="fill-dark">
-                        <ng-container *ngTemplateOutlet="templateDraftSettingsRelocatedMessage"></ng-container>
-                      </app-notice>
-                    } @else {
-                      <p class="helper-text">
-                        <ng-container *ngTemplateOutlet="templateDraftSettingsRelocatedMessage"></ng-container>
-                      </p>
-                    }
-                  }
-                }
-                @if (canUpdateServalConfig) {
-                  <p
-                    class="helper-text"
-                    [innerHTML]="i18n.translateAndInsertTags('settings.serval_config_description')"
-                  ></p>
-                  <mat-form-field [formGroup]="form" appearance="outline">
-                    <mat-label>{{ t("serval_config") }}</mat-label>
-                    <textarea
-                      matInput
-                      cdkTextareaAutosize
-                      id="serval-config"
-                      formControlName="servalConfig"
-                      (blur)="updateServalConfig()"
-                    ></textarea>
-                    <app-write-status
-                      [state]="getControlState('servalConfig')"
-                      [formGroup]="form"
-                      id="serval-config-status"
-                    ></app-write-status>
-                  </mat-form-field>
-                }
-              </div>
-            </mat-card-content>
-          </mat-card>
-        }
-
         <!-- Community Checking Settings Card -->
         <mat-card>
           <mat-card-content>

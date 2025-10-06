@@ -1,7 +1,7 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { DatePipe } from '@angular/common';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { APP_ID, ErrorHandler, NgModule, inject, provideAppInitializer } from '@angular/core';
+import { APP_ID, ErrorHandler, inject, NgModule, provideAppInitializer } from '@angular/core';
 import { MatRipple } from '@angular/material/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ServiceWorkerModule } from '@angular/service-worker';
@@ -23,6 +23,7 @@ import { EmTextTranspiler } from 'xforge-common/i18n-transpilers/em-text.transpi
 import { InAppRootOverlayContainer } from 'xforge-common/overlay-container';
 import { SupportedBrowsersDialogComponent } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
@@ -85,7 +86,8 @@ import { UsersModule } from './users/users.module';
     MatRipple,
     GlobalNoticesComponent,
     QuillModule.forRoot(),
-    LynxInsightsModule.forRoot()
+    LynxInsightsModule.forRoot(),
+    WriteStatusComponent
   ],
   providers: [
     { provide: APP_ID, useValue: 'ng-cli-universal' },

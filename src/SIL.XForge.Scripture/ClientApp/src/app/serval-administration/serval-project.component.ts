@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, Input, OnInit } from '@angular/core';
+import { FormControl, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { saveAs } from 'file-saver';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -8,10 +9,12 @@ import { catchError, lastValueFrom, Observable, of, Subscription, switchMap, thr
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
+import { ElementState } from 'xforge-common/models/element-state';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { BuildDto } from '../machine-api/build-dto';
@@ -52,7 +55,8 @@ function projectType(project: TranslateSource | SFProjectProfile): string {
     SharedModule,
     UICommonModule,
     DraftInformationComponent,
-    MobileNotSupportedComponent
+    MobileNotSupportedComponent,
+    WriteStatusComponent
   ]
 })
 export class ServalProjectComponent extends DataLoadingComponent implements OnInit {
@@ -63,6 +67,12 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   headingsToDisplay = { category: 'Category', type: 'Type', name: 'Project', languageCode: 'Language tag', id: '' };
   columnsToDisplay = ['category', 'type', 'name', 'languageCode', 'id'];
   rows: Row[] = [];
+
+  servalConfig = new FormControl<string | undefined>(undefined);
+  form = new FormGroup({
+    servalConfig: this.servalConfig
+  });
+  updateState = ElementState.InSync;
 
   trainingBooksByProject: ProjectAndRange[] = [];
   trainingFiles: string[] = [];
@@ -182,6 +192,9 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           this.draftConfig = draftConfig;
           this.draftJob$ = SFProjectService.hasDraft(project) ? this.getDraftJob(projectDoc.id) : of(undefined);
 
+          // Setup the serval config value
+          this.servalConfig.setValue(project.translateConfig.draftConfig.servalConfig);
+
           // Get the last completed build
           if (this.isOnline && SFProjectService.hasDraft(project)) {
             return this.draftGenerationService.getLastCompletedBuild(projectDoc.id);
@@ -229,7 +242,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
 
     // If the blob is undefined, display an error
     if (blob == null) {
-      this.noticeService.showError('The project was never synced successfully and does not exist on disk.');
+      void this.noticeService.showError('The project was never synced successfully and does not exist on disk.');
       return;
     }
 
@@ -257,6 +270,24 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     });
   }
 
+  updateServalConfig(): void {
+    if (
+      this.activatedProjectService.projectDoc?.data == null ||
+      (this.form.value.servalConfig ?? '') ===
+        (this.activatedProjectService.projectDoc.data.translateConfig.draftConfig.servalConfig ?? '')
+    ) {
+      // Do not save if we do not have the project doc or if the configuration has not changed
+      return;
+    }
+
+    // Update Serval Configuration
+    const updateTaskPromise = this.projectService.onlineSetServalConfig(
+      this.activatedProjectService.projectDoc.id,
+      this.form.value.servalConfig
+    );
+    this.checkUpdateStatus(updateTaskPromise);
+  }
+
   keys(obj: Object): string[] {
     return Object.keys(obj);
   }
@@ -272,6 +303,13 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     const isObject = typeof value[0] === 'object';
     const contents = isObject ? value.map(x => this.stringify(x)).join(', ') : value.join(', ');
     return '[' + contents + ']';
+  }
+
+  private checkUpdateStatus(updatePromise: Promise<void>): void {
+    this.updateState = ElementState.Submitting;
+    updatePromise
+      .then(() => (this.updateState = ElementState.Submitted))
+      .catch(() => (this.updateState = ElementState.Error));
   }
 
   private getDraftJob(projectId: string): Observable<BuildDto | undefined> {

@@ -3854,7 +3854,7 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        await env.Service.SetServalConfigAsync(User01, [SystemRole.SystemAdmin], Project01, servalConfig: null);
+        await env.Service.SetServalConfigAsync(User01, [SystemRole.ServalAdmin], Project01, servalConfig: null);
 
         // Verify project document
         SFProject project = env.GetProject(Project01);
@@ -3869,7 +3869,7 @@ public class SFProjectServiceTests
 
         // SUT
         Assert.ThrowsAsync<JsonReaderException>(() =>
-            env.Service.SetServalConfigAsync(User01, [SystemRole.SystemAdmin], Project01, servalConfig)
+            env.Service.SetServalConfigAsync(User01, [SystemRole.ServalAdmin], Project01, servalConfig)
         );
     }
 
@@ -3880,7 +3880,7 @@ public class SFProjectServiceTests
         const string servalConfig = "  ";
 
         // SUT
-        await env.Service.SetServalConfigAsync(User01, [SystemRole.SystemAdmin], Project01, servalConfig);
+        await env.Service.SetServalConfigAsync(User01, [SystemRole.ServalAdmin], Project01, servalConfig);
 
         // Verify project document
         SFProject project = env.GetProject(Project01);
@@ -3895,7 +3895,7 @@ public class SFProjectServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.SetServalConfigAsync(User01, [SystemRole.SystemAdmin], "invalid_project", servalConfig)
+            env.Service.SetServalConfigAsync(User01, [SystemRole.ServalAdmin], "invalid_project", servalConfig)
         );
     }
 
@@ -3910,7 +3910,7 @@ public class SFProjectServiceTests
         Assert.IsNotNull(project.TranslateConfig.DraftConfig);
 
         // SUT
-        await env.Service.SetServalConfigAsync(User01, [SystemRole.SystemAdmin], Project01, servalConfig);
+        await env.Service.SetServalConfigAsync(User01, [SystemRole.ServalAdmin], Project01, servalConfig);
 
         // Verify project document
         project = env.GetProject(Project01);
@@ -3918,7 +3918,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void SetServalConfigAsync_UserMustBeSystemAdmin()
+    public void SetServalConfigAsync_UserMustBeServalAdmin()
     {
         var env = new TestEnvironment();
         const string servalConfig = "{ config: true }";
