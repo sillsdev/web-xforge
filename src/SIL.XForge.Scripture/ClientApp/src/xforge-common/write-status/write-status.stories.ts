@@ -1,8 +1,6 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { ElementState } from '../models/element-state';
 import { WriteStatusComponent } from './write-status.component';
 
@@ -23,8 +21,8 @@ const meta: Meta<WriteStatusComponent> = {
   component: WriteStatusTestComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, UICommonModule],
-      declarations: [WriteStatusComponent, WriteStatusTestComponent]
+      declarations: [WriteStatusTestComponent],
+      imports: [WriteStatusComponent]
     })
   ]
 };

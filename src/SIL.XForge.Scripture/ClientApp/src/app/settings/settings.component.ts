@@ -4,11 +4,10 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialogConfig } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { ProjectType, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, firstValueFrom } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -41,7 +40,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   translationSuggestionsEnabled = new FormControl(false);
   sourceParatextId = new FormControl<string | undefined>(undefined);
   biblicalTermsEnabled = new FormControl(false);
-  servalConfig = new FormControl<string | undefined>(undefined);
   checkingEnabled = new FormControl(false);
   usersSeeEachOthersResponses = new FormControl(false);
   checkingAnswerExport = new FormControl<CheckingAnswerExport | undefined>(undefined);
@@ -63,7 +61,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     translationSuggestionsEnabled: this.translationSuggestionsEnabled,
     sourceParatextId: this.sourceParatextId,
     biblicalTermsEnabled: this.biblicalTermsEnabled,
-    servalConfig: this.servalConfig,
     checkingEnabled: this.checkingEnabled,
     usersSeeEachOthersResponses: this.usersSeeEachOthersResponses,
     checkingAnswerExport: this.checkingAnswerExport,
@@ -86,12 +83,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   projectLoadingFailed = false;
   resourceLoadingFailed = false;
   mainSettingsLoaded = false;
-
-  draftSettingsRelocatedMessage = this.i18n.interpolate('settings.draft_settings_on_generate_page');
-  /** Temporary messages. The logic and messages for 'draft generation settings moved' can be removed once they
-   * expire. */
-  showHighlightedDraftGenerationSettingsMovedMessage: boolean = new Date() < new Date('2025-07-01 00:00:00 UTC');
-  showDraftGenerationSettingsMovedMessage: boolean = new Date() < new Date('2025-10-01 00:00:00 UTC');
 
   private static readonly projectSettingValueUnset = 'unset';
   private paratextUsername: string | undefined;
@@ -144,17 +135,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     return this.lynxAssessmentsEnabled.value ?? false;
   }
 
-  get showPreTranslationSettings(): boolean {
-    const translateConfig = this.projectDoc?.data?.translateConfig;
-    if (translateConfig == null) {
-      return false;
-    } else if (this.authService.currentUserRoles.includes(SystemRole.ServalAdmin)) {
-      return true;
-    } else {
-      return translateConfig.preTranslate === true && translateConfig.projectType !== ProjectType.BackTranslation;
-    }
-  }
-
   get projectId(): string {
     return this.activatedProjectService.projectId ?? '';
   }
@@ -178,10 +158,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   get deleteButtonDisabled(): boolean {
     return !this.isAppOnline || !this.mainSettingsLoaded || this.isActiveSourceProject || this.isProjectSyncing;
-  }
-
-  get canUpdateServalConfig(): boolean {
-    return this.authService.currentUserRoles.includes(SystemRole.ServalAdmin);
   }
 
   ngOnInit(): void {
@@ -302,24 +278,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     }
   }
 
-  updateServalConfig(): void {
-    if (
-      this.projectDoc?.data == null ||
-      (this.form.value.servalConfig ?? '') === (this.projectDoc.data.translateConfig.draftConfig.servalConfig ?? '')
-    ) {
-      // Do not save if we do not have the project doc or if the configuration has not changed
-      return;
-    }
-
-    // Update Serval Configuration
-    const updateTaskPromise = this.projectService.onlineSetServalConfig(
-      this.projectDoc.id,
-      this.form.value.servalConfig
-    );
-    this.checkUpdateStatus('servalConfig', updateTaskPromise);
-    this.previousFormValues = this.form.value;
-  }
-
   set loading(loading: boolean) {
     loading ? this.loadingStarted() : this.loadingFinished();
     this.updateFormEnabled();
@@ -357,11 +315,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
     if (this.settingChanged(newValue, 'biblicalTermsEnabled') && this.biblicalTermsMessage == null) {
       this.updateSetting(newValue, 'biblicalTermsEnabled');
-      return;
-    }
-
-    // We only update the Serval config on blur
-    if (this.settingChanged(newValue, 'servalConfig')) {
       return;
     }
 
@@ -494,7 +447,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       translationSuggestionsEnabled: this.projectDoc.data.translateConfig.translationSuggestionsEnabled,
       sourceParatextId: this.projectDoc.data.translateConfig.source?.paratextId,
       biblicalTermsEnabled: this.projectDoc.data.biblicalTermsConfig.biblicalTermsEnabled,
-      servalConfig: this.projectDoc.data.translateConfig.draftConfig.servalConfig,
       checkingEnabled: this.projectDoc.data.checkingConfig.checkingEnabled,
       usersSeeEachOthersResponses: this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses,
       hideCommunityCheckingText: this.projectDoc.data.checkingConfig.hideCommunityCheckingText,
@@ -543,7 +495,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.controlStates.set('translationSuggestionsEnabled', ElementState.InSync);
     this.controlStates.set('sourceParatextId', ElementState.InSync);
     this.controlStates.set('biblicalTermsEnabled', ElementState.InSync);
-    this.controlStates.set('servalConfig', ElementState.InSync);
     this.controlStates.set('checkingEnabled', ElementState.InSync);
     this.controlStates.set('usersSeeEachOthersResponses', ElementState.InSync);
     this.controlStates.set('hideCommunityCheckingText', ElementState.InSync);
@@ -561,9 +512,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   private updateNonSelectableProjects(): void {
     this.nonSelectableProjects = [];
     this.addNonSelectableProject(this.projectDoc?.data?.translateConfig?.source);
-    this.addNonSelectableProject(this.projectDoc?.data?.translateConfig?.draftConfig?.alternateSource);
-    this.addNonSelectableProject(this.projectDoc?.data?.translateConfig?.draftConfig?.alternateTrainingSource);
-    this.addNonSelectableProject(this.projectDoc?.data?.translateConfig?.draftConfig?.additionalTrainingSource);
   }
 
   private addNonSelectableProject(project?: TranslateSource): void {

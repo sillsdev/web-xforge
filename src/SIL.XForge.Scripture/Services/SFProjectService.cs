@@ -1276,7 +1276,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         string? servalConfig
     )
     {
-        if (!systemRoles.Contains(SystemRole.SystemAdmin))
+        if (!systemRoles.Contains(SystemRole.ServalAdmin))
             throw new ForbiddenException();
 
         // Normalize whitespace and empty values to null

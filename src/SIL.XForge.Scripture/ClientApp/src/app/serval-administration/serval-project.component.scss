@@ -22,3 +22,12 @@
 pre {
   white-space: pre-wrap;
 }
+
+.mat-mdc-card-content {
+  display: flex;
+  flex-direction: column;
+
+  .mat-mdc-form-field {
+    width: 100%;
+  }
+}
