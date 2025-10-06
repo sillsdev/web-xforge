@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -47,10 +48,11 @@ public class PreTranslationServiceTests
         );
 
         // SUT
-        (string translationEngineId, string corpusId, bool useParatextVerseRef) =
+        (string translationEngineId, string corpusId, string parallelCorpusId, bool useParatextVerseRef) =
             await env.Service.GetPreTranslationParametersAsync(Project01);
         Assert.AreEqual(TranslationEngine01, translationEngineId);
         Assert.AreEqual(Corpus01, corpusId);
+        Assert.IsNull(parallelCorpusId);
         Assert.AreEqual(uploadParatextZipFile, useParatextVerseRef);
     }
 
@@ -68,10 +70,11 @@ public class PreTranslationServiceTests
         );
 
         // SUT
-        (string translationEngineId, string corpusId, bool useParatextVerseRef) =
+        (string translationEngineId, string corpusId, string parallelCorpusId, bool useParatextVerseRef) =
             await env.Service.GetPreTranslationParametersAsync(Project01);
         Assert.AreEqual(TranslationEngine01, translationEngineId);
-        Assert.AreEqual(ParallelCorpus01, corpusId);
+        Assert.IsNull(corpusId);
+        Assert.AreEqual(ParallelCorpus01, parallelCorpusId);
         Assert.IsTrue(useParatextVerseRef);
     }
 
@@ -129,6 +132,67 @@ public class PreTranslationServiceTests
         const int chapterNum = 1;
         string textId = PreTranslationService.GetTextId(bookNum, chapterNum);
         env.TranslationEnginesClient.GetAllPretranslationsAsync(
+                TranslationEngine01,
+                ParallelCorpus01,
+                textId,
+                CancellationToken.None
+            )
+            .Returns(
+                Task.FromResult<IList<Pretranslation>>(
+                    [
+                        new Pretranslation
+                        {
+                            TextId = "64_1",
+                            Refs = { "64_1:mt1_001" },
+                            Translation = "3 John",
+                        },
+                        new Pretranslation
+                        {
+                            TextId = "64_1",
+                            Refs = { "64_1:verse_001_001" },
+                            Translation = "By the old man,",
+                        },
+                        new Pretranslation
+                        {
+                            TextId = "64_1",
+                            Refs = { "64_1:verse_001_001_001" },
+                            Translation = "To my dear friend Gaius,",
+                        },
+                        new Pretranslation
+                        {
+                            TextId = "64_1",
+                            Refs = { "64_1:verse_001_001_002" },
+                            Translation = "whom I love in the truth:",
+                        },
+                    ]
+                )
+            );
+
+        // SUT
+        PreTranslation[] actual = await env.Service.GetPreTranslationsAsync(
+            Project01,
+            bookNum,
+            chapterNum,
+            CancellationToken.None
+        );
+        Assert.AreEqual(1, actual.Length);
+        Assert.AreEqual("verse_1_1", actual.First().Reference);
+        Assert.AreEqual(
+            "By the old man, To my dear friend Gaius, whom I love in the truth: ",
+            actual.First().Translation
+        );
+    }
+
+    [Test]
+    [Obsolete("Tests legacy corpus")]
+    public async Task GetPreTranslationsAsync_LegacyCorpus()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions { MockLegacyPreTranslationParameters = true });
+        const int bookNum = 64;
+        const int chapterNum = 1;
+        string textId = PreTranslationService.GetTextId(bookNum, chapterNum);
+        env.TranslationEnginesClient.GetAllCorpusPretranslationsAsync(
                 TranslationEngine01,
                 Corpus01,
                 textId,
@@ -192,7 +256,7 @@ public class PreTranslationServiceTests
         string textId = PreTranslationService.GetTextId(bookNum);
         env.TranslationEnginesClient.GetAllPretranslationsAsync(
                 TranslationEngine01,
-                Corpus01,
+                ParallelCorpus01,
                 textId,
                 CancellationToken.None
             )
@@ -208,7 +272,7 @@ public class PreTranslationServiceTests
         Assert.Zero(actual.Length);
         await env
             .TranslationEnginesClient.Received()
-            .GetAllPretranslationsAsync(TranslationEngine01, Corpus01, textId, CancellationToken.None);
+            .GetAllPretranslationsAsync(TranslationEngine01, ParallelCorpus01, textId, CancellationToken.None);
     }
 
     [Test]
@@ -221,7 +285,7 @@ public class PreTranslationServiceTests
         string textId = PreTranslationService.GetTextId(bookNum, chapterNum);
         env.TranslationEnginesClient.GetAllPretranslationsAsync(
                 TranslationEngine01,
-                Corpus01,
+                ParallelCorpus01,
                 textId,
                 CancellationToken.None
             )
@@ -237,7 +301,7 @@ public class PreTranslationServiceTests
         Assert.Zero(actual.Length);
         await env
             .TranslationEnginesClient.Received()
-            .GetAllPretranslationsAsync(TranslationEngine01, Corpus01, textId, CancellationToken.None);
+            .GetAllPretranslationsAsync(TranslationEngine01, ParallelCorpus01, textId, CancellationToken.None);
     }
 
     [Test]
@@ -252,7 +316,7 @@ public class PreTranslationServiceTests
         string textId = PreTranslationService.GetTextId(bookNum);
         env.TranslationEnginesClient.GetAllPretranslationsAsync(
                 TranslationEngine01,
-                Corpus01,
+                ParallelCorpus01,
                 textId,
                 CancellationToken.None
             )
@@ -332,7 +396,7 @@ public class PreTranslationServiceTests
         string textId = PreTranslationService.GetTextId(bookNum, chapterNum);
         env.TranslationEnginesClient.GetAllPretranslationsAsync(
                 TranslationEngine01,
-                Corpus01,
+                ParallelCorpus01,
                 textId,
                 CancellationToken.None
             )
@@ -400,6 +464,37 @@ public class PreTranslationServiceTests
             "Abraham was the father of Isaac, Isaac was the father of James, and James was the father of Jude and his brethren. ",
             actual.Last().Translation
         );
+    }
+
+    [Test]
+    [Obsolete("Uses legacy corpus")]
+    public async Task GetPreTranslationUsfmAsync_LegacyCorpus()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { MockLegacyPreTranslationParameters = true, UseParatextZipFile = true }
+        );
+        env.TranslationEnginesClient.GetCorpusPretranslatedUsfmAsync(
+                id: Arg.Any<string>(),
+                corpusId: Arg.Any<string>(),
+                textId: "MAT",
+                textOrigin: PretranslationUsfmTextOrigin.OnlyPretranslated,
+                template: PretranslationUsfmTemplate.Source,
+                paragraphMarkerBehavior: Arg.Any<PretranslationUsfmMarkerBehavior>(),
+                quoteNormalizationBehavior: Arg.Any<PretranslationNormalizationBehavior>(),
+                cancellationToken: CancellationToken.None
+            )
+            .Returns(TestEnvironment.MatthewBookUsfm);
+
+        // SUT
+        string usfm = await env.Service.GetPreTranslationUsfmAsync(
+            Project01,
+            40,
+            0,
+            new DraftUsfmConfig(),
+            CancellationToken.None
+        );
+        Assert.AreEqual(TestEnvironment.MatthewBookUsfm, usfm);
     }
 
     [Test]
@@ -660,7 +755,7 @@ public class PreTranslationServiceTests
 
         env.TranslationEnginesClient.GetAllPretranslationsAsync(
                 TranslationEngine01,
-                Corpus01,
+                ParallelCorpus01,
                 textId: null,
                 CancellationToken.None
             )
@@ -699,12 +794,13 @@ public class PreTranslationServiceTests
     }
 
     [Test]
+    [Obsolete("Tests legacy corpus")]
     public async Task UpdatePreTranslationStatusAsync_Text()
     {
         // Set up test environment
-        var env = new TestEnvironment(new TestEnvironmentOptions { MockPreTranslationParameters = true });
+        var env = new TestEnvironment(new TestEnvironmentOptions { MockLegacyPreTranslationParameters = true });
 
-        env.TranslationEnginesClient.GetAllPretranslationsAsync(
+        env.TranslationEnginesClient.GetAllCorpusPretranslationsAsync(
                 TranslationEngine01,
                 Corpus01,
                 textId: null,
@@ -746,6 +842,7 @@ public class PreTranslationServiceTests
 
     private class TestEnvironmentOptions
     {
+        public bool MockLegacyPreTranslationParameters { get; init; }
         public bool MockPreTranslationParameters { get; init; }
         public bool UseParatextZipFile { get; init; }
     }
@@ -798,7 +895,7 @@ public class PreTranslationServiceTests
             TranslationEnginesClient
                 .GetPretranslatedUsfmAsync(
                     id: Arg.Any<string>(),
-                    corpusId: Arg.Any<string>(),
+                    parallelCorpusId: Arg.Any<string>(),
                     textId: "MAT",
                     textOrigin: PretranslationUsfmTextOrigin.OnlyPretranslated,
                     template: PretranslationUsfmTemplate.Source,
@@ -812,14 +909,25 @@ public class PreTranslationServiceTests
                 RealtimeService,
                 TranslationEnginesClient
             );
-            if (options.MockPreTranslationParameters)
+            if (options.MockLegacyPreTranslationParameters)
             {
                 Service
                     .Configure()
                     .GetPreTranslationParametersAsync(Project01)
                     .Returns(
-                        Task.FromResult<(string, string, bool)>(
-                            (TranslationEngine01, Corpus01, options.UseParatextZipFile)
+                        Task.FromResult<(string, string, string, bool)>(
+                            (TranslationEngine01, Corpus01, null, options.UseParatextZipFile)
+                        )
+                    );
+            }
+            else if (options.MockPreTranslationParameters)
+            {
+                Service
+                    .Configure()
+                    .GetPreTranslationParametersAsync(Project01)
+                    .Returns(
+                        Task.FromResult<(string, string, string, bool)>(
+                            (TranslationEngine01, null, ParallelCorpus01, options.UseParatextZipFile)
                         )
                     );
             }
