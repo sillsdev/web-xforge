@@ -3,13 +3,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ElementState } from '../models/element-state';
 import { configureTestingModule } from '../test-utils';
-import { UICommonModule } from '../ui-common.module';
 import { WriteStatusComponent } from './write-status.component';
 
 describe('WriteStatusComponent', () => {
   configureTestingModule(() => ({
-    declarations: [WriteStatusComponent, TestHostComponent],
-    imports: [UICommonModule]
+    declarations: [TestHostComponent],
+    imports: [WriteStatusComponent]
   }));
 
   it('should display done, spinner and error icons', () => {

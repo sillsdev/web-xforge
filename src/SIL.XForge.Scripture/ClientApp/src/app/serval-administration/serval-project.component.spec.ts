@@ -1,5 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { saveAs } from 'file-saver';
@@ -233,6 +235,44 @@ describe('ServalProjectComponent', () => {
       expect(translationSources.length).toEqual(1);
       expect(env.getTranslationBookNames(translationSources[0])).toEqual('Leviticus - Numbers');
     }));
+
+    describe('serval configuration', () => {
+      it('should change serval config value', fakeAsync(() => {
+        const env = new TestEnvironment();
+        expect(env.servalConfigTextArea.value).toBe('');
+        expect(env.statusDone(env.servalConfigStatus)).toBeNull();
+
+        env.setServalConfigValue('{}');
+        env.clickElement(env.saveServalConfigButton);
+
+        verify(mockSFProjectService.onlineSetServalConfig(env.mockProjectId, anything())).once();
+        expect(env.statusDone(env.servalConfigStatus)).not.toBeNull();
+      }));
+
+      it('should clear the serval config value', fakeAsync(() => {
+        const env = new TestEnvironment({ preTranslate: true, draftConfig: { servalConfig: '{}' } });
+        expect(env.servalConfigTextArea.value).toBe('{}');
+        expect(env.statusDone(env.servalConfigStatus)).toBeNull();
+
+        env.setServalConfigValue('');
+        env.clickElement(env.saveServalConfigButton);
+
+        verify(mockSFProjectService.onlineSetServalConfig(env.mockProjectId, anything())).once();
+        expect(env.statusDone(env.servalConfigStatus)).not.toBeNull();
+      }));
+
+      it('should not update an unchanged serval config value', fakeAsync(() => {
+        const env = new TestEnvironment();
+        expect(env.servalConfigTextArea.value).toBe('');
+        expect(env.statusDone(env.servalConfigStatus)).toBeNull();
+
+        env.setServalConfigValue('');
+        env.clickElement(env.saveServalConfigButton);
+
+        verify(mockSFProjectService.onlineSetServalConfig(env.mockProjectId, anything())).never();
+        expect(env.statusDone(env.servalConfigStatus)).toBeNull();
+      }));
+    });
   });
 
   class TestEnvironment {
@@ -285,7 +325,8 @@ describe('ServalProjectComponent', () => {
               },
               lastSelectedTrainingScriptureRanges: args.draftConfig?.lastSelectedTrainingScriptureRanges ?? undefined,
               lastSelectedTranslationScriptureRanges:
-                args.draftConfig?.lastSelectedTranslationScriptureRanges ?? undefined
+                args.draftConfig?.lastSelectedTranslationScriptureRanges ?? undefined,
+              servalConfig: args.draftConfig?.servalConfig ?? undefined
             },
             preTranslate: args.preTranslate,
             source: {
@@ -315,6 +356,8 @@ describe('ServalProjectComponent', () => {
       when(mockServalAdministrationService.downloadProject(anything())).thenReturn(of(new Blob()));
       when(mockAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
       when(mockDraftGenerationService.getBuildProgress(anything())).thenReturn(of({ additionalInfo: {} } as BuildDto));
+      when(mockSFProjectService.onlineSetServalConfig(this.mockProjectId, anything())).thenResolve();
+
       spyOn(saveAs, 'saveAs').and.stub();
 
       this.fixture = TestBed.createComponent(ServalProjectComponent);
@@ -346,6 +389,18 @@ describe('ServalProjectComponent', () => {
       return this.fixture.nativeElement.querySelector('#download-draft');
     }
 
+    get saveServalConfigButton(): HTMLInputElement {
+      return this.fixture.nativeElement.querySelector('#save-serval-config');
+    }
+
+    get servalConfigStatus(): DebugElement {
+      return this.fixture.debugElement.query(By.css('#serval-config-status'));
+    }
+
+    get servalConfigTextArea(): HTMLTextAreaElement {
+      return this.fixture.nativeElement.querySelector('#serval-config') as HTMLTextAreaElement;
+    }
+
     get trainingSources(): NodeListOf<HTMLElement> {
       return this.fixture.nativeElement.querySelectorAll('.training');
     }
@@ -373,6 +428,18 @@ describe('ServalProjectComponent', () => {
 
     getTranslationBookNames(node: HTMLElement): string {
       return node.querySelector('.translation-range')?.textContent ?? '';
+    }
+
+    setServalConfigValue(value: string): void {
+      this.servalConfigTextArea.value = value;
+      this.servalConfigTextArea.dispatchEvent(new Event('input'));
+      this.fixture.detectChanges();
+      tick();
+      this.fixture.detectChanges();
+    }
+
+    statusDone(element: DebugElement): HTMLElement {
+      return element.nativeElement.querySelector('.check-icon') as HTMLElement;
     }
   }
 });

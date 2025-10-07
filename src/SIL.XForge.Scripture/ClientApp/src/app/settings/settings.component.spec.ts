@@ -9,7 +9,6 @@ import { ActivatedRoute, Route, RouterModule } from '@angular/router';
 import { cloneDeep, merge } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { RecursivePartial } from 'realtime-server/lib/esm/common/utils/type-utils';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -18,7 +17,6 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { createTestTextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio-test-data';
-import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -69,9 +67,10 @@ describe('SettingsComponent', () => {
       TranslocoMarkupModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       TestOnlineStatusModule.forRoot(),
-      NoopAnimationsModule
+      NoopAnimationsModule,
+      WriteStatusComponent
     ],
-    declarations: [SettingsComponent, WriteStatusComponent, ProjectSelectComponent, InfoComponent],
+    declarations: [SettingsComponent, ProjectSelectComponent, InfoComponent],
     providers: [
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: AuthService, useMock: mockedAuthService },
@@ -188,121 +187,6 @@ describe('SettingsComponent', () => {
       expect(env.basedOnSelectComponent.isDisabled).toBe(false);
       expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(false);
     }));
-
-    describe('Serval Config TextArea', () => {
-      it('should not display for non-serval administrators', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject();
-        env.wait();
-        env.wait();
-        expect(env.servalConfigTextArea).toBeNull();
-      }));
-
-      it('should display for serval administrators on back translations', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            preTranslate: false,
-            projectType: ProjectType.BackTranslation
-          }
-        });
-        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
-        env.wait();
-        env.wait();
-        expect(env.servalConfigTextArea).not.toBeNull();
-      }));
-
-      it('should display for serval administrators on forward translations', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject();
-        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
-        env.wait();
-        env.wait();
-        expect(env.servalConfigTextArea).not.toBeNull();
-      }));
-
-      it('should display for serval administrators on forward translations when not approved', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject();
-        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
-        env.wait();
-        env.wait();
-        expect(env.servalConfigTextArea).not.toBeNull();
-      }));
-
-      it('should change serval config value', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject();
-        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
-        env.wait();
-        env.wait();
-        expect(env.servalConfigTextArea).not.toBeNull();
-        expect(env.servalConfigTextAreaElement.value).toBe('');
-        expect(env.statusDone(env.servalConfigStatus)).toBeNull();
-
-        env.setServalConfigValue('{}');
-
-        expect(env.servalConfigTextAreaElement.value).toContain('{}');
-
-        // Trigger the onblur, which will save the value
-        env.servalConfigTextAreaElement.dispatchEvent(new InputEvent('blur'));
-        env.wait();
-
-        verify(mockedSFProjectService.onlineSetServalConfig('project01', anything())).once();
-        expect(env.statusDone(env.servalConfigStatus)).not.toBeNull();
-      }));
-
-      it('should clear the serval config value', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            draftConfig: {
-              servalConfig: '{}'
-            },
-            preTranslate: true
-          }
-        });
-        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
-        env.wait();
-        env.wait();
-        expect(env.servalConfigTextArea).not.toBeNull();
-        expect(env.servalConfigTextAreaElement.value).toBe('{}');
-        expect(env.statusDone(env.servalConfigStatus)).toBeNull();
-
-        env.setServalConfigValue('');
-
-        expect(env.servalConfigTextAreaElement.value).toBe('');
-
-        // Trigger the onblur, which will save the value
-        env.servalConfigTextAreaElement.dispatchEvent(new InputEvent('blur'));
-        env.wait();
-
-        verify(mockedSFProjectService.onlineSetServalConfig('project01', anything())).once();
-        expect(env.statusDone(env.servalConfigStatus)).not.toBeNull();
-      }));
-
-      it('should not update an unchanged serval config value', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject();
-        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
-        env.wait();
-        env.wait();
-        expect(env.servalConfigTextArea).not.toBeNull();
-        expect(env.servalConfigTextAreaElement.value).toBe('');
-        expect(env.statusDone(env.servalConfigStatus)).toBeNull();
-
-        env.setServalConfigValue('');
-
-        expect(env.servalConfigTextAreaElement.value).toBe('');
-
-        // Trigger the onblur, which will trigger the save
-        env.servalConfigTextAreaElement.dispatchEvent(new InputEvent('blur'));
-        env.wait();
-
-        verify(mockedSFProjectService.onlineSetServalConfig('project01', anything())).never();
-        expect(env.statusDone(env.servalConfigStatus)).toBeNull();
-      }));
-    });
 
     describe('Translation Suggestions options', () => {
       it('should see login button when Paratext account not connected', fakeAsync(() => {
@@ -892,7 +776,6 @@ class TestEnvironment {
     when(mockedSFProjectService.onlineIsSourceProject('project01')).thenResolve(isSource);
     when(mockedSFProjectService.onlineDelete(anything())).thenResolve();
     when(mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();
-    when(mockedSFProjectService.onlineSetServalConfig('project01', anything())).thenResolve();
     when(mockedSFProjectService.onlineSetRoleProjectPermissions('project01', anything(), anything())).thenResolve();
     when(mockedSFProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
@@ -956,14 +839,6 @@ class TestEnvironment {
 
   get translationSuggestionsCheckbox(): DebugElement {
     return this.fixture.debugElement.query(By.css('#checkbox-translation-suggestions'));
-  }
-
-  get servalConfigTextArea(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#serval-config'));
-  }
-
-  get servalConfigStatus(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#serval-config-status'));
   }
 
   get translationSuggestionsStatus(): DebugElement {
@@ -1056,10 +931,6 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  get servalConfigTextAreaElement(): HTMLTextAreaElement {
-    return this.servalConfigTextArea?.nativeElement as HTMLTextAreaElement;
-  }
-
   get basedOnSelectValue(): string {
     const value = this.basedOnSelectComponent.paratextIdControl.value;
     return typeof value === 'object' && value != null ? value.name : '';
@@ -1147,12 +1018,6 @@ class TestEnvironment {
     return element.nativeElement.querySelector('.error-icon') as HTMLElement;
   }
 
-  setServalConfigValue(value: string): void {
-    this.servalConfigTextAreaElement.value = value;
-    this.servalConfigTextAreaElement.dispatchEvent(new Event('input'));
-    this.wait();
-  }
-
   setBasedOnValue(value: string): void {
     this.basedOnSelectComponent.value = value;
     this.wait();
@@ -1167,7 +1032,6 @@ class TestEnvironment {
 
   testProject: SFProject = createTestProject({
     translateConfig: {
-      preTranslate: true,
       translationSuggestionsEnabled: true,
       source: {
         paratextId: 'paratextId01',

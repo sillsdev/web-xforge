@@ -24,7 +24,6 @@ import { SaProjectsComponent } from './system-administration/sa-projects.compone
 import { SaUsersComponent } from './system-administration/sa-users.component';
 import { SystemAdministrationComponent } from './system-administration/system-administration.component';
 import { UICommonModule } from './ui-common.module';
-import { WriteStatusComponent } from './write-status/write-status.component';
 
 const componentExports = [
   GenericDialogComponent,
@@ -33,7 +32,6 @@ const componentExports = [
   SaUsersComponent,
   SystemAdministrationComponent,
   PageNotFoundComponent,
-  WriteStatusComponent,
   ProjectSelectComponent,
   SyncProgressComponent
 ];
