@@ -66,31 +66,9 @@ export function draftSourcesAsTranslateSourceArraysToDraftSourcesAsSelectablePro
  * @returns An object with three arrays: trainingSources, trainingTargets, and draftingSources
  */
 export function projectToDraftSources(project: SFProjectProfile): DraftSourcesAsTranslateSourceArrays {
-  const trainingSources: TranslateSource[] & ({ length: 0 } | { length: 1 } | { length: 2 }) = [];
-  const draftingSources: TranslateSource[] & ({ length: 0 } | { length: 1 }) = [];
-  const trainingTargets: [SFProjectProfile] = [project];
-  const draftConfig = project.translateConfig.draftConfig;
-  let trainingSource: TranslateSource | undefined;
-  if (draftConfig.alternateTrainingSourceEnabled && draftConfig.alternateTrainingSource != null) {
-    trainingSource = draftConfig.alternateTrainingSource;
-  } else {
-    trainingSource = project.translateConfig.source;
-  }
-  if (trainingSource != null) {
-    trainingSources.push(trainingSource);
-  }
-  if (draftConfig.additionalTrainingSourceEnabled && draftConfig.additionalTrainingSource != null) {
-    trainingSources.push(draftConfig.additionalTrainingSource);
-  }
-  let draftingSource: TranslateSource | undefined;
-  if (draftConfig.alternateSourceEnabled && draftConfig.alternateSource != null) {
-    draftingSource = draftConfig.alternateSource;
-  } else {
-    draftingSource = project.translateConfig.source;
-  }
-  if (draftingSource != null) {
-    draftingSources.push(draftingSource);
-  }
+  const trainingSources: TranslateSource[] = [...project.translateConfig.draftConfig.trainingSources];
+  const draftingSources: TranslateSource[] = [...project.translateConfig.draftConfig.draftingSources];
+  const trainingTargets: SFProjectProfile[] = [project];
   return { trainingSources, trainingTargets, draftingSources };
 }
 

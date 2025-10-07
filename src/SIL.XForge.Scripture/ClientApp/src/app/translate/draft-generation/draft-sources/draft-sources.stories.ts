@@ -45,30 +45,31 @@ const projectDocWithExistingSources = {
       translationSuggestionsEnabled: false,
       preTranslate: true,
       draftConfig: {
-        additionalTrainingSourceEnabled: true,
-        alternateSourceEnabled: true,
-        alternateTrainingSourceEnabled: true,
-        alternateTrainingSource: {
-          paratextId: 'pt1',
-          projectRef: 'sf1',
-          name: 'Alternate Training Source',
-          shortName: 'ALT-TS',
-          writingSystem: { script: 'Latn', tag: 'es' }
-        },
-        additionalTrainingSource: {
-          paratextId: 'pt2',
-          projectRef: 'sf2',
-          name: 'Additional Training Source',
-          shortName: 'ADD-TS',
-          writingSystem: { script: 'Latn', tag: 'es' }
-        },
-        alternateSource: {
-          paratextId: 'pt3',
-          projectRef: 'sf3',
-          name: 'Alternate Source',
-          shortName: 'AS',
-          writingSystem: { script: 'Latn', tag: 'es' }
-        }
+        draftingSources: [
+          {
+            paratextId: 'pt3',
+            projectRef: 'sf3',
+            name: 'Alternate Source',
+            shortName: 'AS',
+            writingSystem: { script: 'Latn', tag: 'es' }
+          }
+        ],
+        trainingSources: [
+          {
+            paratextId: 'pt1',
+            projectRef: 'sf1',
+            name: 'Alternate Training Source',
+            shortName: 'ALT-TS',
+            writingSystem: { script: 'Latn', tag: 'es' }
+          },
+          {
+            paratextId: 'pt2',
+            projectRef: 'sf2',
+            name: 'Additional Training Source',
+            shortName: 'ADD-TS',
+            writingSystem: { script: 'Latn', tag: 'es' }
+          }
+        ]
       },
       source: {
         paratextId: 'pt0',

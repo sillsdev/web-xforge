@@ -438,7 +438,7 @@ describe('DraftGenerationComponent', () => {
       });
     });
 
-    describe('user must have access to training source project (aka alternate training source project)', () => {
+    describe('user must have access to training source project', () => {
       it('should show warning when no access to training source project', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
@@ -460,7 +460,7 @@ describe('DraftGenerationComponent', () => {
         expect(env.getElementByTestId('warning-training-source-no-access')).not.toBeNull();
       });
 
-      it('should not show warning when no access to alternate source project and not back translation nor pre-translate approved', () => {
+      it('should not show warning when no access to training source project and not back translation nor pre-translate approved', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
@@ -523,7 +523,7 @@ describe('DraftGenerationComponent', () => {
         expect(env.getElementByTestId('warning-training-source-no-access')).toBeNull();
       });
 
-      it('should show warning even when no access to alternate source project', () => {
+      it('should show warning even when no access to drafting source project', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
