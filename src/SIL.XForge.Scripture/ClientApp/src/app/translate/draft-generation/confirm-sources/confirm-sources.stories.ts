@@ -30,30 +30,31 @@ when(mockActivatedProject.changes$).thenReturn(
           paratextId: 'source-project'
         },
         draftConfig: {
-          alternateTrainingSourceEnabled: true,
-          alternateTrainingSource: {
-            projectRef: 'alternate-training-source',
-            shortName: 'ALT-TS',
-            name: 'Alternate Training Source',
-            paratextId: 'alternate-training-source',
-            writingSystem: { tag: 'es' }
-          },
-          additionalTrainingSourceEnabled: true,
-          additionalTrainingSource: {
-            projectRef: 'additional-training-source',
-            shortName: 'ADD-TS',
-            name: 'Additional Training Source',
-            paratextId: 'additional-training-source',
-            writingSystem: { tag: 'es' }
-          },
-          alternateSourceEnabled: true,
-          alternateSource: {
-            projectRef: 'alternate-drafting-source',
-            shortName: 'ADS',
-            name: 'Alternate Drafting Source',
-            paratextId: 'alternate-drafting-source',
-            writingSystem: { tag: 'es' }
-          }
+          draftingSources: [
+            {
+              projectRef: 'first-drafting-source',
+              shortName: 'FDS',
+              name: 'First Drafting Source',
+              paratextId: 'first-drafting-source',
+              writingSystem: { tag: 'es' }
+            }
+          ],
+          trainingSources: [
+            {
+              projectRef: 'first-training-source',
+              shortName: 'FTS',
+              name: 'First Training Source',
+              paratextId: 'first-training-source',
+              writingSystem: { tag: 'es' }
+            },
+            {
+              projectRef: 'second-training-source',
+              shortName: 'STS',
+              name: 'Second Training Source',
+              paratextId: 'second-training-source',
+              writingSystem: { tag: 'es' }
+            }
+          ]
         }
       }
     })
