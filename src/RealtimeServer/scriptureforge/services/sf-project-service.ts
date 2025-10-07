@@ -130,125 +130,85 @@ export class SFProjectService extends ProjectService<SFProject> {
           draftConfig: {
             bsonType: 'object',
             properties: {
-              additionalTrainingSourceEnabled: {
-                bsonType: 'bool'
-              },
-              additionalTrainingSource: {
-                bsonType: 'object',
-                properties: {
-                  paratextId: {
-                    bsonType: 'string'
-                  },
-                  projectRef: {
-                    bsonType: 'string',
-                    pattern: '^[0-9a-f]+$'
-                  },
-                  name: {
-                    bsonType: 'string'
-                  },
-                  shortName: {
-                    bsonType: 'string'
-                  },
-                  writingSystem: {
-                    bsonType: 'object',
-                    properties: {
-                      region: {
-                        bsonType: 'string'
-                      },
-                      script: {
-                        bsonType: 'string'
-                      },
-                      tag: {
-                        bsonType: 'string'
-                      }
+              draftingSources: {
+                bsonType: 'array',
+                items: {
+                  bsonType: 'object',
+                  properties: {
+                    paratextId: {
+                      bsonType: 'string'
                     },
-                    additionalProperties: false
-                  },
-                  isRightToLeft: {
-                    bsonType: 'bool'
-                  }
-                },
-                additionalProperties: false
-              },
-              alternateSourceEnabled: {
-                bsonType: 'bool'
-              },
-              alternateSource: {
-                bsonType: 'object',
-                properties: {
-                  paratextId: {
-                    bsonType: 'string'
-                  },
-                  projectRef: {
-                    bsonType: 'string',
-                    pattern: '^[0-9a-f]+$'
-                  },
-                  name: {
-                    bsonType: 'string'
-                  },
-                  shortName: {
-                    bsonType: 'string'
-                  },
-                  writingSystem: {
-                    bsonType: 'object',
-                    properties: {
-                      region: {
-                        bsonType: 'string'
-                      },
-                      script: {
-                        bsonType: 'string'
-                      },
-                      tag: {
-                        bsonType: 'string'
-                      }
+                    projectRef: {
+                      bsonType: 'string',
+                      pattern: '^[0-9a-f]+$'
                     },
-                    additionalProperties: false
-                  },
-                  isRightToLeft: {
-                    bsonType: 'bool'
-                  }
-                },
-                additionalProperties: false
-              },
-              alternateTrainingSourceEnabled: {
-                bsonType: 'bool'
-              },
-              alternateTrainingSource: {
-                bsonType: 'object',
-                properties: {
-                  paratextId: {
-                    bsonType: 'string'
-                  },
-                  projectRef: {
-                    bsonType: 'string',
-                    pattern: '^[0-9a-f]+$'
-                  },
-                  name: {
-                    bsonType: 'string'
-                  },
-                  shortName: {
-                    bsonType: 'string'
-                  },
-                  writingSystem: {
-                    bsonType: 'object',
-                    properties: {
-                      region: {
-                        bsonType: 'string'
-                      },
-                      script: {
-                        bsonType: 'string'
-                      },
-                      tag: {
-                        bsonType: 'string'
-                      }
+                    name: {
+                      bsonType: 'string'
                     },
-                    additionalProperties: false
+                    shortName: {
+                      bsonType: 'string'
+                    },
+                    writingSystem: {
+                      bsonType: 'object',
+                      properties: {
+                        region: {
+                          bsonType: 'string'
+                        },
+                        script: {
+                          bsonType: 'string'
+                        },
+                        tag: {
+                          bsonType: 'string'
+                        }
+                      },
+                      additionalProperties: false
+                    },
+                    isRightToLeft: {
+                      bsonType: 'bool'
+                    }
                   },
-                  isRightToLeft: {
-                    bsonType: 'bool'
-                  }
-                },
-                additionalProperties: false
+                  additionalProperties: false
+                }
+              },
+              trainingSources: {
+                bsonType: 'array',
+                items: {
+                  bsonType: 'object',
+                  properties: {
+                    paratextId: {
+                      bsonType: 'string'
+                    },
+                    projectRef: {
+                      bsonType: 'string',
+                      pattern: '^[0-9a-f]+$'
+                    },
+                    name: {
+                      bsonType: 'string'
+                    },
+                    shortName: {
+                      bsonType: 'string'
+                    },
+                    writingSystem: {
+                      bsonType: 'object',
+                      properties: {
+                        region: {
+                          bsonType: 'string'
+                        },
+                        script: {
+                          bsonType: 'string'
+                        },
+                        tag: {
+                          bsonType: 'string'
+                        }
+                      },
+                      additionalProperties: false
+                    },
+                    isRightToLeft: {
+                      bsonType: 'bool'
+                    }
+                  },
+                  additionalProperties: false
+                }
               },
               lastSelectedTrainingDataFiles: {
                 bsonType: 'array',

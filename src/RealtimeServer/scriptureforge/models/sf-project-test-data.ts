@@ -19,9 +19,8 @@ function testProjectProfile(ordinal: number): SFProjectProfile {
       preTranslate: false,
       defaultNoteTagId: 1,
       draftConfig: {
-        additionalTrainingSourceEnabled: false,
-        alternateSourceEnabled: false,
-        alternateTrainingSourceEnabled: false,
+        draftingSources: [],
+        trainingSources: [],
         lastSelectedTrainingDataFiles: []
       }
     },
