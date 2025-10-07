@@ -298,7 +298,8 @@ class TestEnvironment {
       isConnectable: true,
       isConnected: false,
       hasUserRoleChanged: false,
-      hasUpdate: false
+      hasUpdate: false,
+      members: []
     },
     {
       paratextId: 'pt02',
@@ -309,7 +310,8 @@ class TestEnvironment {
       isConnectable: false,
       isConnected: true,
       hasUserRoleChanged: false,
-      hasUpdate: false
+      hasUpdate: false,
+      members: []
     },
     {
       paratextId: 'pt04',
@@ -319,7 +321,8 @@ class TestEnvironment {
       isConnectable: false,
       isConnected: false,
       hasUserRoleChanged: false,
-      hasUpdate: false
+      hasUpdate: false,
+      members: []
     },
     {
       paratextId: 'pt03',
@@ -330,7 +333,8 @@ class TestEnvironment {
       isConnectable: true,
       isConnected: true,
       hasUserRoleChanged: false,
-      hasUpdate: false
+      hasUpdate: false,
+      members: []
     }
   ];
 
