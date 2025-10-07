@@ -761,7 +761,8 @@ class TestEnvironment {
           isConnectable: false,
           isConnected: true,
           hasUserRoleChanged: false,
-          hasUpdate: false
+          hasUpdate: false,
+          members: []
         },
         selectableProjectWithLanguageCode: translateSourceToSelectableProjectWithLanguageTag(o.data),
         translateSource: {
@@ -787,7 +788,8 @@ class TestEnvironment {
         isConnectable: true,
         isConnected: false,
         hasUserRoleChanged: false,
-        hasUpdate: false
+        hasUpdate: false,
+        members: []
       })).map((o: ParatextProject) => ({
         paratextProject: o,
         selectableProjectWithLanguageCode: o,
@@ -808,7 +810,8 @@ class TestEnvironment {
         isConnectable: true,
         isConnected: false,
         hasUserRoleChanged: false,
-        hasUpdate: false
+        hasUpdate: false,
+        members: []
       })).map((o: ParatextProject) => ({
         paratextProject: o,
         selectableProjectWithLanguageCode: o,

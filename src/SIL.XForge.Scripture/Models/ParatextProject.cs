@@ -81,6 +81,11 @@ public class ParatextProject
     public bool HasUpdate { get; init; }
 
     /// <summary>
+    ///  The usernames of the members of the project.
+    /// </summary>
+    public ParatextMember[] Members { get; init; }
+
+    /// <summary>
     /// A descriptive string of object's properties, for debugging.
     /// </summary>
     /// <returns>
@@ -114,4 +119,11 @@ public class ParatextProject
         }
         return message.ToString();
     }
+}
+
+public class ParatextMember
+{
+    public bool ConnectedToProject { get; init; }
+    public string Username { get; init; }
+    public string Role { get; init; }
 }

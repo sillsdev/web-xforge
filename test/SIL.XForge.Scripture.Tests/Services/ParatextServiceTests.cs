@@ -144,6 +144,26 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public async Task GetProjectsAsync_GetProjectMembers()
+    {
+        var env = new TestEnvironment();
+        UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+        IEnumerable<ParatextProject> projects = await env.Service.GetProjectsAsync(user01Secret);
+        Assert.That(projects, Is.Not.Empty);
+
+        ParatextProject project01 = projects.Single(p => p.ParatextId == env.PTProjectIds[env.Project01].Id);
+        Assert.That(
+            project01.Members.Select(m => m.Username),
+            Is.EquivalentTo([env.Username01, env.Username02, env.Username03])
+        );
+        Assert.That(
+            project01.Members.Select(m => m.Role),
+            Is.EquivalentTo([SFProjectRole.Administrator, SFProjectRole.Administrator, SFProjectRole.Administrator])
+        );
+    }
+
+    [Test]
     public async Task GetProjectsAsync_ConnectedConnectable()
     {
         var env = new TestEnvironment();
@@ -6710,7 +6730,7 @@ public class ParatextServiceTests
 
             RealtimeService = new SFMemoryRealtimeService();
 
-            MockSiteOptions.Value.Returns(new SiteOptions { Name = "xForge" });
+            MockSiteOptions.Value.Returns(new SiteOptions { Name = "xForge", Id = "xforge" });
 
             int guidServiceCharId = 1;
             MockGuidService.Generate().Returns(_ => $"{guidServiceCharId++}");
@@ -7161,7 +7181,16 @@ public class ParatextServiceTests
                 .Returns(true);
         }
 
-        public void AddUserRepository(User[]? users = null) =>
+        public void AddUserRepository(User[]? users = null)
+        {
+            Dictionary<string, Site> sites = new Dictionary<string, Site>
+            {
+                {
+                    "xForge",
+                    new Site { Projects = [Project01] }
+                },
+            };
+
             RealtimeService.AddRepository(
                 "users",
                 OTType.Json0,
@@ -7169,14 +7198,25 @@ public class ParatextServiceTests
                     users
                         ??
                         [
-                            new User { Id = User01, ParatextId = ParatextUserId01 },
-                            new User { Id = User02, ParatextId = ParatextUserId02 },
+                            new User
+                            {
+                                Id = User01,
+                                ParatextId = ParatextUserId01,
+                                Sites = sites,
+                            },
+                            new User
+                            {
+                                Id = User02,
+                                ParatextId = ParatextUserId02,
+                                Sites = sites,
+                            },
                             new User { Id = User03, ParatextId = ParatextUserId03 },
                             new User { Id = User04 },
-                            new User { Id = User05 },
+                            new User { Id = User05, Sites = sites },
                         ]
                 )
             );
+        }
 
         public void AddTextDocs(
             int bookNum,
