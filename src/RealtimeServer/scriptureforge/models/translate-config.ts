@@ -59,12 +59,8 @@ export interface DraftUsfmConfig {
 }
 
 export interface DraftConfig {
-  additionalTrainingSourceEnabled: boolean;
-  additionalTrainingSource?: TranslateSource;
-  alternateSourceEnabled: boolean;
-  alternateSource?: TranslateSource;
-  alternateTrainingSourceEnabled: boolean;
-  alternateTrainingSource?: TranslateSource;
+  draftingSources: TranslateSource[];
+  trainingSources: TranslateSource[];
   lastSelectedTrainingDataFiles: string[];
   lastSelectedTrainingScriptureRanges?: ProjectScriptureRange[];
   lastSelectedTranslationScriptureRanges?: ProjectScriptureRange[];
