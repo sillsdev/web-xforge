@@ -299,30 +299,31 @@ describe('ServalProjectComponent', () => {
           ],
           translateConfig: {
             draftConfig: {
-              alternateSourceEnabled: true,
-              alternateSource: {
-                paratextId: 'ptproject03',
-                projectRef: 'project03',
-                name: 'Project 03',
-                shortName: 'P3',
-                writingSystem: { tag: 'en' }
-              },
-              alternateTrainingSourceEnabled: true,
-              alternateTrainingSource: {
-                paratextId: 'ptproject04',
-                projectRef: 'project04',
-                name: 'Project 04',
-                shortName: 'P4',
-                writingSystem: { tag: 'en' }
-              },
-              additionalTrainingSourceEnabled: true,
-              additionalTrainingSource: {
-                paratextId: 'ptproject05',
-                projectRef: 'project05',
-                name: 'Project 05',
-                shortName: 'P5',
-                writingSystem: { tag: 'en' }
-              },
+              draftingSources: [
+                {
+                  paratextId: 'ptproject03',
+                  projectRef: 'project03',
+                  name: 'Project 03',
+                  shortName: 'P3',
+                  writingSystem: { tag: 'en' }
+                }
+              ],
+              trainingSources: [
+                {
+                  paratextId: 'ptproject04',
+                  projectRef: 'project04',
+                  name: 'Project 04',
+                  shortName: 'P4',
+                  writingSystem: { tag: 'en' }
+                },
+                {
+                  paratextId: 'ptproject05',
+                  projectRef: 'project05',
+                  name: 'Project 05',
+                  shortName: 'P5',
+                  writingSystem: { tag: 'en' }
+                }
+              ],
               lastSelectedTrainingScriptureRanges: args.draftConfig?.lastSelectedTrainingScriptureRanges ?? undefined,
               lastSelectedTranslationScriptureRanges:
                 args.draftConfig?.lastSelectedTranslationScriptureRanges ?? undefined,
