@@ -42,7 +42,6 @@ import { BuildStates } from '../../../machine-api/build-states';
 import { TextComponent } from '../../../shared/text/text.component';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { DraftHandlingService } from '../../draft-generation/draft-handling.service';
-import { FORMATTING_OPTIONS_SUPPORTED_DATE } from '../../draft-generation/draft-utils';
 @Component({
   selector: 'app-editor-draft',
   templateUrl: './editor-draft.component.html',
@@ -68,8 +67,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   isDraftReady = false;
   isDraftApplied = false;
   userAppliedDraft = false;
-  hasFormattingSelected = true;
-  formattingOptionsSupported = true;
 
   private selectedRevisionSubject = new BehaviorSubject<Revision | undefined>(undefined);
   private selectedRevision$ = this.selectedRevisionSubject.asObservable();
@@ -104,36 +101,8 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     private readonly router: Router
   ) {}
 
-  get bookId(): string {
-    return this.bookNum !== undefined ? Canon.bookNumberToId(this.bookNum) : '';
-  }
-
-  get canApplyDraft(): boolean {
-    if (this.targetProject == null || this.bookNum == null || this.chapter == null || this.draftDelta?.ops == null) {
-      return false;
-    }
-    return this.draftHandlingService.canApplyDraft(this.targetProject, this.bookNum, this.chapter, this.draftDelta.ops);
-  }
-
-  get doesLatestBuildHaveDraft(): boolean {
-    return (
-      this.targetProject?.texts.find(t => t.bookNum === this.bookNum)?.chapters.find(c => c.number === this.chapter)
-        ?.hasDraft ?? false
-    );
-  }
-
-  get mustChooseFormattingOptions(): boolean {
-    return (
-      this.featureFlags.usfmFormat.enabled &&
-      !this.hasFormattingSelected &&
-      this.formattingOptionsSupported &&
-      this.doesLatestBuildHaveDraft
-    );
-  }
-
   set draftRevisions(value: Revision[]) {
     this._draftRevisions = value;
-    this.formattingOptionsSupported = value.some(rev => new Date(rev.timestamp) > FORMATTING_OPTIONS_SUPPORTED_DATE);
   }
 
   get draftRevisions(): Revision[] {
@@ -157,6 +126,10 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   onSelectionChanged(e: MatSelectChange): void {
     this.selectedRevision = e.value;
     this.selectedRevisionSubject.next(this.selectedRevision);
+  }
+
+  get bookId(): string {
+    return this.bookNum !== undefined ? Canon.bookNumberToId(this.bookNum) : '';
   }
 
   populateDraftTextInit(): void {
@@ -216,7 +189,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
             filterNullish(),
             tap(projectDoc => {
               this.targetProject = projectDoc.data;
-              this.hasFormattingSelected = projectDoc.data?.translateConfig.draftConfig.usfmConfig != null;
             }),
             distinctUntilChanged(),
             map(() => initialTimestamp)
@@ -275,6 +247,20 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
         this.isDraftReady = this.draftCheckState === 'draft-present' || this.draftCheckState === 'draft-legacy';
       });
+  }
+
+  get canApplyDraft(): boolean {
+    if (this.targetProject == null || this.bookNum == null || this.chapter == null || this.draftDelta?.ops == null) {
+      return false;
+    }
+    return this.draftHandlingService.canApplyDraft(this.targetProject, this.bookNum, this.chapter, this.draftDelta.ops);
+  }
+
+  get doesLatestHaveDraft(): boolean {
+    return (
+      this.targetProject?.texts.find(t => t.bookNum === this.bookNum)?.chapters.find(c => c.number === this.chapter)
+        ?.hasDraft ?? false
+    );
   }
 
   navigateToFormatting(): void {

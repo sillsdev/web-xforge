@@ -7,9 +7,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { cloneDeep } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { Delta } from 'quill';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { ParagraphBreakFormat, QuoteFormat } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -393,96 +391,6 @@ describe('EditorDraftComponent', () => {
   }));
 
   describe('applyDraft', () => {
-    it('should allow user to apply draft when formatting selected', fakeAsync(() => {
-      const testProjectDoc: SFProjectProfileDoc = {
-        data: createTestProjectProfile({
-          texts: [
-            {
-              bookNum: 1,
-              chapters: [{ number: 1, permissions: { user01: SFProjectRole.ParatextAdministrator }, hasDraft: true }]
-            }
-          ],
-          translateConfig: {
-            draftConfig: {
-              usfmConfig: { paragraphFormat: ParagraphBreakFormat.BestGuess, quoteFormat: QuoteFormat.Denormalized }
-            }
-          }
-        })
-      } as SFProjectProfileDoc;
-      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
-      when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
-        of(draftHistory)
-      );
-      when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
-      when(mockDialogService.confirm(anything(), anything())).thenResolve(true);
-      spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops));
-      when(mockDraftHandlingService.getDraft(anything(), anything())).thenReturn(of(draftDelta.ops!));
-      when(mockDraftHandlingService.draftDataToOps(anything(), anything())).thenReturn(draftDelta.ops!);
-
-      fixture.detectChanges();
-      tick(EDITOR_READY_TIMEOUT);
-
-      expect(component.mustChooseFormattingOptions).toBe(false);
-      flush();
-    }));
-
-    it('should hide formatting options for drafts created before supported date', fakeAsync(() => {
-      const testProjectDoc: SFProjectProfileDoc = {
-        data: createTestProjectProfile({
-          texts: [
-            {
-              bookNum: 1,
-              chapters: [{ number: 1, permissions: { user01: SFProjectRole.ParatextAdministrator }, hasDraft: true }]
-            }
-          ]
-        })
-      } as SFProjectProfileDoc;
-      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
-      when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
-        of(draftHistory)
-      );
-      when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
-      when(mockDialogService.confirm(anything(), anything())).thenResolve(true);
-      spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops));
-      when(mockDraftHandlingService.getDraft(anything(), anything())).thenReturn(of(draftDelta.ops!));
-      when(mockDraftHandlingService.draftDataToOps(anything(), anything())).thenReturn(draftDelta.ops!);
-
-      fixture.detectChanges();
-      tick(EDITOR_READY_TIMEOUT);
-
-      expect(component.mustChooseFormattingOptions).toBe(false);
-      flush();
-    }));
-
-    it('should guide user to select formatting options when formatting not selected', fakeAsync(() => {
-      const testProjectDoc: SFProjectProfileDoc = {
-        data: createTestProjectProfile({
-          texts: [
-            {
-              bookNum: 1,
-              chapters: [{ number: 1, permissions: { user01: SFProjectRole.ParatextAdministrator }, hasDraft: true }]
-            }
-          ]
-        })
-      } as SFProjectProfileDoc;
-      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
-      const historyAfterFormattingOptions: Revision[] = [{ timestamp: '2025-10-01T12:00:00.000Z' }];
-      when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
-        of(historyAfterFormattingOptions)
-      );
-      when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
-      when(mockDialogService.confirm(anything(), anything())).thenResolve(true);
-      spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops));
-      when(mockDraftHandlingService.getDraft(anything(), anything())).thenReturn(of(draftDelta.ops!));
-      when(mockDraftHandlingService.draftDataToOps(anything(), anything())).thenReturn(draftDelta.ops!);
-
-      fixture.detectChanges();
-      tick(EDITOR_READY_TIMEOUT);
-
-      expect(component.mustChooseFormattingOptions).toBe(true);
-      flush();
-    }));
-
     it('should show a prompt when applying if the target has content', fakeAsync(() => {
       const testProjectDoc: SFProjectProfileDoc = {
         data: createTestProjectProfile()
