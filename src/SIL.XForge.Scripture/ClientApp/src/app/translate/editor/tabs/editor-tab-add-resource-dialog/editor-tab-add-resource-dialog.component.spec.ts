@@ -285,6 +285,7 @@ class TestEnvironment {
       isConnected: false,
       hasUserRoleChanged: false,
       hasUpdate: false,
+      members: [],
       ...overrides
     };
   }
