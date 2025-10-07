@@ -246,6 +246,31 @@ describe('EditorTabMenuService', () => {
       expect(spy).toHaveBeenCalledTimes(1);
     });
   });
+
+  it('should not show draft menu item when draft formatting (usfmConfig) is not set', done => {
+    const projectDocNoFormatting = {
+      id: 'project-no-formatting',
+      data: createTestProjectProfile({
+        texts: [{ bookNum: 40, chapters: [{ number: 1, hasDraft: true }] }],
+        translateConfig: {
+          preTranslate: true
+          // draftConfig intentionally omitted
+        },
+        userRoles: TestEnvironment.rolesByUser
+      })
+    } as SFProjectProfileDoc;
+    const env = new TestEnvironment(projectDocNoFormatting);
+    env.setExistingTabs([]);
+    service['canShowHistory'] = () => true;
+    service['canShowResource'] = () => true;
+    service['canShowBiblicalTerms'] = () => false;
+    service.getMenuItems().subscribe(items => {
+      expect(items.find(i => i.type === 'draft')).toBeUndefined();
+      expect(items.find(i => i.type === 'history')).toBeDefined();
+      expect(items.find(i => i.type === 'project-resource')).toBeDefined();
+      done();
+    });
+  });
 });
 
 class TestEnvironment {
@@ -263,7 +288,10 @@ class TestEnvironment {
       texts: [
         { bookNum: 40, chapters: [{ number: 1, hasDraft: false }] },
         { bookNum: 41, chapters: [{ number: 1, hasDraft: false }] }
-      ]
+      ],
+      translateConfig: {
+        draftConfig: { usfmConfig: {} }
+      }
     })
   } as SFProjectProfileDoc;
 
@@ -278,7 +306,8 @@ class TestEnvironment {
         { bookNum: 41, chapters: [{ number: 1, hasDraft: true }] }
       ],
       translateConfig: {
-        preTranslate: true
+        preTranslate: true,
+        draftConfig: { usfmConfig: {} }
       },
       userRoles: TestEnvironment.rolesByUser,
       biblicalTermsConfig: { biblicalTermsEnabled: true }
@@ -288,6 +317,7 @@ class TestEnvironment {
   constructor(explicitProjectDoc?: SFProjectProfileDoc) {
     const projectDoc: SFProjectProfileDoc = explicitProjectDoc ?? this.projectDoc;
     when(activatedProjectMock.projectDoc$).thenReturn(of(projectDoc));
+    when(activatedProjectMock.projectDoc).thenReturn(projectDoc as any);
     when(mockUserService.currentUserId).thenReturn('user01');
     when(mockPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
     service = TestBed.inject(EditorTabMenuService);

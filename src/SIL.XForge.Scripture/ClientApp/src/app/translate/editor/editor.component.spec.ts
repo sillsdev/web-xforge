@@ -4072,6 +4072,10 @@ describe('EditorComponent', () => {
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
+        const projectDoc = env.getProjectDoc('project01');
+        if (projectDoc.data != null) {
+          (projectDoc.data.translateConfig as any).draftConfig = { usfmConfig: {} };
+        }
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
@@ -4090,6 +4094,10 @@ describe('EditorComponent', () => {
           Object.defineProperty(env.component, 'showSource', { get: () => false });
         });
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
+        const projectDoc = env.getProjectDoc('project01');
+        if (projectDoc.data != null) {
+          (projectDoc.data.translateConfig as any).draftConfig = { usfmConfig: {} };
+        }
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
@@ -4103,11 +4111,32 @@ describe('EditorComponent', () => {
         env.dispose();
       }));
 
+      it('should not add draft preview tab when draft formatting (usfmConfig) is not set', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          Object.defineProperty(env.component, 'showSource', { get: () => true });
+        });
+        when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
+        env.wait();
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
+        env.wait();
+
+        const sourceTabGroup = env.component.tabState.getTabGroup('source');
+        expect(sourceTabGroup?.tabs.find(t => t.type === 'draft')).toBeUndefined();
+
+        const targetTabGroup = env.component.tabState.getTabGroup('target');
+        expect(targetTabGroup?.tabs.find(t => t.type === 'draft')).toBeUndefined();
+        env.dispose();
+      }));
+
       it('should hide source draft preview tab when switching to chapter with no draft', fakeAsync(() => {
         const env = new TestEnvironment(env => {
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
+        const projectDoc = env.getProjectDoc('project01');
+        if (projectDoc.data != null) {
+          (projectDoc.data.translateConfig as any).draftConfig = { usfmConfig: {} };
+        }
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
 
@@ -4144,6 +4173,10 @@ describe('EditorComponent', () => {
           Object.defineProperty(env.component, 'showSource', { get: () => false });
         });
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
+        const projectDoc = env.getProjectDoc('project01');
+        if (projectDoc.data != null) {
+          (projectDoc.data.translateConfig as any).draftConfig = { usfmConfig: {} };
+        }
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
 
@@ -4180,6 +4213,10 @@ describe('EditorComponent', () => {
           queryParams: { 'draft-active': 'true', 'draft-timestamp': new Date().toISOString() }
         } as any);
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
+        const projectDoc = env.getProjectDoc('project01');
+        if (projectDoc.data != null) {
+          (projectDoc.data.translateConfig as any).draftConfig = { usfmConfig: {} };
+        }
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
@@ -4194,6 +4231,10 @@ describe('EditorComponent', () => {
         const env = new TestEnvironment();
         when(mockedActivatedRoute.snapshot).thenReturn({ queryParams: {} } as any);
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
+        const projectDoc = env.getProjectDoc('project01');
+        if (projectDoc.data != null) {
+          (projectDoc.data.translateConfig as any).draftConfig = { usfmConfig: {} };
+        }
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
