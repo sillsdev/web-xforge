@@ -8,14 +8,10 @@ export interface SFProjectSettings {
   sourceParatextId?: string | null;
   biblicalTermsEnabled?: boolean | null;
 
-  additionalTrainingDataFiles?: string[] | null;
-  additionalTrainingSourceEnabled?: boolean | null;
-  additionalTrainingSourceParatextId?: string | null;
-  alternateSourceEnabled?: boolean | null;
-  alternateSourceParatextId?: string | null;
-  alternateTrainingSourceEnabled?: boolean | null;
-  alternateTrainingSourceParatextId?: string | null;
-  servalConfig?: string | null;
+  /* DraftSourcesSettingsChange */
+  additionalTrainingDataFiles: string[];
+  draftingSourcesParatextIds: string[];
+  trainingSourcesParatextIds: string[];
 
   checkingEnabled?: boolean | null;
   usersSeeEachOthersResponses?: boolean | null;
