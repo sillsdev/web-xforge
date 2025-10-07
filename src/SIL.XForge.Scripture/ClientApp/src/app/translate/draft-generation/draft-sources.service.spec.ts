@@ -67,36 +67,37 @@ describe('DraftSourcesService', () => {
             }
           },
           draftConfig: {
-            alternateSource: {
-              projectRef: 'alternate_source_project',
-              paratextId: 'PT_ASP',
-              name: 'Alternate Source Project',
-              shortName: 'ASP',
-              writingSystem: {
-                tag: 'en_NZ'
+            draftingSources: [
+              {
+                projectRef: 'first_drafting_source',
+                paratextId: 'PT_FDS',
+                name: 'First Drafting Source',
+                shortName: 'FDS',
+                writingSystem: {
+                  tag: 'en_NZ'
+                }
               }
-            },
-            alternateTrainingSource: {
-              projectRef: 'alternate_training_source_project',
-              paratextId: 'PT_ATSP',
-              name: 'Alternate Training Source Project',
-              shortName: 'ATSP',
-              writingSystem: {
-                tag: 'en_AU'
+            ],
+            trainingSources: [
+              {
+                projectRef: 'first_training_source',
+                paratextId: 'PT_FTS',
+                name: 'First Training Source',
+                shortName: 'FTS',
+                writingSystem: {
+                  tag: 'en_AU'
+                }
+              },
+              {
+                projectRef: 'second_training_source',
+                paratextId: 'PT_STS',
+                name: 'Second Training Source',
+                shortName: 'STS',
+                writingSystem: {
+                  tag: 'en_UK'
+                }
               }
-            },
-            alternateSourceEnabled: true,
-            alternateTrainingSourceEnabled: true,
-            additionalTrainingSource: {
-              projectRef: 'additional_training_source_project',
-              paratextId: 'PT_ADSP',
-              name: 'Additional Training Source Project',
-              shortName: 'ADSP',
-              writingSystem: {
-                tag: 'en_UK'
-              }
-            },
-            additionalTrainingSourceEnabled: true
+            ]
           }
         }
       });
@@ -112,38 +113,20 @@ describe('DraftSourcesService', () => {
           trainingTargets: [{ ...targetProject, projectRef: 'project01' }],
           draftingSources: [
             {
-              name: 'Alternate Source Project',
-              projectRef: 'alternate_source_project',
-              shortName: 'ASP',
-              paratextId: 'PT_ASP',
+              ...targetProject.translateConfig.draftConfig.draftingSources[0],
               texts: [],
-              writingSystem: {
-                tag: 'en_NZ'
-              },
               noAccess: true
             } as DraftSource
           ],
           trainingSources: [
             {
-              name: 'Alternate Training Source Project',
-              projectRef: 'alternate_training_source_project',
-              shortName: 'ATSP',
-              paratextId: 'PT_ATSP',
+              ...targetProject.translateConfig.draftConfig.trainingSources[0],
               texts: [],
-              writingSystem: {
-                tag: 'en_AU'
-              },
               noAccess: true
             } as DraftSource,
             {
-              name: 'Additional Training Source Project',
-              projectRef: 'additional_training_source_project',
-              shortName: 'ADSP',
-              paratextId: 'PT_ADSP',
+              ...targetProject.translateConfig.draftConfig.trainingSources[1],
               texts: [],
-              writingSystem: {
-                tag: 'en_UK'
-              },
               noAccess: true
             } as DraftSource
           ]
@@ -159,18 +142,8 @@ describe('DraftSourcesService', () => {
             projectRef: 'source_project'
           },
           draftConfig: {
-            alternateSource: {
-              projectRef: 'alternate_source_project'
-            },
-            alternateTrainingSource: {
-              projectRef: 'alternate_training_source_project'
-            },
-            alternateSourceEnabled: true,
-            alternateTrainingSourceEnabled: true,
-            additionalTrainingSource: {
-              projectRef: 'additional_training_source_project'
-            },
-            additionalTrainingSourceEnabled: true
+            draftingSources: [{ projectRef: 'first_drafting_source' }],
+            trainingSources: [{ projectRef: 'first_training_source' }, { projectRef: 'second_training_source' }]
           }
         }
       });
@@ -182,25 +155,25 @@ describe('DraftSourcesService', () => {
           tag: 'en_US'
         }
       });
-      const alternateSourceProject = createTestProjectProfile({
-        name: 'Alternate Source Project',
-        shortName: 'ASP',
+      const firstDraftingSourceProject = createTestProjectProfile({
+        name: 'First Drafting Source Project',
+        shortName: 'FDS',
         texts: [{ bookNum: 1 }],
         writingSystem: {
           tag: 'en_NZ'
         }
       });
-      const alternateTrainingSourceProject = createTestProjectProfile({
-        name: 'Alternate Training Source Project',
-        shortName: 'ATSP',
+      const firstTrainingSourceProject = createTestProjectProfile({
+        name: 'First Training Source Project',
+        shortName: 'FTS',
         texts: [{ bookNum: 1 }],
         writingSystem: {
           tag: 'en_AU'
         }
       });
-      const additionalTrainingSourceProject = createTestProjectProfile({
-        name: 'Additional Training Source Project',
-        shortName: 'ADSP',
+      const secondTrainingSourceProject = createTestProjectProfile({
+        name: 'Second Training Source Project',
+        shortName: 'STS',
         texts: [{ bookNum: 1 }],
         writingSystem: {
           tag: 'en_UK'
@@ -215,26 +188,21 @@ describe('DraftSourcesService', () => {
       when(mockProjectService.getProfile('source_project')).thenResolve({
         data: sourceProject
       } as SFProjectProfileDoc);
-      when(mockProjectService.getProfile('alternate_source_project')).thenResolve({
-        data: alternateSourceProject
+      when(mockProjectService.getProfile('first_drafting_source')).thenResolve({
+        data: firstDraftingSourceProject
       } as SFProjectProfileDoc);
-      when(mockProjectService.getProfile('alternate_training_source_project')).thenResolve({
-        data: alternateTrainingSourceProject
+      when(mockProjectService.getProfile('first_training_source')).thenResolve({
+        data: firstTrainingSourceProject
       } as SFProjectProfileDoc);
-      when(mockProjectService.getProfile('additional_training_source_project')).thenResolve({
-        data: additionalTrainingSourceProject
+      when(mockProjectService.getProfile('second_training_source')).thenResolve({
+        data: secondTrainingSourceProject
       } as SFProjectProfileDoc);
       when(mockUserService.getCurrentUser()).thenResolve({
         data: createTestUser(
           {
             sites: {
               [environment.siteId]: {
-                projects: [
-                  'source_project',
-                  'alternate_source_project',
-                  'alternate_training_source_project',
-                  'additional_training_source_project'
-                ]
+                projects: ['source_project', 'first_drafting_source', 'first_training_source', 'second_training_source']
               }
             }
           },
@@ -245,172 +213,14 @@ describe('DraftSourcesService', () => {
       service.getDraftProjectSources().subscribe(result => {
         expect(result).toEqual({
           trainingTargets: [{ ...targetProject, projectRef: 'project01' }],
-          draftingSources: [{ ...alternateSourceProject, projectRef: 'alternate_source_project' }],
+          draftingSources: [{ ...firstDraftingSourceProject, projectRef: 'first_drafting_source' }],
           trainingSources: [
-            { ...alternateTrainingSourceProject, projectRef: 'alternate_training_source_project' },
-            { ...additionalTrainingSourceProject, projectRef: 'additional_training_source_project' }
+            { ...firstTrainingSourceProject, projectRef: 'first_training_source' },
+            { ...secondTrainingSourceProject, projectRef: 'second_training_source' }
           ]
         } as DraftSourcesAsArrays);
         done();
       });
     });
-
-    it('should not pass the alternate source project if disabled', done => {
-      const targetProject = createTestProjectProfile({
-        translateConfig: {
-          draftConfig: {
-            alternateSource: {
-              projectRef: 'alternate_source_project',
-              name: 'Alternate Source Project',
-              shortName: 'ASP',
-              writingSystem: {
-                tag: 'en_NZ'
-              }
-            },
-            alternateSourceEnabled: false
-          }
-        }
-      });
-      when(mockActivatedProjectService.changes$).thenReturn(
-        new BehaviorSubject<SFProjectProfileDoc>({
-          id: 'project01',
-          data: targetProject
-        } as SFProjectProfileDoc)
-      );
-
-      service.getDraftProjectSources().subscribe(result => {
-        expectTargetOnly({ ...targetProject, projectRef: 'project01' }, result);
-        done();
-      });
-    });
-
-    it('should not pass the alternate source project if enabled but missing', done => {
-      const targetProject = createTestProjectProfile({
-        translateConfig: {
-          draftConfig: {
-            alternateSourceEnabled: true
-          }
-        }
-      });
-      when(mockActivatedProjectService.changes$).thenReturn(
-        new BehaviorSubject<SFProjectProfileDoc>({
-          id: 'project01',
-          data: targetProject
-        } as SFProjectProfileDoc)
-      );
-
-      service.getDraftProjectSources().subscribe(result => {
-        expectTargetOnly({ ...targetProject, projectRef: 'project01' }, result);
-        done();
-      });
-    });
-
-    it('should not pass the alternate training source project if disabled', done => {
-      const targetProject = createTestProjectProfile({
-        translateConfig: {
-          draftConfig: {
-            alternateTrainingSource: {
-              projectRef: 'alternate_training_source_project',
-              name: 'Alternate Training Source Project',
-              shortName: 'ATSP',
-              writingSystem: {
-                tag: 'en_AU'
-              }
-            },
-            alternateTrainingSourceEnabled: false
-          }
-        }
-      });
-      when(mockActivatedProjectService.changes$).thenReturn(
-        new BehaviorSubject<SFProjectProfileDoc>({
-          id: 'project01',
-          data: targetProject
-        } as SFProjectProfileDoc)
-      );
-
-      service.getDraftProjectSources().subscribe(result => {
-        expectTargetOnly({ ...targetProject, projectRef: 'project01' }, result);
-        done();
-      });
-    });
-
-    it('should not pass the alternate training source project if enabled but missing', done => {
-      const targetProject = createTestProjectProfile({
-        translateConfig: {
-          draftConfig: {
-            alternateTrainingSourceEnabled: true
-          }
-        }
-      });
-      when(mockActivatedProjectService.changes$).thenReturn(
-        new BehaviorSubject<SFProjectProfileDoc>({
-          id: 'project01',
-          data: targetProject
-        } as SFProjectProfileDoc)
-      );
-
-      service.getDraftProjectSources().subscribe(result => {
-        expectTargetOnly({ ...targetProject, projectRef: 'project01' }, result);
-        done();
-      });
-    });
-
-    it('should not pass the additional training source project if disabled', done => {
-      const targetProject = createTestProjectProfile({
-        translateConfig: {
-          draftConfig: {
-            additionalTrainingSource: {
-              projectRef: 'additional_training_source_project',
-              name: 'Additional Training Source Project',
-              shortName: 'ADSP',
-              writingSystem: {
-                tag: 'en_UK'
-              }
-            },
-            additionalTrainingSourceEnabled: false
-          }
-        }
-      });
-      when(mockActivatedProjectService.changes$).thenReturn(
-        new BehaviorSubject<SFProjectProfileDoc>({
-          id: 'project01',
-          data: targetProject
-        } as SFProjectProfileDoc)
-      );
-
-      service.getDraftProjectSources().subscribe(result => {
-        expectTargetOnly({ ...targetProject, projectRef: 'project01' }, result);
-        done();
-      });
-    });
-
-    it('should not pass the additional training source project if enabled but missing', done => {
-      const targetProject = createTestProjectProfile({
-        translateConfig: {
-          draftConfig: {
-            additionalTrainingSourceEnabled: true
-          }
-        }
-      });
-      when(mockActivatedProjectService.changes$).thenReturn(
-        new BehaviorSubject<SFProjectProfileDoc>({
-          id: 'project01',
-          data: targetProject
-        } as SFProjectProfileDoc)
-      );
-
-      service.getDraftProjectSources().subscribe(result => {
-        expectTargetOnly({ ...targetProject, projectRef: 'project01' }, result);
-        done();
-      });
-    });
   });
-
-  function expectTargetOnly(targetProject: DraftSource, result: DraftSourcesAsArrays): void {
-    expect(result).toEqual({
-      trainingSources: [],
-      trainingTargets: [targetProject],
-      draftingSources: []
-    } as DraftSourcesAsArrays);
-  }
 });
