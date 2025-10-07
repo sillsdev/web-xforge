@@ -7,7 +7,7 @@ import { NoteTag } from '../models/note-tag';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from '../models/sf-project-rights';
 import { SFProjectRole } from '../models/sf-project-role';
 import { TextInfoPermission } from '../models/text-info-permission';
-import { TranslateShareLevel } from '../models/translate-config';
+import { TranslateShareLevel, TranslateSource } from '../models/translate-config';
 
 class SFProjectMigration1 extends DocMigration {
   static readonly VERSION = 1;
@@ -553,6 +553,83 @@ class SFProjectMigration26 extends DocMigration {
   }
 }
 
+class SFProjectMigration27 extends DocMigration {
+  static readonly VERSION = 27;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops: Op[] = [];
+    const draftingSources: TranslateSource[] = [];
+    const trainingSources: TranslateSource[] = [];
+
+    // Migrate the old values to the new structure
+    if (doc.data.translateConfig.preTranslate === true) {
+      const translateConfig = doc.data.translateConfig;
+      const draftConfig = translateConfig.draftConfig;
+      if (draftConfig.alternateTrainingSourceEnabled && draftConfig.alternateTrainingSource != null) {
+        trainingSources.push(draftConfig.alternateTrainingSource);
+      } else if (translateConfig.source != null) {
+        trainingSources.push(translateConfig.source);
+      }
+      if (draftConfig.additionalTrainingSourceEnabled && draftConfig.additionalTrainingSource != null) {
+        trainingSources.push(draftConfig.additionalTrainingSource);
+      }
+      if (draftConfig.alternateSourceEnabled && draftConfig.alternateSource != null) {
+        draftingSources.push(draftConfig.alternateSource);
+      } else if (translateConfig.source != null) {
+        draftingSources.push(translateConfig.source);
+      }
+    }
+
+    // Create the new structure
+    if (doc.data.translateConfig.draftConfig.draftingSources == null) {
+      ops.push({ p: ['translateConfig', 'draftConfig', 'draftingSources'], oi: draftingSources });
+    }
+    if (doc.data.translateConfig.draftConfig.trainingSources == null) {
+      ops.push({ p: ['translateConfig', 'draftConfig', 'trainingSources'], oi: trainingSources });
+    }
+
+    // Remove the old values
+    if (doc.data.translateConfig.draftConfig.alternateSourceEnabled != null) {
+      ops.push({
+        p: ['translateConfig', 'draftConfig', 'alternateSourceEnabled'],
+        od: doc.data.translateConfig.draftConfig.alternateSourceEnabled
+      });
+    }
+    if (doc.data.translateConfig.draftConfig.alternateSource != null) {
+      ops.push({
+        p: ['translateConfig', 'draftConfig', 'alternateSource'],
+        od: doc.data.translateConfig.draftConfig.alternateSource
+      });
+    }
+    if (doc.data.translateConfig.draftConfig.alternateTrainingSourceEnabled != null) {
+      ops.push({
+        p: ['translateConfig', 'draftConfig', 'alternateTrainingSourceEnabled'],
+        od: doc.data.translateConfig.draftConfig.alternateTrainingSourceEnabled
+      });
+    }
+    if (doc.data.translateConfig.draftConfig.alternateTrainingSource != null) {
+      ops.push({
+        p: ['translateConfig', 'draftConfig', 'alternateTrainingSource'],
+        od: doc.data.translateConfig.draftConfig.alternateTrainingSource
+      });
+    }
+    if (doc.data.translateConfig.draftConfig.additionalTrainingSourceEnabled != null) {
+      ops.push({
+        p: ['translateConfig', 'draftConfig', 'additionalTrainingSourceEnabled'],
+        od: doc.data.translateConfig.draftConfig.additionalTrainingSourceEnabled
+      });
+    }
+    if (doc.data.translateConfig.draftConfig.additionalTrainingSource != null) {
+      ops.push({
+        p: ['translateConfig', 'draftConfig', 'additionalTrainingSource'],
+        od: doc.data.translateConfig.draftConfig.additionalTrainingSource
+      });
+    }
+
+    await submitMigrationOp(SFProjectMigration27.VERSION, doc, ops);
+  }
+}
+
 export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = monotonicallyIncreasingMigrationList([
   SFProjectMigration1,
   SFProjectMigration2,
@@ -579,5 +656,6 @@ export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = monotonicallyIncrea
   SFProjectMigration23,
   SFProjectMigration24,
   SFProjectMigration25,
-  SFProjectMigration26
+  SFProjectMigration26,
+  SFProjectMigration27
 ]);
