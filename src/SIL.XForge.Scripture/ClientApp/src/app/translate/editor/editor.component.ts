@@ -1488,7 +1488,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.projectDoc,
       this.userService.currentUserId
     );
-    if (((hasDraft && !draftApplied) || urlDraftActive) && canViewDrafts) {
+    const hasSetDraftFormatting =
+      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.usfmConfig != null;
+    if (((hasDraft && !draftApplied) || urlDraftActive) && canViewDrafts && hasSetDraftFormatting) {
       // URL may indicate to select the 'draft' tab (such as when coming from generate draft page)
       const groupIdToAddTo: EditorTabGroupType = this.showSource ? 'source' : 'target';
 
