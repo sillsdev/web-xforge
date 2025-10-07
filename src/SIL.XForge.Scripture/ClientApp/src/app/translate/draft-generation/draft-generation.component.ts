@@ -78,8 +78,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   supportedLanguagesUrl: RouterLink = { route: [], fragment: 'supported-languages' };
   draftHelp = this.i18n.interpolate('draft_generation.instructions_help');
 
-  additionalTrainingSourceLanguage?: string;
-  alternateTrainingSourceLanguage?: string;
   sourceLanguage?: string;
   targetLanguage?: string;
   targetLanguageDisplayName?: string;
@@ -88,7 +86,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   source?: DraftSource;
   trainingSource?: DraftSource;
-  additionalTrainingSource?: DraftSource;
+  secondTrainingSource?: DraftSource;
 
   jobSubscription?: Subscription;
   isOnline = true;
@@ -156,7 +154,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       this.isPreviewSupported &&
       this.canAccessDraftSourceIfAvailable(this.trainingSource) &&
       this.canAccessDraftSourceIfAvailable(this.source) &&
-      this.canAccessDraftSourceIfAvailable(this.additionalTrainingSource)
+      this.canAccessDraftSourceIfAvailable(this.secondTrainingSource)
     );
   }
 
@@ -177,7 +175,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   /** Have drafting sources been adequately configured that a draft can be generated? */
   get isSourcesConfigurationComplete(): boolean {
-    return this.source != null && (this.trainingSource != null || this.additionalTrainingSource != null);
+    return this.source != null && (this.trainingSource != null || this.secondTrainingSource != null);
   }
 
   get hasConfigureSourcePermission(): boolean {
@@ -226,7 +224,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
         tap(({ trainingSources, draftingSources }) => {
           this.source = draftingSources[0];
           this.trainingSource = trainingSources[0];
-          this.additionalTrainingSource = trainingSources[1];
+          this.secondTrainingSource = trainingSources[1];
         })
       )
     ])

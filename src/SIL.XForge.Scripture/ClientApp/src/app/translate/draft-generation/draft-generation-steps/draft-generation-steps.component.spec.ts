@@ -615,7 +615,7 @@ describe('DraftGenerationStepsComponent', () => {
     });
   });
 
-  describe('additional training source', () => {
+  describe('two training sources', () => {
     const availableBooks = [{ bookNum: 2 }, { bookNum: 3 }];
     const allBooks = [{ bookNum: 1 }, ...availableBooks, { bookNum: 6 }, { bookNum: 7 }, { bookNum: 8 }];
     const draftingSourceBooks = availableBooks.concat({ bookNum: 7 });

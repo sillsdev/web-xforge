@@ -465,13 +465,9 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
 }
 
 export interface DraftSourcesSettingsChange {
-  additionalTrainingSourceEnabled: boolean;
-  additionalTrainingSourceParatextId?: string;
-  alternateSourceEnabled: boolean;
-  alternateSourceParatextId?: string;
-  alternateTrainingSourceEnabled: boolean;
-  alternateTrainingSourceParatextId?: string;
   additionalTrainingDataFiles: string[];
+  draftingSourcesParatextIds: string[];
+  trainingSourcesParatextIds: string[];
 }
 
 /** Convert some arrays of drafting sources to a settings object that can be applied to a SF project. */
@@ -500,28 +496,9 @@ export function sourceArraysToSettingsChange(
     throw new Error('Training target must be the current project');
   }
 
-  const alternateTrainingSource: SelectableProject | undefined = trainingSources[0];
-  const additionalTrainingSource: SelectableProject | undefined = trainingSources[1];
-  const alternateSource: SelectableProject | undefined = draftingSources[0];
-
-  const alternateTrainingEnabled = alternateTrainingSource != null;
-  const additionalTrainingEnabled = additionalTrainingSource != null;
-  const alternateSourceEnabled = alternateSource != null;
-
-  const config: DraftSourcesSettingsChange = {
-    additionalTrainingSourceEnabled: additionalTrainingEnabled,
-    additionalTrainingSourceParatextId: additionalTrainingEnabled
-      ? additionalTrainingSource?.paratextId
-      : DraftSourcesComponent.projectSettingValueUnset,
-    alternateSourceEnabled: alternateSourceEnabled,
-    alternateSourceParatextId: alternateSourceEnabled
-      ? alternateSource?.paratextId
-      : DraftSourcesComponent.projectSettingValueUnset,
-    alternateTrainingSourceEnabled: alternateTrainingEnabled,
-    alternateTrainingSourceParatextId: alternateTrainingEnabled
-      ? alternateTrainingSource?.paratextId
-      : DraftSourcesComponent.projectSettingValueUnset,
-    additionalTrainingDataFiles: selectedTrainingFileIds
+  return {
+    additionalTrainingDataFiles: selectedTrainingFileIds,
+    trainingSourcesParatextIds: trainingSources.map(s => s.paratextId),
+    draftingSourcesParatextIds: draftingSources.map(s => s.paratextId)
   };
-  return config;
 }

@@ -147,15 +147,12 @@ describe('DraftSourcesComponent', () => {
       // Suppose the user loads up the sources configuration page, changes no projects, and clicks Save. The settings
       // change request will just correspond to what the project already has for its settings.
       const expectedSettingsChangeRequest: SFProjectSettings = {
-        alternateSourceEnabled: true,
-        alternateSourceParatextId:
-          env.activatedProjectDoc.data!.translateConfig.draftConfig.alternateSource!.paratextId,
-        alternateTrainingSourceEnabled: true,
-        alternateTrainingSourceParatextId:
-          env.activatedProjectDoc.data!.translateConfig.draftConfig.alternateTrainingSource!.paratextId,
-        additionalTrainingSourceEnabled: true,
-        additionalTrainingSourceParatextId:
-          env.activatedProjectDoc.data!.translateConfig.draftConfig.additionalTrainingSource!.paratextId,
+        draftingSourcesParatextIds: env.activatedProjectDoc.data!.translateConfig.draftConfig.draftingSources.map(
+          s => s.paratextId
+        ),
+        trainingSourcesParatextIds: env.activatedProjectDoc.data!.translateConfig.draftConfig.trainingSources.map(
+          s => s.paratextId
+        ),
         additionalTrainingDataFiles:
           env.activatedProjectDoc.data!.translateConfig.draftConfig.lastSelectedTrainingDataFiles
       };
@@ -186,15 +183,12 @@ describe('DraftSourcesComponent', () => {
       // Suppose the user loads up the page, clears the second training/reference project box, and clicks Save. The
       // settings change request will show a requested change for unsetting the additional-training-source.
       const expectedSettingsChangeRequest: SFProjectSettings = {
-        alternateSourceEnabled: true,
-        alternateSourceParatextId:
-          env.activatedProjectDoc.data!.translateConfig.draftConfig.alternateSource!.paratextId,
-        alternateTrainingSourceEnabled: true,
-        alternateTrainingSourceParatextId:
-          env.activatedProjectDoc.data!.translateConfig.draftConfig.alternateTrainingSource!.paratextId,
-        // The second training source, the "additional training source", should not be set.
-        additionalTrainingSourceEnabled: false,
-        additionalTrainingSourceParatextId: DraftSourcesComponent.projectSettingValueUnset,
+        draftingSourcesParatextIds: env.activatedProjectDoc.data!.translateConfig.draftConfig.draftingSources.map(
+          s => s.paratextId
+        ),
+        trainingSourcesParatextIds: [
+          env.activatedProjectDoc.data!.translateConfig.draftConfig.trainingSources[0].paratextId
+        ],
         additionalTrainingDataFiles:
           env.activatedProjectDoc.data!.translateConfig.draftConfig.lastSelectedTrainingDataFiles
       };
@@ -229,18 +223,14 @@ describe('DraftSourcesComponent', () => {
 
       // Suppose the user comes to the page, leaves the second reference/training project selection alone, and clears
       // the first reference/training project selection. Let's respond by clearing the additional-training-source, and
-      // setting the alternate-training-source to the remaining reference/training project that is still specified.
+      // setting the first-training-source to the remaining reference/training project that is still specified.
       const expectedSettingsChangeRequest: SFProjectSettings = {
-        alternateSourceEnabled: true,
-        alternateSourceParatextId:
-          env.activatedProjectDoc.data!.translateConfig.draftConfig.alternateSource!.paratextId,
-        // The first training source should be set and should be equal to what the second training source _was_.
-        alternateTrainingSourceEnabled: true,
-        alternateTrainingSourceParatextId:
-          env.activatedProjectDoc.data!.translateConfig.draftConfig.additionalTrainingSource!.paratextId,
-        // And the second training source, the "additional training source", should not be set.
-        additionalTrainingSourceEnabled: false,
-        additionalTrainingSourceParatextId: DraftSourcesComponent.projectSettingValueUnset,
+        draftingSourcesParatextIds: env.activatedProjectDoc.data!.translateConfig.draftConfig.draftingSources.map(
+          s => s.paratextId
+        ),
+        trainingSourcesParatextIds: [
+          env.activatedProjectDoc.data!.translateConfig.draftConfig.trainingSources[1].paratextId
+        ],
         additionalTrainingDataFiles:
           env.activatedProjectDoc.data!.translateConfig.draftConfig.lastSelectedTrainingDataFiles
       };
@@ -313,15 +303,12 @@ describe('DraftSourcesComponent', () => {
       env.clickLanguageCodesConfirmationCheckbox();
 
       const expectedSettingsChangeRequest: SFProjectSettings = {
-        alternateSourceEnabled: true,
-        alternateSourceParatextId:
-          env.activatedProjectDoc.data!.translateConfig.draftConfig.alternateSource!.paratextId,
-        alternateTrainingSourceEnabled: true,
-        alternateTrainingSourceParatextId:
-          env.activatedProjectDoc.data!.translateConfig.draftConfig.alternateTrainingSource!.paratextId,
-        additionalTrainingSourceEnabled: true,
-        additionalTrainingSourceParatextId:
-          env.activatedProjectDoc.data!.translateConfig.draftConfig.additionalTrainingSource!.paratextId,
+        draftingSourcesParatextIds: env.activatedProjectDoc.data!.translateConfig.draftConfig.draftingSources.map(
+          s => s.paratextId
+        ),
+        trainingSourcesParatextIds: env.activatedProjectDoc.data!.translateConfig.draftConfig.trainingSources.map(
+          s => s.paratextId
+        ),
         additionalTrainingDataFiles: ['test1', 'test2']
       };
 
@@ -521,13 +508,9 @@ describe('DraftSourcesComponent', () => {
       );
 
       expect(result).toEqual({
-        additionalTrainingSourceEnabled: false,
-        additionalTrainingSourceParatextId: 'unset',
-        alternateSourceEnabled: false,
-        alternateSourceParatextId: 'unset',
-        alternateTrainingSourceEnabled: false,
-        alternateTrainingSourceParatextId: 'unset',
-        additionalTrainingDataFiles: []
+        additionalTrainingDataFiles: [],
+        trainingSourcesParatextIds: [],
+        draftingSourcesParatextIds: []
       });
     });
 
@@ -546,13 +529,9 @@ describe('DraftSourcesComponent', () => {
         currentProjectParatextId
       );
       expect(result).toEqual({
-        additionalTrainingSourceEnabled: false,
-        additionalTrainingSourceParatextId: 'unset',
-        alternateSourceEnabled: false,
-        alternateSourceParatextId: 'unset',
-        alternateTrainingSourceEnabled: true,
-        alternateTrainingSourceParatextId: mockProject1.paratextId,
-        additionalTrainingDataFiles: []
+        additionalTrainingDataFiles: [],
+        trainingSourcesParatextIds: [mockProject1.paratextId],
+        draftingSourcesParatextIds: []
       });
     });
 
@@ -571,13 +550,9 @@ describe('DraftSourcesComponent', () => {
         currentProjectParatextId
       );
       expect(result).toEqual({
-        additionalTrainingSourceEnabled: true,
-        additionalTrainingSourceParatextId: mockProject2.paratextId,
-        alternateSourceEnabled: false,
-        alternateSourceParatextId: 'unset',
-        alternateTrainingSourceEnabled: true,
-        alternateTrainingSourceParatextId: mockProject1.paratextId,
-        additionalTrainingDataFiles: []
+        additionalTrainingDataFiles: [],
+        trainingSourcesParatextIds: [mockProject1.paratextId, mockProject2.paratextId],
+        draftingSourcesParatextIds: []
       });
     });
 
@@ -596,13 +571,9 @@ describe('DraftSourcesComponent', () => {
         currentProjectParatextId
       );
       expect(result).toEqual({
-        additionalTrainingSourceEnabled: false,
-        additionalTrainingSourceParatextId: 'unset',
-        alternateSourceEnabled: true,
-        alternateSourceParatextId: mockProject1.paratextId,
-        alternateTrainingSourceEnabled: false,
-        alternateTrainingSourceParatextId: 'unset',
-        additionalTrainingDataFiles: []
+        additionalTrainingDataFiles: [],
+        trainingSourcesParatextIds: [],
+        draftingSourcesParatextIds: [mockProject1.paratextId]
       });
     });
 
@@ -621,13 +592,9 @@ describe('DraftSourcesComponent', () => {
         currentProjectParatextId
       );
       expect(result).toEqual({
-        additionalTrainingSourceEnabled: true,
-        additionalTrainingSourceParatextId: mockProject2.paratextId,
-        alternateSourceEnabled: true,
-        alternateSourceParatextId: mockProject1.paratextId,
-        alternateTrainingSourceEnabled: true,
-        alternateTrainingSourceParatextId: mockProject1.paratextId,
-        additionalTrainingDataFiles: []
+        additionalTrainingDataFiles: [],
+        trainingSourcesParatextIds: [mockProject1.paratextId, mockProject2.paratextId],
+        draftingSourcesParatextIds: [mockProject1.paratextId]
       });
     });
 
@@ -664,13 +631,9 @@ describe('DraftSourcesComponent', () => {
         currentProjectParatextId
       );
       expect(result).toEqual({
-        additionalTrainingSourceEnabled: false,
-        additionalTrainingSourceParatextId: 'unset',
-        alternateSourceEnabled: false,
-        alternateSourceParatextId: 'unset',
-        alternateTrainingSourceEnabled: false,
-        alternateTrainingSourceParatextId: 'unset',
-        additionalTrainingDataFiles: []
+        additionalTrainingDataFiles: [],
+        trainingSourcesParatextIds: [],
+        draftingSourcesParatextIds: []
       });
     });
 
@@ -833,12 +796,8 @@ class TestEnvironment {
     // the sf project 0's translate config values.
     const sfProject0: SFProject = this.activatedProjectDoc.data;
     sfProject0.translateConfig.source = usersSFResources[0];
-    sfProject0.translateConfig.draftConfig.alternateSourceEnabled = true;
-    sfProject0.translateConfig.draftConfig.alternateSource = usersSFProjects[1];
-    sfProject0.translateConfig.draftConfig.alternateTrainingSourceEnabled = true;
-    sfProject0.translateConfig.draftConfig.alternateTrainingSource = usersSFResources[2];
-    sfProject0.translateConfig.draftConfig.additionalTrainingSourceEnabled = true;
-    sfProject0.translateConfig.draftConfig.additionalTrainingSource = usersSFProjects[2];
+    sfProject0.translateConfig.draftConfig.draftingSources = [usersSFProjects[1]];
+    sfProject0.translateConfig.draftConfig.trainingSources = [usersSFResources[2], usersSFProjects[2]];
     sfProject0.translateConfig.translationSuggestionsEnabled = false;
     sfProject0.translateConfig.preTranslate = true;
 

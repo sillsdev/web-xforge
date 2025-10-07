@@ -15,23 +15,23 @@ const mockActivatedProject = mock(ActivatedProjectService);
 const defaultDraftSources: DraftSourcesAsSelectableProjectArrays = {
   draftingSources: [
     {
-      shortName: 'ADS',
-      name: 'Alternate Drafting Source',
-      paratextId: 'alternate-drafting-source',
+      shortName: 'FDS',
+      name: 'First Drafting Source',
+      paratextId: 'first-drafting-source',
       languageTag: 'es'
     }
   ],
   trainingSources: [
     {
-      shortName: 'ALT-TS',
-      name: 'Alternate Training Source',
-      paratextId: 'alternate-training-source',
+      shortName: 'FTS',
+      name: 'First Training Source',
+      paratextId: 'first-training-source',
       languageTag: 'spa'
     },
     {
-      shortName: 'ADD-TS',
-      name: 'Additional Training Source',
-      paratextId: 'additional-training-source',
+      shortName: 'STS',
+      name: 'Second Training Source',
+      paratextId: 'second-training-source',
       languageTag: 'es'
     }
   ],
