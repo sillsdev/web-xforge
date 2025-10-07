@@ -82,28 +82,32 @@ describe('progress service', () => {
   it('updates total progress when chapter content changes', fakeAsync(async () => {
     const env = new TestEnvironment();
     const changeEvent = new BehaviorSubject({});
-    when(mockSFProjectService.getText(deepEqual(new TextDocId('project01', 1, 2, 'target')))).thenCall(() => {
-      return {
-        getSegmentCount: () => {
-          return { translated: 12, blank: 2 };
-        },
-        getNonEmptyVerses: () => env.createVerses(12),
-        changes$: changeEvent
-      };
-    });
+    when(mockSFProjectService.getText(deepEqual(new TextDocId('project01', 1, 2, 'target')), anything())).thenCall(
+      () => {
+        return {
+          getSegmentCount: () => {
+            return { translated: 12, blank: 2 };
+          },
+          getNonEmptyVerses: () => env.createVerses(12),
+          changes$: changeEvent
+        };
+      }
+    );
 
     tick();
 
     // mock a change
-    when(mockSFProjectService.getText(deepEqual(new TextDocId('project01', 1, 2, 'target')))).thenCall(() => {
-      return {
-        getSegmentCount: () => {
-          return { translated: 13, blank: 1 };
-        },
-        getNonEmptyVerses: () => env.createVerses(13),
-        changes$: changeEvent
-      };
-    });
+    when(mockSFProjectService.getText(deepEqual(new TextDocId('project01', 1, 2, 'target')), anything())).thenCall(
+      () => {
+        return {
+          getSegmentCount: () => {
+            return { translated: 13, blank: 1 };
+          },
+          getNonEmptyVerses: () => env.createVerses(13),
+          changes$: changeEvent
+        };
+      }
+    );
 
     const originalProgress = env.service.overallProgress.translated;
     tick(1000); // wait for the throttle time
@@ -206,14 +210,14 @@ class TestEnvironment {
     when(mockProjectService.changes$).thenReturn(this.project$);
 
     when(mockPermissionService.canAccessText(anything())).thenResolve(true);
-    when(mockSFProjectService.getProfile('project01')).thenResolve({
+    when(mockSFProjectService.getProfile('project01', anything())).thenResolve({
       data,
       id: 'project01',
       remoteChanges$: new BehaviorSubject([])
     } as unknown as SFProjectProfileDoc);
 
     // set up blank project
-    when(mockSFProjectService.getProfile('project02')).thenResolve({
+    when(mockSFProjectService.getProfile('project02', anything())).thenResolve({
       data,
       id: 'project02',
       remoteChanges$: new BehaviorSubject([])
@@ -234,17 +238,17 @@ class TestEnvironment {
         const blank = blankSegments >= 5 ? 5 : blankSegments;
         blankSegments -= blank;
 
-        when(mockSFProjectService.getText(deepEqual(new TextDocId(projectId, book, chapter, 'target')))).thenCall(
-          () => {
-            return {
-              getSegmentCount: () => {
-                return { translated, blank };
-              },
-              getNonEmptyVerses: () => this.createVerses(translated),
-              changes$: of({} as TextData)
-            };
-          }
-        );
+        when(
+          mockSFProjectService.getText(deepEqual(new TextDocId(projectId, book, chapter, 'target')), anything())
+        ).thenCall(() => {
+          return {
+            getSegmentCount: () => {
+              return { translated, blank };
+            },
+            getNonEmptyVerses: () => this.createVerses(translated),
+            changes$: of({} as TextData)
+          };
+        });
       }
     }
   }

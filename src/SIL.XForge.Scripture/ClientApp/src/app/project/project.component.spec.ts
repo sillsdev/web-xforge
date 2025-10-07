@@ -1,6 +1,6 @@
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flushMicrotasks, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { TranslocoService } from '@ngneat/transloco';
 import { User } from 'realtime-server/lib/esm/common/models/user';
@@ -16,6 +16,7 @@ import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scripturefo
 import { of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -175,6 +176,7 @@ describe('ProjectComponent', () => {
     verify(mockedRouter.navigate(anything(), anything())).never();
 
     env.addUserToProject(1);
+    flushMicrotasks();
     verify(mockedRouter.navigate(deepEqual(['projects', 'project1', 'translate', 'MAT']), anything())).once();
     expect().nothing();
   }));
@@ -190,7 +192,7 @@ class TestEnvironment {
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedUserService.currentProjectId(anything())).thenReturn('project1');
     when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
+      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01', new DocSubscription('spec'))
     );
     when(mockedTranslocoService.translate<string>(anything())).thenReturn('The project link is invalid.');
     const snapshot = new ActivatedRouteSnapshot();
@@ -274,9 +276,9 @@ class TestEnvironment {
     });
   }
 
-  addUserToProject(projectIdSuffix: number): void {
+  async addUserToProject(projectIdSuffix: number): Promise<void> {
     this.setProjectData({ memberProjectIdSuffixes: [projectIdSuffix] });
-    const userDoc: UserDoc = this.realtimeService.get(UserDoc.COLLECTION, 'user01');
+    const userDoc: UserDoc = await this.realtimeService.get(UserDoc.COLLECTION, 'user01', new DocSubscription('spec'));
     userDoc.submitJson0Op(op => op.set(u => u.sites, { sf: { projects: [`project${projectIdSuffix}`] } }), false);
     tick();
   }

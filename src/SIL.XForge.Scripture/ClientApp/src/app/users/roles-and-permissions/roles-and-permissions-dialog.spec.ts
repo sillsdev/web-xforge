@@ -21,6 +21,7 @@ import { BehaviorSubject } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -71,9 +72,9 @@ describe('RolesAndPermissionsComponent', () => {
     env.closeDialog();
   }));
 
-  it('updates the form when the network connection changes', fakeAsync(() => {
+  it('updates the form when the network connection changes', fakeAsync(async () => {
     env.setupProjectData(rolesByUser);
-    env.openDialog();
+    await env.openDialog();
 
     expect(env.component?.isParatextUser()).toBe(true);
     expect(env.component?.roles.disabled).toBe(true);
@@ -88,7 +89,7 @@ describe('RolesAndPermissionsComponent', () => {
     expect(env.component?.roles.disabled).toBe(true);
   }));
 
-  it('initializes values from the project', fakeAsync(() => {
+  it('initializes values from the project', fakeAsync(async () => {
     env.setupProjectData(rolesByUser, {
       ptTranslator: [
         SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
@@ -98,7 +99,7 @@ describe('RolesAndPermissionsComponent', () => {
         SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Delete)
       ]
     });
-    env.openDialog();
+    await env.openDialog();
 
     expect(env.component?.roles.value).toBe(SFProjectRole.ParatextTranslator);
     //translator does not have these permissions by default
@@ -106,48 +107,48 @@ describe('RolesAndPermissionsComponent', () => {
     expect(env.component?.canManageAudio.value).toBe(true);
   }));
 
-  it('reflects whether or not the user is from Paratext', fakeAsync(() => {
+  it('reflects whether or not the user is from Paratext', fakeAsync(async () => {
     env.setupProjectData(rolesByUser);
-    env.openDialog();
+    await env.openDialog();
 
     expect(env.component?.isParatextUser()).toBe(true);
 
     env.closeDialog();
-    env.openDialog('communityChecker');
+    await env.openDialog('communityChecker');
 
     expect(env.component?.isParatextUser()).toBe(false);
   }));
 
-  it('reflects Paratext roles for Paratext users', fakeAsync(() => {
+  it('reflects Paratext roles for Paratext users', fakeAsync(async () => {
     env.setupProjectData(rolesByUser);
-    env.openDialog();
+    await env.openDialog();
 
     expect(env.component?.roleOptions.length).toBeGreaterThan(0);
     forEach(env.component?.roleOptions, r => expect(isParatextRole(r)).toBe(true));
     expect(env.component?.roles.disabled).toBe(true);
   }));
 
-  it('reflects Scripture Forge roles for Scripture Forge users', fakeAsync(() => {
+  it('reflects Scripture Forge roles for Scripture Forge users', fakeAsync(async () => {
     env.setupProjectData(rolesByUser);
-    env.openDialog('communityChecker');
+    await env.openDialog('communityChecker');
 
     expect(env.component?.roleOptions.length).toBeGreaterThan(0);
     forEach(env.component?.roleOptions, r => expect(!isParatextRole(r)));
     expect(env.component?.roles.disabled).toBe(false);
   }));
 
-  it('doesnt save if the form is disabled', fakeAsync(() => {
+  it('doesnt save if the form is disabled', fakeAsync(async () => {
     env.setupProjectData();
-    env.openDialog();
+    await env.openDialog();
     env.isOnline$.next(false);
     expect(env.component?.form.disabled).toBe(true);
 
-    env.component?.save();
+    await env.component?.save();
 
     verify(mockedProjectService.onlineSetUserProjectPermissions(anything(), anything(), anything())).never();
   }));
 
-  it('saves correct permissions without changing unrelated ones', fakeAsync(() => {
+  it('saves correct permissions without changing unrelated ones', fakeAsync(async () => {
     let permissions = [
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.View),
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Delete)
@@ -156,12 +157,16 @@ describe('RolesAndPermissionsComponent', () => {
       ptTranslator: [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Delete)],
       observer: permissions
     });
-    env.openDialog('ptTranslator');
+    await env.openDialog('ptTranslator');
 
     //prep for role change
-    when(mockedProjectService.onlineUpdateUserRole(anything(), anything(), anything())).thenCall((p, u, r) => {
+    when(mockedProjectService.onlineUpdateUserRole(anything(), anything(), anything())).thenCall(async (p, u, r) => {
       rolesByUser[u] = r;
-      const projectDoc: SFProjectDoc = env.realtimeService.get(SFProjectDoc.COLLECTION, p);
+      const projectDoc: SFProjectDoc = await env.realtimeService.get(
+        SFProjectDoc.COLLECTION,
+        p,
+        new DocSubscription('spec')
+      );
       projectDoc.submitJson0Op(op => {
         op.set(p => p.userRoles, rolesByUser);
         op.set(p => p.userPermissions, {
@@ -173,7 +178,7 @@ describe('RolesAndPermissionsComponent', () => {
     env.component?.canAddEditQuestions.setValue(true);
     env.component?.canManageAudio.setValue(true);
     env.component?.roles.setValue(SFProjectRole.Viewer);
-    env.component?.save();
+    await env.component?.save();
     tick();
 
     verify(mockedProjectService.onlineUpdateUserRole('project01', 'ptTranslator', SFProjectRole.Viewer)).once();
@@ -218,8 +223,8 @@ class TestEnvironment {
 
   constructor() {
     when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.isOnline$.asObservable());
-    when(mockedProjectService.get(anything())).thenCall(projectId =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
+    when(mockedProjectService.subscribe(anything(), anything())).thenCall((projectId, subscription) =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId, subscription)
     );
 
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
@@ -242,26 +247,24 @@ class TestEnvironment {
     tick(matDialogCloseDelay);
   }
 
-  openDialog(userId: string = 'ptTranslator'): void {
-    this.realtimeService
-      .subscribe<SFProjectUserConfigDoc>(
-        SF_PROJECT_USER_CONFIGS_COLLECTION,
-        getSFProjectUserConfigDocId('project01', userId)
-      )
-      .then(() => {
-        const config: MatDialogConfig<UserData> = {
-          data: {
-            projectId: 'project01',
-            userId,
-            userProfile: {
-              displayName: 'User',
-              avatarUrl: ''
-            }
-          }
-        };
-        const dialogRef = TestBed.inject(MatDialog).open(RolesAndPermissionsDialogComponent, config);
-        this.component = dialogRef.componentInstance;
-      });
+  async openDialog(userId: string = 'ptTranslator'): Promise<void> {
+    await this.realtimeService.subscribe<SFProjectUserConfigDoc>(
+      SF_PROJECT_USER_CONFIGS_COLLECTION,
+      getSFProjectUserConfigDocId('project01', userId),
+      new DocSubscription('spec')
+    );
+    const config: MatDialogConfig<UserData> = {
+      data: {
+        projectId: 'project01',
+        userId,
+        userProfile: {
+          displayName: 'User',
+          avatarUrl: ''
+        }
+      }
+    };
+    const dialogRef = TestBed.inject(MatDialog).open(RolesAndPermissionsDialogComponent, config);
+    this.component = dialogRef.componentInstance;
     this.wait();
   }
 

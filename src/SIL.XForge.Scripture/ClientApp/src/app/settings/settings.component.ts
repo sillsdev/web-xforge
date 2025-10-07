@@ -17,6 +17,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -183,7 +184,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
             firstValueFrom(this.paratextService.getParatextUsername()).then((username: string | undefined) => {
               if (username != null) this.paratextUsername = username;
             }),
-            this.projectService.get(projectId).then(projectDoc => (this.projectDoc = projectDoc))
+            this.projectService
+              .subscribe(projectId, new DocSubscription('SettingsComponent', this.destroyRef))
+              .then(projectDoc => (this.projectDoc = projectDoc))
           ]).then(() => {
             if (this.projectDoc != null) {
               this.updateSettingsInfo();

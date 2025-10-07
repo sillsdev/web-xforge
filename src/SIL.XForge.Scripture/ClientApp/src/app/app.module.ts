@@ -38,6 +38,7 @@ import { ProjectComponent } from './project/project.component';
 import { ScriptureChooserDialogComponent } from './scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { DeleteProjectDialogComponent } from './settings/delete-project-dialog/delete-project-dialog.component';
 import { SettingsComponent } from './settings/settings.component';
+import { CacheService } from './shared/cache-service/cache.service';
 import { GlobalNoticesComponent } from './shared/global-notices/global-notices.component';
 import { SharedModule } from './shared/shared.module';
 import { TextNoteDialogComponent } from './shared/text/text-note-dialog/text-note-dialog.component';
@@ -46,6 +47,11 @@ import { SyncComponent } from './sync/sync.component';
 import { LynxInsightsModule } from './translate/editor/lynx/insights/lynx-insights.module';
 import { TranslateModule } from './translate/translate.module';
 import { UsersModule } from './users/users.module';
+
+/** Initialization function for any services that need to be run but are not depended on by any component. */
+function initializeGlobalServicesFactory(_cacheService: CacheService): () => Promise<any> {
+  return () => Promise.resolve();
+}
 
 @NgModule({
   declarations: [
@@ -99,6 +105,10 @@ import { UsersModule } from './users/users.module';
     { provide: ErrorHandler, useClass: ExceptionHandlingService },
     { provide: OverlayContainer, useClass: InAppRootOverlayContainer },
     provideHttpClient(withInterceptorsFromDi()),
+    provideAppInitializer(() => {
+      const initializerFn = initializeGlobalServicesFactory(inject(CacheService));
+      return initializerFn();
+    }),
     provideAppInitializer(() => {
       const initializerFn = preloadEnglishTranslations(inject(TranslocoService));
       return initializerFn();

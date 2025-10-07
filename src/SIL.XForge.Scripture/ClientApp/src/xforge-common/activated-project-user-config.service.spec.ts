@@ -2,7 +2,7 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { mock, when } from 'ts-mockito';
+import { anything, mock, when } from 'ts-mockito';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFProjectUserConfigDoc } from '../app/core/models/sf-project-user-config-doc';
 import { SFProjectService } from '../app/core/sf-project.service';
@@ -73,7 +73,7 @@ describe('ActivatedProjectUserConfigService', () => {
 
   it('should emit project user config when project becomes active', fakeAsync(() => {
     const { doc, config } = createTestDoc(PROJECT_ID);
-    when(mockedProjectService.getUserConfig(PROJECT_ID, USER_ID)).thenResolve(doc);
+    when(mockedProjectService.getUserConfig(PROJECT_ID, USER_ID, anything())).thenResolve(doc);
 
     let emittedDoc: SFProjectUserConfigDoc | undefined;
     let emittedConfig: SFProjectUserConfig | undefined;
@@ -89,7 +89,7 @@ describe('ActivatedProjectUserConfigService', () => {
 
   it('should emit updated project user config when config changes', fakeAsync(() => {
     const { doc, changesSubject } = createTestDoc(PROJECT_ID);
-    when(mockedProjectService.getUserConfig(PROJECT_ID, USER_ID)).thenResolve(doc);
+    when(mockedProjectService.getUserConfig(PROJECT_ID, USER_ID, anything())).thenResolve(doc);
 
     projectIdSubject.next(PROJECT_ID);
     tick();
@@ -115,8 +115,8 @@ describe('ActivatedProjectUserConfigService', () => {
     const project1 = createTestDoc(PROJECT_ID);
     const project2 = createTestDoc(PROJECT_ID_2);
 
-    when(mockedProjectService.getUserConfig(PROJECT_ID, USER_ID)).thenResolve(project1.doc);
-    when(mockedProjectService.getUserConfig(PROJECT_ID_2, USER_ID)).thenResolve(project2.doc);
+    when(mockedProjectService.getUserConfig(PROJECT_ID, USER_ID, anything())).thenResolve(project1.doc);
+    when(mockedProjectService.getUserConfig(PROJECT_ID_2, USER_ID, anything())).thenResolve(project2.doc);
 
     let currentDoc: SFProjectUserConfigDoc | undefined;
     service.projectUserConfigDoc$.subscribe(doc => (currentDoc = doc));
@@ -131,7 +131,7 @@ describe('ActivatedProjectUserConfigService', () => {
   }));
 
   it('should handle case where project user config is not available', fakeAsync(() => {
-    when(mockedProjectService.getUserConfig('missing-project', USER_ID)).thenResolve(undefined as any);
+    when(mockedProjectService.getUserConfig('missing-project', USER_ID, anything())).thenResolve(undefined as any);
 
     let doc: SFProjectUserConfigDoc | undefined;
     service.projectUserConfigDoc$.subscribe(d => (doc = d));

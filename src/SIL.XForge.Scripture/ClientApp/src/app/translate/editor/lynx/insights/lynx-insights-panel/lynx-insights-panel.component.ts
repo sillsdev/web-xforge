@@ -16,6 +16,7 @@ import { asapScheduler, combineLatest, debounceTime, map, tap } from 'rxjs';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { isWhitespace } from 'xforge-common/util/string-util';
 import { SFProjectService } from '../../../../../core/sf-project.service';
@@ -837,29 +838,31 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
     }
 
     // Create and cache the promise for loading the document
-    return this.projectService.getText(insight.textDocId).then(textDoc => {
-      const textDocData: TextData | undefined = textDoc.data;
+    return this.projectService
+      .getText(insight.textDocId, new DocSubscription('LynxInsightsPanelComponent', this.destroyRef))
+      .then(textDoc => {
+        const textDocData: TextData | undefined = textDoc.data;
 
-      if (textDocData != null) {
-        this.textDocDataCache.set(textDocIdStr, textDocData);
+        if (textDocData != null) {
+          this.textDocDataCache.set(textDocIdStr, textDocData);
 
-        if (textDocData.ops != null) {
-          this.textDocSegments.set(textDocIdStr, this.editorSegmentService.parseSegments(textDocData.ops));
+          if (textDocData.ops != null) {
+            this.textDocSegments.set(textDocIdStr, this.editorSegmentService.parseSegments(textDocData.ops));
+          }
         }
-      }
 
-      // On text edits, update cached text doc data and segment map for text doc
-      textDoc.changes$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe((changes: TextData) => {
-        if (changes?.ops != null) {
-          const prevDocOps: DeltaOperation[] | undefined = this.textDocDataCache.get(textDocIdStr)?.ops;
-          const newTextDocData: TextData = new Delta(prevDocOps).compose(new Delta(changes.ops));
-          this.textDocDataCache.set(textDocIdStr, newTextDocData);
-          this.textDocSegments.set(textDocIdStr, this.editorSegmentService.parseSegments(newTextDocData.ops ?? []));
-        }
+        // On text edits, update cached text doc data and segment map for text doc
+        textDoc.changes$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe((changes: TextData) => {
+          if (changes?.ops != null) {
+            const prevDocOps: DeltaOperation[] | undefined = this.textDocDataCache.get(textDocIdStr)?.ops;
+            const newTextDocData: TextData = new Delta(prevDocOps).compose(new Delta(changes.ops));
+            this.textDocDataCache.set(textDocIdStr, newTextDocData);
+            this.textDocSegments.set(textDocIdStr, this.editorSegmentService.parseSegments(newTextDocData.ops ?? []));
+          }
+        });
+
+        return this.textDocDataCache.get(textDocIdStr);
       });
-
-      return this.textDocDataCache.get(textDocIdStr);
-    });
   }
 
   /**

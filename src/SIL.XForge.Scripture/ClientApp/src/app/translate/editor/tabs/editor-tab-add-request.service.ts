@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
+import { DestroyRef, Injectable } from '@angular/core';
 import { EditorTabGroupType, EditorTabType } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
 import { map, Observable, of, switchMap, take } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { PermissionsService } from '../../../core/permissions.service';
@@ -22,7 +23,8 @@ export class EditorTabAddRequestService implements TabAddRequestService<EditorTa
     private readonly dialogService: DialogService,
     private readonly projectService: SFProjectService,
     private readonly permissionsService: PermissionsService,
-    private readonly tabState: TabStateService<EditorTabGroupType, EditorTabInfo>
+    private readonly tabState: TabStateService<EditorTabGroupType, EditorTabInfo>,
+    private readonly destroyRef: DestroyRef
   ) {}
 
   handleTabAddRequest(tabType: EditorTabType): Observable<Partial<EditorTabInfo> | never> {
@@ -48,7 +50,10 @@ export class EditorTabAddRequestService implements TabAddRequestService<EditorTa
         Promise.all(
           tabs.map(async tab =>
             tab.projectId != null && (await this.permissionsService.isUserOnProject(tab.projectId))
-              ? this.projectService.get(tab.projectId)
+              ? this.projectService.subscribe(
+                  tab.projectId,
+                  new DocSubscription('EditorTabAddRequestService', this.destroyRef)
+                )
               : undefined
           )
         )

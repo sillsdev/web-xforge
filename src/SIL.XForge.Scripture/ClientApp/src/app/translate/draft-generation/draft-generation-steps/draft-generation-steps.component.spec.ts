@@ -1458,6 +1458,6 @@ describe('DraftGenerationStepsComponent', () => {
       })
     } as SFProjectProfileDoc;
 
-    when(mockProjectService.getProfile(projectId)).thenResolve(profileDoc);
+    when(mockProjectService.getProfile(projectId, anything())).thenResolve(profileDoc);
   }
 });
