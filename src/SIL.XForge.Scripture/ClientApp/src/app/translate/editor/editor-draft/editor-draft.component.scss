@@ -31,7 +31,7 @@ app-notice {
   flex-grow: 1;
   display: flex;
   justify-content: flex-end;
-  gap: 4px;
+  column-gap: 4px;
   align-items: center;
   flex-wrap: wrap;
 }
