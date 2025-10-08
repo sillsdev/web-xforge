@@ -99,12 +99,12 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   async isProjectAdmin(projectId: string, userId: string): Promise<boolean> {
     const docSubscription = new DocSubscription('SFProjectService.isProjectAdmin');
     const projectDoc = await this.getProfile(projectId, docSubscription);
-    docSubscription.unsubscribe();
-    return (
+    const result =
       projectDoc != null &&
       projectDoc.data != null &&
-      projectDoc.data.userRoles[userId] === SFProjectRole.ParatextAdministrator
-    );
+      projectDoc.data.userRoles[userId] === SFProjectRole.ParatextAdministrator;
+    docSubscription.unsubscribe();
+    return result;
   }
 
   /**
