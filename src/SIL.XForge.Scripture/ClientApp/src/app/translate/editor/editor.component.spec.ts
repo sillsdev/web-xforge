@@ -4599,10 +4599,7 @@ describe('EditorComponent', () => {
 });
 
 const defaultTranslateConfig = {
-  translationSuggestionsEnabled: false,
-  draftConfig: {
-    usfmConfig: {}
-  }
+  translationSuggestionsEnabled: false
 };
 
 class TestEnvironment {
@@ -4658,6 +4655,9 @@ class TestEnvironment {
     translateConfig: {
       translationSuggestionsEnabled: true,
       defaultNoteTagId: 2,
+      draftConfig: {
+        usfmConfig: {}
+      },
       source: {
         paratextId: 'source01',
         projectRef: 'project02',
@@ -4920,7 +4920,7 @@ class TestEnvironment {
 
     this.setupUsers();
     this.setCurrentUser('user01');
-    this.setupProject({ translateConfig: defaultTranslateConfig });
+    this.setupProject();
     this.addParatextNoteThread(1, 'MAT 1:1', 'chapter 1', { start: 8, length: 9 }, ['user01', 'user02', 'user03']);
     this.addParatextNoteThread(2, 'MAT 1:3', 'target: chapter 1, verse 3.', { start: 0, length: 0 }, ['user01']);
     this.addParatextNoteThread(3, 'MAT 1:3', 'verse 3', { start: 20, length: 7 }, ['user01']);
