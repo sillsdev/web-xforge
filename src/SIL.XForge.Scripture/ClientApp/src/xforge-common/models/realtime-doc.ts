@@ -1,5 +1,5 @@
 import { DestroyRef } from '@angular/core';
-import { BehaviorSubject, merge, Observable, Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, filter, merge, Observable, Subject, Subscription } from 'rxjs';
 import { Presence } from 'sharedb/lib/sharedb';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { PresenceData } from '../../app/shared/text/text.component';
@@ -239,9 +239,7 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
   addSubscriber(docSubscription: DocSubscription): void {
     this.docSubscriptions.add(docSubscription);
 
-    docSubscription.isUnsubscribed$.subscribe(isUnsubscribed => {
-      if (!isUnsubscribed) return;
-
+    docSubscription.isUnsubscribed$.pipe(filter(isUnsubscribed => isUnsubscribed === true)).subscribe(() => {
       this.docSubscriptions.delete(docSubscription);
 
       if (this.activeDocSubscriptionsCount === 0) {
