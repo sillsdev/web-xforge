@@ -457,7 +457,7 @@ export class LynxWorkspaceService {
     // Close document if it's open but no lynx feature is enabled or we are switching to a different document
     if (isDocCurrentlyOpen && (!shouldOpenDoc || !isSameTextDoc)) {
       await this.documentManager.fireClosed(this.textDocId!.toString());
-      this.textDocChangeSubscription!.unsubscribe();
+      this.textDocChangeSubscription?.unsubscribe();
       this.textDocChangeSubscription = undefined;
       if (!isSameTextDoc) {
         this.textDocId = undefined;
