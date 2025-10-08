@@ -19,6 +19,7 @@ import { BuildStates } from '../../../../machine-api/build-states';
 import { RIGHT_TO_LEFT_MARK } from '../../../../shared/utils';
 import { DraftDownloadButtonComponent } from '../../draft-download-button/draft-download-button.component';
 import { DraftPreviewBooksComponent } from '../../draft-preview-books/draft-preview-books.component';
+import { FORMATTING_OPTIONS_SUPPORTED_DATE } from '../../draft-utils';
 import { TrainingDataService } from '../../training-data/training-data.service';
 
 const STATUS_INFO: Record<BuildStates, { icons: string; text: string; color: string }> = {
@@ -269,6 +270,12 @@ export class DraftHistoryEntryComponent {
 
   get formattingOptionsSelected(): boolean {
     return this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.usfmConfig != null;
+  }
+
+  get formattingOptionsSupported(): boolean {
+    return this.featureFlags.usfmFormat.enabled && this.entry?.additionalInfo?.dateFinished != null
+      ? new Date(this.entry.additionalInfo.dateFinished) > FORMATTING_OPTIONS_SUPPORTED_DATE
+      : false;
   }
 
   @Input() isLatestBuild: boolean = false;
