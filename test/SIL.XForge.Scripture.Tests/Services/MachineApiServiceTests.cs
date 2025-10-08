@@ -3802,7 +3802,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task StartPreTranslationBuildAsync_AlternateSource()
+    public async Task StartPreTranslationBuildAsync_TheSameTrainingAndDraftingSource()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -3824,7 +3824,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task StartPreTranslationBuildAsync_AlternateSourceAndAlternateTrainingSource()
+    public async Task StartPreTranslationBuildAsync_DifferentTrainingAndDraftingSources()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -3835,10 +3835,8 @@ public class MachineApiServiceTests
                     s => s.TranslateConfig.DraftConfig,
                     new DraftConfig
                     {
-                        AlternateSourceEnabled = true,
-                        AlternateSource = new TranslateSource { ProjectRef = Project03 },
-                        AlternateTrainingSourceEnabled = true,
-                        AlternateTrainingSource = new TranslateSource { ProjectRef = Project01 },
+                        DraftingSources = [new TranslateSource { ProjectRef = Project03 }],
+                        TrainingSources = [new TranslateSource { ProjectRef = Project01 }],
                     }
                 )
         );
@@ -3988,74 +3986,6 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task StartPreTranslationBuildAsync_AlternateTrainingSource()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        await env.Projects.UpdateAsync(
-            p => p.Id == Project02,
-            u =>
-                u.Set(
-                    s => s.TranslateConfig.DraftConfig,
-                    new DraftConfig
-                    {
-                        AlternateTrainingSourceEnabled = true,
-                        AlternateTrainingSource = new TranslateSource { ProjectRef = Project01 },
-                    }
-                )
-        );
-
-        // SUT
-        await env.Service.StartPreTranslationBuildAsync(
-            User01,
-            new BuildConfig { ProjectId = Project02 },
-            CancellationToken.None
-        );
-
-        await env
-            .SyncService.Received(1)
-            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.TargetOnly && s.UserId == User01));
-        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
-        Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
-        Assert.IsNotNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationQueuedAt);
-        Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationErrorMessage);
-    }
-
-    [Test]
-    public async Task StartPreTranslationBuildAsync_AdditionalTrainingSource()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        await env.Projects.UpdateAsync(
-            p => p.Id == Project02,
-            u =>
-                u.Set(
-                    s => s.TranslateConfig.DraftConfig,
-                    new DraftConfig
-                    {
-                        AdditionalTrainingSourceEnabled = true,
-                        AdditionalTrainingSource = new TranslateSource { ProjectRef = Project01 },
-                    }
-                )
-        );
-
-        // SUT
-        await env.Service.StartPreTranslationBuildAsync(
-            User01,
-            new BuildConfig { ProjectId = Project02 },
-            CancellationToken.None
-        );
-
-        await env
-            .SyncService.Received(1)
-            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.TargetOnly && s.UserId == User01));
-        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
-        Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
-        Assert.IsNotNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationQueuedAt);
-        Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationErrorMessage);
-    }
-
-    [Test]
     public async Task StartPreTranslationBuildAsync_SavesEchoAndFastTraining()
     {
         // Set up test environment
@@ -4124,12 +4054,12 @@ public class MachineApiServiceTests
                     {
                         DraftConfig = new DraftConfig
                         {
-                            AdditionalTrainingSourceEnabled = true,
-                            AdditionalTrainingSource = new TranslateSource { ProjectRef = Project01 },
-                            AlternateSourceEnabled = true,
-                            AlternateSource = new TranslateSource { ProjectRef = Project01 },
-                            AlternateTrainingSourceEnabled = true,
-                            AlternateTrainingSource = new TranslateSource { ProjectRef = Project01 },
+                            DraftingSources = [new TranslateSource { ProjectRef = Project01 }],
+                            TrainingSources =
+                            [
+                                new TranslateSource { ProjectRef = Project01 },
+                                new TranslateSource { ProjectRef = Project01 },
+                            ],
                         },
                     }
                 )
@@ -4164,12 +4094,8 @@ public class MachineApiServiceTests
                     {
                         DraftConfig = new DraftConfig
                         {
-                            AdditionalTrainingSourceEnabled = true,
-                            AdditionalTrainingSource = new TranslateSource { ProjectRef = Project01 },
-                            AlternateSourceEnabled = true,
-                            AlternateSource = new TranslateSource { ProjectRef = Project01 },
-                            AlternateTrainingSourceEnabled = true,
-                            AlternateTrainingSource = new TranslateSource { ProjectRef = Project01 },
+                            DraftingSources = [new TranslateSource { ProjectRef = Project01 }],
+                            TrainingSources = [new TranslateSource { ProjectRef = Project01 }],
                         },
                         Source = new TranslateSource { ProjectRef = Project01 },
                     }
@@ -4653,8 +4579,8 @@ public class MachineApiServiceTests
                         {
                             DraftConfig = new DraftConfig
                             {
-                                AlternateSourceEnabled = true,
-                                AlternateSource = new TranslateSource { ProjectRef = Project03 },
+                                DraftingSources = [new TranslateSource { ProjectRef = Project03 }],
+                                TrainingSources = [new TranslateSource { ProjectRef = Project03 }],
                                 LastSelectedTranslationScriptureRanges =
                                 [
                                     new ProjectScriptureRange { ProjectId = Project03, ScriptureRange = "GEN" },
