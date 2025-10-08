@@ -1,8 +1,19 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogRef,
+  MatDialogTitle,
+  MatDialogContent,
+  MatDialogActions,
+  MatDialogClose
+} from '@angular/material/dialog';
 import { browserLinks, getLinkHTML, issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import { environment } from '../../environments/environment';
 import { I18nService } from '../i18n.service';
+import { TranslocoModule } from '@ngneat/transloco';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { Dir } from '@angular/cdk/bidi';
+import { MatButton } from '@angular/material/button';
 
 export interface ErrorAlertData {
   message: string;
@@ -13,7 +24,16 @@ export interface ErrorAlertData {
 @Component({
   templateUrl: './error-dialog.component.html',
   styleUrls: ['./error-dialog.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    MatDialogTitle,
+    CdkScrollable,
+    MatDialogContent,
+    Dir,
+    MatDialogActions,
+    MatButton,
+    MatDialogClose
+  ]
 })
 export class ErrorDialogComponent implements OnInit {
   initComplete = false;

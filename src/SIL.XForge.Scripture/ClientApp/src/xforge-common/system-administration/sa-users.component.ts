@@ -16,6 +16,14 @@ import { ProjectService } from '../project.service';
 import { QueryParameters } from '../query-parameters';
 import { UserService } from '../user.service';
 import { SaDeleteDialogComponent, SaDeleteUserDialogData } from './sa-delete-dialog.component';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { MatTable, MatColumnDef, MatCellDef, MatCell, MatRowDef, MatRow } from '@angular/material/table';
+import { AvatarComponent } from '../avatar/avatar.component';
+import { RouterLinkDirective } from '../router-link.directive';
+import { MatIconButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatPaginator } from '@angular/material/paginator';
 interface ProjectInfo {
   id: string;
   name: string;
@@ -31,7 +39,22 @@ interface Row {
   selector: 'app-sa-users',
   templateUrl: './sa-users.component.html',
   styleUrls: ['./sa-users.component.scss'],
-  standalone: false
+  imports: [
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatTable,
+    MatColumnDef,
+    MatCellDef,
+    MatCell,
+    AvatarComponent,
+    RouterLinkDirective,
+    MatIconButton,
+    MatIcon,
+    MatRowDef,
+    MatRow,
+    MatPaginator
+  ]
 })
 export class SaUsersComponent extends DataLoadingComponent implements OnInit {
   @HostBinding('class') classes = 'flex-column';

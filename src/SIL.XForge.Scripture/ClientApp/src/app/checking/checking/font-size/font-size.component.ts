@@ -1,10 +1,16 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { TranslocoModule } from '@ngneat/transloco';
+import { MatIconButton } from '@angular/material/button';
+import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
+import { NgClass } from '@angular/common';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatIcon } from '@angular/material/icon';
 
 @Component({
   selector: 'app-font-size',
   templateUrl: './font-size.component.html',
   styleUrls: ['./font-size.component.scss'],
-  standalone: false
+  imports: [TranslocoModule, MatIconButton, MatMenuTrigger, NgClass, MatTooltip, MatIcon, MatMenu, MatMenuItem]
 })
 export class FontSizeComponent implements OnInit {
   @Input() min: number = 1;

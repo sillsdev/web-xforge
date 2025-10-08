@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogConfig } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -28,13 +28,45 @@ import { SFProjectSettings } from '../core/models/sf-project-settings';
 import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
+import { TranslocoModule } from '@ngneat/transloco';
+import { MatCard, MatCardContent, MatCardTitle, MatCardActions } from '@angular/material/card';
+import { MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { ProjectSelectComponent } from '../project-select/project-select.component';
+import { WriteStatusComponent } from '../../xforge-common/write-status/write-status.component';
+import { MatError, MatHint } from '@angular/material/form-field';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { InfoComponent } from '../shared/info/info.component';
+import { MatRadioGroup, MatRadioButton } from '@angular/material/radio';
+import { TranslocoMarkupComponent } from 'ngx-transloco-markup';
+import { RouterLinkDirective } from '../../xforge-common/router-link.directive';
 
 /** Allows user to configure high-level settings of how SF will use their Paratext project. */
 @Component({
   selector: 'app-settings',
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MatCard,
+    MatCardContent,
+    MatCardTitle,
+    MatButton,
+    MatIcon,
+    ProjectSelectComponent,
+    WriteStatusComponent,
+    MatError,
+    MatCheckbox,
+    InfoComponent,
+    MatHint,
+    MatRadioGroup,
+    MatRadioButton,
+    TranslocoMarkupComponent,
+    RouterLinkDirective,
+    MatCardActions
+  ]
 })
 export class SettingsComponent extends DataLoadingComponent implements OnInit {
   translationSuggestionsEnabled = new FormControl(false);

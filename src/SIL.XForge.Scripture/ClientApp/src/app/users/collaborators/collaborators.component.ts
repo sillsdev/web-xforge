@@ -1,5 +1,5 @@
 import { AfterViewInit, ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
-import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { UntypedFormControl, UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
@@ -17,6 +17,18 @@ import { XFValidators } from 'xforge-common/xfvalidators';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { RolesAndPermissionsDialogComponent } from '../roles-and-permissions/roles-and-permissions-dialog.component';
+import { TranslocoModule } from '@ngneat/transloco';
+import { NoticeComponent } from '../../shared/notice/notice.component';
+import { MatTabGroup, MatTab } from '@angular/material/tabs';
+import { MatFormField, MatLabel, MatHint } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { MatTable, MatColumnDef, MatCellDef, MatCell, MatRowDef, MatRow } from '@angular/material/table';
+import { AvatarComponent } from '../../../xforge-common/avatar/avatar.component';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatIcon } from '@angular/material/icon';
+import { MatIconButton } from '@angular/material/button';
+import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
+import { ShareControlComponent } from '../../shared/share/share-control.component';
 interface UserInfo {
   displayName?: string;
   avatarUrl?: string;
@@ -43,7 +55,32 @@ export interface InviteeStatus {
   selector: 'app-collaborators',
   templateUrl: './collaborators.component.html',
   styleUrls: ['./collaborators.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    NoticeComponent,
+    MatTabGroup,
+    MatTab,
+    MatFormField,
+    FormsModule,
+    ReactiveFormsModule,
+    MatLabel,
+    MatInput,
+    MatTable,
+    MatColumnDef,
+    MatCellDef,
+    MatCell,
+    AvatarComponent,
+    MatTooltip,
+    MatIcon,
+    MatIconButton,
+    MatMenuTrigger,
+    MatMenu,
+    MatMenuItem,
+    MatRowDef,
+    MatRow,
+    MatHint,
+    ShareControlComponent
+  ]
 })
 export class CollaboratorsComponent extends DataLoadingComponent implements OnInit, AfterViewInit {
   userInviteForm = new UntypedFormGroup({

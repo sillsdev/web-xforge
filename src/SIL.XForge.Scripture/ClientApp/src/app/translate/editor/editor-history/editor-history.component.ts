@@ -22,11 +22,15 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { TextComponent } from '../../../shared/text/text.component';
 import { EditorHistoryService } from './editor-history.service';
 import { HistoryChooserComponent, RevisionSelectEvent } from './history-chooser/history-chooser.component';
+import { MatProgressBar } from '@angular/material/progress-bar';
+import { NoticeComponent } from '../../../shared/notice/notice.component';
+import { AsyncPipe } from '@angular/common';
+import { TranslocoModule } from '@ngneat/transloco';
 @Component({
   selector: 'app-editor-history',
   templateUrl: './editor-history.component.html',
   styleUrls: ['./editor-history.component.scss'],
-  standalone: false
+  imports: [MatProgressBar, NoticeComponent, HistoryChooserComponent, TextComponent, AsyncPipe, TranslocoModule]
 })
 export class EditorHistoryComponent implements OnChanges, OnInit, AfterViewInit {
   private _projectId?: string | undefined;

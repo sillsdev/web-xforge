@@ -35,15 +35,6 @@ import { QuillEditorSegmentService } from './quill-services/quill-editor-segment
 import { QuillInsightRenderService } from './quill-services/quill-insight-render.service';
 
 @NgModule({
-  declarations: [
-    LynxInsightActionPromptComponent,
-    LynxInsightEditorObjectsComponent,
-    LynxInsightsPanelComponent,
-    LynxInsightsPanelHeaderComponent,
-    LynxInsightOverlayComponent,
-    LynxInsightScrollPositionIndicatorComponent,
-    LynxInsightStatusIndicatorComponent
-  ],
   imports: [
     CommonModule,
     BidiModule,
@@ -59,7 +50,14 @@ import { QuillInsightRenderService } from './quill-services/quill-insight-render
     MatTooltipModule,
     MatTreeModule,
     OverlayModule,
-    IncludesPipe
+    IncludesPipe,
+    LynxInsightActionPromptComponent,
+    LynxInsightEditorObjectsComponent,
+    LynxInsightsPanelComponent,
+    LynxInsightsPanelHeaderComponent,
+    LynxInsightOverlayComponent,
+    LynxInsightScrollPositionIndicatorComponent,
+    LynxInsightStatusIndicatorComponent
   ],
   exports: [LynxInsightEditorObjectsComponent, LynxInsightsPanelComponent]
 })

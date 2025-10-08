@@ -46,9 +46,9 @@ const componentExports = [
     MatDialogModule,
     AvatarComponent,
     OwnerComponent,
-    MobileNotSupportedComponent
+    MobileNotSupportedComponent,
+    ...componentExports
   ],
-  declarations: componentExports,
   exports: componentExports,
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthHttpInterceptor, multi: true },

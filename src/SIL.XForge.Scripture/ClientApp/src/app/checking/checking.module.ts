@@ -29,7 +29,16 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
 import { TextAndAudioComponent } from './text-and-audio/text-and-audio.component';
 
 @NgModule({
-  declarations: [
+  imports: [
+    CheckingRoutingModule,
+    CommonModule,
+    SharedModule,
+    UICommonModule,
+    XForgeCommonModule,
+    OwnerComponent,
+    AngularSplitModule,
+    ngfModule,
+    TranslocoModule,
     CheckingComponent,
     CheckingOverviewComponent,
     CheckingQuestionsComponent,
@@ -49,17 +58,6 @@ import { TextAndAudioComponent } from './text-and-audio/text-and-audio.component
     AudioTimePipe,
     TextChooserDialogComponent,
     ChapterAudioDialogComponent
-  ],
-  imports: [
-    CheckingRoutingModule,
-    CommonModule,
-    SharedModule,
-    UICommonModule,
-    XForgeCommonModule,
-    OwnerComponent,
-    AngularSplitModule,
-    ngfModule,
-    TranslocoModule
   ],
   exports: [CheckingAudioPlayerComponent]
 })

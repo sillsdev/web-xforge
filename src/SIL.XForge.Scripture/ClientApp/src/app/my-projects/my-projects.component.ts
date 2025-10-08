@@ -19,12 +19,33 @@ import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ParatextService } from '../core/paratext.service';
 import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
+import { TranslocoModule } from '@ngneat/transloco';
+import { NoticeComponent } from '../shared/notice/notice.component';
+import { MatCard } from '@angular/material/card';
+import { MatButton, MatAnchor } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatRipple } from '@angular/material/core';
+import { RouterLinkDirective } from '../../xforge-common/router-link.directive';
+import { MatExpansionPanel, MatExpansionPanelHeader } from '@angular/material/expansion';
+import { AsyncPipe } from '@angular/common';
 /** Presents user with list of available projects to open or connect to. */
 @Component({
   selector: 'app-my-projects',
   templateUrl: './my-projects.component.html',
   styleUrls: ['./my-projects.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    NoticeComponent,
+    MatCard,
+    MatButton,
+    MatIcon,
+    MatRipple,
+    RouterLinkDirective,
+    MatExpansionPanel,
+    MatExpansionPanelHeader,
+    MatAnchor,
+    AsyncPipe
+  ]
 })
 export class MyProjectsComponent implements OnInit {
   /** PT projects that the user can access. */

@@ -14,7 +14,7 @@ import {
   ViewChild,
   ViewChildren
 } from '@angular/core';
-import { UntypedFormControl, Validators } from '@angular/forms';
+import { UntypedFormControl, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatBottomSheet, MatBottomSheetRef } from '@angular/material/bottom-sheet';
 import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -139,9 +139,9 @@ import { DraftGenerationService } from '../draft-generation/draft-generation.ser
 import { DraftOptionsService } from '../draft-generation/draft-options.service';
 import { EditorHistoryService } from './editor-history/editor-history.service';
 import { LynxInsightStateService } from './lynx/insights/lynx-insight-state.service';
-import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
+import { MultiCursorViewer, MultiViewerComponent } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
-import { Suggestion } from './suggestions.component';
+import { Suggestion, SuggestionsComponent } from './suggestions.component';
 import { EditorTabAddRequestService } from './tabs/editor-tab-add-request.service';
 import { EditorTabFactoryService } from './tabs/editor-tab-factory.service';
 import { EditorTabMenuService } from './tabs/editor-tab-menu.service';
@@ -152,6 +152,30 @@ import {
   TranslatorSettingsDialogComponent,
   TranslatorSettingsDialogData
 } from './translator-settings-dialog.component';
+import { TranslocoModule } from '@ngneat/transloco';
+import { BookChapterChooserComponent } from '../../shared/book-chapter-chooser/book-chapter-chooser.component';
+import { NgClass, AsyncPipe, KeyValuePipe } from '@angular/common';
+import { MatIconButton, MatButton, MatMiniFabButton } from '@angular/material/button';
+import { BlurOnClickDirective } from '../../../xforge-common/blur-on-click.directive';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatIcon } from '@angular/material/icon';
+import { ShareButtonComponent } from '../../shared/share/share-button.component';
+import { TabGroupComponent } from '../../shared/sf-tab-group/tab-group.component';
+import { TabComponent } from '../../shared/sf-tab-group/tab/tab.component';
+import { TabHeaderDirective } from '../../shared/sf-tab-group/tab-header/tab-header.directive';
+import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.component';
+import { EditorResourceComponent } from './editor-resource/editor-resource.component';
+import { CopyrightBannerComponent } from '../../shared/copyright-banner/copyright-banner.component';
+import { NoticeComponent } from '../../shared/notice/notice.component';
+import { AngularSplitModule } from 'angular-split';
+import { Dir } from '@angular/cdk/bidi';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { LynxInsightsPanelComponent } from './lynx/insights/lynx-insights-panel/lynx-insights-panel.component';
+import { EditorHistoryComponent } from './editor-history/editor-history.component';
+import { EditorDraftComponent } from './editor-draft/editor-draft.component';
+import { TrainingProgressComponent } from '../training-progress/training-progress.component';
+import { TextDocIdPipe } from '../../shared/text/text-doc-id.pipe';
 
 export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
 
@@ -217,7 +241,42 @@ const UNSUPPORTED_LANGUAGE_CODES = [
     { provide: TabMenuService, useClass: EditorTabMenuService },
     { provide: TabAddRequestService, useClass: EditorTabAddRequestService }
   ],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    BookChapterChooserComponent,
+    NgClass,
+    MatIconButton,
+    BlurOnClickDirective,
+    MatTooltip,
+    MatIcon,
+    ShareButtonComponent,
+    MultiViewerComponent,
+    TabGroupComponent,
+    TabComponent,
+    TabHeaderDirective,
+    BiblicalTermsComponent,
+    EditorResourceComponent,
+    CopyrightBannerComponent,
+    TextComponent,
+    NoticeComponent,
+    AngularSplitModule,
+    Dir,
+    SuggestionsComponent,
+    MatButton,
+    FormsModule,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    ReactiveFormsModule,
+    MatMiniFabButton,
+    LynxInsightsPanelComponent,
+    EditorHistoryComponent,
+    EditorDraftComponent,
+    TrainingProgressComponent,
+    AsyncPipe,
+    KeyValuePipe,
+    TextDocIdPipe
+  ]
 })
 export class EditorComponent extends DataLoadingComponent implements OnDestroy, OnInit, AfterViewInit {
   addingMobileNote: boolean = false;
