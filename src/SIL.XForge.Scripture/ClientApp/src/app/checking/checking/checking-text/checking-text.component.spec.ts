@@ -6,7 +6,7 @@ import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import * as RichText from 'rich-text';
-import { anything, mock, when } from 'ts-mockito';
+import { anyString, anything, mock, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -208,10 +208,7 @@ class TestEnvironment {
         }
       })
     });
-    when(mockedSFProjectService.getProfile('project01', anything())).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01', new DocSubscription('spec'))
-    );
-    when(mockedSFProjectService.getProfile('project01', anything())).thenCall((id, subscription) =>
+    when(mockedSFProjectService.getProfile(anyString(), anything())).thenCall((id, subscription) =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, subscription)
     );
     when(mockedSFProjectService.getText(anything(), anything())).thenCall((id, subscriber) =>
