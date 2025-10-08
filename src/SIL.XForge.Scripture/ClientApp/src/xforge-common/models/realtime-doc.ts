@@ -146,7 +146,7 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
   }
 
   async delete(): Promise<void> {
-    await this.adapter.delete();
+    void this.adapter.delete();
     await this.updateOfflineData();
     await this.realtimeService.onLocalDocUpdate(this);
   }
