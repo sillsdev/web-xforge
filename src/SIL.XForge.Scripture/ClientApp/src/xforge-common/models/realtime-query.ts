@@ -23,7 +23,10 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
   private readonly _remoteDocChanges$ = new Subject<any>();
   private readonly _docs$ = new BehaviorSubject<T[]>([]);
 
-  /** @param {string} name Descriptive text of this query for investigating disposal issues. */
+  /**
+   * @param {string} name Descriptive text of the context in which this query was created, for investigating disposal
+   * issues.
+   */
   constructor(
     private readonly realtimeService: RealtimeService,
     public readonly adapter: RealtimeQueryAdapter,
