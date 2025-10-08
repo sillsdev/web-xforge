@@ -426,7 +426,7 @@ describe('DraftHistoryEntryComponent', () => {
       tick();
       fixture.detectChanges();
 
-      expect(component.scriptureRange).toEqual('Genesis');
+      expect(component.scriptureRange).toEqual('GEN');
       expect(component.draftIsAvailable).toBe(true);
       expect(fixture.nativeElement.querySelector('.format-usfm')).toBeNull();
       expect(component.formattingOptionsSupported).toBe(false);
