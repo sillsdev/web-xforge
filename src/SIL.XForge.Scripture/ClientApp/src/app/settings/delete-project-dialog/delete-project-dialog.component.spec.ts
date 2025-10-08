@@ -103,8 +103,7 @@ describe('DeleteProjectDialogComponent', () => {
 });
 
 @NgModule({
-  declarations: [DeleteProjectDialogComponent],
-  imports: [UICommonModule, TestTranslocoModule],
+  imports: [UICommonModule, TestTranslocoModule, DeleteProjectDialogComponent],
   providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
 })
 class DialogTestModule {}

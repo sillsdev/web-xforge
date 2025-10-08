@@ -387,8 +387,7 @@ export function getShortAudioBlob(): Blob {
 @Directive({
   // es lint complains that a directive should be used as an attribute
   // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: 'viewContainerDirective',
-  standalone: false
+  selector: 'viewContainerDirective'
 })
 export class ViewContainerDirective {
   constructor(public viewContainerRef: ViewContainerRef) {}
@@ -397,7 +396,7 @@ export class ViewContainerDirective {
 @Component({
   selector: 'app-view-container',
   template: '<viewContainerDirective></viewContainerDirective>',
-  standalone: false
+  imports: [ViewContainerDirective]
 })
 export class ChildViewContainerComponent {
   @ViewChild(ViewContainerDirective, { static: true }) viewContainer!: ViewContainerDirective;
@@ -408,7 +407,7 @@ export class ChildViewContainerComponent {
 }
 
 @NgModule({
-  declarations: [ChildViewContainerComponent, ViewContainerDirective],
+  imports: [ChildViewContainerComponent, ViewContainerDirective],
   exports: [ViewContainerDirective]
 })
 export class ChildViewContainerModule {}

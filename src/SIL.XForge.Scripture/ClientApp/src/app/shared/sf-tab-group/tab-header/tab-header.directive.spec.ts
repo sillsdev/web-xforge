@@ -3,10 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TabHeaderDirective } from './tab-header.directive';
 
-@Component({
-  template: ` <div sf-tab-header></div> `,
-  standalone: false
-})
+@Component({ template: ` <div sf-tab-header></div> ` })
 class TestComponent {}
 
 describe('TabHeaderDirective', () => {
@@ -15,7 +12,7 @@ describe('TabHeaderDirective', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [TabHeaderDirective, TestComponent]
+      imports: [TabHeaderDirective, TestComponent]
     });
     fixture = TestBed.createComponent(TestComponent);
     directiveElement = fixture.debugElement.query(By.directive(TabHeaderDirective));

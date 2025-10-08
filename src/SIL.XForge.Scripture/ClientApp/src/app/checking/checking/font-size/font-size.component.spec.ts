@@ -31,8 +31,7 @@ describe('FontSizeComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      imports: [UICommonModule, NoopAnimationsModule, TestTranslocoModule],
-      declarations: [FontSizeComponent]
+      imports: [UICommonModule, NoopAnimationsModule, TestTranslocoModule, FontSizeComponent]
     }).compileComponents();
 
     fixture = TestBed.createComponent(FontSizeComponent);

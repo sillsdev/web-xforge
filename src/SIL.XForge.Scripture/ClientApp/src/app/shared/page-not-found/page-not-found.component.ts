@@ -2,6 +2,11 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { lastValueFrom, timer } from 'rxjs';
 import { map, takeWhile } from 'rxjs/operators';
+import { TranslocoModule } from '@ngneat/transloco';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressBar } from '@angular/material/progress-bar';
+import { RouterLinkDirective } from '../../../xforge-common/router-link.directive';
+import { AsyncPipe } from '@angular/common';
 
 // All times in milliseconds
 const redirectDelay = 10_000;
@@ -12,7 +17,7 @@ const totalProgressUpdates = redirectDelay / progressUpdateInterval;
   selector: 'app-page-not-found',
   templateUrl: './page-not-found.component.html',
   styleUrls: ['./page-not-found.component.scss'],
-  standalone: false
+  imports: [TranslocoModule, MatIcon, MatProgressBar, RouterLinkDirective, AsyncPipe]
 })
 export class PageNotFoundComponent {
   progress = timer(0, progressUpdateInterval).pipe(

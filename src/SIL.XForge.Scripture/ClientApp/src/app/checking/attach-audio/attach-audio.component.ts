@@ -11,12 +11,18 @@ import {
 import { AudioAttachment } from '../checking/checking-audio-player/checking-audio-player.component';
 import { SingleButtonAudioPlayerComponent } from '../checking/single-button-audio-player/single-button-audio-player.component';
 import { TextAndAudioComponent } from '../text-and-audio/text-and-audio.component';
+import { TranslocoModule } from '@ngneat/transloco';
+import { NgClass } from '@angular/common';
+import { MatIconButton } from '@angular/material/button';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatIcon } from '@angular/material/icon';
+import { ngfModule } from 'angular-file';
 
 @Component({
   selector: 'app-attach-audio',
   templateUrl: './attach-audio.component.html',
   styleUrl: './attach-audio.component.scss',
-  standalone: false
+  imports: [TranslocoModule, NgClass, MatIconButton, MatTooltip, MatIcon, ngfModule, SingleButtonAudioPlayerComponent]
 })
 export class AttachAudioComponent {
   @ViewChild(SingleButtonAudioPlayerComponent) audioPlayer?: SingleButtonAudioPlayerComponent;

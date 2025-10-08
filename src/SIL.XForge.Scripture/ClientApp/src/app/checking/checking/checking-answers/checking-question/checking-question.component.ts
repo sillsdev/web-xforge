@@ -26,12 +26,14 @@ import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { CheckingUtils } from '../../../checking.utils';
 import { SingleButtonAudioPlayerComponent } from '../../single-button-audio-player/single-button-audio-player.component';
+import { TranslocoModule } from '@ngneat/transloco';
+import { MatIcon } from '@angular/material/icon';
 
 @Component({
   selector: 'app-checking-question',
   templateUrl: './checking-question.component.html',
   styleUrls: ['./checking-question.component.scss'],
-  standalone: false
+  imports: [TranslocoModule, SingleButtonAudioPlayerComponent, MatIcon]
 })
 export class CheckingQuestionComponent extends SubscriptionDisposable implements OnChanges, OnDestroy {
   @Output() audioPlayed: EventEmitter<void> = new EventEmitter<void>();

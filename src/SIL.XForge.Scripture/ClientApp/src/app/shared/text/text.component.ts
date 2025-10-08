@@ -1,4 +1,4 @@
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, NgClass } from '@angular/common';
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -51,6 +51,9 @@ import { getAttributesAtPosition, getRetainCount } from './quill-util';
 import { Segment } from './segment';
 import { NoteDialogData, TextNoteDialogComponent } from './text-note-dialog/text-note-dialog.component';
 import { EditorRange, TextViewModel } from './text-view-model';
+import { LynxInsightEditorObjectsComponent } from '../../translate/editor/lynx/insights/lynx-insight-editor-objects/lynx-insight-editor-objects.component';
+import { QuillEditorComponent } from 'ngx-quill';
+import { Dir } from '@angular/cdk/bidi';
 
 // When a user is active in the editor a timer starts to mark them as inactive for remote presences
 export const PRESENCE_EDITOR_ACTIVE_TIMEOUT = 3500;
@@ -96,8 +99,8 @@ export interface EmbedsByVerse {
   selector: 'app-text',
   templateUrl: './text.component.html',
   styleUrls: ['./text.component.scss'],
-  providers: [TextViewModel], // New instance for each text component
-  standalone: false
+  providers: [TextViewModel],
+  imports: [LynxInsightEditorObjectsComponent, QuillEditorComponent, NgClass, Dir]
 })
 export class TextComponent implements AfterViewInit, OnDestroy {
   @Input() enablePresence: boolean = false;

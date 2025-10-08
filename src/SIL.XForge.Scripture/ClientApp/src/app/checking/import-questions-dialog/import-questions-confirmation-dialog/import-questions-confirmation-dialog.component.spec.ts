@@ -70,8 +70,7 @@ describe('ImportQuestionsConfirmationDialogComponent', () => {
 });
 
 @NgModule({
-  declarations: [ImportQuestionsConfirmationDialogComponent],
-  imports: [UICommonModule, TestTranslocoModule],
+  imports: [UICommonModule, TestTranslocoModule, ImportQuestionsConfirmationDialogComponent],
   providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
 })
 class DialogTestModule {}

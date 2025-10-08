@@ -39,9 +39,8 @@ describe('EmTextTranspiler', () => {
 
     beforeEach(() => {
       TestBed.configureTestingModule({
-        imports: [TestTranslocoModule, TranslocoMarkupModule],
-        providers: [provideTranslationMarkupTranspiler(EmTextTranspiler)],
-        declarations: [TestComponent]
+        imports: [TestTranslocoModule, TranslocoMarkupModule, TestComponent],
+        providers: [provideTranslationMarkupTranspiler(EmTextTranspiler)]
       });
 
       fixture = TestBed.createComponent(TestComponent);
@@ -62,7 +61,7 @@ describe('EmTextTranspiler', () => {
 @Component({
   selector: 'app-test',
   template: `<transloco [key]="translation"></transloco>`,
-  standalone: false
+  imports: [TestTranslocoModule, TranslocoMarkupModule]
 })
 export class TestComponent {
   translation: string = '';

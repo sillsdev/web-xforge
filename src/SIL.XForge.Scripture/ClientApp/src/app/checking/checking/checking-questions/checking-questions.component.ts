@@ -13,7 +13,7 @@ import {
   SimpleChanges,
   ViewChildren
 } from '@angular/core';
-import { MatListItem } from '@angular/material/list';
+import { MatListItem, MatActionList } from '@angular/material/list';
 import { sortBy } from 'lodash-es';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
@@ -35,6 +35,12 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { TranslationEngineService } from '../../../core/translation-engine.service';
 import { BookChapter, bookChapterMatchesVerseRef, CheckingUtils } from '../../checking.utils';
 import { CheckingQuestionsService } from '../checking-questions.service';
+import { TranslocoModule } from '@ngneat/transloco';
+import { NgClass } from '@angular/common';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatBadge } from '@angular/material/badge';
+import { MatIcon } from '@angular/material/icon';
+import { MatButton } from '@angular/material/button';
 
 export interface QuestionChangeActionSource {
   /** True during events due to a questions doc change such as with a filter. */
@@ -62,7 +68,7 @@ export interface QuestionChangedEvent {
   templateUrl: './checking-questions.component.html',
   styleUrls: ['./checking-questions.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  standalone: false
+  imports: [TranslocoModule, MatActionList, MatListItem, NgClass, MatTooltip, MatBadge, MatIcon, MatButton]
 })
 export class CheckingQuestionsComponent implements OnInit, OnChanges {
   @Output() update = new EventEmitter<QuestionDoc>();
