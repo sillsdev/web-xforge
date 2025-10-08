@@ -233,9 +233,6 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
   }
 
   private onRemove(index: number, docIds: string[]): void {
-    if (docIds.length === 30) {
-      debugger;
-    }
     const removedDocs = this._docs.splice(index, docIds.length);
     for (const doc of removedDocs) {
       doc.onRemovedFromSubscribeQuery();
