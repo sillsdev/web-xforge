@@ -1,6 +1,5 @@
 {
   "app": {
-    "beta": "beta",
     "generate_draft": "Generate draft",
     "hangfire_dashboard": "Hangfire Dashboard",
     "manage_questions": "Manage questions",
