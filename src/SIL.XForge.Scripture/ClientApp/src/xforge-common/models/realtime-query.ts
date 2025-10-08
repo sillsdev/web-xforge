@@ -12,7 +12,7 @@ import { RealtimeDoc } from './realtime-doc';
  */
 export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
   private _docs: T[] = [];
-  private unsubscribe$ = new Subject<void>();
+  private beingDisposed = new Subject<void>();
   private _count: number = 0;
   private _unpagedCount: number = 0;
   private isDisposed = false;
@@ -32,9 +32,9 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
     public readonly adapter: RealtimeQueryAdapter,
     public readonly name: string
   ) {
-    this.adapter.ready$.pipe(takeUntil(this.unsubscribe$)).subscribe(() => this.onReady());
+    this.adapter.ready$.pipe(takeUntil(this.beingDisposed)).subscribe(() => this.onReady());
     this.adapter.remoteChanges$
-      .pipe(takeUntil(this.unsubscribe$))
+      .pipe(takeUntil(this.beingDisposed))
       .subscribe(() => this.onChange(true, this.adapter.docIds, this.adapter.count, this.adapter.unpagedCount));
   }
 
@@ -106,8 +106,8 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
       return;
     }
 
-    this.unsubscribe$.next();
-    this.unsubscribe$.complete();
+    this.beingDisposed.next();
+    this.beingDisposed.complete();
     if (this.subscribed) {
       if (this.adapter.ready) {
         for (const doc of this._docs) {
@@ -158,7 +158,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
           this.realtimeService.get(
             this.collection,
             id,
-            new DocSubscription(`RealtimeQuery/${this.name}`, this.unsubscribe$)
+            new DocSubscription(`RealtimeQuery/${this.name}`, this.beingDisposed)
           )
         )
       );
@@ -221,7 +221,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
       const newDoc = await this.realtimeService.get<T>(
         this.collection,
         docId,
-        new DocSubscription(`RealtimeQuery/${this.name}`, this.unsubscribe$)
+        new DocSubscription(`RealtimeQuery/${this.name}`, this.beingDisposed)
       );
       promises.push(newDoc.onAddedToSubscribeQuery());
       newDocs.push(newDoc);
