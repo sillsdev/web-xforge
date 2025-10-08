@@ -701,7 +701,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     for (const projectId of projectIds) {
       const projectDoc = await this.servalAdministrationService.subscribe(
         projectId,
-        new DocSubscription('DraftJobsComponent')
+        new DocSubscription('DraftJobsComponent', this.destroyRef)
       );
       if (projectDoc?.data != null) {
         this.projectNames.set(projectId, projectLabel(projectDoc.data));
