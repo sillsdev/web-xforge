@@ -1,7 +1,30 @@
 import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { MatTableDataSource } from '@angular/material/table';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogRef,
+  MatDialogTitle,
+  MatDialogContent,
+  MatDialogActions
+} from '@angular/material/dialog';
+import {
+  MatTableDataSource,
+  MatTable,
+  MatColumnDef,
+  MatHeaderCellDef,
+  MatHeaderCell,
+  MatCellDef,
+  MatCell,
+  MatHeaderRowDef,
+  MatHeaderRow,
+  MatRowDef,
+  MatRow
+} from '@angular/material/table';
 import { I18nService } from 'xforge-common/i18n.service';
+import { TranslocoModule } from '@ngneat/transloco';
+import { Dir } from '@angular/cdk/bidi';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatButton } from '@angular/material/button';
 
 export interface ImportQuestionsConfirmationDialogData {
   questions: EditedQuestion[];
@@ -19,7 +42,26 @@ export interface EditedQuestion {
 @Component({
   templateUrl: './import-questions-confirmation-dialog.component.html',
   styleUrls: ['./import-questions-confirmation-dialog.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    Dir,
+    MatDialogTitle,
+    CdkScrollable,
+    MatDialogContent,
+    MatTable,
+    MatColumnDef,
+    MatHeaderCellDef,
+    MatHeaderCell,
+    MatCheckbox,
+    MatCellDef,
+    MatCell,
+    MatHeaderRowDef,
+    MatHeaderRow,
+    MatRowDef,
+    MatRow,
+    MatDialogActions,
+    MatButton
+  ]
 })
 export class ImportQuestionsConfirmationDialogComponent {
   questions: EditedQuestion[];

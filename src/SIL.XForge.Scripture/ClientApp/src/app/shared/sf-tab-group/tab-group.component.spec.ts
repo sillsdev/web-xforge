@@ -18,8 +18,7 @@ describe('TabGroupComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SFTabsModule, TestTranslocoModule],
-      declarations: [TabGroupComponent, TabComponent],
+      imports: [SFTabsModule, TestTranslocoModule, TabGroupComponent, TabComponent],
       providers: [
         { provide: TabFactoryService, useValue: { createTab: () => {} } },
         { provide: TabMenuService, useValue: { getMenuItems: () => of([]) } },

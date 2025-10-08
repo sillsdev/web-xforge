@@ -202,7 +202,7 @@ describe('ProjectSelectComponent', () => {
       [isDisabled]="isDisabled"
     ></app-project-select>
   </form>`,
-  standalone: false
+  imports: [UICommonModule, TestTranslocoModule]
 })
 class HostComponent {
   readonly sourceParatextId = new UntypedFormControl(undefined);
@@ -235,8 +235,7 @@ class TestEnvironment {
     nonSelectableProjects?: SelectableProject[]
   ) {
     TestBed.configureTestingModule({
-      declarations: [HostComponent, ProjectSelectComponent],
-      imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule]
+      imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule, HostComponent, ProjectSelectComponent]
     });
 
     this.fixture = TestBed.createComponent(HostComponent);

@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, DestroyRef, Inject, ViewChild } from '@angular/core';
-import { MatTree } from '@angular/material/tree';
+import { MatTree, MatTreeNodeDef, MatTreeNode, MatTreeNodeToggle } from '@angular/material/tree';
 import { Router } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { groupBy } from 'lodash-es';
@@ -24,6 +24,15 @@ import { combineVerseRefStrs, getVerseRefFromSegmentRef } from '../../../../../s
 import { EditorSegmentService } from '../base-services/editor-segment.service';
 import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightConfig, LynxInsightRange } from '../lynx-insight';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
+import { TranslocoModule } from '@ngneat/transloco';
+import { LynxInsightsPanelHeaderComponent } from './lynx-insights-panel-header/lynx-insights-panel-header.component';
+import { MatRipple } from '@angular/material/core';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
+import { NgClass } from '@angular/common';
+import { MatButton } from '@angular/material/button';
+import { MatProgressBar } from '@angular/material/progress-bar';
 
 /**
  * The sample text surrounding an insight, broken into pre-text, insight text, and post-text.
@@ -63,7 +72,21 @@ interface LynxInsightWithText extends LynxInsight {
   selector: 'app-lynx-insights-panel',
   templateUrl: './lynx-insights-panel.component.html',
   styleUrl: './lynx-insights-panel.component.scss',
-  standalone: false
+  imports: [
+    TranslocoModule,
+    LynxInsightsPanelHeaderComponent,
+    MatTree,
+    MatTreeNodeDef,
+    MatTreeNode,
+    MatRipple,
+    MatProgressSpinner,
+    MatIcon,
+    MatTooltip,
+    MatTreeNodeToggle,
+    NgClass,
+    MatButton,
+    MatProgressBar
+  ]
 })
 export class LynxInsightsPanelComponent implements AfterViewInit {
   @ViewChild(MatTree) tree?: MatTree<InsightPanelNode>;

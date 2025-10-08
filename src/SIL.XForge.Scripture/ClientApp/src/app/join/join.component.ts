@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, ErrorHandler } from '@angular/core';
-import { FormControl, Validators } from '@angular/forms';
+import { FormControl, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
@@ -18,6 +18,12 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { ObjectPaths } from '../../type-utils';
 import { SFProjectService } from '../core/sf-project.service';
+import { TranslocoModule } from '@ngneat/transloco';
+import { NoticeComponent } from '../shared/notice/notice.component';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { MatButton } from '@angular/material/button';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 export interface AnonymousShareKeyDetails {
   projectName: string;
   role: string;
@@ -39,7 +45,17 @@ export const KNOWN_ERROR_CODES: ObjectPaths<typeof en.join>[] = [
   selector: 'app-join',
   templateUrl: './join.component.html',
   styleUrls: ['./join.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    NoticeComponent,
+    FormsModule,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    ReactiveFormsModule,
+    MatButton,
+    MatProgressSpinner
+  ]
 })
 export class JoinComponent extends DataLoadingComponent {
   name: FormControl<string | null> = new FormControl<string | null>('');

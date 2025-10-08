@@ -1,6 +1,16 @@
 import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogRef,
+  MatDialogTitle,
+  MatDialogContent,
+  MatDialogActions,
+  MatDialogClose
+} from '@angular/material/dialog';
 import { Observable } from 'rxjs';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { MatButton } from '@angular/material/button';
+import { AsyncPipe } from '@angular/common';
 
 export interface GenericDialogOptions<T> {
   title?: Observable<string>;
@@ -23,7 +33,7 @@ export interface GenericDialogRef<T> {
 @Component({
   selector: 'app-generic-dialog',
   templateUrl: './generic-dialog.component.html',
-  standalone: false
+  imports: [MatDialogTitle, CdkScrollable, MatDialogContent, MatDialogActions, MatButton, MatDialogClose, AsyncPipe]
 })
 export class GenericDialogComponent<T> {
   constructor(@Inject(MAT_DIALOG_DATA) private readonly data: GenericDialogOptions<T>) {}

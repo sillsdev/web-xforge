@@ -1,6 +1,13 @@
 import { Component, Inject } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogRef,
+  MatDialogTitle,
+  MatDialogContent,
+  MatDialogActions,
+  MatDialogClose
+} from '@angular/material/dialog';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -8,6 +15,13 @@ import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SFValidators } from '../../shared/sfvalidators';
+import { TranslocoModule } from '@ngneat/transloco';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { MatFormField, MatLabel, MatHint, MatError } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { CdkTextareaAutosize } from '@angular/cdk/text-field';
+import { AutofocusDirective } from '../../../xforge-common/autofocus.directive';
+import { MatButton } from '@angular/material/button';
 
 export interface BiblicalTermDialogData {
   biblicalTermDoc: BiblicalTermDoc;
@@ -18,7 +32,24 @@ export interface BiblicalTermDialogData {
 @Component({
   templateUrl: './biblical-term-dialog.component.html',
   styleUrls: ['./biblical-term-dialog.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    MatDialogTitle,
+    CdkScrollable,
+    MatDialogContent,
+    MatFormField,
+    FormsModule,
+    ReactiveFormsModule,
+    MatLabel,
+    MatInput,
+    CdkTextareaAutosize,
+    AutofocusDirective,
+    MatHint,
+    MatError,
+    MatDialogActions,
+    MatButton,
+    MatDialogClose
+  ]
 })
 export class BiblicalTermDialogComponent {
   definition: string = '';

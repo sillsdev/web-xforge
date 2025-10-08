@@ -2,7 +2,7 @@ import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, NavigationBehaviorOptions, Router } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
-import { SplitComponent } from 'angular-split';
+import { SplitComponent, AngularSplitModule } from 'angular-split';
 import { cloneDeep, debounce } from 'lodash-es';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
@@ -48,6 +48,19 @@ import { CheckingQuestionsService, PreCreationQuestionData, QuestionFilter } fro
 import { CheckingQuestionsComponent, QuestionChangedEvent } from './checking-questions/checking-questions.component';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player/checking-scripture-audio-player.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
+import { TranslocoModule } from '@ngneat/transloco';
+import { NgClass, AsyncPipe, KeyValuePipe } from '@angular/common';
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
+import { MatSelectionList, MatListSubheaderCssMatStyler } from '@angular/material/list';
+import { MatIcon } from '@angular/material/icon';
+import { MatIconButton, MatButton } from '@angular/material/button';
+import { BookChapterChooserComponent } from '../../shared/book-chapter-chooser/book-chapter-chooser.component';
+import { MatTooltip } from '@angular/material/tooltip';
+import { FontSizeComponent } from './font-size/font-size.component';
+import { ShareButtonComponent } from '../../shared/share/share-button.component';
+import { Dir } from '@angular/cdk/bidi';
+import { RouterLinkDirective } from '../../../xforge-common/router-link.directive';
+import { DonutChartComponent } from '../../../xforge-common/donut-chart/donut-chart.component';
 
 interface Summary {
   unread: number;
@@ -59,7 +72,32 @@ interface Summary {
   selector: 'app-checking',
   templateUrl: './checking.component.html',
   styleUrls: ['./checking.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    NgClass,
+    MatMenu,
+    MatSelectionList,
+    MatListSubheaderCssMatStyler,
+    MatMenuItem,
+    MatIcon,
+    MatIconButton,
+    MatButton,
+    MatMenuTrigger,
+    CheckingQuestionsComponent,
+    BookChapterChooserComponent,
+    MatTooltip,
+    FontSizeComponent,
+    ShareButtonComponent,
+    AngularSplitModule,
+    Dir,
+    CheckingTextComponent,
+    CheckingAnswersComponent,
+    CheckingScriptureAudioPlayerComponent,
+    RouterLinkDirective,
+    DonutChartComponent,
+    AsyncPipe,
+    KeyValuePipe
+  ]
 })
 export class CheckingComponent extends DataLoadingComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('answerPanelContainer') set answersPanelElement(answersPanelContainerElement: ElementRef) {

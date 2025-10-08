@@ -1,6 +1,12 @@
 import { Component, DestroyRef, Inject, OnInit } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogTitle,
+  MatDialogContent,
+  MatDialogActions,
+  MatDialogClose
+} from '@angular/material/dialog';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -13,6 +19,13 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectService } from '../../core/sf-project.service';
+import { TranslocoModule } from '@ngneat/transloco';
+import { AvatarComponent } from '../../../xforge-common/avatar/avatar.component';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { NoticeComponent } from '../../shared/notice/notice.component';
+import { MatRadioGroup, MatRadioButton } from '@angular/material/radio';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatButton } from '@angular/material/button';
 
 export interface UserData {
   projectId: string;
@@ -24,7 +37,22 @@ export interface UserData {
   selector: 'app-roles-and-permissions',
   templateUrl: './roles-and-permissions-dialog.component.html',
   styleUrls: ['./roles-and-permissions-dialog.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    MatDialogTitle,
+    AvatarComponent,
+    CdkScrollable,
+    MatDialogContent,
+    FormsModule,
+    ReactiveFormsModule,
+    NoticeComponent,
+    MatRadioGroup,
+    MatRadioButton,
+    MatCheckbox,
+    MatDialogActions,
+    MatButton,
+    MatDialogClose
+  ]
 })
 export class RolesAndPermissionsDialogComponent implements OnInit {
   readonly roles: FormControl<any> = new FormControl<string>('');

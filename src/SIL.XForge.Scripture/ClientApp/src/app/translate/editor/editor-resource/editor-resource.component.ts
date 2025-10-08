@@ -6,11 +6,13 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextComponent } from '../../../shared/text/text.component';
 import { formatFontSizeToRems } from '../../../shared/utils';
+import { CopyrightBannerComponent } from '../../../shared/copyright-banner/copyright-banner.component';
+import { TextDocIdPipe } from '../../../shared/text/text-doc-id.pipe';
 @Component({
   selector: 'app-editor-resource',
   templateUrl: './editor-resource.component.html',
   styleUrl: '../editor.component.scss',
-  standalone: false
+  imports: [CopyrightBannerComponent, TextComponent, TextDocIdPipe]
 })
 export class EditorResourceComponent implements AfterViewInit, OnChanges {
   @Input() projectId?: string;

@@ -15,6 +15,14 @@ import { environment } from '../../environments/environment';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
+import { TranslocoModule } from '@ngneat/transloco';
+import { NoticeComponent } from '../shared/notice/notice.component';
+import { MatCard } from '@angular/material/card';
+import { MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { SyncProgressComponent } from './sync-progress/sync-progress.component';
+import { MatHint } from '@angular/material/form-field';
+import { MatTooltip } from '@angular/material/tooltip';
 /** Reports as to whether a given project is actively syncing right now. */
 export function isSFProjectSyncing(project: SFProjectProfile): boolean {
   return project.sync.queuedCount > 0;
@@ -28,7 +36,7 @@ enum SyncErrorCodes {
   selector: 'app-sync',
   templateUrl: './sync.component.html',
   styleUrls: ['./sync.component.scss'],
-  standalone: false
+  imports: [TranslocoModule, NoticeComponent, MatCard, MatButton, MatIcon, SyncProgressComponent, MatHint, MatTooltip]
 })
 export class SyncComponent extends DataLoadingComponent implements OnInit {
   isAppOnline: boolean = false;

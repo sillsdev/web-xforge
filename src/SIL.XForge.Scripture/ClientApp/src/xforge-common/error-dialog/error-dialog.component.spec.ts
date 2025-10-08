@@ -70,8 +70,7 @@ describe('ErrorDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [UICommonModule, TestTranslocoModule],
-  declarations: [ErrorDialogComponent]
+  imports: [UICommonModule, TestTranslocoModule, ErrorDialogComponent]
 })
 class DialogTestModule {}
 
