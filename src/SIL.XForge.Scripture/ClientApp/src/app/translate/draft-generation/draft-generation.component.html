@@ -3,9 +3,14 @@
     @if (isBackTranslation) {
       <h1>{{ t("generate_back_translation_drafts_header") }}</h1>
     } @else {
-      <h1>
-        {{ t("generate_forward_translation_drafts_header") }}
-      </h1>
+      <h1>{{ t("generate_forward_translation_drafts_header") }}</h1>
+    }
+
+    @if (showDraftOptionsNotice) {
+      <app-notice type="primary" mode="fill-dark" icon="info">
+        {{ t("draft_options_message") }}
+        <a href="https://help.scriptureforge.org/format-a-draft/" target="_blank">{{ t("learn_more") }}</a>
+      </app-notice>
     }
 
     <section>

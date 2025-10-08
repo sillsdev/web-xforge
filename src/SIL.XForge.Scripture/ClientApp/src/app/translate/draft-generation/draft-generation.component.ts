@@ -96,6 +96,8 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   currentPage: 'initial' | 'steps' = 'initial';
 
+  showDraftOptionsNotice = new Date() < new Date('2025-12-01 00:00:00Z');
+
   /**
    * Once true, UI can proceed with display according to status of fetched job.
    * This is needed as an undefined `draftJob` could mean that no job has ever been started.
