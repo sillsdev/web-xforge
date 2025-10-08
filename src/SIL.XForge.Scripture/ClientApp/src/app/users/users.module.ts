@@ -11,7 +11,6 @@ import { UsersRoutingModule } from './users-routing.module';
 import { UsersComponent } from './users.component';
 
 @NgModule({
-  declarations: [CollaboratorsComponent, UsersComponent, RolesAndPermissionsDialogComponent],
   imports: [
     UsersRoutingModule,
     CommonModule,
@@ -19,7 +18,10 @@ import { UsersComponent } from './users.component';
     UICommonModule,
     XForgeCommonModule,
     TranslocoModule,
-    AvatarComponent
+    AvatarComponent,
+    CollaboratorsComponent,
+    UsersComponent,
+    RolesAndPermissionsDialogComponent
   ]
 })
 export class UsersModule {}

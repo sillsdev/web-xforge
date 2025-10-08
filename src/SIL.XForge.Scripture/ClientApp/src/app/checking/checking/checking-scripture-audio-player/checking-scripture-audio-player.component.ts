@@ -9,12 +9,16 @@ import { TextDocId } from '../../../core/models/text-doc';
 import { AudioPlayer } from '../../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioHeadingRef, AudioTextRef, CheckingUtils } from '../../checking.utils';
+import { TranslocoModule } from '@ngneat/transloco';
+import { Dir } from '@angular/cdk/bidi';
+import { MatIconButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
 
 @Component({
   selector: 'app-checking-scripture-audio-player',
   templateUrl: './checking-scripture-audio-player.component.html',
   styleUrls: ['./checking-scripture-audio-player.component.scss'],
-  standalone: false
+  imports: [TranslocoModule, Dir, MatIconButton, MatIcon, AudioPlayerComponent]
 })
 export class CheckingScriptureAudioPlayerComponent implements AfterViewInit {
   @Input() canClose: boolean = true;

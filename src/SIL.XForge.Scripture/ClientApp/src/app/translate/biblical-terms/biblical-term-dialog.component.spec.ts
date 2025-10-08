@@ -186,8 +186,7 @@ describe('BiblicalTermDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [UICommonModule, TestTranslocoModule],
-  declarations: [BiblicalTermDialogComponent]
+  imports: [UICommonModule, TestTranslocoModule, BiblicalTermDialogComponent]
 })
 class DialogTestModule {}
 

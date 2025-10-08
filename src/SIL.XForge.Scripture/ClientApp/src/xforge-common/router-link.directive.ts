@@ -2,10 +2,7 @@ import { Directive, ElementRef, HostBinding, HostListener, Inject, Input } from 
 import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
 import { WINDOW } from './browser-globals';
 
-@Directive({
-  selector: '[appRouterLink]',
-  standalone: false
-})
+@Directive({ selector: '[appRouterLink]' })
 export class RouterLinkDirective {
   @Input() set appRouterLink(value: string | string[]) {
     this._route = Array.isArray(value) ? value : [value];

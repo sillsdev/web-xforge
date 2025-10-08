@@ -1,5 +1,18 @@
 import { Component, DestroyRef, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { FormControl, FormGroup, FormGroupDirective, Validators } from '@angular/forms';
+import {
+  FormControl,
+  FormGroup,
+  FormGroupDirective,
+  FormsModule,
+  ReactiveFormsModule,
+  Validators
+} from '@angular/forms';
+import { MatOption } from '@angular/material/autocomplete';
+import { MatButton } from '@angular/material/button';
+import { MatError, MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { MatSelect, MatSelectTrigger } from '@angular/material/select';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -14,12 +27,26 @@ import { XFValidators } from 'xforge-common/xfvalidators';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ShareBaseComponent } from './share-base.component';
+import { ShareButtonComponent } from './share-button.component';
 /** UI to share project access with new users, such as by sending an invitation email. */
 @Component({
   selector: 'app-share-control',
   templateUrl: './share-control.component.html',
   styleUrls: ['./share-control.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatError,
+    MatSelect,
+    MatSelectTrigger,
+    MatOption,
+    MatButton,
+    ShareButtonComponent
+  ]
 })
 export class ShareControlComponent extends ShareBaseComponent {
   /** Fires when an invitation is sent. */

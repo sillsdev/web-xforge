@@ -4,8 +4,7 @@ import { Revision } from '../../../../core/paratext.service';
 
 @Pipe({
   name: 'revisionFormat',
-  pure: false,
-  standalone: false
+  pure: false
 })
 export class HistoryRevisionFormatPipe implements PipeTransform {
   constructor(private readonly i18n: I18nService) {}

@@ -1,8 +1,16 @@
 import { Component, DestroyRef, ElementRef, Inject, NgZone, OnDestroy, ViewChild } from '@angular/core';
-import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
-import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
-import { TranslocoService } from '@ngneat/transloco';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogConfig,
+  MatDialogRef,
+  MatDialogTitle,
+  MatDialogClose,
+  MatDialogContent,
+  MatDialogActions
+} from '@angular/material/dialog';
+import { TranslocoService, TranslocoModule } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { fromVerseRef, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
@@ -32,6 +40,28 @@ import {
   ImportQuestionsConfirmationDialogData,
   ImportQuestionsConfirmationDialogResult
 } from './import-questions-confirmation-dialog/import-questions-confirmation-dialog.component';
+import { MatIconButton, MatButton, MatAnchor } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { MatCard, MatCardTitle, MatCardContent, MatCardActions } from '@angular/material/card';
+import { MatError, MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
+import { ngfModule } from 'angular-file';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import {
+  MatTable,
+  MatColumnDef,
+  MatHeaderCellDef,
+  MatHeaderCell,
+  MatCellDef,
+  MatCell,
+  MatHeaderRowDef,
+  MatHeaderRow,
+  MatRowDef,
+  MatRow
+} from '@angular/material/table';
+import { MatInput } from '@angular/material/input';
+import { MatProgressBar } from '@angular/material/progress-bar';
+import { AsyncPipe } from '@angular/common';
 
 export interface TransceleratorQuestion {
   book: string;
@@ -68,7 +98,44 @@ type DialogStatus = 'initial' | 'no_questions' | 'filter' | 'loading' | 'progres
 @Component({
   templateUrl: './import-questions-dialog.component.html',
   styleUrls: ['./import-questions-dialog.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    MatDialogTitle,
+    MatIconButton,
+    MatDialogClose,
+    MatIcon,
+    CdkScrollable,
+    MatDialogContent,
+    MatCard,
+    MatCardTitle,
+    MatCardContent,
+    MatCardActions,
+    MatButton,
+    MatAnchor,
+    MatError,
+    ngfModule,
+    MatProgressSpinner,
+    MatTable,
+    MatColumnDef,
+    MatHeaderCellDef,
+    MatHeaderCell,
+    MatCellDef,
+    MatCell,
+    MatHeaderRowDef,
+    MatHeaderRow,
+    MatRowDef,
+    MatRow,
+    FormsModule,
+    ReactiveFormsModule,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatSuffix,
+    MatCheckbox,
+    MatProgressBar,
+    MatDialogActions,
+    AsyncPipe
+  ]
 })
 export class ImportQuestionsDialogComponent implements OnDestroy {
   questionSource: null | 'transcelerator' | 'csv_file' = null;

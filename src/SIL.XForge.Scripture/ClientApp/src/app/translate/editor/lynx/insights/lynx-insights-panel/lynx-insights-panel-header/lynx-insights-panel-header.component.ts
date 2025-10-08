@@ -1,5 +1,5 @@
 import { Component, DestroyRef, OnInit, ViewChild } from '@angular/core';
-import { MatMenuTrigger } from '@angular/material/menu';
+import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
 import {
   LynxInsightFilter,
   LynxInsightFilterScope,
@@ -11,12 +11,30 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { LynxInsightStateService } from '../../lynx-insight-state.service';
+import { TranslocoModule } from '@ngneat/transloco';
+import { MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatTabGroup, MatTab, MatTabLabel } from '@angular/material/tabs';
+import { MatDivider } from '@angular/material/divider';
+import { IncludesPipe } from '../../../../../../../xforge-common/includes.pipe';
 
 @Component({
   selector: 'app-lynx-insights-panel-header',
   templateUrl: './lynx-insights-panel-header.component.html',
   styleUrl: './lynx-insights-panel-header.component.scss',
-  standalone: false
+  imports: [
+    TranslocoModule,
+    MatButton,
+    MatMenuTrigger,
+    MatIcon,
+    MatTabGroup,
+    MatTab,
+    MatTabLabel,
+    MatMenu,
+    MatMenuItem,
+    MatDivider,
+    IncludesPipe
+  ]
 })
 export class LynxInsightsPanelHeaderComponent implements OnInit {
   @ViewChild(MatMenuTrigger) menuTrigger?: MatMenuTrigger;

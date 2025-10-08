@@ -2,10 +2,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextDocId } from '../../core/models/text-doc';
 
-@Pipe({
-  name: 'textDocId',
-  standalone: false
-})
+@Pipe({ name: 'textDocId' })
 export class TextDocIdPipe implements PipeTransform {
   transform(
     projectId: string | undefined,
