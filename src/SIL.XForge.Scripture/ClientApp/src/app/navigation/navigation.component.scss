@@ -95,14 +95,3 @@ mat-nav-list .mdc-list-item {
     color: var(--sf-disabled-foreground) !important;
   }
 }
-
-.nav-label {
-  padding: 2px 6px;
-  line-height: 1rem;
-  border-radius: 100px;
-  font-size: 0.95em;
-  margin-inline-start: auto;
-  margin-inline-end: 12px;
-  background-color: var(--sf-navigation-list-item-active-background-color);
-  color: var(--sf-navigation-list-item-active);
-}
