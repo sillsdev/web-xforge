@@ -83,7 +83,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (docType of queriesByCollection | keyvalue; track docType.key) {
+              @for (docType of queryCountByCollection | keyvalue; track docType.key) {
                 <tr>
                   <td>{{ docType.key }}</td>
                   <td>{{ docType.value | l10nNumber }}</td>

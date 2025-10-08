@@ -54,8 +54,8 @@ export class DiagnosticOverlayComponent {
     return this.realtimeService.docsCountByCollection;
   }
 
-  get queriesByCollection(): { [key: string]: number } {
-    return this.realtimeService.queriesByCollection;
+  get queryCountByCollection(): { [key: string]: number } {
+    return this.realtimeService.queryCountByCollection;
   }
 
   get subscriberCountsByContext(): { [key: string]: { [key: string]: { all: number; active: number } } } {
