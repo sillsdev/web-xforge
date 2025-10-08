@@ -23,6 +23,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
   private readonly _remoteDocChanges$ = new Subject<any>();
   private readonly _docs$ = new BehaviorSubject<T[]>([]);
 
+  /** @param {string} name Descriptive text of this query for investigating disposal issues. */
   constructor(
     private readonly realtimeService: RealtimeService,
     public readonly adapter: RealtimeQueryAdapter,
@@ -151,7 +152,11 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
     } else {
       this._docs = await Promise.all<T>(
         this.adapter.docIds.map(id =>
-          this.realtimeService.get(this.collection, id, new DocSubscription('RealtimeQuery', this.unsubscribe$))
+          this.realtimeService.get(
+            this.collection,
+            id,
+            new DocSubscription(`RealtimeQuery/${this.name}`, this.unsubscribe$)
+          )
         )
       );
       this._count = this.adapter.count;
@@ -213,7 +218,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
       const newDoc = await this.realtimeService.get<T>(
         this.collection,
         docId,
-        new DocSubscription('RealtimeQuery', this.unsubscribe$)
+        new DocSubscription(`RealtimeQuery/${this.name}`, this.unsubscribe$)
       );
       promises.push(newDoc.onAddedToSubscribeQuery());
       newDocs.push(newDoc);

@@ -188,8 +188,8 @@ export class RealtimeService {
    * and the individual docs.
    *
    * @param {string} collection The collection name.
-   * @param {QueryParameters} parameters The query parameters.
-   * See https://github.com/share/sharedb-mongo#queries.
+   * @param {string} name Descriptive text of this query for investigating disposal issues.
+   * @param {QueryParameters} parameters The query parameters. See https://github.com/share/sharedb-mongo#queries.
    * @param {DestroyRef} destroyRef The reference to destroy the query when the component gets destroyed.
    * @returns {Promise<RealtimeQuery<T>>} A promise for the query.
    */
@@ -210,8 +210,8 @@ export class RealtimeService {
    * Performs a pessimistic query on the specified collection. The returned query is not notified of any changes.
    *
    * @param {string} collection The collection name.
-   * @param {QueryParameters} parameters The query parameters.
-   * See https://github.com/share/sharedb-mongo#queries.
+   * @param {string} name Descriptive text of this query for investigating disposal issues.
+   * @param {QueryParameters} parameters The query parameters. See https://github.com/share/sharedb-mongo#queries.
    * @returns {Promise<RealtimeQuery<T>>} The query.
    */
   async onlineQuery<T extends RealtimeDoc>(
