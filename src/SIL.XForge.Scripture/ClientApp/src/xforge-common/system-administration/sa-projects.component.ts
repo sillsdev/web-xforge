@@ -12,6 +12,14 @@ import { NONE_ROLE, ProjectRoleInfo } from '../models/project-role-info';
 import { NoticeService } from '../notice.service';
 import { QueryParameters } from '../query-parameters';
 import { UserService } from '../user.service';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { MatTable, MatColumnDef, MatCellDef, MatCell, MatRowDef, MatRow } from '@angular/material/table';
+import { RouterLinkDirective } from '../router-link.directive';
+import { MatSelect } from '@angular/material/select';
+import { MatOption } from '@angular/material/autocomplete';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatPaginator } from '@angular/material/paginator';
 class Row {
   isUpdatingRole: boolean = false;
 
@@ -59,7 +67,22 @@ class Row {
   selector: 'app-sa-projects',
   templateUrl: './sa-projects.component.html',
   styleUrls: ['./sa-projects.component.scss'],
-  standalone: false
+  imports: [
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatTable,
+    MatColumnDef,
+    MatCellDef,
+    MatCell,
+    RouterLinkDirective,
+    MatSelect,
+    MatOption,
+    MatCheckbox,
+    MatRowDef,
+    MatRow,
+    MatPaginator
+  ]
 })
 export class SaProjectsComponent extends DataLoadingComponent implements OnInit {
   @HostBinding('class') classes = 'flex-column';

@@ -21,8 +21,7 @@ describe('OverlayContainer', () => {
  */
 @Component({
   selector: 'app-host',
-  template: '<app-root #root></app-root>',
-  standalone: false
+  template: '<app-root #root></app-root>'
 })
 class HostComponent {
   @ViewChild('root') appRoot?: AppRootComponent;
@@ -33,8 +32,7 @@ class HostComponent {
 }
 @Component({
   selector: 'app-root',
-  template: '<ng-template #bottomSheet><div class="bottom-sheet-container">Opened</div></ng-template>',
-  standalone: false
+  template: '<ng-template #bottomSheet><div class="bottom-sheet-container">Opened</div></ng-template>'
 })
 class AppRootComponent {
   @ViewChild('bottomSheet') TemplateBottomSheet?: TemplateRef<any>;
@@ -55,8 +53,7 @@ class TestEnvironment {
 
   constructor() {
     TestBed.configureTestingModule({
-      declarations: [HostComponent, AppRootComponent],
-      imports: [NoopAnimationsModule],
+      imports: [NoopAnimationsModule, HostComponent, AppRootComponent],
       providers: [{ provide: OverlayContainer, useClass: InAppRootOverlayContainer }]
     });
 

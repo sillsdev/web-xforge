@@ -1,7 +1,16 @@
 import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogTitle,
+  MatDialogContent,
+  MatDialogActions,
+  MatDialogClose
+} from '@angular/material/dialog';
 import { I18nService } from 'xforge-common/i18n.service';
 import { browserLinks, isIosDevice } from 'xforge-common/utils';
+import { TranslocoModule } from '@ngneat/transloco';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { MatButton } from '@angular/material/button';
 
 export enum BrowserIssue {
   Upgrade = 'upgrade_chrome_firefox',
@@ -11,7 +20,15 @@ export enum BrowserIssue {
 @Component({
   selector: 'app-supported-browsers-dialog',
   templateUrl: './supported-browsers-dialog.component.html',
-  standalone: false
+  imports: [
+    TranslocoModule,
+    MatDialogTitle,
+    CdkScrollable,
+    MatDialogContent,
+    MatDialogActions,
+    MatButton,
+    MatDialogClose
+  ]
 })
 export class SupportedBrowsersDialogComponent {
   constructor(

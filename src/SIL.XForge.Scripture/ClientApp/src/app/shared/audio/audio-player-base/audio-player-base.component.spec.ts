@@ -101,9 +101,8 @@ class TestEnvironment {
 
   constructor(template: string) {
     TestBed.configureTestingModule({
-      declarations: [HostComponent, AudioTestComponent],
       providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }],
-      imports: [TestOnlineStatusModule.forRoot()]
+      imports: [TestOnlineStatusModule.forRoot(), HostComponent, AudioTestComponent]
     });
     TestBed.overrideComponent(HostComponent, { set: { template: template } });
     this.testOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
@@ -121,8 +120,7 @@ class TestEnvironment {
 
 @Component({
   selector: 'app-audio-player',
-  template: '<p>Mock Audio Player</p>',
-  standalone: false
+  template: '<p>Mock Audio Player</p>'
 })
 class AudioTestComponent extends AudioPlayerBaseComponent {
   setAudio(audio: AudioPlayer): void {
@@ -136,8 +134,7 @@ class AudioTestComponent extends AudioPlayerBaseComponent {
 
 @Component({
   selector: 'app-host',
-  template: '',
-  standalone: false
+  template: ''
 })
 class HostComponent {
   @ViewChild(AudioTestComponent) baseComponent!: AudioTestComponent;

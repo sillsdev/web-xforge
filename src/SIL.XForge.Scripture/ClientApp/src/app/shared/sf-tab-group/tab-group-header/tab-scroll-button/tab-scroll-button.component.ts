@@ -2,11 +2,13 @@ import { DOCUMENT } from '@angular/common';
 import { Component, DestroyRef, EventEmitter, HostBinding, Inject, Input, OnInit, Output } from '@angular/core';
 import { BehaviorSubject, distinctUntilChanged, fromEvent, merge } from 'rxjs';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
 @Component({
   selector: 'app-tab-scroll-button',
   templateUrl: './tab-scroll-button.component.html',
   styleUrls: ['./tab-scroll-button.component.scss'],
-  standalone: false
+  imports: [MatButton, MatIcon]
 })
 export class TabScrollButtonComponent implements OnInit {
   @Input() disabled = false;

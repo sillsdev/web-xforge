@@ -32,22 +32,6 @@ import { TranslateOverviewComponent } from './translate-overview/translate-overv
 import { TranslateRoutingModule } from './translate-routing.module';
 
 @NgModule({
-  declarations: [
-    BiblicalTermDialogComponent,
-    EditorComponent,
-    MultiViewerComponent,
-    NoteDialogComponent,
-    SuggestionsComponent,
-    TranslatorSettingsDialogComponent,
-    TrainingProgressComponent,
-    TranslateOverviewComponent,
-    HistoryChooserComponent,
-    EditorHistoryComponent,
-    EditorDraftComponent,
-    HistoryRevisionFormatPipe,
-    EditorTabAddResourceDialogComponent,
-    EditorResourceComponent
-  ],
   imports: [
     AngularSplitModule,
     TranslateRoutingModule,
@@ -65,7 +49,21 @@ import { TranslateRoutingModule } from './translate-routing.module';
     DraftApplyProgressDialogComponent,
     FontUnsupportedMessageComponent,
     LynxInsightsModule,
-    L10nPercentPipe
+    L10nPercentPipe,
+    BiblicalTermDialogComponent,
+    EditorComponent,
+    MultiViewerComponent,
+    NoteDialogComponent,
+    SuggestionsComponent,
+    TranslatorSettingsDialogComponent,
+    TrainingProgressComponent,
+    TranslateOverviewComponent,
+    HistoryChooserComponent,
+    EditorHistoryComponent,
+    EditorDraftComponent,
+    HistoryRevisionFormatPipe,
+    EditorTabAddResourceDialogComponent,
+    EditorResourceComponent
   ]
 })
 export class TranslateModule {}

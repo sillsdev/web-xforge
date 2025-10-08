@@ -15,12 +15,18 @@ import { ResumeTranslateService } from '../checking/checking/resume-translate.se
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from '../core/models/sf-project-role-info';
 import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
+import { TranslocoModule } from '@ngneat/transloco';
+import { MatNavList, MatListItem } from '@angular/material/list';
+import { RouterLinkDirective } from '../../xforge-common/router-link.directive';
+import { MatIcon } from '@angular/material/icon';
+import { MatBadge } from '@angular/material/badge';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
   selector: 'app-navigation',
   templateUrl: './navigation.component.html',
   styleUrls: ['./navigation.component.scss'],
-  standalone: false
+  imports: [TranslocoModule, MatNavList, MatListItem, RouterLinkDirective, MatIcon, MatBadge, AsyncPipe]
 })
 export class NavigationComponent {
   canSeeSettings$: Observable<boolean> = this.activatedProjectService.projectId$.pipe(

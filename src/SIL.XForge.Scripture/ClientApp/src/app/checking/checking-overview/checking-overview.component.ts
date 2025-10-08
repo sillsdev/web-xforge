@@ -34,11 +34,47 @@ import {
 } from '../import-questions-dialog/import-questions-dialog.component';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
+import { TranslocoModule } from '@ngneat/transloco';
+import { NgClass } from '@angular/common';
+import { MatButton, MatMiniFabButton, MatIconButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { DonutChartComponent } from '../../../xforge-common/donut-chart/donut-chart.component';
+import {
+  MatExpansionPanel,
+  MatExpansionPanelHeader,
+  MatExpansionPanelTitle,
+  MatExpansionPanelContent
+} from '@angular/material/expansion';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatSelectionList, MatListItem, MatList } from '@angular/material/list';
+import { RouterLinkDirective } from '../../../xforge-common/router-link.directive';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { L10nNumberPipe as L10nNumberPipe_1 } from '../../../xforge-common/l10n-number.pipe';
 @Component({
   selector: 'app-checking-overview',
   templateUrl: './checking-overview.component.html',
   styleUrls: ['./checking-overview.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    NgClass,
+    MatButton,
+    MatIcon,
+    MatMiniFabButton,
+    DonutChartComponent,
+    MatExpansionPanel,
+    MatExpansionPanelHeader,
+    MatExpansionPanelTitle,
+    MatIconButton,
+    MatTooltip,
+    MatExpansionPanelContent,
+    MatSelectionList,
+    MatListItem,
+    MatList,
+    RouterLinkDirective,
+    MatCard,
+    MatCardContent,
+    L10nNumberPipe_1
+  ]
 })
 export class CheckingOverviewComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   texts: TextInfo[] = [];

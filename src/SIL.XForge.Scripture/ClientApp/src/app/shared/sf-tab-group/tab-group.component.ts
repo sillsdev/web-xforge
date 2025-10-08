@@ -15,12 +15,14 @@ import { TabHeaderPointerEvent, TabMoveEvent } from './sf-tabs.types';
 import { TabStateService } from './tab-state/tab-state.service';
 import { TabBodyComponent } from './tab/tab-body/tab-body.component';
 import { TabComponent } from './tab/tab.component';
+import { TabGroupHeaderComponent } from './tab-group-header/tab-group-header.component';
+import { NgTemplateOutlet } from '@angular/common';
 
 @Component({
   selector: 'app-tab-group [groupId]',
   templateUrl: './tab-group.component.html',
   styleUrls: ['./tab-group.component.scss'],
-  standalone: false
+  imports: [TabGroupHeaderComponent, TabBodyComponent, NgTemplateOutlet]
 })
 export class TabGroupComponent implements OnChanges {
   @Input() groupId: string = '';

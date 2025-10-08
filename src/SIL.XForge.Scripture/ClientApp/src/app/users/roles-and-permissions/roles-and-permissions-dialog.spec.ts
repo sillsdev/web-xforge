@@ -204,8 +204,13 @@ class FakeAvatarComponent {
 }
 
 @NgModule({
-  imports: [UICommonModule, TestTranslocoModule, NoticeComponent],
-  declarations: [RolesAndPermissionsDialogComponent, FakeAvatarComponent]
+  imports: [
+    UICommonModule,
+    TestTranslocoModule,
+    NoticeComponent,
+    RolesAndPermissionsDialogComponent,
+    FakeAvatarComponent
+  ]
 })
 class DialogTestModule {}
 

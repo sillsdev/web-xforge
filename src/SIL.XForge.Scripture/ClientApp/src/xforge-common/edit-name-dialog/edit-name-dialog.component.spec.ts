@@ -177,8 +177,7 @@ class TestEnvironment {
 }
 
 @NgModule({
-  imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule],
-  declarations: [EditNameDialogComponent]
+  imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule, EditNameDialogComponent]
 })
 class DialogTestModule {}
 

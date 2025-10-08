@@ -1,6 +1,6 @@
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, NgClass } from '@angular/common';
 import { Component, DestroyRef, ElementRef, EventEmitter, Inject, Input, OnInit, Output } from '@angular/core';
-import { MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
+import { MAT_TOOLTIP_DEFAULT_OPTIONS, MatTooltip } from '@angular/material/tooltip';
 import { Delta } from 'quill';
 import { fromEvent } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -10,13 +10,17 @@ import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightAction, LynxInsightCon
 import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 import { LynxWorkspaceService } from '../lynx-workspace.service';
+import { TranslocoModule } from '@ngneat/transloco';
+import { MatIcon } from '@angular/material/icon';
+import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
+import { Dir } from '@angular/cdk/bidi';
 
 @Component({
   selector: 'app-lynx-insight-overlay',
   templateUrl: './lynx-insight-overlay.component.html',
   styleUrl: './lynx-insight-overlay.component.scss',
   providers: [{ provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: { showDelay: 500 } }],
-  standalone: false
+  imports: [TranslocoModule, NgClass, MatIcon, MatTooltip, MatMenuTrigger, Dir, MatMenu, MatMenuItem]
 })
 export class LynxInsightOverlayComponent implements OnInit {
   showMoreInfo = false;

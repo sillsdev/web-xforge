@@ -398,8 +398,7 @@ describe('ScriptureChooserDialog', () => {
   }));
 
   @NgModule({
-    declarations: [ScriptureChooserDialogComponent],
-    imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule],
+    imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule, ScriptureChooserDialogComponent],
     providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
   })
   class TestModule {}

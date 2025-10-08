@@ -17,15 +17,6 @@ import { TabBodyComponent } from './tab/tab-body/tab-body.component';
 import { TabComponent } from './tab/tab.component';
 
 @NgModule({
-  declarations: [
-    TabGroupComponent,
-    TabComponent,
-    TabHeaderComponent,
-    TabHeaderDirective,
-    TabGroupHeaderComponent,
-    TabScrollButtonComponent,
-    TabBodyComponent
-  ],
   imports: [
     CommonModule,
     CustomIconModule,
@@ -34,7 +25,14 @@ import { TabComponent } from './tab/tab.component';
     MatMenuModule,
     MatTooltipModule,
     DragDropModule,
-    TranslocoModule
+    TranslocoModule,
+    TabGroupComponent,
+    TabComponent,
+    TabHeaderComponent,
+    TabHeaderDirective,
+    TabGroupHeaderComponent,
+    TabScrollButtonComponent,
+    TabBodyComponent
   ],
   exports: [TabGroupComponent, TabComponent, TabHeaderDirective],
   providers: [{ provide: TabAddRequestService, useClass: NoopTabAddRequestService }]

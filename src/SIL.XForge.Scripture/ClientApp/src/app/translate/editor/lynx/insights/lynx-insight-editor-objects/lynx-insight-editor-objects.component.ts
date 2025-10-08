@@ -25,11 +25,18 @@ import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 import { LynxWorkspaceService } from '../lynx-workspace.service';
 import { LynxInsightBlot } from '../quill-services/blots/lynx-insight-blot';
+import { LynxInsightStatusIndicatorComponent } from '../lynx-insight-status-indicator/lynx-insight-status-indicator.component';
+import { LynxInsightScrollPositionIndicatorComponent } from '../lynx-insight-scroll-position-indicator/lynx-insight-scroll-position-indicator.component';
+import { LynxInsightActionPromptComponent } from '../lynx-insight-action-prompt/lynx-insight-action-prompt.component';
 
 @Component({
   selector: 'app-lynx-insight-editor-objects',
   templateUrl: './lynx-insight-editor-objects.component.html',
-  standalone: false
+  imports: [
+    LynxInsightStatusIndicatorComponent,
+    LynxInsightScrollPositionIndicatorComponent,
+    LynxInsightActionPromptComponent
+  ]
 })
 export class LynxInsightEditorObjectsComponent implements OnChanges, OnInit, OnDestroy {
   readonly insightSelector = `.${LynxInsightBlot.superClassName}`;

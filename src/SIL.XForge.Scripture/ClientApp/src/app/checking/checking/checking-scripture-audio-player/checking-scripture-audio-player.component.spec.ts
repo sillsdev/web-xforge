@@ -238,7 +238,7 @@ describe('ScriptureAudioComponent', () => {
 @Component({
   selector: 'app-host',
   template: '',
-  standalone: false
+  imports: [UICommonModule, TestTranslocoModule]
 })
 class HostComponent {
   @ViewChild(CheckingScriptureAudioPlayerComponent) audioPlayer!: CheckingScriptureAudioPlayerComponent;
@@ -247,7 +247,7 @@ class HostComponent {
 @Component({
   selector: 'app-audio-player',
   template: '<p>Mock Audio Player</p>',
-  standalone: false
+  imports: [UICommonModule, TestTranslocoModule]
 })
 class AudioPlayerStubComponent {
   readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
@@ -278,8 +278,14 @@ class TestEnvironment {
     const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
 
     TestBed.configureTestingModule({
-      declarations: [HostComponent, CheckingScriptureAudioPlayerComponent, AudioPlayerStubComponent],
-      imports: [UICommonModule, TestOnlineStatusModule.forRoot(), TestTranslocoModule]
+      imports: [
+        UICommonModule,
+        TestOnlineStatusModule.forRoot(),
+        TestTranslocoModule,
+        HostComponent,
+        CheckingScriptureAudioPlayerComponent,
+        AudioPlayerStubComponent
+      ]
     });
     TestBed.overrideComponent(HostComponent, { set: { template: template } });
     this.ngZone = TestBed.inject(NgZone);

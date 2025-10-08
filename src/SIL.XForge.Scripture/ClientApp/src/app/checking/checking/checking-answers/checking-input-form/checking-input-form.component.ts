@@ -20,6 +20,15 @@ import {
 import { CheckingUtils } from '../../../checking.utils';
 import { TextAndAudioComponent } from '../../../text-and-audio/text-and-audio.component';
 import { AudioAttachment } from '../../checking-audio-player/checking-audio-player.component';
+import { TranslocoModule } from '@ngneat/transloco';
+import { FormsModule } from '@angular/forms';
+import { ScrollIntoViewDirective } from '../../../../../xforge-common/scroll-into-view';
+import { AutofocusDirective } from '../../../../../xforge-common/autofocus.directive';
+import { NgClass } from '@angular/common';
+import { AttachAudioComponent } from '../../../attach-audio/attach-audio.component';
+import { MatIconButton, MatButton } from '@angular/material/button';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatIcon } from '@angular/material/icon';
 export interface CheckingInput {
   text?: string;
   audio?: AudioAttachment;
@@ -37,7 +46,19 @@ function isAnswer(value: Answer | Comment | undefined): value is Answer {
   selector: 'app-checking-input-form',
   templateUrl: './checking-input-form.component.html',
   styleUrls: ['./checking-input-form.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    FormsModule,
+    ScrollIntoViewDirective,
+    TextAndAudioComponent,
+    AutofocusDirective,
+    NgClass,
+    AttachAudioComponent,
+    MatIconButton,
+    MatTooltip,
+    MatIcon,
+    MatButton
+  ]
 })
 export class CheckingInputFormComponent {
   @Input() project?: SFProjectProfile;

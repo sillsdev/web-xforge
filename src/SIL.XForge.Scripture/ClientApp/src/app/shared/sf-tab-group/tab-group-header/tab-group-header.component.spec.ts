@@ -13,8 +13,7 @@ describe('TabGroupHeaderComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [TabGroupHeaderComponent],
-      imports: [SFTabsModule, TestTranslocoModule],
+      imports: [SFTabsModule, TestTranslocoModule, TabGroupHeaderComponent],
       providers: [{ provide: TabMenuService, useValue: { getMenuItems: () => of([]) } }]
     });
     fixture = TestBed.createComponent(TabGroupHeaderComponent);

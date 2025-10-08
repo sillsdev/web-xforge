@@ -179,7 +179,7 @@ describe('CheckingAudioPlayerComponent', () => {
 @Component({
   selector: 'app-host',
   template: '',
-  standalone: false
+  imports: [UICommonModule, TestTranslocoModule]
 })
 class HostComponent {
   @ViewChild(CheckingAudioPlayerComponent) player1!: CheckingAudioPlayerComponent;
@@ -195,9 +195,17 @@ class TestEnvironment {
 
   constructor(template: string, isOnline = true) {
     TestBed.configureTestingModule({
-      declarations: [HostComponent, CheckingAudioPlayerComponent, AudioPlayerComponent, AudioTimePipe, InfoComponent],
       providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }],
-      imports: [UICommonModule, TestOnlineStatusModule.forRoot(), TestTranslocoModule]
+      imports: [
+        UICommonModule,
+        TestOnlineStatusModule.forRoot(),
+        TestTranslocoModule,
+        HostComponent,
+        CheckingAudioPlayerComponent,
+        AudioPlayerComponent,
+        AudioTimePipe,
+        InfoComponent
+      ]
     });
 
     TestBed.overrideComponent(HostComponent, { set: { template: template } });

@@ -1,12 +1,29 @@
 import { Component, DestroyRef, Inject, OnInit } from '@angular/core';
-import { FormControl } from '@angular/forms';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogTitle,
+  MatDialogContent,
+  MatDialogActions,
+  MatDialogClose
+} from '@angular/material/dialog';
 import { BehaviorSubject } from 'rxjs';
 import { debounceTime, map, skip, startWith } from 'rxjs/operators';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
+import { TranslocoModule } from '@ngneat/transloco';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { NoticeComponent } from '../../shared/notice/notice.component';
+import { MatSlideToggle } from '@angular/material/slide-toggle';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatSelect } from '@angular/material/select';
+import { MatOption } from '@angular/material/autocomplete';
+import { MatSlider, MatSliderThumb } from '@angular/material/slider';
+import { MatButton } from '@angular/material/button';
+import { AsyncPipe } from '@angular/common';
 
 export const CONFIDENCE_THRESHOLD_TIMEOUT = 500;
 
@@ -18,7 +35,28 @@ export interface TranslatorSettingsDialogData {
 @Component({
   templateUrl: './translator-settings-dialog.component.html',
   styleUrls: ['./translator-settings-dialog.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    MatDialogTitle,
+    CdkScrollable,
+    MatDialogContent,
+    MatCard,
+    MatCardContent,
+    NoticeComponent,
+    MatSlideToggle,
+    FormsModule,
+    ReactiveFormsModule,
+    MatFormField,
+    MatLabel,
+    MatSelect,
+    MatOption,
+    MatSlider,
+    MatSliderThumb,
+    MatDialogActions,
+    MatButton,
+    MatDialogClose,
+    AsyncPipe
+  ]
 })
 export class TranslatorSettingsDialogComponent implements OnInit {
   readonly suggestionsEnabledSwitch = new FormControl<boolean>({

@@ -38,9 +38,9 @@ const componentExports = [
     TranslocoModule,
     NoticeComponent,
     TranslocoMarkupModule,
-    LynxInsightsModule
+    LynxInsightsModule,
+    ...componentExports
   ],
-  declarations: componentExports,
   exports: [...componentExports, NoticeComponent]
 })
 export class SharedModule {

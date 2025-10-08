@@ -21,7 +21,7 @@ export interface Suggestion {
   selector: 'app-suggestions',
   templateUrl: './suggestions.component.html',
   styleUrls: ['./suggestions.component.scss'],
-  standalone: false
+  imports: [MatSelectionList, MatListOption]
 })
 export class SuggestionsComponent {
   @Output() selected = new EventEmitter<SuggestionSelectedEvent>();

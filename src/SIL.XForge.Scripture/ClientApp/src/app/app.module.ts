@@ -48,23 +48,7 @@ import { TranslateModule } from './translate/translate.module';
 import { UsersModule } from './users/users.module';
 
 @NgModule({
-  declarations: [
-    AppComponent,
-    NavigationComponent,
-    ConnectProjectComponent,
-    DeleteProjectDialogComponent,
-    ProjectComponent,
-    SettingsComponent,
-    MyProjectsComponent,
-    SyncComponent,
-    ScriptureChooserDialogComponent,
-    SupportedBrowsersDialogComponent,
-    ErrorDialogComponent,
-    EditNameDialogComponent,
-    FeatureFlagsDialogComponent,
-    TextNoteDialogComponent,
-    JoinComponent
-  ],
+  declarations: [AppComponent],
   bootstrap: [AppComponent],
   imports: [
     BrowserAnimationsModule,
@@ -87,7 +71,21 @@ import { UsersModule } from './users/users.module';
     GlobalNoticesComponent,
     QuillModule.forRoot(),
     LynxInsightsModule.forRoot(),
-    WriteStatusComponent
+    WriteStatusComponent,
+    NavigationComponent,
+    ConnectProjectComponent,
+    DeleteProjectDialogComponent,
+    ProjectComponent,
+    SettingsComponent,
+    MyProjectsComponent,
+    SyncComponent,
+    ScriptureChooserDialogComponent,
+    SupportedBrowsersDialogComponent,
+    ErrorDialogComponent,
+    EditNameDialogComponent,
+    FeatureFlagsDialogComponent,
+    TextNoteDialogComponent,
+    JoinComponent
   ],
   providers: [
     { provide: APP_ID, useValue: 'ng-cli-universal' },

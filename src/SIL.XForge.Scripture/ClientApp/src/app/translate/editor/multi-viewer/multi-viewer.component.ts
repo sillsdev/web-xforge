@@ -6,6 +6,11 @@ import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { combineLatest } from 'rxjs';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { MatTooltip } from '@angular/material/tooltip';
+import { AvatarComponent } from '../../../../xforge-common/avatar/avatar.component';
+import { MatMiniFabButton } from '@angular/material/button';
+import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
+import { MatIcon } from '@angular/material/icon';
 export interface MultiCursorViewer extends UserProfile {
   cursorColor: string;
   activeInEditor: boolean;
@@ -15,7 +20,7 @@ export interface MultiCursorViewer extends UserProfile {
   selector: 'app-multi-viewer',
   templateUrl: './multi-viewer.component.html',
   styleUrls: ['./multi-viewer.component.scss'],
-  standalone: false
+  imports: [MatTooltip, AvatarComponent, MatMiniFabButton, MatMenuTrigger, MatIcon, MatMenu, MatMenuItem]
 })
 export class MultiViewerComponent implements OnInit {
   @Input() viewers: MultiCursorViewer[] = [];

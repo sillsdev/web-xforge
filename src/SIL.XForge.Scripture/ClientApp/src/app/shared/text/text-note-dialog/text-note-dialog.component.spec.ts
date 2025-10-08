@@ -59,8 +59,7 @@ describe('TextNoteDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [UICommonModule, TestTranslocoModule],
-  declarations: [TextNoteDialogComponent]
+  imports: [UICommonModule, TestTranslocoModule, TextNoteDialogComponent]
 })
 class DialogTestModule {}
 

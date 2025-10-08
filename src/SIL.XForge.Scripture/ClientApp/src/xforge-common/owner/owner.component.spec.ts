@@ -81,7 +81,7 @@ describe('OwnerComponent', () => {
 @Component({
   selector: 'app-host',
   template: '',
-  standalone: false
+  imports: [OwnerComponent]
 })
 class HostComponent {
   @ViewChild(OwnerComponent) checkingOwner!: OwnerComponent;
@@ -96,8 +96,7 @@ class TestEnvironment {
 
   constructor(template: string) {
     TestBed.configureTestingModule({
-      declarations: [HostComponent],
-      imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), OwnerComponent],
+      imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), OwnerComponent, HostComponent],
       providers: [
         { provide: TranslocoService, useFactory: () => instance(this.mockedTranslocoService) },
         provideHttpClient(withInterceptorsFromDi()),

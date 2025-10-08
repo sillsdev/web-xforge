@@ -1,8 +1,12 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef, MatDialogTitle, MatDialogContent } from '@angular/material/dialog';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { I18nService } from 'xforge-common/i18n.service';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
+import { TranslocoModule } from '@ngneat/transloco';
+import { MatIconButton, MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 
 export interface ScriptureChooserDialogData {
   /** Starting verse selection, to highlight */
@@ -29,7 +33,7 @@ export interface ScriptureChooserDialogData {
   selector: 'app-scripture-reference-chooser',
   templateUrl: './scripture-chooser-dialog.component.html',
   styleUrls: ['./scripture-chooser-dialog.component.scss'],
-  standalone: false
+  imports: [TranslocoModule, MatDialogTitle, MatIconButton, MatIcon, CdkScrollable, MatDialogContent, MatButton]
 })
 export class ScriptureChooserDialogComponent implements OnInit {
   showing: 'books' | 'chapters' | 'verses' | 'rangeEnd' = 'books';

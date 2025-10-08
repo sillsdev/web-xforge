@@ -29,11 +29,30 @@ import { TabMenuItem, TabMenuService } from '../../sf-tab-group';
 import { TabHeaderPointerEvent, TabLocation, TabMoveEvent } from '../sf-tabs.types';
 import { TabHeaderComponent } from '../tab-header/tab-header.component';
 import { TabComponent } from '../tab/tab.component';
+import { TabScrollButtonComponent } from './tab-scroll-button/tab-scroll-button.component';
+import { NgFor, NgTemplateOutlet, NgIf, AsyncPipe } from '@angular/common';
+import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
+import { MatIcon } from '@angular/material/icon';
+import { TranslocoModule } from '@ngneat/transloco';
 @Component({
   selector: 'app-tab-group-header',
   templateUrl: './tab-group-header.component.html',
   styleUrls: ['./tab-group-header.component.scss'],
-  standalone: false
+  imports: [
+    TabScrollButtonComponent,
+    CdkDropList,
+    NgFor,
+    TabHeaderComponent,
+    CdkDrag,
+    NgTemplateOutlet,
+    MatMenuTrigger,
+    MatIcon,
+    MatMenu,
+    NgIf,
+    MatMenuItem,
+    AsyncPipe,
+    TranslocoModule
+  ]
 })
 export class TabGroupHeaderComponent implements OnChanges, OnInit, AfterViewInit, OnDestroy {
   @Input() groupId: string = '';

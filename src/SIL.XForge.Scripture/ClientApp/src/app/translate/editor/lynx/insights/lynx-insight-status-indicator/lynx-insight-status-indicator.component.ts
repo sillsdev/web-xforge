@@ -3,6 +3,8 @@ import { LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/l
 import { map, Observable } from 'rxjs';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 import { LynxWorkspaceService } from '../lynx-workspace.service';
+import { MatIcon } from '@angular/material/icon';
+import { NgClass, AsyncPipe } from '@angular/common';
 
 interface InsightCount {
   type: LynxInsightType;
@@ -13,7 +15,7 @@ interface InsightCount {
   selector: 'app-lynx-insight-status-indicator',
   templateUrl: './lynx-insight-status-indicator.component.html',
   styleUrl: './lynx-insight-status-indicator.component.scss',
-  standalone: false
+  imports: [MatIcon, NgClass, AsyncPipe]
 })
 export class LynxInsightStatusIndicatorComponent {
   isFilterHidingInsights$: Observable<boolean> = this.editorInsightState.filter$.pipe(

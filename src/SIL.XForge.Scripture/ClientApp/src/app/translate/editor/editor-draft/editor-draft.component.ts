@@ -1,7 +1,16 @@
+import { AsyncPipe, NgClass } from '@angular/common';
 import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, OnChanges, ViewChild } from '@angular/core';
-import { MatSelectChange } from '@angular/material/select';
+import { MatOption } from '@angular/material/autocomplete';
+import { MatButton } from '@angular/material/button';
+import { MatFormField } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressBar } from '@angular/material/progress-bar';
+import { MatSelect, MatSelectChange, MatSelectTrigger } from '@angular/material/select';
+import { MatTooltip } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
+import { TranslocoMarkupComponent } from 'ngx-transloco-markup';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DeltaOperation } from 'rich-text';
@@ -39,15 +48,36 @@ import { TextDocId } from '../../../core/models/text-doc';
 import { Revision } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { BuildStates } from '../../../machine-api/build-states';
+import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { TextComponent } from '../../../shared/text/text.component';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { DraftHandlingService } from '../../draft-generation/draft-handling.service';
 import { DraftOptionsService } from '../../draft-generation/draft-options.service';
+import { DraftPreviewBooksComponent } from '../../draft-generation/draft-preview-books/draft-preview-books.component';
+import { HistoryRevisionFormatPipe } from '../editor-history/history-chooser/history-revision-format.pipe';
+
 @Component({
   selector: 'app-editor-draft',
   templateUrl: './editor-draft.component.html',
   styleUrls: ['./editor-draft.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    MatProgressBar,
+    NoticeComponent,
+    DraftPreviewBooksComponent,
+    TranslocoMarkupComponent,
+    MatFormField,
+    MatSelect,
+    MatSelectTrigger,
+    MatOption,
+    MatButton,
+    MatIcon,
+    MatTooltip,
+    TextComponent,
+    NgClass,
+    AsyncPipe,
+    HistoryRevisionFormatPipe
+  ]
 })
 export class EditorDraftComponent implements AfterViewInit, OnChanges {
   @Input() projectId?: string;

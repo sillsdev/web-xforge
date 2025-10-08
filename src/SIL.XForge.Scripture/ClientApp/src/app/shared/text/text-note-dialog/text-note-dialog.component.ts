@@ -1,7 +1,11 @@
 import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogTitle, MatDialogClose, MatDialogContent } from '@angular/material/dialog';
 import { TranslocoService } from '@ngneat/transloco';
 import { LocaleDirection } from 'xforge-common/models/i18n-locale';
+import { MatIconButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { Dir } from '@angular/cdk/bidi';
 
 export enum TextNoteType {
   Footnote = 'f',
@@ -20,7 +24,7 @@ export interface NoteDialogData {
 @Component({
   templateUrl: './text-note-dialog.component.html',
   styleUrls: ['./text-note-dialog.component.scss'],
-  standalone: false
+  imports: [MatDialogTitle, MatIconButton, MatDialogClose, MatIcon, CdkScrollable, MatDialogContent, Dir]
 })
 export class TextNoteDialogComponent {
   constructor(

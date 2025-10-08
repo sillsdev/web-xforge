@@ -52,7 +52,7 @@ describe('NoticeComponent', () => {
 @Component({
   selector: 'app-host',
   template: '',
-  standalone: false
+  imports: [NoticeComponent]
 })
 class HostComponent {
   @ViewChild(NoticeComponent, { static: true }) component!: NoticeComponent;
@@ -63,8 +63,7 @@ class TestEnvironment {
 
   constructor(template: string) {
     TestBed.configureTestingModule({
-      declarations: [HostComponent],
-      imports: [NoticeComponent]
+      imports: [NoticeComponent, HostComponent]
     });
 
     TestBed.overrideComponent(HostComponent, { set: { template } });

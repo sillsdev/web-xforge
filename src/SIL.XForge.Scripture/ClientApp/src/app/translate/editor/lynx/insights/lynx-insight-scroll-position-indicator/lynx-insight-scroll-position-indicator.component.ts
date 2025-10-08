@@ -6,6 +6,7 @@ import { EditorReadyService } from '../base-services/editor-ready.service';
 import { LynxableEditor, LynxEditor, LynxEditorAdapterFactory } from '../lynx-editor';
 import { LynxInsight } from '../lynx-insight';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
+import { NgClass } from '@angular/common';
 
 interface LynxInsightScrollPosition {
   id: string;
@@ -17,7 +18,7 @@ interface LynxInsightScrollPosition {
   selector: 'app-lynx-insight-scroll-position-indicator',
   templateUrl: './lynx-insight-scroll-position-indicator.component.html',
   styleUrl: './lynx-insight-scroll-position-indicator.component.scss',
-  standalone: false
+  imports: [NgClass]
 })
 export class LynxInsightScrollPositionIndicatorComponent implements OnInit {
   @Input() set editor(value: LynxableEditor | undefined) {

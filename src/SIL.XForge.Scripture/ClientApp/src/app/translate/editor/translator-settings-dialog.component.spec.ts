@@ -313,8 +313,7 @@ describe('TranslatorSettingsDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [CommonModule, UICommonModule, TestTranslocoModule, NoticeComponent],
-  declarations: [TranslatorSettingsDialogComponent]
+  imports: [CommonModule, UICommonModule, TestTranslocoModule, NoticeComponent, TranslatorSettingsDialogComponent]
 })
 class DialogTestModule {}
 

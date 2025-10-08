@@ -13,7 +13,7 @@ import { verseRefFromMouseEvent } from '../../../shared/utils';
   selector: 'app-checking-text',
   templateUrl: './checking-text.component.html',
   styleUrls: ['./checking-text.component.scss'],
-  standalone: false
+  imports: [TextComponent]
 })
 export class CheckingTextComponent implements AfterViewInit {
   @ViewChild(TextComponent, { static: true }) textComponent!: TextComponent;

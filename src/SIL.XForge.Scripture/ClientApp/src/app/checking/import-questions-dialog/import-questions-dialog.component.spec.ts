@@ -501,9 +501,14 @@ describe('ImportQuestionsDialogComponent', () => {
 });
 
 @NgModule({
-  declarations: [ScriptureChooserDialogComponent, ImportQuestionsDialogComponent],
-
-  imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule, ngfModule],
+  imports: [
+    UICommonModule,
+    TestTranslocoModule,
+    NoopAnimationsModule,
+    ngfModule,
+    ScriptureChooserDialogComponent,
+    ImportQuestionsDialogComponent
+  ],
   providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
 })
 class DialogTestModule {}

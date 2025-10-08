@@ -84,8 +84,14 @@ const modules = [
 ];
 
 @NgModule({
-  declarations: [BlurOnClickDirective, AutofocusDirective, ScrollIntoViewDirective, RouterLinkDirective],
-  imports: [...modules, L10nNumberPipe],
+  imports: [
+    ...modules,
+    L10nNumberPipe,
+    BlurOnClickDirective,
+    AutofocusDirective,
+    ScrollIntoViewDirective,
+    RouterLinkDirective
+  ],
   exports: [
     ...modules,
     BlurOnClickDirective,
