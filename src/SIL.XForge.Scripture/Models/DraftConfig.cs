@@ -4,12 +4,8 @@ namespace SIL.XForge.Scripture.Models;
 
 public class DraftConfig
 {
-    public bool AdditionalTrainingSourceEnabled { get; set; }
-    public TranslateSource? AdditionalTrainingSource { get; set; }
-    public bool AlternateSourceEnabled { get; set; }
-    public TranslateSource? AlternateSource { get; set; }
-    public bool AlternateTrainingSourceEnabled { get; set; }
-    public TranslateSource? AlternateTrainingSource { get; set; }
+    public IList<TranslateSource> DraftingSources { get; set; } = [];
+    public IList<TranslateSource> TrainingSources { get; set; } = [];
     public IList<ProjectScriptureRange> LastSelectedTrainingScriptureRanges { get; set; } = [];
     public IList<string> LastSelectedTrainingDataFiles { get; set; } = [];
     public IList<ProjectScriptureRange> LastSelectedTranslationScriptureRanges { get; set; } = [];
