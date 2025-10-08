@@ -194,7 +194,7 @@ describe('CheckingComponent', () => {
       env.component.checkSliderPosition({ sizes: ['*', 20] });
       env.waitForSliderUpdate();
       expect(env.component.splitComponent?.getVisibleAreaSizes()[1]).toBeGreaterThan(1);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -228,7 +228,7 @@ describe('CheckingComponent', () => {
         tick(env.questionReadTimer);
         const nextQuestion = env.currentQuestion;
         expect(nextQuestion).toEqual(2);
-        flush(1000);
+        flush(TestEnvironment.adequateWaitMs);
       }));
 
       it('can navigate using previous button', fakeAsync(() => {
@@ -238,7 +238,7 @@ describe('CheckingComponent', () => {
         tick(env.questionReadTimer);
         const nextQuestion = env.currentQuestion;
         expect(nextQuestion).toEqual(1);
-        flush(1000);
+        flush(TestEnvironment.adequateWaitMs);
       }));
 
       it('prev/next disabled state based on existence of prev/next question', fakeAsync(() => {
@@ -315,7 +315,7 @@ describe('CheckingComponent', () => {
 
         env.waitForAudioPlayer();
         discardPeriodicTasks();
-        flush(1000);
+        flush(TestEnvironment.adequateWaitMs);
       }));
     });
 
@@ -332,7 +332,7 @@ describe('CheckingComponent', () => {
       env.fixture.detectChanges();
       tick();
       expect(getAdjacentQuestionSpy).toHaveBeenCalledWith(undefined, 'next');
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -341,21 +341,21 @@ describe('CheckingComponent', () => {
       env.clickButton(env.addQuestionButton);
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
       expect().nothing();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
     it('hides add question button for community checker', fakeAsync(() => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       expect(env.addQuestionButton).toBeNull();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
     it('hides add audio button for community checker', fakeAsync(() => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       expect(env.addAudioButton).toBeNull();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -363,7 +363,7 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment({ user: ADMIN_USER });
       expect(env.addAudioButton).not.toBeNull();
       expect(env.addQuestionButton).not.toBeNull();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -372,7 +372,7 @@ describe('CheckingComponent', () => {
       env.fixture.detectChanges();
       expect(env.addAudioButton).not.toBeNull();
       expect(env.addQuestionButton).toBeNull();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -381,7 +381,7 @@ describe('CheckingComponent', () => {
       env.fixture.detectChanges();
       expect(env.addAudioButton).toBeNull();
       expect(env.addQuestionButton).not.toBeNull();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -399,7 +399,7 @@ describe('CheckingComponent', () => {
       expect(env.component.projectDoc).toBeUndefined();
       expect(env.component.questionDocs.length).toEqual(0);
       env.waitForSliderUpdate();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('responds to remote community checking disabled when checker', fakeAsync(async () => {
@@ -411,7 +411,7 @@ describe('CheckingComponent', () => {
       await env.setCheckingEnabled(false);
       expect(env.component.projectDoc).toBeUndefined();
       env.waitForSliderUpdate();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('responds to remote community checking disabled when observer', fakeAsync(async () => {
@@ -422,7 +422,7 @@ describe('CheckingComponent', () => {
       expect(env.component.projectDoc).toBeUndefined();
       expect(env.component.questionDocs.length).toEqual(0);
       env.waitForSliderUpdate();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
   });
 
@@ -481,7 +481,7 @@ describe('CheckingComponent', () => {
       // Question 5 has been stored as the question to start at, but route book/chapter is forced to MAT 1,
       // so active question must be from MAT 1
       expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toBe('q16Id');
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -496,7 +496,7 @@ describe('CheckingComponent', () => {
       env.setBookChapter('JHN', 2);
       env.fixture.detectChanges();
       expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toBe('q15Id');
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -516,7 +516,7 @@ describe('CheckingComponent', () => {
       env.fixture.detectChanges();
       expect(env.component.questionsList!.activeQuestionDoc).toBe(undefined);
       expect(env.component.chapter).toEqual(3);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -542,7 +542,7 @@ describe('CheckingComponent', () => {
       env.fixture.detectChanges();
       expect(question.classes['question-answered']).toBe(true);
       tick();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('question shows answers icon and total', fakeAsync(() => {
@@ -553,7 +553,7 @@ describe('CheckingComponent', () => {
       env.fixture.detectChanges();
       expect(env.getUnread(question)).toEqual(0);
       env.waitForAudioPlayer();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('allows admin to archive a question', fakeAsync(async () => {
@@ -576,7 +576,7 @@ describe('CheckingComponent', () => {
       expect(env.component.questionDocs.length).toEqual(13);
       expect(env.component.questionVerseRefs.length).toEqual(13);
       expect(env.component.questionsList!.activeQuestionDoc!.id).toBe('project01:q3Id');
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('opens a dialog when edit question is clicked', fakeAsync(() => {
@@ -602,7 +602,7 @@ describe('CheckingComponent', () => {
         mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, 'audioFile.mp3')
       ).times(3);
       expect().nothing();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('removes audio player when question audio deleted', fakeAsync(async () => {
@@ -629,7 +629,7 @@ describe('CheckingComponent', () => {
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, undefined)).times(
         3
       );
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('uploads audio then updates audio url', fakeAsync(async () => {
@@ -658,7 +658,7 @@ describe('CheckingComponent', () => {
       expect(env.component.answersPanel?.getFileSource(questionDoc.data?.audioUrl)).toBeDefined();
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, 'questions', questionId, 'anAudioFile.mp3')).once();
       env.waitForAudioPlayer();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -673,7 +673,7 @@ describe('CheckingComponent', () => {
       env.clickButton(env.editQuestionButton);
       verify(mockedDialogService.confirm(anything(), anything())).twice();
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       expect().nothing();
     }));
 
@@ -703,7 +703,7 @@ describe('CheckingComponent', () => {
       expect(env.segmentHasQuestion(1, 5)).toBe(true);
       expect(env.component.questionVerseRefs.some(verseRef => verseRef.equals(new VerseRef('JHN 1:5')))).toBe(true);
       env.waitForQuestionTimersToComplete();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('records audio for question when button clicked', fakeAsync(() => {
@@ -728,7 +728,7 @@ describe('CheckingComponent', () => {
           anything()
         )
       ).once();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -736,7 +736,7 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment({ user: ADMIN_USER });
       env.selectQuestion(15);
       expect(env.recordQuestionButton).toBeNull();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('unread answers badge is only visible when the setting is ON to see other answers', fakeAsync(async () => {
@@ -744,7 +744,7 @@ describe('CheckingComponent', () => {
       expect(env.getUnread(env.questions[5])).toEqual(1);
       await env.setSeeOtherUserResponses(false);
       expect(env.getUnread(env.questions[5])).toEqual(0);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -754,7 +754,7 @@ describe('CheckingComponent', () => {
       expect(env.getUnread(env.questions[6])).toEqual(0);
       await env.setSeeOtherUserResponses(false);
       expect(env.getUnread(env.questions[6])).toEqual(0);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -837,7 +837,7 @@ describe('CheckingComponent', () => {
       verify(
         mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, 'q2Id', 'filename2.mp3')
       ).times(5);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('question added to another book changes the route to that book and activates the question', fakeAsync(async () => {
@@ -859,7 +859,7 @@ describe('CheckingComponent', () => {
       expect(env.location.path()).toEqual('/projects/project01/checking/MAT/1?scope=book');
       await env.activateQuestion('q1Id');
       expect(env.location.path()).toEqual('/projects/project01/checking/JHN/1?scope=book');
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('admin can see appropriate filter options', fakeAsync(() => {
@@ -878,7 +878,7 @@ describe('CheckingComponent', () => {
       expect(env.component.questionFilters.has(QuestionFilter.CurrentUserHasNotAnswered))
         .withContext('CurrentUserHasNotAnswered')
         .toEqual(false);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -898,7 +898,7 @@ describe('CheckingComponent', () => {
       expect(env.component.questionFilters.has(QuestionFilter.CurrentUserHasNotAnswered))
         .withContext('CurrentUserHasNotAnswered')
         .toEqual(true);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -931,7 +931,7 @@ describe('CheckingComponent', () => {
           .withContext(env.component.appliedQuestionFilterKey ?? '')
           .toEqual(`(${expectedVisibleQuestionTotal})`);
       });
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('show no questions message for filter', fakeAsync(() => {
@@ -945,7 +945,7 @@ describe('CheckingComponent', () => {
       env.setQuestionFilter(QuestionFilter.StatusExport);
       expect(env.questions.length).toEqual(0);
       expect(env.noQuestionsFound).not.toBeNull();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('should update question summary when filtered', fakeAsync(() => {
@@ -964,7 +964,7 @@ describe('CheckingComponent', () => {
       expect(env.questions.length).toEqual(10);
       // The first question after filter has now been read
       expect(env.component.summary.unread).toEqual(9);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('should reset filtering after a new question is added', fakeAsync(async () => {
@@ -986,7 +986,7 @@ describe('CheckingComponent', () => {
       expect(env.component.activeQuestionFilter).toEqual(QuestionFilter.None);
       expect(env.questions.length).toEqual(14);
       env.waitForQuestionTimersToComplete();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('should not reset scope after a user changes chapter', fakeAsync(() => {
@@ -1003,7 +1003,7 @@ describe('CheckingComponent', () => {
       env.fixture.detectChanges();
       expect(env.component.activeQuestionScope).toEqual('chapter');
       env.waitForQuestionTimersToComplete();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('should not reset scope after a user changes book', fakeAsync(() => {
@@ -1020,7 +1020,7 @@ describe('CheckingComponent', () => {
       env.fixture.detectChanges();
       expect(env.component.activeQuestionScope).toEqual('book');
       env.waitForQuestionTimersToComplete();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('can narrow questions scope', fakeAsync(() => {
@@ -1040,7 +1040,7 @@ describe('CheckingComponent', () => {
       env.fixture.detectChanges();
       expect(env.questions.length).toEqual(14);
       tick();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -1061,7 +1061,7 @@ describe('CheckingComponent', () => {
       env.fixture.detectChanges();
       expect(env.questions.length).toEqual(16);
       tick();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -1072,7 +1072,7 @@ describe('CheckingComponent', () => {
       });
 
       expect(env.questions.length).toBeGreaterThan(0);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -1095,7 +1095,7 @@ describe('CheckingComponent', () => {
       expect(spyUpdateQuestionRefs).toHaveBeenCalledTimes(1);
       // Called at least once or more depending on if another question replaces the archived question
       expect(spyRefreshSummary).toHaveBeenCalled();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     describe('Question Filter', () => {
@@ -1116,7 +1116,7 @@ describe('CheckingComponent', () => {
         const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
         expect(filtered.length).toBe(1);
         expect(filtered[0]).toBe(questionRemaining);
-        flush(1000);
+        flush(TestEnvironment.adequateWaitMs);
         discardPeriodicTasks();
       }));
 
@@ -1142,7 +1142,7 @@ describe('CheckingComponent', () => {
         const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
         expect(filtered.length).toBe(1);
         expect(filtered[0]).toBe(questionRemaining);
-        flush(1000);
+        flush(TestEnvironment.adequateWaitMs);
         discardPeriodicTasks();
       }));
 
@@ -1168,7 +1168,7 @@ describe('CheckingComponent', () => {
         const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
         expect(filtered.length).toBe(1);
         expect(filtered[0]).toBe(questionRemaining);
-        flush(1000);
+        flush(TestEnvironment.adequateWaitMs);
         discardPeriodicTasks();
       }));
 
@@ -1194,7 +1194,7 @@ describe('CheckingComponent', () => {
         const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
         expect(filtered.length).toBe(1);
         expect(filtered[0]).toBe(questionRemaining);
-        flush(1000);
+        flush(TestEnvironment.adequateWaitMs);
         discardPeriodicTasks();
       }));
 
@@ -1230,7 +1230,7 @@ describe('CheckingComponent', () => {
         filtered = env.component['filterQuestions']([questionRemainingNoneStatus, questionExcluded]);
         expect(filtered.length).toBe(1);
         expect(filtered[0]).toBe(questionRemainingNoneStatus);
-        flush(1000);
+        flush(TestEnvironment.adequateWaitMs);
         discardPeriodicTasks();
       }));
 
@@ -1256,7 +1256,7 @@ describe('CheckingComponent', () => {
         const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
         expect(filtered.length).toBe(1);
         expect(filtered[0]).toBe(questionRemaining);
-        flush(1000);
+        flush(TestEnvironment.adequateWaitMs);
         discardPeriodicTasks();
       }));
 
@@ -1282,7 +1282,7 @@ describe('CheckingComponent', () => {
         const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
         expect(filtered.length).toBe(1);
         expect(filtered[0]).toBe(questionRemaining);
-        flush(1000);
+        flush(TestEnvironment.adequateWaitMs);
         discardPeriodicTasks();
       }));
     });
@@ -1292,7 +1292,7 @@ describe('CheckingComponent', () => {
     it('answer panel is initiated and shows the first question', fakeAsync(() => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       expect(env.answerPanel).not.toBeNull();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -1305,7 +1305,7 @@ describe('CheckingComponent', () => {
       expect(env.answers.length).toEqual(1);
       expect(env.getAnswerText(0)).toBe('Answer question 2');
       expect(env.component.summary.answered).toEqual(3);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('opens edit display name dialog if answering a question for the first time', fakeAsync(async () => {
@@ -1315,7 +1315,7 @@ describe('CheckingComponent', () => {
       verify(mockedUserService.editDisplayName(true)).once();
       expect(env.answers.length).toEqual(1);
       expect(env.getAnswerText(0)).toBe('Answering question 2 should pop up a dialog');
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('does not open edit display name dialog if offline', fakeAsync(async () => {
@@ -1331,7 +1331,7 @@ describe('CheckingComponent', () => {
       verify(mockedUserService.editDisplayName(anything())).never();
       expect(env.answers.length).toEqual(1);
       expect(env.getAnswerText(0)).toBe('Answering question 2 offline');
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('inserts newer answer above older answers', fakeAsync(async () => {
@@ -1341,7 +1341,7 @@ describe('CheckingComponent', () => {
       expect(env.answers.length).toEqual(2);
       expect(env.getAnswerText(0)).toBe('Just added answer');
       expect(env.getAnswerText(1)).toBe('Answer 7 on question');
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('saves the last visited question', fakeAsync(async () => {
@@ -1383,7 +1383,7 @@ describe('CheckingComponent', () => {
       env.waitForSliderUpdate();
       expect(env.yourAnswerField).toBeNull();
       expect(env.addAnswerButton).not.toBeNull();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('does not save the answer when storage quota exceeded', fakeAsync(async () => {
@@ -1420,7 +1420,7 @@ describe('CheckingComponent', () => {
       const questionDoc = env.component.questionsList!.activeQuestionDoc!;
       expect(questionDoc.data!.answers.length).toEqual(0);
       expect(env.saveAnswerButton).not.toBeNull();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('check answering validation', fakeAsync(() => {
@@ -1430,7 +1430,7 @@ describe('CheckingComponent', () => {
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
       expect(env.answerFormErrors[0].classes['visible']).toBe(true);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('can edit a new answer', fakeAsync(async () => {
@@ -1448,7 +1448,7 @@ describe('CheckingComponent', () => {
       expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(true);
       expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeUndefined();
       expect(env.getAnswerText(0)).toBe('Edited question 7 answer');
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('can edit an existing answer', fakeAsync(() => {
@@ -1486,7 +1486,7 @@ describe('CheckingComponent', () => {
         .toBeUndefined();
       expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeUndefined();
       expect(env.getAnswerText(myAnswerIndex)).withContext('should not have been changed').toEqual('Edited answer');
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('highlights remotely edited answer', fakeAsync(async () => {
@@ -1499,7 +1499,7 @@ describe('CheckingComponent', () => {
       await env.simulateRemoteEditAnswer(otherAnswerIndex, 'Question 9 edited answer');
       expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(true);
       expect(env.getAnswerText(otherAnswerIndex)).toBe('Question 9 edited answer');
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('does not highlight upon sync', fakeAsync(async () => {
@@ -1512,7 +1512,7 @@ describe('CheckingComponent', () => {
       await env.simulateSync(answerIndex);
       expect(env.getAnswer(answerIndex).classes['attention']).toBeUndefined();
       expect(env.getAnswerText(answerIndex)).toBe('Answer 1 on question');
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('still shows answers as read after canceling an edit', fakeAsync(async () => {
@@ -1530,7 +1530,7 @@ describe('CheckingComponent', () => {
       expect(env.getAnswer(myAnswerIndex).classes['attention']).toBeUndefined();
       expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeUndefined();
       expect(env.getAnswerText(0)).toEqual('Answer question 7');
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('only my answer is highlighted after I add an answer', fakeAsync(async () => {
@@ -1542,7 +1542,7 @@ describe('CheckingComponent', () => {
       const otherAnswerIndex = 1;
       expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(true);
       expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeUndefined();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('can remove audio from answer', fakeAsync(async () => {
@@ -1558,7 +1558,7 @@ describe('CheckingComponent', () => {
         mockedFileService.deleteFile(FileType.Audio, 'project01', QuestionDoc.COLLECTION, 'a6Id', CHECKER_USER.id)
       ).once();
       expect().nothing();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('saves audio answer offline and plays from cache', fakeAsync(async () => {
@@ -1590,7 +1590,7 @@ describe('CheckingComponent', () => {
       expect(newAnswer.audioUrl).toEqual('blob://audio');
       expect(env.component.answersPanel?.getFileSource(newAnswer.audioUrl)).toBeDefined();
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, 'questions', anything(), 'blob://audio')).once();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -1606,7 +1606,7 @@ describe('CheckingComponent', () => {
       resolveUpload$.next();
       env.waitForSliderUpdate();
       expect(question.data!.answers.length).toEqual(1);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('can delete an answer', fakeAsync(() => {
@@ -1619,7 +1619,7 @@ describe('CheckingComponent', () => {
       verify(
         mockedFileService.deleteFile(FileType.Audio, 'project01', QuestionDoc.COLLECTION, 'a6Id', CHECKER_USER.id)
       ).once();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('can delete correct answer after changing chapters', fakeAsync(async () => {
@@ -1630,7 +1630,7 @@ describe('CheckingComponent', () => {
       env.clickButton(env.answerDeleteButton(0));
       env.waitForSliderUpdate();
       expect(env.answers.length).toEqual(0);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('answers reset when changing questions', fakeAsync(async () => {
@@ -1640,7 +1640,7 @@ describe('CheckingComponent', () => {
       expect(env.answers.length).toEqual(1);
       env.selectQuestion(1);
       expect(env.answers.length).toEqual(0);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it("checker user can like and unlike another's answer", fakeAsync(async () => {
@@ -1657,7 +1657,7 @@ describe('CheckingComponent', () => {
       env.waitForSliderUpdate();
       expect(env.getLikeTotal(1)).toBe(0);
       expect(env.likeButtons[1].classes.like).toBeUndefined();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('cannot like your own answer', fakeAsync(async () => {
@@ -1669,7 +1669,7 @@ describe('CheckingComponent', () => {
       env.waitForSliderUpdate();
       expect(env.getLikeTotal(0)).toBe(0);
       verify(mockedNoticeService.show('You cannot like your own answer.')).once();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('observer cannot like an answer', fakeAsync(() => {
@@ -1702,7 +1702,7 @@ describe('CheckingComponent', () => {
       expect(env.getLikeTotal(1)).toBe(0);
       expect(env.likeButtons[0].classes.like).toBeUndefined();
       expect(env.likeButtons[1].classes.like).toBeUndefined();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('hides the like icon if see other users responses is disabled', fakeAsync(async () => {
@@ -1723,7 +1723,7 @@ describe('CheckingComponent', () => {
       expect(env.answers.length).toBe(0);
       await env.answerQuestion('Answer from checker');
       expect(env.answers.length).toBe(2);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('checker can only see their answers when the setting is OFF to see other answers', fakeAsync(async () => {
@@ -1735,7 +1735,7 @@ describe('CheckingComponent', () => {
       expect(env.answers.length).toBe(0);
       await env.answerQuestion('Answer from checker');
       expect(env.answers.length).toBe(1);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('can add scripture to an answer', fakeAsync(() => {
@@ -1756,7 +1756,7 @@ describe('CheckingComponent', () => {
       expect(env.scriptureText).toBe('John 2:2-5');
       env.clickButton(env.saveAnswerButton);
       expect(env.getAnswerScriptureText(0)).toBe('…The selected text(John 2:2-5)');
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -1768,7 +1768,7 @@ describe('CheckingComponent', () => {
       env.waitForSliderUpdate();
       env.clickButton(env.clearScriptureButton);
       expect(env.selectVersesButton).not.toBeNull();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -1785,7 +1785,7 @@ describe('CheckingComponent', () => {
       expect(env.getAnswerEditButton(0)).toBeNull();
       env.selectQuestion(7);
       expect(env.getAnswerEditButton(0)).not.toBeNull();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('new remote answers from other users are not displayed until requested', fakeAsync(async () => {
@@ -1881,7 +1881,7 @@ describe('CheckingComponent', () => {
       await env.simulateNewRemoteAnswer('remoteAnswerId123');
       // The total answers header comes back.
       expect(env.totalAnswersMessageCount).toEqual(1);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it("new remote answers and banner don't show, if user has not yet answered the question", fakeAsync(async () => {
@@ -1906,7 +1906,7 @@ describe('CheckingComponent', () => {
       expect(env.showUnreadAnswersButton).toBeNull();
       expect(env.answers.length).toEqual(3);
       expect(env.component.answersPanel!.answers.length).toEqual(3);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('show-remote-answer banner disappears if user deletes their answer', fakeAsync(async () => {
@@ -1954,7 +1954,7 @@ describe('CheckingComponent', () => {
       expect(env.showUnreadAnswersButton).not.toBeNull();
       expect(env.unreadAnswersBannerCount).toEqual(1);
       expect(env.totalAnswersMessageCount).toEqual(4);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('show-remote-answer banner disappears if the un-shown remote answer is deleted', fakeAsync(async () => {
@@ -1976,7 +1976,7 @@ describe('CheckingComponent', () => {
       expect(env.answers.length).toEqual(2);
       expect(env.component.answersPanel!.answers.length).toEqual(2);
       expect(env.totalAnswersMessageCount).toEqual(2);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -2004,7 +2004,7 @@ describe('CheckingComponent', () => {
       expect(env.answers.length).toEqual(2);
       expect(env.totalAnswersMessageCount).toEqual(3);
       expect(env.unreadAnswersBannerCount).toEqual(1);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('show-remote-answer banner not shown to user if see-others-answers is disabled', fakeAsync(async () => {
@@ -2023,7 +2023,7 @@ describe('CheckingComponent', () => {
       expect(env.totalAnswersMessageText).toEqual('Your answer');
       // Banner is not shown
       expect(env.showUnreadAnswersButton).toBeNull();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('show-remote-answer banner still shown to proj admin if see-others-answers is disabled', fakeAsync(async () => {
@@ -2041,7 +2041,7 @@ describe('CheckingComponent', () => {
       expect(env.totalAnswersMessageCount).toEqual(2);
       // Banner is shown
       expect(env.showUnreadAnswersButton).not.toBeNull();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     describe('Comments', () => {
@@ -2052,7 +2052,7 @@ describe('CheckingComponent', () => {
         await env.commentOnAnswer(0, 'Response to answer');
         env.waitForSliderUpdate();
         expect(env.getAnswerComments(0).length).toBe(1);
-        flush(1000);
+        flush(TestEnvironment.adequateWaitMs);
       }));
 
       it('can edit comment on an answer', fakeAsync(async () => {
@@ -2072,7 +2072,7 @@ describe('CheckingComponent', () => {
         expect(env.getAnswerCommentText(0, 0)).toBe('Edited comment');
         expect(env.getAnswerCommentText(0, 1)).toBe('Second comment to answer');
         expect(env.getAnswerComments(0).length).toBe(2);
-        flush(1000);
+        flush(TestEnvironment.adequateWaitMs);
       }));
 
       it('can delete comment on an answer', fakeAsync(async () => {
@@ -2085,7 +2085,7 @@ describe('CheckingComponent', () => {
         env.clickButton(env.getDeleteCommentButton(0, 0));
         env.waitForSliderUpdate();
         expect(env.getAnswerComments(0).length).toBe(0);
-        flush(1000);
+        flush(TestEnvironment.adequateWaitMs);
       }));
 
       it('can record audio for a comment', fakeAsync(async () => {
@@ -2100,7 +2100,7 @@ describe('CheckingComponent', () => {
         env.waitForSliderUpdate();
         expect(env.getAnswerCommentAudio(0, 0)).not.toBeNull();
         expect(env.getAnswerCommentText(0, 0)).toBe('');
-        flush(1000);
+        flush(TestEnvironment.adequateWaitMs);
       }));
 
       it('can remove audio from a comment', fakeAsync(async () => {
@@ -2121,7 +2121,7 @@ describe('CheckingComponent', () => {
         verify(
           mockedFileService.deleteFile(FileType.Audio, 'project01', QuestionDoc.COLLECTION, anything(), anything())
         ).once();
-        flush(1000);
+        flush(TestEnvironment.adequateWaitMs);
       }));
 
       it('will delete comment audio when comment is deleted', fakeAsync(async () => {
@@ -2142,7 +2142,7 @@ describe('CheckingComponent', () => {
         verify(
           mockedFileService.deleteFile(FileType.Audio, 'project01', QuestionDoc.COLLECTION, anything(), anything())
         ).once();
-        flush(1000);
+        flush(TestEnvironment.adequateWaitMs);
       }));
 
       it('comments only appear on the relevant answer', fakeAsync(async () => {
@@ -2161,7 +2161,7 @@ describe('CheckingComponent', () => {
         expect(env.getAnswerCommentText(0, 0)).toBe('Third comment');
         env.selectQuestion(1);
         expect(env.getAnswerCommentText(0, 0)).toBe('First comment');
-        flush(1000);
+        flush(TestEnvironment.adequateWaitMs);
       }));
 
       it('comments display show more button', fakeAsync(() => {
@@ -2182,7 +2182,7 @@ describe('CheckingComponent', () => {
         expect(env.getAnswerComments(0).length).toBe(4);
         expect(env.getShowAllCommentsButton(0)).toBeFalsy();
         expect(env.getAddCommentButton(0)).toBeTruthy();
-        flush(1000);
+        flush(TestEnvironment.adequateWaitMs);
       }));
 
       it('comments unread only mark as read when the show more button is clicked', fakeAsync(() => {
@@ -2195,7 +2195,7 @@ describe('CheckingComponent', () => {
         env.clickButton(env.getShowAllCommentsButton(0));
         env.waitForSliderUpdate();
         expect(env.getUnread(question)).toEqual(0);
-        flush(1000);
+        flush(TestEnvironment.adequateWaitMs);
       }));
 
       it('displays comments in real-time', fakeAsync(async () => {
@@ -2212,7 +2212,7 @@ describe('CheckingComponent', () => {
         tick();
         expect(env.getAnswerComments(0).length).toEqual(1);
         expect(env.component.projectUserConfigDoc!.data!.commentRefsRead.includes(commentId)).toBe(true);
-        flush(1000);
+        flush(TestEnvironment.adequateWaitMs);
       }));
 
       it('does not mark third comment read if fourth comment also added', fakeAsync(async () => {
@@ -2234,7 +2234,7 @@ describe('CheckingComponent', () => {
         env.clickButton(env.getShowAllCommentsButton(0));
         expect(env.component.projectUserConfigDoc!.data!.commentRefsRead.length).toEqual(3);
         expect(env.getAnswerComments(0).length).toEqual(4);
-        flush(1000);
+        flush(TestEnvironment.adequateWaitMs);
       }));
 
       it('observer cannot comment on an answer', fakeAsync(() => {
@@ -2251,7 +2251,7 @@ describe('CheckingComponent', () => {
         env.selectQuestion(8);
         expect(env.getAnswerComments(0).length).toEqual(2);
         expect(env.getEditCommentButton(0, 0)).toBeNull();
-        flush(1000);
+        flush(TestEnvironment.adequateWaitMs);
       }));
     });
 
@@ -2275,7 +2275,7 @@ describe('CheckingComponent', () => {
       verify(questionDoc!.updateAnswerFileCache()).once();
       expect().nothing();
       tick();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('update answer audio cache on remote update to question', fakeAsync(async () => {
@@ -2287,7 +2287,7 @@ describe('CheckingComponent', () => {
       verify(questionDoc!.updateAnswerFileCache()).times(2);
       expect().nothing();
       tick();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('update answer audio cache on remote removal of an answer', fakeAsync(async () => {
@@ -2299,7 +2299,7 @@ describe('CheckingComponent', () => {
       // SUT
       await env.simulateRemoteDeleteAnswer('q6Id', 0);
       expect(questionDoc.updateAnswerFileCache).toHaveBeenCalledTimes(2);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('only admins can change answer export status', fakeAsync(() => {
@@ -2316,7 +2316,7 @@ describe('CheckingComponent', () => {
         }
         env.waitForAudioPlayer();
       });
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('can mark answer ready for export', fakeAsync(() => {
@@ -2329,7 +2329,7 @@ describe('CheckingComponent', () => {
       expect(env.getExportAnswerButton(buttonIndex).classes['status-exportable']).toBe(true);
       const questionDoc = env.component.questionsList!.activeQuestionDoc!;
       expect(questionDoc.data!.answers[0].status).toEqual(AnswerStatus.Exportable);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -2343,7 +2343,7 @@ describe('CheckingComponent', () => {
       expect(env.getResolveAnswerButton(buttonIndex).classes['status-resolved']).toBe(true);
       const questionDoc = env.component.questionsList!.activeQuestionDoc!;
       expect(questionDoc.data!.answers[0].status).toEqual(AnswerStatus.Resolved);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -2372,7 +2372,7 @@ describe('CheckingComponent', () => {
       expect(env.getExportAnswerButton(buttonIndex).classes['status-exportable']).toBeUndefined();
       questionDoc = env.component.questionsList!.activeQuestionDoc!;
       expect(questionDoc.data!.answers[0].status).toEqual(AnswerStatus.None);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
   });
@@ -2397,7 +2397,7 @@ describe('CheckingComponent', () => {
       tick(env.questionReadTimer);
       env.fixture.detectChanges();
       expect(env.currentQuestion).toBe(4);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('quill editor element lang attribute is set from project language', fakeAsync(() => {
@@ -2405,7 +2405,7 @@ describe('CheckingComponent', () => {
       env.waitForAudioPlayer();
       const quillElementLang = env.quillEditorElement.getAttribute('lang');
       expect(quillElementLang).toEqual(TestEnvironment.project01WritingSystemTag);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -2414,7 +2414,7 @@ describe('CheckingComponent', () => {
       const segment = env.quillEditor.querySelector('usx-segment[data-segment=verse_1_1]')!;
       expect(segment.hasAttribute('data-question-count')).toBe(true);
       expect(segment.getAttribute('data-question-count')).toBe('13');
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -2440,7 +2440,7 @@ describe('CheckingComponent', () => {
       expect(segment.classList.contains('question-segment')).toBe(true);
       expect(segment.classList.contains('highlight-segment')).toBe(true);
       tick();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('is not hidden when project setting did not specify to hide it', fakeAsync(() => {
@@ -2457,7 +2457,7 @@ describe('CheckingComponent', () => {
         .withContext('Scripture text should be shown since the project is set not to hide it')
         .toBe(false);
 
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -2477,7 +2477,7 @@ describe('CheckingComponent', () => {
         .withContext('Scripture text should be hidden when project setting')
         .toBe(true);
 
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -2523,7 +2523,7 @@ describe('CheckingComponent', () => {
         .withContext('Scripture text should not be hidden')
         .toBe(false);
 
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
   });
@@ -2539,7 +2539,7 @@ describe('CheckingComponent', () => {
       env.fixture.detectChanges();
 
       expect(env.component.showScriptureAudioPlayer).toBe(true);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       expect(env.audioCheckingWarning).toBeNull();
       expect(env.questionNoAudioWarning).toBeNull();
       discardPeriodicTasks();
@@ -2556,7 +2556,7 @@ describe('CheckingComponent', () => {
       env.fixture.detectChanges();
 
       expect(env.component.showScriptureAudioPlayer).toBe(false);
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -2568,7 +2568,7 @@ describe('CheckingComponent', () => {
 
       verify(audio.stop()).once();
       expect(env.component).toBeDefined();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
       discardPeriodicTasks();
     }));
 
@@ -2580,7 +2580,7 @@ describe('CheckingComponent', () => {
 
       verify(audio.stop()).once();
       expect(env.component).toBeDefined();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('pauses chapter audio when adding a question', fakeAsync(() => {
@@ -2608,7 +2608,7 @@ describe('CheckingComponent', () => {
 
       verify(audio.pause()).once();
       expect(env.component).toBeDefined();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
     }));
 
     it('hides chapter audio if chapter audio is absent', fakeAsync(() => {
@@ -2620,7 +2620,7 @@ describe('CheckingComponent', () => {
 
       env.component.chapter = 99;
       env.fixture.detectChanges();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
 
       expect(env.component.showScriptureAudioPlayer).toBe(false);
       discardPeriodicTasks();
@@ -2635,7 +2635,7 @@ describe('CheckingComponent', () => {
 
       env.component.chapter = 2;
       env.fixture.detectChanges();
-      flush(1000);
+      flush(TestEnvironment.adequateWaitMs);
 
       expect(env.component.showScriptureAudioPlayer).toBe(true);
       discardPeriodicTasks();
@@ -2748,6 +2748,7 @@ interface UserInfo {
 }
 
 class TestEnvironment {
+  static readonly adequateWaitMs: number = 1000;
   static project01WritingSystemTag = 'en';
 
   readonly component: CheckingComponent;
