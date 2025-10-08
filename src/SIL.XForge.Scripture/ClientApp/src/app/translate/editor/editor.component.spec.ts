@@ -4072,10 +4072,6 @@ describe('EditorComponent', () => {
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
-        const projectDoc = env.getProjectDoc('project01');
-        if (projectDoc.data != null) {
-          (projectDoc.data.translateConfig as any).draftConfig = { usfmConfig: {} };
-        }
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
@@ -4094,10 +4090,6 @@ describe('EditorComponent', () => {
           Object.defineProperty(env.component, 'showSource', { get: () => false });
         });
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
-        const projectDoc = env.getProjectDoc('project01');
-        if (projectDoc.data != null) {
-          (projectDoc.data.translateConfig as any).draftConfig = { usfmConfig: {} };
-        }
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
@@ -4115,6 +4107,7 @@ describe('EditorComponent', () => {
         const env = new TestEnvironment(env => {
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
+        env.setupProject({ translateConfig: { draftConfig: {} } });
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
@@ -4133,10 +4126,6 @@ describe('EditorComponent', () => {
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
-        const projectDoc = env.getProjectDoc('project01');
-        if (projectDoc.data != null) {
-          (projectDoc.data.translateConfig as any).draftConfig = { usfmConfig: {} };
-        }
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
 
@@ -4173,10 +4162,6 @@ describe('EditorComponent', () => {
           Object.defineProperty(env.component, 'showSource', { get: () => false });
         });
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
-        const projectDoc = env.getProjectDoc('project01');
-        if (projectDoc.data != null) {
-          (projectDoc.data.translateConfig as any).draftConfig = { usfmConfig: {} };
-        }
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
 
@@ -4213,10 +4198,6 @@ describe('EditorComponent', () => {
           queryParams: { 'draft-active': 'true', 'draft-timestamp': new Date().toISOString() }
         } as any);
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
-        const projectDoc = env.getProjectDoc('project01');
-        if (projectDoc.data != null) {
-          (projectDoc.data.translateConfig as any).draftConfig = { usfmConfig: {} };
-        }
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
@@ -4231,10 +4212,6 @@ describe('EditorComponent', () => {
         const env = new TestEnvironment();
         when(mockedActivatedRoute.snapshot).thenReturn({ queryParams: {} } as any);
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
-        const projectDoc = env.getProjectDoc('project01');
-        if (projectDoc.data != null) {
-          (projectDoc.data.translateConfig as any).draftConfig = { usfmConfig: {} };
-        }
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
@@ -4622,7 +4599,10 @@ describe('EditorComponent', () => {
 });
 
 const defaultTranslateConfig = {
-  translationSuggestionsEnabled: false
+  translationSuggestionsEnabled: false,
+  draftConfig: {
+    usfmConfig: {}
+  }
 };
 
 class TestEnvironment {
@@ -4940,7 +4920,7 @@ class TestEnvironment {
 
     this.setupUsers();
     this.setCurrentUser('user01');
-    this.setupProject();
+    this.setupProject({ translateConfig: defaultTranslateConfig });
     this.addParatextNoteThread(1, 'MAT 1:1', 'chapter 1', { start: 8, length: 9 }, ['user01', 'user02', 'user03']);
     this.addParatextNoteThread(2, 'MAT 1:3', 'target: chapter 1, verse 3.', { start: 0, length: 0 }, ['user01']);
     this.addParatextNoteThread(3, 'MAT 1:3', 'verse 3', { start: 20, length: 7 }, ['user01']);
@@ -5163,6 +5143,9 @@ class TestEnvironment {
         projectProfileData.translateConfig.source,
         data.translateConfig?.source
       );
+    }
+    if (data.translateConfig?.draftConfig != null) {
+      projectProfileData.translateConfig.draftConfig = data.translateConfig.draftConfig as any;
     }
     if (data.biblicalTermsConfig !== undefined) {
       projectProfileData.biblicalTermsConfig = merge(projectProfileData.biblicalTermsConfig, data.biblicalTermsConfig);

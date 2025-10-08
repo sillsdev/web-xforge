@@ -101,6 +101,24 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     private readonly router: Router
   ) {}
 
+  get bookId(): string {
+    return this.bookNum !== undefined ? Canon.bookNumberToId(this.bookNum) : '';
+  }
+
+  get canApplyDraft(): boolean {
+    if (this.targetProject == null || this.bookNum == null || this.chapter == null || this.draftDelta?.ops == null) {
+      return false;
+    }
+    return this.draftHandlingService.canApplyDraft(this.targetProject, this.bookNum, this.chapter, this.draftDelta.ops);
+  }
+
+  get doesLatestHaveDraft(): boolean {
+    return (
+      this.targetProject?.texts.find(t => t.bookNum === this.bookNum)?.chapters.find(c => c.number === this.chapter)
+        ?.hasDraft ?? false
+    );
+  }
+
   set draftRevisions(value: Revision[]) {
     this._draftRevisions = value;
   }
@@ -126,10 +144,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   onSelectionChanged(e: MatSelectChange): void {
     this.selectedRevision = e.value;
     this.selectedRevisionSubject.next(this.selectedRevision);
-  }
-
-  get bookId(): string {
-    return this.bookNum !== undefined ? Canon.bookNumberToId(this.bookNum) : '';
   }
 
   populateDraftTextInit(): void {
@@ -247,20 +261,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
         this.isDraftReady = this.draftCheckState === 'draft-present' || this.draftCheckState === 'draft-legacy';
       });
-  }
-
-  get canApplyDraft(): boolean {
-    if (this.targetProject == null || this.bookNum == null || this.chapter == null || this.draftDelta?.ops == null) {
-      return false;
-    }
-    return this.draftHandlingService.canApplyDraft(this.targetProject, this.bookNum, this.chapter, this.draftDelta.ops);
-  }
-
-  get doesLatestHaveDraft(): boolean {
-    return (
-      this.targetProject?.texts.find(t => t.bookNum === this.bookNum)?.chapters.find(c => c.number === this.chapter)
-        ?.hasDraft ?? false
-    );
   }
 
   navigateToFormatting(): void {
