@@ -358,9 +358,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     {
         // Throw an exception if obsolete settings are specified
 #pragma warning disable CS0618 // Type or member is obsolete
-        if (settings.CheckingShareEnabled is not null)
-            throw new ForbiddenException();
-        if (settings.TranslateShareEnabled is not null)
+        if (settings.AlternateSourceEnabled is not null)
             throw new ForbiddenException();
 #pragma warning restore CS0618 // Type or member is obsolete
 
@@ -373,20 +371,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             throw new ForbiddenException();
 
         bool unsetSourceProject = settings.SourceParatextId == ProjectSettingValueUnset;
-        bool unsetAlternateSourceProject = settings.AlternateSourceParatextId == ProjectSettingValueUnset;
-        bool unsetAlternateTrainingSourceProject =
-            settings.AlternateTrainingSourceParatextId == ProjectSettingValueUnset;
-        bool unsetAdditionalTrainingSourceProject =
-            settings.AdditionalTrainingSourceParatextId == ProjectSettingValueUnset;
 
-        // Get the list of projects for setting the source or alternate source
+        // Get the list of projects for setting the source, drafting sources, or training sources
         IReadOnlyList<ParatextProject> ptProjects = [];
         IReadOnlyList<ParatextResource> resources = [];
         if (
             (settings.SourceParatextId != null && !unsetSourceProject)
-            || (settings.AlternateSourceParatextId != null && !unsetAlternateSourceProject)
-            || (settings.AlternateTrainingSourceParatextId != null && !unsetAlternateTrainingSourceProject)
-            || (settings.AdditionalTrainingSourceParatextId != null && !unsetAdditionalTrainingSourceProject)
+            || settings.DraftingSourcesParatextIds?.Any() == true
+            || settings.TrainingSourcesParatextIds?.Any() == true
         )
         {
             Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
@@ -398,9 +390,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             // Only get the resources if at least one of the paratext ids is a resource id
             if (
                 _paratextService.IsResource(settings.SourceParatextId)
-                || _paratextService.IsResource(settings.AlternateSourceParatextId)
-                || _paratextService.IsResource(settings.AlternateTrainingSourceParatextId)
-                || _paratextService.IsResource(settings.AdditionalTrainingSourceParatextId)
+                || settings.DraftingSourcesParatextIds?.Any(_paratextService.IsResource) == true
+                || settings.TrainingSourcesParatextIds?.Any(_paratextService.IsResource) == true
             )
             {
                 resources = await _paratextService.GetResourcesAsync(curUserId);
@@ -409,6 +400,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         // Get the source - any creation or permission updates are handled in GetTranslateSourceAsync
         TranslateSource source = null;
+        List<string> sourceParatextIds = [];
         if (settings.SourceParatextId != null && !unsetSourceProject)
         {
             source = await GetTranslateSourceAsync(
@@ -422,6 +414,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 resources,
                 projectDoc.Data.UserRoles
             );
+            sourceParatextIds.Add(source.ParatextId);
             if (source.ProjectRef == projectId)
             {
                 // A project cannot reference itself
@@ -429,75 +422,55 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             }
         }
 
-        // Get the alternate source for pre-translation drafting
-        TranslateSource alternateSource = null;
-        if (settings.AlternateSourceParatextId != null && !unsetAlternateSourceProject)
+        // Get the drafting sources
+        List<TranslateSource>? draftingSources = settings.DraftingSourcesParatextIds is null ? null : [];
+        foreach (string paratextId in settings.DraftingSourcesParatextIds ?? [])
         {
-            alternateSource = await GetTranslateSourceAsync(
+            TranslateSource translateSource = await GetTranslateSourceAsync(
                 conn,
                 curUserId,
                 projectId,
-                settings.AlternateSourceParatextId,
+                paratextId,
                 skipSync: false,
-                // Only update permissions if this project is different to the preceding project
-                updatePermissions: settings.SourceParatextId != settings.AlternateSourceParatextId,
+                // Only update permissions if this project is different to the preceding projects
+                updatePermissions: !sourceParatextIds.Contains(paratextId),
                 ptProjects,
                 resources,
                 projectDoc.Data.UserRoles
             );
-            if (alternateSource.ProjectRef == projectId)
+
+            // A project cannot reference itself
+            if (translateSource.ProjectRef != projectId)
             {
-                // A project cannot reference itself
-                alternateSource = null;
+                draftingSources ??= [];
+                draftingSources.Add(translateSource);
+                sourceParatextIds.Add(translateSource.ParatextId);
             }
         }
 
-        // Get the alternate training source for pre-translation drafting
-        TranslateSource alternateTrainingSource = null;
-        if (settings.AlternateTrainingSourceParatextId != null && !unsetAlternateTrainingSourceProject)
+        // Get the training sources
+        List<TranslateSource>? trainingSources = settings.TrainingSourcesParatextIds is null ? null : [];
+        foreach (string paratextId in settings.TrainingSourcesParatextIds ?? [])
         {
-            alternateTrainingSource = await GetTranslateSourceAsync(
+            TranslateSource translateSource = await GetTranslateSourceAsync(
                 conn,
                 curUserId,
                 projectId,
-                settings.AlternateTrainingSourceParatextId,
+                paratextId,
                 skipSync: false,
                 // Only update permissions if this project is different to the preceding projects
-                updatePermissions: settings.SourceParatextId != settings.AlternateTrainingSourceParatextId
-                    && settings.AlternateSourceParatextId != settings.AlternateTrainingSourceParatextId,
+                updatePermissions: !sourceParatextIds.Contains(paratextId),
                 ptProjects,
                 resources,
                 projectDoc.Data.UserRoles
             );
-            if (alternateTrainingSource.ProjectRef == projectId)
-            {
-                // A project cannot reference itself
-                alternateTrainingSource = null;
-            }
-        }
 
-        // Get the additional training source for pre-translation drafting
-        TranslateSource additionalTrainingSource = null;
-        if (settings.AdditionalTrainingSourceParatextId != null && !unsetAdditionalTrainingSourceProject)
-        {
-            additionalTrainingSource = await GetTranslateSourceAsync(
-                conn,
-                curUserId,
-                projectId,
-                settings.AdditionalTrainingSourceParatextId,
-                skipSync: false,
-                // Only update permissions if this project is different to the preceding projects
-                updatePermissions: settings.SourceParatextId != settings.AdditionalTrainingSourceParatextId
-                    && settings.AlternateSourceParatextId != settings.AdditionalTrainingSourceParatextId
-                    && settings.AlternateTrainingSourceParatextId != settings.AdditionalTrainingSourceParatextId,
-                ptProjects,
-                resources,
-                projectDoc.Data.UserRoles
-            );
-            if (additionalTrainingSource.ProjectRef == projectId)
+            // A project cannot reference itself
+            if (translateSource.ProjectRef != projectId)
             {
-                // A project cannot reference itself
-                additionalTrainingSource = null;
+                trainingSources ??= [];
+                trainingSources.Add(translateSource);
+                sourceParatextIds.Add(translateSource.ParatextId);
             }
         }
 
@@ -511,39 +484,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             );
             UpdateSetting(op, p => p.BiblicalTermsConfig.BiblicalTermsEnabled, settings.BiblicalTermsEnabled);
             UpdateSetting(op, p => p.TranslateConfig.Source, source, unsetSourceProject);
-            UpdateSetting(
-                op,
-                p => p.TranslateConfig.DraftConfig.AlternateSourceEnabled,
-                settings.AlternateSourceEnabled
-            );
-            UpdateSetting(
-                op,
-                p => p.TranslateConfig.DraftConfig.AlternateSource,
-                alternateSource,
-                unsetAlternateSourceProject
-            );
-            UpdateSetting(
-                op,
-                p => p.TranslateConfig.DraftConfig.AlternateTrainingSourceEnabled,
-                settings.AlternateTrainingSourceEnabled
-            );
-            UpdateSetting(
-                op,
-                p => p.TranslateConfig.DraftConfig.AlternateTrainingSource,
-                alternateTrainingSource,
-                unsetAlternateTrainingSourceProject
-            );
-            UpdateSetting(
-                op,
-                p => p.TranslateConfig.DraftConfig.AdditionalTrainingSourceEnabled,
-                settings.AdditionalTrainingSourceEnabled
-            );
-            UpdateSetting(
-                op,
-                p => p.TranslateConfig.DraftConfig.AdditionalTrainingSource,
-                additionalTrainingSource,
-                unsetAdditionalTrainingSourceProject
-            );
+            UpdateSetting(op, p => p.TranslateConfig.DraftConfig.TrainingSources, trainingSources);
+            UpdateSetting(op, p => p.TranslateConfig.DraftConfig.DraftingSources, draftingSources);
             UpdateSetting(
                 op,
                 p => p.TranslateConfig.DraftConfig.LastSelectedTrainingDataFiles,
@@ -1112,25 +1054,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     }
 
     /// <summary> Determine if the specified project is an active source project. </summary>
-    public bool IsSourceProject(string projectId)
-    {
-        IQueryable<SFProject> projectQuery = RealtimeService.QuerySnapshots<SFProject>();
-        return projectQuery.Any(p =>
-            (p.TranslateConfig.Source != null && (p.TranslateConfig.Source.ProjectRef == projectId))
-            || (
-                p.TranslateConfig.DraftConfig.AlternateSource != null
-                && (p.TranslateConfig.DraftConfig.AlternateSource.ProjectRef == projectId)
-            )
-            || (
-                p.TranslateConfig.DraftConfig.AlternateTrainingSource != null
-                && (p.TranslateConfig.DraftConfig.AlternateTrainingSource.ProjectRef == projectId)
-            )
-            || (
-                p.TranslateConfig.DraftConfig.AdditionalTrainingSource != null
-                && (p.TranslateConfig.DraftConfig.AdditionalTrainingSource.ProjectRef == projectId)
-            )
-        );
-    }
+    public bool IsSourceProject(string projectId) =>
+        RealtimeService
+            .QuerySnapshots<SFProject>()
+            .Any(p =>
+                (p.TranslateConfig.Source != null && p.TranslateConfig.Source.ProjectRef == projectId)
+                || p.TranslateConfig.DraftConfig.DraftingSources.Any(s => s.ProjectRef == projectId)
+                || p.TranslateConfig.DraftConfig.TrainingSources.Any(s => s.ProjectRef == projectId)
+            );
 
     public async Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestionsAsync(
         string curUserId,
@@ -1333,24 +1264,16 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         // Add to the source projects, if required
         await AddUserToSourceProjectAsync(conn, projectDoc.Data.TranslateConfig.Source, userDoc, shareKey);
-        await AddUserToSourceProjectAsync(
-            conn,
-            projectDoc.Data.TranslateConfig.DraftConfig.AlternateSource,
-            userDoc,
-            shareKey
-        );
-        await AddUserToSourceProjectAsync(
-            conn,
-            projectDoc.Data.TranslateConfig.DraftConfig.AlternateTrainingSource,
-            userDoc,
-            shareKey
-        );
-        await AddUserToSourceProjectAsync(
-            conn,
-            projectDoc.Data.TranslateConfig.DraftConfig.AdditionalTrainingSource,
-            userDoc,
-            shareKey
-        );
+        IEnumerable<TranslateSource> translateSources = projectDoc
+            .Data.TranslateConfig.DraftConfig.DraftingSources.Concat(
+                projectDoc.Data.TranslateConfig.DraftConfig.TrainingSources
+            )
+            .GroupBy(s => s.ProjectRef)
+            .Select(g => g.First());
+        foreach (TranslateSource translateSource in translateSources)
+        {
+            await AddUserToSourceProjectAsync(conn, translateSource, userDoc, shareKey);
+        }
     }
 
     /// <summary>
@@ -2059,7 +1982,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
 
         // If the project is created or the last sync was not successful, sync it unless explicitly skipped.
-        // This is usually because this is an alternate source for drafting
+        // This is usually because this is a drafting or training source
         bool syncNeeded =
             projectCreated || (sourceProject is not null && sourceProject.Sync.LastSyncSuccessful == false);
         if (syncNeeded && !skipSync)
