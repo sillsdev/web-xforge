@@ -248,16 +248,14 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
     });
   }
 
+  /** Number of doc subscriptions, whether they are still subscribed or not. */
   get docSubscriptionsCount(): number {
     return this.docSubscriptions.size;
   }
 
+  /** Number of doc subscriptions that are still subscribed. */
   get activeDocSubscriptionsCount(): number {
-    let count = 0;
-    for (const docSubscription of this.docSubscriptions) {
-      if (!docSubscription.isUnsubscribed$.getValue()) count++;
-    }
-    return count;
+    return Array.from(this.docSubscriptions).filter(ds => !ds.isUnsubscribed$.getValue()).length;
   }
 
   protected prepareDataForStore(data: T): any {
