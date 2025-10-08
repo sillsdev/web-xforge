@@ -671,17 +671,17 @@ public class MachineProjectServiceTests
     public async Task BuildProjectAsync_UsesTheServalConfigurationSpecifiedByTheServalAdmin()
     {
         // Set up test environment
-        var env = new TestEnvironment();
+        var env = new TestEnvironment(new TestEnvironmentOptions { DraftingSources = 1, TrainingSources = 1 });
         const string servalConfig = """{"max_steps":35}""";
         await env.Projects.UpdateAsync(
-            Project01,
+            Project02,
             op => op.Set(p => p.TranslateConfig.DraftConfig.ServalConfig, servalConfig)
         );
 
         // SUT
         await env.Service.BuildProjectAsync(
             User01,
-            new BuildConfig { ProjectId = Project01 },
+            new BuildConfig { ProjectId = Project02 },
             preTranslate: true,
             CancellationToken.None
         );
@@ -1427,82 +1427,6 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public void GetSourceLanguage_DoesNotUseTheAlternateSourceIfItIsDisabled()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        const string alternateSourceWritingSystemTag = "alternate_source_writing_system_tag";
-        const string sourceWritingSystemTag = "source_writing_system_tag";
-        var project = new SFProject
-        {
-            TranslateConfig =
-            {
-                DraftConfig = new DraftConfig
-                {
-                    AlternateSourceEnabled = false,
-                    AlternateSource = new TranslateSource
-                    {
-                        WritingSystem = new WritingSystem { Tag = alternateSourceWritingSystemTag },
-                    },
-                },
-                Source = new TranslateSource { WritingSystem = new WritingSystem { Tag = sourceWritingSystemTag } },
-            },
-        };
-
-        // SUT
-        string actual = env.Service.GetSourceLanguage(project, preTranslate: true);
-        Assert.AreEqual(sourceWritingSystemTag, actual);
-    }
-
-    [Test]
-    public void GetSourceLanguage_DoesNotUseTheAlternateSourceIfItsWritingTagIsEmpty()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        const string sourceWritingSystemTag = "source_writing_system_tag";
-        var project = new SFProject
-        {
-            TranslateConfig =
-            {
-                DraftConfig = new DraftConfig { AlternateSourceEnabled = true, AlternateSource = null },
-                Source = new TranslateSource { WritingSystem = new WritingSystem { Tag = sourceWritingSystemTag } },
-            },
-        };
-
-        // SUT
-        string actual = env.Service.GetSourceLanguage(project, preTranslate: true);
-        Assert.AreEqual(sourceWritingSystemTag, actual);
-    }
-
-    [Test]
-    public void GetSourceLanguage_UsesTheAlternateSourceIfPreTranslateIsFalse()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        const string alternateSourceWritingSystemTag = "alternate_source_writing_system_tag";
-        const string sourceWritingSystemTag = "source_writing_system_tag";
-        var project = new SFProject
-        {
-            TranslateConfig =
-            {
-                DraftConfig = new DraftConfig
-                {
-                    AlternateSourceEnabled = true,
-                    AlternateSource = new TranslateSource
-                    {
-                        WritingSystem = new WritingSystem { Tag = alternateSourceWritingSystemTag },
-                    },
-                },
-                Source = new TranslateSource { WritingSystem = new WritingSystem { Tag = sourceWritingSystemTag } },
-            },
-        };
-
-        // SUT
-        string actual = env.Service.GetSourceLanguage(project, preTranslate: false);
-        Assert.AreEqual(sourceWritingSystemTag, actual);
-    }
-
-    [Test]
     public void GetSourceLanguage_ThrowsExceptionWhenProjectDoesNotHaveASource()
     {
         // Set up test environment
@@ -1510,7 +1434,7 @@ public class MachineProjectServiceTests
         var project = new SFProject { TranslateConfig = { Source = null } };
 
         // SUT
-        Assert.Throws<InvalidDataException>(() => env.Service.GetSourceLanguage(project, preTranslate: true));
+        Assert.Throws<InvalidDataException>(() => env.Service.GetSourceLanguage(project, preTranslate: false));
     }
 
     [Test]
@@ -1524,31 +1448,23 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public void GetSourceLanguage_UsesTheAlternateSourceIfItIsEnabledAndConfigured()
+    public void GetSourceLanguage_ThrowsExceptionWhenTheDraftingSourceDoesNotHaveAWritingTag()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        const string alternateSourceWritingSystemTag = "alternate_source_writing_system_tag";
-        const string sourceWritingSystemTag = "source_writing_system_tag";
         var project = new SFProject
         {
             TranslateConfig =
             {
                 DraftConfig = new DraftConfig
                 {
-                    AlternateSourceEnabled = true,
-                    AlternateSource = new TranslateSource
-                    {
-                        WritingSystem = new WritingSystem { Tag = alternateSourceWritingSystemTag },
-                    },
+                    DraftingSources = [new TranslateSource { WritingSystem = new WritingSystem { Tag = null } }],
                 },
-                Source = new TranslateSource { WritingSystem = new WritingSystem { Tag = sourceWritingSystemTag } },
             },
         };
 
         // SUT
-        string actual = env.Service.GetSourceLanguage(project, preTranslate: true);
-        Assert.AreEqual(alternateSourceWritingSystemTag, actual);
+        Assert.Throws<InvalidDataException>(() => env.Service.GetSourceLanguage(project, preTranslate: true));
     }
 
     [Test]
@@ -1563,6 +1479,66 @@ public class MachineProjectServiceTests
 
         // SUT
         Assert.Throws<InvalidDataException>(() => env.Service.GetSourceLanguage(project, preTranslate: false));
+    }
+
+    [Test]
+    public void GetSourceLanguage_UsesTheDraftingSourceIfPreTranslateIsTrue()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string draftingSourceWritingSystemTag = "drafting_source_writing_system_tag";
+        const string sourceWritingSystemTag = "source_writing_system_tag";
+        var project = new SFProject
+        {
+            TranslateConfig =
+            {
+                DraftConfig = new DraftConfig
+                {
+                    DraftingSources =
+                    [
+                        new TranslateSource
+                        {
+                            WritingSystem = new WritingSystem { Tag = draftingSourceWritingSystemTag },
+                        },
+                    ],
+                },
+                Source = new TranslateSource { WritingSystem = new WritingSystem { Tag = sourceWritingSystemTag } },
+            },
+        };
+
+        // SUT
+        string actual = env.Service.GetSourceLanguage(project, preTranslate: true);
+        Assert.AreEqual(draftingSourceWritingSystemTag, actual);
+    }
+
+    [Test]
+    public void GetSourceLanguage_UsesTheSourceIfPreTranslateIsFalse()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string draftingSourceWritingSystemTag = "drafting_source_writing_system_tag";
+        const string sourceWritingSystemTag = "source_writing_system_tag";
+        var project = new SFProject
+        {
+            TranslateConfig =
+            {
+                DraftConfig = new DraftConfig
+                {
+                    DraftingSources =
+                    [
+                        new TranslateSource
+                        {
+                            WritingSystem = new WritingSystem { Tag = draftingSourceWritingSystemTag },
+                        },
+                    ],
+                },
+                Source = new TranslateSource { WritingSystem = new WritingSystem { Tag = sourceWritingSystemTag } },
+            },
+        };
+
+        // SUT
+        string actual = env.Service.GetSourceLanguage(project, preTranslate: false);
+        Assert.AreEqual(sourceWritingSystemTag, actual);
     }
 
     [Test]
@@ -3123,19 +3099,29 @@ public class MachineProjectServiceTests
                     op.Set(p => p.TranslateConfig.Source.WritingSystem.Tag, "fr_be");
                 }
 
-                if (options.AlternateSource)
+                switch (options.DraftingSources)
                 {
-                    op.Set(p => p.TranslateConfig.DraftConfig.AlternateSource.WritingSystem.Tag, "fr_ca");
+                    case 0:
+                        break;
+                    case 1:
+                        op.Set(p => p.TranslateConfig.DraftConfig.DraftingSources[0].WritingSystem.Tag, "fr_ca");
+                        break;
+                    default:
+                        throw new NotSupportedException("Unsupported number of drafting sources");
                 }
 
-                if (options.AlternateTrainingSource)
+                switch (options.TrainingSources)
                 {
-                    op.Set(p => p.TranslateConfig.DraftConfig.AlternateTrainingSource.WritingSystem.Tag, "fr_ch");
-                }
-
-                if (options.AdditionalTrainingSource)
-                {
-                    op.Set(p => p.TranslateConfig.DraftConfig.AdditionalTrainingSource.WritingSystem.Tag, "fr_lu");
+                    case 0:
+                        break;
+                    case 1:
+                        op.Set(p => p.TranslateConfig.DraftConfig.TrainingSources[0].WritingSystem.Tag, "fr_ch");
+                        break;
+                    case 2:
+                        op.Set(p => p.TranslateConfig.DraftConfig.TrainingSources[1].WritingSystem.Tag, "fr_lu");
+                        goto case 1;
+                    default:
+                        throw new NotSupportedException("Unsupported number of training sources");
                 }
             }
         );
@@ -3242,11 +3228,10 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_ThrowsExceptionWhenNoSourceOrAlternateSourceForNmt()
+    public async Task SyncProjectCorporaAsync_ThrowsExceptionWhenNoDraftingSourceForNmt()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.Projects.UpdateAsync(Project01, op => op.Unset(p => p.TranslateConfig.Source));
         await env.SetupProjectSecretAsync(Project01, new ServalData { PreTranslationEngineId = TranslationEngine01 });
 
         // SUT
@@ -3485,7 +3470,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task UpdateTranslationSourcesAsync_DoesNotUpdateIfNoAlternateSources()
+    public async Task UpdateTranslationSourcesAsync_DoesNotUpdateIfNoDraftingSources()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -3520,7 +3505,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task UpdateTranslationSourcesAsync_UpdatesAlternateSource()
+    public async Task UpdateTranslationSourcesAsync_UpdatesDraftingSources()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -3529,26 +3514,22 @@ public class MachineProjectServiceTests
             u =>
                 u.Set(
                     s => s.TranslateConfig.DraftConfig,
-                    new DraftConfig
-                    {
-                        AlternateSourceEnabled = true,
-                        AlternateSource = new TranslateSource { ParatextId = Paratext01 },
-                    }
+                    new DraftConfig { DraftingSources = [new TranslateSource { ParatextId = Paratext01 }] }
                 )
         );
 
         // SUT
         await env.Service.UpdateTranslationSourcesAsync(User01, Project01);
         env.ParatextService.Received(1).GetParatextSettings(Arg.Any<UserSecret>(), Paratext01);
-        Assert.IsTrue(env.Projects.Get(Project01).TranslateConfig.DraftConfig.AlternateSource?.IsRightToLeft);
+        Assert.IsTrue(env.Projects.Get(Project01).TranslateConfig.DraftConfig.DraftingSources[0].IsRightToLeft);
         Assert.AreEqual(
             LanguageTag,
-            env.Projects.Get(Project01).TranslateConfig.DraftConfig.AlternateSource?.WritingSystem.Tag
+            env.Projects.Get(Project01).TranslateConfig.DraftConfig.DraftingSources[0]?.WritingSystem.Tag
         );
     }
 
     [Test]
-    public async Task UpdateTranslationSourcesAsync_UpdatesAlternateTrainingSource()
+    public async Task UpdateTranslationSourcesAsync_UpdatesTrainingSources()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -3557,49 +3538,17 @@ public class MachineProjectServiceTests
             u =>
                 u.Set(
                     s => s.TranslateConfig.DraftConfig,
-                    new DraftConfig
-                    {
-                        AlternateTrainingSourceEnabled = true,
-                        AlternateTrainingSource = new TranslateSource { ParatextId = Paratext01 },
-                    }
+                    new DraftConfig { TrainingSources = [new TranslateSource { ParatextId = Paratext01 }] }
                 )
         );
 
         // SUT
         await env.Service.UpdateTranslationSourcesAsync(User01, Project01);
         env.ParatextService.Received(1).GetParatextSettings(Arg.Any<UserSecret>(), Paratext01);
-        Assert.IsTrue(env.Projects.Get(Project01).TranslateConfig.DraftConfig.AlternateTrainingSource?.IsRightToLeft);
+        Assert.IsTrue(env.Projects.Get(Project01).TranslateConfig.DraftConfig.TrainingSources[0].IsRightToLeft);
         Assert.AreEqual(
             LanguageTag,
-            env.Projects.Get(Project01).TranslateConfig.DraftConfig.AlternateTrainingSource?.WritingSystem.Tag
-        );
-    }
-
-    [Test]
-    public async Task UpdateTranslationSourcesAsync_UpdatesAdditionalTrainingSource()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        await env.Projects.UpdateAsync(
-            p => p.Id == Project01,
-            u =>
-                u.Set(
-                    s => s.TranslateConfig.DraftConfig,
-                    new DraftConfig
-                    {
-                        AdditionalTrainingSourceEnabled = true,
-                        AdditionalTrainingSource = new TranslateSource { ParatextId = Paratext01 },
-                    }
-                )
-        );
-
-        // SUT
-        await env.Service.UpdateTranslationSourcesAsync(User01, Project01);
-        env.ParatextService.Received(1).GetParatextSettings(Arg.Any<UserSecret>(), Paratext01);
-        Assert.IsTrue(env.Projects.Get(Project01).TranslateConfig.DraftConfig.AdditionalTrainingSource!.IsRightToLeft);
-        Assert.AreEqual(
-            LanguageTag,
-            env.Projects.Get(Project01).TranslateConfig.DraftConfig.AdditionalTrainingSource!.WritingSystem.Tag
+            env.Projects.Get(Project01).TranslateConfig.DraftConfig.TrainingSources[0].WritingSystem.Tag
         );
     }
 
@@ -3980,24 +3929,23 @@ public class MachineProjectServiceTests
             {
                 foreach (bool source in boolValues)
                 {
-                    foreach (bool alternateSource in boolValues)
+                    foreach (bool oneDraftingAndTrainingSource in boolValues)
                     {
-                        foreach (bool alternateTrainingSource in boolValues)
+                        foreach (bool twoTrainingSources in boolValues)
                         {
-                            foreach (bool additionalTrainingSource in boolValues)
+                            var options = new TestEnvironmentOptions
                             {
-                                var options = new TestEnvironmentOptions
-                                {
-                                    AlternateSource = alternateSource,
-                                    AlternateTrainingSource = alternateTrainingSource,
-                                    AdditionalTrainingSource = additionalTrainingSource,
-                                    PreTranslate = preTranslate,
-                                    Source = source,
-                                };
-                                if (options.WillSucceed)
-                                {
-                                    yield return options;
-                                }
+                                DraftingSources = oneDraftingAndTrainingSource ? 1 : 0,
+                                TrainingSources =
+                                    twoTrainingSources ? 2
+                                    : oneDraftingAndTrainingSource ? 1
+                                    : 0,
+                                PreTranslate = preTranslate,
+                                Source = source,
+                            };
+                            if (options.WillSucceed)
+                            {
+                                yield return options;
                             }
                         }
                     }
@@ -4006,8 +3954,9 @@ public class MachineProjectServiceTests
                 // Emit special test cases with pre-translate enabled or disabled
                 yield return new TestEnvironmentOptions
                 {
-                    AlternateTrainingSource = true,
-                    AlternateTrainingSourceAndSourceAreTheSame = true,
+                    DraftingSources = 1,
+                    TrainingSources = 1,
+                    DraftingSourceAndTrainingSourceAreTheSame = true,
                     PreTranslate = preTranslate,
                     Source = true,
                 };
@@ -4017,22 +3966,21 @@ public class MachineProjectServiceTests
 
     public record TestEnvironmentOptions
     {
-        public bool AdditionalTrainingSource { get; init; }
-        public bool AlternateSource { get; init; }
-        public bool AlternateTrainingSource { get; init; }
-        public bool AlternateTrainingSourceAndSourceAreTheSame { get; init; }
+        public bool DraftingSourceAndTrainingSourceAreTheSame { get; init; }
         public bool HasTranslationEngineForNmt { get; init; }
         public bool HasTranslationEngineForSmt { get; init; }
         public bool LegacyCorpora { get; init; }
         public bool PreTranslate { get; init; }
         public bool Source { get; init; }
+        public int DraftingSources { get; init; }
+        public int TrainingSources { get; init; }
 
         /// <summary>
         /// Determines if the test has the minimum required configuration to succeed.
         /// </summary>
-        public bool WillSucceed => AlternateSourceOrSourceAndNmt || SourceAndSmt;
+        public bool WillSucceed => TrainingAndDraftingSourceAndNmt || SourceAndSmt;
 
-        private bool AlternateSourceOrSourceAndNmt => (AlternateSource || Source) && PreTranslate;
+        private bool TrainingAndDraftingSourceAndNmt => DraftingSources > 0 && TrainingSources > 0 && PreTranslate;
 
         private bool SourceAndSmt => Source && !PreTranslate;
     }
@@ -4226,42 +4174,56 @@ public class MachineProjectServiceTests
                                 : null,
                             DraftConfig = new DraftConfig
                             {
-                                AlternateSourceEnabled = options.AlternateSource,
-                                AlternateSource = options.AlternateSource
-                                    ? new TranslateSource
-                                    {
-                                        ProjectRef = Project03,
-                                        ParatextId = Paratext03,
-                                        WritingSystem = new WritingSystem { Tag = "en_GB" },
-                                    }
-                                    : null,
-                                AlternateTrainingSourceEnabled = options.AlternateTrainingSource,
-                                AlternateTrainingSource = options.AlternateTrainingSource
-                                    ? new TranslateSource
-                                    {
-                                        ProjectRef = options.AlternateTrainingSourceAndSourceAreTheSame
-                                            ? Project01
-                                            : Project04,
-                                        ParatextId = options.AlternateTrainingSourceAndSourceAreTheSame
-                                            ? Paratext01
-                                            : Paratext04,
-                                        WritingSystem = new WritingSystem { Tag = "en_GB" },
-                                    }
-                                    : null,
-                                AdditionalTrainingSourceEnabled = options.AdditionalTrainingSource,
-                                AdditionalTrainingSource = options.AdditionalTrainingSource
-                                    ? new TranslateSource
-                                    {
-                                        ProjectRef = Project05,
-                                        ParatextId = Paratext05,
-                                        WritingSystem = new WritingSystem { Tag = "en_GB" },
-                                    }
-                                    : null,
+                                DraftingSources =
+                                    options.DraftingSources == 1
+                                        ?
+                                        [
+                                            new TranslateSource
+                                            {
+                                                ProjectRef = Project03,
+                                                ParatextId = Paratext03,
+                                                WritingSystem = new WritingSystem { Tag = "en_GB" },
+                                            },
+                                        ]
+                                        : [],
+                                TrainingSources =
+                                    options.TrainingSources > 0
+                                        ? options.TrainingSources > 1
+                                            ?
+                                            [
+                                                new TranslateSource
+                                                {
+                                                    ProjectRef = options.DraftingSourceAndTrainingSourceAreTheSame
+                                                        ? Project03
+                                                        : Project04,
+                                                    ParatextId = options.DraftingSourceAndTrainingSourceAreTheSame
+                                                        ? Paratext03
+                                                        : Paratext04,
+                                                    WritingSystem = new WritingSystem { Tag = "en_GB" },
+                                                },
+                                                new TranslateSource
+                                                {
+                                                    ProjectRef = Project05,
+                                                    ParatextId = Paratext05,
+                                                    WritingSystem = new WritingSystem { Tag = "en_GB" },
+                                                },
+                                            ]
+                                            :
+                                            [
+                                                new TranslateSource
+                                                {
+                                                    ProjectRef = options.DraftingSourceAndTrainingSourceAreTheSame
+                                                        ? Project03
+                                                        : Project04,
+                                                    ParatextId = options.DraftingSourceAndTrainingSourceAreTheSame
+                                                        ? Paratext03
+                                                        : Paratext04,
+                                                    WritingSystem = new WritingSystem { Tag = "en_GB" },
+                                                },
+                                            ]
+                                        : [],
                             },
-                            PreTranslate =
-                                options.AlternateSource
-                                || options.AlternateTrainingSource
-                                || options.AdditionalTrainingSource,
+                            PreTranslate = options.DraftingSources > 0 || options.TrainingSources > 0,
                         },
                         WritingSystem = new WritingSystem { Tag = "en_US" },
                     },
@@ -4377,7 +4339,7 @@ public class MachineProjectServiceTests
                 .CreateAsync(Arg.Is<CorpusConfig>(c => c.Name == $"{Project02}_{Project02}"));
             Assert.AreEqual(options.PreTranslate ? 2 : 1, actual.Count(s => s.ProjectId == Project02));
 
-            // Source
+            // SMT Source
             if (options.Source)
             {
                 await CorporaClient
@@ -4386,31 +4348,17 @@ public class MachineProjectServiceTests
                 numberOfServalCorpusFiles++;
 
                 // See how many times the source corpus was used in the parallel corpora
-                int expected = options switch
-                {
-                    { PreTranslate: false } => 1,
-                    {
-                        PreTranslate: true,
-                        AlternateTrainingSource: true,
-                        AlternateTrainingSourceAndSourceAreTheSame: true,
-                    } => 2,
-                    { PreTranslate: true, AlternateTrainingSource: true, AlternateSource: true } => 0,
-                    { PreTranslate: true, AlternateTrainingSource: true } => 1,
-                    { PreTranslate: true, AlternateSource: true } => 1,
-                    { PreTranslate: true } => 2,
-                };
-                Assert.AreEqual(expected, actual.Count(s => s.ProjectId == Project01));
+                Assert.AreEqual(options.PreTranslate ? 0 : 1, actual.Count(s => s.ProjectId == Project01));
             }
 
-            // Alternate Source
-            if (options.AlternateSource)
+            // Drafting Source
+            if (options.DraftingSources > 0)
             {
                 int expected = options switch
                 {
                     { PreTranslate: false } => 0,
-                    { PreTranslate: true, AlternateTrainingSource: true } => 1,
-                    { PreTranslate: true, Source: true } => 1,
-                    { PreTranslate: true } => 2,
+                    { PreTranslate: true, DraftingSourceAndTrainingSourceAreTheSame: true } => 2,
+                    { PreTranslate: true } => 1,
                 };
                 await CorporaClient
                     .Received(createsServalCorpora ? 1 : 0)
@@ -4419,9 +4367,9 @@ public class MachineProjectServiceTests
                 numberOfServalCorpusFiles++;
             }
 
-            // Alternate Training Source
+            // One Training Source
             // This can be used to test that a duplicate corpus and file were not uploaded
-            if (options.AlternateTrainingSource && !options.AlternateTrainingSourceAndSourceAreTheSame)
+            if (options.TrainingSources > 0 && !options.DraftingSourceAndTrainingSourceAreTheSame)
             {
                 await CorporaClient
                     .Received(createsServalCorpora ? 1 : 0)
@@ -4430,8 +4378,8 @@ public class MachineProjectServiceTests
                 numberOfServalCorpusFiles++;
             }
 
-            // Additional Training Source
-            if (options.AdditionalTrainingSource)
+            // A Second Training Source
+            if (options.TrainingSources > 1)
             {
                 await CorporaClient
                     .Received(createsServalCorpora ? 1 : 0)
