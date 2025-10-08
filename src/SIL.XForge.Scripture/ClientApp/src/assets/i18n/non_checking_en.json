@@ -224,7 +224,9 @@
     "sign_up_for_drafting": "Sign up for drafting",
     "temporarily_unavailable": "Generating drafts is temporarily unavailable.",
     "warning_generation_faulted": "Last generation attempt failed. Click [em]\"{{ generateButtonText }}\"[/em] below to try again.",
-    "click_book_to_preview": "Click a book below to preview the draft and add it to your project."
+    "click_book_to_preview": "Click a book below to preview the draft and add it to your project.",
+    "draft_options_message": "Generated Drafts now come with formatting options to make editing easier.",
+    "learn_more": "Learn more"
   },
   "draft_generation_steps": {
     "back": "Back",
