@@ -4903,6 +4903,7 @@ class TestEnvironment {
     when(mockedDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
     when(mockedPermissionsService.isUserOnProject(anything())).thenResolve(true);
     when(mockedFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(false));
+    when(mockedFeatureFlagService.usfmFormat).thenReturn(createTestFeatureFlag(true));
     when(mockedLynxWorkspaceService.rawInsightSource$).thenReturn(of([]));
 
     this.realtimeService = TestBed.inject(TestRealtimeService);

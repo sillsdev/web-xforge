@@ -6,6 +6,7 @@ import { of, take } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { v4 as uuid } from 'uuid';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -24,6 +25,7 @@ const activatedProjectMock = mock(ActivatedProjectService);
 const tabStateMock: TabStateService<any, any> = mock(TabStateService);
 const mockUserService = mock(UserService);
 const mockPermissionsService = mock(PermissionsService);
+const mockFeatureFlagService = mock(FeatureFlagService);
 
 describe('EditorTabMenuService', () => {
   configureTestingModule(() => ({
@@ -34,7 +36,8 @@ describe('EditorTabMenuService', () => {
       { provide: TabStateService, useMock: tabStateMock },
       { provide: UserService, useMock: mockUserService },
       { provide: PermissionsService, useMock: mockPermissionsService },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      { provide: FeatureFlagService, useMock: mockFeatureFlagService }
     ]
   }));
 
@@ -320,6 +323,7 @@ class TestEnvironment {
     when(activatedProjectMock.projectDoc).thenReturn(projectDoc as any);
     when(mockUserService.currentUserId).thenReturn('user01');
     when(mockPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
+    when(mockFeatureFlagService.usfmFormat).thenReturn(createTestFeatureFlag(true));
     service = TestBed.inject(EditorTabMenuService);
   }
 

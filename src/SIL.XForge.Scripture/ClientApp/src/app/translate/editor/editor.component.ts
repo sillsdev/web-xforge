@@ -85,6 +85,7 @@ import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
@@ -317,7 +318,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly breakpointObserver: BreakpointObserver,
     private readonly mediaBreakpointService: MediaBreakpointService,
     private readonly permissionsService: PermissionsService,
-    readonly editorInsightState: LynxInsightStateService
+    readonly editorInsightState: LynxInsightStateService,
+    private readonly featureFlagService: FeatureFlagService
   ) {
     super(noticeService);
     const wordTokenizer = new LatinWordTokenizer();
@@ -1489,6 +1491,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.userService.currentUserId
     );
     const hasSetDraftFormatting =
+      !this.featureFlagService.usfmFormat.enabled ||
       this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.usfmConfig != null;
     if (((hasDraft && !draftApplied) || urlDraftActive) && canViewDrafts && hasSetDraftFormatting) {
       // URL may indicate to select the 'draft' tab (such as when coming from generate draft page)
