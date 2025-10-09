@@ -45,23 +45,19 @@ export class RolesAndPermissionsDialogComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public readonly data: UserData,
     public readonly urls: ExternalUrlService,
     public readonly i18n: I18nService,
-    private readonly onlineService: OnlineStatusService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
     private readonly destroyRef: DestroyRef
   ) {}
 
   async ngOnInit(): Promise<void> {
-    this.onlineService.onlineStatus$.subscribe(isOnline => {
-      isOnline ? this.form.enable() : this.form.disable();
-    });
-
     this.projectDoc = await this.projectService.subscribe(
       this.data.projectId,
       new DocSubscription('RolesAndPermissionsDialogComponent', this.destroyRef)
     );
 
     this.onlineSubscription?.unsubscribe();
-    this.onlineSubscription = this.onlineService.onlineStatus$
+    this.onlineSubscription = this.onlineStatusService.onlineStatus$
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(isOnline => this.updateFormEditability(isOnline));
 
