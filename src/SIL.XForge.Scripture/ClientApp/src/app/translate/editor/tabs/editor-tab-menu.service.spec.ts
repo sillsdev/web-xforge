@@ -6,7 +6,6 @@ import { of, take } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { v4 as uuid } from 'uuid';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -26,7 +25,6 @@ const activatedProjectMock = mock(ActivatedProjectService);
 const tabStateMock: TabStateService<any, any> = mock(TabStateService);
 const mockUserService = mock(UserService);
 const mockPermissionsService = mock(PermissionsService);
-const mockFeatureFlagService = mock(FeatureFlagService);
 const mockDraftOptionsService = mock(DraftOptionsService);
 
 describe('EditorTabMenuService', () => {
@@ -39,7 +37,6 @@ describe('EditorTabMenuService', () => {
       { provide: UserService, useMock: mockUserService },
       { provide: PermissionsService, useMock: mockPermissionsService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: FeatureFlagService, useMock: mockFeatureFlagService },
       { provide: DraftOptionsService, useMock: mockDraftOptionsService }
     ]
   }));
@@ -296,10 +293,7 @@ class TestEnvironment {
       texts: [
         { bookNum: 40, chapters: [{ number: 1, hasDraft: false }] },
         { bookNum: 41, chapters: [{ number: 1, hasDraft: false }] }
-      ],
-      translateConfig: {
-        draftConfig: { usfmConfig: {} }
-      }
+      ]
     })
   } as SFProjectProfileDoc;
 
@@ -328,7 +322,6 @@ class TestEnvironment {
     when(activatedProjectMock.projectDoc).thenReturn(projectDoc as any);
     when(mockUserService.currentUserId).thenReturn('user01');
     when(mockPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
-    when(mockFeatureFlagService.usfmFormat).thenReturn(createTestFeatureFlag(true));
     when(mockDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(false);
     service = TestBed.inject(EditorTabMenuService);
   }

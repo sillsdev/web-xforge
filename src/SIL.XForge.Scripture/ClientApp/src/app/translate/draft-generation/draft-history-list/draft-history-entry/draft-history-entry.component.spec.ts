@@ -84,15 +84,6 @@ describe('DraftHistoryEntryComponent', () => {
       instance(trainingDataQuery)
     );
     when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(true);
-    when(mockedDraftOptionsService.areFormattingOptionsSupportedForBuild(anything())).thenCall((entry: BuildDto) => {
-      if (!component.featureFlags.usfmFormat.enabled) {
-        return false;
-      }
-      return (
-        entry?.additionalInfo?.dateFinished != null &&
-        new Date(entry.additionalInfo.dateFinished) > new Date(dateAfterFormattingSupported)
-      );
-    });
     fixture = TestBed.createComponent(DraftHistoryEntryComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -430,6 +421,7 @@ describe('DraftHistoryEntryComponent', () => {
     }));
 
     it('should not show the USFM format option for drafts created before the supported date', fakeAsync(() => {
+      when(mockedDraftOptionsService.areFormattingOptionsSupportedForBuild(anything())).thenReturn(false);
       const user = 'user-display-name';
       const date = dateBeforeFormattingSupported;
       const trainingBooks = ['EXO'];
