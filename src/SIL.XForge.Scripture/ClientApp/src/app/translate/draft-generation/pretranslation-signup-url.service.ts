@@ -41,17 +41,27 @@ export class PreTranslationSignupUrlService {
     const project: Readonly<SFProjectProfile | undefined> = this.activatedProject.projectDoc?.data;
     const languageCode: string | undefined = project?.writingSystem.tag;
 
-    const baseLink: string = this.linkConfig.baseLink;
-    const nameToken: string = this.buildParam(this.linkConfig.nameParam, user?.name);
-    const emailToken: string = this.buildParam(this.linkConfig.emailParam, user?.email);
-    const projectNameToken: string = this.buildParam(this.linkConfig.projectParam, project?.shortName);
-    const languageToken: string =
-      languageCode?.length === 3 ? this.buildParam(this.linkConfig.languageParam, languageCode) : '';
+    const url = new URL(this.linkConfig.baseLink);
+    const searchParams = new URLSearchParams();
 
-    return `${baseLink}?${nameToken}&${emailToken}&${projectNameToken}&${languageToken}`;
+    // Omit the email if it's a transparent authentication noreply email
+    const userEmail = user?.email?.includes('@users.noreply.scriptureforge.org') ? undefined : user?.email;
+
+    // Add parameters to the URL
+    if (user?.name) this.addParam(searchParams, this.linkConfig.nameParam, user.name);
+    if (userEmail) this.addParam(searchParams, this.linkConfig.emailParam, userEmail);
+    if (project?.shortName) this.addParam(searchParams, this.linkConfig.projectParam, project?.shortName);
+
+    // Only add language parameter if it's a 3-character code
+    if (languageCode?.length === 3) this.addParam(searchParams, this.linkConfig.languageParam, languageCode);
+
+    url.search = searchParams.toString();
+    return url.toString();
   }
 
-  private buildParam(key: string, value: string | undefined): string {
-    return `${encodeURIComponent(key)}=${encodeURIComponent(value ?? '')}`;
+  private addParam(searchParams: URLSearchParams, key: string, value: string | undefined): void {
+    if (value != null && value !== '') {
+      searchParams.set(key, value);
+    }
   }
 }
