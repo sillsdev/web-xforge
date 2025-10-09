@@ -43,7 +43,12 @@ export class DocSubscription {
       if ('onDestroy' in destroyRef) destroyRef.onDestroy(() => this.complete());
       else destroyRef.subscribe(() => this.complete());
     } catch (error) {
-      if (!isNG0911Error(error)) throw error;
+      if (isNG0911Error(error)) {
+        // destroyRef has already been destroyed
+        this.complete();
+      } else {
+        throw error;
+      }
     }
   }
 
