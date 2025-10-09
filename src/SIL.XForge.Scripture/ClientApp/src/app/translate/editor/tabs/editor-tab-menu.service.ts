@@ -18,6 +18,7 @@ import { ParatextService } from '../../../core/paratext.service';
 import { PermissionsService } from '../../../core/permissions.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TabMenuItem, TabMenuService, TabStateService } from '../../../shared/sf-tab-group';
+import { DraftOptionsService } from '../../draft-generation/draft-options.service';
 import { EditorTabInfo } from './editor-tabs.types';
 @Injectable()
 export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> {
@@ -31,7 +32,8 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
     private readonly tabState: TabStateService<EditorTabGroupType, EditorTabInfo>,
     private readonly permissionsService: PermissionsService,
     private readonly i18n: I18nService,
-    private readonly featureFlagService: FeatureFlagService
+    private readonly featureFlagService: FeatureFlagService,
+    private readonly draftOptionsService: DraftOptionsService
   ) {}
 
   getMenuItems(): Observable<TabMenuItem[]> {
@@ -49,9 +51,8 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
         return combineLatest([of(projectDoc), of(isOnline), this.tabState.tabs$]);
       }),
       switchMap(([projectDoc, isOnline, existingTabs]) => {
-        const hasSetDraftFormatting =
-          !this.featureFlagService.usfmFormat.enabled ||
-          this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.usfmConfig != null;
+        const hasSetDraftFormatting: boolean =
+          !this.featureFlagService.usfmFormat.enabled || this.draftOptionsService.isFormattingOptionsSelected();
         const showDraft =
           isOnline &&
           projectDoc.data != null &&
