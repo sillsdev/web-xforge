@@ -4112,7 +4112,7 @@ describe('EditorComponent', () => {
         });
         env.setupProject({ translateConfig: { draftConfig: {} } });
         // Formatting options not selected, so draft tab should not be shown
-        when(mockedDraftOptionsService.areFormattingOptionsSelected()).thenReturn(false);
+        when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(false);
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
@@ -4909,7 +4909,7 @@ class TestEnvironment {
     when(mockedPermissionsService.isUserOnProject(anything())).thenResolve(true);
     when(mockedFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(false));
     when(mockedFeatureFlagService.usfmFormat).thenReturn(createTestFeatureFlag(true));
-    when(mockedDraftOptionsService.areFormattingOptionsSelected()).thenReturn(true);
+    when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(true);
     when(mockedDraftOptionsService.areFormattingOptionsSupportedForBuild(anything())).thenReturn(true);
     when(mockedLynxWorkspaceService.rawInsightSource$).thenReturn(of([]));
 
