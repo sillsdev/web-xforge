@@ -15,14 +15,15 @@ export class DraftOptionsService {
     private readonly featureFlags: FeatureFlagService
   ) {}
 
-  isFormattingOptionsSelected(): boolean {
+  areFormattingOptionsSelected(): boolean {
     return (
-      this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.usfmConfig?.paragraphFormat != null &&
-      this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.usfmConfig?.quoteFormat != null
+      !this.featureFlags.usfmFormat.enabled ||
+      (this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.usfmConfig?.paragraphFormat != null &&
+        this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.usfmConfig?.quoteFormat != null)
     );
   }
 
-  isFormattingOptionsSupported(entry: BuildDto | undefined): boolean {
+  areFormattingOptionsSupportedForBuild(entry: BuildDto | undefined): boolean {
     return this.featureFlags.usfmFormat.enabled && entry?.additionalInfo?.dateFinished != null
       ? new Date(entry.additionalInfo.dateFinished) > FORMATTING_OPTIONS_SUPPORTED_DATE
       : false;

@@ -269,11 +269,11 @@ export class DraftHistoryEntryComponent {
   }
 
   get formattingOptionsSelected(): boolean {
-    return this.draftOptionsService.isFormattingOptionsSelected();
+    return this.draftOptionsService.areFormattingOptionsSelected();
   }
 
   get formattingOptionsSupported(): boolean {
-    return this.draftOptionsService.isFormattingOptionsSupported(this.entry);
+    return this.draftOptionsService.areFormattingOptionsSupportedForBuild(this.entry);
   }
 
   @Input() isLatestBuild: boolean = false;

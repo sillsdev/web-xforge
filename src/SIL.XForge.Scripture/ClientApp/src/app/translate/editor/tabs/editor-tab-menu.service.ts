@@ -8,7 +8,6 @@ import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf
 import { combineLatest, map, Observable, of } from 'rxjs';
 import { shareReplay, switchMap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
@@ -32,7 +31,6 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
     private readonly tabState: TabStateService<EditorTabGroupType, EditorTabInfo>,
     private readonly permissionsService: PermissionsService,
     private readonly i18n: I18nService,
-    private readonly featureFlagService: FeatureFlagService,
     private readonly draftOptionsService: DraftOptionsService
   ) {}
 
@@ -51,14 +49,12 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
         return combineLatest([of(projectDoc), of(isOnline), this.tabState.tabs$]);
       }),
       switchMap(([projectDoc, isOnline, existingTabs]) => {
-        const hasSetDraftFormatting: boolean =
-          !this.featureFlagService.usfmFormat.enabled || this.draftOptionsService.isFormattingOptionsSelected();
         const showDraft =
           isOnline &&
           projectDoc.data != null &&
           SFProjectService.hasDraft(projectDoc.data) &&
           this.permissionsService.canAccessDrafts(projectDoc, this.userService.currentUserId) &&
-          hasSetDraftFormatting;
+          this.draftOptionsService.areFormattingOptionsSelected();
         const items: Observable<TabMenuItem>[] = [];
 
         for (const tabType of editorTabTypes) {
