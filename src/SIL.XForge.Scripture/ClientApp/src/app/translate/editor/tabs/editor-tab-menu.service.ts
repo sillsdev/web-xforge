@@ -54,7 +54,7 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
           projectDoc.data != null &&
           SFProjectService.hasDraft(projectDoc.data) &&
           this.permissionsService.canAccessDrafts(projectDoc, this.userService.currentUserId) &&
-          this.draftOptionsService.areFormattingOptionsSelected();
+          !this.draftOptionsService.areFormattingOptionsAvailableButUnselected();
         const items: Observable<TabMenuItem>[] = [];
 
         for (const tabType of editorTabTypes) {

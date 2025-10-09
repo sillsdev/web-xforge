@@ -1493,7 +1493,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (
       ((hasDraft && !draftApplied) || urlDraftActive) &&
       canViewDrafts &&
-      this.draftOptionsService.areFormattingOptionsSelected()
+      !this.draftOptionsService.areFormattingOptionsAvailableButUnselected()
     ) {
       // URL may indicate to select the 'draft' tab (such as when coming from generate draft page)
       const groupIdToAddTo: EditorTabGroupType = this.showSource ? 'source' : 'target';

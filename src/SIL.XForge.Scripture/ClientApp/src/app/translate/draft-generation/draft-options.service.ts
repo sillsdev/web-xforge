@@ -17,9 +17,17 @@ export class DraftOptionsService {
 
   areFormattingOptionsSelected(): boolean {
     return (
-      !this.featureFlags.usfmFormat.enabled ||
-      (this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.usfmConfig?.paragraphFormat != null &&
-        this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.usfmConfig?.quoteFormat != null)
+      this.featureFlags.usfmFormat.enabled &&
+      this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.usfmConfig?.paragraphFormat != null &&
+      this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.usfmConfig?.quoteFormat != null
+    );
+  }
+
+  areFormattingOptionsAvailableButUnselected(): boolean {
+    return (
+      this.featureFlags.usfmFormat.enabled &&
+      (this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.usfmConfig?.paragraphFormat == null ||
+        this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.usfmConfig?.quoteFormat == null)
     );
   }
 

@@ -266,8 +266,8 @@ describe('EditorTabMenuService', () => {
       })
     } as SFProjectProfileDoc;
     const env = new TestEnvironment(projectDocNoFormatting);
-    // Simulate formatting options not selected so draft tab should be hidden
-    when(mockDraftOptionsService.areFormattingOptionsSelected()).thenReturn(false);
+    // Simulate formatting options available but still unselected, so draft tab should be hidden
+    when(mockDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(true);
     env.setExistingTabs([]);
     service['canShowHistory'] = () => true;
     service['canShowResource'] = () => true;
@@ -329,7 +329,7 @@ class TestEnvironment {
     when(mockUserService.currentUserId).thenReturn('user01');
     when(mockPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
     when(mockFeatureFlagService.usfmFormat).thenReturn(createTestFeatureFlag(true));
-    when(mockDraftOptionsService.areFormattingOptionsSelected()).thenReturn(true);
+    when(mockDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(false);
     service = TestBed.inject(EditorTabMenuService);
   }
 

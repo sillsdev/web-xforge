@@ -83,7 +83,7 @@ describe('DraftHistoryEntryComponent', () => {
     when(mockedTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
       instance(trainingDataQuery)
     );
-    when(mockedDraftOptionsService.areFormattingOptionsSelected()).thenReturn(true);
+    when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(true);
     when(mockedDraftOptionsService.areFormattingOptionsSupportedForBuild(anything())).thenCall((entry: BuildDto) => {
       if (!component.featureFlags.usfmFormat.enabled) {
         return false;
@@ -177,7 +177,7 @@ describe('DraftHistoryEntryComponent', () => {
     }));
 
     it('should show the USFM format option when the project is the latest draft', fakeAsync(() => {
-      when(mockedDraftOptionsService.areFormattingOptionsSelected()).thenReturn(false);
+      when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(false);
       when(mockedDraftOptionsService.areFormattingOptionsSupportedForBuild(anything())).thenReturn(true);
       const user = 'user-display-name';
       const date = dateAfterFormattingSupported;
@@ -250,7 +250,7 @@ describe('DraftHistoryEntryComponent', () => {
     }));
 
     it('should handle builds with additional info referencing a deleted user', fakeAsync(() => {
-      when(mockedDraftOptionsService.areFormattingOptionsSelected()).thenReturn(false);
+      when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(false);
       when(mockedDraftOptionsService.areFormattingOptionsSupportedForBuild(anything())).thenReturn(true);
       when(mockedI18nService.formatDate(anything())).thenReturn('formatted-date');
       when(mockedI18nService.formatAndLocalizeScriptureRange('GEN')).thenReturn('Genesis');
@@ -362,7 +362,7 @@ describe('DraftHistoryEntryComponent', () => {
     });
 
     it('should show set draft format UI', fakeAsync(() => {
-      when(mockedDraftOptionsService.areFormattingOptionsSelected()).thenReturn(false);
+      when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(false);
       when(mockedDraftOptionsService.areFormattingOptionsSupportedForBuild(anything())).thenReturn(true);
       const date = dateAfterFormattingSupported;
       component.entry = {
