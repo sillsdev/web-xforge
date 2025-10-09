@@ -76,7 +76,7 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
           }
 
           const projects: ProjectInfo[] = [];
-          for (const projectId of userDoc.data.sites[environment.siteId].projects) {
+          for (const projectId of userDoc.data.sites[environment.siteId]?.projects) {
             const projectDoc = projectDocs.get(projectId);
             if (projectDoc != null && projectDoc.data != null) {
               projects.push({ id: projectDoc.id, name: projectDoc.data.name });
@@ -135,7 +135,7 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
     const projectDocsLookup = [] as string[];
     for (const userDoc of userDocs.docs) {
       if (userDoc.data != null) {
-        for (const projectId of userDoc.data.sites[environment.siteId].projects) {
+        for (const projectId of userDoc.data.sites[environment.siteId]?.projects) {
           projectDocsLookup.push(projectId);
         }
       }
