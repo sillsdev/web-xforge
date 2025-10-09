@@ -109,9 +109,8 @@ export class RealtimeService {
     let doc = this.docs.get(key);
 
     // Handle documents that currently exist but are in the process of being disposed.
-    const docId: string | undefined = doc?.id;
-    if (docId != null) {
-      const docBeingDisposed: Subject<void> | undefined = this.docsBeingDisposed.get(docId);
+    if (doc != null) {
+      const docBeingDisposed: Subject<void> | undefined = this.docsBeingDisposed.get(doc.id);
       if (docBeingDisposed != null) {
         // Waiting for document to be disposed before recreating it.
         await lastValueFrom(docBeingDisposed);
