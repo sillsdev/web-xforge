@@ -17,6 +17,7 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { PermissionsService } from '../../../core/permissions.service';
 import { TabStateService } from '../../../shared/sf-tab-group';
+import { DraftOptionsService } from '../../draft-generation/draft-options.service';
 import { EditorTabMenuService } from './editor-tab-menu.service';
 import { EditorTabInfo } from './editor-tabs.types';
 
@@ -26,6 +27,7 @@ const tabStateMock: TabStateService<any, any> = mock(TabStateService);
 const mockUserService = mock(UserService);
 const mockPermissionsService = mock(PermissionsService);
 const mockFeatureFlagService = mock(FeatureFlagService);
+const mockDraftOptionsService = mock(DraftOptionsService);
 
 describe('EditorTabMenuService', () => {
   configureTestingModule(() => ({
@@ -37,7 +39,8 @@ describe('EditorTabMenuService', () => {
       { provide: UserService, useMock: mockUserService },
       { provide: PermissionsService, useMock: mockPermissionsService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: FeatureFlagService, useMock: mockFeatureFlagService }
+      { provide: FeatureFlagService, useMock: mockFeatureFlagService },
+      { provide: DraftOptionsService, useMock: mockDraftOptionsService }
     ]
   }));
 
@@ -263,6 +266,8 @@ describe('EditorTabMenuService', () => {
       })
     } as SFProjectProfileDoc;
     const env = new TestEnvironment(projectDocNoFormatting);
+    // Simulate formatting options not selected so draft tab should be hidden
+    when(mockDraftOptionsService.areFormattingOptionsSelected()).thenReturn(false);
     env.setExistingTabs([]);
     service['canShowHistory'] = () => true;
     service['canShowResource'] = () => true;
@@ -324,6 +329,7 @@ class TestEnvironment {
     when(mockUserService.currentUserId).thenReturn('user01');
     when(mockPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
     when(mockFeatureFlagService.usfmFormat).thenReturn(createTestFeatureFlag(true));
+    when(mockDraftOptionsService.areFormattingOptionsSelected()).thenReturn(true);
     service = TestBed.inject(EditorTabMenuService);
   }
 
