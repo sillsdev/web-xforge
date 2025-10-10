@@ -89,15 +89,22 @@ export class TextDocService {
   }
 
   async createTextDoc(textDocId: TextDocId, subscriber: DocSubscription, data?: TextData): Promise<TextDoc> {
-    let textDoc: TextDoc = await this.projectService.getText(textDocId, subscriber);
-
-    if (textDoc?.data != null) {
-      throw new Error(`Text Doc already exists for ${textDocId}`);
+    const docSubscription = new DocSubscription('TextDocService.createTextDoc');
+    try {
+      const textDoc: TextDoc = await this.projectService.getText(textDocId, docSubscription);
+      if (textDoc?.data != null) throw new Error(`Text Doc already exists for ${textDocId}`);
+    } finally {
+      docSubscription.unsubscribe();
     }
 
     data ??= { ops: [] };
-    textDoc = await this.realtimeService.create(TextDoc.COLLECTION, textDocId.toString(), data, subscriber, type.uri);
-    return textDoc;
+    return await this.realtimeService.create<TextDoc>(
+      TextDoc.COLLECTION,
+      textDocId.toString(),
+      data,
+      subscriber,
+      type.uri
+    );
   }
 
   /**
