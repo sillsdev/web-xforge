@@ -7566,9 +7566,12 @@ public class ParatextServiceTests
                 CachedGuid = HexId.FromStr(projectId),
             };
             scrText.Settings.LanguageID = LanguageId.English;
-            scrText.ZipFile.AddFile(
+            scrText.ZipFile?.BeginUpdate(new MemoryArchiveStorage());
+            scrText.ZipFile?.Add(
+                new MockStaticDataSource(),
                 Path.Join(ZippedProjectFileManagerBase.DBLFolderName, "language", "iso", zipLanguageCode)
             );
+            scrText.ZipFile?.CommitUpdate();
             return scrText;
         }
 

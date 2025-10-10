@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
-using Ionic.Zip;
+using ICSharpCode.SharpZipLib.Zip;
 using Paratext.Data.ProjectFileAccess;
 
 namespace SIL.XForge.Scripture.Services;
