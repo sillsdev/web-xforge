@@ -136,6 +136,7 @@ import {
   XmlUtils
 } from '../../shared/utils';
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
+import { DraftOptionsService } from '../draft-generation/draft-options.service';
 import { EditorHistoryService } from './editor-history/editor-history.service';
 import { LynxInsightStateService } from './lynx/insights/lynx-insight-state.service';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
@@ -313,6 +314,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly editorTabPersistenceService: EditorTabPersistenceService,
     private readonly textDocService: TextDocService,
     private readonly draftGenerationService: DraftGenerationService,
+    private readonly draftOptionsService: DraftOptionsService,
     private readonly destroyRef: DestroyRef,
     private readonly breakpointObserver: BreakpointObserver,
     private readonly mediaBreakpointService: MediaBreakpointService,
@@ -1488,7 +1490,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.projectDoc,
       this.userService.currentUserId
     );
-    if (((hasDraft && !draftApplied) || urlDraftActive) && canViewDrafts) {
+    if (
+      ((hasDraft && !draftApplied) || urlDraftActive) &&
+      canViewDrafts &&
+      !this.draftOptionsService.areFormattingOptionsAvailableButUnselected()
+    ) {
       // URL may indicate to select the 'draft' tab (such as when coming from generate draft page)
       const groupIdToAddTo: EditorTabGroupType = this.showSource ? 'source' : 'target';
 

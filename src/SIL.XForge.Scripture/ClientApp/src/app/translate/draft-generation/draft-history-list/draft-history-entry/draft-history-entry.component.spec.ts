@@ -22,6 +22,7 @@ import { SFProjectService } from '../../../../core/sf-project.service';
 import { BuildDto } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
 import { DraftGenerationService } from '../../draft-generation.service';
+import { DraftOptionsService, FORMATTING_OPTIONS_SUPPORTED_DATE } from '../../draft-options.service';
 import { TrainingDataService } from '../../training-data/training-data.service';
 import { DraftHistoryEntryComponent } from './draft-history-entry.component';
 
@@ -32,6 +33,11 @@ const mockedUserService = mock(UserService);
 const mockedTrainingDataService = mock(TrainingDataService);
 const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedFeatureFlagsService = mock(FeatureFlagService);
+const mockedDraftOptionsService = mock(DraftOptionsService);
+
+const oneDay = 1000 * 60 * 60 * 24;
+const dateBeforeFormattingSupported = new Date(FORMATTING_OPTIONS_SUPPORTED_DATE.getTime() - oneDay).toISOString();
+const dateAfterFormattingSupported = new Date(FORMATTING_OPTIONS_SUPPORTED_DATE.getTime() + oneDay).toISOString();
 
 describe('DraftHistoryEntryComponent', () => {
   let component: DraftHistoryEntryComponent;
@@ -51,7 +57,8 @@ describe('DraftHistoryEntryComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: TrainingDataService, useMock: mockedTrainingDataService },
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
-      { provide: FeatureFlagService, useMock: mockedFeatureFlagsService }
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagsService },
+      { provide: DraftOptionsService, useMock: mockedDraftOptionsService }
     ]
   }));
 
@@ -76,6 +83,7 @@ describe('DraftHistoryEntryComponent', () => {
     when(mockedTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
       instance(trainingDataQuery)
     );
+    when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(true);
     fixture = TestBed.createComponent(DraftHistoryEntryComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -99,7 +107,7 @@ describe('DraftHistoryEntryComponent', () => {
     it('should handle builds with additional info', fakeAsync(() => {
       when(mockedI18nService.enumerateList(anything())).thenReturn('src');
       const user = 'user-display-name';
-      const date = 'formatted-date';
+      const date = dateAfterFormattingSupported;
       const trainingBooks = ['EXO'];
       const translateBooks = ['GEN'];
       const trainingDataFiles: Map<string, string> = new Map([['file01', 'training-data.txt']]);
@@ -144,7 +152,7 @@ describe('DraftHistoryEntryComponent', () => {
     it('should state that the model did not have training configuration', fakeAsync(() => {
       when(mockedI18nService.enumerateList(anything())).thenReturn('src');
       const user = 'user-display-name';
-      const date = 'formatted-date';
+      const date = dateAfterFormattingSupported;
       const trainingBooks = [];
       const translateBooks = ['GEN'];
       const trainingDataFiles = [];
@@ -160,8 +168,10 @@ describe('DraftHistoryEntryComponent', () => {
     }));
 
     it('should show the USFM format option when the project is the latest draft', fakeAsync(() => {
+      when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(false);
+      when(mockedDraftOptionsService.areFormattingOptionsSupportedForBuild(anything())).thenReturn(true);
       const user = 'user-display-name';
-      const date = 'formatted-date';
+      const date = dateAfterFormattingSupported;
       const trainingBooks = ['EXO'];
       const translateBooks = ['GEN'];
       const trainingDataFiles = ['file01'];
@@ -231,6 +241,8 @@ describe('DraftHistoryEntryComponent', () => {
     }));
 
     it('should handle builds with additional info referencing a deleted user', fakeAsync(() => {
+      when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(false);
+      when(mockedDraftOptionsService.areFormattingOptionsSupportedForBuild(anything())).thenReturn(true);
       when(mockedI18nService.formatDate(anything())).thenReturn('formatted-date');
       when(mockedI18nService.formatAndLocalizeScriptureRange('GEN')).thenReturn('Genesis');
       when(mockedI18nService.formatAndLocalizeScriptureRange('EXO')).thenReturn('Exodus');
@@ -244,8 +256,9 @@ describe('DraftHistoryEntryComponent', () => {
       when(mockedActivatedProjectService.changes$).thenReturn(of(targetProjectDoc));
       const entry = {
         additionalInfo: {
-          dateGenerated: new Date().toISOString(),
-          dateRequested: new Date().toISOString(),
+          dateGenerated: dateAfterFormattingSupported,
+          dateRequested: dateAfterFormattingSupported,
+          dateFinished: dateAfterFormattingSupported,
           requestedByUserId: 'sf-user-id',
           translationScriptureRanges: [{ projectId: 'project01', scriptureRange: 'GEN' }]
         }
@@ -275,7 +288,6 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.buildRequestedByUserName).toBeUndefined();
       expect(component.buildRequestedAtDate).toBe('');
       expect(component.draftIsAvailable).toBe(false);
-      expect(fixture.nativeElement.querySelector('.format-usfm')).toBeNull();
       expect(component.hasDetails).toBe(false);
       expect(component.entry).toBe(entry);
     });
@@ -337,14 +349,18 @@ describe('DraftHistoryEntryComponent', () => {
       const projectDoc = getProjectProfileDoc();
       when(mockedActivatedProjectService.projectDoc).thenReturn(projectDoc);
       when(mockedActivatedProjectService.changes$).thenReturn(of(projectDoc));
+      when(mockedI18nService.formatDate(anything())).thenReturn('formatted-date');
     });
 
     it('should show set draft format UI', fakeAsync(() => {
+      when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(false);
+      when(mockedDraftOptionsService.areFormattingOptionsSupportedForBuild(anything())).thenReturn(true);
+      const date = dateAfterFormattingSupported;
       component.entry = {
         id: 'build01',
         state: BuildStates.Completed,
         message: 'Completed',
-        additionalInfo: { dateGenerated: '2025-09-01' }
+        additionalInfo: { dateGenerated: date, dateFinished: date }
       } as BuildDto;
       component.isLatestBuild = true;
       component.draftIsAvailable = true;
@@ -360,7 +376,8 @@ describe('DraftHistoryEntryComponent', () => {
         state: BuildStates.Completed,
         message: 'Completed',
         additionalInfo: {
-          dateGenerated: '2025-09-01',
+          dateGenerated: dateAfterFormattingSupported,
+          dateFinished: dateAfterFormattingSupported,
           translationScriptureRanges: [{ projectId: 'source01', scriptureRange: 'EXO' }]
         }
       } as BuildDto;
@@ -377,7 +394,8 @@ describe('DraftHistoryEntryComponent', () => {
         state: BuildStates.Completed,
         message: 'Completed',
         additionalInfo: {
-          dateGenerated: '2025-09-01',
+          dateGenerated: dateAfterFormattingSupported,
+          dateFinished: dateAfterFormattingSupported,
           translationScriptureRanges: [{ projectId: 'source01', scriptureRange: 'EXO' }]
         }
       } as BuildDto;
@@ -389,12 +407,38 @@ describe('DraftHistoryEntryComponent', () => {
     }));
 
     it('should hide draft format UI if the draft is not completed', fakeAsync(() => {
-      component.entry = { id: 'build01', state: BuildStates.Canceled, message: 'Cancelled' } as BuildDto;
+      component.entry = {
+        id: 'build01',
+        state: BuildStates.Canceled,
+        message: 'Cancelled',
+        additionalInfo: { dateGenerated: dateAfterFormattingSupported, dateFinished: dateAfterFormattingSupported }
+      } as BuildDto;
       component.isLatestBuild = true;
       component.draftIsAvailable = false;
       tick();
       fixture.detectChanges();
       expect(fixture.nativeElement.querySelector('.require-formatting-options')).toBeNull();
+    }));
+
+    it('should not show the USFM format option for drafts created before the supported date', fakeAsync(() => {
+      when(mockedDraftOptionsService.areFormattingOptionsSupportedForBuild(anything())).thenReturn(false);
+      const user = 'user-display-name';
+      const date = dateBeforeFormattingSupported;
+      const trainingBooks = ['EXO'];
+      const translateBooks = ['GEN'];
+      const trainingDataFiles = ['file01'];
+      const entry = getStandardBuildDto({ user, date, trainingBooks, translateBooks, trainingDataFiles });
+
+      // SUT
+      component.entry = entry;
+      component.isLatestBuild = true;
+      tick();
+      fixture.detectChanges();
+
+      expect(component.scriptureRange).toEqual('GEN');
+      expect(component.draftIsAvailable).toBe(true);
+      expect(fixture.nativeElement.querySelector('.format-usfm')).toBeNull();
+      expect(component.formattingOptionsSupported).toBe(false);
     }));
   });
 
@@ -457,8 +501,9 @@ describe('DraftHistoryEntryComponent', () => {
         id: 'project01'
       },
       additionalInfo: {
-        dateGenerated: new Date().toISOString(),
-        dateRequested: new Date().toISOString(),
+        dateGenerated: new Date(date).toISOString(),
+        dateFinished: new Date(date).toISOString(),
+        dateRequested: new Date(date).toISOString(),
         requestedByUserId: 'sf-user-id',
         trainingScriptureRanges:
           trainingBooks.length > 0 ? [{ projectId: 'project02', scriptureRange: trainingBooks.join(';') }] : [],

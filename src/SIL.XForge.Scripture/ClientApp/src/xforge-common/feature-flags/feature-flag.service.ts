@@ -359,7 +359,7 @@ export class FeatureFlagService {
     'UsfmFormat',
     'USFM Format',
     18,
-    this.featureFlagStore
+    new StaticFeatureFlagStore(true)
   );
 
   get featureFlags(): FeatureFlag[] {

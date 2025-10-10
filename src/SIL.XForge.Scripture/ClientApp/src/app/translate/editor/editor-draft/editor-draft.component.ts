@@ -60,7 +60,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
   inputChanged$ = new Subject<void>();
   draftCheckState: 'draft-unknown' | 'draft-present' | 'draft-legacy' | 'draft-empty' = 'draft-unknown';
-  draftRevisions: Revision[] = [];
   selectedRevision: Revision | undefined;
   generateDraftUrl?: string;
   targetProject?: SFProjectProfile;
@@ -68,10 +67,11 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   isDraftReady = false;
   isDraftApplied = false;
   userAppliedDraft = false;
-  hasFormattingSelected = true;
 
   private selectedRevisionSubject = new BehaviorSubject<Revision | undefined>(undefined);
   private selectedRevision$ = this.selectedRevisionSubject.asObservable();
+
+  private _draftRevisions: Revision[] = [];
 
   // 'asyncScheduler' prevents ExpressionChangedAfterItHasBeenCheckedError
   private loading$ = new BehaviorSubject<boolean>(false);
@@ -119,8 +119,12 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     );
   }
 
-  get mustChooseFormattingOptions(): boolean {
-    return this.featureFlags.usfmFormat.enabled && !this.hasFormattingSelected && this.doesLatestHaveDraft;
+  set draftRevisions(value: Revision[]) {
+    this._draftRevisions = value;
+  }
+
+  get draftRevisions(): Revision[] {
+    return this._draftRevisions;
   }
 
   ngOnChanges(): void {
@@ -199,7 +203,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
             filterNullish(),
             tap(projectDoc => {
               this.targetProject = projectDoc.data;
-              this.hasFormattingSelected = projectDoc.data?.translateConfig.draftConfig.usfmConfig != null;
             }),
             distinctUntilChanged(),
             map(() => initialTimestamp)

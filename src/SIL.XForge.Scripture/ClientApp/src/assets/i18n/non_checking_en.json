@@ -1,6 +1,5 @@
 {
   "app": {
-    "beta": "beta",
     "generate_draft": "Generate draft",
     "hangfire_dashboard": "Hangfire Dashboard",
     "manage_questions": "Manage questions",
@@ -403,16 +402,13 @@
     "your_comment": "Your comment"
   },
   "editor_draft_tab": {
-    "add_chapter_to_project": "Add this chapter to the project",
     "apply_to_project": "Add to project",
     "cannot_import": "You cannot import this draft because you do not have permission to edit this chapter. Permissions can be updated in Paratext.",
     "click_book_to_preview": "Click a book below to preview the draft and add it to your project.",
     "draft_indicator_applied": "Added",
     "draft_legacy_warning": "We have updated our drafting functionality. You can take advantage of this by [link:generateDraftUrl]generating a new draft[/link].",
     "error_applying_draft": "Failed to add the draft to the project. Try again later.",
-    "formatting": "Formatting",
     "format_draft": "Formatting options",
-    "format_draft_before": "Select formatting options before adding it to your project.",
     "format_draft_can": "Customize formatting options for the draft",
     "format_draft_cannot": "You can only change formatting for books from the latest draft",
     "no_draft_notice": "{{ bookChapterName }} has no draft.",
