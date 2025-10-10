@@ -16,6 +16,7 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { PermissionsService } from '../../../core/permissions.service';
 import { TabStateService } from '../../../shared/sf-tab-group';
+import { DraftOptionsService } from '../../draft-generation/draft-options.service';
 import { EditorTabMenuService } from './editor-tab-menu.service';
 import { EditorTabInfo } from './editor-tabs.types';
 
@@ -24,6 +25,7 @@ const activatedProjectMock = mock(ActivatedProjectService);
 const tabStateMock: TabStateService<any, any> = mock(TabStateService);
 const mockUserService = mock(UserService);
 const mockPermissionsService = mock(PermissionsService);
+const mockDraftOptionsService = mock(DraftOptionsService);
 
 describe('EditorTabMenuService', () => {
   configureTestingModule(() => ({
@@ -34,7 +36,8 @@ describe('EditorTabMenuService', () => {
       { provide: TabStateService, useMock: tabStateMock },
       { provide: UserService, useMock: mockUserService },
       { provide: PermissionsService, useMock: mockPermissionsService },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      { provide: DraftOptionsService, useMock: mockDraftOptionsService }
     ]
   }));
 
@@ -244,6 +247,22 @@ describe('EditorTabMenuService', () => {
       const spy = spyOn(service['permissionsService'], 'canSync');
       service['canShowResource'](env.projectDoc);
       expect(spy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('should not show draft menu item when draft formatting (usfmConfig) is not set', done => {
+    const env = new TestEnvironment();
+    // Simulate formatting options available but still unselected, so draft tab should be hidden
+    when(mockDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(true);
+    env.setExistingTabs([]);
+    service['canShowHistory'] = () => true;
+    service['canShowResource'] = () => true;
+    service['canShowBiblicalTerms'] = () => false;
+    service.getMenuItems().subscribe(items => {
+      expect(items.find(i => i.type === 'draft')).toBeUndefined();
+      expect(items.find(i => i.type === 'history')).toBeDefined();
+      expect(items.find(i => i.type === 'project-resource')).toBeDefined();
+      done();
     });
   });
 });

@@ -3,9 +3,6 @@ import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/t
 import language_code_mapping from '../../../../../language_code_mapping.json';
 import { SelectableProjectWithLanguageCode } from '../../core/paratext.service';
 
-// Corresponds to Serval 1.11.0 release
-export const FORMATTING_OPTIONS_SUPPORTED_DATE: Date = new Date('2025-09-25T00:00:00Z');
-
 /** Represents draft sources as a set of two {@link TranslateSource} arrays, and one {@link SFProjectProfile} array. */
 export interface DraftSourcesAsTranslateSourceArrays {
   trainingSources: TranslateSource[];

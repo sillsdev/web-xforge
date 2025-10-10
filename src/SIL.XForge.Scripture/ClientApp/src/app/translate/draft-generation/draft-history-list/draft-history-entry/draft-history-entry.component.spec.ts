@@ -22,7 +22,7 @@ import { SFProjectService } from '../../../../core/sf-project.service';
 import { BuildDto } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
 import { DraftGenerationService } from '../../draft-generation.service';
-import { FORMATTING_OPTIONS_SUPPORTED_DATE } from '../../draft-utils';
+import { DraftOptionsService, FORMATTING_OPTIONS_SUPPORTED_DATE } from '../../draft-options.service';
 import { TrainingDataService } from '../../training-data/training-data.service';
 import { DraftHistoryEntryComponent } from './draft-history-entry.component';
 
@@ -33,6 +33,7 @@ const mockedUserService = mock(UserService);
 const mockedTrainingDataService = mock(TrainingDataService);
 const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedFeatureFlagsService = mock(FeatureFlagService);
+const mockedDraftOptionsService = mock(DraftOptionsService);
 
 const oneDay = 1000 * 60 * 60 * 24;
 const dateBeforeFormattingSupported = new Date(FORMATTING_OPTIONS_SUPPORTED_DATE.getTime() - oneDay).toISOString();
@@ -56,7 +57,8 @@ describe('DraftHistoryEntryComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: TrainingDataService, useMock: mockedTrainingDataService },
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
-      { provide: FeatureFlagService, useMock: mockedFeatureFlagsService }
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagsService },
+      { provide: DraftOptionsService, useMock: mockedDraftOptionsService }
     ]
   }));
 
@@ -81,6 +83,7 @@ describe('DraftHistoryEntryComponent', () => {
     when(mockedTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
       instance(trainingDataQuery)
     );
+    when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(true);
     fixture = TestBed.createComponent(DraftHistoryEntryComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -165,6 +168,8 @@ describe('DraftHistoryEntryComponent', () => {
     }));
 
     it('should show the USFM format option when the project is the latest draft', fakeAsync(() => {
+      when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(false);
+      when(mockedDraftOptionsService.areFormattingOptionsSupportedForBuild(anything())).thenReturn(true);
       const user = 'user-display-name';
       const date = dateAfterFormattingSupported;
       const trainingBooks = ['EXO'];
@@ -236,6 +241,8 @@ describe('DraftHistoryEntryComponent', () => {
     }));
 
     it('should handle builds with additional info referencing a deleted user', fakeAsync(() => {
+      when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(false);
+      when(mockedDraftOptionsService.areFormattingOptionsSupportedForBuild(anything())).thenReturn(true);
       when(mockedI18nService.formatDate(anything())).thenReturn('formatted-date');
       when(mockedI18nService.formatAndLocalizeScriptureRange('GEN')).thenReturn('Genesis');
       when(mockedI18nService.formatAndLocalizeScriptureRange('EXO')).thenReturn('Exodus');
@@ -281,7 +288,6 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.buildRequestedByUserName).toBeUndefined();
       expect(component.buildRequestedAtDate).toBe('');
       expect(component.draftIsAvailable).toBe(false);
-      expect(fixture.nativeElement.querySelector('.format-usfm')).toBeNull();
       expect(component.hasDetails).toBe(false);
       expect(component.entry).toBe(entry);
     });
@@ -347,6 +353,8 @@ describe('DraftHistoryEntryComponent', () => {
     });
 
     it('should show set draft format UI', fakeAsync(() => {
+      when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(false);
+      when(mockedDraftOptionsService.areFormattingOptionsSupportedForBuild(anything())).thenReturn(true);
       const date = dateAfterFormattingSupported;
       component.entry = {
         id: 'build01',
@@ -413,6 +421,7 @@ describe('DraftHistoryEntryComponent', () => {
     }));
 
     it('should not show the USFM format option for drafts created before the supported date', fakeAsync(() => {
+      when(mockedDraftOptionsService.areFormattingOptionsSupportedForBuild(anything())).thenReturn(false);
       const user = 'user-display-name';
       const date = dateBeforeFormattingSupported;
       const trainingBooks = ['EXO'];

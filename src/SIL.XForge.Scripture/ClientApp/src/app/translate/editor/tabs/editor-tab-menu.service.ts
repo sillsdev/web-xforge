@@ -17,6 +17,7 @@ import { ParatextService } from '../../../core/paratext.service';
 import { PermissionsService } from '../../../core/permissions.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TabMenuItem, TabMenuService, TabStateService } from '../../../shared/sf-tab-group';
+import { DraftOptionsService } from '../../draft-generation/draft-options.service';
 import { EditorTabInfo } from './editor-tabs.types';
 @Injectable()
 export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> {
@@ -29,7 +30,8 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
     private readonly onlineStatus: OnlineStatusService,
     private readonly tabState: TabStateService<EditorTabGroupType, EditorTabInfo>,
     private readonly permissionsService: PermissionsService,
-    private readonly i18n: I18nService
+    private readonly i18n: I18nService,
+    private readonly draftOptionsService: DraftOptionsService
   ) {}
 
   getMenuItems(): Observable<TabMenuItem[]> {
@@ -51,7 +53,8 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
           isOnline &&
           projectDoc.data != null &&
           SFProjectService.hasDraft(projectDoc.data) &&
-          this.permissionsService.canAccessDrafts(projectDoc, this.userService.currentUserId);
+          this.permissionsService.canAccessDrafts(projectDoc, this.userService.currentUserId) &&
+          !this.draftOptionsService.areFormattingOptionsAvailableButUnselected();
         const items: Observable<TabMenuItem>[] = [];
 
         for (const tabType of editorTabTypes) {
