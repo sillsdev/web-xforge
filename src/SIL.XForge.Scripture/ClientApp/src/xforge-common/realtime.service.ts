@@ -107,9 +107,8 @@ export class RealtimeService {
   async get<T extends RealtimeDoc>(collection: string, id: string, subscriber: DocSubscription): Promise<T> {
     const key = getDocKey(collection, id);
     let doc = this.docs.get(key);
-
-    // Handle documents that currently exist but are in the process of being disposed.
     if (doc != null) {
+      // Handle documents that currently exist but are in the process of being disposed.
       const docBeingDisposed: Subject<void> | undefined = this.docsBeingDisposed.get(doc.id);
       if (docBeingDisposed != null) {
         // Waiting for document to be disposed before recreating it.
@@ -118,9 +117,7 @@ export class RealtimeService {
         // all get the same instance.
         return await this.get<T>(collection, id, subscriber);
       }
-    }
-
-    if (doc == null) {
+    } else {
       const RealtimeDocType = this.typeRegistry.getDocType(collection);
       if (RealtimeDocType == null) {
         throw new Error('The collection is unknown.');
