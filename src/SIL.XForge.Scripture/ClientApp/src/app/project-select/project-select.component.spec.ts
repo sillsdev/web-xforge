@@ -1,7 +1,7 @@
 import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { isSafari } from 'xforge-common/utils';
@@ -235,7 +235,8 @@ class TestEnvironment {
     nonSelectableProjects?: SelectableProject[]
   ) {
     TestBed.configureTestingModule({
-      imports: [UICommonModule, getTestTranslocoModule(), NoopAnimationsModule, HostComponent]
+      imports: [UICommonModule, getTestTranslocoModule(), HostComponent],
+      providers: [provideNoopAnimations()]
     });
 
     this.fixture = TestBed.createComponent(HostComponent);

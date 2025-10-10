@@ -2,7 +2,7 @@ import { DebugElement, getDebugNode } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { BehaviorSubject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
@@ -28,14 +28,15 @@ const mockedUserService = mock(UserService);
 
 describe('EventMetricsLogComponent', () => {
   configureTestingModule(() => ({
-    imports: [NoopAnimationsModule, TestOnlineStatusModule.forRoot(), getTestTranslocoModule()],
+    imports: [TestOnlineStatusModule.forRoot(), getTestTranslocoModule()],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: DialogService, useMock: mockDialogService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: UserService, useMock: mockedUserService }
+      { provide: UserService, useMock: mockedUserService },
+      provideNoopAnimations()
     ]
   }));
 

@@ -1,7 +1,7 @@
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { mock, when } from 'ts-mockito';
@@ -15,11 +15,12 @@ when(mockedActivatedRoute.queryParams).thenReturn(of({}));
 
 describe('ServalAdministrationComponent', () => {
   configureTestingModule(() => ({
-    imports: [NoopAnimationsModule, getTestTranslocoModule(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [getTestTranslocoModule(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       provideHttpClient(withInterceptorsFromDi()),
       provideHttpClientTesting(),
-      { provide: ActivatedRoute, useMock: mockedActivatedRoute }
+      { provide: ActivatedRoute, useMock: mockedActivatedRoute },
+      provideNoopAnimations()
     ]
   }));
 

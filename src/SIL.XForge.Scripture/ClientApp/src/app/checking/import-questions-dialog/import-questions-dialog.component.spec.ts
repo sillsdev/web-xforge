@@ -6,7 +6,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { FormControl } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { ngfModule } from 'angular-file';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
@@ -50,7 +50,8 @@ describe('ImportQuestionsDialogComponent', () => {
       { provide: CheckingQuestionsService, useMock: mockedQuestionsService },
       { provide: DialogService, useMock: mockedDialogService },
       { provide: CsvService, useMock: mockedCsvService },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      provideNoopAnimations()
     ]
   }));
 
@@ -504,7 +505,6 @@ describe('ImportQuestionsDialogComponent', () => {
   imports: [
     UICommonModule,
     getTestTranslocoModule(),
-    NoopAnimationsModule,
     ngfModule,
     ScriptureChooserDialogComponent,
     ImportQuestionsDialogComponent
