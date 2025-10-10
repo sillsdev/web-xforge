@@ -750,17 +750,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             this.userService.currentUserId
           );
 
-          this.initLynxFeatureStates(this.projectUserConfigDoc);
-
           this.sourceProjectDoc = await this.getSourceProjectDoc();
           if (this.projectUserConfigChangesSub != null) {
             this.projectUserConfigChangesSub.unsubscribe();
           }
-          this.projectUserConfigChangesSub = this.projectUserConfigDoc.remoteChanges$.subscribe(() => {
+          this.projectUserConfigChangesSub = this.projectUserConfigDoc.remoteChanges$.subscribe(async () => {
             if (this.projectUserConfigDoc?.data != null) {
               // Reload config if the checksum has been reset on the server
               if (this.projectUserConfigDoc.data.selectedSegmentChecksum == null) {
-                this.loadProjectUserConfig();
+                await this.loadProjectUserConfig();
               } else {
                 this.loadTranslateSuggesterConfidence();
               }
@@ -791,7 +789,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.updateVerseNumber();
 
         // Set chapter from route if provided
-        this.loadProjectUserConfig(chapterNum != null ? Number.parseInt(chapterNum) : undefined);
+        await this.loadProjectUserConfig(chapterNum != null ? Number.parseInt(chapterNum) : undefined);
+
+        // Lynx must be initialized after the adding of notes and other text-change related events
+        this.initLynxFeatureStates(this.projectUserConfigDoc);
 
         if (this.projectDoc.id !== prevProjectId) {
           this.setupTranslationEngine();
@@ -2030,7 +2031,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       });
   }
 
-  private loadProjectUserConfig(chapterFromUrl?: number): void {
+  private async loadProjectUserConfig(chapterFromUrl?: number): Promise<void> {
     let chapter: number = chapterFromUrl ?? this.chapters[0] ?? 1;
     this.loadTranslateSuggesterConfidence();
 
@@ -2052,10 +2053,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
     this.toggleNoteThreadVerses(false);
     this.chapter$.next(chapter);
-    this.changeText();
+    await this.changeText();
     this.toggleNoteThreadVerses(true);
-    this.updateAutoDraftTabVisibility();
-    this.updateBiblicalTermsTabVisibility();
+    await this.updateAutoDraftTabVisibility();
+    await this.updateBiblicalTermsTabVisibility();
   }
 
   private loadTranslateSuggesterConfidence(): void {
