@@ -113,7 +113,10 @@ async function copyFiles() {
     for await (const dirEntry of Deno.readDir(source)) {
       if (dirEntry.isFile) {
         const crowdinFileName = dirEntry.name;
-        const localeCodeInCrowdinFile = crowdinFileName.match(localeRegex)![1];
+        const localeMatch = crowdinFileName.match(localeRegex);
+        if (localeMatch == null) continue;
+        
+        const localeCodeInCrowdinFile = localeMatch[1];
         const localeCodeWithHyphens = localeCodeInCrowdinFile.replaceAll("_", "-");
         const localeObject = locales.find(l => l.tags.includes(localeCodeWithHyphens));
         if (localeObject == null) continue;

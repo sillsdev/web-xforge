@@ -1,5 +1,41 @@
 const WebSocket = require('ws');
 
+// Configuration constants
+const devConfig = {
+  dbLocation: 'mongodb://localhost:27017/xforge',
+  wsConnectionString: 'ws://127.0.0.1:5003/?server=true',
+  origin: 'http://localhost:5000'
+};
+
+const qaConfig = {
+  dbLocation: 'mongodb://localhost:4017/xforge',
+  wsConnectionString: 'ws://127.0.0.1:4003/?server=true',
+  origin: 'https://qa.scriptureforge.org'
+};
+
+const liveConfig = {
+  dbLocation: 'mongodb://localhost:3017/xforge',
+  wsConnectionString: 'ws://127.0.0.1:3003/?server=true',
+  origin: 'https://scriptureforge.org'
+};
+
+const databaseConfigs = new Map();
+databaseConfigs.set('dev', devConfig);
+databaseConfigs.set('qa', qaConfig);
+databaseConfigs.set('live', liveConfig);
+
+/** Enum of colors and their bash 256-colour values. */
+const colors = Object.freeze({
+  darkGrey: 241,
+  red: 196,
+  lightBlue: 39,
+  lightGreen: 48,
+  yellow: 190,
+  orange: 208
+});
+
+let shouldUseColor = true;
+
 /**
  * @param {ShareDB.Doc} doc The doc to fetch
  */
@@ -55,7 +91,7 @@ function deleteDoc(doc) {
 function createDoc(doc, data, type) {
   return new Promise((resolve, reject) => {
     doc.create(data, type, undefined, err => {
-      if (err) {
+      if (err != null) {
         reject(err);
       } else {
         resolve();
@@ -90,8 +126,6 @@ function fetchSnapshotByTimestamp(conn, collection, docId, time) {
   });
 }
 
-let shouldUseColor = true;
-
 /** Specify if `colored()` should use colouring. Nice for output to a dark terminal. Not nice in log files. */
 function useColor(ifUseColor) {
   shouldUseColor = ifUseColor;
@@ -113,20 +147,10 @@ function colored(colorCode, textToColor) {
   }
 }
 
-/** Enum of colors and their bash 256-colour values. */
-const colors = Object.freeze({
-  darkGrey: 241,
-  red: 196,
-  lightBlue: 39,
-  lightGreen: 48,
-  yellow: 190,
-  orange: 208
-});
-
 /**
  * @param {Object[]} ops List of operations, where an operation can be any object for the purposes of this function
  * (though in practice the definition of an operation should be much more limited; this function is just flexible).
- * @param {showAttributes} Describe some op attributes inline.
+ * @param {boolean} showAttributes Describe some op attributes inline.
  */
 function visualizeOps(ops, showAttributes = false) {
   const result = ops
@@ -156,29 +180,6 @@ function visualizeOps(ops, showAttributes = false) {
 function createWS(connectionConfig) {
   return new WebSocket(connectionConfig.wsConnectionString, [], { origin: connectionConfig.origin });
 }
-
-const devConfig = {
-  dbLocation: 'mongodb://localhost:27017/xforge',
-  wsConnectionString: 'ws://127.0.0.1:5003/?server=true',
-  origin: 'http://localhost:5000'
-};
-
-const qaConfig = {
-  dbLocation: 'mongodb://localhost:4017/xforge',
-  wsConnectionString: 'ws://127.0.0.1:4003/?server=true',
-  origin: 'https://qa.scriptureforge.org'
-};
-
-const liveConfig = {
-  dbLocation: 'mongodb://localhost:3017/xforge',
-  wsConnectionString: 'ws://127.0.0.1:3003/?server=true',
-  origin: 'https://scriptureforge.org'
-};
-
-const databaseConfigs = new Map();
-databaseConfigs.set('dev', devConfig);
-databaseConfigs.set('qa', qaConfig);
-databaseConfigs.set('live', liveConfig);
 
 module.exports = {
   fetchDoc,
