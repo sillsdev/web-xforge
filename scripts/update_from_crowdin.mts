@@ -114,7 +114,9 @@ async function copyFiles() {
       if (dirEntry.isFile) {
         const crowdinFileName = dirEntry.name;
         const localeMatch = crowdinFileName.match(localeRegex);
-        if (localeMatch == null) continue;
+        if (localeMatch == null) {
+          throw new Error(`Could not extract locale from file name: ${crowdinFileName}`);
+        }
         
         const localeCodeInCrowdinFile = localeMatch[1];
         const localeCodeWithHyphens = localeCodeInCrowdinFile.replaceAll("_", "-");
