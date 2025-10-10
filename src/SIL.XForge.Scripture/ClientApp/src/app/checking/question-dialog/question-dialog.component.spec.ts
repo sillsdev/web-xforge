@@ -35,7 +35,7 @@ import {
   ChildViewContainerComponent,
   configureTestingModule,
   getAudioBlob,
-  TestTranslocoModule
+  getTestTranslocoModule
 } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
@@ -581,7 +581,7 @@ describe('QuestionDialogComponent', () => {
     CommonModule,
     UICommonModule,
     CheckingModule,
-    TestTranslocoModule,
+    getTestTranslocoModule(),
     NoopAnimationsModule,
     ScriptureChooserDialogComponent
   ],

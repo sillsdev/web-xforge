@@ -26,7 +26,7 @@ import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/act
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { IncludesPipe } from 'xforge-common/includes.pipe';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { TextDoc, TextDocId } from '../../../../../core/models/text-doc';
 import { SFProjectService } from '../../../../../core/sf-project.service';
 import { CustomIconModule } from '../../../../../shared/custom-icon.module';
@@ -119,10 +119,11 @@ describe('LynxInsightsPanelComponent', () => {
       MatDividerModule,
       IncludesPipe,
       NoopAnimationsModule,
-      TestTranslocoModule,
-      CustomIconModule
+      getTestTranslocoModule(),
+      CustomIconModule,
+      LynxInsightsPanelComponent,
+      LynxInsightsPanelHeaderComponent
     ],
-    declarations: [LynxInsightsPanelComponent, LynxInsightsPanelHeaderComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
     providers: [
       { provide: LynxInsightStateService, useMock: mockLynxInsightStateService },

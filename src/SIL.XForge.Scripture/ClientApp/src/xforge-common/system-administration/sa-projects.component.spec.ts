@@ -22,7 +22,7 @@ import { ProjectDoc } from '../models/project-doc';
 import { NONE_ROLE, ProjectRoleInfo } from '../models/project-role-info';
 import { QueryFilter, QueryParameters } from '../query-parameters';
 import { TestRealtimeService } from '../test-realtime.service';
-import { configureTestingModule, emptyHammerLoader, TestTranslocoModule } from '../test-utils';
+import { configureTestingModule, emptyHammerLoader, getTestTranslocoModule } from '../test-utils';
 import { TypeRegistry } from '../type-registry';
 import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
@@ -34,13 +34,13 @@ const mockedUserService = mock(UserService);
 describe('SaProjectsComponent', () => {
   configureTestingModule(() => ({
     imports: [
+      SaProjectsComponent,
       NoopAnimationsModule,
       RouterModule.forRoot([]),
       UICommonModule,
-      TestTranslocoModule,
+      getTestTranslocoModule(),
       TestRealtimeModule.forRoot(new TypeRegistry([TestProjectDoc], [FileType.Audio], []))
     ],
-    declarations: [SaProjectsComponent],
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },

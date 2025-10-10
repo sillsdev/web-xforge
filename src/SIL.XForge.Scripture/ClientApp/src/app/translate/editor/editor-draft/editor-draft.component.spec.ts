@@ -23,7 +23,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { Revision } from '../../../core/paratext.service';
@@ -53,8 +53,9 @@ describe('EditorDraftComponent', () => {
   const buildProgress$ = new BehaviorSubject<BuildDto | undefined>(undefined);
 
   configureTestingModule(() => ({
-    declarations: [EditorDraftComponent, HistoryRevisionFormatPipe],
     imports: [
+      HistoryRevisionFormatPipe,
+      EditorDraftComponent,
       MatProgressBarModule,
       MatSelectModule,
       MatIconModule,
@@ -63,7 +64,7 @@ describe('EditorDraftComponent', () => {
       SharedModule.forRoot(),
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      TestTranslocoModule,
+      getTestTranslocoModule(),
       TranslocoMarkupModule
     ],
     providers: [

@@ -15,7 +15,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { AudioPlayer } from '../audio/audio-player';
 import { createMockMediaStream } from '../test-utils';
@@ -32,7 +32,7 @@ const mockedConsole: MockConsole = MockConsole.install();
 
 describe('AudioRecorderDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [TestTranslocoModule, TestOnlineStatusModule.forRoot(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [getTestTranslocoModule(), TestOnlineStatusModule.forRoot(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: NAVIGATOR, useMock: mockedNavigator },
