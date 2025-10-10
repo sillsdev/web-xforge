@@ -52,8 +52,7 @@ describe('QuestionDialogService', () => {
   }));
 
   it('should add a question', async () => {
-    const env = new TestEnvironment();
-    await env.init();
+    const env = await TestEnvironment.create();
     const result: QuestionDialogResult = {
       text: 'question added',
       verseRef: new VerseRef('MAT 1:3'),
@@ -66,8 +65,7 @@ describe('QuestionDialogService', () => {
   });
 
   it('should not add a question if cancelled', async () => {
-    const env = new TestEnvironment();
-    await env.init();
+    const env = await TestEnvironment.create();
     when(env.mockedDialogRef.afterClosed()).thenReturn(of('close'));
     await env.service.questionDialog(env.getQuestionDialogData());
     verify(mockedQuestionsService.createQuestion(env.PROJECT01, anything(), anything())).never();
@@ -75,8 +73,7 @@ describe('QuestionDialogService', () => {
   });
 
   it('should not create question if user does not have permission', async () => {
-    const env = new TestEnvironment();
-    await env.init();
+    const env = await TestEnvironment.create();
     const result: QuestionDialogResult = {
       text: 'This question is added just as user role is changed',
       verseRef: new VerseRef('MAT 1:3'),
@@ -91,8 +88,7 @@ describe('QuestionDialogService', () => {
   });
 
   it('uploads audio when provided', async () => {
-    const env = new TestEnvironment();
-    await env.init();
+    const env = await TestEnvironment.create();
     const result: QuestionDialogResult = {
       text: 'question added',
       verseRef: new VerseRef('MAT 1:3'),
@@ -107,8 +103,7 @@ describe('QuestionDialogService', () => {
   });
 
   it('edits a question', async () => {
-    const env = new TestEnvironment();
-    await env.init();
+    const env = await TestEnvironment.create();
     const result: QuestionDialogResult = {
       text: 'question edited',
       verseRef: new VerseRef('MAT 1:3'),
@@ -122,8 +117,7 @@ describe('QuestionDialogService', () => {
   });
 
   it('discards changes if failed to upload or store the audio', async () => {
-    const env = new TestEnvironment();
-    await env.init();
+    const env = await TestEnvironment.create();
     const result: QuestionDialogResult = {
       text: 'question added',
       verseRef: new VerseRef('MAT 1:3'),
@@ -148,8 +142,7 @@ describe('QuestionDialogService', () => {
   });
 
   it('removes audio if audio deleted', async () => {
-    const env = new TestEnvironment();
-    await env.init();
+    const env = await TestEnvironment.create();
     const result: QuestionDialogResult = {
       text: 'question edited',
       verseRef: new VerseRef('MAT 1:3'),
@@ -197,7 +190,7 @@ class TestEnvironment {
   });
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-  constructor() {
+  private constructor() {
     this.service = TestBed.inject(QuestionDialogService);
     this.textsByBookId = { ['MAT']: this.matthewText };
 
@@ -213,7 +206,13 @@ class TestEnvironment {
     );
   }
 
-  async init(): Promise<void> {
+  static async create(): Promise<TestEnvironment> {
+    const env = new TestEnvironment();
+    await env.init();
+    return env;
+  }
+
+  private async init(): Promise<void> {
     this.projectProfileDoc = await this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       this.PROJECT01,

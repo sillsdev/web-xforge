@@ -92,24 +92,21 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('should allow user to cancel', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init();
+    env = await TestEnvironment.create();
     env.clickElement(env.cancelButton);
     flush();
     expect(env.afterCloseCallback).toHaveBeenCalledWith('close');
   }));
 
   it('should not allow Save without required fields', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init();
+    env = await TestEnvironment.create();
     env.clickElement(env.saveButton);
     flush();
     expect(env.afterCloseCallback).not.toHaveBeenCalled();
   }));
 
   it('should show error text for required fields', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init();
+    env = await TestEnvironment.create();
     expect(env.errorText[0].classes['visible']).not.toBeDefined();
 
     env.component.scriptureStart.markAsTouched();
@@ -123,8 +120,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('does not accept just whitespace for a question', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init();
+    env = await TestEnvironment.create();
 
     env.inputValue(env.questionInput, '');
     env.clickElement(env.saveButton);
@@ -143,8 +139,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('should validate verse fields', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init();
+    env = await TestEnvironment.create();
     expect(env.component.versesForm.valid).toBe(false);
     expect(env.component.scriptureStart.valid).toBe(false);
     // scriptureEnd starts disabled, and therefore invalid
@@ -183,8 +178,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('should produce error', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init();
+    env = await TestEnvironment.create();
     const invalidVerses = [
       'MAT 1',
       'MAT a1',
@@ -211,15 +205,13 @@ describe('QuestionDialogComponent', () => {
 
   it('should set default verse and text direction when provided', fakeAsync(async () => {
     const verseRef: VerseRef = new VerseRef('LUK 1:1');
-    env = new TestEnvironment();
-    await env.init(undefined, verseRef, true);
+    env = await TestEnvironment.create(undefined, verseRef, true);
     expect(env.component.scriptureStart.value).toBe('LUK 1:1');
     expect(env.component.isTextRightToLeft).toBe(true);
   }));
 
   it('should validate matching book and chapter', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init();
+    env = await TestEnvironment.create();
     env.component.scriptureStart.setValue('MAT 1:2');
     expect(env.component.scriptureStart.valid).toBe(true);
     expect(env.component.scriptureStart.errors).toBeNull();
@@ -238,8 +230,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('should validate start verse is before or same as end verse', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init();
+    env = await TestEnvironment.create();
     env.component.scriptureStart.setValue('MAT 1:2');
     expect(env.component.scriptureStart.valid).toBe(true);
     expect(env.component.scriptureStart.errors).toBeNull();
@@ -258,8 +249,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('opens reference chooser, uses result', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init();
+    env = await TestEnvironment.create();
     env.component.scriptureStart.setValue('MAT 3:4');
     expect(env.component.scriptureStart.value).not.toEqual('LUK 1:2');
 
@@ -274,8 +264,7 @@ describe('QuestionDialogComponent', () => {
 
   // Needed for validation error messages to appear
   it('control marked as touched+dirty after reference chooser', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init();
+    env = await TestEnvironment.create();
     // scriptureStart control starts off untouched+undirty and changes
     env.component.scriptureStart.setValue('MAT 3:4');
     expect(env.component.scriptureStart.touched).toBe(false);
@@ -298,8 +287,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('control marked as touched after reference chooser closed', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init();
+    env = await TestEnvironment.create();
     when(env.mockedScriptureChooserMatDialogRef.afterOpened()).thenReturn(of());
     when(env.mockedScriptureChooserMatDialogRef.afterClosed()).thenReturn(of('close'));
     flush();
@@ -315,8 +303,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('passes start reference to end-reference chooser', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init();
+    env = await TestEnvironment.create();
     expect(env.component.scriptureEnd.enabled).toBe(false);
     env.component.scriptureStart.setValue('LUK 1:1');
     env.component.scriptureEnd.setValue('GEN 5:6');
@@ -338,8 +325,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('does not pass start reference as range start when opening start-reference chooser', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init();
+    env = await TestEnvironment.create();
     env.component.scriptureStart.setValue('LUK 1:1');
 
     env.clickElement(env.scriptureStartInputIcon);
@@ -356,8 +342,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('disables end-reference if start-reference is invalid', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init();
+    env = await TestEnvironment.create();
     tick(EDITOR_READY_TIMEOUT);
     env.inputValue(env.scriptureStartInput, 'LUK 1:1');
     expect(env.component.scriptureEnd.disabled).toBe(false);
@@ -369,16 +354,14 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('does not enable end-reference until start-reference is changed', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init();
+    env = await TestEnvironment.create();
     expect(env.component.scriptureEnd.disabled).toBe(true);
     env.inputValue(env.scriptureStartInput, 'LUK 1:1');
     expect(env.component.scriptureEnd.disabled).toBe(false);
   }));
 
   it('allows a question without text if audio is provided', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init();
+    env = await TestEnvironment.create();
     env.inputValue(env.questionInput, '');
     env.clickElement(env.saveButton);
     expect(env.component.textAndAudio?.text.valid).toBe(false);
@@ -395,8 +378,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('should not save with no text and audio permission is denied', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init();
+    env = await TestEnvironment.create();
     env.inputValue(env.questionInput, '');
     env.clickElement(env.saveButton);
     expect(env.component.textAndAudio?.text.valid).toBe(false);
@@ -408,8 +390,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('display quill editor', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init();
+    env = await TestEnvironment.create();
     expect(env.quillEditor).not.toBeNull();
     expect(env.component.textDocId).toBeUndefined();
     env.component.scriptureStart.setValue('LUK 1:1');
@@ -424,8 +405,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('retrieves scripture text on editing a question', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init({
+    env = await TestEnvironment.create({
       dataId: 'question01',
       ownerRef: 'user01',
       projectRef: 'project01',
@@ -448,8 +428,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('displays error editing end reference to different book', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init({
+    env = await TestEnvironment.create({
       dataId: 'question01',
       ownerRef: 'user01',
       projectRef: 'project01',
@@ -473,8 +452,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('displays error editing start reference to a different book', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init({
+    env = await TestEnvironment.create({
       dataId: 'question01',
       ownerRef: 'user01',
       projectRef: 'project01',
@@ -495,8 +473,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('generate correct verse ref when start and end mismatch only by case or insignificant zero', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init();
+    env = await TestEnvironment.create();
     env.component.scriptureStart.setValue('LUK 1:1');
     env.component.scriptureEnd.setValue('luk 1:1');
 
@@ -509,8 +486,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('should handle invalid start reference when end reference exists', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init();
+    env = await TestEnvironment.create();
     env.component.scriptureStart.setValue('nonsense');
     env.component.scriptureEnd.setValue('LUK 1:1');
     expect(() => {
@@ -519,8 +495,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('should not highlight range if chapter or book differ', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init();
+    env = await TestEnvironment.create();
     env.component.scriptureStart.setValue('MAT 1:1');
     env.component.scriptureEnd.setValue('LUK 1:2');
     tick(500);
@@ -530,8 +505,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('should clear highlight when starting ref is cleared', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init();
+    env = await TestEnvironment.create();
     env.component.scriptureStart.setValue('LUK 1:1');
     tick(500);
     env.fixture.detectChanges();
@@ -556,8 +530,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('should clear highlight when end ref is invalid', fakeAsync(async () => {
-    env = new TestEnvironment();
-    await env.init();
+    env = await TestEnvironment.create();
     env.component.scriptureStart.setValue('LUK 1:1');
     env.component.scriptureEnd.setValue('LUK 1:2');
     tick(500);
@@ -602,11 +575,21 @@ class TestEnvironment {
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-  constructor() {
+  private constructor() {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
   }
 
-  async init(question?: Question, defaultVerseRef?: VerseRef, isRtl: boolean = false): Promise<void> {
+  static async create(
+    question?: Question,
+    defaultVerseRef?: VerseRef,
+    isRtl: boolean = false
+  ): Promise<TestEnvironment> {
+    const env = new TestEnvironment();
+    await env.init(question, defaultVerseRef, isRtl);
+    return env;
+  }
+
+  private async init(question?: Question, defaultVerseRef?: VerseRef, isRtl: boolean = false): Promise<void> {
     const viewContainerRef = this.fixture.componentInstance.childViewContainer;
     let questionDoc: QuestionDoc | undefined;
     if (question != null) {

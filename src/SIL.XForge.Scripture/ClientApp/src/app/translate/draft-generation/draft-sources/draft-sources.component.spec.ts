@@ -107,8 +107,7 @@ describe('DraftSourcesComponent', () => {
   });
 
   it('loads projects and resources on init', fakeAsync(async () => {
-    const env = new TestEnvironment();
-    await env.init();
+    const env = await TestEnvironment.create();
     verify(mockedParatextService.getProjects()).once();
     verify(mockedParatextService.getResources()).once();
     expect(env.component.projects).toBeDefined();
@@ -116,15 +115,13 @@ describe('DraftSourcesComponent', () => {
   }));
 
   it('suppresses network errors', fakeAsync(async () => {
-    const env = new TestEnvironment();
-    await env.init({ projectLoadSuccessful: false });
+    const env = await TestEnvironment.create({ projectLoadSuccessful: false });
     env.fixture.detectChanges();
     expect(env.component.projects).toBeUndefined();
   }));
 
   it('loads projects and resources when returning online', fakeAsync(async () => {
-    const env = new TestEnvironment();
-    await env.init({ isOnline: false });
+    const env = await TestEnvironment.create({ isOnline: false });
     verify(mockedParatextService.getProjects()).never();
     verify(mockedParatextService.getResources()).never();
     expect(env.component.projects).toBeUndefined();
@@ -142,8 +139,7 @@ describe('DraftSourcesComponent', () => {
 
   describe('save', () => {
     it('should save the settings', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
       env.fixture.detectChanges();
       expect(env.component['changesMade']).toBe(false);
       env.clickLanguageCodesConfirmationCheckbox();
@@ -180,8 +176,7 @@ describe('DraftSourcesComponent', () => {
     }));
 
     it('clearing second training source works', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
       env.fixture.detectChanges();
       env.clickLanguageCodesConfirmationCheckbox();
       expect(env.component['changesMade']).toBe(false);
@@ -224,8 +219,7 @@ describe('DraftSourcesComponent', () => {
     }));
 
     it('clearing first training source works', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
       env.fixture.detectChanges();
       expect(env.component['changesMade']).toBe(false);
       env.clickLanguageCodesConfirmationCheckbox();
@@ -266,8 +260,7 @@ describe('DraftSourcesComponent', () => {
     }));
 
     it('fails to save and sync', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
       env.fixture.detectChanges();
       env.clickLanguageCodesConfirmationCheckbox();
 
@@ -290,8 +283,7 @@ describe('DraftSourcesComponent', () => {
     }));
 
     it('can edit second source after first is cleared', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
       env.fixture.detectChanges();
       env.clickLanguageCodesConfirmationCheckbox();
 
@@ -310,8 +302,7 @@ describe('DraftSourcesComponent', () => {
     }));
 
     it('saves the selected training files', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
       env.fixture.detectChanges();
       env.clickLanguageCodesConfirmationCheckbox();
 
@@ -340,8 +331,7 @@ describe('DraftSourcesComponent', () => {
     }));
 
     it('creates training data for added files', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
       env.fixture.detectChanges();
       env.clickLanguageCodesConfirmationCheckbox();
 
@@ -359,8 +349,7 @@ describe('DraftSourcesComponent', () => {
     }));
 
     it('deletes training data for removed files', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
       env.fixture.detectChanges();
       env.clickLanguageCodesConfirmationCheckbox();
 
@@ -385,8 +374,7 @@ describe('DraftSourcesComponent', () => {
     }));
 
     it('deletes added files on discard from confirmLeave', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
       env.fixture.detectChanges();
       env.clickLanguageCodesConfirmationCheckbox();
       when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(true);
@@ -430,8 +418,7 @@ describe('DraftSourcesComponent', () => {
     }));
 
     it('preserves unsaved training file changes when query updates', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
       env.fixture.detectChanges();
 
       const initialFile1 = { dataId: 'file1' } as TrainingData;
@@ -678,8 +665,7 @@ describe('DraftSourcesComponent', () => {
     });
 
     it('should disable save and sync button and display offline message when offline', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
       env.testOnlineStatusService.setIsOnline(false);
       env.fixture.detectChanges();
       tick();
@@ -692,8 +678,7 @@ describe('DraftSourcesComponent', () => {
     }));
 
     it('should enable save & sync button and not display offline message when online', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
       env.testOnlineStatusService.setIsOnline(true);
       env.fixture.detectChanges();
       tick();
@@ -715,11 +700,19 @@ class TestEnvironment {
   testOnlineStatusService: TestOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
   private projectsLoaded$: Subject<void> = new Subject<void>();
 
-  constructor() {
+  private constructor() {
     this.realtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   }
 
-  async init(
+  static async create(
+    args: { isOnline?: boolean; projectLoadSuccessful?: boolean } = { isOnline: true, projectLoadSuccessful: true }
+  ): Promise<TestEnvironment> {
+    const env = new TestEnvironment();
+    await env.init(args);
+    return env;
+  }
+
+  private async init(
     args: { isOnline?: boolean; projectLoadSuccessful?: boolean } = { isOnline: true, projectLoadSuccessful: true }
   ): Promise<void> {
     const userSFProjectsAndResourcesCount: number = 6;

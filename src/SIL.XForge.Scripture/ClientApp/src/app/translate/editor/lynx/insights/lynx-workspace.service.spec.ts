@@ -61,8 +61,14 @@ describe('LynxWorkspaceService', () => {
     readonly localeTestSubject$ = new BehaviorSubject<Locale>(defaultLocale);
     readonly diagnosticsChangedTestSubject$ = new Subject<DiagnosticsChanged>();
 
-    constructor() {
+    private constructor() {
       this.setupMocks();
+    }
+
+    static async create(): Promise<TestEnvironment> {
+      const env = new TestEnvironment();
+      await env.init();
+      return env;
     }
 
     setupMocks(): void {
@@ -148,7 +154,7 @@ describe('LynxWorkspaceService', () => {
       });
     }
 
-    async init(): Promise<void> {
+    private async init(): Promise<void> {
       this.realtimeService = TestBed.inject<TestRealtimeService>(RealtimeService as any);
 
       when(mockProjectService.getText(anything(), anything())).thenCall(async textDocId => {
@@ -353,8 +359,7 @@ describe('LynxWorkspaceService', () => {
 
   describe('Initialization', () => {
     it('should update language when locale changes', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
 
       // Override the workspace factory for this test to use a plain object with a spy
       const changeLanguageSpy = jasmine.createSpy('changeLanguage').and.returnValue(Promise.resolve());
@@ -412,8 +417,7 @@ describe('LynxWorkspaceService', () => {
 
   describe('Project activation', () => {
     it('should reset document manager when project is activated', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
       env.service['projectId'] = 'different-project-id';
       resetCalls(mockDocumentManager);
 
@@ -423,8 +427,7 @@ describe('LynxWorkspaceService', () => {
     }));
 
     it('should not reset document manager when project id is unchanged', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
       env.service['projectId'] = PROJECT_ID;
       resetCalls(mockDocumentManager);
 
@@ -434,8 +437,7 @@ describe('LynxWorkspaceService', () => {
     }));
 
     it('should clear insights when project changes', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
 
       const insight = env.createTestInsight();
       env.addInsightToService(insight);
@@ -451,8 +453,7 @@ describe('LynxWorkspaceService', () => {
 
   describe('Task running status', () => {
     it('should emit false when no project is active', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
       let taskRunning: boolean | undefined;
 
       env.service.taskRunningStatus$.subscribe(status => {
@@ -464,8 +465,7 @@ describe('LynxWorkspaceService', () => {
     }));
 
     it('should emit true when project is activated, then false after insights arrive', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
       const statusValues: boolean[] = [];
 
       env.service.taskRunningStatus$.subscribe(status => {
@@ -482,8 +482,7 @@ describe('LynxWorkspaceService', () => {
     }));
 
     it('should restart loading cycle when different project is activated', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
       const statusValues: boolean[] = [];
 
       env.service.taskRunningStatus$.subscribe(status => {
@@ -507,8 +506,7 @@ describe('LynxWorkspaceService', () => {
     }));
 
     it('should handle empty insights correctly', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
       const statusValues: boolean[] = [];
 
       env.service.taskRunningStatus$.subscribe(status => {
@@ -521,8 +519,7 @@ describe('LynxWorkspaceService', () => {
     }));
 
     it('should use shareReplay to avoid multiple subscriptions triggering multiple emissions', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
       const statusValues1: boolean[] = [];
       const statusValues2: boolean[] = [];
 
@@ -543,8 +540,7 @@ describe('LynxWorkspaceService', () => {
 
   describe('Book chapter activation', () => {
     it('should fire document closed event when chapter changes', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
 
       // Create project with lynx features enabled so documents will be opened
       const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
@@ -574,8 +570,7 @@ describe('LynxWorkspaceService', () => {
     }));
 
     it('should handle book chapters with undefined chapter number', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
 
       // Create project with lynx features enabled
       const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
@@ -618,8 +613,7 @@ describe('LynxWorkspaceService', () => {
     }));
 
     it('should open document when chapter is activated', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
 
       // Create project with lynx features enabled so documents will be opened
       const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
@@ -642,8 +636,7 @@ describe('LynxWorkspaceService', () => {
     }));
 
     it('should update textDocId when chapter changes', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
 
       // Set up project with lynx features enabled so documents will be opened
       const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
@@ -673,8 +666,7 @@ describe('LynxWorkspaceService', () => {
 
   describe('Insights processing', () => {
     it('should process diagnostics into insights', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
 
       // Set up project with lynx features enabled
       const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
@@ -703,8 +695,7 @@ describe('LynxWorkspaceService', () => {
     }));
 
     it('should convert diagnostic severity to appropriate insight type', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
 
       // Set up project with lynx features enabled
       const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
@@ -741,8 +732,7 @@ describe('LynxWorkspaceService', () => {
     }));
 
     it('should maintain insight ids for matching insights', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
 
       // Set up project with lynx features enabled
       const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
@@ -770,8 +760,7 @@ describe('LynxWorkspaceService', () => {
     }));
 
     it('should remove insights when empty diagnostics are sent', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
 
       // Set up project with lynx features enabled
       const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
@@ -803,8 +792,7 @@ describe('LynxWorkspaceService', () => {
 
   describe('getOnTypeEdits', () => {
     it('should return edits for trigger characters', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
 
       // Set up project with auto-corrections enabled
       const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
@@ -833,8 +821,7 @@ describe('LynxWorkspaceService', () => {
     }));
 
     it('should handle multiple trigger characters', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
 
       env.setCustomWorkspaceMock((workspaceMock: any) => {
         when(workspaceMock.getOnTypeEdits(anything(), anything(), ',')).thenReturn(
@@ -871,8 +858,7 @@ describe('LynxWorkspaceService', () => {
     }));
 
     it('should handle null document when getting on-type edits', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
       env.service['textDocId'] = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
       when(mockDocumentManager.get(anything())).thenReturn(Promise.resolve(undefined));
       const delta = new Delta().insert('Hello,');
@@ -886,8 +872,7 @@ describe('LynxWorkspaceService', () => {
     }));
 
     it('should return empty array when auto-corrections are disabled', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
       env.service['textDocId'] = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
 
       // Create project with auto-corrections disabled
@@ -913,8 +898,7 @@ describe('LynxWorkspaceService', () => {
     }));
 
     it('should return edits when auto-corrections are enabled', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
 
       env.setCustomWorkspaceMock((workspaceMock: any) => {
         when(workspaceMock.getOnTypeEdits(anything(), anything(), anything())).thenReturn(
@@ -947,8 +931,7 @@ describe('LynxWorkspaceService', () => {
     }));
 
     it('should adjust offset for note embeds when getting on-type edits', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
 
       let capturedPosition: Position | undefined;
       env.setCustomWorkspaceMock((workspaceMock: any) => {
@@ -994,8 +977,7 @@ describe('LynxWorkspaceService', () => {
 
   describe('getActions', () => {
     it('should get actions for an insight', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
 
       env.setCustomWorkspaceMock((workspaceMock: any) => {
         when(workspaceMock.getDiagnosticFixes(anything(), anything())).thenReturn(
@@ -1040,8 +1022,7 @@ describe('LynxWorkspaceService', () => {
     }));
 
     it('should handle null document when getting actions', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
       when(mockDocumentManager.get(anything())).thenReturn(Promise.resolve(undefined));
       const insight = env.createTestInsight();
       let actions: LynxInsightAction[] = [];
@@ -1055,8 +1036,7 @@ describe('LynxWorkspaceService', () => {
 
   describe('2D Map Structure - Insights by URI and Source', () => {
     it('should organize insights by URI and diagnostic source', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
 
       // Set up project with lynx features enabled
       const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
@@ -1127,8 +1107,7 @@ describe('LynxWorkspaceService', () => {
     }));
 
     it('should preserve insights from different sources when one source is updated', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
 
       // Set up project with lynx features enabled
       const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
@@ -1214,8 +1193,7 @@ describe('LynxWorkspaceService', () => {
     }));
 
     it('should reuse insight ids for matching diagnostics within the same source', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
 
       // Set up project with lynx features enabled
       const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
@@ -1305,8 +1283,7 @@ describe('LynxWorkspaceService', () => {
     }));
 
     it('should flatten 2D map correctly when returning insights', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
 
       // Set up project with lynx features enabled
       const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
@@ -1372,8 +1349,7 @@ describe('LynxWorkspaceService', () => {
     }));
 
     it('should clear all sources for a URI when empty diagnostics are received', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
 
       // Set up project with lynx features enabled
       const projectDoc = await env.createMockProjectDoc(PROJECT_ID, {
@@ -1433,8 +1409,7 @@ describe('LynxWorkspaceService', () => {
     }));
 
     it('should maintain consistent currentInsights getter behavior', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.init();
+      const env = await TestEnvironment.create();
       env.setupActiveTextDocId();
 
       // Add some insights using the internal 2D map structure
