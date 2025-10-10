@@ -44,7 +44,7 @@ export class QuestionDialogService {
       return questionDoc;
     }
     if (!(await this.canCreateAndEditQuestions(config.projectId))) {
-      this.noticeService.show(this.transloco.translate('question_dialog.add_question_denied'));
+      void this.noticeService.show(this.transloco.translate('question_dialog.add_question_denied'));
       return undefined;
     }
     const questionId = questionDoc != null && questionDoc.data != null ? questionDoc.data.dataId : objectId();

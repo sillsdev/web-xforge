@@ -124,7 +124,7 @@ export class UserService {
       try {
         await this.updateAvatarFromDisplayName();
       } catch {
-        this.noticeService.showError(translate('error_messages.failed_to_update_avatar'));
+        void this.noticeService.showError(translate('error_messages.failed_to_update_avatar'));
       }
     }
   }

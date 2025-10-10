@@ -281,7 +281,7 @@ export class LynxInsightStateService {
     combineLatest([this.filter$, this.orderBy$, this.insightPanelVisible$, stateLoaded$.pipe(filter(loaded => loaded))])
       .pipe(withLatestFrom(this.activatedProjectUserConfig.projectUserConfigDoc$))
       .subscribe(([[filter, sortOrder, isOpen], pucDoc]) => {
-        pucDoc?.submitJson0Op(op =>
+        void pucDoc?.submitJson0Op(op =>
           op.set(puc => puc.lynxInsightState, {
             panelData: {
               isOpen,

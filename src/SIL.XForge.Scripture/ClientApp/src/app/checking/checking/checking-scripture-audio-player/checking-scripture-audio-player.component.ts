@@ -201,7 +201,7 @@ export class CheckingScriptureAudioPlayerComponent implements AfterViewInit {
     if (this.audioPlayer == null) return;
     this._audioIsAvailable = false;
     // wait until the next microtask cycle to get the audio player with the updated source
-    Promise.resolve(this.audioPlayer).then(audioPlayer => {
+    void Promise.resolve(this.audioPlayer).then(audioPlayer => {
       this.audioSubscription?.unsubscribe();
       this.audioSubscription = audioPlayer.isAudioAvailable$
         .pipe(

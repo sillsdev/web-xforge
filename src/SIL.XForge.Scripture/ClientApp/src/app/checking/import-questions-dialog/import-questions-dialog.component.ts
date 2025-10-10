@@ -221,7 +221,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.promiseForQuestionDocQuery.then(query => query.dispose());
+    void this.promiseForQuestionDocQuery.then(query => query.dispose());
   }
 
   dialogScroll(): void {
@@ -295,7 +295,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
   checkboxChanged(listItem: DialogListItem): void {
     this.updateSelectAllCheckbox();
     if (listItem.checked) {
-      this.confirmEditsIfNecessary([listItem]);
+      void this.confirmEditsIfNecessary([listItem]);
     }
   }
 
@@ -307,7 +307,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
       }
       listItem.checked = selectAllChecked;
     }
-    this.confirmEditsIfNecessary(editsToConfirm);
+    void this.confirmEditsIfNecessary(editsToConfirm);
   }
 
   updateSelectAllCheckbox(): void {
