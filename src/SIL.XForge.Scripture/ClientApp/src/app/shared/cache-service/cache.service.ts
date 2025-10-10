@@ -7,7 +7,8 @@ import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 
-// In production this should be true, but when testing doc cleanup it may be useful to set to false an observe behavior
+// In production this should be true, but when testing doc cleanup it may be useful to set to false and observe
+// behavior.
 const KEEP_PRIOR_PROJECT_CACHED_UNTIL_NEW_PROJECT_ACTIVATED = true;
 
 @Injectable({ providedIn: 'root' })
