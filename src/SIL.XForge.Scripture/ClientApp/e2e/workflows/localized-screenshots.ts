@@ -281,7 +281,7 @@ export async function localizedScreenshots(
 
   // FIXME(application-bug) This sometimes fails when "You have no books available for drafting." is shown
   await expect(page.getByRole('heading', { name: 'Review draft setup' })).toBeVisible();
-  await expect(page.getByText('Loading project sync status...')).not.toBeVisible();
+  await expect(page.getByText('Loading project sync status...')).not.toBeVisible({ timeout: 15_000 });
   await forEachLocale(async locale => {
     await user.hover(
       page.locator('app-draft-generation-steps .button-strip').getByRole('button').last(),
@@ -421,6 +421,10 @@ export async function localizedScreenshots(
   await expect(page.getByText('Draft is Finishing')).toBeVisible();
   await expect(page.getByText('Draft is Finishing')).not.toBeVisible({ timeout: 15_000 });
 
+  // Select formatting options
+  await user.click(page.getByRole('button', { name: 'Formatting options' }));
+  await user.click(page.getByRole('button', { name: 'Save' }));
+
   await forEachLocale(async locale => {
     await user.hover(page.getByRole('radio').first(), defaultArrowLocation);
     await screenshot(page, { ...context, pageName: 'draft_complete', locale });
@@ -428,10 +432,11 @@ export async function localizedScreenshots(
 
   await page.getByRole('radio', { name: 'Ruth' }).first().click();
 
-  await expect(page.getByRole('button', { name: 'Add to project' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Add to project' })).toBeVisible({ timeout: 15_000 });
 
   await forEachLocale(async locale => {
-    await user.hover(page.locator('.apply-draft-button-container').getByRole('button'), defaultArrowLocation);
+    // Hover over "Add to project"
+    await user.hover(page.locator('.apply-draft-button-container').getByRole('button').last(), defaultArrowLocation);
     await screenshot(page, { ...context, pageName: 'draft_preview', locale });
   });
 
@@ -439,7 +444,8 @@ export async function localizedScreenshots(
   await page.getByRole('button', { name: 'Overwrite chapter' }).click();
 
   await forEachLocale(async locale => {
-    await user.hover(page.locator('.apply-draft-button-container').getByRole('button'), defaultArrowLocation);
+    // Hover over "Re-add to project"
+    await user.hover(page.locator('.apply-draft-button-container').getByRole('button').last(), defaultArrowLocation);
 
     await screenshot(page, { ...context, pageName: 'chapter_imported', locale });
   });
