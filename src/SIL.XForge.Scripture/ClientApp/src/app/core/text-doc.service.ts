@@ -34,23 +34,25 @@ export class TextDocService {
    * @param {TextDocSource} source The source of the op. This is sent to the server.
    */
   async overwrite(textDocId: TextDocId, newDelta: Delta, source: TextDocSource): Promise<void> {
-    const textDoc: TextDoc = await this.projectService.getText(
-      textDocId,
-      new DocSubscription('TextDocService', this.destroyRef)
-    );
+    const docSubscription = new DocSubscription('TextDocService');
+    try {
+      const textDoc: TextDoc = await this.projectService.getText(textDocId, docSubscription);
 
-    if (textDoc.data?.ops == null) {
-      throw new Error(`No TextDoc data for ${textDocId}`);
+      if (textDoc.data?.ops == null) {
+        throw new Error(`No TextDoc data for ${textDocId}`);
+      }
+
+      const origDelta: Delta = new Delta(textDoc.data.ops);
+      const diff: Delta = origDelta.diff(newDelta);
+
+      // Update text doc directly
+      await textDoc.submit(diff, source);
+
+      // Notify so that TextViewModels can update
+      this.getLocalSystemChangesInternal$(textDocId).next(diff);
+    } finally {
+      docSubscription.unsubscribe();
     }
-
-    const origDelta: Delta = new Delta(textDoc.data.ops);
-    const diff: Delta = origDelta.diff(newDelta);
-
-    // Update text doc directly
-    await textDoc.submit(diff, source);
-
-    // Notify so that TextViewModels can update
-    this.getLocalSystemChangesInternal$(textDocId).next(diff);
   }
 
   /**
