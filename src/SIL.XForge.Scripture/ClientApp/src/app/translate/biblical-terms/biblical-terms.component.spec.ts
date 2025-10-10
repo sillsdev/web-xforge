@@ -34,7 +34,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
@@ -58,7 +58,7 @@ describe('BiblicalTermsComponent', () => {
     imports: [
       NoopAnimationsModule,
       TestOnlineStatusModule.forRoot(),
-      TestTranslocoModule,
+      getTestTranslocoModule(),
       UICommonModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],

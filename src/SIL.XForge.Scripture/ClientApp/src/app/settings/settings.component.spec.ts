@@ -28,7 +28,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
@@ -51,8 +51,7 @@ const mockedUserService = mock(UserService);
 const mockedDialog = mock(MatDialog);
 
 @Component({
-  template: `<div>Mock</div>`,
-  standalone: false
+  template: `<div>Mock</div>`
 })
 class MockComponent {}
 
@@ -61,16 +60,18 @@ const ROUTES: Route[] = [{ path: 'projects', component: MockComponent }];
 describe('SettingsComponent', () => {
   configureTestingModule(() => ({
     imports: [
+      SettingsComponent,
       RouterModule.forRoot(ROUTES),
       UICommonModule,
-      TestTranslocoModule,
+      getTestTranslocoModule(),
       TranslocoMarkupModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       TestOnlineStatusModule.forRoot(),
       NoopAnimationsModule,
-      WriteStatusComponent
+      WriteStatusComponent,
+      ProjectSelectComponent,
+      InfoComponent
     ],
-    declarations: [SettingsComponent, ProjectSelectComponent, InfoComponent],
     providers: [
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: AuthService, useMock: mockedAuthService },

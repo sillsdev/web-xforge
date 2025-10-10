@@ -1,6 +1,6 @@
 import { Component, DebugElement, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatIconModule } from '@angular/material/icon';
+import { MatIcon } from '@angular/material/icon';
 import { By } from '@angular/platform-browser';
 import { LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { BehaviorSubject } from 'rxjs';
@@ -16,8 +16,7 @@ const mockLynxWorkspaceService = mock(LynxWorkspaceService);
 
 describe('LynxInsightStatusIndicatorComponent', () => {
   configureTestingModule(() => ({
-    declarations: [HostComponent, LynxInsightStatusIndicatorComponent],
-    imports: [MatIconModule, CustomIconModule],
+    imports: [LynxInsightStatusIndicatorComponent, MatIcon, CustomIconModule, HostComponent],
     providers: [
       { provide: LynxInsightStateService, useMock: mockLynxInsightStateService },
       { provide: LynxWorkspaceService, useMock: mockLynxWorkspaceService }
@@ -190,7 +189,7 @@ describe('LynxInsightStatusIndicatorComponent', () => {
 
 @Component({
   template: '<app-lynx-insight-status-indicator></app-lynx-insight-status-indicator>',
-  standalone: false
+  imports: [LynxInsightStatusIndicatorComponent]
 })
 class HostComponent {
   @ViewChild(LynxInsightStatusIndicatorComponent) component!: LynxInsightStatusIndicatorComponent;

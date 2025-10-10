@@ -49,8 +49,12 @@ const mockedDialogService = mock(DialogService);
 
 describe('TextComponent', () => {
   configureTestingModule(() => ({
-    declarations: [HostComponent],
-    imports: [SharedModule.forRoot(), TestOnlineStatusModule.forRoot(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [
+      SharedModule.forRoot(),
+      TestOnlineStatusModule.forRoot(),
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      HostComponent
+    ],
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
@@ -1689,7 +1693,7 @@ class MockQuill extends Quill {
     [enablePresence]="enablePresence"
     (presenceChange)="onPresenceChange($event)"
   ></app-text>`,
-  standalone: false
+  imports: [TextComponent]
 })
 class HostComponent {
   @ViewChild(TextComponent) textComponent!: TextComponent;

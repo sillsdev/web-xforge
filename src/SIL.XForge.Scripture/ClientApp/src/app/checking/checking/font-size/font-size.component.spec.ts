@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MatButtonHarness } from '@angular/material/button/testing';
 import { MatMenuHarness, MatMenuItemHarness } from '@angular/material/menu/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { TestTranslocoModule } from 'xforge-common/test-utils';
+import { getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { FontSizeComponent } from './font-size.component';
 
@@ -31,7 +31,7 @@ describe('FontSizeComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      imports: [UICommonModule, NoopAnimationsModule, TestTranslocoModule, FontSizeComponent]
+      imports: [UICommonModule, NoopAnimationsModule, getTestTranslocoModule(), FontSizeComponent]
     }).compileComponents();
 
     fixture = TestBed.createComponent(FontSizeComponent);

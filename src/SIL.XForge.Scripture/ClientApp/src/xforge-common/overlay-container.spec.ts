@@ -15,21 +15,6 @@ describe('OverlayContainer', () => {
   }));
 });
 
-/**
- * Host component is generated to contain the <app-root> element. When tests are rendered the initial component
- * is only rendered as a <div> element whereas this test specifically needs access to the <app-root> element
- */
-@Component({
-  selector: 'app-host',
-  template: '<app-root #root></app-root>'
-})
-class HostComponent {
-  @ViewChild('root') appRoot?: AppRootComponent;
-
-  open(): void {
-    this.appRoot?.open();
-  }
-}
 @Component({
   selector: 'app-root',
   template: '<ng-template #bottomSheet><div class="bottom-sheet-container">Opened</div></ng-template>'
@@ -44,6 +29,23 @@ class AppRootComponent {
       return;
     }
     this.bottomSheet.open(this.TemplateBottomSheet);
+  }
+}
+
+/**
+ * Host component is generated to contain the <app-root> element. When tests are rendered the initial component
+ * is only rendered as a <div> element whereas this test specifically needs access to the <app-root> element
+ */
+@Component({
+  selector: 'app-host',
+  template: '<app-root #root></app-root>',
+  imports: [AppRootComponent]
+})
+class HostComponent {
+  @ViewChild('root') appRoot?: AppRootComponent;
+
+  open(): void {
+    this.appRoot?.open();
   }
 }
 

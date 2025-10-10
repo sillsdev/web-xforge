@@ -178,8 +178,8 @@
                 <td mat-cell *matCellDef="let element">
                   <mat-checkbox
                     [(ngModel)]="element.checked"
-                    (ngModelChange)="checkboxChanged(element)"
                     [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="checkboxChanged(element)"
                     >{{ referenceForDisplay(element.question) }}</mat-checkbox
                   >
                 </td>
