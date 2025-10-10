@@ -21,7 +21,7 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { TestingRetryingRequestService } from 'xforge-common/testing-retrying-request.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { QuestionDoc } from '../../core/models/question-doc';
@@ -503,7 +503,7 @@ describe('ImportQuestionsDialogComponent', () => {
 @NgModule({
   imports: [
     UICommonModule,
-    TestTranslocoModule,
+    getTestTranslocoModule(),
     NoopAnimationsModule,
     ngfModule,
     ScriptureChooserDialogComponent,

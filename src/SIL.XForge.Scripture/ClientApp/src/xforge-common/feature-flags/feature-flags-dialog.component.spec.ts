@@ -15,8 +15,7 @@ const mockedFeatureFlagService = mock(FeatureFlagService);
 
 describe('FeatureFlagsComponent', () => {
   configureTestingModule(() => ({
-    declarations: [FeatureFlagsDialogComponent],
-    imports: [UICommonModule, NoticeComponent],
+    imports: [FeatureFlagsDialogComponent, UICommonModule, NoticeComponent],
     providers: [{ provide: FeatureFlagService, useMock: mockedFeatureFlagService }]
   }));
 

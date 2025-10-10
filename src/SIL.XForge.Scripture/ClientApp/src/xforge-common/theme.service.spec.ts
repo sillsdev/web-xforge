@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { anyString, mock, when } from 'ts-mockito';
+import { DOCUMENT } from './browser-globals';
 import { LocalSettingsService } from './local-settings.service';
 import { configureTestingModule } from './test-utils';
-import { DOCUMENT } from './browser-globals';
 import { Theme, ThemeService } from './theme.service';
 
 const mockedLocalSettingsService = mock(LocalSettingsService);

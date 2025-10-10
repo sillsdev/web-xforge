@@ -9,7 +9,7 @@ import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/trai
 import { anything, mock, when } from 'ts-mockito';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
-import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { TrainingDataFileUpload, TrainingDataUploadDialogComponent } from './training-data-upload-dialog.component';
@@ -99,7 +99,7 @@ describe('TrainingDataUploadDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [ngfModule, TestTranslocoModule],
+  imports: [ngfModule, getTestTranslocoModule()],
   providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
 })
 class DialogTestModule {}

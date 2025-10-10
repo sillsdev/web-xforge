@@ -20,8 +20,8 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import {
   ChildViewContainerComponent,
   configureTestingModule,
-  matDialogCloseDelay,
-  TestTranslocoModule
+  getTestTranslocoModule,
+  matDialogCloseDelay
 } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
@@ -186,7 +186,7 @@ describe('BiblicalTermDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [UICommonModule, TestTranslocoModule, BiblicalTermDialogComponent]
+  imports: [UICommonModule, getTestTranslocoModule(), BiblicalTermDialogComponent]
 })
 class DialogTestModule {}
 

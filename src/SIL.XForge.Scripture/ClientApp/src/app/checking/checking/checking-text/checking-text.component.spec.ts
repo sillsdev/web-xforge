@@ -14,7 +14,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -32,14 +32,14 @@ const mockedDialogService = mock(DialogService);
 
 describe('CheckingTextComponent', () => {
   configureTestingModule(() => ({
-    declarations: [CheckingTextComponent],
     imports: [
+      CheckingTextComponent,
       NoopAnimationsModule,
       SharedModule.forRoot(),
       UICommonModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       TestOnlineStatusModule.forRoot(),
-      TestTranslocoModule
+      getTestTranslocoModule()
     ],
     providers: [
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },

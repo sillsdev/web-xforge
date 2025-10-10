@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, ViewChild } from '@angular/core';
+import { MatIcon } from '@angular/material/icon';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
@@ -13,7 +14,7 @@ import { SingleButtonAudioPlayerComponent } from './single-button-audio-player.c
   template: `<app-single-button-audio-player source="./test-audio-player.webm" #player (click)="togglePlay()">
     <mat-icon>{{ player.playing ? 'stop' : 'play_arrow' }}</mat-icon>
   </app-single-button-audio-player>`,
-  standalone: false
+  imports: [SingleButtonAudioPlayerComponent, MatIcon]
 })
 class TestComponent {
   @ViewChild('player') player!: SingleButtonAudioPlayerComponent;

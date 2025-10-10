@@ -1,7 +1,7 @@
 import { CdkDrag, CdkDropList } from '@angular/cdk/drag-drop';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { TestTranslocoModule } from 'xforge-common/test-utils';
+import { getTestTranslocoModule } from 'xforge-common/test-utils';
 import { TabMenuService } from '../base-services/tab-menu.service';
 import { SFTabsModule } from '../sf-tabs.module';
 import { TabGroupHeaderComponent } from './tab-group-header.component';
@@ -13,7 +13,7 @@ describe('TabGroupHeaderComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [SFTabsModule, TestTranslocoModule, TabGroupHeaderComponent],
+      imports: [SFTabsModule, getTestTranslocoModule(), TabGroupHeaderComponent],
       providers: [{ provide: TabMenuService, useValue: { getMenuItems: () => of([]) } }]
     });
     fixture = TestBed.createComponent(TabGroupHeaderComponent);
