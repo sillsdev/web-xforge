@@ -1,5 +1,4 @@
 import { Component, DestroyRef } from '@angular/core';
-import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import ObjectID from 'bson-objectid';
 import { take } from 'rxjs';
@@ -16,7 +15,7 @@ import { DraftHistoryEntryComponent } from './draft-history-entry/draft-history-
 
 @Component({
   selector: 'app-draft-history-list',
-  imports: [MatIconModule, DraftHistoryEntryComponent, TranslocoModule, NoticeComponent],
+  imports: [DraftHistoryEntryComponent, TranslocoModule, NoticeComponent],
   templateUrl: './draft-history-list.component.html',
   styleUrl: './draft-history-list.component.scss'
 })

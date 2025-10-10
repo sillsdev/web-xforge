@@ -1,14 +1,13 @@
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatDialogModule } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
+import { MatDialogContent, MatDialogTitle } from '@angular/material/dialog';
+import { MatIcon } from '@angular/material/icon';
 import { TranslocoModule } from '@ngneat/transloco';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NLLB_LANGUAGES, NllbLanguage, NllbLanguageDict } from '../../nllb-languages';
 
 @Component({
   selector: 'app-supported-back-translation-languages-dialog',
-  imports: [MatIconModule, MatDialogModule, MatButtonModule, TranslocoModule],
+  imports: [MatIcon, MatDialogTitle, MatDialogContent, TranslocoModule],
   templateUrl: './supported-back-translation-languages-dialog.component.html',
   styleUrls: ['./supported-back-translation-languages-dialog.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush

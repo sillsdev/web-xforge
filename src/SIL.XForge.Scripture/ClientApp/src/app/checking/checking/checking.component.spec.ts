@@ -8,7 +8,7 @@ import { MatDialogRef } from '@angular/material/dialog';
 import { MatMenuHarness } from '@angular/material/menu/testing';
 import { MatSelectHarness } from '@angular/material/select/testing';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, ActivatedRouteSnapshot, Params, Route, Router, RouterModule } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { ngfModule } from 'angular-file';
@@ -151,7 +151,6 @@ describe('CheckingComponent', () => {
       CheckingTextComponent,
       AngularSplitModule,
       ngfModule,
-      NoopAnimationsModule,
       RouterModule.forRoot(ROUTES),
       SharedModule.forRoot(),
       UICommonModule,
@@ -170,7 +169,8 @@ describe('CheckingComponent', () => {
       { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
       { provide: ChapterAudioDialogService, useMock: mockedChapterAudioDialogService },
       { provide: FileService, useMock: mockedFileService },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      provideNoopAnimations()
     ]
   }));
 

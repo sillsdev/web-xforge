@@ -3,7 +3,7 @@ import { DatePipe } from '@angular/common';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { APP_ID, ErrorHandler, inject, NgModule, provideAppInitializer } from '@angular/core';
 import { MatRipple } from '@angular/material/core';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { provideAnimations } from '@angular/platform-browser/animations';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { CookieService } from 'ngx-cookie-service';
@@ -51,7 +51,6 @@ import { UsersModule } from './users/users.module';
   declarations: [AppComponent],
   bootstrap: [AppComponent],
   imports: [
-    BrowserAnimationsModule,
     CoreModule,
     ServiceWorkerModule.register('sf-service-worker.js', {
       enabled: environment.pwaTest || environment.production,
@@ -91,6 +90,7 @@ import { UsersModule } from './users/users.module';
     { provide: APP_ID, useValue: 'ng-cli-universal' },
     CookieService,
     DatePipe,
+    provideAnimations(),
     provideTranslationMarkupTranspiler(EmTextTranspiler),
     translocoMarkupRouterLinkRenderer(),
     defaultTranslocoMarkupTranspilers(),

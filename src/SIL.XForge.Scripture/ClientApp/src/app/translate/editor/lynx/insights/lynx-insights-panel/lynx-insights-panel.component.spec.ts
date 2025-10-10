@@ -8,14 +8,14 @@ import {
   TestBed,
   tick
 } from '@angular/core/testing';
-import { MatButtonModule } from '@angular/material/button';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
+import { MatButton } from '@angular/material/button';
+import { MatDivider } from '@angular/material/divider';
+import { MatIcon } from '@angular/material/icon';
+import { MatMenu } from '@angular/material/menu';
 import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatTreeModule } from '@angular/material/tree';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatTree } from '@angular/material/tree';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import { Range } from 'quill';
 import Delta from 'quill-delta';
@@ -110,15 +110,14 @@ describe('LynxInsightsPanelComponent', () => {
 
   configureTestingModule(() => ({
     imports: [
-      MatTreeModule,
-      MatIconModule,
-      MatButtonModule,
-      MatTooltipModule,
-      MatMenuModule,
+      MatTree,
+      MatIcon,
+      MatButton,
+      MatTooltip,
+      MatMenu,
       MatTabsModule,
-      MatDividerModule,
+      MatDivider,
       IncludesPipe,
-      NoopAnimationsModule,
       getTestTranslocoModule(),
       CustomIconModule,
       LynxInsightsPanelComponent,
@@ -136,7 +135,7 @@ describe('LynxInsightsPanelComponent', () => {
       {
         provide: EDITOR_INSIGHT_DEFAULTS,
         useValue: {
-          filter: { types: ['info', 'warning', 'error'], scope: 'chapter' },
+          filter: { types: ['info', 'warning', 'error', provideNoopAnimations()], scope: 'chapter' },
           sortOrder: 'severity',
           queryParamName: 'insight',
           actionOverlayApplyPrimaryActionChord: { altKey: true, shiftKey: true, key: 'Enter' },

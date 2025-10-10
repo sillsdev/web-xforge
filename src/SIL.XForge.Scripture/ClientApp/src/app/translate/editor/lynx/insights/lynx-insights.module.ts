@@ -2,16 +2,16 @@ import { BidiModule } from '@angular/cdk/bidi';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { inject, ModuleWithProviders, NgModule, provideAppInitializer } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatRippleModule } from '@angular/material/core';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatButton } from '@angular/material/button';
+import { MatRipple } from '@angular/material/core';
+import { MatDivider } from '@angular/material/divider';
+import { MatIcon } from '@angular/material/icon';
+import { MatMenu } from '@angular/material/menu';
+import { MatProgressBar } from '@angular/material/progress-bar';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatTreeModule } from '@angular/material/tree';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatTree } from '@angular/material/tree';
 import { TranslocoModule } from '@ngneat/transloco';
 import { DocumentManager, DocumentReader } from '@sillsdev/lynx';
 import { ScriptureDeltaDocument, ScriptureDeltaDocumentFactory } from '@sillsdev/lynx-delta';
@@ -39,16 +39,16 @@ import { QuillInsightRenderService } from './quill-services/quill-insight-render
     CommonModule,
     BidiModule,
     TranslocoModule,
-    MatButtonModule,
-    MatDividerModule,
-    MatIconModule,
-    MatMenuModule,
-    MatProgressBarModule,
-    MatProgressSpinnerModule,
-    MatRippleModule,
+    MatButton,
+    MatDivider,
+    MatIcon,
+    MatMenu,
+    MatProgressBar,
+    MatProgressSpinner,
+    MatRipple,
     MatTabsModule,
-    MatTooltipModule,
-    MatTreeModule,
+    MatTooltip,
+    MatTree,
     OverlayModule,
     IncludesPipe,
     LynxInsightActionPromptComponent,

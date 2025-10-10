@@ -3,7 +3,7 @@ import { Location } from '@angular/common';
 import { Component, DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Route, Router, RouterModule } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
@@ -90,7 +90,6 @@ describe('AppComponent', () => {
     imports: [
       NavigationComponent,
       UICommonModule,
-      NoopAnimationsModule,
       RouterModule.forRoot(ROUTES),
       getTestTranslocoModule(),
       TestOnlineStatusModule.forRoot(),
@@ -116,7 +115,8 @@ describe('AppComponent', () => {
       { provide: FileService, useMock: mockedFileService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
       { provide: BreakpointObserver, useClass: TestBreakpointObserver },
-      { provide: DialogService, useMock: mockedDialogService }
+      { provide: DialogService, useMock: mockedDialogService },
+      provideNoopAnimations()
     ]
   }));
 

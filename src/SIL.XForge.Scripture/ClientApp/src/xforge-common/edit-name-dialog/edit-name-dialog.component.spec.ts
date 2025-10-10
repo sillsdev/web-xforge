@@ -1,7 +1,7 @@
 import { Component, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { DialogService } from 'xforge-common/dialog.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -14,7 +14,7 @@ import { EditNameDialogComponent, EditNameDialogResult } from './edit-name-dialo
 describe('EditNameDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [TestOnlineStatusModule.forRoot()],
-    providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }]
+    providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }, provideNoopAnimations()]
   }));
 
   it('should display name and cancel button', fakeAsync(() => {
@@ -177,7 +177,7 @@ class TestEnvironment {
 }
 
 @NgModule({
-  imports: [UICommonModule, getTestTranslocoModule(), NoopAnimationsModule, EditNameDialogComponent]
+  imports: [UICommonModule, getTestTranslocoModule(), EditNameDialogComponent]
 })
 class DialogTestModule {}
 
