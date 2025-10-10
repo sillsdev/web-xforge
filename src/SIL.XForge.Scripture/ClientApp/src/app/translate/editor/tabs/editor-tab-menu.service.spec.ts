@@ -308,8 +308,7 @@ class TestEnvironment {
         { bookNum: 41, chapters: [{ number: 1, hasDraft: true }] }
       ],
       translateConfig: {
-        preTranslate: true,
-        draftConfig: { usfmConfig: {} }
+        preTranslate: true
       },
       userRoles: TestEnvironment.rolesByUser,
       biblicalTermsConfig: { biblicalTermsEnabled: true }
@@ -319,10 +318,8 @@ class TestEnvironment {
   constructor(explicitProjectDoc?: SFProjectProfileDoc) {
     const projectDoc: SFProjectProfileDoc = explicitProjectDoc ?? this.projectDoc;
     when(activatedProjectMock.projectDoc$).thenReturn(of(projectDoc));
-    when(activatedProjectMock.projectDoc).thenReturn(projectDoc as any);
     when(mockUserService.currentUserId).thenReturn('user01');
     when(mockPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
-    when(mockDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(false);
     service = TestBed.inject(EditorTabMenuService);
   }
 
