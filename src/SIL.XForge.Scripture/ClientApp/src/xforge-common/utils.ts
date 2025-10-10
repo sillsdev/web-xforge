@@ -44,7 +44,7 @@ export function supportedBrowser(): boolean {
       'samsung internet': '>=17.0'
     }
   });
-  return isSupportedBrowser ? true : false;
+  return isSupportedBrowser ?? false;
 }
 
 export function isIosDevice(): boolean {
@@ -135,8 +135,8 @@ export function aspCultureCookieValue(language: string): string {
  */
 export function getAspCultureCookieLanguage(cookie: string): string {
   const parts = cookie.split('|');
-  let c: string;
-  let uic: string;
+  let c: string | undefined;
+  let uic: string | undefined;
   parts.forEach(value => {
     if (value.startsWith('c=')) {
       c = value.slice('c='.length);
@@ -144,7 +144,7 @@ export function getAspCultureCookieLanguage(cookie: string): string {
       uic = value.slice('uic='.length);
     }
   });
-  return uic! || c! || 'en';
+  return uic ?? c ?? 'en';
 }
 
 export function getI18nLocales(): Locale[] {

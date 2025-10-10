@@ -17,19 +17,22 @@ ShareDB.types.register(OTJson0.type);
 async function run() {
   const ws = utils.createWS(connectionConfig);
   const conn = new ShareDB.Connection(ws);
-  for (const docId of docIds) {
-    const document = conn.get(collection, docId);
-    await utils.fetchDoc(document);
-    const docParts = docId.split(':');
-    // Convert the book number part to book ID
-    const bookId = Scr.Canon.bookNumberToId(parseInt(docParts[1]));
-    const newDocId = `${docParts[0]}:${bookId}:${docParts[2]}:target`;
-    const newDoc = conn.get(collection, newDocId);
-    const newData = document.data;
-    newData.dataId = newDocId;
-    await utils.createDoc(newDoc, newData, OTJson0.type.name);
+  try {
+    for (const docId of docIds) {
+      const document = conn.get(collection, docId);
+      await utils.fetchDoc(document);
+      const docParts = docId.split(':');
+      // Convert the book number part to book ID
+      const bookId = Scr.Canon.bookNumberToId(parseInt(docParts[1]));
+      const newDocId = `${docParts[0]}:${bookId}:${docParts[2]}:target`;
+      const newDoc = conn.get(collection, newDocId);
+      const newData = document.data;
+      newData.dataId = newDocId;
+      await utils.createDoc(newDoc, newData, OTJson0.type.name);
+    }
+  } finally {
+    conn.close();
   }
-  conn.close();
 }
 
 run();
