@@ -8,7 +8,12 @@ import { configureTestingModule } from 'xforge-common/test-utils';
 import { TextDocId } from '../../../../../core/models/text-doc';
 import { EditorReadyService } from '../base-services/editor-ready.service';
 import { InsightRenderService } from '../base-services/insight-render.service';
-import { LynxableEditor, LynxTextModelConverter } from '../lynx-editor';
+import {
+  LynxableEditor,
+  LynxEditorAdapterFactory,
+  LynxTextModelConverter,
+  TestLynxEditorAdapterFactory
+} from '../lynx-editor';
 import { LynxInsight, LynxInsightDisplayState, LynxInsightRange } from '../lynx-insight';
 import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
@@ -28,7 +33,7 @@ const mockTextModelConverter = mock<LynxTextModelConverter>();
 
 describe('LynxInsightEditorObjectsComponent', () => {
   configureTestingModule(() => ({
-    declarations: [HostComponent, LynxInsightEditorObjectsComponent],
+    imports: [HostComponent, LynxInsightEditorObjectsComponent],
     providers: [
       { provide: InsightRenderService, useMock: mockInsightRenderService },
       { provide: LynxInsightStateService, useMock: mockInsightStateService },
@@ -36,7 +41,8 @@ describe('LynxInsightEditorObjectsComponent', () => {
       { provide: LynxInsightOverlayService, useMock: mockOverlayService },
       { provide: LynxWorkspaceService, useMock: mockLynxWorkspaceService },
       { provide: ActivatedBookChapterService, useMock: mockActivatedBookChapterService },
-      { provide: DestroyRef, useMock: mockDestroyRef }
+      { provide: DestroyRef, useMock: mockDestroyRef },
+      { provide: LynxEditorAdapterFactory, useClass: TestLynxEditorAdapterFactory }
     ],
     schemas: [NO_ERRORS_SCHEMA]
   }));
@@ -353,7 +359,7 @@ describe('LynxInsightEditorObjectsComponent', () => {
     >
     </app-lynx-insight-editor-objects>
   `,
-  standalone: false
+  imports: [LynxInsightEditorObjectsComponent]
 })
 class HostComponent {
   @ViewChild(LynxInsightEditorObjectsComponent) component!: LynxInsightEditorObjectsComponent;
@@ -378,6 +384,9 @@ class TestEnvironment {
   private filteredInsightsSubject: BehaviorSubject<LynxInsight[]>;
   private displayStateSubject: BehaviorSubject<LynxInsightDisplayState>;
   private activatedBookChapterSubject: BehaviorSubject<RouteBookChapter | undefined>;
+  private filterSubject: BehaviorSubject<any>;
+  private filteredInsightCountsByTypeSubject: BehaviorSubject<any>;
+  private taskRunningStatusSubject: BehaviorSubject<boolean>;
 
   constructor(args: TestEnvArgs = {}) {
     const textModelConverter = instance(mockTextModelConverter);
@@ -398,10 +407,19 @@ class TestEnvironment {
       chapter: 1
     });
 
+    // Add mocks for LynxInsightStatusIndicatorComponent observables
+    this.filterSubject = new BehaviorSubject<any>({ types: [] });
+    this.filteredInsightCountsByTypeSubject = new BehaviorSubject<any>({ info: 0, warning: 0, error: 0 });
+    this.taskRunningStatusSubject = new BehaviorSubject<boolean>(false);
+
     // Create mock editor
     const mockRoot = document.createElement('div');
     const actualEditor = {
       root: mockRoot,
+      getEditor: () => actualEditor,
+      getScrollingContainer: () => mockRoot,
+      getBounds: () => ({ top: 0 }),
+      getRoot: () => mockRoot,
       on: (eventName: string, handler: (...args: any[]) => void) => {
         if (!this.eventHandlers.has(eventName)) {
           this.eventHandlers.set(eventName, []);
@@ -425,7 +443,10 @@ class TestEnvironment {
     when(mockEditorReadyService.listenEditorReadyState(anything())).thenReturn(this.editorReadySubject);
     when(mockInsightStateService.filteredChapterInsights$).thenReturn(this.filteredInsightsSubject);
     when(mockInsightStateService.displayState$).thenReturn(this.displayStateSubject);
+    when(mockInsightStateService.filter$).thenReturn(this.filterSubject);
+    when(mockInsightStateService.filteredInsightCountsByType$).thenReturn(this.filteredInsightCountsByTypeSubject);
     when(mockActivatedBookChapterService.activatedBookChapter$).thenReturn(this.activatedBookChapterSubject);
+    when(mockLynxWorkspaceService.taskRunningStatus$).thenReturn(this.taskRunningStatusSubject);
     when(mockInsightStateService.updateDisplayState(anything())).thenReturn();
     when(mockInsightStateService.clearDisplayState()).thenReturn();
     when(mockInsightRenderService.render(anything(), anything())).thenResolve();

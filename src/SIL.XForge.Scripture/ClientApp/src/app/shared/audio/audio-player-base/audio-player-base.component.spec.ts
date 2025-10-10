@@ -134,7 +134,8 @@ class AudioTestComponent extends AudioPlayerBaseComponent {
 
 @Component({
   selector: 'app-host',
-  template: ''
+  template: '',
+  imports: [AudioTestComponent]
 })
 class HostComponent {
   @ViewChild(AudioTestComponent) baseComponent!: AudioTestComponent;

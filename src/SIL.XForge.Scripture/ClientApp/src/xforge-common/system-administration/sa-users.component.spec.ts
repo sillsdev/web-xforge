@@ -24,7 +24,7 @@ import { UserDoc } from '../models/user-doc';
 import { ProjectService } from '../project.service';
 import { QueryFilter, QueryParameters } from '../query-parameters';
 import { TestRealtimeService } from '../test-realtime.service';
-import { configureTestingModule, emptyHammerLoader, TestTranslocoModule } from '../test-utils';
+import { configureTestingModule, emptyHammerLoader, getTestTranslocoModule } from '../test-utils';
 import { TypeRegistry } from '../type-registry';
 import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
@@ -38,14 +38,14 @@ const mockedProjectService: ProjectService = mock(ProjectService);
 describe('SaUsersComponent', () => {
   configureTestingModule(() => ({
     imports: [
+      SaUsersComponent,
       RouterModule.forRoot([]),
       UICommonModule,
       DialogTestModule,
-      TestTranslocoModule,
+      getTestTranslocoModule(),
       TestRealtimeModule.forRoot(new TypeRegistry([UserDoc, TestProjectDoc], [FileType.Audio], [])),
       AvatarComponent
     ],
-    declarations: [SaUsersComponent],
     providers: [
       { provide: MatDialog, useMock: mockedMatDialog },
       { provide: UserService, useMock: mockedUserService },

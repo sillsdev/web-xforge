@@ -6,8 +6,8 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import {
   ChildViewContainerComponent,
   configureTestingModule,
-  matDialogCloseDelay,
-  TestTranslocoModule
+  getTestTranslocoModule,
+  matDialogCloseDelay
 } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { NoteDialogData, TextNoteDialogComponent, TextNoteType } from './text-note-dialog.component';
@@ -59,7 +59,7 @@ describe('TextNoteDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [UICommonModule, TestTranslocoModule, TextNoteDialogComponent]
+  imports: [UICommonModule, getTestTranslocoModule(), TextNoteDialogComponent]
 })
 class DialogTestModule {}
 

@@ -1,5 +1,5 @@
 import { Component, DoCheck, Input, OnChanges } from '@angular/core';
-import { MatIconModule } from '@angular/material/icon';
+import { MatIcon } from '@angular/material/icon';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 
 type AvatarMode = 'image' | 'initials' | 'user_icon';
@@ -8,7 +8,7 @@ type AvatarMode = 'image' | 'initials' | 'user_icon';
   selector: 'app-avatar',
   templateUrl: './avatar.component.html',
   styleUrls: ['./avatar.component.scss'],
-  imports: [MatIconModule]
+  imports: [MatIcon]
 })
 export class AvatarComponent implements DoCheck, OnChanges {
   @Input() size: number = 32;
