@@ -100,7 +100,7 @@ export class ActivatedProjectService {
     );
   }
 
-  private async selectProject(projectId: string | undefined): Promise<void> {
+  protected async selectProject(projectId: string | undefined): Promise<void> {
     if (projectId == null) {
       this.projectId = undefined;
       this.projectDoc = undefined;
@@ -132,8 +132,13 @@ export class TestActivatedProjectService extends ActivatedProjectService {
     super(projectService, activeProjectIdService, noopDestroyRef);
   }
 
-  static withProjectId(projectId: string): TestActivatedProjectService {
+  static withProjectId(projectId?: string): TestActivatedProjectService {
     const projectService = TestBed.inject(SFProjectService);
     return new TestActivatedProjectService(projectService, new TestActiveProjectIdService(projectId));
+  }
+
+  /** Simulate active project changing. */
+  async setProject(projectId: string | undefined): Promise<void> {
+    await this.selectProject(projectId);
   }
 }

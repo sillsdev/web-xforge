@@ -1,128 +1,385 @@
-// import { NgZone } from '@angular/core';
-// import { fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-// import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-// import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-// import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
-// import { configureTestingModule } from 'xforge-common/test-utils';
-// import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
-// import { TextDocId } from '../../core/models/text-doc';
-// import { PermissionsService } from '../../core/permissions.service';
-// import { SFProjectService } from '../../core/sf-project.service';
-// import { CacheService } from './cache.service';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { filter } from 'rxjs';
+import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
+import { ActivatedProjectService, TestActivatedProjectService } from 'xforge-common/activated-project.service';
+import { configureTestingModule } from 'xforge-common/test-utils';
+import { DocSubscription } from '../../../xforge-common/models/realtime-doc';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
+import { TextDoc, TextDocId } from '../../core/models/text-doc';
+import { PermissionsService } from '../../core/permissions.service';
+import { SFProjectService } from '../../core/sf-project.service';
+import { CacheService } from './cache.service';
 
-// const mockedProjectService = mock(SFProjectService);
-// const mockedProjectDoc = mock(SFProjectProfileDoc);
-// const mockedPermissionService = mock(PermissionsService);
+const mockProjectService = mock(SFProjectService);
+const mockPermissionsService = mock(PermissionsService);
+// let testActivatedProjectService: TestActivatedProjectService;
 
-// describe('cache service', () => {
-//   configureTestingModule(() => ({
-//     providers: [
-//       { provide: SFProjectService, useMock: mockedProjectService },
-//       { provide: PermissionsService, useMock: mockedPermissionService }
-//     ]
-//   }));
-//   describe('load all texts', () => {
-//     it('does not get texts from project service if no permission', fakeAsync(async () => {
-//       const env = new TestEnvironment();
-//       when(mockedPermissionService.canAccessText(anything())).thenResolve(false);
-//       await env.service.cache(env.projectDoc);
-//       env.wait();
+describe('CacheService', () => {
+  configureTestingModule(() => ({
+    providers: [
+      { provide: SFProjectService, useMock: mockProjectService },
+      { provide: PermissionsService, useMock: mockPermissionsService },
+      { provide: ActivatedProjectService, useClass: TestActivatedProjectService }
+    ]
+  }));
 
-//       verify(mockedProjectService.subscribeText(anything())).times(0);
+  beforeEach(() => {
+    resetCalls(mockProjectService);
+    resetCalls(mockPermissionsService);
+  });
 
-//       flush();
-//       expect(true).toBeTruthy();
-//     }));
+  it('constructs', fakeAsync(() => {
+    const env = new TestEnvironment();
+    tick();
+    expect(env.service).toBeDefined();
+  }));
 
-//     it('gets all texts from project service', fakeAsync(async () => {
-//       const env = new TestEnvironment();
-//       await env.service.cache(env.projectDoc);
-//       env.wait();
+  it('activating a project fetches texts', fakeAsync(() => {
+    const env = new TestEnvironment();
+    tick();
+    env.activateProject('project01');
+    tick();
+    const numTexts: number = env.numBooks * env.numChapters;
+    verify(mockPermissionsService.canAccessText(anything())).times(numTexts);
+    verify(mockProjectService.getText(anything(), anything())).times(numTexts);
+  }));
 
-//       verify(mockedProjectService.subscribeText(anything())).times(200 * 100 * 2);
+  it('activating a project fetches texts, including sources', fakeAsync(() => {
+    const env = new TestEnvironment({ projectHasSource: true, textsHaveSource: true });
+    tick();
+    env.activateProject('project01');
+    tick();
+    // Twice as many
+    const numTexts: number = env.numBooks * env.numChapters * 2;
+    verify(mockPermissionsService.canAccessText(anything())).times(numTexts);
+    verify(mockProjectService.getText(anything(), anything())).times(numTexts);
+  }));
 
-//       flush();
-//       expect(true).toBeTruthy();
-//     }));
+  it('activating a project fetches texts, including sources, unless project has no source project ref', fakeAsync(() => {
+    const env = new TestEnvironment({ projectHasSource: false, textsHaveSource: true });
+    tick();
+    env.activateProject('project01');
+    tick();
+    // Not twice as many
+    const numTexts: number = env.numBooks * env.numChapters;
+    verify(mockPermissionsService.canAccessText(anything())).times(numTexts);
+    verify(mockProjectService.getText(anything(), anything())).times(numTexts);
+  }));
 
-//     it('stops the current operation if cache is called again', fakeAsync(async () => {
-//       const env = new TestEnvironment();
+  it('activating a project fetches texts, including sources, unless texts do not haveSource', fakeAsync(() => {
+    const env = new TestEnvironment({ projectHasSource: false, textsHaveSource: true });
+    tick();
+    env.activateProject('project01');
+    tick();
+    // Not twice as many
+    const numTexts: number = env.numBooks * env.numChapters;
+    verify(mockPermissionsService.canAccessText(anything())).times(numTexts);
+    verify(mockProjectService.getText(anything(), anything())).times(numTexts);
+  }));
 
-//       const mockProject = mock(SFProjectProfileDoc);
-//       when(mockProject.id).thenReturn('new project');
-//       const data = createTestProjectProfile({
-//         texts: env.createTexts()
-//       });
-//       when(mockProject.data).thenReturn(data);
+  it('activating an undefined project does not fetch texts', fakeAsync(() => {
+    const env = new TestEnvironment();
+    tick();
+    env.activateProject('project01');
+    tick();
+    resetCalls(mockPermissionsService);
+    resetCalls(mockProjectService);
+    env.activateProject(undefined);
+    verify(mockPermissionsService.canAccessText(anything())).never();
+    verify(mockProjectService.getText(anything(), anything())).never();
+  }));
 
-//       env.service.cache(env.projectDoc);
-//       await env.service.cache(instance(mockProject));
-//       env.wait();
+  it('activating a project unsubscribes from previous project texts', fakeAsync(() => {
+    const env = new TestEnvironment();
+    tick();
+    env.activateProject('project01');
+    tick();
+    // CacheService should not have unsubscribed from the project01 text docs.
+    expect(env.numTextDocUnsubscribes).toEqual(0);
+    env.activateProject('project02');
+    tick();
+    const numTexts: number = env.numBooks * env.numChapters;
+    // CacheService should have unsubscribed from the previous project text docs.
+    expect(env.numTextDocUnsubscribes).toEqual(numTexts);
+  }));
 
-//       verify(
-//         mockedProjectService.subscribeText(deepEqual(new TextDocId('new project', anything(), anything(), 'target')))
-//       ).times(200 * 100);
+  it('activating a project unsubscribes from previous project texts, including sources', fakeAsync(() => {
+    const env = new TestEnvironment({ projectHasSource: true, textsHaveSource: true });
+    tick();
+    env.activateProject('project01');
+    tick();
+    // CacheService should not have unsubscribed from the project01 text docs.
+    expect(env.numTextDocUnsubscribes).toEqual(0);
+    env.activateProject('project02');
+    tick();
+    // Twice as many
+    const numTexts: number = env.numBooks * env.numChapters * 2;
+    // CacheService should have unsubscribed from the previous project text docs.
+    expect(env.numTextDocUnsubscribes).toEqual(numTexts);
+  }));
 
-//       //verify at least some books were not gotten
-//       verify(mockedProjectService.subscribeText(anything())).atMost(200 * 100 * 2 - 1);
+  it('activating an undefined project does not unsubscribe from project texts', fakeAsync(() => {
+    const env = new TestEnvironment();
+    tick();
+    env.activateProject('project01');
+    tick();
+    // CacheService should not have unsubscribed from the project01 text docs.
+    expect(env.numTextDocUnsubscribes).toEqual(0);
+    env.activateProject(undefined);
+    tick();
+    // CacheService should not have unsubscribed from the project01 text docs.
+    expect(env.numTextDocUnsubscribes).toEqual(0);
+  }));
 
-//       flush();
-//       expect(true).toBeTruthy();
-//     }));
+  it('destroying CacheService unsubscribes from project texts', fakeAsync(() => {
+    const env = new TestEnvironment();
+    tick();
+    env.activateProject('project01');
+    tick();
+    // CacheService should not have unsubscribed from the project01 text docs.
+    expect(env.numTextDocUnsubscribes).toEqual(0);
+    TestBed.resetTestingModule();
+    tick();
+    // CacheService should have unsubscribed from the project01 text docs.
+    expect(env.numTextDocUnsubscribes).toEqual(env.numBooks * env.numChapters);
+  }));
 
-//     it('gets the source texts if they are present and the user can access', fakeAsync(async () => {
-//       const env = new TestEnvironment();
-//       when(mockedPermissionService.canAccessText(deepEqual(new TextDocId('sourceId', 0, 0, 'target')))).thenResolve(
-//         false
-//       ); //remove access for one source doc
+  it('destroying CacheService unsubscribes from project texts, including sources', fakeAsync(() => {
+    const env = new TestEnvironment({ projectHasSource: true, textsHaveSource: true });
+    tick();
+    env.activateProject('project01');
+    tick();
+    // CacheService should not have unsubscribed from the project01 text docs.
+    expect(env.numTextDocUnsubscribes).toEqual(0);
+    TestBed.resetTestingModule();
+    tick();
+    // CacheService should have unsubscribed from the project01 text docs.
+    // Twice as many
+    expect(env.numTextDocUnsubscribes).toEqual(env.numBooks * env.numChapters * 2);
+  }));
 
-//       await env.service.cache(env.projectDoc);
-//       env.wait();
+  it('should not load texts if user lacks permission', fakeAsync(() => {
+    const env = new TestEnvironment({ userHasTextPermission: false });
+    tick();
+    env.activateProject('project01');
+    tick();
+    const numTexts: number = env.numBooks * env.numChapters;
+    // Queried permissions for each text doc.
+    verify(mockPermissionsService.canAccessText(anything())).times(numTexts);
+    // But never tried to fetch them.
+    verify(mockProjectService.getText(anything(), anything())).times(0);
+  }));
 
-//       //verify all sources and targets were gotten except the inaccessible one
-//       verify(mockedProjectService.subscribeText(anything())).times(200 * 100 * 2 - 1);
+  it('should load texts but not source texts if user lacks permission', fakeAsync(() => {
+    const env = new TestEnvironment({
+      projectHasSource: true,
+      textsHaveSource: true,
+      userHasTextPermission: true,
+      userHasSourceTextPermission: false
+    });
+    tick();
+    env.activateProject('project01');
+    tick();
+    const numProjectTexts: number = env.numBooks * env.numChapters;
+    const numSourceTexts: number = env.numBooks * env.numChapters;
+    // Twice as many since there are source texts
+    const numTexts: number = numProjectTexts + numSourceTexts;
+    // Queried permissions for each text doc, including sources.
+    verify(mockPermissionsService.canAccessText(anything())).times(numTexts);
+    // Only tried to fetch project texts, not source texts.
+    verify(mockProjectService.getText(anything(), anything())).times(numProjectTexts);
+  }));
 
-//       flush();
-//       expect(true).toBeTruthy();
-//     }));
-//   });
-// });
+  it('should not load project texts if user lacks permission, but load source texts', fakeAsync(() => {
+    const env = new TestEnvironment({
+      projectHasSource: true,
+      textsHaveSource: true,
+      userHasTextPermission: false,
+      userHasSourceTextPermission: true
+    });
+    tick();
+    env.activateProject('project01');
+    tick();
+    const numProjectTexts: number = env.numBooks * env.numChapters;
+    const numSourceTexts: number = env.numBooks * env.numChapters;
+    // Twice as many since there are source texts
+    const numTexts: number = numProjectTexts + numSourceTexts;
+    // Queried permissions for each text doc, including sources.
+    verify(mockPermissionsService.canAccessText(anything())).times(numTexts);
+    // Only tried to fetch source texts, not project texts.
+    verify(mockProjectService.getText(anything(), anything())).times(numSourceTexts);
+  }));
 
-// class TestEnvironment {
-//   readonly ngZone: NgZone = TestBed.inject(NgZone);
-//   readonly service: CacheService;
-//   readonly projectDoc: SFProjectProfileDoc = instance(mockedProjectDoc);
+  it('should not load project texts or source texts if user lacks permission to both', fakeAsync(() => {
+    const env = new TestEnvironment({
+      projectHasSource: true,
+      textsHaveSource: true,
+      userHasTextPermission: false,
+      userHasSourceTextPermission: false
+    });
+    tick();
+    env.activateProject('project01');
+    tick();
+    const numProjectTexts: number = env.numBooks * env.numChapters;
+    const numSourceTexts: number = env.numBooks * env.numChapters;
+    // Twice as many since there are source texts
+    const numTexts: number = numProjectTexts + numSourceTexts;
+    // Queried permissions for each text doc, including sources.
+    verify(mockPermissionsService.canAccessText(anything())).times(numTexts);
+    // Did not try to fetch project texts or source texts.
+    verify(mockProjectService.getText(anything(), anything())).times(0);
+  }));
 
-//   constructor() {
-//     this.service = TestBed.inject(CacheService);
+  it('activating a project interrupts caching', fakeAsync(() => {
+    const env = new TestEnvironment();
+    tick();
+    // When CacheService starts to process project01's texts, activate another project in the middle of processing.
+    when(
+      mockProjectService.getText(deepEqual(new TextDocId('project01', anything(), anything(), 'target')), anything())
+    ).thenCall(() => env.activateProject('project02'));
+    env.activateProject('project01');
+    tick();
+    const numTexts: number = env.numBooks * env.numChapters;
+    // Verify test setup.
+    expect(numTexts).toBeGreaterThan(1);
+    // CacheService will have started loading texts for project01, but the processing only loads one text before it is interrupted.
+    verify(
+      mockProjectService.getText(deepEqual(new TextDocId('project01', anything(), anything(), 'target')), anything())
+    ).atMost(1);
 
-//     const data = createTestProjectProfile({
-//       texts: this.createTexts(),
-//       translateConfig: {
-//         source: {
-//           projectRef: 'sourceId'
-//         }
-//       }
-//     });
+    // But CacheService will have loaded all the texts for project02.
+    verify(
+      mockProjectService.getText(deepEqual(new TextDocId('project02', anything(), anything(), 'target')), anything())
+    ).times(numTexts);
+  }));
 
-//     when(mockedProjectDoc.data).thenReturn(data);
-//     when(mockedPermissionService.canAccessText(anything())).thenResolve(true);
-//   }
+  it('activating an undefined project does not interrupt caching', fakeAsync(() => {
+    const env = new TestEnvironment();
+    tick();
+    // When CacheService starts to process project01's texts, activate an undefined project in the middle of processing.
+    when(
+      mockProjectService.getText(deepEqual(new TextDocId('project01', anything(), anything(), 'target')), anything())
+    ).thenCall(() => env.activateProject(undefined));
+    env.activateProject('project01');
+    tick();
+    const numTexts: number = env.numBooks * env.numChapters;
+    // CacheService should have continued to load all the texts for project01.
+    verify(
+      mockProjectService.getText(deepEqual(new TextDocId('project01', anything(), anything(), 'target')), anything())
+    ).times(numTexts);
+  }));
+});
 
-//   createTexts(): TextInfo[] {
-//     const texts: TextInfo[] = [];
-//     for (let book = 0; book < 200; book++) {
-//       const chapters: Chapter[] = [];
-//       for (let chapter = 0; chapter < 100; chapter++) {
-//         chapters.push({ isValid: true, lastVerse: 1, number: chapter, permissions: {}, hasAudio: false });
-//       }
-//       texts.push({ bookNum: book, chapters: chapters, hasSource: true, permissions: {} });
-//     }
-//     return texts;
-//   }
+class TestEnvironment {
+  readonly service: CacheService;
+  readonly numBooks = 2;
+  readonly numChapters = 3;
+  numTextDocUnsubscribes: number = 0;
+  private readonly activatedProjectService: TestActivatedProjectService;
 
-//   async wait(ms: number = 200): Promise<void> {
-//     await new Promise(resolve => this.ngZone.runOutsideAngular(() => setTimeout(resolve, ms)));
-//     tick();
-//   }
-// }
+  constructor({
+    projectHasSource = false,
+    textsHaveSource = false,
+    userHasTextPermission = true,
+    userHasSourceTextPermission = true
+  }: {
+    projectHasSource?: boolean;
+    textsHaveSource?: boolean;
+    userHasTextPermission?: boolean;
+    userHasSourceTextPermission?: boolean;
+  } = {}) {
+    when(mockProjectService.getText(anything(), anything())).thenCall(
+      async (_textId: TextDocId | string, subscriber: DocSubscription) => {
+        subscriber.isUnsubscribed$
+          .pipe(filter(isUnsubscribed => isUnsubscribed === true))
+          .subscribe(() => this.numTextDocUnsubscribes++);
+        return {} as TextDoc;
+      }
+    );
+
+    this.setupProject(
+      'project01',
+      projectHasSource,
+      textsHaveSource,
+      userHasTextPermission,
+      userHasSourceTextPermission
+    );
+    this.setupProject(
+      'project02',
+      projectHasSource,
+      textsHaveSource,
+      userHasTextPermission,
+      userHasSourceTextPermission
+    );
+
+    this.activatedProjectService = TestBed.inject(ActivatedProjectService) as TestActivatedProjectService;
+    this.service = TestBed.inject(CacheService);
+  }
+
+  async activateProject(projectId?: string): Promise<void> {
+    await this.activatedProjectService.setProject(projectId);
+  }
+
+  private setupProject(
+    projectId: string,
+    projectHasSource: boolean,
+    textsHaveSource: boolean,
+    userHasTextPermission: boolean,
+    userHasSourceTextPermission: boolean
+  ): void {
+    const data = createTestProjectProfile({
+      texts: this.createTexts(projectId, textsHaveSource, userHasTextPermission, userHasSourceTextPermission),
+      translateConfig: {
+        source: projectHasSource
+          ? {
+              projectRef: 'sourceId'
+            }
+          : undefined
+      }
+    });
+
+    const projectDoc = {
+      id: projectId,
+      data: data as SFProjectProfile
+    } as SFProjectProfileDoc;
+
+    when(mockProjectService.getProfile(projectId, anything())).thenResolve(projectDoc);
+  }
+
+  private createTexts(
+    projectId: string,
+    textsHaveSource: boolean,
+    userHasTextPermission: boolean,
+    userHasSourceTextPermission: boolean
+  ): TextInfo[] {
+    const texts: TextInfo[] = [];
+    // Create Matthew (40) and Mark (41)
+    for (let bookNum = 40; bookNum <= 40 + this.numBooks - 1; bookNum++) {
+      const chapters: Chapter[] = [];
+      for (let chapterNumber = 1; chapterNumber <= this.numChapters; chapterNumber++) {
+        chapters.push({
+          isValid: true,
+          lastVerse: 10,
+          number: chapterNumber,
+          permissions: {},
+          hasAudio: false
+        });
+        const textDocId = new TextDocId(projectId, bookNum, chapterNumber);
+        const sourceTextDocId = new TextDocId('sourceId', bookNum, chapterNumber);
+
+        when(mockPermissionsService.canAccessText(deepEqual(textDocId))).thenResolve(userHasTextPermission);
+        when(mockPermissionsService.canAccessText(deepEqual(sourceTextDocId))).thenResolve(userHasSourceTextPermission);
+      }
+      texts.push({
+        bookNum: bookNum,
+        chapters: chapters,
+        hasSource: textsHaveSource,
+        permissions: {}
+      });
+    }
+    return texts;
+  }
+}
