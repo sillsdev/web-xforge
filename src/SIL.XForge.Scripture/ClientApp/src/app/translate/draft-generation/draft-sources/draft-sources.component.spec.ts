@@ -704,17 +704,19 @@ class TestEnvironment {
     this.realtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   }
 
-  static async create(
-    args: { isOnline?: boolean; projectLoadSuccessful?: boolean } = { isOnline: true, projectLoadSuccessful: true }
-  ): Promise<TestEnvironment> {
+  static async create({
+    isOnline = true,
+    projectLoadSuccessful = true
+  }: { isOnline?: boolean; projectLoadSuccessful?: boolean } = {}): Promise<TestEnvironment> {
     const env = new TestEnvironment();
-    await env.init(args);
+    await env.init({ isOnline, projectLoadSuccessful });
     return env;
   }
 
-  private async init(
-    args: { isOnline?: boolean; projectLoadSuccessful?: boolean } = { isOnline: true, projectLoadSuccessful: true }
-  ): Promise<void> {
+  private async init({
+    isOnline = true,
+    projectLoadSuccessful = true
+  }: { isOnline?: boolean; projectLoadSuccessful?: boolean } = {}): Promise<void> {
     const userSFProjectsAndResourcesCount: number = 6;
     const userNonSFProjectsCount: number = 3;
     const userNonSFResourcesCount: number = 3;
@@ -857,7 +859,7 @@ class TestEnvironment {
     when(mockedParatextService.getResources()).thenResolve(
       projects.filter(o => o.projectType === 'resource').map(o => o.selectableProjectWithLanguageCode)
     );
-    if (args.projectLoadSuccessful === false) {
+    if (projectLoadSuccessful === false) {
       when(mockedParatextService.getProjects()).thenReject(new Error('504 Gateway Timeout'));
     }
     when(mockedSFUserProjectsService.projectDocs$).thenReturn(of(usersProjectsAndResourcesOnSF));
@@ -867,7 +869,7 @@ class TestEnvironment {
     when(mockedActivatedProjectService.projectDoc).thenReturn(this.activatedProjectDoc);
     when(mockedActivatedProjectService.projectId).thenReturn(this.activatedProjectDoc.id);
     when(mockedActivatedProjectService.projectDoc).thenReturn(this.activatedProjectDoc);
-    this.testOnlineStatusService.setIsOnline(!!args.isOnline);
+    this.testOnlineStatusService.setIsOnline(!!isOnline);
 
     when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
       instance(mockTrainingDataQuery)
@@ -879,7 +881,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
     tick();
 
-    if (args.projectLoadSuccessful !== false) {
+    if (projectLoadSuccessful !== false) {
       this.loadingFinished();
     }
     tick();
