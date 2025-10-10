@@ -205,7 +205,7 @@ describe('QuestionDialogComponent', () => {
 
   it('should set default verse and text direction when provided', fakeAsync(async () => {
     const verseRef: VerseRef = new VerseRef('LUK 1:1');
-    env = await TestEnvironment.create(undefined, verseRef, true);
+    env = await TestEnvironment.create({ defaultVerseRef: verseRef, isRtl: true });
     expect(env.component.scriptureStart.value).toBe('LUK 1:1');
     expect(env.component.isTextRightToLeft).toBe(true);
   }));
@@ -406,15 +406,17 @@ describe('QuestionDialogComponent', () => {
 
   it('retrieves scripture text on editing a question', fakeAsync(async () => {
     env = await TestEnvironment.create({
-      dataId: 'question01',
-      ownerRef: 'user01',
-      projectRef: 'project01',
-      verseRef: fromVerseRef(new VerseRef('LUK 1:3')),
-      answers: [],
-      isArchived: false,
-      dateCreated: '',
-      dateModified: '',
-      audioUrl: 'test-audio-short.mp3'
+      question: {
+        dataId: 'question01',
+        ownerRef: 'user01',
+        projectRef: 'project01',
+        verseRef: fromVerseRef(new VerseRef('LUK 1:3')),
+        answers: [],
+        isArchived: false,
+        dateCreated: '',
+        dateModified: '',
+        audioUrl: 'test-audio-short.mp3'
+      }
     });
     flush();
     const textDocId = new TextDocId('project01', 42, 1, 'target');
@@ -429,14 +431,16 @@ describe('QuestionDialogComponent', () => {
 
   it('displays error editing end reference to different book', fakeAsync(async () => {
     env = await TestEnvironment.create({
-      dataId: 'question01',
-      ownerRef: 'user01',
-      projectRef: 'project01',
-      verseRef: fromVerseRef(new VerseRef('LUK 1:3')),
-      answers: [],
-      isArchived: false,
-      dateCreated: '',
-      dateModified: ''
+      question: {
+        dataId: 'question01',
+        ownerRef: 'user01',
+        projectRef: 'project01',
+        verseRef: fromVerseRef(new VerseRef('LUK 1:3')),
+        answers: [],
+        isArchived: false,
+        dateCreated: '',
+        dateModified: ''
+      }
     });
     flush();
     tick(EDITOR_READY_TIMEOUT);
@@ -453,14 +457,16 @@ describe('QuestionDialogComponent', () => {
 
   it('displays error editing start reference to a different book', fakeAsync(async () => {
     env = await TestEnvironment.create({
-      dataId: 'question01',
-      ownerRef: 'user01',
-      projectRef: 'project01',
-      verseRef: fromVerseRef(new VerseRef('LUK 1:3-4')),
-      answers: [],
-      isArchived: false,
-      dateCreated: '',
-      dateModified: ''
+      question: {
+        dataId: 'question01',
+        ownerRef: 'user01',
+        projectRef: 'project01',
+        verseRef: fromVerseRef(new VerseRef('LUK 1:3-4')),
+        answers: [],
+        isArchived: false,
+        dateCreated: '',
+        dateModified: ''
+      }
     });
     flush();
     tick(EDITOR_READY_TIMEOUT);
@@ -579,17 +585,21 @@ class TestEnvironment {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
   }
 
-  static async create(
-    question?: Question,
-    defaultVerseRef?: VerseRef,
-    isRtl: boolean = false
-  ): Promise<TestEnvironment> {
+  static async create({
+    question,
+    defaultVerseRef,
+    isRtl = false
+  }: { question?: Question; defaultVerseRef?: VerseRef; isRtl?: boolean } = {}): Promise<TestEnvironment> {
     const env = new TestEnvironment();
-    await env.init(question, defaultVerseRef, isRtl);
+    await env.init({ question, defaultVerseRef, isRtl });
     return env;
   }
 
-  private async init(question?: Question, defaultVerseRef?: VerseRef, isRtl: boolean = false): Promise<void> {
+  private async init({
+    question,
+    defaultVerseRef,
+    isRtl = false
+  }: { question?: Question; defaultVerseRef?: VerseRef; isRtl?: boolean } = {}): Promise<void> {
     const viewContainerRef = this.fixture.componentInstance.childViewContainer;
     let questionDoc: QuestionDoc | undefined;
     if (question != null) {
