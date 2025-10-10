@@ -4660,9 +4660,6 @@ class TestEnvironment {
     translateConfig: {
       translationSuggestionsEnabled: true,
       defaultNoteTagId: 2,
-      draftConfig: {
-        usfmConfig: {}
-      },
       source: {
         paratextId: 'source01',
         projectRef: 'project02',
@@ -4908,9 +4905,6 @@ class TestEnvironment {
     when(mockedDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
     when(mockedPermissionsService.isUserOnProject(anything())).thenResolve(true);
     when(mockedFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(false));
-    when(mockedFeatureFlagService.usfmFormat).thenReturn(createTestFeatureFlag(true));
-    when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(false);
-    when(mockedDraftOptionsService.areFormattingOptionsSupportedForBuild(anything())).thenReturn(true);
     when(mockedLynxWorkspaceService.rawInsightSource$).thenReturn(of([]));
 
     this.realtimeService = TestBed.inject(TestRealtimeService);
@@ -5151,9 +5145,6 @@ class TestEnvironment {
         projectProfileData.translateConfig.source,
         data.translateConfig?.source
       );
-    }
-    if (data.translateConfig?.draftConfig != null) {
-      projectProfileData.translateConfig.draftConfig = data.translateConfig.draftConfig as any;
     }
     if (data.biblicalTermsConfig !== undefined) {
       projectProfileData.biblicalTermsConfig = merge(projectProfileData.biblicalTermsConfig, data.biblicalTermsConfig);

@@ -251,18 +251,7 @@ describe('EditorTabMenuService', () => {
   });
 
   it('should not show draft menu item when draft formatting (usfmConfig) is not set', done => {
-    const projectDocNoFormatting = {
-      id: 'project-no-formatting',
-      data: createTestProjectProfile({
-        texts: [{ bookNum: 40, chapters: [{ number: 1, hasDraft: true }] }],
-        translateConfig: {
-          preTranslate: true
-          // draftConfig intentionally omitted
-        },
-        userRoles: TestEnvironment.rolesByUser
-      })
-    } as SFProjectProfileDoc;
-    const env = new TestEnvironment(projectDocNoFormatting);
+    const env = new TestEnvironment();
     // Simulate formatting options available but still unselected, so draft tab should be hidden
     when(mockDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(true);
     env.setExistingTabs([]);
@@ -308,8 +297,7 @@ class TestEnvironment {
         { bookNum: 41, chapters: [{ number: 1, hasDraft: true }] }
       ],
       translateConfig: {
-        preTranslate: true,
-        draftConfig: { usfmConfig: {} }
+        preTranslate: true
       },
       userRoles: TestEnvironment.rolesByUser,
       biblicalTermsConfig: { biblicalTermsEnabled: true }
@@ -319,10 +307,8 @@ class TestEnvironment {
   constructor(explicitProjectDoc?: SFProjectProfileDoc) {
     const projectDoc: SFProjectProfileDoc = explicitProjectDoc ?? this.projectDoc;
     when(activatedProjectMock.projectDoc$).thenReturn(of(projectDoc));
-    when(activatedProjectMock.projectDoc).thenReturn(projectDoc as any);
     when(mockUserService.currentUserId).thenReturn('user01');
     when(mockPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
-    when(mockDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(false);
     service = TestBed.inject(EditorTabMenuService);
   }
 
