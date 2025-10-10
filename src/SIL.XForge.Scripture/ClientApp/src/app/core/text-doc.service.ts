@@ -1,4 +1,4 @@
-import { DestroyRef, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { Delta } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -23,8 +23,7 @@ export class TextDocService {
   constructor(
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
-    private readonly realtimeService: RealtimeService,
-    private readonly destroyRef: DestroyRef
+    private readonly realtimeService: RealtimeService
   ) {}
 
   /**
