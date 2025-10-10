@@ -13,7 +13,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
-import { TestTranslocoModule } from 'xforge-common/test-utils';
+import { getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
@@ -198,7 +198,7 @@ const meta: Meta = {
           { path: 'connect-project', component: EmptyComponent }
         ]),
         TestOnlineStatusModule.forRoot(),
-        TestTranslocoModule
+        getTestTranslocoModule()
       ],
       declarations: [MyProjectsComponent],
       providers: [

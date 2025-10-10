@@ -13,7 +13,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QueryResults } from 'xforge-common/query-parameters';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { EventMetric, EventScope } from './event-metric';
@@ -28,7 +28,7 @@ const mockedUserService = mock(UserService);
 
 describe('EventMetricsLogComponent', () => {
   configureTestingModule(() => ({
-    imports: [NoopAnimationsModule, TestOnlineStatusModule.forRoot(), TestTranslocoModule],
+    imports: [NoopAnimationsModule, TestOnlineStatusModule.forRoot(), getTestTranslocoModule()],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },

@@ -18,7 +18,7 @@ import { ProjectDoc } from 'xforge-common/models/project-doc';
 import { QueryFilter, QueryParameters } from 'xforge-common/query-parameters';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { TypeRegistry } from 'xforge-common/type-registry';
 import { ServalAdministrationService } from './serval-administration.service';
 import { ServalProjectsComponent } from './serval-projects.component';
@@ -30,7 +30,7 @@ describe('ServalProjectsComponent', () => {
     imports: [
       NoopAnimationsModule,
       RouterModule.forRoot([]),
-      TestTranslocoModule,
+      getTestTranslocoModule(),
       TestRealtimeModule.forRoot(new TypeRegistry([TestProjectDoc], [FileType.Audio], []))
     ],
     providers: [

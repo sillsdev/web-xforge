@@ -43,7 +43,7 @@ import {
       </app-tab-group>
     }
   `,
-  standalone: false
+  imports: [SFTabsModule]
 })
 class SFTabGroupStoriesComponent implements OnChanges {
   @Input() tabGroups: TabGroup<string, TabInfo<string>>[] = [];

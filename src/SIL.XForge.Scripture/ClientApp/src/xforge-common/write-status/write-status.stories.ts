@@ -9,7 +9,7 @@ import { WriteStatusComponent } from './write-status.component';
   template: `<form [formGroup]="formGroup">
     <app-write-status [state]="state" [formGroup]="formGroup"></app-write-status>
   </form>`,
-  standalone: false
+  imports: [WriteStatusComponent]
 })
 class WriteStatusTestComponent {
   @Input() state?: ElementState;
@@ -21,8 +21,7 @@ const meta: Meta<WriteStatusComponent> = {
   component: WriteStatusTestComponent,
   decorators: [
     moduleMetadata({
-      declarations: [WriteStatusTestComponent],
-      imports: [WriteStatusComponent]
+      imports: [WriteStatusTestComponent]
     })
   ]
 };

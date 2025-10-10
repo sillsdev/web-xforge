@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { Book } from '../../translate/draft-generation/draft-generation-steps/draft-generation-steps.component';
 import { ProgressService, TextProgress } from '../progress-service/progress.service';
 import { BookMultiSelectComponent } from './book-multi-select.component';
@@ -18,7 +18,7 @@ describe('BookMultiSelectComponent', () => {
   let mockSelectedBooks: Book[];
 
   configureTestingModule(() => ({
-    imports: [TestTranslocoModule],
+    imports: [getTestTranslocoModule()],
     providers: [
       { provide: ProgressService, useMock: mockedProgressService },
       { provide: I18nService, useMock: mockedI18nService }

@@ -11,7 +11,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -26,12 +26,13 @@ const mockedErrorReportingService = mock(ErrorReportingService);
 
 describe('SyncProgressComponent', () => {
   configureTestingModule(() => ({
-    declarations: [HostComponent, SyncProgressComponent],
     imports: [
+      SyncProgressComponent,
       TestOnlineStatusModule.forRoot(),
       UICommonModule,
-      TestTranslocoModule,
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+      getTestTranslocoModule(),
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      HostComponent
     ],
     providers: [
       { provide: ProjectNotificationService, useMock: mockedProjectNotificationService },
@@ -137,7 +138,7 @@ describe('SyncProgressComponent', () => {
 
 @Component({
   template: `<app-sync-progress [projectDoc]="projectDoc" (inProgress)="inProgress = $event"></app-sync-progress>`,
-  standalone: false
+  imports: [SyncProgressComponent]
 })
 class HostComponent {
   projectDoc?: SFProjectDoc;

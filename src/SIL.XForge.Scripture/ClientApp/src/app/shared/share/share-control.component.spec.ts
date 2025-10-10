@@ -15,7 +15,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
@@ -30,13 +30,13 @@ const mockedUserService = mock(UserService);
 
 describe('ShareControlComponent', () => {
   configureTestingModule(() => ({
-    declarations: [TestHostComponent],
     imports: [
       TestModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       NoopAnimationsModule,
       TestOnlineStatusModule.forRoot(),
-      SharedModule.forRoot()
+      SharedModule.forRoot(),
+      TestHostComponent
     ],
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
@@ -259,7 +259,7 @@ describe('ShareControlComponent', () => {
 });
 
 @NgModule({
-  imports: [RouterModule.forRoot([]), TestTranslocoModule]
+  imports: [RouterModule.forRoot([]), getTestTranslocoModule()]
 })
 class TestModule {}
 
@@ -267,7 +267,7 @@ class TestModule {}
   template: `
     <app-share-control [projectId]="projectId" [defaultRole]="defaultRole" (invited)="onInvited()"></app-share-control>
   `,
-  standalone: false
+  imports: [ShareControlComponent]
 })
 class TestHostComponent {
   @ViewChild(ShareControlComponent) component!: ShareControlComponent;

@@ -51,7 +51,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getAudioBlob, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
@@ -135,9 +135,8 @@ const ROUTES: Route[] = [
 
 describe('CheckingComponent', () => {
   configureTestingModule(() => ({
-    declarations: [
+    imports: [
       AudioTimePipe,
-      AudioPlayerComponent,
       CheckingAnswersComponent,
       CheckingAudioPlayerComponent,
       CheckingInputFormComponent,
@@ -145,12 +144,11 @@ describe('CheckingComponent', () => {
       CheckingComponent,
       CheckingScriptureAudioPlayerComponent,
       CheckingQuestionsComponent,
-      CheckingTextComponent,
       TextAndAudioComponent,
       FontSizeComponent,
-      AttachAudioComponent
-    ],
-    imports: [
+      AttachAudioComponent,
+      AudioPlayerComponent,
+      CheckingTextComponent,
       AngularSplitModule,
       ngfModule,
       NoopAnimationsModule,
@@ -158,7 +156,7 @@ describe('CheckingComponent', () => {
       SharedModule.forRoot(),
       UICommonModule,
       OwnerComponent,
-      TestTranslocoModule,
+      getTestTranslocoModule(),
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],

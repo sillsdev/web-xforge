@@ -15,7 +15,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -38,10 +38,10 @@ const mockedReportingService = mock(ErrorReportingService);
 
 describe('TranslateMetricsSession', () => {
   configureTestingModule(() => ({
-    declarations: [TextComponent],
     imports: [
+      TextComponent,
       QuillModule.forRoot(),
-      TestTranslocoModule,
+      getTestTranslocoModule(),
       SharedModule.forRoot(),
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)

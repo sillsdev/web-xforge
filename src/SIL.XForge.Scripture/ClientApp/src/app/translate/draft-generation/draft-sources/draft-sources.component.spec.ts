@@ -24,7 +24,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { hasData, notNull, WithData } from '../../../../type-utils';
 import { ParatextProject } from '../../../core/models/paratext-project';
@@ -76,7 +76,7 @@ describe('DraftSourcesComponent', () => {
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       NoopAnimationsModule,
-      TestTranslocoModule
+      getTestTranslocoModule()
     ],
     declarations: [],
     providers: [

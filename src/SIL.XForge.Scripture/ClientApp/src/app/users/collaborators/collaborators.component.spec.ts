@@ -25,7 +25,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, emptyHammerLoader, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, emptyHammerLoader, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -45,11 +45,11 @@ const mockedDialogService = mock(DialogService);
 
 describe('CollaboratorsComponent', () => {
   configureTestingModule(() => ({
-    declarations: [CollaboratorsComponent],
     imports: [
+      CollaboratorsComponent,
       NoopAnimationsModule,
       UICommonModule,
-      TestTranslocoModule,
+      getTestTranslocoModule(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       SharedModule.forRoot(),
       TestOnlineStatusModule.forRoot(),

@@ -34,7 +34,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { AppComponent } from './app.component';
@@ -65,8 +65,7 @@ const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedDialogService = mock(DialogService);
 
 @Component({
-  template: `<div>Mock</div>`,
-  standalone: false
+  template: `<div>Mock</div>`
 })
 class MockComponent {}
 
@@ -87,12 +86,13 @@ const ROUTES: Route[] = [
 
 describe('AppComponent', () => {
   configureTestingModule(() => ({
-    declarations: [AppComponent, NavigationComponent],
+    declarations: [AppComponent],
     imports: [
+      NavigationComponent,
       UICommonModule,
       NoopAnimationsModule,
       RouterModule.forRoot(ROUTES),
-      TestTranslocoModule,
+      getTestTranslocoModule(),
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       AvatarComponent,

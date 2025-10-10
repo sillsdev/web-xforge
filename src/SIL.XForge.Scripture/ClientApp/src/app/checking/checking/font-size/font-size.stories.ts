@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { componentWrapperDecorator, Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { expect, userEvent } from '@storybook/test';
 import { PointerEventsCheckLevel } from '@testing-library/user-event';
-import { TestTranslocoModule } from 'xforge-common/test-utils';
+import { getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { FontSizeComponent } from './font-size.component';
 
@@ -11,7 +11,7 @@ export default {
   component: FontSizeComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, UICommonModule, TestTranslocoModule]
+      imports: [CommonModule, UICommonModule, getTestTranslocoModule()]
     }),
     componentWrapperDecorator(
       story => `

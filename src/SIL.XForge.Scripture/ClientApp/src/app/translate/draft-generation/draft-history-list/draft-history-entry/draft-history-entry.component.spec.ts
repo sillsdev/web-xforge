@@ -13,7 +13,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../../core/models/sf-type-registry';
@@ -46,7 +46,7 @@ describe('DraftHistoryEntryComponent', () => {
   configureTestingModule(() => ({
     imports: [
       NoopAnimationsModule,
-      TestTranslocoModule,
+      getTestTranslocoModule(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       RouterModule.forRoot([])
     ],

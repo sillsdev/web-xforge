@@ -1,10 +1,11 @@
 import { Component, DebugElement, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { MatIcon } from '@angular/material/icon';
 import { By } from '@angular/platform-browser';
 import { BehaviorSubject } from 'rxjs';
 import { instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioPlayer, AudioStatus } from '../../../shared/audio/audio-player';
 import { AudioSegmentPlayer } from '../../../shared/audio/audio-segment-player';
@@ -15,8 +16,7 @@ when(audioMock.status$).thenReturn(new BehaviorSubject<AudioStatus>(AudioStatus.
 
 describe('SingleButtonAudioPlayerComponent', () => {
   configureTestingModule(() => ({
-    imports: [UICommonModule, TestTranslocoModule, TestOnlineStatusModule.forRoot()],
-    declarations: [TestComponent, MockComponent]
+    imports: [TestComponent, UICommonModule, getTestTranslocoModule(), TestOnlineStatusModule.forRoot(), MockComponent]
   }));
 
   let env: TestEnvironment;
@@ -161,7 +161,7 @@ class TestEnvironment {
   template: `<app-single-button-audio-player #player [source]="source" [start]="start" [end]="end">
     <mat-icon id="content">play</mat-icon>
   </app-single-button-audio-player>`,
-  standalone: false
+  imports: [SingleButtonAudioPlayerComponent, MatIcon]
 })
 class MockComponent {
   @ViewChild('player') player!: TestComponent;

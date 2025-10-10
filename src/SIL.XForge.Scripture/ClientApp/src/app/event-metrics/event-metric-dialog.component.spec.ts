@@ -3,7 +3,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, inject, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
-import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { EventMetricDialogComponent } from './event-metric-dialog.component';
 
 describe('EventMetricDialogComponent', () => {
@@ -63,7 +63,7 @@ describe('EventMetricDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [TestTranslocoModule],
+  imports: [getTestTranslocoModule()],
   providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
 })
 class DialogTestModule {}

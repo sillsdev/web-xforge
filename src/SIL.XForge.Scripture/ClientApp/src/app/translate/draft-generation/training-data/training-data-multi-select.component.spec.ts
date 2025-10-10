@@ -9,7 +9,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TrainingDataMultiSelectComponent } from './training-data-multi-select.component';
@@ -47,7 +47,7 @@ describe('TrainingDataMultiSelectComponent', () => {
   let mockTrainingData: TrainingData[];
 
   configureTestingModule(() => ({
-    imports: [TestTranslocoModule],
+    imports: [getTestTranslocoModule()],
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: DialogService, useMock: mockDialogService },

@@ -10,7 +10,6 @@ import { DraftJobsComponent } from './draft-jobs.component';
   selector: 'app-site-event-metrics',
   templateUrl: './site-event-metrics.component.html',
   styleUrls: ['./site-event-metrics.component.scss'],
-  standalone: true,
   imports: [DraftJobsComponent, TranslocoModule]
 })
 export class SiteEventMetricsComponent {}

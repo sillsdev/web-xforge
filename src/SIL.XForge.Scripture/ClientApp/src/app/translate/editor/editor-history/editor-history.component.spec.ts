@@ -6,11 +6,14 @@ import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-dat
 import { Subject } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
+import { FileType } from 'xforge-common/models/file-offline-data';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule } from 'xforge-common/test-utils';
+import { TypeRegistry } from 'xforge-common/type-registry';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { Revision } from '../../../core/paratext.service';
@@ -30,8 +33,11 @@ describe('EditorHistoryComponent', () => {
   const showDiffChange$ = new Subject<boolean>();
 
   configureTestingModule(() => ({
-    imports: [TestOnlineStatusModule.forRoot()],
-    declarations: [EditorHistoryComponent],
+    imports: [
+      EditorHistoryComponent,
+      TestOnlineStatusModule.forRoot(),
+      TestRealtimeModule.forRoot(new TypeRegistry([TextDoc], [FileType.Audio], []))
+    ],
     schemas: [NO_ERRORS_SCHEMA], // Ignore undeclared child components
     providers: [
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },

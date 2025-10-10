@@ -27,8 +27,8 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import {
   ChildViewContainerComponent,
   configureTestingModule,
-  matDialogCloseDelay,
-  TestTranslocoModule
+  getTestTranslocoModule,
+  matDialogCloseDelay
 } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -194,8 +194,7 @@ describe('RolesAndPermissionsComponent', () => {
 });
 
 @Component({
-  selector: 'app-avatar',
-  standalone: false
+  selector: 'app-avatar'
 })
 class FakeAvatarComponent {
   @Input() user?: UserProfile;
@@ -206,7 +205,7 @@ class FakeAvatarComponent {
 @NgModule({
   imports: [
     UICommonModule,
-    TestTranslocoModule,
+    getTestTranslocoModule(),
     NoticeComponent,
     RolesAndPermissionsDialogComponent,
     FakeAvatarComponent

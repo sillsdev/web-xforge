@@ -16,7 +16,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -48,7 +48,7 @@ describe('DraftGenerationStepsComponent', () => {
   when(mockActivatedProjectService.projectId).thenReturn('project01');
 
   configureTestingModule(() => ({
-    imports: [TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), NoopAnimationsModule],
+    imports: [getTestTranslocoModule(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), NoopAnimationsModule],
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: DraftSourcesService, useMock: mockDraftSourceService },

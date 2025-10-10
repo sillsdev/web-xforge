@@ -7,7 +7,7 @@ import { takeWhile } from 'rxjs/operators';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
+import { getAudioBlob, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioStatus } from '../../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
@@ -179,7 +179,7 @@ describe('CheckingAudioPlayerComponent', () => {
 @Component({
   selector: 'app-host',
   template: '',
-  imports: [UICommonModule, TestTranslocoModule]
+  imports: [UICommonModule]
 })
 class HostComponent {
   @ViewChild(CheckingAudioPlayerComponent) player1!: CheckingAudioPlayerComponent;
@@ -199,7 +199,7 @@ class TestEnvironment {
       imports: [
         UICommonModule,
         TestOnlineStatusModule.forRoot(),
-        TestTranslocoModule,
+        getTestTranslocoModule(),
         HostComponent,
         CheckingAudioPlayerComponent,
         AudioPlayerComponent,

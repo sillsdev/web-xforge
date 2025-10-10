@@ -4,7 +4,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testi
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { anything, mock, when } from 'ts-mockito';
 import { I18nService } from '../i18n.service';
-import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from '../test-utils';
+import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from '../test-utils';
 import { UICommonModule } from '../ui-common.module';
 import { ErrorAlertData, ErrorDialogComponent } from './error-dialog.component';
 
@@ -70,7 +70,7 @@ describe('ErrorDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [UICommonModule, TestTranslocoModule, ErrorDialogComponent]
+  imports: [UICommonModule, getTestTranslocoModule(), ErrorDialogComponent]
 })
 class DialogTestModule {}
 

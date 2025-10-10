@@ -14,7 +14,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../../core/models/sf-type-registry';
@@ -34,13 +34,14 @@ const mockedErrorReportingService = mock(ErrorReportingService);
 describe('HistoryChooserComponent', () => {
   configureTestingModule(() => ({
     imports: [
+      HistoryChooserComponent,
+      HistoryRevisionFormatPipe,
       NoopAnimationsModule,
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      TestTranslocoModule,
+      getTestTranslocoModule(),
       UICommonModule
     ],
-    declarations: [HistoryChooserComponent, HistoryRevisionFormatPipe],
     providers: [
       { provide: DialogService, useMock: mockedDialogService },
       { provide: NoticeService, useMock: mockedNoticeService },

@@ -9,7 +9,7 @@ import { anything, mock, verify, when } from 'ts-mockito';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { ParatextProject } from '../../../../core/models/paratext-project';
 import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
@@ -27,7 +27,7 @@ const mockProjectsService = mock(SFUserProjectsService);
 
 describe('EditorTabAddResourceDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [TestOnlineStatusModule.forRoot(), TestTranslocoModule],
+    imports: [TestOnlineStatusModule.forRoot(), getTestTranslocoModule()],
     providers: [
       provideAnimations(),
       { provide: SFProjectService, useMock: mockSFProjectService },

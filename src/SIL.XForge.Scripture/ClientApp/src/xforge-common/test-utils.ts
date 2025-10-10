@@ -1,4 +1,13 @@
-import { Component, Directive, Input, NgModule, TemplateRef, ViewChild, ViewContainerRef } from '@angular/core';
+import {
+  Component,
+  Directive,
+  Input,
+  ModuleWithProviders,
+  NgModule,
+  TemplateRef,
+  ViewChild,
+  ViewContainerRef
+} from '@angular/core';
 import { TestBed, TestModuleMetadata } from '@angular/core/testing';
 import { HAMMER_LOADER } from '@angular/platform-browser';
 import { TranslocoTestingModule } from '@ngneat/transloco';
@@ -52,15 +61,27 @@ export const configureTestingModule = (createModuleDef: () => TestModuleMetadata
   });
 };
 
-export const TestTranslocoModule = TranslocoTestingModule.forRoot({
-  langs: { en },
-  translocoConfig: {
-    availableLangs: ['en'],
-    reRenderOnLangChange: true,
-    fallbackLang: 'en',
-    defaultLang: 'en'
-  }
-});
+// export const TestTranslocoModule = TranslocoTestingModule.forRoot({
+//   langs: { en },
+//   translocoConfig: {
+//     availableLangs: ['en'],
+//     reRenderOnLangChange: true,
+//     fallbackLang: 'en',
+//     defaultLang: 'en'
+//   }
+// });
+
+export function getTestTranslocoModule(): ModuleWithProviders<TranslocoTestingModule> {
+  return TranslocoTestingModule.forRoot({
+    langs: { en },
+    translocoConfig: {
+      availableLangs: ['en'],
+      reRenderOnLangChange: true,
+      fallbackLang: 'en',
+      defaultLang: 'en'
+    }
+  });
+}
 
 // used to prevent Angular from complaining that HammerJS isn't available
 export const emptyHammerLoader = {
@@ -425,8 +446,7 @@ export function arrayOfIntsFromOne(size: number): number[] {
  */
 @Directive({
   // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: '[transloco]',
-  standalone: false
+  selector: '[transloco]'
 })
 export class MockTranslocoDirective {
   @Input() translocoRead?: string;

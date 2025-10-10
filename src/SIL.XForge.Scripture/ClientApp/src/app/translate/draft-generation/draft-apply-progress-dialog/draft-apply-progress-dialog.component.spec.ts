@@ -4,7 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BehaviorSubject } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { DraftApplyProgress, DraftApplyProgressDialogComponent } from './draft-apply-progress-dialog.component';
 
 const mockI18nService = mock(I18nService);
@@ -21,7 +21,7 @@ describe('DraftApplyProgressDialogComponent', () => {
   });
 
   configureTestingModule(() => ({
-    imports: [TestTranslocoModule],
+    imports: [getTestTranslocoModule()],
     providers: [
       { provide: I18nService, useMock: mockI18nService },
       { provide: MatDialogRef, useMock: mockMatDialogRef },

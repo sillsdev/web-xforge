@@ -14,7 +14,7 @@ import { anything, mock, verify, when } from 'ts-mockito';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -31,8 +31,7 @@ const mockedDialogRef = mock(MatDialogRef);
 const mockedTextDocService = mock(TextDocService);
 
 @Component({
-  template: `<div>Mock</div>`,
-  standalone: false
+  template: `<div>Mock</div>`
 })
 class MockComponent {}
 
@@ -43,7 +42,7 @@ let env: TestEnvironment;
 describe('DraftApplyDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [
-      TestTranslocoModule,
+      getTestTranslocoModule(),
       RouterModule.forRoot(ROUTES),
       NoopAnimationsModule,
       TestOnlineStatusModule.forRoot()

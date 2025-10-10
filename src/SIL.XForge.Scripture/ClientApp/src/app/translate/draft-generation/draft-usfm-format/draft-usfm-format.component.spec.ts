@@ -22,7 +22,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
@@ -55,7 +55,7 @@ describe('DraftUsfmFormatComponent', () => {
       DraftUsfmFormatComponent,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       NoopAnimationsModule,
-      TestTranslocoModule,
+      getTestTranslocoModule(),
       TestOnlineStatusModule.forRoot(),
       SharedModule.forRoot()
     ],

@@ -18,7 +18,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { SFProjectService } from '../core/sf-project.service';
@@ -38,10 +38,10 @@ const mockedErrorHandler = mock(ErrorHandler);
 
 describe('JoinComponent', () => {
   configureTestingModule(() => ({
-    declarations: [JoinComponent],
     imports: [
+      JoinComponent,
       NoopAnimationsModule,
-      TestTranslocoModule,
+      getTestTranslocoModule(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       TestOnlineStatusModule.forRoot(),
       UICommonModule,

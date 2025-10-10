@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { NllbLanguage } from '../../nllb-languages';
 import { SupportedBackTranslationLanguagesDialogComponent } from './supported-back-translation-languages-dialog.component';
 
@@ -13,7 +13,7 @@ describe('SupportedBackTranslationLanguagesDialogComponent', () => {
   const language: NllbLanguage = { iso639_1: 'xy', iso639_2t: 'xyz', iso639_2b: 'xyz', name: 'TestLanguageName' };
 
   configureTestingModule(() => ({
-    imports: [TestTranslocoModule],
+    imports: [getTestTranslocoModule()],
     providers: [{ provide: I18nService, useMock: mockI18nService }]
   }));
 

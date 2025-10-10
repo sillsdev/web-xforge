@@ -7,7 +7,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { ProjectNotificationService } from '../../../core/project-notification.service';
@@ -29,7 +29,7 @@ describe('DraftHistoryListComponent', () => {
   configureTestingModule(() => ({
     imports: [
       NoopAnimationsModule,
-      TestTranslocoModule,
+      getTestTranslocoModule(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       RouterModule.forRoot([])
     ],

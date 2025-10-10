@@ -7,7 +7,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { EditNameDialogComponent, EditNameDialogResult } from './edit-name-dialog.component';
 
@@ -177,13 +177,12 @@ class TestEnvironment {
 }
 
 @NgModule({
-  imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule, EditNameDialogComponent]
+  imports: [UICommonModule, getTestTranslocoModule(), NoopAnimationsModule, EditNameDialogComponent]
 })
 class DialogTestModule {}
 
 @Component({
-  template: `<button (click)="openDialog()"></button>`,
-  standalone: false
+  template: `<button (click)="openDialog()"></button>`
 })
 class DialogOpenerComponent {
   publicName: string = 'Simon Says';

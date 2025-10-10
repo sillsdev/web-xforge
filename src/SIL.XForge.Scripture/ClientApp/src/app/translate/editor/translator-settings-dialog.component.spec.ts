@@ -26,8 +26,8 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import {
   ChildViewContainerComponent,
   configureTestingModule,
-  matDialogCloseDelay,
-  TestTranslocoModule
+  getTestTranslocoModule,
+  matDialogCloseDelay
 } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -313,7 +313,7 @@ describe('TranslatorSettingsDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [CommonModule, UICommonModule, TestTranslocoModule, NoticeComponent, TranslatorSettingsDialogComponent]
+  imports: [CommonModule, UICommonModule, getTestTranslocoModule(), NoticeComponent, TranslatorSettingsDialogComponent]
 })
 class DialogTestModule {}
 
