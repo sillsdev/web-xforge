@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { VerseRef } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
 import { BiblicalTerm } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
@@ -34,8 +34,8 @@ const mockedI18nService = mock(I18nService);
 
 describe('BiblicalTermDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, NoopAnimationsModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
-    providers: [{ provide: I18nService, useMock: mockedI18nService }]
+    imports: [DialogTestModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    providers: [{ provide: I18nService, useMock: mockedI18nService }, provideNoopAnimations()]
   }));
 
   it('should display the biblical term', fakeAsync(() => {

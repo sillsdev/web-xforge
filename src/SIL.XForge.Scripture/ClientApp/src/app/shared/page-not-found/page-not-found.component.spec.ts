@@ -1,7 +1,7 @@
 import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatIcon } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatProgressBar } from '@angular/material/progress-bar';
 import { ActivatedRoute, Router, UrlTree } from '@angular/router';
 import { anything, mock, strictEqual, verify, when } from 'ts-mockito';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
@@ -18,13 +18,7 @@ describe('PageNotFoundComponent', () => {
     } as UrlTree);
 
     return {
-      imports: [
-        PageNotFoundComponent,
-        getTestTranslocoModule(),
-        MatIcon,
-        MatProgressBarModule,
-        PageNotFoundHostComponent
-      ],
+      imports: [PageNotFoundComponent, getTestTranslocoModule(), MatIcon, MatProgressBar, PageNotFoundHostComponent],
       providers: [
         { provide: Router, useMock: mockedRouter },
         { provide: ActivatedRoute, useMock: mockedActivatedRoute }
