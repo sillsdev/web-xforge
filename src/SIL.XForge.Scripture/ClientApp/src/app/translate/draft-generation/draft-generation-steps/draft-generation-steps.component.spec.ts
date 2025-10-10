@@ -5,7 +5,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatCheckboxHarness } from '@angular/material/checkbox/testing';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
@@ -48,7 +48,7 @@ describe('DraftGenerationStepsComponent', () => {
   when(mockActivatedProjectService.projectId).thenReturn('project01');
 
   configureTestingModule(() => ({
-    imports: [getTestTranslocoModule(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), NoopAnimationsModule],
+    imports: [getTestTranslocoModule(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: DraftSourcesService, useMock: mockDraftSourceService },
@@ -62,7 +62,8 @@ describe('DraftGenerationStepsComponent', () => {
       { provide: UserService, useMock: mockUserService },
       { provide: DialogService, useMock: mockDialogService },
       provideHttpClient(withInterceptorsFromDi()),
-      provideHttpClientTesting()
+      provideHttpClientTesting(),
+      provideNoopAnimations()
     ]
   }));
 

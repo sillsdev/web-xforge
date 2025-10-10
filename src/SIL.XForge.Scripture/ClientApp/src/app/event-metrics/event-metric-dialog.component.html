@@ -1,5 +1,5 @@
 <ng-container *transloco="let t; read: 'event_metric_dialog'">
-  <mat-dialog [dir]="i18n.direction">
+  <div [dir]="i18n.direction">
     <h2 mat-dialog-title>
       {{ t("technical_details") }}
     </h2>
@@ -24,5 +24,5 @@
     <mat-dialog-actions [align]="'end'">
       <button mat-button id="close-btn" [mat-dialog-close]="'cancel'">{{ t("close") }}</button>
     </mat-dialog-actions>
-  </mat-dialog>
+  </div>
 </ng-container>

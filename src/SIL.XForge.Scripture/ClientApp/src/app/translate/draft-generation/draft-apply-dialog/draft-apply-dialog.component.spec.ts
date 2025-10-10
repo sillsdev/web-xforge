@@ -4,7 +4,7 @@ import { Component } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatCheckboxHarness } from '@angular/material/checkbox/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Route, RouterModule } from '@angular/router';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
@@ -41,12 +41,7 @@ let env: TestEnvironment;
 
 describe('DraftApplyDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      getTestTranslocoModule(),
-      RouterModule.forRoot(ROUTES),
-      NoopAnimationsModule,
-      TestOnlineStatusModule.forRoot()
-    ],
+    imports: [getTestTranslocoModule(), RouterModule.forRoot(ROUTES), TestOnlineStatusModule.forRoot()],
     providers: [
       { provide: SFUserProjectsService, useMock: mockedUserProjectsService },
       { provide: SFProjectService, useMock: mockedProjectService },
@@ -54,7 +49,7 @@ describe('DraftApplyDialogComponent', () => {
       { provide: TextDocService, useMock: mockedTextDocService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: MatDialogRef, useMock: mockedDialogRef },
-      { provide: MAT_DIALOG_DATA, useValue: { bookNum: 1, chapters: [1, 2] } }
+      { provide: MAT_DIALOG_DATA, useValue: { bookNum: 1, chapters: [1, 2, provideNoopAnimations()] } }
     ]
   }));
 

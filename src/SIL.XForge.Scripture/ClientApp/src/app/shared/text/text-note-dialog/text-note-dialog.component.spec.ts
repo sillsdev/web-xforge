@@ -2,7 +2,7 @@ import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import {
   ChildViewContainerComponent,
   configureTestingModule,
@@ -14,7 +14,8 @@ import { NoteDialogData, TextNoteDialogComponent, TextNoteType } from './text-no
 
 describe('TextNoteDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, NoopAnimationsModule]
+    imports: [DialogTestModule],
+    providers: [provideNoopAnimations()]
   }));
   let env: TestEnvironment;
 

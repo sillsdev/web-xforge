@@ -1,12 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, EventEmitter } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatRippleModule } from '@angular/material/core';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatButton } from '@angular/material/button';
+import { MatCard, MatCardContent, MatCardHeader } from '@angular/material/card';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatRipple } from '@angular/material/core';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -55,16 +55,19 @@ export interface ProjectStatus {
 @Component({
   selector: 'app-draft-sources',
   imports: [
-    MatButtonModule,
-    MatFormFieldModule,
-    MatIconModule,
+    MatButton,
+    MatFormField,
+    MatLabel,
+    MatIcon,
     XForgeCommonModule,
-    MatRippleModule,
-    MatCardModule,
+    MatRipple,
+    MatCard,
+    MatCardHeader,
+    MatCardContent,
     CommonModule,
     TranslocoModule,
-    MatCheckboxModule,
-    MatProgressSpinnerModule,
+    MatCheckbox,
+    MatProgressSpinner,
     LanguageCodesConfirmationComponent,
     TrainingDataMultiSelectComponent
   ],
