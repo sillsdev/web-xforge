@@ -2344,6 +2344,49 @@ public class MachineApiControllerTests
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
     }
 
+    [Test]
+    public async Task GetPretranslationChapterCountAsync_Success()
+    {
+        // Set up test environment
+        int[] chapterCount = [1, 2, 3, 4, 5, 6];
+        int bookNum = 40;
+        var env = new TestEnvironment();
+        env.MachineApiService.GetPretranslationChapterCountAsync(User01, Project01, bookNum, CancellationToken.None)
+            .Returns(Task.FromResult(chapterCount));
+
+        // SUT
+        ActionResult<int[]> actual = await env.Controller.GetPretranslationChapterCountAsync(
+            Project01,
+            bookNum,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+        Assert.AreEqual(chapterCount, (actual.Result as OkObjectResult)?.Value);
+        await env
+            .MachineApiService.Received(1)
+            .GetPretranslationChapterCountAsync(User01, Project01, bookNum, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task GetPretranslationChapterCountAsync_NoPermission()
+    {
+        // Set up test environment
+        const int bookNum = 40;
+        var env = new TestEnvironment();
+        env.MachineApiService.GetPretranslationChapterCountAsync(User01, Project01, bookNum, CancellationToken.None)
+            .Throws(new ForbiddenException());
+
+        // SUT
+        ActionResult<int[]> actual = await env.Controller.GetPretranslationChapterCountAsync(
+            Project01,
+            bookNum,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<ForbidResult>(actual.Result);
+    }
+
     private class TestEnvironment
     {
         private static readonly DateTime Timestamp = DateTime.UtcNow;
