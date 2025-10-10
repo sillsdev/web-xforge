@@ -1,9 +1,9 @@
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSelectChange, MatSelectModule } from '@angular/material/select';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressBar } from '@angular/material/progress-bar';
+import { MatSelect, MatSelectChange } from '@angular/material/select';
+import { MatTooltip } from '@angular/material/tooltip';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { cloneDeep } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { Delta } from 'quill';
@@ -56,11 +56,10 @@ describe('EditorDraftComponent', () => {
     imports: [
       HistoryRevisionFormatPipe,
       EditorDraftComponent,
-      MatProgressBarModule,
-      MatSelectModule,
-      MatIconModule,
-      MatTooltipModule,
-      NoopAnimationsModule,
+      MatProgressBar,
+      MatSelect,
+      MatIcon,
+      MatTooltip,
       SharedModule.forRoot(),
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
@@ -76,7 +75,8 @@ describe('EditorDraftComponent', () => {
       { provide: DialogService, useMock: mockDialogService },
       { provide: NoticeService, useMock: mockNoticeService },
       { provide: ErrorReportingService, useMock: mockErrorReportingService },
-      { provide: FeatureFlagService, useMock: mockFeatureFlagService }
+      { provide: FeatureFlagService, useMock: mockFeatureFlagService },
+      provideNoopAnimations()
     ]
   }));
 

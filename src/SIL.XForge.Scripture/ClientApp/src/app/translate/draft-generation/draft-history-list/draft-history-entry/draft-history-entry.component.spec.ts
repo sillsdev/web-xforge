@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -44,12 +44,7 @@ describe('DraftHistoryEntryComponent', () => {
   let fixture: ComponentFixture<DraftHistoryEntryComponent>;
 
   configureTestingModule(() => ({
-    imports: [
-      NoopAnimationsModule,
-      getTestTranslocoModule(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      RouterModule.forRoot([])
-    ],
+    imports: [getTestTranslocoModule(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), RouterModule.forRoot([])],
     providers: [
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
       { provide: I18nService, useMock: mockedI18nService },
@@ -58,7 +53,8 @@ describe('DraftHistoryEntryComponent', () => {
       { provide: TrainingDataService, useMock: mockedTrainingDataService },
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: FeatureFlagService, useMock: mockedFeatureFlagsService },
-      { provide: DraftOptionsService, useMock: mockedDraftOptionsService }
+      { provide: DraftOptionsService, useMock: mockedDraftOptionsService },
+      provideNoopAnimations()
     ]
   }));
 

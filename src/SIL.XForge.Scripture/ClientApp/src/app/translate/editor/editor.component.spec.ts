@@ -8,7 +8,7 @@ import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { MatTooltipHarness } from '@angular/material/tooltip/testing';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Params, Route, Router, RouterModule } from '@angular/router';
 import {
   createRange,
@@ -171,7 +171,6 @@ describe('EditorComponent', () => {
       BiblicalTermsComponent,
       CopyrightBannerComponent,
       DraftPreviewBooksComponent,
-      NoopAnimationsModule,
       RouterModule.forRoot(ROUTES),
       SharedModule.forRoot(),
       UICommonModule,
@@ -204,7 +203,8 @@ describe('EditorComponent', () => {
       { provide: TabMenuService, useValue: EditorTabMenuService },
       { provide: PermissionsService, useMock: mockedPermissionsService },
       { provide: LynxWorkspaceService, useMock: mockedLynxWorkspaceService },
-      { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
+      provideNoopAnimations()
     ]
   }));
 

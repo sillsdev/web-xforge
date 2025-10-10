@@ -1,6 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { VerseRef } from '@sillsdev/scripture';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { BiblicalTerm, getBiblicalTermDocId } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
@@ -56,7 +56,6 @@ const mockedUserService = mock(UserService);
 describe('BiblicalTermsComponent', () => {
   configureTestingModule(() => ({
     imports: [
-      NoopAnimationsModule,
       TestOnlineStatusModule.forRoot(),
       getTestTranslocoModule(),
       UICommonModule,
@@ -67,7 +66,8 @@ describe('BiblicalTermsComponent', () => {
       { provide: MatDialog, useMock: mockedMatDialog },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      provideNoopAnimations()
     ]
   }));
 

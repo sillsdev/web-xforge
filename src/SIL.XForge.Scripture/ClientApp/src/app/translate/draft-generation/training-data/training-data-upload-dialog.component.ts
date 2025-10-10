@@ -1,10 +1,16 @@
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, Inject, ViewChild } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCheckbox, MatCheckboxModule } from '@angular/material/checkbox';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatButton } from '@angular/material/button';
+import { MatCheckbox } from '@angular/material/checkbox';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogActions,
+  MatDialogContent,
+  MatDialogRef,
+  MatDialogTitle
+} from '@angular/material/dialog';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslocoModule } from '@ngneat/transloco';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -32,11 +38,13 @@ export interface TrainingDataFileUpload {
   templateUrl: './training-data-upload-dialog.component.html',
   imports: [
     CommonModule,
-    MatButtonModule,
-    MatCheckboxModule,
-    MatDialogModule,
-    MatIconModule,
-    MatProgressSpinnerModule,
+    MatButton,
+    MatCheckbox,
+    MatDialogTitle,
+    MatDialogContent,
+    MatDialogActions,
+    MatIcon,
+    MatProgressSpinner,
     SharedModule,
     TranslocoModule
   ],

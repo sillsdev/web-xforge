@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { VerseRef } from '@sillsdev/scripture';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -34,7 +34,6 @@ describe('CheckingTextComponent', () => {
   configureTestingModule(() => ({
     imports: [
       CheckingTextComponent,
-      NoopAnimationsModule,
       SharedModule.forRoot(),
       UICommonModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
@@ -45,7 +44,8 @@ describe('CheckingTextComponent', () => {
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: DialogService, useMock: mockedDialogService }
+      { provide: DialogService, useMock: mockedDialogService },
+      provideNoopAnimations()
     ]
   }));
 

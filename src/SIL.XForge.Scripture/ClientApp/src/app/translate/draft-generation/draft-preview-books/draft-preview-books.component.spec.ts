@@ -3,7 +3,7 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { MatMenuHarness } from '@angular/material/menu/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
@@ -37,7 +37,7 @@ describe('DraftPreviewBooks', () => {
   let env: TestEnvironment;
 
   configureTestingModule(() => ({
-    imports: [getTestTranslocoModule(), NoopAnimationsModule],
+    imports: [getTestTranslocoModule()],
     providers: [
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: SFProjectService, useMock: mockedProjectService },
@@ -46,7 +46,8 @@ describe('DraftPreviewBooks', () => {
       { provide: DialogService, useMock: mockedDialogService },
       { provide: TextDocService, useMock: mockedTextService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
-      { provide: Router, useMock: mockedRouter }
+      { provide: Router, useMock: mockedRouter },
+      provideNoopAnimations()
     ]
   }));
 

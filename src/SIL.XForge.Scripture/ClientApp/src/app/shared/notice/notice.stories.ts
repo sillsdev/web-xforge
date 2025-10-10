@@ -1,4 +1,4 @@
-import { MatButtonModule } from '@angular/material/button';
+import { MatButton } from '@angular/material/button';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { NoticeComponent } from '../../shared/notice/notice.component';
 import { NoticeMode, noticeModes } from './notice.types';
@@ -22,7 +22,7 @@ export default {
   component: NoticeComponent,
   decorators: [
     moduleMetadata({
-      imports: [MatButtonModule]
+      imports: [MatButton]
     })
   ],
   args: defaultArgs,

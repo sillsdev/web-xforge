@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
@@ -27,12 +27,7 @@ const mockedFeatureFlagsService = mock(FeatureFlagService);
 
 describe('DraftHistoryListComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      NoopAnimationsModule,
-      getTestTranslocoModule(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      RouterModule.forRoot([])
-    ],
+    imports: [getTestTranslocoModule(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), RouterModule.forRoot([])],
     providers: [
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
@@ -40,7 +35,8 @@ describe('DraftHistoryListComponent', () => {
       { provide: ProjectNotificationService, useMock: mockedProjectNotificationService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: FeatureFlagService, useMock: mockedFeatureFlagsService }
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagsService },
+      provideNoopAnimations()
     ]
   }));
 

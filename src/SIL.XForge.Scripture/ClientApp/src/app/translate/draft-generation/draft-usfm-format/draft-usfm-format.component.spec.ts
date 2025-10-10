@@ -2,7 +2,7 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Location } from '@angular/common';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatRadioButtonHarness } from '@angular/material/radio/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
@@ -54,7 +54,6 @@ describe('DraftUsfmFormatComponent', () => {
     imports: [
       DraftUsfmFormatComponent,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      NoopAnimationsModule,
       getTestTranslocoModule(),
       TestOnlineStatusModule.forRoot(),
       SharedModule.forRoot()
@@ -71,7 +70,8 @@ describe('DraftUsfmFormatComponent', () => {
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: I18nService, useMock: mockI18nService },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: DialogService, useMock: mockedDialogService }
+      { provide: DialogService, useMock: mockedDialogService },
+      provideNoopAnimations()
     ]
   }));
 

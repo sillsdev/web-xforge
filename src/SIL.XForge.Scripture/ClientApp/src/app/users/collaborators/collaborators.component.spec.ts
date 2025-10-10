@@ -4,7 +4,7 @@ import { DebugElement, getDebugNode } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatMenuHarness } from '@angular/material/menu/testing';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -47,7 +47,6 @@ describe('CollaboratorsComponent', () => {
   configureTestingModule(() => ({
     imports: [
       CollaboratorsComponent,
-      NoopAnimationsModule,
       UICommonModule,
       getTestTranslocoModule(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
@@ -62,7 +61,8 @@ describe('CollaboratorsComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: DialogService, useMock: mockedDialogService },
-      emptyHammerLoader
+      emptyHammerLoader,
+      provideNoopAnimations()
     ]
   }));
 

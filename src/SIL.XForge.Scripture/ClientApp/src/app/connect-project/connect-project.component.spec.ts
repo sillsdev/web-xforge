@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { DebugElement, ErrorHandler } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -48,7 +48,6 @@ describe('ConnectProjectComponent', () => {
       ConnectProjectComponent,
       ProjectSelectComponent,
       SyncProgressComponent,
-      NoopAnimationsModule,
       UICommonModule,
       getTestTranslocoModule(),
       TestOnlineStatusModule.forRoot(),
@@ -62,7 +61,8 @@ describe('ConnectProjectComponent', () => {
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ErrorHandler, useMock: mockedErrorHandler },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      provideNoopAnimations()
     ]
   }));
 

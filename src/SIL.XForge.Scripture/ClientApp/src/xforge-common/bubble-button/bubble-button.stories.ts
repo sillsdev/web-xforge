@@ -1,5 +1,5 @@
 import '!style-loader!css-loader!sass-loader!./bubble-button.scss';
-import { MatButtonModule } from '@angular/material/button';
+import { MatButton } from '@angular/material/button';
 import { componentWrapperDecorator, Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { BubbleButtonDirective } from './bubble-button.directive';
 
@@ -8,7 +8,7 @@ export default {
 
   decorators: [
     moduleMetadata({
-      imports: [MatButtonModule],
+      imports: [MatButton],
       declarations: [BubbleButtonDirective]
     }),
     componentWrapperDecorator(
@@ -26,19 +26,19 @@ export default {
 
 type Story = StoryObj;
 
-export const MatRaisedButton: Story = {
+export const NgMatRaisedButton: Story = {
   render: () => ({ template: `<button mat-raised-button sfBubbleButton color="primary">Mat raised button</button>` })
 };
 
-export const MatFlatButton: Story = {
+export const NgMatFlatButton: Story = {
   render: () => ({ template: `<button mat-flat-button sfBubbleButton color="primary">Mat flat button</button>` })
 };
 
-export const MatStrokedButton: Story = {
+export const NgMatStrokedButton: Story = {
   render: () => ({ template: `<button mat-stroked-button sfBubbleButton color="primary">Mat stroked button</button>` })
 };
 
-export const MatButton: Story = {
+export const NgMatButton: Story = {
   render: () => ({ template: `<button mat-button sfBubbleButton color="primary">Mat button</button>` })
 };
 

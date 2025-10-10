@@ -1,10 +1,10 @@
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { DebugElement, getDebugNode, NgModule } from '@angular/core';
+import { DebugElement, getDebugNode } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
 import { escapeRegExp, merge } from 'lodash-es';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
@@ -26,7 +26,6 @@ import { QueryFilter, QueryParameters } from '../query-parameters';
 import { TestRealtimeService } from '../test-realtime.service';
 import { configureTestingModule, emptyHammerLoader, getTestTranslocoModule } from '../test-utils';
 import { TypeRegistry } from '../type-registry';
-import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
 import { SaDeleteDialogComponent } from './sa-delete-dialog.component';
 import { SaUsersComponent } from './sa-users.component';
@@ -40,8 +39,6 @@ describe('SaUsersComponent', () => {
     imports: [
       SaUsersComponent,
       RouterModule.forRoot([]),
-      UICommonModule,
-      DialogTestModule,
       getTestTranslocoModule(),
       TestRealtimeModule.forRoot(new TypeRegistry([UserDoc, TestProjectDoc], [FileType.Audio], [])),
       AvatarComponent
@@ -52,7 +49,8 @@ describe('SaUsersComponent', () => {
       { provide: ProjectService, useMock: mockedProjectService },
       emptyHammerLoader,
       provideHttpClient(withInterceptorsFromDi()),
-      provideHttpClientTesting()
+      provideHttpClientTesting(),
+      provideNoopAnimations()
     ]
   }));
 
@@ -160,11 +158,6 @@ class TestProjectDoc extends ProjectDoc {
 
   readonly taskNames: string[] = [];
 }
-
-@NgModule({
-  imports: [NoopAnimationsModule]
-})
-class DialogTestModule {}
 
 class TestEnvironment {
   readonly component: SaUsersComponent;

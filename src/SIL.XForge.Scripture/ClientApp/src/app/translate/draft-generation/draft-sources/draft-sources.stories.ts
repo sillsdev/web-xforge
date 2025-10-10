@@ -1,5 +1,4 @@
 import { DestroyRef } from '@angular/core';
-import { MatDialogModule } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { expect, userEvent, waitFor, within } from '@storybook/test';
@@ -155,7 +154,7 @@ export default {
   component: DraftSourcesComponent,
   decorators: [
     moduleMetadata({
-      imports: [MatDialogModule],
+      imports: [],
       providers: [
         { provide: ActivatedProjectService, useValue: instance(mockedActivatedProjectService) },
         { provide: DestroyRef, useValue: instance(mockedDestroyRef) },

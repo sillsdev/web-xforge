@@ -1,7 +1,7 @@
 import { Component, DebugElement, NgModule, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
@@ -33,7 +33,6 @@ describe('ShareControlComponent', () => {
     imports: [
       TestModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      NoopAnimationsModule,
       TestOnlineStatusModule.forRoot(),
       SharedModule.forRoot(),
       TestHostComponent
@@ -42,7 +41,8 @@ describe('ShareControlComponent', () => {
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: UserService, useMock: mockedUserService }
+      { provide: UserService, useMock: mockedUserService },
+      provideNoopAnimations()
     ]
   }));
 

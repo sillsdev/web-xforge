@@ -8,7 +8,7 @@ import { MatSelect } from '@angular/material/select';
 import { MatSlideToggleHarness } from '@angular/material/slide-toggle/testing';
 import { MatSlider } from '@angular/material/slider';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
@@ -42,13 +42,8 @@ import {
 
 describe('TranslatorSettingsDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      DialogTestModule,
-      NoopAnimationsModule,
-      TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
-    ],
-    providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }]
+    imports: [DialogTestModule, TestOnlineStatusModule.forRoot(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }, provideNoopAnimations()]
   }));
 
   it('update confidence threshold', fakeAsync(() => {

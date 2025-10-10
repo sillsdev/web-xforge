@@ -6,7 +6,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { VerseRef } from '@sillsdev/scripture';
 import { CookieService } from 'ngx-cookie-service';
 import { Delta } from 'quill';
@@ -78,7 +78,8 @@ describe('QuestionDialogComponent', () => {
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: FileService, useMock: mockedFileService },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      provideNoopAnimations()
     ]
   }));
 
@@ -577,14 +578,7 @@ describe('QuestionDialogComponent', () => {
 
 @NgModule({
   exports: [ScriptureChooserDialogComponent],
-  imports: [
-    CommonModule,
-    UICommonModule,
-    CheckingModule,
-    getTestTranslocoModule(),
-    NoopAnimationsModule,
-    ScriptureChooserDialogComponent
-  ],
+  imports: [CommonModule, UICommonModule, CheckingModule, getTestTranslocoModule(), ScriptureChooserDialogComponent],
   providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
 })
 class DialogTestModule {}

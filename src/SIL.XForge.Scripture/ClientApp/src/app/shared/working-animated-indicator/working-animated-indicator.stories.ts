@@ -1,4 +1,4 @@
-import { MatIconModule } from '@angular/material/icon';
+import { MatIcon } from '@angular/material/icon';
 import { componentWrapperDecorator, Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { WorkingAnimatedIndicatorComponent } from './working-animated-indicator.component';
 
@@ -7,7 +7,7 @@ export default {
   component: WorkingAnimatedIndicatorComponent,
   decorators: [
     moduleMetadata({
-      imports: [MatIconModule]
+      imports: [MatIcon]
     }),
     componentWrapperDecorator(
       (story: string) => `

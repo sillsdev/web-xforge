@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
+import { MatIcon, MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import { lynxIcons } from './svg-icons/lynx-icons';
 
@@ -16,8 +16,8 @@ const BIBLICAL_TERMS_ICON =
   `3.604 3.632q1.287 1.301 1.745 2.116.543 1.001.543 2.417z"/></svg>`;
 
 @NgModule({
-  imports: [MatIconModule],
-  exports: [MatIconModule]
+  imports: [MatIcon],
+  exports: [MatIcon]
 })
 export class CustomIconModule {
   constructor(iconRegistry: MatIconRegistry, sanitizer: DomSanitizer) {
