@@ -35,7 +35,7 @@ export async function generateDraft(
 
   await enableDeveloperMode(page, { closeMenu: true });
 
-  await user.click(page.getByRole('link', { name: 'Generate draft beta' }));
+  await user.click(page.getByRole('link', { name: 'Generate draft' }));
   await expect(page.getByRole('heading', { name: 'Generate translation drafts' })).toBeVisible();
   await screenshot(page, { pageName: 'generate_draft', ...context });
 
@@ -197,6 +197,10 @@ export async function generateDraft(
     finishing = false;
   }
   if (finishing) await expect(page.getByText('Draft is Finishing')).not.toBeVisible({ timeout: 15_000 });
+
+  // Select formatting options
+  await user.click(page.getByRole('button', { name: 'Formatting options' }));
+  await user.click(page.getByRole('button', { name: 'Save' }));
 
   // Preview and apply chapter 1
   await user.click(page.getByRole('radio', { name: bookToDraft }));
