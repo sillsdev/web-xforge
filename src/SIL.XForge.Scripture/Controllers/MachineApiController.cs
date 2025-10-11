@@ -175,6 +175,57 @@ public class MachineApiController : ControllerBase
     }
 
     /// <summary>
+    /// Gets a build job and returns it exactly as Serval provides it.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="buildId">The build identifier.</param>
+    /// <param name="minRevision">The minimum revision.</param>
+    /// <param name="preTranslate"><c>true</c> if the build is a pre-translation build.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">The build is returned.</response>
+    /// <response code="403">You do not have permission to retrieve builds for this project.</response>
+    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
+    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
+    [HttpGet(MachineApi.GetRawBuild)]
+    public async Task<ActionResult<TranslationBuild?>> GetRawBuildAsync(
+        string sfProjectId,
+        string buildId,
+        [FromQuery] int? minRevision,
+        [FromQuery] bool preTranslate,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
+            TranslationBuild build = await _machineApiService.GetRawBuildAsync(
+                _userAccessor.UserId,
+                sfProjectId,
+                buildId,
+                minRevision,
+                preTranslate,
+                isServalAdmin,
+                cancellationToken
+            );
+
+            return Ok(build);
+        }
+        catch (BrokenCircuitException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+    }
+
+    /// <summary>
     /// Gets the previous and current builds for a project.
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>

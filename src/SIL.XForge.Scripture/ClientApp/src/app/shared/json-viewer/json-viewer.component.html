@@ -1,0 +1,43 @@
+@for (token of tokens; track $index) {
+  @switch (token.type) {
+    @case ("indent") {
+      <span class="json-indent">{{ token.value }}</span>
+    }
+    @case ("key") {
+      <span class="json-key">{{ token.value }}</span>
+    }
+    @case ("colon") {
+      <span class="json-colon">{{ token.value }} </span>
+    }
+    @case ("string") {
+      <span class="json-string">{{ token.value }}</span>
+    }
+    @case ("number") {
+      <span class="json-number">{{ token.value }}</span>
+    }
+    @case ("boolean") {
+      <span class="json-boolean">{{ token.value }}</span>
+    }
+    @case ("null") {
+      <span class="json-null">{{ token.value }}</span>
+    }
+    @case ("brace-open") {
+      <span class="json-brace">{{ token.value }}</span>
+    }
+    @case ("brace-close") {
+      <span class="json-brace">{{ token.value }}</span>
+    }
+    @case ("bracket-open") {
+      <span class="json-bracket">{{ token.value }}</span>
+    }
+    @case ("bracket-close") {
+      <span class="json-bracket">{{ token.value }}</span>
+    }
+    @case ("comma") {
+      <span class="json-comma">{{ token.value }}</span>
+    }
+    @case ("newline") {
+      <br />
+    }
+  }
+}

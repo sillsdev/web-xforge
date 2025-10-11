@@ -111,37 +111,56 @@
   </table>
 </div>
 
-<h2>Last Draft Settings</h2>
-<h3>Training books</h3>
-@for (book of trainingBooksByProject; track book.source) {
-  <div class="training">
-    <p>{{ book.source }}</p>
-    <p class="training-source-range">{{ book.scriptureRange }}</p>
-  </div>
-} @empty {
-  <p class="training">None</p>
-}
-<h3>Training data files</h3>
-<p>{{ trainingFiles.join(", ") || "None" }}</p>
-<h3>Translation books</h3>
-@for (book of translationBooksByProject; track book.source) {
-  <div class="translation">
-    <p>{{ book.source }}</p>
-    <p class="translation-range">{{ book.scriptureRange }}</p>
-  </div>
-} @empty {
-  <p class="translation">None</p>
+@if (rawLastCompletedBuild?.executionData?.warnings?.length > 0) {
+  <h2>Serval warnings from last build</h2>
+  @for (warning of rawLastCompletedBuild.executionData.warnings; track $index) {
+    <p>
+      <app-notice icon="warning" mode="fill-dark" type="warning">{{ warning }}</app-notice>
+    </p>
+  }
 }
 
-@if (draftJob$ | async; as draftJob) {
-  <h3>Diagnostic Information</h3>
-  <app-draft-information [draftJob]="draftJob"></app-draft-information>
-}
+<h2>Additional Information</h2>
 
-<h2>Raw Draft Configuration</h2>
-<pre class="raw-draft-config">
-@for (key of keys(draftConfig ?? {}); track key) {{{ key }}: <strong>{{
-    key === 'servalConfig' ? draftConfig![key] : stringify(draftConfig![key])
-  }}</strong>
-}
-</pre>
+<mat-accordion>
+  <mat-expansion-panel>
+    <mat-expansion-panel-header>Last Draft Settings</mat-expansion-panel-header>
+    <h3>Training books</h3>
+    @for (book of trainingBooksByProject; track book.source) {
+      <div class="training">
+        <p>{{ book.source }}</p>
+        <p class="training-source-range">{{ book.scriptureRange }}</p>
+      </div>
+    } @empty {
+      <p class="training">None</p>
+    }
+    <h3>Training data files</h3>
+    <p>{{ trainingFiles.join(", ") || "None" }}</p>
+    <h3>Translation books</h3>
+    @for (book of translationBooksByProject; track book.source) {
+      <div class="translation">
+        <p>{{ book.source }}</p>
+        <p class="translation-range">{{ book.scriptureRange }}</p>
+      </div>
+    } @empty {
+      <p class="translation">None</p>
+    }
+  </mat-expansion-panel>
+
+  @if (draftJob$ | async; as draftJob) {
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>Diagnostic Information</mat-expansion-panel-header>
+      <app-draft-information [draftJob]="draftJob"></app-draft-information>
+    </mat-expansion-panel>
+  }
+
+  <mat-expansion-panel>
+    <mat-expansion-panel-header>Raw Scripture Forge Draft Configuration</mat-expansion-panel-header>
+    <app-json-viewer [data]="draftConfig ?? {}"></app-json-viewer>
+  </mat-expansion-panel>
+
+  <mat-expansion-panel>
+    <mat-expansion-panel-header>Raw Serval Build Info</mat-expansion-panel-header>
+    <app-json-viewer [data]="rawLastCompletedBuild ?? {}"></app-json-viewer>
+  </mat-expansion-panel>
+</mat-accordion>
