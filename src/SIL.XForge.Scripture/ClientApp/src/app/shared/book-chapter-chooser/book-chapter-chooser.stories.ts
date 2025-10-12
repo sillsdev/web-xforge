@@ -3,7 +3,6 @@ import { Meta, StoryFn } from '@storybook/angular';
 import { expect, userEvent, within } from '@storybook/test';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { arrayOfIntsFromOne } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { getOverlay } from '../../../../.storybook/util/mat-dialog-launch';
 import { BookChapterChooserComponent } from './book-chapter-chooser.component';
 
@@ -22,7 +21,7 @@ const meta: Meta = {
 export default meta;
 
 const Template: StoryFn = args => ({
-  moduleMetadata: { imports: [CommonModule, UICommonModule, I18nStoryModule] },
+  moduleMetadata: { imports: [CommonModule, I18nStoryModule] },
   props: args
 });
 

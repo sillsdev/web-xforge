@@ -5,7 +5,6 @@ import { ComponentFixture, fakeAsync, flush, inject, TestBed, tick } from '@angu
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { DeleteProjectDialogComponent } from './delete-project-dialog.component';
 
 describe('DeleteProjectDialogComponent', () => {
@@ -103,7 +102,7 @@ describe('DeleteProjectDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [UICommonModule, getTestTranslocoModule(), DeleteProjectDialogComponent],
+  imports: [getTestTranslocoModule(), DeleteProjectDialogComponent],
   providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting(), provideNoopAnimations()]
 })
 class DialogTestModule {}

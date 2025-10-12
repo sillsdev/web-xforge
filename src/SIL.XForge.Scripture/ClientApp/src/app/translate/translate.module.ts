@@ -5,7 +5,6 @@ import { AngularSplitModule } from 'angular-split';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { L10nPercentPipe } from 'xforge-common/l10n-percent.pipe';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { CopyrightBannerComponent } from '../shared/copyright-banner/copyright-banner.component';
 import { SFTabsModule } from '../shared/sf-tab-group';
@@ -37,7 +36,6 @@ import { TranslateRoutingModule } from './translate-routing.module';
     TranslateRoutingModule,
     CommonModule,
     SharedModule,
-    UICommonModule,
     XForgeCommonModule,
     TranslocoModule,
     TranslocoMarkupModule,

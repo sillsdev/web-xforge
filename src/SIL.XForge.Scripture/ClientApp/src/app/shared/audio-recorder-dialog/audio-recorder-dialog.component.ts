@@ -11,7 +11,10 @@ import {
   ViewChild
 } from '@angular/core';
 import { ControlValueAccessor } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoModule } from '@ngneat/transloco';
 import { interval, Observable, Subscription, timer } from 'rxjs';
 import { map, take } from 'rxjs/operators';
@@ -23,7 +26,6 @@ import {
   BrowserIssue,
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { audioRecordingMimeType, objectId } from 'xforge-common/utils';
 import { SingleButtonAudioPlayerComponent } from '../../checking/checking/single-button-audio-player/single-button-audio-player.component';
@@ -50,7 +52,15 @@ export interface AudioRecorderDialogResult {
   selector: 'app-audio-recorder-dialog',
   templateUrl: './audio-recorder-dialog.component.html',
   styleUrl: './audio-recorder-dialog.component.scss',
-  imports: [UICommonModule, CommonModule, SharedModule, TranslocoModule]
+  imports: [
+    MatTooltipModule,
+    MatButtonModule,
+    MatIconModule,
+    MatDialogModule,
+    CommonModule,
+    SharedModule,
+    TranslocoModule
+  ]
 })
 export class AudioRecorderDialogComponent implements ControlValueAccessor, OnInit, OnDestroy {
   @ViewChild(SingleButtonAudioPlayerComponent) audioPlayer?: SingleButtonAudioPlayerComponent;

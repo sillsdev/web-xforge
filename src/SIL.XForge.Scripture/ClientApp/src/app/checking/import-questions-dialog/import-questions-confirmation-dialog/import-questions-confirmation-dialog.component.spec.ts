@@ -5,7 +5,6 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
 import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import {
   EditedQuestion,
   ImportQuestionsConfirmationDialogComponent,
@@ -70,7 +69,7 @@ describe('ImportQuestionsConfirmationDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [UICommonModule, getTestTranslocoModule(), ImportQuestionsConfirmationDialogComponent],
+  imports: [getTestTranslocoModule(), ImportQuestionsConfirmationDialogComponent],
   providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
 })
 class DialogTestModule {}

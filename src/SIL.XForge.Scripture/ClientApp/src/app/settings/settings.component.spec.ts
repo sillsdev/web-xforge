@@ -29,7 +29,6 @@ import { TestOnlineStatusService } from 'xforge-common/test-online-status.servic
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
@@ -62,7 +61,6 @@ describe('SettingsComponent', () => {
     imports: [
       SettingsComponent,
       RouterModule.forRoot(ROUTES),
-      UICommonModule,
       getTestTranslocoModule(),
       TranslocoMarkupModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),

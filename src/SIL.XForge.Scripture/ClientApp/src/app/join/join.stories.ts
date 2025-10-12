@@ -14,7 +14,6 @@ import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectService } from '../core/sf-project.service';
 import { NoticeComponent } from '../shared/notice/notice.component';
 import { JoinComponent } from './join.component';
@@ -70,7 +69,7 @@ const meta: Meta = {
   },
   decorators: [
     moduleMetadata({
-      imports: [UICommonModule, CommonModule, I18nStoryModule, NoticeComponent],
+      imports: [CommonModule, I18nStoryModule, NoticeComponent],
       declarations: [GenericDialogComponent],
       providers: [
         { provide: ActivatedRoute, useValue: instance(mockedActivatedRoute) },
