@@ -3,7 +3,6 @@ import {
   Directive,
   Input,
   ModuleWithProviders,
-  NgModule,
   TemplateRef,
   ViewChild,
   ViewContainerRef
@@ -426,12 +425,6 @@ export class ChildViewContainerComponent {
     return this.viewContainer.viewContainerRef;
   }
 }
-
-@NgModule({
-  imports: [ChildViewContainerComponent, ViewContainerDirective],
-  exports: [ViewContainerDirective]
-})
-export class ChildViewContainerModule {}
 
 export function arrayOfIntsFromZero(size: number): number[] {
   return Array.from({ length: size }, (_, i) => i);
