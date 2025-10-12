@@ -18,9 +18,9 @@ language js
 ## Basic example
 
 ```ts
-import { UICommonModule } from "../../xforge-common/ui-common.module";
+import { UserService } from "../../xforge-common/user.service";
 ```
 
 ```ts
-import { UICommonModule } from "xforge-common/ui-common.module";
+import { UserService } from "xforge-common/user.service";
 ```

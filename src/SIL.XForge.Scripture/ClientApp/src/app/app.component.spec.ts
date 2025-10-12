@@ -2,6 +2,9 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { Location } from '@angular/common';
 import { Component, DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Route, Router, RouterModule } from '@angular/router';
@@ -35,7 +38,6 @@ import { TestOnlineStatusService } from 'xforge-common/test-online-status.servic
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { AppComponent } from './app.component';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
@@ -89,13 +91,15 @@ describe('AppComponent', () => {
     declarations: [AppComponent],
     imports: [
       NavigationComponent,
-      UICommonModule,
       RouterModule.forRoot(ROUTES),
       getTestTranslocoModule(),
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       AvatarComponent,
-      GlobalNoticesComponent
+      GlobalNoticesComponent,
+      MatMenuModule,
+      MatIconModule,
+      MatTooltipModule
     ],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },

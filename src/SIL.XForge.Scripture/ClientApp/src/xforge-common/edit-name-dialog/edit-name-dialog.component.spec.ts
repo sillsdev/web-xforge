@@ -8,7 +8,6 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { EditNameDialogComponent, EditNameDialogResult } from './edit-name-dialog.component';
 
 describe('EditNameDialogComponent', () => {
@@ -177,7 +176,7 @@ class TestEnvironment {
 }
 
 @NgModule({
-  imports: [UICommonModule, getTestTranslocoModule(), EditNameDialogComponent]
+  imports: [getTestTranslocoModule(), EditNameDialogComponent]
 })
 class DialogTestModule {}
 
