@@ -62,8 +62,7 @@ export default {
   component: SFTabGroupStoriesComponent,
   decorators: [
     moduleMetadata({
-      imports: [SFTabsModule],
-      declarations: [SFTabGroupStoriesComponent],
+      imports: [SFTabsModule, SFTabGroupStoriesComponent],
       providers: [
         TabStateService<string, TabInfo<string>>,
         {

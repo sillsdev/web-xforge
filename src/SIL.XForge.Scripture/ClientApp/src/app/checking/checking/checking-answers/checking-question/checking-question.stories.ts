@@ -67,9 +67,13 @@ const meta: Meta<CheckingQuestionComponent> = {
   component: CheckingQuestionComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, I18nStoryModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
-      providers: [{ provide: SFProjectService, useValue: instance(mockedProjectService) }],
-      declarations: [SingleButtonAudioPlayerComponent]
+      imports: [
+        CommonModule,
+        I18nStoryModule,
+        TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+        SingleButtonAudioPlayerComponent
+      ],
+      providers: [{ provide: SFProjectService, useValue: instance(mockedProjectService) }]
     })
   ],
   args: { questionDoc: instance(questionDoc) }

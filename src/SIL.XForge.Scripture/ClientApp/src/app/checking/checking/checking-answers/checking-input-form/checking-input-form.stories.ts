@@ -13,8 +13,7 @@ const meta: Meta<CheckingInputFormComponent> = {
   component: CheckingInputFormComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, AutofocusDirective, I18nStoryModule],
-      declarations: [TextAndAudioComponent, AttachAudioComponent]
+      imports: [CommonModule, AutofocusDirective, I18nStoryModule, TextAndAudioComponent, AttachAudioComponent]
     })
   ]
 };

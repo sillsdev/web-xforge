@@ -44,7 +44,6 @@ const meta: Meta = {
 export default meta;
 
 export const DraftApplyDialog = matDialogStory(DraftApplyDialogComponent, {
-  standaloneComponent: true,
   imports: [RouterModule.forChild([{ path: 'projects', component: EmptyComponent }])],
   providers: [
     { provide: ActivatedRoute, useValue: instance(mockActivatedRoute) },

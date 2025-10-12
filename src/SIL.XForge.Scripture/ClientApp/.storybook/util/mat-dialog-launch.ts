@@ -24,7 +24,6 @@ export interface MatDialogStoryConfig {
   imports?: any[];
   declarations?: any[];
   providers?: Provider[];
-  standaloneComponent?: boolean;
 }
 
 @Component({ template: '' })
@@ -56,8 +55,8 @@ export class MatDialogLaunchComponent implements OnInit {
 export function matDialogStory(component: any, config?: MatDialogStoryConfig): StoryFn {
   const story: StoryFn = args => ({
     moduleMetadata: {
-      imports: [MatDialogModule, CommonModule, TranslocoModule, ...(config?.imports ?? [])],
-      declarations: [...(config?.standaloneComponent ? [] : [component]), ...(config?.declarations ?? [])],
+      imports: [MatDialogModule, CommonModule, TranslocoModule, component, ...(config?.imports ?? [])],
+      declarations: [...(config?.declarations ?? [])],
       providers: [
         { provide: MAT_DIALOG_DATA, useValue: args.data },
         { provide: COMPONENT_UNDER_TEST, useValue: component },

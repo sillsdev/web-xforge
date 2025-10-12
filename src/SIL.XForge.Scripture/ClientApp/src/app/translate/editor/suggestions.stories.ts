@@ -8,8 +8,7 @@ const meta: Meta<SuggestionsComponent> = {
   component: SuggestionsComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule],
-      declarations: [SuggestionsComponent]
+      imports: [CommonModule, SuggestionsComponent]
     })
   ]
 };

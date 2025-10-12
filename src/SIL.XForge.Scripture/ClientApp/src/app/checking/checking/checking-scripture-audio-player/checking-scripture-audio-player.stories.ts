@@ -37,8 +37,7 @@ const meta: Meta = {
   },
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, I18nStoryModule],
-      declarations: [AudioPlayerComponent, AudioTimePipe],
+      imports: [CommonModule, I18nStoryModule, AudioPlayerComponent, AudioTimePipe],
       providers: [
         {
           provide: SFProjectService,

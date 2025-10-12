@@ -33,8 +33,7 @@ export default {
 
 const Template: StoryFn = args => ({
   moduleMetadata: {
-    imports: [CommonModule, I18nStoryModule],
-    declarations: [ErrorDialogComponent],
+    imports: [CommonModule, I18nStoryModule, ErrorDialogComponent],
     providers: [
       { provide: MAT_DIALOG_DATA, useValue: { data: args.dialogData } },
       { provide: STORY_ARGS, useValue: args }

@@ -69,8 +69,7 @@ const meta: Meta = {
   },
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, I18nStoryModule, NoticeComponent],
-      declarations: [GenericDialogComponent],
+      imports: [CommonModule, I18nStoryModule, NoticeComponent, GenericDialogComponent],
       providers: [
         { provide: ActivatedRoute, useValue: instance(mockedActivatedRoute) },
         {

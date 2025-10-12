@@ -96,8 +96,7 @@ export default {
 
 const dialogStoryConfig: MatDialogStoryConfig = {
   imports: [I18nStoryModule],
-  providers: [DialogService, NoticeService, { provide: NAVIGATOR, useValue: instance(mockedNavigator) }],
-  standaloneComponent: true
+  providers: [DialogService, NoticeService, { provide: NAVIGATOR, useValue: instance(mockedNavigator) }]
 };
 
 export const ReadyToRecord = matDialogStory(AudioRecorderDialogComponent, dialogStoryConfig);

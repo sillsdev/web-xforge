@@ -119,7 +119,7 @@ const meta: Meta = {
 export default meta;
 
 const dialogStoryConfig: MatDialogStoryConfig = {
-  imports: [XForgeCommonModule, I18nStoryModule],
+  imports: [XForgeCommonModule, I18nStoryModule, EditorTabAddResourceDialogComponent],
   providers: [
     provideAnimations(),
     { provide: EditorTabAddResourceDialogService, useValue: instance(mockEditorTabAddResourceDialogService) },
@@ -129,9 +129,7 @@ const dialogStoryConfig: MatDialogStoryConfig = {
     { provide: MatDialogRef, useValue: instance(mockMatDialogRef) },
     { provide: OnlineStatusService, useValue: instance(mockOnlineStatusService) },
     { provide: MAT_DIALOG_DATA, useValue: {} }
-  ],
-  declarations: [EditorTabAddResourceDialogComponent],
-  standaloneComponent: true
+  ]
 };
 
 // List of stories.

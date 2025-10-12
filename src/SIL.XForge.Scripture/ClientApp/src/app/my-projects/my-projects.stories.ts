@@ -196,9 +196,9 @@ const meta: Meta = {
           { path: 'connect-project', component: EmptyComponent }
         ]),
         TestOnlineStatusModule.forRoot(),
-        getTestTranslocoModule()
+        getTestTranslocoModule(),
+        MyProjectsComponent
       ],
-      declarations: [MyProjectsComponent],
       providers: [
         provideAnimations(),
         provideHttpClientTesting(),

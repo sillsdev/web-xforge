@@ -16,8 +16,7 @@ const meta: Meta<AudioPlayerComponent> = {
   component: AudioPlayerComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, I18nStoryModule],
-      declarations: [AudioTimePipe],
+      imports: [CommonModule, I18nStoryModule, AudioTimePipe],
       providers: [
         {
           provide: OnlineStatusService,

@@ -48,12 +48,11 @@ const meta: Meta<CheckingCommentsComponent> = {
   component: CheckingCommentsComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, I18nStoryModule, OwnerComponent],
+      imports: [CommonModule, I18nStoryModule, OwnerComponent, CheckingInputFormComponent],
       providers: [
         { provide: DialogService, useValue: instance(mockedDialogService) },
         { provide: UserService, useValue: instance(mockedUserService) }
-      ],
-      declarations: [CheckingInputFormComponent]
+      ]
     })
   ],
   args: defaultArgs
