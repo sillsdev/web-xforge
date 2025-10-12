@@ -14,7 +14,6 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { getTestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../core/models/paratext-project';
@@ -191,7 +190,6 @@ const meta: Meta = {
   decorators: [
     moduleMetadata({
       imports: [
-        UICommonModule,
         SharedModule.forRoot(),
         RouterModule.forChild([
           { path: 'projects/:projectId', component: EmptyComponent },

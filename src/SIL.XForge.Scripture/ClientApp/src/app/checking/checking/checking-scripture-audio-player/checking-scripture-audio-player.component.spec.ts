@@ -7,7 +7,6 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { getTestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { TextDocId } from '../../../core/models/text-doc';
 import { AudioPlayerStub, getAudioTimings, getAudioTimingWithHeadings } from '../../checking-test.utils';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player.component';
@@ -238,7 +237,7 @@ describe('ScriptureAudioComponent', () => {
 @Component({
   selector: 'app-host',
   template: '',
-  imports: [UICommonModule, CheckingScriptureAudioPlayerComponent]
+  imports: [CheckingScriptureAudioPlayerComponent]
 })
 class HostComponent {
   @ViewChild(CheckingScriptureAudioPlayerComponent) audioPlayer!: CheckingScriptureAudioPlayerComponent;
@@ -246,8 +245,7 @@ class HostComponent {
 
 @Component({
   selector: 'app-audio-player',
-  template: '<p>Mock Audio Player</p>',
-  imports: [UICommonModule]
+  template: '<p>Mock Audio Player</p>'
 })
 class AudioPlayerStubComponent {
   readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
@@ -279,7 +277,6 @@ class TestEnvironment {
 
     TestBed.configureTestingModule({
       imports: [
-        UICommonModule,
         TestOnlineStatusModule.forRoot(),
         getTestTranslocoModule(),
         HostComponent,
