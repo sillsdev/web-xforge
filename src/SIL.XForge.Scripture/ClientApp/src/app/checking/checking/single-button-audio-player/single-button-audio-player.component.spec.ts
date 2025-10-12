@@ -6,7 +6,6 @@ import { BehaviorSubject } from 'rxjs';
 import { instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioPlayer, AudioStatus } from '../../../shared/audio/audio-player';
 import { AudioSegmentPlayer } from '../../../shared/audio/audio-segment-player';
 import { SingleButtonAudioPlayerComponent } from './single-button-audio-player.component';
@@ -16,7 +15,7 @@ when(audioMock.status$).thenReturn(new BehaviorSubject<AudioStatus>(AudioStatus.
 
 describe('SingleButtonAudioPlayerComponent', () => {
   configureTestingModule(() => ({
-    imports: [TestComponent, UICommonModule, getTestTranslocoModule(), TestOnlineStatusModule.forRoot(), MockComponent]
+    imports: [TestComponent, getTestTranslocoModule(), TestOnlineStatusModule.forRoot(), MockComponent]
   }));
 
   let env: TestEnvironment;

@@ -5,7 +5,6 @@ import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { anything, mock, when } from 'ts-mockito';
 import { I18nService } from '../i18n.service';
 import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from '../test-utils';
-import { UICommonModule } from '../ui-common.module';
 import { ErrorAlertData, ErrorDialogComponent } from './error-dialog.component';
 
 const mockedI18nService = mock(I18nService);
@@ -70,7 +69,7 @@ describe('ErrorDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [UICommonModule, getTestTranslocoModule(), ErrorDialogComponent]
+  imports: [getTestTranslocoModule(), ErrorDialogComponent]
 })
 class DialogTestModule {}
 

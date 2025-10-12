@@ -4,7 +4,6 @@ import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioTimePipe } from '../audio-time-pipe';
 import { AudioPlayerComponent } from './audio-player.component';
 
@@ -17,7 +16,7 @@ const meta: Meta<AudioPlayerComponent> = {
   component: AudioPlayerComponent,
   decorators: [
     moduleMetadata({
-      imports: [UICommonModule, CommonModule, I18nStoryModule],
+      imports: [CommonModule, I18nStoryModule],
       declarations: [AudioTimePipe],
       providers: [
         {

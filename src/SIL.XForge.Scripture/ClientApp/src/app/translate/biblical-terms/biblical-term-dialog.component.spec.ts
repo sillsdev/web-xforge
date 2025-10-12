@@ -23,7 +23,6 @@ import {
   getTestTranslocoModule,
   matDialogCloseDelay
 } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -186,7 +185,7 @@ describe('BiblicalTermDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [UICommonModule, getTestTranslocoModule(), BiblicalTermDialogComponent]
+  imports: [getTestTranslocoModule(), BiblicalTermDialogComponent]
 })
 class DialogTestModule {}
 

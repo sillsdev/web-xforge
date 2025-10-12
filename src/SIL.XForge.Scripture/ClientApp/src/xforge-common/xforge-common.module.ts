@@ -23,8 +23,6 @@ import { SaDeleteDialogComponent } from './system-administration/sa-delete-dialo
 import { SaProjectsComponent } from './system-administration/sa-projects.component';
 import { SaUsersComponent } from './system-administration/sa-users.component';
 import { SystemAdministrationComponent } from './system-administration/system-administration.component';
-import { UICommonModule } from './ui-common.module';
-
 const componentExports = [
   GenericDialogComponent,
   SaProjectsComponent,
@@ -41,7 +39,6 @@ const componentExports = [
     CommonModule,
     ngfModule,
     RouterModule,
-    UICommonModule,
     TranslocoModule,
     MatDialogModule,
     AvatarComponent,

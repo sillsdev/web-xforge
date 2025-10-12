@@ -29,7 +29,6 @@ import {
   getTestTranslocoModule,
   matDialogCloseDelay
 } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -308,7 +307,7 @@ describe('TranslatorSettingsDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [CommonModule, UICommonModule, getTestTranslocoModule(), NoticeComponent, TranslatorSettingsDialogComponent]
+  imports: [CommonModule, getTestTranslocoModule(), NoticeComponent, TranslatorSettingsDialogComponent]
 })
 class DialogTestModule {}
 

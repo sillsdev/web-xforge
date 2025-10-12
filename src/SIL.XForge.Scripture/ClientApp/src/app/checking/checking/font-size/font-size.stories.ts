@@ -3,7 +3,6 @@ import { componentWrapperDecorator, Meta, moduleMetadata, StoryObj } from '@stor
 import { expect, userEvent } from '@storybook/test';
 import { PointerEventsCheckLevel } from '@testing-library/user-event';
 import { getTestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { FontSizeComponent } from './font-size.component';
 
 export default {
@@ -11,7 +10,7 @@ export default {
   component: FontSizeComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, UICommonModule, getTestTranslocoModule()]
+      imports: [CommonModule, getTestTranslocoModule()]
     }),
     componentWrapperDecorator(
       story => `

@@ -8,7 +8,6 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { getAudioBlob, getTestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioStatus } from '../../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
@@ -178,8 +177,7 @@ describe('CheckingAudioPlayerComponent', () => {
 
 @Component({
   selector: 'app-host',
-  template: '',
-  imports: [UICommonModule]
+  template: ''
 })
 class HostComponent {
   @ViewChild(CheckingAudioPlayerComponent) player1!: CheckingAudioPlayerComponent;
@@ -197,7 +195,6 @@ class TestEnvironment {
     TestBed.configureTestingModule({
       providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }],
       imports: [
-        UICommonModule,
         TestOnlineStatusModule.forRoot(),
         getTestTranslocoModule(),
         HostComponent,

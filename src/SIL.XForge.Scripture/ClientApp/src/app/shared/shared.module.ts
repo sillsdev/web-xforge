@@ -3,7 +3,6 @@ import { inject, ModuleWithProviders, NgModule, provideAppInitializer } from '@a
 import { TranslocoModule } from '@ngneat/transloco';
 import { QuillModule } from 'ngx-quill';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { CheckingQuestionComponent } from '../checking/checking/checking-answers/checking-question/checking-question.component';
 import { SingleButtonAudioPlayerComponent } from '../checking/checking/single-button-audio-player/single-button-audio-player.component';
 import { LynxInsightsModule } from '../translate/editor/lynx/insights/lynx-insights.module';
@@ -34,7 +33,6 @@ const componentExports = [
   imports: [
     CommonModule,
     QuillModule,
-    UICommonModule,
     TranslocoModule,
     NoticeComponent,
     TranslocoMarkupModule,

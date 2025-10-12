@@ -10,6 +10,7 @@ import { MatSelectHarness } from '@angular/material/select/testing';
 import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, ActivatedRouteSnapshot, Params, Route, Router, RouterModule } from '@angular/router';
+import { ReactiveFormsModule } from '@angular/forms';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
@@ -52,7 +53,6 @@ import { TestOnlineStatusService } from 'xforge-common/test-online-status.servic
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getAudioBlob, getTestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
@@ -153,7 +153,7 @@ describe('CheckingComponent', () => {
       ngfModule,
       RouterModule.forRoot(ROUTES),
       SharedModule.forRoot(),
-      UICommonModule,
+      ReactiveFormsModule,
       OwnerComponent,
       getTestTranslocoModule(),
       TestOnlineStatusModule.forRoot(),

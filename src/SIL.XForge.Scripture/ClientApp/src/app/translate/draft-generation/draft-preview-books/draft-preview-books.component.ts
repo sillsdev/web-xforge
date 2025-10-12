@@ -1,6 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatDialogRef } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { Router, RouterModule } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
@@ -11,7 +14,6 @@ import { BehaviorSubject, firstValueFrom, map, Observable, tap } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -43,7 +45,7 @@ export interface BookWithDraft {
   selector: 'app-draft-preview-books',
   templateUrl: './draft-preview-books.component.html',
   styleUrls: ['./draft-preview-books.component.scss'],
-  imports: [CommonModule, UICommonModule, RouterModule, TranslocoModule]
+  imports: [CommonModule, MatMenuModule, MatIconModule, MatButtonToggleModule, RouterModule, TranslocoModule]
 })
 export class DraftPreviewBooksComponent {
   @Input() build: BuildDto | undefined;

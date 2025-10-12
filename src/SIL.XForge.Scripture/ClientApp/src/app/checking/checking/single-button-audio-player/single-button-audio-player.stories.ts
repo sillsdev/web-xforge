@@ -6,7 +6,6 @@ import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SingleButtonAudioPlayerComponent } from './single-button-audio-player.component';
 
 @Component({
@@ -32,7 +31,7 @@ const meta: Meta<SingleButtonAudioPlayerComponent> = {
   component: TestComponent,
   decorators: [
     moduleMetadata({
-      imports: [UICommonModule, CommonModule, I18nStoryModule],
+      imports: [CommonModule, I18nStoryModule],
       providers: [
         {
           provide: OnlineStatusService,

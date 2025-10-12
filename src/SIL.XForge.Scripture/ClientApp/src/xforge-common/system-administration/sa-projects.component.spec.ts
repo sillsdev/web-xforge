@@ -24,7 +24,6 @@ import { QueryFilter, QueryParameters } from '../query-parameters';
 import { TestRealtimeService } from '../test-realtime.service';
 import { configureTestingModule, emptyHammerLoader, getTestTranslocoModule } from '../test-utils';
 import { TypeRegistry } from '../type-registry';
-import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
 import { SaProjectsComponent } from './sa-projects.component';
 
@@ -36,7 +35,6 @@ describe('SaProjectsComponent', () => {
     imports: [
       SaProjectsComponent,
       RouterModule.forRoot([]),
-      UICommonModule,
       getTestTranslocoModule(),
       TestRealtimeModule.forRoot(new TypeRegistry([TestProjectDoc], [FileType.Audio], []))
     ],

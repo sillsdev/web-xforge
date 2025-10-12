@@ -16,7 +16,6 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../core/models/paratext-project';
@@ -41,7 +40,6 @@ describe('MyProjectsComponent', () => {
   configureTestingModule(() => ({
     imports: [
       MyProjectsComponent,
-      UICommonModule,
       SharedModule.forRoot(),
       RouterModule.forRoot([
         { path: 'projects/:projectId', component: EmptyComponent },

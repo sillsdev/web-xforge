@@ -11,7 +11,6 @@ import { anything, instance, mock, when } from 'ts-mockito';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
 import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
@@ -63,7 +62,6 @@ describe('CheckingQuestionComponent', () => {
     imports: [
       CheckingQuestionComponent,
       SingleButtonAudioPlayerComponent,
-      UICommonModule,
       getTestTranslocoModule(),
       TestOnlineStatusModule.forRoot(),
       MockComponent

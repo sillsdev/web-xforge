@@ -1,7 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
@@ -9,7 +13,6 @@ import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/model
 import { BehaviorSubject, map } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
@@ -36,7 +39,18 @@ export interface DraftApplyDialogConfig {
 
 @Component({
   selector: 'app-draft-apply-dialog',
-  imports: [UICommonModule, XForgeCommonModule, TranslocoModule, CommonModule, SharedModule],
+  imports: [
+    MatButtonModule,
+    MatFormFieldModule,
+    MatCheckboxModule,
+    MatProgressBarModule,
+    MatDialogModule,
+    ReactiveFormsModule,
+    XForgeCommonModule,
+    TranslocoModule,
+    CommonModule,
+    SharedModule
+  ],
   templateUrl: './draft-apply-dialog.component.html',
   styleUrl: './draft-apply-dialog.component.scss'
 })

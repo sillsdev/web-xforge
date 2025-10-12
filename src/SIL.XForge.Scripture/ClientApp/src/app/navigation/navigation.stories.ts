@@ -17,7 +17,6 @@ import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 import { ResumeTranslateService } from '../checking/checking/resume-translate.service';
@@ -107,7 +106,7 @@ const meta: Meta = {
     setUpMocks(args as StoryState);
     return {
       moduleMetadata: {
-        imports: [UICommonModule, CommonModule, I18nStoryModule],
+        imports: [CommonModule, I18nStoryModule],
         providers: [
           { provide: AuthService, useValue: instance(mockedAuthService) },
           {

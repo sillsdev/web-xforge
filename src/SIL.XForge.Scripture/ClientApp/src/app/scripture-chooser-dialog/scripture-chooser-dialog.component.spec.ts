@@ -8,7 +8,6 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
 import { ScriptureChooserDialogComponent, ScriptureChooserDialogData } from './scripture-chooser-dialog.component';
 
@@ -398,7 +397,7 @@ describe('ScriptureChooserDialog', () => {
   }));
 
   @NgModule({
-    imports: [UICommonModule, getTestTranslocoModule(), ScriptureChooserDialogComponent],
+    imports: [getTestTranslocoModule(), ScriptureChooserDialogComponent],
     providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting(), provideNoopAnimations()]
   })
   class TestModule {}

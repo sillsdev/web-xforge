@@ -1,9 +1,8 @@
 import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { ReactiveFormsModule, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { getTestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { isSafari } from 'xforge-common/utils';
 import { SelectableProject } from '../core/paratext.service';
 import { CustomValidatorState, SFValidators } from '../shared/sfvalidators';
@@ -202,7 +201,7 @@ describe('ProjectSelectComponent', () => {
       [isDisabled]="isDisabled"
     ></app-project-select>
   </form>`,
-  imports: [UICommonModule, ProjectSelectComponent]
+  imports: [ReactiveFormsModule, ProjectSelectComponent]
 })
 class HostComponent {
   readonly sourceParatextId = new UntypedFormControl(undefined);
@@ -235,7 +234,7 @@ class TestEnvironment {
     nonSelectableProjects?: SelectableProject[]
   ) {
     TestBed.configureTestingModule({
-      imports: [UICommonModule, getTestTranslocoModule(), HostComponent],
+      imports: [ReactiveFormsModule, getTestTranslocoModule(), HostComponent],
       providers: [provideNoopAnimations()]
     });
 

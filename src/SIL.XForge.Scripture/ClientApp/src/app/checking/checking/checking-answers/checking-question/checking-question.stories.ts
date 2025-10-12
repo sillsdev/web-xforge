@@ -13,7 +13,6 @@ import { anything, instance, mock, when } from 'ts-mockito';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../../../core/models/sf-type-registry';
@@ -68,7 +67,7 @@ const meta: Meta<CheckingQuestionComponent> = {
   component: CheckingQuestionComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, UICommonModule, I18nStoryModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+      imports: [CommonModule, I18nStoryModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
       providers: [{ provide: SFProjectService, useValue: instance(mockedProjectService) }],
       declarations: [SingleButtonAudioPlayerComponent]
     })

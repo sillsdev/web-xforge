@@ -5,7 +5,6 @@ import { MatButtonHarness } from '@angular/material/button/testing';
 import { MatMenuHarness, MatMenuItemHarness } from '@angular/material/menu/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { getTestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { FontSizeComponent } from './font-size.component';
 
 describe('FontSizeComponent', () => {
@@ -31,7 +30,7 @@ describe('FontSizeComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      imports: [UICommonModule, getTestTranslocoModule(), FontSizeComponent],
+      imports: [getTestTranslocoModule(), FontSizeComponent],
       providers: [provideNoopAnimations()]
     }).compileComponents();
 

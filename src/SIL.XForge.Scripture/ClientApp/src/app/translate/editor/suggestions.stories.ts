@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { expect, within } from '@storybook/test';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SuggestionsComponent } from './suggestions.component';
 
 const meta: Meta<SuggestionsComponent> = {
@@ -9,7 +8,7 @@ const meta: Meta<SuggestionsComponent> = {
   component: SuggestionsComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, UICommonModule],
+      imports: [CommonModule],
       declarations: [SuggestionsComponent]
     })
   ]

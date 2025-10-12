@@ -37,7 +37,6 @@ import {
   getAudioBlob,
   getTestTranslocoModule
 } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -578,7 +577,7 @@ describe('QuestionDialogComponent', () => {
 
 @NgModule({
   exports: [ScriptureChooserDialogComponent],
-  imports: [CommonModule, UICommonModule, CheckingModule, getTestTranslocoModule(), ScriptureChooserDialogComponent],
+  imports: [CommonModule, CheckingModule, getTestTranslocoModule(), ScriptureChooserDialogComponent],
   providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
 })
 class DialogTestModule {}
