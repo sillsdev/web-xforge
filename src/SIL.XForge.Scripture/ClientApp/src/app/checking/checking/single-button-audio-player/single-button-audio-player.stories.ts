@@ -31,14 +31,13 @@ const meta: Meta<SingleButtonAudioPlayerComponent> = {
   component: TestComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, I18nStoryModule],
+      imports: [CommonModule, I18nStoryModule, SingleButtonAudioPlayerComponent, TestComponent],
       providers: [
         {
           provide: OnlineStatusService,
           useValue: instance(mockedOnlineStatusService)
         }
-      ],
-      declarations: [SingleButtonAudioPlayerComponent, TestComponent]
+      ]
     })
   ]
 };

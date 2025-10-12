@@ -8,8 +8,7 @@ export default {
 
   decorators: [
     moduleMetadata({
-      imports: [MatButton],
-      declarations: [BubbleButtonDirective]
+      imports: [MatButton, BubbleButtonDirective]
     }),
     componentWrapperDecorator(
       story => `
