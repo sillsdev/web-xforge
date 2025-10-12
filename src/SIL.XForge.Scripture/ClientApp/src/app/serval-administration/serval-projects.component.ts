@@ -1,4 +1,9 @@
 import { Component, DestroyRef, OnInit } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatTableModule } from '@angular/material/table';
 import { Router } from '@angular/router';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
@@ -9,7 +14,6 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { projectLabel } from '../shared/utils';
@@ -65,7 +69,7 @@ class Row {
   selector: 'app-serval-projects',
   templateUrl: './serval-projects.component.html',
   styleUrls: ['./serval-projects.component.scss'],
-  imports: [UICommonModule]
+  imports: [MatButtonModule, MatFormFieldModule, MatIconModule, MatTableModule, MatPaginatorModule]
 })
 export class ServalProjectsComponent extends DataLoadingComponent implements OnInit {
   columnsToDisplay: string[] = ['name', 'preTranslate', 'source', 'draftingSource', 'trainingSource', 'actions'];

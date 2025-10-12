@@ -17,7 +17,6 @@ import { TestOnlineStatusService } from 'xforge-common/test-online-status.servic
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectCreateSettings } from '../core/models/sf-project-create-settings';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
@@ -48,7 +47,6 @@ describe('ConnectProjectComponent', () => {
       ConnectProjectComponent,
       ProjectSelectComponent,
       SyncProgressComponent,
-      UICommonModule,
       getTestTranslocoModule(),
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)

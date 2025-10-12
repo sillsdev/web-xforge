@@ -19,7 +19,6 @@ import { TestOnlineStatusService } from 'xforge-common/test-online-status.servic
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { SFProjectService } from '../core/sf-project.service';
 import { NoticeComponent } from '../shared/notice/notice.component';
@@ -43,7 +42,6 @@ describe('JoinComponent', () => {
       getTestTranslocoModule(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       TestOnlineStatusModule.forRoot(),
-      UICommonModule,
       NoticeComponent
     ],
     providers: [

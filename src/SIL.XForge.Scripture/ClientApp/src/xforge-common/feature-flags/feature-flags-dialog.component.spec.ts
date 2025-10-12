@@ -6,7 +6,6 @@ import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { mock, when } from 'ts-mockito';
 import { ChildViewContainerComponent, configureTestingModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { NoticeComponent } from '../../app/shared/notice/notice.component';
 import { FeatureFlagService } from './feature-flag.service';
 import { FeatureFlagsDialogComponent } from './feature-flags-dialog.component';
@@ -15,7 +14,7 @@ const mockedFeatureFlagService = mock(FeatureFlagService);
 
 describe('FeatureFlagsComponent', () => {
   configureTestingModule(() => ({
-    imports: [FeatureFlagsDialogComponent, UICommonModule, NoticeComponent],
+    imports: [FeatureFlagsDialogComponent, NoticeComponent],
     providers: [{ provide: FeatureFlagService, useMock: mockedFeatureFlagService }]
   }));
 

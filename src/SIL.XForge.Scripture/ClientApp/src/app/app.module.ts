@@ -21,9 +21,9 @@ import { ExceptionHandlingService } from 'xforge-common/exception-handling.servi
 import { FeatureFlagsDialogComponent } from 'xforge-common/feature-flags/feature-flags-dialog.component';
 import { EmTextTranspiler } from 'xforge-common/i18n-transpilers/em-text.transpiler';
 import { InAppRootOverlayContainer } from 'xforge-common/overlay-container';
+import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { SupportedBrowsersDialogComponent } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { provideUICommon } from 'xforge-common/ui-common-providers';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { environment } from '../environments/environment';
@@ -60,7 +60,7 @@ import { UsersModule } from './users/users.module';
     TranslateModule,
     CheckingModule,
     UsersModule,
-    UICommonModule,
+    RouterLinkDirective,
     XForgeCommonModule,
     TranslocoModule,
     TranslocoMarkupModule,

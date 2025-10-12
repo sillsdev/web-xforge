@@ -30,7 +30,6 @@ import {
   getTestTranslocoModule,
   matDialogCloseDelay
 } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -203,13 +202,7 @@ class FakeAvatarComponent {
 }
 
 @NgModule({
-  imports: [
-    UICommonModule,
-    getTestTranslocoModule(),
-    NoticeComponent,
-    RolesAndPermissionsDialogComponent,
-    FakeAvatarComponent
-  ]
+  imports: [getTestTranslocoModule(), NoticeComponent, RolesAndPermissionsDialogComponent, FakeAvatarComponent]
 })
 class DialogTestModule {}
 

@@ -9,7 +9,6 @@ import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { configureTestingModule, getAudioBlob, getTestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioRecorderDialogComponent } from '../../shared/audio-recorder-dialog/audio-recorder-dialog.component';
 import { SharedModule } from '../../shared/shared.module';
 import { TextAndAudioComponent } from '../text-and-audio/text-and-audio.component';
@@ -23,7 +22,6 @@ describe('AttachAudioComponent', () => {
   configureTestingModule(() => ({
     imports: [
       AttachAudioComponent,
-      UICommonModule,
       ngfModule,
       SharedModule.forRoot(),
       getTestTranslocoModule(),

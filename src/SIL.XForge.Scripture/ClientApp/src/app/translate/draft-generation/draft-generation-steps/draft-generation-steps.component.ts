@@ -1,5 +1,11 @@
 import { Component, DestroyRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
-import { MatStepper } from '@angular/material/stepper';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatStepper, MatStepperModule } from '@angular/material/stepper';
+import { MatTableModule } from '@angular/material/table';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { isEqual } from 'lodash-es';
@@ -22,7 +28,6 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { ParatextProject } from '../../../core/models/paratext-project';
@@ -78,7 +83,13 @@ interface ProjectPendingUpdate {
   styleUrls: ['./draft-generation-steps.component.scss'],
   imports: [
     SharedModule,
-    UICommonModule,
+    MatButtonModule,
+    MatCheckboxModule,
+    MatIconModule,
+    MatCardModule,
+    MatProgressSpinnerModule,
+    MatStepperModule,
+    MatTableModule,
     TranslocoModule,
     TranslocoMarkupModule,
     BookMultiSelectComponent,

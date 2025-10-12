@@ -1,5 +1,12 @@
 import { Component, DestroyRef, OnInit } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatOptionModule } from '@angular/material/core';
 import { MatDialogConfig } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { BehaviorSubject, combineLatest, map, Observable, switchMap } from 'rxjs';
@@ -10,7 +17,6 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectService } from '../core/sf-project.service';
 import { EventMetric } from '../event-metrics/event-metric';
@@ -65,7 +71,18 @@ interface Row {
   selector: 'app-draft-jobs',
   templateUrl: './draft-jobs.component.html',
   styleUrls: ['./draft-jobs.component.scss'],
-  imports: [OwnerComponent, UICommonModule, RouterLink, NoticeComponent]
+  imports: [
+    OwnerComponent,
+    MatTooltipModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatOptionModule,
+    MatIconModule,
+    MatTableModule,
+    RouterLink,
+    NoticeComponent
+  ]
 })
 export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
   columnsToDisplay: string[] = [
