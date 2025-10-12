@@ -22,6 +22,7 @@ import { FeatureFlagsDialogComponent } from 'xforge-common/feature-flags/feature
 import { EmTextTranspiler } from 'xforge-common/i18n-transpilers/em-text.transpiler';
 import { InAppRootOverlayContainer } from 'xforge-common/overlay-container';
 import { SupportedBrowsersDialogComponent } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
+import { provideUICommon } from 'xforge-common/ui-common-providers';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
@@ -59,7 +60,7 @@ import { UsersModule } from './users/users.module';
     TranslateModule,
     CheckingModule,
     UsersModule,
-    UICommonModule.forRoot(),
+    UICommonModule,
     XForgeCommonModule,
     TranslocoModule,
     TranslocoMarkupModule,
@@ -91,6 +92,7 @@ import { UsersModule } from './users/users.module';
     CookieService,
     DatePipe,
     provideAnimations(),
+    provideUICommon(),
     provideTranslationMarkupTranspiler(EmTextTranspiler),
     translocoMarkupRouterLinkRenderer(),
     defaultTranslocoMarkupTranspilers(),
