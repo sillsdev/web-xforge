@@ -1,12 +1,23 @@
 import { Component, DestroyRef, OnInit } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatOptionModule } from '@angular/material/core';
+import { MatIconButton } from '@angular/material/button';
+import { MatOption } from '@angular/material/core';
 import { MatDialogConfig } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatSelectModule } from '@angular/material/select';
-import { MatTableModule } from '@angular/material/table';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import { MatSelect } from '@angular/material/select';
+import {
+  MatCell,
+  MatCellDef,
+  MatColumnDef,
+  MatHeaderCell,
+  MatHeaderCellDef,
+  MatHeaderRow,
+  MatHeaderRowDef,
+  MatRow,
+  MatRowDef,
+  MatTable
+} from '@angular/material/table';
+import { MatTooltip } from '@angular/material/tooltip';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { BehaviorSubject, combineLatest, map, Observable, switchMap } from 'rxjs';
@@ -82,13 +93,23 @@ const DRAFTING_EVENTS = [
   styleUrls: ['./draft-jobs.component.scss'],
   imports: [
     OwnerComponent,
-    MatTooltipModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatOptionModule,
-    MatIconModule,
-    MatTableModule,
+    MatTooltip,
+    MatIconButton,
+    MatFormField,
+    MatLabel,
+    MatSelect,
+    MatOption,
+    MatIcon,
+    MatTable,
+    MatColumnDef,
+    MatHeaderCell,
+    MatHeaderCellDef,
+    MatCell,
+    MatCellDef,
+    MatHeaderRow,
+    MatHeaderRowDef,
+    MatRow,
+    MatRowDef,
     RouterLink,
     NoticeComponent
   ]
