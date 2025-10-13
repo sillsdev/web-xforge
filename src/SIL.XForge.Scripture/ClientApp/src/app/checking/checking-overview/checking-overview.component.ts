@@ -1,5 +1,18 @@
+import { NgClass } from '@angular/common';
 import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { MatButton, MatIconButton, MatMiniFabButton } from '@angular/material/button';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import {
+  MatExpansionPanel,
+  MatExpansionPanelContent,
+  MatExpansionPanelHeader,
+  MatExpansionPanelTitle
+} from '@angular/material/expansion';
+import { MatIcon } from '@angular/material/icon';
+import { MatList, MatListItem, MatSelectionList } from '@angular/material/list';
+import { MatTooltip } from '@angular/material/tooltip';
 import { ActivatedRoute } from '@angular/router';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import Papa from 'papaparse';
@@ -11,11 +24,13 @@ import { asyncScheduler, merge, Subscription } from 'rxjs';
 import { map, tap, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
+import { DonutChartComponent } from 'xforge-common/donut-chart/donut-chart.component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { L10nNumberPipe } from 'xforge-common/l10n-number.pipe';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { QuestionDoc } from '../../core/models/question-doc';
@@ -34,22 +49,6 @@ import {
 } from '../import-questions-dialog/import-questions-dialog.component';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
-import { TranslocoModule } from '@ngneat/transloco';
-import { NgClass } from '@angular/common';
-import { MatButton, MatMiniFabButton, MatIconButton } from '@angular/material/button';
-import { MatIcon } from '@angular/material/icon';
-import { DonutChartComponent } from '../../../xforge-common/donut-chart/donut-chart.component';
-import {
-  MatExpansionPanel,
-  MatExpansionPanelHeader,
-  MatExpansionPanelTitle,
-  MatExpansionPanelContent
-} from '@angular/material/expansion';
-import { MatTooltip } from '@angular/material/tooltip';
-import { MatSelectionList, MatListItem, MatList } from '@angular/material/list';
-import { RouterLinkDirective } from '../../../xforge-common/router-link.directive';
-import { MatCard, MatCardContent } from '@angular/material/card';
-import { L10nNumberPipe as L10nNumberPipe_1 } from '../../../xforge-common/l10n-number.pipe';
 @Component({
   selector: 'app-checking-overview',
   templateUrl: './checking-overview.component.html',
@@ -73,7 +72,7 @@ import { L10nNumberPipe as L10nNumberPipe_1 } from '../../../xforge-common/l10n-
     RouterLinkDirective,
     MatCard,
     MatCardContent,
-    L10nNumberPipe_1
+    L10nNumberPipe
   ]
 })
 export class CheckingOverviewComponent extends DataLoadingComponent implements OnInit, OnDestroy {

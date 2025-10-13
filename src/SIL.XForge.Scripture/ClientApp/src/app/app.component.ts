@@ -22,6 +22,7 @@ import { Observable, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
+import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DiagnosticOverlayService } from 'xforge-common/diagnostic-overlay.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -37,6 +38,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { PWA_BEFORE_PROMPT_CAN_BE_SHOWN_AGAIN, PwaService } from 'xforge-common/pwa.service';
+import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import {
   BrowserIssue,
   SupportedBrowsersDialogComponent
@@ -47,8 +49,6 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
-import { AvatarComponent } from '../xforge-common/avatar/avatar.component';
-import { RouterLinkDirective } from '../xforge-common/router-link.directive';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
