@@ -1,9 +1,18 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { DOCUMENT } from '@angular/common';
+import { AsyncPipe, DOCUMENT } from '@angular/common';
 import { Component, DestroyRef, Inject, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router } from '@angular/router';
+import { MatButton } from '@angular/material/button';
+import { MatDivider } from '@angular/material/divider';
+import { MatIcon } from '@angular/material/icon';
+import { MatMenu, MatMenuTrigger } from '@angular/material/menu';
+import { MatProgressBar } from '@angular/material/progress-bar';
+import { MatDrawer, MatDrawerContainer } from '@angular/material/sidenav';
+import { MatToolbar, MatToolbarRow } from '@angular/material/toolbar';
+import { MatTooltip } from '@angular/material/tooltip';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import Bugsnag from '@bugsnag/js';
+import { TranslocoModule } from '@ngneat/transloco';
 import { cloneDeep } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
@@ -38,10 +47,14 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
+import { AvatarComponent } from '../xforge-common/avatar/avatar.component';
+import { RouterLinkDirective } from '../xforge-common/router-link.directive';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
 import { SFProjectService } from './core/sf-project.service';
+import { NavigationComponent } from './navigation/navigation.component';
+import { GlobalNoticesComponent } from './shared/global-notices/global-notices.component';
 import { checkAppAccess } from './shared/utils';
 
 declare function gtag(...args: any): void;
@@ -50,7 +63,27 @@ declare function gtag(...args: any): void;
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
-  standalone: false
+  imports: [
+    AsyncPipe,
+    TranslocoModule,
+    RouterLink,
+    AvatarComponent,
+    RouterLinkDirective,
+    NavigationComponent,
+    GlobalNoticesComponent,
+    RouterOutlet,
+    MatIcon,
+    MatDrawerContainer,
+    MatButton,
+    MatMenu,
+    MatMenuTrigger,
+    MatTooltip,
+    MatToolbar,
+    MatToolbarRow,
+    MatProgressBar,
+    MatDivider,
+    MatDrawer
+  ]
 })
 export class AppComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   version: string = versionData.version;
