@@ -4,9 +4,11 @@ import { Component } from '@angular/core';
 import { MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { DiagnosticOverlayService } from 'xforge-common/diagnostic-overlay.service';
+import { L10nNumberPipe } from 'xforge-common/l10n-number.pipe';
 import { LocalSettingsService } from 'xforge-common/local-settings.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
+
 export interface DiagnosticOverlayData {
   bookNum: number;
   chapterNum: number;
@@ -21,7 +23,7 @@ const diagnosticOverlayCollapsedKey = 'DIAGNOSTIC_OVERLAY_COLLAPSED';
   selector: 'app-diagnostic-overlay',
   templateUrl: './diagnostic-overlay.component.html',
   styleUrl: './diagnostic-overlay.component.scss',
-  imports: [OverlayModule, CommonModule, MatIconButton, MatIcon]
+  imports: [OverlayModule, CommonModule, MatIconButton, MatIcon, L10nNumberPipe]
 })
 export class DiagnosticOverlayComponent {
   isExpanded: boolean = true;

@@ -30,6 +30,7 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { NoticeComponent } from '../../shared/notice/notice.component';
 import { ShareControlComponent } from '../../shared/share/share-control.component';
 import { RolesAndPermissionsDialogComponent } from '../roles-and-permissions/roles-and-permissions-dialog.component';
+
 interface UserInfo {
   displayName?: string;
   avatarUrl?: string;

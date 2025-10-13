@@ -1,5 +1,12 @@
+import { AsyncPipe, NgClass } from '@angular/common';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { MatSelectChange, MatSelect, MatSelectTrigger } from '@angular/material/select';
+import { MatOption } from '@angular/material/autocomplete';
+import { MatButton } from '@angular/material/button';
+import { MatFormField } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import { MatSelect, MatSelectChange, MatSelectTrigger } from '@angular/material/select';
+import { MatTooltip } from '@angular/material/tooltip';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { Delta } from 'quill';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
@@ -14,6 +21,7 @@ import {
   Subject,
   tap
 } from 'rxjs';
+import { BlurOnClickDirective } from 'xforge-common/blur-on-click.directive';
 import { isNetworkError } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -27,14 +35,6 @@ import { TextDocId } from '../../../../core/models/text-doc';
 import { ParatextService, Revision } from '../../../../core/paratext.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { TextDocService } from '../../../../core/text-doc.service';
-import { TranslocoModule } from '@ngneat/transloco';
-import { MatFormField } from '@angular/material/form-field';
-import { MatOption } from '@angular/material/autocomplete';
-import { MatIcon } from '@angular/material/icon';
-import { MatButton } from '@angular/material/button';
-import { BlurOnClickDirective } from '../../../../../xforge-common/blur-on-click.directive';
-import { MatTooltip } from '@angular/material/tooltip';
-import { NgClass, AsyncPipe } from '@angular/common';
 import { HistoryRevisionFormatPipe } from './history-revision-format.pipe';
 
 export interface RevisionSelectEvent {

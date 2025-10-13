@@ -1,16 +1,16 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, DestroyRef, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { MatMiniFabButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
+import { MatTooltip } from '@angular/material/tooltip';
 import { translate } from '@ngneat/transloco';
 import { slice } from 'lodash-es';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { combineLatest } from 'rxjs';
+import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
-import { MatTooltip } from '@angular/material/tooltip';
-import { AvatarComponent } from '../../../../xforge-common/avatar/avatar.component';
-import { MatMiniFabButton } from '@angular/material/button';
-import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
-import { MatIcon } from '@angular/material/icon';
 export interface MultiCursorViewer extends UserProfile {
   cursorColor: string;
   activeInEditor: boolean;
