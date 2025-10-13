@@ -1,9 +1,20 @@
 import { Component, DestroyRef, OnInit } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
+import { MatButton } from '@angular/material/button';
 import { MatDialogConfig } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { MatTableModule } from '@angular/material/table';
+import { MatIcon } from '@angular/material/icon';
+import { MatPaginator } from '@angular/material/paginator';
+import {
+  MatCell,
+  MatCellDef,
+  MatColumnDef,
+  MatHeaderCell,
+  MatHeaderCellDef,
+  MatHeaderRow,
+  MatHeaderRowDef,
+  MatRow,
+  MatRowDef,
+  MatTable
+} from '@angular/material/table';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { BehaviorSubject, combineLatest, switchMap } from 'rxjs';
@@ -32,7 +43,23 @@ interface Row {
   selector: 'app-event-metrics-log',
   templateUrl: './event-metrics-log.component.html',
   styleUrls: ['./event-metrics-log.component.scss'],
-  imports: [OwnerComponent, TranslocoModule, MatButtonModule, MatIconModule, MatTableModule, MatPaginatorModule]
+  imports: [
+    OwnerComponent,
+    TranslocoModule,
+    MatButton,
+    MatIcon,
+    MatTable,
+    MatColumnDef,
+    MatHeaderCell,
+    MatHeaderCellDef,
+    MatCell,
+    MatCellDef,
+    MatHeaderRow,
+    MatHeaderRowDef,
+    MatRow,
+    MatRowDef,
+    MatPaginator
+  ]
 })
 export class EventMetricsLogComponent extends DataLoadingComponent implements OnInit {
   columnsToDisplay: string[] = ['successful', 'scope', 'eventType', 'author'];

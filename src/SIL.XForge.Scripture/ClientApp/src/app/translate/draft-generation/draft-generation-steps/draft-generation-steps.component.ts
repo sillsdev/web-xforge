@@ -1,11 +1,22 @@
 import { Component, DestroyRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatStepper, MatStepperModule } from '@angular/material/stepper';
-import { MatTableModule } from '@angular/material/table';
+import { MatButton } from '@angular/material/button';
+import { MatCard } from '@angular/material/card';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatStep, MatStepLabel, MatStepper, MatStepperPrevious } from '@angular/material/stepper';
+import {
+  MatCell,
+  MatCellDef,
+  MatColumnDef,
+  MatHeaderCell,
+  MatHeaderCellDef,
+  MatHeaderRow,
+  MatHeaderRowDef,
+  MatRow,
+  MatRowDef,
+  MatTable
+} from '@angular/material/table';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { isEqual } from 'lodash-es';
@@ -83,13 +94,25 @@ interface ProjectPendingUpdate {
   styleUrls: ['./draft-generation-steps.component.scss'],
   imports: [
     SharedModule,
-    MatButtonModule,
-    MatCheckboxModule,
-    MatIconModule,
-    MatCardModule,
-    MatProgressSpinnerModule,
-    MatStepperModule,
-    MatTableModule,
+    MatButton,
+    MatCheckbox,
+    MatIcon,
+    MatCard,
+    MatProgressSpinner,
+    MatStepper,
+    MatStep,
+    MatStepLabel,
+    MatStepperPrevious,
+    MatTable,
+    MatColumnDef,
+    MatHeaderCell,
+    MatHeaderCellDef,
+    MatCell,
+    MatCellDef,
+    MatHeaderRow,
+    MatHeaderRowDef,
+    MatRow,
+    MatRowDef,
     TranslocoModule,
     TranslocoMarkupModule,
     BookMultiSelectComponent,

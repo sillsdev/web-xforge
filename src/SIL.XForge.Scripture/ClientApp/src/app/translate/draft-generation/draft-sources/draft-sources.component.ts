@@ -2,9 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, EventEmitter } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MatCard, MatCardContent, MatCardHeader } from '@angular/material/card';
-import { MatCheckbox } from '@angular/material/checkbox';
 import { MatRipple } from '@angular/material/core';
-import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
@@ -56,8 +54,6 @@ export interface ProjectStatus {
   selector: 'app-draft-sources',
   imports: [
     MatButton,
-    MatFormField,
-    MatLabel,
     MatIcon,
     XForgeCommonModule,
     MatRipple,
@@ -66,7 +62,6 @@ export interface ProjectStatus {
     MatCardContent,
     CommonModule,
     TranslocoModule,
-    MatCheckbox,
     MatProgressSpinner,
     LanguageCodesConfirmationComponent,
     TrainingDataMultiSelectComponent

@@ -12,7 +12,7 @@ import { MatButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
 import { MatIcon } from '@angular/material/icon';
 import { MatMenu } from '@angular/material/menu';
-import { MatTabsModule } from '@angular/material/tabs';
+import { MatTab, MatTabGroup } from '@angular/material/tabs';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatTree } from '@angular/material/tree';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
@@ -115,7 +115,8 @@ describe('LynxInsightsPanelComponent', () => {
       MatButton,
       MatTooltip,
       MatMenu,
-      MatTabsModule,
+      MatTabGroup,
+      MatTab,
       MatDivider,
       IncludesPipe,
       getTestTranslocoModule(),

@@ -1,14 +1,25 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatOptionModule } from '@angular/material/core';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSortModule, Sort } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatIconButton } from '@angular/material/button';
+import { MatOption } from '@angular/material/core';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
+import { MatSelect } from '@angular/material/select';
+import { MatSort, MatSortHeader, Sort } from '@angular/material/sort';
+import {
+  MatCell,
+  MatCellDef,
+  MatColumnDef,
+  MatHeaderCell,
+  MatHeaderCellDef,
+  MatHeaderRow,
+  MatHeaderRowDef,
+  MatRow,
+  MatRowDef,
+  MatTable
+} from '@angular/material/table';
+import { MatTooltip } from '@angular/material/tooltip';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -184,15 +195,28 @@ class Row {
   imports: [
     CommonModule,
     TranslocoModule,
-    MatTooltipModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatOptionModule,
-    MatMenuModule,
-    MatIconModule,
-    MatTableModule,
-    MatSortModule
+    MatTooltip,
+    MatIconButton,
+    MatFormField,
+    MatLabel,
+    MatSelect,
+    MatOption,
+    MatMenu,
+    MatMenuItem,
+    MatMenuTrigger,
+    MatIcon,
+    MatTable,
+    MatColumnDef,
+    MatHeaderCell,
+    MatHeaderCellDef,
+    MatCell,
+    MatCellDef,
+    MatHeaderRow,
+    MatHeaderRowDef,
+    MatRow,
+    MatRowDef,
+    MatSort,
+    MatSortHeader
   ]
 })
 export class BiblicalTermsComponent extends DataLoadingComponent implements OnDestroy, OnInit {

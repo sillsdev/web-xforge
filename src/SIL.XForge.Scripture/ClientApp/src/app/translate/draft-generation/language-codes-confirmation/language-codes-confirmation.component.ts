@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, EventEmitter, Input, Output } from '@angular/core';
-import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
+import { MatCheckbox, MatCheckboxChange } from '@angular/material/checkbox';
 import { TranslocoModule } from '@ngneat/transloco';
 import { TranslocoMarkupComponent } from 'ngx-transloco-markup';
 import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
@@ -13,7 +13,7 @@ import { DraftSourcesAsSelectableProjectArrays, normalizeLanguageCodeToISO639_3 
 
 @Component({
   selector: 'app-language-codes-confirmation',
-  imports: [CommonModule, TranslocoModule, TranslocoMarkupComponent, MatCheckboxModule, NoticeComponent],
+  imports: [CommonModule, TranslocoModule, TranslocoMarkupComponent, MatCheckbox, NoticeComponent],
   templateUrl: './language-codes-confirmation.component.html',
   styleUrl: './language-codes-confirmation.component.scss'
 })

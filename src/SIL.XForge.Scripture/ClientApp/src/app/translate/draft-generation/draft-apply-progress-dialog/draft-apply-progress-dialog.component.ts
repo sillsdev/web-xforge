@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, Inject } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatButton } from '@angular/material/button';
+import { MAT_DIALOG_DATA, MatDialogActions, MatDialogContent, MatDialogRef } from '@angular/material/dialog';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressBar } from '@angular/material/progress-bar';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Observable } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -18,7 +18,7 @@ export interface DraftApplyProgress {
 
 @Component({
   selector: 'app-draft-apply-progress',
-  imports: [CommonModule, MatButtonModule, MatIconModule, MatProgressBarModule, MatDialogModule, TranslocoModule],
+  imports: [CommonModule, MatButton, MatIcon, MatProgressBar, MatDialogContent, MatDialogActions, TranslocoModule],
   templateUrl: './draft-apply-progress-dialog.component.html',
   styleUrl: './draft-apply-progress-dialog.component.scss'
 })

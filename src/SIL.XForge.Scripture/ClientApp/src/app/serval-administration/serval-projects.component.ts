@@ -1,9 +1,17 @@
 import { Component, DestroyRef, OnInit } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { MatTableModule } from '@angular/material/table';
+import { MatPaginator } from '@angular/material/paginator';
+import {
+  MatCell,
+  MatCellDef,
+  MatColumnDef,
+  MatHeaderCell,
+  MatHeaderCellDef,
+  MatHeaderRow,
+  MatHeaderRowDef,
+  MatRow,
+  MatRowDef,
+  MatTable
+} from '@angular/material/table';
 import { Router } from '@angular/router';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
@@ -69,7 +77,19 @@ class Row {
   selector: 'app-serval-projects',
   templateUrl: './serval-projects.component.html',
   styleUrls: ['./serval-projects.component.scss'],
-  imports: [MatButtonModule, MatFormFieldModule, MatIconModule, MatTableModule, MatPaginatorModule]
+  imports: [
+    MatTable,
+    MatColumnDef,
+    MatHeaderCell,
+    MatHeaderCellDef,
+    MatCell,
+    MatCellDef,
+    MatHeaderRow,
+    MatHeaderRowDef,
+    MatRow,
+    MatRowDef,
+    MatPaginator
+  ]
 })
 export class ServalProjectsComponent extends DataLoadingComponent implements OnInit {
   columnsToDisplay: string[] = ['name', 'preTranslate', 'source', 'draftingSource', 'trainingSource', 'actions'];

@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatButtonToggleGroup } from '@angular/material/button-toggle';
 import { MatDialogRef } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
+import { MatIcon } from '@angular/material/icon';
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { Router, RouterModule } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
@@ -45,7 +45,16 @@ export interface BookWithDraft {
   selector: 'app-draft-preview-books',
   templateUrl: './draft-preview-books.component.html',
   styleUrls: ['./draft-preview-books.component.scss'],
-  imports: [CommonModule, MatMenuModule, MatIconModule, MatButtonToggleModule, RouterModule, TranslocoModule]
+  imports: [
+    CommonModule,
+    MatMenu,
+    MatMenuItem,
+    MatMenuTrigger,
+    MatIcon,
+    MatButtonToggleGroup,
+    RouterModule,
+    TranslocoModule
+  ]
 })
 export class DraftPreviewBooksComponent {
   @Input() build: BuildDto | undefined;

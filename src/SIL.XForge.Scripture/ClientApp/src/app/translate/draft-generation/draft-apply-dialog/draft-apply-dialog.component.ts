@@ -1,11 +1,16 @@
 import { CommonModule } from '@angular/common';
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatButton } from '@angular/material/button';
+import { MatCheckbox } from '@angular/material/checkbox';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogActions,
+  MatDialogContent,
+  MatDialogRef,
+  MatDialogTitle
+} from '@angular/material/dialog';
+import { MatProgressBar } from '@angular/material/progress-bar';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
@@ -40,11 +45,12 @@ export interface DraftApplyDialogConfig {
 @Component({
   selector: 'app-draft-apply-dialog',
   imports: [
-    MatButtonModule,
-    MatFormFieldModule,
-    MatCheckboxModule,
-    MatProgressBarModule,
-    MatDialogModule,
+    MatButton,
+    MatCheckbox,
+    MatProgressBar,
+    MatDialogContent,
+    MatDialogActions,
+    MatDialogTitle,
     ReactiveFormsModule,
     XForgeCommonModule,
     TranslocoModule,
