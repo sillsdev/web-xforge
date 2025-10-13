@@ -1,15 +1,46 @@
-import { enableProdMode } from '@angular/core';
-import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import {
+  APP_ID,
+  enableProdMode,
+  ErrorHandler,
+  importProvidersFrom,
+  inject,
+  provideAppInitializer
+} from '@angular/core';
 
 import { ExceptionHandlingService } from 'xforge-common/exception-handling.service';
-import { AppModule } from './app/app.module';
+
+import { OverlayContainer } from '@angular/cdk/overlay';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { bootstrapApplication } from '@angular/platform-browser';
+import { provideAnimations } from '@angular/platform-browser/animations';
+import { ServiceWorkerModule } from '@angular/service-worker';
+import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
+import { CookieService } from 'ngx-cookie-service';
+import { QuillModule } from 'ngx-quill';
+import {
+  defaultTranslocoMarkupTranspilers,
+  provideTranslationMarkupTranspiler,
+  TranslocoMarkupModule
+} from 'ngx-transloco-markup';
+import { translocoMarkupRouterLinkRenderer } from 'ngx-transloco-markup-router-link';
+import { EmTextTranspiler } from 'xforge-common/i18n-transpilers/em-text.transpiler';
+import { InAppRootOverlayContainer } from 'xforge-common/overlay-container';
+import { provideUICommon } from 'xforge-common/ui-common-providers';
+import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
+import { AppRoutingModule } from './app/app-routing.module';
+import { AppComponent } from './app/app.component';
+import { CheckingModule } from './app/checking/checking.module';
+import { CoreModule } from './app/core/core.module';
+import { SharedModule } from './app/shared/shared.module';
+import { preloadEnglishTranslations } from './app/shared/utils';
+import { LynxInsightsModule } from './app/translate/editor/lynx/insights/lynx-insights.module';
+import { TranslateModule } from './app/translate/translate.module';
+import { UsersModule } from './app/users/users.module';
 import { environment } from './environments/environment';
 
 export function getBaseUrl(): string {
   return document.getElementsByTagName('base')[0].href;
 }
-
-const providers = [{ provide: 'BASE_URL', useFactory: getBaseUrl, deps: [] as any[] }];
 
 if (environment.production || environment.pwaTest) {
   enableProdMode();
@@ -17,6 +48,39 @@ if (environment.production || environment.pwaTest) {
 
 ExceptionHandlingService.initBugsnag();
 
-platformBrowserDynamic(providers)
-  .bootstrapModule(AppModule, { ngZoneEventCoalescing: true })
-  .catch(err => console.log(err));
+bootstrapApplication(AppComponent, {
+  providers: [
+    { provide: 'BASE_URL', useFactory: getBaseUrl, deps: [] as any[] },
+    importProvidersFrom(
+      CoreModule,
+      ServiceWorkerModule.register('sf-service-worker.js', {
+        enabled: environment.pwaTest || environment.production,
+        registrationStrategy: 'registerImmediately'
+      }),
+      TranslateModule,
+      CheckingModule,
+      UsersModule,
+      XForgeCommonModule,
+      TranslocoModule,
+      TranslocoMarkupModule,
+      AppRoutingModule,
+      SharedModule.forRoot(),
+      QuillModule.forRoot(),
+      LynxInsightsModule.forRoot()
+    ),
+    { provide: APP_ID, useValue: 'ng-cli-universal' },
+    CookieService,
+    provideAnimations(),
+    provideUICommon(),
+    provideTranslationMarkupTranspiler(EmTextTranspiler),
+    translocoMarkupRouterLinkRenderer(),
+    defaultTranslocoMarkupTranspilers(),
+    { provide: ErrorHandler, useClass: ExceptionHandlingService },
+    { provide: OverlayContainer, useClass: InAppRootOverlayContainer },
+    provideHttpClient(withInterceptorsFromDi()),
+    provideAppInitializer(() => {
+      const initializerFn = preloadEnglishTranslations(inject(TranslocoService));
+      return initializerFn();
+    })
+  ]
+}).catch(err => console.log(err));
