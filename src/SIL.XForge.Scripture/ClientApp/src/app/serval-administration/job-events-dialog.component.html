@@ -29,14 +29,14 @@
           @if (hasPayload(event.payload)) {
             <div class="event-payload">
               <strong>Parameters:</strong>
-              <pre>{{ event.payload | json }}</pre>
+              <app-json-viewer [data]="event.payload"></app-json-viewer>
             </div>
           }
 
           @if (event.result != null) {
             <div class="event-result">
               <strong>Result:</strong>
-              <pre>{{ event.result }}</pre>
+              <app-json-viewer [data]="event.result"></app-json-viewer>
             </div>
           }
         </div>

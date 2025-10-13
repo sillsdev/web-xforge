@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ModuleWithProviders, NgModule, inject, provideAppInitializer } from '@angular/core';
+import { inject, ModuleWithProviders, NgModule, provideAppInitializer } from '@angular/core';
 import { TranslocoModule } from '@ngneat/transloco';
 import { QuillModule } from 'ngx-quill';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
