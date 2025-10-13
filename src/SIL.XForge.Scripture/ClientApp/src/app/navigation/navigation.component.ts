@@ -1,5 +1,10 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, EventEmitter, Output } from '@angular/core';
+import { MatBadge } from '@angular/material/badge';
+import { MatIcon } from '@angular/material/icon';
+import { MatListItem, MatNavList } from '@angular/material/list';
 import { Router } from '@angular/router';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -9,18 +14,13 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { UserService } from 'xforge-common/user.service';
 import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 import { ResumeTranslateService } from '../checking/checking/resume-translate.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from '../core/models/sf-project-role-info';
 import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
-import { TranslocoModule } from '@ngneat/transloco';
-import { MatNavList, MatListItem } from '@angular/material/list';
-import { RouterLinkDirective } from '../../xforge-common/router-link.directive';
-import { MatIcon } from '@angular/material/icon';
-import { MatBadge } from '@angular/material/badge';
-import { AsyncPipe } from '@angular/common';
 
 @Component({
   selector: 'app-navigation',

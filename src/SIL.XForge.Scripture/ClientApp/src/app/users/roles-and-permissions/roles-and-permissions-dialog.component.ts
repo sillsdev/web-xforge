@@ -1,31 +1,31 @@
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { Component, DestroyRef, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatButton } from '@angular/material/button';
+import { MatCheckbox } from '@angular/material/checkbox';
 import {
   MAT_DIALOG_DATA,
-  MatDialogTitle,
-  MatDialogContent,
   MatDialogActions,
-  MatDialogClose
+  MatDialogClose,
+  MatDialogContent,
+  MatDialogTitle
 } from '@angular/material/dialog';
+import { MatRadioButton, MatRadioGroup } from '@angular/material/radio';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { Subscription } from 'rxjs';
+import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectService } from '../../core/sf-project.service';
-import { TranslocoModule } from '@ngneat/transloco';
-import { AvatarComponent } from '../../../xforge-common/avatar/avatar.component';
-import { CdkScrollable } from '@angular/cdk/scrolling';
 import { NoticeComponent } from '../../shared/notice/notice.component';
-import { MatRadioGroup, MatRadioButton } from '@angular/material/radio';
-import { MatCheckbox } from '@angular/material/checkbox';
-import { MatButton } from '@angular/material/button';
 
 export interface UserData {
   projectId: string;

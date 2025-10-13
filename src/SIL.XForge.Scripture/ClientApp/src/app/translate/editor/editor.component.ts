@@ -1,5 +1,7 @@
+import { Dir } from '@angular/cdk/bidi';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { ComponentType } from '@angular/cdk/portal';
+import { AsyncPipe, KeyValuePipe, NgClass } from '@angular/common';
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -14,10 +16,16 @@ import {
   ViewChild,
   ViewChildren
 } from '@angular/core';
-import { UntypedFormControl, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, UntypedFormControl, Validators } from '@angular/forms';
 import { MatBottomSheet, MatBottomSheetRef } from '@angular/material/bottom-sheet';
+import { MatButton, MatIconButton, MatMiniFabButton } from '@angular/material/button';
 import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import { MatInput } from '@angular/material/input';
+import { MatTooltip } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslocoModule } from '@ngneat/transloco';
 import {
   InteractiveTranslator,
   InteractiveTranslatorFactory,
@@ -28,6 +36,7 @@ import {
   TranslationSuggester
 } from '@sillsdev/machine';
 import { Canon, VerseRef } from '@sillsdev/scripture';
+import { AngularSplitModule } from 'angular-split';
 import { isEqual } from 'lodash-es';
 import Quill, { Bounds, Delta, Range } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -81,6 +90,7 @@ import {
   throttleTime
 } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { BlurOnClickDirective } from 'xforge-common/blur-on-click.directive';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -113,10 +123,18 @@ import { TextDocService } from '../../core/text-doc.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
+import { BookChapterChooserComponent } from '../../shared/book-chapter-chooser/book-chapter-chooser.component';
+import { CopyrightBannerComponent } from '../../shared/copyright-banner/copyright-banner.component';
+import { NoticeComponent } from '../../shared/notice/notice.component';
 import { TabFactoryService, TabGroup, TabMenuService, TabStateService } from '../../shared/sf-tab-group';
 import { TabAddRequestService } from '../../shared/sf-tab-group/base-services/tab-add-request.service';
+import { TabGroupComponent } from '../../shared/sf-tab-group/tab-group.component';
+import { TabHeaderDirective } from '../../shared/sf-tab-group/tab-header/tab-header.directive';
+import { TabComponent } from '../../shared/sf-tab-group/tab/tab.component';
+import { ShareButtonComponent } from '../../shared/share/share-button.component';
 import { getRetainCount } from '../../shared/text/quill-util';
 import { Segment } from '../../shared/text/segment';
+import { TextDocIdPipe } from '../../shared/text/text-doc-id.pipe';
 import {
   EmbedsByVerse,
   FeaturedVerseRefInfo,
@@ -135,10 +153,16 @@ import {
   verseRefFromMouseEvent,
   XmlUtils
 } from '../../shared/utils';
+import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.component';
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { DraftOptionsService } from '../draft-generation/draft-options.service';
+import { TrainingProgressComponent } from '../training-progress/training-progress.component';
+import { EditorDraftComponent } from './editor-draft/editor-draft.component';
+import { EditorHistoryComponent } from './editor-history/editor-history.component';
 import { EditorHistoryService } from './editor-history/editor-history.service';
+import { EditorResourceComponent } from './editor-resource/editor-resource.component';
 import { LynxInsightStateService } from './lynx/insights/lynx-insight-state.service';
+import { LynxInsightsPanelComponent } from './lynx/insights/lynx-insights-panel/lynx-insights-panel.component';
 import { MultiCursorViewer, MultiViewerComponent } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
 import { Suggestion, SuggestionsComponent } from './suggestions.component';
@@ -152,30 +176,6 @@ import {
   TranslatorSettingsDialogComponent,
   TranslatorSettingsDialogData
 } from './translator-settings-dialog.component';
-import { TranslocoModule } from '@ngneat/transloco';
-import { BookChapterChooserComponent } from '../../shared/book-chapter-chooser/book-chapter-chooser.component';
-import { NgClass, AsyncPipe, KeyValuePipe } from '@angular/common';
-import { MatIconButton, MatButton, MatMiniFabButton } from '@angular/material/button';
-import { BlurOnClickDirective } from '../../../xforge-common/blur-on-click.directive';
-import { MatTooltip } from '@angular/material/tooltip';
-import { MatIcon } from '@angular/material/icon';
-import { ShareButtonComponent } from '../../shared/share/share-button.component';
-import { TabGroupComponent } from '../../shared/sf-tab-group/tab-group.component';
-import { TabComponent } from '../../shared/sf-tab-group/tab/tab.component';
-import { TabHeaderDirective } from '../../shared/sf-tab-group/tab-header/tab-header.directive';
-import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.component';
-import { EditorResourceComponent } from './editor-resource/editor-resource.component';
-import { CopyrightBannerComponent } from '../../shared/copyright-banner/copyright-banner.component';
-import { NoticeComponent } from '../../shared/notice/notice.component';
-import { AngularSplitModule } from 'angular-split';
-import { Dir } from '@angular/cdk/bidi';
-import { MatFormField, MatLabel } from '@angular/material/form-field';
-import { MatInput } from '@angular/material/input';
-import { LynxInsightsPanelComponent } from './lynx/insights/lynx-insights-panel/lynx-insights-panel.component';
-import { EditorHistoryComponent } from './editor-history/editor-history.component';
-import { EditorDraftComponent } from './editor-draft/editor-draft.component';
-import { TrainingProgressComponent } from '../training-progress/training-progress.component';
-import { TextDocIdPipe } from '../../shared/text/text-doc-id.pipe';
 
 export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
 

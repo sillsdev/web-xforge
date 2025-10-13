@@ -1,6 +1,13 @@
+import { AsyncPipe } from '@angular/common';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { Component, DestroyRef, OnInit } from '@angular/core';
+import { MatAnchor, MatButton } from '@angular/material/button';
+import { MatCard } from '@angular/material/card';
+import { MatRipple } from '@angular/material/core';
+import { MatExpansionPanel, MatExpansionPanelHeader } from '@angular/material/expansion';
+import { MatIcon } from '@angular/material/icon';
 import { Router } from '@angular/router';
+import { TranslocoModule } from '@ngneat/transloco';
 import { isPTUser } from 'realtime-server/lib/esm/common/models/user';
 import { isResource } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { Observable } from 'rxjs';
@@ -8,6 +15,7 @@ import { en, I18nService } from 'xforge-common/i18n.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -19,15 +27,7 @@ import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ParatextService } from '../core/paratext.service';
 import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
-import { TranslocoModule } from '@ngneat/transloco';
 import { NoticeComponent } from '../shared/notice/notice.component';
-import { MatCard } from '@angular/material/card';
-import { MatButton, MatAnchor } from '@angular/material/button';
-import { MatIcon } from '@angular/material/icon';
-import { MatRipple } from '@angular/material/core';
-import { RouterLinkDirective } from '../../xforge-common/router-link.directive';
-import { MatExpansionPanel, MatExpansionPanelHeader } from '@angular/material/expansion';
-import { AsyncPipe } from '@angular/common';
 /** Presents user with list of available projects to open or connect to. */
 @Component({
   selector: 'app-my-projects',

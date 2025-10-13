@@ -1,12 +1,12 @@
+import { AsyncPipe } from '@angular/common';
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
-import { lastValueFrom, timer } from 'rxjs';
-import { map, takeWhile } from 'rxjs/operators';
-import { TranslocoModule } from '@ngneat/transloco';
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressBar } from '@angular/material/progress-bar';
-import { RouterLinkDirective } from '../../../xforge-common/router-link.directive';
-import { AsyncPipe } from '@angular/common';
+import { Router } from '@angular/router';
+import { TranslocoModule } from '@ngneat/transloco';
+import { lastValueFrom, timer } from 'rxjs';
+import { map, takeWhile } from 'rxjs/operators';
+import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 
 // All times in milliseconds
 const redirectDelay = 10_000;
