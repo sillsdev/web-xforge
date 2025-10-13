@@ -11,10 +11,10 @@ import {
   ViewChild
 } from '@angular/core';
 import { ControlValueAccessor } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatButton, MatIconButton } from '@angular/material/button';
+import { MAT_DIALOG_DATA, MatDialogContent, MatDialogRef } from '@angular/material/dialog';
+import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
 import { TranslocoModule } from '@ngneat/transloco';
 import { interval, Observable, Subscription, timer } from 'rxjs';
 import { map, take } from 'rxjs/operators';
@@ -53,10 +53,11 @@ export interface AudioRecorderDialogResult {
   templateUrl: './audio-recorder-dialog.component.html',
   styleUrl: './audio-recorder-dialog.component.scss',
   imports: [
-    MatTooltipModule,
-    MatButtonModule,
-    MatIconModule,
-    MatDialogModule,
+    MatTooltip,
+    MatButton,
+    MatIconButton,
+    MatIcon,
+    MatDialogContent,
     CommonModule,
     SharedModule,
     TranslocoModule
