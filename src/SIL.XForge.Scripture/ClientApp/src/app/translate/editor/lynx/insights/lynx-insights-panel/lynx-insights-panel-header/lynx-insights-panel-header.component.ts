@@ -1,5 +1,10 @@
 import { Component, DestroyRef, OnInit, ViewChild } from '@angular/core';
-import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
+import { MatButton } from '@angular/material/button';
+import { MatDivider } from '@angular/material/divider';
+import { MatIcon } from '@angular/material/icon';
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
+import { MatTab, MatTabGroup, MatTabLabel } from '@angular/material/tabs';
+import { TranslocoModule } from '@ngneat/transloco';
 import {
   LynxInsightFilter,
   LynxInsightFilterScope,
@@ -9,14 +14,9 @@ import {
   LynxInsightType,
   LynxInsightTypes
 } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
+import { IncludesPipe } from 'xforge-common/includes.pipe';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { LynxInsightStateService } from '../../lynx-insight-state.service';
-import { TranslocoModule } from '@ngneat/transloco';
-import { MatButton } from '@angular/material/button';
-import { MatIcon } from '@angular/material/icon';
-import { MatTabGroup, MatTab, MatTabLabel } from '@angular/material/tabs';
-import { MatDivider } from '@angular/material/divider';
-import { IncludesPipe } from '../../../../../../../xforge-common/includes.pipe';
 
 @Component({
   selector: 'app-lynx-insights-panel-header',

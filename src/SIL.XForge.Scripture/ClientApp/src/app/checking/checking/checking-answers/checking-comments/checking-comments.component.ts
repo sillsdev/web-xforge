@@ -1,4 +1,9 @@
+import { NgClass } from '@angular/common';
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
+import { TranslocoModule } from '@ngneat/transloco';
 import { cloneDeep, sortBy } from 'lodash-es';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
@@ -8,19 +13,14 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { debounceTime } from 'rxjs/operators';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
 import { AudioAttachment } from '../../checking-audio-player/checking-audio-player.component';
-import { CheckingInputFormComponent } from '../checking-input-form/checking-input-form.component';
-import { TranslocoModule } from '@ngneat/transloco';
-import { NgClass } from '@angular/common';
 import { SingleButtonAudioPlayerComponent } from '../../single-button-audio-player/single-button-audio-player.component';
-import { MatIcon } from '@angular/material/icon';
-import { MatIconButton, MatButton } from '@angular/material/button';
-import { MatTooltip } from '@angular/material/tooltip';
-import { OwnerComponent } from '../../../../../xforge-common/owner/owner.component';
+import { CheckingInputFormComponent } from '../checking-input-form/checking-input-form.component';
 
 export interface CommentAction {
   action: 'delete' | 'save' | 'show-form' | 'hide-form' | 'show-comments';
