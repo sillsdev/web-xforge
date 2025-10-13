@@ -72,7 +72,7 @@ export async function traverseHomePageAndLoginPage(page: Page, context: Screensh
 
   // Log in with Paratext
   await page.locator('a').filter({ hasText: 'Log in with Paratext' }).click();
-  await expect(page.getByText('Sign in with your Paratext Registry account')).toBeVisible();
+  await expect(page.getByText('Sign in with your Paratext Registry account')).toBeVisible({ timeout: 10_000 });
   await page.fill('input[name=email]', 'user@example.com');
   await page.click('#login-form button[type=submit]');
   await screenshot(page, { pageName: 'registry_login_page', ...context });
