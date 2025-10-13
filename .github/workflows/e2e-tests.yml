@@ -39,7 +39,7 @@ jobs:
             src/RealtimeServer/lib
             src/RealtimeServer/node_modules
       - name: "Deps: Node"
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{matrix.node_version}}
           cache: "npm"
@@ -108,7 +108,7 @@ jobs:
             src/RealtimeServer/lib
             src/RealtimeServer/node_modules
       - name: "Deps: Node"
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{matrix.node_version}}
           cache: "npm"
@@ -242,7 +242,7 @@ jobs:
           persist-credentials: false
 
       - name: "Deps: Node"
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{matrix.node_version}}
           cache: "npm"
@@ -391,7 +391,7 @@ jobs:
           cache-dependency-path: src/SIL.XForge.Scripture/packages.lock.json
 
       - name: "Deps: Node"
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{matrix.node_version}}
           cache: "npm"
