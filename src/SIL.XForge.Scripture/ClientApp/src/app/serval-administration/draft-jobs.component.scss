@@ -6,7 +6,7 @@
 }
 
 #draft-jobs-table tr:nth-child(odd) {
-  background-color: white;
+  background-color: var(--sf-draft-jobs-table-row-background);
 }
 
 app-owner,
@@ -76,7 +76,7 @@ app-owner,
 }
 
 .project-link {
-  color: #1976d2;
+  color: var(--sf-draft-jobs-project-link-color);
   text-decoration: none;
   font-weight: 500;
 
@@ -89,7 +89,7 @@ app-owner,
   cursor: help;
   text-decoration: underline;
   text-decoration-style: dotted;
-  color: #666;
+  color: var(--sf-draft-jobs-book-count-color);
 }
 
 .filter-notice-content {
