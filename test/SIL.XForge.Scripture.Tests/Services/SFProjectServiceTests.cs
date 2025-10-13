@@ -2788,8 +2788,9 @@ public class SFProjectServiceTests
 
         SFProject project = env.GetProject(Project01);
         Assert.That(project.TranslateConfig.Source.ProjectRef, Is.EqualTo(Resource01));
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         await env
-            .ParatextService.Received(2)
+            .ParatextService.Received(1)
             .GetPermissionsAsync(
                 Arg.Any<UserSecret>(),
                 Arg.Is<SFProject>(p => p.ParatextId == Resource01PTId),
