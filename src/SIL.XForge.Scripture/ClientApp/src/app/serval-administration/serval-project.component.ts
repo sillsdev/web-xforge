@@ -1,12 +1,23 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, Input, OnInit } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
+import { MatButton } from '@angular/material/button';
+import { MatCard, MatCardContent, MatCardHeader } from '@angular/material/card';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import {
+  MatCell,
+  MatCellDef,
+  MatColumnDef,
+  MatHeaderCell,
+  MatHeaderCellDef,
+  MatHeaderRow,
+  MatHeaderRowDef,
+  MatRow,
+  MatRowDef,
+  MatTable
+} from '@angular/material/table';
 import { Router } from '@angular/router';
 import { saveAs } from 'file-saver';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -59,12 +70,24 @@ function projectType(project: TranslateSource | SFProjectProfile): string {
     CommonModule,
     NoticeComponent,
     SharedModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatCheckboxModule,
-    MatIconModule,
-    MatCardModule,
-    MatTableModule,
+    MatButton,
+    MatFormField,
+    MatLabel,
+    MatCheckbox,
+    MatIcon,
+    MatCard,
+    MatCardHeader,
+    MatCardContent,
+    MatTable,
+    MatColumnDef,
+    MatHeaderCell,
+    MatHeaderCellDef,
+    MatCell,
+    MatCellDef,
+    MatHeaderRow,
+    MatHeaderRowDef,
+    MatRow,
+    MatRowDef,
     ReactiveFormsModule,
     DraftInformationComponent,
     MobileNotSupportedComponent,
