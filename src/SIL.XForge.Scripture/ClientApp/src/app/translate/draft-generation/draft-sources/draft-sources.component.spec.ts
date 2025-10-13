@@ -73,7 +73,6 @@ when(mockTrainingDataQuery.remoteDocChanges$).thenReturn(of());
 describe('DraftSourcesComponent', () => {
   configureTestingModule(() => ({
     imports: [TestOnlineStatusModule.forRoot(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), getTestTranslocoModule()],
-    declarations: [],
     providers: [
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
