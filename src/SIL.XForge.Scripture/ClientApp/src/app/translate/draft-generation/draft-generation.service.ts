@@ -135,7 +135,7 @@ export class DraftGenerationService {
     if (!this.onlineStatusService.isOnline) {
       return of(undefined);
     }
-    return this.httpClient.get<Object>(`translation/rawBuilds/id:${buildId}?pretranslate=true`).pipe(
+    return this.httpClient.get<Object>(`translation/builds/id:${buildId}/raw?pretranslate=true`).pipe(
       map(res => res.data),
       catchError(() => of(undefined))
     );
