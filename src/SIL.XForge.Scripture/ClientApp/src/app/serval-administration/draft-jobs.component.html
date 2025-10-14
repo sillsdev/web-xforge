@@ -73,7 +73,7 @@
           <th mat-header-cell *matHeaderCellDef>Training Books</th>
           <td mat-cell *matCellDef="let row">
             @for (projectBook of row.trainingBooks; track projectBook.projectId) {
-              <div class="project-books-line">
+              <div>
                 <a [routerLink]="['/serval-administration', projectBook.projectId]" class="project-link">{{
                   getProjectShortName(projectBook.projectId)
                 }}</a
@@ -95,7 +95,7 @@
           <th mat-header-cell *matHeaderCellDef>Translation Books</th>
           <td mat-cell *matCellDef="let row">
             @for (projectBook of row.translationBooks; track projectBook.projectId) {
-              <div class="project-books-line">
+              <div>
                 <a [routerLink]="['/serval-administration', projectBook.projectId]" class="project-link">{{
                   getProjectShortName(projectBook.projectId)
                 }}</a
@@ -142,20 +142,17 @@
             ></app-owner>
           </td>
         </ng-container>
-        <ng-container matColumnDef="buildId">
-          <th mat-header-cell *matHeaderCellDef>Build ID & ClearML link</th>
+        <ng-container matColumnDef="buildDetails">
+          <th mat-header-cell *matHeaderCellDef>Build Details</th>
           <td mat-cell *matCellDef="let row">
-            <a [href]="row.clearmlUrl" target="_blank" rel="noopener noreferrer" matTooltip="Open in ClearML">
-              {{ row.job.buildId }}
+            <a
+              (click)="openJobDetailsDialog(row.job)"
+              class="build-id-link"
+              [class.disabled]="!row.job.buildId"
+              matTooltip="View complete job details including build information and events"
+            >
+              {{ row.job.buildId || "N/A" }}
             </a>
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="details">
-          <th mat-header-cell *matHeaderCellDef>Events</th>
-          <td mat-cell *matCellDef="let row">
-            <button mat-stroked-button (click)="openDetailsDialog(row.job)" color="primary" class="details-button">
-              <mat-icon class="mirror-rtl">list</mat-icon> Events
-            </button>
           </td>
         </ng-container>
       </table>

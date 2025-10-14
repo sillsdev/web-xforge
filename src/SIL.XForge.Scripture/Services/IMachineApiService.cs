@@ -69,6 +69,13 @@ public interface IMachineApiService
         CancellationToken cancellationToken
     );
     Task<ServalEngineDto> GetEngineAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
+    Task<TranslationEngine?> GetRawEngineAsync(
+        string curUserId,
+        string sfProjectId,
+        bool preTranslate,
+        bool isServalAdmin,
+        CancellationToken cancellationToken
+    );
     Task<ServalBuildDto?> GetLastCompletedPreTranslationBuildAsync(
         string curUserId,
         string sfProjectId,

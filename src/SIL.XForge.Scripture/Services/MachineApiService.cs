@@ -1255,6 +1255,34 @@ public class MachineApiService(
         }
     }
 
+    public async Task<TranslationEngine?> GetRawEngineAsync(
+        string curUserId,
+        string sfProjectId,
+        bool preTranslate,
+        bool isServalAdmin,
+        CancellationToken cancellationToken
+    )
+    {
+        // Ensure that the user has permission
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin, cancellationToken);
+
+        TranslationEngine? translationEngine = null;
+
+        // Execute on Serval, if it is enabled
+        string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate);
+
+        try
+        {
+            translationEngine = await translationEnginesClient.GetAsync(translationEngineId, cancellationToken);
+        }
+        catch (ServalApiException e)
+        {
+            ProcessServalApiException(e);
+        }
+
+        return translationEngine;
+    }
+
     public async Task<PreTranslationDto> GetPreTranslationAsync(
         string curUserId,
         string sfProjectId,

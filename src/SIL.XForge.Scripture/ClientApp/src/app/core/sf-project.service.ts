@@ -357,19 +357,15 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return await this.onlineInvoke<QueryResults<EventMetric>>('eventMetrics', { projectId, pageIndex, pageSize });
   }
 
-  async onlineAllEventMetricsForConstructionDraftJobs(
+  async onlineAllEventMetricsForConstructingDraftJobs(
+    eventTypes: string[],
     projectId?: string,
     daysBack?: number
   ): Promise<QueryResults<EventMetric> | undefined> {
     const params: any = {
       projectId: projectId ?? null,
       scopes: [3], // Drafting scope
-      eventTypes: [
-        'StartPreTranslationBuildAsync',
-        'BuildProjectAsync',
-        'RetrievePreTranslationStatusAsync',
-        'CancelPreTranslationBuildAsync'
-      ]
+      eventTypes
     };
 
     if (daysBack != null) {
