@@ -4,6 +4,7 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { filter, switchMap, tap } from 'rxjs';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
@@ -13,7 +14,6 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { XFValidators } from 'xforge-common/xfvalidators';
-import { ActivatedProjectService } from '../../../xforge-common/activated-project.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { ParatextService } from '../../core/paratext.service';
 import { SFProjectService } from '../../core/sf-project.service';
