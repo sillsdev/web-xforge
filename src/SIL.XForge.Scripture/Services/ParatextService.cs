@@ -2502,6 +2502,7 @@ public class ParatextService : DisposableBase, IParatextService
         if (!File.Exists(customHgPath))
         {
             string msg = string.Format(
+                CultureInfo.InvariantCulture,
                 "Error: Could not find hg executable at {0}. Please install hg 4.7 or greater.",
                 customHgPath
             );
@@ -3006,7 +3007,13 @@ public class ParatextService : DisposableBase, IParatextService
         string date = new DateTimeOffset(note.DateCreated).ToString("o");
         // Comment ids are generated using the Paratext username. Since we do not want to transparently
         // store a username to a note in SF we construct the intended Comment id at runtime.
-        string commentId = string.Format("{0}/{1}/{2}", note.ThreadId, ptUser.Username, date);
+        string commentId = string.Format(
+            CultureInfo.InvariantCulture,
+            "{0}/{1}/{2}",
+            note.ThreadId,
+            ptUser.Username,
+            date
+        );
         Paratext.Data.ProjectComments.Comment matchingComment = thread.Comments.LastOrDefault(c => c.Id == commentId);
         if (matchingComment != null)
             return matchingComment;

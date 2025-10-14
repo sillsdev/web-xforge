@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using Hangfire.Common;
 using Hangfire.States;
 using Hangfire.Storage;
@@ -145,5 +146,7 @@ public class MutexAttribute(string? resource = null) : JobFilterAttribute, IElec
     private string GetResourceKey(Job job) => $"extension:job-mutex:set:{GetKeyFormat(job, resource)}";
 
     private static string GetKeyFormat(Job job, string? keyFormat) =>
-        string.IsNullOrWhiteSpace(keyFormat) ? job.Method.Name : string.Format(keyFormat, job.Args);
+        string.IsNullOrWhiteSpace(keyFormat)
+            ? job.Method.Name
+            : string.Format(CultureInfo.InvariantCulture, keyFormat, job.Args);
 }
