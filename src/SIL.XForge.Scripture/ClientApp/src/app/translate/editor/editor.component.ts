@@ -1491,20 +1491,25 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.projectDoc,
       this.userService.currentUserId
     );
-    if (
-      ((hasDraft && !draftApplied) || urlDraftActive) &&
-      canViewDrafts &&
-      !this.draftOptionsService.areFormattingOptionsAvailableButUnselected()
-    ) {
+
+    const hasUnappliedDraft: boolean = hasDraft && !draftApplied;
+    const draftShouldBeVisible: boolean = hasUnappliedDraft || urlDraftActive;
+
+    let draftBuild: BuildDto | undefined;
+    // Only try to fetch the draft build if existing information indicates we should show the draft
+    if (draftShouldBeVisible && canViewDrafts && this.projectId != null) {
+      draftBuild = await firstValueFrom(this.draftGenerationService.getLastCompletedBuild(this.projectId));
+    }
+
+    const isBlockedByFormattingOptions: boolean =
+      this.draftOptionsService.areFormattingOptionsAvailableButUnselected(draftBuild);
+
+    if (draftShouldBeVisible && canViewDrafts && draftBuild != null && !isBlockedByFormattingOptions) {
       // URL may indicate to select the 'draft' tab (such as when coming from generate draft page)
       const groupIdToAddTo: EditorTabGroupType = this.showSource ? 'source' : 'target';
 
       // Add to 'source' (or 'target' if showSource is false) tab group if no existing draft tab
       if (existingDraftTab == null) {
-        const draftBuild: BuildDto | undefined = await firstValueFrom(
-          this.draftGenerationService.getLastCompletedBuild(this.projectId!)
-        );
-
         this.tabState.addTab(
           groupIdToAddTo,
           this.editorTabFactory.createTab('draft', {
