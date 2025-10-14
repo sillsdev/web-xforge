@@ -83,6 +83,8 @@ describe('EditorDraftComponent', () => {
     when(mockFeatureFlagService.usfmFormat).thenReturn(createTestFeatureFlag(true));
     when(mockDraftGenerationService.pollBuildProgress(anything())).thenReturn(buildProgress$.asObservable());
     buildProgress$.next({ state: BuildStates.Completed } as BuildDto);
+    when(mockActivatedProjectService.projectId$).thenReturn(of('targetProjectId'));
+    when(mockDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of(undefined));
 
     fixture = TestBed.createComponent(EditorDraftComponent);
     component = fixture.componentInstance;
