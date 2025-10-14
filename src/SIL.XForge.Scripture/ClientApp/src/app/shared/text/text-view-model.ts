@@ -241,15 +241,15 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
     if (source === 'user' && editor.isEnabled()) {
       const modelDelta = this.viewToData(delta);
       if (modelDelta.ops != null && modelDelta.ops.length > 0) {
-        this.textDoc.submit(modelDelta, 'Editor');
+        void this.textDoc.submit(modelDelta, 'Editor');
       }
     }
 
     // Re-compute segment boundaries so the insertion point stays in the right place.
-    this.updateSegments(editor, isOnline);
+    void this.updateSegments(editor, isOnline);
 
     // Defer the update, since it might cause the segment ranges to be out-of-sync with the view model
-    Promise.resolve().then(() => {
+    void Promise.resolve().then(() => {
       const updateDelta = this.updateSegments(editor, isOnline);
       if (updateDelta.ops != null && updateDelta.ops.length > 0) {
         // Clean up blanks in quill editor. This may result in re-entering the update() method.
@@ -818,7 +818,7 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
         // if the segment is no longer blank, ensure that the selection is at the end of the segment.
         // Sometimes after typing in a blank segment, the selection will be at the beginning. This seems to be a bug
         // in Quill.
-        Promise.resolve().then(() => editor.setSelection(segment.index + segment.length - 1, 0, 'user'));
+        void Promise.resolve().then(() => editor.setSelection(segment.index + segment.length - 1, 0, 'user'));
       }
     } else if (segment.containsBlank && segment.length === 1 && !segment.hasInitialFormat && segment.isInitial) {
       const delta = new Delta();

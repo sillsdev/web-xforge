@@ -101,7 +101,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
         this.projectDoc = await this.projectService.getProfile(projectId);
 
         // Update the overview now if we are online, or when we are next online
-        this.onlineStatusService.online.then(async () => {
+        void this.onlineStatusService.online.then(async () => {
           this.loadingStarted();
           try {
             if (this.translationEngine == null) {
@@ -152,17 +152,17 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     }
     this.trainingPercentage = 0;
     this.isTraining = true;
-    this.translationEngine
+    void this.translationEngine
       .startTraining()
       .catch((error: any) => {
         this.isTraining = false;
         if (error instanceof HttpErrorResponse && error.status === 401) {
-          this.authService.requestParatextCredentialUpdate();
+          void this.authService.requestParatextCredentialUpdate();
         } else {
-          this.noticeService.showError(this.i18n.translateStatic('translate_overview.training_unavailable'));
+          void this.noticeService.showError(this.i18n.translateStatic('translate_overview.training_unavailable'));
         }
       })
-      .then(() => this.listenForStatus());
+      .then(() => void this.listenForStatus());
   }
 
   getBookName(text: TextInfo): string {
@@ -215,7 +215,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
           complete: () => {
             // training completed successfully
             this.isTraining = false;
-            this.updateEngineStats();
+            void this.updateEngineStats();
           }
         }),
         repeat(),

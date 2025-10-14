@@ -141,7 +141,9 @@ export class TrainingProgressComponent extends DataLoadingComponent implements O
           complete: () => {
             // training completed successfully
             if (this.trainingProgressClosed) {
-              this.noticeService.show(this.i18n.translateStatic('training_progress.training_completed_successfully'));
+              void this.noticeService.show(
+                this.i18n.translateStatic('training_progress.training_completed_successfully')
+              );
               this.trainingProgressClosed = false;
             } else {
               this.trainingMessage = this.i18n.translateStatic('training_progress.completed_successfully');

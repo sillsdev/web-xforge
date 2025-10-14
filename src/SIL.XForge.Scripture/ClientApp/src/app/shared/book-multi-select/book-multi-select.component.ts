@@ -90,7 +90,7 @@ export class BookMultiSelectComponent implements OnChanges {
       .filter(n => n.selected)
       .map(n => ({ number: n.bookNum, selected: this.bookOptions[bookIndex].selected }));
     this.bookSelect.emit(this.selectedBooks.map(b => b.number));
-    this.initBookOptions();
+    void this.initBookOptions();
   }
 
   isBookInScope(bookNum: number, scope: Scope): boolean {

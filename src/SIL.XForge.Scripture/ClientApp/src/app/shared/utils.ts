@@ -191,7 +191,7 @@ export function checkAppAccess(
 ): void {
   if (projectDoc.data == null) return;
   // Remove the record of the selected task so 'Project Home' will not redirect there
-  projectUserConfigDoc.submitJson0Op(op => {
+  void projectUserConfigDoc.submitJson0Op(op => {
     op.unset(puc => puc.selectedTask!);
     op.unset(puc => puc.selectedQuestionRef!);
   });
@@ -199,11 +199,11 @@ export function checkAppAccess(
   const route = '/projects/' + projectDoc.id;
 
   if (pathname.includes('translate') && !roleCanAccessTranslate(projectRole)) {
-    router.navigateByUrl(route, { replaceUrl: true });
+    void router.navigateByUrl(route, { replaceUrl: true });
     return;
   }
   if (pathname.includes('checking') && !roleCanAccessCommunityChecking(projectRole)) {
-    router.navigateByUrl(route, { replaceUrl: true });
+    void router.navigateByUrl(route, { replaceUrl: true });
   }
 }
 
