@@ -127,4 +127,49 @@ describe('DraftOptionsService', () => {
       expect(service.areFormattingOptionsSupportedForBuild(entry)).toBe(false);
     });
   });
+
+  describe('shouldBlockDraftTabDueToFormattingOptions', () => {
+    function buildWithDate(date: Date | undefined): BuildDto | undefined {
+      if (date == null) {
+        return { additionalInfo: {} } as BuildDto;
+      }
+      return { additionalInfo: { dateFinished: date.toJSON() } } as BuildDto;
+    }
+
+    it('returns true when formatting options are unselected and draft is new', () => {
+      when(mockedActivatedProject.projectDoc).thenReturn(PROJECT_DOC_EMPTY_USFM);
+      const newBuild = buildWithDate(new Date(FORMATTING_OPTIONS_SUPPORTED_DATE.getTime() + 1));
+      expect(service.shouldBlockDraftTabDueToFormattingOptions(newBuild)).toBe(true);
+    });
+
+    it('returns false when formatting options are unselected but draft is old', () => {
+      when(mockedActivatedProject.projectDoc).thenReturn(PROJECT_DOC_EMPTY_USFM);
+      const oldBuild = buildWithDate(new Date(FORMATTING_OPTIONS_SUPPORTED_DATE.getTime() - 1));
+      expect(service.shouldBlockDraftTabDueToFormattingOptions(oldBuild)).toBe(false);
+    });
+
+    it('returns false when formatting options are selected and draft is new', () => {
+      when(mockedActivatedProject.projectDoc).thenReturn(PROJECT_DOC_BOTH_FORMATS);
+      const newBuild = buildWithDate(new Date(FORMATTING_OPTIONS_SUPPORTED_DATE.getTime() + 1));
+      expect(service.shouldBlockDraftTabDueToFormattingOptions(newBuild)).toBe(false);
+    });
+
+    it('returns false when formatting options are selected and draft is old', () => {
+      when(mockedActivatedProject.projectDoc).thenReturn(PROJECT_DOC_BOTH_FORMATS);
+      const oldBuild = buildWithDate(new Date(FORMATTING_OPTIONS_SUPPORTED_DATE.getTime() - 1));
+      expect(service.shouldBlockDraftTabDueToFormattingOptions(oldBuild)).toBe(false);
+    });
+
+    it('returns false when build is undefined', () => {
+      when(mockedActivatedProject.projectDoc).thenReturn(PROJECT_DOC_EMPTY_USFM);
+      expect(service.shouldBlockDraftTabDueToFormattingOptions(undefined)).toBe(false);
+    });
+
+    it('returns false when flag is disabled even if options unselected and draft is new', () => {
+      when(mockedFeatureFlagService.usfmFormat).thenReturn(createTestFeatureFlag(false));
+      when(mockedActivatedProject.projectDoc).thenReturn(PROJECT_DOC_EMPTY_USFM);
+      const newBuild = buildWithDate(new Date(FORMATTING_OPTIONS_SUPPORTED_DATE.getTime() + 1));
+      expect(service.shouldBlockDraftTabDueToFormattingOptions(newBuild)).toBe(false);
+    });
+  });
 });
