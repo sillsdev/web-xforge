@@ -107,6 +107,7 @@ import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component
 import { XmlUtils } from '../../shared/utils';
 import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.component';
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
+import { DraftOptionsService } from '../draft-generation/draft-options.service';
 import { DraftPreviewBooksComponent } from '../draft-generation/draft-preview-books/draft-preview-books.component';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { EditorDraftComponent } from './editor-draft/editor-draft.component';
@@ -132,6 +133,7 @@ const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedMatDialog = mock(MatDialog);
 const mockedHttpClient = mock(HttpClient);
 const mockedDraftGenerationService = mock(DraftGenerationService);
+const mockedDraftOptionsService = mock(DraftOptionsService);
 const mockedParatextService = mock(ParatextService);
 const mockedPermissionsService = mock(PermissionsService);
 const mockedLynxWorkspaceService = mock(LynxWorkspaceService);
@@ -198,6 +200,7 @@ describe('EditorComponent', () => {
       { provide: BreakpointObserver, useClass: TestBreakpointObserver },
       { provide: HttpClient, useMock: mockedHttpClient },
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
+      { provide: DraftOptionsService, useMock: mockedDraftOptionsService },
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: TabFactoryService, useValue: EditorTabFactoryService },
       { provide: TabMenuService, useValue: EditorTabMenuService },
@@ -4100,6 +4103,26 @@ describe('EditorComponent', () => {
         const sourceTabGroup = env.component.tabState.getTabGroup('source');
         expect(sourceTabGroup?.tabs[1]).toBeUndefined();
 
+        env.dispose();
+      }));
+
+      it('should not add draft preview tab when draft formatting (usfmConfig) is not set', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          Object.defineProperty(env.component, 'showSource', { get: () => true });
+        });
+        env.setupProject({ translateConfig: { draftConfig: {} } });
+        // Formatting options not selected, so draft tab should not be shown
+        when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(true);
+        when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
+        env.wait();
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
+        env.wait();
+
+        const sourceTabGroup = env.component.tabState.getTabGroup('source');
+        expect(sourceTabGroup?.tabs.find(t => t.type === 'draft')).toBeUndefined();
+
+        const targetTabGroup = env.component.tabState.getTabGroup('target');
+        expect(targetTabGroup?.tabs.find(t => t.type === 'draft')).toBeUndefined();
         env.dispose();
       }));
 

@@ -18,8 +18,8 @@ import { BuildDto } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
 import { RIGHT_TO_LEFT_MARK } from '../../../../shared/utils';
 import { DraftDownloadButtonComponent } from '../../draft-download-button/draft-download-button.component';
+import { DraftOptionsService } from '../../draft-options.service';
 import { DraftPreviewBooksComponent } from '../../draft-preview-books/draft-preview-books.component';
-import { FORMATTING_OPTIONS_SUPPORTED_DATE } from '../../draft-utils';
 import { TrainingDataService } from '../../training-data/training-data.service';
 
 const STATUS_INFO: Record<BuildStates, { icons: string; text: string; color: string }> = {
@@ -269,13 +269,11 @@ export class DraftHistoryEntryComponent {
   }
 
   get formattingOptionsSelected(): boolean {
-    return this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.usfmConfig != null;
+    return this.draftOptionsService.areFormattingOptionsSelected();
   }
 
   get formattingOptionsSupported(): boolean {
-    return this.featureFlags.usfmFormat.enabled && this.entry?.additionalInfo?.dateFinished != null
-      ? new Date(this.entry.additionalInfo.dateFinished) > FORMATTING_OPTIONS_SUPPORTED_DATE
-      : false;
+    return this.draftOptionsService.areFormattingOptionsSupportedForBuild(this.entry);
   }
 
   @Input() isLatestBuild: boolean = false;
@@ -295,6 +293,7 @@ export class DraftHistoryEntryComponent {
     private readonly trainingDataService: TrainingDataService,
     private readonly activatedProjectService: ActivatedProjectService,
     readonly featureFlags: FeatureFlagService,
+    private readonly draftOptionsService: DraftOptionsService,
     private readonly destroyRef: DestroyRef
   ) {}
 

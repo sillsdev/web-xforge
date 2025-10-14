@@ -4,6 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { EventMetric } from '../event-metrics/event-metric';
+import { JsonViewerComponent } from '../shared/json-viewer/json-viewer.component';
 
 interface JobEventsDialogData {
   projectId: string;
@@ -28,7 +29,7 @@ const EVENT_TYPE_LABELS: {
   selector: 'app-job-events-dialog',
   templateUrl: './job-events-dialog.component.html',
   styleUrls: ['./job-events-dialog.component.scss'],
-  imports: [CommonModule, MatDialogModule, UICommonModule]
+  imports: [CommonModule, MatDialogModule, UICommonModule, JsonViewerComponent]
 })
 export class JobEventsDialogComponent {
   constructor(
