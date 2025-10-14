@@ -138,6 +138,8 @@ $colors: (
     // set the button theme vars to our specific colors
     --mdc-filled-button-container-color: var(--notice-color-button-bg);
     --mdc-filled-button-label-text-color: var(--notice-color-button-text);
+    // icon buttons
+    color: var(--notice-color-text);
 
     &:hover {
       background-color: var(--notice-color-button-hover-bg) !important;
