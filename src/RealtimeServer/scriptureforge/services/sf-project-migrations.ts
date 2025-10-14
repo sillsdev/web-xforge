@@ -425,7 +425,7 @@ class SFProjectMigration23 extends DocMigration {
 
   async migrateDoc(doc: Doc): Promise<void> {
     const ops: Op[] = [];
-    if (doc.data.translateConfig.draftConfig.usfmConfig != null) {
+    if (doc.data.translateConfig.draftConfig.usfmConfig?.preserveParagraphMarkers != null) {
       ops.push({
         p: ['translateConfig', 'draftConfig', 'usfmConfig'],
         od: doc.data.translateConfig.draftConfig.usfmConfig
