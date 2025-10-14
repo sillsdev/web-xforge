@@ -1,10 +1,10 @@
-import { Inject, Injectable } from '@angular/core';
+import { DestroyRef, Inject, Injectable } from '@angular/core';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { BehaviorSubject, interval, Observable } from 'rxjs';
-import { filter, takeUntil } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import { WINDOW } from 'xforge-common/browser-globals';
 import { LocalSettingsService } from 'xforge-common/local-settings.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { LocationService } from './location.service';
 
 export const PWA_CHECK_FOR_UPDATES = 30_000;
@@ -26,7 +26,7 @@ export interface InstallPromptOutcome {
 @Injectable({
   providedIn: 'root'
 })
-export class PwaService extends SubscriptionDisposable {
+export class PwaService {
   private readonly _canInstall$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private promptEvent?: BeforeInstallPromptEvent;
 
@@ -34,20 +34,18 @@ export class PwaService extends SubscriptionDisposable {
     private readonly updates: SwUpdate,
     private readonly locationService: LocationService,
     private readonly localSettings: LocalSettingsService,
-    @Inject(WINDOW) private window: Window
+    @Inject(WINDOW) private window: Window,
+    private readonly destroyRef: DestroyRef
   ) {
-    super();
-
     // Check for updates periodically if enabled and the browser supports it
     if (this.updates.isEnabled) {
-      const checkForUpdatesInterval$ = interval(PWA_CHECK_FOR_UPDATES)
-        .pipe(takeUntil(this.ngUnsubscribe))
-        .subscribe(() =>
-          this.updates.checkForUpdate().catch((error: any) => {
-            // Stop checking for updates and throw the error
-            checkForUpdatesInterval$.unsubscribe();
-            throw new Error(error);
-          })
+      interval(PWA_CHECK_FOR_UPDATES)
+        .pipe(quietTakeUntilDestroyed(this.destroyRef))
+        .subscribe(
+          () =>
+            void this.updates.checkForUpdate().catch((error: any) => {
+              throw new Error(error);
+            })
         );
     }
 
@@ -87,7 +85,7 @@ export class PwaService extends SubscriptionDisposable {
   }
 
   activateUpdates(): void {
-    this.updates.activateUpdate();
+    void this.updates.activateUpdate();
     this.locationService.reload();
   }
 

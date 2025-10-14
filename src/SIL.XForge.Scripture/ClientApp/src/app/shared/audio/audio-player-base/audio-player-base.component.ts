@@ -1,23 +1,25 @@
-import { Component, Input, OnDestroy } from '@angular/core';
+import { Component, DestroyRef, Input, OnDestroy } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { AudioPlayer, AudioStatus } from '../audio-player';
 
 @Component({
   template: ``,
   standalone: false
 })
-export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable implements OnDestroy {
+export abstract class AudioPlayerBaseComponent implements OnDestroy {
   readonly isAudioAvailable$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private _audioStatus: AudioStatus | undefined;
   private _hasProblem: boolean = false;
   private _isAudioAvailable: boolean = false;
   private _audio: AudioPlayer | undefined;
 
-  constructor(protected readonly onlineStatusService: OnlineStatusService) {
-    super();
-    this.subscribe(this.isAudioAvailable$, newVal => {
+  constructor(
+    protected readonly onlineStatusService: OnlineStatusService,
+    protected readonly destroyRef: DestroyRef
+  ) {
+    this.isAudioAvailable$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(newVal => {
       this._isAudioAvailable = newVal;
       this.audio?.setSeek(0);
     });
@@ -38,7 +40,7 @@ export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable im
   protected set audio(value: AudioPlayer | undefined) {
     this._audio = value;
     if (this._audio !== undefined) {
-      this.subscribe(this._audio.status$, newVal => {
+      this._audio.status$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(newVal => {
         this._audioStatus = newVal;
         if (newVal === AudioStatus.Available) {
           this.hasProblem = false;
@@ -73,8 +75,7 @@ export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable im
     }
   }
 
-  override ngOnDestroy(): void {
-    super.ngOnDestroy();
+  ngOnDestroy(): void {
     this.audio?.dispose();
   }
 }

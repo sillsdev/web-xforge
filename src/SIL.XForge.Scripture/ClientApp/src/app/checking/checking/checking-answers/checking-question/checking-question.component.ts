@@ -20,7 +20,7 @@ import {
 import { Subscription } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
@@ -33,14 +33,14 @@ import { SingleButtonAudioPlayerComponent } from '../../single-button-audio-play
   styleUrls: ['./checking-question.component.scss'],
   standalone: false
 })
-export class CheckingQuestionComponent extends SubscriptionDisposable implements OnChanges, OnDestroy {
+export class CheckingQuestionComponent implements OnChanges, OnDestroy {
   @Output() audioPlayed: EventEmitter<void> = new EventEmitter<void>();
   @ViewChild('questionAudio') questionAudio?: SingleButtonAudioPlayerComponent;
   @ViewChild('scriptureAudio') set scriptureAudio(comp: SingleButtonAudioPlayerComponent) {
     if (this._scriptureAudio === comp) return;
     this._scriptureAudio = comp;
     if (comp) {
-      this.subscribe(comp.hasFinishedPlayingOnce$, newVal => {
+      comp.hasFinishedPlayingOnce$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(newVal => {
         if (newVal) {
           this.selectQuestion();
           this.updateUserRefsPlayed();
@@ -64,9 +64,7 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
     private readonly destroyRef: DestroyRef,
     private readonly projectService: SFProjectService,
     private readonly i18n: I18nService
-  ) {
-    super();
-  }
+  ) {}
 
   get focusedText(): string {
     return this._focusedText;
@@ -181,7 +179,7 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
 
   async ngOnChanges(changes: SimpleChanges): Promise<void> {
     if (changes['questionDoc']) {
-      this.dispose();
+      this.audioQuery?.dispose();
 
       const projectId: string = this._questionDoc!.data!.projectRef;
       if (projectId === this.projectId) {
@@ -209,7 +207,6 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
 
   ngOnDestroy(): void {
     this.isDestroyed = true;
-    super.ngOnDestroy();
     this._audioChangeSub?.unsubscribe();
     this.questionDocSub?.unsubscribe();
     this.audioQuery?.dispose();

@@ -247,8 +247,8 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
     this.idle$ = fromEvent(this.doc, 'no write pending').pipe(map(() => undefined));
     this.create$ = fromEvent(this.doc, 'create').pipe(map(() => undefined));
     this.delete$ = fromEvent(this.doc, 'del').pipe(map(() => undefined));
-    this.changes$ = fromEvent<[any, any]>(this.doc, 'op').pipe(map(([ops]) => ops));
-    this.remoteChanges$ = fromEvent<[any, any]>(this.doc, 'op').pipe(
+    this.changes$ = fromEvent(this.doc, 'op').pipe(map(([ops]) => ops));
+    this.remoteChanges$ = fromEvent(this.doc, 'op').pipe(
       filter(([, source]) => !source),
       map(([ops]) => ops)
     );
