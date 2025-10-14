@@ -45,6 +45,16 @@ describe('DraftOptionsService', () => {
     return doc;
   }
 
+  function buildDtoWithDate(date: Date): BuildDto {
+    return {
+      additionalInfo: {
+        dateFinished: date.toJSON()
+      }
+    } as BuildDto;
+  }
+
+  const SUPPORTED_BUILD_ENTRY: BuildDto = buildDtoWithDate(new Date(FORMATTING_OPTIONS_SUPPORTED_DATE.getTime() + 1));
+
   const PROJECT_DOC_BOTH_FORMATS: SFProjectProfileDoc = buildProjectDoc({
     paragraphFormat: ParagraphBreakFormat.BestGuess,
     quoteFormat: QuoteFormat.Normalized
@@ -83,23 +93,28 @@ describe('DraftOptionsService', () => {
   describe('areFormattingOptionsAvailableButUnselected', () => {
     it('returns true when flag enabled and both options missing', () => {
       when(mockedActivatedProject.projectDoc).thenReturn(PROJECT_DOC_EMPTY_USFM);
-      expect(service.areFormattingOptionsAvailableButUnselected()).toBe(true);
+      expect(service.areFormattingOptionsAvailableButUnselected(SUPPORTED_BUILD_ENTRY)).toBe(true);
     });
 
     it('returns true when flag enabled and one option missing', () => {
       when(mockedActivatedProject.projectDoc).thenReturn(PROJECT_DOC_QUOTE_ONLY);
-      expect(service.areFormattingOptionsAvailableButUnselected()).toBe(true);
+      expect(service.areFormattingOptionsAvailableButUnselected(SUPPORTED_BUILD_ENTRY)).toBe(true);
     });
 
     it('returns false when flag enabled and both options set', () => {
       when(mockedActivatedProject.projectDoc).thenReturn(PROJECT_DOC_BOTH_FORMATS);
-      expect(service.areFormattingOptionsAvailableButUnselected()).toBe(false);
+      expect(service.areFormattingOptionsAvailableButUnselected(SUPPORTED_BUILD_ENTRY)).toBe(false);
     });
 
     it('returns false when flag disabled', () => {
       when(mockedFeatureFlagService.usfmFormat).thenReturn(createTestFeatureFlag(false));
       when(mockedActivatedProject.projectDoc).thenReturn(PROJECT_DOC_EMPTY_USFM);
-      expect(service.areFormattingOptionsAvailableButUnselected()).toBe(false);
+      expect(service.areFormattingOptionsAvailableButUnselected(SUPPORTED_BUILD_ENTRY)).toBe(false);
+    });
+
+    it('returns false when build entry unavailable', () => {
+      when(mockedActivatedProject.projectDoc).thenReturn(PROJECT_DOC_EMPTY_USFM);
+      expect(service.areFormattingOptionsAvailableButUnselected(undefined)).toBe(false);
     });
   });
 
@@ -109,7 +124,7 @@ describe('DraftOptionsService', () => {
       if (date == null) {
         return { additionalInfo: {} } as BuildDto;
       }
-      return { additionalInfo: { dateFinished: date.toJSON() } } as BuildDto;
+      return buildDtoWithDate(date);
     }
 
     it('returns true when flag enabled and date after supported date', () => {
