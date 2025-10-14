@@ -1,3 +1,4 @@
+import { DestroyRef } from '@angular/core';
 import { fakeAsync, tick } from '@angular/core/testing';
 import { SwUpdate, VersionEvent, VersionReadyEvent } from '@angular/service-worker';
 import { BehaviorSubject, Subject } from 'rxjs';
@@ -72,6 +73,7 @@ class TestEnvironment {
   readonly pwaService: PwaService;
   private versionUpdates$: Subject<VersionEvent> = new Subject<VersionEvent>();
   static isRunningInstalledApp$: BehaviorSubject<boolean> = new BehaviorSubject(false);
+  private readonly mockDestroyRef: DestroyRef = { onDestroy: (_cb: () => void) => () => {} };
 
   constructor() {
     TestEnvironment.isRunningInstalledApp$.next(false);
@@ -80,7 +82,8 @@ class TestEnvironment {
       instance(mockedSwUpdate),
       instance(mockedLocationService),
       instance(mockedLocalSettingsService),
-      mockedWindow
+      mockedWindow,
+      this.mockDestroyRef
     );
     when(mockedSwUpdate.versionUpdates).thenReturn(this.versionUpdates$);
     when(mockedSwUpdate.checkForUpdate()).thenResolve(true);
@@ -88,7 +91,7 @@ class TestEnvironment {
   }
 
   dispose(): void {
-    this.pwaService.dispose();
+    // No longer need to call dispose since we're using DestroyRef
   }
 
   triggerVersionEvent(type: 'VERSION_DETECTED' | 'VERSION_READY' | 'VERSION_INSTALLATION_FAILED'): void {
