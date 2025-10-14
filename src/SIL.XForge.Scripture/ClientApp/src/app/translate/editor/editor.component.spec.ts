@@ -4111,8 +4111,8 @@ describe('EditorComponent', () => {
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
         env.setupProject({ translateConfig: { draftConfig: {} } });
-        // Formatting options not selected, so draft tab should not be shown
-        when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(true);
+        // Formatting options not selected, so draft tab should be blocked
+        when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected(anything())).thenReturn(true);
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
@@ -4903,6 +4903,9 @@ class TestEnvironment {
     ).thenReturn(of([]));
     when(mockedDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(of([]));
     when(mockedDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
+    when(mockedDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of({} as BuildDto));
+    when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected(anything())).thenReturn(false);
+    when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected(anything())).thenReturn(false);
     when(mockedPermissionsService.isUserOnProject(anything())).thenResolve(true);
     when(mockedFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(false));
     when(mockedLynxWorkspaceService.rawInsightSource$).thenReturn(of([]));

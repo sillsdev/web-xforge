@@ -23,12 +23,12 @@ export class DraftOptionsService {
     );
   }
 
-  areFormattingOptionsAvailableButUnselected(): boolean {
-    return (
-      this.featureFlags.usfmFormat.enabled &&
-      (this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.usfmConfig?.paragraphFormat == null ||
-        this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.usfmConfig?.quoteFormat == null)
-    );
+  areFormattingOptionsAvailableButUnselected(draftBuild: BuildDto | undefined): boolean {
+    const usfmConfig = this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.usfmConfig;
+    const optionsSelected = usfmConfig?.paragraphFormat != null && usfmConfig?.quoteFormat != null;
+
+    const available = this.featureFlags.usfmFormat.enabled && this.areFormattingOptionsSupportedForBuild(draftBuild);
+    return available && !optionsSelected;
   }
 
   areFormattingOptionsSupportedForBuild(entry: BuildDto | undefined): boolean {
