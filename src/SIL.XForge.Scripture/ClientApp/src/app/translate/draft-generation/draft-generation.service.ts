@@ -131,6 +131,7 @@ export class DraftGenerationService {
       );
   }
 
+  /** Gets the build exactly as Serval returns it */
   getRawBuild(buildId: string): Observable<Object | undefined> {
     if (!this.onlineStatusService.isOnline) {
       return of(undefined);
@@ -139,6 +140,19 @@ export class DraftGenerationService {
       map(res => res.data),
       catchError(() => of(undefined))
     );
+  }
+
+  /** Gets the engine exactly as Serval returns it */
+  getRawEngine(projectId: string, preTranslate: boolean): Observable<Object | undefined> {
+    if (!this.onlineStatusService.isOnline) {
+      return of(undefined);
+    }
+    return this.httpClient
+      .get<Object>(`translation/engines/project:${projectId}/raw?pretranslate=${preTranslate}`)
+      .pipe(
+        map(res => res.data),
+        catchError(() => of(undefined))
+      );
   }
 
   /**
