@@ -43,7 +43,7 @@
           </mat-form-field>
         }
         <div class="apply-draft-button-container">
-          @if (featureFlags.usfmFormat.enabled) {
+          @if (showDraftOptionsButton$ | async) {
             <span
               [matTooltip]="t(doesLatestHaveDraft ? 'format_draft_can' : 'format_draft_cannot')"
               [style.cursor]="doesLatestHaveDraft ? 'pointer' : 'not-allowed'"

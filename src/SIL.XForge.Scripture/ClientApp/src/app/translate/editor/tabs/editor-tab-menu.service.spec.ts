@@ -16,6 +16,7 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { PermissionsService } from '../../../core/permissions.service';
 import { TabStateService } from '../../../shared/sf-tab-group';
+import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { DraftOptionsService } from '../../draft-generation/draft-options.service';
 import { EditorTabMenuService } from './editor-tab-menu.service';
 import { EditorTabInfo } from './editor-tabs.types';
@@ -26,6 +27,7 @@ const tabStateMock: TabStateService<any, any> = mock(TabStateService);
 const mockUserService = mock(UserService);
 const mockPermissionsService = mock(PermissionsService);
 const mockDraftOptionsService = mock(DraftOptionsService);
+const mockDraftGenerationService = mock(DraftGenerationService);
 
 describe('EditorTabMenuService', () => {
   configureTestingModule(() => ({
@@ -37,7 +39,8 @@ describe('EditorTabMenuService', () => {
       { provide: UserService, useMock: mockUserService },
       { provide: PermissionsService, useMock: mockPermissionsService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: DraftOptionsService, useMock: mockDraftOptionsService }
+      { provide: DraftOptionsService, useMock: mockDraftOptionsService },
+      { provide: DraftGenerationService, useMock: mockDraftGenerationService }
     ]
   }));
 
@@ -253,7 +256,7 @@ describe('EditorTabMenuService', () => {
   it('should not show draft menu item when draft formatting (usfmConfig) is not set', done => {
     const env = new TestEnvironment();
     // Simulate formatting options available but still unselected, so draft tab should be hidden
-    when(mockDraftOptionsService.areFormattingOptionsAvailableButUnselected()).thenReturn(true);
+    when(mockDraftOptionsService.areFormattingOptionsAvailableButUnselected(anything())).thenReturn(true);
     env.setExistingTabs([]);
     service['canShowHistory'] = () => true;
     service['canShowResource'] = () => true;
@@ -307,6 +310,10 @@ class TestEnvironment {
   constructor(explicitProjectDoc?: SFProjectProfileDoc) {
     const projectDoc: SFProjectProfileDoc = explicitProjectDoc ?? this.projectDoc;
     when(activatedProjectMock.projectDoc$).thenReturn(of(projectDoc));
+    when(activatedProjectMock.projectId$).thenReturn(of(projectDoc.id));
+    when(tabStateMock.tabs$).thenReturn(of([] as EditorTabInfo[]));
+    when(mockDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of(undefined));
+    when(mockDraftOptionsService.areFormattingOptionsAvailableButUnselected(anything())).thenReturn(false);
     when(mockUserService.currentUserId).thenReturn('user01');
     when(mockPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
     service = TestBed.inject(EditorTabMenuService);

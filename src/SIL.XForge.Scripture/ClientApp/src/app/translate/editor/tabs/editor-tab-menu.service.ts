@@ -6,7 +6,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { combineLatest, map, Observable, of } from 'rxjs';
-import { shareReplay, switchMap } from 'rxjs/operators';
+import { shareReplay, startWith, switchMap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -16,11 +16,27 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { ParatextService } from '../../../core/paratext.service';
 import { PermissionsService } from '../../../core/permissions.service';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { BuildDto } from '../../../machine-api/build-dto';
 import { TabMenuItem, TabMenuService, TabStateService } from '../../../shared/sf-tab-group';
+import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { DraftOptionsService } from '../../draft-generation/draft-options.service';
 import { EditorTabInfo } from './editor-tabs.types';
+
 @Injectable()
 export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> {
+  // TODO: Detect when a new draft build is available so we can update the latest build
+  // This is ugly, but null means it doesn't exist, 'loading' means we don't know yet
+  private readonly latestDraftBuild$: Observable<BuildDto | null | 'loading'> = this.activatedProject.projectId$.pipe(
+    switchMap(projectId =>
+      projectId == null
+        ? of(null)
+        : this.draftGenerationService.getLastCompletedBuild(projectId).pipe(
+            map(build => build ?? null),
+            startWith('loading' as const)
+          )
+    )
+  );
+
   private readonly menuItems$: Observable<TabMenuItem[]> = this.initMenuItems();
 
   constructor(
@@ -31,7 +47,8 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
     private readonly tabState: TabStateService<EditorTabGroupType, EditorTabInfo>,
     private readonly permissionsService: PermissionsService,
     private readonly i18n: I18nService,
-    private readonly draftOptionsService: DraftOptionsService
+    private readonly draftOptionsService: DraftOptionsService,
+    private readonly draftGenerationService: DraftGenerationService
   ) {}
 
   getMenuItems(): Observable<TabMenuItem[]> {
@@ -42,19 +59,22 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
   private initMenuItems(): Observable<TabMenuItem[]> {
     return combineLatest([
       this.activatedProject.projectDoc$.pipe(filterNullish()),
-      this.onlineStatus.onlineStatus$
+      this.onlineStatus.onlineStatus$,
+      this.latestDraftBuild$
     ]).pipe(
       quietTakeUntilDestroyed(this.destroyRef),
-      switchMap(([projectDoc, isOnline]) => {
-        return combineLatest([of(projectDoc), of(isOnline), this.tabState.tabs$]);
+      switchMap(([projectDoc, isOnline, latestDraftBuild]) => {
+        return combineLatest([of(projectDoc), of(isOnline), this.tabState.tabs$, of(latestDraftBuild)]);
       }),
-      switchMap(([projectDoc, isOnline, existingTabs]) => {
+      switchMap(([projectDoc, isOnline, existingTabs, latestDraftBuild]) => {
         const showDraft =
           isOnline &&
           projectDoc.data != null &&
           SFProjectService.hasDraft(projectDoc.data) &&
           this.permissionsService.canAccessDrafts(projectDoc, this.userService.currentUserId) &&
-          !this.draftOptionsService.areFormattingOptionsAvailableButUnselected();
+          latestDraftBuild !== 'loading' &&
+          latestDraftBuild !== null &&
+          !this.draftOptionsService.areFormattingOptionsAvailableButUnselected(latestDraftBuild);
         const items: Observable<TabMenuItem>[] = [];
 
         for (const tabType of editorTabTypes) {
