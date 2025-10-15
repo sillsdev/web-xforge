@@ -313,6 +313,12 @@ export class NoteThreadEmbed extends QuillEmbedBlot {
     };
   }
 
+  appendChild(_child: Node): void {
+    // An embed cannot have children. As such, we will just ignore this request.
+    // This function can be called by wrap() if the embed is inside an inline of block,
+    // and this embed is having a format applied to it (i.e. 'highlight' in EditorComponent).
+  }
+
   format(name: string, value: any): void {
     if (name === NoteThreadEmbed.blotName && value != null) {
       const ref = value as NoteThread;

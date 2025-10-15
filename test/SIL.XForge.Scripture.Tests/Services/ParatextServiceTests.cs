@@ -747,6 +747,7 @@ public class ParatextServiceTests
 
         // See if there is a message for the user updating the book
         string logMessage = string.Format(
+            CultureInfo.InvariantCulture,
             "{0} updated {1} in {2}.",
             env.User01,
             Canon.BookNumberToEnglishName(ruthBookNum),
@@ -782,6 +783,7 @@ public class ParatextServiceTests
 
         // See if there is a message for the user updating the book
         string logMessage = string.Format(
+            CultureInfo.InvariantCulture,
             "{0} updated {1} in {2}.",
             env.User01,
             Canon.BookNumberToEnglishName(ruthBookNum),
@@ -819,6 +821,7 @@ public class ParatextServiceTests
 
         // See if there is a message for the user updating the chapter
         string logMessage = string.Format(
+            CultureInfo.InvariantCulture,
             "{0} updated chapter {1} of {2} in {3}.",
             env.User01,
             1,

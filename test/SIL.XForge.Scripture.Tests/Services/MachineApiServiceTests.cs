@@ -2635,6 +2635,70 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task GetPreTranslationUsjAsync_ChapterZeroLoadsMultipleChaptersFromMongo()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        Usj testUsjChapterTwo = new Usj
+        {
+            Type = Usj.UsjType,
+            Version = Usj.UsjVersion,
+            Content =
+            [
+                new UsjMarker
+                {
+                    Type = "chapter",
+                    Marker = "c",
+                    Number = "2",
+                },
+                new UsjMarker
+                {
+                    Type = "verse",
+                    Marker = "v",
+                    Number = "1",
+                },
+                "Verse 1",
+            ],
+        };
+        string id1 = TextDocument.GetDocId(Project01, 40, 1, TextDocument.Draft);
+        env.TextDocuments.Add(new TextDocument(id1, TestUsj));
+        string id2 = TextDocument.GetDocId(Project01, 40, 2, TextDocument.Draft);
+        env.TextDocuments.Add(new TextDocument(id2, testUsjChapterTwo));
+
+        // The chapters must be configured in the project document
+        await env.Projects.UpdateAsync(
+            Project01,
+            u =>
+                u.Add(
+                    p => p.Texts,
+                    new TextInfo { BookNum = 40, Chapters = [new Chapter { Number = 1 }, new Chapter { Number = 2 }] }
+                )
+        );
+
+        // SUT
+        IUsj actual = await env.Service.GetPreTranslationUsjAsync(
+            User01,
+            Project01,
+            40,
+            0,
+            false,
+            DateTime.UtcNow,
+            null,
+            CancellationToken.None
+        );
+
+        // The returned Usj will be chapter 1 and 2 combined in order
+        List<object> expectedContent = [.. TestUsj.Content, .. testUsjChapterTwo.Content];
+        Usj expected = new Usj
+        {
+            Type = Usj.UsjType,
+            Version = Usj.UsjVersion,
+            Content = expectedContent,
+        };
+        Assert.That(actual, Is.EqualTo(expected).UsingPropertiesComparer());
+    }
+
+    [Test]
     public void GetPreTranslationUsjAsync_CorpusDoesNotSupportUsfm()
     {
         // Set up test environment

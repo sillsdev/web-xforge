@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -3997,6 +3998,19 @@ public class DeltaUsxMapperTests
 
     [Test]
     public async Task RoundTrip_Asv() => await RoundTripTestHelper("eng-asv_usfm-partial", "eng-asv");
+
+    [Test]
+    public void IsDeltaValid_DifferentCulture_ReturnsTrue()
+    {
+        CultureInfo previousCulture = CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = new CultureInfo("es");
+        var delta = Delta.New().InsertChapter("1").InsertPara("p").InsertText("text", "verse_1_1");
+
+        // SUT
+        bool result = DeltaUsxMapper.IsDeltaValid(delta);
+        Assert.IsTrue(result);
+        CultureInfo.CurrentCulture = previousCulture;
+    }
 
     [Test]
     public void IsDeltaValid_Valid_ReturnsTrue()
