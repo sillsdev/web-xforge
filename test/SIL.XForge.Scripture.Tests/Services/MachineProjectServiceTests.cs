@@ -2246,6 +2246,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    [Obsolete("Tests legacy corpora")]
     public async Task RemoveLegacyServalDataAsync_DoesNotCallServalIfNoTranslationEngineId()
     {
         // Set up test environment
@@ -2261,6 +2262,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    [Obsolete("Tests legacy corpora")]
     public async Task RemoveLegacyServalDataAsync_LogsAnErrorWhenAServalErrorOccurs()
     {
         // Set up test environment
@@ -2283,6 +2285,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    [Obsolete("Tests legacy corpora")]
     public async Task RemoveLegacyServalDataAsync_LogsAnEventWhenTheFileIsNotFound()
     {
         // Set up test environment
@@ -2307,6 +2310,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    [Obsolete("Tests legacy corpora")]
     public async Task RemoveLegacyServalDataAsync_OnlyRemovesRelevantCorpora()
     {
         // Set up test environment
@@ -2328,6 +2332,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    [Obsolete("Tests legacy corpora")]
     public async Task RemoveLegacyServalDataAsync_RemovesCorporaPropertyIfNoMoreCorpora()
     {
         // Set up test environment
