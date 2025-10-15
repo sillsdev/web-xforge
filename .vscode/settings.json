@@ -116,6 +116,8 @@
   "omnisharp.enableEditorConfigSupport": true,
   "omnisharp.enableRoslynAnalyzers": true,
   "python.formatting.provider": "black",
+  "deno.enablePaths": ["./src/SIL.XForge.Scripture/ClientApp/e2e", "./scripts/"],
+  "deno.disablePaths": ["./scripts/db_tools/"],
   "typescript.tsdk": "./src/SIL.XForge.Scripture/ClientApp/node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "typescript.preferences.importModuleSpecifier": "relative",
