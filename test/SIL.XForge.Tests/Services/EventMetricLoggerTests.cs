@@ -33,6 +33,7 @@ public class EventMetricLoggerTests
                 EventScope.None,
                 Arg.Any<Dictionary<string, object>>(),
                 result: Arg.Any<object>(),
+                executionTime: Arg.Any<TimeSpan?>(),
                 exception: Arg.Any<Exception>()
             )
             .ThrowsAsync(ex);
@@ -83,6 +84,7 @@ public class EventMetricLoggerTests
                 scope: EventScope.None,
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a => a.Count == 0),
                 result: Arg.Any<object>(),
+                executionTime: Arg.Any<TimeSpan?>(),
                 exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
@@ -108,6 +110,7 @@ public class EventMetricLoggerTests
                 scope: EventScope.None,
                 argumentsWithNames: Arg.Any<Dictionary<string, object>>(),
                 result: Arg.Any<object>(),
+                executionTime: Arg.Any<TimeSpan?>(),
                 exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
@@ -140,6 +143,7 @@ public class EventMetricLoggerTests
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
                 result: Arg.Any<object>(),
+                executionTime: Arg.Any<TimeSpan?>(),
                 exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
@@ -172,6 +176,7 @@ public class EventMetricLoggerTests
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
                 result: Arg.Any<object>(),
+                executionTime: Arg.Any<TimeSpan?>(),
                 exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
@@ -204,6 +209,7 @@ public class EventMetricLoggerTests
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
                 result: Arg.Any<object>(),
+                executionTime: Arg.Any<TimeSpan?>(),
                 exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
@@ -236,6 +242,7 @@ public class EventMetricLoggerTests
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
                 result: Arg.Any<object>(),
+                executionTime: Arg.Any<TimeSpan?>(),
                 exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
@@ -279,6 +286,7 @@ public class EventMetricLoggerTests
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
                 result: Arg.Any<object>(),
+                executionTime: Arg.Any<TimeSpan?>(),
                 exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
@@ -340,6 +348,7 @@ public class EventMetricLoggerTests
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
                 result: Arg.Any<object>(),
+                executionTime: Arg.Any<TimeSpan?>(),
                 exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
@@ -372,6 +381,7 @@ public class EventMetricLoggerTests
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
                 result: Arg.Any<object>(),
+                executionTime: Arg.Any<TimeSpan?>(),
                 exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
@@ -405,6 +415,7 @@ public class EventMetricLoggerTests
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
                 result: expected,
+                executionTime: Arg.Any<TimeSpan?>(),
                 exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
@@ -436,6 +447,7 @@ public class EventMetricLoggerTests
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
                 result: Arg.Any<object>(),
+                executionTime: Arg.Any<TimeSpan?>(),
                 exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
@@ -469,6 +481,7 @@ public class EventMetricLoggerTests
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
                 result: expected,
+                executionTime: Arg.Any<TimeSpan?>(),
                 exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
@@ -509,6 +522,7 @@ public class EventMetricLoggerTests
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
                 result: Arg.Any<object>(),
+                executionTime: Arg.Any<TimeSpan?>(),
                 exception: Arg.Is<ArgumentException>(e => e.ParamName == exceptionParamName)
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
@@ -549,6 +563,7 @@ public class EventMetricLoggerTests
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
                 result: Arg.Any<object>(),
+                executionTime: Arg.Any<TimeSpan?>(),
                 exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
@@ -589,6 +604,7 @@ public class EventMetricLoggerTests
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
                 result: Arg.Any<object>(),
+                executionTime: Arg.Any<TimeSpan?>(),
                 exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);

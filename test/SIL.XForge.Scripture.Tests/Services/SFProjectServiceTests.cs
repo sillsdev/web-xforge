@@ -2985,6 +2985,7 @@ public class SFProjectServiceTests
                 EventScope.Settings,
                 Arg.Any<Dictionary<string, object>>(),
                 Arg.Any<object?>(),
+                Arg.Any<TimeSpan?>(),
                 Arg.Any<Exception?>()
             );
         Assert.That(env.ContainsProject(Project01), Is.False);
@@ -3016,6 +3017,7 @@ public class SFProjectServiceTests
                 EventScope.Settings,
                 Arg.Any<Dictionary<string, object>>(),
                 Arg.Any<object?>(),
+                Arg.Any<TimeSpan?>(),
                 Arg.Any<Exception?>()
             );
         await env

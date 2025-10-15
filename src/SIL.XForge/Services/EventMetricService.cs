@@ -80,8 +80,9 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
         string eventType,
         EventScope scope,
         Dictionary<string, object> argumentsWithNames,
-        object? result,
-        Exception? exception
+        object? result = null,
+        TimeSpan? executionTime = null,
+        Exception? exception = null
     )
     {
         // Process the arguments into a MongoDB format for the payload
@@ -97,6 +98,7 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
         {
             Id = ObjectId.GenerateNewId().ToString(),
             EventType = eventType,
+            ExecutionTime = executionTime,
             Payload = payload,
             ProjectId = projectId,
             Scope = scope,

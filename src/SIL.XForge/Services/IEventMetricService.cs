@@ -22,7 +22,8 @@ public interface IEventMetricService
         string eventType,
         EventScope scope,
         Dictionary<string, object> argumentsWithNames,
-        object? result,
-        Exception? exception
+        object? result = null,
+        TimeSpan? executionTime = null,
+        Exception? exception = null
     );
 }

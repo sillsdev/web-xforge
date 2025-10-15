@@ -25,6 +25,12 @@ public class EventMetric : IIdentifiable
     public string? Exception { get; set; }
 
     /// <summary>
+    /// Gets or sets the time it took to execute the method that recorded this metric.
+    /// </summary>
+    /// <remarks>This value will not be set if the metric was recorded manually.</remarks>
+    public TimeSpan? ExecutionTime { get; set; }
+
+    /// <summary>
     /// Gets or sets the identifier.
     /// </summary>
     public string Id { get; set; } = string.Empty;

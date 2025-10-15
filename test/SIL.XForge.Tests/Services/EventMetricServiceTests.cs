@@ -166,9 +166,7 @@ public class EventMetricServiceTests
             userId: null,
             EventType01,
             EventScope01,
-            argumentsWithNames: [],
-            result: null,
-            exception: null
+            argumentsWithNames: []
         );
 
         // Verify the saved event metric
@@ -205,8 +203,7 @@ public class EventMetricServiceTests
             EventType01,
             EventScope01,
             argumentsWithNames,
-            result,
-            exception: null
+            result
         );
 
         // Verify the saved event metric
@@ -246,6 +243,7 @@ public class EventMetricServiceTests
         {
             { "complexObject", complexObjectBson },
         };
+        TimeSpan expectedExecutionTime = new TimeSpan(0, 0, 0, 1, 2, 3);
         var exception = new InvalidOperationException("A test error occurred");
         string expectedException = exception.ToString();
 
@@ -257,6 +255,7 @@ public class EventMetricServiceTests
             EventScope01,
             argumentsWithNames,
             complexObject,
+            expectedExecutionTime,
             exception
         );
 
@@ -269,6 +268,7 @@ public class EventMetricServiceTests
         Assert.IsTrue(env.PayloadEqualityComparer.Equals(expectedPayload, eventMetric.Payload));
         Assert.AreEqual(complexObjectBson, eventMetric.Result);
         Assert.AreEqual(expectedException, eventMetric.Exception);
+        Assert.AreEqual(expectedExecutionTime, eventMetric.ExecutionTime);
     }
 
     [Test]
@@ -324,8 +324,7 @@ public class EventMetricServiceTests
             EventType01,
             EventScope01,
             argumentsWithNames,
-            result,
-            exception: null
+            result
         );
 
         // Verify the saved event metric
@@ -355,15 +354,7 @@ public class EventMetricServiceTests
         };
 
         // SUT
-        await env.Service.SaveEventMetricAsync(
-            Project01,
-            User01,
-            EventType01,
-            EventScope01,
-            argumentsWithNames,
-            result: null,
-            exception: null
-        );
+        await env.Service.SaveEventMetricAsync(Project01, User01, EventType01, EventScope01, argumentsWithNames);
 
         // Verify the saved event metric
         EventMetric eventMetric = env.EventMetrics.Query().OrderByDescending(e => e.TimeStamp).First();
@@ -388,15 +379,7 @@ public class EventMetricServiceTests
         };
 
         // SUT
-        await env.Service.SaveEventMetricAsync(
-            Project01,
-            User01,
-            EventType01,
-            EventScope01,
-            argumentsWithNames,
-            result: null,
-            exception: null
-        );
+        await env.Service.SaveEventMetricAsync(Project01, User01, EventType01, EventScope01, argumentsWithNames);
 
         // Verify the saved event metric
         EventMetric eventMetric = env.EventMetrics.Query().OrderByDescending(e => e.TimeStamp).First();

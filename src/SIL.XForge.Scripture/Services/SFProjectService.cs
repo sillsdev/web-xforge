@@ -297,9 +297,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 curUserId,
                 nameof(DeleteProjectAsync),
                 EventScope.Settings,
-                arguments,
-                result: null,
-                exception: null
+                arguments
             );
 
             // Log this to the system log

@@ -8,6 +8,7 @@ export interface EventMetric {
   scope: EventScope;
   timeStamp: string;
   userId?: string;
+  executionTime?: string;
 }
 
 export enum EventScope {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -57,24 +58,31 @@ public class EventMetricLogger(IEventMetricService eventMetricService, ILogger<E
         {
             // Invoke the method, then record its event metrics
             Task task;
+            Stopwatch stopwatch = Stopwatch.StartNew();
             try
             {
                 invocation.Proceed();
                 if (invocation.ReturnValue is Task methodTask)
                 {
                     // Save the event metric after the task has run
-                    task = methodTask.ContinueWith(t => SaveEventMetricAsync(t.Exception));
+                    task = methodTask.ContinueWith(t =>
+                    {
+                        stopwatch.Stop();
+                        return SaveEventMetricAsync(stopwatch.Elapsed, t.Exception);
+                    });
                 }
                 else
                 {
                     // Save the event metric in another thread after the method has executed
-                    task = Task.Run(() => SaveEventMetricAsync());
+                    stopwatch.Stop();
+                    task = Task.Run(() => SaveEventMetricAsync(stopwatch.Elapsed));
                 }
             }
             catch (Exception e)
             {
                 // Save the error in the event metric, as the Proceed() will have faulted
-                task = Task.Run(() => SaveEventMetricAsync(e));
+                stopwatch.Stop();
+                task = Task.Run(() => SaveEventMetricAsync(stopwatch.Elapsed, e));
 
                 // Notify observers of the task of immediate completion
                 TaskStarted?.Invoke(task);
@@ -89,7 +97,7 @@ public class EventMetricLogger(IEventMetricService eventMetricService, ILogger<E
 
             // Run as a separate task so we do not slow down the method execution
             // Unless we want the return value, in which case we will not write the metric until the method returns
-            async Task SaveEventMetricAsync(Exception? exception = null)
+            async Task SaveEventMetricAsync(TimeSpan executionTime, Exception? exception = null)
             {
                 string methodName = invocation.Method.Name;
                 try
@@ -177,6 +185,7 @@ public class EventMetricLogger(IEventMetricService eventMetricService, ILogger<E
                         logEventMetricAttribute.Scope,
                         argumentsWithNames,
                         result,
+                        executionTime,
                         exception
                     );
                 }
