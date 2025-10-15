@@ -779,8 +779,7 @@ public class MachineApiService(
             nameof(ExecuteWebhookAsync),
             EventScope.Drafting,
             arguments,
-            result: buildId,
-            exception: null
+            result: buildId
         );
 
         // Run the background job
