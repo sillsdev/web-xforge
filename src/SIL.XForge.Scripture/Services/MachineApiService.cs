@@ -1580,25 +1580,63 @@ public class MachineApiService(
             cancellationToken
         );
 
-        // First, see if the document exists in the realtime service, if the chapter is not 0
+        // First, see if the document exists in the realtime service, if we are not retrieving a custom draft configuration
         IDocument<TextDocument>? textDocument = null;
-        if (chapterNum != 0 && draftUsfmConfig is null)
+        if (draftUsfmConfig is null)
         {
-            textDocument = await connection.FetchAsync<TextDocument>(id);
-            if (textDocument.IsLoaded)
+            // Retrieve the chapters for this book from the realtime server, if the chapter is zero
+            if (chapterNum == 0)
             {
-                // Retrieve the snapshot if it exists
-                Snapshot<TextDocument> snapshot = await connection.FetchSnapshotAsync<TextDocument>(
-                    id,
-                    latestTimestampForRevision
-                );
-                if (snapshot.Data is not null)
+                List<object> content = [];
+                foreach (Chapter chapter in project.Texts.SingleOrDefault(t => t.BookNum == bookNum)?.Chapters ?? [])
                 {
-                    return snapshot.Data;
+                    id = TextDocument.GetDocId(sfProjectId, bookNum, chapter.Number, TextDocument.Draft);
+                    textDocument = await connection.FetchAsync<TextDocument>(id);
+                    if (textDocument.IsLoaded)
+                    {
+                        // Retrieve the snapshot if it exists
+                        Snapshot<TextDocument> snapshot = await connection.FetchSnapshotAsync<TextDocument>(
+                            id,
+                            latestTimestampForRevision
+                        );
+                        if (snapshot.Data?.Content is not null)
+                        {
+                            // Append the chapter to the book content
+                            content.AddRange(snapshot.Data.Content);
+                        }
+                    }
                 }
 
-                // There is no draft at the timestamp
-                throw new DataNotFoundException("A draft cannot be retrieved at that timestamp");
+                // Return the USJ of the entire book, if present
+                if (content.Count > 0)
+                {
+                    return new Usj
+                    {
+                        Type = Usj.UsjType,
+                        Version = Usj.UsjVersion,
+                        Content = content,
+                    };
+                }
+            }
+            else
+            {
+                // Otherwise, retrieve the specific chapter from the realtime server
+                textDocument = await connection.FetchAsync<TextDocument>(id);
+                if (textDocument.IsLoaded)
+                {
+                    // Retrieve the snapshot if it exists
+                    Snapshot<TextDocument> snapshot = await connection.FetchSnapshotAsync<TextDocument>(
+                        id,
+                        latestTimestampForRevision
+                    );
+                    if (snapshot.Data is not null)
+                    {
+                        return snapshot.Data;
+                    }
+
+                    // There is no draft at the timestamp
+                    throw new DataNotFoundException("A draft cannot be retrieved at that timestamp");
+                }
             }
         }
 

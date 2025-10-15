@@ -23,6 +23,8 @@
 @use 'src/app/translate/biblical-terms/biblical-terms-theme' as sf-biblical-terms;
 @use 'src/app/translate/translate-overview/translate-overview.component' as sf-translate-overview;
 @use 'src/app/permissions-viewer/permissions-viewer-theme' as sf-permissions-viewer;
+@use 'src/app/serval-administration/draft-jobs-theme' as sf-draft-jobs;
+@use 'src/app/serval-administration/job-events-dialog-theme' as sf-job-events-dialog;
 
 @use 'text' as sf-text;
 
@@ -55,6 +57,8 @@
   @include sf-text.theme($theme);
   @include sf-translate-overview.theme($theme);
   @include sf-permissions-viewer.theme($theme);
+  @include sf-draft-jobs.theme($theme);
+  @include sf-job-events-dialog.theme($theme);
 
   // Custom variables
   --sf-disabled-foreground: #{mat.get-theme-color($theme, neutral, 70)};
