@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { invert } from 'lodash-es';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { lastValueFrom, of, take } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { v4 as uuid } from 'uuid';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -51,14 +51,11 @@ describe('EditorTabMenuService', () => {
     service['canShowResource'] = () => true;
     service['canShowBiblicalTerms'] = () => false;
 
-    const items = await lastValueFrom(service.getMenuItems().pipe(take(1)));
-    expect(items.length).toBe(3);
-    expect(items[0].type).toBe('history');
-    expect(items[1].type).toBe('draft');
-    expect(items[2].type).toBe('project-resource');
+    const items = await firstValueFrom(service.getMenuItems());
+    expect(items.map(i => i.type)).toEqual(['history', 'draft', 'project-resource']);
   });
 
-  it('should get "history", "project-resource", and not "draft" (tab already exists) menu items', done => {
+  it('should get "history", "project-resource", and not "draft" (tab already exists) menu items', async () => {
     const env = new TestEnvironment();
     env.setExistingTabs([
       { id: uuid(), type: 'history', headerText$: of('History'), closeable: true, movable: true },
@@ -69,26 +66,19 @@ describe('EditorTabMenuService', () => {
     service['canShowResource'] = () => true;
     service['canShowBiblicalTerms'] = () => false;
 
-    service.getMenuItems().subscribe(items => {
-      expect(items.length).toBe(2);
-      expect(items[0].type).toBe('history');
-      expect(items[1].type).toBe('project-resource');
-      done();
-    });
+    const items = await firstValueFrom(service.getMenuItems());
+    expect(items.map(i => i.type)).toEqual(['history', 'project-resource']);
   });
 
-  it('should get "history" (enabled), not "draft" (no draft build), and not "project-resource" menu items', done => {
+  it('should get "history" (enabled), not "draft" (no draft build), and not "project-resource" menu items', async () => {
     const env = new TestEnvironment(TestEnvironment.projectDocNoDraft, { hasCompletedDraftBuild: false });
     env.setExistingTabs([{ id: uuid(), type: 'history', headerText$: of('History'), closeable: true, movable: true }]);
     service['canShowHistory'] = () => true;
     service['canShowResource'] = () => false;
     service['canShowBiblicalTerms'] = () => false;
 
-    service.getMenuItems().subscribe(items => {
-      expect(items.length).toBe(1);
-      expect(items[0].type).toBe('history');
-      done();
-    });
+    const items = await firstValueFrom(service.getMenuItems());
+    expect(items.map(i => i.type)).toEqual(['history']);
   });
 
   it('should get "draft", "project-resource", and not "history" menu items', async () => {
@@ -98,13 +88,11 @@ describe('EditorTabMenuService', () => {
     service['canShowResource'] = () => true;
     service['canShowBiblicalTerms'] = () => false;
 
-    const items = await lastValueFrom(service.getMenuItems().pipe(take(1)));
-    expect(items.length).toBe(2);
-    expect(items[0].type).toBe('draft');
-    expect(items[1].type).toBe('project-resource');
+    const items = await firstValueFrom(service.getMenuItems());
+    expect(items.map(i => i.type)).toEqual(['draft', 'project-resource']);
   });
 
-  it('should get "project-resources" and "history", and not "draft" on resource projects', done => {
+  it('should get "project-resources" and "history", and not "draft" on resource projects', async () => {
     const projectDoc = {
       id: 'resource01',
       data: createTestProjectProfile({ paratextId: 'resource16char01', userRoles: TestEnvironment.rolesByUser })
@@ -114,15 +102,11 @@ describe('EditorTabMenuService', () => {
     service['canShowHistory'] = () => true;
     service['canShowResource'] = () => true;
 
-    service.getMenuItems().subscribe(items => {
-      expect(items.length).toBe(2);
-      expect(items[0].type).toBe('history');
-      expect(items[1].type).toBe('project-resource');
-      done();
-    });
+    const items = await firstValueFrom(service.getMenuItems());
+    expect(items.map(i => i.type)).toEqual(['history', 'project-resource']);
   });
 
-  it('should get "project-resources" and "history", and not "draft" when draft does not exist', done => {
+  it('should get "project-resources" and "history", and not "draft" when draft does not exist', async () => {
     const projectDoc = {
       id: 'project-no-draft',
       data: createTestProjectProfile({ translateConfig: { preTranslate: false } })
@@ -132,42 +116,34 @@ describe('EditorTabMenuService', () => {
     service['canShowHistory'] = () => true;
     service['canShowResource'] = () => true;
 
-    service.getMenuItems().subscribe(items => {
-      expect(items.length).toBe(2);
-      expect(items[0].type).toBe('history');
-      expect(items[1].type).toBe('project-resource');
-      done();
-    });
+    const items = await firstValueFrom(service.getMenuItems());
+    expect(items.map(i => i.type)).toEqual(['history', 'project-resource']);
   });
 
-  it('should not get "draft" if the user cannot view drafts', done => {
+  it('should not get "draft" if the user cannot view drafts', async () => {
     const env = new TestEnvironment();
     when(mockPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(false);
     env.setExistingTabs([]);
     service['canShowHistory'] = () => true;
 
-    service.getMenuItems().subscribe(items => {
-      expect(items.length).toBe(1);
-      expect(items[0].type).toBe('history');
-      done();
-    });
+    const items = await firstValueFrom(service.getMenuItems());
+    expect(items.map(i => i.type)).toEqual(['history']);
   });
 
-  it('should get "biblical terms" menu item', done => {
+  it('should get "biblical terms" menu item', async () => {
     const env = new TestEnvironment();
     when(mockPermissionsService.canAccessBiblicalTerms(anything())).thenReturn(true);
     env.setExistingTabs([]);
     service['canShowHistory'] = () => false;
     service['canShowResource'] = () => false;
 
-    service.getMenuItems().subscribe(items => {
-      expect(items.length).toBeGreaterThanOrEqual(1);
-      expect(items.some(i => i.type === 'biblical-terms')).toBe(true);
-      if (items.length > 1) {
-        expect(items.some(i => i.type === 'draft')).toBe(true);
-      }
-      done();
-    });
+    const items = await firstValueFrom(service.getMenuItems());
+
+    expect(items.length).toBeGreaterThanOrEqual(1);
+    expect(items.some(i => i.type === 'biblical-terms')).toBe(true);
+    if (items.length > 1) {
+      expect(items.some(i => i.type === 'draft')).toBe(true);
+    }
   });
 
   it('should get no menu items', async () => {
@@ -177,7 +153,7 @@ describe('EditorTabMenuService', () => {
     service['canShowResource'] = () => false;
     service['canShowBiblicalTerms'] = () => false;
 
-    const items = await lastValueFrom(service.getMenuItems().pipe(take(1)));
+    const items = await firstValueFrom(service.getMenuItems());
     expect(items.length).toBe(0);
   });
 
@@ -190,16 +166,12 @@ describe('EditorTabMenuService', () => {
 
     // Wait for observables to settle
     env.onlineStatus.setIsOnline(false);
-    const offlineItems = await lastValueFrom(service.getMenuItems().pipe(take(1)));
-    expect(offlineItems.length).toBe(1);
-    expect(offlineItems[0].type).toBe('history');
+    const offlineItems = await firstValueFrom(service.getMenuItems());
+    expect(offlineItems.map(i => i.type)).toEqual(['history']);
 
     env.onlineStatus.setIsOnline(true);
-    const onlineItems = await lastValueFrom(service.getMenuItems().pipe(take(1)));
-    expect(onlineItems.length).toBe(3);
-    expect(onlineItems[0].type).toBe('history');
-    expect(onlineItems[1].type).toBe('draft');
-    expect(onlineItems[2].type).toBe('project-resource');
+    const onlineItems = await firstValueFrom(service.getMenuItems());
+    expect(onlineItems.map(i => i.type)).toEqual(['history', 'draft', 'project-resource']);
   });
 
   describe('canShowHistory', () => {
@@ -249,10 +221,8 @@ describe('EditorTabMenuService', () => {
     service['canShowResource'] = () => true;
     service['canShowBiblicalTerms'] = () => false;
 
-    const items = await lastValueFrom(service.getMenuItems().pipe(take(1)));
-    expect(items.length).toBe(2);
-    expect(items[0].type).toBe('history');
-    expect(items[1].type).toBe('project-resource');
+    const items = await firstValueFrom(service.getMenuItems());
+    expect(items.map(i => i.type)).toEqual(['history', 'project-resource']);
   });
 });
 
@@ -299,8 +269,9 @@ class TestEnvironment {
   ) {
     const projectDoc: SFProjectProfileDoc = explicitProjectDoc ?? this.projectDoc;
     const hasCompletedDraftBuild = options?.hasCompletedDraftBuild ?? true;
-    when(mockActivatedProject.projectDoc$).thenReturn(of(projectDoc));
+    when(mockActivatedProject.changes$).thenReturn(of(projectDoc));
     when(mockActivatedProject.projectId$).thenReturn(of(projectDoc.id));
+    when(mockActivatedProject.projectId).thenReturn(projectDoc.id);
     when(mockTabState.tabs$).thenReturn(of([] as EditorTabInfo[]));
     when(mockDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(
       of(hasCompletedDraftBuild ? ({} as any) : undefined)
