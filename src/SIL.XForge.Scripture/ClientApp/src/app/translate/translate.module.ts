@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { AngularSplitModule } from 'angular-split';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
@@ -32,12 +33,12 @@ import { TranslatorSettingsDialogComponent } from './editor/translator-settings-
 import { FontUnsupportedMessageComponent } from './font-unsupported-message/font-unsupported-message.component';
 import { TrainingProgressComponent } from './training-progress/training-progress.component';
 import { TranslateOverviewComponent } from './translate-overview/translate-overview.component';
-import { TranslateRoutingModule } from './translate-routing.module';
+import { TRANSLATE_ROUTES } from './translate.routes';
 
 @NgModule({
   imports: [
     AngularSplitModule,
-    TranslateRoutingModule,
+    RouterModule.forChild(TRANSLATE_ROUTES),
     CommonModule,
     XForgeCommonModule,
     TranslocoModule,

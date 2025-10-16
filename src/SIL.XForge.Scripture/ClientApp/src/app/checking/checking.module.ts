@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
@@ -16,7 +17,7 @@ import { TextChooserDialogComponent } from '../text-chooser-dialog/text-chooser-
 import { AttachAudioComponent } from './attach-audio/attach-audio.component';
 import { ChapterAudioDialogComponent } from './chapter-audio-dialog/chapter-audio-dialog.component';
 import { CheckingOverviewComponent } from './checking-overview/checking-overview.component';
-import { CheckingRoutingModule } from './checking-routing.module';
+import { CHECKING_ROUTES } from './checking.routes';
 import { CheckingAnswersComponent } from './checking/checking-answers/checking-answers.component';
 import { CheckingCommentsComponent } from './checking/checking-answers/checking-comments/checking-comments.component';
 import { CheckingInputFormComponent } from './checking/checking-answers/checking-input-form/checking-input-form.component';
@@ -33,7 +34,7 @@ import { TextAndAudioComponent } from './text-and-audio/text-and-audio.component
 
 @NgModule({
   imports: [
-    CheckingRoutingModule,
+    RouterModule.forChild(CHECKING_ROUTES),
     CommonModule,
     XForgeCommonModule,
     OwnerComponent,
