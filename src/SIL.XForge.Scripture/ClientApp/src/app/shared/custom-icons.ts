@@ -1,5 +1,5 @@
-import { NgModule } from '@angular/core';
-import { MatIcon, MatIconRegistry } from '@angular/material/icon';
+import { EnvironmentProviders, inject, provideAppInitializer } from '@angular/core';
+import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import { lynxIcons } from './svg-icons/lynx-icons';
 
@@ -15,16 +15,18 @@ const BIBLICAL_TERMS_ICON =
   ` 1.845 1.344 1.845 3.404 0 1.43-.629 2.202-.486.601-1.058.601-.315 0-.572-.486-.429-.787-1.187-1.444l-2.145 2.674 ` +
   `3.604 3.632q1.287 1.301 1.745 2.116.543 1.001.543 2.417z"/></svg>`;
 
-@NgModule({
-  imports: [MatIcon],
-  exports: [MatIcon]
-})
-export class CustomIconModule {
-  constructor(iconRegistry: MatIconRegistry, sanitizer: DomSanitizer) {
+/**
+ * This registers custom SVG icons with Material Icon Registry.
+ */
+export function provideCustomIcons(): EnvironmentProviders {
+  return provideAppInitializer(() => {
+    const iconRegistry = inject(MatIconRegistry);
+    const sanitizer = inject(DomSanitizer);
+
     iconRegistry.addSvgIconLiteral('biblical_terms', sanitizer.bypassSecurityTrustHtml(BIBLICAL_TERMS_ICON));
 
     for (const [name, svg] of Object.entries(lynxIcons)) {
       iconRegistry.addSvgIconLiteral(name, sanitizer.bypassSecurityTrustHtml(svg));
     }
-  }
+  });
 }

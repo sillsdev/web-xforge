@@ -29,7 +29,6 @@ import { IncludesPipe } from 'xforge-common/includes.pipe';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { TextDoc, TextDocId } from '../../../../../core/models/text-doc';
 import { SFProjectService } from '../../../../../core/sf-project.service';
-import { CustomIconModule } from '../../../../../shared/custom-icon.module';
 import { EditorSegmentService } from '../base-services/editor-segment.service';
 import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightConfig } from '../lynx-insight';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
@@ -120,7 +119,6 @@ describe('LynxInsightsPanelComponent', () => {
       MatDivider,
       IncludesPipe,
       getTestTranslocoModule(),
-      CustomIconModule,
       LynxInsightsPanelComponent,
       LynxInsightsPanelHeaderComponent
     ],
