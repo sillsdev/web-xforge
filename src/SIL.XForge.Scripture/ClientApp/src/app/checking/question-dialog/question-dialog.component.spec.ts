@@ -44,8 +44,8 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ScriptureChooserDialogComponent } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
-import { SharedModule } from '../../shared/shared.module';
 import { getTextDoc } from '../../shared/test-utils';
+import { provideQuillRegistrations } from '../../shared/text/quill-editor-registration/quill-providers';
 import { EDITOR_READY_TIMEOUT } from '../../shared/text/text.component';
 import { CheckingModule } from '../checking.module';
 import { AudioAttachment } from '../checking/checking-audio-player/checking-audio-player.component';
@@ -65,7 +65,7 @@ describe('QuestionDialogComponent', () => {
       ReactiveFormsModule,
       FormsModule,
       DialogTestModule,
-      SharedModule.forRoot(),
+      provideQuillRegistrations(),
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],

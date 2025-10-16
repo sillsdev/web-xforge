@@ -29,8 +29,8 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
-import { SharedModule } from '../shared.module';
 import { getCombinedVerseTextDoc, getEmptyChapterDoc, getPoetryVerseTextDoc, getTextDoc } from '../test-utils';
+import { provideQuillRegistrations } from './quill-editor-registration/quill-providers';
 import { getAttributesAtPosition } from './quill-util';
 import { TextNoteDialogComponent, TextNoteType } from './text-note-dialog/text-note-dialog.component';
 import {
@@ -50,7 +50,7 @@ const mockedDialogService = mock(DialogService);
 describe('TextComponent', () => {
   configureTestingModule(() => ({
     imports: [
-      SharedModule.forRoot(),
+      provideQuillRegistrations(),
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       HostComponent

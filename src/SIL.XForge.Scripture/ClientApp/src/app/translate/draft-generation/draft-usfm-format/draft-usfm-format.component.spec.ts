@@ -31,7 +31,7 @@ import { BuildDto } from '../../../machine-api/build-dto';
 import { BuildStates } from '../../../machine-api/build-states';
 import { QuotationAnalysis } from '../../../machine-api/quotation-denormalization';
 import { ServalAdministrationService } from '../../../serval-administration/serval-administration.service';
-import { SharedModule } from '../../../shared/shared.module';
+import { provideQuillRegistrations } from '../../../shared/text/quill-editor-registration/quill-providers';
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftHandlingService } from '../draft-handling.service';
@@ -56,7 +56,7 @@ describe('DraftUsfmFormatComponent', () => {
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       getTestTranslocoModule(),
       TestOnlineStatusModule.forRoot(),
-      SharedModule.forRoot()
+      provideQuillRegistrations()
     ],
     providers: [
       { provide: DraftHandlingService, useMock: mockedDraftHandlingService },

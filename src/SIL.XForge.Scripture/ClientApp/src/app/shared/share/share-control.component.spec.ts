@@ -21,7 +21,7 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
-import { SharedModule } from '../shared.module';
+import { provideQuillRegistrations } from '../text/quill-editor-registration/quill-providers';
 import { ShareControlComponent } from './share-control.component';
 
 const mockedProjectService = mock(SFProjectService);
@@ -34,7 +34,7 @@ describe('ShareControlComponent', () => {
       TestModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       TestOnlineStatusModule.forRoot(),
-      SharedModule.forRoot(),
+      provideQuillRegistrations(),
       TestHostComponent
     ],
     providers: [

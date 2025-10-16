@@ -29,7 +29,6 @@ import {
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { audioRecordingMimeType, objectId } from 'xforge-common/utils';
 import { SingleButtonAudioPlayerComponent } from '../../checking/checking/single-button-audio-player/single-button-audio-player.component';
-import { SharedModule } from '../shared.module';
 
 export interface AudioAttachment {
   status?: 'denied' | 'processed' | 'recording' | 'reset' | 'stopped' | 'uploaded';
@@ -59,7 +58,7 @@ export interface AudioRecorderDialogResult {
     MatIcon,
     MatDialogContent,
     CommonModule,
-    SharedModule,
+    SingleButtonAudioPlayerComponent,
     TranslocoModule
   ]
 })

@@ -28,8 +28,9 @@ import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { QuotationAnalysis } from '../../../machine-api/quotation-denormalization';
 import { ServalAdministrationService } from '../../../serval-administration/serval-administration.service';
+import { BookChapterChooserComponent } from '../../../shared/book-chapter-chooser/book-chapter-chooser.component';
+import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { ConfirmOnLeave } from '../../../shared/project-router.guard';
-import { SharedModule } from '../../../shared/shared.module';
 import { TextComponent } from '../../../shared/text/text.component';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftHandlingService } from '../draft-handling.service';
@@ -46,7 +47,9 @@ import { DraftHandlingService } from '../draft-handling.service';
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    SharedModule,
+    BookChapterChooserComponent,
+    NoticeComponent,
+    TextComponent,
     TranslocoModule,
     MatRadioGroup,
     MatRadioButton
