@@ -33,8 +33,8 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_PROJECT_ROLES } from '../../core/models/sf-project-role-info';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
-import { SharedModule } from '../../shared/shared.module';
 import { paratextUsersFromRoles } from '../../shared/test-utils';
+import { provideQuillRegistrations } from '../../shared/text/quill-editor-registration/quill-providers';
 import { CollaboratorsComponent, UserType } from './collaborators.component';
 
 const mockedActivatedProject = mock(ActivatedProjectService);
@@ -49,7 +49,7 @@ describe('CollaboratorsComponent', () => {
       CollaboratorsComponent,
       getTestTranslocoModule(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      SharedModule.forRoot(),
+      provideQuillRegistrations(),
       TestOnlineStatusModule.forRoot(),
       AvatarComponent
     ],

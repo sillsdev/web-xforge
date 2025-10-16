@@ -3,6 +3,7 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Location } from '@angular/common';
 import { DebugElement, DestroyRef, NgZone } from '@angular/core';
 import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ReactiveFormsModule } from '@angular/forms';
 import { MatButtonHarness } from '@angular/material/button/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { MatMenuHarness } from '@angular/material/menu/testing';
@@ -10,7 +11,6 @@ import { MatSelectHarness } from '@angular/material/select/testing';
 import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, ActivatedRouteSnapshot, Params, Route, Router, RouterModule } from '@angular/router';
-import { ReactiveFormsModule } from '@angular/forms';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
@@ -67,7 +67,7 @@ import { TranslationEngineService } from '../../core/translation-engine.service'
 import { AudioRecorderDialogComponent } from '../../shared/audio-recorder-dialog/audio-recorder-dialog.component';
 import { AudioPlayerComponent } from '../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../shared/audio/audio-time-pipe';
-import { SharedModule } from '../../shared/shared.module';
+import { provideQuillRegistrations } from '../../shared/text/quill-editor-registration/quill-providers';
 import { TextChooserDialogComponent, TextSelection } from '../../text-chooser-dialog/text-chooser-dialog.component';
 import { AttachAudioComponent } from '../attach-audio/attach-audio.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
@@ -152,7 +152,7 @@ describe('CheckingComponent', () => {
       AngularSplitModule,
       ngfModule,
       RouterModule.forRoot(ROUTES),
-      SharedModule.forRoot(),
+      provideQuillRegistrations(),
       ReactiveFormsModule,
       OwnerComponent,
       getTestTranslocoModule(),

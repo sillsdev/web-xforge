@@ -25,7 +25,7 @@ import { CheckingModule } from '../checking/checking.module';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { TextDoc } from '../core/models/text-doc';
-import { SharedModule } from '../shared/shared.module';
+import { provideQuillRegistrations } from '../shared/text/quill-editor-registration/quill-providers';
 import { TextChooserDialogComponent, TextChooserDialogData, TextSelection } from './text-chooser-dialog.component';
 
 const mockedDocument = mock(Document);
@@ -35,7 +35,7 @@ describe('TextChooserDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [
       DialogTestModule,
-      SharedModule.forRoot(),
+      provideQuillRegistrations(),
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],

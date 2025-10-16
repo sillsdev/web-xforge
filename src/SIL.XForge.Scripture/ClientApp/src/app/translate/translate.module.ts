@@ -6,9 +6,13 @@ import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { L10nPercentPipe } from 'xforge-common/l10n-percent.pipe';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
+import { BookChapterChooserComponent } from '../shared/book-chapter-chooser/book-chapter-chooser.component';
 import { CopyrightBannerComponent } from '../shared/copyright-banner/copyright-banner.component';
+import { InfoComponent } from '../shared/info/info.component';
 import { TabComponent, TabGroupComponent, TabHeaderDirective } from '../shared/sf-tab-group';
-import { SharedModule } from '../shared/shared.module';
+import { ShareButtonComponent } from '../shared/share/share-button.component';
+import { TextDocIdPipe } from '../shared/text/text-doc-id.pipe';
+import { TextComponent } from '../shared/text/text.component';
 import { BiblicalTermDialogComponent } from './biblical-terms/biblical-term-dialog.component';
 import { BiblicalTermsComponent } from './biblical-terms/biblical-terms.component';
 import { DraftApplyProgressDialogComponent } from './draft-generation/draft-apply-progress-dialog/draft-apply-progress-dialog.component';
@@ -35,7 +39,6 @@ import { TranslateRoutingModule } from './translate-routing.module';
     AngularSplitModule,
     TranslateRoutingModule,
     CommonModule,
-    SharedModule,
     XForgeCommonModule,
     TranslocoModule,
     TranslocoMarkupModule,
@@ -43,6 +46,11 @@ import { TranslateRoutingModule } from './translate-routing.module';
     TabGroupComponent,
     TabComponent,
     TabHeaderDirective,
+    BookChapterChooserComponent,
+    InfoComponent,
+    ShareButtonComponent,
+    TextComponent,
+    TextDocIdPipe,
     BiblicalTermsComponent,
     CopyrightBannerComponent,
     DraftPreviewBooksComponent,

@@ -7,7 +7,11 @@ import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { AudioPlayerComponent } from '../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../shared/audio/audio-time-pipe';
-import { SharedModule } from '../shared/shared.module';
+import { BookChapterChooserComponent } from '../shared/book-chapter-chooser/book-chapter-chooser.component';
+import { InfoComponent } from '../shared/info/info.component';
+import { NoticeComponent } from '../shared/notice/notice.component';
+import { TextDocIdPipe } from '../shared/text/text-doc-id.pipe';
+import { TextComponent } from '../shared/text/text.component';
 import { TextChooserDialogComponent } from '../text-chooser-dialog/text-chooser-dialog.component';
 import { AttachAudioComponent } from './attach-audio/attach-audio.component';
 import { ChapterAudioDialogComponent } from './chapter-audio-dialog/chapter-audio-dialog.component';
@@ -31,12 +35,16 @@ import { TextAndAudioComponent } from './text-and-audio/text-and-audio.component
   imports: [
     CheckingRoutingModule,
     CommonModule,
-    SharedModule,
     XForgeCommonModule,
     OwnerComponent,
     AngularSplitModule,
     ngfModule,
     TranslocoModule,
+    BookChapterChooserComponent,
+    InfoComponent,
+    NoticeComponent,
+    TextComponent,
+    TextDocIdPipe,
     CheckingComponent,
     CheckingOverviewComponent,
     CheckingQuestionsComponent,

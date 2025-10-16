@@ -44,7 +44,7 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { ServalProjectComponent } from '../../serval-administration/serval-project.component';
-import { SharedModule } from '../../shared/shared.module';
+import { NoticeComponent } from '../../shared/notice/notice.component';
 import { projectLabel } from '../../shared/utils';
 import { WorkingAnimatedIndicatorComponent } from '../../shared/working-animated-indicator/working-animated-indicator.component';
 import { NllbLanguageService } from '../nllb-language.service';
@@ -83,7 +83,7 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
     RouterModule,
     TranslocoModule,
     TranslocoMarkupModule,
-    SharedModule,
+    NoticeComponent,
     NgCircleProgressModule,
     L10nNumberPipe,
     L10nPercentPipe,

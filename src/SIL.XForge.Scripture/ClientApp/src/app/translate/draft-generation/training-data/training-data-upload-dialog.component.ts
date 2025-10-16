@@ -20,7 +20,7 @@ import { FileType } from 'xforge-common/models/file-offline-data';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
-import { SharedModule } from '../../../shared/shared.module';
+import { InfoComponent } from '../../../shared/info/info.component';
 
 export interface TrainingDataUploadDialogData {
   projectId: string;
@@ -45,7 +45,7 @@ export interface TrainingDataFileUpload {
     MatDialogActions,
     MatIcon,
     MatProgressSpinner,
-    SharedModule,
+    InfoComponent,
     TranslocoModule
   ],
   styleUrls: ['./training-data-upload-dialog.component.scss']
