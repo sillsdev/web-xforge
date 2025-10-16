@@ -126,8 +126,13 @@ import { RemoteTranslationEngine } from '../../machine-api/remote-translation-en
 import { BookChapterChooserComponent } from '../../shared/book-chapter-chooser/book-chapter-chooser.component';
 import { CopyrightBannerComponent } from '../../shared/copyright-banner/copyright-banner.component';
 import { NoticeComponent } from '../../shared/notice/notice.component';
-import { TabFactoryService, TabGroup, TabMenuService, TabStateService } from '../../shared/sf-tab-group';
-import { TabAddRequestService } from '../../shared/sf-tab-group/base-services/tab-add-request.service';
+import {
+  TabAddRequestService,
+  TabFactoryService,
+  TabGroup,
+  TabMenuService,
+  TabStateService
+} from '../../shared/sf-tab-group';
 import { TabGroupComponent } from '../../shared/sf-tab-group/tab-group.component';
 import { TabHeaderDirective } from '../../shared/sf-tab-group/tab-header/tab-header.directive';
 import { TabComponent } from '../../shared/sf-tab-group/tab/tab.component';

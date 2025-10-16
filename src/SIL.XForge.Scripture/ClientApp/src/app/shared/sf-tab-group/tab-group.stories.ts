@@ -3,9 +3,12 @@ import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { Observable, of } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import {
-  SFTabsModule,
+  provideSFTabs,
+  TabComponent,
   TabFactoryService,
   TabGroup,
+  TabGroupComponent,
+  TabHeaderDirective,
   TabInfo,
   TabMenuItem,
   TabMenuService,
@@ -43,7 +46,7 @@ import {
       </app-tab-group>
     }
   `,
-  imports: [SFTabsModule]
+  imports: [TabGroupComponent, TabComponent, TabHeaderDirective]
 })
 class SFTabGroupStoriesComponent implements OnChanges {
   @Input() tabGroups: TabGroup<string, TabInfo<string>>[] = [];
@@ -62,8 +65,9 @@ export default {
   component: SFTabGroupStoriesComponent,
   decorators: [
     moduleMetadata({
-      imports: [SFTabsModule, SFTabGroupStoriesComponent],
+      imports: [TabGroupComponent, TabComponent, TabHeaderDirective, SFTabGroupStoriesComponent],
       providers: [
+        provideSFTabs(),
         TabStateService<string, TabInfo<string>>,
         {
           provide: TabMenuService,
