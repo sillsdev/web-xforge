@@ -24,7 +24,8 @@ import { HistoryChooserComponent } from './editor/editor-history/history-chooser
 import { HistoryRevisionFormatPipe } from './editor/editor-history/history-chooser/history-revision-format.pipe';
 import { EditorResourceComponent } from './editor/editor-resource/editor-resource.component';
 import { EditorComponent } from './editor/editor.component';
-import { LynxInsightsModule } from './editor/lynx/insights/lynx-insights.module';
+import { LynxInsightEditorObjectsComponent } from './editor/lynx/insights/lynx-insight-editor-objects/lynx-insight-editor-objects.component';
+import { LynxInsightsPanelComponent } from './editor/lynx/insights/lynx-insights-panel/lynx-insights-panel.component';
 import { MultiViewerComponent } from './editor/multi-viewer/multi-viewer.component';
 import { NoteDialogComponent } from './editor/note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './editor/suggestions.component';
@@ -57,7 +58,8 @@ import { TRANSLATE_ROUTES } from './translate.routes';
     DraftPreviewBooksComponent,
     DraftApplyProgressDialogComponent,
     FontUnsupportedMessageComponent,
-    LynxInsightsModule,
+    LynxInsightEditorObjectsComponent,
+    LynxInsightsPanelComponent,
     L10nPercentPipe,
     BiblicalTermDialogComponent,
     EditorComponent,
