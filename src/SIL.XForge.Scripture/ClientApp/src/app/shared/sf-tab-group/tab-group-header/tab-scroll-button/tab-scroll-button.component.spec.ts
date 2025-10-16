@@ -1,7 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { SFTabsModule } from '../../sf-tabs.module';
+import { provideSFTabs } from '../../sf-tabs-providers';
 import { TabScrollButtonComponent } from './tab-scroll-button.component';
 
 describe('TabScrollButtonComponent', () => {
@@ -10,7 +10,8 @@ describe('TabScrollButtonComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [SFTabsModule]
+      imports: [TabScrollButtonComponent],
+      providers: [provideSFTabs()]
     });
     fixture = TestBed.createComponent(TabScrollButtonComponent);
     component = fixture.componentInstance;

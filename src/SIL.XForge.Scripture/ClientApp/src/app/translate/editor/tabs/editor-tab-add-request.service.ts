@@ -6,8 +6,7 @@ import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { PermissionsService } from '../../../core/permissions.service';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { TabStateService } from '../../../shared/sf-tab-group';
-import { TabAddRequestService } from '../../../shared/sf-tab-group/base-services/tab-add-request.service';
+import { TabAddRequestService, TabStateService } from '../../../shared/sf-tab-group';
 import {
   EditorTabAddResourceDialogComponent,
   EditorTabAddResourceDialogData

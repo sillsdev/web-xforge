@@ -99,7 +99,15 @@ import { BuildStates } from '../../machine-api/build-states';
 import { HttpClient } from '../../machine-api/http-client';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 import { CopyrightBannerComponent } from '../../shared/copyright-banner/copyright-banner.component';
-import { SFTabsModule, TabFactoryService, TabGroup, TabMenuService } from '../../shared/sf-tab-group';
+import {
+  provideSFTabs,
+  TabComponent,
+  TabFactoryService,
+  TabGroup,
+  TabGroupComponent,
+  TabHeaderDirective,
+  TabMenuService
+} from '../../shared/sf-tab-group';
 import { SharedModule } from '../../shared/shared.module';
 import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/test-utils';
 import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component';
@@ -176,11 +184,14 @@ describe('EditorComponent', () => {
       TranslocoMarkupModule,
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      SFTabsModule,
+      TabGroupComponent,
+      TabComponent,
+      TabHeaderDirective,
       LynxInsightsModule.forRoot(),
       AngularSplitModule
     ],
     providers: [
+      provideSFTabs(),
       { provide: AuthService, useMock: mockedAuthService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
