@@ -25,12 +25,15 @@ import {
 import { translocoMarkupRouterLinkRenderer } from 'ngx-transloco-markup-router-link';
 import { EmTextTranspiler } from 'xforge-common/i18n-transpilers/em-text.transpiler';
 import { InAppRootOverlayContainer } from 'xforge-common/overlay-container';
+import { ProjectService } from 'xforge-common/project.service';
+import { TypeRegistry } from 'xforge-common/type-registry';
 import { provideUICommon } from 'xforge-common/ui-common-providers';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
 import { CheckingModule } from './app/checking/checking.module';
-import { CoreModule } from './app/core/core.module';
+import { SF_TYPE_REGISTRY } from './app/core/models/sf-type-registry';
+import { SFProjectService } from './app/core/sf-project.service';
 import { SharedModule } from './app/shared/shared.module';
 import { preloadEnglishTranslations } from './app/shared/utils';
 import { LynxInsightsModule } from './app/translate/editor/lynx/insights/lynx-insights.module';
@@ -51,8 +54,9 @@ ExceptionHandlingService.initBugsnag();
 bootstrapApplication(AppComponent, {
   providers: [
     { provide: 'BASE_URL', useFactory: getBaseUrl, deps: [] as any[] },
+    { provide: TypeRegistry, useValue: SF_TYPE_REGISTRY },
+    { provide: ProjectService, useExisting: SFProjectService },
     importProvidersFrom(
-      CoreModule,
       ServiceWorkerModule.register('sf-service-worker.js', {
         enabled: environment.pwaTest || environment.production,
         registrationStrategy: 'registerImmediately'
