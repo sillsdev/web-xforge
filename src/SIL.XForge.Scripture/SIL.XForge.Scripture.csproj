@@ -28,31 +28,22 @@
   <ItemGroup>
     <PackageReference Include="CsvHelper" Version="33.1.0" />
     <PackageReference Include="Duende.AccessTokenManagement" Version="3.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.19" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="8.0.19" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.20" />
+    <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="8.0.20" />
     <PackageReference Include="Microsoft.FeatureManagement.AspNetCore" Version="4.3.0" />
     <!-- Use a version of ICU on Windows that supports ARM64, x86, and x64 -->
     <PackageReference Include="Microsoft.ICU.ICU4C.Runtime" Version="72.1.0.3" Condition="$([MSBuild]::IsOsPlatform('Windows')) AND '$(RuntimeIdentifier)' == 'win-arm64'" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
-    <PackageReference Include="NPOI" Version="2.7.4" />
+    <PackageReference Include="NPOI" Version="2.7.5" />
     <!-- When using a new major or minor version of ParatextData, update where dependencies.yml copies the
          InternetSettings.xml file. Also update server config scriptureforge.org_v2.yml. -->
-    <PackageReference Include="ParatextData" Version="9.5.0.14" />
+    <PackageReference Include="ParatextData" Version="9.5.0.19" />
     <!-- When updating Serval.Client consider that API changes must be released to Serval Prod
         prior to testing on SF QA -->
     <PackageReference Include="Serval.Client" Version="1.10.0" />
-    <PackageReference Include="SharpZipLib" Version="1.4.2" />
-    <PackageReference Include="SIL.Machine" Version="3.7.3" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.4" />
-    <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="9.0.4" />
-    <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
-  </ItemGroup>
-  <!-- Override vulnerable versions of ParatextData dependencies -->
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Windows.Compatibility" Version="6.0.9" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
-    <PackageReference Include="System.IO.Packaging" Version="6.0.2" />
+    <PackageReference Include="SIL.Machine" Version="3.7.7" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="9.0.6" />
   </ItemGroup>
   <ItemGroup>
     <!-- Don't publish the SPA source files, but do show them in the project files list -->
