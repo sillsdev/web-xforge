@@ -3,7 +3,7 @@ import { NgModule } from '@angular/core';
 import { TranslocoModule } from '@ngneat/transloco';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
-import { SharedModule } from '../shared/shared.module';
+import { ShareControlComponent } from '../shared/share/share-control.component';
 import { CollaboratorsComponent } from './collaborators/collaborators.component';
 import { RolesAndPermissionsDialogComponent } from './roles-and-permissions/roles-and-permissions-dialog.component';
 import { UsersRoutingModule } from './users-routing.module';
@@ -13,10 +13,10 @@ import { UsersComponent } from './users.component';
   imports: [
     UsersRoutingModule,
     CommonModule,
-    SharedModule,
     XForgeCommonModule,
     TranslocoModule,
     AvatarComponent,
+    ShareControlComponent,
     CollaboratorsComponent,
     UsersComponent,
     RolesAndPermissionsDialogComponent

@@ -108,8 +108,8 @@ import {
   TabHeaderDirective,
   TabMenuService
 } from '../../shared/sf-tab-group';
-import { SharedModule } from '../../shared/shared.module';
 import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/test-utils';
+import { provideQuillRegistrations } from '../../shared/text/quill-editor-registration/quill-providers';
 import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component';
 import { XmlUtils } from '../../shared/utils';
 import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.component';
@@ -179,7 +179,7 @@ describe('EditorComponent', () => {
       CopyrightBannerComponent,
       DraftPreviewBooksComponent,
       RouterModule.forRoot(ROUTES),
-      SharedModule.forRoot(),
+      provideQuillRegistrations(),
       getTestTranslocoModule(),
       TranslocoMarkupModule,
       TestOnlineStatusModule.forRoot(),

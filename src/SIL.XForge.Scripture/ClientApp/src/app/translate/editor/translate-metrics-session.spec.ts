@@ -22,8 +22,8 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { TranslateMetrics } from '../../core/models/translate-metrics';
 import { SFProjectService } from '../../core/sf-project.service';
-import { SharedModule } from '../../shared/shared.module';
 import { getTextDoc } from '../../shared/test-utils';
+import { provideQuillRegistrations } from '../../shared/text/quill-editor-registration/quill-providers';
 import { EDITOR_READY_TIMEOUT, TextComponent } from '../../shared/text/text.component';
 import {
   ACTIVE_EDIT_TIMEOUT,
@@ -42,7 +42,7 @@ describe('TranslateMetricsSession', () => {
       TextComponent,
       QuillModule.forRoot(),
       getTestTranslocoModule(),
-      SharedModule.forRoot(),
+      provideQuillRegistrations(),
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],

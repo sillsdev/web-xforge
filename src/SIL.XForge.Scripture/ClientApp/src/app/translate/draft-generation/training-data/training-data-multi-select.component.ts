@@ -11,7 +11,6 @@ import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/trai
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { UserService } from 'xforge-common/user.service';
-import { SharedModule } from '../../../shared/shared.module';
 import {
   TrainingDataUploadDialogComponent,
   TrainingDataUploadDialogData
@@ -20,7 +19,7 @@ import {
 @Component({
   selector: 'app-training-data-multi-select',
   templateUrl: './training-data-multi-select.component.html',
-  imports: [CommonModule, MatButton, MatIcon, SharedModule, TranslocoModule],
+  imports: [CommonModule, MatButton, MatIcon, TranslocoModule],
   styleUrls: ['./training-data-multi-select.component.scss']
 })
 export class TrainingDataMultiSelectComponent {
