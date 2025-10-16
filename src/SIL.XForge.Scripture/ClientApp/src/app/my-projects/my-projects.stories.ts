@@ -21,7 +21,7 @@ import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ParatextService } from '../core/paratext.service';
 import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
-import { SharedModule } from '../shared/shared.module';
+import { provideQuillRegistrations } from '../shared/text/quill-editor-registration/quill-providers';
 import { MyProjectsComponent } from './my-projects.component';
 
 @Component({ template: '' })
@@ -190,7 +190,7 @@ const meta: Meta = {
   decorators: [
     moduleMetadata({
       imports: [
-        SharedModule.forRoot(),
+        provideQuillRegistrations(),
         RouterModule.forChild([
           { path: 'projects/:projectId', component: EmptyComponent },
           { path: 'connect-project', component: EmptyComponent }

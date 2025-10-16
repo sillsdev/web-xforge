@@ -29,7 +29,7 @@ import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { Revision } from '../../../core/paratext.service';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { BuildStates } from '../../../machine-api/build-states';
-import { SharedModule } from '../../../shared/shared.module';
+import { provideQuillRegistrations } from '../../../shared/text/quill-editor-registration/quill-providers';
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
 import { DraftSegmentMap } from '../../draft-generation/draft-generation';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
@@ -60,7 +60,7 @@ describe('EditorDraftComponent', () => {
       MatSelect,
       MatIcon,
       MatTooltip,
-      SharedModule.forRoot(),
+      provideQuillRegistrations(),
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       getTestTranslocoModule(),

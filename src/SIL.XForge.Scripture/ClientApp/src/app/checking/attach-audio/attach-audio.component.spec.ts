@@ -10,7 +10,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { configureTestingModule, getAudioBlob, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { AudioRecorderDialogComponent } from '../../shared/audio-recorder-dialog/audio-recorder-dialog.component';
-import { SharedModule } from '../../shared/shared.module';
+import { provideQuillRegistrations } from '../../shared/text/quill-editor-registration/quill-providers';
 import { TextAndAudioComponent } from '../text-and-audio/text-and-audio.component';
 import { AttachAudioComponent } from './attach-audio.component';
 
@@ -23,7 +23,7 @@ describe('AttachAudioComponent', () => {
     imports: [
       AttachAudioComponent,
       ngfModule,
-      SharedModule.forRoot(),
+      provideQuillRegistrations(),
       getTestTranslocoModule(),
       TestOnlineStatusModule.forRoot()
     ],

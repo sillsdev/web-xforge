@@ -34,10 +34,10 @@ import { WriteStatusComponent } from 'xforge-common/write-status/write-status.co
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { BuildDto } from '../machine-api/build-dto';
+import { InfoComponent } from '../shared/info/info.component';
 import { JsonViewerComponent } from '../shared/json-viewer/json-viewer.component';
 import { MobileNotSupportedComponent } from '../shared/mobile-not-supported/mobile-not-supported.component';
 import { NoticeComponent } from '../shared/notice/notice.component';
-import { SharedModule } from '../shared/shared.module';
 import { projectLabel } from '../shared/utils';
 import { DraftZipProgress } from '../translate/draft-generation/draft-generation';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
@@ -68,8 +68,8 @@ function projectType(project: TranslateSource | SFProjectProfile): string {
   styleUrls: ['./serval-project.component.scss'],
   imports: [
     CommonModule,
+    InfoComponent,
     NoticeComponent,
-    SharedModule,
     MatButton,
     MatFormField,
     MatLabel,

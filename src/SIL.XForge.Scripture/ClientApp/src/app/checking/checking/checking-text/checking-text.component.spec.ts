@@ -20,8 +20,8 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { SharedModule } from '../../../shared/shared.module';
 import { getCombinedVerseTextDoc, getTextDoc } from '../../../shared/test-utils';
+import { provideQuillRegistrations } from '../../../shared/text/quill-editor-registration/quill-providers';
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
 import { CheckingTextComponent } from './checking-text.component';
 
@@ -33,7 +33,7 @@ describe('CheckingTextComponent', () => {
   configureTestingModule(() => ({
     imports: [
       CheckingTextComponent,
-      SharedModule.forRoot(),
+      provideQuillRegistrations(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       TestOnlineStatusModule.forRoot(),
       getTestTranslocoModule()

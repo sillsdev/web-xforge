@@ -36,7 +36,7 @@ import { SF_TYPE_REGISTRY } from './app/core/models/sf-type-registry';
 import { SFProjectService } from './app/core/sf-project.service';
 import { provideCustomIcons } from './app/shared/custom-icons';
 import { provideSFTabs } from './app/shared/sf-tab-group';
-import { SharedModule } from './app/shared/shared.module';
+import { provideQuillRegistrations } from './app/shared/text/quill-editor-registration/quill-providers';
 import { preloadEnglishTranslations } from './app/shared/utils';
 import { LynxInsightsModule } from './app/translate/editor/lynx/insights/lynx-insights.module';
 import { TranslateModule } from './app/translate/translate.module';
@@ -60,6 +60,7 @@ bootstrapApplication(AppComponent, {
     { provide: ProjectService, useExisting: SFProjectService },
     provideCustomIcons(),
     provideSFTabs(),
+    provideQuillRegistrations(),
     importProvidersFrom(
       ServiceWorkerModule.register('sf-service-worker.js', {
         enabled: environment.pwaTest || environment.production,
@@ -72,7 +73,6 @@ bootstrapApplication(AppComponent, {
       TranslocoModule,
       TranslocoMarkupModule,
       AppRoutingModule,
-      SharedModule.forRoot(),
       QuillModule.forRoot(),
       LynxInsightsModule.forRoot()
     ),

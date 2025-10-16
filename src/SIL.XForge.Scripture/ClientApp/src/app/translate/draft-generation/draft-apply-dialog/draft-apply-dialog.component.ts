@@ -28,8 +28,8 @@ import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { ProjectSelectComponent } from '../../../project-select/project-select.component';
+import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { CustomValidatorState as CustomErrorState, SFValidators } from '../../../shared/sfvalidators';
-import { SharedModule } from '../../../shared/shared.module';
 import { compareProjectsForSorting } from '../../../shared/utils';
 
 export interface DraftApplyDialogResult {
@@ -55,7 +55,7 @@ export interface DraftApplyDialogConfig {
     XForgeCommonModule,
     TranslocoModule,
     CommonModule,
-    SharedModule
+    NoticeComponent
   ],
   templateUrl: './draft-apply-dialog.component.html',
   styleUrl: './draft-apply-dialog.component.scss'
