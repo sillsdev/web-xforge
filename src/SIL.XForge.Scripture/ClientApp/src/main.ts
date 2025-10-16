@@ -38,7 +38,7 @@ import { provideCustomIcons } from './app/shared/custom-icons';
 import { provideSFTabs } from './app/shared/sf-tab-group';
 import { provideQuillRegistrations } from './app/shared/text/quill-editor-registration/quill-providers';
 import { preloadEnglishTranslations } from './app/shared/utils';
-import { LynxInsightsModule } from './app/translate/editor/lynx/insights/lynx-insights.module';
+import { provideLynxInsights } from './app/translate/editor/lynx/insights/lynx-insights-providers';
 import { TranslateModule } from './app/translate/translate.module';
 import { UsersModule } from './app/users/users.module';
 import { environment } from './environments/environment';
@@ -61,6 +61,7 @@ bootstrapApplication(AppComponent, {
     provideCustomIcons(),
     provideSFTabs(),
     provideQuillRegistrations(),
+    provideLynxInsights(),
     importProvidersFrom(
       ServiceWorkerModule.register('sf-service-worker.js', {
         enabled: environment.pwaTest || environment.production,
@@ -73,8 +74,7 @@ bootstrapApplication(AppComponent, {
       TranslocoModule,
       TranslocoMarkupModule,
       AppRoutingModule,
-      QuillModule.forRoot(),
-      LynxInsightsModule.forRoot()
+      QuillModule.forRoot()
     ),
     { provide: APP_ID, useValue: 'ng-cli-universal' },
     CookieService,

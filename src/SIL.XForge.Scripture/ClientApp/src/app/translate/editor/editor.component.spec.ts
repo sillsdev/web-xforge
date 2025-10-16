@@ -120,7 +120,9 @@ import { TrainingProgressComponent } from '../training-progress/training-progres
 import { EditorDraftComponent } from './editor-draft/editor-draft.component';
 import { HistoryRevisionFormatPipe } from './editor-history/history-chooser/history-revision-format.pipe';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
-import { LynxInsightsModule } from './lynx/insights/lynx-insights.module';
+import { LynxInsightEditorObjectsComponent } from './lynx/insights/lynx-insight-editor-objects/lynx-insight-editor-objects.component';
+import { LynxInsightsPanelComponent } from './lynx/insights/lynx-insights-panel/lynx-insights-panel.component';
+import { provideLynxInsights } from './lynx/insights/lynx-insights-providers';
 import { LynxWorkspaceService } from './lynx/insights/lynx-workspace.service';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
@@ -187,11 +189,13 @@ describe('EditorComponent', () => {
       TabGroupComponent,
       TabComponent,
       TabHeaderDirective,
-      LynxInsightsModule.forRoot(),
+      LynxInsightEditorObjectsComponent,
+      LynxInsightsPanelComponent,
       AngularSplitModule
     ],
     providers: [
       provideSFTabs(),
+      provideLynxInsights(),
       { provide: AuthService, useMock: mockedAuthService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
