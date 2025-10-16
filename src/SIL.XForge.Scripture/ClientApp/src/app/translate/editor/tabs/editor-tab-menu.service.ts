@@ -6,7 +6,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { combineLatest, map, Observable, of } from 'rxjs';
-import { shareReplay, switchMap } from 'rxjs/operators';
+import { distinctUntilChanged, shareReplay, switchMap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -16,7 +16,6 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { ParatextService } from '../../../core/paratext.service';
 import { PermissionsService } from '../../../core/permissions.service';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { BuildDto } from '../../../machine-api/build-dto';
 import { TabMenuItem, TabMenuService, TabStateService } from '../../../shared/sf-tab-group';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { DraftOptionsService } from '../../draft-generation/draft-options.service';
@@ -24,11 +23,27 @@ import { EditorTabInfo } from './editor-tabs.types';
 
 @Injectable()
 export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> {
-  // TODO: Detect when a new draft build is available so we can update the latest build
-  private readonly latestDraftBuild$: Observable<BuildDto | undefined> = this.activatedProject.projectId$.pipe(
-    switchMap(projectId =>
-      projectId == null ? of(undefined) : this.draftGenerationService.getLastCompletedBuild(projectId)
-    )
+  private readonly hasDraftAndPermission$: Observable<boolean> = this.activatedProject.changes$.pipe(
+    map(
+      projectDoc =>
+        projectDoc?.data != null &&
+        SFProjectService.hasDraft(projectDoc.data) &&
+        this.permissionsService.canAccessDrafts(projectDoc, this.userService.currentUserId)
+    ),
+    distinctUntilChanged()
+  );
+
+  private readonly showDraftTab$: Observable<boolean> = combineLatest([
+    this.hasDraftAndPermission$,
+    this.onlineStatus.onlineStatus$
+  ]).pipe(
+    switchMap(([hasDraftAndPermission, isOnline]) => {
+      return isOnline && hasDraftAndPermission && this.activatedProject.projectId != null
+        ? this.draftGenerationService
+            .getLastCompletedBuild(this.activatedProject.projectId)
+            .pipe(map(build => !this.draftOptionsService.areFormattingOptionsAvailableButUnselected(build)))
+        : of(false);
+    })
   );
 
   private readonly menuItems$: Observable<TabMenuItem[]> = this.initMenuItems();
@@ -52,22 +67,15 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
 
   private initMenuItems(): Observable<TabMenuItem[]> {
     return combineLatest([
-      this.activatedProject.projectDoc$.pipe(filterNullish()),
+      this.activatedProject.changes$.pipe(filterNullish()),
       this.onlineStatus.onlineStatus$,
-      this.latestDraftBuild$
+      this.showDraftTab$
     ]).pipe(
       quietTakeUntilDestroyed(this.destroyRef),
-      switchMap(([projectDoc, isOnline, latestDraftBuild]) => {
-        return combineLatest([of(projectDoc), of(isOnline), this.tabState.tabs$, of(latestDraftBuild)]);
+      switchMap(([projectDoc, isOnline, showDraftTab]) => {
+        return combineLatest([of(projectDoc), of(isOnline), of(showDraftTab), this.tabState.tabs$]);
       }),
-      switchMap(([projectDoc, isOnline, existingTabs, latestDraftBuild]) => {
-        const showDraft =
-          isOnline &&
-          projectDoc.data != null &&
-          SFProjectService.hasDraft(projectDoc.data) &&
-          this.permissionsService.canAccessDrafts(projectDoc, this.userService.currentUserId) &&
-          latestDraftBuild != null &&
-          !this.draftOptionsService.areFormattingOptionsAvailableButUnselected(latestDraftBuild);
+      switchMap(([projectDoc, isOnline, showDraftTab, existingTabs]) => {
         const items: Observable<TabMenuItem>[] = [];
 
         for (const tabType of editorTabTypes) {
@@ -83,7 +91,7 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
               }
               break;
             case 'draft':
-              if (!showDraft) {
+              if (!showDraftTab) {
                 continue;
               }
               break;
