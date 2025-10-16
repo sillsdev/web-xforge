@@ -47,8 +47,8 @@ import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
+import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
-import { SharedModule } from '../../../shared/shared.module';
 import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
@@ -93,7 +93,7 @@ interface ProjectPendingUpdate {
   templateUrl: './draft-generation-steps.component.html',
   styleUrls: ['./draft-generation-steps.component.scss'],
   imports: [
-    SharedModule,
+    NoticeComponent,
     MatButton,
     MatCheckbox,
     MatIcon,
