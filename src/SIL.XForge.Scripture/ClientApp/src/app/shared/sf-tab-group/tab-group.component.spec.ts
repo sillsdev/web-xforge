@@ -6,7 +6,6 @@ import { getTestTranslocoModule } from 'xforge-common/test-utils';
 import { TabMenuService } from '../../shared/sf-tab-group';
 import { TabAddRequestService } from './base-services/tab-add-request.service';
 import { TabFactoryService } from './base-services/tab-factory.service';
-import { SFTabsModule } from './sf-tabs.module';
 import { TabGroupComponent } from './tab-group.component';
 import { TabInfo, TabStateService } from './tab-state/tab-state.service';
 import { TabComponent } from './tab/tab.component';
@@ -18,7 +17,7 @@ describe('TabGroupComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SFTabsModule, getTestTranslocoModule(), TabGroupComponent, TabComponent],
+      imports: [getTestTranslocoModule(), TabGroupComponent, TabComponent],
       providers: [
         { provide: TabFactoryService, useValue: { createTab: () => {} } },
         { provide: TabMenuService, useValue: { getMenuItems: () => of([]) } },
