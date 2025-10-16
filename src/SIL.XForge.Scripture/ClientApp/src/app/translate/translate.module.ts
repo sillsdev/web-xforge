@@ -7,7 +7,7 @@ import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { L10nPercentPipe } from 'xforge-common/l10n-percent.pipe';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { CopyrightBannerComponent } from '../shared/copyright-banner/copyright-banner.component';
-import { SFTabsModule } from '../shared/sf-tab-group';
+import { TabComponent, TabGroupComponent, TabHeaderDirective } from '../shared/sf-tab-group';
 import { SharedModule } from '../shared/shared.module';
 import { BiblicalTermDialogComponent } from './biblical-terms/biblical-term-dialog.component';
 import { BiblicalTermsComponent } from './biblical-terms/biblical-terms.component';
@@ -40,7 +40,9 @@ import { TranslateRoutingModule } from './translate-routing.module';
     TranslocoModule,
     TranslocoMarkupModule,
     AvatarComponent,
-    SFTabsModule,
+    TabGroupComponent,
+    TabComponent,
+    TabHeaderDirective,
     BiblicalTermsComponent,
     CopyrightBannerComponent,
     DraftPreviewBooksComponent,
