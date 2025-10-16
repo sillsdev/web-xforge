@@ -34,6 +34,7 @@ import { AppComponent } from './app/app.component';
 import { CheckingModule } from './app/checking/checking.module';
 import { SF_TYPE_REGISTRY } from './app/core/models/sf-type-registry';
 import { SFProjectService } from './app/core/sf-project.service';
+import { provideCustomIcons } from './app/shared/custom-icons';
 import { SharedModule } from './app/shared/shared.module';
 import { preloadEnglishTranslations } from './app/shared/utils';
 import { LynxInsightsModule } from './app/translate/editor/lynx/insights/lynx-insights.module';
@@ -56,6 +57,7 @@ bootstrapApplication(AppComponent, {
     { provide: 'BASE_URL', useFactory: getBaseUrl, deps: [] as any[] },
     { provide: TypeRegistry, useValue: SF_TYPE_REGISTRY },
     { provide: ProjectService, useExisting: SFProjectService },
+    provideCustomIcons(),
     importProvidersFrom(
       ServiceWorkerModule.register('sf-service-worker.js', {
         enabled: environment.pwaTest || environment.production,

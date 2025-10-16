@@ -6,7 +6,6 @@ import { MatIcon } from '@angular/material/icon';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatTooltip } from '@angular/material/tooltip';
 import { TranslocoModule } from '@ngneat/transloco';
-import { CustomIconModule } from '../custom-icon.module';
 import { NoopTabAddRequestService, TabAddRequestService } from './base-services/tab-add-request.service';
 import { TabGroupHeaderComponent } from './tab-group-header/tab-group-header.component';
 import { TabScrollButtonComponent } from './tab-group-header/tab-scroll-button/tab-scroll-button.component';
@@ -19,7 +18,6 @@ import { TabComponent } from './tab/tab.component';
 @NgModule({
   imports: [
     CommonModule,
-    CustomIconModule,
     MatButton,
     MatIcon,
     MatMenu,
