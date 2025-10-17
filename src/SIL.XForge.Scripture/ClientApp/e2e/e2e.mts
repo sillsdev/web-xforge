@@ -1,11 +1,11 @@
 #!/usr/bin/env -S deno run --allow-run --allow-env --allow-sys --allow-read --allow-write --unstable-sloppy-imports
-import { chromium, firefox, webkit } from "npm:playwright";
-import { logger, preset, ScreenshotContext } from "./e2e-globals.ts";
-import { screenshot } from "./e2e-utils.ts";
-import { numberOfTimesToAttemptTest } from "./pass-probability.ts";
-import { presets } from "./presets.ts";
-import { tests } from "./test-definitions.ts";
-import testCharacterization from "./test_characterization.json" with { type: "json" };
+import { chromium, firefox, webkit } from 'npm:playwright';
+import { logger, preset, ScreenshotContext } from './e2e-globals.ts';
+import { screenshot } from './e2e-utils.ts';
+import { numberOfTimesToAttemptTest } from './pass-probability.ts';
+import { presets } from './presets.ts';
+import { tests } from './test-definitions.ts';
+import testCharacterization from './test_characterization.json' with { type: 'json' };
 
 const availableEngines = { chromium, firefox, webkit };
 
@@ -17,15 +17,15 @@ for (const arg of args) {
   if ((availableTests as string[]).includes(arg)) {
     testScopes.push(arg as keyof typeof tests);
   } else if (!(arg in presets)) {
-    console.log("Usage: ./e2e.mts <preset> <test1> <test2> ...");
-    console.error(`Unknown test: ${arg}. Available tests: ${availableTests.join(", ")} and`);
+    console.log('Usage: ./e2e.mts <preset> <test1> <test2> ...');
+    console.error(`Unknown test: ${arg}. Available tests: ${availableTests.join(', ')} and`);
     Deno.exit(1);
   }
 }
 if (testScopes.length === 0) {
   for (const scope of availableTests) testScopes.push(scope as keyof typeof testCharacterization);
 }
-console.log(`Running tests: ${testScopes.join(" ")}`);
+console.log(`Running tests: ${testScopes.join(' ')}`);
 
 const results: {
   [key in (typeof testScopes)[number]]?: {
@@ -47,7 +47,7 @@ try {
 
       const screenshotContext: ScreenshotContext = { engine: engineName };
 
-      console.log(`%cRunning test ${test} with up to ${attempts} attempts`, "color: blue");
+      console.log(`%cRunning test ${test} with up to ${attempts} attempts`, 'color: blue');
 
       let testPassed = false;
       for (let i = 0; i < attempts && !testPassed; i++) {
@@ -56,7 +56,7 @@ try {
         if (preset.trace) await browserContext.tracing.start({ screenshots: true, snapshots: true });
 
         // Grant permission so share links can be copied and then read from clipboard (only supported in Chromium)
-        if (engineName === "chromium") await browserContext.grantPermissions(["clipboard-read", "clipboard-write"]);
+        if (engineName === 'chromium') await browserContext.grantPermissions(['clipboard-read', 'clipboard-write']);
 
         const page = await browserContext.newPage();
 
@@ -66,7 +66,7 @@ try {
           const mins = (new Date().getTime() - startTime) / 60_000;
           console.log(
             `%c✔ Test ${test} passed in ${mins.toFixed(2)} minutes on attempt ${i + 1} of ${attempts}`,
-            "color: green"
+            'color: green'
           );
           testPassed = true;
           results[test] = { success: true, attempts: i + 1 };
@@ -79,7 +79,7 @@ try {
             { overrideScreenshotSkipping: true }
           );
           if (preset.pauseOnFailure) await page.pause();
-          console.log(`%c✗ Test ${test} failed on attempt ${i + 1} of ${attempts}.`, "color: red");
+          console.log(`%c✗ Test ${test} failed on attempt ${i + 1} of ${attempts}.`, 'color: red');
           console.error(e);
           if (i === attempts - 1) {
             console.error(`Test ${test} failed after ${attempts} attempts.`);
@@ -106,13 +106,13 @@ try {
   await logger.saveToFile();
 }
 
-console.log("Test results:");
+console.log('Test results:');
 for (const test of Object.keys(results) as (typeof testScopes)[number][]) {
   const result = results[test]!;
   if (result?.success) {
-    console.log(`%c✔ ${test}: passed after ${result.attempts} attempts`, "color: green");
+    console.log(`%c✔ ${test}: passed after ${result.attempts} attempts`, 'color: green');
   } else {
-    console.log(`%c✗ ${test}: failed after ${result.attempts} attempts`, "color: red");
+    console.log(`%c✗ ${test}: failed after ${result.attempts} attempts`, 'color: red');
   }
 }
 

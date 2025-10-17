@@ -24,7 +24,7 @@
 //   5. Results can be found in APP_OWNER_HOME/.local/share/sf-resource-reports
 
 // @ts-ignore Deno provides this module resolution at runtime.
-import { parseArgs } from "jsr:@std/cli/parse-args";
+import { parseArgs } from 'jsr:@std/cli/parse-args';
 
 // Help IDE.
 declare const Deno: any;
@@ -92,7 +92,7 @@ class RtsMon {
 
   private async sendSignal(pid: number): Promise<void> {
     try {
-      await this.runCommand("kill", ["-SIGUSR2", String(pid)]);
+      await this.runCommand('kill', ['-SIGUSR2', String(pid)]);
       Program.log(`Sent SIGUSR2 to pid ${pid}`);
     } catch (e) {
       Program.logError(`Failed to send SIGUSR2 to pid ${pid}: ${(e as Error).message}`);
@@ -101,7 +101,7 @@ class RtsMon {
 
   private async readRssMib(pid: number): Promise<number | undefined> {
     try {
-      const { code, stdout } = await this.runCommand("ps", ["--quick-pid", String(pid), "--no-headers", "-o", "rss"]);
+      const { code, stdout } = await this.runCommand('ps', ['--quick-pid', String(pid), '--no-headers', '-o', 'rss']);
       if (code !== 0) return undefined;
       const text: string = new TextDecoder().decode(stdout).trim();
       const kib: number = Number.parseInt(text, 10);
@@ -114,7 +114,7 @@ class RtsMon {
 
   private async findRealtimeServerPid(): Promise<number | undefined> {
     try {
-      const { code, stdout } = await this.runCommand("pgrep", ["--full", "--", "node .* --port 5002"]);
+      const { code, stdout } = await this.runCommand('pgrep', ['--full', '--', 'node .* --port 5002']);
       if (code !== 0) return undefined;
       const text: string = new TextDecoder().decode(stdout).trim();
       const lines: string[] = text.split(/\n+/);
@@ -140,14 +140,14 @@ class RtsMon {
 
 /** Handles running the program. */
 class Program {
-  static programName: string = "rtsmon";
+  static programName: string = 'rtsmon';
 
   async main(): Promise<void> {
     try {
       const options: CliOptions = this.parse(Deno.args);
       const watcher: RtsMon = new RtsMon(options);
-      Deno.addSignalListener("SIGINT", () => {
-        Program.log("Received SIGINT. Exiting.");
+      Deno.addSignalListener('SIGINT', () => {
+        Program.log('Received SIGINT. Exiting.');
         Deno.exit(0);
       });
       await watcher.monitor();
@@ -169,11 +169,11 @@ class Program {
 
   private parse(args: string[]): CliOptions {
     const parseOptions = {
-      boolean: ["help"],
-      default: { "threshold-mib": 1.5 * 1024, "interval-seconds": 10 }
+      boolean: ['help'],
+      default: { 'threshold-mib': 1.5 * 1024, 'interval-seconds': 10 }
     };
     const parsed = parseArgs(args, parseOptions);
-    const allowed: Set<string> = new Set(["threshold-mib", "interval-seconds", "help", "_"]);
+    const allowed: Set<string> = new Set(['threshold-mib', 'interval-seconds', 'help', '_']);
     for (const key of Object.keys(parsed)) {
       if (allowed.has(key) === false) {
         Program.logError(`Unexpected argument: ${key}`);
@@ -181,7 +181,7 @@ class Program {
       }
     }
     if (parsed._.length > 0) {
-      Program.logError(`Unexpected arguments: ${parsed._.join(", ")}`);
+      Program.logError(`Unexpected arguments: ${parsed._.join(', ')}`);
       Deno.exit(1);
     }
     if (parsed.help === true) {
@@ -190,17 +190,17 @@ class Program {
       Deno.exit(0);
     }
     if (Array.isArray(parsed._) && parsed._.length > 0) {
-      Program.logError(`Unexpected positional arguments: ${parsed._.join(", ")}`);
+      Program.logError(`Unexpected positional arguments: ${parsed._.join(', ')}`);
       Deno.exit(1);
     }
 
-    const thresholdMib: number = this.toNumber(parsed["threshold-mib"], "threshold-mib");
-    const intervalSeconds: number = this.toNumber(parsed["interval-seconds"], "interval-seconds");
+    const thresholdMib: number = this.toNumber(parsed['threshold-mib'], 'threshold-mib');
+    const intervalSeconds: number = this.toNumber(parsed['interval-seconds'], 'interval-seconds');
     return { thresholdMib, intervalSeconds };
   }
 
   private toNumber(value: unknown, name: string): number {
-    if (typeof value === "number") return value;
+    if (typeof value === 'number') return value;
     throw new Error(`${name} must be a number`);
   }
 }

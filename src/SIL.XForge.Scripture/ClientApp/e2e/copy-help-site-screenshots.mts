@@ -1,16 +1,16 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write --allow-run
 
-import { walk } from "jsr:@std/fs/walk";
-import path from "node:path";
-import { pngImagesDiffer } from "./compare-images.mts";
-import { ScreenshotEvent } from "./e2e-test-run-logger.ts";
+import { walk } from 'jsr:@std/fs/walk';
+import path from 'node:path';
+import { pngImagesDiffer } from './compare-images.mts';
+import { ScreenshotEvent } from './e2e-test-run-logger.ts';
 
 const runLogDir = Deno.args[0];
 const helpRepo = Deno.args[1];
 const copyFilesEvenIfIdentical = false;
 
 if (runLogDir == null || helpRepo == null) {
-  console.error("Usage: ./copy-help-site-screenshots.mts <run_log_dir> <help_repo>");
+  console.error('Usage: ./copy-help-site-screenshots.mts <run_log_dir> <help_repo>');
   Deno.exit(1);
 }
 
@@ -23,13 +23,13 @@ if (!(await Deno.stat(helpRepo)).isDirectory) {
 const screenshotEvents: ScreenshotEvent[] = runLog.screenshotEvents;
 
 function getDirForLocale(localeCode: string): string {
-  return localeCode === "en"
+  return localeCode === 'en'
     ? `${helpRepo}/docs`
     : `${helpRepo}/i18n/${localeCode}/docusaurus-plugin-content-docs/current`;
 }
 
 function getScreenshotByFileNameAndLocale(fileName: string, localeCode: string): ScreenshotEvent | undefined {
-  const pageName = fileName.replace(/\.png$/, "");
+  const pageName = fileName.replace(/\.png$/, '');
   return screenshotEvents.find(event => event.context.pageName === pageName && event.context.locale === localeCode);
 }
 
@@ -57,9 +57,9 @@ for (const locale of localeCodesInRunLog()) {
         const pngsReferencedByMarkdownFiles: string[] = [];
         const pngsInDirectory: string[] = [];
         for await (const subEntry of Deno.readDir(entry.path)) {
-          if (subEntry.isFile && subEntry.name.endsWith(".md")) {
+          if (subEntry.isFile && subEntry.name.endsWith('.md')) {
             pngsReferencedByMarkdownFiles.push(...(await imagesInMarkdownFile(path.join(entry.path, subEntry.name))));
-          } else if (subEntry.isFile && subEntry.name.endsWith(".png")) {
+          } else if (subEntry.isFile && subEntry.name.endsWith('.png')) {
             pngsInDirectory.push(subEntry.name);
           }
         }
@@ -73,7 +73,7 @@ for (const locale of localeCodesInRunLog()) {
         }
 
         // Copy screenshots referenced by Markdown files
-      } else if (entry.isFile && entry.name.endsWith(".md")) {
+      } else if (entry.isFile && entry.name.endsWith('.md')) {
         for (const imageFileName of await imagesInMarkdownFile(entry.path)) {
           const screenshot = getScreenshotByFileNameAndLocale(imageFileName, locale);
           if (screenshot != null) {
@@ -100,7 +100,7 @@ for (const pageName of new Set(screenshotEvents.map(event => event.context.pageN
   }
 }
 
-Deno.removeSync("diff", { recursive: true });
+Deno.removeSync('diff', { recursive: true });
 
 /**
  * Copies a file from point A to point B if the files differ, or if there is no file at point B, or if
@@ -112,17 +112,17 @@ Deno.removeSync("diff", { recursive: true });
  * @throws If the source file does not exist or if the copy fails.
  */
 async function copyScreenshotIfDiffers(source: string, destination: string): Promise<void> {
-  Deno.mkdirSync("diff", { recursive: true });
-  const imageDiffers = pngImagesDiffer(source, destination, "diff/diff.png");
+  Deno.mkdirSync('diff', { recursive: true });
+  const imageDiffers = pngImagesDiffer(source, destination, 'diff/diff.png');
 
   const confirmWithUser = imageDiffers && !copyFilesEvenIfIdentical;
 
   if (confirmWithUser) {
     // copy original to a.png, and new version to b.png
-    Deno.copyFile(destination, "diff/a.png");
-    Deno.copyFile(source, "diff/b.png");
+    Deno.copyFile(destination, 'diff/a.png');
+    Deno.copyFile(source, 'diff/b.png');
 
-    console.log("💡 Tip: source, target, and diff are in the diff directory.");
+    console.log('💡 Tip: source, target, and diff are in the diff directory.');
     const update = confirm(`Image ${source} differs from ${destination}. See diff.png. Do you want to update it?`);
     if (!update) return;
   }
@@ -130,7 +130,7 @@ async function copyScreenshotIfDiffers(source: string, destination: string): Pro
   if (imageDiffers || copyFilesEvenIfIdentical) {
     // zopflipng npm package must be installed globally for this to work
     console.log(`Copying ${source} to ${destination} using zopflipng...`);
-    const zopflipng = new Deno.Command("zopflipng", { args: ["-y", source, destination], stdout: "inherit" });
+    const zopflipng = new Deno.Command('zopflipng', { args: ['-y', source, destination], stdout: 'inherit' });
     const status = await zopflipng.output();
     if (status.code !== 0) {
       throw new Error(`Failed to copy ${source} to ${destination} using zopflipng: ${status}`);

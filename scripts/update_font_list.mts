@@ -18,7 +18,7 @@ type FontFamilies = {
   };
 };
 
-const fonts: FontFamilies = await fetch("https://raw.githubusercontent.com/silnrsi/fonts/main/families.json").then(
+const fonts: FontFamilies = await fetch('https://raw.githubusercontent.com/silnrsi/fonts/main/families.json').then(
   response => response.json()
 );
 
@@ -31,7 +31,7 @@ const filesByFamily: {
 for (const entry of Object.values(fonts)) {
   if (entry.distributable !== true) continue;
 
-  const defaultFileName = entry.defaults?.["woff2"] ?? entry.defaults?.["woff"] ?? entry.defaults?.["ttf"];
+  const defaultFileName = entry.defaults?.['woff2'] ?? entry.defaults?.['woff'] ?? entry.defaults?.['ttf'];
   if (defaultFileName == null) continue;
 
   const defaultFileUrl = entry.files[defaultFileName]?.flourl;
@@ -56,7 +56,7 @@ for (const [family, files] of Object.entries(filesByFamily)) {
       bestFileByFamily[family] = matchingFiles[0].fileUrl;
     } else if (matchingFiles.length > 1) {
       console.warn(
-        `Multiple Regular files found for ${family}: ${matchingFiles.map(file => file.fileName).join(", ")}`
+        `Multiple Regular files found for ${family}: ${matchingFiles.map(file => file.fileName).join(', ')}`
       );
     }
   } else if (files.length === 0) {
@@ -67,7 +67,7 @@ for (const [family, files] of Object.entries(filesByFamily)) {
 // Step 3: Get the Noto fonts
 
 const notoFonts = await fetch(
-  "https://raw.githubusercontent.com/notofonts/notofonts.github.io/refs/heads/main/state.json"
+  'https://raw.githubusercontent.com/notofonts/notofonts.github.io/refs/heads/main/state.json'
 ).then(response => response.json());
 
 const notoFontsByFamily: { [family: string]: string } = {};
@@ -89,7 +89,7 @@ for (const [_group, specification] of Object.entries(notoFonts)) {
     matchingFiles.sort((a, b) => a.length - b.length);
 
     if (matchingFiles.length > 1) {
-      console.warn(`Multiple Regular files found for ${family}: ${matchingFiles.join(", ")}`);
+      console.warn(`Multiple Regular files found for ${family}: ${matchingFiles.join(', ')}`);
       console.warn(`Using ${matchingFiles[0]}`);
     }
 
@@ -103,4 +103,4 @@ for (const [_group, specification] of Object.entries(notoFonts)) {
 
 const filePath = `${import.meta.dirname}/../src/SIL.XForge.Scripture/fonts.json`;
 
-Deno.writeTextFileSync(filePath, JSON.stringify(bestFileByFamily, null, 2) + "\n");
+Deno.writeTextFileSync(filePath, JSON.stringify(bestFileByFamily, null, 2) + '\n');

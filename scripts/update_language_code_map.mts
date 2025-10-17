@@ -12,16 +12,16 @@
  * @returns An array of objects, where each object represents a row in the TSV file.
  */
 function parseTsvToObjects(tsv: string, expectedHeaders: readonly string[]): { [key: string]: string }[] {
-  const lines = tsv.trim().split("\n");
-  const rows = lines.map(line => line.split("\t"));
+  const lines = tsv.trim().split('\n');
+  const rows = lines.map(line => line.split('\t'));
 
   const header = rows[0];
   const missingHeaders = expectedHeaders.filter(expectedHeader => !header.includes(expectedHeader));
   if (missingHeaders.length > 0) {
     throw new Error(
       `The file includes the following headers: ${header.join(
-        ", "
-      )} and is missing the following required headers: ${missingHeaders.join(", ")}`
+        ', '
+      )} and is missing the following required headers: ${missingHeaders.join(', ')}`
     );
   }
 
@@ -39,10 +39,10 @@ function parseTsvToObjects(tsv: string, expectedHeaders: readonly string[]): { [
   return entries;
 }
 
-const fileHeaders = ["Id", "Part2b", "Part2t", "Part1", "Scope", "Language_Type", "Ref_Name", "Comment"] as const;
+const fileHeaders = ['Id', 'Part2b', 'Part2t', 'Part1', 'Scope', 'Language_Type', 'Ref_Name', 'Comment'] as const;
 type FileHeader = (typeof fileHeaders)[number];
 
-const isoFileUrl = "https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3.tab";
+const isoFileUrl = 'https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3.tab';
 const fileContent = await fetch(isoFileUrl).then(response => response.text());
 const mainFileEntries = parseTsvToObjects(fileContent, fileHeaders) as { [key in FileHeader]?: string }[];
 
@@ -52,7 +52,7 @@ const iso639_1_to_iso639_3: { [code: string]: string } = {};
 
 for (const entry of mainFileEntries) {
   if (entry.Id == null || entry.Scope == null || entry.Language_Type == null) {
-    throw new Error("Entry is Missing required fields: " + JSON.stringify(entry));
+    throw new Error('Entry is Missing required fields: ' + JSON.stringify(entry));
   }
 
   if (entry.Part2b && entry.Part2t && entry.Part2b !== entry.Part2t) {
@@ -73,4 +73,4 @@ const json = JSON.stringify(results, null, 2);
 
 const filePath = `${import.meta.dirname}/../src/SIL.XForge.Scripture/language_code_mapping.json`;
 
-Deno.writeTextFileSync(filePath, json + "\n");
+Deno.writeTextFileSync(filePath, json + '\n');
