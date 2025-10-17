@@ -25,12 +25,12 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
-import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { hasData, notNull } from '../../../../type-utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { ParatextService, SelectableProject, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { ProjectSelectComponent } from '../../../project-select/project-select.component';
 import { ConfirmOnLeave } from '../../../shared/project-router.guard';
 import { projectLabel } from '../../../shared/utils';
 import { isSFProjectSyncing } from '../../../sync/sync.component';
@@ -56,7 +56,6 @@ export interface ProjectStatus {
   imports: [
     MatButton,
     MatIcon,
-    XForgeCommonModule,
     MatRipple,
     MatCard,
     MatCardActions,
@@ -68,7 +67,8 @@ export interface ProjectStatus {
     TranslocoModule,
     MatProgressSpinner,
     LanguageCodesConfirmationComponent,
-    TrainingDataMultiSelectComponent
+    TrainingDataMultiSelectComponent,
+    ProjectSelectComponent
   ],
   templateUrl: './draft-sources.component.html',
   styleUrl: './draft-sources.component.scss'

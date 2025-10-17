@@ -24,7 +24,6 @@ import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { ParatextService } from '../../../core/paratext.service';
@@ -58,10 +57,10 @@ export interface DraftApplyDialogConfig {
     MatDialogTitle,
     MatError,
     ReactiveFormsModule,
-    XForgeCommonModule,
     TranslocoModule,
     CommonModule,
-    NoticeComponent
+    NoticeComponent,
+    ProjectSelectComponent
   ],
   templateUrl: './draft-apply-dialog.component.html',
   styleUrl: './draft-apply-dialog.component.scss'
