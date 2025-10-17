@@ -905,6 +905,153 @@ describe('SFProjectMigrations', () => {
       ]);
     });
   });
+
+  describe('version 27', () => {
+    it('adds empty arrays if preTranslate is false', async () => {
+      const env = new TestEnvironment(26);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { preTranslate: false, draftConfig: {} }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.draftingSources).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.trainingSources).toBeUndefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.draftingSources).toEqual([]);
+      expect(projectDoc.data.translateConfig.draftConfig.trainingSources).toEqual([]);
+    });
+
+    it('adds empty arrays if preTranslate is true but sources were disabled', async () => {
+      const env = new TestEnvironment(26);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: {
+          preTranslate: true,
+          draftConfig: {
+            alternateTrainingSource: { projectRef: 'project02' },
+            alternateTrainingSourceEnabled: false,
+            alternateSource: { projectRef: 'project03' },
+            alternateSourceEnabled: false,
+            additionalTrainingSource: { projectRef: 'project04' },
+            additionalTrainingSourceEnabled: false
+          }
+        }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.draftingSources).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.trainingSources).toBeUndefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.draftingSources).toEqual([]);
+      expect(projectDoc.data.translateConfig.draftConfig.trainingSources).toEqual([]);
+      expect(projectDoc.data.translateConfig.draftConfig.alternateTrainingSource).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.alternateTrainingSourceEnabled).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.alternateSource).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.alternateSourceEnabled).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.additionalTrainingSource).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.additionalTrainingSourceEnabled).toBeUndefined();
+    });
+
+    it('adds empty arrays if preTranslate is true and sources are enabled but undefined', async () => {
+      const env = new TestEnvironment(26);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: {
+          preTranslate: true,
+          draftConfig: {
+            alternateTrainingSourceEnabled: true,
+            alternateSourceEnabled: true,
+            additionalTrainingSourceEnabled: true
+          }
+        }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.draftingSources).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.trainingSources).toBeUndefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.draftingSources).toEqual([]);
+      expect(projectDoc.data.translateConfig.draftConfig.trainingSources).toEqual([]);
+    });
+
+    it('adds source to both arrays if preTranslate is true but sources were disabled', async () => {
+      const env = new TestEnvironment(26);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: {
+          preTranslate: true,
+          draftConfig: {
+            alternateTrainingSource: { projectRef: 'project02' },
+            alternateTrainingSourceEnabled: false,
+            alternateSource: { projectRef: 'project03' },
+            alternateSourceEnabled: false,
+            additionalTrainingSource: { projectRef: 'project04' },
+            additionalTrainingSourceEnabled: false
+          },
+          source: { projectRef: 'project05' }
+        }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.draftingSources).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.trainingSources).toBeUndefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.draftingSources).toEqual([{ projectRef: 'project05' }]);
+      expect(projectDoc.data.translateConfig.draftConfig.trainingSources).toEqual([{ projectRef: 'project05' }]);
+      expect(projectDoc.data.translateConfig.draftConfig.alternateTrainingSource).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.alternateTrainingSourceEnabled).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.alternateSource).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.alternateSourceEnabled).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.additionalTrainingSource).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.additionalTrainingSourceEnabled).toBeUndefined();
+    });
+
+    it('adds sources to the appropriate arrays if preTranslate is true and sources are configured', async () => {
+      const env = new TestEnvironment(26);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: {
+          preTranslate: true,
+          draftConfig: {
+            alternateTrainingSource: { projectRef: 'project02' },
+            alternateTrainingSourceEnabled: true,
+            alternateSource: { projectRef: 'project03' },
+            alternateSourceEnabled: true,
+            additionalTrainingSource: { projectRef: 'project04' },
+            additionalTrainingSourceEnabled: true
+          },
+          source: { projectRef: 'project05' }
+        }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.draftingSources).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.trainingSources).toBeUndefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.draftingSources).toEqual([{ projectRef: 'project03' }]);
+      expect(projectDoc.data.translateConfig.draftConfig.trainingSources).toEqual([
+        { projectRef: 'project02' },
+        { projectRef: 'project04' }
+      ]);
+      expect(projectDoc.data.translateConfig.draftConfig.alternateTrainingSource).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.alternateTrainingSourceEnabled).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.alternateSource).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.alternateSourceEnabled).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.additionalTrainingSource).toBeUndefined();
+      expect(projectDoc.data.translateConfig.draftConfig.additionalTrainingSourceEnabled).toBeUndefined();
+    });
+  });
 });
 
 class TestEnvironment {

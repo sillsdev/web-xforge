@@ -197,9 +197,7 @@ export class DraftGenerationStepsComponent implements OnInit {
           }
 
           const trainingSourceBooks: Set<number> = new Set<number>(trainingSources[0]?.texts.map(t => t.bookNum));
-          const additionalTrainingSourceBooks: Set<number> = new Set<number>(
-            trainingSources[1]?.texts.map(t => t.bookNum)
-          );
+          const secondTrainingSourceBooks: Set<number> = new Set<number>(trainingSources[1]?.texts.map(t => t.bookNum));
 
           for (const source of this.draftingSources) {
             this.availableTranslateBooks[source?.projectRef] = [];
@@ -291,7 +289,7 @@ export class DraftGenerationStepsComponent implements OnInit {
                 this.translatedBooksWithNoSource.push(bookNum);
               }
             }
-            if (trainingSources[1] != null && additionalTrainingSourceBooks.has(bookNum)) {
+            if (trainingSources[1] != null && secondTrainingSourceBooks.has(bookNum)) {
               this.availableTrainingBooks[trainingSources[1].projectRef].push({ number: bookNum, selected: selected });
               isPresentInASource = true;
             }

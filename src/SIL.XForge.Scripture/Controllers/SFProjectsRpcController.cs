@@ -188,12 +188,24 @@ public class SFProjectsRpcController(
                     { "CheckingAnswerExport", settings?.CheckingAnswerExport },
                     { "SourceParatextId", settings?.SourceParatextId },
                     { "BiblicalTermsEnabled", settings?.BiblicalTermsEnabled?.ToString() },
-                    { "AdditionalTrainingDataFiles", settings?.AdditionalTrainingDataFiles?.ToString() },
-                    { "AlternateSourceParatextId", settings?.AlternateSourceParatextId },
-                    { "AlternateTrainingSourceEnabled", settings?.AlternateTrainingSourceEnabled?.ToString() },
-                    { "AlternateTrainingSourceParatextId", settings?.AlternateTrainingSourceParatextId },
-                    { "AdditionalTrainingSourceEnabled", settings?.AdditionalTrainingSourceEnabled?.ToString() },
-                    { "AdditionalTrainingSourceParatextId", settings?.AdditionalTrainingSourceParatextId },
+                    {
+                        "AdditionalTrainingDataFiles",
+                        settings?.AdditionalTrainingDataFiles is null
+                            ? null
+                            : string.Join(',', settings.AdditionalTrainingDataFiles)
+                    },
+                    {
+                        "DraftingSourcesParatextIds",
+                        settings?.DraftingSourcesParatextIds is null
+                            ? null
+                            : string.Join(',', settings.DraftingSourcesParatextIds)
+                    },
+                    {
+                        "TrainingSourcesParatextIds",
+                        settings?.TrainingSourcesParatextIds is null
+                            ? null
+                            : string.Join(',', settings.TrainingSourcesParatextIds)
+                    },
                     { "CheckingEnabled", settings?.CheckingEnabled?.ToString() },
                     { "TranslationSuggestionsEnabled", settings?.TranslationSuggestionsEnabled?.ToString() },
                     { "UsersSeeEachOthersResponses", settings?.UsersSeeEachOthersResponses?.ToString() },
