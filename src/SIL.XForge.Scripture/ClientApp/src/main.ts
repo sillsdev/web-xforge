@@ -29,7 +29,7 @@ import { InAppRootOverlayContainer } from 'xforge-common/overlay-container';
 import { ProjectService } from 'xforge-common/project.service';
 import { TypeRegistry } from 'xforge-common/type-registry';
 import { provideUICommon } from 'xforge-common/ui-common-providers';
-import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
+import { provideXForgeCommon } from 'xforge-common/xforge-common-providers';
 import { AppComponent } from './app/app.component';
 import { APP_ROUTES } from './app/app.routes';
 import { SF_TYPE_REGISTRY } from './app/core/models/sf-type-registry';
@@ -60,6 +60,7 @@ bootstrapApplication(AppComponent, {
     provideSFTabs(),
     provideQuillRegistrations(),
     provideLynxInsights(),
+    provideXForgeCommon(),
     provideRouter(
       APP_ROUTES,
       withRouterConfig({
@@ -73,7 +74,6 @@ bootstrapApplication(AppComponent, {
         enabled: environment.pwaTest || environment.production,
         registrationStrategy: 'registerImmediately'
       }),
-      XForgeCommonModule,
       TranslocoModule,
       TranslocoMarkupModule,
       QuillModule.forRoot()
