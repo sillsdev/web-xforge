@@ -5,6 +5,7 @@ import { MatCheckbox } from '@angular/material/checkbox';
 import {
   MAT_DIALOG_DATA,
   MatDialogActions,
+  MatDialogClose,
   MatDialogContent,
   MatDialogRef,
   MatDialogTitle
@@ -43,6 +44,7 @@ export interface TrainingDataFileUpload {
     MatDialogTitle,
     MatDialogContent,
     MatDialogActions,
+    MatDialogClose,
     MatIcon,
     MatProgressSpinner,
     InfoComponent,
