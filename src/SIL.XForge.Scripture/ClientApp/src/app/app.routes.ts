@@ -1,5 +1,4 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { AuthGuard } from 'xforge-common/auth.guard';
 import { SystemAdminAuthGuard } from 'xforge-common/system-admin-auth.guard';
 import { SystemAdministrationComponent } from 'xforge-common/system-administration/system-administration.component';
@@ -18,7 +17,7 @@ import { PageNotFoundComponent } from './shared/page-not-found/page-not-found.co
 import { SettingsAuthGuard, SyncAuthGuard } from './shared/project-router.guard';
 import { SyncComponent } from './sync/sync.component';
 
-const routes: Routes = [
+export const APP_ROUTES: Routes = [
   { path: 'callback/auth0', component: MyProjectsComponent, canActivate: [AuthGuard] },
   { path: 'connect-project', component: ConnectProjectComponent, canActivate: [AuthGuard] },
   { path: 'login', redirectTo: 'projects', pathMatch: 'full' },
@@ -35,9 +34,3 @@ const routes: Routes = [
   { path: 'system-administration', component: SystemAdministrationComponent, canActivate: [SystemAdminAuthGuard] },
   { path: '**', component: PageNotFoundComponent }
 ];
-
-@NgModule({
-  imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
-})
-export class AppRoutingModule {}
