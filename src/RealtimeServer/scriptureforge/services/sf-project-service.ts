@@ -558,7 +558,7 @@ export class SFProjectService extends ProjectService<SFProject> {
         bsonType: 'array',
         items: {
           bsonType: 'object',
-          required: ['username', 'opaqueUserId'],
+          required: ['username', 'opaqueUserId', 'role'],
           properties: {
             username: {
               bsonType: 'string'
@@ -567,6 +567,9 @@ export class SFProjectService extends ProjectService<SFProject> {
               bsonType: 'string'
             },
             sfUserId: {
+              bsonType: 'string'
+            },
+            role: {
               bsonType: 'string'
             }
           },
