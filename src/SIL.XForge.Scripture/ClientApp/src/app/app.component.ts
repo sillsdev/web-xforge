@@ -2,10 +2,10 @@ import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { AsyncPipe, DOCUMENT } from '@angular/common';
 import { Component, DestroyRef, Inject, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MatButton } from '@angular/material/button';
+import { MatButton, MatIconAnchor, MatIconButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
 import { MatIcon } from '@angular/material/icon';
-import { MatMenu, MatMenuTrigger } from '@angular/material/menu';
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatProgressBar } from '@angular/material/progress-bar';
 import { MatDrawer, MatDrawerContainer } from '@angular/material/sidenav';
 import { MatToolbar, MatToolbarRow } from '@angular/material/toolbar';
@@ -75,7 +75,10 @@ declare function gtag(...args: any): void;
     MatIcon,
     MatDrawerContainer,
     MatButton,
+    MatIconAnchor,
+    MatIconButton,
     MatMenu,
+    MatMenuItem,
     MatMenuTrigger,
     MatTooltip,
     MatToolbar,
