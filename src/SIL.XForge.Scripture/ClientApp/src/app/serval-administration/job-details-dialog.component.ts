@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, Inject, OnInit } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import {
@@ -51,7 +50,6 @@ const EVENT_TYPE_LABELS: {
   templateUrl: './job-details-dialog.component.html',
   styleUrls: ['./job-details-dialog.component.scss'],
   imports: [
-    CommonModule,
     MatButton,
     MatDialogActions,
     MatDialogClose,

@@ -1,5 +1,8 @@
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { MatCheckbox } from '@angular/material/checkbox';
 import { MatChipListbox, MatChipOption } from '@angular/material/chips';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatTooltip } from '@angular/material/tooltip';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { filter, firstValueFrom } from 'rxjs';
@@ -19,7 +22,15 @@ type Scope = 'OT' | 'NT' | 'DC';
 @Component({
   selector: 'app-book-multi-select',
   templateUrl: './book-multi-select.component.html',
-  imports: [MatChipListbox, MatChipOption, TranslocoModule, L10nPercentPipe],
+  imports: [
+    MatCheckbox,
+    MatChipListbox,
+    MatChipOption,
+    MatTooltip,
+    MatProgressSpinner,
+    TranslocoModule,
+    L10nPercentPipe
+  ],
   styleUrls: ['./book-multi-select.component.scss']
 })
 export class BookMultiSelectComponent implements OnChanges {
