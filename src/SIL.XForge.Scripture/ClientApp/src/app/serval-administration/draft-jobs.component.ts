@@ -215,126 +215,109 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
         event.eventType === 'StartPreTranslationBuildAsync' ||
         event.eventType === 'BuildProjectAsync' ||
         event.eventType === 'RetrievePreTranslationStatusAsync' ||
+        event.eventType === 'ExecuteWebhookAsync' ||
         event.eventType === 'CancelPreTranslationBuildAsync'
     );
 
-    // Step 1: Group events by build ID where available
-    const jobsByBuildId = new Map<string, EventMetric[]>();
-    const eventsWithoutBuildId: EventMetric[] = [];
-
-    for (const event of draftEvents) {
-      const buildId = this.extractBuildIdFromEvent(event);
-      if (buildId != null) {
-        if (!jobsByBuildId.has(buildId)) {
-          jobsByBuildId.set(buildId, []);
-        }
-        jobsByBuildId.get(buildId)!.push(event);
-      } else {
-        eventsWithoutBuildId.push(event);
-      }
-    }
-
-    // Step 2: Create jobs from events grouped by build ID
     const jobs: DraftJob[] = [];
-    for (const [buildId, events] of jobsByBuildId) {
-      const job = this.createJobFromEvents(events, buildId);
-      if (job != null) {
-        jobs.push(job);
-      }
-    }
 
-    // Step 3: Match remaining events to existing jobs or create new jobs
-    const remainingEvents = [...eventsWithoutBuildId];
+    // Step 1: Find all build events (BuildProjectAsync) - these are our anchors
+    const buildEvents = draftEvents.filter(event => event.eventType === 'BuildProjectAsync');
 
-    // Sort remaining events by timestamp for temporal matching
-    remainingEvents.sort((a, b) => new Date(a.timeStamp).getTime() - new Date(b.timeStamp).getTime());
+    // Step 2: For each build event, find the nearest preceding start event
+    for (const buildEvent of buildEvents) {
+      if (buildEvent.projectId == null) continue;
 
-    // Process StartPreTranslationBuildAsync events that don't have build IDs
-    const unmatchedStartEvents = remainingEvents.filter(e => e.eventType === 'StartPreTranslationBuildAsync');
+      const buildId = this.extractBuildIdFromEvent(buildEvent);
+      if (buildId == null) continue;
 
-    for (const startEvent of unmatchedStartEvents) {
-      if (startEvent.projectId == null) continue;
+      const buildTime = new Date(buildEvent.timeStamp);
 
-      // Try to find a matching job for this start event
-      const matchingJob = this.findMatchingJobForStartEvent(startEvent, jobs);
+      // Find all StartPreTranslationBuildAsync events for this project that precede the build
+      const candidateStartEvents = draftEvents.filter(
+        event =>
+          event.eventType === 'StartPreTranslationBuildAsync' &&
+          event.projectId === buildEvent.projectId &&
+          new Date(event.timeStamp) < buildTime
+      );
 
-      if (matchingJob != null) {
-        // Update the matching job with this start event
-        matchingJob.startEvent = startEvent;
-        matchingJob.startTime = new Date(startEvent.timeStamp);
-        matchingJob.userId = startEvent.userId;
+      // If no start event found, skip this build (not started in our time window)
+      if (candidateStartEvents.length === 0) continue;
 
-        // Update books information from start event
-        const { trainingBooks, translationBooks } = this.extractBooksFromEvent(startEvent);
-        matchingJob.trainingBooks = trainingBooks;
-        matchingJob.translationBooks = translationBooks;
+      // Find the chronologically nearest start event (the one closest before the build)
+      const startEvent = candidateStartEvents.reduce((nearest, current) => {
+        const currentTime = new Date(current.timeStamp);
+        const nearestTime = new Date(nearest.timeStamp);
+        return currentTime > nearestTime ? current : nearest;
+      });
 
-        // Remove this event from remaining events
-        const index = remainingEvents.indexOf(startEvent);
-        if (index > -1) {
-          remainingEvents.splice(index, 1);
-        }
-      } else {
-        // Create a new job for this start event
-        const newJob = this.createJobFromStartEvent(startEvent);
-        if (newJob != null) {
-          jobs.push(newJob);
-          // Remove this event from remaining events
-          const index = remainingEvents.indexOf(startEvent);
-          if (index > -1) {
-            remainingEvents.splice(index, 1);
+      // Step 3: Find the first completion event after the build
+      const candidateCompletionEvents = draftEvents.filter(event => {
+        if (event.projectId !== buildEvent.projectId) return false;
+        if (new Date(event.timeStamp) <= buildTime) return false;
+
+        // Check if it's a completion event type
+        if (
+          event.eventType === 'RetrievePreTranslationStatusAsync' ||
+          event.eventType === 'ExecuteWebhookAsync' ||
+          event.eventType === 'CancelPreTranslationBuildAsync'
+        ) {
+          // For cancel events, we don't check build ID (they don't have one)
+          if (event.eventType === 'CancelPreTranslationBuildAsync') {
+            return true;
           }
+          // For other completion events, verify build ID matches
+          const completionBuildId = this.extractBuildIdFromEvent(event);
+          return completionBuildId === buildId;
         }
+
+        return false;
+      });
+
+      // Find the chronologically first completion event (nearest after the build)
+      let completionEvent: EventMetric | undefined;
+      if (candidateCompletionEvents.length > 0) {
+        completionEvent = candidateCompletionEvents.reduce((earliest, current) => {
+          const currentTime = new Date(current.timeStamp);
+          const earliestTime = new Date(earliest.timeStamp);
+          return currentTime < earliestTime ? current : earliest;
+        });
       }
-    }
 
-    // Step 4: Try to match remaining events to existing jobs
-    const unprocessedEvents: EventMetric[] = [];
+      // Create the job from these events
+      const { trainingBooks, translationBooks } = this.extractBooksFromEvent(startEvent);
 
-    for (const event of remainingEvents) {
-      const eventBuildId = this.extractBuildIdFromEvent(event);
-      let eventWasProcessed = false;
+      const job: DraftJob = {
+        projectId: buildEvent.projectId,
+        buildId,
+        startEvent,
+        buildEvent,
+        finishEvent: undefined,
+        cancelEvent: undefined,
+        events: [],
+        startTime: new Date(startEvent.timeStamp),
+        userId: startEvent.userId,
+        trainingBooks,
+        translationBooks,
+        status: 'running', // Will be finalized later
+        errorMessage: undefined,
+        finishTime: null,
+        duration: null
+      };
 
-      // If this event has a build ID but wasn't grouped earlier, it might be from a different job
-      if (eventBuildId != null) {
-        // Check if we already have a job with this build ID
-        const existingJobWithBuildId = jobs.find(job => job.buildId === eventBuildId);
-        if (existingJobWithBuildId != null) {
-          this.addEventToJob(existingJobWithBuildId, event);
-          eventWasProcessed = true;
+      // Assign the completion event to the appropriate field
+      if (completionEvent != null) {
+        if (completionEvent.eventType === 'CancelPreTranslationBuildAsync') {
+          job.cancelEvent = completionEvent;
         } else {
-          // Create a new job for this orphaned event with build ID
-          const newJob = this.createJobFromOrphanedEvent(event, eventBuildId);
-          if (newJob != null) {
-            jobs.push(newJob);
-            eventWasProcessed = true;
-          }
-        }
-      } else {
-        // Event has no build ID, try temporal matching
-        const matchingJob = this.findMatchingJobForEvent(event, jobs);
-        if (matchingJob != null) {
-          this.addEventToJob(matchingJob, event);
-          eventWasProcessed = true;
+          job.finishEvent = completionEvent;
         }
       }
 
-      if (!eventWasProcessed) {
-        unprocessedEvents.push(event);
-      }
+      jobs.push(job);
     }
 
-    // Log any events that couldn't be processed
-    if (unprocessedEvents.length > 0) {
-      console.warn(`${unprocessedEvents.length} events could not be processed:`);
-      for (const event of unprocessedEvents) {
-        console.warn(
-          `- ${event.eventType} (project: ${event.projectId}, time: ${event.timeStamp}, buildId: ${this.extractBuildIdFromEvent(event) || 'none'})`
-        );
-      }
-    }
-
-    // Step 5: Finalize job statuses and mark incomplete jobs as broken
+    // Finalize job statuses
     for (const job of jobs) {
       this.finalizeJobStatus(job);
     }
@@ -346,7 +329,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
       return bTime - aTime;
     });
 
-    // Generate rows with fallback project names (just IDs for now)
+    // Generate rows
     this.generateRows();
   }
 
@@ -362,214 +345,6 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     }
 
     return null;
-  }
-
-  private createJobFromEvents(events: EventMetric[], buildId: string): DraftJob | null {
-    if (events.length === 0) return null;
-
-    // Sort events by timestamp
-    events.sort((a, b) => new Date(a.timeStamp).getTime() - new Date(b.timeStamp).getTime());
-
-    const startEvent = events.find(e => e.eventType === 'StartPreTranslationBuildAsync');
-    const buildEvent = events.find(e => e.eventType === 'BuildProjectAsync');
-    const cancelEvent = events.find(e => e.eventType === 'CancelPreTranslationBuildAsync');
-
-    // For finish events, take the latest one (they can occur multiple times)
-    const finishEvents = events.filter(e => e.eventType === 'RetrievePreTranslationStatusAsync');
-    const finishEvent = finishEvents.length > 0 ? finishEvents[finishEvents.length - 1] : undefined;
-
-    // Determine project ID (prefer from start event, fallback to any event)
-    const projectId = startEvent?.projectId ?? events.find(e => e.projectId != null)?.projectId;
-    if (projectId == null) return null;
-
-    // Determine start time and user
-    const startTime = startEvent ? new Date(startEvent.timeStamp) : new Date(events[0].timeStamp);
-    const userId = startEvent?.userId;
-
-    // Extract books from start event if available
-    const booksInfo = startEvent ? this.extractBooksFromEvent(startEvent) : { trainingBooks: [], translationBooks: [] };
-    const { trainingBooks, translationBooks } = booksInfo;
-
-    return {
-      projectId,
-      startTime,
-      events: [],
-      userId,
-      startEvent: startEvent,
-      buildEvent,
-      finishEvent,
-      cancelEvent,
-      trainingBooks,
-      translationBooks,
-      buildId,
-      status: 'running', // Will be finalized later
-      errorMessage: undefined,
-      finishTime: null,
-      duration: null
-    };
-  }
-
-  private findMatchingJobForStartEvent(startEvent: EventMetric, jobs: DraftJob[]): DraftJob | null {
-    if (startEvent.projectId == null) return null;
-
-    const startTime = new Date(startEvent.timeStamp);
-
-    // Look for jobs in the same project that don't have a start event yet
-    const candidateJobs = jobs.filter(job => job.projectId === startEvent.projectId && job.startEvent == null);
-
-    if (candidateJobs.length === 0) return null;
-
-    // Find the job with build event closest after this start event
-    let bestMatch: DraftJob | null = null;
-    let bestTimeDiff = Infinity;
-
-    for (const job of candidateJobs) {
-      if (job.buildEvent != null) {
-        const buildTime = new Date(job.buildEvent.timeStamp);
-        const timeDiff = buildTime.getTime() - startTime.getTime();
-
-        // Build event should be after start event
-        if (timeDiff > 0 && timeDiff < bestTimeDiff) {
-          bestMatch = job;
-          bestTimeDiff = timeDiff;
-        }
-      }
-    }
-
-    return bestMatch;
-  }
-
-  private createJobFromStartEvent(startEvent: EventMetric): DraftJob | null {
-    if (startEvent.projectId == null) return null;
-
-    const { trainingBooks, translationBooks } = this.extractBooksFromEvent(startEvent);
-
-    return {
-      projectId: startEvent.projectId,
-      startTime: new Date(startEvent.timeStamp),
-      events: [],
-      userId: startEvent.userId,
-      startEvent,
-      buildEvent: undefined,
-      finishEvent: undefined,
-      cancelEvent: undefined,
-      trainingBooks,
-      translationBooks,
-      buildId: null,
-      status: 'running', // Will be finalized later
-      errorMessage: undefined,
-      finishTime: null,
-      duration: null
-    };
-  }
-
-  private createJobFromOrphanedEvent(event: EventMetric, buildId: string | null): DraftJob | null {
-    if (event.projectId == null) return null;
-
-    // Create a minimal job from this orphaned event
-    const job: DraftJob = {
-      projectId: event.projectId,
-      startTime: new Date(event.timeStamp), // Use event time as fallback start time
-      events: [],
-      userId: event.userId,
-      startEvent: undefined,
-      buildEvent: undefined,
-      finishEvent: undefined,
-      cancelEvent: undefined,
-      trainingBooks: [],
-      translationBooks: [],
-      buildId: buildId ?? null,
-      status: 'running', // Will be finalized later
-      errorMessage: undefined,
-      finishTime: null,
-      duration: null
-    };
-
-    // Add the event to the appropriate slot
-    this.addEventToJob(job, event);
-
-    return job;
-  }
-
-  private findMatchingJobForEvent(event: EventMetric, jobs: DraftJob[]): DraftJob | null {
-    if (event.projectId == null) return null;
-
-    const eventTime = new Date(event.timeStamp);
-    const eventBuildId = this.extractBuildIdFromEvent(event);
-
-    // Find jobs in the same project
-    const projectJobs = jobs.filter(job => job.projectId === event.projectId);
-
-    if (event.eventType === 'BuildProjectAsync') {
-      // Find job with start event that most closely precedes this build event
-      const candidateJobs = projectJobs.filter(
-        job =>
-          job.buildEvent == null &&
-          job.startEvent != null &&
-          new Date(job.startEvent.timeStamp) <= eventTime &&
-          // Only match if build IDs are compatible (job has no build ID or they match)
-          (job.buildId == null || eventBuildId == null || job.buildId === eventBuildId)
-      );
-
-      if (candidateJobs.length === 0) return null;
-
-      return candidateJobs.reduce((closest, job) => {
-        const currentDiff = eventTime.getTime() - new Date(job.startEvent!.timeStamp).getTime();
-        const closestDiff = eventTime.getTime() - new Date(closest.startEvent!.timeStamp).getTime();
-        return currentDiff < closestDiff ? job : closest;
-      });
-    }
-
-    if (
-      event.eventType === 'RetrievePreTranslationStatusAsync' ||
-      event.eventType === 'CancelPreTranslationBuildAsync'
-    ) {
-      // Find job with build event that precedes this event
-      const candidateJobs = projectJobs.filter(
-        job =>
-          job.buildEvent != null &&
-          new Date(job.buildEvent.timeStamp) <= eventTime &&
-          // Only match if build IDs are compatible
-          (job.buildId == null || eventBuildId == null || job.buildId === eventBuildId)
-      );
-
-      if (candidateJobs.length === 0) return null;
-
-      return candidateJobs.reduce((closest, job) => {
-        const currentDiff = eventTime.getTime() - new Date(job.buildEvent!.timeStamp).getTime();
-        const closestDiff = eventTime.getTime() - new Date(closest.buildEvent!.timeStamp).getTime();
-        return currentDiff < closestDiff ? job : closest;
-      });
-    }
-
-    return null;
-  }
-
-  private addEventToJob(job: DraftJob, event: EventMetric): void {
-    // Check for build ID conflicts
-    const eventBuildId = this.extractBuildIdFromEvent(event);
-    if (eventBuildId != null && job.buildId != null && eventBuildId !== job.buildId) {
-      // This event has a different build ID than the job - don't add it
-      console.warn(
-        `BUILD ID CONFLICT: Event ${event.eventType} with build ID ${eventBuildId} cannot be added to job with build ID ${job.buildId}. Project: ${event.projectId}, Event time: ${event.timeStamp}`
-      );
-      return;
-    }
-
-    if (event.eventType === 'BuildProjectAsync' && job.buildEvent == null) {
-      job.buildEvent = event;
-      // Update build ID if we get it from the build event
-      if (event.result != null) {
-        job.buildId = String(event.result);
-      }
-    } else if (event.eventType === 'RetrievePreTranslationStatusAsync') {
-      // For finish events, take the latest one (but only if build ID matches or is null)
-      if (job.finishEvent == null || new Date(event.timeStamp) > new Date(job.finishEvent.timeStamp)) {
-        job.finishEvent = event;
-      }
-    } else if (event.eventType === 'CancelPreTranslationBuildAsync' && job.cancelEvent == null) {
-      job.cancelEvent = event;
-    }
   }
 
   private finalizeJobStatus(job: DraftJob): void {
