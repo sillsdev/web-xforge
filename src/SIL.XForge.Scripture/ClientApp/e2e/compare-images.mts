@@ -1,6 +1,6 @@
-import fs from "node:fs";
-import pixelmatch from "npm:pixelmatch";
-import { PNG } from "npm:pngjs";
+import fs from 'node:fs';
+import pixelmatch from 'npm:pixelmatch';
+import { PNG } from 'npm:pngjs';
 
 /**
  * Compares two PNG images and returns true if they differ. If pathB does not exist, the images are considered

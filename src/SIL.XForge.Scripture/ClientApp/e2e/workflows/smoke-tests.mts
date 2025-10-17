@@ -1,7 +1,7 @@
-import { Page } from "npm:playwright";
-import { expect } from "npm:playwright/test";
-import locales from "../../../locales.json" with { type: "json" };
-import { DEFAULT_PROJECT_SHORTNAME, preset, ptUsersByRole, ScreenshotContext, UserRole } from "../e2e-globals.ts";
+import { Page } from 'npm:playwright';
+import { expect } from 'npm:playwright/test';
+import locales from '../../../locales.json' with { type: 'json' };
+import { DEFAULT_PROJECT_SHORTNAME, preset, ptUsersByRole, ScreenshotContext, UserRole } from '../e2e-globals.ts';
 import {
   createShareLinksAsAdmin,
   ensureJoinedOrConnectedToProject,
@@ -11,8 +11,8 @@ import {
   pageName,
   screenshot,
   waitForAppLoad
-} from "../e2e-utils.ts";
-import secrets from "../secrets.json" with { type: "json" };
+} from '../e2e-utils.ts';
+import secrets from '../secrets.json' with { type: 'json' };
 
 // Note: This is one of the first e2e tests written, and therefore may not follow best practices.
 
@@ -35,13 +35,13 @@ export async function runSmokeTests(page: Page, screenshotContext: ScreenshotCon
 
 async function screenshotLanguages(page: Page, context: ScreenshotContext): Promise<void> {
   if (preset.skipScreenshots) return;
-  if (preset.locales.length === 1 && preset.locales[0] === "en") {
-    await screenshot(page, { ...context, locale: "en" });
+  if (preset.locales.length === 1 && preset.locales[0] === 'en') {
+    await screenshot(page, { ...context, locale: 'en' });
     return;
   }
 
   const name = context.pageName ?? (await pageName(page));
-  const changeLanguageButton = await page.locator("header button").first();
+  const changeLanguageButton = await page.locator('header button').first();
 
   for (let i = 0; i < preset.locales.length; i++) {
     const localeCode = preset.locales[i];
@@ -50,32 +50,32 @@ async function screenshotLanguages(page: Page, context: ScreenshotContext): Prom
 
     if (i !== 0) {
       await changeLanguageButton.click();
-      await page.getByRole("menuitem", { name: locale.localName }).click();
+      await page.getByRole('menuitem', { name: locale.localName }).click();
       await page.waitForTimeout(300);
     }
     await screenshot(page, { ...context, pageName: name, locale: localeCode });
   }
 
   await changeLanguageButton.click();
-  await page.getByRole("menuitem", { name: locales[0].localName }).click();
+  await page.getByRole('menuitem', { name: locales[0].localName }).click();
 }
 
 export async function traverseHomePageAndLoginPage(page: Page, context: ScreenshotContext): Promise<void> {
   // Home page
   await page.goto(preset.rootUrl);
-  await screenshot(page, { pageName: "home_page", ...context });
+  await screenshot(page, { pageName: 'home_page', ...context });
 
   // Log in
-  await page.getByRole("link", { name: "Log in" }).click();
-  await expect(page.getByText("Log in with Paratext")).toBeVisible({ timeout: 10_000 });
-  await screenshot(page, { pageName: "login_page", ...context });
+  await page.getByRole('link', { name: 'Log in' }).click();
+  await expect(page.getByText('Log in with Paratext')).toBeVisible({ timeout: 10_000 });
+  await screenshot(page, { pageName: 'login_page', ...context });
 
   // Log in with Paratext
-  await page.locator("a").filter({ hasText: "Log in with Paratext" }).click();
-  await expect(page.getByText("Sign in with your Paratext Registry account")).toBeVisible();
-  await page.fill("input[name=email]", "user@example.com");
-  await page.click("#login-form button[type=submit]");
-  await screenshot(page, { pageName: "registry_login_page", ...context });
+  await page.locator('a').filter({ hasText: 'Log in with Paratext' }).click();
+  await expect(page.getByText('Sign in with your Paratext Registry account')).toBeVisible();
+  await page.fill('input[name=email]', 'user@example.com');
+  await page.click('#login-form button[type=submit]');
+  await screenshot(page, { pageName: 'registry_login_page', ...context });
 }
 
 export async function joinAsUserAndTraversePages(
@@ -84,7 +84,7 @@ export async function joinAsUserAndTraversePages(
   context: ScreenshotContext
 ): Promise<void> {
   console.log(`Logging in as ${user.email} for ${context.role}`);
-  const pageName = "my_projects_" + user.email.split("@")[0].split("+")[1];
+  const pageName = 'my_projects_' + user.email.split('@')[0].split('+')[1];
   await logInAsPTUser(page, { email: user.email, password: user.password });
 
   await page.waitForURL(/\/projects/);
@@ -92,8 +92,8 @@ export async function joinAsUserAndTraversePages(
 
   // If we aren't redirected when joining the project, click the project button
   // It seems like maybe we only sometimes redirect on joining
-  if (await page.getByRole("button", { name: DEFAULT_PROJECT_SHORTNAME }).isVisible()) {
-    await page.getByRole("button", { name: DEFAULT_PROJECT_SHORTNAME }).click();
+  if (await page.getByRole('button', { name: DEFAULT_PROJECT_SHORTNAME }).isVisible()) {
+    await page.getByRole('button', { name: DEFAULT_PROJECT_SHORTNAME }).click();
   }
 
   await page.waitForURL(/\/projects\/[a-z0-9]+/);
@@ -106,8 +106,8 @@ export async function joinAsUserAndTraversePages(
 }
 
 async function traversePagesInMainNav(page: Page, context: ScreenshotContext) {
-  await page.waitForSelector("app-navigation");
-  const links = await page.locator("app-navigation a").all();
+  await page.waitForSelector('app-navigation');
+  const links = await page.locator('app-navigation a').all();
   for (const link of links) {
     await link.click();
     await waitForAppLoad(page);
@@ -124,17 +124,17 @@ export async function joinWithLinkAndTraversePages(
   const role = context.role;
   // Go to join page
   await page.goto(link);
-  await page.focus("input");
+  await page.focus('input');
   await page.waitForTimeout(500);
-  await page.fill("input", `${role} test user`);
+  await page.fill('input', `${role} test user`);
   await waitForAppLoad(page);
-  await screenshot(page, { ...context, pageName: "join_page" });
-  await page.getByRole("button", { name: "Join" }).click();
+  await screenshot(page, { ...context, pageName: 'join_page' });
+  await page.getByRole('button', { name: 'Join' }).click();
 
   // Check out all main pages
   // FIXME(application-bug) This can fail with "Cannot read properties of undefined (reading 'sites')"
-  await page.waitForSelector("app-navigation");
-  const links = await page.locator("app-navigation a").all();
+  await page.waitForSelector('app-navigation');
+  const links = await page.locator('app-navigation a').all();
   for (const link of links) {
     await link.click();
     await waitForAppLoad(page);
@@ -142,7 +142,7 @@ export async function joinWithLinkAndTraversePages(
   }
 
   // Check out the projects page
-  await page.click("#sf-logo-button");
+  await page.click('#sf-logo-button');
   await waitForAppLoad(page);
   await screenshotLanguages(page, context);
 

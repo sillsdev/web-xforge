@@ -1,6 +1,6 @@
-import { chromium } from "npm:playwright";
-import { logInAsPTUser } from "./pt-login.ts";
-import secrets from "./secrets.json" with { type: "json" };
+import { chromium } from 'npm:playwright';
+import { logInAsPTUser } from './pt-login.ts';
+import secrets from './secrets.json' with { type: 'json' };
 
 // Usage:
 // Run Deno REPL by running deno
@@ -11,7 +11,7 @@ import secrets from "./secrets.json" with { type: "json" };
 export default async function launch() {
   const browser = await chromium.launch({ headless: false });
   const page = await browser.newPage();
-  await page.goto("http://localhost:5000");
+  await page.goto('http://localhost:5000');
   await logInAsPTUser(page, secrets.users[0]);
   return page;
 }
