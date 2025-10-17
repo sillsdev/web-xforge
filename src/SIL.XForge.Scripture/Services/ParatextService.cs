@@ -2377,7 +2377,6 @@ public class ParatextService : DisposableBase, IParatextService
 
         List<ParatextProject> paratextProjects = [];
         IQueryable<SFProject> existingSfProjects = _realtimeService.QuerySnapshots<SFProject>();
-        IQueryable<User> users = _realtimeService.QuerySnapshots<User>();
 
         foreach (SharedRepository remotePtProject in remotePtProjects)
         {
