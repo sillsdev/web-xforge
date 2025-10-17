@@ -29,8 +29,7 @@ const routes: Routes = [
   {
     path: 'projects/:projectId/draft-generation/format',
     component: DraftUsfmFormatComponent,
-    canActivate: [NmtDraftAuthGuard],
-    canDeactivate: [DraftNavigationAuthGuard]
+    canActivate: [NmtDraftAuthGuard]
   },
   {
     path: 'projects/:projectId/draft-generation/format/:bookId',

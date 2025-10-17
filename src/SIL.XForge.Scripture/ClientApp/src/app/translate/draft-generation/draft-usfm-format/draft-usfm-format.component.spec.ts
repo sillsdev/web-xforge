@@ -130,7 +130,7 @@ describe('DraftUsfmFormatComponent', () => {
     const env = new TestEnvironment({ quotationAnalysis: QuotationAnalysis.Successful });
     expect(env.component.paragraphFormat.value).toBe(ParagraphBreakFormat.BestGuess);
     expect(env.component.quoteFormat.value).toBe(QuoteFormat.Denormalized);
-    expect(await env.component.confirmLeave()).toBe(true);
+    expect(await env.component['confirmLeave']()).toBe(true);
     expect(env.quoteFormatWarning).toBeNull();
   }));
 
@@ -158,7 +158,7 @@ describe('DraftUsfmFormatComponent', () => {
     tick();
     env.fixture.detectChanges();
     // user will be prompted that there are unsaved changes
-    expect(await env.component.confirmLeave()).toBe(true);
+    expect(await env.component['confirmLeave']()).toBe(true);
     verify(mockedProjectService.onlineSetUsfmConfig(env.projectId, anything())).never();
     verify(mockedLocation.back()).once();
   }));
