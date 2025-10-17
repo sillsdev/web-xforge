@@ -42,6 +42,7 @@ import { BuildStates } from '../../../machine-api/build-states';
 import { TextComponent } from '../../../shared/text/text.component';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { DraftHandlingService } from '../../draft-generation/draft-handling.service';
+import { DraftOptionsService } from '../../draft-generation/draft-options.service';
 @Component({
   selector: 'app-editor-draft',
   templateUrl: './editor-draft.component.html',
@@ -82,6 +83,12 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     this.onlineStatusService.onlineStatus$
   ]).pipe(map(([isLoading, isOnline]) => isLoading || !isOnline));
 
+  showDraftOptionsButton$: Observable<boolean> = this.activatedProjectService.projectId$.pipe(
+    filterNullish(),
+    switchMap(projectId => this.draftGenerationService.getLastCompletedBuild(projectId)),
+    map(build => this.draftOptionsService.areFormattingOptionsSupportedForBuild(build))
+  );
+
   private draftDelta?: Delta;
   private targetDelta?: Delta;
 
@@ -98,7 +105,8 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     readonly onlineStatusService: OnlineStatusService,
     private readonly noticeService: NoticeService,
     private errorReportingService: ErrorReportingService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly draftOptionsService: DraftOptionsService
   ) {}
 
   get bookId(): string {
