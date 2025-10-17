@@ -2,7 +2,7 @@ import { CommonModule, Location } from '@angular/common';
 import { AfterViewInit, Component, DestroyRef, EventEmitter, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
-import { MatCard, MatCardContent, MatCardHeader } from '@angular/material/card';
+import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatRadioButton, MatRadioGroup } from '@angular/material/radio';
@@ -42,6 +42,7 @@ import { DraftHandlingService } from '../draft-handling.service';
     MatCard,
     MatCardHeader,
     MatCardContent,
+    MatCardTitle,
     MatIcon,
     MatProgressSpinner,
     CommonModule,

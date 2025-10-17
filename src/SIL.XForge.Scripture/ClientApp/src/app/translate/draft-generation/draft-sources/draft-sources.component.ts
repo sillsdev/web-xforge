@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, EventEmitter } from '@angular/core';
 import { MatButton } from '@angular/material/button';
-import { MatCard, MatCardContent, MatCardHeader } from '@angular/material/card';
+import { MatCard, MatCardActions, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
 import { MatRipple } from '@angular/material/core';
+import { MatError } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
@@ -58,8 +59,11 @@ export interface ProjectStatus {
     XForgeCommonModule,
     MatRipple,
     MatCard,
+    MatCardActions,
     MatCardHeader,
     MatCardContent,
+    MatCardTitle,
+    MatError,
     CommonModule,
     TranslocoModule,
     MatProgressSpinner,

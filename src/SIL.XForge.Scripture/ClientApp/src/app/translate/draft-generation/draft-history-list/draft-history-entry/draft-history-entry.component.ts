@@ -1,7 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, Input } from '@angular/core';
 import { MatButton } from '@angular/material/button';
-import { MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelTitle } from '@angular/material/expansion';
+import {
+  MatExpansionPanel,
+  MatExpansionPanelDescription,
+  MatExpansionPanelHeader,
+  MatExpansionPanelTitle
+} from '@angular/material/expansion';
 import { MatIcon } from '@angular/material/icon';
 import {
   MatCell,
@@ -62,6 +67,7 @@ interface TrainingConfigurationRow {
     DraftPreviewBooksComponent,
     MatButton,
     MatExpansionPanel,
+    MatExpansionPanelDescription,
     MatExpansionPanelHeader,
     MatExpansionPanelTitle,
     MatIcon,

@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { MatIconButton } from '@angular/material/button';
 import { MatOption } from '@angular/material/core';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
@@ -193,6 +194,7 @@ class Row {
   templateUrl: './biblical-terms.component.html',
   styleUrls: ['./biblical-terms.component.scss'],
   imports: [
+    FormsModule,
     CommonModule,
     TranslocoModule,
     MatTooltip,

@@ -2,8 +2,9 @@ import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, Input, OnInit } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
-import { MatCard, MatCardContent, MatCardHeader } from '@angular/material/card';
+import { MatCard, MatCardActions, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
 import { MatCheckbox } from '@angular/material/checkbox';
+import { MatAccordion, MatExpansionPanel, MatExpansionPanelHeader } from '@angular/material/expansion';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
 import {
@@ -29,6 +30,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
 import { ParatextService } from '../core/paratext.service';
@@ -68,6 +70,7 @@ function projectType(project: TranslateSource | SFProjectProfile): string {
   styleUrls: ['./serval-project.component.scss'],
   imports: [
     CommonModule,
+
     InfoComponent,
     NoticeComponent,
     MatButton,
@@ -78,6 +81,8 @@ function projectType(project: TranslateSource | SFProjectProfile): string {
     MatCard,
     MatCardHeader,
     MatCardContent,
+    MatCardTitle,
+    MatCardActions,
     MatTable,
     MatColumnDef,
     MatHeaderCell,
@@ -88,7 +93,11 @@ function projectType(project: TranslateSource | SFProjectProfile): string {
     MatHeaderRowDef,
     MatRow,
     MatRowDef,
+    MatExpansionPanel,
+    MatExpansionPanelHeader,
+    MatAccordion,
     ReactiveFormsModule,
+    RouterLinkDirective,
     DraftInformationComponent,
     MobileNotSupportedComponent,
     WriteStatusComponent,
