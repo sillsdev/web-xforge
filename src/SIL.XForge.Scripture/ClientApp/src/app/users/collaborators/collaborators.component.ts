@@ -1,9 +1,10 @@
 import { Component, DestroyRef, OnInit } from '@angular/core';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { filter, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, combineLatest, distinctUntilChanged, filter, tap } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -12,10 +13,9 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { XFValidators } from 'xforge-common/xfvalidators';
-import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
-import { ParatextService } from '../../core/paratext.service';
+import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { RolesAndPermissionsDialogComponent } from '../roles-and-permissions/roles-and-permissions-dialog.component';
 interface UserInfo {
@@ -63,14 +63,14 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   });
   isAppOnline = true;
 
-  private projectDoc?: SFProjectProfileDoc;
+  private projectDoc?: SFProjectDoc;
   private _userRows?: Row[];
+  private loadUsers$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
 
   constructor(
     private readonly activatedProject: ActivatedProjectService,
     noticeService: NoticeService,
     private readonly projectService: SFProjectService,
-    private readonly paratextService: ParatextService,
     private readonly userService: UserService,
     readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
@@ -112,23 +112,29 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   }
 
   ngOnInit(): void {
-    this.onlineStatusService.onlineStatus$
+    combineLatest([this.onlineStatusService.onlineStatus$, this.activatedProject.projectId$])
       .pipe(
-        tap(isOnline => (this.isAppOnline = isOnline)),
-        filter(isOnline => isOnline),
-        switchMap(() => this.activatedProject.changes$),
-        filterNullish(),
+        tap(([isOnline]) => {
+          this.isAppOnline = isOnline;
+        }),
+        filter(([isOnline, id]) => isOnline && id != null),
+        distinctUntilChanged(),
         quietTakeUntilDestroyed(this.destroyRef)
       )
-      .subscribe(async projectDoc => {
-        this.projectDoc = projectDoc;
-        this.loadingStarted();
-        try {
-          await this.loadUsers();
-        } finally {
-          this.loadingFinished();
-        }
+      .subscribe(async ([_, projectId]) => {
+        this.projectDoc = await this.projectService.get(projectId!);
+        this.projectDoc.changes$.subscribe(() => this.loadUsers$.next());
+        this.loadUsers$.next();
       });
+
+    this.loadUsers$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async () => {
+      this.loadingStarted();
+      try {
+        await this.loadUsers();
+      } finally {
+        this.loadingFinished();
+      }
+    });
   }
 
   isCurrentUser(userRow: Row): boolean {
@@ -147,11 +153,11 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
 
   async uninviteProjectUser(emailToUninvite: string): Promise<void> {
     await this.projectService.onlineUninviteUser(this.projectId, emailToUninvite);
-    this.loadUsers();
+    this.loadUsers$.next();
   }
 
   onInvitationSent(): void {
-    this.loadUsers();
+    this.loadUsers$.next();
   }
 
   async openRolesDialog(row: Row): Promise<void> {
@@ -206,19 +212,16 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
       });
     }
 
-    try {
-      const paratextMembersNotOnProject =
-        (await this.paratextService.getProjects())
-          ?.find(p => p.paratextId === project.paratextId)
-          ?.members.filter(m => !m.connectedToProject) ?? [];
-      otherParatextMemberRows.push(
-        ...paratextMembersNotOnProject.map(
-          m => ({ id: '', role: m.role, user: { displayName: m.username }, paratextMemberNotConnected: true }) as Row
-        )
-      );
-    } catch {
-      this.noticeService.show(this.i18n.translateStatic('collaborators.problem_loading_paratext_users'));
-    }
+    // add paratext members that have not join the project yet
+    const userIdsOnProject = new Set(Object.keys(project.userRoles));
+    const paratextMembersNotOnProject: ParatextUserProfile[] = project.paratextUsers.filter(
+      u => u.sfUserId == null || u.sfUserId.length < 1 || !userIdsOnProject.has(u.sfUserId)
+    );
+    otherParatextMemberRows.push(
+      ...paratextMembersNotOnProject.map(
+        m => ({ id: '', role: m.role, user: { displayName: m.username }, paratextMemberNotConnected: true }) as Row
+      )
+    );
 
     try {
       inviteeRows.push(

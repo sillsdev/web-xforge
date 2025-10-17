@@ -8,9 +8,10 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { CheckingAnswerExport, CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
+import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -28,20 +29,18 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, emptyHammerLoader, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { ParatextProject } from '../../core/models/paratext-project';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_PROJECT_ROLES } from '../../core/models/sf-project-role-info';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
-import { ParatextService } from '../../core/paratext.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../../shared/shared.module';
+import { paratextUsersFromRoles } from '../../shared/test-utils';
 import { CollaboratorsComponent, UserType } from './collaborators.component';
 
 const mockedActivatedProject = mock(ActivatedProjectService);
 const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
-const mockedParatextService = mock(ParatextService);
 const mockedUserService = mock(UserService);
 const mockedDialogService = mock(DialogService);
 
@@ -61,7 +60,6 @@ describe('CollaboratorsComponent', () => {
       { provide: ActivatedProjectService, useMock: mockedActivatedProject },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: ParatextService, useMock: mockedParatextService },
       { provide: UserService, useMock: mockedUserService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: DialogService, useMock: mockedDialogService },
@@ -86,7 +84,7 @@ describe('CollaboratorsComponent', () => {
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
-    const numParatextUsers = 3;
+    const numParatextUsers = 5;
     expect(env.userRowsByCategory(UserType.Paratext).length).toEqual(numParatextUsers);
     expect(env.noUsersLabel(UserType.Paratext)).toBeNull();
     expect(env.userTable(UserType.Guest)).toBeNull();
@@ -102,7 +100,7 @@ describe('CollaboratorsComponent', () => {
 
     expect(env.noUsersLabel(UserType.Paratext)).toBeNull();
     expect(env.noUsersLabel(UserType.Guest)).toBeNull();
-    const numParatextUsers = 3;
+    const numParatextUsers = 5;
     const numProjectGuests = 1;
     expect(env.userRowsByCategory(UserType.Paratext).length).toEqual(numParatextUsers);
     expect(env.userRowsByCategory(UserType.Guest).length).toEqual(numProjectGuests);
@@ -134,11 +132,11 @@ describe('CollaboratorsComponent', () => {
     tick();
     env.fixture.detectChanges();
 
-    const numParatextUsers = 3;
+    const numParatextUsers = 5;
     expect(env.userRowsByCategory(UserType.Paratext).length).toEqual(numParatextUsers);
     expect(
       env.component.projectUsers.find(u => u.userType === UserType.Paratext)!.rows.map(r => r.user.displayName)
-    ).toEqual(['User 01', 'User 02', 'User Not On SF']);
+    ).toEqual(['User 01', 'User 02', 'User C', 'User B', 'User A']);
     expect(env.userRowsByCategory(UserType.Paratext)[0].nativeElement.querySelector('.user-more-menu')).not.toBeNull();
     expect(env.userRowsByCategory(UserType.Paratext)[1].nativeElement.querySelector('.user-more-menu')).not.toBeNull();
     expect(env.userRowsByCategory(UserType.Paratext)[2].nativeElement.querySelector('.user-more-menu')).toBeNull();
@@ -157,7 +155,7 @@ describe('CollaboratorsComponent', () => {
     tick();
     env.fixture.detectChanges();
 
-    const numParatextUsers = 3;
+    const numParatextUsers = 5;
     const numGuestUsers = 1;
     const numInvitees = 3;
     expect(env.userRowsByCategory(UserType.Paratext).length).toEqual(numParatextUsers);
@@ -188,18 +186,6 @@ describe('CollaboratorsComponent', () => {
       { email: 'alice@a.aa', role: 'sf_community_checker', expired: false }
     ]);
 
-    when(mockedParatextService.getProjects()).thenResolve([
-      {
-        paratextId: 'paratextId1',
-        name: 'Project 01',
-        members: [
-          { username: 'A User', role: SFProjectRole.ParatextConsultant, connectedToProject: false },
-          { username: 'B User', role: SFProjectRole.ParatextTranslator, connectedToProject: false },
-          { username: 'C User', role: SFProjectRole.ParatextAdministrator, connectedToProject: false }
-        ]
-      } as ParatextProject
-    ]);
-
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
@@ -207,7 +193,7 @@ describe('CollaboratorsComponent', () => {
     expect(env.userRowsByCategory(UserType.Paratext).length).toEqual(5);
     expect(env.userRowsByCategory(UserType.Guest).length).toEqual(4);
     const paratextRows = Array.from(env.component.projectUsers.find(u => u.userType === UserType.Paratext)!.rows);
-    expect(paratextRows.map(r => r.user.displayName)).toEqual(['User 01', 'User 02', 'C User', 'B User', 'A User']);
+    expect(paratextRows.map(r => r.user.displayName)).toEqual(['User 01', 'User 02', 'User C', 'User B', 'User A']);
     const guestRows = Array.from(env.component.projectUsers.find(u => u.userType === UserType.Guest)!.rows);
     expect(guestRows.map(r => r.user.displayName ?? r.user.email)).toEqual([
       'User 03',
@@ -215,18 +201,6 @@ describe('CollaboratorsComponent', () => {
       'bob@b.bb',
       'charles@c.cc'
     ]);
-  }));
-
-  it('handle error from paratext project query', fakeAsync(() => {
-    const env = new TestEnvironment();
-    when(mockedParatextService.getProjects()).thenThrow(new Error('Network error'));
-    env.setupProjectData();
-    env.fixture.detectChanges();
-    expect(() => {
-      tick();
-    }).not.toThrow();
-    verify(mockedNoticeService.show(anything())).once();
-    tick();
   }));
 
   it('handle error from invited users query, when user is not on project', fakeAsync(() => {
@@ -461,17 +435,6 @@ class TestEnvironment {
       }
     );
 
-    when(mockedParatextService.getProjects()).thenResolve([
-      {
-        paratextId: 'paratextId1',
-        name: 'Project 01',
-        members: [
-          { connectedToProject: true, username: 'User 01', role: SFProjectRole.ParatextAdministrator },
-          { connectedToProject: true, username: 'User 02', role: SFProjectRole.ParatextTranslator },
-          { connectedToProject: false, username: 'User Not On SF', role: SFProjectRole.ParatextTranslator }
-        ]
-      } as ParatextProject
-    ]);
     this.realtimeService.addSnapshots<UserProfile>(UserProfileDoc.COLLECTION, [
       {
         id: 'user01',
@@ -611,20 +574,27 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  private createProject(userRoles: { [userRef: string]: string }): SFProjectProfile {
-    return createTestProjectProfile({
+  private createProject(userRoles: { [userRef: string]: string }): SFProject {
+    const paratextUsers: ParatextUserProfile[] = paratextUsersFromRoles(userRoles);
+    const ptMembersNotConnected = [
+      { username: 'User A', opaqueUserId: 'opaqueA', role: SFProjectRole.ParatextObserver },
+      { username: 'User B', opaqueUserId: 'opaqueB', role: SFProjectRole.ParatextTranslator },
+      { username: 'User C', opaqueUserId: 'opaqueC', role: SFProjectRole.ParatextAdministrator }
+    ];
+    paratextUsers.push(...ptMembersNotConnected);
+    return createTestProject({
       checkingConfig: {
         checkingEnabled: false,
         usersSeeEachOthersResponses: false,
         answerExportMethod: CheckingAnswerExport.MarkedForExport
       },
-      userRoles
+      userRoles,
+      paratextUsers
     });
   }
 
   private setupThisProjectData(projectId: string, project: SFProjectProfile): void {
-    const projectDoc = { id: projectId, data: project } as SFProjectProfileDoc;
-    when(mockedActivatedProject.changes$).thenReturn(of(projectDoc));
+    when(mockedActivatedProject.projectId$).thenReturn(of(projectId));
     this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectDoc.COLLECTION, {
       id: projectId,
       data: project

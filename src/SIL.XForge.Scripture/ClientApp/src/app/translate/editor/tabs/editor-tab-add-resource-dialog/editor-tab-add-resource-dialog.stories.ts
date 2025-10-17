@@ -40,7 +40,6 @@ function createTestParatextProject(index: number, overrides?: Partial<ParatextPr
     isConnected: false,
     hasUserRoleChanged: false,
     hasUpdate: false,
-    members: [],
     ...overrides
   };
 }
