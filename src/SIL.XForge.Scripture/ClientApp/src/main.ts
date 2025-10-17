@@ -39,7 +39,6 @@ import { provideSFTabs } from './app/shared/sf-tab-group';
 import { provideQuillRegistrations } from './app/shared/text/quill-editor-registration/quill-providers';
 import { preloadEnglishTranslations } from './app/shared/utils';
 import { provideLynxInsights } from './app/translate/editor/lynx/insights/lynx-insights-providers';
-import { TranslateModule } from './app/translate/translate.module';
 import { environment } from './environments/environment';
 
 export function getBaseUrl(): string {
@@ -67,7 +66,6 @@ bootstrapApplication(AppComponent, {
         enabled: environment.pwaTest || environment.production,
         registrationStrategy: 'registerImmediately'
       }),
-      TranslateModule,
       XForgeCommonModule,
       TranslocoModule,
       TranslocoMarkupModule,
