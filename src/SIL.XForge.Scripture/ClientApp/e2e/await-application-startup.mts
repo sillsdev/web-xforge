@@ -8,7 +8,7 @@ const pollInterval = 1000;
 const timeout = 5 * 60_000;
 
 setTimeout(() => {
-  console.log('Failed to start in ', timeout, ' milliseconds. Exiting.')
+  console.log('Failed to start in ', timeout, ' milliseconds. Exiting.');
   Deno.exit(1);
 }, timeout);
 
@@ -17,22 +17,23 @@ function elapsedTime() {
   const currentTIme = Date.now();
   const elapsed = currentTIme - startTime;
   const minutes = Math.floor(elapsed / 60_000);
-  const seconds = Math.floor((elapsed % 60_000) / 1000)
-  return `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`
+  const seconds = Math.floor((elapsed % 60_000) / 1000);
+  return `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
 }
 
 async function check() {
   try {
     const response = await fetch(pollUrl, {
-      headers: { 'Accept': 'text/html' }
+      headers: { Accept: 'text/html' }
     });
     if (response.ok) {
-      console.log(elapsedTime(), 'Startup check passed. Exiting.')
+      console.log(elapsedTime(), 'Startup check passed. Exiting.');
       Deno.exit(0);
     } else {
-      console.log(elapsedTime(), 'Startup check failed: ', response.status, response.statusText)
-    } } catch (error) {
-      console.log(elapsedTime(), 'Startup check failed: '+ error.message)
+      console.log(elapsedTime(), 'Startup check failed: ', response.status, response.statusText);
+    }
+  } catch (error) {
+    console.log(elapsedTime(), 'Startup check failed: ' + error.message);
   }
 }
 
