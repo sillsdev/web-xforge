@@ -2078,8 +2078,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         else if (updatePermissions)
         {
             // Update all the permissions for all the users on this project or resource
-            IDocument<SFProject> projectDoc = await GetProjectDocAsync(sourceProjectRef, conn);
-            await UpdatePermissionsAsync(curUserId, projectDoc);
+            _backgroundJobClient.Enqueue<ISFProjectService>(r => r.SyncUserRoleAsync(curUserId, sourceProjectRef));
         }
 
         return new TranslateSource
