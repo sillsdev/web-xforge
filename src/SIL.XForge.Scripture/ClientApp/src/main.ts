@@ -13,6 +13,7 @@ import { OverlayContainer } from '@angular/cdk/overlay';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
+import { provideRouter, withRouterConfig } from '@angular/router';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { CookieService } from 'ngx-cookie-service';
@@ -29,8 +30,8 @@ import { ProjectService } from 'xforge-common/project.service';
 import { TypeRegistry } from 'xforge-common/type-registry';
 import { provideUICommon } from 'xforge-common/ui-common-providers';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
-import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
+import { APP_ROUTES } from './app/app.routes';
 import { CheckingModule } from './app/checking/checking.module';
 import { SF_TYPE_REGISTRY } from './app/core/models/sf-type-registry';
 import { SFProjectService } from './app/core/sf-project.service';
@@ -62,6 +63,14 @@ bootstrapApplication(AppComponent, {
     provideSFTabs(),
     provideQuillRegistrations(),
     provideLynxInsights(),
+    provideRouter(
+      APP_ROUTES,
+      withRouterConfig({
+        // This setting was introduced to prevent canceling the "prompt on leave" dialog for pages like draft-usfm-format
+        // from mangling the browser history (SF-3577).
+        canceledNavigationResolution: 'computed'
+      })
+    ),
     importProvidersFrom(
       ServiceWorkerModule.register('sf-service-worker.js', {
         enabled: environment.pwaTest || environment.production,
@@ -73,7 +82,6 @@ bootstrapApplication(AppComponent, {
       XForgeCommonModule,
       TranslocoModule,
       TranslocoMarkupModule,
-      AppRoutingModule,
       QuillModule.forRoot()
     ),
     { provide: APP_ID, useValue: 'ng-cli-universal' },
