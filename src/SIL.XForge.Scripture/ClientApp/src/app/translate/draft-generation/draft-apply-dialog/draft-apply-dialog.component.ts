@@ -6,10 +6,12 @@ import { MatCheckbox } from '@angular/material/checkbox';
 import {
   MAT_DIALOG_DATA,
   MatDialogActions,
+  MatDialogClose,
   MatDialogContent,
   MatDialogRef,
   MatDialogTitle
 } from '@angular/material/dialog';
+import { MatError } from '@angular/material/form-field';
 import { MatProgressBar } from '@angular/material/progress-bar';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -18,6 +20,7 @@ import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/model
 import { BehaviorSubject, map } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
@@ -45,12 +48,15 @@ export interface DraftApplyDialogConfig {
 @Component({
   selector: 'app-draft-apply-dialog',
   imports: [
+    RouterLinkDirective,
     MatButton,
     MatCheckbox,
     MatProgressBar,
     MatDialogContent,
+    MatDialogClose,
     MatDialogActions,
     MatDialogTitle,
+    MatError,
     ReactiveFormsModule,
     XForgeCommonModule,
     TranslocoModule,

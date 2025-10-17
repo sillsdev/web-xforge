@@ -1,4 +1,5 @@
 import { Component, DestroyRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
 import { MatCard } from '@angular/material/card';
 import { MatCheckbox } from '@angular/material/checkbox';
@@ -93,6 +94,7 @@ interface ProjectPendingUpdate {
   templateUrl: './draft-generation-steps.component.html',
   styleUrls: ['./draft-generation-steps.component.scss'],
   imports: [
+    FormsModule,
     NoticeComponent,
     MatButton,
     MatCheckbox,

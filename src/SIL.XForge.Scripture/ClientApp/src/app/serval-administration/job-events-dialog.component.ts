@@ -1,6 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogActions, MatDialogContent, MatDialogTitle } from '@angular/material/dialog';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogActions,
+  MatDialogClose,
+  MatDialogContent,
+  MatDialogTitle
+} from '@angular/material/dialog';
+import { MatIcon } from '@angular/material/icon';
 import { I18nService } from 'xforge-common/i18n.service';
 import { EventMetric } from '../event-metrics/event-metric';
 import { JsonViewerComponent } from '../shared/json-viewer/json-viewer.component';
@@ -28,7 +35,15 @@ const EVENT_TYPE_LABELS: {
   selector: 'app-job-events-dialog',
   templateUrl: './job-events-dialog.component.html',
   styleUrls: ['./job-events-dialog.component.scss'],
-  imports: [CommonModule, MatDialogTitle, MatDialogContent, MatDialogActions, JsonViewerComponent]
+  imports: [
+    CommonModule,
+    MatDialogTitle,
+    MatDialogContent,
+    MatDialogActions,
+    MatDialogClose,
+    MatIcon,
+    JsonViewerComponent
+  ]
 })
 export class JobEventsDialogComponent {
   constructor(
