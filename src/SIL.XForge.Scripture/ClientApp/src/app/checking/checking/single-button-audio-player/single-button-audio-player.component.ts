@@ -1,6 +1,7 @@
-import { Component, Input, OnChanges, OnDestroy } from '@angular/core';
+import { Component, DestroyRef, Input, OnChanges, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { AudioPlayer, AudioStatus } from '../../../shared/audio/audio-player';
 import { AudioPlayerBaseComponent } from '../../../shared/audio/audio-player-base/audio-player-base.component';
 import { AudioSegmentPlayer } from '../../../shared/audio/audio-segment-player';
@@ -26,8 +27,8 @@ export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent i
     this._source = source;
   }
 
-  constructor(onlineStatusService: OnlineStatusService) {
-    super(onlineStatusService);
+  constructor(onlineStatusService: OnlineStatusService, destroyRef: DestroyRef) {
+    super(onlineStatusService, destroyRef);
   }
 
   get progressInDegrees(): string {
@@ -71,13 +72,13 @@ export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent i
         this.audio = new AudioPlayer(this._source, this.onlineStatusService);
       }
 
-      this.subscribe(this.audio.status$, newVal => {
+      this.audio.status$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(newVal => {
         if (newVal === AudioStatus.Available) {
           this.isAudioAvailable$.next(true);
           this.calculateProgress();
         }
       });
-      this.subscribe(this.audio.finishedPlaying$, () => {
+      this.audio.finishedPlaying$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
         if (!this.hasFinishedPlayingOnce$.value) {
           this.hasFinishedPlayingOnce$.next(true);
         }
@@ -90,7 +91,7 @@ export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent i
     }
   }
 
-  ngOnDestroy(): void {
+  override ngOnDestroy(): void {
     super.ngOnDestroy();
     this._timeUpdatedSubscription?.unsubscribe();
   }
