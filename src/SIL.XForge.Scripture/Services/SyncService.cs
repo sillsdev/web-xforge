@@ -198,7 +198,8 @@ public class SyncService(
                                 syncConfig.UserId,
                                 new BuildConfig { ProjectId = syncConfig.ProjectId },
                                 false,
-                                CancellationToken.None
+                                CancellationToken.None,
+                                null
                             ),
                         null,
                         JobContinuationOptions.OnAnyFinishedState

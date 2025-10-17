@@ -146,13 +146,11 @@ public interface IMachineApiService
     Task<LanguageDto> IsLanguageSupportedAsync(string languageCode, CancellationToken cancellationToken);
 
     [Mutex]
-    [LogEventMetric(EventScope.Drafting, projectId: nameof(sfProjectId), captureReturnValue: true)]
     Task<string> RetrievePreTranslationStatusAsync(string sfProjectId, CancellationToken cancellationToken);
 
     [LogEventMetric(EventScope.Drafting, nameof(curUserId), nameof(sfProjectId))]
     Task StartBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
 
-    [LogEventMetric(EventScope.Drafting, nameof(curUserId), projectId: "buildConfig.ProjectId")]
     Task StartPreTranslationBuildAsync(string curUserId, BuildConfig buildConfig, CancellationToken cancellationToken);
     Task TrainSegmentAsync(
         string curUserId,

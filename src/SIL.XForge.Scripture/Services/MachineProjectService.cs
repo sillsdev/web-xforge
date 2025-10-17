@@ -107,6 +107,7 @@ public class MachineProjectService(
     /// <param name="buildConfig">The build configuration.</param>
     /// <param name="preTranslate">If <c>true</c> use NMT; otherwise if <c>false</c> use SMT.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
+    /// <param name="draftGenerationRequestId">The SF-specific NMT draft generation request id. (Or null when SMT.)</param>
     /// <returns>An asynchronous task.</returns>
     /// <remarks>
     /// This cannot be run multiple times in different threads.
@@ -115,12 +116,13 @@ public class MachineProjectService(
         string curUserId,
         BuildConfig buildConfig,
         bool preTranslate,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        string? draftGenerationRequestId
     )
     {
         try
         {
-            await BuildProjectAsync(curUserId, buildConfig, preTranslate, cancellationToken);
+            await BuildProjectAsync(curUserId, buildConfig, preTranslate, cancellationToken, draftGenerationRequestId);
         }
         catch (TaskCanceledException e) when (e.InnerException is not TimeoutException)
         {
@@ -599,7 +601,8 @@ public class MachineProjectService(
     /// <param name="buildConfig">The build configuration.</param>
     /// <param name="preTranslate">If <c>true</c> use NMT; otherwise if <c>false</c> use SMT.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>An asynchronous task.</returns>
+    /// <param name="draftGenerationRequestId">The SF-specific draft generation request id</param>
+    /// <returns>Serval build id</returns>
     /// <exception cref="DataNotFoundException">The project or project secret could not be found.</exception>
     /// <exception cref="InvalidDataException">The language of the source project was not specified.</exception>
     /// <remarks>
@@ -616,7 +619,8 @@ public class MachineProjectService(
         string curUserId,
         BuildConfig buildConfig,
         bool preTranslate,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        string? draftGenerationRequestId
     )
     {
         // Load the target project secrets, so we can get the translation engine ID
