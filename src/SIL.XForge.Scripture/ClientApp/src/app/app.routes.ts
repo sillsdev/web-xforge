@@ -14,8 +14,9 @@ import { ServalAdministrationComponent } from './serval-administration/serval-ad
 import { ServalProjectComponent } from './serval-administration/serval-project.component';
 import { SettingsComponent } from './settings/settings.component';
 import { PageNotFoundComponent } from './shared/page-not-found/page-not-found.component';
-import { SettingsAuthGuard, SyncAuthGuard } from './shared/project-router.guard';
+import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
 import { SyncComponent } from './sync/sync.component';
+import { UsersComponent } from './users/users.component';
 
 export const APP_ROUTES: Routes = [
   { path: 'callback/auth0', component: MyProjectsComponent, canActivate: [AuthGuard] },
@@ -26,6 +27,7 @@ export const APP_ROUTES: Routes = [
   { path: 'projects/:projectId/event-log', component: EventMetricsComponent, canActivate: [EventMetricsAuthGuard] },
   { path: 'projects/:projectId/settings', component: SettingsComponent, canActivate: [SettingsAuthGuard] },
   { path: 'projects/:projectId/sync', component: SyncComponent, canActivate: [SyncAuthGuard] },
+  { path: 'projects/:projectId/users', component: UsersComponent, canActivate: [UsersAuthGuard] },
   { path: 'projects/:projectId', component: ProjectComponent, canActivate: [AuthGuard] },
   { path: 'projects', component: MyProjectsComponent, canActivate: [AuthGuard] },
   { path: 'system-administration/permissions-viewer', component: PermissionsViewerComponent },
