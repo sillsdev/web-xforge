@@ -1872,14 +1872,46 @@ public class ParatextSyncRunnerTests
         };
         env.ParatextService.GetParatextUsersAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), CancellationToken.None)
             .Returns([newUser, TestEnvironment.ParatextProjectUser02]);
+
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
         project = env.GetProject();
         Assert.That(
             project.ParatextUsers.Select(u => u.Username),
             Is.EquivalentTo(new[] { "User 1", "User 2", "New User 1" })
         );
-        Assert.That(project.ParatextUsers.Single(u => u.Username == "New User 1").SFUserId, Is.EqualTo("user01"));
+
+        ParatextUserProfile newPtUser = project.ParatextUsers.Single(u => u.Username == "New User 1");
+        Assert.That(newPtUser.SFUserId, Is.EqualTo("user01"));
+        Assert.That(newPtUser.Role, Is.EqualTo(SFProjectRole.Administrator));
         Assert.That(project.ParatextUsers.Single(u => u.Username == "User 1").SFUserId, Is.EqualTo(null));
+    }
+
+    [Test]
+    public async Task SyncAsync_UpdatesParatextUserRole()
+    {
+        var env = new TestEnvironment();
+        env.SetupSFData(false, false, false, true);
+        env.SetupPTData(new Book("MAT", 1, true));
+        SFProject project = env.GetProject();
+        Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
+
+        ParatextProjectUser user2 = new ParatextProjectUser
+        {
+            ParatextId = TestEnvironment.ParatextProjectUser02.ParatextId,
+            Username = "User 2",
+            Id = TestEnvironment.ParatextProjectUser02.Id,
+            Role = SFProjectRole.PTObserver,
+        };
+        env.ParatextService.GetParatextUsersAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), CancellationToken.None)
+            .Returns([TestEnvironment.ParatextProjectUser01, user2]);
+
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+        project = env.GetProject();
+        Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
+
+        ParatextUserProfile ptUser2 = project.ParatextUsers.Single(u => u.Username == user2.Username);
+        Assert.That(ptUser2.SFUserId, Is.EqualTo(user2.Id));
+        Assert.That(ptUser2.Role, Is.EqualTo(user2.Role));
     }
 
     [Test]
@@ -1905,7 +1937,29 @@ public class ParatextSyncRunnerTests
         project = env.GetProject();
         Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
         Assert.That(project.ParatextUsers.Single(u => u.Username == "User 1").SFUserId, Is.EqualTo(null));
-        Assert.That(project.ParatextUsers.Single(u => u.Username == "User 2").SFUserId, Is.EqualTo("user01"));
+        ParatextUserProfile ptUser2 = project.ParatextUsers.Single(u => u.Username == "User 2");
+        Assert.That(ptUser2.SFUserId, Is.EqualTo(user2.Id));
+        Assert.That(ptUser2.Role, Is.EqualTo(user2.Role));
+    }
+
+    [Test]
+    public async Task SyncAsync_UpdatesRoleIfUserNoLongerAMember()
+    {
+        var env = new TestEnvironment();
+        env.SetupSFData(false, false, false, true);
+        env.SetupPTData(new Book("MAT", 1, true));
+        SFProject project = env.GetProject();
+        Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
+
+        env.ParatextService.GetParatextUsersAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), CancellationToken.None)
+            .Returns([TestEnvironment.ParatextProjectUser01]);
+
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+        project = env.GetProject();
+        Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
+
+        ParatextUserProfile ptUser2 = project.ParatextUsers.Single(u => u.Username == "User 2");
+        Assert.That(ptUser2.Role, Is.EqualTo(string.Empty));
     }
 
     [Test]
@@ -3785,8 +3839,14 @@ public class ParatextSyncRunnerTests
                             OpaqueUserId = "syncuser01",
                             Username = "User 1",
                             SFUserId = "user01",
+                            Role = SFProjectRole.Administrator,
                         },
-                        new ParatextUserProfile { OpaqueUserId = "syncuser02", Username = "User 2" },
+                        new ParatextUserProfile
+                        {
+                            OpaqueUserId = "syncuser02",
+                            Username = "User 2",
+                            Role = SFProjectRole.Translator,
+                        },
                     ],
                     NoteTags = [],
                 },
@@ -3848,6 +3908,22 @@ public class ParatextSyncRunnerTests
                         // No SyncedToRepositoryVersion
                         // No DataInSync
                     },
+                    ParatextUsers =
+                    [
+                        new ParatextUserProfile
+                        {
+                            OpaqueUserId = "syncuser01",
+                            Username = "User 1",
+                            SFUserId = "user01",
+                            Role = SFProjectRole.Administrator,
+                        },
+                        new ParatextUserProfile
+                        {
+                            OpaqueUserId = "syncuser02",
+                            Username = "User 2",
+                            Role = SFProjectRole.Translator,
+                        },
+                    ],
                 },
                 new SFProject
                 {
@@ -3912,6 +3988,22 @@ public class ParatextSyncRunnerTests
                         DataInSync = false,
                         // No SyncedToRepositoryVersion
                     },
+                    ParatextUsers =
+                    [
+                        new ParatextUserProfile
+                        {
+                            OpaqueUserId = "syncuser01",
+                            Username = "User 1",
+                            SFUserId = "user01",
+                            Role = SFProjectRole.Administrator,
+                        },
+                        new ParatextUserProfile
+                        {
+                            OpaqueUserId = "syncuser02",
+                            Username = "User 2",
+                            Role = SFProjectRole.Translator,
+                        },
+                    ],
                     NoteTags = [],
                 },
             ];
