@@ -3,6 +3,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MatDialogConfig } from '@angular/material/dialog';
 import { MatIcon } from '@angular/material/icon';
+import { MatList, MatListItem } from '@angular/material/list';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -19,7 +20,7 @@ import {
 @Component({
   selector: 'app-training-data-multi-select',
   templateUrl: './training-data-multi-select.component.html',
-  imports: [CommonModule, MatButton, MatIcon, TranslocoModule],
+  imports: [CommonModule, MatButton, MatIcon, MatList, MatListItem, TranslocoModule],
   styleUrls: ['./training-data-multi-select.component.scss']
 })
 export class TrainingDataMultiSelectComponent {

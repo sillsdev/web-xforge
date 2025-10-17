@@ -1,4 +1,6 @@
 import { Component, DestroyRef, OnInit } from '@angular/core';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
 import { MatPaginator } from '@angular/material/paginator';
 import {
   MatCell,
@@ -23,6 +25,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { RouterLinkDirective } from '../../xforge-common/router-link.directive';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { projectLabel } from '../shared/utils';
 import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../translate/draft-generation/draft-utils';
@@ -86,9 +89,13 @@ class Row {
     MatCellDef,
     MatHeaderRow,
     MatHeaderRowDef,
+    MatIcon,
     MatRow,
+    MatLabel,
+    MatFormField,
     MatRowDef,
-    MatPaginator
+    MatPaginator,
+    RouterLinkDirective
   ]
 })
 export class ServalProjectsComponent extends DataLoadingComponent implements OnInit {

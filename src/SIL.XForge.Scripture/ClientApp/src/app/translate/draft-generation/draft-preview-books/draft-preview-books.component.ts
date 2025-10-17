@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
-import { MatButtonToggleGroup } from '@angular/material/button-toggle';
+import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
 import { MatDialogRef } from '@angular/material/dialog';
 import { MatIcon } from '@angular/material/icon';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
@@ -47,6 +47,7 @@ export interface BookWithDraft {
   styleUrls: ['./draft-preview-books.component.scss'],
   imports: [
     CommonModule,
+    MatButtonToggle,
     MatMenu,
     MatMenuItem,
     MatMenuTrigger,
