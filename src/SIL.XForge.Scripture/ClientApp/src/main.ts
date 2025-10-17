@@ -41,7 +41,6 @@ import { provideQuillRegistrations } from './app/shared/text/quill-editor-regist
 import { preloadEnglishTranslations } from './app/shared/utils';
 import { provideLynxInsights } from './app/translate/editor/lynx/insights/lynx-insights-providers';
 import { TranslateModule } from './app/translate/translate.module';
-import { UsersModule } from './app/users/users.module';
 import { environment } from './environments/environment';
 
 export function getBaseUrl(): string {
@@ -71,7 +70,6 @@ bootstrapApplication(AppComponent, {
       }),
       TranslateModule,
       CheckingModule,
-      UsersModule,
       XForgeCommonModule,
       TranslocoModule,
       TranslocoMarkupModule,
