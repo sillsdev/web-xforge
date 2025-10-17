@@ -144,26 +144,6 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public async Task GetProjectsAsync_GetProjectMembers()
-    {
-        var env = new TestEnvironment();
-        UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-        env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
-        IEnumerable<ParatextProject> projects = await env.Service.GetProjectsAsync(user01Secret);
-        Assert.That(projects, Is.Not.Empty);
-
-        ParatextProject project01 = projects.Single(p => p.ParatextId == env.PTProjectIds[env.Project01].Id);
-        Assert.That(
-            project01.Members.Select(m => m.Username),
-            Is.EquivalentTo([env.Username01, env.Username02, env.Username03])
-        );
-        Assert.That(
-            project01.Members.Select(m => m.Role),
-            Is.EquivalentTo([SFProjectRole.Administrator, SFProjectRole.Administrator, SFProjectRole.Administrator])
-        );
-    }
-
-    [Test]
     public async Task GetProjectsAsync_ConnectedConnectable()
     {
         var env = new TestEnvironment();

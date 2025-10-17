@@ -299,8 +299,7 @@ describe('SettingsComponent', () => {
             isConnectable: true,
             isConnected: false,
             hasUserRoleChanged: false,
-            hasUpdate: false,
-            members: []
+            hasUpdate: false
           }
         ]);
         when(mockedParatextService.getResources()).thenResolve([]);
@@ -793,8 +792,7 @@ class TestEnvironment {
         isConnectable: true,
         isConnected: false,
         hasUserRoleChanged: false,
-        hasUpdate: false,
-        members: []
+        hasUpdate: false
       },
       {
         paratextId: 'paratextId02',
@@ -804,8 +802,7 @@ class TestEnvironment {
         isConnectable: true,
         isConnected: false,
         hasUserRoleChanged: false,
-        hasUpdate: false,
-        members: []
+        hasUpdate: false
       }
     ]);
     when(mockedParatextService.getResources()).thenResolve([
