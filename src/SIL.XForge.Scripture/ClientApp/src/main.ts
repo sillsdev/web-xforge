@@ -32,7 +32,6 @@ import { provideUICommon } from 'xforge-common/ui-common-providers';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { AppComponent } from './app/app.component';
 import { APP_ROUTES } from './app/app.routes';
-import { CheckingModule } from './app/checking/checking.module';
 import { SF_TYPE_REGISTRY } from './app/core/models/sf-type-registry';
 import { SFProjectService } from './app/core/sf-project.service';
 import { provideCustomIcons } from './app/shared/custom-icons';
@@ -69,7 +68,6 @@ bootstrapApplication(AppComponent, {
         registrationStrategy: 'registerImmediately'
       }),
       TranslateModule,
-      CheckingModule,
       XForgeCommonModule,
       TranslocoModule,
       TranslocoMarkupModule,
