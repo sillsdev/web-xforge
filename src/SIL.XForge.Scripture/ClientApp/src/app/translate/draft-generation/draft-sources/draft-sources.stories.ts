@@ -131,8 +131,7 @@ function setUpMocks(args: DraftSourcesComponentStoryState): void {
     isConnectable: true,
     isConnected: false,
     hasUserRoleChanged: false,
-    hasUpdate: false,
-    members: []
+    hasUpdate: false
   });
 
   when(mockedParatextService.getResources()).thenResolve(resources);

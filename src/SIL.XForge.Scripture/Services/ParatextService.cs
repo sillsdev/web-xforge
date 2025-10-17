@@ -2423,13 +2423,6 @@ public class ParatextService : DisposableBase, IParatextService
                 && StringUtils.ConvertToTipId(correspondingSfProject.Sync.SyncedToRepositoryVersion)
                     != remotePtProject.TipId;
 
-            string siteId = _siteOptions.Value.Id;
-            IEnumerable<User> usersOnProject = correspondingSfProject is null
-                ? []
-                : users.Where(u =>
-                    u.Sites.ContainsKey(siteId) && u.Sites[siteId].Projects.Contains(correspondingSfProject.Id)
-                );
-
             paratextProjects.Add(
                 new ParatextProject
                 {
@@ -2446,15 +2439,6 @@ public class ParatextService : DisposableBase, IParatextService
                     HasDraft = hasDraft,
                     HasUserRoleChanged = hasUserRoleChanged,
                     HasUpdate = hasUpdate,
-                    Members =
-                    [
-                        .. remotePtProject.SourceUsers.Users.Select(member => new ParatextMember
-                        {
-                            ConnectedToProject = usersOnProject.Any(u => u.Name == member.Name),
-                            Username = member.Name,
-                            Role = ConvertFromUserRole(member.Role),
-                        }),
-                    ],
                 }
             );
         }
