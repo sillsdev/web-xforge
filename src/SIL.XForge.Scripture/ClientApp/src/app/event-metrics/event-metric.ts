@@ -9,6 +9,7 @@ export interface EventMetric {
   timeStamp: string;
   userId?: string;
   executionTime?: string;
+  tags?: { [key: string]: any | undefined };
 }
 
 export enum EventScope {

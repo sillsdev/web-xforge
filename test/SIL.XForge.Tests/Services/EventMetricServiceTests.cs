@@ -393,6 +393,73 @@ public class EventMetricServiceTests
         Assert.AreEqual(BsonNull.Value, eventMetric.Result);
     }
 
+    [Test]
+    public async Task SaveEventMetricAsync_ActivityTags()
+    {
+        var env = new TestEnvironment();
+        Dictionary<string, object> argumentsWithNames = new Dictionary<string, object>
+        {
+            { "projectId", Project01 },
+            { "userId", User01 },
+        };
+
+        // Set up Activity tags
+        using var activity = new System.Diagnostics.Activity("test");
+        activity.AddTag("draftGenerationRequestId", "abc-123-def-456");
+        activity.AddTag("someOtherThing", "xyz-789");
+        activity.Start();
+
+        // SUT
+        await env.Service.SaveEventMetricAsync(Project01, User01, EventType01, EventScope01, argumentsWithNames);
+
+        activity.Stop();
+
+        EventMetric eventMetric = env.EventMetrics.Query().OrderByDescending(e => e.TimeStamp).First();
+        Assert.IsNotNull(eventMetric.Tags);
+        Assert.AreEqual(2, eventMetric.Tags.Count);
+        Assert.AreEqual("abc-123-def-456", eventMetric.Tags["draftGenerationRequestId"]?.AsString);
+        Assert.AreEqual("xyz-789", eventMetric.Tags["someOtherThing"]?.AsString);
+    }
+
+    [Test]
+    public async Task SaveEventMetricAsync_ActivityTags_FromParentActivity()
+    {
+        var env = new TestEnvironment();
+        Dictionary<string, object> argumentsWithNames = new Dictionary<string, object> { { "projectId", Project01 } };
+
+        // Set up parent activity with tags
+        using var parentActivity = new System.Diagnostics.Activity("parent");
+        parentActivity.AddTag("draftGenerationRequestId", "parent-123");
+        parentActivity.AddTag("parentTag", "parent-value");
+        parentActivity.Start();
+
+        // Create child activity (simulating what EventMetricLogger does)
+        using var childActivity = new System.Diagnostics.Activity("child");
+        childActivity.AddTag("childTag", "child-value");
+        childActivity.AddTag("draftGenerationRequestId", "child-override-456"); // Override parent
+        childActivity.Start();
+
+        // SUT - should collect tags from both parent and child
+        await env.Service.SaveEventMetricAsync(Project01, User01, EventType01, EventScope01, argumentsWithNames);
+
+        childActivity.Stop();
+        parentActivity.Stop();
+
+        // Verify the saved event metric
+        EventMetric eventMetric = env.EventMetrics.Query().OrderByDescending(e => e.TimeStamp).First();
+        Assert.IsNotNull(eventMetric.Tags);
+        Assert.AreEqual(3, eventMetric.Tags.Count);
+
+        // Child tag should be present
+        Assert.AreEqual("child-value", eventMetric.Tags["childTag"]?.AsString);
+
+        // Parent tag should be present
+        Assert.AreEqual("parent-value", eventMetric.Tags["parentTag"]?.AsString);
+
+        // Child should override parent for same key
+        Assert.AreEqual("child-override-456", eventMetric.Tags["draftGenerationRequestId"]?.AsString);
+    }
+
     private class TestEnvironment
     {
         public TestEnvironment()
