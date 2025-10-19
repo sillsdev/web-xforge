@@ -1,6 +1,7 @@
 import { EventEmitter, NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import Quill from 'quill';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { Subject } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
@@ -10,6 +11,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { Revision } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -66,6 +68,19 @@ describe('EditorHistoryComponent', () => {
     expect(component.loadedRevision).toBeUndefined();
     expect(component.revisionSelect.emit).not.toHaveBeenCalled();
   });
+
+  it('should load the project document when the project id is set', fakeAsync(() => {
+    const testProjectId = 'test_project_id';
+    const projectDoc = { data: createTestProjectProfile(), id: testProjectId } as SFProjectProfileDoc;
+    when(mockSFProjectService.getProfile(testProjectId)).thenReturn(Promise.resolve(projectDoc));
+    expect(component.projectDoc).toBeUndefined();
+
+    component.projectId = testProjectId;
+    tick();
+
+    expect(component.projectId).toBe(testProjectId);
+    expect(component.projectDoc).toBe(projectDoc);
+  }));
 
   it('should load history after view init', fakeAsync(() => {
     const revision: Revision = { timestamp: 'date_here' };
