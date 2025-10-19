@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -93,6 +94,35 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
             payload[kvp.Key] = GetBsonValue(kvp.Value);
         }
 
+        // Collect tags from Activity.Current and all parent activities
+        // Child activity tags override parent tags with the same key
+        Dictionary<string, BsonValue?>? tags = null;
+        var collectedTags = new Dictionary<string, string?>();
+
+        // Walk up the activity chain collecting tags (parent first, so child overrides)
+        var activity = Activity.Current;
+        var activityChain = new Stack<Activity>();
+        while (activity is not null)
+        {
+            activityChain.Push(activity);
+            activity = activity.Parent;
+        }
+
+        // Apply tags from root to current (so child overrides parent)
+        while (activityChain.Count > 0)
+        {
+            activity = activityChain.Pop();
+            foreach (var kvp in activity.Tags)
+            {
+                collectedTags[kvp.Key] = kvp.Value;
+            }
+        }
+
+        if (collectedTags.Count > 0)
+        {
+            tags = collectedTags.ToDictionary(kvp => kvp.Key, kvp => GetBsonValue(kvp.Value));
+        }
+
         // Generate the event metric
         var eventMetric = new EventMetric
         {
@@ -103,6 +133,7 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
             ProjectId = projectId,
             Scope = scope,
             UserId = userId,
+            Tags = tags,
         };
 
         // Do not set Result if it is null, or the document will contain "result: null"

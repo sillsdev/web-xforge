@@ -443,6 +443,11 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
+
+        // Mock for GetDraftGenerationRequestIdForBuildAsync (returns empty)
+        env.EventMetricService.GetEventMetricsAsync(null, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
+
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
             .Returns(
                 Task.FromResult(
@@ -479,6 +484,11 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
+
+        // Mock for GetDraftGenerationRequestIdForBuildAsync (returns empty)
+        env.EventMetricService.GetEventMetricsAsync(null, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
+
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
             .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
 
@@ -498,6 +508,11 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         ServalApiException ex = ServalApiExceptions.Forbidden;
+
+        // Mock for GetDraftGenerationRequestIdForBuildAsync (returns empty)
+        env.EventMetricService.GetEventMetricsAsync(null, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
+
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
             .ThrowsAsync(ex);
 
@@ -517,6 +532,11 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
+
+        // Mock for GetDraftGenerationRequestIdForBuildAsync (returns empty)
+        env.EventMetricService.GetEventMetricsAsync(null, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
+
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
             .Returns(Task.FromResult(env.GetEventMetricsForBuildCompleted(true)));
 
@@ -543,6 +563,11 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
+
+        // Mock for GetDraftGenerationRequestIdForBuildAsync (returns empty)
+        env.EventMetricService.GetEventMetricsAsync(null, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
+
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
             .Returns(Task.FromResult(env.GetEventMetricsForBuildCompleted(false)));
 
@@ -562,6 +587,68 @@ public class MachineApiServiceTests
                 Arg.Any<string>(),
                 Arg.Any<Uri>()
             );
+    }
+
+    [Test]
+    public async Task BuildCompletedAsync_AddsDraftGenerationRequestIdTag()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string draftGenerationRequestId = "1234";
+
+        // Mock the event metrics service to return a build event with draftGenerationRequestId tag
+        // This is for GetDraftGenerationRequestIdForBuildAsync
+        env.EventMetricService.GetEventMetricsAsync(
+                null,
+                Arg.Is<EventScope[]?>(s => s != null && s.Contains(EventScope.Drafting)),
+                Arg.Is<string[]>(t => t.Contains(nameof(MachineProjectService.BuildProjectAsync)))
+            )
+            .Returns(
+                Task.FromResult(
+                    new QueryResults<EventMetric>
+                    {
+                        Results =
+                        [
+                            new EventMetric
+                            {
+                                EventType = nameof(MachineProjectService.BuildProjectAsync),
+                                Result = Build01,
+                                Tags = new Dictionary<string, BsonValue?>
+                                {
+                                    { "draftGenerationRequestId", draftGenerationRequestId },
+                                },
+                            },
+                        ],
+                        UnpagedCount = 1,
+                    }
+                )
+            );
+
+        // Mock for the BuildCompletedAsync email check
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(env.GetEventMetricsForBuildCompleted(false)));
+
+        System.Diagnostics.Activity? capturedActivity = null;
+        using (var activity = new System.Diagnostics.Activity("TestActivity").Start())
+        {
+            // SUT
+            await env.Service.BuildCompletedAsync(
+                Project01,
+                Build01,
+                nameof(JobState.Completed),
+                env.HttpRequestAccessor.SiteRoot
+            );
+
+            // Capture the activity after the call
+            capturedActivity = System.Diagnostics.Activity.Current;
+        }
+
+        // Verify the Activity has the draftGenerationRequestId tag
+        Assert.IsNotNull(capturedActivity, "Activity.Current should be set during execution");
+        Assert.IsTrue(
+            capturedActivity!.Tags.Any(t => t.Key == "draftGenerationRequestId" && t.Value == draftGenerationRequestId),
+            "Activity should contain draftGenerationRequestId tag with correct value"
+        );
     }
 
     [Test]
@@ -640,6 +727,10 @@ public class MachineApiServiceTests
         await env.QueueBuildAsync(Project01, preTranslate: true, dateTime: DateTime.UtcNow);
         env.ConfigureTranslationBuild();
 
+        // Mock the event metrics service to return empty results (no draftGenerationRequestId found)
+        env.EventMetricService.GetEventMetricsAsync(null, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
+
         // SUT
         string actual = await env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None);
         Assert.AreEqual(Build01, actual);
@@ -648,6 +739,65 @@ public class MachineApiServiceTests
         env.BackgroundJobClient.Received(1).ChangeState(JobId, Arg.Any<DeletedState>(), null); // Same as Delete()
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueuedAt);
+    }
+
+    [Test]
+    public async Task CancelPreTranslationBuildAsync_AddsDraftGenerationRequestIdTag()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.QueueBuildAsync(Project01, preTranslate: true, dateTime: DateTime.UtcNow);
+        env.ConfigureTranslationBuild();
+
+        const string draftGenerationRequestId = "2345";
+
+        // Mock the event metrics service to return a build event with draftGenerationRequestId tag
+        env.EventMetricService.GetEventMetricsAsync(
+                null,
+                Arg.Is<EventScope[]?>(s => s != null && s.Contains(EventScope.Drafting)),
+                Arg.Is<string[]>(t => t.Contains(nameof(MachineProjectService.BuildProjectAsync)))
+            )
+            .Returns(
+                Task.FromResult(
+                    new QueryResults<EventMetric>
+                    {
+                        Results =
+                        [
+                            new EventMetric
+                            {
+                                EventType = nameof(MachineProjectService.BuildProjectAsync),
+                                Result = Build01,
+                                Tags = new Dictionary<string, BsonValue?>
+                                {
+                                    { "draftGenerationRequestId", draftGenerationRequestId },
+                                },
+                            },
+                        ],
+                        UnpagedCount = 1,
+                    }
+                )
+            );
+
+        System.Diagnostics.Activity? capturedActivity = null;
+        using (var activity = new System.Diagnostics.Activity("TestActivity").Start())
+        {
+            // SUT
+            string actual = await env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None);
+
+            // Capture the activity after the call
+            capturedActivity = System.Diagnostics.Activity.Current;
+
+            Assert.AreEqual(Build01, actual);
+        }
+
+        // Verify the Activity has the draftGenerationRequestId tag
+        Assert.IsNotNull(capturedActivity, "Activity.Current should be set during execution");
+        Assert.IsTrue(
+            capturedActivity!.Tags.Any(t => t.Key == "draftGenerationRequestId" && t.Value == draftGenerationRequestId),
+            "Activity should contain draftGenerationRequestId tag with correct value"
+        );
+
+        await env.TranslationEnginesClient.Received(1).CancelBuildAsync(TranslationEngine01, CancellationToken.None);
     }
 
     [Test]
@@ -4578,6 +4728,21 @@ public class MachineApiServiceTests
             BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns(JobId);
             DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
             EventMetricService = Substitute.For<IEventMetricService>();
+            // Mock GetEventMetricsAsync to return empty results for GetDraftGenerationRequestIdForBuildAsync queries
+            EventMetricService
+                .GetEventMetricsAsync(
+                    projectId: null,
+                    scopes: Arg.Is<EventScope[]>(s => s != null && s.Contains(EventScope.Drafting)),
+                    eventTypes: Arg.Is<string[]>(t => t != null && t.Contains("BuildProjectAsync")),
+                    Arg.Any<DateTime?>(),
+                    Arg.Any<int>(),
+                    Arg.Any<int>()
+                )
+                .Returns(
+                    Task.FromResult(
+                        new QueryResults<EventMetric> { Results = new List<EventMetric>(), UnpagedCount = 0 }
+                    )
+                );
             ExceptionHandler = Substitute.For<IExceptionHandler>();
             HttpRequestAccessor = Substitute.For<IHttpRequestAccessor>();
             HttpRequestAccessor.SiteRoot.Returns(new Uri("https://scriptureforge.org", UriKind.Absolute));

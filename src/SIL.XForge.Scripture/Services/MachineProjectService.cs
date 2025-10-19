@@ -106,6 +106,9 @@ public class MachineProjectService(
     /// <param name="curUserId">The current user identifier.</param>
     /// <param name="buildConfig">The build configuration.</param>
     /// <param name="preTranslate">If <c>true</c> use NMT; otherwise if <c>false</c> use SMT.</param>
+    /// <param name="draftGenerationRequestId">
+    /// The draft generation request identifier (NMT only). Pass null for SMT builds.
+    /// </param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>An asynchronous task.</returns>
     /// <remarks>
@@ -115,12 +118,18 @@ public class MachineProjectService(
         string curUserId,
         BuildConfig buildConfig,
         bool preTranslate,
-        CancellationToken cancellationToken
+        string? draftGenerationRequestId = null,
+        CancellationToken cancellationToken = default
     )
     {
+        if (!string.IsNullOrEmpty(draftGenerationRequestId))
+        {
+            System.Diagnostics.Activity.Current?.AddTag("draftGenerationRequestId", draftGenerationRequestId);
+        }
+
         try
         {
-            await BuildProjectAsync(curUserId, buildConfig, preTranslate, cancellationToken);
+            await BuildProjectAsync(curUserId, buildConfig, preTranslate, draftGenerationRequestId, cancellationToken);
         }
         catch (TaskCanceledException e) when (e.InnerException is not TimeoutException)
         {
@@ -598,8 +607,11 @@ public class MachineProjectService(
     /// <param name="curUserId">The current user identifier.</param>
     /// <param name="buildConfig">The build configuration.</param>
     /// <param name="preTranslate">If <c>true</c> use NMT; otherwise if <c>false</c> use SMT.</param>
+    /// <param name="draftGenerationRequestId">
+    /// The draft generation request identifier (NMT only). Pass null for SMT builds.
+    /// </param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>An asynchronous task.</returns>
+    /// <returns>Serval build id</returns>
     /// <exception cref="DataNotFoundException">The project or project secret could not be found.</exception>
     /// <exception cref="InvalidDataException">The language of the source project was not specified.</exception>
     /// <remarks>
@@ -616,9 +628,15 @@ public class MachineProjectService(
         string curUserId,
         BuildConfig buildConfig,
         bool preTranslate,
-        CancellationToken cancellationToken
+        string? draftGenerationRequestId = null,
+        CancellationToken cancellationToken = default
     )
     {
+        if (!string.IsNullOrEmpty(draftGenerationRequestId))
+        {
+            System.Diagnostics.Activity.Current?.AddTag("draftGenerationRequestId", draftGenerationRequestId);
+        }
+
         // Load the target project secrets, so we can get the translation engine ID
         if (
             !(await projectSecrets.TryGetAsync(buildConfig.ProjectId, cancellationToken)).TryResult(
