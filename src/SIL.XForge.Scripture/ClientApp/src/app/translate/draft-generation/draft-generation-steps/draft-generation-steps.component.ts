@@ -114,6 +114,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   useEcho: boolean = false;
   sendEmailOnBuildFinished: boolean = false;
 
+  expandTranslatedBooksWithNoSource = false;
   expandUnusableTranslateBooks = false;
   expandUnusableTrainingBooks = false;
   isStepsCompleted = false;
@@ -349,7 +350,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   }
 
   get firstTrainingSource(): string {
-    return this.trainingSources[0]?.shortName ?? '';
+    return projectLabel(this.trainingSources[0]);
   }
 
   get trainingSourceBooksSelected(): boolean {
