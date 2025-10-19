@@ -124,7 +124,6 @@ export class DraftGenerationStepsComponent implements OnInit {
   protected draftingSources: DraftSource[] = [];
   protected trainingSources: DraftSource[] = [];
   protected trainingTargets: DraftSource[] = [];
-  protected translatedBooksWithNoSource: number[] = [];
   protected trainingDataFiles: Readonly<TrainingData>[] = [];
 
   private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
@@ -284,12 +283,6 @@ export class DraftGenerationStepsComponent implements OnInit {
               isPresentInASource = true;
             } else {
               this.unusableTrainingSourceBooks.push(bookNum);
-              const textProgress: TextProgress | undefined = this.progressService.texts.find(
-                t => t.text.bookNum === bookNum
-              );
-              if (textProgress != null && textProgress.translated > minimumTranslatedSegments) {
-                this.translatedBooksWithNoSource.push(bookNum);
-              }
             }
             if (trainingSources[1] != null && additionalTrainingSourceBooks.has(bookNum)) {
               this.availableTrainingBooks[trainingSources[1].projectRef].push({ number: bookNum, selected: selected });
@@ -349,7 +342,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   }
 
   get firstTrainingSource(): string {
-    return this.trainingSources[0]?.shortName ?? '';
+    return projectLabel(this.trainingSources[0]);
   }
 
   get trainingSourceBooksSelected(): boolean {
