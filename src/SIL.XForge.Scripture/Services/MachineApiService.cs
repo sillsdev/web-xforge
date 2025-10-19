@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -772,6 +773,7 @@ public class MachineApiService(
             { "buildState", buildState },
             { "event", delivery.Event },
             { "translationEngineId", delivery.Payload.Engine.Id },
+            { "draftGenerationRequestId", await GetDraftGenerationRequestIdForBuildAsync(buildId) },
         };
         await eventMetricService.SaveEventMetricAsync(
             projectId,
@@ -1800,17 +1802,23 @@ public class MachineApiService(
                 );
 
                 // Notify any SignalR clients subscribed to the project
+                string? buildId = translationBuild?.Id;
                 await hubContext.NotifyBuildProgress(
                     sfProjectId,
-                    new ServalBuildState
-                    {
-                        BuildId = translationBuild?.Id,
-                        State = nameof(ServalData.PreTranslationsRetrieved),
-                    }
+                    new ServalBuildState { BuildId = buildId, State = nameof(ServalData.PreTranslationsRetrieved) }
                 );
 
+                if (!string.IsNullOrEmpty(buildId))
+                {
+                    string? draftGenerationRequestId = await GetDraftGenerationRequestIdForBuildAsync(buildId);
+                    if (!string.IsNullOrEmpty(draftGenerationRequestId))
+                    {
+                        Activity.Current?.AddTag("draftGenerationRequestId", draftGenerationRequestId);
+                    }
+                }
+
                 // Return the build id
-                return translationBuild?.Id;
+                return buildId;
             }
         }
         catch (TaskCanceledException e) when (e.InnerException is not TimeoutException)
@@ -2584,6 +2592,26 @@ public class MachineApiService(
 
         // Return the project, in case the caller needs it
         return project;
+    }
+
+    /// <summary>
+    /// Gets the SF-specific draft generation request identifier for a build by looking up the BuildProjectAsync event.
+    /// </summary>
+    /// <param name="buildId">The Serval build identifier.</param>
+    /// <returns>The draft generation request identifier, or null if not found.</returns>
+    private async Task<string?> GetDraftGenerationRequestIdForBuildAsync(string buildId)
+    {
+        // BuildProjectAsync events serve as a record of what Serval build id corresponds to what draft generation
+        // request id.
+        QueryResults<EventMetric> buildProjectEvents = await eventMetricService.GetEventMetricsAsync(
+            projectId: null,
+            scopes: [EventScope.Drafting],
+            eventTypes: [nameof(MachineProjectService.BuildProjectAsync)]
+        );
+        EventMetric? buildEvent = buildProjectEvents.Results.FirstOrDefault(e => e.Result?.ToString() == buildId);
+        return buildEvent?.Payload.TryGetValue("draftGenerationRequestId", out BsonValue? requestId) == true
+            ? requestId?.ToString()
+            : null;
     }
 
     private async Task<string> GetTranslationIdAsync(

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -89,6 +90,13 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
         // We should not save the cancellation token as it is not user data
         var payload = new Dictionary<string, BsonValue>();
         foreach (var kvp in argumentsWithNames.Where(kvp => kvp.Value is not CancellationToken))
+        {
+            payload[kvp.Key] = GetBsonValue(kvp.Value);
+        }
+
+        // Add any tags from the current activity
+        // TODO: Write these to a separate property in the EventMetric, e.g. Tags
+        foreach (KeyValuePair<string, string?> kvp in Activity.Current?.Tags ?? [])
         {
             payload[kvp.Key] = GetBsonValue(kvp.Value);
         }
