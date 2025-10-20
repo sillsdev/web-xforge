@@ -38,6 +38,7 @@ import * as RichText from 'rich-text';
 import { firstValueFrom } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
+import { FontService } from 'xforge-common/font.service';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -54,17 +55,19 @@ import { getCombinedVerseTextDoc, getTextDoc, paratextUsersFromRoles } from '../
 import { TranslateModule } from '../../translate.module';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog.component';
 
+const mockedDialogService = mock(DialogService);
+const mockedFontService = mock(FontService);
 const mockedHttpClient = mock(HttpClient);
 const mockedUserService = mock(UserService);
-const mockedDialogService = mock(DialogService);
 
 describe('NoteDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [DialogTestModule, NoopAnimationsModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
+      { provide: DialogService, useMock: mockedDialogService },
+      { provide: FontService, useMock: mockedFontService },
       { provide: HttpClient, useMock: mockedHttpClient },
-      { provide: UserService, useMock: mockedUserService },
-      { provide: DialogService, useMock: mockedDialogService }
+      { provide: UserService, useMock: mockedUserService }
     ]
   }));
 
