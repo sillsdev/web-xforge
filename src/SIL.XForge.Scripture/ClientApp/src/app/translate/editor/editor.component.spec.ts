@@ -75,9 +75,9 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { noopDestroyRef } from 'xforge-common/realtime.service';
 import { TestBreakpointObserver } from 'xforge-common/test-breakpoint-observer';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
@@ -181,11 +181,8 @@ describe('EditorComponent', () => {
       CopyrightBannerComponent,
       DraftPreviewBooksComponent,
       RouterModule.forRoot(ROUTES),
-      provideQuillRegistrations(),
       getTestTranslocoModule(),
       TranslocoMarkupModule,
-      TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       TabGroupComponent,
       TabComponent,
       TabHeaderDirective,
@@ -194,6 +191,9 @@ describe('EditorComponent', () => {
       AngularSplitModule
     ],
     providers: [
+      provideQuillRegistrations(),
+      provideTestOnlineStatus(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
       provideSFTabs(),
       provideLynxInsights(),
       { provide: AuthService, useMock: mockedAuthService },

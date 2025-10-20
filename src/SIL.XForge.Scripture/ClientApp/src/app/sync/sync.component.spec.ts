@@ -14,9 +14,9 @@ import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
@@ -41,16 +41,10 @@ const mockedCookieService = mock(CookieService);
 
 describe('SyncComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      SyncComponent,
-      SyncProgressComponent,
-      CommonModule,
-      getTestTranslocoModule(),
-      TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      NoticeComponent
-    ],
+    imports: [SyncComponent, SyncProgressComponent, CommonModule, getTestTranslocoModule(), NoticeComponent],
     providers: [
+      provideTestOnlineStatus(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: AuthService, useMock: mockedAuthService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: ErrorHandler, useMock: mockedErrorHandler },

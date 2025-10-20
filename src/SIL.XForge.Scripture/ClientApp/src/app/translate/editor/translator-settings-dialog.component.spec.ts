@@ -19,9 +19,9 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import {
   ChildViewContainerComponent,
@@ -41,8 +41,13 @@ import {
 
 describe('TranslatorSettingsDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, TestOnlineStatusModule.forRoot(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
-    providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }, provideNoopAnimations()]
+    imports: [DialogTestModule],
+    providers: [
+      provideTestOnlineStatus(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      provideNoopAnimations()
+    ]
   }));
 
   it('update confidence threshold', fakeAsync(() => {

@@ -11,9 +11,9 @@ import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
@@ -38,15 +38,11 @@ const mockedReportingService = mock(ErrorReportingService);
 
 describe('TranslateMetricsSession', () => {
   configureTestingModule(() => ({
-    imports: [
-      TextComponent,
-      QuillModule.forRoot(),
-      getTestTranslocoModule(),
-      provideQuillRegistrations(),
-      TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
-    ],
+    imports: [TextComponent, QuillModule.forRoot(), getTestTranslocoModule()],
     providers: [
+      provideQuillRegistrations(),
+      provideTestOnlineStatus(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService }

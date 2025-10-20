@@ -12,7 +12,7 @@ import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/model
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
@@ -41,8 +41,9 @@ let env: TestEnvironment;
 
 describe('DraftApplyDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [getTestTranslocoModule(), RouterModule.forRoot(ROUTES), TestOnlineStatusModule.forRoot()],
+    imports: [getTestTranslocoModule(), RouterModule.forRoot(ROUTES)],
     providers: [
+      provideTestOnlineStatus(),
       { provide: SFUserProjectsService, useMock: mockedUserProjectsService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },

@@ -9,7 +9,7 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import * as RichText from 'rich-text';
 import { defer, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
@@ -25,8 +25,9 @@ const mockedUserService = mock(UserService);
 
 describe('TrainingProgressComponent', () => {
   configureTestingModule(() => ({
-    imports: [TrainingProgressComponent, getTestTranslocoModule(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [TrainingProgressComponent, getTestTranslocoModule()],
     providers: [
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
       { provide: UserService, useMock: mockedUserService },
       provideHttpClient(withInterceptorsFromDi()),

@@ -36,7 +36,7 @@ import { MemoryRealtimeRemoteStore } from './memory-realtime-remote-store';
 import { OfflineStore } from './offline-store';
 import { OnlineStatusService } from './online-status.service';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
-import { TestOnlineStatusModule } from './test-online-status.module';
+import { provideTestOnlineStatus } from './test-online-status.module';
 import { TestOnlineStatusService } from './test-online-status.service';
 import { configureTestingModule, getTestTranslocoModule } from './test-utils';
 import { aspCultureCookieValue } from './utils';
@@ -55,8 +55,9 @@ const mockedConsole: MockConsole = MockConsole.install();
 
 describe('AuthService', () => {
   configureTestingModule(() => ({
-    imports: [RouterModule.forRoot([]), TestOnlineStatusModule.forRoot(), getTestTranslocoModule()],
+    imports: [RouterModule.forRoot([]), getTestTranslocoModule()],
     providers: [
+      provideTestOnlineStatus(),
       AuthService,
       { provide: Auth0Service, useMock: mockedAuth0Service },
       { provide: SharedbRealtimeRemoteStore, useClass: MemoryRealtimeRemoteStore },

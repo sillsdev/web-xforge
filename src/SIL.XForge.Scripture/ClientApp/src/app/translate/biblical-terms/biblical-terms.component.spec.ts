@@ -30,9 +30,9 @@ import { Locale } from 'xforge-common/models/i18n-locale';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { noopDestroyRef } from 'xforge-common/realtime.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
@@ -54,8 +54,10 @@ const mockedUserService = mock(UserService);
 
 describe('BiblicalTermsComponent', () => {
   configureTestingModule(() => ({
-    imports: [TestOnlineStatusModule.forRoot(), getTestTranslocoModule(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [getTestTranslocoModule()],
     providers: [
+      provideTestOnlineStatus(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: I18nService, useMock: mockedI18nService },
       { provide: MatDialog, useMock: mockedMatDialog },
       { provide: SFProjectService, useMock: mockedProjectService },

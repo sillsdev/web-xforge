@@ -12,7 +12,7 @@ import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
@@ -44,8 +44,9 @@ describe('DraftHistoryEntryComponent', () => {
   let fixture: ComponentFixture<DraftHistoryEntryComponent>;
 
   configureTestingModule(() => ({
-    imports: [getTestTranslocoModule(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), RouterModule.forRoot([])],
+    imports: [getTestTranslocoModule(), RouterModule.forRoot([])],
     providers: [
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
       { provide: I18nService, useMock: mockedI18nService },
       { provide: SFProjectService, useMock: mockedSFProjectService },

@@ -2,8 +2,8 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { mock, when } from 'ts-mockito';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -13,8 +13,12 @@ const mockedActivatedRoute = mock(ActivatedRoute);
 
 describe('ShareButtonComponent', () => {
   configureTestingModule(() => ({
-    imports: [getTestTranslocoModule(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), TestOnlineStatusModule.forRoot()],
-    providers: [{ provide: ActivatedRoute, useMock: mockedActivatedRoute }]
+    imports: [getTestTranslocoModule()],
+    providers: [
+      provideTestRealtime(SF_TYPE_REGISTRY),
+      provideTestOnlineStatus(),
+      { provide: ActivatedRoute, useMock: mockedActivatedRoute }
+    ]
   }));
 
   it('dialog should open when clicked', fakeAsync(() => {

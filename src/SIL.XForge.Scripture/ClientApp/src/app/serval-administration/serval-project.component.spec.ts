@@ -15,7 +15,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
@@ -43,8 +43,8 @@ const mockServalAdministrationService = mock(ServalAdministrationService);
 
 describe('ServalProjectComponent', () => {
   configureTestingModule(() => ({
-    imports: [TestOnlineStatusModule.forRoot()],
     providers: [
+      provideTestOnlineStatus(),
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: ActivatedRoute, useMock: mockActivatedRoute },
       { provide: AuthService, useMock: mockAuthService },

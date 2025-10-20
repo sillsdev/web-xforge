@@ -15,7 +15,7 @@ import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
@@ -48,8 +48,9 @@ describe('DraftGenerationStepsComponent', () => {
   when(mockActivatedProjectService.projectId).thenReturn('project01');
 
   configureTestingModule(() => ({
-    imports: [getTestTranslocoModule(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [getTestTranslocoModule()],
     providers: [
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: DraftSourcesService, useMock: mockDraftSourceService },
       { provide: SFProjectService, useMock: mockProjectService },

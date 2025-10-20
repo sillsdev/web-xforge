@@ -6,12 +6,12 @@ import { SF_TYPE_REGISTRY } from '../app/core/models/sf-type-registry';
 import { RealtimeDoc } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';
 import { RealtimeService } from './realtime.service';
-import { TestRealtimeModule } from './test-realtime.module';
+import { provideTestRealtime } from './test-realtime.module';
 import { configureTestingModule } from './test-utils';
 
 describe('RealtimeService', () => {
   configureTestingModule(() => ({
-    imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)]
+    providers: [provideTestRealtime(SF_TYPE_REGISTRY)]
   }));
 
   describe('manageQuery', () => {

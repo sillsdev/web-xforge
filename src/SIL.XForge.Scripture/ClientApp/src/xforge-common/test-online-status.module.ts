@@ -1,16 +1,17 @@
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ModuleWithProviders, NgModule } from '@angular/core';
+import { EnvironmentProviders, Provider } from '@angular/core';
 import { mock, when } from 'ts-mockito';
 
-@NgModule({ providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()] })
-export class TestOnlineStatusModule {
-  static forRoot(): ModuleWithProviders<TestOnlineStatusModule> {
-    const mockedNavigator = mock(Navigator);
-    when(mockedNavigator.onLine).thenReturn(true);
-    return {
-      ngModule: TestOnlineStatusModule,
-      providers: [{ provide: Navigator, useValue: mockedNavigator }]
-    };
-  }
+/**
+ * Provides a mocked Navigator (defaults to online).
+ */
+export function provideTestOnlineStatus(): (Provider | EnvironmentProviders)[] {
+  const mockedNavigator = mock(Navigator);
+  when(mockedNavigator.onLine).thenReturn(true);
+  return [
+    provideHttpClient(withInterceptorsFromDi()),
+    provideHttpClientTesting(),
+    { provide: Navigator, useValue: mockedNavigator }
+  ];
 }

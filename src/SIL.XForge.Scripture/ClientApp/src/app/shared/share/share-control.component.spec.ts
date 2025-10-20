@@ -11,9 +11,9 @@ import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
@@ -30,14 +30,11 @@ const mockedUserService = mock(UserService);
 
 describe('ShareControlComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      TestModule,
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      TestOnlineStatusModule.forRoot(),
-      provideQuillRegistrations(),
-      TestHostComponent
-    ],
+    imports: [TestModule, TestHostComponent],
     providers: [
+      provideQuillRegistrations(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
+      provideTestOnlineStatus(),
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },

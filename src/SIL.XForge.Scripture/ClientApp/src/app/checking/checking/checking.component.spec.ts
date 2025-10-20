@@ -48,9 +48,9 @@ import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getAudioBlob, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
@@ -152,14 +152,14 @@ describe('CheckingComponent', () => {
       AngularSplitModule,
       ngfModule,
       RouterModule.forRoot(ROUTES),
-      provideQuillRegistrations(),
       ReactiveFormsModule,
       OwnerComponent,
-      getTestTranslocoModule(),
-      TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+      getTestTranslocoModule()
     ],
     providers: [
+      provideQuillRegistrations(),
+      provideTestOnlineStatus(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: UserService, useMock: mockedUserService },
       { provide: SFProjectService, useMock: mockedProjectService },

@@ -4,7 +4,7 @@ import { MatIcon } from '@angular/material/icon';
 import { By } from '@angular/platform-browser';
 import { BehaviorSubject } from 'rxjs';
 import { instance, mock, resetCalls, verify, when } from 'ts-mockito';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { AudioPlayer, AudioStatus } from '../../../shared/audio/audio-player';
 import { AudioSegmentPlayer } from '../../../shared/audio/audio-segment-player';
@@ -15,7 +15,8 @@ when(audioMock.status$).thenReturn(new BehaviorSubject<AudioStatus>(AudioStatus.
 
 describe('SingleButtonAudioPlayerComponent', () => {
   configureTestingModule(() => ({
-    imports: [TestComponent, getTestTranslocoModule(), TestOnlineStatusModule.forRoot(), MockComponent]
+    imports: [TestComponent, getTestTranslocoModule(), MockComponent],
+    providers: [provideTestOnlineStatus()]
   }));
 
   let env: TestEnvironment;

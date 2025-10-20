@@ -21,9 +21,9 @@ import { NONE_ROLE, ProjectRoleInfo } from 'xforge-common/models/project-role-in
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, emptyHammerLoader, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
@@ -44,15 +44,11 @@ const mockedDialogService = mock(DialogService);
 
 describe('CollaboratorsComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      CollaboratorsComponent,
-      getTestTranslocoModule(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      provideQuillRegistrations(),
-      TestOnlineStatusModule.forRoot(),
-      AvatarComponent
-    ],
+    imports: [CollaboratorsComponent, getTestTranslocoModule(), AvatarComponent],
     providers: [
+      provideQuillRegistrations(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
+      provideTestOnlineStatus(),
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: SFProjectService, useMock: mockedProjectService },
