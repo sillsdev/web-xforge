@@ -59,7 +59,7 @@
                       ></div>
                     }
                     <div class="hide-gt-sm">
-                      <em>{{ userRow.role ? i18n.localizeRole(userRow.role) : "" }}</em>
+                      <em>{{ userRow.role ? i18n.localizeRole(userRow.role) : t("role_unknown") }}</em>
                     </div>
                   </td>
                 </ng-container>
@@ -83,7 +83,7 @@
                 </ng-container>
                 <ng-container matColumnDef="role">
                   <td class="hide-lt-sm" mat-cell *matCellDef="let userRow">
-                    <em>{{ userRow.role ? i18n.localizeRole(userRow.role) : "" }}</em>
+                    <em>{{ userRow.role ? i18n.localizeRole(userRow.role) : t("role_unknown") }}</em>
                   </td>
                 </ng-container>
                 <ng-container matColumnDef="more">

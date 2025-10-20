@@ -103,6 +103,7 @@
     "project_guests": "Project Guests",
     "remove_from_project": "Remove from project",
     "remove_user": "Remove User",
+    "role_unknown": "Role unknown",
     "share_with_others": "Share with others"
   },
   "confirm_draft_sources": {

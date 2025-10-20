@@ -84,7 +84,7 @@ describe('CollaboratorsComponent', () => {
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
-    const numParatextUsers = 5;
+    const numParatextUsers = 6;
     expect(env.userRowsByCategory(UserType.Paratext).length).toEqual(numParatextUsers);
     expect(env.noUsersLabel(UserType.Paratext)).toBeNull();
     expect(env.userTable(UserType.Guest)).toBeNull();
@@ -100,7 +100,7 @@ describe('CollaboratorsComponent', () => {
 
     expect(env.noUsersLabel(UserType.Paratext)).toBeNull();
     expect(env.noUsersLabel(UserType.Guest)).toBeNull();
-    const numParatextUsers = 5;
+    const numParatextUsers = 6;
     const numProjectGuests = 1;
     expect(env.userRowsByCategory(UserType.Paratext).length).toEqual(numParatextUsers);
     expect(env.userRowsByCategory(UserType.Guest).length).toEqual(numProjectGuests);
@@ -132,11 +132,11 @@ describe('CollaboratorsComponent', () => {
     tick();
     env.fixture.detectChanges();
 
-    const numParatextUsers = 5;
+    const numParatextUsers = 6;
     expect(env.userRowsByCategory(UserType.Paratext).length).toEqual(numParatextUsers);
     expect(
       env.component.projectUsers.find(u => u.userType === UserType.Paratext)!.rows.map(r => r.user.displayName)
-    ).toEqual(['User 01', 'User 02', 'User C', 'User B', 'User A']);
+    ).toEqual(['User 01', 'User 02', 'User C', 'User B', 'User A', 'User No Role']);
     expect(env.userRowsByCategory(UserType.Paratext)[0].nativeElement.querySelector('.user-more-menu')).not.toBeNull();
     expect(env.userRowsByCategory(UserType.Paratext)[1].nativeElement.querySelector('.user-more-menu')).not.toBeNull();
     expect(env.userRowsByCategory(UserType.Paratext)[2].nativeElement.querySelector('.user-more-menu')).toBeNull();
@@ -155,7 +155,7 @@ describe('CollaboratorsComponent', () => {
     tick();
     env.fixture.detectChanges();
 
-    const numParatextUsers = 5;
+    const numParatextUsers = 6;
     const numGuestUsers = 1;
     const numInvitees = 3;
     expect(env.userRowsByCategory(UserType.Paratext).length).toEqual(numParatextUsers);
@@ -190,10 +190,19 @@ describe('CollaboratorsComponent', () => {
     tick();
     env.fixture.detectChanges();
 
-    expect(env.userRowsByCategory(UserType.Paratext).length).toEqual(5);
-    expect(env.userRowsByCategory(UserType.Guest).length).toEqual(4);
+    const numParatextUsers = 6;
+    const numGuestUsers = 4;
+    expect(env.userRowsByCategory(UserType.Paratext).length).toEqual(numParatextUsers);
+    expect(env.userRowsByCategory(UserType.Guest).length).toEqual(numGuestUsers);
     const paratextRows = Array.from(env.component.projectUsers.find(u => u.userType === UserType.Paratext)!.rows);
-    expect(paratextRows.map(r => r.user.displayName)).toEqual(['User 01', 'User 02', 'User C', 'User B', 'User A']);
+    expect(paratextRows.map(r => r.user.displayName)).toEqual([
+      'User 01',
+      'User 02',
+      'User C',
+      'User B',
+      'User A',
+      'User No Role'
+    ]);
     const guestRows = Array.from(env.component.projectUsers.find(u => u.userType === UserType.Guest)!.rows);
     expect(guestRows.map(r => r.user.displayName ?? r.user.email)).toEqual([
       'User 03',
@@ -579,7 +588,8 @@ class TestEnvironment {
     const ptMembersNotConnected = [
       { username: 'User A', opaqueUserId: 'opaqueA', role: SFProjectRole.ParatextObserver },
       { username: 'User B', opaqueUserId: 'opaqueB', role: SFProjectRole.ParatextTranslator },
-      { username: 'User C', opaqueUserId: 'opaqueC', role: SFProjectRole.ParatextAdministrator }
+      { username: 'User C', opaqueUserId: 'opaqueC', role: SFProjectRole.ParatextAdministrator },
+      { username: 'User No Role', opaqueUserId: 'opaqueNoRole' }
     ];
     paratextUsers.push(...ptMembersNotConnected);
     return createTestProject({

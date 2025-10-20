@@ -117,8 +117,7 @@ function setUpMocks(args: DraftSourcesComponentStoryState): void {
     isConnectable: true,
     isConnected: true,
     hasUserRoleChanged: false,
-    hasUpdate: false,
-    members: []
+    hasUpdate: false
   }));
 
   // Add a project that has an unknown language code
