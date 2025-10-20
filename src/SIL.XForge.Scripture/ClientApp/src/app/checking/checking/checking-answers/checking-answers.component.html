@@ -93,7 +93,7 @@
                 }
                 @if (answer.scriptureText) {
                   <div class="answer-scripture" dir="auto">
-                    <span class="answer-scripture-text">{{
+                    <span class="answer-scripture-text" [style.--project-font]="projectFont">{{
                       (answer.selectionStartClipped ? "…" : "") +
                         (answer.scriptureText || "") +
                         (answer.selectionEndClipped ? "…" : "")
