@@ -18,6 +18,7 @@ import { TextComponent } from '../shared/text/text.component';
 export interface TextChooserDialogData {
   bookNum: number;
   chapterNum: number;
+  projectFont?: string;
   projectId: string;
   textsByBookId: TextsByBookId;
   isRightToLeft?: boolean;
@@ -79,6 +80,10 @@ export class TextChooserDialogComponent {
 
   get bookName(): string {
     return this.i18n.localizeBook(this.bookNum);
+  }
+
+  get projectFont(): string {
+    return this.data.projectFont ?? '';
   }
 
   get isTextRightToLeft(): boolean {
