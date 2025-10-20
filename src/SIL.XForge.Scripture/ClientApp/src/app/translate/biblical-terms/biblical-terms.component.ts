@@ -16,6 +16,7 @@ import {
   MatHeaderCellDef,
   MatHeaderRow,
   MatHeaderRowDef,
+  MatNoDataRow,
   MatRow,
   MatRowDef,
   MatTable
@@ -217,6 +218,7 @@ class Row {
     MatHeaderRowDef,
     MatRow,
     MatRowDef,
+    MatNoDataRow,
     MatSort,
     MatSortHeader
   ]
