@@ -56,6 +56,10 @@ mat-list-option {
   overflow: visible;
 }
 
+.suggestion-words {
+  font-family: var(--project-font);
+}
+
 .suggestion-confidence {
   font-size: smaller;
   color: $lighterTextColor;

@@ -231,6 +231,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   multiCursorViewers: MultiCursorViewer[] = [];
   target: TextComponent | undefined;
   draftTimestamp?: Date;
+  projectFont?: string;
   lynxInsightsEnabled = false;
   lynxAutoCorrectionsEnabled = false;
 
@@ -735,6 +736,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
         if (projectId !== prevProjectId) {
           this.projectDoc = await this.projectService.getProfile(projectId);
+          this.projectFont = this.fontService.getFontFamilyFromProject(this.projectDoc);
 
           const userRole: string | undefined = this.userRole;
           if (userRole != null) {
