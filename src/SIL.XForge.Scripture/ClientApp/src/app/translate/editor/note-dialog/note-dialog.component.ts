@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, ElementRef, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { VerseRef } from '@sillsdev/scripture';
@@ -17,6 +17,7 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DialogService } from 'xforge-common/dialog.service';
+import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { UserService } from 'xforge-common/user.service';
@@ -82,12 +83,14 @@ export class NoteDialogComponent implements OnInit {
   private userRole?: string;
 
   constructor(
-    private readonly dialogRef: MatDialogRef<NoteDialogComponent, NoteDialogResult | undefined>,
     @Inject(MAT_DIALOG_DATA) private readonly data: NoteDialogData,
+    private readonly dialogRef: MatDialogRef<NoteDialogComponent, NoteDialogResult | undefined>,
+    private readonly dialogService: DialogService,
+    private readonly elementRef: ElementRef<HTMLElement>,
+    private readonly fontService: FontService,
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
-    private readonly userService: UserService,
-    private readonly dialogService: DialogService
+    private readonly userService: UserService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -104,6 +107,10 @@ export class NoteDialogComponent implements OnInit {
     }
 
     this.projectProfileDoc = await this.projectService.getProfile(this.projectId);
+    this.elementRef.nativeElement.style.setProperty(
+      '--project-font',
+      this.fontService.getFontFamilyFromProject(this.projectProfileDoc)
+    );
     this.userRole = this.projectProfileDoc?.data?.userRoles[this.userService.currentUserId];
     if (this.userRole != null) {
       const projectDoc: SFProjectDoc | undefined = await this.projectService.tryGetForRole(
