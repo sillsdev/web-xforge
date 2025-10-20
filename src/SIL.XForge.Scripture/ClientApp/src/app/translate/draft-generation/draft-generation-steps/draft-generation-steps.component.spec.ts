@@ -365,7 +365,7 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.unusableTranslateSourceBooks).toEqual([6]);
       expect(component.unusableTrainingSourceBooks).toEqual([6]);
       // warn when translated book has no source
-      expect(fixture.nativeElement.querySelector('.warn-source-books-missing')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('.unusable-training-books')).not.toBeNull();
     }));
 
     it('should set "emptyTranslateSourceBooks"', fakeAsync(() => {

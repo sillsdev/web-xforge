@@ -191,11 +191,6 @@
             {{ t("choose_books_for_training_error") }}
           </app-notice>
         }
-        @if (translatedBooksWithNoSource.length > 0) {
-          <app-notice class="warn-source-books-missing" type="warning" icon="warning">
-            {{ t("source_books_missing") }}
-          </app-notice>
-        }
         <div class="button-strip">
           <button mat-stroked-button matStepperPrevious>
             <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
