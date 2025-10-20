@@ -1959,7 +1959,7 @@ public class ParatextSyncRunnerTests
         Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
 
         ParatextUserProfile ptUser2 = project.ParatextUsers.Single(u => u.Username == "User 2");
-        Assert.That(ptUser2.Role, Is.EqualTo(string.Empty));
+        Assert.That(ptUser2.Role, Is.Null);
     }
 
     [Test]
