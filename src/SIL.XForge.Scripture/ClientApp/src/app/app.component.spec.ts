@@ -33,9 +33,9 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { PWA_BEFORE_PROMPT_CAN_BE_SHOWN_AGAIN, PwaService } from 'xforge-common/pwa.service';
 import { TestBreakpointObserver } from 'xforge-common/test-breakpoint-observer';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
@@ -93,8 +93,6 @@ describe('AppComponent', () => {
       NavigationComponent,
       RouterModule.forRoot(ROUTES),
       getTestTranslocoModule(),
-      TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       AvatarComponent,
       GlobalNoticesComponent,
       MatMenuModule,
@@ -102,6 +100,8 @@ describe('AppComponent', () => {
       MatTooltipModule
     ],
     providers: [
+      provideTestOnlineStatus(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: AuthService, useMock: mockedAuthService },
       { provide: UserService, useMock: mockedUserService },
       { provide: SettingsAuthGuard, useMock: mockedSettingsAuthGuard },

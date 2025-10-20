@@ -16,7 +16,7 @@ import { combineLatest, from, Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { FileType } from 'xforge-common/models/file-offline-data';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime.module';
 import { SFProjectService } from '../../app/core/sf-project.service';
 import { ProjectDoc } from '../models/project-doc';
 import { NONE_ROLE, ProjectRoleInfo } from '../models/project-role-info';
@@ -36,7 +36,7 @@ describe('SaProjectsComponent', () => {
       SaProjectsComponent,
       RouterModule.forRoot([]),
       getTestTranslocoModule(),
-      TestRealtimeModule.forRoot(new TypeRegistry([TestProjectDoc], [FileType.Audio], []))
+      provideTestRealtime(new TypeRegistry([TestProjectDoc], [FileType.Audio], []))
     ],
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },

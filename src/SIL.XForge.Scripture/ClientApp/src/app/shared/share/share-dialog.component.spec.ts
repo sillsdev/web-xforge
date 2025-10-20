@@ -13,9 +13,9 @@ import { Locale } from 'xforge-common/models/i18n-locale';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
@@ -38,8 +38,10 @@ enum TestUsers {
 
 describe('ShareDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, TestOnlineStatusModule.forRoot(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [DialogTestModule],
     providers: [
+      provideTestOnlineStatus(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: NAVIGATOR, useMock: mockedNavigator },
       { provide: NoticeService, useMock: mockedNoticeService },

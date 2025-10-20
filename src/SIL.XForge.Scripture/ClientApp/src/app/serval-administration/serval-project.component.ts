@@ -7,6 +7,7 @@ import { MatCheckbox } from '@angular/material/checkbox';
 import { MatAccordion, MatExpansionPanel, MatExpansionPanelHeader } from '@angular/material/expansion';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
+import { MatInput } from '@angular/material/input';
 import {
   MatCell,
   MatCellDef,
@@ -70,12 +71,12 @@ function projectType(project: TranslateSource | SFProjectProfile): string {
   styleUrls: ['./serval-project.component.scss'],
   imports: [
     CommonModule,
-
     InfoComponent,
     NoticeComponent,
     MatButton,
     MatFormField,
     MatLabel,
+    MatInput,
     MatCheckbox,
     MatIcon,
     MatCard,

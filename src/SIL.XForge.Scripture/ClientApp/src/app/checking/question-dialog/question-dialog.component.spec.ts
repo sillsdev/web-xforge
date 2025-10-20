@@ -27,9 +27,9 @@ import { createStorageFileData, FileType } from 'xforge-common/models/file-offli
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import {
   ChildViewContainerComponent,
@@ -47,7 +47,6 @@ import { ScriptureChooserDialogComponent } from '../../scripture-chooser-dialog/
 import { getTextDoc } from '../../shared/test-utils';
 import { provideQuillRegistrations } from '../../shared/text/quill-editor-registration/quill-providers';
 import { EDITOR_READY_TIMEOUT } from '../../shared/text/text.component';
-import { CheckingModule } from '../checking.module';
 import { AudioAttachment } from '../checking/checking-audio-player/checking-audio-player.component';
 import { QuestionDialogComponent, QuestionDialogData } from './question-dialog.component';
 
@@ -61,15 +60,11 @@ const mockedFileService = mock(FileService);
 
 describe('QuestionDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      ReactiveFormsModule,
-      FormsModule,
-      DialogTestModule,
-      provideQuillRegistrations(),
-      TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
-    ],
+    imports: [ReactiveFormsModule, FormsModule, DialogTestModule],
     providers: [
+      provideQuillRegistrations(),
+      provideTestOnlineStatus(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: AuthService, useMock: mockedAuthService },
       { provide: UserService, useMock: mockedUserService },
       { provide: NoticeService, useMock: mockedNoticeService },
@@ -577,7 +572,7 @@ describe('QuestionDialogComponent', () => {
 
 @NgModule({
   exports: [ScriptureChooserDialogComponent],
-  imports: [CommonModule, CheckingModule, getTestTranslocoModule(), ScriptureChooserDialogComponent],
+  imports: [CommonModule, getTestTranslocoModule(), ScriptureChooserDialogComponent],
   providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
 })
 class DialogTestModule {}

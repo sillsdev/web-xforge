@@ -7,9 +7,9 @@ import { firstValueFrom } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -25,14 +25,10 @@ const mockedErrorReportingService = mock(ErrorReportingService);
 
 describe('SyncProgressComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      SyncProgressComponent,
-      TestOnlineStatusModule.forRoot(),
-      getTestTranslocoModule(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      HostComponent
-    ],
+    imports: [SyncProgressComponent, getTestTranslocoModule(), HostComponent],
     providers: [
+      provideTestOnlineStatus(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: ProjectNotificationService, useMock: mockedProjectNotificationService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
