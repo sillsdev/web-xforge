@@ -135,32 +135,32 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
             id: projectDoc.id,
             type: projectType(projectDoc.data),
             name: this.projectName,
-            category: 'Target Project',
+            category: 'Target project',
             fileName: project.shortName + '.zip',
             languageCode: project.writingSystem.tag
           });
 
           let i = 1;
-          // Add the drafting source
+          // Add the draft sources
           for (const draftingSource of draftSources.draftingSources) {
             rows.push({
               id: draftingSource.projectRef,
               type: projectType(draftingSource),
               name: projectLabel(draftingSource),
-              category: 'Drafting Source ' + i++,
+              category: draftSources.draftingSources.length === 1 ? 'Draft source' : 'Draft source ' + i++,
               fileName: draftingSource.shortName + '.zip',
               languageCode: draftingSource.writingSystem.tag
             });
           }
 
-          // Add the training sources
+          // Add the training sources (called reference projects)
           i = 1;
           for (const trainingSource of draftSources.trainingSources) {
             rows.push({
               id: trainingSource.projectRef,
               type: projectType(trainingSource),
               name: projectLabel(trainingSource),
-              category: 'Training Source  ' + i++,
+              category: draftSources.trainingSources.length === 1 ? 'Reference project' : 'Reference project ' + i++,
               fileName: trainingSource.shortName + '.zip',
               languageCode: trainingSource.writingSystem.tag
             });
