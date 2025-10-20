@@ -5,7 +5,7 @@ import { By } from '@angular/platform-browser';
 import { lastValueFrom } from 'rxjs';
 import { takeWhile } from 'rxjs/operators';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { getAudioBlob, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { AudioStatus } from '../../../shared/audio/audio-player';
@@ -177,7 +177,8 @@ describe('CheckingAudioPlayerComponent', () => {
 
 @Component({
   selector: 'app-host',
-  template: ''
+  template: '',
+  imports: [CheckingAudioPlayerComponent]
 })
 class HostComponent {
   @ViewChild(CheckingAudioPlayerComponent) player1!: CheckingAudioPlayerComponent;
@@ -193,9 +194,8 @@ class TestEnvironment {
 
   constructor(template: string, isOnline = true) {
     TestBed.configureTestingModule({
-      providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }],
+      providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }, provideTestOnlineStatus()],
       imports: [
-        TestOnlineStatusModule.forRoot(),
         getTestTranslocoModule(),
         HostComponent,
         CheckingAudioPlayerComponent,

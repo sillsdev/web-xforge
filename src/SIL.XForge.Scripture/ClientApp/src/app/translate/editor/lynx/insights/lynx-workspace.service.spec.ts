@@ -14,7 +14,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { RealtimeService } from 'xforge-common/realtime.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
@@ -328,8 +328,9 @@ describe('LynxWorkspaceService', () => {
   }
 
   configureTestingModule(() => ({
-    imports: [BrowserModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [BrowserModule],
     providers: [
+      provideTestRealtime(SF_TYPE_REGISTRY),
       LynxWorkspaceService,
       { provide: SFProjectService, useMock: mockProjectService },
       { provide: I18nService, useMock: mockI18nService },
