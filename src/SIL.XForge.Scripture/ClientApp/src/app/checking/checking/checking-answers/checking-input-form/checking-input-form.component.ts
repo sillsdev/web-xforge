@@ -5,6 +5,7 @@ import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DialogService } from 'xforge-common/dialog.service';
+import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -60,6 +61,7 @@ export class CheckingInputFormComponent {
   constructor(
     readonly noticeService: NoticeService,
     private readonly dialogService: DialogService,
+    private readonly fontService: FontService,
     private readonly i18n: I18nService,
     private readonly breakpointObserver: BreakpointObserver,
     private readonly mediaBreakpointService: MediaBreakpointService,
@@ -98,6 +100,7 @@ export class CheckingInputFormComponent {
       chapterNum: (this.verseRef && this.verseRef.chapterNum) || verseRef.chapterNum,
       textsByBookId: this.textsByBookId,
       projectId: this._questionDoc.data.projectRef,
+      projectFont: this.fontService.getFontFamilyFromProject(this.project),
       isRightToLeft: this.project?.isRightToLeft,
       selectedText: this.selectedText || '',
       selectedVerses: this.verseRef
