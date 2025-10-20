@@ -20,6 +20,7 @@ import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge
 import { firstValueFrom, Subscription } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
+import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -110,6 +111,7 @@ export class CheckingAnswersComponent implements OnInit {
   verseRef?: VerseRef;
   answersHighlightStatus: Map<string, boolean> = new Map<string, boolean>();
   submittingAnswer: boolean = false;
+  projectFont?: string;
 
   /** IDs of answers to show to user (so, excluding unshown incoming answers). */
   private _answersToShow: string[] = [];
@@ -130,6 +132,7 @@ export class CheckingAnswersComponent implements OnInit {
     private readonly questionDialogService: QuestionDialogService,
     private readonly i18n: I18nService,
     private readonly fileService: FileService,
+    private readonly fontService: FontService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
     private destroyRef: DestroyRef
@@ -154,6 +157,7 @@ export class CheckingAnswersComponent implements OnInit {
         this.setProjectAdmin();
       });
     this.setProjectAdmin();
+    this.projectFont = this.fontService.getFontFamilyFromProject(projectProfileDoc);
   }
 
   @Input() set questionDoc(questionDoc: QuestionDoc | undefined) {
