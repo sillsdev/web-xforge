@@ -9,9 +9,9 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime.module';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { TypeRegistry } from 'xforge-common/type-registry';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -33,13 +33,11 @@ describe('EditorHistoryComponent', () => {
   const showDiffChange$ = new Subject<boolean>();
 
   configureTestingModule(() => ({
-    imports: [
-      EditorHistoryComponent,
-      TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(new TypeRegistry([TextDoc], [FileType.Audio], []))
-    ],
+    imports: [EditorHistoryComponent],
     schemas: [NO_ERRORS_SCHEMA], // Ignore undeclared child components
     providers: [
+      provideTestRealtime(new TypeRegistry([TextDoc], [FileType.Audio], [])),
+      provideTestOnlineStatus(),
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: SFProjectService, useMock: mockSFProjectService },
       { provide: I18nService, useMock: mockI18nService }

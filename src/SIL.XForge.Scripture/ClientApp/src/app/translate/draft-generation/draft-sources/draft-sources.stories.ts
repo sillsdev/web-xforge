@@ -155,7 +155,6 @@ export default {
   component: DraftSourcesComponent,
   decorators: [
     moduleMetadata({
-      imports: [],
       providers: [
         { provide: ActivatedProjectService, useValue: instance(mockedActivatedProjectService) },
         { provide: DestroyRef, useValue: instance(mockedDestroyRef) },

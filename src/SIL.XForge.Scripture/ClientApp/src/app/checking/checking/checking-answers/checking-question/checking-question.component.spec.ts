@@ -9,7 +9,7 @@ import { BehaviorSubject, lastValueFrom, Subject } from 'rxjs';
 import { takeWhile } from 'rxjs/operators';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
@@ -59,14 +59,8 @@ class MockComponent {
 
 describe('CheckingQuestionComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      CheckingQuestionComponent,
-      SingleButtonAudioPlayerComponent,
-      getTestTranslocoModule(),
-      TestOnlineStatusModule.forRoot(),
-      MockComponent
-    ],
-    providers: [{ provide: SFProjectService, useMock: mockedSFProjectService }]
+    imports: [CheckingQuestionComponent, SingleButtonAudioPlayerComponent, getTestTranslocoModule(), MockComponent],
+    providers: [provideTestOnlineStatus(), { provide: SFProjectService, useMock: mockedSFProjectService }]
   }));
 
   it('selects scripture text when scripture audio is present', async () => {

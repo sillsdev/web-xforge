@@ -15,7 +15,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import {
   ChildViewContainerComponent,
@@ -33,8 +33,12 @@ const mockedI18nService = mock(I18nService);
 
 describe('BiblicalTermDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
-    providers: [{ provide: I18nService, useMock: mockedI18nService }, provideNoopAnimations()]
+    imports: [DialogTestModule],
+    providers: [
+      provideTestRealtime(SF_TYPE_REGISTRY),
+      { provide: I18nService, useMock: mockedI18nService },
+      provideNoopAnimations()
+    ]
   }));
 
   it('should display the biblical term', fakeAsync(() => {

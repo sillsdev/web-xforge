@@ -10,7 +10,7 @@ import {
   NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { NoteThreadDoc, NoteThreadIcon } from './note-thread-doc';
@@ -18,7 +18,7 @@ import { SF_TYPE_REGISTRY } from './sf-type-registry';
 
 describe('NoteThreadDoc', () => {
   configureTestingModule(() => ({
-    imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)]
+    providers: [provideTestRealtime(SF_TYPE_REGISTRY)]
   }));
   let env: TestEnvironment;
 

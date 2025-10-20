@@ -17,7 +17,7 @@ import { switchMap } from 'rxjs/operators';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { FileType } from 'xforge-common/models/file-offline-data';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime.module';
 import { environment } from '../../environments/environment';
 import { ProjectDoc } from '../models/project-doc';
 import { UserDoc } from '../models/user-doc';
@@ -40,7 +40,7 @@ describe('SaUsersComponent', () => {
       SaUsersComponent,
       RouterModule.forRoot([]),
       getTestTranslocoModule(),
-      TestRealtimeModule.forRoot(new TypeRegistry([UserDoc, TestProjectDoc], [FileType.Audio], [])),
+      provideTestRealtime(new TypeRegistry([UserDoc, TestProjectDoc], [FileType.Audio], [])),
       AvatarComponent
     ],
     providers: [

@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { BehaviorSubject } from 'rxjs';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { getTestTranslocoModule } from 'xforge-common/test-utils';
 import { TextDocId } from '../../../core/models/text-doc';
@@ -277,7 +277,7 @@ class TestEnvironment {
 
     TestBed.configureTestingModule({
       imports: [
-        TestOnlineStatusModule.forRoot(),
+        provideTestOnlineStatus(),
         getTestTranslocoModule(),
         HostComponent,
         CheckingScriptureAudioPlayerComponent,
