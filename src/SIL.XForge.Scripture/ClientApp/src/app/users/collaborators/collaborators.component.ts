@@ -91,8 +91,14 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
 
   get projectUsers(): ProjectUserLists[] {
     return [
-      { userType: UserType.Paratext, rows: this._userRows?.filter(u => isParatextRole(u.role)) ?? [] },
-      { userType: UserType.Guest, rows: this._userRows?.filter(u => !isParatextRole(u.role)) ?? [] }
+      {
+        userType: UserType.Paratext,
+        rows: this._userRows?.filter(u => isParatextRole(u.role) || u.paratextMemberNotConnected) ?? []
+      },
+      {
+        userType: UserType.Guest,
+        rows: this._userRows?.filter(u => !isParatextRole(u.role) && !u.paratextMemberNotConnected) ?? []
+      }
     ];
   }
 
@@ -235,15 +241,19 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   }
 
   private sortUsers(projectUsers: Row[], paratextMembersNotConnected: Row[], invitees: Row[]): Row[] {
-    // Administrators, Translators, Consultants, Observers, Community Checkers, Commenters, SF Observers, None
-    const userRoles: SFProjectRole[] = Object.values(SFProjectRole).filter(r => r !== SFProjectRole.None);
+    // Administrators, Translators, Consultants, Observers, Community Checkers, Commenters, SF Observers
+    const userRoles: (SFProjectRole | null | undefined)[] = Object.values(SFProjectRole).filter(
+      r => r !== SFProjectRole.None
+    );
+
     const sortedRows: Row[] = [];
     for (const role of userRoles) {
       const rowsForRole = projectUsers.filter(u => u.role === role).sort(this.sortByName);
       sortedRows.push(...rowsForRole);
     }
 
-    for (const role of userRoles) {
+    for (const role of [...userRoles].concat(undefined, null)) {
+      // include users that do not have their role set
       const paratextMembers = paratextMembersNotConnected.filter(u => u.role === role).sort(this.sortByName);
       sortedRows.push(...paratextMembers);
     }
