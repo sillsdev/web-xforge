@@ -115,6 +115,13 @@ public class MachineApiService(
             cancellationToken
         );
 
+        // Retrieve the user secret
+        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(curUserId, cancellationToken);
+        if (!attempt.TryResult(out UserSecret userSecret))
+        {
+            throw new DataNotFoundException("The user does not exist.");
+        }
+
         // Connect to the realtime server
         await using IConnection connection = await realtimeService.ConnectAsync(curUserId);
 
@@ -126,13 +133,6 @@ public class MachineApiService(
         List<(ChapterDelta chapterDelta, int bookNum)> chapterDeltas = [];
         try
         {
-            // Retrieve the user secret
-            Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(curUserId, cancellationToken);
-            if (!attempt.TryResult(out UserSecret userSecret))
-            {
-                throw new DataNotFoundException("The user does not exist.");
-            }
-
             // Load the target project
             targetProjectDoc = await connection.FetchAsync<SFProject>(targetProjectId);
             if (!targetProjectDoc.IsLoaded)
@@ -404,13 +404,27 @@ public class MachineApiService(
                     sfProjectId,
                     new DraftApplyState { State = "Loading permissions from Paratext." }
                 );
-                await projectService.UpdatePermissionsAsync(
-                    curUserId,
-                    targetProjectDoc,
-                    users: null,
-                    books: chapterDeltas.Select(c => c.bookNum).Distinct().ToList(),
-                    cancellationToken
-                );
+                if (createdBooks.Count == 0)
+                {
+                    // Update books for which chapters were added
+                    await projectService.UpdatePermissionsAsync(
+                        curUserId,
+                        targetProjectDoc,
+                        users: null,
+                        books: chapterDeltas.Select(c => c.bookNum).Distinct().ToList(),
+                        cancellationToken
+                    );
+                }
+                else
+                {
+                    // Update permissions for new books
+                    await paratextService.UpdateParatextPermissionsForNewBooksAsync(
+                        userSecret,
+                        targetProjectDoc.Data.ParatextId,
+                        targetProjectDoc,
+                        writeToParatext: false
+                    );
+                }
             }
 
             // Create the text data documents, using the permissions matrix calculated above for permissions

@@ -77,6 +77,12 @@ public interface IParatextService
         string paratextId,
         IReadOnlyList<BiblicalTerm> biblicalTerms
     );
+    Task<SyncMetricInfo> UpdateParatextPermissionsForNewBooksAsync(
+        UserSecret userSecret,
+        string paratextId,
+        IDocument<SFProject> projectDoc,
+        bool writeToParatext
+    );
     string? GetLatestSharedVersion(UserSecret userSecret, string paratextId);
     string GetRepoRevision(UserSecret userSecret, string paratextId);
     void SetRepoToRevision(UserSecret userSecret, string paratextId, string desiredRevision);
