@@ -59,6 +59,11 @@ public record SyncMetrics : IIdentifiable
     public SyncMetricInfo ParatextNotes { get; set; } = new SyncMetricInfo();
 
     /// <summary>
+    /// Gets or sets the info for changes to permissions outgoing to Paratext.
+    /// </summary>
+    public SyncMetricInfo ParatextPermissions { get; set; } = new SyncMetricInfo();
+
+    /// <summary>
     /// Gets or sets the info for changes to questions incoming from Paratext.
     /// </summary>
     public SyncMetricInfo Questions { get; set; } = new SyncMetricInfo();
