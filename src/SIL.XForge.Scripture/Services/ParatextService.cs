@@ -47,6 +47,7 @@ using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
 using StringUtils = SIL.XForge.Utils.StringUtils;
+using TextInfo = SIL.XForge.Scripture.Models.TextInfo;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -1687,6 +1688,107 @@ public class ParatextService : DisposableBase, IParatextService
         }
 
         termRenderings.Save();
+        return syncMetricInfo;
+    }
+
+    public async Task<SyncMetricInfo> UpdateParatextPermissionsForNewBooksAsync(
+        UserSecret userSecret,
+        string paratextId,
+        IDocument<SFProject> projectDoc,
+        bool writeToParatext
+    )
+    {
+        var syncMetricInfo = new SyncMetricInfo();
+        using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret)!, paratextId);
+        if (scrText is null)
+        {
+            return syncMetricInfo;
+        }
+
+        if (!projectDoc.Data.Editable)
+        {
+            return syncMetricInfo;
+        }
+
+        // Get all projects that are not on disk
+        for (int i = 0; i < projectDoc.Data.Texts.Count; i++)
+        {
+            TextInfo text = projectDoc.Data.Texts[i];
+            int bookNum = text.BookNum;
+            if (scrText.BookPresent(bookNum))
+            {
+                // Book is on disk, skip to the next book
+                continue;
+            }
+
+            // Add any users to the book who would have the ability to access it
+            foreach (var user in projectDoc.Data.ParatextUsers)
+            {
+                // If there is no SF user id or PT username, ignore this user
+                if (string.IsNullOrEmpty(user.SFUserId) || string.IsNullOrEmpty(user.Username))
+                {
+                    continue;
+                }
+
+                bool hasPermissionInParatext = scrText.Permissions.CanEdit(bookNum, chapterNum: 0, user.Username);
+                bool hasPermissionInMongo =
+                    text.Permissions.TryGetValue(user.SFUserId, out string permission)
+                    && permission == TextInfoPermission.Write;
+                bool userIsAdministrator = scrText.Permissions.GetUser(user.Username)?.Role == UserRoles.Administrator;
+
+                if (writeToParatext)
+                {
+                    // Grant the user access to edit the new book, if we granted them access in Mongo,
+                    // they are an administrator, but they do not have access in Paratext.
+                    //
+                    // This is based on ParatextData.ImportSfmText.GrantBookPermissions()
+                    if (hasPermissionInMongo && !hasPermissionInParatext && userIsAdministrator)
+                    {
+                        scrText.Permissions.SetPermission(user.Username, bookNum, PermissionSet.Manual, true);
+                        syncMetricInfo.Updated++;
+                    }
+                }
+                else
+                {
+                    // If the user can edit the book and doesn't have permission,
+                    // or they are the current user and an administrator,
+                    // update the Scripture Forge permissions to allow writing.
+                    bool currentUserIsAdministrator = userIsAdministrator && user.SFUserId == userSecret.Id;
+                    if (!hasPermissionInMongo && (currentUserIsAdministrator || hasPermissionInParatext))
+                    {
+                        // Add the user to the new book in SF with book permissions and available chapter permissions
+                        // This will be empty if the current user is an administrator but has no permissions for the book
+                        int[] editableChapters =
+                        [
+                            .. scrText.Permissions.GetEditableChapters(
+                                bookNum,
+                                scrText.Settings.Versification,
+                                user.Username
+                            ) ?? [],
+                        ];
+                        await projectDoc.SubmitJson0OpAsync(op =>
+                        {
+                            int textIndex = i;
+                            op.Set(p => p.Texts[textIndex].Permissions[user.SFUserId], TextInfoPermission.Write);
+                            for (int j = 0; j < text.Chapters.Count; j++)
+                            {
+                                int chapterIndex = j;
+                                int chapterNumber = text.Chapters[chapterIndex].Number;
+                                if (editableChapters.Contains(chapterNumber) || currentUserIsAdministrator)
+                                {
+                                    op.Set(
+                                        p => p.Texts[textIndex].Chapters[chapterIndex].Permissions[user.SFUserId],
+                                        TextInfoPermission.Write
+                                    );
+                                }
+                            }
+                        });
+                        syncMetricInfo.Updated++;
+                    }
+                }
+            }
+        }
+
         return syncMetricInfo;
     }
 
