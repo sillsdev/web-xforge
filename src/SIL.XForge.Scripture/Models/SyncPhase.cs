@@ -1,3 +1,5 @@
+namespace SIL.XForge.Scripture.Models;
+
 /// <summary>
 /// The sync phase.
 /// </summary>

@@ -332,6 +332,7 @@ public class ParatextService : DisposableBase, IParatextService
                         syncMetrics.ParatextBooks != new SyncMetricInfo()
                         || syncMetrics.ParatextNotes != new SyncMetricInfo()
                         || syncMetrics.ParatextBiblicalTerms != new SyncMetricInfo()
+                        || syncMetrics.ParatextPermissions != new SyncMetricInfo()
                     )
                 )
                 {
