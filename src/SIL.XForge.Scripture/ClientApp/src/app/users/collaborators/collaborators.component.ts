@@ -72,20 +72,12 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     super(noticeService);
   }
 
-  get hasEmailError(): boolean {
-    return this.userInviteForm.controls.email.hasError('email');
-  }
-
   get isLoading(): boolean {
     return this._userRows == null;
   }
 
   get projectId(): string {
     return this.projectDoc ? this.projectDoc.id : '';
-  }
-
-  get totalUsers(): number {
-    return this._userRows == null ? 0 : this._userRows.length;
   }
 
   get filteredLength(): number {

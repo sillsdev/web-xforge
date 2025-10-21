@@ -96,10 +96,6 @@ export class MyProjectsComponent implements OnInit {
     if (this.userIsPTUser) await this.loadParatextProjects();
   }
 
-  currentUserRole(projectId: string): string | undefined {
-    return this.userConnectedProjects.find(project => project.id === projectId)?.data?.userRoles[this.user!.id];
-  }
-
   isLastSelectedProject(project: SFProjectProfileDoc): boolean {
     return project.id === this.user?.data?.sites[environment.siteId].currentProjectId;
   }

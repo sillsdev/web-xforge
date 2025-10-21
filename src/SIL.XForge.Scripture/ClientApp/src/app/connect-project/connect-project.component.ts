@@ -86,10 +86,6 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     return this.projectsFromParatext == null || !this.isAppOnline;
   }
 
-  get isBasedOnProjectSet(): boolean {
-    return this.settings.controls.sourceParatextId.value != null;
-  }
-
   get projects(): ParatextProject[] {
     return this.projectsFromParatext ?? [];
   }
@@ -125,10 +121,6 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
         this.state = 'offline';
       }
     });
-  }
-
-  logInWithParatext(): void {
-    this.paratextService.linkParatext('/connect-project');
   }
 
   async submit(): Promise<void> {

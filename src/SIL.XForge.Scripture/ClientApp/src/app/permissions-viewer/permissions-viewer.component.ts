@@ -90,12 +90,6 @@ export class PermissionsViewerComponent implements OnInit {
     return this.permissionsMatrix[role]?.[domain] || [];
   }
 
-  /** Check if a specific role has a specific permission for a domain */
-  hasOperation(role: string, domain: string, operation: string): boolean {
-    const operations = this.getOperationsForRoleDomain(role, domain);
-    return operations.includes(operation) === true;
-  }
-
   /** Sort operations according to a predefined logical order */
   private sortOperations(operations: string[]): string[] {
     if (operations === undefined || operations.length === 0) {

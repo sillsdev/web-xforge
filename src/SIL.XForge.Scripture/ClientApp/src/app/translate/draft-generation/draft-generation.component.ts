@@ -25,7 +25,6 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { issuesEmailTemplate } from 'xforge-common/utils';
-import { environment } from '../../../environments/environment';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SelectableProject } from '../../core/paratext.service';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -126,10 +125,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   get draftEnabled(): boolean {
     return this.isBackTranslation || this.isPreTranslationApproved;
-  }
-
-  get issueEmail(): string {
-    return environment.issueEmail;
   }
 
   constructor(

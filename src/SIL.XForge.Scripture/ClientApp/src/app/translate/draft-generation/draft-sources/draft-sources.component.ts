@@ -232,10 +232,6 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
     return value ? `(${value})` : '';
   }
 
-  get targetLanguageTag(): string {
-    return this.trainingTargets[0]!.writingSystem.tag;
-  }
-
   onTrainingDataSelect(newTrainingFiles: TrainingData[]): void {
     this.availableTrainingFiles = newTrainingFiles;
     this.changesMade = true;
