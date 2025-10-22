@@ -1,4 +1,4 @@
-import { EnvironmentProviders, Provider } from '@angular/core';
+import { EnvironmentProviders, makeEnvironmentProviders } from '@angular/core';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { MatPaginatorIntl } from '@angular/material/paginator';
 import { MAT_SELECT_CONFIG } from '@angular/material/select';
@@ -10,8 +10,8 @@ import { Paginator } from './paginator/paginator.component';
 /**
  * Provides Angular Material configuration and other UI-related providers for the application.
  */
-export function provideUICommon(): (Provider | EnvironmentProviders)[] {
-  return [
+export function provideUICommon(): EnvironmentProviders {
+  return makeEnvironmentProviders([
     {
       provide: MatPaginatorIntl,
       useClass: Paginator,
@@ -44,5 +44,5 @@ export function provideUICommon(): (Provider | EnvironmentProviders)[] {
       responsive: true,
       renderOnClick: false
     }).providers ?? [])
-  ];
+  ]);
 }
