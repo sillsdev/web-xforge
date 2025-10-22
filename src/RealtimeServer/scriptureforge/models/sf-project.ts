@@ -22,9 +22,8 @@ export const SF_PROJECT_INDEX_PATHS: (string | [string, CreateIndexesOptions])[]
   obj<SFProject>().pathStr(p => p.shortName),
   // Indexes for SFProjectService.IsSourceProject() in .NET
   [obj<SFProject>().pathStr(p => p.translateConfig.source!.projectRef), { sparse: true }],
-  [obj<SFProject>().pathStr(p => p.translateConfig.draftConfig.additionalTrainingSource!.projectRef), { sparse: true }],
-  [obj<SFProject>().pathStr(p => p.translateConfig.draftConfig.alternateSource!.projectRef), { sparse: true }],
-  [obj<SFProject>().pathStr(p => p.translateConfig.draftConfig.alternateTrainingSource!.projectRef), { sparse: true }]
+  ['translateConfig.draftConfig.draftingSources.projectRef', { sparse: true }],
+  ['translateConfig.draftConfig.trainingSources.projectRef', { sparse: true }]
 ];
 
 /** Length of id for a DBL resource. */

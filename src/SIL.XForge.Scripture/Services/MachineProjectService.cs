@@ -470,7 +470,7 @@ public class MachineProjectService(
     }
 
     /// <summary>
-    /// Updates the language configuration for the additional and alternate sources.
+    /// Updates the language configuration for the training and drafting sources.
     /// </summary>
     /// <param name="curUserId">The current user identifier.</param>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
@@ -492,99 +492,76 @@ public class MachineProjectService(
             throw new DataNotFoundException("The project does not exist.");
         }
 
-        // If there is an alternate source, ensure that name, writing system and RTL is correct
-        if (projectDoc.Data.TranslateConfig.DraftConfig.AlternateSource is not null)
+        // Ensure that name, writing system and RTL are correct for training sources
+        for (int index = 0; index < projectDoc.Data.TranslateConfig.DraftConfig.TrainingSources.Count; index++)
         {
-            ParatextSettings? alternateSourceSettings = paratextService.GetParatextSettings(
+            // Retrieve the Paratext settings for the training source
+            ParatextSettings? translateSourceSettings = paratextService.GetParatextSettings(
                 userSecret,
-                projectDoc.Data.TranslateConfig.DraftConfig.AlternateSource.ParatextId
+                projectDoc.Data.TranslateConfig.DraftConfig.TrainingSources[index].ParatextId
             );
-            if (alternateSourceSettings is not null)
+
+            // Copy the index so that it is captured correctly in the lambda
+            int pos = index;
+            if (translateSourceSettings is not null)
             {
                 await projectDoc.SubmitJson0OpAsync(op =>
                 {
                     op.Set(
-                        pd => pd.TranslateConfig.DraftConfig.AlternateSource.IsRightToLeft,
-                        alternateSourceSettings.IsRightToLeft
+                        pd => pd.TranslateConfig.DraftConfig.TrainingSources[pos].IsRightToLeft,
+                        translateSourceSettings.IsRightToLeft
                     );
-                    if (alternateSourceSettings.LanguageTag is not null)
+                    if (translateSourceSettings.LanguageTag is not null)
                     {
                         op.Set(
-                            pd => pd.TranslateConfig.DraftConfig.AlternateSource.WritingSystem.Tag,
-                            alternateSourceSettings.LanguageTag
+                            pd => pd.TranslateConfig.DraftConfig.TrainingSources[pos].WritingSystem.Tag,
+                            translateSourceSettings.LanguageTag
                         );
                     }
-                    if (alternateSourceSettings.FullName is not null)
+
+                    if (translateSourceSettings.FullName is not null)
                     {
                         op.Set(
-                            pd => pd.TranslateConfig.DraftConfig.AlternateSource.Name,
-                            alternateSourceSettings.FullName
+                            pd => pd.TranslateConfig.DraftConfig.TrainingSources[pos].Name,
+                            translateSourceSettings.FullName
                         );
                     }
                 });
             }
         }
 
-        // If there is an alternate training source, ensure that name, writing system and RTL is correct
-        if (projectDoc.Data.TranslateConfig.DraftConfig.AlternateTrainingSource is not null)
+        // Ensure that name, writing system and RTL are correct for drafting sources
+        for (int index = 0; index < projectDoc.Data.TranslateConfig.DraftConfig.DraftingSources.Count; index++)
         {
-            ParatextSettings? alternateTrainingSourceSettings = paratextService.GetParatextSettings(
+            // Retrieve the Paratext settings for the drafting source
+            ParatextSettings? translateSourceSettings = paratextService.GetParatextSettings(
                 userSecret,
-                projectDoc.Data.TranslateConfig.DraftConfig.AlternateTrainingSource.ParatextId
+                projectDoc.Data.TranslateConfig.DraftConfig.DraftingSources[index].ParatextId
             );
-            if (alternateTrainingSourceSettings is not null)
-            {
-                await projectDoc.SubmitJson0OpAsync(op =>
-                {
-                    op.Set(
-                        pd => pd.TranslateConfig.DraftConfig.AlternateTrainingSource.IsRightToLeft,
-                        alternateTrainingSourceSettings.IsRightToLeft
-                    );
-                    if (alternateTrainingSourceSettings.LanguageTag is not null)
-                    {
-                        op.Set(
-                            pd => pd.TranslateConfig.DraftConfig.AlternateTrainingSource.WritingSystem.Tag,
-                            alternateTrainingSourceSettings.LanguageTag
-                        );
-                    }
-                    if (alternateTrainingSourceSettings.FullName is not null)
-                    {
-                        op.Set(
-                            pd => pd.TranslateConfig.DraftConfig.AlternateTrainingSource.Name,
-                            alternateTrainingSourceSettings.FullName
-                        );
-                    }
-                });
-            }
-        }
 
-        // If there is an additional training source, ensure that name, writing system and RTL is correct
-        if (projectDoc.Data.TranslateConfig.DraftConfig.AdditionalTrainingSource is not null)
-        {
-            ParatextSettings? additionalTrainingSourceSettings = paratextService.GetParatextSettings(
-                userSecret,
-                projectDoc.Data.TranslateConfig.DraftConfig.AdditionalTrainingSource.ParatextId
-            );
-            if (additionalTrainingSourceSettings is not null)
+            // Copy the index so that it is captured correctly in the lambda
+            int pos = index;
+            if (translateSourceSettings is not null)
             {
                 await projectDoc.SubmitJson0OpAsync(op =>
                 {
                     op.Set(
-                        pd => pd.TranslateConfig.DraftConfig.AdditionalTrainingSource.IsRightToLeft,
-                        additionalTrainingSourceSettings.IsRightToLeft
+                        pd => pd.TranslateConfig.DraftConfig.DraftingSources[pos].IsRightToLeft,
+                        translateSourceSettings.IsRightToLeft
                     );
-                    if (additionalTrainingSourceSettings.LanguageTag is not null)
+                    if (translateSourceSettings.LanguageTag is not null)
                     {
                         op.Set(
-                            pd => pd.TranslateConfig.DraftConfig.AdditionalTrainingSource.WritingSystem.Tag,
-                            additionalTrainingSourceSettings.LanguageTag
+                            pd => pd.TranslateConfig.DraftConfig.DraftingSources[pos].WritingSystem.Tag,
+                            translateSourceSettings.LanguageTag
                         );
                     }
-                    if (additionalTrainingSourceSettings.FullName is not null)
+
+                    if (translateSourceSettings.FullName is not null)
                     {
                         op.Set(
-                            pd => pd.TranslateConfig.DraftConfig.AdditionalTrainingSource.Name,
-                            additionalTrainingSourceSettings.FullName
+                            pd => pd.TranslateConfig.DraftConfig.DraftingSources[pos].Name,
+                            translateSourceSettings.FullName
                         );
                     }
                 });
@@ -1021,7 +998,7 @@ public class MachineProjectService(
             // which is not present until after the first sync (not from the Registry).
 
             // If the source or target writing system tag is missing, get them from the ScrText
-            // We do not need to do this for the alternate source as this would have been populated correctly
+            // We do not need to do this for the drafting sources as these would have been populated correctly
             if (
                 string.IsNullOrWhiteSpace(projectDoc.Data?.WritingSystem.Tag)
                 || (
@@ -1146,15 +1123,11 @@ public class MachineProjectService(
             throw new DataNotFoundException("The project does not exist.");
         }
 
-        string alternateSourceLanguage = project.TranslateConfig.DraftConfig.AlternateSource?.WritingSystem.Tag;
-        bool useAlternateSourceLanguage =
-            project.TranslateConfig.DraftConfig.AlternateSourceEnabled
-            && !string.IsNullOrWhiteSpace(alternateSourceLanguage)
-            && preTranslate;
-        return useAlternateSourceLanguage
-            ? alternateSourceLanguage
-            : project.TranslateConfig.Source?.WritingSystem.Tag
-                ?? throw new InvalidDataException("The source project's language is not specified.");
+        return (
+                preTranslate
+                    ? project.TranslateConfig.DraftConfig.DraftingSources.FirstOrDefault()?.WritingSystem.Tag
+                    : project.TranslateConfig.Source?.WritingSystem.Tag
+            ) ?? throw new InvalidDataException("The source project's language is not specified.");
     }
 
     /// <summary>
@@ -1713,37 +1686,33 @@ public class MachineProjectService(
             throw new DataNotFoundException("The translation engine ID cannot be found.");
         }
 
-        // See if there is an alternate source to use for drafting
-        bool hasAlternateSource =
-            project.TranslateConfig.DraftConfig.AlternateSourceEnabled
-            && project.TranslateConfig.DraftConfig.AlternateSource is not null
-            && project.TranslateConfig.PreTranslate;
-
-        // See if there is an alternate training source corpus
-        bool hasAlternateTrainingSource =
-            project.TranslateConfig.DraftConfig.AlternateTrainingSourceEnabled
-            && project.TranslateConfig.DraftConfig.AlternateTrainingSource is not null
-            && project.TranslateConfig.PreTranslate;
-
-        // See if there is an additional training source
-        bool hasAdditionalTrainingSource =
-            project.TranslateConfig.DraftConfig.AdditionalTrainingSourceEnabled
-            && project.TranslateConfig.DraftConfig.AdditionalTrainingSource is not null
-            && project.TranslateConfig.PreTranslate;
-
-        // Ensure we have a source if we are running an SMT build or have a source or an alternate source when NMT
-        if ((!preTranslate || !hasAlternateSource) && project.TranslateConfig.Source is null)
+        // Ensure we have a source if we are running an SMT build
+        if (!preTranslate && project.TranslateConfig.Source is null)
         {
             throw new InvalidDataException("The project source is not specified.");
+        }
+
+        // Ensure we have drafting and training sources if we are running an NMT build
+        if (
+            preTranslate
+            && (
+                project.TranslateConfig.DraftConfig.DraftingSources.Count == 0
+                || project.TranslateConfig.DraftConfig.TrainingSources.Count == 0
+            )
+        )
+        {
+            throw new InvalidDataException("The drafting or training sources are not specified.");
         }
 
         // Build the list of corpora and files to upload
         List<(string projectId, string paratextId, string writingSystemTag)> projects =
         [
-            // Target Project
+            // All builds will contain the target project
             (project.Id, project.ParatextId, project.WritingSystem.Tag),
         ];
 
+        // Add the source to the corpora, as it may be used in SMT builds if present
+        // Not including it will result in its deletion from Serval
         if (project.TranslateConfig.Source is not null)
         {
             projects.Add(
@@ -1755,38 +1724,15 @@ public class MachineProjectService(
             );
         }
 
-        if (hasAlternateSource)
-        {
-            projects.Add(
-                (
-                    project.TranslateConfig.DraftConfig.AlternateSource.ProjectRef,
-                    project.TranslateConfig.DraftConfig.AlternateSource.ParatextId,
-                    project.TranslateConfig.DraftConfig.AlternateSource.WritingSystem.Tag
+        // Add the drafting and training sources to the corpora as they may be used in NMT builds if present
+        // Not including it will result in its deletion from Serval
+        projects.AddRange(
+            project
+                .TranslateConfig.DraftConfig.DraftingSources.Concat(project.TranslateConfig.DraftConfig.TrainingSources)
+                .Select(translateSource =>
+                    (translateSource.ProjectRef, translateSource.ParatextId, translateSource.WritingSystem.Tag)
                 )
-            );
-        }
-
-        if (hasAlternateTrainingSource)
-        {
-            projects.Add(
-                (
-                    project.TranslateConfig.DraftConfig.AlternateTrainingSource.ProjectRef,
-                    project.TranslateConfig.DraftConfig.AlternateTrainingSource.ParatextId,
-                    project.TranslateConfig.DraftConfig.AlternateTrainingSource.WritingSystem.Tag
-                )
-            );
-        }
-
-        if (hasAdditionalTrainingSource)
-        {
-            projects.Add(
-                (
-                    project.TranslateConfig.DraftConfig.AdditionalTrainingSource.ProjectRef,
-                    project.TranslateConfig.DraftConfig.AdditionalTrainingSource.ParatextId,
-                    project.TranslateConfig.DraftConfig.AdditionalTrainingSource.WritingSystem.Tag
-                )
-            );
-        }
+        );
 
         // Create and upload the Serval Corpus Files
         List<ServalCorpusFile> servalCorpusFiles = [];
@@ -1836,14 +1782,16 @@ public class MachineProjectService(
             );
         }
 
-        // Get the source project for the NMT/SMT translation corpus
-        string sourceProjectId =
-            hasAlternateSource && preTranslate
-                ? project.TranslateConfig.DraftConfig.AlternateSource.ProjectRef
-                : project.TranslateConfig.Source.ProjectRef;
+        // Get the drafting source projects for the NMT/SMT translation corpus
+        string[] sourceProjectIds = preTranslate
+            ? [.. project.TranslateConfig.DraftConfig.DraftingSources.Select(s => s.ProjectRef)]
+            : [project.TranslateConfig.Source!.ProjectRef];
 
         // Set up the parallel corpus for NMT/SMT translation
-        List<ServalCorpusFile> sourceCorpora = [servalCorpusFiles.Single(f => f.ProjectId == sourceProjectId)];
+        List<ServalCorpusFile> sourceCorpora =
+        [
+            .. servalCorpusFiles.Where(f => sourceProjectIds.Contains(f.ProjectId)),
+        ];
         List<ServalCorpusFile> targetCorpora = [servalCorpusFiles.Single(f => f.ProjectId == project.Id)];
         List<string> sourceCorpusIds = [.. sourceCorpora.Select(f => f.CorpusId)];
         List<string> targetCorpusIds = [.. targetCorpora.Select(f => f.CorpusId)];
@@ -1876,25 +1824,13 @@ public class MachineProjectService(
         ServalAdditionalTrainingData? additionalTrainingData = projectSecret.ServalData.AdditionalTrainingData;
         if (preTranslate)
         {
-            // Build the source corpus ids for training
-            // First try the alternate training source, then the source, then the source specified for translation above
-            sourceProjectId = hasAlternateTrainingSource
-                ? project.TranslateConfig.DraftConfig.AlternateTrainingSource.ProjectRef
-                : (project.TranslateConfig.Source?.ProjectRef ?? sourceProjectId);
-
-            sourceCorpora = [servalCorpusFiles.Single(f => f.ProjectId == sourceProjectId)];
-
-            // Add the additional training source, if present and we are pre-translating
-            if (hasAdditionalTrainingSource)
-            {
-                string additionalTrainingSourceProjectId = project
-                    .TranslateConfig
-                    .DraftConfig
-                    .AdditionalTrainingSource
-                    .ProjectRef;
-                sourceCorpora.Add(servalCorpusFiles.Single(f => f.ProjectId == additionalTrainingSourceProjectId));
-            }
-
+            // Build the source corpora for training
+            sourceCorpora =
+            [
+                .. servalCorpusFiles.Where(f =>
+                    project.TranslateConfig.DraftConfig.TrainingSources.Select(s => s.ProjectRef).Contains(f.ProjectId)
+                ),
+            ];
             sourceCorpusIds = [.. sourceCorpora.Select(f => f.CorpusId)];
 
             // Build the target corpus ids for training

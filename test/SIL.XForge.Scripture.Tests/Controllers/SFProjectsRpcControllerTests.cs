@@ -1203,16 +1203,11 @@ public class SFProjectsRpcControllerTests
         var env = new TestEnvironment();
         var settings = new SFProjectSettings
         {
-            AlternateSourceParatextId = string.Empty,
             BiblicalTermsEnabled = true,
             CheckingAnswerExport = string.Empty,
             CheckingEnabled = true,
             HideCommunityCheckingText = true,
             SourceParatextId = string.Empty,
-            AlternateTrainingSourceEnabled = true,
-            AlternateTrainingSourceParatextId = string.Empty,
-            AdditionalTrainingSourceEnabled = true,
-            AdditionalTrainingSourceParatextId = string.Empty,
             TranslationSuggestionsEnabled = true,
             UsersSeeEachOthersResponses = true,
         };

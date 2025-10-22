@@ -101,13 +101,13 @@
             ></transloco>
           </app-notice>
         }
-        @if (!canAccessDraftSourceIfAvailable(additionalTrainingSource)) {
+        @if (!canAccessDraftSourceIfAvailable(secondTrainingSource)) {
           <app-notice type="warning" icon="warning" data-test-id="warning-mix-source-no-access">
             <transloco
               key="draft_generation.info_alert_no_additional_training_source_access"
               [params]="{
                 connectProjectUrl: { route: '/connect-project' },
-                name: projectLabel(additionalTrainingSource)
+                name: projectLabel(secondTrainingSource)
               }"
             ></transloco>
           </app-notice>
