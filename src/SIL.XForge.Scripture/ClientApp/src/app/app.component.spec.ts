@@ -7,7 +7,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { Route, Router, RouterModule } from '@angular/router';
+import { provideRouter, Route, Router } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
@@ -91,7 +91,6 @@ describe('AppComponent', () => {
     imports: [
       AppComponent,
       NavigationComponent,
-      RouterModule.forRoot(ROUTES),
       getTestTranslocoModule(),
       AvatarComponent,
       GlobalNoticesComponent,
@@ -100,6 +99,7 @@ describe('AppComponent', () => {
       MatTooltipModule
     ],
     providers: [
+      provideRouter(ROUTES),
       provideTestOnlineStatus(),
       provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: AuthService, useMock: mockedAuthService },

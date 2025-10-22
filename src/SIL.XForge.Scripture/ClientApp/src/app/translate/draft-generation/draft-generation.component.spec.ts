@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
-import { RouterModule } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -78,8 +78,9 @@ describe('DraftGenerationComponent', () => {
       }
 
       TestBed.configureTestingModule({
-        imports: [RouterModule.forRoot([]), getTestTranslocoModule()],
+        imports: [, getTestTranslocoModule()],
         providers: [
+          provideRouter([]),
           provideTestOnlineStatus(),
           { provide: AuthService, useValue: mockAuthService },
           { provide: DraftGenerationService, useValue: mockDraftGenerationService },

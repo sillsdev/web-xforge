@@ -4,7 +4,7 @@ import { DebugElement, getDebugNode } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { RouterModule } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { escapeRegExp, merge } from 'lodash-es';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
@@ -27,8 +27,9 @@ const mockedServalAdministrationService = mock(ServalAdministrationService);
 
 describe('ServalProjectsComponent', () => {
   configureTestingModule(() => ({
-    imports: [RouterModule.forRoot([]), getTestTranslocoModule()],
+    imports: [getTestTranslocoModule()],
     providers: [
+      provideRouter([]),
       { provide: ServalAdministrationService, useMock: mockedServalAdministrationService },
       provideTestRealtime(new TypeRegistry([TestProjectDoc], [FileType.Audio], [])),
       provideHttpClient(withInterceptorsFromDi()),

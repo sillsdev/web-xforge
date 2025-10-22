@@ -3,7 +3,7 @@ import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { Router, RouterModule } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
@@ -38,16 +38,12 @@ const mockedNoticeService = mock(NoticeService);
 
 describe('MyProjectsComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      MyProjectsComponent,
-
-      RouterModule.forRoot([
+    imports: [MyProjectsComponent, getTestTranslocoModule()],
+    providers: [
+      provideRouter([
         { path: 'projects/:projectId', component: EmptyComponent },
         { path: 'connect-project', component: EmptyComponent }
       ]),
-      getTestTranslocoModule()
-    ],
-    providers: [
       provideQuillRegistrations(),
       provideTestOnlineStatus(),
       provideAnimations(),

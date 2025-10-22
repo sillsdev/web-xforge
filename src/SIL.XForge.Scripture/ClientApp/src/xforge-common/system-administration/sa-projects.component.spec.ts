@@ -5,7 +5,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { MatCheckbox } from '@angular/material/checkbox';
 import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { RouterModule } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { escapeRegExp, merge } from 'lodash-es';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
@@ -32,8 +32,9 @@ const mockedUserService = mock(UserService);
 
 describe('SaProjectsComponent', () => {
   configureTestingModule(() => ({
-    imports: [SaProjectsComponent, RouterModule.forRoot([]), getTestTranslocoModule()],
+    imports: [SaProjectsComponent, getTestTranslocoModule()],
     providers: [
+      provideRouter([]),
       provideTestRealtime(new TypeRegistry([TestProjectDoc], [FileType.Audio], [])),
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },

@@ -5,7 +5,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { MatCheckboxHarness } from '@angular/material/checkbox/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { Route, RouterModule } from '@angular/router';
+import { provideRouter, Route } from '@angular/router';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
@@ -41,8 +41,9 @@ let env: TestEnvironment;
 
 describe('DraftApplyDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [getTestTranslocoModule(), RouterModule.forRoot(ROUTES)],
+    imports: [getTestTranslocoModule()],
     providers: [
+      provideRouter(ROUTES),
       provideTestOnlineStatus(),
       provideNoopAnimations(),
       { provide: SFUserProjectsService, useMock: mockedUserProjectsService },

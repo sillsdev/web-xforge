@@ -4,7 +4,7 @@ import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-
 import { MatDialogRef } from '@angular/material/dialog';
 import { MatIcon } from '@angular/material/icon';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
-import { Router, RouterModule } from '@angular/router';
+import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -53,7 +53,6 @@ export interface BookWithDraft {
     MatMenuTrigger,
     MatIcon,
     MatButtonToggleGroup,
-    RouterModule,
     TranslocoModule
   ]
 })

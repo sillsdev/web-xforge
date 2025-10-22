@@ -1,6 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { RouterModule } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
@@ -44,8 +44,9 @@ describe('DraftHistoryEntryComponent', () => {
   let fixture: ComponentFixture<DraftHistoryEntryComponent>;
 
   configureTestingModule(() => ({
-    imports: [getTestTranslocoModule(), RouterModule.forRoot([])],
+    imports: [getTestTranslocoModule()],
     providers: [
+      provideRouter([]),
       provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
       { provide: I18nService, useMock: mockedI18nService },
