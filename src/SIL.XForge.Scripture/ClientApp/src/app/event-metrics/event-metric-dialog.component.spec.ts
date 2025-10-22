@@ -63,7 +63,7 @@ describe('EventMetricDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [getTestTranslocoModule()],
+  imports: [getTestTranslocoModule(), EventMetricDialogComponent],
   providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
 })
 class DialogTestModule {}

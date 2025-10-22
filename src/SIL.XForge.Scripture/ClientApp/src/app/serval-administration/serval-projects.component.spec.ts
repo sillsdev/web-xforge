@@ -16,7 +16,7 @@ import { anything, mock, when } from 'ts-mockito';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { ProjectDoc } from 'xforge-common/models/project-doc';
 import { QueryFilter, QueryParameters } from 'xforge-common/query-parameters';
-import { provideTestRealtime } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { TypeRegistry } from 'xforge-common/type-registry';
@@ -27,13 +27,10 @@ const mockedServalAdministrationService = mock(ServalAdministrationService);
 
 describe('ServalProjectsComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      RouterModule.forRoot([]),
-      getTestTranslocoModule(),
-      provideTestRealtime(new TypeRegistry([TestProjectDoc], [FileType.Audio], []))
-    ],
+    imports: [RouterModule.forRoot([]), getTestTranslocoModule()],
     providers: [
       { provide: ServalAdministrationService, useMock: mockedServalAdministrationService },
+      provideTestRealtime(new TypeRegistry([TestProjectDoc], [FileType.Audio], [])),
       provideHttpClient(withInterceptorsFromDi()),
       provideHttpClientTesting(),
       provideNoopAnimations()
