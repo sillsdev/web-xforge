@@ -280,7 +280,7 @@ export class DraftHandlingService {
    */
   opsHaveContent(ops: DeltaOperation[]): boolean {
     const indexOfFirstText = ops.findIndex(op => typeof op.insert === 'string');
-    const onlyTextOpIsTrailingNewline = indexOfFirstText === ops.length - 1 && ops[indexOfFirstText].insert === '\n';
+    const onlyTextOpIsTrailingNewline = indexOfFirstText === ops.length - 1 && ops[indexOfFirstText]?.insert === '\n';
     const hasNoExistingText = indexOfFirstText === -1 || onlyTextOpIsTrailingNewline;
     return !hasNoExistingText;
   }

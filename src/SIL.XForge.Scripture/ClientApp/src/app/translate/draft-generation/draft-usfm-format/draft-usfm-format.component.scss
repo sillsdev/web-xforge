@@ -13,6 +13,7 @@
   flex-direction: row;
   column-gap: 8px;
   height: 100%;
+  width: 100%;
   margin-top: 8px;
 
   @include breakpoints.media-breakpoint-down(sm) {
@@ -48,6 +49,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  width: 100%;
 
   @include breakpoints.media-breakpoint-down(sm) {
     height: 600px;
@@ -55,6 +57,7 @@
   }
 
   .viewer-container {
+    height: 100%;
     overflow-y: auto;
   }
 }
