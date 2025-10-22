@@ -5,7 +5,7 @@ import { userEvent, within } from '@storybook/test';
 import { of } from 'rxjs';
 import { anything, instance, mock, reset, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
-import { I18nStoryModule } from 'xforge-common/i18n-story.module';
+import { provideI18nStory } from 'xforge-common/i18n-story';
 import { ShareButtonComponent } from './share-button.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
@@ -23,8 +23,9 @@ type Story = StoryObj<ShareButtonComponent>;
 const Template: Story = {
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, I18nStoryModule],
+      imports: [CommonModule],
       providers: [
+        provideI18nStory() as any,
         { provide: ActivatedRoute, useValue: instance(mockedActivatedRoute) },
         { provide: DialogService, useValue: instance(mockedDialogService) }
       ]

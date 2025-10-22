@@ -13,9 +13,9 @@ import { ActivatedProjectService, TestActivatedProjectService } from 'xforge-com
 import { AuthGuard } from 'xforge-common/auth.guard';
 import { AuthService } from 'xforge-common/auth.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { I18nStoryModule } from 'xforge-common/i18n-story.module';
+import { provideI18nStory } from 'xforge-common/i18n-story';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime-providers';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UserService } from 'xforge-common/user.service';
 import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
@@ -65,8 +65,11 @@ function setUpMocks(args: StoryState): void {
 
   TestBed.resetTestingModule();
   TestBed.configureTestingModule({
-    imports: [I18nStoryModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
-    providers: [{ provide: UserService, useValue: instance(mockedUserService) }]
+    providers: [
+      provideI18nStory(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
+      { provide: UserService, useValue: instance(mockedUserService) }
+    ]
   });
 
   const realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
@@ -106,8 +109,9 @@ const meta: Meta = {
     setUpMocks(args as StoryState);
     return {
       moduleMetadata: {
-        imports: [CommonModule, I18nStoryModule],
+        imports: [CommonModule],
         providers: [
+          provideI18nStory() as any,
           { provide: AuthService, useValue: instance(mockedAuthService) },
           {
             provide: OnlineStatusService,
