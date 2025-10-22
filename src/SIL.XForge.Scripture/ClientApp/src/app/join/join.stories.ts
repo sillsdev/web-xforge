@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
@@ -69,7 +68,7 @@ const meta: Meta = {
   },
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, NoticeComponent, GenericDialogComponent],
+      imports: [NoticeComponent, GenericDialogComponent],
       providers: [
         provideI18nStory() as any,
         { provide: ActivatedRoute, useValue: instance(mockedActivatedRoute) },

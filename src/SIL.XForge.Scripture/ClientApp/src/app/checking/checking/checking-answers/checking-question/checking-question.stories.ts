@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { expect } from '@storybook/test';
 import { cloneDeep } from 'mingo/util';
@@ -67,7 +66,7 @@ const meta: Meta<CheckingQuestionComponent> = {
   component: CheckingQuestionComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, SingleButtonAudioPlayerComponent],
+      imports: [SingleButtonAudioPlayerComponent],
       providers: [
         provideI18nStory() as any,
         provideTestRealtime(SF_TYPE_REGISTRY),

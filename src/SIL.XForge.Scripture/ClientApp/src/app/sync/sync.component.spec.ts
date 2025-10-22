@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { DebugElement, ErrorHandler } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -41,7 +40,7 @@ const mockedCookieService = mock(CookieService);
 
 describe('SyncComponent', () => {
   configureTestingModule(() => ({
-    imports: [SyncComponent, SyncProgressComponent, CommonModule, getTestTranslocoModule(), NoticeComponent],
+    imports: [SyncComponent, SyncProgressComponent, getTestTranslocoModule(), NoticeComponent],
     providers: [
       provideTestOnlineStatus(),
       provideTestRealtime(SF_TYPE_REGISTRY),
