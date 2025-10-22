@@ -1,7 +1,7 @@
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { CommonModule } from '@angular/common';
-import { DebugElement, NgModule } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { MatSelect } from '@angular/material/select';
@@ -41,7 +41,7 @@ import {
 
 describe('TranslatorSettingsDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule],
+    imports: [CommonModule, getTestTranslocoModule(), NoticeComponent, TranslatorSettingsDialogComponent],
     providers: [
       provideTestOnlineStatus(),
       provideTestRealtime(SF_TYPE_REGISTRY),
@@ -310,11 +310,6 @@ describe('TranslatorSettingsDialogComponent', () => {
     }));
   });
 });
-
-@NgModule({
-  imports: [CommonModule, getTestTranslocoModule(), NoticeComponent, TranslatorSettingsDialogComponent]
-})
-class DialogTestModule {}
 
 interface TestEnvironmentConstructorArgs {
   translationSuggestionsEnabled?: boolean;

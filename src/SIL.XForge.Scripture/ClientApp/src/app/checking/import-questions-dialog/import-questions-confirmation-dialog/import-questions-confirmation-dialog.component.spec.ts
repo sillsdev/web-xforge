@@ -1,6 +1,5 @@
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
@@ -14,7 +13,8 @@ import {
 
 describe('ImportQuestionsConfirmationDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule]
+    imports: [getTestTranslocoModule(), ImportQuestionsConfirmationDialogComponent],
+    providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
   }));
 
   it('Allows selecting and unselecting all questions', fakeAsync(async () => {
@@ -67,12 +67,6 @@ describe('ImportQuestionsConfirmationDialogComponent', () => {
     expect(dialogResult).toEqual([false, false, true]);
   }));
 });
-
-@NgModule({
-  imports: [getTestTranslocoModule(), ImportQuestionsConfirmationDialogComponent],
-  providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
-})
-class DialogTestModule {}
 
 class TestEnvironment {
   fixture: ComponentFixture<ChildViewContainerComponent>;

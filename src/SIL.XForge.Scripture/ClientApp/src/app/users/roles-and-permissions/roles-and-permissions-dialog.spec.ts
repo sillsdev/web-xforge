@@ -1,5 +1,5 @@
 import { HttpClient, HttpHandler } from '@angular/common/http';
-import { Component, DebugElement, Input, NgModule } from '@angular/core';
+import { Component, DebugElement, Input } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
@@ -44,7 +44,7 @@ const mockedProjectService = mock(SFProjectService);
 
 describe('RolesAndPermissionsComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule],
+    imports: [getTestTranslocoModule(), NoticeComponent, RolesAndPermissionsDialogComponent, FakeAvatarComponent],
     providers: [
       provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: ExternalUrlService },
@@ -201,11 +201,6 @@ class FakeAvatarComponent {
   @Input() size?: number;
   @Input() round?: boolean;
 }
-
-@NgModule({
-  imports: [getTestTranslocoModule(), NoticeComponent, RolesAndPermissionsDialogComponent, FakeAvatarComponent]
-})
-class DialogTestModule {}
 
 class TestEnvironment {
   component?: RolesAndPermissionsDialogComponent;

@@ -1,6 +1,5 @@
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, inject, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
@@ -9,7 +8,8 @@ import { DeleteProjectDialogComponent } from './delete-project-dialog.component'
 
 describe('DeleteProjectDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule]
+    imports: [getTestTranslocoModule(), DeleteProjectDialogComponent],
+    providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting(), provideNoopAnimations()]
   }));
 
   let dialog: MatDialog;
@@ -100,9 +100,3 @@ describe('DeleteProjectDialogComponent', () => {
     viewContainerFixture = TestBed.createComponent(ChildViewContainerComponent);
   });
 });
-
-@NgModule({
-  imports: [getTestTranslocoModule(), DeleteProjectDialogComponent],
-  providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting(), provideNoopAnimations()]
-})
-class DialogTestModule {}

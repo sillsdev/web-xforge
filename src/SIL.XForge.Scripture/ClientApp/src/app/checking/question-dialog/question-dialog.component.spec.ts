@@ -1,7 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { DebugElement, NgModule } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
@@ -60,7 +58,14 @@ const mockedFileService = mock(FileService);
 
 describe('QuestionDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [ReactiveFormsModule, FormsModule, DialogTestModule],
+    imports: [
+      CommonModule,
+      ReactiveFormsModule,
+      FormsModule,
+      getTestTranslocoModule(),
+      ScriptureChooserDialogComponent,
+      QuestionDialogComponent
+    ],
     providers: [
       provideQuillRegistrations(),
       provideTestOnlineStatus(),
@@ -569,13 +574,6 @@ describe('QuestionDialogComponent', () => {
     expect(env.isSegmentHighlighted('1')).toBe(true);
   }));
 });
-
-@NgModule({
-  exports: [ScriptureChooserDialogComponent],
-  imports: [CommonModule, getTestTranslocoModule(), ScriptureChooserDialogComponent],
-  providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
-})
-class DialogTestModule {}
 
 class TestEnvironment {
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
