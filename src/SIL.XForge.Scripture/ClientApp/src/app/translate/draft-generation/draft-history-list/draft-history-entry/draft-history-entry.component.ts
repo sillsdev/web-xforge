@@ -20,7 +20,7 @@ import {
   MatRowDef,
   MatTable
 } from '@angular/material/table';
-import { RouterModule } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -82,7 +82,7 @@ interface TrainingConfigurationRow {
     MatRow,
     MatRowDef,
     TranslocoModule,
-    RouterModule
+    RouterLink
   ],
   templateUrl: './draft-history-entry.component.html',
   styleUrl: './draft-history-entry.component.scss'

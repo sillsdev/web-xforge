@@ -15,7 +15,7 @@ import { MatExpansionPanel, MatExpansionPanelContent, MatExpansionPanelHeader } 
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressBar } from '@angular/material/progress-bar';
 import { MatTabGroup } from '@angular/material/tabs';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterLink as NgRouterLink, Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { NgCircleProgressModule } from 'ng-circle-progress';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
@@ -80,7 +80,7 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
     MatExpansionPanel,
     MatExpansionPanelHeader,
     MatExpansionPanelContent,
-    RouterModule,
+    NgRouterLink,
     TranslocoModule,
     TranslocoMarkupModule,
     NoticeComponent,
