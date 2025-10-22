@@ -3,9 +3,8 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { Meta, moduleMetadata } from '@storybook/angular';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
-import { I18nStoryModule } from 'xforge-common/i18n-story.module';
+import { provideI18nStory } from 'xforge-common/i18n-story';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import {
   MatDialogLaunchComponent,
   matDialogStory,
@@ -119,8 +118,9 @@ const meta: Meta = {
 export default meta;
 
 const dialogStoryConfig: MatDialogStoryConfig = {
-  imports: [XForgeCommonModule, I18nStoryModule, EditorTabAddResourceDialogComponent],
+  imports: [EditorTabAddResourceDialogComponent],
   providers: [
+    provideI18nStory() as any,
     provideAnimations(),
     { provide: EditorTabAddResourceDialogService, useValue: instance(mockEditorTabAddResourceDialogService) },
     { provide: SFProjectService, useValue: instance(mockSFProjectService) },
