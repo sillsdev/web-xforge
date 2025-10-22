@@ -287,19 +287,6 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     this.projectUserConfigDoc?.submitJson0Op(op => op.set<boolean>(puc => puc.transliterateBiblicalTerms, value));
   }
 
-  get selectedReferenceForCaption(): string {
-    if ((this._bookNum ?? 0) === 0) {
-      return '';
-    } else if ((this._chapter ?? 0) === 0) {
-      return ` (${this.i18n.localizeBook(this._bookNum ?? 0)})`;
-    } else if ((this._verse ?? '0') === '0') {
-      return ` (${this.i18n.localizeBook(this._bookNum ?? 0)} ${this._chapter})`;
-    } else {
-      const verseRef = new VerseRef(Canon.bookNumberToId(this._bookNum!), this._chapter!.toString(), this._verse!);
-      return ` (${this.i18n.localizeReference(verseRef)})`;
-    }
-  }
-
   ngOnDestroy(): void {
     this.biblicalTermQuery?.dispose();
     this.noteThreadQuery?.dispose();

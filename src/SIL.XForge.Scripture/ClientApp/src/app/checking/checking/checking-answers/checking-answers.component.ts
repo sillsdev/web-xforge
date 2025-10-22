@@ -234,10 +234,6 @@ export class CheckingAnswersComponent implements OnInit {
     return this.project == null ? false : this.project.checkingConfig.usersSeeEachOthersResponses;
   }
 
-  get canShowScriptureInput(): boolean {
-    return !!this.selectedText;
-  }
-
   get currentUserTotalAnswers(): number {
     if (this._questionDoc == null || this._questionDoc.data == null) {
       return 0;
@@ -254,15 +250,6 @@ export class CheckingAnswersComponent implements OnInit {
       answer => answer.ownerRef === this.userService.currentUserId && !answer.deleted
     );
     return answer !== undefined ? answer : null;
-  }
-
-  get hasUserRead(): boolean {
-    return this.projectUserConfigDoc != null &&
-      this.projectUserConfigDoc.data != null &&
-      this._questionDoc != null &&
-      this._questionDoc.data != null
-      ? this.projectUserConfigDoc.data.questionRefsRead.includes(this._questionDoc.data.dataId)
-      : false;
   }
 
   get canEditQuestion(): boolean {

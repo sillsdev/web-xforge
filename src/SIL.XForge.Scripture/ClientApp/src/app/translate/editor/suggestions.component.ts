@@ -29,8 +29,6 @@ export class SuggestionsComponent {
 
   @ViewChild('list') list?: MatSelectionList;
 
-  showHelp: boolean = false;
-
   private _text?: TextComponent;
   private _suggestions: Suggestion[] = [];
   private resizeObserver?: ResizeObserver;
@@ -111,10 +109,6 @@ export class SuggestionsComponent {
 
   private get root(): HTMLElement {
     return this.elemRef.nativeElement;
-  }
-
-  toggleHelp(): void {
-    this.showHelp = !this.showHelp;
   }
 
   selectAll(event: Event): void {

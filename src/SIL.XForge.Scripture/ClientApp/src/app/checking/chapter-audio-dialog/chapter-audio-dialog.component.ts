@@ -61,7 +61,6 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
   private _chapter: number = 1;
   private textAudioQuery?: RealtimeQuery<TextAudioDoc>;
   private timing: AudioTiming[] = [];
-  private _editState: boolean = false;
   private _selectionHasAudioAlready: boolean = false;
   private _audioLength: number = 0;
   private _audioBlob?: string;
@@ -151,10 +150,6 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
 
   get numberOfTimingSegments(): number {
     return this.timing_processed.length;
-  }
-
-  get inEditState(): boolean {
-    return this._editState;
   }
 
   get isLoadingAudio(): boolean {
@@ -515,7 +510,6 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
         if (doc == null) {
           return;
         }
-        this._editState = true;
         this.timing = this.timing_processed = doc.timings;
         this.fileService
           .findOrUpdateCache(FileType.Audio, TextAudioDoc.COLLECTION, textAudioId, doc.audioUrl)

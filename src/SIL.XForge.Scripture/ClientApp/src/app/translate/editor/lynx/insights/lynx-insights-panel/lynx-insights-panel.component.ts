@@ -278,18 +278,6 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
   }
 
   /**
-   * Returns the total number of additional nodes that are not currently visible.
-   */
-  getRemainingNodeCount(node: InsightPanelNode): number {
-    if (!node.children) {
-      return 0;
-    }
-    const defaultCount = this.lynxInsightConfig.panelOptimizationThreshold;
-    const currentCount = this.lastVisibleCountMap.get(node.description) || defaultCount;
-    return Math.max(0, node.children.length - currentCount);
-  }
-
-  /**
    * Shows more nodes by incrementing the number of visible nodes.
    */
   showMoreNodes(node: InsightPanelNode): void {

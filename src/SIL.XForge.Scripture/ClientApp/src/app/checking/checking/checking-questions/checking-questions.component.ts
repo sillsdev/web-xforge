@@ -187,10 +187,6 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
     return this.activeQuestionDoc?.data == null ? undefined : this.activeQuestionDoc.data.verseRef.bookNum;
   }
 
-  get activeQuestionChapter(): number | undefined {
-    return this.activeQuestionDoc?.data == null ? undefined : this.activeQuestionDoc.data.verseRef.chapterNum;
-  }
-
   get activeQuestionIndex(): number {
     if (this.activeQuestionDoc == null) {
       return -1;
@@ -385,14 +381,6 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
     return config != null && (config.commentRefsRead.includes(comment.dataId) || config.ownerRef === comment.ownerRef);
   }
 
-  nextQuestion(): void {
-    this.changeQuestion(1);
-  }
-
-  previousQuestion(): void {
-    this.changeQuestion(-1);
-  }
-
   activateQuestion(questionDoc: QuestionDoc, actionSource?: QuestionChangeActionSource, clearFilter?: boolean): void {
     const verseRef: VerseRefData | undefined = questionDoc.data?.verseRef;
 
@@ -442,12 +430,6 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
     this.questionListOptions
       ?.find(opt => opt.nativeElement?.classList.contains('selected'))
       ?.nativeElement.scrollIntoView({ block: 'nearest' });
-  }
-
-  private changeQuestion(newDifferential: number): void {
-    if (this.activeQuestionDoc && this.checkCanChangeQuestion(newDifferential)) {
-      this.activateQuestion(this.questionDocs[this.activeQuestionIndex + newDifferential]);
-    }
   }
 
   private referenceForDisplay(questionDoc: QuestionDoc): string {
