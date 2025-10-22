@@ -3,7 +3,7 @@ import { MAT_DIALOG_DATA, MatDialog, MatDialogConfig } from '@angular/material/d
 
 import { CommonModule } from '@angular/common';
 import { Meta, StoryFn } from '@storybook/angular';
-import { I18nStoryModule } from 'xforge-common/i18n-story.module';
+import { provideI18nStory } from 'xforge-common/i18n-story';
 import { ErrorAlertData, ErrorDialogComponent } from './error-dialog.component';
 
 interface StoryArgs {
@@ -33,8 +33,9 @@ export default {
 
 const Template: StoryFn = args => ({
   moduleMetadata: {
-    imports: [CommonModule, I18nStoryModule, ErrorDialogComponent],
+    imports: [CommonModule, ErrorDialogComponent],
     providers: [
+      provideI18nStory() as any,
       { provide: MAT_DIALOG_DATA, useValue: { data: args.dialogData } },
       { provide: STORY_ARGS, useValue: args }
     ]

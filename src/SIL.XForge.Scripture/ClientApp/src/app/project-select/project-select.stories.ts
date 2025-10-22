@@ -2,7 +2,7 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { expect, within } from '@storybook/test';
 import userEvent from '@testing-library/user-event';
-import { I18nStoryModule } from 'xforge-common/i18n-story.module';
+import { provideI18nStory } from 'xforge-common/i18n-story';
 import { SelectableProjectWithLanguageCode } from '../core/paratext.service';
 import { projectLabel } from '../shared/utils';
 import { ProjectSelectComponent } from './project-select.component';
@@ -12,7 +12,8 @@ const meta: Meta<ProjectSelectComponent> = {
   component: ProjectSelectComponent,
   decorators: [
     moduleMetadata({
-      imports: [I18nStoryModule, TranslocoModule]
+      imports: [TranslocoModule],
+      providers: [provideI18nStory() as any]
     })
   ]
 };
