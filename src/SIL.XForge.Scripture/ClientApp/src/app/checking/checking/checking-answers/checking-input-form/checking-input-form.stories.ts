@@ -3,7 +3,7 @@ import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { expect, userEvent, within } from '@storybook/test';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { AutofocusDirective } from 'xforge-common/autofocus.directive';
-import { I18nStoryModule } from 'xforge-common/i18n-story.module';
+import { provideI18nStory } from 'xforge-common/i18n-story';
 import { AttachAudioComponent } from '../../../attach-audio/attach-audio.component';
 import { TextAndAudioComponent } from '../../../text-and-audio/text-and-audio.component';
 import { CheckingInputFormComponent } from './checking-input-form.component';
@@ -13,7 +13,8 @@ const meta: Meta<CheckingInputFormComponent> = {
   component: CheckingInputFormComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, AutofocusDirective, I18nStoryModule, TextAndAudioComponent, AttachAudioComponent]
+      imports: [CommonModule, AutofocusDirective, TextAndAudioComponent, AttachAudioComponent],
+      providers: [provideI18nStory() as any]
     })
   ]
 };
