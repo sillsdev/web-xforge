@@ -4,12 +4,15 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { MatRadioButtonHarness } from '@angular/material/radio/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import {
+  DraftConfig,
   DraftUsfmConfig,
   ParagraphBreakFormat,
-  QuoteFormat
+  QuoteFormat,
+  TranslateConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
@@ -78,8 +81,15 @@ describe('DraftUsfmFormatComponent', () => {
 
   it('shows message if user is not online', fakeAsync(async () => {
     const env = new TestEnvironment({
-      config: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Denormalized }
+      project: {
+        translateConfig: {
+          draftConfig: {
+            usfmConfig: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Normalized }
+          } as DraftConfig
+        } as TranslateConfig
+      }
     });
+
     expect(env.offlineMessage).toBeNull();
 
     env.onlineStatusService.setIsOnline(false);
@@ -102,19 +112,63 @@ describe('DraftUsfmFormatComponent', () => {
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
   }));
 
+  it('can navigate to first book and chapter if book does not exist', fakeAsync(() => {
+    when(mockedActivatedRoute.params).thenReturn(of({ bookId: 'NUM', chapter: '1' }));
+    const env = new TestEnvironment();
+    tick(EDITOR_READY_TIMEOUT);
+    env.fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+    expect(env.component.bookNum).toBe(1);
+    expect(env.component.chapterNum).toBe(1);
+    verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
+  }));
+
+  it('can navigate to book and chapter if first chapter has no draft', fakeAsync(() => {
+    const env = new TestEnvironment({
+      project: {
+        texts: [
+          {
+            bookNum: 1,
+            chapters: [
+              { number: 1, lastVerse: 15, isValid: true, permissions: {}, hasDraft: false },
+              { number: 2, lastVerse: 20, isValid: true, permissions: {}, hasDraft: true },
+              { number: 3, lastVerse: 18, isValid: true, permissions: {}, hasDraft: true }
+            ],
+            hasSource: true,
+            permissions: {}
+          }
+        ]
+      }
+    });
+    tick(EDITOR_READY_TIMEOUT);
+    env.fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+    expect(env.component.bookNum).toBe(1);
+    expect(env.component.chapterNum).toBe(2);
+    expect(env.component.chaptersWithDrafts).toEqual([2, 3]);
+    verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
+  }));
+
   // Book and chapter changed
   it('navigates to a different book and chapter', fakeAsync(() => {
     const env = new TestEnvironment({
-      config: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Denormalized }
+      project: {
+        translateConfig: {
+          draftConfig: {
+            usfmConfig: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Denormalized }
+          } as DraftConfig
+        } as TranslateConfig
+      }
     });
+
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
-    expect(env.component.chapters.length).toEqual(1);
+    expect(env.component.chaptersWithDrafts.length).toEqual(1);
     expect(env.component.booksWithDrafts.length).toEqual(2);
 
     env.component.bookChanged(2);
     tick();
     env.fixture.detectChanges();
-    expect(env.component.chapters.length).toEqual(2);
+    expect(env.component.chaptersWithDrafts.length).toEqual(2);
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).twice();
 
     env.component.chapterChanged(2);
@@ -133,7 +187,13 @@ describe('DraftUsfmFormatComponent', () => {
 
   it('should show the currently selected format options', fakeAsync(() => {
     const env = new TestEnvironment({
-      config: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Normalized }
+      project: {
+        translateConfig: {
+          draftConfig: {
+            usfmConfig: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Normalized }
+          } as DraftConfig
+        } as TranslateConfig
+      }
     });
     expect(env.component.paragraphFormat.value).toBe(ParagraphBreakFormat.MoveToEnd);
     expect(env.component.quoteFormat.value).toBe(QuoteFormat.Normalized);
@@ -141,7 +201,13 @@ describe('DraftUsfmFormatComponent', () => {
 
   it('goes back if user chooses different configurations and then goes back', fakeAsync(async () => {
     const env = new TestEnvironment({
-      config: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Denormalized }
+      project: {
+        translateConfig: {
+          draftConfig: {
+            usfmConfig: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Denormalized }
+          } as DraftConfig
+        } as TranslateConfig
+      }
     });
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
     expect(env.harnesses?.length).toEqual(5);
@@ -162,7 +228,13 @@ describe('DraftUsfmFormatComponent', () => {
 
   it('should save changes to the draft format', fakeAsync(async () => {
     const env = new TestEnvironment({
-      config: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Denormalized }
+      project: {
+        translateConfig: {
+          draftConfig: {
+            usfmConfig: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Denormalized }
+          } as DraftConfig
+        } as TranslateConfig
+      }
     });
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
     expect(env.harnesses?.length).toEqual(5);
@@ -212,7 +284,7 @@ class TestEnvironment {
   readonly projectId = 'project01';
   onlineStatusService: TestOnlineStatusService;
 
-  constructor(args: { config?: DraftUsfmConfig; quotationAnalysis?: QuotationAnalysis } = {}) {
+  constructor(args: { project?: Partial<SFProjectProfile>; quotationAnalysis?: QuotationAnalysis } = {}) {
     const userDoc = mock(UserDoc);
     this.onlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
     when(mockedDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(
@@ -232,7 +304,7 @@ class TestEnvironment {
     when(mockedNoticeService.show(anything())).thenResolve();
     when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(true);
     when(mockedServalAdministration.onlineRetrievePreTranslationStatus(anything())).thenResolve();
-    this.setupProject(args.config);
+    this.setupProject(args.project);
     this.fixture = TestBed.createComponent(DraftUsfmFormatComponent);
     this.component = this.fixture.componentInstance;
     const loader = TestbedHarnessEnvironment.loader(this.fixture);
@@ -257,7 +329,7 @@ class TestEnvironment {
     return this.fixture.nativeElement.querySelector('.quote-format-warning');
   }
 
-  setupProject(config?: DraftUsfmConfig): void {
+  setupProject(project?: Partial<SFProjectProfile>): void {
     const texts: TextInfo[] = [
       {
         bookNum: 1,
@@ -283,7 +355,7 @@ class TestEnvironment {
     ];
     const projectDoc = {
       id: this.projectId,
-      data: createTestProjectProfile({ translateConfig: { draftConfig: { usfmConfig: config } }, texts })
+      data: createTestProjectProfile({ translateConfig: project?.translateConfig, texts: project?.texts ?? texts })
     } as SFProjectProfileDoc;
     when(mockedActivatedProjectService.projectId).thenReturn(this.projectId);
     when(mockedActivatedProjectService.projectDoc$).thenReturn(of(projectDoc));
