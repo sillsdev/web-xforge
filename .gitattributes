@@ -6,6 +6,9 @@
 # Declare files that will always have LF line endings on checkout.
 *.css text eol=lf
 *.js text eol=lf
+*.mjs text eol=lf
+*.ts text eol=lf
+*.mts text eol=lf
 *.json text eol=lf
 *.html text eol=lf
 *.php text eol=lf
