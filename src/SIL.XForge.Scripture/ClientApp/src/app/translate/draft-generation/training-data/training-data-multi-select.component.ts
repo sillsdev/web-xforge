@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MatDialogConfig } from '@angular/material/dialog';
@@ -20,7 +19,7 @@ import {
 @Component({
   selector: 'app-training-data-multi-select',
   templateUrl: './training-data-multi-select.component.html',
-  imports: [CommonModule, MatButton, MatIcon, MatList, MatListItem, TranslocoModule],
+  imports: [MatButton, MatIcon, MatList, MatListItem, TranslocoModule],
   styleUrls: ['./training-data-multi-select.component.scss']
 })
 export class TrainingDataMultiSelectComponent {

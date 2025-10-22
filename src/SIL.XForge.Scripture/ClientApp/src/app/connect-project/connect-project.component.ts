@@ -1,8 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, ErrorHandler, OnInit } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatButton } from '@angular/material/button';
+import { MatCard, MatCardContent, MatCardSubtitle, MatCardTitle } from '@angular/material/card';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatDivider } from '@angular/material/divider';
+import { MatError } from '@angular/material/form-field';
 import { Router } from '@angular/router';
-import { TranslocoService, TranslocoModule } from '@ngneat/transloco';
+import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -15,14 +20,9 @@ import { SFProjectCreateSettings } from '../core/models/sf-project-create-settin
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
-import { compareProjectsForSorting, projectLabel } from '../shared/utils';
-import { MatCard, MatCardContent, MatCardTitle, MatCardSubtitle } from '@angular/material/card';
-import { SyncProgressComponent } from '../sync/sync-progress/sync-progress.component';
 import { ProjectSelectComponent } from '../project-select/project-select.component';
-import { MatError } from '@angular/material/form-field';
-import { MatDivider } from '@angular/material/divider';
-import { MatCheckbox } from '@angular/material/checkbox';
-import { MatButton } from '@angular/material/button';
+import { compareProjectsForSorting, projectLabel } from '../shared/utils';
+import { SyncProgressComponent } from '../sync/sync-progress/sync-progress.component';
 interface ConnectProjectFormValues {
   settings: {
     checking: boolean;

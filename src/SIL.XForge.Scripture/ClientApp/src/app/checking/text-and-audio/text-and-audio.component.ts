@@ -1,16 +1,16 @@
+import { NgClass } from '@angular/common';
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   AbstractControl,
-  UntypedFormControl,
-  UntypedFormGroup,
   FormsModule,
-  ReactiveFormsModule
+  ReactiveFormsModule,
+  UntypedFormControl,
+  UntypedFormGroup
 } from '@angular/forms';
-import { AudioAttachment } from '../checking/checking-audio-player/checking-audio-player.component';
-import { TranslocoModule } from '@ngneat/transloco';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
-import { NgClass } from '@angular/common';
+import { TranslocoModule } from '@ngneat/transloco';
+import { AudioAttachment } from '../checking/checking-audio-player/checking-audio-player.component';
 
 @Component({
   selector: 'app-text-and-audio',

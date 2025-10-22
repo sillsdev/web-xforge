@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, Inject, InjectionToken, Injector, OnInit, Provider } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { TranslocoModule } from '@ngneat/transloco';
@@ -55,7 +54,7 @@ export class MatDialogLaunchComponent implements OnInit {
 export function matDialogStory(component: any, config?: MatDialogStoryConfig): StoryFn {
   const story: StoryFn = args => ({
     moduleMetadata: {
-      imports: [MatDialogModule, CommonModule, TranslocoModule, component, ...(config?.imports ?? [])],
+      imports: [MatDialogModule, TranslocoModule, component, ...(config?.imports ?? [])],
       declarations: [...(config?.declarations ?? [])],
       providers: [
         { provide: MAT_DIALOG_DATA, useValue: args.data },

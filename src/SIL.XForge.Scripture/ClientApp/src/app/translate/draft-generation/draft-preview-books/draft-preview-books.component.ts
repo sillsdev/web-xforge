@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
 import { MatDialogRef } from '@angular/material/dialog';
@@ -46,7 +46,7 @@ export interface BookWithDraft {
   templateUrl: './draft-preview-books.component.html',
   styleUrls: ['./draft-preview-books.component.scss'],
   imports: [
-    CommonModule,
+    AsyncPipe,
     MatButtonToggle,
     MatMenu,
     MatMenuItem,

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, Inject, ViewChild } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MatCheckbox } from '@angular/material/checkbox';
@@ -38,7 +38,7 @@ export interface TrainingDataFileUpload {
   selector: 'app-training-data-upload-dialog',
   templateUrl: './training-data-upload-dialog.component.html',
   imports: [
-    CommonModule,
+    NgClass,
     MatButton,
     MatCheckbox,
     MatDialogTitle,

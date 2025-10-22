@@ -1,13 +1,13 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
 import { ActivatedRoute } from '@angular/router';
+import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { map } from 'rxjs/operators';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ShareDialogComponent, ShareDialogData } from './share-dialog.component';
-import { TranslocoModule } from '@ngneat/transloco';
-import { MatIconButton, MatButton } from '@angular/material/button';
-import { MatTooltip } from '@angular/material/tooltip';
-import { MatIcon } from '@angular/material/icon';
 
 @Component({
   selector: 'app-share-button',

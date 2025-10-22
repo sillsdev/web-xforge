@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { AsyncPipe, NgClass } from '@angular/common';
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
@@ -59,7 +59,8 @@ export interface DraftApplyDialogConfig {
     FormsModule,
     ReactiveFormsModule,
     TranslocoModule,
-    CommonModule,
+    AsyncPipe,
+    NgClass,
     NoticeComponent,
     ProjectSelectComponent
   ],

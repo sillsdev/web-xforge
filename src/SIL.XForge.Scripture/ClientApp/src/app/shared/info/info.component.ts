@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
-import { ICONS_TO_MIRROR_RTL } from '../utils';
-import { MatTooltip } from '@angular/material/tooltip';
 import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
+import { ICONS_TO_MIRROR_RTL } from '../utils';
 
 @Component({
   selector: 'app-info',

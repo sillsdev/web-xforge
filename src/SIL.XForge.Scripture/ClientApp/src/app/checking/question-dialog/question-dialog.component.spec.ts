@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -59,7 +58,6 @@ const mockedFileService = mock(FileService);
 describe('QuestionDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [
-      CommonModule,
       ReactiveFormsModule,
       FormsModule,
       getTestTranslocoModule(),

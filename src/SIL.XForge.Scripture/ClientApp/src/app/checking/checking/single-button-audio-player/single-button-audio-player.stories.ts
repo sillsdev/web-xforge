@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, ViewChild } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
@@ -31,7 +30,7 @@ const meta: Meta<SingleButtonAudioPlayerComponent> = {
   component: TestComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, SingleButtonAudioPlayerComponent, TestComponent],
+      imports: [SingleButtonAudioPlayerComponent, TestComponent],
       providers: [
         provideI18nStory() as any,
         { provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) }

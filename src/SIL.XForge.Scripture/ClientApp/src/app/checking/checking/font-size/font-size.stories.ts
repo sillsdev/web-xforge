@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { componentWrapperDecorator, Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { expect, userEvent } from '@storybook/test';
 import { PointerEventsCheckLevel } from '@testing-library/user-event';
@@ -10,7 +9,7 @@ export default {
   component: FontSizeComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, getTestTranslocoModule()]
+      imports: [getTestTranslocoModule()]
     }),
     componentWrapperDecorator(
       story => `

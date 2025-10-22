@@ -1,4 +1,8 @@
+import { Dir } from '@angular/cdk/bidi';
 import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { MatIconButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { Subscription } from 'rxjs';
@@ -9,10 +13,6 @@ import { TextDocId } from '../../../core/models/text-doc';
 import { AudioPlayer } from '../../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioHeadingRef, AudioTextRef, CheckingUtils } from '../../checking.utils';
-import { TranslocoModule } from '@ngneat/transloco';
-import { Dir } from '@angular/cdk/bidi';
-import { MatIconButton } from '@angular/material/button';
-import { MatIcon } from '@angular/material/icon';
 
 @Component({
   selector: 'app-checking-scripture-audio-player',

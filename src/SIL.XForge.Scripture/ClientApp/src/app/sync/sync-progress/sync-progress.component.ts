@@ -1,5 +1,7 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, DestroyRef, EventEmitter, Input, Output } from '@angular/core';
-import { ProgressBarMode, MatProgressBar } from '@angular/material/progress-bar';
+import { MatProgressBar, ProgressBarMode } from '@angular/material/progress-bar';
+import { TranslocoModule } from '@ngneat/transloco';
 import { OtJson0Op } from 'ot-json0';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { BehaviorSubject, map, merge, Observable } from 'rxjs';
@@ -10,8 +12,6 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { ProjectNotificationService } from '../../core/project-notification.service';
 import { SFProjectService } from '../../core/sf-project.service';
-import { TranslocoModule } from '@ngneat/transloco';
-import { AsyncPipe } from '@angular/common';
 export class ProgressState {
   constructor(
     public progressValue: number,

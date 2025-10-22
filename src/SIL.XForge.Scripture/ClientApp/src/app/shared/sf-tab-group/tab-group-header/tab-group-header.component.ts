@@ -1,4 +1,5 @@
 import { CdkDrag, CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
+import { AsyncPipe, NgFor, NgIf, NgTemplateOutlet } from '@angular/common';
 import {
   AfterViewInit,
   Component,
@@ -14,6 +15,9 @@ import {
   SimpleChanges,
   ViewChildren
 } from '@angular/core';
+import { MatIcon } from '@angular/material/icon';
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
+import { TranslocoModule } from '@ngneat/transloco';
 import {
   BehaviorSubject,
   debounceTime,
@@ -30,10 +34,6 @@ import { TabHeaderPointerEvent, TabLocation, TabMoveEvent } from '../sf-tabs.typ
 import { TabHeaderComponent } from '../tab-header/tab-header.component';
 import { TabComponent } from '../tab/tab.component';
 import { TabScrollButtonComponent } from './tab-scroll-button/tab-scroll-button.component';
-import { NgFor, NgTemplateOutlet, NgIf, AsyncPipe } from '@angular/common';
-import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
-import { MatIcon } from '@angular/material/icon';
-import { TranslocoModule } from '@ngneat/transloco';
 @Component({
   selector: 'app-tab-group-header',
   templateUrl: './tab-group-header.component.html',

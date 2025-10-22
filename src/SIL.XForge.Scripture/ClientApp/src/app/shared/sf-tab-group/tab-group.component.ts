@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   Component,
   ContentChildren,
@@ -12,11 +13,10 @@ import { take } from 'rxjs';
 import { TabAddRequestService } from './base-services/tab-add-request.service';
 import { TabFactoryService } from './base-services/tab-factory.service';
 import { TabHeaderPointerEvent, TabMoveEvent } from './sf-tabs.types';
+import { TabGroupHeaderComponent } from './tab-group-header/tab-group-header.component';
 import { TabStateService } from './tab-state/tab-state.service';
 import { TabBodyComponent } from './tab/tab-body/tab-body.component';
 import { TabComponent } from './tab/tab.component';
-import { TabGroupHeaderComponent } from './tab-group-header/tab-group-header.component';
-import { NgTemplateOutlet } from '@angular/common';
 
 @Component({
   selector: 'app-tab-group [groupId]',

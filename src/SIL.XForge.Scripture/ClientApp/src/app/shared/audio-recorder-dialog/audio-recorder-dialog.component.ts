@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { NgClass } from '@angular/common';
 import {
   Component,
   DestroyRef,
@@ -57,7 +57,7 @@ export interface AudioRecorderDialogResult {
     MatIconButton,
     MatIcon,
     MatDialogContent,
-    CommonModule,
+    NgClass,
     SingleButtonAudioPlayerComponent,
     TranslocoModule
   ]

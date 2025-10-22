@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Injector } from '@angular/core';
 import { Translation, TranslocoService } from '@ngneat/transloco';
 import { Decorator, Meta, moduleMetadata, StoryContext, StoryFn, StoryObj } from '@storybook/angular';
@@ -25,7 +24,6 @@ const meta: Meta = {
   title: 'App/Transloco/LtrMarkers',
   decorators: [
     moduleMetadata({
-      imports: [CommonModule],
       providers: [provideI18nStory() as any]
     }),
     AdaptedI18nStoryDecorator

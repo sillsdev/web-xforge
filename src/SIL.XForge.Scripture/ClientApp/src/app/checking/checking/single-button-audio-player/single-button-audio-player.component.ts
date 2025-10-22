@@ -1,14 +1,14 @@
+import { NgClass } from '@angular/common';
 import { Component, Input, OnChanges, OnDestroy } from '@angular/core';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatTooltip } from '@angular/material/tooltip';
+import { TranslocoModule } from '@ngneat/transloco';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { AudioPlayer, AudioStatus } from '../../../shared/audio/audio-player';
 import { AudioPlayerBaseComponent } from '../../../shared/audio/audio-player-base/audio-player-base.component';
 import { AudioSegmentPlayer } from '../../../shared/audio/audio-segment-player';
-import { TranslocoModule } from '@ngneat/transloco';
-import { NgClass } from '@angular/common';
-import { MatProgressSpinner } from '@angular/material/progress-spinner';
-import { MatIcon } from '@angular/material/icon';
-import { MatTooltip } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-single-button-audio-player',

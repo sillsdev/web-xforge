@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SwUpdate } from '@angular/service-worker';
@@ -109,7 +108,6 @@ const meta: Meta = {
     setUpMocks(args as StoryState);
     return {
       moduleMetadata: {
-        imports: [CommonModule],
         providers: [
           provideI18nStory() as any,
           { provide: AuthService, useValue: instance(mockedAuthService) },

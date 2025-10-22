@@ -1,13 +1,18 @@
+import { Dir } from '@angular/cdk/bidi';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { Component, DestroyRef, ElementRef, Inject, Optional, ViewChild } from '@angular/core';
+import { MatButton } from '@angular/material/button';
 import {
   MAT_DIALOG_DATA,
-  MatDialogConfig,
-  MatDialogRef,
-  MatDialogTitle,
-  MatDialogContent,
   MatDialogActions,
-  MatDialogClose
+  MatDialogClose,
+  MatDialogConfig,
+  MatDialogContent,
+  MatDialogRef,
+  MatDialogTitle
 } from '@angular/material/dialog';
+import { MatIcon } from '@angular/material/icon';
+import { TranslocoModule } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { fromEvent } from 'rxjs';
@@ -23,11 +28,6 @@ import {
   ScriptureChooserDialogData
 } from '../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { TextComponent } from '../shared/text/text.component';
-import { TranslocoModule } from '@ngneat/transloco';
-import { CdkScrollable } from '@angular/cdk/scrolling';
-import { MatIcon } from '@angular/material/icon';
-import { Dir } from '@angular/cdk/bidi';
-import { MatButton } from '@angular/material/button';
 export interface TextChooserDialogData {
   bookNum: number;
   chapterNum: number;

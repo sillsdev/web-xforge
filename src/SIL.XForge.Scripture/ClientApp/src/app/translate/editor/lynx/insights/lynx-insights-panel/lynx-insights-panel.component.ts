@@ -1,6 +1,14 @@
+import { NgClass } from '@angular/common';
 import { AfterViewInit, Component, DestroyRef, Inject, ViewChild } from '@angular/core';
-import { MatTree, MatTreeNodeDef, MatTreeNode, MatTreeNodeToggle } from '@angular/material/tree';
+import { MatButton } from '@angular/material/button';
+import { MatRipple } from '@angular/material/core';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressBar } from '@angular/material/progress-bar';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatTree, MatTreeNode, MatTreeNodeDef, MatTreeNodeToggle } from '@angular/material/tree';
 import { Router } from '@angular/router';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { groupBy } from 'lodash-es';
 import { Range } from 'quill';
@@ -24,15 +32,7 @@ import { combineVerseRefStrs, getVerseRefFromSegmentRef } from '../../../../../s
 import { EditorSegmentService } from '../base-services/editor-segment.service';
 import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightConfig, LynxInsightRange } from '../lynx-insight';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
-import { TranslocoModule } from '@ngneat/transloco';
 import { LynxInsightsPanelHeaderComponent } from './lynx-insights-panel-header/lynx-insights-panel-header.component';
-import { MatRipple } from '@angular/material/core';
-import { MatProgressSpinner } from '@angular/material/progress-spinner';
-import { MatIcon } from '@angular/material/icon';
-import { MatTooltip } from '@angular/material/tooltip';
-import { NgClass } from '@angular/common';
-import { MatButton } from '@angular/material/button';
-import { MatProgressBar } from '@angular/material/progress-bar';
 
 /**
  * The sample text surrounding an insight, broken into pre-text, insight text, and post-text.

@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, Inject } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import {
@@ -18,7 +17,6 @@ import { EventMetric } from './event-metric';
   templateUrl: './event-metric-dialog.component.html',
   styleUrls: ['./event-metric-dialog.component.scss'],
   imports: [
-    CommonModule,
     MatButton,
     MatDialogTitle,
     MatDialogContent,

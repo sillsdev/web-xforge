@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
@@ -15,7 +14,7 @@ import { DraftGenerationService } from '../draft-generation.service';
   selector: 'app-draft-download-button',
   templateUrl: './draft-download-button.component.html',
   styleUrls: ['./draft-download-button.component.scss'],
-  imports: [CommonModule, MatButton, MatIcon, MatProgressSpinner, TranslocoModule]
+  imports: [MatButton, MatIcon, MatProgressSpinner, TranslocoModule]
 })
 export class DraftDownloadButtonComponent {
   /**

@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, Inject } from '@angular/core';
 import {
   MAT_DIALOG_DATA,
@@ -35,15 +34,7 @@ const EVENT_TYPE_LABELS: {
   selector: 'app-job-events-dialog',
   templateUrl: './job-events-dialog.component.html',
   styleUrls: ['./job-events-dialog.component.scss'],
-  imports: [
-    CommonModule,
-    MatDialogTitle,
-    MatDialogContent,
-    MatDialogActions,
-    MatDialogClose,
-    MatIcon,
-    JsonViewerComponent
-  ]
+  imports: [MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose, MatIcon, JsonViewerComponent]
 })
 export class JobEventsDialogComponent {
   constructor(

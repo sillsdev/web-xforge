@@ -1,12 +1,18 @@
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { AsyncPipe } from '@angular/common';
 import { Component, DestroyRef, Inject, OnInit } from '@angular/core';
-import { FormControl, FormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButton } from '@angular/material/button';
 import {
   MAT_DIALOG_DATA,
-  MatDialogRef,
-  MatDialogTitle,
+  MatDialogActions,
   MatDialogContent,
-  MatDialogActions
+  MatDialogRef,
+  MatDialogTitle
 } from '@angular/material/dialog';
+import { MatError } from '@angular/material/form-field';
+import { MatProgressBar } from '@angular/material/progress-bar';
+import { TranslocoModule } from '@ngneat/transloco';
 import { map, repeat, take, timer } from 'rxjs';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -15,15 +21,9 @@ import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
 import { SelectableProject } from '../../../../core/paratext.service';
 import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
-import { EditorTabAddResourceDialogService } from './editor-tab-add-resource-dialog.service';
-import { MatProgressBar } from '@angular/material/progress-bar';
-import { SyncProgressComponent } from '../../../../sync/sync-progress/sync-progress.component';
-import { TranslocoModule } from '@ngneat/transloco';
-import { CdkScrollable } from '@angular/cdk/scrolling';
 import { ProjectSelectComponent } from '../../../../project-select/project-select.component';
-import { MatError } from '@angular/material/form-field';
-import { MatButton } from '@angular/material/button';
-import { AsyncPipe } from '@angular/common';
+import { SyncProgressComponent } from '../../../../sync/sync-progress/sync-progress.component';
+import { EditorTabAddResourceDialogService } from './editor-tab-add-resource-dialog.service';
 export interface EditorTabAddResourceDialogData {
   excludedParatextIds: string[];
 }

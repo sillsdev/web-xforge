@@ -1,12 +1,21 @@
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { NgClass } from '@angular/common';
 import { Component, DestroyRef, Inject } from '@angular/core';
+import { MatButton, MatIconButton } from '@angular/material/button';
 import {
   MAT_DIALOG_DATA,
-  MatDialogRef,
-  MatDialogTitle,
+  MatDialogActions,
   MatDialogClose,
   MatDialogContent,
-  MatDialogActions
+  MatDialogRef,
+  MatDialogTitle
 } from '@angular/material/dialog';
+import { MatIcon } from '@angular/material/icon';
+import { MatListOption, MatSelectionList } from '@angular/material/list';
+import { MatMenu, MatMenuTrigger } from '@angular/material/menu';
+import { MatTooltip } from '@angular/material/tooltip';
+import { TranslocoModule } from '@ngneat/transloco';
+import { TranslocoMarkupComponent } from 'ngx-transloco-markup';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -21,17 +30,8 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { environment } from '../../../environments/environment';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectService } from '../../core/sf-project.service';
-import { ShareBaseComponent } from './share-base.component';
-import { TranslocoModule } from '@ngneat/transloco';
-import { MatIconButton, MatButton } from '@angular/material/button';
-import { MatIcon } from '@angular/material/icon';
-import { CdkScrollable } from '@angular/cdk/scrolling';
-import { MatMenuTrigger, MatMenu } from '@angular/material/menu';
-import { MatTooltip } from '@angular/material/tooltip';
-import { MatSelectionList, MatListOption } from '@angular/material/list';
-import { TranslocoMarkupComponent } from 'ngx-transloco-markup';
-import { NgClass } from '@angular/common';
 import { NoticeComponent } from '../notice/notice.component';
+import { ShareBaseComponent } from './share-base.component';
 export interface ShareDialogData {
   projectId: string;
   defaultRole: SFProjectRole;

@@ -1,13 +1,13 @@
+import { Dir } from '@angular/cdk/bidi';
 import { Component, OnDestroy } from '@angular/core';
-import { MatSliderDragEvent, MatSlider, MatSliderThumb } from '@angular/material/slider';
+import { MatIcon } from '@angular/material/icon';
+import { MatSlider, MatSliderDragEvent, MatSliderThumb } from '@angular/material/slider';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Subscription } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { AudioPlayerBaseComponent } from '../audio-player-base/audio-player-base.component';
-import { TranslocoModule } from '@ngneat/transloco';
-import { Dir } from '@angular/cdk/bidi';
-import { MatIcon } from '@angular/material/icon';
 import { InfoComponent } from '../../info/info.component';
+import { AudioPlayerBaseComponent } from '../audio-player-base/audio-player-base.component';
 import { AudioTimePipe } from '../audio-time-pipe';
 
 @Component({
