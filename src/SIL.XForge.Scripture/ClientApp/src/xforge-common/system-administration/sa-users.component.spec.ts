@@ -5,7 +5,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { RouterModule } from '@angular/router';
+import { providerRouter } from '@angular/router';
 import { escapeRegExp, merge } from 'lodash-es';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { User } from 'realtime-server/lib/esm/common/models/user';
@@ -36,8 +36,9 @@ const mockedProjectService: ProjectService = mock(ProjectService);
 
 describe('SaUsersComponent', () => {
   configureTestingModule(() => ({
-    imports: [SaUsersComponent, RouterModule.forRoot([]), getTestTranslocoModule(), AvatarComponent],
+    imports: [SaUsersComponent, getTestTranslocoModule(), AvatarComponent],
     providers: [
+      providerRouter([]),
       provideTestRealtime(new TypeRegistry([UserDoc, TestProjectDoc], [FileType.Audio], [])),
       { provide: MatDialog, useMock: mockedMatDialog },
       { provide: UserService, useMock: mockedUserService },

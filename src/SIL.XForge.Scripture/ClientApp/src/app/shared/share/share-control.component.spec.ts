@@ -1,8 +1,8 @@
-import { Component, DebugElement, NgModule, ViewChild } from '@angular/core';
+import { Component, DebugElement, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { RouterModule } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
@@ -30,8 +30,9 @@ const mockedUserService = mock(UserService);
 
 describe('ShareControlComponent', () => {
   configureTestingModule(() => ({
-    imports: [TestModule, TestHostComponent],
+    imports: [TestHostComponent, getTestTranslocoModule()],
     providers: [
+      provideRouter([]),
       provideQuillRegistrations(),
       provideTestRealtime(SF_TYPE_REGISTRY),
       provideTestOnlineStatus(),
@@ -254,11 +255,6 @@ describe('ShareControlComponent', () => {
     expect(env.fetchElement('#email mat-error')).toBeNull();
   }));
 });
-
-@NgModule({
-  imports: [RouterModule.forRoot([]), getTestTranslocoModule()]
-})
-class TestModule {}
 
 @Component({
   template: `
