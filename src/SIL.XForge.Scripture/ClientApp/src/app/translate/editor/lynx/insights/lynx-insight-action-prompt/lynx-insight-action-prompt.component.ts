@@ -1,5 +1,6 @@
 import { Directionality } from '@angular/cdk/bidi';
 import { Component, DestroyRef, ElementRef, Input, OnInit, Renderer2 } from '@angular/core';
+import { MatIcon } from '@angular/material/icon';
 import { Bounds } from 'quill';
 import {
   combineLatest,
@@ -20,7 +21,6 @@ import { LynxableEditor, LynxEditor, LynxEditorAdapterFactory, LynxTextModelConv
 import { LynxInsight } from '../lynx-insight';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 import { getMostNestedInsight } from '../lynx-insight-util';
-import { MatIcon } from '@angular/material/icon';
 
 @Component({
   selector: 'app-lynx-insight-action-prompt',

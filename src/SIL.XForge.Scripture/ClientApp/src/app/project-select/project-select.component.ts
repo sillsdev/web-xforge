@@ -1,14 +1,17 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, DestroyRef, EventEmitter, forwardRef, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import {
   ControlValueAccessor,
   FormControl,
-  NG_VALUE_ACCESSOR,
-  ValidatorFn,
   FormsModule,
-  ReactiveFormsModule
+  NG_VALUE_ACCESSOR,
+  ReactiveFormsModule,
+  ValidatorFn
 } from '@angular/forms';
 import { MatAutocomplete, MatAutocompleteTrigger, MatOptgroup, MatOption } from '@angular/material/autocomplete';
 import { ShowOnDirtyErrorStateMatcher } from '@angular/material/core';
+import { MatError, MatFormField } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
 import { translate, TranslocoModule } from '@ngneat/transloco';
 import { BehaviorSubject, combineLatest, fromEvent, Observable } from 'rxjs';
 import { distinctUntilChanged, map, shareReplay, startWith, takeUntil, tap } from 'rxjs/operators';
@@ -17,9 +20,6 @@ import { hasPropWithValue } from '../../type-utils';
 import { SelectableProject } from '../core/paratext.service';
 import { SFValidators } from '../shared/sfvalidators';
 import { projectLabel } from '../shared/utils';
-import { MatFormField, MatError } from '@angular/material/form-field';
-import { MatInput } from '@angular/material/input';
-import { AsyncPipe } from '@angular/common';
 // A value accessor is necessary in order to create a custom form control
 export const PROJECT_SELECT_VALUE_ACCESSOR: any = {
   provide: NG_VALUE_ACCESSOR,

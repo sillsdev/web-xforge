@@ -1,7 +1,6 @@
 import { Component, Inject, InjectionToken, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogConfig } from '@angular/material/dialog';
 
-import { CommonModule } from '@angular/common';
 import { Meta, StoryFn } from '@storybook/angular';
 import { provideI18nStory } from 'xforge-common/i18n-story';
 import { ErrorAlertData, ErrorDialogComponent } from './error-dialog.component';
@@ -33,7 +32,7 @@ export default {
 
 const Template: StoryFn = args => ({
   moduleMetadata: {
-    imports: [CommonModule, ErrorDialogComponent],
+    imports: [ErrorDialogComponent],
     providers: [
       provideI18nStory() as any,
       { provide: MAT_DIALOG_DATA, useValue: { data: args.dialogData } },

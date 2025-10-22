@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { userEvent, within } from '@storybook/test';
@@ -23,7 +22,6 @@ type Story = StoryObj<ShareButtonComponent>;
 const Template: Story = {
   decorators: [
     moduleMetadata({
-      imports: [CommonModule],
       providers: [
         provideI18nStory() as any,
         { provide: ActivatedRoute, useValue: instance(mockedActivatedRoute) },

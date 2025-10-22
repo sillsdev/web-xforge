@@ -1,19 +1,19 @@
+import { Dir } from '@angular/cdk/bidi';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { Component, Inject, OnInit } from '@angular/core';
+import { MatButton } from '@angular/material/button';
 import {
   MAT_DIALOG_DATA,
-  MatDialogRef,
-  MatDialogTitle,
-  MatDialogContent,
   MatDialogActions,
-  MatDialogClose
+  MatDialogClose,
+  MatDialogContent,
+  MatDialogRef,
+  MatDialogTitle
 } from '@angular/material/dialog';
+import { TranslocoModule } from '@ngneat/transloco';
 import { browserLinks, getLinkHTML, issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import { environment } from '../../environments/environment';
 import { I18nService } from '../i18n.service';
-import { TranslocoModule } from '@ngneat/transloco';
-import { CdkScrollable } from '@angular/cdk/scrolling';
-import { Dir } from '@angular/cdk/bidi';
-import { MatButton } from '@angular/material/button';
 
 export interface ErrorAlertData {
   message: string;

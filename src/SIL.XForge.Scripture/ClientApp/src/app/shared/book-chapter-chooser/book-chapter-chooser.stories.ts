@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Meta, StoryFn } from '@storybook/angular';
 import { expect, userEvent, within } from '@storybook/test';
 import { provideI18nStory } from 'xforge-common/i18n-story';
@@ -22,7 +21,6 @@ export default meta;
 
 const Template: StoryFn = args => ({
   moduleMetadata: {
-    imports: [CommonModule],
     providers: [provideI18nStory() as any]
   },
   props: args

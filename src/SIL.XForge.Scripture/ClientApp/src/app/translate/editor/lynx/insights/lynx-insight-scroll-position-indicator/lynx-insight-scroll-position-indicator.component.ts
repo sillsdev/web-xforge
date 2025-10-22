@@ -1,3 +1,4 @@
+import { NgClass } from '@angular/common';
 import { Component, DestroyRef, Input, OnInit } from '@angular/core';
 import { LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { combineLatest, debounceTime, filter, fromEvent, map, startWith, switchMap } from 'rxjs';
@@ -6,7 +7,6 @@ import { EditorReadyService } from '../base-services/editor-ready.service';
 import { LynxableEditor, LynxEditor, LynxEditorAdapterFactory } from '../lynx-editor';
 import { LynxInsight } from '../lynx-insight';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
-import { NgClass } from '@angular/common';
 
 interface LynxInsightScrollPosition {
   id: string;

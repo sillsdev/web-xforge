@@ -1,11 +1,12 @@
+import { Dir } from '@angular/cdk/bidi';
 import { AfterViewInit, Component, DestroyRef, Input, ViewChild } from '@angular/core';
+import { MatIconButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { TranslocoModule } from '@ngneat/transloco';
 import { I18nService } from 'xforge-common/i18n.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
-import { TranslocoModule } from '@ngneat/transloco';
-import { Dir } from '@angular/cdk/bidi';
-import { MatIconButton } from '@angular/material/button';
-import { MatIcon } from '@angular/material/icon';
+
 export interface AudioAttachment {
   status?: 'denied' | 'processed' | 'recording' | 'reset' | 'stopped' | 'uploaded';
   url?: string;

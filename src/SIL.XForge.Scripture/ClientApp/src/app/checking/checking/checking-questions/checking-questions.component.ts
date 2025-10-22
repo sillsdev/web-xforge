@@ -1,3 +1,4 @@
+import { NgClass } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -13,7 +14,12 @@ import {
   SimpleChanges,
   ViewChildren
 } from '@angular/core';
-import { MatListItem, MatActionList } from '@angular/material/list';
+import { MatBadge } from '@angular/material/badge';
+import { MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatActionList, MatListItem } from '@angular/material/list';
+import { MatTooltip } from '@angular/material/tooltip';
+import { TranslocoModule } from '@ngneat/transloco';
 import { sortBy } from 'lodash-es';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
@@ -35,12 +41,6 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { TranslationEngineService } from '../../../core/translation-engine.service';
 import { BookChapter, bookChapterMatchesVerseRef, CheckingUtils } from '../../checking.utils';
 import { CheckingQuestionsService } from '../checking-questions.service';
-import { TranslocoModule } from '@ngneat/transloco';
-import { NgClass } from '@angular/common';
-import { MatTooltip } from '@angular/material/tooltip';
-import { MatBadge } from '@angular/material/badge';
-import { MatIcon } from '@angular/material/icon';
-import { MatButton } from '@angular/material/button';
 
 export interface QuestionChangeActionSource {
   /** True during events due to a questions doc change such as with a filter. */

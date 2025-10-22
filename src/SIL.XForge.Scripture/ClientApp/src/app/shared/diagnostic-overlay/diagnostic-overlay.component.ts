@@ -1,5 +1,5 @@
 import { OverlayModule } from '@angular/cdk/overlay';
-import { CommonModule } from '@angular/common';
+import { KeyValuePipe } from '@angular/common';
 import { Component } from '@angular/core';
 import { MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
@@ -23,7 +23,7 @@ const diagnosticOverlayCollapsedKey = 'DIAGNOSTIC_OVERLAY_COLLAPSED';
   selector: 'app-diagnostic-overlay',
   templateUrl: './diagnostic-overlay.component.html',
   styleUrl: './diagnostic-overlay.component.scss',
-  imports: [OverlayModule, CommonModule, MatIconButton, MatIcon, L10nNumberPipe]
+  imports: [OverlayModule, KeyValuePipe, MatIconButton, MatIcon, L10nNumberPipe]
 })
 export class DiagnosticOverlayComponent {
   isExpanded: boolean = true;
