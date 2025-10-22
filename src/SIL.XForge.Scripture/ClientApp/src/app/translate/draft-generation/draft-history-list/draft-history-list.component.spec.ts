@@ -1,6 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { RouterModule } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -27,8 +27,9 @@ const mockedFeatureFlagsService = mock(FeatureFlagService);
 
 describe('DraftHistoryListComponent', () => {
   configureTestingModule(() => ({
-    imports: [getTestTranslocoModule(), RouterModule.forRoot([])],
+    imports: [getTestTranslocoModule()],
     providers: [
+      provideRouter([]),
       provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },

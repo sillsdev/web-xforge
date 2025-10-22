@@ -10,7 +10,7 @@ import { MatMenuHarness } from '@angular/material/menu/testing';
 import { MatSelectHarness } from '@angular/material/select/testing';
 import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { ActivatedRoute, ActivatedRouteSnapshot, Params, Route, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Params, provideRouter, Route, Router } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
@@ -151,12 +151,12 @@ describe('CheckingComponent', () => {
       CheckingTextComponent,
       AngularSplitModule,
       ngfModule,
-      RouterModule.forRoot(ROUTES),
       ReactiveFormsModule,
       OwnerComponent,
       getTestTranslocoModule()
     ],
     providers: [
+      provideRouter(ROUTES),
       provideQuillRegistrations(),
       provideTestOnlineStatus(),
       provideTestRealtime(SF_TYPE_REGISTRY),
