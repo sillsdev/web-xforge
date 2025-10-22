@@ -1,7 +1,7 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { NgModule, NgZone } from '@angular/core';
+import { NgZone } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ngfModule } from 'angular-file';
@@ -21,8 +21,10 @@ const mockedUserService = mock(UserService);
 
 describe('TrainingDataUploadDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule],
+    imports: [ngfModule, getTestTranslocoModule()],
     providers: [
+      provideHttpClient(withInterceptorsFromDi()),
+      provideHttpClientTesting(),
       { provide: FileService, useMock: mockedFileService },
       { provide: TrainingDataService, useMock: mockedTrainingDataService },
       { provide: UserService, useMock: mockedUserService }
@@ -97,12 +99,6 @@ describe('TrainingDataUploadDialogComponent', () => {
     expect(env.fileNameExistsWarning).not.toBeNull();
   });
 });
-
-@NgModule({
-  imports: [ngfModule, getTestTranslocoModule()],
-  providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
-})
-class DialogTestModule {}
 
 class TestEnvironment {
   static uploadFiles: File[] = [new File([], 'test.csv')];

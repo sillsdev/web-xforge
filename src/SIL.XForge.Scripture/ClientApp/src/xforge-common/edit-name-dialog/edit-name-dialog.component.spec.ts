@@ -1,4 +1,4 @@
-import { Component, NgModule } from '@angular/core';
+import { Component } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
@@ -12,6 +12,7 @@ import { EditNameDialogComponent, EditNameDialogResult } from './edit-name-dialo
 
 describe('EditNameDialogComponent', () => {
   configureTestingModule(() => ({
+    imports: [getTestTranslocoModule(), EditNameDialogComponent],
     providers: [
       provideTestOnlineStatus(),
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
@@ -109,7 +110,7 @@ class TestEnvironment {
 
   constructor() {
     TestBed.configureTestingModule({
-      imports: [DialogTestModule]
+      imports: [getTestTranslocoModule(), EditNameDialogComponent, DialogOpenerComponent]
     });
     this.testOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
     this.fixture = TestBed.createComponent(DialogOpenerComponent);
@@ -177,11 +178,6 @@ class TestEnvironment {
     return this.overlayContainerElement.querySelector(selector);
   }
 }
-
-@NgModule({
-  imports: [getTestTranslocoModule(), EditNameDialogComponent]
-})
-class DialogTestModule {}
 
 @Component({
   template: `<button (click)="openDialog()"></button>`
