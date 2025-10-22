@@ -1,6 +1,6 @@
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { DebugElement, NgModule } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
@@ -13,7 +13,8 @@ import { ScriptureChooserDialogComponent, ScriptureChooserDialogData } from './s
 
 describe('ScriptureChooserDialog', () => {
   configureTestingModule(() => ({
-    imports: [TestModule]
+    imports: [getTestTranslocoModule(), ScriptureChooserDialogComponent],
+    providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting(), provideNoopAnimations()]
   }));
 
   let env: TestEnvironment;
@@ -395,12 +396,6 @@ describe('ScriptureChooserDialog', () => {
     expect(env.component.selection.book).toBeUndefined();
     expect(env.component.selection.chapter).toBeUndefined();
   }));
-
-  @NgModule({
-    imports: [getTestTranslocoModule(), ScriptureChooserDialogComponent],
-    providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting(), provideNoopAnimations()]
-  })
-  class TestModule {}
 
   class TestEnvironment {
     fixture: ComponentFixture<ChildViewContainerComponent>;

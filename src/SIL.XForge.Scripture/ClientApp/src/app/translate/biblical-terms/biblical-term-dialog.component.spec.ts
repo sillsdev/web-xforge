@@ -1,4 +1,3 @@
-import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
@@ -33,7 +32,7 @@ const mockedI18nService = mock(I18nService);
 
 describe('BiblicalTermDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule],
+    imports: [getTestTranslocoModule(), BiblicalTermDialogComponent],
     providers: [
       provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: I18nService, useMock: mockedI18nService },
@@ -187,11 +186,6 @@ describe('BiblicalTermDialogComponent', () => {
     env.closeDialog();
   }));
 });
-
-@NgModule({
-  imports: [getTestTranslocoModule(), BiblicalTermDialogComponent]
-})
-class DialogTestModule {}
 
 class TestEnvironment {
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;

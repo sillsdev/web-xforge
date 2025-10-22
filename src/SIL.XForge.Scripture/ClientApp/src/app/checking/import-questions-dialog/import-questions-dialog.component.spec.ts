@@ -1,7 +1,4 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
@@ -43,7 +40,13 @@ const mockedRealtimeQuery: RealtimeQuery<QuestionDoc> = mock(RealtimeQuery);
 
 describe('ImportQuestionsDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule],
+    imports: [
+      ReactiveFormsModule,
+      getTestTranslocoModule(),
+      ngfModule,
+      ScriptureChooserDialogComponent,
+      ImportQuestionsDialogComponent
+    ],
     providers: [
       provideTestOnlineStatus(),
       { provide: SFProjectService, useMock: mockedProjectService },
@@ -500,18 +503,6 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.overlayContainerElement.hasChildNodes()).withContext('close button closes dialog').toBeFalse();
   }));
 });
-
-@NgModule({
-  imports: [
-    ReactiveFormsModule,
-    getTestTranslocoModule(),
-    ngfModule,
-    ScriptureChooserDialogComponent,
-    ImportQuestionsDialogComponent
-  ],
-  providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
-})
-class DialogTestModule {}
 
 class TestEnvironment {
   fixture: ComponentFixture<ChildViewContainerComponent>;

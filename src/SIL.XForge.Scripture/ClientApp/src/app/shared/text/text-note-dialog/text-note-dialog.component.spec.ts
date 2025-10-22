@@ -1,4 +1,4 @@
-import { DebugElement, NgModule } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
@@ -13,7 +13,7 @@ import { NoteDialogData, TextNoteDialogComponent, TextNoteType } from './text-no
 
 describe('TextNoteDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule],
+    imports: [getTestTranslocoModule(), TextNoteDialogComponent],
     providers: [provideNoopAnimations()]
   }));
   let env: TestEnvironment;
@@ -57,11 +57,6 @@ describe('TextNoteDialogComponent', () => {
     expect(env.text).toBe(text);
   }));
 });
-
-@NgModule({
-  imports: [getTestTranslocoModule(), TextNoteDialogComponent]
-})
-class DialogTestModule {}
 
 class TestEnvironment {
   fixture: ComponentFixture<ChildViewContainerComponent>;

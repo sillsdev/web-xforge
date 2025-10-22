@@ -1,5 +1,4 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
-import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { anything, mock, when } from 'ts-mockito';
@@ -11,7 +10,7 @@ const mockedI18nService = mock(I18nService);
 
 describe('ErrorDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule],
+    imports: [getTestTranslocoModule(), ErrorDialogComponent],
     providers: [{ provide: I18nService, useMock: mockedI18nService }]
   }));
 
@@ -67,11 +66,6 @@ describe('ErrorDialogComponent', () => {
     flush();
   }));
 });
-
-@NgModule({
-  imports: [getTestTranslocoModule(), ErrorDialogComponent]
-})
-class DialogTestModule {}
 
 class TestEnvironment {
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
