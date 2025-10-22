@@ -24,6 +24,10 @@ export function hasProp<X, Y extends PropertyKey>(value: X, property: Y): value 
   return (isObj(value) || isFn(value)) && property in value;
 }
 
+export function hasArrayProp<X, Y extends PropertyKey>(value: X, property: Y): value is X & Record<Y, unknown[]> {
+  return hasProp(value, property) && Array.isArray(value[property]);
+}
+
 export function hasStringProp<X, Y extends PropertyKey>(value: X, property: Y): value is X & Record<Y, string> {
   return hasProp(value, property) && typeof value[property] === 'string';
 }

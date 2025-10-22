@@ -1,6 +1,7 @@
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import language_code_mapping from '../../../../../language_code_mapping.json';
+import { hasArrayProp } from '../../../type-utils';
 import { SelectableProjectWithLanguageCode } from '../../core/paratext.service';
 
 /** Represents draft sources as a set of two {@link TranslateSource} arrays, and one {@link SFProjectProfile} array. */
@@ -70,6 +71,16 @@ export function projectToDraftSources(project: SFProjectProfile): DraftSourcesAs
   const draftingSources: TranslateSource[] & ({ length: 0 } | { length: 1 }) = [];
   const trainingTargets: [SFProjectProfile] = [project];
   const draftConfig = project.translateConfig.draftConfig;
+  // Forward compatibility with the upcoming SF-3163 change to allow draft sources as arrays
+  if (
+    hasArrayProp(project.translateConfig.draftConfig, 'trainingSources') &&
+    hasArrayProp(project.translateConfig.draftConfig, 'draftingSources')
+  ) {
+    const trainingSources: TranslateSource[] = [...project.translateConfig.draftConfig.trainingSources] as any[];
+    const draftingSources: TranslateSource[] = [...project.translateConfig.draftConfig.draftingSources] as any[];
+    const trainingTargets: SFProjectProfile[] = [project];
+    return { trainingSources, trainingTargets, draftingSources };
+  }
   let trainingSource: TranslateSource | undefined;
   if (draftConfig.alternateTrainingSourceEnabled && draftConfig.alternateTrainingSource != null) {
     trainingSource = draftConfig.alternateTrainingSource;
