@@ -19,7 +19,7 @@ import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { TestingRetryingRequestService } from 'xforge-common/testing-retrying-request.service';

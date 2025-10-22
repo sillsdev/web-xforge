@@ -4,7 +4,7 @@ import { fakeAsync, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { HttpClient } from '../machine-api/http-client';
 import { NllbLanguageService } from './nllb-language.service';

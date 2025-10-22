@@ -17,7 +17,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
-import { provideTestRealtime } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';

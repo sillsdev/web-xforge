@@ -7,7 +7,7 @@ import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { NoticeService } from 'xforge-common/notice.service';
-import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../core/models/text-doc';

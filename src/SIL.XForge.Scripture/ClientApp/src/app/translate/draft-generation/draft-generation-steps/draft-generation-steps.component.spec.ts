@@ -15,7 +15,7 @@ import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { provideTestRealtime } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../../../core/models/paratext-project';

@@ -1,7 +1,7 @@
 import { Component, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { AudioPlayerStub } from '../../../checking/checking-test.utils';
 import { AudioPlayer, AudioStatus } from '../audio-player';

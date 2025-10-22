@@ -4,10 +4,11 @@ import { By } from '@angular/platform-browser';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { BehaviorSubject } from 'rxjs';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { getTestTranslocoModule } from 'xforge-common/test-utils';
 import { TextDocId } from '../../../core/models/text-doc';
+import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioPlayerStub, getAudioTimings, getAudioTimingWithHeadings } from '../../checking-test.utils';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player.component';
 
@@ -277,14 +278,18 @@ class TestEnvironment {
 
     TestBed.configureTestingModule({
       imports: [
-        provideTestOnlineStatus(),
         getTestTranslocoModule(),
         HostComponent,
         CheckingScriptureAudioPlayerComponent,
         AudioPlayerStubComponent
-      ]
+      ],
+      providers: [provideTestOnlineStatus()]
     });
     TestBed.overrideComponent(HostComponent, { set: { template: template } });
+    TestBed.overrideComponent(CheckingScriptureAudioPlayerComponent, {
+      remove: { imports: [AudioPlayerComponent] },
+      add: { imports: [AudioPlayerStubComponent] }
+    });
     this.ngZone = TestBed.inject(NgZone);
     this.fixture = TestBed.createComponent(HostComponent);
     this.component = this.fixture.componentInstance;

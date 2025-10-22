@@ -12,7 +12,7 @@ import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforg
 import { anything, instance, mock, when } from 'ts-mockito';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { TestRealtimeModule } from 'xforge-common/test-realtime-providers';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../../../core/models/sf-type-registry';

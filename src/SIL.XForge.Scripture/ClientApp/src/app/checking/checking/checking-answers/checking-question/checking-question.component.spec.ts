@@ -9,7 +9,7 @@ import { BehaviorSubject, lastValueFrom, Subject } from 'rxjs';
 import { takeWhile } from 'rxjs/operators';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
-import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';

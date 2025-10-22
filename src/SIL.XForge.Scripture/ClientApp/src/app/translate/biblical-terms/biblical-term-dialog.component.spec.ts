@@ -15,7 +15,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
-import { provideTestRealtime } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import {
   ChildViewContainerComponent,

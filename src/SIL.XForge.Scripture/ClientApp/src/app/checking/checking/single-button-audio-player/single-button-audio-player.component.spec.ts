@@ -1,10 +1,14 @@
+import { NgClass } from '@angular/common';
 import { Component, DebugElement, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatIcon } from '@angular/material/icon';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatTooltip } from '@angular/material/tooltip';
 import { By } from '@angular/platform-browser';
+import { TranslocoModule } from '@ngneat/transloco';
 import { BehaviorSubject } from 'rxjs';
 import { instance, mock, resetCalls, verify, when } from 'ts-mockito';
-import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { AudioPlayer, AudioStatus } from '../../../shared/audio/audio-player';
 import { AudioSegmentPlayer } from '../../../shared/audio/audio-segment-player';
@@ -158,10 +162,22 @@ class TestEnvironment {
 }
 
 @Component({
-  template: `<app-single-button-audio-player #player [source]="source" [start]="start" [end]="end">
+  selector: 'app-test-player',
+  templateUrl: './single-button-audio-player.component.html',
+  styleUrls: ['./single-button-audio-player.component.scss'],
+  imports: [TranslocoModule, NgClass, MatProgressSpinner, MatIcon, MatTooltip]
+})
+class TestComponent extends SingleButtonAudioPlayerComponent {
+  public setAudio(audioPlayer: AudioPlayer | undefined): void {
+    this.audio = audioPlayer;
+  }
+}
+
+@Component({
+  template: `<app-test-player #player [source]="source" [start]="start" [end]="end">
     <mat-icon id="content">play</mat-icon>
-  </app-single-button-audio-player>`,
-  imports: [SingleButtonAudioPlayerComponent, MatIcon]
+  </app-test-player>`,
+  imports: [TestComponent, MatIcon]
 })
 class MockComponent {
   @ViewChild('player') player!: TestComponent;
@@ -170,11 +186,5 @@ class MockComponent {
   end: number | undefined;
   constructor() {
     this.source = 'test-audio-player.webm';
-  }
-}
-
-class TestComponent extends SingleButtonAudioPlayerComponent {
-  public setAudio(audioPlayer: AudioPlayer | undefined): void {
-    this.audio = audioPlayer;
   }
 }

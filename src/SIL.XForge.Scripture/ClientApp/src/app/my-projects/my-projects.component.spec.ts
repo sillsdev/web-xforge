@@ -13,7 +13,7 @@ import { anything, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';

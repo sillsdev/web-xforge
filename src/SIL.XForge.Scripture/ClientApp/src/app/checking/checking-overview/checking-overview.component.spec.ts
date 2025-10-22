@@ -32,11 +32,11 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { noopDestroyRef } from 'xforge-common/realtime.service';
-import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { provideTestRealtime } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -61,7 +61,7 @@ const mockedChapterAudioDialogService = mock(ChapterAudioDialogService);
 
 describe('CheckingOverviewComponent', () => {
   configureTestingModule(() => ({
-    imports: [ngfModule],
+    imports: [ngfModule, getTestTranslocoModule()],
     providers: [
       provideTestOnlineStatus(),
       provideTestRealtime(SF_TYPE_REGISTRY),

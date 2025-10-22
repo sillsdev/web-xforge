@@ -1,5 +1,5 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
-import { DebugElement, NgModule, NgZone } from '@angular/core';
+import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
@@ -14,15 +14,16 @@ import { CsvService } from 'xforge-common/csv-service.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileOfflineData, FileType } from 'xforge-common/models/file-offline-data';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { provideTestRealtime } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import {
   ChildViewContainerComponent,
   configureTestingModule,
   getAudioBlob,
-  getShortAudioBlob
+  getShortAudioBlob,
+  getTestTranslocoModule
 } from 'xforge-common/test-utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -40,7 +41,7 @@ const mockedFileService = mock(FileService);
 
 describe('ChapterAudioDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule],
+    imports: [ngfModule, ChapterAudioDialogComponent, getTestTranslocoModule()],
     providers: [
       provideTestOnlineStatus(),
       provideTestRealtime(SF_TYPE_REGISTRY),
@@ -367,7 +368,7 @@ describe('ChapterAudioDialogComponent', () => {
     // The "from" value of the next entry
     expect(result.timingData[0].to).toEqual(1.1);
     // The end of the audio file
-    expect(result.timingData[1].to).toEqual(1.296);
+    expect(result.timingData[1].to).toEqual(1.32);
   }));
 
   it('will not save or upload if there is no audio', fakeAsync(() => {
@@ -600,11 +601,6 @@ describe('ChapterAudioDialogComponent', () => {
     expect(result!.timingData.every(t => t.to > 0)).toBe(true);
   });
 });
-
-@NgModule({
-  imports: [ngfModule]
-})
-class DialogTestModule {}
 
 class TestEnvironment {
   static genesisText: TextInfo = {

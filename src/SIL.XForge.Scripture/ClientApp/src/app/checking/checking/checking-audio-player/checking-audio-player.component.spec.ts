@@ -5,7 +5,7 @@ import { By } from '@angular/platform-browser';
 import { lastValueFrom } from 'rxjs';
 import { takeWhile } from 'rxjs/operators';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { getAudioBlob, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { AudioStatus } from '../../../shared/audio/audio-player';
@@ -194,7 +194,6 @@ class TestEnvironment {
 
   constructor(template: string, isOnline = true) {
     TestBed.configureTestingModule({
-      providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }, provideTestOnlineStatus()],
       imports: [
         getTestTranslocoModule(),
         HostComponent,
@@ -202,7 +201,8 @@ class TestEnvironment {
         AudioPlayerComponent,
         AudioTimePipe,
         InfoComponent
-      ]
+      ],
+      providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }, provideTestOnlineStatus()]
     });
 
     TestBed.overrideComponent(HostComponent, { set: { template: template } });

@@ -14,7 +14,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { RealtimeService } from 'xforge-common/realtime.service';
-import { provideTestRealtime } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';

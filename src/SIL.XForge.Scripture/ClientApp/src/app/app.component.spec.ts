@@ -33,9 +33,9 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { PWA_BEFORE_PROMPT_CAN_BE_SHOWN_AGAIN, PwaService } from 'xforge-common/pwa.service';
 import { TestBreakpointObserver } from 'xforge-common/test-breakpoint-observer';
-import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { provideTestRealtime } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
@@ -88,8 +88,8 @@ const ROUTES: Route[] = [
 
 describe('AppComponent', () => {
   configureTestingModule(() => ({
-    declarations: [AppComponent],
     imports: [
+      AppComponent,
       NavigationComponent,
       RouterModule.forRoot(ROUTES),
       getTestTranslocoModule(),

@@ -17,7 +17,7 @@ import { of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
-import { provideTestRealtime } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';

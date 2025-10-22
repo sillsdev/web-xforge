@@ -1,6 +1,7 @@
 import { Component, DestroyRef, OnInit } from '@angular/core';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
+import { MatInput } from '@angular/material/input';
 import { MatPaginator } from '@angular/material/paginator';
 import {
   MatCell,
@@ -93,6 +94,7 @@ class Row {
     MatRow,
     MatLabel,
     MatFormField,
+    MatInput,
     MatRowDef,
     MatPaginator,
     RouterLinkDirective

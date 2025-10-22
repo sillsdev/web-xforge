@@ -12,7 +12,7 @@ import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
-import { provideTestRealtime } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';

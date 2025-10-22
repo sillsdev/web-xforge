@@ -1,7 +1,7 @@
 import { fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { mock, verify, when } from 'ts-mockito';
 import { AnonymousService } from 'xforge-common/anonymous.service';
-import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { FeatureFlagService } from './feature-flag.service';
 

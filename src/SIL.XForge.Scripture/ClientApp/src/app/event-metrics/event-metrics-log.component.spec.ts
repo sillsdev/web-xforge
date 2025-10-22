@@ -11,7 +11,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QueryResults } from 'xforge-common/query-parameters';
-import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
