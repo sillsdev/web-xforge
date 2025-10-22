@@ -1,7 +1,7 @@
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component } from '@angular/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -189,15 +189,12 @@ const meta: Meta = {
   },
   decorators: [
     moduleMetadata({
-      imports: [
-        RouterModule.forChild([
+      imports: [getTestTranslocoModule(), MyProjectsComponent],
+      providers: [
+        provideRouter([
           { path: 'projects/:projectId', component: EmptyComponent },
           { path: 'connect-project', component: EmptyComponent }
         ]),
-        getTestTranslocoModule(),
-        MyProjectsComponent
-      ],
-      providers: [
         provideQuillRegistrations() as any,
         provideTestOnlineStatus() as any,
         provideAnimations() as any,

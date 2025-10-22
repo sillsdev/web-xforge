@@ -9,7 +9,7 @@ import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dial
 import { MatTooltipHarness } from '@angular/material/tooltip/testing';
 import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { ActivatedRoute, Params, Route, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Params, provideRouter, Route, Router } from '@angular/router';
 import {
   createRange,
   InteractiveTranslatorFactory,
@@ -180,7 +180,6 @@ describe('EditorComponent', () => {
       BiblicalTermsComponent,
       CopyrightBannerComponent,
       DraftPreviewBooksComponent,
-      RouterModule.forRoot(ROUTES),
       getTestTranslocoModule(),
       TranslocoMarkupModule,
       TabGroupComponent,
@@ -191,6 +190,7 @@ describe('EditorComponent', () => {
       AngularSplitModule
     ],
     providers: [
+      provideRouter(ROUTES),
       provideQuillRegistrations(),
       provideTestOnlineStatus(),
       provideTestRealtime(SF_TYPE_REGISTRY),
