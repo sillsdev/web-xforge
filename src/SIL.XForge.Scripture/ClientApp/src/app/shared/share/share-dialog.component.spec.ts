@@ -1,4 +1,4 @@
-import { DebugElement, NgModule } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -38,7 +38,7 @@ enum TestUsers {
 
 describe('ShareDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule],
+    imports: [getTestTranslocoModule()],
     providers: [
       provideTestOnlineStatus(),
       provideTestRealtime(SF_TYPE_REGISTRY),
@@ -342,11 +342,6 @@ interface TestEnvironmentArgs {
   shareAPIEnabled?: boolean;
   translateShareEnabled?: boolean;
 }
-
-@NgModule({
-  imports: [getTestTranslocoModule()]
-})
-class DialogTestModule {}
 
 class TestEnvironment {
   isDialogOpen = true;
