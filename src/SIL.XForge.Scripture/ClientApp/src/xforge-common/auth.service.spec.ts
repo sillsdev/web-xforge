@@ -36,7 +36,7 @@ import { MemoryRealtimeRemoteStore } from './memory-realtime-remote-store';
 import { OfflineStore } from './offline-store';
 import { OnlineStatusService } from './online-status.service';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
-import { provideTestOnlineStatus } from './test-online-status.module';
+import { provideTestOnlineStatus } from './test-online-status-providers';
 import { TestOnlineStatusService } from './test-online-status.service';
 import { configureTestingModule, getTestTranslocoModule } from './test-utils';
 import { aspCultureCookieValue } from './utils';

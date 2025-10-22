@@ -19,9 +19,9 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { provideTestRealtime } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -51,8 +51,9 @@ const mockedDialogService = mock(DialogService);
 
 describe('DraftUsfmFormatComponent', () => {
   configureTestingModule(() => ({
-    imports: [DraftUsfmFormatComponent, getTestTranslocoModule(), provideQuillRegistrations()],
+    imports: [DraftUsfmFormatComponent, getTestTranslocoModule()],
     providers: [
+      provideQuillRegistrations(),
       provideTestRealtime(SF_TYPE_REGISTRY),
       provideTestOnlineStatus(),
       { provide: DraftHandlingService, useMock: mockedDraftHandlingService },

@@ -40,9 +40,14 @@ import { anything, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FontService } from 'xforge-common/font.service';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
-import { provideTestRealtime } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { ChildViewContainerComponent, configureTestingModule, matDialogCloseDelay } from 'xforge-common/test-utils';
+import {
+  ChildViewContainerComponent,
+  configureTestingModule,
+  getTestTranslocoModule,
+  matDialogCloseDelay
+} from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { BiblicalTermDoc } from '../../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../../core/models/note-thread-doc';
@@ -61,7 +66,7 @@ const mockedUserService = mock(UserService);
 
 describe('NoteDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [NoteDialogComponent],
+    imports: [NoteDialogComponent, getTestTranslocoModule()],
     providers: [
       { provide: DialogService, useMock: mockedDialogService },
       { provide: FontService, useMock: mockedFontService },

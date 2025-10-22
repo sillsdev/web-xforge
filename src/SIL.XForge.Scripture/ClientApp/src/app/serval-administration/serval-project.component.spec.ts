@@ -15,7 +15,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
@@ -102,13 +102,13 @@ describe('ServalProjectComponent', () => {
     it('should disable the view event log button when offline', fakeAsync(() => {
       const env = new TestEnvironment();
       env.onlineStatus = false;
-      expect(env.viewEventLogButton.ariaDisabled).toBe('true');
+      expect(env.viewEventLogButton['disabled']).toBe(true);
     }));
 
     it('should not disable the view event log button when online', fakeAsync(() => {
       const env = new TestEnvironment();
       env.onlineStatus = true;
-      expect(env.viewEventLogButton.ariaDisabled).toBeNull();
+      expect(env.viewEventLogButton['disabled']).toBeFalsy();
     }));
   });
 

@@ -12,7 +12,7 @@ import { anything, instance, mock, objectContaining, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
@@ -190,18 +190,18 @@ const meta: Meta = {
   decorators: [
     moduleMetadata({
       imports: [
-        provideQuillRegistrations(),
         RouterModule.forChild([
           { path: 'projects/:projectId', component: EmptyComponent },
           { path: 'connect-project', component: EmptyComponent }
         ]),
-        TestOnlineStatusModule.forRoot(),
         getTestTranslocoModule(),
         MyProjectsComponent
       ],
       providers: [
-        provideAnimations(),
-        provideHttpClientTesting(),
+        provideQuillRegistrations() as any,
+        provideTestOnlineStatus() as any,
+        provideAnimations() as any,
+        provideHttpClientTesting() as any,
         {
           provide: SFProjectService,
           useValue: instance(mockedSFProjectService)

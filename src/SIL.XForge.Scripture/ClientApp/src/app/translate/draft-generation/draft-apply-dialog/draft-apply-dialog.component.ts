@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
 import { MatCheckbox } from '@angular/material/checkbox';
 import {
@@ -56,6 +56,7 @@ export interface DraftApplyDialogConfig {
     MatDialogActions,
     MatDialogTitle,
     MatError,
+    FormsModule,
     ReactiveFormsModule,
     TranslocoModule,
     CommonModule,
@@ -175,9 +176,9 @@ export class DraftApplyDialogComponent implements OnInit {
       });
   }
 
-  addToProject(): void {
+  async addToProject(): Promise<void> {
     this.addToProjectClicked = true;
-    this.validateProject();
+    await this.validateProject();
     if (!this.isAppOnline || !this.isFormValid || this.targetProjectId == null || !this.canEditProject) {
       return;
     }
@@ -194,7 +195,7 @@ export class DraftApplyDialogComponent implements OnInit {
       this.canEditProject = false;
       this.targetBookExists = false;
       this.targetProject$.next(undefined);
-      this.validateProject();
+      void this.validateProject();
       return;
     }
 
@@ -223,18 +224,21 @@ export class DraftApplyDialogComponent implements OnInit {
     } else {
       this.targetProject$.next(undefined);
     }
-    this.validateProject();
+    void this.validateProject();
   }
 
   close(): void {
     this.dialogRef.close();
   }
 
-  private validateProject(): void {
-    // setTimeout prevents a "changed after checked" exception (may be removable after SF-3014)
-    setTimeout(() => {
-      this.isValid = this.getCustomErrorState() === CustomErrorState.None;
-      this.projectSelect?.customValidate(SFValidators.customValidator(this.getCustomErrorState()));
+  private async validateProject(): Promise<void> {
+    await new Promise<void>(resolve => {
+      // setTimeout prevents a "changed after checked" exception (may be removable after SF-3014)
+      setTimeout(() => {
+        this.isValid = this.getCustomErrorState() === CustomErrorState.None;
+        this.projectSelect?.customValidate(SFValidators.customValidator(this.getCustomErrorState()));
+        resolve();
+      });
     });
   }
 

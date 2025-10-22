@@ -2,8 +2,8 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { mock, when } from 'ts-mockito';
-import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
-import { provideTestRealtime } from 'xforge-common/test-realtime.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';

@@ -12,7 +12,7 @@ import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/model
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
@@ -44,13 +44,14 @@ describe('DraftApplyDialogComponent', () => {
     imports: [getTestTranslocoModule(), RouterModule.forRoot(ROUTES)],
     providers: [
       provideTestOnlineStatus(),
+      provideNoopAnimations(),
       { provide: SFUserProjectsService, useMock: mockedUserProjectsService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: TextDocService, useMock: mockedTextDocService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: MatDialogRef, useMock: mockedDialogRef },
-      { provide: MAT_DIALOG_DATA, useValue: { bookNum: 1, chapters: [1, 2, provideNoopAnimations()] } }
+      { provide: MAT_DIALOG_DATA, useValue: { bookNum: 1, chapters: [1, 2] } }
     ]
   }));
 
@@ -278,7 +279,11 @@ class TestEnvironment {
   }
 
   get confirmOverwriteErrorMessage(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('.form-error.visible');
+    return this.fixture.nativeElement.querySelector('.form-error.overwrite-content-error.visible');
+  }
+
+  get confirmCreateChaptersErrorMessage(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('.form-error.create-chapters-error.visible');
   }
 
   set onlineStatus(online: boolean) {
