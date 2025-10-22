@@ -2,9 +2,9 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { Location } from '@angular/common';
 import { Component, DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatIcon } from '@angular/material/icon';
+import { MatMenu } from '@angular/material/menu';
+import { MatTooltip } from '@angular/material/tooltip';
 import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, Route, Router } from '@angular/router';
@@ -94,9 +94,9 @@ describe('AppComponent', () => {
       getTestTranslocoModule(),
       AvatarComponent,
       GlobalNoticesComponent,
-      MatMenuModule,
-      MatIconModule,
-      MatTooltipModule
+      MatMenu,
+      MatIcon,
+      MatTooltip
     ],
     providers: [
       provideRouter(ROUTES),
