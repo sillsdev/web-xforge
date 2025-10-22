@@ -1,4 +1,12 @@
 import { Component, DestroyRef, HostBinding, OnInit } from '@angular/core';
+import { MatOption } from '@angular/material/autocomplete';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { MatPaginator } from '@angular/material/paginator';
+import { MatSelect } from '@angular/material/select';
+import { MatCell, MatCellDef, MatColumnDef, MatRow, MatRowDef, MatTable } from '@angular/material/table';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -11,15 +19,9 @@ import { DataLoadingComponent } from '../data-loading-component';
 import { NONE_ROLE, ProjectRoleInfo } from '../models/project-role-info';
 import { NoticeService } from '../notice.service';
 import { QueryParameters } from '../query-parameters';
-import { UserService } from '../user.service';
-import { MatFormField, MatLabel } from '@angular/material/form-field';
-import { MatInput } from '@angular/material/input';
-import { MatTable, MatColumnDef, MatCellDef, MatCell, MatRowDef, MatRow } from '@angular/material/table';
 import { RouterLinkDirective } from '../router-link.directive';
-import { MatSelect } from '@angular/material/select';
-import { MatOption } from '@angular/material/autocomplete';
-import { MatCheckbox } from '@angular/material/checkbox';
-import { MatPaginator } from '@angular/material/paginator';
+import { UserService } from '../user.service';
+
 class Row {
   isUpdatingRole: boolean = false;
 
@@ -81,7 +83,8 @@ class Row {
     MatCheckbox,
     MatRowDef,
     MatRow,
-    MatPaginator
+    MatPaginator,
+    TranslocoModule
   ]
 })
 export class SaProjectsComponent extends DataLoadingComponent implements OnInit {

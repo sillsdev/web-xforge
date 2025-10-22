@@ -8,7 +8,7 @@ import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
-import { provideTestRealtime } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { SF_TYPE_REGISTRY } from '../../app/core/models/sf-type-registry';
 import { isSafari } from '../utils';
