@@ -1,15 +1,15 @@
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { Component, Inject } from '@angular/core';
+import { MatButton } from '@angular/material/button';
 import {
   MAT_DIALOG_DATA,
-  MatDialogTitle,
-  MatDialogContent,
   MatDialogActions,
-  MatDialogClose
+  MatDialogClose,
+  MatDialogContent,
+  MatDialogTitle
 } from '@angular/material/dialog';
 import { User } from 'realtime-server/lib/esm/common/models/user';
-import { CdkScrollable } from '@angular/cdk/scrolling';
 import { AvatarComponent } from '../avatar/avatar.component';
-import { MatButton } from '@angular/material/button';
 
 export interface SaDeleteUserDialogData {
   user: User;
