@@ -5,7 +5,7 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { mock, when } from 'ts-mockito';
-import { provideTestRealtime } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { ServalAdministrationComponent } from './serval-administration.component';

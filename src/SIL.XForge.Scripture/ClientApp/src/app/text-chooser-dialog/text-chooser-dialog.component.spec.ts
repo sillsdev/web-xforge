@@ -15,10 +15,10 @@ import { firstValueFrom, of } from 'rxjs';
 import { anything, instance, mock, spy, when } from 'ts-mockito';
 import { DOCUMENT } from 'xforge-common/browser-globals';
 import { UserDoc } from 'xforge-common/models/user-doc';
-import { provideTestOnlineStatus } from 'xforge-common/test-online-status.module';
-import { provideTestRealtime } from 'xforge-common/test-realtime.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { ChildViewContainerComponent, configureTestingModule } from 'xforge-common/test-utils';
+import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
@@ -31,6 +31,7 @@ const mockedUserService = mock(UserService);
 
 describe('TextChooserDialogComponent', () => {
   configureTestingModule(() => ({
+    imports: [getTestTranslocoModule()],
     providers: [
       provideQuillRegistrations(),
       provideTestOnlineStatus(),

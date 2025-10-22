@@ -17,7 +17,7 @@ import { switchMap } from 'rxjs/operators';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { FileType } from 'xforge-common/models/file-offline-data';
-import { provideTestRealtime } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { environment } from '../../environments/environment';
 import { ProjectDoc } from '../models/project-doc';
 import { UserDoc } from '../models/user-doc';
@@ -36,14 +36,9 @@ const mockedProjectService: ProjectService = mock(ProjectService);
 
 describe('SaUsersComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      SaUsersComponent,
-      RouterModule.forRoot([]),
-      getTestTranslocoModule(),
-      provideTestRealtime(new TypeRegistry([UserDoc, TestProjectDoc], [FileType.Audio], [])),
-      AvatarComponent
-    ],
+    imports: [SaUsersComponent, RouterModule.forRoot([]), getTestTranslocoModule(), AvatarComponent],
     providers: [
+      provideTestRealtime(new TypeRegistry([UserDoc, TestProjectDoc], [FileType.Audio], [])),
       { provide: MatDialog, useMock: mockedMatDialog },
       { provide: UserService, useMock: mockedUserService },
       { provide: ProjectService, useMock: mockedProjectService },
