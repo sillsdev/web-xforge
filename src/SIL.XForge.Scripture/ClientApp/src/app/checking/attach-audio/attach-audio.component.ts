@@ -1,5 +1,11 @@
+import { NgClass } from '@angular/common';
 import { Component, Input, ViewChild } from '@angular/core';
+import { MatIconButton } from '@angular/material/button';
 import { MatDialogRef } from '@angular/material/dialog';
+import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
+import { TranslocoModule } from '@ngneat/transloco';
+import { ngfModule } from 'angular-file';
 import { InvalidFileItem } from 'angular-file/file-upload/fileTools';
 import { firstValueFrom } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -11,12 +17,6 @@ import {
 import { AudioAttachment } from '../checking/checking-audio-player/checking-audio-player.component';
 import { SingleButtonAudioPlayerComponent } from '../checking/single-button-audio-player/single-button-audio-player.component';
 import { TextAndAudioComponent } from '../text-and-audio/text-and-audio.component';
-import { TranslocoModule } from '@ngneat/transloco';
-import { NgClass } from '@angular/common';
-import { MatIconButton } from '@angular/material/button';
-import { MatTooltip } from '@angular/material/tooltip';
-import { MatIcon } from '@angular/material/icon';
-import { ngfModule } from 'angular-file';
 
 @Component({
   selector: 'app-attach-audio',
