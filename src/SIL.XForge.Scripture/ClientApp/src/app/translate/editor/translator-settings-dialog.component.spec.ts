@@ -1,6 +1,5 @@
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { CommonModule } from '@angular/common';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
@@ -41,7 +40,7 @@ import {
 
 describe('TranslatorSettingsDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [CommonModule, getTestTranslocoModule(), NoticeComponent, TranslatorSettingsDialogComponent],
+    imports: [getTestTranslocoModule(), NoticeComponent, TranslatorSettingsDialogComponent],
     providers: [
       provideTestOnlineStatus(),
       provideTestRealtime(SF_TYPE_REGISTRY),

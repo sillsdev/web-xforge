@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { userEvent, within } from '@storybook/test';
 import { of } from 'rxjs';
@@ -19,7 +18,7 @@ const meta: Meta<CheckingAudioPlayerComponent> = {
   component: CheckingAudioPlayerComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, CheckingAudioPlayerComponent, AudioPlayerComponent, AudioTimePipe, InfoComponent],
+      imports: [CheckingAudioPlayerComponent, AudioPlayerComponent, AudioTimePipe, InfoComponent],
       providers: [
         provideI18nStory() as any,
         { provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) }

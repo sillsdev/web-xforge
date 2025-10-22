@@ -1,4 +1,4 @@
-import { CommonModule, Location } from '@angular/common';
+import { Location } from '@angular/common';
 import { AfterViewInit, Component, DestroyRef, EventEmitter, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
@@ -46,7 +46,6 @@ import { DraftHandlingService } from '../draft-handling.service';
     MatCardTitle,
     MatIcon,
     MatProgressSpinner,
-    CommonModule,
     FormsModule,
     ReactiveFormsModule,
     BookChapterChooserComponent,

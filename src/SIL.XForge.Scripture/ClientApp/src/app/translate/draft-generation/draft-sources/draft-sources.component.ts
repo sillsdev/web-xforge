@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, EventEmitter } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MatCard, MatCardActions, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
@@ -63,7 +62,6 @@ export interface ProjectStatus {
     MatCardContent,
     MatCardTitle,
     MatError,
-    CommonModule,
     TranslocoModule,
     MatProgressSpinner,
     LanguageCodesConfirmationComponent,

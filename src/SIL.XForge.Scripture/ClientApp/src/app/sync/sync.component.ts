@@ -1,5 +1,11 @@
 import { Component, DestroyRef, OnInit } from '@angular/core';
+import { MatButton } from '@angular/material/button';
+import { MatCard } from '@angular/material/card';
+import { MatHint } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
 import { ActivatedRoute } from '@angular/router';
+import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { firstValueFrom } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -15,14 +21,8 @@ import { environment } from '../../environments/environment';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
-import { TranslocoModule } from '@ngneat/transloco';
 import { NoticeComponent } from '../shared/notice/notice.component';
-import { MatCard } from '@angular/material/card';
-import { MatButton } from '@angular/material/button';
-import { MatIcon } from '@angular/material/icon';
 import { SyncProgressComponent } from './sync-progress/sync-progress.component';
-import { MatHint } from '@angular/material/form-field';
-import { MatTooltip } from '@angular/material/tooltip';
 /** Reports as to whether a given project is actively syncing right now. */
 export function isSFProjectSyncing(project: SFProjectProfile): boolean {
   return project.sync.queuedCount > 0;

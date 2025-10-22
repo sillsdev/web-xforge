@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -73,7 +72,7 @@ const meta: Meta = {
   component: ConfirmSourcesComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, TranslocoModule, LanguageCodesConfirmationComponent],
+      imports: [TranslocoModule, LanguageCodesConfirmationComponent],
       providers: [
         { provide: DraftSourcesService, useValue: instance(mockDraftService) },
         { provide: ActivatedProjectService, useValue: instance(mockActivatedProject) },

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, ViewChild } from '@angular/core';
 import { MatButton } from '@angular/material/button';
@@ -67,7 +67,7 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
   templateUrl: './draft-generation.component.html',
   styleUrls: ['./draft-generation.component.scss'],
   imports: [
-    CommonModule,
+    AsyncPipe,
     MatButton,
     MatIcon,
     MatCard,

@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
@@ -16,7 +15,7 @@ const meta: Meta<AudioPlayerComponent> = {
   component: AudioPlayerComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, AudioTimePipe],
+      imports: [AudioTimePipe],
       providers: [
         provideI18nStory() as any,
         { provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) }

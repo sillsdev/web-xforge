@@ -1,11 +1,11 @@
-import { Component } from '@angular/core';
-import { FeatureFlagService } from './feature-flag.service';
-import { MatDialogTitle, MatDialogContent } from '@angular/material/dialog';
-import { MatIcon } from '@angular/material/icon';
 import { CdkScrollable } from '@angular/cdk/scrolling';
-import { NoticeComponent } from '../../app/shared/notice/notice.component';
-import { MatCheckbox } from '@angular/material/checkbox';
+import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatDialogContent, MatDialogTitle } from '@angular/material/dialog';
+import { MatIcon } from '@angular/material/icon';
+import { NoticeComponent } from '../../app/shared/notice/notice.component';
+import { FeatureFlagService } from './feature-flag.service';
 
 @Component({
   templateUrl: './feature-flags-dialog.component.html',
