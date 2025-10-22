@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Meta, StoryFn } from '@storybook/angular';
 import { expect, userEvent, within } from '@storybook/test';
-import { I18nStoryModule } from 'xforge-common/i18n-story.module';
+import { provideI18nStory } from 'xforge-common/i18n-story';
 import { arrayOfIntsFromOne } from 'xforge-common/test-utils';
 import { getOverlay } from '../../../../.storybook/util/mat-dialog-launch';
 import { BookChapterChooserComponent } from './book-chapter-chooser.component';
@@ -21,7 +21,10 @@ const meta: Meta = {
 export default meta;
 
 const Template: StoryFn = args => ({
-  moduleMetadata: { imports: [CommonModule, I18nStoryModule] },
+  moduleMetadata: {
+    imports: [CommonModule],
+    providers: [provideI18nStory() as any]
+  },
   props: args
 });
 
