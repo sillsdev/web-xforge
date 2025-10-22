@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { SlicePipe } from '@angular/common';
 import { Component, DestroyRef, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconButton } from '@angular/material/button';
@@ -196,9 +196,9 @@ class Row {
   styleUrls: ['./biblical-terms.component.scss'],
   imports: [
     FormsModule,
-    CommonModule,
     TranslocoModule,
     MatTooltip,
+    SlicePipe,
     MatIconButton,
     MatFormField,
     MatLabel,

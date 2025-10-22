@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { expect, within } from '@storybook/test';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -48,7 +47,7 @@ const meta: Meta<CheckingCommentsComponent> = {
   component: CheckingCommentsComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, OwnerComponent, CheckingInputFormComponent],
+      imports: [OwnerComponent, CheckingInputFormComponent],
       providers: [
         provideI18nStory() as any,
         { provide: DialogService, useValue: instance(mockedDialogService) },

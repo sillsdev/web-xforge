@@ -1,17 +1,39 @@
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { AsyncPipe } from '@angular/common';
 import { Component, DestroyRef, ElementRef, Inject, NgZone, OnDestroy, ViewChild } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatAnchor, MatButton, MatIconButton } from '@angular/material/button';
+import { MatCard, MatCardActions, MatCardContent, MatCardTitle } from '@angular/material/card';
 import { MatCheckbox } from '@angular/material/checkbox';
 import {
   MAT_DIALOG_DATA,
-  MatDialogConfig,
-  MatDialogRef,
-  MatDialogTitle,
+  MatDialogActions,
   MatDialogClose,
+  MatDialogConfig,
   MatDialogContent,
-  MatDialogActions
+  MatDialogRef,
+  MatDialogTitle
 } from '@angular/material/dialog';
-import { TranslocoService, TranslocoModule } from '@ngneat/transloco';
+import { MatError, MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import { MatInput } from '@angular/material/input';
+import { MatProgressBar } from '@angular/material/progress-bar';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import {
+  MatCell,
+  MatCellDef,
+  MatColumnDef,
+  MatHeaderCell,
+  MatHeaderCellDef,
+  MatHeaderRow,
+  MatHeaderRowDef,
+  MatRow,
+  MatRowDef,
+  MatTable
+} from '@angular/material/table';
+import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
+import { ngfModule } from 'angular-file';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { fromVerseRef, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Subject } from 'rxjs';
@@ -40,28 +62,6 @@ import {
   ImportQuestionsConfirmationDialogData,
   ImportQuestionsConfirmationDialogResult
 } from './import-questions-confirmation-dialog/import-questions-confirmation-dialog.component';
-import { MatIconButton, MatButton, MatAnchor } from '@angular/material/button';
-import { MatIcon } from '@angular/material/icon';
-import { CdkScrollable } from '@angular/cdk/scrolling';
-import { MatCard, MatCardTitle, MatCardContent, MatCardActions } from '@angular/material/card';
-import { MatError, MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
-import { ngfModule } from 'angular-file';
-import { MatProgressSpinner } from '@angular/material/progress-spinner';
-import {
-  MatTable,
-  MatColumnDef,
-  MatHeaderCellDef,
-  MatHeaderCell,
-  MatCellDef,
-  MatCell,
-  MatHeaderRowDef,
-  MatHeaderRow,
-  MatRowDef,
-  MatRow
-} from '@angular/material/table';
-import { MatInput } from '@angular/material/input';
-import { MatProgressBar } from '@angular/material/progress-bar';
-import { AsyncPipe } from '@angular/common';
 
 export interface TransceleratorQuestion {
   book: string;

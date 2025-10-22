@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
@@ -8,7 +7,7 @@ import { NoticeComponent } from '../notice/notice.component';
 
 @Component({
   selector: 'app-global-notices',
-  imports: [CommonModule, NoticeComponent, MatIcon, MatTooltip, TranslocoModule],
+  imports: [NoticeComponent, MatIcon, MatTooltip, TranslocoModule],
   templateUrl: './global-notices.component.html',
   styleUrl: './global-notices.component.scss'
 })

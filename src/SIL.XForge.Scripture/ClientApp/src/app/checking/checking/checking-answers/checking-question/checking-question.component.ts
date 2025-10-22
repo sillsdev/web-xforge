@@ -9,6 +9,8 @@ import {
   SimpleChanges,
   ViewChild
 } from '@angular/core';
+import { MatIcon } from '@angular/material/icon';
+import { TranslocoModule } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
@@ -26,8 +28,6 @@ import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { CheckingUtils } from '../../../checking.utils';
 import { SingleButtonAudioPlayerComponent } from '../../single-button-audio-player/single-button-audio-player.component';
-import { TranslocoModule } from '@ngneat/transloco';
-import { MatIcon } from '@angular/material/icon';
 
 @Component({
   selector: 'app-checking-question',

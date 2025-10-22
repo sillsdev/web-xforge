@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, Inject } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogActions, MatDialogContent, MatDialogRef } from '@angular/material/dialog';
@@ -18,7 +17,7 @@ export interface DraftApplyProgress {
 
 @Component({
   selector: 'app-draft-apply-progress',
-  imports: [CommonModule, MatButton, MatIcon, MatProgressBar, MatDialogContent, MatDialogActions, TranslocoModule],
+  imports: [MatButton, MatIcon, MatProgressBar, MatDialogContent, MatDialogActions, TranslocoModule],
   templateUrl: './draft-apply-progress-dialog.component.html',
   styleUrl: './draft-apply-progress-dialog.component.scss'
 })

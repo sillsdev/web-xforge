@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { Component, DestroyRef, Input } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import {
@@ -62,7 +62,7 @@ interface TrainingConfigurationRow {
 @Component({
   selector: 'app-draft-history-entry',
   imports: [
-    CommonModule,
+    NgClass,
     DraftDownloadButtonComponent,
     DraftPreviewBooksComponent,
     MatButton,

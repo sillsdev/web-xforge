@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { expect, within } from '@storybook/test';
@@ -50,7 +49,7 @@ const meta: Meta = {
   component: LanguageCodesConfirmationComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, TranslocoModule, TranslocoMarkupComponent, LanguageCodesConfirmationComponent],
+      imports: [TranslocoModule, TranslocoMarkupComponent, LanguageCodesConfirmationComponent],
       providers: [
         { provide: ActivatedProjectService, useValue: instance(mockActivatedProject) },
         { provide: AuthService, useValue: instance(mockAuthService) },

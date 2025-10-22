@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { AsyncPipe, SlicePipe } from '@angular/common';
 import { Component, DestroyRef, Input, OnInit } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
@@ -70,7 +70,8 @@ function projectType(project: TranslateSource | SFProjectProfile): string {
   templateUrl: './serval-project.component.html',
   styleUrls: ['./serval-project.component.scss'],
   imports: [
-    CommonModule,
+    AsyncPipe,
+    SlicePipe,
     InfoComponent,
     NoticeComponent,
     MatButton,
