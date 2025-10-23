@@ -4,7 +4,7 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { BehaviorSubject, of } from 'rxjs';
-import { anything, deepEqual, instance, mock, when } from 'ts-mockito';
+import { anything, instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -82,28 +82,12 @@ describe('progress service', () => {
   it('updates total progress when chapter content changes', fakeAsync(async () => {
     const env = new TestEnvironment();
     const changeEvent = new BehaviorSubject({});
-    when(mockSFProjectService.getText(deepEqual(new TextDocId('project01', 1, 2, 'target')))).thenCall(() => {
-      return {
-        getSegmentCount: () => {
-          return { translated: 12, blank: 2 };
-        },
-        getNonEmptyVerses: () => env.createVerses(12),
-        changes$: changeEvent
-      };
-    });
+    env.setTextData('project01', 1, 2, 'target', 12, 2, changeEvent);
 
     tick();
 
     // mock a change
-    when(mockSFProjectService.getText(deepEqual(new TextDocId('project01', 1, 2, 'target')))).thenCall(() => {
-      return {
-        getSegmentCount: () => {
-          return { translated: 13, blank: 1 };
-        },
-        getNonEmptyVerses: () => env.createVerses(13),
-        changes$: changeEvent
-      };
-    });
+    env.setTextData('project01', 1, 2, 'target', 13, 1, changeEvent);
 
     const originalProgress = env.service.overallProgress.translated;
     tick(1000); // wait for the throttle time
@@ -155,9 +139,9 @@ describe('progress service', () => {
 
   it('cannot train suggestions if no source permission', fakeAsync(async () => {
     const env = new TestEnvironment();
-    when(
-      mockPermissionService.canAccessText(deepEqual(new TextDocId('sourceId', anything(), anything(), 'target')))
-    ).thenResolve(false);
+    when(mockPermissionService.canAccessText(anything())).thenCall((textDocId: TextDocId) => {
+      return Promise.resolve(textDocId.projectId !== 'sourceId');
+    });
     tick();
 
     expect(env.service.canTrainSuggestions).toBeFalsy();
@@ -187,6 +171,9 @@ class TestEnvironment {
 
   readonly mockProject = mock(SFProjectProfileDoc);
   readonly project$ = new BehaviorSubject(instance(this.mockProject));
+
+  // Store all text data in a single map to avoid repeated deepEqual calls
+  private readonly allTextData = new Map<string, { translated: number; blank: number }>();
 
   constructor(
     private readonly translatedSegments: number = 1000,
@@ -218,15 +205,42 @@ class TestEnvironment {
       id: 'project02',
       remoteChanges$: new BehaviorSubject([])
     } as unknown as SFProjectProfileDoc);
-    this.setUpGetText('project02', 0, 1000);
+    this.populateTextData('project02', 0, 1000);
 
-    this.setUpGetText('sourceId', this.translatedSegments, this.blankSegments);
-    this.setUpGetText('project01', this.translatedSegments, this.blankSegments);
+    this.populateTextData('sourceId', this.translatedSegments, this.blankSegments);
+    this.populateTextData('project01', this.translatedSegments, this.blankSegments);
+
+    // Set up a single mock for getText that handles all TextDocId instances
+    when(mockSFProjectService.getText(anything())).thenCall((textDocId: TextDocId) => {
+      const key = `${textDocId.projectId}:${textDocId.bookNum}:${textDocId.chapterNum}:${textDocId.textType}`;
+      const data = this.allTextData.get(key);
+      const changeKey = `${key}:changes`;
+      const customChanges = (this.allTextData as any).get(changeKey);
+
+      if (data != null) {
+        return {
+          getSegmentCount: () => {
+            return { translated: data.translated, blank: data.blank };
+          },
+          getNonEmptyVerses: () => this.createVerses(data.translated),
+          changes$: customChanges ?? of({} as TextData)
+        };
+      }
+
+      // Return a default value if not found
+      return {
+        getSegmentCount: () => {
+          return { translated: 0, blank: 0 };
+        },
+        getNonEmptyVerses: () => [],
+        changes$: of({} as TextData)
+      };
+    });
 
     this.service = TestBed.inject(ProgressService);
   }
 
-  setUpGetText(projectId: string, translatedSegments: number, blankSegments: number): void {
+  private populateTextData(projectId: string, translatedSegments: number, blankSegments: number): void {
     for (let book = 1; book <= this.numBooks; book++) {
       for (let chapter = 0; chapter < this.numChapters; chapter++) {
         const translated = translatedSegments >= 9 ? 9 : translatedSegments;
@@ -234,18 +248,29 @@ class TestEnvironment {
         const blank = blankSegments >= 5 ? 5 : blankSegments;
         blankSegments -= blank;
 
-        when(mockSFProjectService.getText(deepEqual(new TextDocId(projectId, book, chapter, 'target')))).thenCall(
-          () => {
-            return {
-              getSegmentCount: () => {
-                return { translated, blank };
-              },
-              getNonEmptyVerses: () => this.createVerses(translated),
-              changes$: of({} as TextData)
-            };
-          }
-        );
+        const key = `${projectId}:${book}:${chapter}:target`;
+        this.allTextData.set(key, { translated, blank });
       }
+    }
+  }
+
+  setTextData(
+    projectId: string,
+    book: number,
+    chapter: number,
+    textType: string,
+    translated: number,
+    blank: number,
+    changes$?: BehaviorSubject<any>
+  ): void {
+    const key = `${projectId}:${book}:${chapter}:${textType}`;
+    this.allTextData.set(key, { translated, blank });
+
+    // If a custom changes$ observable is provided, we need to store it
+    // so the mock can return it
+    if (changes$ != null) {
+      const changeKey = `${key}:changes`;
+      (this.allTextData as any).set(changeKey, changes$);
     }
   }
 
