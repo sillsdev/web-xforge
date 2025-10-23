@@ -45,10 +45,10 @@
         <div class="apply-draft-button-container">
           @if (showDraftOptionsButton$ | async) {
             <span
-              [matTooltip]="t(doesLatestHaveDraft ? 'format_draft_can' : 'format_draft_cannot')"
-              [style.cursor]="doesLatestHaveDraft ? 'pointer' : 'not-allowed'"
+              [matTooltip]="t(canConfigureFormatting ? 'format_draft_can' : 'format_draft_cannot')"
+              [style.cursor]="canConfigureFormatting ? 'pointer' : 'not-allowed'"
             >
-              <button mat-button (click)="navigateToFormatting()" [disabled]="!doesLatestHaveDraft">
+              <button mat-button (click)="navigateToFormatting()" [disabled]="!canConfigureFormatting">
                 <mat-icon>build</mat-icon>
                 <transloco key="editor_draft_tab.format_draft"></transloco>
               </button>
