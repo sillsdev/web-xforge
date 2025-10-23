@@ -99,23 +99,18 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
         Dictionary<string, BsonValue?>? tags = null;
         var collectedTags = new Dictionary<string, string?>();
 
-        // Walk up the activity chain collecting tags (parent first, so child overrides)
+        // Walk up the activity chain collecting tags (child first, so child overrides parent)
         var activity = Activity.Current;
-        var activityChain = new Stack<Activity>();
         while (activity is not null)
         {
-            activityChain.Push(activity);
-            activity = activity.Parent;
-        }
-
-        // Apply tags from root to current (so child overrides parent)
-        while (activityChain.Count > 0)
-        {
-            activity = activityChain.Pop();
             foreach (var kvp in activity.Tags)
             {
-                collectedTags[kvp.Key] = kvp.Value;
+                if (!collectedTags.ContainsKey(kvp.Key))
+                {
+                    collectedTags[kvp.Key] = kvp.Value;
+                }
             }
+            activity = activity.Parent;
         }
 
         if (collectedTags.Count > 0)
