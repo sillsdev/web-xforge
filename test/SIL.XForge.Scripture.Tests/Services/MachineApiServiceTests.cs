@@ -4733,7 +4733,9 @@ public class MachineApiServiceTests
                 .GetEventMetricsAsync(
                     projectId: null,
                     scopes: Arg.Is<EventScope[]>(s => s != null && s.Contains(EventScope.Drafting)),
-                    eventTypes: Arg.Is<string[]>(t => t != null && t.Contains("BuildProjectAsync")),
+                    eventTypes: Arg.Is<string[]>(t =>
+                        t != null && t.Contains(nameof(Services.MachineProjectService.BuildProjectAsync))
+                    ),
                     Arg.Any<DateTime?>(),
                     Arg.Any<int>(),
                     Arg.Any<int>()
