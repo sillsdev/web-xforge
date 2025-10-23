@@ -6,6 +6,7 @@ import { LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/l
 import { BehaviorSubject } from 'rxjs';
 import { mock, verify, when } from 'ts-mockito';
 import { configureTestingModule } from 'xforge-common/test-utils';
+import { provideCustomIcons } from '../../../../../shared/custom-icons';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 import { LynxWorkspaceService } from '../lynx-workspace.service';
 import { LynxInsightStatusIndicatorComponent } from './lynx-insight-status-indicator.component';
@@ -17,6 +18,7 @@ describe('LynxInsightStatusIndicatorComponent', () => {
   configureTestingModule(() => ({
     imports: [LynxInsightStatusIndicatorComponent, MatIcon, HostComponent],
     providers: [
+      provideCustomIcons(),
       { provide: LynxInsightStateService, useMock: mockLynxInsightStateService },
       { provide: LynxWorkspaceService, useMock: mockLynxWorkspaceService }
     ]

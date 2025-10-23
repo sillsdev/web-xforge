@@ -1,11 +1,13 @@
 import { Component, DestroyRef, NO_ERRORS_SCHEMA, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { Delta } from 'quill';
+import { LynxInsightFilter, LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { BehaviorSubject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { TextDocId } from '../../../../../core/models/text-doc';
+import { provideCustomIcons } from '../../../../../shared/custom-icons';
 import { EditorReadyService } from '../base-services/editor-ready.service';
 import { InsightRenderService } from '../base-services/insight-render.service';
 import {
@@ -35,6 +37,7 @@ describe('LynxInsightEditorObjectsComponent', () => {
   configureTestingModule(() => ({
     imports: [HostComponent, LynxInsightEditorObjectsComponent],
     providers: [
+      provideCustomIcons(),
       { provide: InsightRenderService, useMock: mockInsightRenderService },
       { provide: LynxInsightStateService, useMock: mockInsightStateService },
       { provide: EditorReadyService, useMock: mockEditorReadyService },
@@ -384,8 +387,8 @@ class TestEnvironment {
   private filteredInsightsSubject: BehaviorSubject<LynxInsight[]>;
   private displayStateSubject: BehaviorSubject<LynxInsightDisplayState>;
   private activatedBookChapterSubject: BehaviorSubject<RouteBookChapter | undefined>;
-  private filterSubject: BehaviorSubject<any>;
-  private filteredInsightCountsByTypeSubject: BehaviorSubject<any>;
+  private filterSubject: BehaviorSubject<LynxInsightFilter>;
+  private filteredInsightCountsByTypeSubject: BehaviorSubject<Record<LynxInsightType, number>>;
   private taskRunningStatusSubject: BehaviorSubject<boolean>;
 
   constructor(args: TestEnvArgs = {}) {

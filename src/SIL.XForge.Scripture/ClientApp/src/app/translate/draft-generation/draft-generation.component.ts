@@ -1,7 +1,7 @@
 import { AsyncPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, ViewChild } from '@angular/core';
-import { MatButton } from '@angular/material/button';
+import { MatAnchor, MatButton } from '@angular/material/button';
 import {
   MatCard,
   MatCardActions,
@@ -68,6 +68,7 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
   styleUrls: ['./draft-generation.component.scss'],
   imports: [
     AsyncPipe,
+    MatAnchor,
     MatButton,
     MatIcon,
     MatCard,
@@ -231,7 +232,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
         const dialogRef = this.dialogService.openMatDialog(SupportedBackTranslationLanguagesDialogComponent);
 
         dialogRef.afterClosed().subscribe(() => {
-          this.router.navigate([], { fragment: undefined });
+          void this.router.navigate([], { fragment: undefined });
         });
       });
 
@@ -433,7 +434,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
         if (this.isDraftInProgress(job)) {
           this.draftJob = job;
           this.currentPage = 'initial';
-          this.dialogService.message('draft_generation.draft_already_running');
+          void this.dialogService.message('draft_generation.draft_already_running');
           return;
         }
       });

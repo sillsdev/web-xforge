@@ -39,7 +39,7 @@ const mockedFileService = mock(FileService);
 
 describe('QuestionDialogService', () => {
   configureTestingModule(() => ({
-    imports: [getTestTranslocoModule()],
+    imports: [getTestTranslocoModule(false)],
     providers: [
       provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: FileService, useMock: mockedFileService },

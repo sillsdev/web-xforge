@@ -60,17 +60,12 @@ export const configureTestingModule = (createModuleDef: () => TestModuleMetadata
   });
 };
 
-// export const TestTranslocoModule = TranslocoTestingModule.forRoot({
-//   langs: { en },
-//   translocoConfig: {
-//     availableLangs: ['en'],
-//     reRenderOnLangChange: true,
-//     fallbackLang: 'en',
-//     defaultLang: 'en'
-//   }
-// });
-
-export function getTestTranslocoModule(): ModuleWithProviders<TranslocoTestingModule> {
+/**
+ * Gets a Transloco testing module with 'en' translations loaded.
+ * @param loadLangs Whether to preload the languages. Set to false if tests want to use the untranslated key.
+ * Default is true.
+ */
+export function getTestTranslocoModule(loadLangs = true): ModuleWithProviders<TranslocoTestingModule> {
   return TranslocoTestingModule.forRoot({
     langs: { en },
     translocoConfig: {
@@ -78,7 +73,8 @@ export function getTestTranslocoModule(): ModuleWithProviders<TranslocoTestingMo
       reRenderOnLangChange: true,
       fallbackLang: 'en',
       defaultLang: 'en'
-    }
+    },
+    preloadLangs: loadLangs
   });
 }
 

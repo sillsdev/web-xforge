@@ -78,7 +78,7 @@ describe('DraftGenerationComponent', () => {
       }
 
       TestBed.configureTestingModule({
-        imports: [, getTestTranslocoModule()],
+        imports: [getTestTranslocoModule()],
         providers: [
           provideRouter([]),
           provideTestOnlineStatus(),

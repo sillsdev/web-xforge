@@ -1,3 +1,4 @@
+import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
 import { Component, DestroyRef, EventEmitter } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MatCard, MatCardActions, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
@@ -41,6 +42,7 @@ import {
 import { LanguageCodesConfirmationComponent } from '../language-codes-confirmation/language-codes-confirmation.component';
 import { TrainingDataMultiSelectComponent } from '../training-data/training-data-multi-select.component';
 import { TrainingDataService } from '../training-data/training-data.service';
+
 /** Status for a project, which may or may not be at SF. */
 export interface ProjectStatus {
   shortName: string;
@@ -53,6 +55,8 @@ export interface ProjectStatus {
 @Component({
   selector: 'app-draft-sources',
   imports: [
+    NgTemplateOutlet,
+    KeyValuePipe,
     MatButton,
     MatIcon,
     MatRipple,
