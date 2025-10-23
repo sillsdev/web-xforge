@@ -39,19 +39,19 @@ import { TabScrollButtonComponent } from './tab-scroll-button/tab-scroll-button.
   templateUrl: './tab-group-header.component.html',
   styleUrls: ['./tab-group-header.component.scss'],
   imports: [
-    TabScrollButtonComponent,
     CdkDropList,
-    NgFor,
-    TabHeaderComponent,
     CdkDrag,
+    NgFor,
+    NgIf,
     NgTemplateOutlet,
-    MatMenuTrigger,
+    AsyncPipe,
     MatIcon,
     MatMenu,
-    NgIf,
     MatMenuItem,
-    AsyncPipe,
-    TranslocoModule
+    MatMenuTrigger,
+    TranslocoModule,
+    TabHeaderComponent,
+    TabScrollButtonComponent
   ]
 })
 export class TabGroupHeaderComponent implements OnChanges, OnInit, AfterViewInit, OnDestroy {

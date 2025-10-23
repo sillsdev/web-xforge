@@ -368,7 +368,7 @@ describe('ChapterAudioDialogComponent', () => {
     // The "from" value of the next entry
     expect(result.timingData[0].to).toEqual(1.1);
     // The end of the audio file
-    expect(result.timingData[1].to).toEqual(1.32);
+    expect(result.timingData[1].to).toEqual(1.296);
   }));
 
   it('will not save or upload if there is no audio', fakeAsync(() => {

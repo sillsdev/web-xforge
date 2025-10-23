@@ -1,7 +1,7 @@
 import { AsyncPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, ViewChild } from '@angular/core';
-import { MatButton } from '@angular/material/button';
+import { MatAnchor, MatButton } from '@angular/material/button';
 import {
   MatCard,
   MatCardActions,
@@ -68,6 +68,7 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
   styleUrls: ['./draft-generation.component.scss'],
   imports: [
     AsyncPipe,
+    MatAnchor,
     MatButton,
     MatIcon,
     MatCard,

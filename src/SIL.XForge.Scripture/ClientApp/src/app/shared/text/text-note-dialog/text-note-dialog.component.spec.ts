@@ -13,7 +13,7 @@ import { NoteDialogData, TextNoteDialogComponent, TextNoteType } from './text-no
 
 describe('TextNoteDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [getTestTranslocoModule(), TextNoteDialogComponent],
+    imports: [getTestTranslocoModule(false), TextNoteDialogComponent],
     providers: [provideNoopAnimations()]
   }));
   let env: TestEnvironment;

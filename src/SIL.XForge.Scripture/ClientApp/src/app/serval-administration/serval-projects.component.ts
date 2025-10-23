@@ -1,4 +1,5 @@
 import { Component, DestroyRef, OnInit } from '@angular/core';
+import { MatButton } from '@angular/material/button';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
 import { MatInput } from '@angular/material/input';
@@ -25,8 +26,8 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
+import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
-import { RouterLinkDirective } from '../../xforge-common/router-link.directive';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { projectLabel } from '../shared/utils';
 import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../translate/draft-generation/draft-utils';
@@ -82,6 +83,7 @@ class Row {
   templateUrl: './serval-projects.component.html',
   styleUrls: ['./serval-projects.component.scss'],
   imports: [
+    MatButton,
     MatTable,
     MatColumnDef,
     MatHeaderCell,
