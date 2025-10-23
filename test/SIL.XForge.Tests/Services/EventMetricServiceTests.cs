@@ -404,7 +404,7 @@ public class EventMetricServiceTests
         };
 
         // Set up Activity tags
-        var activity = new System.Diagnostics.Activity("test");
+        using var activity = new System.Diagnostics.Activity("test");
         activity.AddTag("draftGenerationRequestId", "abc-123-def-456");
         activity.AddTag("someOtherThing", "xyz-789");
         activity.Start();
@@ -428,13 +428,13 @@ public class EventMetricServiceTests
         Dictionary<string, object> argumentsWithNames = new Dictionary<string, object> { { "projectId", Project01 } };
 
         // Set up parent activity with tags
-        var parentActivity = new System.Diagnostics.Activity("parent");
+        using var parentActivity = new System.Diagnostics.Activity("parent");
         parentActivity.AddTag("draftGenerationRequestId", "parent-123");
         parentActivity.AddTag("parentTag", "parent-value");
         parentActivity.Start();
 
         // Create child activity (simulating what EventMetricLogger does)
-        var childActivity = new System.Diagnostics.Activity("child");
+        using var childActivity = new System.Diagnostics.Activity("child");
         childActivity.AddTag("childTag", "child-value");
         childActivity.AddTag("draftGenerationRequestId", "child-override-456"); // Override parent
         childActivity.Start();

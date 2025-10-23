@@ -632,7 +632,7 @@ public class MachineApiServiceTests
             .Returns(Task.FromResult(env.GetEventMetricsForBuildCompleted(false)));
 
         System.Diagnostics.Activity? capturedActivity = null;
-        using (var activity = new System.Diagnostics.Activity("TestActivity").Start())
+        using (new System.Diagnostics.Activity("TestActivity").Start())
         {
             // SUT
             await env.Service.BuildCompletedAsync(
@@ -785,7 +785,7 @@ public class MachineApiServiceTests
             );
 
         System.Diagnostics.Activity? capturedActivity = null;
-        using (var activity = new System.Diagnostics.Activity("TestActivity").Start())
+        using (new System.Diagnostics.Activity("TestActivity").Start())
         {
             // SUT
             string actual = await env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None);
