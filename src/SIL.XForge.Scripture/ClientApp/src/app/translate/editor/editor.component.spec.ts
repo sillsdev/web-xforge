@@ -99,6 +99,7 @@ import { BuildStates } from '../../machine-api/build-states';
 import { HttpClient } from '../../machine-api/http-client';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 import { CopyrightBannerComponent } from '../../shared/copyright-banner/copyright-banner.component';
+import { provideCustomIcons } from '../../shared/custom-icons';
 import {
   provideSFTabs,
   TabComponent,
@@ -180,14 +181,14 @@ describe('EditorComponent', () => {
       BiblicalTermsComponent,
       CopyrightBannerComponent,
       DraftPreviewBooksComponent,
-      getTestTranslocoModule(),
-      TranslocoMarkupModule,
       TabGroupComponent,
       TabComponent,
       TabHeaderDirective,
       LynxInsightEditorObjectsComponent,
       LynxInsightsPanelComponent,
-      AngularSplitModule
+      AngularSplitModule,
+      getTestTranslocoModule(),
+      TranslocoMarkupModule
     ],
     providers: [
       provideRouter(ROUTES),
@@ -196,6 +197,7 @@ describe('EditorComponent', () => {
       provideTestRealtime(SF_TYPE_REGISTRY),
       provideSFTabs(),
       provideLynxInsights(),
+      provideCustomIcons(),
       { provide: AuthService, useMock: mockedAuthService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
