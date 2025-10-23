@@ -3,7 +3,6 @@ import { expect, userEvent } from '@storybook/test';
 import { instance, mock, when } from 'ts-mockito';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
-import { provideI18nStory } from 'xforge-common/i18n-story';
 import { NoticeService } from 'xforge-common/notice.service';
 import {
   MatDialogLaunchComponent,
@@ -95,12 +94,7 @@ export default {
 } as Meta;
 
 const dialogStoryConfig: MatDialogStoryConfig = {
-  providers: [
-    provideI18nStory() as any,
-    DialogService,
-    NoticeService,
-    { provide: NAVIGATOR, useValue: instance(mockedNavigator) }
-  ]
+  providers: [DialogService, NoticeService, { provide: NAVIGATOR, useValue: instance(mockedNavigator) }]
 };
 
 export const ReadyToRecord = matDialogStory(AudioRecorderDialogComponent, dialogStoryConfig);
