@@ -78,6 +78,7 @@
                   [chapter]="chapter"
                   [verse]="verse"
                   [projectId]="projectId"
+                  [style.--project-font]="projectFont"
                 ></app-biblical-terms>
               }
               @case ("project-resource") {
@@ -189,7 +190,7 @@
                             [fontSize]="fontSize"
                             [selectableVerses]="showAddCommentUI"
                             [ngClass]="{ 'comment-enabled-editor': showAddCommentUI }"
-                            [style.--project-font]="fontService.getFontFamilyFromProject(projectDoc)"
+                            [style.--project-font]="projectFont"
                           ></app-text>
                           <app-suggestions
                             class="mat-elevation-z2"
@@ -198,6 +199,7 @@
                             [text]="target"
                             (selected)="insertSuggestion($event.suggestionIndex, $event.wordIndex, $event.event)"
                             (showChange)="showSuggestions = $event"
+                            [style.--project-font]="projectFont"
                           ></app-suggestions>
                           <ng-template #fabBottomSheet>
                             <div class="fab-bottom-sheet" [dir]="direction">

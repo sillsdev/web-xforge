@@ -29,7 +29,22 @@ import { HistoryChooserComponent, RevisionSelectEvent } from './history-chooser/
   standalone: false
 })
 export class EditorHistoryComponent implements OnChanges, OnInit, AfterViewInit {
-  @Input() projectId?: string;
+  private _projectId?: string | undefined;
+
+  @Input()
+  public get projectId(): string | undefined {
+    return this._projectId;
+  }
+  public set projectId(value: string | undefined) {
+    this._projectId = value;
+    if (value != null) {
+      this.projectService.getProfile(value).then(
+        p => (this.projectDoc = p),
+        () => (this.projectDoc = undefined)
+      );
+    }
+  }
+
   @Input() bookNum?: number;
   @Input() chapter?: number;
   @Input() isRightToLeft!: boolean;

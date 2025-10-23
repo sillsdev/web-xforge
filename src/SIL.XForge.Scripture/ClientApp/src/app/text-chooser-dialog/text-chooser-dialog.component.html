@@ -12,8 +12,9 @@
         [id]="textDocId"
         [multiSegmentSelection]="true"
         [isRightToLeft]="isTextRightToLeft"
+        [style.--project-font]="projectFont"
       ></app-text>
-      <div class="selection-preview">
+      <div class="selection-preview" [style.--project-font]="projectFont">
         <p dir="auto">
           {{ (startClipped ? "…" : "") + (selectedText || "") + (endClipped ? "…" : "") }}
           <span class="selection-reference">{{ referenceForDisplay }}</span>

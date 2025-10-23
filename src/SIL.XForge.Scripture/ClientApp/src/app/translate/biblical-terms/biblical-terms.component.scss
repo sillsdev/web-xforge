@@ -50,6 +50,11 @@
   overflow: hidden;
 }
 
+/* Show the term renderings in the project font */
+.mat-column-renderings {
+  font-family: var(--project-font);
+}
+
 /* Disable hover effects for disabled buttons */
 .mat-mdc-icon-button:disabled {
   pointer-events: none;
