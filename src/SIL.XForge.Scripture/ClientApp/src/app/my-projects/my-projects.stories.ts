@@ -1,7 +1,6 @@
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { Component } from '@angular/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -12,7 +11,6 @@ import { anything, instance, mock, objectContaining, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
@@ -21,11 +19,7 @@ import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ParatextService } from '../core/paratext.service';
 import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
-import { provideQuillRegistrations } from '../shared/text/quill-editor-registration/quill-providers';
 import { MyProjectsComponent } from './my-projects.component';
-
-@Component({ template: '' })
-class EmptyComponent {}
 
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedUserService = mock(UserService);
@@ -191,14 +185,8 @@ const meta: Meta = {
     moduleMetadata({
       imports: [getTestTranslocoModule(), MyProjectsComponent],
       providers: [
-        provideRouter([
-          { path: 'projects/:projectId', component: EmptyComponent },
-          { path: 'connect-project', component: EmptyComponent }
-        ]),
-        provideQuillRegistrations() as any,
-        provideTestOnlineStatus() as any,
-        provideAnimations() as any,
-        provideHttpClientTesting() as any,
+        provideAnimations(),
+        provideHttpClientTesting(),
         {
           provide: SFProjectService,
           useValue: instance(mockedSFProjectService)

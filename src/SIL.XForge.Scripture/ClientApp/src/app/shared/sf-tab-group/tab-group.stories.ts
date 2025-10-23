@@ -1,3 +1,4 @@
+import { AsyncPipe, KeyValuePipe } from '@angular/common';
 import { Component, Input, OnChanges } from '@angular/core';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { Observable, of } from 'rxjs';
@@ -46,7 +47,7 @@ import {
       </app-tab-group>
     }
   `,
-  imports: [TabGroupComponent, TabComponent, TabHeaderDirective]
+  imports: [AsyncPipe, KeyValuePipe, TabGroupComponent, TabComponent, TabHeaderDirective]
 })
 class SFTabGroupStoriesComponent implements OnChanges {
   @Input() tabGroups: TabGroup<string, TabInfo<string>>[] = [];

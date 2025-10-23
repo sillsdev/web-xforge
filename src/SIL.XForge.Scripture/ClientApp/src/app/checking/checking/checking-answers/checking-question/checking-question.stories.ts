@@ -9,7 +9,6 @@ import {
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { anything, instance, mock, when } from 'ts-mockito';
-import { provideI18nStory } from 'xforge-common/i18n-story';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { QuestionDoc } from '../../../../core/models/question-doc';
@@ -68,7 +67,6 @@ const meta: Meta<CheckingQuestionComponent> = {
     moduleMetadata({
       imports: [SingleButtonAudioPlayerComponent],
       providers: [
-        provideI18nStory() as any,
         provideTestRealtime(SF_TYPE_REGISTRY),
         { provide: SFProjectService, useValue: instance(mockedProjectService) }
       ]

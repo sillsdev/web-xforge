@@ -9,7 +9,6 @@ import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { GenericDialogComponent } from 'xforge-common/generic-dialog/generic-dialog.component';
-import { provideI18nStory } from 'xforge-common/i18n-story';
 import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -70,7 +69,6 @@ const meta: Meta = {
     moduleMetadata({
       imports: [NoticeComponent, GenericDialogComponent],
       providers: [
-        provideI18nStory() as any,
         { provide: ActivatedRoute, useValue: instance(mockedActivatedRoute) },
         {
           provide: AnonymousService,

@@ -2,7 +2,6 @@ import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { userEvent, within } from '@storybook/test';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
-import { provideI18nStory } from 'xforge-common/i18n-story';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
@@ -19,10 +18,7 @@ const meta: Meta<CheckingAudioPlayerComponent> = {
   decorators: [
     moduleMetadata({
       imports: [CheckingAudioPlayerComponent, AudioPlayerComponent, AudioTimePipe, InfoComponent],
-      providers: [
-        provideI18nStory() as any,
-        { provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) }
-      ]
+      providers: [{ provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) }]
     })
   ],
   args: { source: './test-audio-player.webm' }

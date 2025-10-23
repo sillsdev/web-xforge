@@ -1,6 +1,5 @@
 import { Meta, StoryFn } from '@storybook/angular';
 import { expect, userEvent, within } from '@storybook/test';
-import { provideI18nStory } from 'xforge-common/i18n-story';
 import { arrayOfIntsFromOne } from 'xforge-common/test-utils';
 import { getOverlay } from '../../../../.storybook/util/mat-dialog-launch';
 import { BookChapterChooserComponent } from './book-chapter-chooser.component';
@@ -20,9 +19,6 @@ const meta: Meta = {
 export default meta;
 
 const Template: StoryFn = args => ({
-  moduleMetadata: {
-    providers: [provideI18nStory() as any]
-  },
   props: args
 });
 

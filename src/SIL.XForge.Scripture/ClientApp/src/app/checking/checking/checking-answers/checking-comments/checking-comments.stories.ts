@@ -5,7 +5,6 @@ import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { instance, mock, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
-import { provideI18nStory } from 'xforge-common/i18n-story';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { UserService } from 'xforge-common/user.service';
@@ -49,7 +48,6 @@ const meta: Meta<CheckingCommentsComponent> = {
     moduleMetadata({
       imports: [OwnerComponent, CheckingInputFormComponent],
       providers: [
-        provideI18nStory() as any,
         { provide: DialogService, useValue: instance(mockedDialogService) },
         { provide: UserService, useValue: instance(mockedUserService) }
       ]

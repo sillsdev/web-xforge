@@ -109,7 +109,6 @@ const meta: Meta = {
     return {
       moduleMetadata: {
         providers: [
-          provideI18nStory() as any,
           { provide: AuthService, useValue: instance(mockedAuthService) },
           {
             provide: OnlineStatusService,

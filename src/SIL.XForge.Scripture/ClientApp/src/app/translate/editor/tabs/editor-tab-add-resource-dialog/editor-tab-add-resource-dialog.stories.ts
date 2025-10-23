@@ -3,7 +3,6 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { Meta, moduleMetadata } from '@storybook/angular';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
-import { provideI18nStory } from 'xforge-common/i18n-story';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import {
   MatDialogLaunchComponent,
@@ -120,7 +119,6 @@ export default meta;
 const dialogStoryConfig: MatDialogStoryConfig = {
   imports: [EditorTabAddResourceDialogComponent],
   providers: [
-    provideI18nStory() as any,
     provideAnimations(),
     { provide: EditorTabAddResourceDialogService, useValue: instance(mockEditorTabAddResourceDialogService) },
     { provide: SFProjectService, useValue: instance(mockSFProjectService) },

@@ -3,7 +3,6 @@ import { MatIcon } from '@angular/material/icon';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
-import { provideI18nStory } from 'xforge-common/i18n-story';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SingleButtonAudioPlayerComponent } from './single-button-audio-player.component';
 
@@ -31,10 +30,7 @@ const meta: Meta<SingleButtonAudioPlayerComponent> = {
   decorators: [
     moduleMetadata({
       imports: [SingleButtonAudioPlayerComponent, TestComponent],
-      providers: [
-        provideI18nStory() as any,
-        { provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) }
-      ]
+      providers: [{ provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) }]
     })
   ]
 };
