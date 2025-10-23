@@ -1,7 +1,6 @@
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
-import { provideI18nStory } from 'xforge-common/i18n-story';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
@@ -38,7 +37,6 @@ const meta: Meta = {
     moduleMetadata({
       imports: [AudioPlayerComponent, AudioTimePipe],
       providers: [
-        provideI18nStory() as any,
         { provide: SFProjectService, useValue: instance(mockedSFProjectService) },
         { provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) }
       ]
