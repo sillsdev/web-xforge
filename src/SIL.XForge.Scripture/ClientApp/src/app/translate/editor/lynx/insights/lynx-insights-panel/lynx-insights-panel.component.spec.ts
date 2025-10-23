@@ -124,6 +124,7 @@ describe('LynxInsightsPanelComponent', () => {
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
     providers: [
+      provideNoopAnimations(),
       { provide: LynxInsightStateService, useMock: mockLynxInsightStateService },
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: ActivatedBookChapterService, useMock: mockActivatedBookChapterService },
@@ -134,7 +135,7 @@ describe('LynxInsightsPanelComponent', () => {
       {
         provide: EDITOR_INSIGHT_DEFAULTS,
         useValue: {
-          filter: { types: ['info', 'warning', 'error', provideNoopAnimations()], scope: 'chapter' },
+          filter: { types: ['info', 'warning', 'error'], scope: 'chapter' },
           sortOrder: 'severity',
           queryParamName: 'insight',
           actionOverlayApplyPrimaryActionChord: { altKey: true, shiftKey: true, key: 'Enter' },
