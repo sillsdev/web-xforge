@@ -2632,7 +2632,8 @@ public class MachineApiService(
     {
         // BuildProjectAsync events serve as a record of what Serval build id corresponds to what draft generation
         // request id.
-        DateTime startDate = DateTime.UtcNow.AddDays(-60);
+        const int lookupTimeframeDays = 60;
+        DateTime startDate = DateTime.UtcNow.AddDays(-lookupTimeframeDays);
         QueryResults<EventMetric> buildProjectEvents = await eventMetricService.GetEventMetricsAsync(
             projectId: null,
             scopes: [EventScope.Drafting],
