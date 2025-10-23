@@ -2632,10 +2632,13 @@ public class MachineApiService(
     {
         // BuildProjectAsync events serve as a record of what Serval build id corresponds to what draft generation
         // request id.
+        // Only query events from the last 30 days to avoid performance bottlenecks.
+        DateTime startDate = DateTime.UtcNow.AddDays(-30);
         QueryResults<EventMetric> buildProjectEvents = await eventMetricService.GetEventMetricsAsync(
             projectId: null,
             scopes: [EventScope.Drafting],
-            eventTypes: [nameof(MachineProjectService.BuildProjectAsync)]
+            eventTypes: [nameof(MachineProjectService.BuildProjectAsync)],
+            startDate: startDate
         );
         EventMetric? buildEvent = buildProjectEvents.Results.FirstOrDefault(e => e.Result?.ToString() == buildId);
         return (buildEvent?.Tags?.TryGetValue("draftGenerationRequestId", out BsonValue? requestId) == true)
