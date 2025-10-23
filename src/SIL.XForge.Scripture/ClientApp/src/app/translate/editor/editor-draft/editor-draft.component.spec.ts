@@ -559,6 +559,89 @@ describe('EditorDraftComponent', () => {
     }));
   });
 
+  describe('canConfigureFormatting', () => {
+    beforeEach(() => {
+      when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(true));
+      when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
+        of(draftHistory)
+      );
+      spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops));
+      when(mockDraftHandlingService.getDraft(anything(), anything())).thenReturn(of(draftDelta.ops!));
+      when(mockDraftHandlingService.draftDataToOps(anything(), anything())).thenReturn(draftDelta.ops!);
+    });
+
+    it('should be true when latest build has draft and selected revision is latest', fakeAsync(() => {
+      const testProjectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          texts: [
+            {
+              bookNum: 1,
+              chapters: [{ number: 1, permissions: { user01: SFProjectRole.ParatextAdministrator }, hasDraft: true }]
+            }
+          ]
+        })
+      } as SFProjectProfileDoc;
+      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
+      when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+
+      fixture.detectChanges();
+      tick(EDITOR_READY_TIMEOUT);
+
+      expect(component.isSelectedDraftLatest).toBe(true);
+      expect(component.canConfigureFormatting).toBe(true);
+      flush();
+    }));
+
+    it('should be false when selected revision is not the latest', fakeAsync(() => {
+      const testProjectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          texts: [
+            {
+              bookNum: 1,
+              chapters: [{ number: 1, permissions: { user01: SFProjectRole.ParatextAdministrator }, hasDraft: true }]
+            }
+          ]
+        })
+      } as SFProjectProfileDoc;
+      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
+      when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+
+      fixture.detectChanges();
+      tick(EDITOR_READY_TIMEOUT);
+      expect(component.canConfigureFormatting).toBe(true);
+
+      // Select earlier revision
+      component.onSelectionChanged({ value: draftHistory[1] } as MatSelectChange);
+      fixture.detectChanges();
+      tick(EDITOR_READY_TIMEOUT);
+
+      expect(component.isSelectedDraftLatest).toBe(false);
+      expect(component.canConfigureFormatting).toBe(false);
+      flush();
+    }));
+
+    it('should be false when latest build does not have a draft', fakeAsync(() => {
+      const testProjectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          texts: [
+            {
+              bookNum: 1,
+              chapters: [{ number: 1, permissions: { user01: SFProjectRole.ParatextAdministrator }, hasDraft: false }]
+            }
+          ]
+        })
+      } as SFProjectProfileDoc;
+      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(false));
+      when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+
+      fixture.detectChanges();
+      tick(EDITOR_READY_TIMEOUT);
+      expect(component.isSelectedDraftLatest).toBe(true);
+      expect(component.canConfigureFormatting).toBe(false);
+      flush();
+    }));
+  });
+
   describe('getLocalizedBookChapter', () => {
     it('should return an empty string if bookNum or chapter is undefined', () => {
       component.bookNum = undefined;

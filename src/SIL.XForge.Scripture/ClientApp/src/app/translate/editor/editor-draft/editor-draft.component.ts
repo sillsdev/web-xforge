@@ -150,11 +150,19 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     return this.draftHandlingService.canApplyDraft(this.targetProject, this.bookNum, this.chapter, this.draftDelta.ops);
   }
 
+  get canConfigureFormatting(): boolean {
+    return this.doesLatestHaveDraft && this.isSelectedDraftLatest;
+  }
+
   get doesLatestHaveDraft(): boolean {
     return (
       this.targetProject?.texts.find(t => t.bookNum === this.bookNum)?.chapters.find(c => c.number === this.chapter)
         ?.hasDraft ?? false
     );
+  }
+
+  get isSelectedDraftLatest(): boolean {
+    return this.selectedRevision?.timestamp === this._draftRevisions[0].timestamp;
   }
 
   set draftRevisions(value: Revision[]) {
