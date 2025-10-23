@@ -32,6 +32,7 @@ describe('progress service', () => {
   }));
 
   it('populates progress and texts on construction', fakeAsync(() => {
+    const startTime = performance.now();
     // Create segments for 20 chapters multiplied by 20 books
     const env = new TestEnvironment(3600, 2000);
     // Override the verse counts to be less than half of the number created for each book
@@ -61,6 +62,8 @@ describe('progress service', () => {
       }
     }
     expect(calculate).toHaveBeenCalledTimes(1);
+    const endTime = performance.now();
+    console.log(`Test took ${endTime - startTime} ms`);
 
     discardPeriodicTasks();
   }));
