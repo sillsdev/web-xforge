@@ -601,7 +601,10 @@ public class MachineApiServiceTests
         env.EventMetricService.GetEventMetricsAsync(
                 null,
                 Arg.Is<EventScope[]?>(s => s != null && s.Contains(EventScope.Drafting)),
-                Arg.Is<string[]>(t => t.Contains(nameof(MachineProjectService.BuildProjectAsync)))
+                Arg.Is<string[]>(t => t.Contains(nameof(MachineProjectService.BuildProjectAsync))),
+                Arg.Any<DateTime?>(),
+                Arg.Any<int>(),
+                Arg.Any<int>()
             )
             .Returns(
                 Task.FromResult(
@@ -755,7 +758,10 @@ public class MachineApiServiceTests
         env.EventMetricService.GetEventMetricsAsync(
                 null,
                 Arg.Is<EventScope[]?>(s => s != null && s.Contains(EventScope.Drafting)),
-                Arg.Is<string[]>(t => t.Contains(nameof(MachineProjectService.BuildProjectAsync)))
+                Arg.Is<string[]>(t => t.Contains(nameof(MachineProjectService.BuildProjectAsync))),
+                Arg.Any<DateTime?>(),
+                Arg.Any<int>(),
+                Arg.Any<int>()
             )
             .Returns(
                 Task.FromResult(
