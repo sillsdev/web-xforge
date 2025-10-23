@@ -611,7 +611,7 @@ public class MachineProjectService(
     /// The draft generation request identifier (NMT only). Pass null for SMT builds.
     /// </param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>Serval build id</returns>
+    /// <returns>Serval build ID</returns>
     /// <exception cref="DataNotFoundException">The project or project secret could not be found.</exception>
     /// <exception cref="InvalidDataException">The language of the source project was not specified.</exception>
     /// <remarks>
