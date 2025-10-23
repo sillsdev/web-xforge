@@ -128,7 +128,7 @@ jobs:
           cache: true
           cache-dependency-path: src/SIL.XForge.Scripture/packages.lock.json
       - name: "Deps: Node"
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{inputs.node_version}}
           cache: "npm"
