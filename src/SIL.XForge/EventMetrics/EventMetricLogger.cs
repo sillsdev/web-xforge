@@ -58,7 +58,6 @@ public class EventMetricLogger(IEventMetricService eventMetricService, ILogger<E
         {
             // Start an activity so additional information can be logged via tags
             Activity activity = new Activity("log_event_metric").Start();
-            Activity.Current = activity;
 
             // Invoke the method, then record its event metrics
             Task task;
