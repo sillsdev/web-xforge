@@ -185,13 +185,13 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
             invalidProjects: this.i18n.enumerateList([...new Set(missingProjects)])
           })
         );
+      } else {
+        this.trainingTargets = [projectDoc.data];
+        this.trainingSources = trainingSourcesParam.map(sn => allAvailable.find(p => p.shortName === sn));
+        this.draftingSources = draftingSourcesParam.map(sn => allAvailable.find(p => p.shortName === sn));
+
+        this.dialogService.message('draft_sources.sources_loaded_from_link');
       }
-
-      this.trainingTargets = [projectDoc.data];
-      this.trainingSources = trainingSourcesParam.map(sn => allAvailable.find(p => p.shortName === sn));
-      this.draftingSources = draftingSourcesParam.map(sn => allAvailable.find(p => p.shortName === sn));
-
-      this.dialogService.message('draft_sources.sources_loaded_from_link');
     }
 
     // Load from project defaults (either no query params or fallback due to invalid projects)
@@ -232,6 +232,8 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
   }
 
   private async initializeTrainingFiles(projectDoc: SFProjectProfileDoc): Promise<void> {
+    if (projectDoc?.data == null) return;
+
     // Query for all training data files in the project
     this.trainingDataQuery?.dispose();
     this.trainingDataQuery = await this.trainingDataService.queryTrainingDataAsync(projectDoc.id, this.destroyRef);
