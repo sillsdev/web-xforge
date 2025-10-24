@@ -49,6 +49,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     private readonly ITransceleratorService _transceleratorService;
     private readonly IEventMetricService _eventMetricService;
     private readonly ISFProjectRights _projectRights;
+    private readonly IGuidService _guidService;
 
     public SFProjectService(
         IRealtimeService realtimeService,
@@ -68,7 +69,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         ITransceleratorService transceleratorService,
         IBackgroundJobClient backgroundJobClient,
         IEventMetricService eventMetricService,
-        ISFProjectRights projectRights
+        ISFProjectRights projectRights,
+        IGuidService guidService
     )
         : base(realtimeService, siteOptions, audioService, projectSecrets, fileSystemService)
     {
@@ -86,6 +88,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         _eventMetricService = eventMetricService;
         _backgroundJobClient = backgroundJobClient;
         _projectRights = projectRights;
+        _guidService = guidService;
     }
 
     protected override string ProjectAdminRole => SFProjectRole.Administrator;
@@ -1322,6 +1325,31 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
         // Listeners can now assume the ProjectUserConfig is ready when the user is added.
         await base.AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, shareKey);
+        if (SFProjectRole.IsParatextRole(projectRole))
+        {
+            int index = projectDoc.Data.ParatextUsers.FindIndex(u => u.Username == userDoc.Data.Name);
+            if (index > -1)
+                await projectDoc.SubmitJson0OpAsync(op =>
+                {
+                    op.Set(p => p.ParatextUsers[index].SFUserId, userDoc.Id);
+                    op.Set(p => p.ParatextUsers[index].Role, projectRole);
+                });
+            else
+            {
+                await projectDoc.SubmitJson0OpAsync(op =>
+                    op.Add(
+                        p => p.ParatextUsers,
+                        new ParatextUserProfile
+                        {
+                            SFUserId = userDoc.Id,
+                            Username = userDoc.Data.Name,
+                            Role = projectRole,
+                            OpaqueUserId = _guidService.NewObjectId(),
+                        }
+                    )
+                );
+            }
+        }
 
         // Update book and chapter permissions on SF project/resource, but only if user
         // has a role on the PT project or permissions to the DBL resource. These permissions are needed
@@ -1372,7 +1400,13 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             && ptRole is SFProjectRole.Administrator or SFProjectRole.Translator;
         if (projectDoc.Data.UserRoles[curUserId] != ptRole)
         {
-            await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserRoles[curUserId], ptRole));
+            await projectDoc.SubmitJson0OpAsync(op =>
+            {
+                op.Set(p => p.UserRoles[curUserId], ptRole);
+                int index = projectDoc.Data.ParatextUsers.FindIndex(u => u.SFUserId == curUserId);
+                if (index > -1)
+                    op.Set(p => p.ParatextUsers[index].Role, ptRole);
+            });
         }
 
         // If the user can now write text, we should sync to see if there are new permissions for them.

@@ -112,7 +112,7 @@ export function getEmptyChapterDoc(id: TextDocId): TextData {
 export function paratextUsersFromRoles(userRoles: { [id: string]: string }): ParatextUserProfile[] {
   return Object.keys(userRoles)
     .filter(u => isParatextRole(userRoles[u]))
-    .map(u => ({ sfUserId: u, username: `pt${u}`, opaqueUserId: `opaque${u}` }));
+    .map(u => ({ sfUserId: u, username: `pt${u}`, opaqueUserId: `opaque${u}`, role: userRoles[u] }));
 }
 
 // Function to create a mock MediaStream with an audio track

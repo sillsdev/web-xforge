@@ -11,137 +11,127 @@
       </div>
     </app-notice>
 
-    <div class="users-controls">
-      <!-- The tab group component sets the currentTabIndex which filters the list of users.
-      This is a non-standard way to use the component and causes a slight UI glitch where the
-      tab text jumps a few pixels when navigating between tabs. -->
-      <div class="tab-selector">
-        <mat-tab-group [mat-stretch-tabs]="false" (selectedIndexChange)="currentTabIndex = $event">
-          <mat-tab [label]="t('all')"></mat-tab>
-          <mat-tab [label]="t('paratext_members')"></mat-tab>
-          <mat-tab [label]="t('project_guests')"></mat-tab>
-        </mat-tab-group>
-      </div>
-      <mat-form-field [formGroup]="filterForm" appearance="outline" id="project-user-filter">
-        <mat-label>{{ t("filter_users") }}</mat-label>
-        <input matInput formControlName="filter" (keyup)="updateSearchTerm($event.target)" />
-      </mat-form-field>
-    </div>
     @if (!isLoading) {
       <div>
-        @if (filteredLength > 0) {
-          <div>
-            <table mat-table fxFill id="project-users-table" [dataSource]="rowsToDisplay">
-              <ng-container matColumnDef="avatar">
-                <td mat-cell *matCellDef="let userRow; let i = index">
-                  @if (!userRow.isInvitee) {
-                    <div>
-                      <app-avatar [user]="userRow.user" [size]="32"></app-avatar>
+        @for (userList of projectUsers; track userList.userType) {
+          <h2>
+            {{ userList.userType === "paratext" ? t("paratext_members") : t("project_guests") }}
+          </h2>
+          @if (userList.rows.length > 0) {
+            <div>
+              <table mat-table fxFill id="{{ userList.userType }}" [dataSource]="userList.rows">
+                <ng-container matColumnDef="avatar">
+                  <td mat-cell *matCellDef="let userRow; let i = index">
+                    @if (userRow.inviteeStatus == null && !userRow.paratextMemberNotConnected) {
+                      <div>
+                        <app-avatar [user]="userRow.user" [size]="32"></app-avatar>
+                      </div>
+                    }
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="name">
+                  <td mat-cell *matCellDef="let userRow">
+                    @if (!userRow.inviteeStatus) {
+                      <div class="display-name-label">
+                        <div>
+                          {{ userRow.user?.displayName }}
+                          @if (isCurrentUser(userRow)) {
+                            &nbsp;<b class="current-user-label">
+                              {{ t("me") }}
+                            </b>
+                          }
+                        </div>
+                        @if (userRow.paratextMemberNotConnected) {
+                          <i>{{ t("paratext_member_not_connected") }}</i>
+                        }
+                      </div>
+                    } @else {
+                      <div
+                        [innerHtml]="
+                          userRow.inviteeStatus.expired
+                            ? i18n.translateAndInsertTags('collaborators.invitation_expired', {
+                                email: userRow.user?.email
+                              })
+                            : i18n.translateAndInsertTags('collaborators.awaiting_response_from', {
+                                email: userRow.user?.email
+                              })
+                        "
+                      ></div>
+                    }
+                    <div class="hide-gt-sm">
+                      <em>{{ userRow.role ? i18n.localizeRole(userRow.role) : t("role_unknown") }}</em>
                     </div>
-                  }
-                </td>
-              </ng-container>
-              <ng-container matColumnDef="name">
-                <td mat-cell *matCellDef="let userRow">
-                  @if (!userRow.inviteeStatus) {
-                    <div class="display-name-label">
-                      {{ userRow.user?.displayName }}
-                      @if (isCurrentUser(userRow)) {
-                        <b class="current-user-label">&nbsp;{{ t("me") }}</b>
-                      }
-                    </div>
-                  } @else {
-                    <div
-                      [innerHtml]="
-                        userRow.inviteeStatus.expired
-                          ? i18n.translateAndInsertTags('collaborators.invitation_expired', {
-                              email: userRow.user?.email
-                            })
-                          : i18n.translateAndInsertTags('collaborators.awaiting_response_from', {
-                              email: userRow.user?.email
-                            })
-                      "
-                    ></div>
-                  }
-                  <div class="hide-gt-sm">
-                    <em>{{ userRow.role ? i18n.localizeRole(userRow.role) : "" }}</em>
-                  </div>
-                </td>
-              </ng-container>
-              <ng-container matColumnDef="info">
-                <td mat-cell *matCellDef="let userRow">
-                  @if (hasParatextRole(userRow)) {
-                    <div>
-                      <img src="/assets/images/logo-pt9.png" alt="Paratext Logo" class="paratext-logo" />
-                    </div>
-                  }
-                </td>
-              </ng-container>
-              <ng-container matColumnDef="questions_permission">
-                <td mat-cell *matCellDef="let userRow">
-                  @if (userRow.allowCreatingQuestions) {
-                    <div [matTooltip]="t('allow_add_edit_questions')">
-                      <mat-icon>post_add</mat-icon>
-                    </div>
-                  }
-                </td>
-              </ng-container>
-              <ng-container matColumnDef="audio_permission">
-                <td mat-cell *matCellDef="let userRow">
-                  @if (userRow.canManageAudio) {
-                    <div [matTooltip]="t('allow_manage_audio')">
-                      <mat-icon class="shift-left material-icons-outlined">audio_file</mat-icon>
-                    </div>
-                  }
-                </td>
-              </ng-container>
-              <ng-container matColumnDef="role">
-                <td class="hide-lt-sm" mat-cell *matCellDef="let userRow">
-                  <em>{{ userRow.role ? i18n.localizeRole(userRow.role) : "" }}</em>
-                </td>
-              </ng-container>
-              <ng-container matColumnDef="more">
-                <td mat-cell *matCellDef="let userRow">
-                  <button mat-icon-button class="user-more-menu" [matMenuTriggerFor]="userOptions">
-                    <mat-icon>more_vert</mat-icon>
-                  </button>
-                  <mat-menu #userOptions="matMenu" class="user-options">
-                    @if (!userRow.inviteeStatus && !isCurrentUser(userRow)) {
-                      <button
-                        mat-menu-item
-                        class="remove-user"
-                        (click)="removeProjectUserClicked(userRow)"
-                        [disabled]="!isAppOnline"
-                      >
-                        {{ t("remove_from_project") }}
-                      </button>
-                    } @else if (userRow.inviteeStatus) {
-                      <button
-                        mat-menu-item
-                        class="cancel-invite"
-                        (click)="uninviteProjectUser(userRow.user.email)"
-                        [disabled]="!isAppOnline"
-                      >
-                        {{ t("cancel_invite") }}
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="questions_permission">
+                  <td mat-cell *matCellDef="let userRow">
+                    @if (userRow.allowCreatingQuestions) {
+                      <div [matTooltip]="t('allow_add_edit_questions')">
+                        <mat-icon>post_add</mat-icon>
+                      </div>
+                    }
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="audio_permission">
+                  <td mat-cell *matCellDef="let userRow">
+                    @if (userRow.canManageAudio) {
+                      <div [matTooltip]="t('allow_manage_audio')">
+                        <mat-icon class="shift-left material-icons-outlined">audio_file</mat-icon>
+                      </div>
+                    }
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="role">
+                  <td class="hide-lt-sm" mat-cell *matCellDef="let userRow">
+                    <em>{{ userRow.role ? i18n.localizeRole(userRow.role) : t("role_unknown") }}</em>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="more">
+                  <td mat-cell *matCellDef="let userRow">
+                    @if (!userRow.paratextMemberNotConnected) {
+                      <button mat-icon-button class="user-more-menu" [matMenuTriggerFor]="userOptions">
+                        <mat-icon>more_vert</mat-icon>
                       </button>
                     }
-                    <button
-                      mat-menu-item
-                      (click)="openRolesDialog(userRow)"
-                      [disabled]="isAdmin(userRow.role) || userRow.inviteeStatus"
-                      data-test-id="edit-roles-and-permissions"
-                    >
-                      {{ t("edit_roles_and_permissions") }}
-                    </button>
-                  </mat-menu>
-                </td>
-              </ng-container>
-              <tr mat-row *matRowDef="let userRow; columns: tableColumns"></tr>
-            </table>
-          </div>
-        }
-        @if (filteredLength === 0) {
-          <mat-hint class="no-users-label">{{ t("no_users_found") }}</mat-hint>
+                    <mat-menu #userOptions="matMenu" class="user-options">
+                      @if (!userRow.inviteeStatus && !isCurrentUser(userRow)) {
+                        <button
+                          mat-menu-item
+                          class="remove-user"
+                          (click)="removeProjectUserClicked(userRow)"
+                          [disabled]="!isAppOnline"
+                        >
+                          {{ t("remove_from_project") }}
+                        </button>
+                      } @else if (userRow.inviteeStatus) {
+                        <button
+                          mat-menu-item
+                          class="cancel-invite"
+                          (click)="uninviteProjectUser(userRow.user.email)"
+                          [disabled]="!isAppOnline"
+                        >
+                          {{ t("cancel_invite") }}
+                        </button>
+                      }
+                      <button
+                        mat-menu-item
+                        (click)="openRolesDialog(userRow)"
+                        [disabled]="isAdmin(userRow.role) || userRow.inviteeStatus"
+                        data-test-id="edit-roles-and-permissions"
+                      >
+                        {{ t("edit_roles_and_permissions") }}
+                      </button>
+                    </mat-menu>
+                  </td>
+                </ng-container>
+                <tr mat-row *matRowDef="let userRow; columns: tableColumns"></tr>
+              </table>
+            </div>
+          } @else {
+            <mat-hint class="no-users-label" id="{{ `no-users-${userList.userType}`}}">{{
+              t("no_users_found")
+            }}</mat-hint>
+          }
         }
       </div>
     }

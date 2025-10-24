@@ -13,4 +13,5 @@ public class ParatextUserProfile
     /// </summary>
     public string OpaqueUserId { get; set; }
     public string? SFUserId { get; set; }
+    public string? Role { get; set; }
 }
