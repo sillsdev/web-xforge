@@ -103,13 +103,10 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
         var activity = Activity.Current;
         while (activity is not null)
         {
-            foreach (var kvp in activity.Tags)
-            {
-                if (!collectedTags.ContainsKey(kvp.Key))
-                {
-                    collectedTags[kvp.Key] = kvp.Value;
-                }
-            }
+            collectedTags = activity
+                .Tags.Where(kvp => !collectedTags.ContainsKey(kvp.Key))
+                .Union(collectedTags)
+                .ToDictionary();
             activity = activity.Parent;
         }
 
