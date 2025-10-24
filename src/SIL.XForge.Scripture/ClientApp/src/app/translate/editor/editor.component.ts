@@ -1476,7 +1476,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  private async updateAutoDraftTabVisibility(): Promise<void> {
+  private async updateDraftTabVisibility(): Promise<void> {
     const chapter: Chapter | undefined = this.text?.chapters.find(c => c.number === this.chapter);
     const hasDraft: boolean = chapter?.hasDraft ?? false;
     const draftApplied: boolean = chapter?.draftApplied ?? false;
@@ -2062,7 +2062,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.chapter$.next(chapter);
     await this.changeText();
     this.toggleNoteThreadVerses(true);
-    await this.updateAutoDraftTabVisibility();
+    await this.updateDraftTabVisibility();
     await this.updateBiblicalTermsTabVisibility();
   }
 

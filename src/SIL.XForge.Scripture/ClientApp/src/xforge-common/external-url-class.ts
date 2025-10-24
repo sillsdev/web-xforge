@@ -23,7 +23,7 @@ export class ExternalUrls {
     return localeUrlPortion === '' ? this.options.helpUrl : `${this.options.helpUrl}/${localeUrlPortion}`;
   }
 
-  get autoDrafts(): string {
+  get understandingDrafts(): string {
     return this.helps + '/understanding-drafts';
   }
 
