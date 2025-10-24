@@ -15,6 +15,7 @@ public interface IMachineProjectService
         string curUserId,
         BuildConfig buildConfig,
         bool preTranslate,
+        string? draftGenerationRequestId,
         CancellationToken cancellationToken
     );
     Task<string> GetProjectZipAsync(string sfProjectId, Stream outputStream, CancellationToken cancellationToken);

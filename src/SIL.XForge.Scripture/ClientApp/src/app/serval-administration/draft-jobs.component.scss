@@ -130,6 +130,22 @@
       font-weight: 500;
     }
   }
+
+  .grouping-toggle {
+    margin-bottom: 1rem;
+    align-self: flex-start;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    > .grouping-toggle-label {
+      display: flex;
+      margin-bottom: 0.5rem;
+      app-info {
+        margin-left: 0.25rem;
+      }
+    }
+  }
 }
 
 .project-link {
