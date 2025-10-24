@@ -232,7 +232,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
   }
 
   private async initializeTrainingFiles(projectDoc: SFProjectProfileDoc): Promise<void> {
-    if (projectDoc == null) return;
+    if (projectDoc?.data == null) return;
 
     // Query for all training data files in the project
     this.trainingDataQuery?.dispose();
