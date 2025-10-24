@@ -238,7 +238,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
       this.processUploadedFiles(e.dataTransfer.files);
     });
 
-    this.projectService.queryAudioText(this.data.projectId, this.destroyRef).then(query => {
+    void this.projectService.queryAudioText(this.data.projectId, this.destroyRef).then(query => {
       this.textAudioQuery = query;
       this.populateExistingData();
     });
@@ -322,7 +322,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
     // if the upload fails, we need to show an error and not close the dialog
     this._loadingAudio = false;
     if (audioUrl == null) {
-      this.dialogService.message('chapter_audio_dialog.upload_failed');
+      void this.dialogService.message('chapter_audio_dialog.upload_failed');
       return;
     }
 
@@ -511,7 +511,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
           return;
         }
         this.timing = this.timing_processed = doc.timings;
-        this.fileService
+        void this.fileService
           .findOrUpdateCache(FileType.Audio, TextAudioDoc.COLLECTION, textAudioId, doc.audioUrl)
           .then(data => {
             if (data == null) {
@@ -524,7 +524,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
               fileName: this.i18n.localizeBook(this.data.currentBook!) + ' ' + this.data.currentChapter,
               status: 'uploaded'
             };
-            this.audioUpdate(audioAttachment);
+            void this.audioUpdate(audioAttachment);
           });
       });
   }
@@ -553,7 +553,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
       }
       const isTimingFile: boolean = TIMING_FILE_EXTENSION_REGEX.test(file.name);
       if (isTimingFile) {
-        this.prepareTimingFileUpload(file);
+        void this.prepareTimingFileUpload(file);
       } else {
         // if file is larger than 100MB, show an error
         if (file.size > 100_000_000) {
@@ -568,7 +568,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
           status: 'uploaded'
         };
 
-        this.audioUpdate(audioAttachment);
+        void this.audioUpdate(audioAttachment);
       }
     }
   }

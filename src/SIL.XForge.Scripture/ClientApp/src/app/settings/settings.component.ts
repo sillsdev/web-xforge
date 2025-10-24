@@ -259,7 +259,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
         await this.userService.setCurrentProjectId(user, undefined);
         if (this.projectDoc != null) {
           await this.projectService.onlineDelete(this.projectDoc.id);
-          this.router.navigateByUrl('/projects', { replaceUrl: true });
+          void this.router.navigateByUrl('/projects', { replaceUrl: true });
         }
       }
     });

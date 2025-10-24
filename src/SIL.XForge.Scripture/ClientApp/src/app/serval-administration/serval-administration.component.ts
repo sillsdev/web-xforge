@@ -36,7 +36,7 @@ export class ServalAdministrationComponent implements OnInit {
   onTabChange(index: number): void {
     this.selectedTabIndex = index;
 
-    this.router.navigate([], {
+    void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { tab: this.availableTabs[index] },
       queryParamsHandling: 'preserve'

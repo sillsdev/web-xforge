@@ -21,8 +21,8 @@ export class PageNotFoundComponent {
   );
 
   constructor(readonly router: Router) {
-    lastValueFrom(this.progress).then(() => {
-      this.router.navigateByUrl('/projects');
+    void lastValueFrom(this.progress).then(() => {
+      void this.router.navigateByUrl('/projects');
     });
   }
 }

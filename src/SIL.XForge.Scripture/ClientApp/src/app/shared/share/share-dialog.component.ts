@@ -64,7 +64,7 @@ export class ShareDialogComponent extends ShareBaseComponent {
   ) {
     super(userService);
     this.projectId = this.data.projectId;
-    Promise.all([
+    void Promise.all([
       this.projectService.getProfile(this.projectId),
       this.projectService.isProjectAdmin(this.projectId, this.userService.currentUserId)
     ]).then(value => {
@@ -167,8 +167,8 @@ export class ShareDialogComponent extends ShareBaseComponent {
       this._error = 'no_language';
       return;
     }
-    this.navigator.clipboard.writeText(this.shareableLink).then(async () => {
-      await this.noticeService.show(this.i18n.translateStatic('share_control.link_copied'));
+    void this.navigator.clipboard.writeText(this.shareableLink).then(async () => {
+      this.noticeService.show(this.i18n.translateStatic('share_control.link_copied'));
       await this.reserveShareLink();
     });
   }
@@ -262,7 +262,7 @@ export class ShareDialogComponent extends ShareBaseComponent {
     if (!this.onlineStatusService.isOnline || this.projectId == null || this.shareRole == null) {
       return;
     }
-    this.projectService
+    void this.projectService
       .onlineGetLinkSharingKey(this.projectId, this.shareRole, this.shareLinkType, this.shareExpiration)
       .then((shareKey: string) => {
         this.linkSharingKey = shareKey;

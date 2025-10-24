@@ -101,7 +101,7 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
           this.i18n.translateStatic('error_messages.suggestion_engine_requires_retrain'),
           this.i18n.translateStatic('error_messages.go_to_retrain'),
           () => {
-            this.router.navigate(['projects', this.projectId, 'translate']);
+            void this.router.navigate(['projects', this.projectId, 'translate']);
           }
         );
       } else {

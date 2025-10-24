@@ -362,7 +362,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
   }
 
   navigateToDrafting(): void {
-    this.router.navigate(['/projects', this.activatedProjectService.projectId, 'draft-generation']);
+    void this.router.navigate(['/projects', this.activatedProjectService.projectId, 'draft-generation']);
   }
 
   async save(): Promise<void> {
@@ -381,7 +381,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
       messageKey = this.languageCodeConfirmationMessageIfUserTriesToContinue;
     }
     if (messageKey) {
-      this.dialogService.message(this.i18n.translate(`draft_sources.${messageKey}`));
+      void this.dialogService.message(this.i18n.translate(`draft_sources.${messageKey}`));
       return;
     }
 

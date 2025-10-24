@@ -121,7 +121,7 @@ export class MyProjectsComponent implements OnInit {
       this.noticeService.loadingStarted(this.constructor.name);
       this.joiningProjects.push(projectId);
       await this.projectService.onlineAddCurrentUser(projectId);
-      this.router.navigate(['projects', projectId]);
+      void this.router.navigate(['projects', projectId]);
     } catch {
       this.noticeService.show(this.i18n.translateStatic('my_projects.failed_to_join_project'));
     } finally {

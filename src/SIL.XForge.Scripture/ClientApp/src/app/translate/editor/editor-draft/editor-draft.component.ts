@@ -272,7 +272,9 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   }
 
   navigateToFormatting(): void {
-    this.router.navigateByUrl(`/projects/${this.projectId}/draft-generation/format/${this.bookId}/${this.chapter}`);
+    void this.router.navigateByUrl(
+      `/projects/${this.projectId}/draft-generation/format/${this.bookId}/${this.chapter}`
+    );
   }
 
   async applyDraft(): Promise<void> {

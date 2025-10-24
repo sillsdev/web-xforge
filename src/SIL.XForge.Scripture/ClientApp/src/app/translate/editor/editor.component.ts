@@ -353,7 +353,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   set isTargetTextRight(value: boolean) {
     if (this.projectUserConfigDoc != null && this.isTargetTextRight !== value) {
-      this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.isTargetTextRight, value));
+      void this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.isTargetTextRight, value));
     }
   }
 
@@ -407,14 +407,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   set chapter(value: number | undefined) {
     if (this.chapter$.value !== value && value != null) {
       // Update url to reflect current chapter, triggering ActivatedRoute
-      this.router.navigateByUrl(
+      void this.router.navigateByUrl(
         `/projects/${this.projectId}/translate/${Canon.bookNumberToId(this.bookNum!)}/${value}`
       );
     }
   }
 
   setBook(book: number): void {
-    this.router.navigate(['projects', this.projectId, 'translate', Canon.bookNumberToId(book)]);
+    void this.router.navigate(['projects', this.projectId, 'translate', Canon.bookNumberToId(book)]);
   }
 
   get bookNum(): number | undefined {
@@ -778,7 +778,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         // If book is not in project, navigate to 'projects' route, which should send the user
         // to the book stored in SFProjectUserConfig.
         if (this.text == null) {
-          this.router.navigateByUrl('projects', { replaceUrl: true });
+          void this.router.navigateByUrl('projects', { replaceUrl: true });
           return;
         }
 
@@ -1210,7 +1210,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.setNoteFabVisibility('hidden');
       this.bottomSheetRef = this.bottomSheet.open(this.TemplateBottomSheet, { hasBackdrop: false });
     } else {
-      this.showNoteThread(undefined, verseRef);
+      void this.showNoteThread(undefined, verseRef);
     }
   }
 
@@ -1392,7 +1392,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         return tabsToPersist;
       }),
       tap((tabs: EditorTabPersistData[]) => {
-        this.editorTabPersistenceService.persistTabsOpen(tabs);
+        void this.editorTabPersistenceService.persistTabsOpen(tabs);
       })
     );
 
@@ -1462,7 +1462,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             op.set(t => t.status, noteStatus);
           });
         } else {
-          this.dialogService.message('editor.cannot_edit_note_paratext');
+          void this.dialogService.message('editor.cannot_edit_note_paratext');
         }
       } else {
         note.threadId = threadDoc.data!.threadId;
@@ -1532,7 +1532,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             take(1)
           )
           .subscribe(() => {
-            this.router.navigate([], {
+            void this.router.navigate([], {
               queryParams: { 'draft-active': null, 'draft-timestamp': null },
               queryParamsHandling: 'merge',
               replaceUrl: true
@@ -1596,7 +1596,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
     this.shouldNoteThreadsRespondToEdits = true;
     // Defer the subscription so that the editor has time to clean up comments on blanks verses
-    Promise.resolve().then(() => this.subscribeClickEvents(segments));
+    void Promise.resolve().then(() => this.subscribeClickEvents(segments));
   }
 
   private async showNoteThread(threadDataId?: string, verseRef?: VerseRef): Promise<void> {
@@ -1669,7 +1669,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       if (notesRead.length === 0) {
         return;
       }
-      this.projectUserConfigDoc.submitJson0Op(op => {
+      void this.projectUserConfigDoc.submitJson0Op(op => {
         for (const noteId of notesRead) {
           op.add(puc => puc.noteRefsRead, noteId);
         }
@@ -1761,8 +1761,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     this.onTargetDeleteSub = textDoc.delete$.subscribe(() => {
-      this.dialogService.message(this.i18n.translate('editor.text_has_been_deleted')).then(() => {
-        this.router.navigateByUrl('/projects/' + this.projectDoc!.id + '/translate', { replaceUrl: true });
+      void this.dialogService.message(this.i18n.translate('editor.text_has_been_deleted')).then(() => {
+        void this.router.navigateByUrl('/projects/' + this.projectDoc!.id + '/translate', { replaceUrl: true });
       });
     });
 
@@ -1921,7 +1921,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.projectUserConfigDoc.data.selectedBookNum != null &&
       this.projectUserConfigDoc.data.selectedChapterNum != null
     ) {
-      this.translationEngineService.storeTrainingSegment(
+      void this.translationEngineService.storeTrainingSegment(
         this.projectUserConfigDoc.data.projectRef,
         sourceProjectRef,
         this.projectUserConfigDoc.data.selectedBookNum,
@@ -1970,7 +1970,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
               }
               const threadDataId: string | undefined = threadIdFromMouseEvent(event);
               if (threadDataId != null) {
-                this.showNoteThread(threadDataId);
+                void this.showNoteThread(threadDataId);
                 this.target?.formatEmbed(threadDataId, 'note-thread-embed', {
                   ['highlight']: false
                 });

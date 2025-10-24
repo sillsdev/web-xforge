@@ -220,7 +220,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           this.downloadBooksProgress = draftZipProgress.current;
           this.downloadBooksTotal = draftZipProgress.total;
         },
-        error: (error: Error) => void this.noticeService.showError(error.message)
+        error: (error: Error) => this.noticeService.showError(error.message)
       });
   }
 
@@ -244,7 +244,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
 
     // If the blob is undefined, display an error
     if (blob == null) {
-      void this.noticeService.showError('The project was never synced successfully and does not exist on disk.');
+      this.noticeService.showError('The project was never synced successfully and does not exist on disk.');
       return;
     }
 
@@ -260,11 +260,11 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
 
   async retrievePreTranslationStatus(): Promise<void> {
     await this.servalAdministrationService.onlineRetrievePreTranslationStatus(this.activatedProjectService.projectId!);
-    await this.noticeService.show('Webhook job started.');
+    this.noticeService.show('Webhook job started.');
   }
 
   navigateToDraftJobs(): void {
-    this.router.navigate(['/serval-administration'], {
+    void this.router.navigate(['/serval-administration'], {
       queryParams: {
         projectId: this.activatedProjectService.projectId!,
         tab: 'draft-jobs'

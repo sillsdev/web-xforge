@@ -42,7 +42,7 @@ export class AuthHttpInterceptor implements HttpInterceptor {
       // JSON RPC responds with this status code for 401 unauthorized
       case CommandErrorCode.InvalidRequest:
       case 401:
-        await this.authService!.expireToken();
+        this.authService!.expireToken();
         return await this.handle(req, next);
     }
     // HTTP/2 Requests do not carry the status text from the HTTP/1.1 Request

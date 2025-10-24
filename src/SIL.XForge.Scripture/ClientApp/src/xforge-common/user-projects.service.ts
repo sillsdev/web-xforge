@@ -22,7 +22,7 @@ export class SFUserProjectsService {
     private readonly authService: AuthService,
     private destroyRef: DestroyRef
   ) {
-    this.setup();
+    void this.setup();
   }
 
   /** List of SF project docs the user is on. Or undefined if the information is not yet available. */
@@ -38,10 +38,10 @@ export class SFUserProjectsService {
           return;
         }
         const userDoc = await this.userService.getCurrentUser();
-        this.updateProjectList(userDoc);
+        void this.updateProjectList(userDoc);
         userDoc.remoteChanges$
           .pipe(quietTakeUntilDestroyed(this.destroyRef))
-          .subscribe(() => this.updateProjectList(userDoc));
+          .subscribe(() => void this.updateProjectList(userDoc));
       });
   }
 
@@ -54,7 +54,7 @@ export class SFUserProjectsService {
     for (const [id, projectDoc] of this.projectDocs) {
       if (!currentProjectIds.includes(id)) {
         removedProjectsCount++;
-        projectDoc.dispose();
+        void projectDoc.dispose();
         this.projectDocs.delete(id);
       }
     }

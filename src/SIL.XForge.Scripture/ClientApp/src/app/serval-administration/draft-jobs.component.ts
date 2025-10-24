@@ -195,7 +195,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
   }
 
   clearProjectFilter(): void {
-    this.router.navigate([], {
+    void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { projectId: null },
       queryParamsHandling: 'merge'

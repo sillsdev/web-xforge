@@ -6,7 +6,7 @@ import { TranslocoService } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { fromVerseRef, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { lastValueFrom, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
@@ -221,7 +221,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.promiseForQuestionDocQuery.then(query => query.dispose());
+    void this.promiseForQuestionDocQuery.then(query => query.dispose());
   }
 
   dialogScroll(): void {
@@ -295,7 +295,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
   checkboxChanged(listItem: DialogListItem): void {
     this.updateSelectAllCheckbox();
     if (listItem.checked) {
-      this.confirmEditsIfNecessary([listItem]);
+      void this.confirmEditsIfNecessary([listItem]);
     }
   }
 
@@ -307,7 +307,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
       }
       listItem.checked = selectAllChecked;
     }
-    this.confirmEditsIfNecessary(editsToConfirm);
+    void this.confirmEditsIfNecessary(editsToConfirm);
   }
 
   updateSelectAllCheckbox(): void {
@@ -500,11 +500,13 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
       ImportQuestionsConfirmationDialogComponent,
       data
     ) as MatDialogRef<ImportQuestionsConfirmationDialogComponent, ImportQuestionsConfirmationDialogResult>;
-    const result: ImportQuestionsConfirmationDialogResult | undefined = await lastValueFrom(dialogRef.afterClosed());
-    if (result != null) {
-      result.forEach((checked, index) => (changesToConfirm[index].checked = checked));
-    }
-    this.updateSelectAllCheckbox();
+
+    dialogRef.afterClosed().subscribe((result: ImportQuestionsConfirmationDialogResult | undefined) => {
+      if (result != null) {
+        result.forEach((checked, index) => (changesToConfirm[index].checked = checked));
+      }
+      this.updateSelectAllCheckbox();
+    });
   }
 
   private questionsDiffer(listItem: DialogListItem): boolean {

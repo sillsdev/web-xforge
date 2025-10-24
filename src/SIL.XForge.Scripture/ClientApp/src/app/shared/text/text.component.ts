@@ -318,7 +318,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       localStorage.setItem(this.cursorColorStorageKey, localCursorColor);
     }
     this.cursorColor = localCursorColor;
-    this.userService.getCurrentUser().then((userDoc: UserDoc) => {
+    void this.userService.getCurrentUser().then((userDoc: UserDoc) => {
       this.currentUserDoc = userDoc;
       this.currentUserDoc.changes$
         .pipe(quietTakeUntilDestroyed(this.destroyRef, { logWarnings: false }))
@@ -380,9 +380,9 @@ export class TextComponent implements AfterViewInit, OnDestroy {
         if (this.highlightMarker != null) {
           this.highlightMarker.style.visibility = 'hidden';
         }
-        this.bindQuill(); // not awaited
+        void this.bindQuill(); // not awaited
       }
-      this.setLangFromText();
+      void this.setLangFromText();
     }
   }
 
@@ -631,7 +631,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     this.isDestroyed = true;
     this.viewModel?.unbind();
     this.loadingState = 'unloaded';
-    this.dismissPresences();
+    void this.dismissPresences();
     this.onDeleteSub?.unsubscribe();
     this.localSystemChangesSub?.unsubscribe();
   }
@@ -649,7 +649,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.setHighlightMarkerPosition());
     this.viewModel.editor = editor;
-    this.bindQuill(); // not awaited
+    void this.bindQuill(); // not awaited
     editor.container.addEventListener('beforeinput', (ev: Event) => this.onBeforeinput(ev));
     this.editorCreated.emit();
   }
@@ -934,7 +934,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       this.update();
     }
 
-    this.submitLocalPresenceDoc(range);
+    void this.submitLocalPresenceDoc(range);
   }
 
   clearHighlight(): void {
@@ -958,7 +958,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
 
     segmentRefs = this.filterSegments(segmentRefs, false);
     // this changes the underlying HTML, which can mess up some Quill events, so defer this call
-    Promise.resolve(segmentRefs).then(refs => {
+    void Promise.resolve(segmentRefs).then(refs => {
       this.viewModel.highlight(refs);
       if (!this.readOnlyEnabled) {
         this.viewModel.updateUsfmDescription();
@@ -1136,7 +1136,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       }
     };
     this.presenceChannel.on('receive', this.onPresenceChannelReceive);
-    this.submitLocalPresenceChannel(false);
+    void this.submitLocalPresenceChannel(false);
   }
 
   private async bindQuill(): Promise<void> {
@@ -1187,7 +1187,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     // As these are user initiated, it is OK to complete reload the editor, as the user will not be in the editor
     this.localSystemChangesSub?.unsubscribe();
     this.localSystemChangesSub = this.textDocService.getLocalSystemChanges$(this._id).subscribe(() => {
-      this.bindQuill();
+      void this.bindQuill();
     });
 
     this.loaded.emit(true);
@@ -1521,7 +1521,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
         this.activePresenceSubscription = timer(PRESENCE_EDITOR_ACTIVE_TIMEOUT)
           .pipe(takeUntil(this.presenceActiveEditor$))
           .subscribe(() => {
-            this.submitLocalPresenceChannel(false);
+            void this.submitLocalPresenceChannel(false);
           });
       }
     }
@@ -1605,7 +1605,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       this.setHighlightMarkerPosition();
     }
 
-    Promise.resolve().then(() => this.adjustSelection());
+    void Promise.resolve().then(() => this.adjustSelection());
     const affectedEmbeds: EmbedsByVerse[] =
       isUserEdit === true ? this.getEmbedsAffectedByDelta(delta, preDeltaSegmentCache, preDeltaEmbedCache) : [];
     this.updated.emit({
@@ -1616,7 +1616,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       isLocalUpdate: isUserEdit
     });
     if (isUserEdit) {
-      this.submitLocalPresenceChannel(true);
+      void this.submitLocalPresenceChannel(true);
     }
   }
 
