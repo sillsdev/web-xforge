@@ -1,6 +1,5 @@
 {
   "app": {
-    "beta": "beta",
     "generate_draft": "Generar borrador",
     "hangfire_dashboard": "Panel de Hangfire",
     "manage_questions": "Administrar preguntas",
@@ -255,7 +254,6 @@
     "reference_books": "Libros de referencia",
     "remote_changes": "La configuración de fuente para la generación de borradores ha sido modificada. Por favor, inicie un nuevo borrador y revise la configuración de fuente más reciente.",
     "remote_changes_start_over": "Empezar de nuevo",
-    "source_books_missing": "En el texto de referencia faltan uno o varios de los libros traducidos de su proyecto. Considere la posibilidad de elegir un texto de referencia que contenga una coincidencia para todos los libros traducidos",
     "summary_header": "Resumen",
     "summary_notifications": "Notificaciones",
     "summary_title": "Resumen",

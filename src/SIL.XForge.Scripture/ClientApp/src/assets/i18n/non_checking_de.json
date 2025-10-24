@@ -1,6 +1,5 @@
 {
   "app": {
-    "beta": "Beta",
     "generate_draft": "Entwurf generieren",
     "hangfire_dashboard": "Hangfire Dashboard",
     "manage_questions": "Fragen verwalten",
@@ -255,7 +254,6 @@
     "reference_books": "Referenzbücher",
     "remote_changes": "Die Konfiguration der Ausgangstexte für das Generieren von Entwürfen wurde verändert. Bitte starte einen neuen Entwurf und überprüfe die aktuelle Konfiguration.",
     "remote_changes_start_over": "Neu beginnen",
-    "source_books_missing": "Im Referenztext fehlen ein oder mehrere der übersetzten Bücher Deines Projekts. Wähle einen Referenztext, der eine Übereinstimmung für alle übersetzten Bücher enthält",
     "summary_header": "Zusammenfassung",
     "summary_notifications": "Benachrichtigungen",
     "summary_title": "Zusammenfassung",
