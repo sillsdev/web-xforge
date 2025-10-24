@@ -4069,7 +4069,7 @@ describe('EditorComponent', () => {
       }));
     });
 
-    describe('updateAutoDraftTabVisibility', () => {
+    describe('updateDraftTabVisibility', () => {
       it('should add the draft preview tab to source when available and "showSource" is true', fakeAsync(() => {
         const env = new TestEnvironment(env => {
           Object.defineProperty(env.component, 'showSource', { get: () => true });
