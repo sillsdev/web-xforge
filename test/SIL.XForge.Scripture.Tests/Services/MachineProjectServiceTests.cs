@@ -110,7 +110,13 @@ public class MachineProjectServiceTests
         ServalApiException ex = ServalApiExceptions.BuildInProgress;
         var buildConfig = new BuildConfig { ProjectId = Project01 };
         env.Service.Configure()
-            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .BuildProjectAsync(
+                User01,
+                buildConfig,
+                preTranslate: true,
+                draftGenerationRequestId: null,
+                cancellationToken: CancellationToken.None
+            )
             .ThrowsAsync(ex);
 
         // A pre-translation job has been queued
@@ -124,6 +130,7 @@ public class MachineProjectServiceTests
             User01,
             buildConfig,
             preTranslate: true,
+            draftGenerationRequestId: null,
             CancellationToken.None
         );
 
@@ -142,7 +149,13 @@ public class MachineProjectServiceTests
         ServalApiException ex = ServalApiExceptions.BuildInProgress;
         var buildConfig = new BuildConfig { ProjectId = Project01 };
         env.Service.Configure()
-            .BuildProjectAsync(User01, buildConfig, preTranslate: false, CancellationToken.None)
+            .BuildProjectAsync(
+                User01,
+                buildConfig,
+                preTranslate: false,
+                draftGenerationRequestId: null,
+                cancellationToken: CancellationToken.None
+            )
             .ThrowsAsync(ex);
 
         // An SMT translation job has been queued
@@ -156,6 +169,7 @@ public class MachineProjectServiceTests
             User01,
             buildConfig,
             preTranslate: false,
+            draftGenerationRequestId: null,
             CancellationToken.None
         );
 
@@ -174,7 +188,13 @@ public class MachineProjectServiceTests
         var ex = new TaskCanceledException();
         var buildConfig = new BuildConfig { ProjectId = Project01 };
         env.Service.Configure()
-            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .BuildProjectAsync(
+                User01,
+                buildConfig,
+                preTranslate: true,
+                draftGenerationRequestId: null,
+                cancellationToken: CancellationToken.None
+            )
             .ThrowsAsync(ex);
 
         // A pre-translation job has been queued
@@ -185,6 +205,7 @@ public class MachineProjectServiceTests
             User01,
             buildConfig,
             preTranslate: true,
+            draftGenerationRequestId: null,
             CancellationToken.None
         );
 
@@ -201,7 +222,13 @@ public class MachineProjectServiceTests
         var ex = new TaskCanceledException();
         var buildConfig = new BuildConfig { ProjectId = Project01 };
         env.Service.Configure()
-            .BuildProjectAsync(User01, buildConfig, preTranslate: false, CancellationToken.None)
+            .BuildProjectAsync(
+                User01,
+                buildConfig,
+                preTranslate: false,
+                draftGenerationRequestId: null,
+                cancellationToken: CancellationToken.None
+            )
             .ThrowsAsync(ex);
 
         // An SMT translation job has been queued
@@ -212,6 +239,7 @@ public class MachineProjectServiceTests
             User01,
             buildConfig,
             preTranslate: false,
+            draftGenerationRequestId: null,
             CancellationToken.None
         );
 
@@ -228,7 +256,13 @@ public class MachineProjectServiceTests
         var ex = new DataNotFoundException("project not found");
         var buildConfig = new BuildConfig { ProjectId = Project01 };
         env.Service.Configure()
-            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .BuildProjectAsync(
+                User01,
+                buildConfig,
+                preTranslate: true,
+                draftGenerationRequestId: null,
+                cancellationToken: CancellationToken.None
+            )
             .ThrowsAsync(ex);
 
         // SUT
@@ -236,6 +270,7 @@ public class MachineProjectServiceTests
             User01,
             buildConfig,
             preTranslate: true,
+            draftGenerationRequestId: null,
             CancellationToken.None
         );
 
@@ -251,7 +286,13 @@ public class MachineProjectServiceTests
         var ex = new DataNotFoundException("directory not found");
         var buildConfig = new BuildConfig { ProjectId = Project01 };
         env.Service.Configure()
-            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .BuildProjectAsync(
+                User01,
+                buildConfig,
+                preTranslate: true,
+                draftGenerationRequestId: null,
+                cancellationToken: CancellationToken.None
+            )
             .ThrowsAsync(ex);
 
         // SUT
@@ -259,6 +300,7 @@ public class MachineProjectServiceTests
             User01,
             buildConfig,
             preTranslate: true,
+            draftGenerationRequestId: null,
             CancellationToken.None
         );
 
@@ -273,7 +315,13 @@ public class MachineProjectServiceTests
         var ex = new InvalidDataException("Source project language not specified");
         var buildConfig = new BuildConfig { ProjectId = Project01 };
         env.Service.Configure()
-            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .BuildProjectAsync(
+                User01,
+                buildConfig,
+                preTranslate: true,
+                draftGenerationRequestId: null,
+                cancellationToken: CancellationToken.None
+            )
             .ThrowsAsync(ex);
 
         // A pre-translation job has been queued
@@ -287,6 +335,7 @@ public class MachineProjectServiceTests
             User01,
             buildConfig,
             preTranslate: true,
+            draftGenerationRequestId: null,
             CancellationToken.None
         );
 
@@ -305,7 +354,13 @@ public class MachineProjectServiceTests
         ServalApiException ex = ServalApiExceptions.Forbidden;
         var buildConfig = new BuildConfig { ProjectId = Project01 };
         env.Service.Configure()
-            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .BuildProjectAsync(
+                User01,
+                buildConfig,
+                preTranslate: true,
+                draftGenerationRequestId: null,
+                cancellationToken: CancellationToken.None
+            )
             .ThrowsAsync(ex);
 
         // A pre-translation job has been queued
@@ -319,6 +374,7 @@ public class MachineProjectServiceTests
             User01,
             buildConfig,
             preTranslate: true,
+            draftGenerationRequestId: null,
             CancellationToken.None
         );
 
@@ -338,7 +394,13 @@ public class MachineProjectServiceTests
         ServalApiException ex = ServalApiExceptions.Forbidden;
         var buildConfig = new BuildConfig { ProjectId = Project01 };
         env.Service.Configure()
-            .BuildProjectAsync(User01, buildConfig, preTranslate: false, CancellationToken.None)
+            .BuildProjectAsync(
+                User01,
+                buildConfig,
+                preTranslate: false,
+                draftGenerationRequestId: null,
+                cancellationToken: CancellationToken.None
+            )
             .ThrowsAsync(ex);
 
         // An SMT translation job has been queued
@@ -352,6 +414,7 @@ public class MachineProjectServiceTests
             User01,
             buildConfig,
             preTranslate: false,
+            draftGenerationRequestId: null,
             CancellationToken.None
         );
 
@@ -370,7 +433,13 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment();
         var buildConfig = new BuildConfig { ProjectId = Project01 };
         env.Service.Configure()
-            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .BuildProjectAsync(
+                User01,
+                buildConfig,
+                preTranslate: true,
+                draftGenerationRequestId: null,
+                cancellationToken: CancellationToken.None
+            )
             .Returns(Task.FromResult(Build01));
 
         // SUT
@@ -378,12 +447,19 @@ public class MachineProjectServiceTests
             User01,
             buildConfig,
             preTranslate: true,
+            draftGenerationRequestId: null,
             CancellationToken.None
         );
 
         await env
             .Service.Received(1)
-            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None);
+            .BuildProjectAsync(
+                User01,
+                buildConfig,
+                preTranslate: true,
+                draftGenerationRequestId: null,
+                cancellationToken: CancellationToken.None
+            );
     }
 
     [Test]
@@ -394,7 +470,13 @@ public class MachineProjectServiceTests
         ServalApiException ex = ServalApiExceptions.BuildInProgress;
         var buildConfig = new BuildConfig { ProjectId = Project01, SendEmailOnBuildFinished = true };
         env.Service.Configure()
-            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .BuildProjectAsync(
+                User01,
+                buildConfig,
+                preTranslate: true,
+                draftGenerationRequestId: null,
+                cancellationToken: CancellationToken.None
+            )
             .ThrowsAsync(ex);
 
         // A pre-translation job has been queued
@@ -408,6 +490,7 @@ public class MachineProjectServiceTests
             User01,
             buildConfig,
             preTranslate: true,
+            draftGenerationRequestId: null,
             CancellationToken.None
         );
 
@@ -422,7 +505,13 @@ public class MachineProjectServiceTests
         var ex = new TaskCanceledException();
         var buildConfig = new BuildConfig { ProjectId = Project01, SendEmailOnBuildFinished = true };
         env.Service.Configure()
-            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .BuildProjectAsync(
+                User01,
+                buildConfig,
+                preTranslate: true,
+                draftGenerationRequestId: null,
+                cancellationToken: CancellationToken.None
+            )
             .ThrowsAsync(ex);
 
         // A pre-translation job has been queued
@@ -436,6 +525,7 @@ public class MachineProjectServiceTests
             User01,
             buildConfig,
             preTranslate: true,
+            draftGenerationRequestId: null,
             CancellationToken.None
         );
 
@@ -450,7 +540,13 @@ public class MachineProjectServiceTests
         var ex = new NotSupportedException();
         var buildConfig = new BuildConfig { ProjectId = Project01, SendEmailOnBuildFinished = true };
         env.Service.Configure()
-            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .BuildProjectAsync(
+                User01,
+                buildConfig,
+                preTranslate: true,
+                draftGenerationRequestId: null,
+                cancellationToken: CancellationToken.None
+            )
             .ThrowsAsync(ex);
 
         // A pre-translation job has been queued
@@ -464,10 +560,54 @@ public class MachineProjectServiceTests
             User01,
             buildConfig,
             preTranslate: true,
+            draftGenerationRequestId: null,
             CancellationToken.None
         );
 
         await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Test]
+    public async Task BuildProjectForBackgroundJobAsync_AddsDraftGenerationRequestIdTag()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var buildConfig = new BuildConfig { ProjectId = Project01 };
+        const string draftGenerationRequestId = "5678";
+
+        // Mock BuildProjectAsync to return successfully
+        env.Service.Configure()
+            .BuildProjectAsync(
+                User01,
+                buildConfig,
+                preTranslate: true,
+                draftGenerationRequestId,
+                cancellationToken: CancellationToken.None
+            )
+            .Returns(Task.FromResult(Build01));
+
+        System.Diagnostics.Activity? capturedActivity = null;
+        using (new System.Diagnostics.Activity("TestActivity").Start())
+        {
+            // SUT
+            await env.Service.BuildProjectForBackgroundJobAsync(
+                User01,
+                buildConfig,
+                preTranslate: true,
+                draftGenerationRequestId,
+                CancellationToken.None
+            );
+
+            // Capture the activity after the call
+            capturedActivity = System.Diagnostics.Activity.Current;
+        }
+
+        // Verify the Activity has the draftGenerationRequestId tag
+        Assert.IsNotNull(capturedActivity, "Activity.Current should be set during execution");
+        Assert.IsTrue(
+            capturedActivity!.Tags.Any(t => t.Key == "draftGenerationRequestId" && t.Value == draftGenerationRequestId),
+            "Activity should contain draftGenerationRequestId tag with correct value"
+        );
     }
 
     [Test]
@@ -519,7 +659,13 @@ public class MachineProjectServiceTests
             .Returns(translationBuildConfig);
 
         // SUT
-        await env.Service.BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None);
+        await env.Service.BuildProjectAsync(
+            User01,
+            buildConfig,
+            preTranslate: true,
+            draftGenerationRequestId: null,
+            cancellationToken: CancellationToken.None
+        );
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueuedAt);
         await env
@@ -567,7 +713,13 @@ public class MachineProjectServiceTests
             .Returns(Task.FromResult<IList<ServalCorpusSyncInfo>>([]));
 
         // SUT
-        await env.Service.BuildProjectAsync(User01, buildConfig, preTranslate: false, CancellationToken.None);
+        await env.Service.BuildProjectAsync(
+            User01,
+            buildConfig,
+            preTranslate: false,
+            draftGenerationRequestId: null,
+            cancellationToken: CancellationToken.None
+        );
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.TranslationJobId);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.TranslationQueuedAt);
         await env
@@ -588,6 +740,7 @@ public class MachineProjectServiceTests
                 User01,
                 new BuildConfig { ProjectId = Project01 },
                 preTranslate: false,
+                draftGenerationRequestId: null,
                 CancellationToken.None
             )
         );
@@ -606,6 +759,7 @@ public class MachineProjectServiceTests
                 User01,
                 new BuildConfig { ProjectId = Project01 },
                 preTranslate: false,
+                draftGenerationRequestId: null,
                 CancellationToken.None
             )
         );
@@ -623,8 +777,77 @@ public class MachineProjectServiceTests
                 User01,
                 new BuildConfig { ProjectId = Project04 },
                 preTranslate: false,
+                draftGenerationRequestId: null,
                 CancellationToken.None
             )
+        );
+    }
+
+    [Test]
+    public async Task BuildProjectAsync_CreatesActivityWithDraftGenerationRequestId()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.SetupProjectSecretAsync(Project01, new ServalData { PreTranslationEngineId = TranslationEngine01 });
+        var buildConfig = new BuildConfig { ProjectId = Project01 };
+        const string draftGenerationRequestId = "test-draft-generation-request-id";
+
+        env.Service.Configure()
+            .RemoveLegacyServalDataAsync(Project01, preTranslate: true, CancellationToken.None)
+            .Returns(Task.CompletedTask);
+        env.Service.Configure()
+            .EnsureTranslationEngineExistsAsync(
+                User01,
+                Arg.Any<IDocument<SFProject>>(),
+                Arg.Any<SFProjectSecret>(),
+                preTranslate: true,
+                useEcho: false,
+                CancellationToken.None
+            )
+            .Returns(Task.FromResult(TranslationEngine01));
+        env.Service.Configure()
+            .RecreateOrUpdateTranslationEngineIfRequiredAsync(
+                TranslationEngine01,
+                Arg.Any<SFProject>(),
+                preTranslate: true,
+                useEcho: false,
+                CancellationToken.None
+            )
+            .Returns(Task.CompletedTask);
+        env.Service.Configure()
+            .SyncProjectCorporaAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .Returns(Task.FromResult<IList<ServalCorpusSyncInfo>>([]));
+
+        System.Diagnostics.Activity? capturedActivity = null;
+        env.Service.Configure()
+            .SyncProjectCorporaAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .Returns(callInfo =>
+            {
+                // Capture the Activity during execution to verify it has the tag
+                capturedActivity = System.Diagnostics.Activity.Current;
+                return Task.FromResult<IList<ServalCorpusSyncInfo>>([]);
+            });
+
+        // Create an Activity for the test (simulating what EventMetricLogger would do)
+        using var activity = new System.Diagnostics.Activity("test-activity");
+        activity.Start();
+
+        // SUT
+        await env.Service.BuildProjectAsync(
+            User01,
+            buildConfig,
+            preTranslate: true,
+            draftGenerationRequestId,
+            CancellationToken.None
+        );
+
+        activity.Stop();
+
+        // Verify the Activity was created with the draftGenerationRequestId tag
+        Assert.IsNotNull(capturedActivity, "Activity.Current should have been set during execution");
+        Assert.IsTrue(
+            capturedActivity!.Tags.Any(t => t.Key == "draftGenerationRequestId" && t.Value == draftGenerationRequestId),
+            "Activity should contain draftGenerationRequestId tag with correct value"
         );
     }
 
@@ -663,7 +886,13 @@ public class MachineProjectServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            env.Service.BuildProjectAsync(
+                User01,
+                buildConfig,
+                preTranslate: true,
+                draftGenerationRequestId: null,
+                cancellationToken: CancellationToken.None
+            )
         );
     }
 
@@ -683,7 +912,8 @@ public class MachineProjectServiceTests
             User01,
             new BuildConfig { ProjectId = Project01 },
             preTranslate: true,
-            CancellationToken.None
+            draftGenerationRequestId: null,
+            cancellationToken: CancellationToken.None
         );
         await env
             .TranslationEnginesClient.Received()
