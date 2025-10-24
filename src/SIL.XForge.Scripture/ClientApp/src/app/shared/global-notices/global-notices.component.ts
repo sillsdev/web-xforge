@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
 import { TranslocoModule } from '@ngneat/transloco';
@@ -7,7 +8,7 @@ import { NoticeComponent } from '../notice/notice.component';
 
 @Component({
   selector: 'app-global-notices',
-  imports: [NoticeComponent, MatIcon, MatTooltip, TranslocoModule],
+  imports: [NoticeComponent, MatIcon, MatIconButton, MatTooltip, TranslocoModule],
   templateUrl: './global-notices.component.html',
   styleUrl: './global-notices.component.scss'
 })
