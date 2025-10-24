@@ -4,7 +4,6 @@ import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { Observable, of } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import {
-  provideSFTabs,
   TabComponent,
   TabFactoryService,
   TabGroup,
@@ -68,7 +67,6 @@ export default {
     moduleMetadata({
       imports: [TabGroupComponent, TabComponent, TabHeaderDirective, SFTabGroupStoriesComponent],
       providers: [
-        provideSFTabs(),
         TabStateService<string, TabInfo<string>>,
         {
           provide: TabMenuService,
