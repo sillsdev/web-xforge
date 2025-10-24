@@ -45,7 +45,9 @@ interface ProjectBooks {
   books: string[];
 }
 
-interface DraftJob {
+/** Defines information about a Serval draft generation request. This is exported so it can be used in tests. */
+export interface DraftJob {
+  /** Serval build ID */
   buildId: string | null;
   projectId: string;
   startEvent?: EventMetric; // Made optional since incomplete jobs might not have a start event
@@ -84,6 +86,7 @@ const DRAFTING_EVENTS = [
   'BuildProjectAsync',
   'RetrievePreTranslationStatusAsync',
   'ExecuteWebhookAsync',
+  'BuildCompletedAsync',
   'CancelPreTranslationBuildAsync'
 ];
 
@@ -322,11 +325,13 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
 
       // Step 3: Find the first completion event after the build
       const candidateCompletionEvents = this.draftEvents.filter(event => {
-        if (event.projectId !== buildEvent.projectId) return false;
+        if (event.projectId !== buildEvent.projectId && event.payload.sfProjectId !== buildEvent.projectId)
+          return false;
         if (new Date(event.timeStamp) <= buildTime) return false;
 
         // Check if it's a completion event type
         if (
+          event.eventType === 'BuildCompletedAsync' ||
           event.eventType === 'RetrievePreTranslationStatusAsync' ||
           event.eventType === 'ExecuteWebhookAsync' ||
           event.eventType === 'CancelPreTranslationBuildAsync'
@@ -461,6 +466,10 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
       if (job.finishEvent.exception != null) {
         status = 'failed';
         errorMessage = job.finishEvent.exception;
+      } else if (job.finishEvent.payload?.buildState === 'Faulted') {
+        // We might expect the buildState to match BuildStates.Faulted, but the EventMetric object uses TitleCase rather
+        // than the all caps of BuildStates.
+        status = 'failed';
       } else {
         status = 'success';
       }
