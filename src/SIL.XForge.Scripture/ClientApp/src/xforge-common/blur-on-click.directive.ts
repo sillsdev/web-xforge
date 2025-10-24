@@ -1,9 +1,6 @@
 import { Directive, ElementRef, HostListener } from '@angular/core';
 
-@Directive({
-  selector: 'button[appBlurOnClick]',
-  standalone: false
-})
+@Directive({ selector: 'button[appBlurOnClick]' })
 export class BlurOnClickDirective {
   constructor(private readonly elementRef: ElementRef<HTMLElement>) {}
 

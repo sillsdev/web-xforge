@@ -1,12 +1,9 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { FormControl } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { ngfModule } from 'angular-file';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
@@ -19,11 +16,10 @@ import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { TestingRetryingRequestService } from 'xforge-common/testing-retrying-request.service';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -44,13 +40,21 @@ const mockedRealtimeQuery: RealtimeQuery<QuestionDoc> = mock(RealtimeQuery);
 
 describe('ImportQuestionsDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, TestOnlineStatusModule.forRoot()],
+    imports: [
+      ReactiveFormsModule,
+      getTestTranslocoModule(),
+      ngfModule,
+      ScriptureChooserDialogComponent,
+      ImportQuestionsDialogComponent
+    ],
     providers: [
+      provideTestOnlineStatus(),
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: CheckingQuestionsService, useMock: mockedQuestionsService },
       { provide: DialogService, useMock: mockedDialogService },
       { provide: CsvService, useMock: mockedCsvService },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      provideNoopAnimations()
     ]
   }));
 
@@ -499,14 +503,6 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.overlayContainerElement.hasChildNodes()).withContext('close button closes dialog').toBeFalse();
   }));
 });
-
-@NgModule({
-  declarations: [ScriptureChooserDialogComponent, ImportQuestionsDialogComponent],
-
-  imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule, ngfModule],
-  providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
-})
-class DialogTestModule {}
 
 class TestEnvironment {
   fixture: ComponentFixture<ChildViewContainerComponent>;

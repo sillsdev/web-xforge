@@ -1,4 +1,8 @@
+import { Dir } from '@angular/cdk/bidi';
 import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { MatIconButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { Subscription } from 'rxjs';
@@ -14,7 +18,7 @@ import { AudioHeadingRef, AudioTextRef, CheckingUtils } from '../../checking.uti
   selector: 'app-checking-scripture-audio-player',
   templateUrl: './checking-scripture-audio-player.component.html',
   styleUrls: ['./checking-scripture-audio-player.component.scss'],
-  standalone: false
+  imports: [TranslocoModule, Dir, MatIconButton, MatIcon, AudioPlayerComponent]
 })
 export class CheckingScriptureAudioPlayerComponent implements AfterViewInit {
   @Input() canClose: boolean = true;

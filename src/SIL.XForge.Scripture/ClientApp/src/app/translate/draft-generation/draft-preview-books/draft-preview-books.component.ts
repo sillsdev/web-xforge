@@ -1,7 +1,10 @@
-import { CommonModule } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { Component, Input } from '@angular/core';
+import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
 import { MatDialogRef } from '@angular/material/dialog';
-import { Router, RouterModule } from '@angular/router';
+import { MatIcon } from '@angular/material/icon';
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
+import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -11,7 +14,6 @@ import { BehaviorSubject, firstValueFrom, map, Observable, tap } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -43,7 +45,16 @@ export interface BookWithDraft {
   selector: 'app-draft-preview-books',
   templateUrl: './draft-preview-books.component.html',
   styleUrls: ['./draft-preview-books.component.scss'],
-  imports: [CommonModule, UICommonModule, RouterModule, TranslocoModule]
+  imports: [
+    AsyncPipe,
+    MatButtonToggle,
+    MatMenu,
+    MatMenuItem,
+    MatMenuTrigger,
+    MatIcon,
+    MatButtonToggleGroup,
+    TranslocoModule
+  ]
 })
 export class DraftPreviewBooksComponent {
   @Input() build: BuildDto | undefined;

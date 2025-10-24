@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { expect } from '@storybook/test';
 import { cloneDeep } from 'mingo/util';
@@ -10,10 +9,8 @@ import {
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { anything, instance, mock, when } from 'ts-mockito';
-import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../../../core/models/sf-type-registry';
@@ -68,9 +65,11 @@ const meta: Meta<CheckingQuestionComponent> = {
   component: CheckingQuestionComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, UICommonModule, I18nStoryModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
-      providers: [{ provide: SFProjectService, useValue: instance(mockedProjectService) }],
-      declarations: [SingleButtonAudioPlayerComponent]
+      imports: [SingleButtonAudioPlayerComponent],
+      providers: [
+        provideTestRealtime(SF_TYPE_REGISTRY),
+        { provide: SFProjectService, useValue: instance(mockedProjectService) }
+      ]
     })
   ],
   args: { questionDoc: instance(questionDoc) }

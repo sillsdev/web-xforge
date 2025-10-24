@@ -7,7 +7,7 @@ import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import * as RichText from 'rich-text';
 import { mock, when } from 'ts-mockito';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
@@ -22,8 +22,8 @@ const mockUserService = mock(UserService);
 
 describe('TextDocService', () => {
   configureTestingModule(() => ({
-    imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: SFProjectService, useMock: mockProjectService },
       { provide: UserService, useMock: mockUserService }
     ]

@@ -3,12 +3,12 @@ import Quill from 'quill';
 import QuillCursors from 'quill-cursors';
 import QuillInlineBlot from 'quill/blots/inline';
 import QuillScrollBlot from 'quill/blots/scroll';
-import { SharedModule } from '../../shared.module';
 import { DragAndDrop } from '../drag-and-drop';
 import { DisableHtmlClipboard } from './quill-clipboard';
 import { QuillFormatRegistryService } from './quill-format-registry.service';
 import { ChapterEmbed, NotNormalizedText, ParaBlock, ScrollBlot } from './quill-formats/quill-blots';
 import { FixSelectionHistory } from './quill-history';
+import { provideQuillRegistrations } from './quill-providers';
 import { registerScriptureFormats } from './quill-registrations';
 
 describe('QuillRegistrations', () => {
@@ -19,8 +19,7 @@ describe('QuillRegistrations', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [SharedModule.forRoot()],
-      providers: [QuillFormatRegistryService]
+      providers: [provideQuillRegistrations(), QuillFormatRegistryService]
     });
     formatRegistry = TestBed.inject(QuillFormatRegistryService);
     quillRegisterSpy = spyOn(Quill, 'register');

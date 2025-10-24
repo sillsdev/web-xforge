@@ -1,20 +1,30 @@
 import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { Router } from '@angular/router';
-import { anything, mock, strictEqual, verify } from 'ts-mockito';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressBar } from '@angular/material/progress-bar';
+import { ActivatedRoute, Router, UrlTree } from '@angular/router';
+import { anything, mock, strictEqual, verify, when } from 'ts-mockito';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { PageNotFoundComponent } from './page-not-found.component';
 
 const mockedRouter = mock(Router);
+const mockedActivatedRoute = mock(ActivatedRoute);
 
 describe('PageNotFoundComponent', () => {
-  configureTestingModule(() => ({
-    imports: [TestTranslocoModule, MatIconModule, MatProgressBarModule],
-    declarations: [PageNotFoundComponent, PageNotFoundHostComponent],
-    providers: [{ provide: Router, useMock: mockedRouter }]
-  }));
+  configureTestingModule(() => {
+    // Return a simple UrlTree-like object
+    when(mockedRouter.createUrlTree(anything(), anything())).thenReturn({
+      toString: () => '/projects'
+    } as UrlTree);
+
+    return {
+      imports: [PageNotFoundComponent, getTestTranslocoModule(), MatIcon, MatProgressBar, PageNotFoundHostComponent],
+      providers: [
+        { provide: Router, useMock: mockedRouter },
+        { provide: ActivatedRoute, useMock: mockedActivatedRoute }
+      ]
+    };
+  });
 
   it('should redirect after ten seconds', fakeAsync(() => {
     new TestEnvironment();
@@ -28,7 +38,7 @@ describe('PageNotFoundComponent', () => {
 
 @Component({
   template: `<app-page-not-found></app-page-not-found>`,
-  standalone: false
+  imports: [PageNotFoundComponent]
 })
 class PageNotFoundHostComponent {
   @ViewChild(PageNotFoundComponent) pageNotFoundComponent!: PageNotFoundComponent;

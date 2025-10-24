@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { Component, Input, OnInit } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
@@ -11,7 +11,7 @@ import { UserService } from '../user.service';
   selector: 'app-owner',
   templateUrl: './owner.component.html',
   styleUrls: ['./owner.component.scss'],
-  imports: [AvatarComponent, CommonModule]
+  imports: [AvatarComponent, NgClass]
 })
 export class OwnerComponent implements OnInit {
   @Input() ownerRef?: string;

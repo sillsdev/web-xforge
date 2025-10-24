@@ -1,11 +1,9 @@
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
-import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import {
   EditedQuestion,
   ImportQuestionsConfirmationDialogComponent,
@@ -15,7 +13,8 @@ import {
 
 describe('ImportQuestionsConfirmationDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule]
+    imports: [getTestTranslocoModule(), ImportQuestionsConfirmationDialogComponent],
+    providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
   }));
 
   it('Allows selecting and unselecting all questions', fakeAsync(async () => {
@@ -68,13 +67,6 @@ describe('ImportQuestionsConfirmationDialogComponent', () => {
     expect(dialogResult).toEqual([false, false, true]);
   }));
 });
-
-@NgModule({
-  declarations: [ImportQuestionsConfirmationDialogComponent],
-  imports: [UICommonModule, TestTranslocoModule],
-  providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
-})
-class DialogTestModule {}
 
 class TestEnvironment {
   fixture: ComponentFixture<ChildViewContainerComponent>;

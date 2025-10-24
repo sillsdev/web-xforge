@@ -16,9 +16,9 @@ import { first } from 'rxjs/operators';
 import { anything, mock, verify } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDocSource } from '../../core/models/text-doc';
 import { BuildDto } from '../../machine-api/build-dto';
@@ -34,8 +34,9 @@ describe('DraftGenerationService', () => {
   let testOnlineStatusService: TestOnlineStatusService;
 
   configureTestingModule(() => ({
-    imports: [TestOnlineStatusModule.forRoot(), TestTranslocoModule],
+    imports: [getTestTranslocoModule()],
     providers: [
+      provideTestOnlineStatus(),
       { provide: NoticeService, useMock: mockNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]

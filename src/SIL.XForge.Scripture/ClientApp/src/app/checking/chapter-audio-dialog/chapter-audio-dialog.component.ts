@@ -1,5 +1,19 @@
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { NgClass } from '@angular/common';
 import { AfterViewInit, Component, DestroyRef, ElementRef, Inject, OnDestroy, ViewChild } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MatAnchor, MatButton } from '@angular/material/button';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogActions,
+  MatDialogClose,
+  MatDialogContent,
+  MatDialogRef,
+  MatDialogTitle
+} from '@angular/material/dialog';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatTooltip } from '@angular/material/tooltip';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { cloneDeep, reject } from 'lodash-es';
 import { Chapter, TextInfo } from 'realtime-server//lib/esm/scriptureforge/models/text-info';
@@ -21,7 +35,9 @@ import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
+import { NoticeComponent } from '../../shared/notice/notice.component';
 import { AudioAttachment } from '../checking/checking-audio-player/checking-audio-player.component';
+import { CheckingScriptureAudioPlayerComponent } from '../checking/checking-scripture-audio-player/checking-scripture-audio-player.component';
 import { SingleButtonAudioPlayerComponent } from '../checking/single-button-audio-player/single-button-audio-player.component';
 
 const TIMING_FILE_EXTENSION_REGEX = /.(tsv|csv|txt)$/i;
@@ -45,7 +61,23 @@ export interface ChapterAudioDialogResult {
   selector: 'app-chapter-audio-dialog',
   templateUrl: './chapter-audio-dialog.component.html',
   styleUrls: ['./chapter-audio-dialog.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    MatDialogTitle,
+    CdkScrollable,
+    MatDialogContent,
+    MatTooltip,
+    MatButton,
+    NgClass,
+    SingleButtonAudioPlayerComponent,
+    MatIcon,
+    CheckingScriptureAudioPlayerComponent,
+    NoticeComponent,
+    MatDialogActions,
+    MatAnchor,
+    MatDialogClose,
+    MatProgressSpinner
+  ]
 })
 export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
   @ViewChild('dropzone') dropzone!: ElementRef<HTMLElement>;

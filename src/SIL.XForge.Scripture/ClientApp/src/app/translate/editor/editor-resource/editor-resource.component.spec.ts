@@ -4,7 +4,7 @@ import { Subject } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FontService } from 'xforge-common/font.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { CopyrightBannerComponent } from '../../../shared/copyright-banner/copyright-banner.component';
@@ -27,7 +27,7 @@ describe('EditorResourceComponent', () => {
       { provide: FontService, useMock: mockFontService },
       { provide: DialogService, useMock: mockDialogService }
     ],
-    imports: [CopyrightBannerComponent, TestTranslocoModule]
+    imports: [CopyrightBannerComponent, getTestTranslocoModule()]
   }));
 
   beforeEach(async () => {

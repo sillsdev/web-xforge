@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
@@ -10,11 +9,9 @@ import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { GenericDialogComponent } from 'xforge-common/generic-dialog/generic-dialog.component';
-import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectService } from '../core/sf-project.service';
 import { NoticeComponent } from '../shared/notice/notice.component';
 import { JoinComponent } from './join.component';
@@ -70,8 +67,7 @@ const meta: Meta = {
   },
   decorators: [
     moduleMetadata({
-      imports: [UICommonModule, CommonModule, I18nStoryModule, NoticeComponent],
-      declarations: [GenericDialogComponent],
+      imports: [NoticeComponent, GenericDialogComponent],
       providers: [
         { provide: ActivatedRoute, useValue: instance(mockedActivatedRoute) },
         {

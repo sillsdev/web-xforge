@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { DebugElement, ErrorHandler } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -12,12 +12,11 @@ import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectCreateSettings } from '../core/models/sf-project-create-settings';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
@@ -44,15 +43,10 @@ const mockedErrorHandler = mock(ErrorHandler);
 
 describe('ConnectProjectComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      NoopAnimationsModule,
-      UICommonModule,
-      TestTranslocoModule,
-      TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
-    ],
-    declarations: [ConnectProjectComponent, ProjectSelectComponent, SyncProgressComponent],
+    imports: [ConnectProjectComponent, ProjectSelectComponent, SyncProgressComponent, getTestTranslocoModule()],
     providers: [
+      provideTestOnlineStatus(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: AuthService, useMock: mockedAuthService },
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: ProjectNotificationService, useMock: mockedProjectNotificationService },
@@ -60,7 +54,8 @@ describe('ConnectProjectComponent', () => {
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ErrorHandler, useMock: mockedErrorHandler },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      provideNoopAnimations()
     ]
   }));
 

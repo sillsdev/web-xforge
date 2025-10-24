@@ -2,7 +2,7 @@ import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatTooltipHarness } from '@angular/material/tooltip/testing';
-import { SFTabsModule } from '../sf-tabs.module';
+import { provideSFTabs } from '../sf-tabs-providers';
 import { TabHeaderComponent } from './tab-header.component';
 
 describe('TabHeaderComponent', () => {
@@ -12,7 +12,8 @@ describe('TabHeaderComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [SFTabsModule]
+      imports: [TabHeaderComponent],
+      providers: [provideSFTabs()]
     });
     fixture = TestBed.createComponent(TabHeaderComponent);
     harnessLoader = TestbedHarnessEnvironment.loader(fixture);

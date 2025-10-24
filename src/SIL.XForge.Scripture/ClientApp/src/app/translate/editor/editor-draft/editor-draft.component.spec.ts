@@ -1,9 +1,9 @@
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSelectChange, MatSelectModule } from '@angular/material/select';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressBar } from '@angular/material/progress-bar';
+import { MatSelect, MatSelectChange } from '@angular/material/select';
+import { MatTooltip } from '@angular/material/tooltip';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { cloneDeep } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { Delta } from 'quill';
@@ -20,16 +20,16 @@ import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { Revision } from '../../../core/paratext.service';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { BuildStates } from '../../../machine-api/build-states';
-import { SharedModule } from '../../../shared/shared.module';
+import { provideQuillRegistrations } from '../../../shared/text/quill-editor-registration/quill-providers';
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
 import { DraftSegmentMap } from '../../draft-generation/draft-generation';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
@@ -53,20 +53,20 @@ describe('EditorDraftComponent', () => {
   const buildProgress$ = new BehaviorSubject<BuildDto | undefined>(undefined);
 
   configureTestingModule(() => ({
-    declarations: [EditorDraftComponent, HistoryRevisionFormatPipe],
     imports: [
-      MatProgressBarModule,
-      MatSelectModule,
-      MatIconModule,
-      MatTooltipModule,
-      NoopAnimationsModule,
-      SharedModule.forRoot(),
-      TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      TestTranslocoModule,
+      HistoryRevisionFormatPipe,
+      EditorDraftComponent,
+      MatProgressBar,
+      MatSelect,
+      MatIcon,
+      MatTooltip,
+      getTestTranslocoModule(),
       TranslocoMarkupModule
     ],
     providers: [
+      provideQuillRegistrations(),
+      provideTestOnlineStatus(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: DraftGenerationService, useMock: mockDraftGenerationService },
       { provide: DraftHandlingService, useMock: mockDraftHandlingService },
@@ -75,7 +75,8 @@ describe('EditorDraftComponent', () => {
       { provide: DialogService, useMock: mockDialogService },
       { provide: NoticeService, useMock: mockNoticeService },
       { provide: ErrorReportingService, useMock: mockErrorReportingService },
-      { provide: FeatureFlagService, useMock: mockFeatureFlagService }
+      { provide: FeatureFlagService, useMock: mockFeatureFlagService },
+      provideNoopAnimations()
     ]
   }));
 

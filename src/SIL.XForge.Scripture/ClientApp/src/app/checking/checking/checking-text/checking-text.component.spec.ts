@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { VerseRef } from '@sillsdev/scripture';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -10,19 +10,18 @@ import { anything, mock, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { SharedModule } from '../../../shared/shared.module';
 import { getCombinedVerseTextDoc, getTextDoc } from '../../../shared/test-utils';
+import { provideQuillRegistrations } from '../../../shared/text/quill-editor-registration/quill-providers';
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
 import { CheckingTextComponent } from './checking-text.component';
 
@@ -32,20 +31,16 @@ const mockedDialogService = mock(DialogService);
 
 describe('CheckingTextComponent', () => {
   configureTestingModule(() => ({
-    declarations: [CheckingTextComponent],
-    imports: [
-      NoopAnimationsModule,
-      SharedModule.forRoot(),
-      UICommonModule,
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      TestOnlineStatusModule.forRoot(),
-      TestTranslocoModule
-    ],
+    imports: [CheckingTextComponent, getTestTranslocoModule()],
     providers: [
+      provideQuillRegistrations(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
+      provideTestOnlineStatus(),
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: DialogService, useMock: mockedDialogService }
+      { provide: DialogService, useMock: mockedDialogService },
+      provideNoopAnimations()
     ]
   }));
 

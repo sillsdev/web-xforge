@@ -1,7 +1,7 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { NgModule, NgZone } from '@angular/core';
+import { NgZone } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ngfModule } from 'angular-file';
@@ -9,7 +9,7 @@ import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/trai
 import { anything, mock, when } from 'ts-mockito';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
-import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { TrainingDataFileUpload, TrainingDataUploadDialogComponent } from './training-data-upload-dialog.component';
@@ -21,8 +21,10 @@ const mockedUserService = mock(UserService);
 
 describe('TrainingDataUploadDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule],
+    imports: [ngfModule, getTestTranslocoModule()],
     providers: [
+      provideHttpClient(withInterceptorsFromDi()),
+      provideHttpClientTesting(),
       { provide: FileService, useMock: mockedFileService },
       { provide: TrainingDataService, useMock: mockedTrainingDataService },
       { provide: UserService, useMock: mockedUserService }
@@ -97,12 +99,6 @@ describe('TrainingDataUploadDialogComponent', () => {
     expect(env.fileNameExistsWarning).not.toBeNull();
   });
 });
-
-@NgModule({
-  imports: [ngfModule, TestTranslocoModule],
-  providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
-})
-class DialogTestModule {}
 
 class TestEnvironment {
   static uploadFiles: File[] = [new File([], 'test.csv')];

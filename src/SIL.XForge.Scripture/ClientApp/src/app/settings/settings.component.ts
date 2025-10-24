@@ -1,8 +1,16 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatButton } from '@angular/material/button';
+import { MatCard, MatCardActions, MatCardContent, MatCardTitle } from '@angular/material/card';
+import { MatCheckbox } from '@angular/material/checkbox';
 import { MatDialogConfig } from '@angular/material/dialog';
+import { MatError, MatHint } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import { MatRadioButton, MatRadioGroup } from '@angular/material/radio';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslocoModule } from '@ngneat/transloco';
+import { TranslocoMarkupComponent } from 'ngx-transloco-markup';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
@@ -20,13 +28,17 @@ import { ElementState } from 'xforge-common/models/element-state';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectSettings } from '../core/models/sf-project-settings';
 import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
+import { ProjectSelectComponent } from '../project-select/project-select.component';
+import { InfoComponent } from '../shared/info/info.component';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
 
 /** Allows user to configure high-level settings of how SF will use their Paratext project. */
@@ -34,7 +46,27 @@ import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-pro
   selector: 'app-settings',
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MatCard,
+    MatCardContent,
+    MatCardTitle,
+    MatButton,
+    MatIcon,
+    ProjectSelectComponent,
+    WriteStatusComponent,
+    MatError,
+    MatCheckbox,
+    InfoComponent,
+    MatHint,
+    MatRadioGroup,
+    MatRadioButton,
+    TranslocoMarkupComponent,
+    RouterLinkDirective,
+    MatCardActions
+  ]
 })
 export class SettingsComponent extends DataLoadingComponent implements OnInit {
   translationSuggestionsEnabled = new FormControl(false);

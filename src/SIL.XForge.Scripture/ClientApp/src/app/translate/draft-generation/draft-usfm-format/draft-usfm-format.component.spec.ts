@@ -2,7 +2,7 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Location } from '@angular/common';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatRadioButtonHarness } from '@angular/material/radio/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
@@ -19,10 +19,10 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
@@ -31,7 +31,7 @@ import { BuildDto } from '../../../machine-api/build-dto';
 import { BuildStates } from '../../../machine-api/build-states';
 import { QuotationAnalysis } from '../../../machine-api/quotation-denormalization';
 import { ServalAdministrationService } from '../../../serval-administration/serval-administration.service';
-import { SharedModule } from '../../../shared/shared.module';
+import { provideQuillRegistrations } from '../../../shared/text/quill-editor-registration/quill-providers';
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftHandlingService } from '../draft-handling.service';
@@ -51,15 +51,11 @@ const mockedDialogService = mock(DialogService);
 
 describe('DraftUsfmFormatComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      DraftUsfmFormatComponent,
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      NoopAnimationsModule,
-      TestTranslocoModule,
-      TestOnlineStatusModule.forRoot(),
-      SharedModule.forRoot()
-    ],
+    imports: [DraftUsfmFormatComponent, getTestTranslocoModule()],
     providers: [
+      provideQuillRegistrations(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
+      provideTestOnlineStatus(),
       { provide: DraftHandlingService, useMock: mockedDraftHandlingService },
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
@@ -71,7 +67,8 @@ describe('DraftUsfmFormatComponent', () => {
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: I18nService, useMock: mockI18nService },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: DialogService, useMock: mockedDialogService }
+      { provide: DialogService, useMock: mockedDialogService },
+      provideNoopAnimations()
     ]
   }));
 

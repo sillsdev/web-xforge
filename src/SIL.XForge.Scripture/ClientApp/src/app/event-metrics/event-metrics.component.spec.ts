@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { EventMetricsComponent } from './event-metrics.component';
 
 describe('EventMetricsComponent', () => {
   configureTestingModule(() => ({
-    imports: [TestTranslocoModule]
+    imports: [getTestTranslocoModule()]
   }));
 
   it('should be created', () => {

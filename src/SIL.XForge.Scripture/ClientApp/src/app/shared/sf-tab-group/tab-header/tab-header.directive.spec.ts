@@ -5,7 +5,7 @@ import { TabHeaderDirective } from './tab-header.directive';
 
 @Component({
   template: ` <div sf-tab-header></div> `,
-  standalone: false
+  imports: [TabHeaderDirective]
 })
 class TestComponent {}
 
@@ -15,7 +15,7 @@ describe('TabHeaderDirective', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [TabHeaderDirective, TestComponent]
+      imports: [TestComponent]
     });
     fixture = TestBed.createComponent(TestComponent);
     directiveElement = fixture.debugElement.query(By.directive(TabHeaderDirective));

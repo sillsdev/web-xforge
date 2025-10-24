@@ -1,5 +1,7 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, DestroyRef, EventEmitter, Input, Output } from '@angular/core';
-import { ProgressBarMode } from '@angular/material/progress-bar';
+import { MatProgressBar, ProgressBarMode } from '@angular/material/progress-bar';
+import { TranslocoModule } from '@ngneat/transloco';
 import { OtJson0Op } from 'ot-json0';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { BehaviorSubject, map, merge, Observable } from 'rxjs';
@@ -35,7 +37,7 @@ enum SyncPhase {
   selector: 'app-sync-progress',
   templateUrl: './sync-progress.component.html',
   styleUrl: '../sync.component.scss',
-  standalone: false
+  imports: [TranslocoModule, MatProgressBar, AsyncPipe]
 })
 export class SyncProgressComponent {
   @Input() showSyncStatus: boolean = true;

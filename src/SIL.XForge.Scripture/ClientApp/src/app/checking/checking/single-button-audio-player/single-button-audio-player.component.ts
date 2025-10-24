@@ -1,4 +1,9 @@
+import { NgClass } from '@angular/common';
 import { Component, Input, OnChanges, OnDestroy } from '@angular/core';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatTooltip } from '@angular/material/tooltip';
+import { TranslocoModule } from '@ngneat/transloco';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { AudioPlayer, AudioStatus } from '../../../shared/audio/audio-player';
@@ -9,7 +14,7 @@ import { AudioSegmentPlayer } from '../../../shared/audio/audio-segment-player';
   selector: 'app-single-button-audio-player',
   templateUrl: './single-button-audio-player.component.html',
   styleUrls: ['./single-button-audio-player.component.scss'],
-  standalone: false
+  imports: [TranslocoModule, NgClass, MatProgressSpinner, MatIcon, MatTooltip]
 })
 export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent implements OnChanges, OnDestroy {
   private _source?: string;

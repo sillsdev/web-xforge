@@ -4,8 +4,8 @@ import { DebugElement, getDebugNode } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { RouterModule } from '@angular/router';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideRouter } from '@angular/router';
 import { escapeRegExp, merge } from 'lodash-es';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
@@ -16,15 +16,14 @@ import { combineLatest, from, Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { FileType } from 'xforge-common/models/file-offline-data';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { SFProjectService } from '../../app/core/sf-project.service';
 import { ProjectDoc } from '../models/project-doc';
 import { NONE_ROLE, ProjectRoleInfo } from '../models/project-role-info';
 import { QueryFilter, QueryParameters } from '../query-parameters';
 import { TestRealtimeService } from '../test-realtime.service';
-import { configureTestingModule, emptyHammerLoader, TestTranslocoModule } from '../test-utils';
+import { configureTestingModule, emptyHammerLoader, getTestTranslocoModule } from '../test-utils';
 import { TypeRegistry } from '../type-registry';
-import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
 import { SaProjectsComponent } from './sa-projects.component';
 
@@ -33,20 +32,16 @@ const mockedUserService = mock(UserService);
 
 describe('SaProjectsComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      NoopAnimationsModule,
-      RouterModule.forRoot([]),
-      UICommonModule,
-      TestTranslocoModule,
-      TestRealtimeModule.forRoot(new TypeRegistry([TestProjectDoc], [FileType.Audio], []))
-    ],
-    declarations: [SaProjectsComponent],
+    imports: [SaProjectsComponent, getTestTranslocoModule()],
     providers: [
+      provideRouter([]),
+      provideTestRealtime(new TypeRegistry([TestProjectDoc], [FileType.Audio], [])),
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
       emptyHammerLoader,
       provideHttpClient(withInterceptorsFromDi()),
-      provideHttpClientTesting()
+      provideHttpClientTesting(),
+      provideNoopAnimations()
     ]
   }));
 

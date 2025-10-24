@@ -1,8 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, ErrorHandler, OnInit } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatButton } from '@angular/material/button';
+import { MatCard, MatCardContent, MatCardSubtitle, MatCardTitle } from '@angular/material/card';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatDivider } from '@angular/material/divider';
+import { MatError } from '@angular/material/form-field';
 import { Router } from '@angular/router';
-import { TranslocoService } from '@ngneat/transloco';
+import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -15,7 +20,9 @@ import { SFProjectCreateSettings } from '../core/models/sf-project-create-settin
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
+import { ProjectSelectComponent } from '../project-select/project-select.component';
 import { compareProjectsForSorting, projectLabel } from '../shared/utils';
+import { SyncProgressComponent } from '../sync/sync-progress/sync-progress.component';
 interface ConnectProjectFormValues {
   settings: {
     checking: boolean;
@@ -27,7 +34,21 @@ interface ConnectProjectFormValues {
   selector: 'app-connect-project',
   templateUrl: './connect-project.component.html',
   styleUrls: ['./connect-project.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    MatCard,
+    MatCardContent,
+    SyncProgressComponent,
+    FormsModule,
+    ReactiveFormsModule,
+    MatCardTitle,
+    MatCardSubtitle,
+    ProjectSelectComponent,
+    MatError,
+    MatDivider,
+    MatCheckbox,
+    MatButton
+  ]
 })
 export class ConnectProjectComponent extends DataLoadingComponent implements OnInit {
   static readonly errorAlreadyConnectedKey: string = 'error-already-connected';

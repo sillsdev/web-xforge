@@ -1,12 +1,9 @@
-import { CommonModule } from '@angular/common';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { DebugElement, NgModule } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { VerseRef } from '@sillsdev/scripture';
 import { CookieService } from 'ngx-cookie-service';
 import { Delta } from 'quill';
@@ -27,17 +24,16 @@ import { createStorageFileData, FileType } from 'xforge-common/models/file-offli
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import {
   ChildViewContainerComponent,
   configureTestingModule,
   getAudioBlob,
-  TestTranslocoModule
+  getTestTranslocoModule
 } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -45,10 +41,9 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ScriptureChooserDialogComponent } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
-import { SharedModule } from '../../shared/shared.module';
 import { getTextDoc } from '../../shared/test-utils';
+import { provideQuillRegistrations } from '../../shared/text/quill-editor-registration/quill-providers';
 import { EDITOR_READY_TIMEOUT } from '../../shared/text/text.component';
-import { CheckingModule } from '../checking.module';
 import { AudioAttachment } from '../checking/checking-audio-player/checking-audio-player.component';
 import { QuestionDialogComponent, QuestionDialogData } from './question-dialog.component';
 
@@ -65,12 +60,14 @@ describe('QuestionDialogComponent', () => {
     imports: [
       ReactiveFormsModule,
       FormsModule,
-      DialogTestModule,
-      SharedModule.forRoot(),
-      TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+      getTestTranslocoModule(),
+      ScriptureChooserDialogComponent,
+      QuestionDialogComponent
     ],
     providers: [
+      provideQuillRegistrations(),
+      provideTestOnlineStatus(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: AuthService, useMock: mockedAuthService },
       { provide: UserService, useMock: mockedUserService },
       { provide: NoticeService, useMock: mockedNoticeService },
@@ -78,7 +75,8 @@ describe('QuestionDialogComponent', () => {
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: FileService, useMock: mockedFileService },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      provideNoopAnimations()
     ]
   }));
 
@@ -574,14 +572,6 @@ describe('QuestionDialogComponent', () => {
     expect(env.isSegmentHighlighted('1')).toBe(true);
   }));
 });
-
-@NgModule({
-  declarations: [ScriptureChooserDialogComponent],
-  exports: [ScriptureChooserDialogComponent],
-  imports: [CommonModule, UICommonModule, CheckingModule, TestTranslocoModule, NoopAnimationsModule],
-  providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
-})
-class DialogTestModule {}
 
 class TestEnvironment {
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;

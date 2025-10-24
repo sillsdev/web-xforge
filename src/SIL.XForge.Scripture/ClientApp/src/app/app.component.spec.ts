@@ -2,9 +2,12 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { Location } from '@angular/common';
 import { Component, DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { MatIcon } from '@angular/material/icon';
+import { MatMenu } from '@angular/material/menu';
+import { MatTooltip } from '@angular/material/tooltip';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { Route, Router, RouterModule } from '@angular/router';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideRouter, Route, Router } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
@@ -30,12 +33,11 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { PWA_BEFORE_PROMPT_CAN_BE_SHOWN_AGAIN, PwaService } from 'xforge-common/pwa.service';
 import { TestBreakpointObserver } from 'xforge-common/test-breakpoint-observer';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { AppComponent } from './app.component';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
@@ -65,8 +67,7 @@ const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedDialogService = mock(DialogService);
 
 @Component({
-  template: `<div>Mock</div>`,
-  standalone: false
+  template: `<div>Mock</div>`
 })
 class MockComponent {}
 
@@ -87,18 +88,20 @@ const ROUTES: Route[] = [
 
 describe('AppComponent', () => {
   configureTestingModule(() => ({
-    declarations: [AppComponent, NavigationComponent],
     imports: [
-      UICommonModule,
-      NoopAnimationsModule,
-      RouterModule.forRoot(ROUTES),
-      TestTranslocoModule,
-      TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      AppComponent,
+      NavigationComponent,
+      getTestTranslocoModule(),
       AvatarComponent,
-      GlobalNoticesComponent
+      GlobalNoticesComponent,
+      MatMenu,
+      MatIcon,
+      MatTooltip
     ],
     providers: [
+      provideRouter(ROUTES),
+      provideTestOnlineStatus(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: AuthService, useMock: mockedAuthService },
       { provide: UserService, useMock: mockedUserService },
       { provide: SettingsAuthGuard, useMock: mockedSettingsAuthGuard },
@@ -116,7 +119,8 @@ describe('AppComponent', () => {
       { provide: FileService, useMock: mockedFileService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
       { provide: BreakpointObserver, useClass: TestBreakpointObserver },
-      { provide: DialogService, useMock: mockedDialogService }
+      { provide: DialogService, useMock: mockedDialogService },
+      provideNoopAnimations()
     ]
   }));
 

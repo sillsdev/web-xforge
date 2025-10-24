@@ -3,8 +3,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { DebugElement, getDebugNode } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { RouterModule } from '@angular/router';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideRouter } from '@angular/router';
 import { escapeRegExp, merge } from 'lodash-es';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
@@ -16,9 +16,9 @@ import { anything, mock, when } from 'ts-mockito';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { ProjectDoc } from 'xforge-common/models/project-doc';
 import { QueryFilter, QueryParameters } from 'xforge-common/query-parameters';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { TypeRegistry } from 'xforge-common/type-registry';
 import { ServalAdministrationService } from './serval-administration.service';
 import { ServalProjectsComponent } from './serval-projects.component';
@@ -27,16 +27,14 @@ const mockedServalAdministrationService = mock(ServalAdministrationService);
 
 describe('ServalProjectsComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      NoopAnimationsModule,
-      RouterModule.forRoot([]),
-      TestTranslocoModule,
-      TestRealtimeModule.forRoot(new TypeRegistry([TestProjectDoc], [FileType.Audio], []))
-    ],
+    imports: [getTestTranslocoModule()],
     providers: [
+      provideRouter([]),
       { provide: ServalAdministrationService, useMock: mockedServalAdministrationService },
+      provideTestRealtime(new TypeRegistry([TestProjectDoc], [FileType.Audio], [])),
       provideHttpClient(withInterceptorsFromDi()),
-      provideHttpClientTesting()
+      provideHttpClientTesting(),
+      provideNoopAnimations()
     ]
   }));
 

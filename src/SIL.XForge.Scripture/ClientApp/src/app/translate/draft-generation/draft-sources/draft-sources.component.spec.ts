@@ -2,7 +2,7 @@ import { OverlayContainer } from '@angular/cdk/overlay';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
@@ -20,11 +20,11 @@ import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { hasData, notNull, WithData } from '../../../../type-utils';
 import { ParatextProject } from '../../../core/models/paratext-project';
@@ -72,14 +72,10 @@ when(mockTrainingDataQuery.remoteDocChanges$).thenReturn(of());
 
 describe('DraftSourcesComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      NoopAnimationsModule,
-      TestTranslocoModule
-    ],
-    declarations: [],
+    imports: [getTestTranslocoModule()],
     providers: [
+      provideTestOnlineStatus(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
@@ -92,7 +88,8 @@ describe('DraftSourcesComponent', () => {
       { provide: DialogService, useMock: mockedDialogService },
       { provide: TrainingDataService, useMock: mockTrainingDataService },
       { provide: ErrorReportingService, useMock: mock(ErrorReportingService) },
-      { provide: FileService, useMock: mockedFileService }
+      { provide: FileService, useMock: mockedFileService },
+      provideNoopAnimations()
     ]
   }));
 

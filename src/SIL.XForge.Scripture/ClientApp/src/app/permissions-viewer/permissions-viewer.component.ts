@@ -13,8 +13,7 @@ const permissions = rightsByRole;
 @Component({
   selector: 'app-permissions-viewer',
   templateUrl: './permissions-viewer.component.html',
-  styleUrls: ['./permissions-viewer.component.scss'],
-  standalone: false
+  styleUrls: ['./permissions-viewer.component.scss']
 })
 export class PermissionsViewerComponent implements OnInit {
   // All available roles

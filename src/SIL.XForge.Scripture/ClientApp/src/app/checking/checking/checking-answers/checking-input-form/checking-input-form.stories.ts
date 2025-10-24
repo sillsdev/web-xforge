@@ -1,9 +1,7 @@
-import { CommonModule } from '@angular/common';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { expect, userEvent, within } from '@storybook/test';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
-import { I18nStoryModule } from 'xforge-common/i18n-story.module';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { AutofocusDirective } from 'xforge-common/autofocus.directive';
 import { AttachAudioComponent } from '../../../attach-audio/attach-audio.component';
 import { TextAndAudioComponent } from '../../../text-and-audio/text-and-audio.component';
 import { CheckingInputFormComponent } from './checking-input-form.component';
@@ -13,8 +11,7 @@ const meta: Meta<CheckingInputFormComponent> = {
   component: CheckingInputFormComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, UICommonModule, I18nStoryModule],
-      declarations: [TextAndAudioComponent, AttachAudioComponent]
+      imports: [AutofocusDirective, TextAndAudioComponent, AttachAudioComponent]
     })
   ]
 };

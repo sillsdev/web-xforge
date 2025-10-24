@@ -1,7 +1,6 @@
-import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { VerseRef } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
 import { BiblicalTerm } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
@@ -15,15 +14,14 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import {
   ChildViewContainerComponent,
   configureTestingModule,
-  matDialogCloseDelay,
-  TestTranslocoModule
+  getTestTranslocoModule,
+  matDialogCloseDelay
 } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -34,8 +32,12 @@ const mockedI18nService = mock(I18nService);
 
 describe('BiblicalTermDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, NoopAnimationsModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
-    providers: [{ provide: I18nService, useMock: mockedI18nService }]
+    imports: [getTestTranslocoModule(), BiblicalTermDialogComponent],
+    providers: [
+      provideTestRealtime(SF_TYPE_REGISTRY),
+      { provide: I18nService, useMock: mockedI18nService },
+      provideNoopAnimations()
+    ]
   }));
 
   it('should display the biblical term', fakeAsync(() => {
@@ -184,12 +186,6 @@ describe('BiblicalTermDialogComponent', () => {
     env.closeDialog();
   }));
 });
-
-@NgModule({
-  imports: [UICommonModule, TestTranslocoModule],
-  declarations: [BiblicalTermDialogComponent]
-})
-class DialogTestModule {}
 
 class TestEnvironment {
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;

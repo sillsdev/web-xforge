@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SwUpdate } from '@angular/service-worker';
@@ -13,11 +12,10 @@ import { ActivatedProjectService, TestActivatedProjectService } from 'xforge-com
 import { AuthGuard } from 'xforge-common/auth.guard';
 import { AuthService } from 'xforge-common/auth.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { I18nStoryModule } from 'xforge-common/i18n-story.module';
+import { provideI18nStory } from 'xforge-common/i18n-story';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 import { ResumeTranslateService } from '../checking/checking/resume-translate.service';
@@ -66,8 +64,11 @@ function setUpMocks(args: StoryState): void {
 
   TestBed.resetTestingModule();
   TestBed.configureTestingModule({
-    imports: [I18nStoryModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
-    providers: [{ provide: UserService, useValue: instance(mockedUserService) }]
+    providers: [
+      provideI18nStory(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
+      { provide: UserService, useValue: instance(mockedUserService) }
+    ]
   });
 
   const realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
@@ -107,7 +108,6 @@ const meta: Meta = {
     setUpMocks(args as StoryState);
     return {
       moduleMetadata: {
-        imports: [UICommonModule, CommonModule, I18nStoryModule],
         providers: [
           { provide: AuthService, useValue: instance(mockedAuthService) },
           {

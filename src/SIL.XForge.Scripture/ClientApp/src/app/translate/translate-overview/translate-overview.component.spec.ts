@@ -22,12 +22,11 @@ import { L10nPercentPipe } from 'xforge-common/l10n-percent.pipe';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -50,16 +49,16 @@ const mockedProgressService = mock(ProgressService);
 
 describe('TranslateOverviewComponent', () => {
   configureTestingModule(() => ({
-    declarations: [TranslateOverviewComponent, TrainingProgressComponent],
     imports: [
-      UICommonModule,
-      TestTranslocoModule,
-      TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      TrainingProgressComponent,
+      TranslateOverviewComponent,
+      getTestTranslocoModule(),
       FontUnsupportedMessageComponent,
       L10nPercentPipe
     ],
     providers: [
+      provideTestOnlineStatus(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: AuthService, useMock: mockedAuthService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },

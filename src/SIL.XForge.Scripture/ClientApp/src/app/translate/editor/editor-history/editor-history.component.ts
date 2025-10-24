@@ -1,3 +1,4 @@
+import { AsyncPipe } from '@angular/common';
 import {
   AfterViewInit,
   Component,
@@ -9,6 +10,8 @@ import {
   Output,
   ViewChild
 } from '@angular/core';
+import { MatProgressBar } from '@angular/material/progress-bar';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Delta } from 'quill';
 import { combineLatest, startWith, tap } from 'rxjs';
 import { FontService } from 'xforge-common/font.service';
@@ -19,6 +22,7 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { TextDoc } from '../../../core/models/text-doc';
 import { Revision } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { TextComponent } from '../../../shared/text/text.component';
 import { EditorHistoryService } from './editor-history.service';
 import { HistoryChooserComponent, RevisionSelectEvent } from './history-chooser/history-chooser.component';
@@ -26,7 +30,7 @@ import { HistoryChooserComponent, RevisionSelectEvent } from './history-chooser/
   selector: 'app-editor-history',
   templateUrl: './editor-history.component.html',
   styleUrls: ['./editor-history.component.scss'],
-  standalone: false
+  imports: [MatProgressBar, NoticeComponent, HistoryChooserComponent, TextComponent, AsyncPipe, TranslocoModule]
 })
 export class EditorHistoryComponent implements OnChanges, OnInit, AfterViewInit {
   private _projectId?: string | undefined;

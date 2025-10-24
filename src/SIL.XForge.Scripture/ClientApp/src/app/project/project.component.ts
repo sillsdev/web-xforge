@@ -18,8 +18,7 @@ type TaskType = 'translate' | 'checking';
 @Component({
   selector: 'app-projects',
   templateUrl: './project.component.html',
-  styleUrls: ['./project.component.scss'],
-  standalone: false
+  styleUrls: ['./project.component.scss']
 })
 export class ProjectComponent extends DataLoadingComponent implements OnInit {
   constructor(

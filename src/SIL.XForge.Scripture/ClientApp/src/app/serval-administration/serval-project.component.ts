@@ -1,6 +1,25 @@
-import { CommonModule } from '@angular/common';
+import { AsyncPipe, SlicePipe } from '@angular/common';
 import { Component, DestroyRef, Input, OnInit } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { MatButton } from '@angular/material/button';
+import { MatCard, MatCardActions, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatAccordion, MatExpansionPanel, MatExpansionPanelHeader } from '@angular/material/expansion';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import { MatInput } from '@angular/material/input';
+import {
+  MatCell,
+  MatCellDef,
+  MatColumnDef,
+  MatHeaderCell,
+  MatHeaderCellDef,
+  MatHeaderRow,
+  MatHeaderRowDef,
+  MatRow,
+  MatRowDef,
+  MatTable
+} from '@angular/material/table';
 import { Router } from '@angular/router';
 import { saveAs } from 'file-saver';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -12,16 +31,16 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { BuildDto } from '../machine-api/build-dto';
+import { InfoComponent } from '../shared/info/info.component';
 import { JsonViewerComponent } from '../shared/json-viewer/json-viewer.component';
 import { MobileNotSupportedComponent } from '../shared/mobile-not-supported/mobile-not-supported.component';
 import { NoticeComponent } from '../shared/notice/notice.component';
-import { SharedModule } from '../shared/shared.module';
 import { projectLabel } from '../shared/utils';
 import { DraftZipProgress } from '../translate/draft-generation/draft-generation';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
@@ -51,10 +70,36 @@ function projectType(project: TranslateSource | SFProjectProfile): string {
   templateUrl: './serval-project.component.html',
   styleUrls: ['./serval-project.component.scss'],
   imports: [
-    CommonModule,
+    AsyncPipe,
+    SlicePipe,
+    InfoComponent,
     NoticeComponent,
-    SharedModule,
-    UICommonModule,
+    MatButton,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatCheckbox,
+    MatIcon,
+    MatCard,
+    MatCardHeader,
+    MatCardContent,
+    MatCardTitle,
+    MatCardActions,
+    MatTable,
+    MatColumnDef,
+    MatHeaderCell,
+    MatHeaderCellDef,
+    MatCell,
+    MatCellDef,
+    MatHeaderRow,
+    MatHeaderRowDef,
+    MatRow,
+    MatRowDef,
+    MatExpansionPanel,
+    MatExpansionPanelHeader,
+    MatAccordion,
+    ReactiveFormsModule,
+    RouterLinkDirective,
     DraftInformationComponent,
     MobileNotSupportedComponent,
     WriteStatusComponent,

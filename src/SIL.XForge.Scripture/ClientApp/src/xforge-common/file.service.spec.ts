@@ -12,9 +12,9 @@ import { FileService, formatFileSource } from './file.service';
 import { createDeletionFileData, createStorageFileData, FileOfflineData, FileType } from './models/file-offline-data';
 import { ProjectDataDoc } from './models/project-data-doc';
 import { OnlineStatusService } from './online-status.service';
-import { TestOnlineStatusModule } from './test-online-status.module';
+import { provideTestOnlineStatus } from './test-online-status-providers';
 import { TestOnlineStatusService } from './test-online-status.service';
-import { TestRealtimeModule } from './test-realtime.module';
+import { provideTestRealtime } from './test-realtime-providers';
 import { TestRealtimeService } from './test-realtime.service';
 import { TypeRegistry } from './type-registry';
 import { COMMAND_API_NAMESPACE, PROJECTS_URL } from './url-constants';
@@ -25,11 +25,9 @@ const mockedDialogService = mock(DialogService);
 
 describe('FileService', () => {
   configureTestingModule(() => ({
-    imports: [
-      TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(new TypeRegistry([TestDataDoc], [FileType.Audio], []))
-    ],
     providers: [
+      provideTestRealtime(new TypeRegistry([TestDataDoc], [FileType.Audio], [])),
+      provideTestOnlineStatus(),
       FileService,
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: AuthService, useMock: mockedAuthService },

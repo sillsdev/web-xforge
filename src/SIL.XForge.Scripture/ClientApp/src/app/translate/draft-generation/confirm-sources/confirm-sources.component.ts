@@ -1,6 +1,5 @@
 import { Component, DestroyRef } from '@angular/core';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatIconModule } from '@angular/material/icon';
+import { MatIcon } from '@angular/material/icon';
 import { TranslocoModule } from '@ngneat/transloco';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { merge, Subscription } from 'rxjs';
@@ -20,7 +19,7 @@ import { TrainingDataService } from '../training-data/training-data.service';
 
 @Component({
   selector: 'app-confirm-sources',
-  imports: [TranslocoModule, MatCheckboxModule, MatIconModule],
+  imports: [TranslocoModule, MatIcon],
   templateUrl: './confirm-sources.component.html',
   styleUrl: './confirm-sources.component.scss'
 })

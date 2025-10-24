@@ -4,7 +4,7 @@ import { of, throwError } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { NoticeService } from 'xforge-common/notice.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftDownloadButtonComponent } from './draft-download-button.component';
@@ -15,7 +15,7 @@ const mockNoticeService: NoticeService = mock(NoticeService);
 
 describe('DraftDownloadButtonComponent', () => {
   configureTestingModule(() => ({
-    imports: [TestTranslocoModule],
+    imports: [getTestTranslocoModule()],
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: DraftGenerationService, useMock: mockDraftGenerationService },

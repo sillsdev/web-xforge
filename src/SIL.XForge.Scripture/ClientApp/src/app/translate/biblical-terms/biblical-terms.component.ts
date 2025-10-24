@@ -1,6 +1,27 @@
-import { CommonModule } from '@angular/common';
+import { NgFor, SlicePipe } from '@angular/common';
 import { Component, DestroyRef, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Sort } from '@angular/material/sort';
+import { FormsModule } from '@angular/forms';
+import { MatIconButton } from '@angular/material/button';
+import { MatOption } from '@angular/material/core';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
+import { MatSelect } from '@angular/material/select';
+import { MatSort, MatSortHeader, Sort } from '@angular/material/sort';
+import {
+  MatCell,
+  MatCellDef,
+  MatColumnDef,
+  MatHeaderCell,
+  MatHeaderCellDef,
+  MatHeaderRow,
+  MatHeaderRowDef,
+  MatNoDataRow,
+  MatRow,
+  MatRowDef,
+  MatTable
+} from '@angular/material/table';
+import { MatTooltip } from '@angular/material/tooltip';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -24,7 +45,6 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { objectId } from 'xforge-common/utils';
@@ -174,7 +194,35 @@ class Row {
   selector: 'app-biblical-terms',
   templateUrl: './biblical-terms.component.html',
   styleUrls: ['./biblical-terms.component.scss'],
-  imports: [CommonModule, TranslocoModule, UICommonModule]
+  imports: [
+    NgFor,
+    FormsModule,
+    TranslocoModule,
+    MatTooltip,
+    SlicePipe,
+    MatIconButton,
+    MatFormField,
+    MatLabel,
+    MatSelect,
+    MatOption,
+    MatMenu,
+    MatMenuItem,
+    MatMenuTrigger,
+    MatIcon,
+    MatTable,
+    MatColumnDef,
+    MatHeaderCell,
+    MatHeaderCellDef,
+    MatCell,
+    MatCellDef,
+    MatHeaderRow,
+    MatHeaderRowDef,
+    MatRow,
+    MatRowDef,
+    MatNoDataRow,
+    MatSort,
+    MatSortHeader
+  ]
 })
 export class BiblicalTermsComponent extends DataLoadingComponent implements OnDestroy, OnInit {
   categories: string[] = [];

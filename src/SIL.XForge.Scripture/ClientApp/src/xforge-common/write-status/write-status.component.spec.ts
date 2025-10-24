@@ -7,8 +7,7 @@ import { WriteStatusComponent } from './write-status.component';
 
 describe('WriteStatusComponent', () => {
   configureTestingModule(() => ({
-    declarations: [TestHostComponent],
-    imports: [WriteStatusComponent]
+    imports: [WriteStatusComponent, TestHostComponent]
   }));
 
   it('should display done, spinner and error icons', () => {
@@ -64,7 +63,7 @@ class TestEnvironment {
 
 @Component({
   template: `<app-write-status id="test-status" [state]="controlState" [formGroup]="testForm"></app-write-status>`,
-  standalone: false
+  imports: [WriteStatusComponent]
 })
 class TestHostComponent {
   testForm: FormGroup = new FormGroup({

@@ -1,6 +1,5 @@
-import { Component } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Meta } from '@storybook/angular';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { BehaviorSubject } from 'rxjs';
@@ -13,9 +12,6 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { DraftApplyDialogComponent } from './draft-apply-dialog.component';
-
-@Component({ template: '' })
-class EmptyComponent {}
 
 const mockedUserProjectService = mock(SFUserProjectsService);
 const mockedI18nService = mock(I18nService);
@@ -44,8 +40,6 @@ const meta: Meta = {
 export default meta;
 
 export const DraftApplyDialog = matDialogStory(DraftApplyDialogComponent, {
-  standaloneComponent: true,
-  imports: [RouterModule.forChild([{ path: 'projects', component: EmptyComponent }])],
   providers: [
     { provide: ActivatedRoute, useValue: instance(mockActivatedRoute) },
     { provide: SFUserProjectsService, useValue: instance(mockedUserProjectService) },

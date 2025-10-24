@@ -9,7 +9,7 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
@@ -25,8 +25,8 @@ const mockedProjectService = mock(SFProjectService);
 const mockedProjectDoc = mock(SFProjectProfileDoc);
 describe('PermissionsService', () => {
   configureTestingModule(() => ({
-    imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: UserService, useMock: mockedUserService },
       { provide: SFProjectService, useMock: mockedProjectService }
     ]

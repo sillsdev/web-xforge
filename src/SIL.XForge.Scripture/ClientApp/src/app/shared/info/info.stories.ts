@@ -1,6 +1,4 @@
-import { CommonModule } from '@angular/common';
-import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { Meta, StoryObj } from '@storybook/angular';
 import { InfoComponent } from './info.component';
 
 const defaultArgs = {
@@ -10,8 +8,7 @@ const defaultArgs = {
 const meta: Meta<InfoComponent> = {
   title: 'Utility/Info',
   component: InfoComponent,
-  args: defaultArgs,
-  decorators: [moduleMetadata({ imports: [UICommonModule, CommonModule] })]
+  args: defaultArgs
 };
 export default meta;
 

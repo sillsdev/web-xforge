@@ -9,9 +9,8 @@ import { BehaviorSubject, lastValueFrom, Subject } from 'rxjs';
 import { takeWhile } from 'rxjs/operators';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
 import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
@@ -33,7 +32,7 @@ const mockedSFProjectUserConfigDoc = mock(SFProjectUserConfigDoc);
     [questionDoc]="questionDoc"
     (audioPlayed)="played = true"
   ></app-checking-question>`,
-  standalone: false
+  imports: [CheckingQuestionComponent]
 })
 class MockComponent {
   @ViewChild('question') question!: CheckingQuestionComponent;
@@ -60,9 +59,8 @@ class MockComponent {
 
 describe('CheckingQuestionComponent', () => {
   configureTestingModule(() => ({
-    imports: [UICommonModule, TestTranslocoModule, TestOnlineStatusModule.forRoot()],
-    declarations: [CheckingQuestionComponent, SingleButtonAudioPlayerComponent, MockComponent],
-    providers: [{ provide: SFProjectService, useMock: mockedSFProjectService }]
+    imports: [CheckingQuestionComponent, SingleButtonAudioPlayerComponent, getTestTranslocoModule(), MockComponent],
+    providers: [provideTestOnlineStatus(), { provide: SFProjectService, useMock: mockedSFProjectService }]
   }));
 
   it('selects scripture text when scripture audio is present', async () => {

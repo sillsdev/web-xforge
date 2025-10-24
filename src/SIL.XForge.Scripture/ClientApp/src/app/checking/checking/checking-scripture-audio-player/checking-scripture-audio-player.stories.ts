@@ -1,10 +1,7 @@
-import { CommonModule } from '@angular/common';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
-import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
@@ -38,17 +35,10 @@ const meta: Meta = {
   },
   decorators: [
     moduleMetadata({
-      imports: [UICommonModule, CommonModule, I18nStoryModule],
-      declarations: [AudioPlayerComponent, AudioTimePipe],
+      imports: [AudioPlayerComponent, AudioTimePipe],
       providers: [
-        {
-          provide: SFProjectService,
-          useValue: instance(mockedSFProjectService)
-        },
-        {
-          provide: OnlineStatusService,
-          useValue: instance(mockedOnlineStatusService)
-        }
+        { provide: SFProjectService, useValue: instance(mockedSFProjectService) },
+        { provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) }
       ]
     }),
     (story, context) => {

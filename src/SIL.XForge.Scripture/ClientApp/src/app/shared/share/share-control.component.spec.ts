@@ -1,8 +1,8 @@
-import { Component, DebugElement, NgModule, ViewChild } from '@angular/core';
+import { Component, DebugElement, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { RouterModule } from '@angular/router';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideRouter } from '@angular/router';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
@@ -11,17 +11,17 @@ import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
-import { SharedModule } from '../shared.module';
+import { provideQuillRegistrations } from '../text/quill-editor-registration/quill-providers';
 import { ShareControlComponent } from './share-control.component';
 
 const mockedProjectService = mock(SFProjectService);
@@ -30,19 +30,17 @@ const mockedUserService = mock(UserService);
 
 describe('ShareControlComponent', () => {
   configureTestingModule(() => ({
-    declarations: [TestHostComponent],
-    imports: [
-      TestModule,
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      NoopAnimationsModule,
-      TestOnlineStatusModule.forRoot(),
-      SharedModule.forRoot()
-    ],
+    imports: [TestHostComponent, getTestTranslocoModule()],
     providers: [
+      provideRouter([]),
+      provideQuillRegistrations(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
+      provideTestOnlineStatus(),
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: UserService, useMock: mockedUserService }
+      { provide: UserService, useMock: mockedUserService },
+      provideNoopAnimations()
     ]
   }));
 
@@ -258,16 +256,11 @@ describe('ShareControlComponent', () => {
   }));
 });
 
-@NgModule({
-  imports: [RouterModule.forRoot([]), TestTranslocoModule]
-})
-class TestModule {}
-
 @Component({
   template: `
     <app-share-control [projectId]="projectId" [defaultRole]="defaultRole" (invited)="onInvited()"></app-share-control>
   `,
-  standalone: false
+  imports: [ShareControlComponent]
 })
 class TestHostComponent {
   @ViewChild(ShareControlComponent) component!: ShareControlComponent;

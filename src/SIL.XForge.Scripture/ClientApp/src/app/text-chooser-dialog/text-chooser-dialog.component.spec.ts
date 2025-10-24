@@ -1,7 +1,6 @@
-import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { VerseRef } from '@sillsdev/scripture';
 import { CookieService } from 'ngx-cookie-service';
 import { Delta } from 'quill';
@@ -16,16 +15,15 @@ import { firstValueFrom, of } from 'rxjs';
 import { anything, instance, mock, spy, when } from 'ts-mockito';
 import { DOCUMENT } from 'xforge-common/browser-globals';
 import { UserDoc } from 'xforge-common/models/user-doc';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { ChildViewContainerComponent, configureTestingModule } from 'xforge-common/test-utils';
+import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
-import { CheckingModule } from '../checking/checking.module';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { TextDoc } from '../core/models/text-doc';
-import { SharedModule } from '../shared/shared.module';
+import { provideQuillRegistrations } from '../shared/text/quill-editor-registration/quill-providers';
 import { TextChooserDialogComponent, TextChooserDialogData, TextSelection } from './text-chooser-dialog.component';
 
 const mockedDocument = mock(Document);
@@ -33,17 +31,15 @@ const mockedUserService = mock(UserService);
 
 describe('TextChooserDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      DialogTestModule,
-      NoopAnimationsModule,
-      SharedModule.forRoot(),
-      TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
-    ],
+    imports: [getTestTranslocoModule()],
     providers: [
+      provideQuillRegistrations(),
+      provideTestOnlineStatus(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: DOCUMENT, useMock: mockedDocument },
       { provide: CookieService, useMock: mock(CookieService) },
-      { provide: UserService, useMock: mockedUserService }
+      { provide: UserService, useMock: mockedUserService },
+      provideNoopAnimations()
     ]
   }));
 
@@ -335,11 +331,6 @@ describe('TextChooserDialogComponent', () => {
     env.closeDialog();
   }));
 });
-
-@NgModule({
-  imports: [CheckingModule]
-})
-class DialogTestModule {}
 
 interface SimpleRange {
   start: number;

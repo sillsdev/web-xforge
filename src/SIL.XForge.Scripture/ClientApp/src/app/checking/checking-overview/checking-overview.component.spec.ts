@@ -1,9 +1,9 @@
 import { Location } from '@angular/common';
-import { DebugElement, NgModule, NgZone } from '@angular/core';
+import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatExpansionPanel } from '@angular/material/expansion';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { ngfModule } from 'angular-file';
 import { saveAs } from 'file-saver';
@@ -32,11 +32,11 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { noopDestroyRef } from 'xforge-common/realtime.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -45,7 +45,6 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
-import { CheckingModule } from '../checking.module';
 import { CheckingQuestionsService } from '../checking/checking-questions.service';
 import { ImportQuestionsDialogComponent } from '../import-questions-dialog/import-questions-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
@@ -62,8 +61,10 @@ const mockedChapterAudioDialogService = mock(ChapterAudioDialogService);
 
 describe('CheckingOverviewComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, TestOnlineStatusModule.forRoot(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [ngfModule, getTestTranslocoModule()],
     providers: [
+      provideTestOnlineStatus(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: DialogService, useMock: mockedDialogService },
       { provide: NoticeService, useMock: mockedNoticeService },
@@ -72,7 +73,8 @@ describe('CheckingOverviewComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: ChapterAudioDialogService, useMock: mockedChapterAudioDialogService }
+      { provide: ChapterAudioDialogService, useMock: mockedChapterAudioDialogService },
+      provideNoopAnimations()
     ]
   }));
 
@@ -664,11 +666,6 @@ describe('CheckingOverviewComponent', () => {
     discardPeriodicTasks();
   }));
 });
-
-@NgModule({
-  imports: [NoopAnimationsModule, ngfModule, CheckingModule]
-})
-class DialogTestModule {}
 
 interface UserInfo {
   id: string;

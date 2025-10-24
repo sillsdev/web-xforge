@@ -1,4 +1,5 @@
-import { DOCUMENT } from '@angular/common';
+import { Dir } from '@angular/cdk/bidi';
+import { DOCUMENT, NgClass } from '@angular/common';
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -13,6 +14,7 @@ import {
 import { TranslocoService } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { isEqual, merge } from 'lodash-es';
+import { QuillEditorComponent } from 'ngx-quill';
 import Quill, { Delta, EmitterSource, Range } from 'quill';
 import QuillCursors from 'quill-cursors';
 import { AuthType, getAuthType } from 'realtime-server/lib/esm/common/models/user';
@@ -38,6 +40,7 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
+import { LynxInsightEditorObjectsComponent } from '../../translate/editor/lynx/insights/lynx-insight-editor-objects/lynx-insight-editor-objects.component';
 import { MultiCursorViewer } from '../../translate/editor/multi-viewer/multi-viewer.component';
 import {
   attributeFromMouseEvent,
@@ -96,8 +99,8 @@ export interface EmbedsByVerse {
   selector: 'app-text',
   templateUrl: './text.component.html',
   styleUrls: ['./text.component.scss'],
-  providers: [TextViewModel], // New instance for each text component
-  standalone: false
+  providers: [TextViewModel],
+  imports: [LynxInsightEditorObjectsComponent, QuillEditorComponent, NgClass, Dir]
 })
 export class TextComponent implements AfterViewInit, OnDestroy {
   @Input() enablePresence: boolean = false;

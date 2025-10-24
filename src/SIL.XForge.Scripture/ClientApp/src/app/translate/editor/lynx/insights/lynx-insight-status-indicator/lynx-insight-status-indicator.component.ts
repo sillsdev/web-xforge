@@ -1,4 +1,6 @@
+import { AsyncPipe, NgClass } from '@angular/common';
 import { Component, HostListener } from '@angular/core';
+import { MatIcon } from '@angular/material/icon';
 import { LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { map, Observable } from 'rxjs';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
@@ -13,14 +15,13 @@ interface InsightCount {
   selector: 'app-lynx-insight-status-indicator',
   templateUrl: './lynx-insight-status-indicator.component.html',
   styleUrl: './lynx-insight-status-indicator.component.scss',
-  standalone: false
+  imports: [MatIcon, NgClass, AsyncPipe]
 })
 export class LynxInsightStatusIndicatorComponent {
-  isFilterHidingInsights$: Observable<boolean> = this.editorInsightState.filter$.pipe(
+  readonly isFilterHidingInsights$: Observable<boolean> = this.editorInsightState.filter$.pipe(
     map(filter => filter.types.length === 0)
   );
 
-  private insightTypeOrder: LynxInsightType[] = ['info', 'warning', 'error'];
   readonly insightCountsByType$: Observable<InsightCount[]> = this.editorInsightState.filteredInsightCountsByType$.pipe(
     map(counts =>
       this.insightTypeOrder
@@ -30,6 +31,7 @@ export class LynxInsightStatusIndicatorComponent {
   );
 
   readonly isLoading$: Observable<boolean> = this.lynxWorkspaceService.taskRunningStatus$;
+  private insightTypeOrder: LynxInsightType[] = ['info', 'warning', 'error'];
 
   constructor(
     private readonly editorInsightState: LynxInsightStateService,

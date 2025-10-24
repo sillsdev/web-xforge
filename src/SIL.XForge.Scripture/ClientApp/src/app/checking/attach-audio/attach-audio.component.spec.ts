@@ -7,11 +7,10 @@ import { InvalidFileItem } from 'angular-file/file-upload/fileTools';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
-import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
+import { configureTestingModule, getAudioBlob, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { AudioRecorderDialogComponent } from '../../shared/audio-recorder-dialog/audio-recorder-dialog.component';
-import { SharedModule } from '../../shared/shared.module';
+import { provideQuillRegistrations } from '../../shared/text/quill-editor-registration/quill-providers';
 import { TextAndAudioComponent } from '../text-and-audio/text-and-audio.component';
 import { AttachAudioComponent } from './attach-audio.component';
 
@@ -21,9 +20,12 @@ describe('AttachAudioComponent', () => {
   let env: TestEnvironment;
 
   configureTestingModule(() => ({
-    imports: [UICommonModule, ngfModule, SharedModule.forRoot(), TestTranslocoModule, TestOnlineStatusModule.forRoot()],
-    declarations: [AttachAudioComponent],
-    providers: [{ provide: DialogService, useMock: mockDialogService }]
+    imports: [AttachAudioComponent, ngfModule, getTestTranslocoModule()],
+    providers: [
+      provideQuillRegistrations(),
+      provideTestOnlineStatus(),
+      { provide: DialogService, useMock: mockDialogService }
+    ]
   }));
 
   beforeEach(async () => {

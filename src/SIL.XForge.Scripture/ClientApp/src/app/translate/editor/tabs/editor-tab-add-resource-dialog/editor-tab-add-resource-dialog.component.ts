@@ -1,6 +1,18 @@
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { AsyncPipe } from '@angular/common';
 import { Component, DestroyRef, Inject, OnInit } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButton } from '@angular/material/button';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogActions,
+  MatDialogContent,
+  MatDialogRef,
+  MatDialogTitle
+} from '@angular/material/dialog';
+import { MatError } from '@angular/material/form-field';
+import { MatProgressBar } from '@angular/material/progress-bar';
+import { TranslocoModule } from '@ngneat/transloco';
 import { map, repeat, take, timer } from 'rxjs';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -9,6 +21,8 @@ import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
 import { SelectableProject } from '../../../../core/paratext.service';
 import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
+import { ProjectSelectComponent } from '../../../../project-select/project-select.component';
+import { SyncProgressComponent } from '../../../../sync/sync-progress/sync-progress.component';
 import { EditorTabAddResourceDialogService } from './editor-tab-add-resource-dialog.service';
 export interface EditorTabAddResourceDialogData {
   excludedParatextIds: string[];
@@ -18,7 +32,21 @@ export interface EditorTabAddResourceDialogData {
   selector: 'app-editor-tab-add-resource-dialog',
   templateUrl: './editor-tab-add-resource-dialog.component.html',
   styleUrls: ['./editor-tab-add-resource-dialog.component.scss'],
-  standalone: false
+  imports: [
+    MatProgressBar,
+    SyncProgressComponent,
+    TranslocoModule,
+    MatDialogTitle,
+    CdkScrollable,
+    MatDialogContent,
+    FormsModule,
+    ReactiveFormsModule,
+    ProjectSelectComponent,
+    MatError,
+    MatDialogActions,
+    MatButton,
+    AsyncPipe
+  ]
 })
 export class EditorTabAddResourceDialogComponent implements OnInit {
   projects?: ParatextProject[];

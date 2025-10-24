@@ -8,7 +8,7 @@ import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { SF_TYPE_REGISTRY } from '../../app/core/models/sf-type-registry';
 import { isSafari } from '../utils';
@@ -81,7 +81,7 @@ describe('OwnerComponent', () => {
 @Component({
   selector: 'app-host',
   template: '',
-  standalone: false
+  imports: [OwnerComponent]
 })
 class HostComponent {
   @ViewChild(OwnerComponent) checkingOwner!: OwnerComponent;
@@ -96,9 +96,9 @@ class TestEnvironment {
 
   constructor(template: string) {
     TestBed.configureTestingModule({
-      declarations: [HostComponent],
-      imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), OwnerComponent],
+      imports: [OwnerComponent, HostComponent],
       providers: [
+        provideTestRealtime(SF_TYPE_REGISTRY),
         { provide: TranslocoService, useFactory: () => instance(this.mockedTranslocoService) },
         provideHttpClient(withInterceptorsFromDi()),
         provideHttpClientTesting()

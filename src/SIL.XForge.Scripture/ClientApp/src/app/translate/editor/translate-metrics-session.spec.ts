@@ -11,19 +11,19 @@ import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { TranslateMetrics } from '../../core/models/translate-metrics';
 import { SFProjectService } from '../../core/sf-project.service';
-import { SharedModule } from '../../shared/shared.module';
 import { getTextDoc } from '../../shared/test-utils';
+import { provideQuillRegistrations } from '../../shared/text/quill-editor-registration/quill-providers';
 import { EDITOR_READY_TIMEOUT, TextComponent } from '../../shared/text/text.component';
 import {
   ACTIVE_EDIT_TIMEOUT,
@@ -38,15 +38,11 @@ const mockedReportingService = mock(ErrorReportingService);
 
 describe('TranslateMetricsSession', () => {
   configureTestingModule(() => ({
-    declarations: [TextComponent],
-    imports: [
-      QuillModule.forRoot(),
-      TestTranslocoModule,
-      SharedModule.forRoot(),
-      TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
-    ],
+    imports: [TextComponent, QuillModule.forRoot(), getTestTranslocoModule()],
     providers: [
+      provideQuillRegistrations(),
+      provideTestOnlineStatus(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService }

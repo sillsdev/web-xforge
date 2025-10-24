@@ -5,10 +5,9 @@ import { By } from '@angular/platform-browser';
 import { lastValueFrom } from 'rxjs';
 import { takeWhile } from 'rxjs/operators';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { getAudioBlob, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { AudioStatus } from '../../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
@@ -179,7 +178,7 @@ describe('CheckingAudioPlayerComponent', () => {
 @Component({
   selector: 'app-host',
   template: '',
-  standalone: false
+  imports: [CheckingAudioPlayerComponent]
 })
 class HostComponent {
   @ViewChild(CheckingAudioPlayerComponent) player1!: CheckingAudioPlayerComponent;
@@ -195,9 +194,15 @@ class TestEnvironment {
 
   constructor(template: string, isOnline = true) {
     TestBed.configureTestingModule({
-      declarations: [HostComponent, CheckingAudioPlayerComponent, AudioPlayerComponent, AudioTimePipe, InfoComponent],
-      providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }],
-      imports: [UICommonModule, TestOnlineStatusModule.forRoot(), TestTranslocoModule]
+      imports: [
+        getTestTranslocoModule(),
+        HostComponent,
+        CheckingAudioPlayerComponent,
+        AudioPlayerComponent,
+        AudioTimePipe,
+        InfoComponent
+      ],
+      providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }, provideTestOnlineStatus()]
     });
 
     TestBed.overrideComponent(HostComponent, { set: { template: template } });

@@ -1,9 +1,14 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, DestroyRef, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { MatMiniFabButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
+import { MatTooltip } from '@angular/material/tooltip';
 import { translate } from '@ngneat/transloco';
 import { slice } from 'lodash-es';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { combineLatest } from 'rxjs';
+import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 export interface MultiCursorViewer extends UserProfile {
@@ -15,7 +20,7 @@ export interface MultiCursorViewer extends UserProfile {
   selector: 'app-multi-viewer',
   templateUrl: './multi-viewer.component.html',
   styleUrls: ['./multi-viewer.component.scss'],
-  standalone: false
+  imports: [MatTooltip, AvatarComponent, MatMiniFabButton, MatMenuTrigger, MatIcon, MatMenu, MatMenuItem]
 })
 export class MultiViewerComponent implements OnInit {
   @Input() viewers: MultiCursorViewer[] = [];

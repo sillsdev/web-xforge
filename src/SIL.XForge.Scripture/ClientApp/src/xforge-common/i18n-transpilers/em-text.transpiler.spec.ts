@@ -6,7 +6,7 @@ import {
   TranslationMarkupRendererFactory,
   TranslocoMarkupModule
 } from 'ngx-transloco-markup';
-import { TestTranslocoModule } from '../test-utils';
+import { getTestTranslocoModule } from '../test-utils';
 import { EmTextTranspiler } from './em-text.transpiler';
 
 function createTestTranspiler(): EmTextTranspiler {
@@ -39,9 +39,8 @@ describe('EmTextTranspiler', () => {
 
     beforeEach(() => {
       TestBed.configureTestingModule({
-        imports: [TestTranslocoModule, TranslocoMarkupModule],
-        providers: [provideTranslationMarkupTranspiler(EmTextTranspiler)],
-        declarations: [TestComponent]
+        imports: [getTestTranslocoModule(), TranslocoMarkupModule, TestComponent],
+        providers: [provideTranslationMarkupTranspiler(EmTextTranspiler)]
       });
 
       fixture = TestBed.createComponent(TestComponent);
@@ -62,7 +61,7 @@ describe('EmTextTranspiler', () => {
 @Component({
   selector: 'app-test',
   template: `<transloco [key]="translation"></transloco>`,
-  standalone: false
+  imports: [TranslocoMarkupModule]
 })
 export class TestComponent {
   translation: string = '';

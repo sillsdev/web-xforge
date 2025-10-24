@@ -1,7 +1,7 @@
 import { Component, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { AudioPlayerStub } from '../../../checking/checking-test.utils';
 import { AudioPlayer, AudioStatus } from '../audio-player';
@@ -101,9 +101,8 @@ class TestEnvironment {
 
   constructor(template: string) {
     TestBed.configureTestingModule({
-      declarations: [HostComponent, AudioTestComponent],
-      providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }],
-      imports: [TestOnlineStatusModule.forRoot()]
+      imports: [HostComponent, AudioTestComponent],
+      providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }, provideTestOnlineStatus()]
     });
     TestBed.overrideComponent(HostComponent, { set: { template: template } });
     this.testOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
@@ -121,8 +120,7 @@ class TestEnvironment {
 
 @Component({
   selector: 'app-audio-player',
-  template: '<p>Mock Audio Player</p>',
-  standalone: false
+  template: '<p>Mock Audio Player</p>'
 })
 class AudioTestComponent extends AudioPlayerBaseComponent {
   setAudio(audio: AudioPlayer): void {
@@ -137,7 +135,7 @@ class AudioTestComponent extends AudioPlayerBaseComponent {
 @Component({
   selector: 'app-host',
   template: '',
-  standalone: false
+  imports: [AudioTestComponent]
 })
 class HostComponent {
   @ViewChild(AudioTestComponent) baseComponent!: AudioTestComponent;

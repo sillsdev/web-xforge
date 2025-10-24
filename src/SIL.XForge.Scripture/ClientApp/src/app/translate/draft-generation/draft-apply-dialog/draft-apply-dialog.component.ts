@@ -1,7 +1,18 @@
-import { CommonModule } from '@angular/common';
+import { AsyncPipe, NgClass } from '@angular/common';
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButton } from '@angular/material/button';
+import { MatCheckbox } from '@angular/material/checkbox';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogActions,
+  MatDialogClose,
+  MatDialogContent,
+  MatDialogRef,
+  MatDialogTitle
+} from '@angular/material/dialog';
+import { MatError } from '@angular/material/form-field';
+import { MatProgressBar } from '@angular/material/progress-bar';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
@@ -9,19 +20,18 @@ import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/model
 import { BehaviorSubject, map } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { ProjectSelectComponent } from '../../../project-select/project-select.component';
+import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { CustomValidatorState as CustomErrorState, SFValidators } from '../../../shared/sfvalidators';
-import { SharedModule } from '../../../shared/shared.module';
 import { compareProjectsForSorting } from '../../../shared/utils';
 
 export interface DraftApplyDialogResult {
@@ -36,7 +46,24 @@ export interface DraftApplyDialogConfig {
 
 @Component({
   selector: 'app-draft-apply-dialog',
-  imports: [UICommonModule, XForgeCommonModule, TranslocoModule, CommonModule, SharedModule],
+  imports: [
+    RouterLinkDirective,
+    MatButton,
+    MatCheckbox,
+    MatProgressBar,
+    MatDialogContent,
+    MatDialogClose,
+    MatDialogActions,
+    MatDialogTitle,
+    MatError,
+    FormsModule,
+    ReactiveFormsModule,
+    TranslocoModule,
+    AsyncPipe,
+    NgClass,
+    NoticeComponent,
+    ProjectSelectComponent
+  ],
   templateUrl: './draft-apply-dialog.component.html',
   styleUrl: './draft-apply-dialog.component.scss'
 })
@@ -150,9 +177,9 @@ export class DraftApplyDialogComponent implements OnInit {
       });
   }
 
-  addToProject(): void {
+  async addToProject(): Promise<void> {
     this.addToProjectClicked = true;
-    this.validateProject();
+    await this.validateProject();
     if (!this.isAppOnline || !this.isFormValid || this.targetProjectId == null || !this.canEditProject) {
       return;
     }
@@ -169,7 +196,7 @@ export class DraftApplyDialogComponent implements OnInit {
       this.canEditProject = false;
       this.targetBookExists = false;
       this.targetProject$.next(undefined);
-      this.validateProject();
+      void this.validateProject();
       return;
     }
 
@@ -198,18 +225,21 @@ export class DraftApplyDialogComponent implements OnInit {
     } else {
       this.targetProject$.next(undefined);
     }
-    this.validateProject();
+    void this.validateProject();
   }
 
   close(): void {
     this.dialogRef.close();
   }
 
-  private validateProject(): void {
-    // setTimeout prevents a "changed after checked" exception (may be removable after SF-3014)
-    setTimeout(() => {
-      this.isValid = this.getCustomErrorState() === CustomErrorState.None;
-      this.projectSelect?.customValidate(SFValidators.customValidator(this.getCustomErrorState()));
+  private async validateProject(): Promise<void> {
+    await new Promise<void>(resolve => {
+      // setTimeout prevents a "changed after checked" exception (may be removable after SF-3014)
+      setTimeout(() => {
+        this.isValid = this.getCustomErrorState() === CustomErrorState.None;
+        this.projectSelect?.customValidate(SFValidators.customValidator(this.getCustomErrorState()));
+        resolve();
+      });
     });
   }
 

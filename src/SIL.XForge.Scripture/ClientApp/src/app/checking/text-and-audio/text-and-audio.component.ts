@@ -1,12 +1,22 @@
+import { NgClass } from '@angular/common';
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import {
+  AbstractControl,
+  FormsModule,
+  ReactiveFormsModule,
+  UntypedFormControl,
+  UntypedFormGroup
+} from '@angular/forms';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { TranslocoModule } from '@ngneat/transloco';
 import { AudioAttachment } from '../checking/checking-audio-player/checking-audio-player.component';
 
 @Component({
   selector: 'app-text-and-audio',
   templateUrl: './text-and-audio.component.html',
   styleUrls: ['./text-and-audio.component.scss'],
-  standalone: false
+  imports: [TranslocoModule, FormsModule, ReactiveFormsModule, MatFormField, MatLabel, MatInput, NgClass]
 })
 export class TextAndAudioComponent implements AfterViewInit, OnInit, OnDestroy {
   @Input() input?: { text?: string; audioUrl?: string };

@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 import { mock } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { CopyrightBannerComponent } from './copyright-banner.component';
 
 const mockedDialogService = mock(DialogService);
@@ -14,7 +14,7 @@ const mockedMatDialog = mock(MatDialog);
 
 describe('CopyrightBannerComponent', () => {
   configureTestingModule(() => ({
-    imports: [CopyrightBannerComponent, TestTranslocoModule],
+    imports: [CopyrightBannerComponent, getTestTranslocoModule()],
     providers: [
       { provide: DialogService, useValue: mockedDialogService },
       { provide: I18nService, useValue: mockedi18nService },

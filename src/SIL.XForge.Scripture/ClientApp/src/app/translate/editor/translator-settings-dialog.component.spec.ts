@@ -1,14 +1,13 @@
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { CommonModule } from '@angular/common';
-import { DebugElement, NgModule } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { MatSelect } from '@angular/material/select';
 import { MatSlideToggleHarness } from '@angular/material/slide-toggle/testing';
 import { MatSlider } from '@angular/material/slider';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
@@ -19,17 +18,16 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import {
   ChildViewContainerComponent,
   configureTestingModule,
-  matDialogCloseDelay,
-  TestTranslocoModule
+  getTestTranslocoModule,
+  matDialogCloseDelay
 } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -42,13 +40,13 @@ import {
 
 describe('TranslatorSettingsDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      DialogTestModule,
-      NoopAnimationsModule,
-      TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
-    ],
-    providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }]
+    imports: [getTestTranslocoModule(), NoticeComponent, TranslatorSettingsDialogComponent],
+    providers: [
+      provideTestOnlineStatus(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      provideNoopAnimations()
+    ]
   }));
 
   it('update confidence threshold', fakeAsync(() => {
@@ -311,12 +309,6 @@ describe('TranslatorSettingsDialogComponent', () => {
     }));
   });
 });
-
-@NgModule({
-  imports: [CommonModule, UICommonModule, TestTranslocoModule, NoticeComponent],
-  declarations: [TranslatorSettingsDialogComponent]
-})
-class DialogTestModule {}
 
 interface TestEnvironmentConstructorArgs {
   translationSuggestionsEnabled?: boolean;

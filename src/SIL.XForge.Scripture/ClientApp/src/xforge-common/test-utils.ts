@@ -1,4 +1,12 @@
-import { Component, Directive, Input, NgModule, TemplateRef, ViewChild, ViewContainerRef } from '@angular/core';
+import {
+  Component,
+  Directive,
+  Input,
+  ModuleWithProviders,
+  TemplateRef,
+  ViewChild,
+  ViewContainerRef
+} from '@angular/core';
 import { TestBed, TestModuleMetadata } from '@angular/core/testing';
 import { HAMMER_LOADER } from '@angular/platform-browser';
 import { TranslocoTestingModule } from '@ngneat/transloco';
@@ -52,15 +60,23 @@ export const configureTestingModule = (createModuleDef: () => TestModuleMetadata
   });
 };
 
-export const TestTranslocoModule = TranslocoTestingModule.forRoot({
-  langs: { en },
-  translocoConfig: {
-    availableLangs: ['en'],
-    reRenderOnLangChange: true,
-    fallbackLang: 'en',
-    defaultLang: 'en'
-  }
-});
+/**
+ * Gets a Transloco testing module with 'en' translations loaded.
+ * @param loadLangs Whether to preload the languages. Set to false if tests want to use the untranslated key.
+ * Default is true.
+ */
+export function getTestTranslocoModule(loadLangs = true): ModuleWithProviders<TranslocoTestingModule> {
+  return TranslocoTestingModule.forRoot({
+    langs: { en },
+    translocoConfig: {
+      availableLangs: ['en'],
+      reRenderOnLangChange: true,
+      fallbackLang: 'en',
+      defaultLang: 'en'
+    },
+    preloadLangs: loadLangs
+  });
+}
 
 // used to prevent Angular from complaining that HammerJS isn't available
 export const emptyHammerLoader = {
@@ -387,8 +403,7 @@ export function getShortAudioBlob(): Blob {
 @Directive({
   // es lint complains that a directive should be used as an attribute
   // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: 'viewContainerDirective',
-  standalone: false
+  selector: 'viewContainerDirective'
 })
 export class ViewContainerDirective {
   constructor(public viewContainerRef: ViewContainerRef) {}
@@ -397,7 +412,7 @@ export class ViewContainerDirective {
 @Component({
   selector: 'app-view-container',
   template: '<viewContainerDirective></viewContainerDirective>',
-  standalone: false
+  imports: [ViewContainerDirective]
 })
 export class ChildViewContainerComponent {
   @ViewChild(ViewContainerDirective, { static: true }) viewContainer!: ViewContainerDirective;
@@ -406,12 +421,6 @@ export class ChildViewContainerComponent {
     return this.viewContainer.viewContainerRef;
   }
 }
-
-@NgModule({
-  declarations: [ChildViewContainerComponent, ViewContainerDirective],
-  exports: [ViewContainerDirective]
-})
-export class ChildViewContainerModule {}
 
 export function arrayOfIntsFromZero(size: number): number[] {
   return Array.from({ length: size }, (_, i) => i);
@@ -426,8 +435,7 @@ export function arrayOfIntsFromOne(size: number): number[] {
  */
 @Directive({
   // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: '[transloco]',
-  standalone: false
+  selector: '[transloco]'
 })
 export class MockTranslocoDirective {
   @Input() translocoRead?: string;

@@ -17,9 +17,9 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -39,8 +39,9 @@ const mockedFileService = mock(FileService);
 
 describe('QuestionDialogService', () => {
   configureTestingModule(() => ({
-    imports: [TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [getTestTranslocoModule(false)],
     providers: [
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: FileService, useMock: mockedFileService },
       { provide: DialogService, useMock: mockedDialogService },
       { provide: SFProjectService, useMock: mockedProjectService },

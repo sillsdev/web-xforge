@@ -1,5 +1,5 @@
 import { HttpClient, HttpHandler } from '@angular/common/http';
-import { Component, DebugElement, Input, NgModule } from '@angular/core';
+import { Component, DebugElement, Input } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
@@ -22,15 +22,14 @@ import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import {
   ChildViewContainerComponent,
   configureTestingModule,
-  matDialogCloseDelay,
-  TestTranslocoModule
+  getTestTranslocoModule,
+  matDialogCloseDelay
 } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -45,8 +44,9 @@ const mockedProjectService = mock(SFProjectService);
 
 describe('RolesAndPermissionsComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [getTestTranslocoModule(), NoticeComponent, RolesAndPermissionsDialogComponent, FakeAvatarComponent],
     providers: [
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: ExternalUrlService },
       { provide: HttpClient },
       { provide: HttpHandler },
@@ -194,20 +194,13 @@ describe('RolesAndPermissionsComponent', () => {
 });
 
 @Component({
-  selector: 'app-avatar',
-  standalone: false
+  selector: 'app-avatar'
 })
 class FakeAvatarComponent {
   @Input() user?: UserProfile;
   @Input() size?: number;
   @Input() round?: boolean;
 }
-
-@NgModule({
-  imports: [UICommonModule, TestTranslocoModule, NoticeComponent],
-  declarations: [RolesAndPermissionsDialogComponent, FakeAvatarComponent]
-})
-class DialogTestModule {}
 
 class TestEnvironment {
   component?: RolesAndPermissionsDialogComponent;

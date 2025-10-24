@@ -1,5 +1,18 @@
+import { Dir } from '@angular/cdk/bidi';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { Component, DestroyRef, ElementRef, Inject, Optional, ViewChild } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
+import { MatButton } from '@angular/material/button';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogActions,
+  MatDialogClose,
+  MatDialogConfig,
+  MatDialogContent,
+  MatDialogRef,
+  MatDialogTitle
+} from '@angular/material/dialog';
+import { MatIcon } from '@angular/material/icon';
+import { TranslocoModule } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { fromEvent } from 'rxjs';
@@ -37,7 +50,18 @@ export interface TextSelection {
 @Component({
   templateUrl: './text-chooser-dialog.component.html',
   styleUrls: ['./text-chooser-dialog.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    MatDialogTitle,
+    CdkScrollable,
+    MatDialogContent,
+    MatIcon,
+    TextComponent,
+    Dir,
+    MatDialogActions,
+    MatButton,
+    MatDialogClose
+  ]
 })
 export class TextChooserDialogComponent {
   @ViewChild(TextComponent, { read: ElementRef }) scriptureText?: ElementRef;

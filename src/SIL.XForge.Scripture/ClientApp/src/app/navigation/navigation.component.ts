@@ -1,5 +1,10 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, EventEmitter, Output } from '@angular/core';
+import { MatBadge } from '@angular/material/badge';
+import { MatIcon } from '@angular/material/icon';
+import { MatListItem, MatNavList } from '@angular/material/list';
 import { Router } from '@angular/router';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -9,6 +14,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { UserService } from 'xforge-common/user.service';
 import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 import { ResumeTranslateService } from '../checking/checking/resume-translate.service';
@@ -20,7 +26,7 @@ import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } f
   selector: 'app-navigation',
   templateUrl: './navigation.component.html',
   styleUrls: ['./navigation.component.scss'],
-  standalone: false
+  imports: [TranslocoModule, MatNavList, MatListItem, RouterLinkDirective, MatIcon, MatBadge, AsyncPipe]
 })
 export class NavigationComponent {
   canSeeSettings$: Observable<boolean> = this.activatedProjectService.projectId$.pipe(
