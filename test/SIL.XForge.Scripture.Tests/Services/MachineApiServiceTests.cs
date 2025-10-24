@@ -444,8 +444,15 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
 
-        // Mock for GetDraftGenerationRequestIdForBuildAsync (returns empty)
-        env.EventMetricService.GetEventMetricsAsync(null, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+        // Mock for GetEventMetricsAsync in GetDraftGenerationRequestIdForBuildAsync
+        env.EventMetricService.GetEventMetricsAsync(
+                null,
+                Arg.Any<EventScope[]?>(),
+                Arg.Any<string[]>(),
+                Arg.Any<DateTime?>(),
+                Arg.Any<int>(),
+                Arg.Any<int>()
+            )
             .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
 
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
@@ -485,8 +492,15 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
 
-        // Mock for GetDraftGenerationRequestIdForBuildAsync (returns empty)
-        env.EventMetricService.GetEventMetricsAsync(null, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+        // Mock for GetEventMetricsAsync in GetDraftGenerationRequestIdForBuildAsync
+        env.EventMetricService.GetEventMetricsAsync(
+                null,
+                Arg.Any<EventScope[]?>(),
+                Arg.Any<string[]>(),
+                Arg.Any<DateTime?>(),
+                Arg.Any<int>(),
+                Arg.Any<int>()
+            )
             .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
 
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
@@ -509,8 +523,15 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
         ServalApiException ex = ServalApiExceptions.Forbidden;
 
-        // Mock for GetDraftGenerationRequestIdForBuildAsync (returns empty)
-        env.EventMetricService.GetEventMetricsAsync(null, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+        // Mock for GetEventMetricsAsync in GetDraftGenerationRequestIdForBuildAsync
+        env.EventMetricService.GetEventMetricsAsync(
+                null,
+                Arg.Any<EventScope[]?>(),
+                Arg.Any<string[]>(),
+                Arg.Any<DateTime?>(),
+                Arg.Any<int>(),
+                Arg.Any<int>()
+            )
             .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
 
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
@@ -533,8 +554,15 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
 
-        // Mock for GetDraftGenerationRequestIdForBuildAsync (returns empty)
-        env.EventMetricService.GetEventMetricsAsync(null, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+        // Mock for GetEventMetricsAsync in GetDraftGenerationRequestIdForBuildAsync
+        env.EventMetricService.GetEventMetricsAsync(
+                null,
+                Arg.Any<EventScope[]?>(),
+                Arg.Any<string[]>(),
+                Arg.Any<DateTime?>(),
+                Arg.Any<int>(),
+                Arg.Any<int>()
+            )
             .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
 
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
@@ -730,8 +758,15 @@ public class MachineApiServiceTests
         await env.QueueBuildAsync(Project01, preTranslate: true, dateTime: DateTime.UtcNow);
         env.ConfigureTranslationBuild();
 
-        // Mock the event metrics service to return empty results (no draftGenerationRequestId found)
-        env.EventMetricService.GetEventMetricsAsync(null, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+        // Mock for GetEventMetricsAsync in GetDraftGenerationRequestIdForBuildAsync
+        env.EventMetricService.GetEventMetricsAsync(
+                null,
+                Arg.Any<EventScope[]?>(),
+                Arg.Any<string[]>(),
+                Arg.Any<DateTime?>(),
+                Arg.Any<int>(),
+                Arg.Any<int>()
+            )
             .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
 
         // SUT
@@ -903,6 +938,17 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         string signature = env.Service.CalculateSignature(JsonPayload);
+
+        // Mock for GetEventMetricsAsync in GetDraftGenerationRequestIdForBuildAsync
+        env.EventMetricService.GetEventMetricsAsync(
+                null,
+                Arg.Any<EventScope[]?>(),
+                Arg.Any<string[]>(),
+                Arg.Any<DateTime?>(),
+                Arg.Any<int>(),
+                Arg.Any<int>()
+            )
+            .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
 
         // SUT
         await env.Service.ExecuteWebhookAsync(JsonPayload, signature);
@@ -2106,6 +2152,18 @@ public class MachineApiServiceTests
         const double percentCompleted = 0;
         const int revision = 43;
         const JobState state = JobState.Completed;
+
+        // Mock for GetEventMetricsAsync in GetDraftGenerationRequestIdForBuildAsync
+        env.EventMetricService.GetEventMetricsAsync(
+                null,
+                Arg.Any<EventScope[]?>(),
+                Arg.Any<string[]>(),
+                Arg.Any<DateTime?>(),
+                Arg.Any<int>(),
+                Arg.Any<int>()
+            )
+            .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
+
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(
                 Task.FromResult<IList<TranslationBuild>>(
@@ -2160,6 +2218,18 @@ public class MachineApiServiceTests
         const double percentCompleted = 0;
         const int revision = 43;
         const JobState state = JobState.Completed;
+
+        // Mock for GetEventMetricsAsync in GetDraftGenerationRequestIdForBuildAsync
+        env.EventMetricService.GetEventMetricsAsync(
+                null,
+                Arg.Any<EventScope[]?>(),
+                Arg.Any<string[]>(),
+                Arg.Any<DateTime?>(),
+                Arg.Any<int>(),
+                Arg.Any<int>()
+            )
+            .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
+
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(
                 Task.FromResult<IList<TranslationBuild>>(
@@ -4734,23 +4804,6 @@ public class MachineApiServiceTests
             BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns(JobId);
             DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
             EventMetricService = Substitute.For<IEventMetricService>();
-            // Mock GetEventMetricsAsync to return empty results for GetDraftGenerationRequestIdForBuildAsync queries
-            EventMetricService
-                .GetEventMetricsAsync(
-                    projectId: null,
-                    scopes: Arg.Is<EventScope[]>(s => s != null && s.Contains(EventScope.Drafting)),
-                    eventTypes: Arg.Is<string[]>(t =>
-                        t != null && t.Contains(nameof(Services.MachineProjectService.BuildProjectAsync))
-                    ),
-                    Arg.Any<DateTime?>(),
-                    Arg.Any<int>(),
-                    Arg.Any<int>()
-                )
-                .Returns(
-                    Task.FromResult(
-                        new QueryResults<EventMetric> { Results = new List<EventMetric>(), UnpagedCount = 0 }
-                    )
-                );
             ExceptionHandler = Substitute.For<IExceptionHandler>();
             HttpRequestAccessor = Substitute.For<IHttpRequestAccessor>();
             HttpRequestAccessor.SiteRoot.Returns(new Uri("https://scriptureforge.org", UriKind.Absolute));
