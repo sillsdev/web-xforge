@@ -9,6 +9,8 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { APP_ROOT_ELEMENT_SELECTOR, InAppRootOverlayContainer } from 'xforge-common/overlay-container';
 import { getI18nLocales } from 'xforge-common/utils';
 import docJson from '../documentation.json';
+import { provideSFTabs } from '../src/app/shared/sf-tab-group';
+import { provideUICommon } from '../src/xforge-common/ui-common-providers';
 
 setCompodocJson(docJson);
 
@@ -43,6 +45,8 @@ export const decorators = [
     providers: [
       provideI18nStory(),
       provideAnimations(),
+      provideUICommon(),
+      provideSFTabs(),
       { provide: APP_ROOT_ELEMENT_SELECTOR, useValue: 'storybook-root' },
       { provide: OverlayContainer, useClass: InAppRootOverlayContainer }
     ]
