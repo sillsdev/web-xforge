@@ -717,6 +717,33 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
+    public async Task SyncAsync_CreatesNewBooks()
+    {
+        var env = new TestEnvironment();
+        Book[] sfBooks = [new Book("2JN", 1), new Book("3JN", 1)];
+        env.SetupSFData(false, false, true, false, sfBooks);
+        Book[] ptBooks = [new Book("2JN", 1)];
+        env.SetupPTData(ptBooks);
+
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+        env.VerifyProjectSync(true);
+        await env
+            .ParatextService.Received()
+            .PutBookText(Arg.Any<UserSecret>(), "target", 63, Arg.Any<XDocument>(), Arg.Any<Dictionary<int, string>>());
+        await env
+            .ParatextService.Received()
+            .PutBookText(Arg.Any<UserSecret>(), "target", 64, Arg.Any<XDocument>(), Arg.Any<Dictionary<int, string>>());
+        await env
+            .ParatextService.Received()
+            .UpdateParatextPermissionsForNewBooksAsync(
+                Arg.Any<UserSecret>(),
+                Arg.Any<string>(),
+                Arg.Any<IDocument<SFProject>>(),
+                writeToParatext: true
+            );
+    }
+
+    [Test]
     public async Task SyncAsync_CreatesNoteTagIcon()
     {
         var env = new TestEnvironment();
