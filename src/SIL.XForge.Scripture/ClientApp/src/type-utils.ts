@@ -122,3 +122,12 @@ export type ObjectPaths<T, Depth extends number = 10> = Depth extends never
  * This has a data field that is not null. Such as for a realtime document that has a non-null data field.
  */
 export type WithData<T extends { data: any }> = T & { data: NonNullable<T['data']> };
+
+/** This type indicates that the array has at least one element; the array is not empty. Briefer but less flexible
+ * definitions can be seen at https://stackoverflow.com/q/56006111. */
+export type PopulatedArray<T> = [T, ...T[]] | [...T[], T] | [T, ...T[], T];
+
+/** The input array has one or more elements; it is not empty. */
+export function hasElements<T>(array: T[]): array is PopulatedArray<T> {
+  return array.length > 0;
+}
