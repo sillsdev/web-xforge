@@ -1,6 +1,5 @@
 {
   "app": {
-    "beta": "beta",
     "generate_draft": "Buat konsep",
     "hangfire_dashboard": "Dasbor Hangfire",
     "manage_questions": "Mengelola pertanyaan",
@@ -255,7 +254,6 @@
     "reference_books": "Kitab referensi",
     "remote_changes": "The source configuration for draft generation has been modified. Please start a new draft and review the latest source configuration.",
     "remote_changes_start_over": "Start over",
-    "source_books_missing": "Teks referensi tidak memiliki satu atau beberapa kitab terjemahan dalam proyek Anda. Pertimbangkan untuk memilih teks referensi yang berisi kecocokan untuk semua kitab yang diterjemahkan",
     "summary_header": "Rangkuman",
     "summary_notifications": "Pemberitahuan",
     "summary_title": "Rangkuman",

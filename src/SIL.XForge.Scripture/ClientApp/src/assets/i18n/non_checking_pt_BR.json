@@ -1,6 +1,5 @@
 {
   "app": {
-    "beta": "beta",
     "generate_draft": "Gerar Rascunho",
     "hangfire_dashboard": "Hangfire Dashboard",
     "manage_questions": "Gerenciar perguntas",
@@ -255,7 +254,6 @@
     "reference_books": "Reference books",
     "remote_changes": "The source configuration for draft generation has been modified. Please start a new draft and review the latest source configuration.",
     "remote_changes_start_over": "Start over",
-    "source_books_missing": "The reference text is missing one or more of the translated books in your project. Consider choosing a reference text that contains a match for all the translated books",
     "summary_header": "Resumo",
     "summary_notifications": "Notificação",
     "summary_title": "Resumo",
