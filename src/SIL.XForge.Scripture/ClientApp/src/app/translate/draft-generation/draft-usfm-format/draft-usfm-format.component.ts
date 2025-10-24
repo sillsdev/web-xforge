@@ -13,6 +13,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { Delta } from 'quill';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import {
   DraftUsfmConfig,
@@ -62,7 +63,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   bookNum: number = 1;
   booksWithDrafts: number[] = [];
   chapterNum: number = 1;
-  chapters: number[] = [];
+  chaptersWithDrafts: number[] = [];
   isInitializing: boolean = true;
   paragraphBreakFormat = ParagraphBreakFormat;
   quoteStyle = QuoteFormat;
@@ -153,11 +154,11 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
           defaultBook = Canon.bookIdToNumber(params['bookId']);
         }
         let defaultChapter = 1;
-        this.chapters = texts.find(t => t.bookNum === defaultBook)?.chapters.map(c => c.number) ?? [];
-        if (params['chapter'] !== undefined && this.chapters.includes(Number(params['chapter']))) {
+        this.chaptersWithDrafts = this.getChaptersWithDrafts(defaultBook, projectDoc.data);
+        if (params['chapter'] !== undefined && this.chaptersWithDrafts.includes(Number(params['chapter']))) {
           defaultChapter = Number(params['chapter']);
-        } else if (this.chapters.length > 0) {
-          defaultChapter = this.chapters[0];
+        } else if (this.chaptersWithDrafts.length > 0) {
+          defaultChapter = this.chaptersWithDrafts[0];
         }
         this.bookChanged(defaultBook, defaultChapter);
       });
@@ -186,9 +187,8 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
 
   bookChanged(bookNum: number, chapterNum?: number): void {
     this.bookNum = bookNum;
-    const texts = this.activatedProjectService.projectDoc!.data!.texts;
-    this.chapters = texts.find(t => t.bookNum === this.bookNum)?.chapters.map(c => c.number) ?? [];
-    this.chapterNum = chapterNum ?? this.chapters[0] ?? 1;
+    this.chaptersWithDrafts = this.getChaptersWithDrafts(bookNum, this.activatedProjectService.projectDoc!.data!);
+    this.chapterNum = chapterNum ?? this.chaptersWithDrafts[0] ?? 1;
     this.reloadText();
   }
 
@@ -253,5 +253,14 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
       .subscribe(isOnline => {
         if (isOnline) this.reloadText();
       });
+  }
+
+  private getChaptersWithDrafts(bookNum: number, project: SFProjectProfile): number[] {
+    return (
+      project.texts
+        .find(t => t.bookNum === bookNum)
+        ?.chapters.filter(c => !!c.hasDraft && c.lastVerse > 0)
+        .map(c => c.number) ?? []
+    );
   }
 }
