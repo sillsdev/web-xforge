@@ -1,0 +1,391 @@
+[
+  {
+    "_id": "event-metric-01",
+    "eventType": "BuildCompletedAsync",
+    "executionTime": "00:00:00.0371659",
+    "payload": {
+      "sfProjectId": "sf-user-5",
+      "buildId": "serval-build-1",
+      "buildState": "Completed",
+      "websiteUrl": "https://scriptureforge.org/"
+    },
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T18:53:52.277Z"
+    },
+    "userId": "sf-user-5"
+  },
+  {
+    "_id": "event-metric-02",
+    "eventType": "RetrievePreTranslationStatusAsync",
+    "executionTime": "00:00:00.6796873",
+    "payload": {
+      "sfProjectId": "sf-user-5"
+    },
+    "projectId": "sf-user-5",
+    "result": "serval-build-1",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T18:53:52.222Z"
+    }
+  },
+  {
+    "_id": "event-metric-03",
+    "eventType": "ExecuteWebhookAsync",
+    "payload": {
+      "buildId": "serval-build-1",
+      "buildState": "Completed",
+      "event": "TranslationBuildFinished",
+      "translationEngineId": "65d842f7ce3e63d26118e00f"
+    },
+    "projectId": "sf-user-5",
+    "result": "serval-build-1",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T18:53:50.612Z"
+    }
+  },
+  {
+    "_id": "event-metric-04",
+    "eventType": "BuildProjectAsync",
+    "executionTime": "00:00:01.3696345",
+    "payload": {
+      "curUserId": "sf-user-8",
+      "buildConfig": {
+        "TrainingScriptureRanges": [
+          {
+            "ProjectId": "sf-project-1",
+            "ScriptureRange": "2PE;1JN;2JN;3JN;JUD;REV"
+          }
+        ],
+        "TranslationScriptureRanges": [
+          {
+            "ProjectId": "sf-project-1",
+            "ScriptureRange": "HEB;JAS;1PE"
+          }
+        ],
+        "SendEmailOnBuildFinished": true,
+        "ProjectId": "sf-user-5"
+      },
+      "preTranslate": true
+    },
+    "projectId": "sf-user-5",
+    "result": "serval-build-1",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T16:35:06.122Z"
+    },
+    "userId": "sf-user-8"
+  },
+  {
+    "_id": "event-metric-05",
+    "eventType": "StartPreTranslationBuildAsync",
+    "executionTime": "00:00:00.3524906",
+    "payload": {
+      "curUserId": "sf-user-8",
+      "buildConfig": {
+        "TrainingScriptureRanges": [
+          {
+            "ProjectId": "sf-project-1",
+            "ScriptureRange": "2PE;1JN;2JN;3JN;JUD;REV"
+          }
+        ],
+        "TranslationScriptureRanges": [
+          {
+            "ProjectId": "sf-project-1",
+            "ScriptureRange": "HEB;JAS;1PE"
+          }
+        ],
+        "SendEmailOnBuildFinished": true,
+        "ProjectId": "sf-user-5"
+      }
+    },
+    "projectId": "sf-user-5",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T16:34:37.500Z"
+    },
+    "userId": "sf-user-8"
+  },
+  {
+    "_id": "event-metric-06",
+    "eventType": "BuildProjectAsync",
+    "executionTime": "00:00:01.2272067",
+    "payload": {
+      "curUserId": "sf-user-8",
+      "buildConfig": {
+        "TrainingScriptureRanges": [
+          {
+            "ProjectId": "sf-project-1",
+            "ScriptureRange": "1PE;2PE;1JN;2JN;3JN;JUD;REV"
+          }
+        ],
+        "TranslationScriptureRanges": [
+          {
+            "ProjectId": "sf-project-1",
+            "ScriptureRange": "HEB;JAS"
+          }
+        ],
+        "SendEmailOnBuildFinished": true,
+        "ProjectId": "sf-user-5"
+      },
+      "preTranslate": true
+    },
+    "projectId": "sf-user-5",
+    "result": "serval-build-5",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T14:10:25.443Z"
+    },
+    "userId": "sf-user-8"
+  },
+  {
+    "_id": "event-metric-07",
+    "eventType": "StartPreTranslationBuildAsync",
+    "executionTime": "00:00:00.3218818",
+    "payload": {
+      "curUserId": "sf-user-8",
+      "buildConfig": {
+        "TrainingScriptureRanges": [
+          {
+            "ProjectId": "sf-project-1",
+            "ScriptureRange": "1PE;2PE;1JN;2JN;3JN;JUD;REV"
+          }
+        ],
+        "TranslationScriptureRanges": [
+          {
+            "ProjectId": "sf-project-1",
+            "ScriptureRange": "HEB;JAS"
+          }
+        ],
+        "SendEmailOnBuildFinished": true,
+        "ProjectId": "sf-user-5"
+      }
+    },
+    "projectId": "sf-user-5",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T14:09:56.568Z"
+    },
+    "userId": "sf-user-8"
+  },
+
+  {
+    "_id": "event-metric-08",
+    "eventType": "BuildCompletedAsync",
+    "executionTime": "00:00:00.0390059",
+    "payload": {
+      "sfProjectId": "sf-user-5",
+      "buildId": "serval-build-3",
+      "buildState": "Completed",
+      "websiteUrl": "https://scriptureforge.org/"
+    },
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T13:24:02.187Z"
+    },
+    "userId": "sf-user-5"
+  },
+  {
+    "_id": "event-metric-09",
+    "eventType": "RetrievePreTranslationStatusAsync",
+    "executionTime": "00:00:00.4759442",
+    "payload": {
+      "sfProjectId": "sf-user-5"
+    },
+    "projectId": "sf-user-5",
+    "result": "serval-build-3",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T13:24:02.128Z"
+    }
+  },
+  {
+    "_id": "event-metric-10",
+    "eventType": "ExecuteWebhookAsync",
+    "payload": {
+      "buildId": "serval-build-3",
+      "buildState": "Completed",
+      "event": "TranslationBuildFinished",
+      "translationEngineId": "65d842f7ce3e63d26118e00f"
+    },
+    "projectId": "sf-user-5",
+    "result": "serval-build-3",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T13:24:00.726Z"
+    }
+  },
+  {
+    "_id": "event-metric-11",
+    "eventType": "BuildCompletedAsync",
+    "executionTime": "00:00:00.0422597",
+    "payload": {
+      "sfProjectId": "sf-user-4",
+      "buildId": "serval-build-2",
+      "buildState": "Canceled",
+      "websiteUrl": "https://scriptureforge.org/"
+    },
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T13:21:39.482Z"
+    },
+    "userId": "sf-user-4"
+  },
+  {
+    "_id": "event-metric-12",
+    "eventType": "CancelPreTranslationBuildAsync",
+    "executionTime": "00:00:00.0603686",
+    "payload": {
+      "curUserId": "sf-user-2",
+      "sfProjectId": "sf-user-4"
+    },
+    "projectId": "sf-user-4",
+    "result": "serval-build-2",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T13:21:30.794Z"
+    },
+    "userId": "sf-user-2"
+  },
+  {
+    "_id": "event-metric-13",
+    "eventType": "BuildProjectAsync",
+    "executionTime": "00:00:03.5693243",
+    "payload": {
+      "curUserId": "sf-user-2",
+      "buildConfig": {
+        "TrainingScriptureRanges": [
+          {
+            "ProjectId": "sf-project-6",
+            "ScriptureRange": "JDG;RUT;JON"
+          }
+        ],
+        "TranslationScriptureRanges": [
+          {
+            "ProjectId": "sf-project-6",
+            "ScriptureRange": "GEN;EXO;JOS;MAT;MRK;LUK;JHN;ACT;ROM;1CO;2CO;GAL;EPH;PHP;COL;1TH;2TH;1TI;2TI;TIT;PHM;HEB;JAS;1PE;2PE;1JN;2JN;3JN;JUD;REV"
+          }
+        ],
+        "SendEmailOnBuildFinished": true,
+        "ProjectId": "sf-user-4"
+      },
+      "preTranslate": true
+    },
+    "projectId": "sf-user-4",
+    "result": "serval-build-2",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T13:19:57.488Z"
+    },
+    "userId": "sf-user-2"
+  },
+  {
+    "_id": "event-metric-14",
+    "eventType": "StartPreTranslationBuildAsync",
+    "executionTime": "00:00:00.3576129",
+    "payload": {
+      "curUserId": "sf-user-2",
+      "buildConfig": {
+        "TrainingScriptureRanges": [
+          {
+            "ProjectId": "sf-project-6",
+            "ScriptureRange": "JDG;RUT;JON"
+          }
+        ],
+        "TranslationScriptureRanges": [
+          {
+            "ProjectId": "sf-project-6",
+            "ScriptureRange": "GEN;EXO;JOS;MAT;MRK;LUK;JHN;ACT;ROM;1CO;2CO;GAL;EPH;PHP;COL;1TH;2TH;1TI;2TI;TIT;PHM;HEB;JAS;1PE;2PE;1JN;2JN;3JN;JUD;REV"
+          }
+        ],
+        "SendEmailOnBuildFinished": true,
+        "ProjectId": "sf-user-4"
+      }
+    },
+    "projectId": "sf-user-4",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T13:19:00.448Z"
+    },
+    "userId": "sf-user-2"
+  },
+  {
+    "_id": "event-metric-15",
+    "eventType": "BuildCompletedAsync",
+    "executionTime": "00:00:00.0427099",
+    "payload": {
+      "sfProjectId": "sf-user-1",
+      "buildId": "serval-build-4",
+      "buildState": "Faulted",
+      "websiteUrl": "https://scriptureforge.org/"
+    },
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-23T16:44:29.334Z"
+    },
+    "userId": "sf-user-1"
+  },
+  {
+    "_id": "event-metric-16",
+    "eventType": "BuildProjectAsync",
+    "executionTime": "00:00:03.3202407",
+    "payload": {
+      "curUserId": "sf-user-6",
+      "buildConfig": {
+        "TrainingScriptureRanges": [
+          {
+            "ProjectId": "sf-project-9",
+            "ScriptureRange": "DEU;JDG"
+          }
+        ],
+        "TranslationScriptureRanges": [
+          {
+            "ProjectId": "sf-project-9",
+            "ScriptureRange": "GEN;EXO;MAT;MRK;LUK;JHN;ACT;ROM;1CO;2CO;GAL;EPH;PHP;COL;1TH;2TH;1TI;2TI;TIT;PHM;HEB;JAS;1PE;2PE;1JN;2JN;3JN;JUD;REV"
+          }
+        ],
+        "SendEmailOnBuildFinished": true,
+        "ProjectId": "sf-user-1"
+      },
+      "preTranslate": true
+    },
+    "projectId": "sf-user-1",
+    "result": "serval-build-4",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-23T16:44:19.899Z"
+    },
+    "userId": "sf-user-6"
+  },
+  {
+    "_id": "event-metric-17",
+    "eventType": "StartPreTranslationBuildAsync",
+    "executionTime": "00:00:00.4124422",
+    "payload": {
+      "curUserId": "sf-user-6",
+      "buildConfig": {
+        "TrainingScriptureRanges": [
+          {
+            "ProjectId": "sf-project-9",
+            "ScriptureRange": "DEU;JDG"
+          }
+        ],
+        "TranslationScriptureRanges": [
+          {
+            "ProjectId": "sf-project-9",
+            "ScriptureRange": "GEN;EXO;MAT;MRK;LUK;JHN;ACT;ROM;1CO;2CO;GAL;EPH;PHP;COL;1TH;2TH;1TI;2TI;TIT;PHM;HEB;JAS;1PE;2PE;1JN;2JN;3JN;JUD;REV"
+          }
+        ],
+        "SendEmailOnBuildFinished": true,
+        "ProjectId": "sf-user-1"
+      }
+    },
+    "projectId": "sf-user-1",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-23T16:43:53.312Z"
+    },
+    "userId": "sf-user-6"
+  }
+]
