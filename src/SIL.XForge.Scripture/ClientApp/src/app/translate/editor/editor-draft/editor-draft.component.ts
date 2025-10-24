@@ -295,7 +295,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       this.isDraftApplied = true;
       this.userAppliedDraft = true;
     } catch (err) {
-      void this.noticeService.showError(this.i18n.translateStatic('editor_draft_tab.error_applying_draft'));
+      this.noticeService.showError(this.i18n.translateStatic('editor_draft_tab.error_applying_draft'));
       if (!isNetworkError(err)) {
         this.errorReportingService.silentError(
           'Error applying a draft to a chapter',

@@ -232,9 +232,9 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
     this.audio = { status: 'denied' };
 
     if (error.code === DOMException.NOT_FOUND_ERR) {
-      void this.noticeService.show(this.i18n.translateStatic('checking_audio_recorder.mic_not_found'));
+      this.noticeService.show(this.i18n.translateStatic('checking_audio_recorder.mic_not_found'));
     } else {
-      void this.noticeService.show(this.i18n.translateStatic('checking_audio_recorder.mic_access_denied'));
+      this.noticeService.show(this.i18n.translateStatic('checking_audio_recorder.mic_access_denied'));
     }
   }
 

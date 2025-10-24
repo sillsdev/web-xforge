@@ -264,7 +264,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
       );
       this._userRows = userRows.concat(invitees);
     } catch {
-      void this.noticeService.show(this.i18n.translateStatic('collaborators.problem_loading_invited_users'));
+      this.noticeService.show(this.i18n.translateStatic('collaborators.problem_loading_invited_users'));
     }
   }
 }

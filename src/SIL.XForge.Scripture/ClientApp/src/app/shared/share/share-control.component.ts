@@ -186,7 +186,7 @@ export class ShareControlComponent extends ShareBaseComponent {
       }
     }
 
-    void this.noticeService.show(message);
+    this.noticeService.show(message);
 
     const roleValue = this.shareRole;
     const localeValue = this.localeControl.value;

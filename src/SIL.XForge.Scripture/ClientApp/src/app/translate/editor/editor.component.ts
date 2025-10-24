@@ -1195,7 +1195,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
     if (!this.target.contentShowing) {
-      void this.noticeService.show(this.i18n.translateStatic('editor.navigate_to_a_valid_text'));
+      this.noticeService.show(this.i18n.translateStatic('editor.navigate_to_a_valid_text'));
       return;
     }
     let verseRef: VerseRef | undefined = this.commenterSelectedVerseRef;
@@ -1817,7 +1817,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     } else if (!translator.isSegmentValid) {
       this.translator = undefined;
       if (this.translationSuggestionsEnabled) {
-        void this.noticeService.show(this.i18n.translateStatic('editor.verse_too_long_for_suggestions'));
+        this.noticeService.show(this.i18n.translateStatic('editor.verse_too_long_for_suggestions'));
       }
       return;
     }

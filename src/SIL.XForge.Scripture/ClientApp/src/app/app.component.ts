@@ -355,12 +355,12 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     if (this.currentUser == null) {
       return;
     } else if (!this.isAppOnline) {
-      void this.noticeService.show(this.i18n.translateStatic('app.action_not_available_offline'));
+      this.noticeService.show(this.i18n.translateStatic('app.action_not_available_offline'));
     } else {
       void this.authService
         .changePassword(this.currentUser.email)
         .then(() => {
-          void this.noticeService.show(this.i18n.translateStatic('app.password_reset_email_sent'));
+          this.noticeService.show(this.i18n.translateStatic('app.password_reset_email_sent'));
         })
         .catch(() => {
           void this.dialogService.message('app.cannot_change_password');
@@ -372,7 +372,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     if (this.isAppOnline) {
       void this.userService.editDisplayName(false);
     } else {
-      void this.noticeService.show(this.i18n.translateStatic('app.action_not_available_offline'));
+      this.noticeService.show(this.i18n.translateStatic('app.action_not_available_offline'));
     }
   }
 

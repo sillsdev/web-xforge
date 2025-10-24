@@ -213,7 +213,7 @@ export class AuthService {
     }
   }
 
-  async expireToken(): Promise<void> {
+  expireToken(): void {
     this.localSettings.set(EXPIRES_AT_SETTING, 0);
   }
 

@@ -123,7 +123,7 @@ export class MyProjectsComponent implements OnInit {
       await this.projectService.onlineAddCurrentUser(projectId);
       void this.router.navigate(['projects', projectId]);
     } catch {
-      void this.noticeService.show(this.i18n.translateStatic('my_projects.failed_to_join_project'));
+      this.noticeService.show(this.i18n.translateStatic('my_projects.failed_to_join_project'));
     } finally {
       this.noticeService.loadingFinished(this.constructor.name);
       this.joiningProjects.pop();
@@ -134,11 +134,11 @@ export class MyProjectsComponent implements OnInit {
     try {
       this.noticeService.loadingStarted(this.constructor.name);
       await this.projectService.onlineSyncUserRole(projectId);
-      void this.noticeService.show(this.i18n.translateStatic('my_projects.user_role_updated'));
+      this.noticeService.show(this.i18n.translateStatic('my_projects.user_role_updated'));
       const project = this.userParatextProjects.find(project => project.projectId === projectId);
       if (project != null) project.hasUserRoleChanged = false;
     } catch {
-      void this.noticeService.showError(this.i18n.translateStatic('my_projects.failed_to_update_user_role'));
+      this.noticeService.showError(this.i18n.translateStatic('my_projects.failed_to_update_user_role'));
     } finally {
       this.noticeService.loadingFinished(this.constructor.name);
     }
