@@ -232,12 +232,16 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
   }
 
   private async initializeTrainingFiles(projectDoc: SFProjectProfileDoc): Promise<void> {
-    if (projectDoc?.data == null) return;
+    if (projectDoc == null) return;
 
     // Query for all training data files in the project
     this.trainingDataQuery?.dispose();
     this.trainingDataQuery = await this.trainingDataService.queryTrainingDataAsync(projectDoc.id, this.destroyRef);
     this.trainingDataQuerySubscription?.unsubscribe();
+
+    // Initialize training files from the query
+    this.savedTrainingFiles = this.trainingDataQuery?.docs.filter(d => d.data != null).map(d => d.data!) ?? [];
+    this.availableTrainingFiles = this.savedTrainingFiles;
 
     // Subscribe to the training data query results changes
     this.trainingDataQuerySubscription = merge(
