@@ -36,7 +36,7 @@ public class EventMetric : IIdentifiable
     public string Id { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the event payload.
+    /// Gets or sets the event payload, which contains the arguments given to the method call being recorded.
     /// </summary>
     /// <remarks>
     /// <para>If you are querying by projectId or userId, that will be done here.</para>
@@ -73,4 +73,12 @@ public class EventMetric : IIdentifiable
     /// Gets or sets the event user identifier.
     /// </summary>
     public string? UserId { get; set; }
+
+    /// <summary>
+    /// Additional event metadata. For example, from items in an Activity Tags.
+    /// </summary>
+    /// <remarks>
+    /// <para>Keys should be normalized to lowerCamelCase.</para>
+    /// </remarks>
+    public Dictionary<string, BsonValue?>? Tags { get; set; }
 }
