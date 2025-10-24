@@ -1,0 +1,391 @@
+[
+  {
+    "_id": "68fbcb406a411b337164c877",
+    "eventType": "BuildCompletedAsync",
+    "executionTime": "00:00:00.0371659",
+    "payload": {
+      "sfProjectId": "65d6090edc609e1adc379d1c",
+      "buildId": "68fbaaba6c00da700a86c979",
+      "buildState": "Completed",
+      "websiteUrl": "https://scriptureforge.org/"
+    },
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T18:53:52.277Z"
+    },
+    "userId": "65d6090edc609e1adc379d1c"
+  },
+  {
+    "_id": "68fbcb406a411b337164c875",
+    "eventType": "RetrievePreTranslationStatusAsync",
+    "executionTime": "00:00:00.6796873",
+    "payload": {
+      "sfProjectId": "65d6090edc609e1adc379d1c"
+    },
+    "projectId": "65d6090edc609e1adc379d1c",
+    "result": "68fbaaba6c00da700a86c979",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T18:53:52.222Z"
+    }
+  },
+  {
+    "_id": "68fbcb3e6a411b337164c86f",
+    "eventType": "ExecuteWebhookAsync",
+    "payload": {
+      "buildId": "68fbaaba6c00da700a86c979",
+      "buildState": "Completed",
+      "event": "TranslationBuildFinished",
+      "translationEngineId": "65d842f7ce3e63d26118e00f"
+    },
+    "projectId": "65d6090edc609e1adc379d1c",
+    "result": "68fbaaba6c00da700a86c979",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T18:53:50.612Z"
+    }
+  },
+  {
+    "_id": "68fbaaba6a411b337164c6d0",
+    "eventType": "BuildProjectAsync",
+    "executionTime": "00:00:01.3696345",
+    "payload": {
+      "curUserId": "656497a13017af1200b35395",
+      "buildConfig": {
+        "TrainingScriptureRanges": [
+          {
+            "ProjectId": "68e8632de05d50047eb1ec67",
+            "ScriptureRange": "2PE;1JN;2JN;3JN;JUD;REV"
+          }
+        ],
+        "TranslationScriptureRanges": [
+          {
+            "ProjectId": "68e8632de05d50047eb1ec67",
+            "ScriptureRange": "HEB;JAS;1PE"
+          }
+        ],
+        "SendEmailOnBuildFinished": true,
+        "ProjectId": "65d6090edc609e1adc379d1c"
+      },
+      "preTranslate": true
+    },
+    "projectId": "65d6090edc609e1adc379d1c",
+    "result": "68fbaaba6c00da700a86c979",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T16:35:06.122Z"
+    },
+    "userId": "656497a13017af1200b35395"
+  },
+  {
+    "_id": "68fbaa9d6a411b337164c6ca",
+    "eventType": "StartPreTranslationBuildAsync",
+    "executionTime": "00:00:00.3524906",
+    "payload": {
+      "curUserId": "656497a13017af1200b35395",
+      "buildConfig": {
+        "TrainingScriptureRanges": [
+          {
+            "ProjectId": "68e8632de05d50047eb1ec67",
+            "ScriptureRange": "2PE;1JN;2JN;3JN;JUD;REV"
+          }
+        ],
+        "TranslationScriptureRanges": [
+          {
+            "ProjectId": "68e8632de05d50047eb1ec67",
+            "ScriptureRange": "HEB;JAS;1PE"
+          }
+        ],
+        "SendEmailOnBuildFinished": true,
+        "ProjectId": "65d6090edc609e1adc379d1c"
+      }
+    },
+    "projectId": "65d6090edc609e1adc379d1c",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T16:34:37.500Z"
+    },
+    "userId": "656497a13017af1200b35395"
+  },
+  {
+    "_id": "68fb88d16a411b337164c493",
+    "eventType": "BuildProjectAsync",
+    "executionTime": "00:00:01.2272067",
+    "payload": {
+      "curUserId": "656497a13017af1200b35395",
+      "buildConfig": {
+        "TrainingScriptureRanges": [
+          {
+            "ProjectId": "68e8632de05d50047eb1ec67",
+            "ScriptureRange": "1PE;2PE;1JN;2JN;3JN;JUD;REV"
+          }
+        ],
+        "TranslationScriptureRanges": [
+          {
+            "ProjectId": "68e8632de05d50047eb1ec67",
+            "ScriptureRange": "HEB;JAS"
+          }
+        ],
+        "SendEmailOnBuildFinished": true,
+        "ProjectId": "65d6090edc609e1adc379d1c"
+      },
+      "preTranslate": true
+    },
+    "projectId": "65d6090edc609e1adc379d1c",
+    "result": "68fb88d16c00da700a86c6bb",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T14:10:25.443Z"
+    },
+    "userId": "656497a13017af1200b35395"
+  },
+  {
+    "_id": "68fb88b46a411b337164c48d",
+    "eventType": "StartPreTranslationBuildAsync",
+    "executionTime": "00:00:00.3218818",
+    "payload": {
+      "curUserId": "656497a13017af1200b35395",
+      "buildConfig": {
+        "TrainingScriptureRanges": [
+          {
+            "ProjectId": "68e8632de05d50047eb1ec67",
+            "ScriptureRange": "1PE;2PE;1JN;2JN;3JN;JUD;REV"
+          }
+        ],
+        "TranslationScriptureRanges": [
+          {
+            "ProjectId": "68e8632de05d50047eb1ec67",
+            "ScriptureRange": "HEB;JAS"
+          }
+        ],
+        "SendEmailOnBuildFinished": true,
+        "ProjectId": "65d6090edc609e1adc379d1c"
+      }
+    },
+    "projectId": "65d6090edc609e1adc379d1c",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T14:09:56.568Z"
+    },
+    "userId": "656497a13017af1200b35395"
+  },
+
+  {
+    "_id": "68fb7df26a411b337164c3ad",
+    "eventType": "BuildCompletedAsync",
+    "executionTime": "00:00:00.0390059",
+    "payload": {
+      "sfProjectId": "65d6090edc609e1adc379d1c",
+      "buildId": "68fb69926c00da700a863981",
+      "buildState": "Completed",
+      "websiteUrl": "https://scriptureforge.org/"
+    },
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T13:24:02.187Z"
+    },
+    "userId": "65d6090edc609e1adc379d1c"
+  },
+  {
+    "_id": "68fb7df26a411b337164c3ab",
+    "eventType": "RetrievePreTranslationStatusAsync",
+    "executionTime": "00:00:00.4759442",
+    "payload": {
+      "sfProjectId": "65d6090edc609e1adc379d1c"
+    },
+    "projectId": "65d6090edc609e1adc379d1c",
+    "result": "68fb69926c00da700a863981",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T13:24:02.128Z"
+    }
+  },
+  {
+    "_id": "68fb7df06a411b337164c3a5",
+    "eventType": "ExecuteWebhookAsync",
+    "payload": {
+      "buildId": "68fb69926c00da700a863981",
+      "buildState": "Completed",
+      "event": "TranslationBuildFinished",
+      "translationEngineId": "65d842f7ce3e63d26118e00f"
+    },
+    "projectId": "65d6090edc609e1adc379d1c",
+    "result": "68fb69926c00da700a863981",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T13:24:00.726Z"
+    }
+  },
+  {
+    "_id": "68fb7d636a411b337164c39e",
+    "eventType": "BuildCompletedAsync",
+    "executionTime": "00:00:00.0422597",
+    "payload": {
+      "sfProjectId": "66f69a07c0509900557fddff",
+      "buildId": "68fb7cfd6c00da700a863d21",
+      "buildState": "Canceled",
+      "websiteUrl": "https://scriptureforge.org/"
+    },
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T13:21:39.482Z"
+    },
+    "userId": "66f69a07c0509900557fddff"
+  },
+  {
+    "_id": "68fb7d5a6a411b337164c39a",
+    "eventType": "CancelPreTranslationBuildAsync",
+    "executionTime": "00:00:00.0603686",
+    "payload": {
+      "curUserId": "66f73bd7a040f872f8ec3a73",
+      "sfProjectId": "66f69a07c0509900557fddff"
+    },
+    "projectId": "66f69a07c0509900557fddff",
+    "result": "68fb7cfd6c00da700a863d21",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T13:21:30.794Z"
+    },
+    "userId": "66f73bd7a040f872f8ec3a73"
+  },
+  {
+    "_id": "68fb7cfd6a411b337164c393",
+    "eventType": "BuildProjectAsync",
+    "executionTime": "00:00:03.5693243",
+    "payload": {
+      "curUserId": "66f73bd7a040f872f8ec3a73",
+      "buildConfig": {
+        "TrainingScriptureRanges": [
+          {
+            "ProjectId": "66ee9fffc0509900557ce3c3",
+            "ScriptureRange": "JDG;RUT;JON"
+          }
+        ],
+        "TranslationScriptureRanges": [
+          {
+            "ProjectId": "66ee9fffc0509900557ce3c3",
+            "ScriptureRange": "GEN;EXO;JOS;MAT;MRK;LUK;JHN;ACT;ROM;1CO;2CO;GAL;EPH;PHP;COL;1TH;2TH;1TI;2TI;TIT;PHM;HEB;JAS;1PE;2PE;1JN;2JN;3JN;JUD;REV"
+          }
+        ],
+        "SendEmailOnBuildFinished": true,
+        "ProjectId": "66f69a07c0509900557fddff"
+      },
+      "preTranslate": true
+    },
+    "projectId": "66f69a07c0509900557fddff",
+    "result": "68fb7cfd6c00da700a863d21",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T13:19:57.488Z"
+    },
+    "userId": "66f73bd7a040f872f8ec3a73"
+  },
+  {
+    "_id": "68fb7cc46a411b337164c38d",
+    "eventType": "StartPreTranslationBuildAsync",
+    "executionTime": "00:00:00.3576129",
+    "payload": {
+      "curUserId": "66f73bd7a040f872f8ec3a73",
+      "buildConfig": {
+        "TrainingScriptureRanges": [
+          {
+            "ProjectId": "66ee9fffc0509900557ce3c3",
+            "ScriptureRange": "JDG;RUT;JON"
+          }
+        ],
+        "TranslationScriptureRanges": [
+          {
+            "ProjectId": "66ee9fffc0509900557ce3c3",
+            "ScriptureRange": "GEN;EXO;JOS;MAT;MRK;LUK;JHN;ACT;ROM;1CO;2CO;GAL;EPH;PHP;COL;1TH;2TH;1TI;2TI;TIT;PHM;HEB;JAS;1PE;2PE;1JN;2JN;3JN;JUD;REV"
+          }
+        ],
+        "SendEmailOnBuildFinished": true,
+        "ProjectId": "66f69a07c0509900557fddff"
+      }
+    },
+    "projectId": "66f69a07c0509900557fddff",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-24T13:19:00.448Z"
+    },
+    "userId": "66f73bd7a040f872f8ec3a73"
+  },
+  {
+    "_id": "68fa5b6d6a411b3371647961",
+    "eventType": "BuildCompletedAsync",
+    "executionTime": "00:00:00.0427099",
+    "payload": {
+      "sfProjectId": "68174dd10f4bc06feab75c34",
+      "buildId": "68fa5b626c00da700a848a94",
+      "buildState": "Faulted",
+      "websiteUrl": "https://scriptureforge.org/"
+    },
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-23T16:44:29.334Z"
+    },
+    "userId": "68174dd10f4bc06feab75c34"
+  },
+  {
+    "_id": "68fa5b636a411b337164795d",
+    "eventType": "BuildProjectAsync",
+    "executionTime": "00:00:03.3202407",
+    "payload": {
+      "curUserId": "65cad7b8a3d9941200f0f560",
+      "buildConfig": {
+        "TrainingScriptureRanges": [
+          {
+            "ProjectId": "65cd91a83901f3168c4ac4d5",
+            "ScriptureRange": "DEU;JDG"
+          }
+        ],
+        "TranslationScriptureRanges": [
+          {
+            "ProjectId": "65cd91a83901f3168c4ac4d5",
+            "ScriptureRange": "GEN;EXO;MAT;MRK;LUK;JHN;ACT;ROM;1CO;2CO;GAL;EPH;PHP;COL;1TH;2TH;1TI;2TI;TIT;PHM;HEB;JAS;1PE;2PE;1JN;2JN;3JN;JUD;REV"
+          }
+        ],
+        "SendEmailOnBuildFinished": true,
+        "ProjectId": "68174dd10f4bc06feab75c34"
+      },
+      "preTranslate": true
+    },
+    "projectId": "68174dd10f4bc06feab75c34",
+    "result": "68fa5b626c00da700a848a94",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-23T16:44:19.899Z"
+    },
+    "userId": "65cad7b8a3d9941200f0f560"
+  },
+  {
+    "_id": "68fa5b496a411b3371647957",
+    "eventType": "StartPreTranslationBuildAsync",
+    "executionTime": "00:00:00.4124422",
+    "payload": {
+      "curUserId": "65cad7b8a3d9941200f0f560",
+      "buildConfig": {
+        "TrainingScriptureRanges": [
+          {
+            "ProjectId": "65cd91a83901f3168c4ac4d5",
+            "ScriptureRange": "DEU;JDG"
+          }
+        ],
+        "TranslationScriptureRanges": [
+          {
+            "ProjectId": "65cd91a83901f3168c4ac4d5",
+            "ScriptureRange": "GEN;EXO;MAT;MRK;LUK;JHN;ACT;ROM;1CO;2CO;GAL;EPH;PHP;COL;1TH;2TH;1TI;2TI;TIT;PHM;HEB;JAS;1PE;2PE;1JN;2JN;3JN;JUD;REV"
+          }
+        ],
+        "SendEmailOnBuildFinished": true,
+        "ProjectId": "68174dd10f4bc06feab75c34"
+      }
+    },
+    "projectId": "68174dd10f4bc06feab75c34",
+    "scope": "Drafting",
+    "timeStamp": {
+      "$date": "2025-10-23T16:43:53.312Z"
+    },
+    "userId": "65cad7b8a3d9941200f0f560"
+  }
+]

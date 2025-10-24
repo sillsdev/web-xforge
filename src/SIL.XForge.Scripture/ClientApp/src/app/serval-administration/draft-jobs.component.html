@@ -27,7 +27,7 @@
     <div class="table-wrapper">
       <table mat-table id="draft-jobs-table" [dataSource]="rows">
         <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
-        <tr mat-row *matRowDef="let row; columns: columnsToDisplay"></tr>
+        <tr class="job-row" mat-row *matRowDef="let row; columns: columnsToDisplay"></tr>
         <ng-container matColumnDef="status">
           <th mat-header-cell *matHeaderCellDef>Status</th>
           <td mat-cell *matCellDef="let row">
@@ -159,7 +159,7 @@
     </div>
 
     @if (rows.length === 0) {
-      <p>No draft jobs found for the selected time period.</p>
+      <p id="no-draft-jobs-found-message">No draft jobs found for the selected time period.</p>
     }
   }
 } @else {
