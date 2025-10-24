@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { cloneDeep, sortBy } from 'lodash-es';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
@@ -8,8 +8,8 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { debounceTime } from 'rxjs/operators';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
 import { AudioAttachment } from '../../checking-audio-player/checking-audio-player.component';
@@ -29,7 +29,7 @@ export interface CommentAction {
   styleUrls: ['./checking-comments.component.scss'],
   standalone: false
 })
-export class CheckingCommentsComponent extends SubscriptionDisposable implements OnInit {
+export class CheckingCommentsComponent implements OnInit {
   @ViewChild(CheckingInputFormComponent) inputComponent?: CheckingInputFormComponent;
   @Input() project?: SFProjectProfile;
   @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
@@ -46,10 +46,9 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
   constructor(
     private readonly dialogService: DialogService,
     private userService: UserService,
-    private readonly i18n: I18nService
-  ) {
-    super();
-  }
+    private readonly i18n: I18nService,
+    private readonly destroyRef: DestroyRef
+  ) {}
 
   get showMoreCommentsLabel(): string {
     const comments = this.getSortedComments();
@@ -148,34 +147,36 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
     if (this.questionDoc != null) {
       // Give the user two seconds before marking the comment as read. This also prevents SF-624 - prematurely
       // marking a remotely added comment as read
-      this.subscribe(this.questionDoc.remoteChanges$.pipe(debounceTime(2000)), () => {
-        if (this.projectUserConfigDoc == null || this.projectUserConfigDoc.data == null || this.answer == null) {
-          return;
-        }
-        const commentsLength: number = this.answer.comments.filter(comment => !comment.deleted).length;
-        const defaultCommentsToShow =
-          commentsLength > this.maxCommentsToShow ? this.maxCommentsToShow - 1 : commentsLength;
-        const commentsToShow = this.showAllComments ? commentsLength : defaultCommentsToShow;
-        const commentIdsToMarkRead: string[] = [];
-        let commentNumber = 1;
-        // Older comments are displayed above newer comments, so iterate over comments starting with the oldest
-        for (const comment of this.getSortedComments()) {
-          if (!this.projectUserConfigDoc.data.commentRefsRead.includes(comment.dataId)) {
-            commentIdsToMarkRead.push(comment.dataId);
+      this.questionDoc.remoteChanges$
+        .pipe(debounceTime(2000), quietTakeUntilDestroyed(this.destroyRef))
+        .subscribe(() => {
+          if (this.projectUserConfigDoc == null || this.projectUserConfigDoc.data == null || this.answer == null) {
+            return;
           }
-          commentNumber++;
-          if (commentNumber > commentsToShow) {
-            break;
-          }
-        }
-        if (commentIdsToMarkRead.length) {
-          this.projectUserConfigDoc.submitJson0Op(op => {
-            for (const commentId of commentIdsToMarkRead) {
-              op.add(puc => puc.commentRefsRead, commentId);
+          const commentsLength: number = this.answer.comments.filter(comment => !comment.deleted).length;
+          const defaultCommentsToShow =
+            commentsLength > this.maxCommentsToShow ? this.maxCommentsToShow - 1 : commentsLength;
+          const commentsToShow = this.showAllComments ? commentsLength : defaultCommentsToShow;
+          const commentIdsToMarkRead: string[] = [];
+          let commentNumber = 1;
+          // Older comments are displayed above newer comments, so iterate over comments starting with the oldest
+          for (const comment of this.getSortedComments()) {
+            if (!this.projectUserConfigDoc.data.commentRefsRead.includes(comment.dataId)) {
+              commentIdsToMarkRead.push(comment.dataId);
             }
-          });
-        }
-      });
+            commentNumber++;
+            if (commentNumber > commentsToShow) {
+              break;
+            }
+          }
+          if (commentIdsToMarkRead.length) {
+            this.projectUserConfigDoc.submitJson0Op(op => {
+              for (const commentId of commentIdsToMarkRead) {
+                op.add(puc => puc.commentRefsRead, commentId);
+              }
+            });
+          }
+        });
     }
   }
 

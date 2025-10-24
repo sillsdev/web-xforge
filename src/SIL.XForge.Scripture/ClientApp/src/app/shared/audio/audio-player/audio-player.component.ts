@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, DestroyRef, OnDestroy } from '@angular/core';
 import { MatSliderDragEvent } from '@angular/material/slider';
 import { Subscription } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -18,9 +18,10 @@ export class AudioPlayerComponent extends AudioPlayerBaseComponent implements On
 
   constructor(
     onlineStatusService: OnlineStatusService,
-    readonly i18n: I18nService
+    readonly i18n: I18nService,
+    destroyRef: DestroyRef
   ) {
-    super(onlineStatusService);
+    super(onlineStatusService, destroyRef);
   }
 
   get currentTime(): number {
@@ -50,7 +51,7 @@ export class AudioPlayerComponent extends AudioPlayerBaseComponent implements On
     });
   }
 
-  ngOnDestroy(): void {
+  override ngOnDestroy(): void {
     super.ngOnDestroy();
     this._timeUpdatedSubscription?.unsubscribe();
   }
