@@ -1,0 +1,237 @@
+mat-dialog-content {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.tab-content {
+  padding: 16px 0;
+}
+
+// Build Information Tab Styles
+.summary-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  background-color: var(--job-details-summary-background);
+  border-radius: 4px;
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-size: 18px;
+    font-weight: 500;
+  }
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+.summary-item {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  background-color: var(--job-details-summary-item-background);
+  border-radius: 4px;
+
+  .label {
+    font-weight: 500;
+    color: var(--job-details-label-color);
+    min-width: 160px;
+  }
+
+  .value {
+    color: var(--job-details-value-color);
+    word-break: break-word;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+}
+
+.language-pair-maybe {
+  color: var(--job-details-maybe-color);
+  font-style: italic;
+  cursor: help;
+  white-space: nowrap;
+  display: inline-block;
+  padding: 2px 4px;
+  margin-left: 2px;
+}
+
+.build-id-clearml-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--job-details-link-color);
+  text-decoration: none;
+  transition: color 0.2s;
+
+  &:hover {
+    color: var(--job-details-link-hover-color);
+    text-decoration: underline;
+  }
+
+  .external-link-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    vertical-align: middle;
+  }
+}
+
+.engine-info-notice {
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.engine-section,
+.raw-build-section {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 8px;
+  background-color: var(--job-details-event-background);
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 16px;
+    font-weight: 500;
+  }
+}
+
+.no-data-message {
+  padding: 24px;
+  text-align: center;
+  color: var(--job-details-no-data-color);
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  gap: 16px;
+
+  p {
+    margin: 0;
+    color: var(--job-details-loading-text-color);
+  }
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background-color: var(--job-details-error-background);
+  border-radius: 4px;
+  color: var(--job-details-error-color);
+  margin: 16px 0;
+
+  mat-icon {
+    flex-shrink: 0;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+// Events Tab Styles
+.events-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.additional-events-section {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 2px solid var(--job-details-event-timestamp-color);
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  .additional-events-notice {
+    margin-bottom: 16px;
+  }
+
+  .events-timeline {
+    margin-top: 16px;
+  }
+}
+
+.event-item {
+  padding: 16px;
+  border-radius: 8px;
+  background-color: var(--job-details-event-background);
+}
+
+.event-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+
+  .event-icon {
+    margin-top: 2px;
+  }
+}
+
+.event-info {
+  flex: 1;
+
+  h4 {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  .event-timestamp {
+    margin: 0;
+    font-size: 14px;
+    color: var(--job-details-event-timestamp-color);
+  }
+}
+
+.event-exception,
+.event-payload,
+.event-result {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: var(--job-details-event-content-background);
+  border-radius: 4px;
+
+  strong {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--job-details-event-content-text);
+  }
+
+  pre {
+    margin: 0;
+    padding: 8px;
+    background-color: var(--job-details-event-code-background);
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+}
+
+.event-exception {
+  border-left: 3px solid var(--job-details-exception-border);
+  background-color: var(--job-details-exception-background);
+
+  pre {
+    background-color: var(--job-details-event-content-background);
+  }
+}

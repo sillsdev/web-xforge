@@ -16,7 +16,7 @@ import { SFProjectService } from '../core/sf-project.service';
 import { EventMetric } from '../event-metrics/event-metric';
 import { NoticeComponent } from '../shared/notice/notice.component';
 import { projectLabel } from '../shared/utils';
-import { JobEventsDialogComponent } from './job-events-dialog.component';
+import { JobDetailsDialogComponent } from './job-details-dialog.component';
 import { ServalAdministrationService } from './serval-administration.service';
 
 /**
@@ -36,6 +36,7 @@ interface DraftJob {
   finishEvent?: EventMetric;
   cancelEvent?: EventMetric;
   events: EventMetric[];
+  additionalEvents: EventMetric[]; // Events with same build ID that weren't included in the main job tracking
   status: 'running' | 'success' | 'failed' | 'cancelled' | 'incomplete';
   startTime: Date | null;
   finishTime: Date | null;
@@ -61,6 +62,14 @@ interface Row {
   clearmlUrl?: string;
 }
 
+const DRAFTING_EVENTS = [
+  'StartPreTranslationBuildAsync',
+  'BuildProjectAsync',
+  'RetrievePreTranslationStatusAsync',
+  'ExecuteWebhookAsync',
+  'CancelPreTranslationBuildAsync'
+];
+
 @Component({
   selector: 'app-draft-jobs',
   templateUrl: './draft-jobs.component.html',
@@ -75,8 +84,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     'translationBooks',
     'startTime',
     'duration',
-    'author',
-    'buildId'
+    'author'
   ];
   rows: Row[] = [];
 
@@ -102,7 +110,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     this.daysBack$.next(value);
   }
 
-  private eventMetrics?: EventMetric[];
+  private draftEvents?: EventMetric[];
   private draftJobs: DraftJob[] = [];
   private projectNames = new Map<string, string | null>(); // Cache for project names
   private projectShortNames = new Map<string, string | null>(); // Cache for project short names
@@ -124,16 +132,16 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
   }
 
   get isLoading(): boolean {
-    return this.eventMetrics == null;
+    return this.draftEvents == null;
   }
 
   ngOnInit(): void {
     if (
-      !this.columnsToDisplay.includes('details') &&
+      !this.columnsToDisplay.includes('buildDetails') &&
       (this.authService.currentUserRoles.includes(SystemRole.ServalAdmin) ||
         this.authService.currentUserRoles.includes(SystemRole.SystemAdmin))
     ) {
-      this.columnsToDisplay.push('details');
+      this.columnsToDisplay.push('buildDetails');
     }
     this.loadingStarted();
 
@@ -159,14 +167,15 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
           }
 
           if (isOnline) {
-            const queryResults = await this.projectService.onlineAllEventMetricsForConstructionDraftJobs(
+            const queryResults = await this.projectService.onlineAllEventMetricsForConstructingDraftJobs(
+              DRAFTING_EVENTS,
               projectFilterId ?? undefined,
               daysBack === 'all_time' ? undefined : daysBack
             );
             if (Array.isArray(queryResults?.results)) {
-              this.eventMetrics = queryResults.results as EventMetric[];
+              this.draftEvents = queryResults.results as EventMetric[];
             } else {
-              this.eventMetrics = [];
+              this.draftEvents = [];
             }
             this.processDraftJobs();
             await this.loadProjectNames();
@@ -178,24 +187,56 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
       .subscribe();
   }
 
-  openDetailsDialog(job: DraftJob): void {
+  openJobDetailsDialog(job: DraftJob): void {
+    if (job.buildId == null) {
+      void this.noticeService.show('No build ID available for this job');
+      return;
+    }
+
+    // Format event-based duration if available
+    const eventBasedDuration = job.duration != null ? this.formatDuration(job.duration) : undefined;
+
+    // Format start time if available
+    const startTime = job.startTime != null ? this.i18n.formatDate(job.startTime, { showTimeZone: true }) : undefined;
+
     // Collect all events that were used to create this job
     const events = [job.startEvent, job.buildEvent, job.finishEvent, job.cancelEvent]
       .filter((event): event is EventMetric => event != null)
       .sort((a, b) => new Date(a.timeStamp).getTime() - new Date(b.timeStamp).getTime());
 
+    // Get ClearML URL
+    const clearmlUrl = job.buildId
+      ? `https://app.sil.hosted.allegro.ai/projects?gq=${job.buildId}&tab=tasks`
+      : undefined;
+
+    // Count how many builds have started on this project since this build started
+    let buildsStartedSince = 0;
+    if (job.startTime != null) {
+      const jobStartTime = job.startTime;
+      buildsStartedSince = this.draftJobs.filter(
+        otherJob =>
+          otherJob.projectId === job.projectId && otherJob.startTime != null && otherJob.startTime > jobStartTime
+      ).length;
+    }
+
     const dialogData = {
+      buildId: job.buildId,
       projectId: job.projectId,
       jobStatus: this.getStatusDisplay(job.status),
-      events
+      events,
+      additionalEvents: job.additionalEvents,
+      eventBasedDuration,
+      startTime,
+      clearmlUrl,
+      buildsStartedSince
     };
 
-    const dialogConfig: MatDialogConfig<any> = { data: dialogData, width: '800px', maxHeight: '80vh' };
-    this.dialogService.openMatDialog(JobEventsDialogComponent, dialogConfig);
+    const dialogConfig: MatDialogConfig<any> = { data: dialogData, width: '1000px', maxHeight: '80vh' };
+    this.dialogService.openMatDialog(JobDetailsDialogComponent, dialogConfig);
   }
 
   clearProjectFilter(): void {
-    this.router.navigate([], {
+    void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { projectId: null },
       queryParamsHandling: 'merge'
@@ -203,26 +244,16 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
   }
 
   private processDraftJobs(): void {
-    if (this.eventMetrics == null) {
+    if (this.draftEvents == null) {
       this.draftJobs = [];
       this.generateRows();
       return;
     }
 
-    // Filter draft-related events
-    const draftEvents = this.eventMetrics.filter(
-      event =>
-        event.eventType === 'StartPreTranslationBuildAsync' ||
-        event.eventType === 'BuildProjectAsync' ||
-        event.eventType === 'RetrievePreTranslationStatusAsync' ||
-        event.eventType === 'ExecuteWebhookAsync' ||
-        event.eventType === 'CancelPreTranslationBuildAsync'
-    );
-
     const jobs: DraftJob[] = [];
 
     // Step 1: Find all build events (BuildProjectAsync) - these are our anchors
-    const buildEvents = draftEvents.filter(event => event.eventType === 'BuildProjectAsync');
+    const buildEvents = this.draftEvents.filter(event => event.eventType === 'BuildProjectAsync');
 
     // Step 2: For each build event, find the nearest preceding start event
     for (const buildEvent of buildEvents) {
@@ -234,7 +265,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
       const buildTime = new Date(buildEvent.timeStamp);
 
       // Find all StartPreTranslationBuildAsync events for this project that precede the build
-      const candidateStartEvents = draftEvents.filter(
+      const candidateStartEvents = this.draftEvents.filter(
         event =>
           event.eventType === 'StartPreTranslationBuildAsync' &&
           event.projectId === buildEvent.projectId &&
@@ -252,7 +283,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
       });
 
       // Step 3: Find the first completion event after the build
-      const candidateCompletionEvents = draftEvents.filter(event => {
+      const candidateCompletionEvents = this.draftEvents.filter(event => {
         if (event.projectId !== buildEvent.projectId) return false;
         if (new Date(event.timeStamp) <= buildTime) return false;
 
@@ -295,6 +326,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
         finishEvent: undefined,
         cancelEvent: undefined,
         events: [],
+        additionalEvents: [],
         startTime: new Date(startEvent.timeStamp),
         userId: startEvent.userId,
         trainingBooks,
@@ -313,6 +345,22 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
           job.finishEvent = completionEvent;
         }
       }
+
+      // Step 4: Collect additional events (any events with same build ID that weren't already included)
+      const additionalEvents = this.draftEvents.filter(event => {
+        // Don't include events we've already tracked
+        if (event === startEvent || event === buildEvent || event === completionEvent) {
+          return false;
+        }
+
+        // Check if this event has the same build ID
+        const eventBuildId = this.extractBuildIdFromEvent(event);
+        return eventBuildId === buildId;
+      });
+
+      job.additionalEvents = additionalEvents.sort(
+        (a, b) => new Date(a.timeStamp).getTime() - new Date(b.timeStamp).getTime()
+      );
 
       jobs.push(job);
     }

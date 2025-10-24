@@ -117,7 +117,7 @@ describe('DraftGenerationService', () => {
 
       // Setup the HTTP request
       const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/builds/id:${projectId}?pretranslate=true`
+        `${MACHINE_API_BASE_URL}translation/builds/id:${projectId}?preTranslate=true`
       );
       expect(req.request.method).toEqual('GET');
       req.flush(buildDto);
@@ -192,7 +192,7 @@ describe('DraftGenerationService', () => {
 
       // Setup the HTTP request
       const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/builds/project:${projectId}?pretranslate=true`
+        `${MACHINE_API_BASE_URL}translation/builds/project:${projectId}?preTranslate=true`
       );
       expect(req.request.method).toEqual('GET');
       req.flush([buildDto]);
@@ -209,7 +209,7 @@ describe('DraftGenerationService', () => {
 
       // Setup the HTTP request
       const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/builds/project:${projectId}?pretranslate=true`
+        `${MACHINE_API_BASE_URL}translation/builds/project:${projectId}?preTranslate=true`
       );
       expect(req.request.method).toEqual('GET');
       req.flush(null, { status: HttpStatusCode.Unauthorized, statusText: 'Unauthorized' });
@@ -226,7 +226,7 @@ describe('DraftGenerationService', () => {
 
       // Setup the HTTP request
       const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/builds/project:${projectId}?pretranslate=true`
+        `${MACHINE_API_BASE_URL}translation/builds/project:${projectId}?preTranslate=true`
       );
       expect(req.request.method).toEqual('GET');
       req.flush(null, { status: HttpStatusCode.NotFound, statusText: 'Not Found' });
@@ -254,7 +254,7 @@ describe('DraftGenerationService', () => {
 
       // Setup the HTTP request
       const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/builds/id:${projectId}?pretranslate=true`
+        `${MACHINE_API_BASE_URL}translation/builds/id:${projectId}?preTranslate=true`
       );
       expect(req.request.method).toEqual('GET');
       req.flush(buildDto);
@@ -271,7 +271,7 @@ describe('DraftGenerationService', () => {
 
       // Setup the HTTP request
       const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/builds/id:${projectId}?pretranslate=true`
+        `${MACHINE_API_BASE_URL}translation/builds/id:${projectId}?preTranslate=true`
       );
       expect(req.request.method).toEqual('GET');
       req.flush(faultedBuild);

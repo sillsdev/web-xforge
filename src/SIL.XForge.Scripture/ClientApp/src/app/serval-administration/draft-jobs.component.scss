@@ -9,9 +9,20 @@
   background-color: var(--sf-draft-jobs-table-row-background);
 }
 
-app-owner,
-.details-button {
+app-owner {
   white-space: nowrap;
+}
+
+.build-id-link {
+  text-decoration: underline;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &.disabled {
+    color: var(--sf-draft-jobs-disabled-link-color);
+    text-decoration: none;
+    cursor: default;
+  }
 }
 
 .status-cell {
