@@ -26,6 +26,18 @@
         }
       </div>
     }
+    <div class="grouping-toggle">
+      <div class="grouping-toggle-label">
+        Determination
+        <app-info
+          text="Whether to determine build activity more strictly by using request ID where available, or always by using timing."
+        ></app-info>
+      </div>
+      <mat-button-toggle-group [value]="groupingMode" (valueChange)="onGroupingModeChange($event)">
+        <mat-button-toggle value="requestId">Request ID</mat-button-toggle>
+        <mat-button-toggle value="timing">Timing</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
   </div>
 
   @if (!isLoading) {
