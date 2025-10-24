@@ -445,9 +445,9 @@ export class CheckingAnswersComponent implements OnInit {
         answer
       });
     } else if (likeAnswerResponse === LikeAnswerResponse.DeniedOwnAnswer) {
-      void this.noticeService.show(this.i18n.translateStatic('checking_answers.cannot_like_own_answer'));
+      this.noticeService.show(this.i18n.translateStatic('checking_answers.cannot_like_own_answer'));
     } else if (likeAnswerResponse === LikeAnswerResponse.DeniedNoPermission) {
-      void this.noticeService.show(this.i18n.translateStatic('checking_answers.no_permission_to_like'));
+      this.noticeService.show(this.i18n.translateStatic('checking_answers.no_permission_to_like'));
     }
   }
 

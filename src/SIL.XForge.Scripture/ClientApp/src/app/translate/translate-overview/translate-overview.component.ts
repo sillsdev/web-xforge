@@ -159,7 +159,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
         if (error instanceof HttpErrorResponse && error.status === 401) {
           void this.authService.requestParatextCredentialUpdate();
         } else {
-          void this.noticeService.showError(this.i18n.translateStatic('translate_overview.training_unavailable'));
+          this.noticeService.showError(this.i18n.translateStatic('translate_overview.training_unavailable'));
         }
       })
       .then(() => void this.listenForStatus());

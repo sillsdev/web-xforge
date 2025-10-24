@@ -183,17 +183,14 @@ export class ExceptionHandlingService {
       error.error.target instanceof XMLHttpRequest &&
       error.error.target.status === 0
     ) {
-      ngZone.run(
-        () =>
-          void noticeService.showError(this.i18n.translateStatic('exception_handling_service.network_request_failed'))
+      ngZone.run(() =>
+        noticeService.showError(this.i18n.translateStatic('exception_handling_service.network_request_failed'))
       );
       return;
     }
 
     if (error instanceof DOMException && (error.name === 'QuotaExceededError' || error.name === 'DataError')) {
-      ngZone.run(
-        () => void noticeService.showError(this.i18n.translateStatic('exception_handling_service.out_of_space'))
-      );
+      ngZone.run(() => noticeService.showError(this.i18n.translateStatic('exception_handling_service.out_of_space')));
       return;
     }
 

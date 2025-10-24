@@ -75,7 +75,7 @@ export class DraftGenerationService {
           return of(undefined);
         }
 
-        void this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
+        this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
         return of(undefined);
       })
     );
@@ -99,7 +99,7 @@ export class DraftGenerationService {
           return of(undefined);
         }
 
-        void this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
+        this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
         return of(undefined);
       })
     );
@@ -125,7 +125,7 @@ export class DraftGenerationService {
             return of(undefined);
           }
 
-          void this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
+          this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
           return of(undefined);
         })
       );
@@ -202,7 +202,7 @@ export class DraftGenerationService {
             return of({});
           }
 
-          void this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
+          this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
           return of({});
         })
       );
@@ -250,7 +250,7 @@ export class DraftGenerationService {
           return throwError(() => err);
         }
 
-        void this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
+        this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
         return of([]);
       })
     );
@@ -279,7 +279,7 @@ export class DraftGenerationService {
             return of(undefined);
           }
 
-          void this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
+          this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
           return of(undefined);
         })
       );

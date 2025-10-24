@@ -142,7 +142,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
 
   async revertToSnapshot(): Promise<void> {
     if (!this.onlineStatusService.isOnline) {
-      void this.noticeService.show(this.i18n.translateStatic('history_chooser.please_connect'));
+      this.noticeService.show(this.i18n.translateStatic('history_chooser.please_connect'));
       return;
     }
     // Ensure the user wants to proceed
@@ -162,7 +162,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
       this.chapter == null ||
       !this.canRestoreSnapshot
     ) {
-      void this.noticeService.showError(this.i18n.translateStatic('history_chooser.error'));
+      this.noticeService.showError(this.i18n.translateStatic('history_chooser.error'));
       return;
     }
 
@@ -183,11 +183,11 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
       }
       await this.textDocService.overwrite(textDocId, delta, 'History');
 
-      void this.noticeService.show(this.i18n.translateStatic('history_chooser.revert_successful'));
+      this.noticeService.show(this.i18n.translateStatic('history_chooser.revert_successful'));
       // Force the history editor to reload
       this.revisionSelect.emit({ revision: this.selectedRevision, snapshot: this.selectedSnapshot });
     } catch (err) {
-      void this.noticeService.showError(this.i18n.translateStatic('history_chooser.revert_error'));
+      this.noticeService.showError(this.i18n.translateStatic('history_chooser.revert_error'));
       if (!isNetworkError(err)) {
         this.errorReportingService.silentError(
           'Error occurred restoring a snapshot',

@@ -108,7 +108,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
         )
       ) {
         if (this.projectDoc.data.sync.lastSyncSuccessful) {
-          void this.noticeService.show(
+          this.noticeService.show(
             this.i18n.translateStatic('sync.successfully_synchronized_with_paratext', { projectName })
           );
           this.previousLastSyncDate = this.lastSyncDate;

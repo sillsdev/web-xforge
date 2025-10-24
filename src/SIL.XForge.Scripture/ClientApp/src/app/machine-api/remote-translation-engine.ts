@@ -97,7 +97,7 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
       return this.createWordGraph(response.data as WordGraphDto);
     } catch (err: any) {
       if (err.status === 403 || err.status === 404 || err.status === 409) {
-        void this.noticeService.showError(
+        this.noticeService.showError(
           this.i18n.translateStatic('error_messages.suggestion_engine_requires_retrain'),
           this.i18n.translateStatic('error_messages.go_to_retrain'),
           () => {
@@ -105,7 +105,7 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
           }
         );
       } else {
-        void this.noticeService.showError(this.i18n.translateStatic('error_messages.failed_to_retrieve_suggestions'));
+        this.noticeService.showError(this.i18n.translateStatic('error_messages.failed_to_retrieve_suggestions'));
       }
     }
 

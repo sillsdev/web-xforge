@@ -168,7 +168,7 @@ export class ShareDialogComponent extends ShareBaseComponent {
       return;
     }
     void this.navigator.clipboard.writeText(this.shareableLink).then(async () => {
-      await this.noticeService.show(this.i18n.translateStatic('share_control.link_copied'));
+      this.noticeService.show(this.i18n.translateStatic('share_control.link_copied'));
       await this.reserveShareLink();
     });
   }

@@ -858,7 +858,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         break;
       case 'delete':
         if (answerAction.answer != null) {
-          this.deleteAnswer(answerAction.answer);
+          void this.deleteAnswer(answerAction.answer);
         }
         break;
       case 'edit':
@@ -1278,7 +1278,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       : activeQuestionDoc.data.answers.findIndex(existingAnswer => existingAnswer.dataId === answer.dataId);
   }
 
-  private deleteAnswer(answer: Answer): void {
+  private async deleteAnswer(answer: Answer): Promise<void> {
     if (this.questionsList == null) {
       return;
     }
@@ -1288,7 +1288,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     }
     const answerIndex = this.getAnswerIndex(answer);
     if (answerIndex >= 0) {
-      void activeQuestionDoc
+      await activeQuestionDoc
         .submitJson0Op(op => {
           op.set(q => q.answers[answerIndex].deleted, true);
         })
