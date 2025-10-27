@@ -106,7 +106,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   ngOnInit(): void {
     this.state = 'input';
     if (this.ptProjectId === '') {
-      this.router.navigate(['/projects']);
+      void this.router.navigate(['/projects']);
     }
 
     this.onlineStatusService.onlineStatus$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async isOnline => {
@@ -151,7 +151,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       err.message = this.translocoService.translate('connect_project.problem_already_connected');
       this.errorHandler.handleError(err);
       this.state = 'input';
-      this.populateProjectList();
+      void this.populateProjectList();
       return;
     }
     this.projectDoc = await this.projectService.get(projectId);
@@ -159,7 +159,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
 
   updateStatus(inProgress: boolean): void {
     if (!inProgress && this.projectDoc != null) {
-      this.router.navigate(['/projects', this.projectDoc.id]);
+      void this.router.navigate(['/projects', this.projectDoc.id]);
     }
   }
 
@@ -171,7 +171,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       const projects: ParatextProject[] | undefined = (await this.paratextService.getProjects()) ?? [];
       this.projectsFromParatext = projects.sort(compareProjectsForSorting);
       // do not wait for resources to load
-      this.fetchResources();
+      void this.fetchResources();
     } catch (error: any) {
       if (error instanceof HttpErrorResponse && error.status === 401) {
         this.authService.requestParatextCredentialUpdate(() => this.router.navigate(['/projects']));

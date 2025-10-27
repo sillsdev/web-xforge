@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
-import { firstValueFrom } from 'rxjs';
 import { I18nService } from './i18n.service';
 
 /** Manages and provides access to notices shown to user on the web site. */
@@ -47,24 +46,24 @@ export class NoticeService {
     }
   }
 
-  async show(message: string): Promise<void> {
+  show(message: string): void {
     return this.showSnackBar(message);
   }
 
-  async showError(
+  showError(
     message: string,
     action: string | undefined = undefined,
     onAction: (() => void) | undefined = undefined
-  ): Promise<void> {
+  ): void {
     return this.showSnackBar(message, ['snackbar-error'], action, onAction);
   }
 
-  private async showSnackBar(
+  private showSnackBar(
     message: string,
     classes: string[] = [],
     action: string | undefined = undefined,
     onAction: (() => void) | undefined = undefined
-  ): Promise<void> {
+  ): void {
     const config: MatSnackBarConfig<any> = {
       panelClass: classes.join(' '),
       direction: this.i18n.direction,
@@ -85,7 +84,9 @@ export class NoticeService {
 
     this.messageOnDisplay = message;
 
-    firstValueFrom(snackBarRef.afterDismissed()).then(() => (this.messageOnDisplay = undefined));
+    snackBarRef.afterDismissed().subscribe(() => {
+      this.messageOnDisplay = undefined;
+    });
   }
 
   private setAppLoadingAsync(value: boolean): void {

@@ -79,7 +79,7 @@ export class JoinComponent extends DataLoadingComponent {
       if (this.authService.currentUserId == null) {
         this.i18nService.setLocale(joining.locale);
       }
-      this.initialize(joining.shareKey);
+      void this.initialize(joining.shareKey);
     });
     this.onlineStatusService.onlineStatus$
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
@@ -135,7 +135,7 @@ export class JoinComponent extends DataLoadingComponent {
     if (this.status !== 'input') {
       return;
     }
-    this.authService.logIn({ returnUrl: this.locationService.pathname, signUp: false });
+    void this.authService.logIn({ returnUrl: this.locationService.pathname, signUp: false });
   }
 
   private async joinWithShareKey(shareKey: string): Promise<void> {
@@ -145,10 +145,10 @@ export class JoinComponent extends DataLoadingComponent {
       // If that fails the user will be redirected to auth0 to sign up
       await this.authService.isLoggedIn;
       const projectId = await this.projectService.onlineJoinWithShareKey(shareKey);
-      this.router.navigateByUrl(`/projects/${projectId}`, { replaceUrl: true });
+      void this.router.navigateByUrl(`/projects/${projectId}`, { replaceUrl: true });
     } catch (err) {
       await this.handleJoiningError(err);
-      this.router.navigateByUrl('/projects', { replaceUrl: true });
+      void this.router.navigateByUrl('/projects', { replaceUrl: true });
     }
   }
 
@@ -176,7 +176,7 @@ export class JoinComponent extends DataLoadingComponent {
       this.status = 'input';
     } else if (!this.onlineStatusService.isOnline && (await this.authService.isLoggedIn)) {
       await this.dialogService.message('join.please_connect_to_use_link');
-      this.router.navigateByUrl('/projects', { replaceUrl: true });
+      void this.router.navigateByUrl('/projects', { replaceUrl: true });
     } else {
       this.name.disable();
       this.status = 'unavailable';

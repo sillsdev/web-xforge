@@ -376,7 +376,7 @@ export class DraftGenerationService {
         usfmFiles.push(usfmFile);
       }
 
-      Promise.all(usfmFiles).then(() => {
+      void Promise.all(usfmFiles).then(() => {
         if (Object.keys(zip.files).length === 0) {
           observer.next({ current: 0, total: 0 });
           observer.error(this.i18n.translateStatic('draft_generation.info_alert_download_error'));
@@ -391,7 +391,7 @@ export class DraftGenerationService {
 
         filename += '.zip';
 
-        zip.generateAsync({ type: 'blob' }).then(blob => {
+        void zip.generateAsync({ type: 'blob' }).then(blob => {
           saveAs(blob, filename);
           observer.next({ current: 0, total: 0 });
           observer.complete();

@@ -113,9 +113,9 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
           );
           this.previousLastSyncDate = this.lastSyncDate;
         } else if (this.showSyncUserPermissionsFailureMessage) {
-          this.dialogService.message(this.i18n.translate('sync.user_permissions_failure_dialog_message'));
+          void this.dialogService.message(this.i18n.translate('sync.user_permissions_failure_dialog_message'));
         } else {
-          this.dialogService.message(
+          void this.dialogService.message(
             this.i18n.translate('sync.something_went_wrong_synchronizing_this_project', { projectName })
           );
         }
@@ -209,7 +209,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     if (this.projectDoc == null) {
       return;
     }
-    this.projectService.onlineCancelSync(this.projectDoc.id);
+    void this.projectService.onlineCancelSync(this.projectDoc.id);
     this.isSyncCancelled = true;
   }
 

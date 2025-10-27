@@ -135,7 +135,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
       .subscribe(async projectId => {
         this.loadingStarted();
         this.projectDoc = await this.projectService.get(projectId);
-        this.loadUsers();
+        void this.loadUsers();
         // TODO Clean up the use of nested subscribe()
         this.projectDoc.remoteChanges$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async () => {
           this.loadingStarted();
@@ -151,7 +151,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
       this.isAppOnline = isOnline;
       if (isOnline && this._userRows == null) {
         this.loadingStarted();
-        this.loadUsers();
+        void this.loadUsers();
         this.loadingFinished();
       }
     });
@@ -190,17 +190,17 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
       'collaborators.remove_user'
     );
     if (confirmed) {
-      this.projectService.onlineRemoveUser(this.projectId, row.id);
+      void this.projectService.onlineRemoveUser(this.projectId, row.id);
     }
   }
 
   async uninviteProjectUser(emailToUninvite: string): Promise<void> {
     await this.projectService.onlineUninviteUser(this.projectId, emailToUninvite);
-    this.loadUsers();
+    void this.loadUsers();
   }
 
   onInvitationSent(): void {
-    this.loadUsers();
+    void this.loadUsers();
   }
 
   async openRolesDialog(row: Row): Promise<void> {

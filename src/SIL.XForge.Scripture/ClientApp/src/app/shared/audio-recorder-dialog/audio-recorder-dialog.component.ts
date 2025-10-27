@@ -115,7 +115,7 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
   ngOnDestroy(): void {
     this.destroyed = true;
     if (this.isRecording) {
-      this.stopRecording();
+      void this.stopRecording();
     }
   }
 

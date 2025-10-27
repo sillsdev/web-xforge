@@ -207,13 +207,13 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
         startWith(this.activatedProject.projectDoc),
         filterNullish(),
         tap(async project => {
-          this.initialize(project.id);
+          void this.initialize(project.id);
         }),
         throttleTime(1000, asyncScheduler, { leading: false, trailing: true }),
         quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe(project => {
-        this.initialize(project.id);
+        void this.initialize(project.id);
       });
   }
 
