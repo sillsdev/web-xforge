@@ -1,0 +1,226 @@
+<h2 mat-dialog-title>Job Details - {{ data.projectId }}</h2>
+
+<mat-dialog-content>
+  <mat-tab-group>
+    <!-- Build Information Tab -->
+    <mat-tab label="Build Information (Serval)">
+      <div class="tab-content">
+        @if (isLoadingBuild) {
+          <div class="loading-container">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p>Loading build information...</p>
+          </div>
+        } @else if (buildError != null) {
+          <div class="error-message">
+            <mat-icon color="warn">error</mat-icon>
+            <p>Failed to load build information: {{ buildError }}</p>
+          </div>
+        } @else if (rawBuild != null) {
+          <div class="summary-section">
+            <h3>Summary</h3>
+            <div class="summary-grid">
+              <div class="summary-item">
+                <span class="label">Build ID:</span>
+                <span class="value">
+                  @if (data.clearmlUrl != null) {
+                    <a
+                      [href]="data.clearmlUrl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="build-id-clearml-link"
+                      matTooltip="Open job in ClearML"
+                    >
+                      {{ data.buildId }}
+                      <mat-icon class="external-link-icon">open_in_new</mat-icon>
+                    </a>
+                  } @else {
+                    {{ data.buildId }}
+                  }
+                </span>
+              </div>
+              <div class="summary-item">
+                <span class="label">Project ID:</span> <span class="value">{{ data.projectId }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="label">Status:</span> <span class="value">{{ buildStatus }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="label">Language Pair:</span>
+                <span class="value">
+                  {{ languagePair }}
+                  @if (data.buildsStartedSince > 0) {
+                    <span class="language-pair-maybe" [matTooltip]="languagePairTooltip" matTooltipShowDelay="300">
+                      (maybe)
+                    </span>
+                  }
+                </span>
+              </div>
+              <div class="summary-item">
+                <span class="label">Strings Trained On:</span>
+                <span class="value">{{ stringsTrainedOn | l10nNumber }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="label">Strings Translated:</span>
+                <span class="value">{{ stringsTranslated | l10nNumber }}</span>
+              </div>
+              @if (currentProgress != null) {
+                <div class="summary-item">
+                  <span class="label">Current Progress:</span> <span class="value">{{ currentProgress }}</span>
+                </div>
+              }
+              <div class="summary-item">
+                <span class="label">Serval Version:</span> <span class="value">{{ servalVersion }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="raw-build-section">
+            <h3>Raw Build Information</h3>
+            <app-json-viewer [data]="rawBuild"></app-json-viewer>
+          </div>
+        } @else {
+          <div class="no-data-message">
+            <p>No build data available for this job.</p>
+          </div>
+        }
+
+        @if (isLoadingEngine) {
+          <div class="loading-container">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p>Loading engine information...</p>
+          </div>
+        } @else if (engineError != null) {
+          <div class="error-message">
+            <mat-icon color="warn">error</mat-icon>
+            <p>Failed to load engine information: {{ engineError }}</p>
+          </div>
+        } @else if (engine != null) {
+          <app-notice
+            [icon]="engineInfoNoticeType === 'warning' ? 'warning' : 'info'"
+            [type]="engineInfoNoticeType"
+            mode="outline"
+            class="engine-info-notice"
+          >
+            {{ engineInfoNoticeText }}
+          </app-notice>
+
+          <div class="engine-section">
+            <h3>Engine Information</h3>
+            <app-json-viewer [data]="engine"></app-json-viewer>
+          </div>
+        }
+      </div>
+    </mat-tab>
+
+    <!-- Events Tab -->
+    <mat-tab label="Events (Scripture Forge)">
+      <div class="tab-content">
+        <div class="summary-section">
+          <h3>Summary</h3>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <span class="label">Job Status:</span> <span class="value">{{ data.jobStatus }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">Events Found:</span> <span class="value">{{ data.events.length }}</span>
+            </div>
+            @if (data.startTime != null) {
+              <div class="summary-item">
+                <span class="label">Start Time:</span> <span class="value">{{ data.startTime }}</span>
+              </div>
+            }
+            @if (data.eventBasedDuration != null) {
+              <div class="summary-item">
+                <span class="label">Duration:</span> <span class="value">{{ data.eventBasedDuration }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="events-timeline">
+          @for (event of data.events; track event.id) {
+            <div class="event-item" [class]="'event-' + event.eventType">
+              <div class="event-header">
+                <mat-icon [color]="getEventStatusColor(event.eventType, event.exception != null)" class="event-icon">
+                  {{ getEventStatusIcon(event.eventType, event.exception != null) }}
+                </mat-icon>
+                <div class="event-info">
+                  <h4>{{ getEventTypeLabel(event.eventType) }}</h4>
+                  <p class="event-timestamp">{{ formatDate(event.timeStamp) }}</p>
+                </div>
+              </div>
+
+              @if (event.exception != null) {
+                <div class="event-exception">
+                  <strong>Exception:</strong>
+                  <pre>{{ event.exception }}</pre>
+                </div>
+              }
+
+              @if (hasPayload(event.payload)) {
+                <div class="event-payload">
+                  <strong>Parameters:</strong>
+                  <app-json-viewer [data]="event.payload"></app-json-viewer>
+                </div>
+              }
+
+              @if (event.result != null) {
+                <div class="event-result">
+                  <strong>Result:</strong>
+                  <app-json-viewer [data]="event.result"></app-json-viewer>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        @if (data.additionalEvents.length > 0) {
+          <div class="additional-events-section">
+            <h3>Additional Events</h3>
+            <app-notice icon="info" type="primary" mode="outline" class="additional-events-notice">
+              These events occurred after the job completed but have the same build ID. They are shown for diagnostic
+              purposes and do not affect the job status or duration calculations.
+            </app-notice>
+            <div class="events-timeline">
+              @for (event of data.additionalEvents; track event.id) {
+                <div class="event-item" [class]="'event-' + event.eventType">
+                  <div class="event-header">
+                    <div class="event-info">
+                      <h4>{{ event.eventType }}</h4>
+                      <p class="event-timestamp">{{ formatDate(event.timeStamp) }}</p>
+                    </div>
+                  </div>
+
+                  @if (event.exception != null) {
+                    <div class="event-exception">
+                      <strong>Exception:</strong>
+                      <pre>{{ event.exception }}</pre>
+                    </div>
+                  }
+
+                  @if (hasPayload(event.payload)) {
+                    <div class="event-payload">
+                      <strong>Parameters:</strong>
+                      <app-json-viewer [data]="event.payload"></app-json-viewer>
+                    </div>
+                  }
+
+                  @if (event.result != null) {
+                    <div class="event-result">
+                      <strong>Result:</strong>
+                      <app-json-viewer [data]="event.result"></app-json-viewer>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Close</button>
+</mat-dialog-actions>

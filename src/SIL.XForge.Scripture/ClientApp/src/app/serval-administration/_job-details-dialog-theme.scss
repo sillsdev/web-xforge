@@ -1,0 +1,41 @@
+@use '@angular/material' as mat;
+
+@mixin color($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
+
+  // Summary section colors
+  --job-details-summary-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 17, 98))};
+  --job-details-summary-item-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 22, 100))};
+  --job-details-label-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 80, 50))};
+  --job-details-value-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 90, 10))};
+
+  // Language pair maybe indicator
+  --job-details-maybe-color: #{mat.get-theme-color($theme, tertiary, if($is-dark, 70, 50))};
+
+  // ClearML link colors
+  --job-details-link-color: #{mat.get-theme-color($theme, primary, if($is-dark, 70, 40))};
+  --job-details-link-hover-color: #{mat.get-theme-color($theme, primary, if($is-dark, 80, 30))};
+
+  // Loading and error states
+  --job-details-loading-text-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 80, 50))};
+  --job-details-error-background: #{mat.get-theme-color($theme, error, if($is-dark, 20, 95))};
+  --job-details-error-color: #{mat.get-theme-color($theme, error, if($is-dark, 80, 40))};
+  --job-details-no-data-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 60, 60))};
+
+  // Event timeline colors
+  --job-details-event-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 17, 98))};
+  --job-details-event-timestamp-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 70, 50))};
+  --job-details-event-content-background: #{mat.get-theme-color($theme, surface)};
+  --job-details-event-content-text: #{mat.get-theme-color($theme, neutral, if($is-dark, 90, 10))};
+  --job-details-event-code-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 20, 95))};
+
+  // Exception styling
+  --job-details-exception-border: #{mat.get-theme-color($theme, error, if($is-dark, 60, 50))};
+  --job-details-exception-background: #{mat.get-theme-color($theme, error, if($is-dark, 20, 95))};
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}
