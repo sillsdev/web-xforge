@@ -4892,6 +4892,7 @@ class TestEnvironment {
     when(mockedDraftGenerationService.pollBuildProgress(anything())).thenReturn(
       of({ state: BuildStates.Completed } as BuildDto)
     );
+    when(mockedDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(of(undefined));
     when(
       mockedDraftGenerationService.getGeneratedDraftDeltaOperations(
         anything(),
