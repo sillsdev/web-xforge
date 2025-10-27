@@ -795,6 +795,54 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    public async Task GetLastPreTranslationBuildAsync_NoBuild()
+    {
+        var env = new TestEnvironment();
+        env.MachineApiService.GetLastPreTranslationBuildAsync(User01, Project01, false, CancellationToken.None)
+            .Returns(Task.FromResult<ServalBuildDto>(null));
+
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetLastPreTranslationBuildAsync(
+            Project01,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<NoContentResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetLastPreTranslationBuildAsync_NoProject()
+    {
+        var env = new TestEnvironment();
+        env.MachineApiService.GetLastPreTranslationBuildAsync(User01, Project01, false, CancellationToken.None)
+            .Throws(new DataNotFoundException(string.Empty));
+
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetLastPreTranslationBuildAsync(
+            Project01,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<NotFoundResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetLastPreTranslationBuildAsync_Success()
+    {
+        var env = new TestEnvironment();
+        env.MachineApiService.GetLastPreTranslationBuildAsync(User01, Project01, false, CancellationToken.None)
+            .Returns(Task.FromResult(new ServalBuildDto()));
+
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetLastPreTranslationBuildAsync(
+            Project01,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+        await env
+            .MachineApiService.Received(1)
+            .GetLastPreTranslationBuildAsync(User01, Project01, false, CancellationToken.None);
+    }
+
+    [Test]
     public async Task GetPreTranslationAsync_MachineApiDown()
     {
         // Set up test environment

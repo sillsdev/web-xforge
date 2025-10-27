@@ -359,6 +359,54 @@ public class MachineApiController : ControllerBase
     }
 
     /// <summary>
+    /// Gets the last pre-translation build regardless of state (completed, running, queued, faulted, or canceled).
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">The last pre-translation build was found.</response>
+    /// <response code="204">There are no pre-translation builds.</response>
+    /// <response code="403">You do not have permission to get the builds for this project.</response>
+    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
+    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
+    [HttpGet(MachineApi.GetLastPreTranslationBuild)]
+    public async Task<ActionResult<ServalBuildDto?>> GetLastPreTranslationBuildAsync(
+        string sfProjectId,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
+            ServalBuildDto? build = await _machineApiService.GetLastPreTranslationBuildAsync(
+                _userAccessor.UserId,
+                sfProjectId,
+                isServalAdmin,
+                cancellationToken
+            );
+
+            if (build is null)
+            {
+                return NoContent();
+            }
+
+            return Ok(build);
+        }
+        catch (BrokenCircuitException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+    }
+
+    /// <summary>
     /// Gets all the pre-translations for the specified chapter.
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>

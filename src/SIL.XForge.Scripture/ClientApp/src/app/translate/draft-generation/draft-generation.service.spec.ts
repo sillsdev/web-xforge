@@ -182,6 +182,50 @@ describe('DraftGenerationService', () => {
     }));
   });
 
+  describe('getLastPreTranslationBuild', () => {
+    it('should get last pre-translation build and return an observable of BuildDto', fakeAsync(() => {
+      // SUT
+      service.getLastPreTranslationBuild(projectId).subscribe(result => {
+        expect(result).toEqual(buildDto);
+      });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/getLastPreTranslationBuild`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(buildDto);
+      tick();
+    }));
+
+    it('should return undefined when no build has ever run', fakeAsync(() => {
+      // SUT
+      service.getLastPreTranslationBuild(projectId).subscribe(result => {
+        expect(result).toBeUndefined();
+      });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/getLastPreTranslationBuild`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(null, { status: HttpStatusCode.NoContent, statusText: 'No Content' });
+      tick();
+    }));
+
+    it('should return undefined if offline', fakeAsync(() => {
+      testOnlineStatusService.setIsOnline(false);
+
+      // SUT
+      service.getLastPreTranslationBuild(projectId).subscribe(result => {
+        expect(result).toBeUndefined();
+      });
+      tick();
+    }));
+  });
+
   describe('getBuildHistory', () => {
     it('should get project builds and return an observable array of BuildDto', fakeAsync(() => {
       // SUT
