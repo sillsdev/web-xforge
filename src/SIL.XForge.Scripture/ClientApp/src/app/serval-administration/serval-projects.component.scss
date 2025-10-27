@@ -1,3 +1,5 @@
+@use 'src/xforge-common/media-breakpoints/breakpoints' as *;
+
 mat-form-field {
   margin-top: 10px;
 }
@@ -11,4 +13,96 @@ mat-form-field {
   align-items: center;
   gap: 4px;
   white-space: nowrap;
+}
+
+// On wider viewports, show table, hide cards
+.table-view {
+  display: block;
+}
+
+.card-view {
+  display: none;
+}
+
+// On narrower viewports, show cards, hide table
+@include media-breakpoint('<', lg) {
+  .table-view {
+    display: none;
+  }
+
+  .card-view {
+    display: block;
+  }
+}
+
+// Card layout styles for narrower viewport
+.project-card {
+  margin-bottom: 16px;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--sf-serval-project-card-background);
+  position: relative;
+
+  &.pre-translate-disabled {
+    background-color: var(--sf-serval-project-card-background-disabled);
+  }
+
+  .card-header {
+    padding: 16px 16px 8px 16px;
+
+    .card-project-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--sf-draft-jobs-project-link-color);
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .card-body {
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .card-pre-translate {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+
+      .pre-translate-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    .card-section {
+      line-height: 1.6;
+
+      strong {
+        margin-right: 4px;
+      }
+
+      .source-link {
+        color: var(--sf-draft-jobs-project-link-color);
+        text-decoration: none;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+
+  .card-footer {
+    padding: 12px 16px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+  }
 }

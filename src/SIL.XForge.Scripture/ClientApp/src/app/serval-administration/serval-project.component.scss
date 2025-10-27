@@ -1,3 +1,5 @@
+@use 'src/xforge-common/media-breakpoints/breakpoints' as *;
+
 .admin-tool {
   display: flex;
   flex-direction: column;
@@ -17,4 +19,23 @@
 .zip-progress {
   display: flex;
   align-items: center;
+}
+
+.download-button {
+  // Hide button text on narrow viewports, showing icon only
+  @include media-breakpoint('<', md) {
+    .button-text {
+      display: none;
+    }
+
+    // Remove icon margins when text is hidden to center it properly
+    mat-icon {
+      margin-right: 0;
+      margin-left: 0;
+    }
+
+    // Make button more compact with just icon
+    min-width: 40px;
+    padding: 0px;
+  }
 }

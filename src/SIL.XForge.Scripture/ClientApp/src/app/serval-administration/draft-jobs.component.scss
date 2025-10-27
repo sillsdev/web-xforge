@@ -1,12 +1,134 @@
 @use 'src/variables' as sfColors;
+@use 'src/xforge-common/media-breakpoints/breakpoints' as *;
 
 .table-wrapper {
   overflow-x: auto;
   display: block;
 }
 
+// Show table on wider viewport, hide cards
+.table-view {
+  display: block;
+}
+
+.card-view {
+  display: none;
+}
+
+// Show cards on narrower viewport, hide table
+@include media-breakpoint('<', xl) {
+  .table-view {
+    display: none;
+  }
+
+  .card-view {
+    display: block;
+  }
+}
+
 #draft-jobs-table tr:nth-child(odd) {
   background-color: var(--sf-draft-jobs-table-row-background);
+}
+
+// Card layout styles for narrower viewport
+.draft-job-card {
+  margin-bottom: 16px;
+  border: none;
+  border-radius: 8px;
+  position: relative;
+
+  &.status-running {
+    background-color: rgba(255, 152, 0, 0.16);
+  }
+
+  &.status-success {
+    background-color: rgba(76, 175, 80, 0.16);
+  }
+
+  &.status-failed {
+    background-color: rgba(244, 67, 54, 0.16);
+  }
+
+  &.status-cancelled {
+    background-color: rgba(158, 158, 158, 0.16);
+  }
+
+  &.status-incomplete {
+    background-color: rgba(158, 158, 158, 0.16);
+  }
+
+  .card-header {
+    padding: 16px 16px 8px 16px;
+
+    .card-project-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--sf-draft-jobs-project-link-color);
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .card-body {
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .card-author {
+      font-weight: 500;
+    }
+
+    .card-build-id {
+      color: var(--mdc-theme-text-secondary-on-background);
+    }
+
+    .card-duration-time {
+      color: var(--mdc-theme-text-secondary-on-background);
+    }
+
+    .card-books-section {
+      margin-top: 4px;
+      line-height: 1.6;
+
+      strong {
+        margin-right: 4px;
+      }
+
+      .card-books-line {
+        display: inline;
+      }
+    }
+  }
+
+  .card-footer {
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .card-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+    }
+
+    .card-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .details-button {
+        min-width: auto;
+        height: 36px;
+        line-height: 36px;
+      }
+    }
+  }
 }
 
 app-owner {
@@ -101,6 +223,10 @@ app-owner {
   text-decoration: underline;
   text-decoration-style: dotted;
   color: var(--sf-draft-jobs-book-count-color);
+}
+
+app-notice {
+  margin-bottom: 24px;
 }
 
 .filter-notice-content {

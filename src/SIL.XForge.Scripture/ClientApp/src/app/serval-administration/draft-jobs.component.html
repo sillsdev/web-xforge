@@ -24,7 +24,8 @@
       </app-notice>
     }
 
-    <div class="table-wrapper">
+    <!-- Show table when viewed on a larger screen. -->
+    <div class="table-wrapper table-view">
       <table mat-table id="draft-jobs-table" [dataSource]="rows">
         <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
         <tr mat-row *matRowDef="let row; columns: columnsToDisplay"></tr>
@@ -156,6 +157,131 @@
           </td>
         </ng-container>
       </table>
+    </div>
+
+    <!-- Narrower view with cards. -->
+    <div class="card-list card-view">
+      @for (row of rows; track row.job.buildId) {
+        <div
+          class="draft-job-card"
+          [class.status-running]="row.job.status === 'running'"
+          [class.status-success]="row.job.status === 'success'"
+          [class.status-failed]="row.job.status === 'failed'"
+          [class.status-cancelled]="row.job.status === 'cancelled'"
+          [class.status-incomplete]="row.job.status === 'incomplete'"
+        >
+          <div class="card-header">
+            @if (!row.projectDeleted) {
+              <a [routerLink]="['/serval-administration', row.projectId]" class="card-project-name">{{
+                row.projectName || "Unknown"
+              }}</a>
+            } @else {
+              <div class="deleted-project">
+                <mat-icon class="deleted-project-icon" matTooltip="Project has been deleted">delete</mat-icon>
+                <span>{{ row.projectId }}</span>
+              </div>
+            }
+          </div>
+          <div class="card-body">
+            <div class="card-author">
+              <app-owner
+                [ownerRef]="row.userId"
+                [includeAvatar]="true"
+                [dateTime]="row.startTimeStamp"
+                [showTimeZone]="true"
+              ></app-owner>
+            </div>
+            <div class="card-build-id">Serval build id {{ row.job.buildId }}</div>
+            <div class="card-duration-time">
+              @if (row.job.status === "running") {
+                <span class="running-text">In progress (from {{ row.startTimeStamp }})</span>
+              } @else if (row.durationTooltip) {
+                <span [matTooltip]="row.durationTooltip"
+                  >{{ row.duration || "Not available" }} (from {{ row.startTimeStamp }})</span
+                >
+              } @else {
+                {{ row.duration || "Not available" }} (from {{ row.startTimeStamp }})
+              }
+            </div>
+            <div class="card-books-section">
+              <strong>Training:</strong>
+              @for (projectBook of row.trainingBooks; track projectBook.projectId) {
+                <span class="card-books-line">
+                  <a [routerLink]="['/serval-administration', projectBook.projectId]" class="project-link">{{
+                    getProjectShortName(projectBook.projectId)
+                  }}</a
+                  >:
+                  @if (projectBook.books.length <= 2) {
+                    {{ projectBook.books.join(", ") }}
+                  } @else {
+                    <span [matTooltip]="projectBook.books.join(', ')" class="book-count"
+                      >{{ projectBook.books.length }} books</span
+                    >
+                  }
+                </span>
+              } @empty {
+                None
+              }
+              <br />
+              <strong>Translation:</strong>
+              @for (projectBook of row.translationBooks; track projectBook.projectId) {
+                <span class="card-books-line">
+                  <a [routerLink]="['/serval-administration', projectBook.projectId]" class="project-link">{{
+                    getProjectShortName(projectBook.projectId)
+                  }}</a
+                  >:
+                  @if (projectBook.books.length <= 2) {
+                    {{ projectBook.books.join(", ") }}
+                  } @else {
+                    <span [matTooltip]="projectBook.books.join(', ')" class="book-count"
+                      >{{ projectBook.books.length }} books</span
+                    >
+                  }
+                </span>
+              } @empty {
+                None
+              }
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="card-status">
+              <mat-icon
+                class="status-icon"
+                [class.successful]="row.job.status === 'success'"
+                [class.failed]="row.job.status === 'failed'"
+                [class.running]="row.job.status === 'running'"
+                [class.cancelled]="row.job.status === 'cancelled'"
+                [class.incomplete]="row.job.status === 'incomplete'"
+              >
+                @if (row.job.status === "success") {
+                  check_circle
+                } @else if (row.job.status === "failed") {
+                  error
+                } @else if (row.job.status === "running") {
+                  schedule
+                } @else if (row.job.status === "cancelled") {
+                  cancel
+                } @else if (row.job.status === "incomplete") {
+                  warning
+                }
+              </mat-icon>
+              <span>{{ row.status }}</span>
+            </div>
+            <div class="card-actions">
+              <button
+                mat-stroked-button
+                (click)="openJobDetailsDialog(row.job)"
+                color="primary"
+                class="details-button"
+                [class.disabled]="!row.job.buildId"
+                matTooltip="View complete job details including build information and events"
+              >
+                <mat-icon class="mirror-rtl">list</mat-icon> Details
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     </div>
 
     @if (rows.length === 0) {

@@ -19,7 +19,6 @@ import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { BuildDto } from '../machine-api/build-dto';
 import { JsonViewerComponent } from '../shared/json-viewer/json-viewer.component';
-import { MobileNotSupportedComponent } from '../shared/mobile-not-supported/mobile-not-supported.component';
 import { NoticeComponent } from '../shared/notice/notice.component';
 import { SharedModule } from '../shared/shared.module';
 import { projectLabel } from '../shared/utils';
@@ -56,7 +55,6 @@ function projectType(project: TranslateSource | SFProjectProfile): string {
     SharedModule,
     UICommonModule,
     DraftInformationComponent,
-    MobileNotSupportedComponent,
     WriteStatusComponent,
     JsonViewerComponent
   ]
