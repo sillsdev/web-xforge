@@ -6,69 +6,130 @@
 </div>
 @if (!isLoading) {
   @if (length > 0) {
-    <table mat-table id="projects-table" [dataSource]="rows">
-      <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef>Name</th>
-        <td mat-cell *matCellDef="let row">
-          <a [appRouterLink]="['/serval-administration', row.id]">{{ row.name }}</a>
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="preTranslate">
-        <th mat-header-cell *matHeaderCellDef>Pre-translation</th>
-        <td mat-cell *matCellDef="let row">
-          @if (row.preTranslate) {
-            <strong>Enabled</strong>
-          } @else {
-            <span>Disabled</span>
-          }
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="source">
-        <th mat-header-cell *matHeaderCellDef>Translate source</th>
-        <td mat-cell *matCellDef="let row">
-          @if (row.sourceId != null) {
-            <a [appRouterLink]="['/serval-administration', row.sourceId]">{{ row.source }}</a>
-          } @else {
-            <span>{{ row.source }}</span>
-          }
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="draftingSource">
-        <th mat-header-cell *matHeaderCellDef>Draft source</th>
-        <td mat-cell *matCellDef="let row">
-          @for (source of row.draftingSources; track source.id) {
-            <p>
-              <a [appRouterLink]="['/serval-administration', source.id]">{{ source.label }}</a>
-            </p>
-          } @empty {
-            <span>None</span>
-          }
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="trainingSource">
-        <th mat-header-cell *matHeaderCellDef>Reference projects</th>
-        <td mat-cell *matCellDef="let row">
-          @for (source of row.trainingSources; track source.id) {
-            <p>
-              <a [appRouterLink]="['/serval-administration', source.id]">{{ source.label }}</a>
-            </p>
-          } @empty {
-            <span>None</span>
-          }
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef>Actions</th>
-        <td mat-cell *matCellDef="let row">
-          <button mat-stroked-button (click)="viewDraftJobs(row.id)" class="draft-jobs-button">
-            <mat-icon>list</mat-icon>
-            Draft Jobs
-          </button>
-        </td>
-      </ng-container>
-      <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
-      <tr mat-row *matRowDef="let row; columns: columnsToDisplay"></tr>
-    </table>
+    <!-- Show table for wide viewport. -->
+    <div class="table-view">
+      <table mat-table id="projects-table" [dataSource]="rows">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <td mat-cell *matCellDef="let row">
+            <a [appRouterLink]="['/serval-administration', row.id]">{{ row.name }}</a>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="preTranslate">
+          <th mat-header-cell *matHeaderCellDef>Pre-translation</th>
+          <td mat-cell *matCellDef="let row">
+            @if (row.preTranslate) {
+              <strong>Enabled</strong>
+            } @else {
+              <span>Disabled</span>
+            }
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="source">
+          <th mat-header-cell *matHeaderCellDef>Translate source</th>
+          <td mat-cell *matCellDef="let row">
+            @if (row.sourceId != null) {
+              <a [appRouterLink]="['/serval-administration', row.sourceId]">{{ row.source }}</a>
+            } @else {
+              <span>{{ row.source }}</span>
+            }
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="draftingSource">
+          <th mat-header-cell *matHeaderCellDef>Draft source</th>
+          <td mat-cell *matCellDef="let row">
+            @for (source of row.draftingSources; track source.id) {
+              <p>
+                <a [appRouterLink]="['/serval-administration', source.id]">{{ source.label }}</a>
+              </p>
+            } @empty {
+              <span>None</span>
+            }
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="trainingSource">
+          <th mat-header-cell *matHeaderCellDef>Reference projects</th>
+          <td mat-cell *matCellDef="let row">
+            @for (source of row.trainingSources; track source.id) {
+              <p>
+                <a [appRouterLink]="['/serval-administration', source.id]">{{ source.label }}</a>
+              </p>
+            } @empty {
+              <span>None</span>
+            }
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let row">
+            <button mat-stroked-button (click)="viewDraftJobs(row.id)" class="draft-jobs-button">
+              <mat-icon>list</mat-icon>
+              Draft Jobs
+            </button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
+        <tr mat-row *matRowDef="let row; columns: columnsToDisplay"></tr>
+      </table>
+    </div>
+
+    <!-- Show cards in narrow viewport. -->
+    <div class="card-list card-view">
+      @for (row of rows; track row.id) {
+        <div class="project-card">
+          <div class="card-header">
+            <a [appRouterLink]="['/serval-administration', row.id]" class="card-project-name">{{ row.name }}</a>
+          </div>
+          <div class="card-body">
+            <div class="card-pre-translate">
+              <span>Pre-translation</span>
+              @if (row.preTranslate) {
+                <mat-icon class="pre-translate-icon enabled">check</mat-icon>
+              } @else {
+                <mat-icon class="pre-translate-icon disabled">close</mat-icon>
+              }
+            </div>
+            <div class="card-section">
+              <strong>Translate source:</strong>
+              @if (row.sourceId != null) {
+                <a [appRouterLink]="['/serval-administration', row.sourceId]" class="source-link">{{ row.source }}</a>
+              } @else {
+                <span>{{ row.source }}</span>
+              }
+            </div>
+            <div class="card-section">
+              <strong>Draft source:</strong>
+              @for (source of row.draftingSources; track source.id) {
+                <a [appRouterLink]="['/serval-administration', source.id]" class="source-link">{{ source.label }}</a>
+                @if (!$last) {
+                  <span>, </span>
+                }
+              } @empty {
+                <span>None</span>
+              }
+            </div>
+            <div class="card-section">
+              <strong>Reference projects:</strong>
+              @for (source of row.trainingSources; track source.id) {
+                <a [appRouterLink]="['/serval-administration', source.id]" class="source-link">{{ source.label }}</a>
+                @if (!$last) {
+                  <span>, </span>
+                }
+              } @empty {
+                <span>None</span>
+              }
+            </div>
+          </div>
+          <div class="card-footer">
+            <button mat-stroked-button (click)="viewDraftJobs(row.id)" class="draft-jobs-button">
+              <mat-icon>list</mat-icon>
+              Draft Jobs
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
     <mat-paginator
       [pageIndex]="pageIndex"
       [length]="length"

@@ -1,3 +1,5 @@
+@use 'src/xforge-common/media-breakpoints/breakpoints' as *;
+
 :host {
   display: block;
   border-radius: 8px;
@@ -7,6 +9,15 @@
   font-size: 14px;
   line-height: 1.6;
   white-space: nowrap;
+
+  // Allow wrapping on narrow screen
+  @include media-breakpoint('<', sm) {
+    white-space: pre-wrap;
+    word-break: break-all;
+    overflow-x: hidden;
+    font-size: 12px;
+    padding: 12px;
+  }
 
   // JSON syntax highlighting using CSS custom properties
   .json-key {

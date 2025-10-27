@@ -1,5 +1,4 @@
 @use '@angular/material' as mat;
-
 @mixin color($theme) {
   $is-dark: mat.get-theme-type($theme) == dark;
 
@@ -7,6 +6,7 @@
   --sf-draft-jobs-project-link-color: #{mat.get-theme-color($theme, primary, if($is-dark, 70, 40))};
   --sf-draft-jobs-book-count-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 70, 40))};
   --sf-draft-jobs-disabled-link-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 50, 50))};
+  --sf-serval-project-card-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 30, 90))};
 }
 
 @mixin theme($theme) {
