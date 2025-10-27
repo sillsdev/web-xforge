@@ -178,7 +178,12 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
       },
       complete: () => {
         this.showCountdown = false;
-        if (!this.destroyed) this.startRecording(mediaStream);
+        if (this.destroyed) {
+          // If the dialog was closed during countdown, stop the media stream
+          mediaStream.getAudioTracks().forEach(track => track.stop());
+        } else {
+          this.startRecording(mediaStream);
+        }
       }
     });
   }
