@@ -86,6 +86,11 @@ describe('EditorDraftComponent', () => {
     buildProgress$.next({ state: BuildStates.Completed } as BuildDto);
     when(mockActivatedProjectService.projectId$).thenReturn(of('targetProjectId'));
     when(mockDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of(undefined));
+    const defaultProjectDoc: SFProjectProfileDoc = { data: createTestProjectProfile() } as SFProjectProfileDoc;
+    when(mockActivatedProjectService.projectDoc$).thenReturn(of(defaultProjectDoc));
+    when(mockDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(
+      of({ state: BuildStates.Completed } as BuildDto)
+    );
 
     fixture = TestBed.createComponent(EditorDraftComponent);
     component = fixture.componentInstance;
@@ -582,8 +587,12 @@ describe('EditorDraftComponent', () => {
         })
       } as SFProjectProfileDoc;
       when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
+      when(mockActivatedProjectService.projectDoc$).thenReturn(of(testProjectDoc));
       when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
 
+      when(mockDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(
+        of({ state: BuildStates.Completed } as BuildDto)
+      );
       fixture.detectChanges();
       tick(EDITOR_READY_TIMEOUT);
 
@@ -604,8 +613,12 @@ describe('EditorDraftComponent', () => {
         })
       } as SFProjectProfileDoc;
       when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
+      when(mockActivatedProjectService.projectDoc$).thenReturn(of(testProjectDoc));
       when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
 
+      when(mockDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(
+        of({ state: BuildStates.Completed } as BuildDto)
+      );
       fixture.detectChanges();
       tick(EDITOR_READY_TIMEOUT);
       expect(component.canConfigureFormatting).toBe(true);
@@ -632,11 +645,43 @@ describe('EditorDraftComponent', () => {
         })
       } as SFProjectProfileDoc;
       when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(false));
+      when(mockActivatedProjectService.projectDoc$).thenReturn(of(testProjectDoc));
+      when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+
+      when(mockDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(
+        of({ state: BuildStates.Completed } as BuildDto)
+      );
+      fixture.detectChanges();
+      tick(EDITOR_READY_TIMEOUT);
+      tick();
+      expect(component.isSelectedDraftLatest).toBe(true);
+      expect(component.canConfigureFormatting).toBe(false);
+      flush();
+    }));
+
+    it('should be false when latest build is canceled even if draft exists and selected revision is latest', fakeAsync(() => {
+      const testProjectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          texts: [
+            {
+              bookNum: 1,
+              chapters: [{ number: 1, permissions: { user01: SFProjectRole.ParatextAdministrator }, hasDraft: true }]
+            }
+          ]
+        })
+      } as SFProjectProfileDoc;
+      when(mockDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(
+        of({ state: BuildStates.Canceled } as BuildDto)
+      );
+      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
+      when(mockActivatedProjectService.projectDoc$).thenReturn(of(testProjectDoc));
       when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
 
       fixture.detectChanges();
       tick(EDITOR_READY_TIMEOUT);
+
       expect(component.isSelectedDraftLatest).toBe(true);
+      expect(component.doesLatestCompletedHaveDraft).toBe(true);
       expect(component.canConfigureFormatting).toBe(false);
       flush();
     }));

@@ -30,6 +30,7 @@ import {
   startWith,
   Subject,
   switchMap,
+  take,
   tap,
   throttleTime
 } from 'rxjs';
@@ -47,6 +48,7 @@ import { isString } from '../../../../type-utils';
 import { TextDocId } from '../../../core/models/text-doc';
 import { Revision } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { BuildDto } from '../../../machine-api/build-dto';
 import { BuildStates } from '../../../machine-api/build-states';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { TextComponent } from '../../../shared/text/text.component';
@@ -121,6 +123,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
   private draftDelta?: Delta;
   private targetDelta?: Delta;
+  private _latestPreTranslationBuild: BuildDto | undefined;
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
@@ -151,14 +154,18 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   }
 
   get canConfigureFormatting(): boolean {
-    return this.doesLatestHaveDraft && this.isSelectedDraftLatest;
+    return this.doesLatestCompletedHaveDraft && this.isSelectedDraftLatest && this.isLatestBuildCompleted;
   }
 
-  get doesLatestHaveDraft(): boolean {
+  get doesLatestCompletedHaveDraft(): boolean {
     return (
       this.targetProject?.texts.find(t => t.bookNum === this.bookNum)?.chapters.find(c => c.number === this.chapter)
         ?.hasDraft ?? false
     );
+  }
+
+  get isLatestBuildCompleted(): boolean {
+    return this._latestPreTranslationBuild?.state === BuildStates.Completed;
   }
 
   get isSelectedDraftLatest(): boolean {
@@ -247,9 +254,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
           // Respond to project changes
           return this.activatedProjectService.changes$.pipe(
             filterNullish(),
-            tap(projectDoc => {
-              this.targetProject = projectDoc.data;
-            }),
             distinctUntilChanged(),
             map(() => initialTimestamp)
           );
@@ -306,6 +310,37 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         }
 
         this.isDraftReady = this.draftCheckState === 'draft-present' || this.draftCheckState === 'draft-legacy';
+      });
+
+    combineLatest([
+      this.onlineStatusService.onlineStatus$,
+      this.activatedProjectService.projectDoc$,
+      this.draftGenerationService.pollBuildProgress(this.textDocId!.projectId),
+      this.draftText.editorCreated as EventEmitter<any>,
+      this.inputChanged$.pipe(startWith(undefined))
+    ])
+      .pipe(
+        quietTakeUntilDestroyed(this.destroyRef),
+        filter(([_, projectDoc]) => projectDoc !== undefined),
+        tap(([_, projectDoc]) => {
+          this.targetProject = projectDoc!.data;
+        }),
+        filter(([isOnline, _]) => {
+          return isOnline && this.doesLatestCompletedHaveDraft;
+        })
+      )
+      .subscribe(() => this.refreshLastPreTranslationBuild());
+  }
+
+  private refreshLastPreTranslationBuild(): void {
+    if (this.projectId == null) {
+      return;
+    }
+    this.draftGenerationService
+      .getLastPreTranslationBuild(this.projectId)
+      .pipe(quietTakeUntilDestroyed(this.destroyRef), take(1))
+      .subscribe((build: BuildDto | undefined) => {
+        this._latestPreTranslationBuild = build;
       });
   }
 
