@@ -115,7 +115,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     this.onlineStatusService.onlineStatus$
   ]).pipe(map(([isLoading, isOnline]) => isLoading || !isOnline));
 
-  showDraftOptionsButton$: Observable<boolean> = this.activatedProjectService.projectId$.pipe(
+  isFormattingSupportedForLatest$: Observable<boolean> = this.activatedProjectService.projectId$.pipe(
     filterNullish(),
     switchMap(projectId => this.draftGenerationService.getLastCompletedBuild(projectId)),
     map(build => this.draftOptionsService.areFormattingOptionsSupportedForBuild(build))

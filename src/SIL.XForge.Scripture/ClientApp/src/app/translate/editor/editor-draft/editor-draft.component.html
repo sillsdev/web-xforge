@@ -43,12 +43,9 @@
           </mat-form-field>
         }
         <div class="apply-draft-button-container">
-          @if (showDraftOptionsButton$ | async) {
-            <span
-              [matTooltip]="t(canConfigureFormatting ? 'format_draft_can' : 'format_draft_cannot')"
-              [style.cursor]="canConfigureFormatting ? 'pointer' : 'not-allowed'"
-            >
-              <button mat-button (click)="navigateToFormatting()" [disabled]="!canConfigureFormatting">
+          @if ((isFormattingSupportedForLatest$ | async) && canConfigureFormatting) {
+            <span [matTooltip]="t('format_draft_tooltip')">
+              <button mat-button (click)="navigateToFormatting()">
                 <mat-icon>build</mat-icon>
                 <transloco key="editor_draft_tab.format_draft"></transloco>
               </button>
