@@ -58,7 +58,7 @@
       </form>
 
       <div class="actions">
-        <button mat-button class="back" (click)="cancelClicked()"><mat-icon>close</mat-icon>{{ t("cancel") }}</button>
+        <button mat-button class="back" (click)="close()"><mat-icon>close</mat-icon>{{ t("cancel") }}</button>
         <div class="save-container">
           <div class="progress" [class.saving]="saving">
             <mat-spinner diameter="24"></mat-spinner>

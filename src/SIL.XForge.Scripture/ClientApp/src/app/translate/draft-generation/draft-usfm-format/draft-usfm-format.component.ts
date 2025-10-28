@@ -197,11 +197,6 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     this.reloadText();
   }
 
-  async cancelClicked(): Promise<void> {
-    if (!(await this.confirmLeave())) return;
-    this.close();
-  }
-
   close(): void {
     this.location.back();
   }
