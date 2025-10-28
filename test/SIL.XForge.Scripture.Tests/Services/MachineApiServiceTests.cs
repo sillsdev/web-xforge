@@ -224,7 +224,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.ConfigureDraft(
-            Project01,
+            Project02,
             bookNum: 39,
             numberOfChapters: 3,
             bookExists: true,
@@ -232,21 +232,20 @@ public class MachineApiServiceTests
             canWriteBook: true,
             writeChapters: 3
         );
-        env.ProjectService.UpdatePermissionsAsync(
+        env.ParatextService.UpdateParatextPermissionsForNewBooksAsync(
+                Arg.Any<UserSecret>(),
                 Arg.Any<string>(),
                 Arg.Any<IDocument<SFProject>>(),
-                users: null,
-                books: Arg.Any<IReadOnlyList<int>>(),
-                CancellationToken.None
+                writeToParatext: false
             )
             .ThrowsAsync(new NotSupportedException());
 
         // SUT
         DraftApplyResult actual = await env.Service.ApplyPreTranslationToProjectAsync(
             User01,
-            Project01,
+            Project02,
             scriptureRange: "MAL",
-            targetProjectId: Project02,
+            targetProjectId: Project01,
             DateTime.UtcNow,
             CancellationToken.None
         );
@@ -354,19 +353,16 @@ public class MachineApiServiceTests
         await env.UserSecrets.DeleteAllAsync(_ => true);
 
         // SUT
-        DraftApplyResult actual = await env.Service.ApplyPreTranslationToProjectAsync(
-            User01,
-            Project01,
-            scriptureRange: "GEN",
-            Project02,
-            DateTime.UtcNow,
-            CancellationToken.None
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.ApplyPreTranslationToProjectAsync(
+                User01,
+                Project01,
+                scriptureRange: "GEN",
+                Project02,
+                DateTime.UtcNow,
+                CancellationToken.None
+            )
         );
-
-        env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception?.GetType() == typeof(DataNotFoundException));
-        env.ExceptionHandler.Received().ReportException(Arg.Is<DataNotFoundException>(e => e.Message.Contains("user")));
-        Assert.That(actual.Log, Is.Not.Empty);
-        Assert.That(actual.ChangesSaved, Is.False);
     }
 
     [Test]
@@ -4930,6 +4926,36 @@ public class MachineApiServiceTests
                         }
                     }
                 });
+
+            // Update the permissions for the user applying the draft
+            ParatextService
+                .When(x =>
+                    x.UpdateParatextPermissionsForNewBooksAsync(
+                        Arg.Any<UserSecret>(),
+                        Arg.Any<string>(),
+                        Arg.Any<IDocument<SFProject>>(),
+                        writeToParatext: false
+                    )
+                )
+                .Do(callInfo =>
+                {
+                    UserSecret userSecret = callInfo.ArgAt<UserSecret>(0);
+                    var projectDoc = callInfo.ArgAt<IDocument<SFProject>>(2);
+                    foreach (var text in projectDoc.Data.Texts)
+                    {
+                        text.Permissions.TryAdd(
+                            userSecret.Id,
+                            canWriteBook ? TextInfoPermission.Write : TextInfoPermission.Read
+                        );
+                        foreach (var chapter in text.Chapters)
+                        {
+                            chapter.Permissions.TryAdd(
+                                userSecret.Id,
+                                chapter.Number <= writeChapters ? TextInfoPermission.Write : TextInfoPermission.Read
+                            );
+                        }
+                    }
+                });
         }
 
         public async Task VerifyDraftAsync(
@@ -4941,15 +4967,30 @@ public class MachineApiServiceTests
             int writeChapters
         )
         {
-            await ProjectService
-                .Received()
-                .UpdatePermissionsAsync(
-                    User01,
-                    Arg.Any<IDocument<SFProject>>(),
-                    users: null,
-                    books: Arg.Any<IReadOnlyList<int>>(),
-                    CancellationToken.None
-                );
+            if (targetProjectId == Project02)
+            {
+                await ParatextService
+                    .Received()
+                    .UpdateParatextPermissionsForNewBooksAsync(
+                        Arg.Any<UserSecret>(),
+                        Arg.Any<string>(),
+                        Arg.Any<IDocument<SFProject>>(),
+                        writeToParatext: false
+                    );
+            }
+            else
+            {
+                await ProjectService
+                    .Received()
+                    .UpdatePermissionsAsync(
+                        User01,
+                        Arg.Any<IDocument<SFProject>>(),
+                        users: null,
+                        books: Arg.Any<IReadOnlyList<int>>(),
+                        CancellationToken.None
+                    );
+            }
+
             ExceptionHandler.DidNotReceive().ReportException(Arg.Any<Exception>());
 
             await Assert.ThatAsync(

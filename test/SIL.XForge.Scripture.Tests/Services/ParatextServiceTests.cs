@@ -6539,6 +6539,201 @@ public class ParatextServiceTests
         CultureInfo.CurrentCulture = previousCulture;
     }
 
+    [Test]
+    public async Task UpdateParatextPermissionsForNewBooksAsync_AllBooksPresentOnDisk()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        // Set up Paratext project
+        string paratextId = env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
+
+        // Set up Scripture Forge project
+        SFProject project = env.NewSFProject(env.Project01);
+        // Ruth is configured in the MockScrText with 1 chapter
+        project.Texts = [new TextInfo { BookNum = 8, Chapters = [new Chapter { Number = 1 }] }];
+        env.AddProjectRepository(project);
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(project.Id);
+        await projectDoc.FetchAsync();
+
+        // SUT
+        SyncMetricInfo actual = await env.Service.UpdateParatextPermissionsForNewBooksAsync(
+            userSecret,
+            paratextId,
+            projectDoc,
+            writeToParatext: false
+        );
+        SyncMetricInfo expected = new SyncMetricInfo();
+        Assert.AreEqual(expected, actual);
+    }
+
+    [Test]
+    public async Task UpdateParatextPermissionsForNewBooksAsync_MissingScrText()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        // Set up Paratext project
+        string paratextId = env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
+        env.MockScrTextCollection.FindById(Arg.Any<string>(), paratextId).Returns(null as ScrText);
+
+        // Set up Scripture Forge project
+        SFProject project = env.NewSFProject(env.Project01);
+        env.AddProjectRepository(project);
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(project.Id);
+        await projectDoc.FetchAsync();
+
+        // SUT
+        SyncMetricInfo actual = await env.Service.UpdateParatextPermissionsForNewBooksAsync(
+            userSecret,
+            paratextId,
+            projectDoc,
+            writeToParatext: false
+        );
+        SyncMetricInfo expected = new SyncMetricInfo();
+        Assert.AreEqual(expected, actual);
+    }
+
+    [Test]
+    public async Task UpdateParatextPermissionsForNewBooksAsync_ProjectNotEditable()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        // Set up Paratext project
+        string paratextId = env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
+
+        // Set up Scripture Forge project
+        SFProject project = env.NewSFProject(env.Project01);
+        project.Editable = false;
+        env.AddProjectRepository(project);
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(project.Id);
+        await projectDoc.FetchAsync();
+
+        // SUT
+        SyncMetricInfo actual = await env.Service.UpdateParatextPermissionsForNewBooksAsync(
+            userSecret,
+            paratextId,
+            projectDoc,
+            writeToParatext: false
+        );
+        SyncMetricInfo expected = new SyncMetricInfo();
+        Assert.AreEqual(expected, actual);
+    }
+
+    [Test]
+    public async Task UpdateParatextPermissionsForNewBooksAsync_ProjectHasNoBooks()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        // Set up Paratext project
+        string paratextId = env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
+
+        // Set up Scripture Forge project
+        SFProject project = env.NewSFProject(env.Project01);
+        project.Texts = [];
+        env.AddProjectRepository(project);
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(project.Id);
+        await projectDoc.FetchAsync();
+
+        // SUT
+        SyncMetricInfo actual = await env.Service.UpdateParatextPermissionsForNewBooksAsync(
+            userSecret,
+            paratextId,
+            projectDoc,
+            writeToParatext: false
+        );
+        SyncMetricInfo expected = new SyncMetricInfo();
+        Assert.AreEqual(expected, actual);
+    }
+
+    [Test]
+    public async Task UpdateParatextPermissionsForNewBooksAsync_UpdatesMongo()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        // Set up Paratext project
+        string paratextId = env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
+
+        // Set up Scripture Forge project
+        SFProject project = env.NewSFProject(env.Project01);
+        project.ParatextUsers =
+        [
+            new ParatextUserProfile { SFUserId = env.User01, Username = env.ParatextProjectUser01.Username },
+            new ParatextUserProfile { OpaqueUserId = "User With Missing Data" },
+        ];
+        project.Texts = [new TextInfo { BookNum = 40, Chapters = [new Chapter { Number = 1 }] }];
+        env.AddProjectRepository(project);
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(project.Id);
+        await projectDoc.FetchAsync();
+
+        // SUT
+        SyncMetricInfo actual = await env.Service.UpdateParatextPermissionsForNewBooksAsync(
+            userSecret,
+            paratextId,
+            projectDoc,
+            writeToParatext: false
+        );
+        SyncMetricInfo expected = new SyncMetricInfo { Updated = 1 };
+        Assert.AreEqual(expected, actual);
+        Assert.AreEqual(TextInfoPermission.Write, projectDoc.Data.Texts[0].Permissions[env.User01]);
+        Assert.AreEqual(TextInfoPermission.Write, projectDoc.Data.Texts[0].Chapters[0].Permissions[env.User01]);
+    }
+
+    [Test]
+    public async Task UpdateParatextPermissionsForNewBooksAsync_UpdatesParatext()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        // Set up Paratext project
+        string paratextId = env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
+        env.ProjectScrText.Permissions.SetPermission(null, 40, PermissionSet.Manual, false);
+
+        // Set up Scripture Forge project
+        SFProject project = env.NewSFProject(env.Project01);
+        project.ParatextUsers =
+        [
+            new ParatextUserProfile { SFUserId = env.User01, Username = env.ParatextProjectUser01.Username },
+        ];
+        project.Texts =
+        [
+            new TextInfo
+            {
+                BookNum = 40,
+                Chapters = [new Chapter { Number = 1, Permissions = { { env.User01, TextInfoPermission.Write } } }],
+                Permissions = { { env.User01, TextInfoPermission.Write } },
+            },
+        ];
+        env.AddProjectRepository(project);
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(project.Id);
+        await projectDoc.FetchAsync();
+
+        // SUT
+        SyncMetricInfo actual = await env.Service.UpdateParatextPermissionsForNewBooksAsync(
+            userSecret,
+            paratextId,
+            projectDoc,
+            writeToParatext: true
+        );
+        SyncMetricInfo expected = new SyncMetricInfo { Updated = 1 };
+        Assert.AreEqual(expected, actual);
+    }
+
     private class TestEnvironment : IDisposable
     {
         public readonly string ParatextUserId01 = "paratext01";
@@ -7440,6 +7635,7 @@ public class ParatextServiceTests
             ProjectCommentManager = CommentManager.Get(ProjectScrText);
             MockScrTextCollection.FindById(Arg.Any<string>(), ptProjectId).Returns(ProjectScrText);
             SetupCommentTags(ProjectScrText, null);
+            ProjectScrText.Permissions.CreateFirstAdminUser();
             return ptProjectId;
         }
 

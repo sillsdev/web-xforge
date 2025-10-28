@@ -220,6 +220,12 @@ public class ParatextSyncRunner : IParatextSyncRunner
             // Update target Paratext books, notes and biblical terms, if this is not a resource
             if (!_paratextService.IsResource(targetParatextId))
             {
+                _syncMetrics.ParatextPermissions += await _paratextService.UpdateParatextPermissionsForNewBooksAsync(
+                    _userSecret,
+                    targetParatextId,
+                    _projectDoc,
+                    writeToParatext: true
+                );
                 await GetAndUpdateParatextBooksAndNotes(
                     SyncPhase.Phase2,
                     targetParatextId,
