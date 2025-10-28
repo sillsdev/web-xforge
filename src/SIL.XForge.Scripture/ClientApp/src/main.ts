@@ -1,3 +1,5 @@
+import { OverlayContainer } from '@angular/cdk/overlay';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import {
   APP_ID,
   enableProdMode,
@@ -6,11 +8,6 @@ import {
   inject,
   provideAppInitializer
 } from '@angular/core';
-
-import { ExceptionHandlingService } from 'xforge-common/exception-handling.service';
-
-import { OverlayContainer } from '@angular/cdk/overlay';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, withRouterConfig } from '@angular/router';
@@ -24,6 +21,7 @@ import {
   TranslocoMarkupModule
 } from 'ngx-transloco-markup';
 import { translocoMarkupRouterLinkRenderer } from 'ngx-transloco-markup-router-link';
+import { ExceptionHandlingService } from 'xforge-common/exception-handling.service';
 import { EmTextTranspiler } from 'xforge-common/i18n-transpilers/em-text.transpiler';
 import { InAppRootOverlayContainer } from 'xforge-common/overlay-container';
 import { ProjectService } from 'xforge-common/project.service';
