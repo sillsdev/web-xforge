@@ -49,7 +49,6 @@ function startServer() {
   local SERVER_PID="$!"
   trap "shutDownServer ${SERVER_PID}" EXIT
   output "Server started with PID ${SERVER_PID}"
-  output "Awaiting application startup before running tests"
   cd "${SCRIPT_DIR}"
   ./await-application-startup.mts
 }
