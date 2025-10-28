@@ -7,10 +7,10 @@ import { applicationConfig } from '@storybook/angular';
 import { I18nStoryDecorator, provideI18nStory } from 'xforge-common/i18n-story';
 import { I18nService } from 'xforge-common/i18n.service';
 import { APP_ROOT_ELEMENT_SELECTOR, InAppRootOverlayContainer } from 'xforge-common/overlay-container';
+import { provideUICommon } from 'xforge-common/ui-common-providers';
 import { getI18nLocales } from 'xforge-common/utils';
 import docJson from '../documentation.json';
 import { provideSFTabs } from '../src/app/shared/sf-tab-group';
-import { provideUICommon } from '../src/xforge-common/ui-common-providers';
 
 setCompodocJson(docJson);
 
