@@ -39,6 +39,8 @@ const routes: Routes = [
 @NgModule({
   imports: [
     RouterModule.forRoot(routes, {
+      // This setting was introduced to prevent canceling the "prompt on leave" dialog for pages like draft-usfm-format
+      // from mangling the browser history (SF-3577).
       canceledNavigationResolution: 'computed'
     })
   ],
