@@ -52,7 +52,7 @@
                   warning
                 }
               </mat-icon>
-              <span>{{ row.status }}</span>
+              <span class="status-label">{{ row.status }}</span>
             </div>
           </td>
         </ng-container>
@@ -134,12 +134,7 @@
         <ng-container matColumnDef="author">
           <th mat-header-cell *matHeaderCellDef>Author</th>
           <td mat-cell *matCellDef="let row">
-            <app-owner
-              [ownerRef]="row.userId"
-              [includeAvatar]="true"
-              [dateTime]="row.startTimeStamp"
-              [showTimeZone]="true"
-            ></app-owner>
+            <app-owner [ownerRef]="row.userId" [includeAvatar]="true"></app-owner>
           </td>
         </ng-container>
         <ng-container matColumnDef="buildDetails">
