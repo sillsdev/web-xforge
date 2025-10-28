@@ -31,6 +31,7 @@ import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { QuotationAnalysis } from '../../../machine-api/quotation-denormalization';
 import { ServalAdministrationService } from '../../../serval-administration/serval-administration.service';
+import { ConfirmOnLeave } from '../../../shared/project-router.guard';
 import { SharedModule } from '../../../shared/shared.module';
 import { TextComponent } from '../../../shared/text/text.component';
 import { DraftGenerationService } from '../draft-generation.service';
@@ -56,7 +57,7 @@ import { DraftHandlingService } from '../draft-handling.service';
   templateUrl: './draft-usfm-format.component.html',
   styleUrl: './draft-usfm-format.component.scss'
 })
-export class DraftUsfmFormatComponent extends DataLoadingComponent implements AfterViewInit {
+export class DraftUsfmFormatComponent extends DataLoadingComponent implements AfterViewInit, ConfirmOnLeave {
   @ViewChild(TextComponent) draftText!: TextComponent;
   bookNum: number = 1;
   booksWithDrafts: number[] = [];
@@ -228,7 +229,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     }
   }
 
-  private async confirmLeave(): Promise<boolean> {
+  async confirmLeave(): Promise<boolean> {
     if (
       this.lastSavedState?.paragraphFormat === this.currentFormat?.paragraphFormat &&
       this.lastSavedState?.quoteFormat === this.currentFormat?.quoteFormat
