@@ -246,7 +246,7 @@ describe('JsonViewerComponent', () => {
 @Component({
   selector: 'app-host',
   template: '<app-json-viewer></app-json-viewer>',
-  standalone: false
+  imports: [JsonViewerComponent]
 })
 class HostComponent {
   @ViewChild(JsonViewerComponent, { static: true }) component!: JsonViewerComponent;
@@ -257,8 +257,8 @@ class TestEnvironment {
 
   constructor(data: any) {
     TestBed.configureTestingModule({
-      declarations: [HostComponent],
-      imports: [JsonViewerComponent]
+      declarations: [],
+      imports: [HostComponent]
     });
 
     this.fixture = TestBed.createComponent(HostComponent);
