@@ -46,7 +46,6 @@ const EVENT_TYPE_LABELS: {
  */
 @Component({
   selector: 'app-job-details-dialog',
-  standalone: true,
   templateUrl: './job-details-dialog.component.html',
   styleUrls: ['./job-details-dialog.component.scss'],
   imports: [

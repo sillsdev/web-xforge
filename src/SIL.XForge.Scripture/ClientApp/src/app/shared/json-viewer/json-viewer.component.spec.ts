@@ -245,8 +245,7 @@ describe('JsonViewerComponent', () => {
 
 @Component({
   selector: 'app-host',
-  template: '<app-json-viewer></app-json-viewer>',
-  standalone: false
+  template: '<app-json-viewer></app-json-viewer>'
 })
 class HostComponent {
   @ViewChild(JsonViewerComponent, { static: true }) component!: JsonViewerComponent;
