@@ -1,4 +1,5 @@
 @use 'src/variables' as sfColors;
+@use 'src/xforge-common/media-breakpoints/breakpoints' as *;
 
 .table-wrapper {
   overflow-x: auto;
@@ -9,14 +10,11 @@
   background-color: var(--sf-draft-jobs-table-row-background);
 }
 
-app-owner {
-  white-space: nowrap;
-}
-
 .build-id-link {
-  text-decoration: underline;
   cursor: pointer;
-  white-space: nowrap;
+  word-break: break-all;
+  font-family: monospace;
+  font-size: 0.7rem;
 
   &.disabled {
     color: var(--sf-draft-jobs-disabled-link-color);
@@ -29,6 +27,13 @@ app-owner {
   display: flex;
   align-items: center;
   gap: 8px;
+
+  @include media-breakpoint('<', lg) {
+    justify-content: center;
+    .status-label {
+      display: none;
+    }
+  }
 }
 
 .status-icon {
