@@ -589,7 +589,8 @@ class TestEnvironment {
       { username: 'User A', opaqueUserId: 'opaqueA', role: SFProjectRole.ParatextObserver },
       { username: 'User B', opaqueUserId: 'opaqueB', role: SFProjectRole.ParatextTranslator },
       { username: 'User C', opaqueUserId: 'opaqueC', role: SFProjectRole.ParatextAdministrator },
-      { username: 'User No Role', opaqueUserId: 'opaqueNoRole' }
+      { username: 'User No Role', opaqueUserId: 'opaqueNoRole' },
+      { username: 'User Not Member', opaqueUserId: 'opaqueNotMember', role: SFProjectRole.None }
     ];
     paratextUsers.push(...ptMembersNotConnected);
     return createTestProject({

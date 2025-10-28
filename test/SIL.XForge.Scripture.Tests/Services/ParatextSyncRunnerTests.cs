@@ -1963,7 +1963,9 @@ public class ParatextSyncRunnerTests
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
         project = env.GetProject();
         Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
-        Assert.That(project.ParatextUsers.Single(u => u.Username == "User 1").SFUserId, Is.EqualTo(null));
+        ParatextUserProfile ptUser1 = project.ParatextUsers.Single(u => u.Username == "User 1");
+        Assert.That(ptUser1.SFUserId, Is.EqualTo(null));
+        Assert.That(ptUser1.Role, Is.EqualTo(SFProjectRole.None));
         ParatextUserProfile ptUser2 = project.ParatextUsers.Single(u => u.Username == "User 2");
         Assert.That(ptUser2.SFUserId, Is.EqualTo(user2.Id));
         Assert.That(ptUser2.Role, Is.EqualTo(user2.Role));
@@ -1986,7 +1988,7 @@ public class ParatextSyncRunnerTests
         Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
 
         ParatextUserProfile ptUser2 = project.ParatextUsers.Single(u => u.Username == "User 2");
-        Assert.That(ptUser2.Role, Is.Null);
+        Assert.That(ptUser2.Role, Is.EqualTo(SFProjectRole.None));
     }
 
     [Test]

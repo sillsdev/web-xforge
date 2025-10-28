@@ -1907,7 +1907,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                             userIdsAdded.Add(updatedSFUserId);
                         }
 
-                        string paratextRole = ptUserInRegistry?.Role;
+                        string paratextRole = ptUserInRegistry?.Role ?? SFProjectRole.None;
                         if (paratextRole != existingUser.Role)
                         {
                             op.Set(pd => pd.ParatextUsers[index].Role, paratextRole);
