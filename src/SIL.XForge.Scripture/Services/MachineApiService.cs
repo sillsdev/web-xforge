@@ -1991,48 +1991,12 @@ public class MachineApiService(
         // We use project service, as it provides permission and token checks
         string jobId = await projectService.SyncAsync(curUserId, buildConfig.ProjectId);
 
-        // Store the project ids in a hashset to prevent duplicates
-        HashSet<string> syncProjectIds = [];
-
-        // If we have an alternate source, sync that first
-        string alternateSourceProjectId = projectDoc.Data.TranslateConfig.DraftConfig.AlternateSource?.ProjectRef;
-        if (
-            projectDoc.Data.TranslateConfig.DraftConfig.AlternateSourceEnabled
-            && !string.IsNullOrWhiteSpace(alternateSourceProjectId)
-        )
-        {
-            syncProjectIds.Add(alternateSourceProjectId);
-        }
-
-        // If we have an alternate training source, sync that next
-        string alternateTrainingSourceProjectId = projectDoc
-            .Data
-            .TranslateConfig
-            .DraftConfig
-            .AlternateTrainingSource
-            ?.ProjectRef;
-        if (
-            projectDoc.Data.TranslateConfig.DraftConfig.AlternateTrainingSourceEnabled
-            && !string.IsNullOrWhiteSpace(alternateTrainingSourceProjectId)
-        )
-        {
-            syncProjectIds.Add(alternateTrainingSourceProjectId);
-        }
-
-        // If we have an additional training source, sync that next
-        string additionalTrainingSourceProjectId = projectDoc
-            .Data
-            .TranslateConfig
-            .DraftConfig
-            .AdditionalTrainingSource
-            ?.ProjectRef;
-        if (
-            projectDoc.Data.TranslateConfig.DraftConfig.AdditionalTrainingSourceEnabled
-            && !string.IsNullOrWhiteSpace(additionalTrainingSourceProjectId)
-        )
-        {
-            syncProjectIds.Add(additionalTrainingSourceProjectId);
-        }
+        // Store the project ids to sync in a hashset to prevent duplicates
+        HashSet<string> syncProjectIds =
+        [
+            .. projectDoc.Data.TranslateConfig.DraftConfig.TrainingSources.Select(s => s.ProjectRef),
+            .. projectDoc.Data.TranslateConfig.DraftConfig.DraftingSources.Select(s => s.ProjectRef),
+        ];
 
         // Remove the source project, as it was synced when the target was synced
         string sourceProjectId = projectDoc.Data.TranslateConfig.Source?.ProjectRef;

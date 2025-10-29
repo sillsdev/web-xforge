@@ -1,7 +1,6 @@
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import language_code_mapping from '../../../../../language_code_mapping.json';
-import { hasArrayProp } from '../../../type-utils';
 import { SelectableProjectWithLanguageCode } from '../../core/paratext.service';
 
 /** Represents draft sources as a set of two {@link TranslateSource} arrays, and one {@link SFProjectProfile} array. */
@@ -51,57 +50,16 @@ export function draftSourcesAsTranslateSourceArraysToDraftSourcesAsSelectablePro
 /**
  * Takes a SFProjectProfile and returns the training and drafting sources for the project as three arrays.
  *
- * This considers properties such as alternateTrainingSourceEnabled and alternateTrainingSource and makes sure to only
- * include a source if it's enabled and not null. It also considers whether the project source is implicitly the
- * training and/or drafting source.
+ * This method is also intended to be act as an abstraction layer to allow changing the data model in the future to
+ * allow multiple training targets without needing to change all the places that use this method.
  *
- * This method is also intended to be act as an abstraction layer to allow changing the data model in the future without
- * needing to change all the places that use this method.
- *
- * Currently this method provides guarantees via the type system that there will be at most 2 training sources, exactly
- * 1 training target, and at most 1 drafting source. Consumers of this method that cannot accept an arbitrary length for
- * each of these arrays are encouraged to write their code in such a way that it will noticeably break (preferably at
- * build time) if these guarantees are changed, to make it easier to find code that relies on the current limit on the
- * number of sources in each category.
  * @param project The project to get the sources for
  * @returns An object with three arrays: trainingSources, trainingTargets, and draftingSources
  */
 export function projectToDraftSources(project: SFProjectProfile): DraftSourcesAsTranslateSourceArrays {
-  const trainingSources: TranslateSource[] & ({ length: 0 } | { length: 1 } | { length: 2 }) = [];
-  const draftingSources: TranslateSource[] & ({ length: 0 } | { length: 1 }) = [];
-  const trainingTargets: [SFProjectProfile] = [project];
-  const draftConfig = project.translateConfig.draftConfig;
-  // Forward compatibility with the upcoming SF-3163 change to allow draft sources as arrays
-  if (
-    hasArrayProp(project.translateConfig.draftConfig, 'trainingSources') &&
-    hasArrayProp(project.translateConfig.draftConfig, 'draftingSources')
-  ) {
-    const trainingSources: TranslateSource[] = [...project.translateConfig.draftConfig.trainingSources] as any[];
-    const draftingSources: TranslateSource[] = [...project.translateConfig.draftConfig.draftingSources] as any[];
-    const trainingTargets: SFProjectProfile[] = [project];
-    return { trainingSources, trainingTargets, draftingSources };
-  }
-  let trainingSource: TranslateSource | undefined;
-  if (draftConfig.alternateTrainingSourceEnabled && draftConfig.alternateTrainingSource != null) {
-    trainingSource = draftConfig.alternateTrainingSource;
-  } else {
-    trainingSource = project.translateConfig.source;
-  }
-  if (trainingSource != null) {
-    trainingSources.push(trainingSource);
-  }
-  if (draftConfig.additionalTrainingSourceEnabled && draftConfig.additionalTrainingSource != null) {
-    trainingSources.push(draftConfig.additionalTrainingSource);
-  }
-  let draftingSource: TranslateSource | undefined;
-  if (draftConfig.alternateSourceEnabled && draftConfig.alternateSource != null) {
-    draftingSource = draftConfig.alternateSource;
-  } else {
-    draftingSource = project.translateConfig.source;
-  }
-  if (draftingSource != null) {
-    draftingSources.push(draftingSource);
-  }
+  const trainingSources: TranslateSource[] = [...project.translateConfig.draftConfig.trainingSources];
+  const draftingSources: TranslateSource[] = [...project.translateConfig.draftConfig.draftingSources];
+  const trainingTargets: SFProjectProfile[] = [project];
   return { trainingSources, trainingTargets, draftingSources };
 }
 
