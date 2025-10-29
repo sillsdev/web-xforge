@@ -134,7 +134,7 @@ Para =
             },
         attribute vid { xsd:string { pattern = "[A-Z1-4]{3} ?[a-z0-9\-,:]*" } }?,
         attribute status { text }?,
-        (Reference | Note | Char | Milestone | Figure | Verse | Break | Unmatched | text)+
+        (Reference | Note | Link | Char | Milestone | Figure | Verse | Break | Unmatched | text)+
     }
 Para.para.style.enum = (
       "restore" # Comment about when text was restored
@@ -430,7 +430,7 @@ ListChar.char.style.enum = (
 
 char.link =
     attribute link-href { xsd:string
-        { pattern = "(.*///?(.*/?)+)|((prj:[A-Za-z\-0-9]{3,8} )?[A-Z1-4]{3} \d+:\d+(\-\d+)?)|(#[^\s]+)" } }?, # The resource being linked to as a URI
+        { pattern = "(.*///?(.*/?)+)|((prj:[A-Za-z\-0-9]{3,8} )?[A-Z1-4]{3} \d+:\d+(\-\d+)?[ ]*)|(#[^\s]+)" } }?, # The resource being linked to as a URI
     attribute link-title { xsd:string }?, # Plain text describing the remote resource such as might be shown in a tooltip
     attribute link-id { xsd:string { pattern = "[\w_\-\.:]+" } }? # Unique identifier for this location in the text
 
@@ -483,7 +483,7 @@ Note =
         attribute style { "f" | "fe" | "ef" | "x" | "ex" },
         attribute caller { text },
         (attribute category { text })?,
-        (NoteChar | Unmatched | text )+
+        (NoteChar | Link | Unmatched | text )+
     }
 
 NoteChar =
@@ -491,7 +491,7 @@ NoteChar =
         attribute style { FootnoteChar.char.style.enum | CrossReferenceChar.char.style.enum },
         char.link?,
         char.closed?,
-        (Char | Reference | Unmatched | text)+
+        (Char | Link | Reference | Unmatched | text)+
     }
 FootnoteChar.char.style.enum = (
       "fr" # The origin reference for the footnote
@@ -541,6 +541,13 @@ Figure =
 Reference =
     element ref {
         attribute loc { xsd:string { pattern = "[A-Z1-4]{3} ?[a-z0-9\-,:]*" } },
+        text?
+    }
+
+Link =
+    element link {
+        attribute style { CrossReferenceChar.char.style.enum },
+        char.link?,
         text?
     }
 
