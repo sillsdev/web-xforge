@@ -26,6 +26,9 @@ This repository contains three interconnected applications:
 - Error handling with ErrorReportingService
 - Keep related files together in feature folders
 - Follow existing naming conventions
+- Follow MVVM design, where domain objects and business logic are in Models, templates represent information to the user in Views, and ViewModels transform and bridge data between Models and Views.
+- Component templates should be in separate .html files, rather than specified inline in the component decorator.
+- Component template stylesheets should be in separate .scss files, rather than specified inline in the component decorator.
 
 # Frontend localization
 
@@ -35,11 +38,11 @@ This repository contains three interconnected applications:
 - Localizations that a Community Checker user might see should be created or edited in src/SIL.XForge.Scripture/ClientApp/src/assets/i18n/checking_en.json. Only localizations that a Community Checker user will not see can be created or edited in src/SIL.XForge.Scripture/ClientApp/src/assets/i18n/non_checking_en.json.
 - Even if something is a system-wide feature that isn't specific to community checking functionality, it should still be placed in checking_en.json if a community checking user would POSSIBLY see it.
 
-# Testing
+# Frontend testing
 
 - Write unit tests for new components and services
 - Follow existing patterns for mocking dependencies
-- Use TestEnvironment pattern from existing tests
+- Use TestEnvironment pattern from existing tests. Use the TestEnvironment class pattern rather than using a `beforeEach`.
 - Test both online and offline scenarios
 - Test permission boundaries
 
@@ -56,15 +59,21 @@ This repository contains three interconnected applications:
 # TypeScript language
 
 - Use explicit true/false/null/undefined rather than truthy/falsy
-- Never rely on JavaScript's truthy or falsy. Instead, work with actual true, false, null, and undefined values, rather than relying on their interpretation as truthy or falsy. For example, if `count` might be null, or undefined, or zero, don't write code like `if (count)` or `const foo:string = someVariable ? 'a' : 'b'`. Instead, inspect for the null, undefined, or zero rather than letting the value be interpreted as truthy for falsy. For example, use`if (count == null)` or `const foo:string = someVariable != null 'a' : 'b'` or `if (count > 0)`.
+- Never rely on JavaScript's truthy or falsy. Instead, work with actual true, false, null, and undefined values, rather than relying on their interpretation as truthy or falsy. For example, if `count` might be null, or undefined, or zero, don't write code like `if (count)` or `const foo:string = someVariable ? 'a' : 'b'`. Instead, inspect for the null, undefined, or zero rather than letting the value be interpreted as truthy for falsy. For example, use `if (count == null)` or `const foo:string = someVariable != null 'a' : 'b'` or `if (count > 0)`.
 - Specify types where not obvious, such as when declaring variables and arguments, and for function return types.
 - Use `@if {}` syntax rather than `*ngIf` syntax.
+- Although interacting with existing code and APIs may necessitate the use of `null`, when writing new code, prefer using `undefined` rather than `null`.
+- Fields that are of type Subject or BehaviorSubject should have names that end with a `$`.
 
 # Code
 
 - All code that you write should be able to pass eslint linting tests for TypeScript, or csharpier for C#.
 - Don't merely write code for the local context, but make changes that are good overall considering the architecture of the application and structure of the files and classes.
+- It is better to write code that is verbose and understandable than terse and concise.
+- It is better to explicitly check for and handle problems, or prevent problems from happening, than to assume problems will not happen.
+- Corner-cases happen. They should be handled in code.
 
 # Running commands
 
 - If you run frontend tests, run them in the `src/SIL.XForge.Scripture/ClientApp` directory with a command such as `npm run test:headless -- --watch=false --include '**/text.component.spec.ts' --include '**/settings.component.spec.ts'`
+- If you need to run all frontend tests, you can run them in the `src/SIL.XForge.Scripture/ClientApp` directory with command `npm run test:headless -- --watch=false`

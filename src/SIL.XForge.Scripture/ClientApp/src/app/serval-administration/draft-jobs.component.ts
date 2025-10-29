@@ -1,10 +1,10 @@
 import { Component, DestroyRef, OnInit } from '@angular/core';
-import { MatIconButton } from '@angular/material/button';
-import { MatOption } from '@angular/material/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatButton, MatIconButton } from '@angular/material/button';
+import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatDialogConfig } from '@angular/material/dialog';
-import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
-import { MatSelect } from '@angular/material/select';
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import {
   MatCell,
   MatCellDef,
@@ -20,7 +20,7 @@ import {
 import { MatTooltip } from '@angular/material/tooltip';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
-import { BehaviorSubject, combineLatest, map, Observable, switchMap } from 'rxjs';
+import { BehaviorSubject, combineLatest, filter, map } from 'rxjs';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -28,18 +28,15 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
-import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { notNull } from '../../type-utils';
 import { SFProjectService } from '../core/sf-project.service';
 import { EventMetric } from '../event-metrics/event-metric';
 import { NoticeComponent } from '../shared/notice/notice.component';
 import { projectLabel } from '../shared/utils';
+import { DateRangePickerComponent, NormalizedDateRange } from './date-range-picker.component';
+import { DraftJobsExportService } from './draft-jobs-export.service';
 import { JobDetailsDialogComponent } from './job-details-dialog.component';
 import { ServalAdministrationService } from './serval-administration.service';
-
-/**
- * Draft jobs component for the serval administration page.
- * Shows draft jobs derived from event metrics across all projects for system administrators.
- */
 interface ProjectBooks {
   projectId: string;
   books: string[];
@@ -48,25 +45,27 @@ interface ProjectBooks {
 /** Defines information about a Serval draft generation request. This is exported so it can be used in tests. */
 export interface DraftJob {
   /** Serval build ID */
-  buildId: string | null;
+  buildId: string | undefined;
   projectId: string;
-  startEvent?: EventMetric; // Made optional since incomplete jobs might not have a start event
+  /** This is optional since incomplete jobs might not have a start event */
+  startEvent?: EventMetric;
   buildEvent?: EventMetric;
   finishEvent?: EventMetric;
   cancelEvent?: EventMetric;
   events: EventMetric[];
-  additionalEvents: EventMetric[]; // Events with same build ID that weren't included in the main job tracking
+  /** Events with the same build ID that weren't included in the main job tracking */
+  additionalEvents: EventMetric[];
   status: 'running' | 'success' | 'failed' | 'cancelled' | 'incomplete';
-  startTime: Date | null;
-  finishTime: Date | null;
-  duration: number | null;
+  startTime: Date | undefined;
+  finishTime: Date | undefined;
+  duration: number | undefined;
   errorMessage?: string;
   userId?: string;
   trainingBooks?: ProjectBooks[];
   translationBooks?: ProjectBooks[];
 }
 
-interface Row {
+export interface DraftJobsTableRow {
   job: DraftJob;
   projectId: string;
   projectName: string;
@@ -90,31 +89,37 @@ const DRAFTING_EVENTS = [
   'CancelPreTranslationBuildAsync'
 ];
 
+/**
+ * Draft jobs component for the serval administration page.
+ * Shows draft jobs derived from event metrics across all projects for Serval administrators.
+ */
 @Component({
   selector: 'app-draft-jobs',
   templateUrl: './draft-jobs.component.html',
   styleUrls: ['./draft-jobs.component.scss'],
+  providers: [provideNativeDateAdapter()],
   imports: [
-    OwnerComponent,
-    MatTooltip,
-    MatIconButton,
-    MatFormField,
-    MatLabel,
-    MatSelect,
-    MatOption,
-    MatIcon,
-    MatTable,
+    MatButton,
+    MatCell,
+    MatCellDef,
     MatColumnDef,
     MatHeaderCell,
     MatHeaderCellDef,
-    MatCell,
-    MatCellDef,
     MatHeaderRow,
     MatHeaderRowDef,
+    MatIcon,
+    MatIconButton,
+    MatMenu,
+    MatMenuItem,
+    MatMenuTrigger,
     MatRow,
     MatRowDef,
+    MatTable,
+    MatTooltip,
+    NoticeComponent,
+    OwnerComponent,
     RouterLink,
-    NoticeComponent
+    DateRangePickerComponent
   ]
 })
 export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
@@ -127,35 +132,21 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     'duration',
     'author'
   ];
-  rows: Row[] = [];
+  rows: DraftJobsTableRow[] = [];
 
-  private daysBack$ = new BehaviorSubject<number | 'all_time'>(7);
   currentProjectFilter: string | null = null;
-
-  // Available day options for the dropdown
-  dayOptions = [
-    { value: 7, label: '7 days' },
-    { value: 14, label: '14 days' },
-    { value: 30, label: '30 days' }
-  ];
 
   get isOnline(): boolean {
     return this.onlineStatusService.isOnline;
   }
 
-  get daysBack(): number | 'all_time' {
-    return this.daysBack$.value;
-  }
-
-  set daysBack(value: number | 'all_time') {
-    this.daysBack$.next(value);
-  }
-
   private draftEvents?: EventMetric[];
   private draftJobs: DraftJob[] = [];
-  private projectNames = new Map<string, string | null>(); // Cache for project names
-  private projectShortNames = new Map<string, string | null>(); // Cache for project short names
+  private projectNames = new Map<string, string | undefined>(); // Cache for project names
+  private projectShortNames = new Map<string, string | undefined>(); // Cache for project short names
   filteredProjectName = '';
+  private currentDateRange: NormalizedDateRange | undefined;
+  private readonly dateRange$ = new BehaviorSubject<NormalizedDateRange | undefined>(undefined);
 
   constructor(
     noticeService: NoticeService,
@@ -165,15 +156,46 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
     private readonly servalAdministrationService: ServalAdministrationService,
-    private destroyRef: DestroyRef,
     private readonly route: ActivatedRoute,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly destroyRef: DestroyRef,
+    private readonly exportService: DraftJobsExportService
   ) {
     super(noticeService);
   }
 
   get isLoading(): boolean {
     return this.draftEvents == null;
+  }
+
+  get meanDuration(): number | undefined {
+    const durations = this.rows.map(r => r.job.duration).filter((d): d is number => d != null);
+    if (durations.length === 0) {
+      return undefined;
+    }
+    return durations.reduce((sum, d) => sum + d, 0) / durations.length;
+  }
+
+  get maxDuration(): number | undefined {
+    const durations = this.rows.map(r => r.job.duration).filter((d): d is number => d != null);
+    if (durations.length === 0) {
+      return undefined;
+    }
+    return Math.max(...durations);
+  }
+
+  get meanDurationFormatted(): string | undefined {
+    if (this.meanDuration == null) {
+      return undefined;
+    }
+    return this.formatDurationInHours(this.meanDuration);
+  }
+
+  get maxDurationFormatted(): string | undefined {
+    if (this.maxDuration == null) {
+      return undefined;
+    }
+    return this.formatDurationInHours(this.maxDuration);
   }
 
   ngOnInit(): void {
@@ -184,48 +206,22 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     ) {
       this.columnsToDisplay.push('buildDetails');
     }
-    this.loadingStarted();
+    combineLatest([
+      this.route.queryParams.pipe(map(params => params['projectId'] || null)),
+      this.onlineStatusService.onlineStatus$,
+      this.dateRange$.pipe(filter(notNull))
+    ])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(([projectFilterId, isOnline, range]) => {
+        this.loadingStarted();
+        void this.loadDraftJobs(range, isOnline, projectFilterId);
+      });
+  }
 
-    const projectFilterId$: Observable<string | null> = this.route.queryParams.pipe(map(params => params['projectId']));
-
-    // Combine days filter with project filter from the service
-    combineLatest([this.daysBack$, this.onlineStatusService.onlineStatus$, projectFilterId$])
-      .pipe(
-        switchMap(async ([daysBack, isOnline, projectFilterId]) => {
-          this.loadingStarted();
-          this.currentProjectFilter = projectFilterId;
-
-          // Fetch project name if filtering by project
-          this.filteredProjectName = projectFilterId ?? '';
-          if (projectFilterId) {
-            try {
-              const projectDoc = await this.servalAdministrationService.get(projectFilterId);
-              this.filteredProjectName = projectDoc?.data != null ? projectLabel(projectDoc.data) : projectFilterId;
-            } catch (error) {
-              // We can filter for a now-deleted project, so an error here is not unexpected and fully supported
-              console.error('Error fetching project name:', error);
-            }
-          }
-
-          if (isOnline) {
-            const queryResults = await this.projectService.onlineAllEventMetricsForConstructingDraftJobs(
-              DRAFTING_EVENTS,
-              projectFilterId ?? undefined,
-              daysBack === 'all_time' ? undefined : daysBack
-            );
-            if (Array.isArray(queryResults?.results)) {
-              this.draftEvents = queryResults.results as EventMetric[];
-            } else {
-              this.draftEvents = [];
-            }
-            this.processDraftJobs();
-            await this.loadProjectNames();
-          }
-          this.loadingFinished();
-        }),
-        quietTakeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe();
+  /** Handle date range changes from the date range picker component */
+  onDateRangeChange(range: NormalizedDateRange): void {
+    this.currentDateRange = range;
+    this.dateRange$.next(range);
   }
 
   openJobDetailsDialog(job: DraftJob): void {
@@ -235,7 +231,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     }
 
     // Format event-based duration if available
-    const eventBasedDuration = job.duration != null ? this.formatDuration(job.duration) : undefined;
+    const eventBasedDuration = job.duration != null ? this.formatDurationInHours(job.duration) : undefined;
 
     // Format start time if available
     const startTime = job.startTime != null ? this.i18n.formatDate(job.startTime, { showTimeZone: true }) : undefined;
@@ -282,6 +278,51 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
       queryParams: { projectId: null },
       queryParamsHandling: 'merge'
     });
+  }
+
+  private async loadDraftJobs(
+    range: NormalizedDateRange,
+    isOnline: boolean,
+    projectFilterId: string | null
+  ): Promise<void> {
+    try {
+      // Fetch project name if filtering by project
+      let displayName = projectFilterId ?? '';
+      if (projectFilterId != null) {
+        try {
+          const projectDoc = await this.servalAdministrationService.get(projectFilterId);
+          displayName = projectDoc?.data != null ? projectLabel(projectDoc.data) : projectFilterId;
+        } catch (error) {
+          // We can filter for a now-deleted project, so an error here is not unexpected and fully supported
+          console.error('Error fetching project name:', error);
+        }
+      }
+
+      this.currentProjectFilter = projectFilterId;
+      this.filteredProjectName = displayName;
+
+      if (!isOnline) {
+        return;
+      }
+
+      const queryResults = await this.projectService.onlineAllEventMetricsForConstructingDraftJobs(
+        DRAFTING_EVENTS,
+        projectFilterId ?? undefined,
+        range.start,
+        range.end
+      );
+
+      if (Array.isArray(queryResults?.results)) {
+        this.draftEvents = queryResults.results as EventMetric[];
+      } else {
+        this.draftEvents = [];
+      }
+
+      this.processDraftJobs();
+      await this.loadProjectNames();
+    } finally {
+      this.loadingFinished();
+    }
   }
 
   private processDraftJobs(): void {
@@ -376,8 +417,8 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
         translationBooks,
         status: 'running', // Will be finalized later
         errorMessage: undefined,
-        finishTime: null,
-        duration: null
+        finishTime: undefined,
+        duration: undefined
       };
 
       // Assign the completion event to the appropriate field
@@ -440,8 +481,8 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
 
   private finalizeJobStatus(job: DraftJob): void {
     let status: 'running' | 'success' | 'failed' | 'cancelled' | 'incomplete';
-    let finishTime: Date | null = null;
-    let duration: number | null = null;
+    let finishTime: Date | undefined = undefined;
+    let duration: number | undefined = undefined;
     let errorMessage: string | undefined;
 
     // Check for early failures or cancellations
@@ -453,15 +494,15 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     } else if (job.cancelEvent != null) {
       status = 'cancelled';
       finishTime = new Date(job.cancelEvent.timeStamp);
-      duration = job.startTime ? finishTime.getTime() - job.startTime.getTime() : null;
+      duration = job.startTime ? finishTime.getTime() - job.startTime.getTime() : undefined;
     } else if (job.buildEvent?.exception != null) {
       status = 'failed';
       errorMessage = job.buildEvent.exception;
       finishTime = new Date(job.buildEvent.timeStamp);
-      duration = job.startTime ? finishTime.getTime() - job.startTime.getTime() : null;
+      duration = job.startTime ? finishTime.getTime() - job.startTime.getTime() : undefined;
     } else if (job.finishEvent != null) {
       finishTime = new Date(job.finishEvent.timeStamp);
-      duration = job.startTime ? finishTime.getTime() - job.startTime.getTime() : null;
+      duration = job.startTime ? finishTime.getTime() - job.startTime.getTime() : undefined;
 
       if (job.finishEvent.exception != null) {
         status = 'failed';
@@ -490,7 +531,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
   }
 
   private generateRows(): void {
-    const rows: Row[] = [];
+    const rows: DraftJobsTableRow[] = [];
 
     for (const job of this.draftJobs) {
       const projectName = this.projectNames.get(job.projectId);
@@ -500,7 +541,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
         ? `https://app.sil.hosted.allegro.ai/projects?gq=${job.buildId}&tab=tasks`
         : undefined;
 
-      const duration = job.duration ? this.formatDuration(job.duration) : undefined;
+      const duration = job.duration ? this.formatDurationInHours(job.duration) : undefined;
       const durationTooltip = job.finishTime
         ? `Finished: ${this.i18n.formatDate(job.finishTime, { showTimeZone: true })}`
         : undefined;
@@ -520,21 +561,12 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
         clearmlUrl
       });
     }
+
     this.rows = rows;
   }
 
-  private formatDuration(milliseconds: number): string {
-    const seconds = Math.floor(milliseconds / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-
-    if (hours > 0) {
-      return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
-    } else if (minutes > 0) {
-      return `${minutes}m ${seconds % 60}s`;
-    } else {
-      return `${seconds}s`;
-    }
+  private formatDurationInHours(milliseconds: number): string {
+    return `${(milliseconds / 3600000).toFixed(1)} h`;
   }
 
   private getStatusDisplay(status: string): string {
@@ -544,7 +576,6 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
   private async loadProjectNames(): Promise<void> {
     // Get unique project IDs from draft jobs
     const projectIds = new Set(this.draftJobs.map(job => job.projectId));
-
     // Also collect project IDs from training and translation book ranges
     for (const job of this.draftJobs) {
       if (job.trainingBooks) {
@@ -558,23 +589,20 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
         }
       }
     }
-
     // Clear existing caches
     this.projectNames.clear();
     this.projectShortNames.clear();
-
     // Fetch project data for each unique project ID
     for (const projectId of projectIds) {
       const projectDoc = await this.servalAdministrationService.get(projectId);
       if (projectDoc?.data != null) {
         this.projectNames.set(projectId, projectLabel(projectDoc.data));
-        this.projectShortNames.set(projectId, projectDoc.data.shortName || null);
+        this.projectShortNames.set(projectId, projectDoc.data.shortName || undefined);
       } else {
-        this.projectNames.set(projectId, null);
-        this.projectShortNames.set(projectId, null);
+        this.projectNames.set(projectId, undefined);
+        this.projectShortNames.set(projectId, undefined);
       }
     }
-
     // Regenerate rows with project names
     this.generateRows();
   }
@@ -647,5 +675,21 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
 
   getProjectShortName(projectId: string): string {
     return this.projectShortNames.get(projectId) || this.projectNames.get(projectId) || projectId;
+  }
+
+  /**
+   * Export the current draft jobs data to a CSV file.
+   */
+  exportCsv(): void {
+    if (this.currentDateRange == null) throw new Error('Date range is not set');
+    this.exportService.exportCsv(this.rows, this.currentDateRange, this.meanDuration ?? 0, this.maxDuration ?? 0);
+  }
+
+  /**
+   * Export the current draft jobs data to an RSV (Rows of String Values) file.
+   */
+  exportRsv(): void {
+    if (this.currentDateRange == null) throw new Error('Date range is not set');
+    this.exportService.exportRsv(this.rows, this.currentDateRange, this.meanDuration ?? 0, this.maxDuration ?? 0);
   }
 }

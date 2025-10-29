@@ -360,7 +360,8 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   async onlineAllEventMetricsForConstructingDraftJobs(
     eventTypes: string[],
     projectId?: string,
-    daysBack?: number
+    startDate?: Date,
+    endDate?: Date
   ): Promise<QueryResults<EventMetric> | undefined> {
     const params: any = {
       projectId: projectId ?? null,
@@ -368,10 +369,9 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
       eventTypes
     };
 
-    if (daysBack != null) {
-      const fromDate = new Date();
-      fromDate.setDate(fromDate.getDate() - daysBack);
-      params.fromDate = fromDate.toISOString();
+    if (startDate != null && endDate != null) {
+      params.fromDate = startDate.toISOString();
+      params.toDate = endDate.toISOString();
     }
 
     return await this.onlineInvoke<QueryResults<EventMetric>>('eventMetrics', params);
