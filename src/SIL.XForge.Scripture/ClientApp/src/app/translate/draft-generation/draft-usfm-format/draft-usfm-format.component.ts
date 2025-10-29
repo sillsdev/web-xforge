@@ -23,6 +23,7 @@ import { combineLatest, first, firstValueFrom, Subject, switchMap } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
+import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -75,6 +76,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   });
 
   protected saving = false;
+  protected projectFont?: string;
 
   private updateDraftConfig$: Subject<DraftUsfmConfig | undefined> = new Subject<DraftUsfmConfig | undefined>();
   private lastSavedState?: DraftUsfmConfig;
@@ -91,6 +93,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     private readonly dialogService: DialogService,
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
+    readonly fontService: FontService,
     private readonly location: Location,
     private destroyRef: DestroyRef
   ) {
@@ -159,6 +162,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
         } else if (this.chapters.length > 0) {
           defaultChapter = this.chapters[0];
         }
+        this.projectFont = this.fontService.getFontFamilyFromProject(projectDoc);
         this.bookChanged(defaultBook, defaultChapter);
       });
 
