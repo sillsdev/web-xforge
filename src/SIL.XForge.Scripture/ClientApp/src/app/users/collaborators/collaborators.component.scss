@@ -14,11 +14,6 @@ h3 {
   bottom: 10px;
 }
 
-.paratext-logo {
-  width: 24px;
-  height: 24px;
-}
-
 // Add bottom border to last row that was removed in Material v15+
 .mat-mdc-row:last-child .mat-mdc-cell {
   border-bottom: 1px solid rgba(0, 0, 0, 0.12);
@@ -27,6 +22,7 @@ h3 {
 // Padding only for the start of first column and around the 'role' column
 .mat-mdc-cell {
   padding-inline-end: 0;
+  min-width: 32px;
 
   &:not(:first-of-type) {
     padding-inline-start: 0;
@@ -46,10 +42,6 @@ h3 {
   flex-wrap: wrap-reverse;
   display: flex;
   align-items: center;
-}
-
-.tab-selector {
-  flex-grow: 1;
 }
 
 .mat-column-avatar {
@@ -87,9 +79,4 @@ h3 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-// prevent undesirable flicker effect when changing tabs
-:host ::ng-deep .mat-mdc-tab-body-wrapper {
-  display: none;
 }

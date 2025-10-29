@@ -62,8 +62,13 @@ class TestEnvironment {
   readonly db: ShareDBMingo;
   readonly mockedSchemaVersionRepository = mock(SchemaVersionRepository);
   readonly paratextUsers: ParatextUserProfile[] = [
-    { sfUserId: 'projectAdmin', username: 'ptprojectAdmin', opaqueUserId: 'opaqueprojectAdmin' },
-    { sfUserId: 'translator', username: 'pttranslator', opaqueUserId: 'opaquetranslator' }
+    {
+      sfUserId: 'projectAdmin',
+      username: 'ptprojectAdmin',
+      opaqueUserId: 'opaqueprojectAdmin',
+      role: 'pt_administrator'
+    },
+    { sfUserId: 'translator', username: 'pttranslator', opaqueUserId: 'opaquetranslator', role: 'pt_translator' }
   ];
 
   constructor() {

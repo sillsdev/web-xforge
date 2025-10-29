@@ -5,15 +5,16 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { MatMenuHarness } from '@angular/material/menu/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { ActivatedRoute } from '@angular/router';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { CheckingAnswerExport, CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
+import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -35,9 +36,9 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../../shared/shared.module';
 import { paratextUsersFromRoles } from '../../shared/test-utils';
-import { CollaboratorsComponent } from './collaborators.component';
+import { CollaboratorsComponent, UserType } from './collaborators.component';
 
-const mockedActivatedRoute = mock(ActivatedRoute);
+const mockedActivatedProject = mock(ActivatedProjectService);
 const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
@@ -56,7 +57,7 @@ describe('CollaboratorsComponent', () => {
       AvatarComponent
     ],
     providers: [
-      { provide: ActivatedRoute, useMock: mockedActivatedRoute },
+      { provide: ActivatedProjectService, useMock: mockedActivatedProject },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
@@ -73,55 +74,72 @@ describe('CollaboratorsComponent', () => {
     tick();
     env.fixture.detectChanges();
 
-    expect(env.noUsersLabel).toBeNull();
+    expect(env.noUsersLabel(UserType.Paratext)).toBeNull();
+    expect(env.noUsersLabel(UserType.Guest)).toBeNull();
   }));
 
-  it('should display message when there are no users on a tab', fakeAsync(() => {
+  it('should display message when there are no users in a table', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupProjectData({ user01: SFProjectRole.ParatextAdministrator, user02: SFProjectRole.ParatextTranslator });
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
-    expect(env.userRows.length).toEqual(2);
-    expect(env.noUsersLabel).toBeNull();
-
-    // click tab to project guests where there are no users
-    env.clickElement(env.tabElementFromIndex(2));
-    tick();
-    env.fixture.detectChanges();
-    expect(env.component.currentTabIndex).toBe(2);
-    expect(env.table).toBeNull();
-    expect(env.noUsersLabel).not.toBeNull();
+    const numParatextUsers = 6;
+    expect(env.userRowsByCategory(UserType.Paratext).length).toEqual(numParatextUsers);
+    expect(env.noUsersLabel(UserType.Paratext)).toBeNull();
+    expect(env.userTable(UserType.Guest)).toBeNull();
+    expect(env.noUsersLabel(UserType.Guest)).not.toBeNull();
   }));
 
-  it('should display users', fakeAsync(() => {
+  it('should display paratext users and project guests', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupProjectData();
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
 
-    expect(env.noUsersLabel).toBeNull();
-    expect(env.userRows.length).toEqual(3);
+    expect(env.noUsersLabel(UserType.Paratext)).toBeNull();
+    expect(env.noUsersLabel(UserType.Guest)).toBeNull();
+    const numParatextUsers = 6;
+    const numProjectGuests = 1;
+    expect(env.userRowsByCategory(UserType.Paratext).length).toEqual(numParatextUsers);
+    expect(env.userRowsByCategory(UserType.Guest).length).toEqual(numProjectGuests);
 
-    expect(env.cellDisplayName(0, 1)).toEqual('User 01');
-    expect(env.cellRole(0, 3).innerText).toEqual('Administrator');
-    env.clickElement(env.userRowMoreMenuElement(0));
-    expect(env.removeUserItemOnRow(0)).toBeNull();
-    expect(env.cancelInviteItemOnRow(0)).toBeNull();
+    expect(env.cellDisplayName(0, 1, UserType.Paratext)).toContain('User 01');
+    expect(env.cellRole(0, 2, UserType.Paratext).innerText).toEqual('Administrator');
+    env.clickElement(env.userRowMoreMenuElement(0, UserType.Paratext));
 
-    expect(env.cellDisplayName(1, 1)).toEqual('User 02');
-    expect(env.cellRole(1, 3).innerText).toEqual('Translator');
-    env.clickElement(env.userRowMoreMenuElement(1));
-    expect(env.removeUserItemOnRow(1)).toBeTruthy();
-    expect(env.cancelInviteItemOnRow(1)).toBeFalsy();
+    expect(env.removeUserItemOnRow(0, UserType.Paratext)).toBeNull();
+    expect(env.cancelInviteItemOnRow(0, UserType.Paratext)).toBeNull();
+    expect(env.cellDisplayName(1, 1, UserType.Paratext)).toEqual('User 02');
+    expect(env.cellRole(1, 2, UserType.Paratext).innerText).toEqual('Translator');
+    env.clickElement(env.userRowMoreMenuElement(1, UserType.Paratext));
+    expect(env.removeUserItemOnRow(1, UserType.Paratext)).toBeTruthy();
+    expect(env.cancelInviteItemOnRow(1, UserType.Paratext)).toBeFalsy();
 
-    expect(env.cellDisplayName(2, 1)).toEqual('User 03');
-    expect(env.cellRole(2, 3).innerText).toEqual('Community Checker');
-    env.clickElement(env.userRowMoreMenuElement(2));
-    expect(env.removeUserItemOnRow(2)).toBeTruthy();
-    expect(env.cancelInviteItemOnRow(2)).toBeFalsy();
+    expect(env.cellDisplayName(0, 1, UserType.Guest)).toEqual('User 03');
+    expect(env.cellRole(0, 2, UserType.Guest).innerText).toEqual('Community Checker');
+    env.clickElement(env.userRowMoreMenuElement(0, UserType.Guest));
+    expect(env.removeUserItemOnRow(0, UserType.Guest)).toBeTruthy();
+    expect(env.cancelInviteItemOnRow(0, UserType.Guest)).toBeFalsy();
     env.cleanup();
+  }));
+
+  it('display paratext users not on project', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProjectData();
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+
+    const numParatextUsers = 6;
+    expect(env.userRowsByCategory(UserType.Paratext).length).toEqual(numParatextUsers);
+    expect(
+      env.component.projectUsers.find(u => u.userType === UserType.Paratext)!.rows.map(r => r.user.displayName)
+    ).toEqual(['User 01', 'User 02', 'User C', 'User B', 'User A', 'User No Role']);
+    expect(env.userRowsByCategory(UserType.Paratext)[0].nativeElement.querySelector('.user-more-menu')).not.toBeNull();
+    expect(env.userRowsByCategory(UserType.Paratext)[1].nativeElement.querySelector('.user-more-menu')).not.toBeNull();
+    expect(env.userRowsByCategory(UserType.Paratext)[2].nativeElement.querySelector('.user-more-menu')).toBeNull();
   }));
 
   it('displays invited users', fakeAsync(() => {
@@ -137,24 +155,61 @@ describe('CollaboratorsComponent', () => {
     tick();
     env.fixture.detectChanges();
 
-    const numUsersOnProject = 3;
+    const numParatextUsers = 6;
+    const numGuestUsers = 1;
     const numInvitees = 3;
-    expect(env.userRows.length).toEqual(numUsersOnProject + numInvitees);
+    expect(env.userRowsByCategory(UserType.Paratext).length).toEqual(numParatextUsers);
+    expect(env.userRowsByCategory(UserType.Guest).length).toEqual(numGuestUsers + numInvitees);
 
-    const inviteeRow = 3;
-    const inviteeDisplay = env.elementTextContent(env.cell(inviteeRow, 1));
+    const inviteeRow = 1;
+    const inviteeDisplay = env.elementTextContent(env.cell(inviteeRow, 1, UserType.Guest));
     expect(inviteeDisplay).toContain('Awaiting');
     expect(inviteeDisplay).toContain('alice@a.aa');
-    const expiredRow = 5;
-    const expiredInvitee = env.elementTextContent(env.cell(expiredRow, 1));
+    const expiredRow = 3;
+    const expiredInvitee = env.elementTextContent(env.cell(expiredRow, 1, UserType.Guest));
     expect(expiredInvitee).toContain('Invitation has expired');
     expect(expiredInvitee).toContain('charles@c.cc');
 
     // Invitee row has cancel button but not remove button.
-    env.clickElement(env.userRowMoreMenuElement(inviteeRow));
-    expect(env.removeUserItemOnRow(inviteeRow)).toBeFalsy();
-    expect(env.cancelInviteItemOnRow(inviteeRow)).toBeTruthy();
+    env.clickElement(env.userRowMoreMenuElement(inviteeRow, UserType.Guest));
+    expect(env.removeUserItemOnRow(inviteeRow, UserType.Guest)).toBeFalsy();
+    expect(env.cancelInviteItemOnRow(inviteeRow, UserType.Guest)).toBeTruthy();
     env.cleanup();
+  }));
+
+  it('sorts by project users first, then paratext members not on project, then invitees', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProjectData();
+    when(mockedProjectService.onlineInvitedUsers('project01')).thenResolve([
+      { email: 'charles@c.cc', role: 'sf_community_checker', expired: false },
+      { email: 'bob@b.bb', role: 'sf_community_checker', expired: false },
+      { email: 'alice@a.aa', role: 'sf_community_checker', expired: false }
+    ]);
+
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+
+    const numParatextUsers = 6;
+    const numGuestUsers = 4;
+    expect(env.userRowsByCategory(UserType.Paratext).length).toEqual(numParatextUsers);
+    expect(env.userRowsByCategory(UserType.Guest).length).toEqual(numGuestUsers);
+    const paratextRows = Array.from(env.component.projectUsers.find(u => u.userType === UserType.Paratext)!.rows);
+    expect(paratextRows.map(r => r.user.displayName)).toEqual([
+      'User 01',
+      'User 02',
+      'User C',
+      'User B',
+      'User A',
+      'User No Role'
+    ]);
+    const guestRows = Array.from(env.component.projectUsers.find(u => u.userType === UserType.Guest)!.rows);
+    expect(guestRows.map(r => r.user.displayName ?? r.user.email)).toEqual([
+      'User 03',
+      'alice@a.aa',
+      'bob@b.bb',
+      'charles@c.cc'
+    ]);
   }));
 
   it('handle error from invited users query, when user is not on project', fakeAsync(() => {
@@ -210,9 +265,9 @@ describe('CollaboratorsComponent', () => {
     env.fixture.detectChanges();
 
     // Only Alice invitee is listed
-    const numUsersOnProject = 3;
+    const numGuestUsers = 1;
     let numInvitees = 1;
-    expect(env.userRows.length).toEqual(numUsersOnProject + numInvitees);
+    expect(env.userRowsByCategory(UserType.Guest).length).toEqual(numGuestUsers + numInvitees);
 
     // Simulate invitation event
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
@@ -225,7 +280,7 @@ describe('CollaboratorsComponent', () => {
     env.fixture.detectChanges();
 
     // Both invitees are now listed
-    expect(env.userRows.length).toEqual(numUsersOnProject + numInvitees);
+    expect(env.userRowsByCategory(UserType.Guest).length).toEqual(numGuestUsers + numInvitees);
   }));
 
   it('should un-invite user from project', fakeAsync(() => {
@@ -240,27 +295,27 @@ describe('CollaboratorsComponent', () => {
     env.fixture.detectChanges();
 
     // Alice invitee is listed
-    const numUsersOnProject = 3;
+    const numGuestUsers = 1;
     let numInvitees = 1;
-    expect(env.userRows.length).toEqual(numUsersOnProject + numInvitees);
+    expect(env.userRowsByCategory(UserType.Guest).length).toEqual(numGuestUsers + numInvitees);
 
-    const inviteeRow = 3;
-    const inviteeDisplay = env.elementTextContent(env.cell(inviteeRow, 1));
+    const inviteeRow = 1;
+    const inviteeDisplay = env.elementTextContent(env.cell(inviteeRow, 1, UserType.Guest));
     expect(inviteeDisplay).toContain('Awaiting');
     expect(inviteeDisplay).toContain('alice@a.aa');
     // Invitee row has cancel button but not remove button.
-    env.clickElement(env.userRowMoreMenuElement(inviteeRow));
-    expect(env.removeUserItemOnRow(inviteeRow)).toBeFalsy();
-    expect(env.cancelInviteItemOnRow(inviteeRow)).toBeTruthy();
+    env.clickElement(env.userRowMoreMenuElement(inviteeRow, UserType.Guest));
+    expect(env.removeUserItemOnRow(inviteeRow, UserType.Guest)).toBeFalsy();
+    expect(env.cancelInviteItemOnRow(inviteeRow, UserType.Guest)).toBeTruthy();
 
     // Uninvite Alice
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([]);
-    env.clickElement(env.cancelInviteItemOnRow(inviteeRow));
+    env.clickElement(env.cancelInviteItemOnRow(inviteeRow, UserType.Guest));
     verify(mockedProjectService.onlineUninviteUser(env.project01Id, 'alice@a.aa')).once();
 
     // Alice is not shown as in invitee
     numInvitees = 0;
-    expect(env.userRows.length).toEqual(numUsersOnProject + numInvitees);
+    expect(env.userRowsByCategory(UserType.Guest).length).toEqual(numGuestUsers + numInvitees);
   }));
 
   it('should remove user from project', fakeAsync(() => {
@@ -269,61 +324,10 @@ describe('CollaboratorsComponent', () => {
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
-    env.clickElement(env.userRowMoreMenuElement(1));
-    env.clickElement(env.removeUserItemOnRow(1));
+    env.clickElement(env.userRowMoreMenuElement(1, UserType.Paratext));
+    env.clickElement(env.removeUserItemOnRow(1, UserType.Paratext));
     verify(mockedProjectService.onlineRemoveUser(anything(), anything())).once();
     expect().nothing();
-  }));
-
-  it('can tab between groups', fakeAsync(() => {
-    const env = new TestEnvironment();
-    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
-      { email: 'bob@example.com', role: 'sf_community_checker', expired: false }
-    ]);
-    env.setupProjectData();
-    env.fixture.detectChanges();
-    tick();
-    env.fixture.detectChanges();
-
-    expect(env.component.currentTabIndex).toBe(0);
-    expect(env.userRows.length).toBe(4);
-    env.clickElement(env.tabElementFromIndex(1));
-    tick();
-    env.fixture.detectChanges();
-    expect(env.component.currentTabIndex).toBe(1);
-    expect(env.userRows.length).toBe(2);
-
-    env.clickElement(env.tabElementFromIndex(2));
-    tick();
-    env.fixture.detectChanges();
-    expect(env.component.currentTabIndex).toBe(2);
-    expect(env.component.rowsToDisplay.length).toBe(2);
-  }));
-
-  it('should filter users', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupProjectData();
-    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
-      { email: 'bob@example.com', role: 'sf_community_checker', expired: false }
-    ]);
-    env.fixture.detectChanges();
-    tick();
-    env.fixture.detectChanges();
-
-    expect(env.userRows.length).toEqual(4);
-    env.setInputValue(env.filterInput, '02');
-
-    expect(env.userRows.length).toEqual(1);
-
-    env.setInputValue(env.filterInput, 'bob@example.com');
-    expect(env.userRows.length).toEqual(1);
-    env.setInputValue(env.filterInput, 'BOB');
-    expect(env.userRows.length).toEqual(1);
-    env.setInputValue(env.filterInput, '    BOB ');
-    expect(env.userRows.length).toEqual(1);
-
-    env.setInputValue(env.filterInput, 'Community Checker');
-    expect(env.userRows.length).toEqual(2);
   }));
 
   it('should disable collaborators if not connected', fakeAsync(() => {
@@ -335,23 +339,20 @@ describe('CollaboratorsComponent', () => {
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
-    const numUsersOnProject = 3;
+    const numGuestUsers = 1;
     expect(env.offlineMessage).not.toBeNull();
-    expect(env.isFilterDisabled).toBe(true);
 
     env.onlineStatus = true;
-    expect(env.userRows.length).toEqual(numUsersOnProject + 1);
+    expect(env.userRowsByCategory(UserType.Guest).length).toEqual(numGuestUsers + 1);
     expect(env.offlineMessage).toBeNull();
-    expect(env.isFilterDisabled).toBe(false);
 
     env.onlineStatus = false;
-    const inviteeRow = 3;
-    expect(env.userRows.length).toEqual(numUsersOnProject + 1);
+    const inviteeRow = 1;
+    expect(env.userRowsByCategory(UserType.Guest).length).toEqual(numGuestUsers + 1);
     expect(env.offlineMessage).not.toBeNull();
-    expect(env.isFilterDisabled).toBe(true);
-    env.clickElement(env.userRowMoreMenuElement(inviteeRow));
-    expect(env.removeUserItemOnRow(inviteeRow)).toBeNull();
-    expect(env.cancelInviteItemOnRow(inviteeRow).attributes['disabled']).toBe('true');
+    env.clickElement(env.userRowMoreMenuElement(inviteeRow, UserType.Guest));
+    expect(env.removeUserItemOnRow(inviteeRow, UserType.Guest)).toBeNull();
+    expect(env.cancelInviteItemOnRow(inviteeRow, UserType.Guest).attributes['disabled']).toBe('true');
     env.cleanup();
   }));
 
@@ -362,7 +363,7 @@ describe('CollaboratorsComponent', () => {
     tick();
     env.fixture.detectChanges();
 
-    env.clickElement(env.userRowMoreMenuElement(1));
+    env.clickElement(env.userRowMoreMenuElement(1, UserType.Paratext));
     expect(env.rolesAndPermissionsItem().nativeElement.disabled).toBe(false);
 
     env.cleanup();
@@ -375,7 +376,7 @@ describe('CollaboratorsComponent', () => {
     tick();
     env.fixture.detectChanges();
 
-    env.clickElement(env.userRowMoreMenuElement(0));
+    env.clickElement(env.userRowMoreMenuElement(0, UserType.Paratext));
     expect(env.rolesAndPermissionsItem().nativeElement.disabled).toBe(true);
 
     env.cleanup();
@@ -392,9 +393,10 @@ describe('CollaboratorsComponent', () => {
     tick();
     env.fixture.detectChanges();
 
-    env.clickElement(env.userRowMoreMenuElement(3));
+    const inviteeRow = 1;
+    env.clickElement(env.userRowMoreMenuElement(inviteeRow, UserType.Guest));
     expect(env.rolesAndPermissionsItem().nativeElement.disabled).toBe(true);
-    env.clickElement(env.userRowMoreMenuElement(4));
+    env.clickElement(env.userRowMoreMenuElement(inviteeRow + 1, UserType.Guest));
     expect(env.rolesAndPermissionsItem().nativeElement.disabled).toBe(true);
 
     env.cleanup();
@@ -413,7 +415,6 @@ class TestEnvironment {
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor(hasConnection: boolean = true) {
-    when(mockedActivatedRoute.params).thenReturn(of({ projectId: this.project01Id }));
     const roles = new Map<string, ProjectRoleInfo>();
     for (const role of SF_PROJECT_ROLES) {
       roles.set(role.role, role);
@@ -442,6 +443,7 @@ class TestEnvironment {
         return projectDoc.submitJson0Op(op => op.set(p => p.userPermissions[userId], permissions));
       }
     );
+
     this.realtimeService.addSnapshots<UserProfile>(UserProfileDoc.COLLECTION, [
       {
         id: 'user01',
@@ -468,72 +470,60 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#collaborators-offline-message'));
   }
 
-  get noUsersLabel(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.no-users-label'));
-  }
-
-  get table(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#project-users-table'));
-  }
-
-  get tabControl(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.users-controls'));
-  }
-
-  get userRows(): DebugElement[] {
-    // querying the debug table element doesn't seem to work, so we query the native element instead and convert back
-    // to debug elements
-    return Array.from(this.table.nativeElement.querySelectorAll('tr')).map(r => getDebugNode(r) as DebugElement);
-  }
-
-  get filterInput(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#project-user-filter input'));
-  }
-
-  get isFilterDisabled(): boolean {
-    return this.filterInput.nativeElement.disabled;
-  }
-
   set onlineStatus(hasConnection: boolean) {
     this.testOnlineStatusService.setIsOnline(hasConnection);
     tick();
     this.fixture.detectChanges();
   }
 
+  noUsersLabel(userType: UserType): DebugElement {
+    return this.fixture.debugElement.query(By.css(`#no-users-${userType}`));
+  }
+
+  userTable(userType: UserType): DebugElement {
+    return this.fixture.debugElement.query(By.css(`#${userType}`));
+  }
+
+  userRowsByCategory(userType: UserType): DebugElement[] {
+    // querying the debug table element doesn't seem to work, so we query the native element instead and convert back
+    // to debug elements
+    return Array.from(this.userTable(userType).nativeElement.querySelectorAll('tr')).map(
+      r => getDebugNode(r) as DebugElement
+    );
+  }
+
   getElementByTestId(testId: string): DebugElement {
     return this.fixture.debugElement.query(By.css(`[data-test-id="${testId}"]`));
   }
 
-  cell(row: number, column: number): DebugElement {
-    return this.userRows[row].children[column];
+  cell(row: number, column: number, category: UserType): DebugElement {
+    return this.userRowsByCategory(category)[row].children[column];
   }
 
-  cellDisplayName(row: number, column: number): string {
-    return this.cell(row, column).query(By.css('.display-name-label')).nativeElement.childNodes[0].textContent.trim();
+  cellDisplayName(row: number, column: number, userType: UserType): string {
+    return this.cell(row, column, userType)
+      .query(By.css('.display-name-label'))
+      .nativeElement.childNodes[0].textContent.trim();
   }
 
-  cellRole(row: number, column: number): HTMLElement {
-    return this.cell(row, column).query(By.css('em')).nativeElement;
+  cellRole(row: number, column: number, userType: UserType): HTMLElement {
+    return this.cell(row, column, userType).query(By.css('em')).nativeElement;
   }
 
-  removeUserItemOnRow(row: number): DebugElement {
-    return this.userRows[row].query(By.css('.user-options button.remove-user'));
+  removeUserItemOnRow(row: number, userType: UserType): DebugElement {
+    return this.userRowsByCategory(userType)[row].query(By.css('.user-options button.remove-user'));
   }
 
-  cancelInviteItemOnRow(row: number): DebugElement {
-    return this.userRows[row].query(By.css('.user-options button.cancel-invite'));
+  cancelInviteItemOnRow(row: number, userType: UserType): DebugElement {
+    return this.userRowsByCategory(userType)[row].query(By.css('.user-options button.cancel-invite'));
   }
 
   rolesAndPermissionsItem(): DebugElement {
     return this.getElementByTestId('edit-roles-and-permissions');
   }
 
-  userPermissionIcon(row: number): HTMLElement {
-    return this.table.nativeElement.querySelectorAll('td.mat-column-questions_permission .mat-icon')[row];
-  }
-
-  tabElementFromIndex(index: number): DebugElement {
-    return this.tabControl.queryAll(By.css('.mat-mdc-tab'))[index];
+  userPermissionIcon(row: number, userType: UserType): HTMLElement {
+    return this.userTable(userType).nativeElement.querySelectorAll('td.mat-column-questions_permission .mat-icon')[row];
   }
 
   clickElement(element: HTMLElement | DebugElement): void {
@@ -546,8 +536,8 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  userRowMoreMenuElement(row: number): DebugElement {
-    return this.userRows[row].query(By.css('.user-more-menu'));
+  userRowMoreMenuElement(row: number, userType: UserType): DebugElement {
+    return this.userRowsByCategory(userType)[row].query(By.css('.user-more-menu'));
   }
 
   elementTextContent(element: DebugElement): string {
@@ -568,9 +558,9 @@ class TestEnvironment {
   setupProjectData(userRoles?: { [userRef: string]: string }): void {
     if (userRoles === undefined) {
       userRoles = {
-        user01: SFProjectRole.ParatextAdministrator,
+        user03: SFProjectRole.CommunityChecker,
         user02: SFProjectRole.ParatextTranslator,
-        user03: SFProjectRole.CommunityChecker
+        user01: SFProjectRole.ParatextAdministrator
       };
     }
     this.setupThisProjectData(this.project01Id, this.createProject(userRoles));
@@ -594,6 +584,15 @@ class TestEnvironment {
   }
 
   private createProject(userRoles: { [userRef: string]: string }): SFProject {
+    const paratextUsers: ParatextUserProfile[] = paratextUsersFromRoles(userRoles);
+    const ptMembersNotConnected = [
+      { username: 'User A', opaqueUserId: 'opaqueA', role: SFProjectRole.ParatextObserver },
+      { username: 'User B', opaqueUserId: 'opaqueB', role: SFProjectRole.ParatextTranslator },
+      { username: 'User C', opaqueUserId: 'opaqueC', role: SFProjectRole.ParatextAdministrator },
+      { username: 'User No Role', opaqueUserId: 'opaqueNoRole' },
+      { username: 'User Not Member', opaqueUserId: 'opaqueNotMember', role: SFProjectRole.None }
+    ];
+    paratextUsers.push(...ptMembersNotConnected);
     return createTestProject({
       checkingConfig: {
         checkingEnabled: false,
@@ -601,12 +600,13 @@ class TestEnvironment {
         answerExportMethod: CheckingAnswerExport.MarkedForExport
       },
       userRoles,
-      paratextUsers: paratextUsersFromRoles(userRoles)
+      paratextUsers
     });
   }
 
-  private setupThisProjectData(projectId: string, project: SFProject): void {
-    this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
+  private setupThisProjectData(projectId: string, project: SFProjectProfile): void {
+    when(mockedActivatedProject.projectId$).thenReturn(of(projectId));
+    this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectDoc.COLLECTION, {
       id: projectId,
       data: project
     });

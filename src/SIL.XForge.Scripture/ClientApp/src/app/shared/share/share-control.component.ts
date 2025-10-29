@@ -1,18 +1,9 @@
-import {
-  ChangeDetectorRef,
-  Component,
-  DestroyRef,
-  ElementRef,
-  EventEmitter,
-  Input,
-  Output,
-  ViewChild
-} from '@angular/core';
+import { Component, DestroyRef, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, FormGroupDirective, Validators } from '@angular/forms';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { BehaviorSubject, combineLatest } from 'rxjs';
+import { BehaviorSubject, combineLatest, startWith } from 'rxjs';
 import { CommandError } from 'xforge-common/command.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -58,7 +49,6 @@ export class ShareControlComponent extends ShareBaseComponent {
     private readonly noticeService: NoticeService,
     private readonly projectService: SFProjectService,
     private readonly onlineStatusService: OnlineStatusService,
-    private readonly changeDetector: ChangeDetectorRef,
     userService: UserService,
     private destroyRef: DestroyRef
   ) {
@@ -80,7 +70,7 @@ export class ShareControlComponent extends ShareBaseComponent {
           .pipe(quietTakeUntilDestroyed(this.destroyRef, { logWarnings: false }))
           .subscribe(() => this.updateFormEnabledStateAndLinkSharingKey());
       });
-    combineLatest([this.onlineStatusService.onlineStatus$, this.roleControl.valueChanges])
+    combineLatest([this.onlineStatusService.onlineStatus$, this.roleControl.valueChanges.pipe(startWith(null))])
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateFormEnabledStateAndLinkSharingKey());
   }
@@ -201,8 +191,6 @@ export class ShareControlComponent extends ShareBaseComponent {
       this.sendInviteForm.enable({ emitEvent: false });
     } else {
       this.sendInviteForm.disable({ emitEvent: false });
-      // Workaround for angular/angular#17793 (ExpressionChangedAfterItHasBeenCheckedError after form disabled)
-      this.changeDetector.detectChanges();
     }
   }
 }

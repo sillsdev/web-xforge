@@ -1881,7 +1881,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     ParatextUserProfile existingUser = _projectDoc.Data.ParatextUsers.SingleOrDefault(u =>
                         u.Username == activePtSyncUser.Username
                     );
-                    if (existingUser == null)
+                    if (existingUser is null)
                     {
                         // Ensure the PT user gets the up-to-date SF user ID
                         activePtSyncUser.SFUserId = _paratextUsers
@@ -1891,18 +1891,26 @@ public class ParatextSyncRunner : IParatextSyncRunner
                         if (!string.IsNullOrEmpty(activePtSyncUser.SFUserId))
                             userIdsAdded.Add(activePtSyncUser.SFUserId);
                     }
-                    else if (string.IsNullOrEmpty(existingUser.SFUserId))
+                    else
                     {
                         int index = _projectDoc.Data.ParatextUsers.FindIndex(u =>
                             u.Username == activePtSyncUser.Username
                         );
-                        string? userId = _paratextUsers
-                            .SingleOrDefault(u => u.Username == activePtSyncUser.Username)
-                            ?.Id;
-                        if (!string.IsNullOrEmpty(userId))
+                        ParatextProjectUser ptUserInRegistry = _paratextUsers.SingleOrDefault(u =>
+                            u.Username == activePtSyncUser.Username
+                        );
+                        string updatedSFUserId = ptUserInRegistry?.Id;
+                        if (string.IsNullOrEmpty(existingUser.SFUserId) && !string.IsNullOrEmpty(updatedSFUserId))
                         {
-                            op.Set(pd => pd.ParatextUsers[index].SFUserId, userId);
-                            userIdsAdded.Add(userId);
+                            // Ensure the PT user gets the up-to-date SF user ID
+                            op.Set(pd => pd.ParatextUsers[index].SFUserId, updatedSFUserId);
+                            userIdsAdded.Add(updatedSFUserId);
+                        }
+
+                        string paratextRole = ptUserInRegistry?.Role ?? SFProjectRole.None;
+                        if (paratextRole != existingUser.Role)
+                        {
+                            op.Set(pd => pd.ParatextUsers[index].Role, paratextRole);
                         }
                     }
                 }
@@ -2069,6 +2077,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     Username = paratextUser.Username,
                     SFUserId = sfUserId,
                     OpaqueUserId = _guidService.NewObjectId(),
+                    Role = paratextUser.Role,
                 };
             }
             else
@@ -2082,6 +2091,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                         Username = profile.Username,
                         SFUserId = sfUserId,
                         OpaqueUserId = profile.OpaqueUserId,
+                        Role = paratextUser.Role,
                     };
                 }
             }
