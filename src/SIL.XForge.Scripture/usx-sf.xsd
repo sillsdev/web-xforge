@@ -143,6 +143,7 @@
       <xs:choice minOccurs="0" maxOccurs="unbounded">
         <xs:element ref="ref"/>
         <xs:element ref="note"/>
+        <xs:element ref="link"/>
         <xs:group ref="Char"/>
         <xs:element ref="ms"/>
         <xs:element ref="figure"/>
@@ -563,7 +564,7 @@
     <xs:attribute name="link-href">
       <xs:simpleType>
         <xs:restriction base="xs:string">
-          <xs:pattern value="(.*///?(.*/?)+)|((prj:[A-Za-z\-0-9]{3,8} )?[A-Z1-4]{3} \d+:\d+(\-\d+)?)|(#[^\s]+)"/>
+          <xs:pattern value="(.*///?(.*/?)+)|((prj:[A-Za-z\-0-9]{3,8} )?[A-Z1-4]{3} \d+:\d+(\-\d+)?[ ]*)|(#[^\s]+)"/>
         </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
@@ -726,6 +727,7 @@
     <xs:complexType mixed="true">
       <xs:choice minOccurs="0" maxOccurs="unbounded">
         <xs:group ref="NoteChar"/>
+        <xs:element ref="link"/>
         <xs:element ref="unmatched"/>
       </xs:choice>
       <xs:attribute name="style" use="required">
@@ -749,6 +751,7 @@
         <xs:complexType mixed="true">
           <xs:choice minOccurs="0" maxOccurs="unbounded">
             <xs:group ref="Char"/>
+            <xs:element ref="link"/>
             <xs:element ref="ref"/>
             <xs:element ref="unmatched"/>
           </xs:choice>
@@ -818,6 +821,12 @@
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="link">
+    <xs:complexType mixed="true">
+      <xs:attribute name="style" use="required" type="CrossReferenceChar.char.style.enum"/>
+      <xs:attributeGroup ref="char.link"/>
     </xs:complexType>
   </xs:element>
   <xs:element name="optbreak">
