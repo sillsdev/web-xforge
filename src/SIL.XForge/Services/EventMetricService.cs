@@ -18,6 +18,7 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
         EventScope[]? scopes,
         string[]? eventTypes,
         DateTime? fromDate = null,
+        DateTime? toDate = null,
         int pageIndex = 0,
         int pageSize = int.MaxValue
     )
@@ -48,6 +49,12 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
         {
             DateTime from = fromDate.Value;
             query = query.Where(m => m.TimeStamp >= from);
+        }
+
+        if (toDate.HasValue)
+        {
+            DateTime to = toDate.Value;
+            query = query.Where(m => m.TimeStamp <= to);
         }
 
         var orderedQuery = query.OrderByDescending(m => m.TimeStamp);

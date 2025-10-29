@@ -1,0 +1,21 @@
+<mat-form-field class="date-range-field">
+  <mat-label>Date range</mat-label>
+  <mat-date-range-input [formGroup]="dateRangeForm" [rangePicker]="dateRangePicker" [dateFilter]="disableFutureDates">
+    <input matStartDate matInput formControlName="start" [max]="maxSelectableDate" placeholder="Start date" />
+    <input matEndDate matInput formControlName="end" [max]="maxSelectableDate" placeholder="End date" />
+  </mat-date-range-input>
+  <mat-datepicker-toggle matIconSuffix [for]="dateRangePicker"></mat-datepicker-toggle>
+  <mat-date-range-picker #dateRangePicker></mat-date-range-picker>
+  @if (dateRangeFormatHint != null) {
+    <mat-hint align="start" class="date-format-hint">{{ dateRangeFormatHint }}</mat-hint>
+  }
+  @if (dateRangeForm.get("start")?.hasError("futureDate")) {
+    <mat-error>Start date cannot be in the future.</mat-error>
+  }
+  @if (dateRangeForm.get("end")?.hasError("futureDate")) {
+    <mat-error>End date cannot be in the future.</mat-error>
+  }
+  @if (dateRangeForm.invalid) {
+    <mat-error>Select a valid date range ending no later than today.</mat-error>
+  }
+</mat-form-field>

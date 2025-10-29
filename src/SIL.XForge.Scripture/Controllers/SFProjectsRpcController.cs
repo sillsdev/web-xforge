@@ -712,6 +712,7 @@ public class SFProjectsRpcController(
         EventScope[]? scopes = null,
         string[]? eventTypes = null,
         DateTime? fromDate = null,
+        DateTime? toDate = null,
         int pageIndex = 0,
         int pageSize = int.MaxValue
     )
@@ -726,6 +727,7 @@ public class SFProjectsRpcController(
                     scopes,
                     eventTypes,
                     fromDate,
+                    toDate,
                     pageIndex,
                     pageSize
                 )
@@ -755,6 +757,7 @@ public class SFProjectsRpcController(
                     { "scope", string.Join(',', scopes ?? []) },
                     { "eventTypes", string.Join(',', eventTypes ?? []) },
                     { "fromDate", fromDate?.ToString("o") ?? string.Empty },
+                    { "toDate", toDate?.ToString("o") ?? string.Empty },
                 }
             );
             throw;

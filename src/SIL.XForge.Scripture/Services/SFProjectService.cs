@@ -988,6 +988,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         EventScope[]? scopes,
         string[]? eventTypes,
         DateTime? fromDate = null,
+        DateTime? toDate = null,
         int pageIndex = 0,
         int pageSize = int.MaxValue
     )
@@ -1043,6 +1044,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             scopes,
             eventTypes,
             fromDate,
+            toDate,
             pageIndex,
             pageSize
         );

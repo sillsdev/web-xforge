@@ -82,12 +82,53 @@
 
 .filter-controls {
   display: flex;
-  align-items: center;
-  margin-bottom: 24px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 16px;
   padding-top: 8px; // Add top padding to prevent cutoff
 
-  mat-form-field {
-    min-width: 150px;
+  app-date-range-picker {
+    margin-bottom: 1rem;
+  }
+
+  .export-button-group {
+    display: flex;
+    margin-bottom: 1rem;
+
+    .export-csv-button {
+      // Be flush with the drop-down arrow
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+      border-right: none;
+      // Help the button text be aligned with the baseline of other text items, despite having a button icon.
+      display: initial;
+    }
+
+    .export-menu-button {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+      min-width: 40px;
+      padding: 0 8px;
+
+      mat-icon {
+        margin: 0;
+      }
+    }
+  }
+
+  .duration-statistics {
+    display: flex;
+    gap: 16px;
+    padding: 8px 16px;
+    background-color: var(--sf-draft-jobs-statistics-background);
+    border-radius: 4px;
+    font-size: 14px;
+    margin-bottom: 2rem;
+
+    .stat-item {
+      color: var(--sf-draft-jobs-statistics-text);
+      font-weight: 500;
+    }
   }
 }
 
