@@ -28,6 +28,7 @@ import {
   CharInline,
   EmptyEmbed,
   FigureEmbed,
+  LinkEmbed,
   NoteEmbed,
   NoteThreadEmbed,
   NotNormalizedText,
@@ -57,6 +58,7 @@ export function registerScriptureFormats(formatRegistry: QuillFormatRegistryServ
     UnmatchedEmbed,
     ChapterEmbed,
     UnknownBlot,
+    LinkEmbed,
 
     // Inline Blots
     CharInline,
