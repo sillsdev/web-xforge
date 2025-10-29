@@ -1713,6 +1713,34 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task AddUserAsync_AddsRoleAndIdToParatextUsers()
+    {
+        var env = new TestEnvironment();
+        SFProject project = env.GetProject(Project02);
+
+        Assert.That(project.UserRoles.ContainsKey(User01), Is.False, "setup");
+        Assert.That(project.ParatextUsers.Exists(u => u.Username == "User 01"), Is.True, "setup");
+        Assert.That(project.ParatextUsers.Exists(u => u.SFUserId == User01), Is.False, "setup");
+        env.ParatextService.TryGetProjectRoleAsync(
+                Arg.Any<UserSecret>(),
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
+
+        await env.Service.AddUserAsync(User01, Project02, null);
+        project = env.GetProject(Project02);
+
+        Assert.That(project.UserRoles.ContainsKey(User01), Is.True, "User should have been added to project");
+        Assert.That(
+            project.ParatextUsers.Exists(u =>
+                u.SFUserId == User01 && u.Username == "User 01" && u.Role == SFProjectRole.Administrator
+            ),
+            Is.True
+        );
+    }
+
+    [Test]
     public async Task AddUserAsync_ShareKeyExists_AddsUserAndRemovesKey()
     {
         var env = new TestEnvironment();
@@ -1732,6 +1760,7 @@ public class SFProjectServiceTests
         project = env.GetProject(Project03);
 
         Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
+        Assert.That(project.ParatextUsers.Exists(u => u.SFUserId == User03 && u.Username == "User 03"), Is.True);
     }
 
     [Test]
@@ -1743,6 +1772,7 @@ public class SFProjectServiceTests
         Assert.DoesNotThrowAsync(() => env.Service.AddUserAsync(User03, Project04, SFProjectRole.Translator));
         var project = env.GetProject(Project04);
         Assert.That(project.UserRoles[User03], Is.EqualTo(SFProjectRole.Translator));
+        Assert.That(project.ParatextUsers.Exists(u => u.SFUserId == User03 && u.Username == "User 03"), Is.True);
     }
 
     [Test]
@@ -1909,8 +1939,9 @@ public class SFProjectServiceTests
         await env.Service.AddUserAsync(User03, Project03, SFProjectRole.Translator);
         project03 = env.GetProject(Project03);
         source = env.GetProject(SourceOnly);
-        Assert.That(project03.UserRoles.ContainsKey(User03));
-        Assert.That(source.UserRoles.ContainsKey(User03));
+        Assert.That(project03.UserRoles.ContainsKey(User03), Is.True);
+        Assert.That(project03.ParatextUsers.Exists(u => u.SFUserId == User03 && u.Username == "User 03"), Is.True);
+        Assert.That(source.UserRoles.ContainsKey(User03), Is.True);
         user = env.GetUser(User03);
         Assert.That(user.Sites[SiteId].Projects, Is.EquivalentTo(new[] { Project01, Project03, SourceOnly }));
     }
@@ -4487,13 +4518,20 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
         var user = env.GetProject(Project01).UserRoles[User01];
         Assert.AreEqual(SFProjectRole.Administrator, user);
+        SFProject project = env.GetProject(Project01);
+        Assert.IsFalse(
+            project.ParatextUsers.Exists(u => u.Username == "User 01" && u.Role == SFProjectRole.Translator),
+            "setup"
+        );
 
         // SUT
         env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
             .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Translator)));
         await env.Service.SyncUserRoleAsync(User01, Project01);
-        user = env.GetProject(Project01).UserRoles[User01];
+        project = env.GetProject(Project01);
+        user = project.UserRoles[User01];
         Assert.AreEqual(SFProjectRole.Translator, user);
+        Assert.IsTrue(project.ParatextUsers.Exists(u => u.Username == "User 01" && u.Role == SFProjectRole.Translator));
         await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -4516,13 +4554,20 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
         var user = env.GetProject(Project01).UserRoles[User03];
         Assert.AreEqual(SFProjectRole.Consultant, user);
+        SFProject project = env.GetProject(Project01);
+        Assert.IsFalse(
+            project.ParatextUsers.Exists(u => u.Username == "User 03" && u.Role == SFProjectRole.Translator),
+            "setup"
+        );
 
         // SUT
         env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
             .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Translator)));
         await env.Service.SyncUserRoleAsync(User03, Project01);
-        user = env.GetProject(Project01).UserRoles[User03];
+        project = env.GetProject(Project01);
+        user = project.UserRoles[User03];
         Assert.AreEqual(SFProjectRole.Translator, user);
+        Assert.IsTrue(project.ParatextUsers.Exists(u => u.Username == "User 03" && u.Role == SFProjectRole.Translator));
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -4543,6 +4588,7 @@ public class SFProjectServiceTests
                             Id = User01,
                             Email = "user01@example.com",
                             ParatextId = "pt-user01",
+                            Name = "User 01",
                             Roles = [SystemRole.User],
                             Sites = new Dictionary<string, Site>
                             {
@@ -4557,6 +4603,7 @@ public class SFProjectServiceTests
                             Id = User02,
                             Email = "user02@example.com",
                             ParatextId = "pt-user02",
+                            Name = "User 02",
                             Roles = [SystemRole.User],
                             Sites = new Dictionary<string, Site>
                             {
@@ -4571,6 +4618,7 @@ public class SFProjectServiceTests
                             Id = User03,
                             Email = "user03@example.com",
                             ParatextId = "pt-user03",
+                            Name = "User 03",
                             Roles = [SystemRole.User],
                             Sites = new Dictionary<string, Site>
                             {
@@ -4585,6 +4633,7 @@ public class SFProjectServiceTests
                             Id = User04,
                             Email = "user04@example.com",
                             Roles = [SystemRole.SystemAdmin],
+                            Name = "User 04",
                             Sites = new Dictionary<string, Site> { { SiteId, new Site() } },
                         },
                         new User
@@ -4599,6 +4648,7 @@ public class SFProjectServiceTests
                             Id = User05,
                             Email = "user05@example.com",
                             ParatextId = "pt-user05",
+                            Name = "User 05",
                             Roles = [SystemRole.User],
                             Sites = new Dictionary<string, Site>
                             {
@@ -4613,6 +4663,7 @@ public class SFProjectServiceTests
                             Id = User06,
                             Email = "user06@example.com",
                             Roles = [SystemRole.User],
+                            Name = "User 06",
                             Sites = new Dictionary<string, Site>
                             {
                                 {
@@ -4626,6 +4677,7 @@ public class SFProjectServiceTests
                             Id = User07,
                             Email = "user07@example.com",
                             Roles = [SystemRole.SystemAdmin],
+                            Name = "User 07",
                             Sites = new Dictionary<string, Site>
                             {
                                 {
@@ -4734,6 +4786,30 @@ public class SFProjectServiceTests
                                 },
                             },
                             WritingSystem = new WritingSystem { Tag = "qaa" },
+                            ParatextUsers =
+                            {
+                                new ParatextUserProfile
+                                {
+                                    SFUserId = User01,
+                                    Username = "User 01",
+                                    Role = SFProjectRole.Administrator,
+                                    OpaqueUserId = "syncuser01",
+                                },
+                                new ParatextUserProfile
+                                {
+                                    SFUserId = User03,
+                                    Username = "User 03",
+                                    OpaqueUserId = "syncuser03",
+                                    Role = SFProjectRole.Consultant,
+                                },
+                                new ParatextUserProfile
+                                {
+                                    SFUserId = User05,
+                                    Username = "User 05",
+                                    OpaqueUserId = "syncuser05",
+                                    Role = SFProjectRole.Translator,
+                                },
+                            },
                         },
                         new SFProject
                         {
@@ -4753,6 +4829,22 @@ public class SFProjectServiceTests
                             {
                                 { User02, SFProjectRole.Administrator },
                                 { User04, SFProjectRole.CommunityChecker },
+                            },
+                            ParatextUsers =
+                            {
+                                new ParatextUserProfile
+                                {
+                                    SFUserId = User02,
+                                    Username = "User 02",
+                                    Role = SFProjectRole.Administrator,
+                                    OpaqueUserId = "syncuser02",
+                                },
+                                new ParatextUserProfile
+                                {
+                                    SFUserId = string.Empty,
+                                    Username = "User 01",
+                                    OpaqueUserId = "syncuser01",
+                                },
                             },
                         },
                         new SFProject
@@ -5305,6 +5397,8 @@ public class SFProjectServiceTests
             TransceleratorService = Substitute.For<ITransceleratorService>();
             EventMetricService = Substitute.For<IEventMetricService>();
             BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
+            GuidService = Substitute.For<IGuidService>();
+            GuidService.NewObjectId().Returns($"syncuser");
 
             // These project rights correspond to the permissions in the projects above
             ProjectRights = Substitute.For<ISFProjectRights>();
@@ -5431,7 +5525,8 @@ public class SFProjectServiceTests
                 TransceleratorService,
                 BackgroundJobClient,
                 EventMetricService,
-                ProjectRights
+                ProjectRights,
+                GuidService
             );
         }
 
@@ -5451,6 +5546,7 @@ public class SFProjectServiceTests
         public ITransceleratorService TransceleratorService { get; set; }
         public IBackgroundJobClient BackgroundJobClient { get; }
         public ISFProjectRights ProjectRights { get; }
+        public IGuidService GuidService { get; }
 
         public SFProject GetProject(string id) => RealtimeService.GetRepository<SFProject>().Get(id);
 

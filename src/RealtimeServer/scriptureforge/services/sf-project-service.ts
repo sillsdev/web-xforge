@@ -528,6 +528,9 @@ export class SFProjectService extends ProjectService<SFProject> {
             },
             sfUserId: {
               bsonType: 'string'
+            },
+            role: {
+              bsonType: 'string'
             }
           },
           additionalProperties: false
