@@ -3,7 +3,7 @@ import { VerseRef } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
 import Quill, { Delta, EmitterSource, Range } from 'quill';
 import { DeltaOperation, StringMap } from 'rich-text';
-import { BehaviorSubject, Subscription } from 'rxjs';
+import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { isString } from '../../../type-utils';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { LynxTextModelConverter } from '../../translate/editor/lynx/insights/lynx-editor';
@@ -128,18 +128,22 @@ class SegmentInfo {
 export class TextViewModel implements OnDestroy, LynxTextModelConverter {
   editor?: Quill;
 
-  private readonly _segments: Map<string, Range> = new Map<string, Range>();
   private changesSub?: Subscription;
   private onCreateSub?: Subscription;
   private textDoc?: TextDoc;
   private textDocId?: TextDocId;
+
   /**
    * A mapping of IDs of elements embedded into the quill editor to their positions.
    * These elements are in addition to the text data i.e. Note threads
    */
   private _embeddedElements: Map<string, EmbedPosition> = new Map<string, EmbedPosition>();
 
-  segments$ = new BehaviorSubject<ReadonlyMap<string, Range>>(this._segments);
+  private readonly _segments: Map<string, Range> = new Map<string, Range>();
+  private readonly segments$ = new BehaviorSubject<ReadonlyMap<string, Range>>(this._segments);
+
+  private readonly _embedPositionsChanged$ = new Subject<void>();
+  readonly embedPositionsChanged$ = this._embedPositionsChanged$.asObservable();
 
   get segments(): IterableIterator<[string, Range]> {
     return this._segments.entries();
@@ -780,6 +784,7 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
     }
 
     this.segments$.next(this._segments);
+    this._embedPositionsChanged$.next();
 
     return convertDelta.compose(fixDelta).chop();
   }
