@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import Quill, { Delta, Op, Range } from 'quill';
+import { Observable } from 'rxjs';
 import { QuillLynxEditorAdapter } from './quill-services/quill-lynx-editor-adapter';
 
 export type LynxableEditor = Quill; // Add future editor as union type
@@ -44,6 +45,13 @@ export interface LynxTextModelConverter {
    * Useful when embeds that are present only in the editor model may affect position offsets from Lynx.
    */
   getEmbedCountsToOffsetFunc(): LynxCountToOffsetFunc;
+
+  /**
+   * Observable that emits when embedded element positions change.
+   * This is useful for detecting when note embeds are added/removed (including remotely),
+   * which affect the mapping between data model positions and editor positions.
+   */
+  readonly embedPositionsChanged$: Observable<void>;
 }
 
 @Injectable({ providedIn: 'root' })
