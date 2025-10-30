@@ -39,14 +39,15 @@ import { LynxInsightActionPromptComponent } from '../lynx-insight-action-prompt/
   ]
 })
 export class LynxInsightEditorObjectsComponent implements OnChanges, OnInit, OnDestroy {
-  readonly insightSelector = `.${LynxInsightBlot.superClassName}`;
-
-  private readonly dataIdProp = LynxInsightBlot.idDatasetPropName;
-
   @Input() editor?: LynxableEditor;
   @Input() lynxTextModelConverter?: LynxTextModelConverter;
   @Input() autoCorrectionsEnabled: boolean = false;
   @Input() insightsEnabled: boolean = false;
+
+  readonly embedPositionsChangedDebounceTime = 100;
+
+  readonly insightSelector = `.${LynxInsightBlot.superClassName}`;
+  private readonly dataIdProp = LynxInsightBlot.idDatasetPropName;
 
   private isEditorMouseDown = false;
   private insightsEnabled$ = new BehaviorSubject<boolean>(this.insightsEnabled);
@@ -169,7 +170,7 @@ export class LynxInsightEditorObjectsComponent implements OnChanges, OnInit, OnD
                   })
                 ),
                 (this.lynxTextModelConverter?.embedPositionsChanged$ ?? EMPTY).pipe(
-                  debounceTime(100),
+                  debounceTime(this.embedPositionsChangedDebounceTime),
                   withLatestFrom(this.insightState.filteredChapterInsights$),
                   switchMap(([_, insights]) => {
                     return from(

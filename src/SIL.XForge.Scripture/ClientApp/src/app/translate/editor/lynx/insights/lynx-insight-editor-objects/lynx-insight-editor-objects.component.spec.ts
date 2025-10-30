@@ -374,7 +374,7 @@ describe('LynxInsightEditorObjectsComponent', () => {
 
       // Embed position change should trigger second insights render, but not action overlay render
       env.triggerEmbedPositionChange();
-      tick(100); // Allow debounceTime(100) to elapse
+      tick(env.component.embedPositionsChangedDebounceTime);
       flush();
       verify(mockInsightRenderService.render(anything(), anything())).twice();
       verify(mockInsightRenderService.renderActionOverlay(anything(), anything(), anything(), anything())).once();
@@ -414,7 +414,7 @@ describe('LynxInsightEditorObjectsComponent', () => {
 
       // Embed position change should trigger second insights render, but not action overlay render
       env.triggerEmbedPositionChange();
-      tick(100);
+      tick(env.component.embedPositionsChangedDebounceTime);
       flush();
       verify(mockInsightRenderService.render(anything(), anything())).twice();
       verify(mockInsightRenderService.renderActionOverlay(anything(), anything(), anything(), anything())).twice();
