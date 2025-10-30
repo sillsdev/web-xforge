@@ -29,6 +29,7 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { TrainingDataDoc } from '../../../../core/models/training-data-doc';
+import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { BuildDto } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
@@ -125,8 +126,11 @@ export class DraftHistoryEntryComponent {
         // Get the target language, if it is not already set
         this._targetLanguage ??= target?.data?.writingSystem.tag;
 
-        // Get the source project, if it is configured
-        const source = r.projectId === '' ? undefined : await this.projectService.getProfile(r.projectId);
+        let source: SFProjectProfileDoc | undefined;
+        // Get the source project, if it is configured and the user has access
+        if (await this.permissionsService.isUserOnProject(r.projectId)) {
+          source = r.projectId === '' ? undefined : await this.projectService.getProfile(r.projectId);
+        }
 
         // Get the source language, if it is not already set
         this._sourceLanguage ??= source?.data?.writingSystem.tag;
@@ -154,10 +158,13 @@ export class DraftHistoryEntryComponent {
     this._translationSources = [];
     void Promise.all(
       translationScriptureRanges.map(async r => {
-        const source =
-          r.projectId === '' || r.projectId === value?.engine?.id
-            ? undefined
-            : await this.projectService.getProfile(r.projectId);
+        let source: SFProjectProfileDoc | undefined;
+        if (await this.permissionsService.isUserOnProject(r.projectId)) {
+          source =
+            r.projectId === '' || r.projectId === value?.engine?.id
+              ? undefined
+              : await this.projectService.getProfile(r.projectId);
+        }
         const sourceShortName = source?.data?.shortName;
         if (sourceShortName != null) this._translationSources.push(sourceShortName);
       })
@@ -322,6 +329,7 @@ export class DraftHistoryEntryComponent {
     private readonly activatedProjectService: ActivatedProjectService,
     readonly featureFlags: FeatureFlagService,
     private readonly draftOptionsService: DraftOptionsService,
+    private readonly permissionsService: PermissionsService,
     private readonly destroyRef: DestroyRef
   ) {}
 
