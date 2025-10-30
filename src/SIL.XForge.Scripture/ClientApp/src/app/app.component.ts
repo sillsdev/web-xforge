@@ -1,4 +1,6 @@
+import { BidiModule } from '@angular/cdk/bidi';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { AsyncPipe, DOCUMENT } from '@angular/common';
 import { Component, DestroyRef, Inject, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -85,7 +87,10 @@ declare function gtag(...args: any): void;
     MatToolbarRow,
     MatProgressBar,
     MatDivider,
-    MatDrawer
+    MatDrawer,
+    MatDrawerContainer,
+    CdkScrollable,
+    BidiModule
   ]
 })
 export class AppComponent extends DataLoadingComponent implements OnInit, OnDestroy {

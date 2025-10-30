@@ -5,7 +5,7 @@ import { MatCard } from '@angular/material/card';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
-import { MatStep, MatStepLabel, MatStepper, MatStepperPrevious } from '@angular/material/stepper';
+import { MatStep, MatStepLabel, MatStepper, MatStepperIcon, MatStepperPrevious } from '@angular/material/stepper';
 import {
   MatCell,
   MatCellDef,
@@ -104,6 +104,7 @@ interface ProjectPendingUpdate {
     MatStepper,
     MatStep,
     MatStepLabel,
+    MatStepperIcon,
     MatStepperPrevious,
     MatTable,
     MatColumnDef,

@@ -20,6 +20,7 @@ import { hasPropWithValue } from '../../type-utils';
 import { SelectableProject } from '../core/paratext.service';
 import { SFValidators } from '../shared/sfvalidators';
 import { projectLabel } from '../shared/utils';
+
 // A value accessor is necessary in order to create a custom form control
 export const PROJECT_SELECT_VALUE_ACCESSOR: any = {
   provide: NG_VALUE_ACCESSOR,

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { MatButton } from '@angular/material/button';
+import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatDialogConfig } from '@angular/material/dialog';
 import { MatIcon } from '@angular/material/icon';
 import { MatList, MatListItem } from '@angular/material/list';
@@ -19,7 +19,7 @@ import {
 @Component({
   selector: 'app-training-data-multi-select',
   templateUrl: './training-data-multi-select.component.html',
-  imports: [MatButton, MatIcon, MatList, MatListItem, TranslocoModule],
+  imports: [MatButton, MatIcon, MatIconButton, MatList, MatListItem, TranslocoModule],
   styleUrls: ['./training-data-multi-select.component.scss']
 })
 export class TrainingDataMultiSelectComponent {
