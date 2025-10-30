@@ -211,41 +211,34 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         filter(([isOnline, build]) => isOnline && build != null && build.state !== BuildStates.Finishing),
         tap(() => this.setInitialState()),
         switchMap(() =>
-          combineLatest([
-            merge(
-              this.draftGenerationService
-                .getGeneratedDraftHistory(
-                  this.textDocId!.projectId,
-                  this.textDocId!.bookNum,
-                  this.textDocId!.chapterNum
-                )
-                .pipe(
-                  map(revisions => {
-                    if (revisions != null && revisions.length > 0) {
-                      // Sort revisions by timestamp descending
-                      this.draftRevisions = [...revisions].sort((a, b) => {
-                        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-                      });
-                      const date = this.timestamp ?? new Date();
-                      // Don't emit this.selectedRevision$, as the merge will handle this
-                      this.selectedRevision = this.findClosestRevision(date, this.draftRevisions);
-                      return date;
-                    } else {
-                      return undefined;
-                    }
-                  })
-                ),
-              this.selectedRevision$.pipe(
-                filter((rev): rev is { timestamp: string } => rev != null),
-                map(revision => new Date(revision.timestamp))
-              )
-            ),
-            this.draftExists()
-          ])
+          merge(
+            this.draftGenerationService
+              .getGeneratedDraftHistory(this.textDocId!.projectId, this.textDocId!.bookNum, this.textDocId!.chapterNum)
+              .pipe(
+                map(revisions => {
+                  if (revisions != null && revisions.length > 0) {
+                    // Sort revisions by timestamp descending
+                    this.draftRevisions = [...revisions].sort((a, b) => {
+                      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+                    });
+                    const date = this.timestamp ?? new Date();
+                    // Don't emit this.selectedRevision$, as the merge will handle this
+                    this.selectedRevision = this.findClosestRevision(date, this.draftRevisions);
+                    return date;
+                  } else {
+                    return undefined;
+                  }
+                })
+              ),
+            this.selectedRevision$.pipe(
+              filter((rev): rev is { timestamp: string } => rev != null),
+              map(revision => new Date(revision.timestamp))
+            )
+          )
         ),
-        switchMap(([timestamp, draftExists]) => {
+        switchMap(timestamp => {
           // If an earlier draft exists, hide it if the draft history feature is not enabled
-          if (!draftExists && timestamp == null) {
+          if (timestamp == null) {
             this.draftCheckState = 'draft-empty';
             return EMPTY;
           }
@@ -374,11 +367,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     this.isDraftReady = false;
     this.isDraftApplied = false;
     this.userAppliedDraft = false;
-  }
-
-  private draftExists(): Observable<boolean> {
-    // This method of checking for draft may be temporary until there is a better way supplied by serval
-    return this.draftGenerationService.draftExists(this.projectId!, this.bookNum!, this.chapter!);
   }
 
   private findClosestRevision(date: Date, revisions: Revision[]): Revision | undefined {
