@@ -1,5 +1,5 @@
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-import { expect, userEvent, within } from '@storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { AutofocusDirective } from 'xforge-common/autofocus.directive';
 import { AttachAudioComponent } from '../../../attach-audio/attach-audio.component';

@@ -1,5 +1,5 @@
 import { Meta, StoryFn } from '@storybook/angular';
-import { expect, userEvent, within } from '@storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
 import { arrayOfIntsFromOne } from 'xforge-common/test-utils';
 import { getOverlay } from '../../../../.storybook/util/mat-dialog-launch';
 import { BookChapterChooserComponent } from './book-chapter-chooser.component';
