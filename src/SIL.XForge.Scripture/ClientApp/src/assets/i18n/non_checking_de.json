@@ -98,10 +98,12 @@
     "member_role_info": "Projektmitglieder haben in Scripture Forge und Paratext die gleichen Rollen.",
     "no_users_found": "Keine Benutzer gefunden",
     "paratext_members": "Paratext Mitglieder",
+    "paratext_member_not_connected": "Ist dem Projekt nicht beigetreten",
     "problem_loading_invited_users": "Es gab ein Problem beim Laden der Liste der eingeladenen Benutzer.",
     "project_guests": "Projektgäste",
     "remove_from_project": "Aus dem Projekt entfernen",
     "remove_user": "Benutzer entfernen",
+    "role_unknown": "Rolle unbekannt",
     "share_with_others": "Mit anderen teilen"
   },
   "confirm_draft_sources": {

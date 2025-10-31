@@ -356,7 +356,7 @@
     "upcoming_maintenance": "Scripture Forge wird wegen Wartungsarbeiten für etwa {{ duration }} ab {{ startTime }} nicht zur Verfügung stehen."
   },
   "issue_email": {
-    "heading": "Bitte beschreibe das Problem.",
+    "heading": "Bitte beschreibe, was Du getan hast, als der Fehler auftrat. Gib an:\n- was Du versucht hast zu tun\n- was Du erwartet hast\n- was dabei passiert ist\n- ob es jedes Mal passiert oder nur einmal passiert ist",
     "technical_details": "Technische Details",
     "unknown": "Unbekannt"
   },

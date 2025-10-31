@@ -98,10 +98,12 @@
     "member_role_info": "Project members will have the same roles in both Scripture Forge and Paratext.",
     "no_users_found": "Niciun utilizator găsit",
     "paratext_members": "Paratext Members",
+    "paratext_member_not_connected": "Has not joined the project",
     "problem_loading_invited_users": "A apărut o eroare la încărcarea listei de utilizatori invitați.",
     "project_guests": "Project Guests",
     "remove_from_project": "Elimină din proiect",
     "remove_user": "Remove User",
+    "role_unknown": "Role unknown",
     "share_with_others": "Distribuiți altora"
   },
   "confirm_draft_sources": {
