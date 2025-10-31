@@ -1,5 +1,5 @@
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-import { expect, within } from '@storybook/test';
+import { expect, within } from 'storybook/test';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';

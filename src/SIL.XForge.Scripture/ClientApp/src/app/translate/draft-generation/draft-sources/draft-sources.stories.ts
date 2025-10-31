@@ -1,7 +1,7 @@
 import { DestroyRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-import { expect, userEvent, waitFor, within } from '@storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { defaultTranslocoMarkupTranspilers } from 'ngx-transloco-markup';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';

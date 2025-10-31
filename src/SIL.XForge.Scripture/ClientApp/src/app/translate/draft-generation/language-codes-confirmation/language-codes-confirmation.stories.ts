@@ -1,6 +1,6 @@
 import { TranslocoModule } from '@ngneat/transloco';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-import { expect, within } from '@storybook/test';
+import { expect, within } from 'storybook/test';
 import { defaultTranslocoMarkupTranspilers, TranslocoMarkupComponent } from 'ngx-transloco-markup';
 import { instance, mock } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';

@@ -1,5 +1,5 @@
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-import { userEvent, within } from '@storybook/test';
+import { userEvent, within } from 'storybook/test';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
 import { OnlineStatusService } from 'xforge-common/online-status.service';

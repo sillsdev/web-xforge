@@ -1,5 +1,5 @@
 import { Meta, StoryObj } from '@storybook/angular';
-import { expect, within } from '@storybook/test';
+import { expect, within } from 'storybook/test';
 import userEvent from '@testing-library/user-event';
 import { SelectableProjectWithLanguageCode } from '../core/paratext.service';
 import { projectLabel } from '../shared/utils';
