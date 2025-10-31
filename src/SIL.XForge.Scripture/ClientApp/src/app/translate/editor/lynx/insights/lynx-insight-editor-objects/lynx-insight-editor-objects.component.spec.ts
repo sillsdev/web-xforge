@@ -2,7 +2,7 @@ import { Component, DestroyRef, NO_ERRORS_SCHEMA, ViewChild } from '@angular/cor
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { Delta } from 'quill';
 import { LynxInsightFilter, LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
@@ -350,6 +350,76 @@ describe('LynxInsightEditorObjectsComponent', () => {
       verify(mockInsightRenderService.removeAllInsightFormatting(anything())).atLeast(1);
     }));
   });
+
+  describe('embed position changes', () => {
+    it('should re-render insights when embed positions change', fakeAsync(() => {
+      // Start with editor not ready
+      const env = new TestEnvironment({ initialEditorReady: false });
+      const testInsight = env.createTestInsight();
+
+      env.setFilteredInsights([testInsight]);
+      tick();
+      flush();
+
+      // No render calls, as editor not ready yet
+      verify(mockInsightRenderService.renderActionOverlay(anything(), anything(), anything(), anything())).never();
+      verify(mockInsightRenderService.render(anything(), anything())).never();
+
+      // Editor ready should trigger first render of insights and action overlay
+      env.setEditorReady(true);
+      tick();
+      flush();
+      verify(mockInsightRenderService.render(anything(), anything())).once();
+      verify(mockInsightRenderService.renderActionOverlay(anything(), anything(), anything(), anything())).once();
+
+      // Embed position change should trigger second insights render, but not action overlay render
+      env.triggerEmbedPositionChange();
+      tick(env.component.embedPositionsChangedDebounceTime);
+      flush();
+      verify(mockInsightRenderService.render(anything(), anything())).twice();
+      verify(mockInsightRenderService.renderActionOverlay(anything(), anything(), anything(), anything())).once();
+    }));
+
+    it('should not reset overlay state when embed positions change', fakeAsync(() => {
+      // Start with editor not ready
+      const env = new TestEnvironment({ initialEditorReady: false });
+      const testInsight = env.createTestInsight();
+
+      env.setFilteredInsights([testInsight]);
+      tick();
+      flush();
+
+      // No render calls, as editor not ready yet
+      verify(mockInsightRenderService.renderActionOverlay(anything(), anything(), anything(), anything())).never();
+      verify(mockInsightRenderService.render(anything(), anything())).never();
+
+      // Editor ready should trigger first render of insights and action overlay
+      env.setEditorReady(true);
+      tick();
+      flush();
+      verify(mockInsightRenderService.render(anything(), anything())).once();
+      verify(mockInsightRenderService.renderActionOverlay(anything(), anything(), anything(), anything())).once();
+
+      // Set display state to trigger action overlay
+      env.setDisplayState({
+        activeInsightIds: [testInsight.id],
+        actionOverlayActive: true,
+        promptActive: true,
+        cursorActiveInsightIds: []
+      });
+      tick();
+      flush();
+      verify(mockInsightRenderService.render(anything(), anything())).once(); // No new insight render
+      verify(mockInsightRenderService.renderActionOverlay(anything(), anything(), anything(), anything())).twice();
+
+      // Embed position change should trigger second insights render, but not action overlay render
+      env.triggerEmbedPositionChange();
+      tick(env.component.embedPositionsChangedDebounceTime);
+      flush();
+      verify(mockInsightRenderService.render(anything(), anything())).twice();
+      verify(mockInsightRenderService.renderActionOverlay(anything(), anything(), anything(), anything())).twice();
+    }));
+  });
 });
 
 @Component({
@@ -390,6 +460,7 @@ class TestEnvironment {
   private filterSubject: BehaviorSubject<LynxInsightFilter>;
   private filteredInsightCountsByTypeSubject: BehaviorSubject<Record<LynxInsightType, number>>;
   private taskRunningStatusSubject: BehaviorSubject<boolean>;
+  private embedPositionsChangedSubject: Subject<void>;
 
   constructor(args: TestEnvArgs = {}) {
     const textModelConverter = instance(mockTextModelConverter);
@@ -414,6 +485,8 @@ class TestEnvironment {
     this.filterSubject = new BehaviorSubject<any>({ types: [] });
     this.filteredInsightCountsByTypeSubject = new BehaviorSubject<any>({ info: 0, warning: 0, error: 0 });
     this.taskRunningStatusSubject = new BehaviorSubject<boolean>(false);
+
+    this.embedPositionsChangedSubject = new Subject<void>();
 
     // Create mock editor
     const mockRoot = document.createElement('div');
@@ -460,6 +533,7 @@ class TestEnvironment {
     when(mockOverlayService.isOpen).thenReturn(false);
     when(mockLynxWorkspaceService.getOnTypeEdits(anything(), anything())).thenResolve([]);
     when(mockTextModelConverter.dataDeltaToEditorDelta(anything())).thenCall((delta: Delta) => delta);
+    when(mockTextModelConverter.embedPositionsChanged$).thenReturn(this.embedPositionsChangedSubject);
 
     // Setup text model converter to return ranges as-is (prevents null range issues)
     when(mockTextModelConverter.dataRangeToEditorRange(anything())).thenCall((range: LynxInsightRange) => range);
@@ -516,6 +590,10 @@ class TestEnvironment {
     if (handlers) {
       handlers.forEach(handler => handler([delta, new Delta(), 'user']));
     }
+  }
+
+  triggerEmbedPositionChange(): void {
+    this.embedPositionsChangedSubject.next();
   }
 
   createTestInsight(props: Partial<LynxInsight> = {}): LynxInsight {

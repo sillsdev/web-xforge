@@ -14,7 +14,7 @@ import {
   switchMap,
   tap
 } from 'rxjs';
-import { distinctUntilChanged, map, observeOn, scan } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map, observeOn, scan, withLatestFrom } from 'rxjs/operators';
 import { ActivatedBookChapterService } from 'xforge-common/activated-book-chapter.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { EditorReadyService } from '../base-services/editor-ready.service';
@@ -39,14 +39,15 @@ import { LynxInsightActionPromptComponent } from '../lynx-insight-action-prompt/
   ]
 })
 export class LynxInsightEditorObjectsComponent implements OnChanges, OnInit, OnDestroy {
-  readonly insightSelector = `.${LynxInsightBlot.superClassName}`;
-
-  private readonly dataIdProp = LynxInsightBlot.idDatasetPropName;
-
   @Input() editor?: LynxableEditor;
   @Input() lynxTextModelConverter?: LynxTextModelConverter;
   @Input() autoCorrectionsEnabled: boolean = false;
   @Input() insightsEnabled: boolean = false;
+
+  readonly embedPositionsChangedDebounceTime = 100;
+
+  readonly insightSelector = `.${LynxInsightBlot.superClassName}`;
+  private readonly dataIdProp = LynxInsightBlot.idDatasetPropName;
 
   private isEditorMouseDown = false;
   private insightsEnabled$ = new BehaviorSubject<boolean>(this.insightsEnabled);
@@ -153,7 +154,9 @@ export class LynxInsightEditorObjectsComponent implements OnChanges, OnInit, OnD
               }
 
               return merge(
-                // Render blots when insights change
+                // Render blots when insights change OR when note embeds are added/removed.
+                // Only reset chapterInsightsRendered$ when insights change (not embeds)
+                // to avoid clearing insight overlay.
                 this.insightState.filteredChapterInsights$.pipe(
                   switchMap(insights => {
                     chapterInsightsRendered$.next(false);
@@ -164,6 +167,18 @@ export class LynxInsightEditorObjectsComponent implements OnChanges, OnInit, OnD
                         this.editor!
                       )
                     ).pipe(tap(() => chapterInsightsRendered$.next(true)));
+                  })
+                ),
+                (this.lynxTextModelConverter?.embedPositionsChanged$ ?? EMPTY).pipe(
+                  debounceTime(this.embedPositionsChangedDebounceTime),
+                  withLatestFrom(this.insightState.filteredChapterInsights$),
+                  switchMap(([_, insights]) => {
+                    return from(
+                      this.insightRenderService.render(
+                        insights.map(insight => this.adjustInsightRange(insight)),
+                        this.editor!
+                      )
+                    );
                   })
                 ),
                 // Ensure insights are rendered before responding to display state changes,
