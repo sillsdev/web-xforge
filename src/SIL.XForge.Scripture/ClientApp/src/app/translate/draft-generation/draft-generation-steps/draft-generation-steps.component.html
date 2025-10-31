@@ -133,7 +133,7 @@
           (bookSelect)="onTranslatedBookSelect($event)"
           data-test-id="draft-stepper-training-books"
         ></app-book-multi-select>
-        @if (unusableTrainingSourceBooks.length) {
+        @if (unusableTrainingSourceBooks.length > 0 || emptyTrainingSourceBooks.length > 0) {
           <app-notice icon="info" mode="basic" type="light" class="unusable-training-books">
             <div class="notice-container">
               <span
@@ -142,22 +142,33 @@
                 [innerHtml]="
                   !expandUnusableTrainingBooks
                     ? i18n.translateAndInsertTags('draft_generation_steps.books_are_hidden_show_why', {
-                        numBooks: unusableTrainingSourceBooks.length
+                        numBooks: unusableTrainingSourceBooks.length + emptyTrainingSourceBooks.length
                       })
                     : i18n.translateAndInsertTags('draft_generation_steps.books_are_hidden_hide_explanation', {
-                        numBooks: unusableTrainingSourceBooks.length
+                        numBooks: unusableTrainingSourceBooks.length + emptyTrainingSourceBooks.length
                       })
                 "
               >
               </span>
               @if (expandUnusableTrainingBooks) {
-                <h4 class="explanation">
-                  <transloco
-                    key="draft_generation_steps.these_source_books_cannot_be_used_for_training"
-                    [params]="{ firstTrainingSource }"
-                  ></transloco>
-                </h4>
-                <span class="book-names">{{ bookNames(unusableTrainingSourceBooks) }}</span>
+                @if (emptyTrainingSourceBooks.length > 0) {
+                  <h4 class="explanation">
+                    <transloco
+                      key="draft_generation_steps.these_training_source_books_are_blank"
+                      [params]="{ firstTrainingSource }"
+                    ></transloco>
+                  </h4>
+                  <span class="book-names">{{ bookNames(emptyTrainingSourceBooks) }}</span>
+                }
+                @if (unusableTrainingSourceBooks.length > 0) {
+                  <h4 class="explanation">
+                    <transloco
+                      key="draft_generation_steps.these_source_books_cannot_be_used_for_training"
+                      [params]="{ firstTrainingSource }"
+                    ></transloco>
+                  </h4>
+                  <span class="book-names">{{ bookNames(unusableTrainingSourceBooks) }}</span>
+                }
               }
             </div>
           </app-notice>
