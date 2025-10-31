@@ -356,7 +356,7 @@
     "upcoming_maintenance": "Scripture Forge sera indisponible pour maintenance pendant environ {{ duration }} à partir de {{ startTime }}."
   },
   "issue_email": {
-    "heading": "Veuillez expliquer le problème.",
+    "heading": "Veuillez décrire ce que vous faisiez lorsque cette erreur s'est produite. Veuillez inclure :\n- Ce que vous essayiez de faire\n- Ce que vous attendiez\n- Ce qui s'est réellement passé\n- Si cela se produit à chaque fois ou seulement une fois",
     "technical_details": "Détails techniques",
     "unknown": "Inconnu"
   },
