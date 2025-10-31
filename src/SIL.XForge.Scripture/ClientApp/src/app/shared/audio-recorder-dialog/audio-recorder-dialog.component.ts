@@ -276,7 +276,7 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
     const analyser: AnalyserNode = audioCtx.createAnalyser();
     const source: MediaStreamAudioSourceNode = audioCtx.createMediaStreamSource(stream);
     const bufferLength: number = analyser.frequencyBinCount;
-    const dataArray: Uint8Array = new Uint8Array(bufferLength);
+    const dataArray: Uint8Array<ArrayBuffer> = new Uint8Array(bufferLength);
     source.connect(analyser);
 
     this.initCanvasContext();
