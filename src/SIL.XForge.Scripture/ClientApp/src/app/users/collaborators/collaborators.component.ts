@@ -1,11 +1,21 @@
 import { Component, DestroyRef, OnInit } from '@angular/core';
-import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { MatIconButton } from '@angular/material/button';
+import { MatFormField, MatHint, MatLabel } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import { MatInput } from '@angular/material/input';
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
+import { MatCell, MatCellDef, MatColumnDef, MatRow, MatRowDef, MatTable } from '@angular/material/table';
+import { MatTab, MatTabGroup } from '@angular/material/tabs';
+import { MatTooltip } from '@angular/material/tooltip';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { BehaviorSubject, combineLatest, distinctUntilChanged, filter, tap } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
@@ -17,7 +27,10 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectService } from '../../core/sf-project.service';
+import { NoticeComponent } from '../../shared/notice/notice.component';
+import { ShareControlComponent } from '../../shared/share/share-control.component';
 import { RolesAndPermissionsDialogComponent } from '../roles-and-permissions/roles-and-permissions-dialog.component';
+
 interface UserInfo {
   displayName?: string;
   avatarUrl?: string;
@@ -55,7 +68,32 @@ export enum UserType {
   selector: 'app-collaborators',
   templateUrl: './collaborators.component.html',
   styleUrls: ['./collaborators.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    NoticeComponent,
+    MatTabGroup,
+    MatTab,
+    MatFormField,
+    FormsModule,
+    ReactiveFormsModule,
+    MatLabel,
+    MatInput,
+    MatTable,
+    MatColumnDef,
+    MatCellDef,
+    MatCell,
+    AvatarComponent,
+    MatTooltip,
+    MatIcon,
+    MatIconButton,
+    MatMenuTrigger,
+    MatMenu,
+    MatMenuItem,
+    MatRowDef,
+    MatRow,
+    MatHint,
+    ShareControlComponent
+  ]
 })
 export class CollaboratorsComponent extends DataLoadingComponent implements OnInit {
   userInviteForm = new UntypedFormGroup({

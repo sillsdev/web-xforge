@@ -1,10 +1,12 @@
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
-import { MatChipsModule } from '@angular/material/chips';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatChipListbox, MatChipOption } from '@angular/material/chips';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatTooltip } from '@angular/material/tooltip';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { filter, firstValueFrom } from 'rxjs';
 import { L10nPercentPipe } from 'xforge-common/l10n-percent.pipe';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { Book } from '../../translate/draft-generation/draft-generation-steps/draft-generation-steps.component';
 import { ProgressService } from '../progress-service/progress.service';
 
@@ -20,7 +22,15 @@ type Scope = 'OT' | 'NT' | 'DC';
 @Component({
   selector: 'app-book-multi-select',
   templateUrl: './book-multi-select.component.html',
-  imports: [UICommonModule, MatChipsModule, TranslocoModule, L10nPercentPipe],
+  imports: [
+    MatCheckbox,
+    MatChipListbox,
+    MatChipOption,
+    MatTooltip,
+    MatProgressSpinner,
+    TranslocoModule,
+    L10nPercentPipe
+  ],
   styleUrls: ['./book-multi-select.component.scss']
 })
 export class BookMultiSelectComponent implements OnChanges {

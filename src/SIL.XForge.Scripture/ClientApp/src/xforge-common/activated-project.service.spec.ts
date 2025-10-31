@@ -1,13 +1,12 @@
 import { Component } from '@angular/core';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { Route, Router, RouterModule } from '@angular/router';
+import { provideRouter, Route, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ActiveProjectIdService } from './activated-project.service';
 import { configureTestingModule } from './test-utils';
 
 @Component({
-  template: '<div></div>',
-  standalone: false
+  template: '<div></div>'
 })
 class MockComponent {}
 
@@ -16,7 +15,7 @@ let env: TestEnvironment;
 
 describe('ActiveProjectIdService', () => {
   configureTestingModule(() => ({
-    imports: [RouterModule.forRoot(ROUTES)]
+    providers: [provideRouter(ROUTES)]
   }));
 
   beforeEach(() => (env = new TestEnvironment()));

@@ -1,8 +1,18 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, DestroyRef, EventEmitter, forwardRef, Input, OnDestroy, Output, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR, ValidatorFn } from '@angular/forms';
-import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import {
+  ControlValueAccessor,
+  FormControl,
+  FormsModule,
+  NG_VALUE_ACCESSOR,
+  ReactiveFormsModule,
+  ValidatorFn
+} from '@angular/forms';
+import { MatAutocomplete, MatAutocompleteTrigger, MatOptgroup, MatOption } from '@angular/material/autocomplete';
 import { ShowOnDirtyErrorStateMatcher } from '@angular/material/core';
-import { translate } from '@ngneat/transloco';
+import { MatError, MatFormField } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { translate, TranslocoModule } from '@ngneat/transloco';
 import { BehaviorSubject, combineLatest, fromEvent, Observable } from 'rxjs';
 import { distinctUntilChanged, map, shareReplay, startWith, takeUntil, tap } from 'rxjs/operators';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -10,6 +20,7 @@ import { hasPropWithValue } from '../../type-utils';
 import { SelectableProject } from '../core/paratext.service';
 import { SFValidators } from '../shared/sfvalidators';
 import { projectLabel } from '../shared/utils';
+
 // A value accessor is necessary in order to create a custom form control
 export const PROJECT_SELECT_VALUE_ACCESSOR: any = {
   provide: NG_VALUE_ACCESSOR,
@@ -23,7 +34,19 @@ export const PROJECT_SELECT_VALUE_ACCESSOR: any = {
   templateUrl: 'project-select.component.html',
   styleUrls: ['project-select.component.scss'],
   providers: [PROJECT_SELECT_VALUE_ACCESSOR],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    MatFormField,
+    MatInput,
+    FormsModule,
+    MatAutocompleteTrigger,
+    ReactiveFormsModule,
+    MatError,
+    MatAutocomplete,
+    MatOptgroup,
+    MatOption,
+    AsyncPipe
+  ]
 })
 export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
   @Output() valueChange: EventEmitter<string | undefined> = new EventEmitter<string | undefined>(true);

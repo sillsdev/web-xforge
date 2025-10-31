@@ -1,20 +1,20 @@
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { DebugElement, NgModule } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
 import { ScriptureChooserDialogComponent, ScriptureChooserDialogData } from './scripture-chooser-dialog.component';
 
 describe('ScriptureChooserDialog', () => {
   configureTestingModule(() => ({
-    imports: [TestModule]
+    imports: [getTestTranslocoModule(), ScriptureChooserDialogComponent],
+    providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting(), provideNoopAnimations()]
   }));
 
   let env: TestEnvironment;
@@ -396,13 +396,6 @@ describe('ScriptureChooserDialog', () => {
     expect(env.component.selection.book).toBeUndefined();
     expect(env.component.selection.chapter).toBeUndefined();
   }));
-
-  @NgModule({
-    declarations: [ScriptureChooserDialogComponent],
-    imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule],
-    providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
-  })
-  class TestModule {}
 
   class TestEnvironment {
     fixture: ComponentFixture<ChildViewContainerComponent>;

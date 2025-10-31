@@ -1,23 +1,27 @@
 import { Component, DestroyRef, Input, OnDestroy, OnInit } from '@angular/core';
+import { MatIconButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { BehaviorSubject, Subscription, timer } from 'rxjs';
 import { filter, repeat, retry, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { DonutChartComponent } from 'xforge-common/donut-chart/donut-chart.component';
+import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
-
-import { I18nService } from 'xforge-common/i18n.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
+
 @Component({
   selector: 'app-training-progress',
   templateUrl: './training-progress.component.html',
   styleUrls: ['./training-progress.component.scss'],
-  standalone: false
+  imports: [TranslocoModule, MatIconButton, MatIcon, DonutChartComponent]
 })
 export class TrainingProgressComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   showTrainingProgress: boolean = false;

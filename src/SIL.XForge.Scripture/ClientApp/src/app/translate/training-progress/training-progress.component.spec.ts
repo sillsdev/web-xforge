@@ -9,10 +9,9 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import * as RichText from 'rich-text';
 import { defer, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -26,9 +25,9 @@ const mockedUserService = mock(UserService);
 
 describe('TrainingProgressComponent', () => {
   configureTestingModule(() => ({
-    imports: [TestTranslocoModule, UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
-    declarations: [TrainingProgressComponent],
+    imports: [TrainingProgressComponent, getTestTranslocoModule()],
     providers: [
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
       { provide: UserService, useMock: mockedUserService },
       provideHttpClient(withInterceptorsFromDi()),

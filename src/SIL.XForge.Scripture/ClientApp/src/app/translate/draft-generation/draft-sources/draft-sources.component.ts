@@ -1,12 +1,11 @@
-import { CommonModule } from '@angular/common';
+import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
 import { Component, DestroyRef, EventEmitter } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatRippleModule } from '@angular/material/core';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatButton } from '@angular/material/button';
+import { MatCard, MatCardActions, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
+import { MatRipple } from '@angular/material/core';
+import { MatError } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -26,12 +25,12 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
-import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { hasData, notNull } from '../../../../type-utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { ParatextService, SelectableProject, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { ProjectSelectComponent } from '../../../project-select/project-select.component';
 import { ConfirmOnLeave } from '../../../shared/project-router.guard';
 import { projectLabel } from '../../../shared/utils';
 import { isSFProjectSyncing } from '../../../sync/sync.component';
@@ -43,6 +42,7 @@ import {
 import { LanguageCodesConfirmationComponent } from '../language-codes-confirmation/language-codes-confirmation.component';
 import { TrainingDataMultiSelectComponent } from '../training-data/training-data-multi-select.component';
 import { TrainingDataService } from '../training-data/training-data.service';
+
 /** Status for a project, which may or may not be at SF. */
 export interface ProjectStatus {
   shortName: string;
@@ -55,18 +55,22 @@ export interface ProjectStatus {
 @Component({
   selector: 'app-draft-sources',
   imports: [
-    MatButtonModule,
-    MatFormFieldModule,
-    MatIconModule,
-    XForgeCommonModule,
-    MatRippleModule,
-    MatCardModule,
-    CommonModule,
+    NgTemplateOutlet,
+    KeyValuePipe,
+    MatButton,
+    MatIcon,
+    MatRipple,
+    MatCard,
+    MatCardActions,
+    MatCardHeader,
+    MatCardContent,
+    MatCardTitle,
+    MatError,
     TranslocoModule,
-    MatCheckboxModule,
-    MatProgressSpinnerModule,
+    MatProgressSpinner,
     LanguageCodesConfirmationComponent,
-    TrainingDataMultiSelectComponent
+    TrainingDataMultiSelectComponent,
+    ProjectSelectComponent
   ],
   templateUrl: './draft-sources.component.html',
   styleUrl: './draft-sources.component.scss'

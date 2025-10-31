@@ -1,3 +1,5 @@
+import { Dir } from '@angular/cdk/bidi';
+import { NgClass } from '@angular/common';
 import {
   Component,
   DestroyRef,
@@ -9,7 +11,11 @@ import {
   ViewChild,
   ViewChildren
 } from '@angular/core';
+import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatDialogRef } from '@angular/material/dialog';
+import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
+import { TranslocoModule } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -25,6 +31,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { QuestionDoc } from '../../../core/models/question-doc';
@@ -40,7 +47,10 @@ import {
 import { CheckingUtils } from '../../checking.utils';
 import { QuestionDialogData } from '../../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../../question-dialog/question-dialog.service';
-import { AudioAttachment } from '../checking-audio-player/checking-audio-player.component';
+import {
+  AudioAttachment,
+  CheckingAudioPlayerComponent
+} from '../checking-audio-player/checking-audio-player.component';
 import { CheckingTextComponent } from '../checking-text/checking-text.component';
 import { CheckingCommentsComponent, CommentAction } from './checking-comments/checking-comments.component';
 import { CheckingInput, CheckingInputFormComponent } from './checking-input-form/checking-input-form.component';
@@ -89,7 +99,20 @@ enum LikeAnswerResponse {
   selector: 'app-checking-answers',
   templateUrl: './checking-answers.component.html',
   styleUrls: ['./checking-answers.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    CheckingQuestionComponent,
+    MatIconButton,
+    MatTooltip,
+    MatIcon,
+    MatButton,
+    CheckingInputFormComponent,
+    NgClass,
+    Dir,
+    CheckingAudioPlayerComponent,
+    OwnerComponent,
+    CheckingCommentsComponent
+  ]
 })
 export class CheckingAnswersComponent implements OnInit {
   @ViewChild(CheckingInputFormComponent) answerInput?: CheckingInputFormComponent;

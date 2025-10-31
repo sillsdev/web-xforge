@@ -1,5 +1,20 @@
 import { Component, DestroyRef, OnInit } from '@angular/core';
+import { MatButton } from '@angular/material/button';
 import { MatDialogConfig } from '@angular/material/dialog';
+import { MatIcon } from '@angular/material/icon';
+import { MatPaginator } from '@angular/material/paginator';
+import {
+  MatCell,
+  MatCellDef,
+  MatColumnDef,
+  MatHeaderCell,
+  MatHeaderCellDef,
+  MatHeaderRow,
+  MatHeaderRowDef,
+  MatRow,
+  MatRowDef,
+  MatTable
+} from '@angular/material/table';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { BehaviorSubject, combineLatest, switchMap } from 'rxjs';
@@ -11,7 +26,6 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectService } from '../core/sf-project.service';
 import { EventMetric } from './event-metric';
@@ -29,7 +43,23 @@ interface Row {
   selector: 'app-event-metrics-log',
   templateUrl: './event-metrics-log.component.html',
   styleUrls: ['./event-metrics-log.component.scss'],
-  imports: [OwnerComponent, TranslocoModule, UICommonModule]
+  imports: [
+    OwnerComponent,
+    TranslocoModule,
+    MatButton,
+    MatIcon,
+    MatTable,
+    MatColumnDef,
+    MatHeaderCell,
+    MatHeaderCellDef,
+    MatCell,
+    MatCellDef,
+    MatHeaderRow,
+    MatHeaderRowDef,
+    MatRow,
+    MatRowDef,
+    MatPaginator
+  ]
 })
 export class EventMetricsLogComponent extends DataLoadingComponent implements OnInit {
   columnsToDisplay: string[] = ['successful', 'scope', 'eventType', 'author'];

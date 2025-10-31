@@ -18,7 +18,7 @@ import { FeatureFlagService } from './feature-flags/feature-flag.service';
 import { UserDoc } from './models/user-doc';
 import { NoticeService } from './notice.service';
 import { PwaService } from './pwa.service';
-import { configureTestingModule, TestTranslocoModule } from './test-utils';
+import { configureTestingModule, getTestTranslocoModule } from './test-utils';
 import { UserService } from './user.service';
 
 const mockedAuthService = mock(AuthService);
@@ -55,7 +55,7 @@ class MockConsole {
 }
 describe('ExceptionHandlingService', () => {
   configureTestingModule(() => ({
-    declarations: [HostComponent],
+    imports: [HostComponent, getTestTranslocoModule()],
     providers: [
       ExceptionHandlingService,
       { provide: AuthService, useMock: mockedAuthService },
@@ -67,8 +67,7 @@ describe('ExceptionHandlingService', () => {
       { provide: CONSOLE, useValue: new MockConsole() },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
-    ],
-    imports: [TestTranslocoModule]
+    ]
   }));
 
   it('should not crash on anything', fakeAsync(() => {
@@ -233,8 +232,7 @@ interface BreadcrumbTests {
       <div class="mdc-button__ripple"></div>
       <span>Ripple text</span>
     </button>
-  `,
-  standalone: false
+  `
 })
 class HostComponent {}
 

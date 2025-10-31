@@ -1,5 +1,11 @@
 import { Component, DestroyRef, HostBinding, OnInit } from '@angular/core';
+import { MatIconButton } from '@angular/material/button';
 import { MatDialogConfig } from '@angular/material/dialog';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import { MatInput } from '@angular/material/input';
+import { MatPaginator } from '@angular/material/paginator';
+import { MatCell, MatCellDef, MatColumnDef, MatRow, MatRowDef, MatTable } from '@angular/material/table';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
@@ -8,14 +14,17 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { environment } from '../../environments/environment';
+import { AvatarComponent } from '../avatar/avatar.component';
 import { DataLoadingComponent } from '../data-loading-component';
 import { DialogService } from '../dialog.service';
 import { ProjectDoc } from '../models/project-doc';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
 import { QueryParameters } from '../query-parameters';
+import { RouterLinkDirective } from '../router-link.directive';
 import { UserService } from '../user.service';
 import { SaDeleteDialogComponent, SaDeleteUserDialogData } from './sa-delete-dialog.component';
+
 interface ProjectInfo {
   id: string;
   name: string;
@@ -31,7 +40,22 @@ interface Row {
   selector: 'app-sa-users',
   templateUrl: './sa-users.component.html',
   styleUrls: ['./sa-users.component.scss'],
-  standalone: false
+  imports: [
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatTable,
+    MatColumnDef,
+    MatCellDef,
+    MatCell,
+    AvatarComponent,
+    RouterLinkDirective,
+    MatIconButton,
+    MatIcon,
+    MatRowDef,
+    MatRow,
+    MatPaginator
+  ]
 })
 export class SaUsersComponent extends DataLoadingComponent implements OnInit {
   @HostBinding('class') classes = 'flex-column';

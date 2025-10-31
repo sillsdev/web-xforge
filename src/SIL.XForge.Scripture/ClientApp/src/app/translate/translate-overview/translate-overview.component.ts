@@ -1,6 +1,21 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { MatButton } from '@angular/material/button';
+import { MatCard, MatCardActions, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
+import { MatDivider } from '@angular/material/divider';
+import { MatIcon } from '@angular/material/icon';
+import {
+  MatList,
+  MatListItem,
+  MatListItemIcon,
+  MatListItemLine,
+  MatListItemMeta,
+  MatListItemTitle
+} from '@angular/material/list';
+import { MatProgressBar } from '@angular/material/progress-bar';
+import { MatTooltip } from '@angular/material/tooltip';
 import { ActivatedRoute } from '@angular/router';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { ANY_INDEX, obj } from 'realtime-server/lib/esm/common/utils/obj-path';
@@ -12,9 +27,13 @@ import { asyncScheduler, firstValueFrom, Subscription, timer } from 'rxjs';
 import { filter, map, repeat, retry, tap, throttleTime } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { DonutChartComponent } from 'xforge-common/donut-chart/donut-chart.component';
 import { I18nService } from 'xforge-common/i18n.service';
+import { L10nNumberPipe } from 'xforge-common/l10n-number.pipe';
+import { L10nPercentPipe } from 'xforge-common/l10n-percent.pipe';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -22,6 +41,8 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 import { ProgressService, TextProgress } from '../../shared/progress-service/progress.service';
+import { FontUnsupportedMessageComponent } from '../font-unsupported-message/font-unsupported-message.component';
+import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 const ENGINE_QUALITY_STAR_COUNT = 3;
 const TEXT_PATH_TEMPLATE = obj<SFProject>().pathTemplate(p => p.texts[ANY_INDEX]);
 
@@ -29,7 +50,31 @@ const TEXT_PATH_TEMPLATE = obj<SFProject>().pathTemplate(p => p.texts[ANY_INDEX]
   selector: 'app-translate-overview',
   templateUrl: './translate-overview.component.html',
   styleUrls: ['./translate-overview.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    FontUnsupportedMessageComponent,
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatTooltip,
+    DonutChartComponent,
+    MatDivider,
+    MatList,
+    MatListItem,
+    RouterLinkDirective,
+    MatIcon,
+    MatListItemIcon,
+    MatListItemTitle,
+    MatListItemLine,
+    MatListItemMeta,
+    MatProgressBar,
+    MatCardContent,
+    MatCardActions,
+    MatButton,
+    TrainingProgressComponent,
+    L10nNumberPipe,
+    L10nPercentPipe
+  ]
 })
 export class TranslateOverviewComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   trainingPercentage: number = 0;

@@ -1,11 +1,9 @@
-import { CommonModule } from '@angular/common';
 import { Component, ViewChild } from '@angular/core';
+import { MatIcon } from '@angular/material/icon';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
-import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SingleButtonAudioPlayerComponent } from './single-button-audio-player.component';
 
 @Component({
@@ -13,7 +11,7 @@ import { SingleButtonAudioPlayerComponent } from './single-button-audio-player.c
   template: `<app-single-button-audio-player source="./test-audio-player.webm" #player (click)="togglePlay()">
     <mat-icon>{{ player.playing ? 'stop' : 'play_arrow' }}</mat-icon>
   </app-single-button-audio-player>`,
-  standalone: false
+  imports: [SingleButtonAudioPlayerComponent, MatIcon]
 })
 class TestComponent {
   @ViewChild('player') player!: SingleButtonAudioPlayerComponent;
@@ -31,14 +29,8 @@ const meta: Meta<SingleButtonAudioPlayerComponent> = {
   component: TestComponent,
   decorators: [
     moduleMetadata({
-      imports: [UICommonModule, CommonModule, I18nStoryModule],
-      providers: [
-        {
-          provide: OnlineStatusService,
-          useValue: instance(mockedOnlineStatusService)
-        }
-      ],
-      declarations: [SingleButtonAudioPlayerComponent, TestComponent]
+      imports: [SingleButtonAudioPlayerComponent, TestComponent],
+      providers: [{ provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) }]
     })
   ]
 };

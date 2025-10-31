@@ -1,4 +1,5 @@
 import { CdkDrag, CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
+import { AsyncPipe, NgFor, NgIf, NgTemplateOutlet } from '@angular/common';
 import {
   AfterViewInit,
   Component,
@@ -14,6 +15,9 @@ import {
   SimpleChanges,
   ViewChildren
 } from '@angular/core';
+import { MatIcon } from '@angular/material/icon';
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
+import { TranslocoModule } from '@ngneat/transloco';
 import {
   BehaviorSubject,
   debounceTime,
@@ -29,11 +33,26 @@ import { TabMenuItem, TabMenuService } from '../../sf-tab-group';
 import { TabHeaderPointerEvent, TabLocation, TabMoveEvent } from '../sf-tabs.types';
 import { TabHeaderComponent } from '../tab-header/tab-header.component';
 import { TabComponent } from '../tab/tab.component';
+import { TabScrollButtonComponent } from './tab-scroll-button/tab-scroll-button.component';
 @Component({
   selector: 'app-tab-group-header',
   templateUrl: './tab-group-header.component.html',
   styleUrls: ['./tab-group-header.component.scss'],
-  standalone: false
+  imports: [
+    CdkDropList,
+    CdkDrag,
+    NgFor,
+    NgIf,
+    NgTemplateOutlet,
+    AsyncPipe,
+    MatIcon,
+    MatMenu,
+    MatMenuItem,
+    MatMenuTrigger,
+    TranslocoModule,
+    TabHeaderComponent,
+    TabScrollButtonComponent
+  ]
 })
 export class TabGroupHeaderComponent implements OnChanges, OnInit, AfterViewInit, OnDestroy {
   @Input() groupId: string = '';

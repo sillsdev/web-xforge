@@ -18,9 +18,9 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { MockConsole } from 'xforge-common/mock-console';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
@@ -29,8 +29,8 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
-import { SharedModule } from '../shared.module';
 import { getCombinedVerseTextDoc, getEmptyChapterDoc, getPoetryVerseTextDoc, getTextDoc } from '../test-utils';
+import { provideQuillRegistrations } from './quill-editor-registration/quill-providers';
 import { getAttributesAtPosition } from './quill-util';
 import { TextNoteDialogComponent, TextNoteType } from './text-note-dialog/text-note-dialog.component';
 import {
@@ -49,9 +49,11 @@ const mockedDialogService = mock(DialogService);
 
 describe('TextComponent', () => {
   configureTestingModule(() => ({
-    declarations: [HostComponent],
-    imports: [SharedModule.forRoot(), TestOnlineStatusModule.forRoot(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [HostComponent],
     providers: [
+      provideQuillRegistrations(),
+      provideTestOnlineStatus(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: TranslocoService, useMock: mockedTranslocoService },
@@ -1689,7 +1691,7 @@ class MockQuill extends Quill {
     [enablePresence]="enablePresence"
     (presenceChange)="onPresenceChange($event)"
   ></app-text>`,
-  standalone: false
+  imports: [TextComponent]
 })
 class HostComponent {
   @ViewChild(TextComponent) textComponent!: TextComponent;

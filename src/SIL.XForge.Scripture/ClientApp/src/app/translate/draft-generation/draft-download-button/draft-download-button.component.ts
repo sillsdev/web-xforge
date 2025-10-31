@@ -1,8 +1,7 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Subscription } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -15,7 +14,7 @@ import { DraftGenerationService } from '../draft-generation.service';
   selector: 'app-draft-download-button',
   templateUrl: './draft-download-button.component.html',
   styleUrls: ['./draft-download-button.component.scss'],
-  imports: [CommonModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, TranslocoModule]
+  imports: [MatButton, MatIcon, MatProgressSpinner, TranslocoModule]
 })
 export class DraftDownloadButtonComponent {
   /**

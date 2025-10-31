@@ -4,7 +4,7 @@ import { DebugElement, getDebugNode } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatMenuHarness } from '@angular/material/menu/testing';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { CheckingAnswerExport, CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
@@ -22,20 +22,19 @@ import { NONE_ROLE, ProjectRoleInfo } from 'xforge-common/models/project-role-in
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, emptyHammerLoader, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { configureTestingModule, emptyHammerLoader, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_PROJECT_ROLES } from '../../core/models/sf-project-role-info';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
-import { SharedModule } from '../../shared/shared.module';
 import { paratextUsersFromRoles } from '../../shared/test-utils';
+import { provideQuillRegistrations } from '../../shared/text/quill-editor-registration/quill-providers';
 import { CollaboratorsComponent, UserType } from './collaborators.component';
 
 const mockedActivatedProject = mock(ActivatedProjectService);
@@ -46,24 +45,19 @@ const mockedDialogService = mock(DialogService);
 
 describe('CollaboratorsComponent', () => {
   configureTestingModule(() => ({
-    declarations: [CollaboratorsComponent],
-    imports: [
-      NoopAnimationsModule,
-      UICommonModule,
-      TestTranslocoModule,
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      SharedModule.forRoot(),
-      TestOnlineStatusModule.forRoot(),
-      AvatarComponent
-    ],
+    imports: [CollaboratorsComponent, getTestTranslocoModule(), AvatarComponent],
     providers: [
+      provideQuillRegistrations(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
+      provideTestOnlineStatus(),
       { provide: ActivatedProjectService, useMock: mockedActivatedProject },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: DialogService, useMock: mockedDialogService },
-      emptyHammerLoader
+      emptyHammerLoader,
+      provideNoopAnimations()
     ]
   }));
 

@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { MatTabsModule } from '@angular/material/tabs';
+import { MatTab, MatTabContent, MatTabGroup } from '@angular/material/tabs';
 import { ActivatedRoute, Router } from '@angular/router';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { MobileNotSupportedComponent } from '../shared/mobile-not-supported/mobile-not-supported.component';
 import { DraftJobsComponent } from './draft-jobs.component';
 import { ServalProjectsComponent } from './serval-projects.component';
@@ -14,7 +13,14 @@ import { ServalProjectsComponent } from './serval-projects.component';
   selector: 'app-serval-administration',
   templateUrl: './serval-administration.component.html',
   styleUrls: ['./serval-administration.component.scss'],
-  imports: [ServalProjectsComponent, MobileNotSupportedComponent, DraftJobsComponent, MatTabsModule, UICommonModule]
+  imports: [
+    ServalProjectsComponent,
+    MobileNotSupportedComponent,
+    DraftJobsComponent,
+    MatTabGroup,
+    MatTab,
+    MatTabContent
+  ]
 })
 export class ServalAdministrationComponent implements OnInit {
   selectedTabIndex = 0;

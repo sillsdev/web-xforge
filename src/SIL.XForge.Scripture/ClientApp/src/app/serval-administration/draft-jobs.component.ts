@@ -1,5 +1,23 @@
 import { Component, DestroyRef, OnInit } from '@angular/core';
+import { MatIconButton } from '@angular/material/button';
+import { MatOption } from '@angular/material/core';
 import { MatDialogConfig } from '@angular/material/dialog';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import { MatSelect } from '@angular/material/select';
+import {
+  MatCell,
+  MatCellDef,
+  MatColumnDef,
+  MatHeaderCell,
+  MatHeaderCellDef,
+  MatHeaderRow,
+  MatHeaderRowDef,
+  MatRow,
+  MatRowDef,
+  MatTable
+} from '@angular/material/table';
+import { MatTooltip } from '@angular/material/tooltip';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { BehaviorSubject, combineLatest, map, Observable, switchMap } from 'rxjs';
@@ -10,7 +28,6 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectService } from '../core/sf-project.service';
 import { EventMetric } from '../event-metrics/event-metric';
@@ -74,7 +91,28 @@ const DRAFTING_EVENTS = [
   selector: 'app-draft-jobs',
   templateUrl: './draft-jobs.component.html',
   styleUrls: ['./draft-jobs.component.scss'],
-  imports: [OwnerComponent, UICommonModule, RouterLink, NoticeComponent]
+  imports: [
+    OwnerComponent,
+    MatTooltip,
+    MatIconButton,
+    MatFormField,
+    MatLabel,
+    MatSelect,
+    MatOption,
+    MatIcon,
+    MatTable,
+    MatColumnDef,
+    MatHeaderCell,
+    MatHeaderCellDef,
+    MatCell,
+    MatCellDef,
+    MatHeaderRow,
+    MatHeaderRowDef,
+    MatRow,
+    MatRowDef,
+    RouterLink,
+    NoticeComponent
+  ]
 })
 export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
   columnsToDisplay: string[] = [

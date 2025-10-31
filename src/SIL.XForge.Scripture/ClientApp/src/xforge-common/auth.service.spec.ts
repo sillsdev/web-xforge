@@ -1,5 +1,5 @@
 import { discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { Router, RouterModule } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import {
   Auth0Client,
   GenericError,
@@ -36,9 +36,9 @@ import { MemoryRealtimeRemoteStore } from './memory-realtime-remote-store';
 import { OfflineStore } from './offline-store';
 import { OnlineStatusService } from './online-status.service';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
-import { TestOnlineStatusModule } from './test-online-status.module';
+import { provideTestOnlineStatus } from './test-online-status-providers';
 import { TestOnlineStatusService } from './test-online-status.service';
-import { configureTestingModule, TestTranslocoModule } from './test-utils';
+import { configureTestingModule, getTestTranslocoModule } from './test-utils';
 import { aspCultureCookieValue } from './utils';
 
 const mockedAuth0Service = mock(Auth0Service);
@@ -55,8 +55,10 @@ const mockedConsole: MockConsole = MockConsole.install();
 
 describe('AuthService', () => {
   configureTestingModule(() => ({
-    imports: [RouterModule.forRoot([]), TestOnlineStatusModule.forRoot(), TestTranslocoModule],
+    imports: [getTestTranslocoModule()],
     providers: [
+      provideRouter([]),
+      provideTestOnlineStatus(),
       AuthService,
       { provide: Auth0Service, useMock: mockedAuth0Service },
       { provide: SharedbRealtimeRemoteStore, useClass: MemoryRealtimeRemoteStore },

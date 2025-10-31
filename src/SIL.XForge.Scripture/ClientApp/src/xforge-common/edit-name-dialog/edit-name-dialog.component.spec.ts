@@ -1,20 +1,23 @@
-import { Component, NgModule } from '@angular/core';
+import { Component } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { DialogService } from 'xforge-common/dialog.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { EditNameDialogComponent, EditNameDialogResult } from './edit-name-dialog.component';
 
 describe('EditNameDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [TestOnlineStatusModule.forRoot()],
-    providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }]
+    imports: [getTestTranslocoModule(), EditNameDialogComponent],
+    providers: [
+      provideTestOnlineStatus(),
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      provideNoopAnimations()
+    ]
   }));
 
   it('should display name and cancel button', fakeAsync(() => {
@@ -107,7 +110,7 @@ class TestEnvironment {
 
   constructor() {
     TestBed.configureTestingModule({
-      imports: [DialogTestModule]
+      imports: [getTestTranslocoModule(), EditNameDialogComponent, DialogOpenerComponent]
     });
     this.testOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
     this.fixture = TestBed.createComponent(DialogOpenerComponent);
@@ -176,15 +179,8 @@ class TestEnvironment {
   }
 }
 
-@NgModule({
-  imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule],
-  declarations: [EditNameDialogComponent]
-})
-class DialogTestModule {}
-
 @Component({
-  template: `<button (click)="openDialog()"></button>`,
-  standalone: false
+  template: `<button (click)="openDialog()"></button>`
 })
 class DialogOpenerComponent {
   publicName: string = 'Simon Says';

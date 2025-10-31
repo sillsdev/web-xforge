@@ -1,11 +1,14 @@
 import { Component, EventEmitter, HostBinding, HostListener, Inject, Input, Output } from '@angular/core';
+import { MatIconButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
 import { SF_TABS_CONFIG, SFTabsConfig } from '../sf-tabs-config';
 
 @Component({
   selector: 'app-tab-header',
   templateUrl: './tab-header.component.html',
   styleUrls: ['./tab-header.component.scss'],
-  standalone: false
+  imports: [MatTooltip, MatIconButton, MatIcon]
 })
 export class TabHeaderComponent {
   @HostBinding('class.closeable')

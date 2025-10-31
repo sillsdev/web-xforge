@@ -1,14 +1,22 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
+import { NgClass } from '@angular/common';
 import { Component, DestroyRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { AutofocusDirective } from 'xforge-common/autofocus.directive';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
 import { NoticeService } from 'xforge-common/notice.service';
+import { ScrollIntoViewDirective } from 'xforge-common/scroll-into-view';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { TextsByBookId } from '../../../../core/models/texts-by-book-id';
@@ -17,6 +25,7 @@ import {
   TextChooserDialogData,
   TextSelection
 } from '../../../../text-chooser-dialog/text-chooser-dialog.component';
+import { AttachAudioComponent } from '../../../attach-audio/attach-audio.component';
 import { CheckingUtils } from '../../../checking.utils';
 import { TextAndAudioComponent } from '../../../text-and-audio/text-and-audio.component';
 import { AudioAttachment } from '../../checking-audio-player/checking-audio-player.component';
@@ -37,7 +46,19 @@ function isAnswer(value: Answer | Comment | undefined): value is Answer {
   selector: 'app-checking-input-form',
   templateUrl: './checking-input-form.component.html',
   styleUrls: ['./checking-input-form.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    FormsModule,
+    ScrollIntoViewDirective,
+    TextAndAudioComponent,
+    AutofocusDirective,
+    NgClass,
+    AttachAudioComponent,
+    MatIconButton,
+    MatTooltip,
+    MatIcon,
+    MatButton
+  ]
 })
 export class CheckingInputFormComponent {
   @Input() project?: SFProjectProfile;

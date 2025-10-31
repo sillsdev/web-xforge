@@ -4,17 +4,17 @@ import { Component } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatCheckboxHarness } from '@angular/material/checkbox/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { Route, RouterModule } from '@angular/router';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideRouter, Route } from '@angular/router';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -31,8 +31,7 @@ const mockedDialogRef = mock(MatDialogRef);
 const mockedTextDocService = mock(TextDocService);
 
 @Component({
-  template: `<div>Mock</div>`,
-  standalone: false
+  template: `<div>Mock</div>`
 })
 class MockComponent {}
 
@@ -42,13 +41,11 @@ let env: TestEnvironment;
 
 describe('DraftApplyDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      TestTranslocoModule,
-      RouterModule.forRoot(ROUTES),
-      NoopAnimationsModule,
-      TestOnlineStatusModule.forRoot()
-    ],
+    imports: [getTestTranslocoModule()],
     providers: [
+      provideRouter(ROUTES),
+      provideTestOnlineStatus(),
+      provideNoopAnimations(),
       { provide: SFUserProjectsService, useMock: mockedUserProjectsService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
@@ -283,7 +280,11 @@ class TestEnvironment {
   }
 
   get confirmOverwriteErrorMessage(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('.form-error.visible');
+    return this.fixture.nativeElement.querySelector('.form-error.overwrite-content-error.visible');
+  }
+
+  get confirmCreateChaptersErrorMessage(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('.form-error.create-chapters-error.visible');
   }
 
   set onlineStatus(online: boolean) {

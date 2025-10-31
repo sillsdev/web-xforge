@@ -8,8 +8,8 @@ import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { MatTooltipHarness } from '@angular/material/tooltip/testing';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { ActivatedRoute, Params, Route, Router, RouterModule } from '@angular/router';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { ActivatedRoute, Params, provideRouter, Route, Router } from '@angular/router';
 import {
   createRange,
   InteractiveTranslatorFactory,
@@ -75,12 +75,11 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { noopDestroyRef } from 'xforge-common/realtime.service';
 import { TestBreakpointObserver } from 'xforge-common/test-breakpoint-observer';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { isBlink } from 'xforge-common/utils';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
@@ -100,9 +99,18 @@ import { BuildStates } from '../../machine-api/build-states';
 import { HttpClient } from '../../machine-api/http-client';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 import { CopyrightBannerComponent } from '../../shared/copyright-banner/copyright-banner.component';
-import { SFTabsModule, TabFactoryService, TabGroup, TabMenuService } from '../../shared/sf-tab-group';
-import { SharedModule } from '../../shared/shared.module';
+import { provideCustomIcons } from '../../shared/custom-icons';
+import {
+  provideSFTabs,
+  TabComponent,
+  TabFactoryService,
+  TabGroup,
+  TabGroupComponent,
+  TabHeaderDirective,
+  TabMenuService
+} from '../../shared/sf-tab-group';
 import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/test-utils';
+import { provideQuillRegistrations } from '../../shared/text/quill-editor-registration/quill-providers';
 import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component';
 import { XmlUtils } from '../../shared/utils';
 import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.component';
@@ -113,7 +121,9 @@ import { TrainingProgressComponent } from '../training-progress/training-progres
 import { EditorDraftComponent } from './editor-draft/editor-draft.component';
 import { HistoryRevisionFormatPipe } from './editor-history/history-chooser/history-revision-format.pipe';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
-import { LynxInsightsModule } from './lynx/insights/lynx-insights.module';
+import { LynxInsightEditorObjectsComponent } from './lynx/insights/lynx-insight-editor-objects/lynx-insight-editor-objects.component';
+import { LynxInsightsPanelComponent } from './lynx/insights/lynx-insights-panel/lynx-insights-panel.component';
+import { provideLynxInsights } from './lynx/insights/lynx-insights-providers';
 import { LynxWorkspaceService } from './lynx/insights/lynx-workspace.service';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
@@ -162,30 +172,32 @@ class MockConsole {
 
 describe('EditorComponent', () => {
   configureTestingModule(() => ({
-    declarations: [
-      EditorComponent,
-      SuggestionsComponent,
-      TrainingProgressComponent,
-      EditorDraftComponent,
-      HistoryRevisionFormatPipe
-    ],
     imports: [
+      SuggestionsComponent,
+      HistoryRevisionFormatPipe,
+      EditorComponent,
+      EditorDraftComponent,
+      TrainingProgressComponent,
       BiblicalTermsComponent,
       CopyrightBannerComponent,
       DraftPreviewBooksComponent,
-      NoopAnimationsModule,
-      RouterModule.forRoot(ROUTES),
-      SharedModule.forRoot(),
-      UICommonModule,
-      TestTranslocoModule,
-      TranslocoMarkupModule,
-      TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      SFTabsModule,
-      LynxInsightsModule.forRoot(),
-      AngularSplitModule
+      TabGroupComponent,
+      TabComponent,
+      TabHeaderDirective,
+      LynxInsightEditorObjectsComponent,
+      LynxInsightsPanelComponent,
+      AngularSplitModule,
+      getTestTranslocoModule(),
+      TranslocoMarkupModule
     ],
     providers: [
+      provideRouter(ROUTES),
+      provideQuillRegistrations(),
+      provideTestOnlineStatus(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
+      provideSFTabs(),
+      provideLynxInsights(),
+      provideCustomIcons(),
       { provide: AuthService, useMock: mockedAuthService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
@@ -206,7 +218,8 @@ describe('EditorComponent', () => {
       { provide: TabMenuService, useValue: EditorTabMenuService },
       { provide: PermissionsService, useMock: mockedPermissionsService },
       { provide: LynxWorkspaceService, useMock: mockedLynxWorkspaceService },
-      { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
+      provideNoopAnimations()
     ]
   }));
 

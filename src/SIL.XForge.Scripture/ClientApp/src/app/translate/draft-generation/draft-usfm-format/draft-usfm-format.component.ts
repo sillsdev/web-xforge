@@ -1,14 +1,11 @@
-import { CommonModule, Location } from '@angular/common';
+import { Location } from '@angular/common';
 import { AfterViewInit, Component, DestroyRef, EventEmitter, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatRadioModule } from '@angular/material/radio';
-import { MatSelectModule } from '@angular/material/select';
+import { MatButton } from '@angular/material/button';
+import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatRadioButton, MatRadioGroup } from '@angular/material/radio';
 import { ActivatedRoute } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
@@ -32,8 +29,9 @@ import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { QuotationAnalysis } from '../../../machine-api/quotation-denormalization';
 import { ServalAdministrationService } from '../../../serval-administration/serval-administration.service';
+import { BookChapterChooserComponent } from '../../../shared/book-chapter-chooser/book-chapter-chooser.component';
+import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { ConfirmOnLeave } from '../../../shared/project-router.guard';
-import { SharedModule } from '../../../shared/shared.module';
 import { TextComponent } from '../../../shared/text/text.component';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftHandlingService } from '../draft-handling.service';
@@ -41,19 +39,21 @@ import { DraftHandlingService } from '../draft-handling.service';
 @Component({
   selector: 'app-draft-usfm-format',
   imports: [
-    MatButtonModule,
-    MatCardModule,
-    MatCheckboxModule,
-    MatIconModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    CommonModule,
+    MatButton,
+    MatCard,
+    MatCardHeader,
+    MatCardContent,
+    MatCardTitle,
+    MatIcon,
+    MatProgressSpinner,
     FormsModule,
     ReactiveFormsModule,
-    SharedModule,
+    BookChapterChooserComponent,
+    NoticeComponent,
+    TextComponent,
     TranslocoModule,
-    MatFormFieldModule,
-    MatRadioModule
+    MatRadioGroup,
+    MatRadioButton
   ],
   templateUrl: './draft-usfm-format.component.html',
   styleUrl: './draft-usfm-format.component.scss'

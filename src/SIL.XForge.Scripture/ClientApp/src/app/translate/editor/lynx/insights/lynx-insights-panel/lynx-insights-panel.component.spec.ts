@@ -8,14 +8,14 @@ import {
   TestBed,
   tick
 } from '@angular/core/testing';
-import { MatButtonModule } from '@angular/material/button';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatTreeModule } from '@angular/material/tree';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MatButton } from '@angular/material/button';
+import { MatDivider } from '@angular/material/divider';
+import { MatIcon } from '@angular/material/icon';
+import { MatMenu } from '@angular/material/menu';
+import { MatTab, MatTabGroup } from '@angular/material/tabs';
+import { MatTooltip } from '@angular/material/tooltip';
+import { MatTree } from '@angular/material/tree';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import { Range } from 'quill';
 import Delta from 'quill-delta';
@@ -26,10 +26,9 @@ import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/act
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { IncludesPipe } from 'xforge-common/includes.pipe';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { TextDoc, TextDocId } from '../../../../../core/models/text-doc';
 import { SFProjectService } from '../../../../../core/sf-project.service';
-import { CustomIconModule } from '../../../../../shared/custom-icon.module';
 import { EditorSegmentService } from '../base-services/editor-segment.service';
 import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightConfig } from '../lynx-insight';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
@@ -110,21 +109,22 @@ describe('LynxInsightsPanelComponent', () => {
 
   configureTestingModule(() => ({
     imports: [
-      MatTreeModule,
-      MatIconModule,
-      MatButtonModule,
-      MatTooltipModule,
-      MatMenuModule,
-      MatTabsModule,
-      MatDividerModule,
+      MatTree,
+      MatIcon,
+      MatButton,
+      MatTooltip,
+      MatMenu,
+      MatTabGroup,
+      MatTab,
+      MatDivider,
       IncludesPipe,
-      NoopAnimationsModule,
-      TestTranslocoModule,
-      CustomIconModule
+      getTestTranslocoModule(),
+      LynxInsightsPanelComponent,
+      LynxInsightsPanelHeaderComponent
     ],
-    declarations: [LynxInsightsPanelComponent, LynxInsightsPanelHeaderComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
     providers: [
+      provideNoopAnimations(),
       { provide: LynxInsightStateService, useMock: mockLynxInsightStateService },
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: ActivatedBookChapterService, useMock: mockActivatedBookChapterService },

@@ -1,10 +1,11 @@
-import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MatButton } from '@angular/material/button';
+import { MAT_DIALOG_DATA, MatDialogActions, MatDialogContent, MatDialogRef } from '@angular/material/dialog';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressBar } from '@angular/material/progress-bar';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Observable } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 export interface DraftApplyProgress {
   bookNum: number;
@@ -16,7 +17,7 @@ export interface DraftApplyProgress {
 
 @Component({
   selector: 'app-draft-apply-progress',
-  imports: [CommonModule, UICommonModule, TranslocoModule],
+  imports: [MatButton, MatIcon, MatProgressBar, MatDialogContent, MatDialogActions, TranslocoModule],
   templateUrl: './draft-apply-progress-dialog.component.html',
   styleUrl: './draft-apply-progress-dialog.component.scss'
 })

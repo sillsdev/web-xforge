@@ -1,9 +1,9 @@
 import { HttpClient } from '@angular/common/http';
-import { DebugElement, NgModule } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
@@ -40,9 +40,14 @@ import { anything, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FontService } from 'xforge-common/font.service';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { ChildViewContainerComponent, configureTestingModule, matDialogCloseDelay } from 'xforge-common/test-utils';
+import {
+  ChildViewContainerComponent,
+  configureTestingModule,
+  getTestTranslocoModule,
+  matDialogCloseDelay
+} from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { BiblicalTermDoc } from '../../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../../core/models/note-thread-doc';
@@ -52,7 +57,6 @@ import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-con
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { getCombinedVerseTextDoc, getTextDoc, paratextUsersFromRoles } from '../../../shared/test-utils';
-import { TranslateModule } from '../../translate.module';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog.component';
 
 const mockedDialogService = mock(DialogService);
@@ -62,12 +66,14 @@ const mockedUserService = mock(UserService);
 
 describe('NoteDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, NoopAnimationsModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [NoteDialogComponent, getTestTranslocoModule()],
     providers: [
       { provide: DialogService, useMock: mockedDialogService },
       { provide: FontService, useMock: mockedFontService },
       { provide: HttpClient, useMock: mockedHttpClient },
-      { provide: UserService, useMock: mockedUserService }
+      { provide: UserService, useMock: mockedUserService },
+      provideTestRealtime(SF_TYPE_REGISTRY),
+      provideNoopAnimations()
     ]
   }));
 
@@ -690,11 +696,6 @@ describe('NoteDialogComponent', () => {
     expect(env.notes[0].nativeElement.querySelector('.user-name').textContent).toContain('ptuser01');
   }));
 });
-
-@NgModule({
-  imports: [TranslateModule]
-})
-class DialogTestModule {}
 
 interface TestEnvironmentConstructorArgs {
   includeSnapshots?: boolean;

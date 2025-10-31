@@ -3,7 +3,7 @@ import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { Router, RouterModule } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
@@ -13,10 +13,9 @@ import { anything, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../core/models/paratext-project';
@@ -24,11 +23,10 @@ import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
-import { SharedModule } from '../shared/shared.module';
+import { provideQuillRegistrations } from '../shared/text/quill-editor-registration/quill-providers';
 import { MyProjectsComponent } from './my-projects.component';
 @Component({
-  template: '',
-  standalone: false
+  template: ''
 })
 class EmptyComponent {}
 
@@ -40,18 +38,14 @@ const mockedNoticeService = mock(NoticeService);
 
 describe('MyProjectsComponent', () => {
   configureTestingModule(() => ({
-    declarations: [MyProjectsComponent],
-    imports: [
-      UICommonModule,
-      SharedModule.forRoot(),
-      RouterModule.forRoot([
+    imports: [MyProjectsComponent, getTestTranslocoModule()],
+    providers: [
+      provideRouter([
         { path: 'projects/:projectId', component: EmptyComponent },
         { path: 'connect-project', component: EmptyComponent }
       ]),
-      TestOnlineStatusModule.forRoot(),
-      TestTranslocoModule
-    ],
-    providers: [
+      provideQuillRegistrations(),
+      provideTestOnlineStatus(),
       provideAnimations(),
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },

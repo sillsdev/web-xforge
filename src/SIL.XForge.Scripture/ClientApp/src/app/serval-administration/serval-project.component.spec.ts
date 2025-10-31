@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { saveAs } from 'file-saver';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
@@ -15,7 +15,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
@@ -43,8 +43,8 @@ const mockServalAdministrationService = mock(ServalAdministrationService);
 
 describe('ServalProjectComponent', () => {
   configureTestingModule(() => ({
-    imports: [NoopAnimationsModule, TestOnlineStatusModule.forRoot()],
     providers: [
+      provideTestOnlineStatus(),
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: ActivatedRoute, useMock: mockActivatedRoute },
       { provide: AuthService, useMock: mockAuthService },
@@ -53,7 +53,8 @@ describe('ServalProjectComponent', () => {
       { provide: NoticeService, useMock: mockNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: ServalAdministrationService, useMock: mockServalAdministrationService },
-      { provide: SFProjectService, useMock: mockSFProjectService }
+      { provide: SFProjectService, useMock: mockSFProjectService },
+      provideNoopAnimations()
     ]
   }));
 
@@ -101,13 +102,13 @@ describe('ServalProjectComponent', () => {
     it('should disable the view event log button when offline', fakeAsync(() => {
       const env = new TestEnvironment();
       env.onlineStatus = false;
-      expect(env.viewEventLogButton.ariaDisabled).toBe('true');
+      expect(env.viewEventLogButton['disabled']).toBe(true);
     }));
 
     it('should not disable the view event log button when online', fakeAsync(() => {
       const env = new TestEnvironment();
       env.onlineStatus = true;
-      expect(env.viewEventLogButton.ariaDisabled).toBeNull();
+      expect(env.viewEventLogButton['disabled']).toBeFalsy();
     }));
   });
 

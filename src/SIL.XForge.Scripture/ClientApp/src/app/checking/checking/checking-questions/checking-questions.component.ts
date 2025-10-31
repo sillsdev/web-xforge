@@ -1,3 +1,4 @@
+import { NgClass } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -13,7 +14,12 @@ import {
   SimpleChanges,
   ViewChildren
 } from '@angular/core';
-import { MatListItem } from '@angular/material/list';
+import { MatBadge } from '@angular/material/badge';
+import { MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatActionList, MatListItem } from '@angular/material/list';
+import { MatTooltip } from '@angular/material/tooltip';
+import { TranslocoModule } from '@ngneat/transloco';
 import { sortBy } from 'lodash-es';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
@@ -62,7 +68,7 @@ export interface QuestionChangedEvent {
   templateUrl: './checking-questions.component.html',
   styleUrls: ['./checking-questions.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  standalone: false
+  imports: [TranslocoModule, MatActionList, MatListItem, NgClass, MatTooltip, MatBadge, MatIcon, MatButton]
 })
 export class CheckingQuestionsComponent implements OnInit, OnChanges {
   @Output() update = new EventEmitter<QuestionDoc>();

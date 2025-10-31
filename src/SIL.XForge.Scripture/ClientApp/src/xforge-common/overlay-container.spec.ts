@@ -3,7 +3,7 @@ import { Component, DebugElement, TemplateRef, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { InAppRootOverlayContainer } from './overlay-container';
 
 describe('OverlayContainer', () => {
@@ -15,26 +15,9 @@ describe('OverlayContainer', () => {
   }));
 });
 
-/**
- * Host component is generated to contain the <app-root> element. When tests are rendered the initial component
- * is only rendered as a <div> element whereas this test specifically needs access to the <app-root> element
- */
-@Component({
-  selector: 'app-host',
-  template: '<app-root #root></app-root>',
-  standalone: false
-})
-class HostComponent {
-  @ViewChild('root') appRoot?: AppRootComponent;
-
-  open(): void {
-    this.appRoot?.open();
-  }
-}
 @Component({
   selector: 'app-root',
-  template: '<ng-template #bottomSheet><div class="bottom-sheet-container">Opened</div></ng-template>',
-  standalone: false
+  template: '<ng-template #bottomSheet><div class="bottom-sheet-container">Opened</div></ng-template>'
 })
 class AppRootComponent {
   @ViewChild('bottomSheet') TemplateBottomSheet?: TemplateRef<any>;
@@ -49,15 +32,31 @@ class AppRootComponent {
   }
 }
 
+/**
+ * Host component is generated to contain the <app-root> element. When tests are rendered the initial component
+ * is only rendered as a <div> element whereas this test specifically needs access to the <app-root> element
+ */
+@Component({
+  selector: 'app-host',
+  template: '<app-root #root></app-root>',
+  imports: [AppRootComponent]
+})
+class HostComponent {
+  @ViewChild('root') appRoot?: AppRootComponent;
+
+  open(): void {
+    this.appRoot?.open();
+  }
+}
+
 class TestEnvironment {
   readonly component: HostComponent;
   readonly fixture: ComponentFixture<HostComponent>;
 
   constructor() {
     TestBed.configureTestingModule({
-      declarations: [HostComponent, AppRootComponent],
-      imports: [NoopAnimationsModule],
-      providers: [{ provide: OverlayContainer, useClass: InAppRootOverlayContainer }]
+      imports: [HostComponent, AppRootComponent],
+      providers: [{ provide: OverlayContainer, useClass: InAppRootOverlayContainer }, provideNoopAnimations()]
     });
 
     this.fixture = TestBed.createComponent(HostComponent);

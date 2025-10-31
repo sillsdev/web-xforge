@@ -1,15 +1,14 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatIconButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
 import { TranslocoModule } from '@ngneat/transloco';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeComponent } from '../notice/notice.component';
 
 @Component({
   selector: 'app-global-notices',
-  imports: [CommonModule, NoticeComponent, MatIconModule, MatButtonModule, MatTooltipModule, TranslocoModule],
+  imports: [NoticeComponent, MatIcon, MatIconButton, MatTooltip, TranslocoModule],
   templateUrl: './global-notices.component.html',
   styleUrl: './global-notices.component.scss'
 })

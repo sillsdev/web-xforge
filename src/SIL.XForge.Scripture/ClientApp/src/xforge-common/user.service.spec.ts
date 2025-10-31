@@ -11,9 +11,9 @@ import { DialogService } from './dialog.service';
 import { LocalSettingsService } from './local-settings.service';
 import { UserDoc } from './models/user-doc';
 import { NoticeService } from './notice.service';
-import { TestRealtimeModule } from './test-realtime.module';
+import { provideTestRealtime } from './test-realtime-providers';
 import { TestRealtimeService } from './test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from './test-utils';
+import { configureTestingModule, getTestTranslocoModule } from './test-utils';
 import { TypeRegistry } from './type-registry';
 import { CURRENT_PROJECT_ID_SETTING, UserService } from './user.service';
 
@@ -25,8 +25,9 @@ const mockedNoticeService = mock(NoticeService);
 
 describe('UserService', () => {
   configureTestingModule(() => ({
-    imports: [TestTranslocoModule, TestRealtimeModule.forRoot(new TypeRegistry([UserDoc], [], []))],
+    imports: [getTestTranslocoModule()],
     providers: [
+      provideTestRealtime(new TypeRegistry([UserDoc], [], [])),
       { provide: AuthService, useMock: mockedAuthService },
       { provide: LocalSettingsService, useMock: mockedLocalSettingsService },
       { provide: CommandService, useMock: mockedCommandService },

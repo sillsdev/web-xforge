@@ -4,8 +4,8 @@ import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { ActivatedRoute, Route, RouterModule } from '@angular/router';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { ActivatedRoute, provideRouter, Route } from '@angular/router';
 import { cloneDeep, merge } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -24,12 +24,11 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { noopDestroyRef } from 'xforge-common/realtime.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
@@ -51,8 +50,7 @@ const mockedUserService = mock(UserService);
 const mockedDialog = mock(MatDialog);
 
 @Component({
-  template: `<div>Mock</div>`,
-  standalone: false
+  template: `<div>Mock</div>`
 })
 class MockComponent {}
 
@@ -61,17 +59,17 @@ const ROUTES: Route[] = [{ path: 'projects', component: MockComponent }];
 describe('SettingsComponent', () => {
   configureTestingModule(() => ({
     imports: [
-      RouterModule.forRoot(ROUTES),
-      UICommonModule,
-      TestTranslocoModule,
+      SettingsComponent,
+      getTestTranslocoModule(),
       TranslocoMarkupModule,
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      TestOnlineStatusModule.forRoot(),
-      NoopAnimationsModule,
-      WriteStatusComponent
+      WriteStatusComponent,
+      ProjectSelectComponent,
+      InfoComponent
     ],
-    declarations: [SettingsComponent, ProjectSelectComponent, InfoComponent],
     providers: [
+      provideRouter(ROUTES),
+      provideTestRealtime(SF_TYPE_REGISTRY),
+      provideTestOnlineStatus(),
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: AuthService, useMock: mockedAuthService },
       { provide: NoticeService, useMock: mockedNoticeService },
@@ -79,7 +77,8 @@ describe('SettingsComponent', () => {
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: MatDialog, useMock: mockedDialog }
+      { provide: MatDialog, useMock: mockedDialog },
+      provideNoopAnimations()
     ]
   }));
 

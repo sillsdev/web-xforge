@@ -1,7 +1,6 @@
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { Component } from '@angular/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -12,9 +11,7 @@ import { anything, instance, mock, objectContaining, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
-import { TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../core/models/paratext-project';
@@ -22,11 +19,7 @@ import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ParatextService } from '../core/paratext.service';
 import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
-import { SharedModule } from '../shared/shared.module';
 import { MyProjectsComponent } from './my-projects.component';
-
-@Component({ template: '' })
-class EmptyComponent {}
 
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedUserService = mock(UserService);
@@ -190,17 +183,7 @@ const meta: Meta = {
   },
   decorators: [
     moduleMetadata({
-      imports: [
-        UICommonModule,
-        SharedModule.forRoot(),
-        RouterModule.forChild([
-          { path: 'projects/:projectId', component: EmptyComponent },
-          { path: 'connect-project', component: EmptyComponent }
-        ]),
-        TestOnlineStatusModule.forRoot(),
-        TestTranslocoModule
-      ],
-      declarations: [MyProjectsComponent],
+      imports: [getTestTranslocoModule(), MyProjectsComponent],
       providers: [
         provideAnimations(),
         provideHttpClientTesting(),

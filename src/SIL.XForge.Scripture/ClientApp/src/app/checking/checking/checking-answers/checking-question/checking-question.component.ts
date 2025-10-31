@@ -9,6 +9,8 @@ import {
   SimpleChanges,
   ViewChild
 } from '@angular/core';
+import { MatIcon } from '@angular/material/icon';
+import { TranslocoModule } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
@@ -31,7 +33,7 @@ import { SingleButtonAudioPlayerComponent } from '../../single-button-audio-play
   selector: 'app-checking-question',
   templateUrl: './checking-question.component.html',
   styleUrls: ['./checking-question.component.scss'],
-  standalone: false
+  imports: [TranslocoModule, SingleButtonAudioPlayerComponent, MatIcon]
 })
 export class CheckingQuestionComponent extends SubscriptionDisposable implements OnChanges, OnDestroy {
   @Output() audioPlayed: EventEmitter<void> = new EventEmitter<void>();

@@ -1,9 +1,7 @@
-import { CommonModule } from '@angular/common';
 import { Component, Inject, InjectionToken, Injector, OnInit, Provider } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { TranslocoModule } from '@ngneat/transloco';
 import { StoryFn } from '@storybook/angular';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { hasProp } from '../../src/type-utils';
 
 export function getOverlays(element: HTMLElement): HTMLElement[] {
@@ -25,7 +23,6 @@ export interface MatDialogStoryConfig {
   imports?: any[];
   declarations?: any[];
   providers?: Provider[];
-  standaloneComponent?: boolean;
 }
 
 @Component({ template: '' })
@@ -57,8 +54,8 @@ export class MatDialogLaunchComponent implements OnInit {
 export function matDialogStory(component: any, config?: MatDialogStoryConfig): StoryFn {
   const story: StoryFn = args => ({
     moduleMetadata: {
-      imports: [UICommonModule, CommonModule, TranslocoModule, ...(config?.imports ?? [])],
-      declarations: [...(config?.standaloneComponent ? [] : [component]), ...(config?.declarations ?? [])],
+      imports: [MatDialogModule, TranslocoModule, component, ...(config?.imports ?? [])],
+      declarations: [...(config?.declarations ?? [])],
       providers: [
         { provide: MAT_DIALOG_DATA, useValue: args.data },
         { provide: COMPONENT_UNDER_TEST, useValue: component },

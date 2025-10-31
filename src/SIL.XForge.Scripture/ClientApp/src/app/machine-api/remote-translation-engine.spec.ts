@@ -7,7 +7,7 @@ import { of, throwError } from 'rxjs';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { BuildDto } from './build-dto';
 import { BuildStates } from './build-states';
 import { EngineDto } from './engine-dto';
@@ -20,7 +20,7 @@ import { WordGraphDto } from './word-graph-dto';
 
 describe('RemoteTranslationEngine', () => {
   configureTestingModule(() => ({
-    imports: [TestTranslocoModule]
+    imports: [getTestTranslocoModule()]
   }));
 
   it('get word graph', async () => {

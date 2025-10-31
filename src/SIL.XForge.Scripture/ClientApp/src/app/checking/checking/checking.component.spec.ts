@@ -3,13 +3,14 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Location } from '@angular/common';
 import { DebugElement, DestroyRef, NgZone } from '@angular/core';
 import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ReactiveFormsModule } from '@angular/forms';
 import { MatButtonHarness } from '@angular/material/button/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { MatMenuHarness } from '@angular/material/menu/testing';
 import { MatSelectHarness } from '@angular/material/select/testing';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { ActivatedRoute, ActivatedRouteSnapshot, Params, Route, Router, RouterModule } from '@angular/router';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { ActivatedRoute, ActivatedRouteSnapshot, Params, provideRouter, Route, Router } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
@@ -47,12 +48,11 @@ import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { configureTestingModule, getAudioBlob, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
@@ -67,7 +67,7 @@ import { TranslationEngineService } from '../../core/translation-engine.service'
 import { AudioRecorderDialogComponent } from '../../shared/audio-recorder-dialog/audio-recorder-dialog.component';
 import { AudioPlayerComponent } from '../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../shared/audio/audio-time-pipe';
-import { SharedModule } from '../../shared/shared.module';
+import { provideQuillRegistrations } from '../../shared/text/quill-editor-registration/quill-providers';
 import { TextChooserDialogComponent, TextSelection } from '../../text-chooser-dialog/text-chooser-dialog.component';
 import { AttachAudioComponent } from '../attach-audio/attach-audio.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
@@ -135,9 +135,8 @@ const ROUTES: Route[] = [
 
 describe('CheckingComponent', () => {
   configureTestingModule(() => ({
-    declarations: [
+    imports: [
       AudioTimePipe,
-      AudioPlayerComponent,
       CheckingAnswersComponent,
       CheckingAudioPlayerComponent,
       CheckingInputFormComponent,
@@ -145,24 +144,22 @@ describe('CheckingComponent', () => {
       CheckingComponent,
       CheckingScriptureAudioPlayerComponent,
       CheckingQuestionsComponent,
-      CheckingTextComponent,
       TextAndAudioComponent,
       FontSizeComponent,
-      AttachAudioComponent
-    ],
-    imports: [
+      AttachAudioComponent,
+      AudioPlayerComponent,
+      CheckingTextComponent,
       AngularSplitModule,
       ngfModule,
-      NoopAnimationsModule,
-      RouterModule.forRoot(ROUTES),
-      SharedModule.forRoot(),
-      UICommonModule,
+      ReactiveFormsModule,
       OwnerComponent,
-      TestTranslocoModule,
-      TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+      getTestTranslocoModule()
     ],
     providers: [
+      provideRouter(ROUTES),
+      provideQuillRegistrations(),
+      provideTestOnlineStatus(),
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: UserService, useMock: mockedUserService },
       { provide: SFProjectService, useMock: mockedProjectService },
@@ -172,7 +169,8 @@ describe('CheckingComponent', () => {
       { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
       { provide: ChapterAudioDialogService, useMock: mockedChapterAudioDialogService },
       { provide: FileService, useMock: mockedFileService },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      provideNoopAnimations()
     ]
   }));
 

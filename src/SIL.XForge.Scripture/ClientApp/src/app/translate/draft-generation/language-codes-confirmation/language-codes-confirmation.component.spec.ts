@@ -6,8 +6,7 @@ import { anything, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { DraftSourcesAsSelectableProjectArrays } from '../draft-utils';
@@ -22,7 +21,7 @@ describe('LanguageCodesConfirmationComponent', () => {
   const mockAuthService = mock(AuthService);
 
   configureTestingModule(() => ({
-    imports: [TestTranslocoModule, UICommonModule, NoticeComponent, TranslocoMarkupComponent],
+    imports: [getTestTranslocoModule(), NoticeComponent, TranslocoMarkupComponent],
     providers: [
       { provide: I18nService, useMock: mockI18nService },
       { provide: ActivatedProjectService, useMock: mockActivatedProject },

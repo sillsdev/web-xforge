@@ -1,16 +1,15 @@
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, inject, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { DeleteProjectDialogComponent } from './delete-project-dialog.component';
 
 describe('DeleteProjectDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, NoopAnimationsModule]
+    imports: [getTestTranslocoModule(), DeleteProjectDialogComponent],
+    providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting(), provideNoopAnimations()]
   }));
 
   let dialog: MatDialog;
@@ -101,10 +100,3 @@ describe('DeleteProjectDialogComponent', () => {
     viewContainerFixture = TestBed.createComponent(ChildViewContainerComponent);
   });
 });
-
-@NgModule({
-  declarations: [DeleteProjectDialogComponent],
-  imports: [UICommonModule, TestTranslocoModule],
-  providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
-})
-class DialogTestModule {}

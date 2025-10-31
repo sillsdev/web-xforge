@@ -1,5 +1,23 @@
 import { Component, DestroyRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
-import { MatStepper } from '@angular/material/stepper';
+import { FormsModule } from '@angular/forms';
+import { MatButton } from '@angular/material/button';
+import { MatCard } from '@angular/material/card';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatStep, MatStepLabel, MatStepper, MatStepperIcon, MatStepperPrevious } from '@angular/material/stepper';
+import {
+  MatCell,
+  MatCellDef,
+  MatColumnDef,
+  MatHeaderCell,
+  MatHeaderCellDef,
+  MatHeaderRow,
+  MatHeaderRowDef,
+  MatRow,
+  MatRowDef,
+  MatTable
+} from '@angular/material/table';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { isEqual } from 'lodash-es';
@@ -22,7 +40,6 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { ParatextProject } from '../../../core/models/paratext-project';
@@ -31,8 +48,8 @@ import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
+import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
-import { SharedModule } from '../../../shared/shared.module';
 import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
@@ -77,8 +94,28 @@ interface ProjectPendingUpdate {
   templateUrl: './draft-generation-steps.component.html',
   styleUrls: ['./draft-generation-steps.component.scss'],
   imports: [
-    SharedModule,
-    UICommonModule,
+    FormsModule,
+    NoticeComponent,
+    MatButton,
+    MatCheckbox,
+    MatIcon,
+    MatCard,
+    MatProgressSpinner,
+    MatStepper,
+    MatStep,
+    MatStepLabel,
+    MatStepperIcon,
+    MatStepperPrevious,
+    MatTable,
+    MatColumnDef,
+    MatHeaderCell,
+    MatHeaderCellDef,
+    MatCell,
+    MatCellDef,
+    MatHeaderRow,
+    MatHeaderRowDef,
+    MatRow,
+    MatRowDef,
     TranslocoModule,
     TranslocoMarkupModule,
     BookMultiSelectComponent,

@@ -5,7 +5,7 @@ import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { noopDestroyRef } from 'xforge-common/realtime.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { TypeRegistry } from 'xforge-common/type-registry';
@@ -170,7 +170,7 @@ describe('CheckingQuestionsService', () => {
   let realtimeService: TestRealtimeService;
 
   configureTestingModule(() => ({
-    imports: [TestRealtimeModule.forRoot(new TypeRegistry([QuestionDoc], [FileType.Audio], []))]
+    providers: [provideTestRealtime(new TypeRegistry([QuestionDoc], [FileType.Audio], []))]
   }));
 
   beforeEach(() => {

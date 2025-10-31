@@ -2,7 +2,7 @@ import { DebugElement, getDebugNode } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { BehaviorSubject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
@@ -11,9 +11,9 @@ import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QueryResults } from 'xforge-common/query-parameters';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { EventMetric, EventScope } from './event-metric';
@@ -28,14 +28,16 @@ const mockedUserService = mock(UserService);
 
 describe('EventMetricsLogComponent', () => {
   configureTestingModule(() => ({
-    imports: [NoopAnimationsModule, TestOnlineStatusModule.forRoot(), TestTranslocoModule],
+    imports: [getTestTranslocoModule()],
     providers: [
+      provideTestOnlineStatus(),
       { provide: AuthService, useMock: mockedAuthService },
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: DialogService, useMock: mockDialogService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: UserService, useMock: mockedUserService }
+      { provide: UserService, useMock: mockedUserService },
+      provideNoopAnimations()
     ]
   }));
 

@@ -1,8 +1,7 @@
-import { CommonModule } from '@angular/common';
 import { Injector } from '@angular/core';
 import { Translation, TranslocoService } from '@ngneat/transloco';
-import { Decorator, Meta, moduleMetadata, StoryContext, StoryFn, StoryObj } from '@storybook/angular';
-import { I18nStoryModule, I18nStoryDecorator as OriginalI18nStoryDecorator } from 'xforge-common/i18n-story.module';
+import { Decorator, Meta, StoryContext, StoryFn, StoryObj } from '@storybook/angular';
+import { I18nStoryDecorator as OriginalI18nStoryDecorator } from 'xforge-common/i18n-story';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LtrMarkerInterceptor } from './ltr-marker.interceptor';
 
@@ -23,12 +22,7 @@ const createMockTranslocoService = (englishTranslations: Translation): Transloco
 
 const meta: Meta = {
   title: 'App/Transloco/LtrMarkers',
-  decorators: [
-    moduleMetadata({
-      imports: [CommonModule, I18nStoryModule]
-    }),
-    AdaptedI18nStoryDecorator
-  ],
+  decorators: [AdaptedI18nStoryDecorator],
   argTypes: {
     englishTranslations: {
       control: 'object',

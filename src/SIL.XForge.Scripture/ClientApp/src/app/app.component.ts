@@ -1,9 +1,20 @@
+import { BidiModule } from '@angular/cdk/bidi';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { DOCUMENT } from '@angular/common';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { AsyncPipe, DOCUMENT } from '@angular/common';
 import { Component, DestroyRef, Inject, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router } from '@angular/router';
+import { MatButton, MatIconAnchor, MatIconButton } from '@angular/material/button';
+import { MatDivider } from '@angular/material/divider';
+import { MatIcon } from '@angular/material/icon';
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
+import { MatProgressBar } from '@angular/material/progress-bar';
+import { MatDrawer, MatDrawerContainer } from '@angular/material/sidenav';
+import { MatToolbar, MatToolbarRow } from '@angular/material/toolbar';
+import { MatTooltip } from '@angular/material/tooltip';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import Bugsnag from '@bugsnag/js';
+import { TranslocoModule } from '@ngneat/transloco';
 import { cloneDeep } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
@@ -13,6 +24,7 @@ import { Observable, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
+import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DiagnosticOverlayService } from 'xforge-common/diagnostic-overlay.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -28,6 +40,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { PWA_BEFORE_PROMPT_CAN_BE_SHOWN_AGAIN, PwaService } from 'xforge-common/pwa.service';
+import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import {
   BrowserIssue,
   SupportedBrowsersDialogComponent
@@ -42,6 +55,8 @@ import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
 import { SFProjectService } from './core/sf-project.service';
+import { NavigationComponent } from './navigation/navigation.component';
+import { GlobalNoticesComponent } from './shared/global-notices/global-notices.component';
 import { checkAppAccess } from './shared/utils';
 
 declare function gtag(...args: any): void;
@@ -50,7 +65,33 @@ declare function gtag(...args: any): void;
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
-  standalone: false
+  imports: [
+    AsyncPipe,
+    TranslocoModule,
+    RouterLink,
+    AvatarComponent,
+    RouterLinkDirective,
+    NavigationComponent,
+    GlobalNoticesComponent,
+    RouterOutlet,
+    MatIcon,
+    MatDrawerContainer,
+    MatButton,
+    MatIconAnchor,
+    MatIconButton,
+    MatMenu,
+    MatMenuItem,
+    MatMenuTrigger,
+    MatTooltip,
+    MatToolbar,
+    MatToolbarRow,
+    MatProgressBar,
+    MatDivider,
+    MatDrawer,
+    MatDrawerContainer,
+    CdkScrollable,
+    BidiModule
+  ]
 })
 export class AppComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   version: string = versionData.version;

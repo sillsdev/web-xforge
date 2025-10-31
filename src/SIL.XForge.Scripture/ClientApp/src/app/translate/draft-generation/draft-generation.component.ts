@@ -1,10 +1,23 @@
-import { CommonModule } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, ViewChild } from '@angular/core';
+import { MatAnchor, MatButton } from '@angular/material/button';
+import {
+  MatCard,
+  MatCardActions,
+  MatCardContent,
+  MatCardHeader,
+  MatCardSubtitle,
+  MatCardTitle
+} from '@angular/material/card';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
+import { MatExpansionPanel, MatExpansionPanelContent, MatExpansionPanelHeader } from '@angular/material/expansion';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressBar } from '@angular/material/progress-bar';
 import { MatTabGroup } from '@angular/material/tabs';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterLink as NgRouterLink, Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
+import { NgCircleProgressModule } from 'ng-circle-progress';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { RouterLink } from 'ngx-transloco-markup-router-link';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
@@ -19,10 +32,10 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { L10nNumberPipe } from 'xforge-common/l10n-number.pipe';
 import { L10nPercentPipe } from 'xforge-common/l10n-percent.pipe';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { issuesEmailTemplate } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -31,7 +44,7 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { ServalProjectComponent } from '../../serval-administration/serval-project.component';
-import { SharedModule } from '../../shared/shared.module';
+import { NoticeComponent } from '../../shared/notice/notice.component';
 import { projectLabel } from '../../shared/utils';
 import { WorkingAnimatedIndicatorComponent } from '../../shared/working-animated-indicator/working-animated-indicator.component';
 import { NllbLanguageService } from '../nllb-language.service';
@@ -54,12 +67,26 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
   templateUrl: './draft-generation.component.html',
   styleUrls: ['./draft-generation.component.scss'],
   imports: [
-    CommonModule,
-    UICommonModule,
-    RouterModule,
+    AsyncPipe,
+    MatAnchor,
+    MatButton,
+    MatIcon,
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardSubtitle,
+    MatCardContent,
+    MatCardActions,
+    MatProgressBar,
+    MatExpansionPanel,
+    MatExpansionPanelHeader,
+    MatExpansionPanelContent,
+    NgRouterLink,
     TranslocoModule,
     TranslocoMarkupModule,
-    SharedModule,
+    NoticeComponent,
+    NgCircleProgressModule,
+    L10nNumberPipe,
     L10nPercentPipe,
     WorkingAnimatedIndicatorComponent,
     DraftGenerationStepsComponent,

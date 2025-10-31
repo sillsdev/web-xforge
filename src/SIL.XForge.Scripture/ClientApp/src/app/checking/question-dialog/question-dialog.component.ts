@@ -1,6 +1,20 @@
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { Component, DestroyRef, Inject, OnInit, ViewChild } from '@angular/core';
-import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
+import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButton, MatIconButton } from '@angular/material/button';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogActions,
+  MatDialogClose,
+  MatDialogConfig,
+  MatDialogContent,
+  MatDialogRef,
+  MatDialogTitle
+} from '@angular/material/dialog';
+import { MatError, MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import { MatInput } from '@angular/material/input';
+import { TranslocoModule } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
@@ -18,7 +32,9 @@ import {
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { ParentAndStartErrorStateMatcher, SFValidators } from '../../shared/sfvalidators';
 import { combineVerseRefStrs } from '../../shared/utils';
+import { AttachAudioComponent } from '../attach-audio/attach-audio.component';
 import { AudioAttachment } from '../checking/checking-audio-player/checking-audio-player.component';
+import { CheckingTextComponent } from '../checking/checking-text/checking-text.component';
 import { TextAndAudioComponent } from '../text-and-audio/text-and-audio.component';
 export interface QuestionDialogData {
   questionDoc?: QuestionDoc;
@@ -38,7 +54,27 @@ export interface QuestionDialogResult {
 @Component({
   templateUrl: './question-dialog.component.html',
   styleUrls: ['./question-dialog.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    MatDialogTitle,
+    MatIcon,
+    CdkScrollable,
+    MatDialogContent,
+    FormsModule,
+    ReactiveFormsModule,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatIconButton,
+    MatSuffix,
+    MatError,
+    CheckingTextComponent,
+    TextAndAudioComponent,
+    AttachAudioComponent,
+    MatDialogActions,
+    MatButton,
+    MatDialogClose
+  ]
 })
 export class QuestionDialogComponent implements OnInit {
   @ViewChild(TextAndAudioComponent) textAndAudio?: TextAndAudioComponent;

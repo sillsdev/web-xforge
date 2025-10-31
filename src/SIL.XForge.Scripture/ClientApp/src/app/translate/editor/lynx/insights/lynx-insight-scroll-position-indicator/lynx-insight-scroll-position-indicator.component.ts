@@ -1,3 +1,4 @@
+import { NgClass } from '@angular/common';
 import { Component, DestroyRef, Input, OnInit } from '@angular/core';
 import { LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { combineLatest, debounceTime, filter, fromEvent, map, startWith, switchMap } from 'rxjs';
@@ -17,7 +18,7 @@ interface LynxInsightScrollPosition {
   selector: 'app-lynx-insight-scroll-position-indicator',
   templateUrl: './lynx-insight-scroll-position-indicator.component.html',
   styleUrl: './lynx-insight-scroll-position-indicator.component.scss',
-  standalone: false
+  imports: [NgClass]
 })
 export class LynxInsightScrollPositionIndicatorComponent implements OnInit {
   @Input() set editor(value: LynxableEditor | undefined) {

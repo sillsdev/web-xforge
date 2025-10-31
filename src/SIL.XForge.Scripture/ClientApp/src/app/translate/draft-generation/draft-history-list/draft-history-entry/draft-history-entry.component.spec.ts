@@ -1,6 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { RouterModule } from '@angular/router';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideRouter } from '@angular/router';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
@@ -12,8 +12,8 @@ import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../../core/models/sf-type-registry';
@@ -44,13 +44,10 @@ describe('DraftHistoryEntryComponent', () => {
   let fixture: ComponentFixture<DraftHistoryEntryComponent>;
 
   configureTestingModule(() => ({
-    imports: [
-      NoopAnimationsModule,
-      TestTranslocoModule,
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      RouterModule.forRoot([])
-    ],
+    imports: [getTestTranslocoModule()],
     providers: [
+      provideRouter([]),
+      provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
       { provide: I18nService, useMock: mockedI18nService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
@@ -58,7 +55,8 @@ describe('DraftHistoryEntryComponent', () => {
       { provide: TrainingDataService, useMock: mockedTrainingDataService },
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: FeatureFlagService, useMock: mockedFeatureFlagsService },
-      { provide: DraftOptionsService, useMock: mockedDraftOptionsService }
+      { provide: DraftOptionsService, useMock: mockedDraftOptionsService },
+      provideNoopAnimations()
     ]
   }));
 

@@ -3,8 +3,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testi
 import { By } from '@angular/platform-browser';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { TextDocId } from '../../../../../core/models/text-doc';
 import { LynxEditor, LynxTextModelConverter } from '../lynx-editor';
 import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightAction, LynxInsightConfig } from '../lynx-insight';
@@ -37,7 +36,7 @@ const defaultInsightConfig: LynxInsightConfig = {
     [editor]="editor"
     [textModelConverter]="textModelConverter"
   ></app-lynx-insight-overlay>`,
-  standalone: false
+  imports: [LynxInsightOverlayComponent]
 })
 class HostComponent {
   @ViewChild('overlay') component!: LynxInsightOverlayComponent;
@@ -48,8 +47,7 @@ class HostComponent {
 
 describe('LynxInsightOverlayComponent', () => {
   configureTestingModule(() => ({
-    imports: [UICommonModule, TestTranslocoModule],
-    declarations: [HostComponent, LynxInsightOverlayComponent],
+    imports: [LynxInsightOverlayComponent, getTestTranslocoModule(), HostComponent],
     providers: [
       { provide: LynxInsightStateService, useMock: mockLynxInsightStateService },
       { provide: LynxInsightOverlayService, useMock: mockLynxInsightOverlayService },

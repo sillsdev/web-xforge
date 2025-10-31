@@ -1,8 +1,22 @@
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { Component, Inject } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatButton } from '@angular/material/button';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogActions,
+  MatDialogClose,
+  MatDialogContent,
+  MatDialogRef,
+  MatDialogTitle
+} from '@angular/material/dialog';
+import { MatError, MatFormField, MatHint, MatLabel } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { AutofocusDirective } from 'xforge-common/autofocus.directive';
 import { I18nService } from 'xforge-common/i18n.service';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -18,7 +32,24 @@ export interface BiblicalTermDialogData {
 @Component({
   templateUrl: './biblical-term-dialog.component.html',
   styleUrls: ['./biblical-term-dialog.component.scss'],
-  standalone: false
+  imports: [
+    TranslocoModule,
+    MatDialogTitle,
+    CdkScrollable,
+    MatDialogContent,
+    MatFormField,
+    FormsModule,
+    ReactiveFormsModule,
+    MatLabel,
+    MatInput,
+    CdkTextareaAutosize,
+    AutofocusDirective,
+    MatHint,
+    MatError,
+    MatDialogActions,
+    MatButton,
+    MatDialogClose
+  ]
 })
 export class BiblicalTermDialogComponent {
   definition: string = '';

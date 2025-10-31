@@ -1,5 +1,11 @@
+import { NgClass } from '@angular/common';
 import { Component, Input, ViewChild } from '@angular/core';
+import { MatIconButton } from '@angular/material/button';
 import { MatDialogRef } from '@angular/material/dialog';
+import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
+import { TranslocoModule } from '@ngneat/transloco';
+import { ngfModule } from 'angular-file';
 import { InvalidFileItem } from 'angular-file/file-upload/fileTools';
 import { firstValueFrom } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -16,7 +22,7 @@ import { TextAndAudioComponent } from '../text-and-audio/text-and-audio.componen
   selector: 'app-attach-audio',
   templateUrl: './attach-audio.component.html',
   styleUrl: './attach-audio.component.scss',
-  standalone: false
+  imports: [TranslocoModule, NgClass, MatIconButton, MatTooltip, MatIcon, ngfModule, SingleButtonAudioPlayerComponent]
 })
 export class AttachAudioComponent {
   @ViewChild(SingleButtonAudioPlayerComponent) audioPlayer?: SingleButtonAudioPlayerComponent;

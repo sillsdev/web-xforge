@@ -3,9 +3,7 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { Meta, moduleMetadata } from '@storybook/angular';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
-import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import {
   MatDialogLaunchComponent,
   matDialogStory,
@@ -119,7 +117,7 @@ const meta: Meta = {
 export default meta;
 
 const dialogStoryConfig: MatDialogStoryConfig = {
-  imports: [XForgeCommonModule, I18nStoryModule],
+  imports: [EditorTabAddResourceDialogComponent],
   providers: [
     provideAnimations(),
     { provide: EditorTabAddResourceDialogService, useValue: instance(mockEditorTabAddResourceDialogService) },
@@ -129,9 +127,7 @@ const dialogStoryConfig: MatDialogStoryConfig = {
     { provide: MatDialogRef, useValue: instance(mockMatDialogRef) },
     { provide: OnlineStatusService, useValue: instance(mockOnlineStatusService) },
     { provide: MAT_DIALOG_DATA, useValue: {} }
-  ],
-  declarations: [EditorTabAddResourceDialogComponent],
-  standaloneComponent: true
+  ]
 };
 
 // List of stories.

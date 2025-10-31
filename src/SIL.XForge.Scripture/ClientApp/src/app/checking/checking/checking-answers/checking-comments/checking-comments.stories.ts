@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { expect, within } from '@storybook/test';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -6,10 +5,8 @@ import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { instance, mock, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
-import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { CheckingInputFormComponent } from '../checking-input-form/checking-input-form.component';
 import { CheckingCommentsComponent } from './checking-comments.component';
@@ -49,12 +46,11 @@ const meta: Meta<CheckingCommentsComponent> = {
   component: CheckingCommentsComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, UICommonModule, I18nStoryModule, OwnerComponent],
+      imports: [OwnerComponent, CheckingInputFormComponent],
       providers: [
         { provide: DialogService, useValue: instance(mockedDialogService) },
         { provide: UserService, useValue: instance(mockedUserService) }
-      ],
-      declarations: [CheckingInputFormComponent]
+      ]
     })
   ],
   args: defaultArgs

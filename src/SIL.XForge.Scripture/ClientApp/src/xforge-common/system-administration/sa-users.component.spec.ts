@@ -1,11 +1,11 @@
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { DebugElement, getDebugNode, NgModule } from '@angular/core';
+import { DebugElement, getDebugNode } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { RouterModule } from '@angular/router';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideRouter } from '@angular/router';
 import { escapeRegExp, merge } from 'lodash-es';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { User } from 'realtime-server/lib/esm/common/models/user';
@@ -17,16 +17,15 @@ import { switchMap } from 'rxjs/operators';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { FileType } from 'xforge-common/models/file-offline-data';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { environment } from '../../environments/environment';
 import { ProjectDoc } from '../models/project-doc';
 import { UserDoc } from '../models/user-doc';
 import { ProjectService } from '../project.service';
 import { QueryFilter, QueryParameters } from '../query-parameters';
 import { TestRealtimeService } from '../test-realtime.service';
-import { configureTestingModule, emptyHammerLoader, TestTranslocoModule } from '../test-utils';
+import { configureTestingModule, emptyHammerLoader, getTestTranslocoModule } from '../test-utils';
 import { TypeRegistry } from '../type-registry';
-import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
 import { SaDeleteDialogComponent } from './sa-delete-dialog.component';
 import { SaUsersComponent } from './sa-users.component';
@@ -37,22 +36,17 @@ const mockedProjectService: ProjectService = mock(ProjectService);
 
 describe('SaUsersComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      RouterModule.forRoot([]),
-      UICommonModule,
-      DialogTestModule,
-      TestTranslocoModule,
-      TestRealtimeModule.forRoot(new TypeRegistry([UserDoc, TestProjectDoc], [FileType.Audio], [])),
-      AvatarComponent
-    ],
-    declarations: [SaUsersComponent],
+    imports: [SaUsersComponent, getTestTranslocoModule(), AvatarComponent],
     providers: [
+      provideRouter([]),
+      provideTestRealtime(new TypeRegistry([UserDoc, TestProjectDoc], [FileType.Audio], [])),
       { provide: MatDialog, useMock: mockedMatDialog },
       { provide: UserService, useMock: mockedUserService },
       { provide: ProjectService, useMock: mockedProjectService },
       emptyHammerLoader,
       provideHttpClient(withInterceptorsFromDi()),
-      provideHttpClientTesting()
+      provideHttpClientTesting(),
+      provideNoopAnimations()
     ]
   }));
 
@@ -160,11 +154,6 @@ class TestProjectDoc extends ProjectDoc {
 
   readonly taskNames: string[] = [];
 }
-
-@NgModule({
-  imports: [NoopAnimationsModule]
-})
-class DialogTestModule {}
 
 class TestEnvironment {
   readonly component: SaUsersComponent;
