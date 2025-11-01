@@ -235,7 +235,6 @@
     "delete_timing": "Zeitdatei löschen",
     "drag_and_drop_files": "Audio- und Zeitdateien zum Hochladen hier ablegen",
     "drag_and_drop_overlay": "Dateien zum Hochladen ablegen",
-    "drag_and_drop_or_browse": "oder",
     "from_timing_past_to_timing": "Ein oder mehrere Endwerte enden vor ihren Anfangswerten.",
     "help": "Hilfe",
     "no_audio_file_uploaded": "Keine Audiodatei hochgeladen",

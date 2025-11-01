@@ -235,7 +235,6 @@
     "delete_timing": "Eliminar Tiempo",
     "drag_and_drop_files": "Suelte aquí los archivos de audio y tiempo para cargarlos",
     "drag_and_drop_overlay": "Suelta los archivos para subirlos",
-    "drag_and_drop_or_browse": "o",
     "from_timing_past_to_timing": "Uno o más valores finales terminan antes que sus valores iniciales.",
     "help": "Ayuda",
     "no_audio_file_uploaded": "No se ha cargado ningún archivo de audio",
