@@ -78,8 +78,8 @@ ChaptersInOrder.play = async ({ canvasElement }) => {
 
 export const Mobile = Template.bind({});
 Mobile.args = { ...defaultArgs };
-Mobile.parameters = {
-  viewport: { defaultViewport: 'mobile1' }
+Mobile.globals = {
+  viewport: { value: 'mobile1' }
 };
 
 export const SelectBook = Template.bind({});

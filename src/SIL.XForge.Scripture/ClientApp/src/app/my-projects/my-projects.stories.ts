@@ -515,8 +515,8 @@ export const LayoutLengths: Story = {
 
 export const LayoutLengthsMobile: Story = {
   args: { ...LayoutLengths.args, projectNameLengthCheck: false },
-  parameters: {
-    viewport: { defaultViewport: 'mobile1' }
+  globals: {
+    viewport: { value: 'mobile1' }
   }
 };
 

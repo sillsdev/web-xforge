@@ -3,7 +3,6 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { ngfModule } from 'angular-file';
-import { InvalidFileItem } from 'angular-file/file-upload/fileTools';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -12,7 +11,7 @@ import { configureTestingModule, getAudioBlob, getTestTranslocoModule } from 'xf
 import { AudioRecorderDialogComponent } from '../../shared/audio-recorder-dialog/audio-recorder-dialog.component';
 import { provideQuillRegistrations } from '../../shared/text/quill-editor-registration/quill-providers';
 import { TextAndAudioComponent } from '../text-and-audio/text-and-audio.component';
-import { AttachAudioComponent } from './attach-audio.component';
+import { AttachAudioComponent, InvalidFileItem } from './attach-audio.component';
 
 const mockDialogService = mock(DialogService);
 

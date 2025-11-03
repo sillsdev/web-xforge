@@ -1,10 +1,10 @@
 import { DestroyRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { defaultTranslocoMarkupTranspilers } from 'ngx-transloco-markup';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -180,8 +180,7 @@ export default {
   parameters: {
     controls: {
       include: Object.keys(defaultArgs)
-    },
-    viewport: { defaultViewport: 'responsive' }
+    }
   },
   argTypes: {}
 } as Meta<DraftSourcesComponentStoryState>;
@@ -276,22 +275,22 @@ export const SelectAllAndSave: Story = {
 
 export const DefaultOnMobile = {
   ...Template,
-  parameters: {
-    viewport: { defaultViewport: 'mobile1' }
+  globals: {
+    viewport: { value: 'mobile1' }
   }
 };
 
 export const PreExistingSettingsOnMobile = {
   ...PreExistingSettings,
-  parameters: {
-    viewport: { defaultViewport: 'mobile1' }
+  globals: {
+    viewport: { value: 'mobile1' }
   }
 };
 
 export const SelectAllAndSaveOnMobile = {
   ...SelectAllAndSave,
-  parameters: {
-    viewport: { defaultViewport: 'mobile1' }
+  globals: {
+    viewport: { value: 'mobile1' }
   }
 };
 

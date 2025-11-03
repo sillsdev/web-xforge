@@ -179,8 +179,8 @@ export const EmptyAddTabMenu: Story = {
 
 export const Narrow: Story = {
   ...Default,
-  parameters: {
-    viewport: { defaultViewport: 'mobile1' }
+  globals: {
+    viewport: { value: 'mobile1' }
   }
 };
 
