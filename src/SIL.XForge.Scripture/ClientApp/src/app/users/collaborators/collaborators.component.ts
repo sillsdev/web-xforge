@@ -1,12 +1,10 @@
 import { Component, DestroyRef, OnInit } from '@angular/core';
 import { FormsModule, ReactiveFormsModule, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { MatIconButton } from '@angular/material/button';
-import { MatFormField, MatHint, MatLabel } from '@angular/material/form-field';
+import { MatHint } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
-import { MatInput } from '@angular/material/input';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatCell, MatCellDef, MatColumnDef, MatRow, MatRowDef, MatTable } from '@angular/material/table';
-import { MatTab, MatTabGroup } from '@angular/material/tabs';
 import { MatTooltip } from '@angular/material/tooltip';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -71,13 +69,8 @@ export enum UserType {
   imports: [
     TranslocoModule,
     NoticeComponent,
-    MatTabGroup,
-    MatTab,
-    MatFormField,
     FormsModule,
     ReactiveFormsModule,
-    MatLabel,
-    MatInput,
     MatTable,
     MatColumnDef,
     MatCellDef,
