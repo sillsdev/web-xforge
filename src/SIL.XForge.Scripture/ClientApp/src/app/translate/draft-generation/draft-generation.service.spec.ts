@@ -225,6 +225,23 @@ describe('DraftGenerationService', () => {
       });
       tick();
     }));
+
+    it('should return undefined and show error when server returns 500', fakeAsync(() => {
+      // SUT
+      service.getLastPreTranslationBuild(projectId).subscribe(result => {
+        expect(result).toBeUndefined();
+        verify(mockNoticeService.showError(anything())).once();
+      });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/getLastPreTranslationBuild`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(null, { status: HttpStatusCode.InternalServerError, statusText: 'Server Error' });
+      tick();
+    }));
   });
 
   describe('getBuildHistory', () => {

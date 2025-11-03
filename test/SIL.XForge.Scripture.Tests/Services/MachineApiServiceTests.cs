@@ -2087,7 +2087,7 @@ public class MachineApiServiceTests
             Message = MachineApiService.BuildStateCompleted,
             Progress = 100,
             Revision = 11,
-            State = JobState.Completed,
+            State = JobState.Canceled,
             DateFinished = now.AddMinutes(-5),
         };
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
