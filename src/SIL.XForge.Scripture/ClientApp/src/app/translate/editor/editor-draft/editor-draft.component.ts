@@ -327,21 +327,20 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         }),
         filter(([isOnline, _]) => {
           return isOnline && this.doesLatestCompletedHaveDraft;
+        }),
+        switchMap(() => this.refreshLastPreTranslationBuild()),
+        tap((build: BuildDto | undefined) => {
+          this._latestPreTranslationBuild = build;
         })
       )
-      .subscribe(() => this.refreshLastPreTranslationBuild());
+      .subscribe();
   }
 
-  private refreshLastPreTranslationBuild(): void {
+  private refreshLastPreTranslationBuild(): Observable<BuildDto | undefined> {
     if (this.projectId == null) {
-      return;
+      return of<BuildDto | undefined>(undefined);
     }
-    this.draftGenerationService
-      .getLastPreTranslationBuild(this.projectId)
-      .pipe(quietTakeUntilDestroyed(this.destroyRef), take(1))
-      .subscribe((build: BuildDto | undefined) => {
-        this._latestPreTranslationBuild = build;
-      });
+    return this.draftGenerationService.getLastPreTranslationBuild(this.projectId).pipe(take(1));
   }
 
   navigateToFormatting(): void {
