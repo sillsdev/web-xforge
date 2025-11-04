@@ -4,6 +4,7 @@ import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@ang
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { setCompodocJson } from '@storybook/addon-docs/angular';
 import { applicationConfig } from '@storybook/angular';
+import { MINIMAL_VIEWPORTS } from 'storybook/viewport';
 import { I18nStoryDecorator, provideI18nStory } from 'xforge-common/i18n-story';
 import { I18nService } from 'xforge-common/i18n.service';
 import { APP_ROOT_ELEMENT_SELECTOR, InAppRootOverlayContainer } from 'xforge-common/overlay-container';
@@ -21,6 +22,9 @@ export const parameters = {
       color: /(background|color)$/i,
       date: /Date$/
     }
+  },
+  viewport: {
+    options: MINIMAL_VIEWPORTS
   }
 };
 

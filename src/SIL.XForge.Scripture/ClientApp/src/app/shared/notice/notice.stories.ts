@@ -128,7 +128,7 @@ export const WithButton: Story = {
 
 export const WrappingText: Story = {
   ...FillDark,
-  parameters: {
-    viewport: { defaultViewport: 'mobile1' }
+  globals: {
+    viewport: { value: 'mobile1' }
   }
 };

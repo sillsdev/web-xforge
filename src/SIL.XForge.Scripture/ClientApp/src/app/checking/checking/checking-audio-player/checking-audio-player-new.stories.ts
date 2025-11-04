@@ -1,6 +1,6 @@
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-import { userEvent, within } from '@storybook/test';
 import { of } from 'rxjs';
+import { userEvent, within } from 'storybook/test';
 import { instance, mock, when } from 'ts-mockito';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';

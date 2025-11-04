@@ -1,7 +1,7 @@
 {
-  "extends": "../src/tsconfig.app.json",
+  "extends": "../tsconfig.json",
   "compilerOptions": {
-    "types": ["node"],
+    "types": ["node", "chai", "react", "react-dom"],
     "allowSyntheticDefaultImports": true
   },
   "exclude": [
@@ -11,6 +11,6 @@
     "../src/xforge-common/test-utils.ts",
     "../src/xforge-common/mock-console.ts"
   ],
-  "include": ["../src/**/*", "./jest-setup.ts", "./preview.ts"],
+  "include": ["../src/**/*", "./**/*"],
   "files": ["./typings.d.ts"]
 }

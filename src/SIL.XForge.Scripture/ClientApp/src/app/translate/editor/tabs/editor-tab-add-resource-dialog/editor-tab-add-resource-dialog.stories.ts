@@ -109,8 +109,10 @@ const meta: Meta = {
     controls: {
       expanded: true,
       include: Object.keys(defaultArgs)
-    },
-    viewport: { defaultViewport: 'mobile1' }
+    }
+  },
+  globals: {
+    viewport: { value: 'mobile1' }
   },
   args: defaultArgs
 };

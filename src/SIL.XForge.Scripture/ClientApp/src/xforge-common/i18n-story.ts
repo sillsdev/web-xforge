@@ -7,7 +7,7 @@ import {
   provideAppInitializer
 } from '@angular/core';
 import { TRANSLOCO_CONFIG, TRANSLOCO_LOADER, TranslocoConfig, TranslocoModule } from '@ngneat/transloco';
-import { DecoratorFunction } from '@storybook/types';
+import { Decorator } from '@storybook/angular';
 import { I18nService, IGNORE_COOKIE_LOCALE, TranslationLoader } from './i18n.service';
 
 let i18nService: I18nService | undefined;
@@ -15,7 +15,7 @@ let selectedLocale: string | undefined;
 
 const translocoConfig: TranslocoConfig = { ...I18nService.translocoConfig, prodMode: false };
 
-export const I18nStoryDecorator: DecoratorFunction = (Story, context) => {
+export const I18nStoryDecorator: Decorator = (Story, context) => {
   // In some cases the locale has been known to be the empty string, so make sure not to set it to that.
   const locale = context.parameters.locale || context.globals.locale || I18nService.defaultLocale.canonicalTag;
   selectedLocale = locale;

@@ -6,7 +6,6 @@ import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
 import { TranslocoModule } from '@ngneat/transloco';
 import { ngfModule } from 'angular-file';
-import { InvalidFileItem } from 'angular-file/file-upload/fileTools';
 import { firstValueFrom } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
 import {
@@ -17,6 +16,12 @@ import {
 import { AudioAttachment } from '../checking/checking-audio-player/checking-audio-player.component';
 import { SingleButtonAudioPlayerComponent } from '../checking/single-button-audio-player/single-button-audio-player.component';
 import { TextAndAudioComponent } from '../text-and-audio/text-and-audio.component';
+
+// Taken from 'angular-file/file-upload/fileTools'
+export interface InvalidFileItem {
+  file: File;
+  type: string;
+}
 
 @Component({
   selector: 'app-attach-audio',

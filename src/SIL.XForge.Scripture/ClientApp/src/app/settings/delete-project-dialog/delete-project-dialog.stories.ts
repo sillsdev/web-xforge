@@ -1,5 +1,5 @@
 import { Meta } from '@storybook/angular';
-import { expect, userEvent, within } from '@storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
 import { getOverlay, MatDialogLaunchComponent, matDialogStory } from '../../../../.storybook/util/mat-dialog-launch';
 import { DeleteProjectDialogComponent } from './delete-project-dialog.component';
 
