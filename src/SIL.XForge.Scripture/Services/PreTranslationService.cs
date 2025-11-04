@@ -207,6 +207,8 @@ public class PreTranslationService(
                 QuoteStyleOptions.Normalized => PretranslationNormalizationBehavior.Normalized,
                 _ => PretranslationNormalizationBehavior.Denormalized,
             },
+            embedBehavior: PretranslationUsfmMarkerBehavior.Strip,
+            styleMarkerBehavior: PretranslationUsfmMarkerBehavior.Strip,
             cancellationToken: cancellationToken
         );
 

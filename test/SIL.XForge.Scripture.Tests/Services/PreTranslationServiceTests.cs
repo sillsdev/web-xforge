@@ -485,6 +485,8 @@ public class PreTranslationServiceTests
                 Arg.Any<PretranslationUsfmTemplate>(),
                 paragraphMarkerBehavior: PretranslationUsfmMarkerBehavior.Strip,
                 quoteNormalizationBehavior: PretranslationNormalizationBehavior.Denormalized,
+                embedBehavior: PretranslationUsfmMarkerBehavior.Strip,
+                styleMarkerBehavior: PretranslationUsfmMarkerBehavior.Strip,
                 cancellationToken: CancellationToken.None
             );
 
@@ -506,6 +508,8 @@ public class PreTranslationServiceTests
                 Arg.Any<PretranslationUsfmTemplate>(),
                 paragraphMarkerBehavior: PretranslationUsfmMarkerBehavior.PreservePosition,
                 quoteNormalizationBehavior: PretranslationNormalizationBehavior.Denormalized,
+                embedBehavior: PretranslationUsfmMarkerBehavior.Strip,
+                styleMarkerBehavior: PretranslationUsfmMarkerBehavior.Strip,
                 cancellationToken: CancellationToken.None
             );
 
@@ -527,6 +531,8 @@ public class PreTranslationServiceTests
                 Arg.Any<PretranslationUsfmTemplate>(),
                 paragraphMarkerBehavior: PretranslationUsfmMarkerBehavior.Preserve,
                 quoteNormalizationBehavior: PretranslationNormalizationBehavior.Denormalized,
+                embedBehavior: PretranslationUsfmMarkerBehavior.Strip,
+                styleMarkerBehavior: PretranslationUsfmMarkerBehavior.Strip,
                 cancellationToken: CancellationToken.None
             );
     }
@@ -557,6 +563,8 @@ public class PreTranslationServiceTests
                 Arg.Any<PretranslationUsfmTemplate>(),
                 paragraphMarkerBehavior: PretranslationUsfmMarkerBehavior.PreservePosition,
                 quoteNormalizationBehavior: PretranslationNormalizationBehavior.Normalized,
+                embedBehavior: PretranslationUsfmMarkerBehavior.Strip,
+                styleMarkerBehavior: PretranslationUsfmMarkerBehavior.Strip,
                 cancellationToken: CancellationToken.None
             );
 
@@ -578,6 +586,8 @@ public class PreTranslationServiceTests
                 Arg.Any<PretranslationUsfmTemplate>(),
                 paragraphMarkerBehavior: PretranslationUsfmMarkerBehavior.PreservePosition,
                 quoteNormalizationBehavior: PretranslationNormalizationBehavior.Denormalized,
+                embedBehavior: PretranslationUsfmMarkerBehavior.Strip,
+                styleMarkerBehavior: PretranslationUsfmMarkerBehavior.Strip,
                 cancellationToken: CancellationToken.None
             );
     }
@@ -804,6 +814,8 @@ public class PreTranslationServiceTests
                     template: PretranslationUsfmTemplate.Source,
                     paragraphMarkerBehavior: Arg.Any<PretranslationUsfmMarkerBehavior>(),
                     quoteNormalizationBehavior: Arg.Any<PretranslationNormalizationBehavior>(),
+                    embedBehavior: PretranslationUsfmMarkerBehavior.Strip,
+                    styleMarkerBehavior: PretranslationUsfmMarkerBehavior.Strip,
                     cancellationToken: CancellationToken.None
                 )
                 .Returns(MatthewBookUsfm);
