@@ -2,6 +2,13 @@ using System.Collections.Generic;
 
 namespace SIL.XForge.Scripture.Models;
 
+/// <summary>
+/// A chapter in a <see cref="TextInfo"/>.
+/// </summary>
+/// <remarks>
+/// If you add any properties to this class, please update the ChapterEqualityComparer
+/// or ParatextSyncRunner.UpdateNewChapters() to include them if necessary.
+/// </remarks>
 public class Chapter
 {
     public int Number { get; set; }

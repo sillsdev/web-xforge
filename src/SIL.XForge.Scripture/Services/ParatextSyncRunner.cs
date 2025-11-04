@@ -964,6 +964,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
             // update project metadata
             LogMetric("Updating project metadata");
+            newSetOfChapters = UpdateNewChapters(_projectDoc.Data, text.BookNum, newSetOfChapters);
             await _projectDoc.SubmitJson0OpAsync(op =>
             {
                 if (textIndex == -1)
@@ -1209,6 +1210,33 @@ public class ParatextSyncRunner : IParatextSyncRunner
         }
 
         return chapterAuthors;
+    }
+
+    /// <summary>
+    /// Updates the new set of chapters to carry over properties from the old set of chapters.
+    /// </summary>
+    /// <param name="project">The project.</param>
+    /// <param name="bookNum">The book number.</param>
+    /// <param name="newChapters">The set of new chapters.</param>
+    /// <returns>The set of new chapters</returns>
+    private static List<Chapter> UpdateNewChapters(SFProject project, int bookNum, List<Chapter> newChapters)
+    {
+        TextInfo text = project.Texts.FirstOrDefault(t => t.BookNum == bookNum);
+        if (text is not null)
+        {
+            foreach (Chapter newChapter in newChapters)
+            {
+                Chapter oldChapter = text.Chapters.FirstOrDefault(c => c.Number == newChapter.Number);
+                if (oldChapter is not null)
+                {
+                    newChapter.HasAudio = oldChapter.HasAudio;
+                    newChapter.HasDraft = oldChapter.HasDraft;
+                    newChapter.DraftApplied = oldChapter.DraftApplied;
+                }
+            }
+        }
+
+        return newChapters;
     }
 
     /// <summary>
