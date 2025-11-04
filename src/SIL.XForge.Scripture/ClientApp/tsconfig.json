@@ -16,7 +16,7 @@
     "importHelpers": true,
     "target": "ES2022",
     "module": "esnext",
-    "lib": ["es2019", "dom", "dom.iterable"],
+    "lib": ["esnext", "dom", "dom.iterable"],
     "ignoreDeprecations": "5.0",
     "esModuleInterop": true,
     "typeRoots": ["node_modules/@types"],

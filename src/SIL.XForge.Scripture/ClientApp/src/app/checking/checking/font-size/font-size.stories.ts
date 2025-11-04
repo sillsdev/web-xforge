@@ -1,6 +1,6 @@
 import { componentWrapperDecorator, Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-import { expect, userEvent } from 'storybook/test';
 import { PointerEventsCheckLevel } from '@testing-library/user-event';
+import { expect, userEvent } from 'storybook/test';
 import { getTestTranslocoModule } from 'xforge-common/test-utils';
 import { FontSizeComponent } from './font-size.component';
 
