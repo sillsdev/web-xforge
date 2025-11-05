@@ -469,7 +469,7 @@ public class ParatextServiceTests
             ptUsernameMapping,
             40
         );
-        string[] expected = [TextInfoPermission.Write, TextInfoPermission.None, TextInfoPermission.None];
+        string[] expected = [TextInfoPermission.Write];
         Assert.That(permissions.Values, Is.EquivalentTo(expected));
         // User01 permission to Mark explicitly and automatically
         permissions = await env.Service.GetPermissionsAsync(user01Secret, project, ptUsernameMapping, 41);
@@ -503,8 +503,8 @@ public class ParatextServiceTests
             40
         );
 
-        // Ensure the user has read only access to Matthew and Mark
-        string[] expected = [TextInfoPermission.Read, TextInfoPermission.None, TextInfoPermission.None];
+        // Ensure the user has read only access to Matthew
+        string[] expected = [TextInfoPermission.Read];
         Assert.That(permissions.Values, Is.EquivalentTo(expected));
     }
 
@@ -533,11 +533,11 @@ public class ParatextServiceTests
             ptUsernameMapping,
             40
         );
-        string[] expected = [TextInfoPermission.Read, TextInfoPermission.None, TextInfoPermission.None];
+        string[] expected = [TextInfoPermission.Read];
         Assert.That(permissions.Values, Is.EquivalentTo(expected));
         // User01 has permission to Mark automatically
         permissions = await env.Service.GetPermissionsAsync(user01Secret, project, ptUsernameMapping, 41);
-        expected = [TextInfoPermission.Write, TextInfoPermission.None, TextInfoPermission.None];
+        expected = [TextInfoPermission.Write];
         Assert.That(permissions.Values, Is.EquivalentTo(expected));
     }
 
@@ -6693,7 +6693,7 @@ public class ParatextServiceTests
         SyncMetricInfo expected = new SyncMetricInfo { Updated = 1 };
         Assert.AreEqual(expected, actual);
         Assert.AreEqual(TextInfoPermission.Write, projectDoc.Data.Texts[0].Permissions[env.User01]);
-        Assert.AreEqual(TextInfoPermission.Write, projectDoc.Data.Texts[0].Chapters[0].Permissions[env.User01]);
+        Assert.IsFalse(projectDoc.Data.Texts[0].Chapters[0].Permissions.ContainsKey(env.User01));
     }
 
     [Test]
