@@ -24,6 +24,7 @@ import { BehaviorSubject, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { IncludesPipe } from 'xforge-common/includes.pipe';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
@@ -43,6 +44,7 @@ const mockRouter = mock<Router>();
 const mockI18nService = mock<I18nService>();
 const mockEditorSegmentService = mock<EditorSegmentService>();
 const mockTextDoc = mock<TextDoc>();
+const mockFontService = mock(FontService);
 
 const OPTIMIZATION_THRESHOLD = 50;
 
@@ -132,6 +134,7 @@ describe('LynxInsightsPanelComponent', () => {
       { provide: Router, useMock: mockRouter },
       { provide: I18nService, useMock: mockI18nService },
       { provide: EditorSegmentService, useMock: mockEditorSegmentService },
+      { provide: FontService, useMock: mockFontService },
       {
         provide: EDITOR_INSIGHT_DEFAULTS,
         useValue: {

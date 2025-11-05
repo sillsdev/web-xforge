@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { AfterViewInit, Component, DestroyRef, Inject, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, HostBinding, Inject, ViewChild } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MatRipple } from '@angular/material/core';
 import { MatIcon } from '@angular/material/icon';
@@ -23,6 +23,7 @@ import { DeltaOperation } from 'rich-text';
 import { asapScheduler, combineLatest, debounceTime, map, tap } from 'rxjs';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { isWhitespace } from 'xforge-common/util/string-util';
@@ -90,6 +91,10 @@ interface LynxInsightWithText extends LynxInsight {
 })
 export class LynxInsightsPanelComponent implements AfterViewInit {
   @ViewChild(MatTree) tree?: MatTree<InsightPanelNode>;
+  @HostBinding('style.--project-font')
+  get projectFont(): string | null {
+    return this.fontService.getFontFamilyFromProject(this.activatedProject.projectDoc);
+  }
 
   treeDataSource: InsightPanelNode[] = [];
 
@@ -152,6 +157,7 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
     private readonly activatedBookChapterService: ActivatedBookChapterService,
     private readonly editorSegmentService: EditorSegmentService,
     private readonly projectService: SFProjectService,
+    private readonly fontService: FontService,
     private readonly router: Router,
     readonly i18n: I18nService,
     @Inject(EDITOR_INSIGHT_DEFAULTS) readonly lynxInsightConfig: LynxInsightConfig
