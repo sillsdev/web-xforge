@@ -1,6 +1,16 @@
 import { Dir } from '@angular/cdk/bidi';
-import { DOCUMENT, NgClass } from '@angular/common';
-import { Component, DestroyRef, ElementRef, EventEmitter, Inject, Input, OnInit, Output } from '@angular/core';
+import { NgClass } from '@angular/common';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  EventEmitter,
+  Inject,
+  Input,
+  OnInit,
+  Output,
+  DOCUMENT
+} from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MAT_TOOLTIP_DEFAULT_OPTIONS, MatTooltip } from '@angular/material/tooltip';

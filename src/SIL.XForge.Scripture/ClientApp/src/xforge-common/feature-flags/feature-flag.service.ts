@@ -3,6 +3,7 @@ import { BehaviorSubject, distinctUntilChanged, Observable, Subject } from 'rxjs
 import { AnonymousService } from 'xforge-common/anonymous.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+
 export interface FeatureFlag {
   readonly key: string;
   readonly description: string;
@@ -173,7 +174,10 @@ class StaticFeatureFlagStore implements IFeatureFlagStore {
   private readonly = false;
   private enabledSource$ = new Subject<{ key: string; value: boolean }>();
   enabled$ = this.enabledSource$.asObservable();
-  destroyRef: DestroyRef = { onDestroy: (_cb: () => void) => () => {} };
+  destroyRef: DestroyRef = {
+    onDestroy: (_cb: () => void) => () => {},
+    destroyed: false
+  };
 
   constructor(
     private enabled: boolean,

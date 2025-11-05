@@ -1,7 +1,6 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { Platform } from '@angular/cdk/platform';
-import { DOCUMENT } from '@angular/common';
-import { Inject, Injectable, InjectionToken } from '@angular/core';
+import { DOCUMENT, Inject, Injectable, InjectionToken } from '@angular/core';
 
 export const APP_ROOT_ELEMENT_SELECTOR = new InjectionToken<string>('APP_ROOT_ELEMENT_SELECTOR', {
   providedIn: 'root',

@@ -16,21 +16,22 @@
   [cdkDropListSortPredicate]="movablePredicate.bind(this)"
   (cdkDropListDropped)="onTabDrop($event)"
 >
-  <app-tab-header
-    *ngFor="let tab of tabs; let i = index"
-    [closeable]="tab.closeable"
-    [movable]="tab.movable"
-    [tooltip]="tab.tooltip"
-    [active]="i === selectedIndex"
-    (tabPress)="tabPress.next({ index: i, pointerEvent: $event })"
-    (tabClick)="tabClick.next({ index: i, pointerEvent: $event })"
-    (closeClick)="closeClick.next(i)"
-    cdkDrag
-    [cdkDragDisabled]="!tab.movable"
-    [cdkDragData]="tab"
-  >
-    <ng-container *ngTemplateOutlet="tab.tabHeaderTemplate"></ng-container>
-  </app-tab-header>
+  @for (tab of tabs; track tab; let i = $index) {
+    <app-tab-header
+      [closeable]="tab.closeable"
+      [movable]="tab.movable"
+      [tooltip]="tab.tooltip"
+      [active]="i === selectedIndex"
+      (tabPress)="tabPress.next({ index: i, pointerEvent: $event })"
+      (tabClick)="tabClick.next({ index: i, pointerEvent: $event })"
+      (closeClick)="closeClick.next(i)"
+      cdkDrag
+      [cdkDragDisabled]="!tab.movable"
+      [cdkDragData]="tab"
+    >
+      <ng-container *ngTemplateOutlet="tab.tabHeaderTemplate"></ng-container>
+    </app-tab-header>
+  }
 
   <app-tab-header
     #menuTrigger="matMenuTrigger"
@@ -47,16 +48,21 @@
 
   <mat-menu #newTabMenu>
     <!-- Migrating to control flow causes an "Expression changed after check" error when tabs are dragged -->
-    <ng-container *ngIf="(menuItems$ | async)?.length; else emptyMenu">
-      <button *ngFor="let item of menuItems$ | async" mat-menu-item (click)="tabAddRequest.next(item.type)">
-        <mat-icon *ngIf="item.icon">{{ item.icon }}</mat-icon>
-        <mat-icon *ngIf="item.svgIcon" [svgIcon]="item.svgIcon"></mat-icon>
-        <span>{{ item.text }}</span>
-      </button>
-    </ng-container>
-    <ng-template #emptyMenu>
+    @if ((menuItems$ | async)?.length) {
+      @for (item of menuItems$ | async; track item) {
+        <button mat-menu-item (click)="tabAddRequest.next(item.type)">
+          @if (item.icon) {
+            <mat-icon>{{ item.icon }}</mat-icon>
+          }
+          @if (item.svgIcon) {
+            <mat-icon [svgIcon]="item.svgIcon"></mat-icon>
+          }
+          <span>{{ item.text }}</span>
+        </button>
+      }
+    } @else {
       <button mat-menu-item disabled>{{ "tab_group_header.no_tabs_available" | transloco }}</button>
-    </ng-template>
+    }
   </mat-menu>
 </div>
 

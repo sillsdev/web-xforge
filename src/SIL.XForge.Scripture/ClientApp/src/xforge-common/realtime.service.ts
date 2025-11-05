@@ -18,7 +18,8 @@ function getDocKey(collection: string, id: string): string {
  * This may be useful to satisfy a subscribe query in testing or if a query is not associated with a component.
  */
 export const noopDestroyRef: DestroyRef = {
-  onDestroy: _callback => () => {}
+  onDestroy: _callback => () => {},
+  destroyed: false
 };
 
 /**

@@ -84,9 +84,9 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     super(noticeService);
     this.connectProjectForm.disable();
     this.projectMetadata = {
-      paratextId: this.router.getCurrentNavigation()?.extras.state?.paratextId ?? '',
-      name: this.router.getCurrentNavigation()?.extras.state?.name ?? '',
-      shortName: this.router.getCurrentNavigation()?.extras.state?.shortName ?? ''
+      paratextId: this.router.currentNavigation()?.extras.state?.paratextId ?? '',
+      name: this.router.currentNavigation()?.extras.state?.name ?? '',
+      shortName: this.router.currentNavigation()?.extras.state?.shortName ?? ''
     };
   }
 

@@ -28,8 +28,7 @@ module.exports = function (config) {
     require('karma-coverage-istanbul-reporter'),
     require('karma-teamcity-reporter'),
     require('karma-mocha-reporter'),
-    require('karma-junit-reporter'),
-    require('@angular-devkit/build-angular/plugins/karma')
+    require('karma-junit-reporter')
   );
 
   config.set({

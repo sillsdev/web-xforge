@@ -379,13 +379,13 @@ class TestEnvironment {
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
     if (params.paratextId === undefined) {
-      when(mockedRouter.getCurrentNavigation()).thenReturn({ extras: {} } as any);
+      when(mockedRouter.currentNavigation()).thenReturn({ extras: {} } as any);
     } else {
       const paratextId = params.paratextId ?? 'pt01';
       const name: string | undefined = this.paratextProjects.find(p => p.paratextId === paratextId)?.name;
       const shortName: string | undefined = this.paratextProjects.find(p => p.paratextId === paratextId)?.shortName;
 
-      when(mockedRouter.getCurrentNavigation()).thenReturn({
+      when(mockedRouter.currentNavigation()).thenReturn({
         extras: { state: { paratextId, name, shortName } }
       } as any);
     }
