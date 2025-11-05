@@ -490,6 +490,20 @@ public class ParatextSyncRunnerTests
         env.AddParatextNoteThreadData(books);
         Assert.That(env.ContainsNote(1), Is.True);
 
+        // Set up Matthew 1 to update because the number of verses has changed (AddPTBook will create a chapter with 10 verses)
+        await env
+            .RealtimeService.GetRepository<SFProject>()
+            .UpdateAsync(
+                p => p.Id == "project01",
+                u =>
+                {
+                    u.Set(p => p.Texts[0].Chapters[0].LastVerse, 9);
+                    u.Set(p => p.Texts[0].Chapters[0].HasAudio, true);
+                    u.Set(p => p.Texts[0].Chapters[0].HasDraft, true);
+                    u.Set(p => p.Texts[0].Chapters[0].DraftApplied, true);
+                }
+            );
+
         await env.Runner.RunAsync("project02", "user01", "project02", false, CancellationToken.None);
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
         env.ParatextService.Received()
@@ -522,6 +536,13 @@ public class ParatextSyncRunnerTests
         Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 2)));
         Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 1, updated: 0)));
         Assert.That(syncMetrics.Questions, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 1, updated: 0)));
+
+        // Verify that Matthew 1 was updated correctly
+        SFProject project = env.GetProject();
+        Assert.That(project.Texts[0].Chapters[0].LastVerse, Is.EqualTo(10));
+        Assert.That(project.Texts[0].Chapters[0].HasAudio, Is.True);
+        Assert.That(project.Texts[0].Chapters[0].HasDraft, Is.True);
+        Assert.That(project.Texts[0].Chapters[0].DraftApplied, Is.True);
     }
 
     [Test]
