@@ -970,7 +970,7 @@ public class SFProjectServiceTests
         user = env.GetUser(User03);
         Assert.That(user.Sites[SiteId].Projects, Contains.Item(Project05));
 
-        Assert.That(project.Texts.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Read));
+        Assert.That(project.Texts.First().Permissions.ContainsKey(User03), Is.False);
         Assert.That(project.Texts.First().Chapters.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Write));
 
         resource = env.GetProject(Resource01);
@@ -981,11 +981,9 @@ public class SFProjectServiceTests
         );
         Assert.That(resourceUserRole, Is.EqualTo(SFProjectRole.PTObserver), "user role not set correctly on resource");
         Assert.That(user.Sites[SiteId].Projects, Contains.Item(Resource01), "user not added to resource correctly");
-        Assert.That(resource.Texts.First().Permissions[User03], Is.EqualTo(userDBLPermissionForResource));
-        Assert.That(
-            resource.Texts.First().Chapters.First().Permissions[User03],
-            Is.EqualTo(userDBLPermissionForResource)
-        );
+        // Book and chapter level read permissions are not written for resources
+        Assert.That(resource.Texts.First().Permissions.ContainsKey(User03), Is.False);
+        Assert.That(resource.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False);
     }
 
     [Test]
@@ -1363,16 +1361,9 @@ public class SFProjectServiceTests
             .ParatextService.Received()
             .GetResourcePermissionAsync(Resource01PTId, User03, Arg.Any<CancellationToken>());
         resource = env.GetProject(Resource01);
-        Assert.That(
-            resource.Texts.First().Permissions[User03],
-            Is.EqualTo(userDBLPermissionForResource),
-            "resource permissions should have been set for joining project user"
-        );
-        Assert.That(
-            resource.Texts.First().Chapters.First().Permissions[User03],
-            Is.EqualTo(userDBLPermissionForResource),
-            "resource permissions should have been set for joining project user"
-        );
+        // Book and chapter level read permissions are not written for resources
+        Assert.That(resource.Texts.First().Permissions.ContainsKey(User03), Is.False);
+        Assert.That(resource.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False);
         Assert.That(
             resource.UserRoles.TryGetValue(User03, out string resourceUserRole),
             Is.True,
@@ -1905,15 +1896,13 @@ public class SFProjectServiceTests
         user = env.GetUser(User03);
         Assert.That(user.Sites[SiteId].Projects, Contains.Item(Project05));
 
-        Assert.That(project.Texts.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Read));
+        Assert.That(project.Texts.First().Permissions.ContainsKey(User03), Is.False);
         Assert.That(project.Texts.First().Chapters.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Write));
 
         resource = env.GetProject(Resource01);
-        Assert.That(resource.Texts.First().Permissions[User03], Is.EqualTo(userDBLPermissionForResource));
-        Assert.That(
-            resource.Texts.First().Chapters.First().Permissions[User03],
-            Is.EqualTo(userDBLPermissionForResource)
-        );
+        // Book and chapter level read permissions are not written for resources
+        Assert.That(resource.Texts.First().Permissions.ContainsKey(User03), Is.False);
+        Assert.That(resource.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False);
         Assert.That(
             resource.UserRoles.TryGetValue(User03, out string resourceUserRole),
             Is.True,
@@ -2082,7 +2071,7 @@ public class SFProjectServiceTests
 
         // Permissions were set for the books and chapters that we were able to handle.
         sfProject = env.GetProject(Project01);
-        Assert.That(sfProject.Texts.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Read));
+        Assert.That(sfProject.Texts.First().Permissions.ContainsKey(User01), Is.False);
         Assert.That(sfProject.Texts.First().Permissions[User02], Is.EqualTo(TextInfoPermission.Write));
         Assert.That(sfProject.Texts.First().Chapters.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Write));
         Assert.That(sfProject.Texts.First().Chapters.First().Permissions[User02], Is.EqualTo(TextInfoPermission.Read));
@@ -2153,7 +2142,7 @@ public class SFProjectServiceTests
         await env.Service.UpdatePermissionsAsync(User01, project01Doc);
 
         sfProject = env.GetProject(Project01);
-        Assert.That(sfProject.Texts.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Read));
+        Assert.That(sfProject.Texts.First().Permissions.ContainsKey(User01), Is.False);
         Assert.That(sfProject.Texts.First().Permissions[User02], Is.EqualTo(TextInfoPermission.Write));
         Assert.That(sfProject.Texts.First().Chapters.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Write));
         Assert.That(sfProject.Texts.First().Chapters.First().Permissions[User02], Is.EqualTo(TextInfoPermission.Read));
@@ -2206,10 +2195,10 @@ public class SFProjectServiceTests
         await env.Service.UpdatePermissionsAsync(User01, project01Doc);
 
         sfProject = env.GetProject(Project01);
-        Assert.That(sfProject.Texts.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Read));
+        Assert.That(sfProject.Texts.First().Permissions.ContainsKey(User01), Is.False);
         Assert.That(sfProject.Texts.First().Permissions[User02], Is.EqualTo(TextInfoPermission.None));
-        Assert.That(sfProject.Texts.First().Chapters.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Read));
-        Assert.That(sfProject.Texts.First().Chapters.First().Permissions[User02], Is.EqualTo(TextInfoPermission.None));
+        Assert.That(sfProject.Texts.First().Chapters.First().Permissions.ContainsKey(User01), Is.False);
+        Assert.That(sfProject.Texts.First().Chapters.First().Permissions.ContainsKey(User02), Is.False);
     }
 
     [Test]
@@ -2229,7 +2218,7 @@ public class SFProjectServiceTests
         var ptChapterPermissions = new Dictionary<string, string>
         {
             { User01, TextInfoPermission.Write },
-            { User02, TextInfoPermission.Write },
+            { User02, TextInfoPermission.Read },
         };
         var ptSourcePermissions = new Dictionary<string, string>
         {
@@ -2284,12 +2273,12 @@ public class SFProjectServiceTests
         resource = env.GetProject(Resource01);
         Assert.That(sfProject.Texts.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Write));
         Assert.That(sfProject.Texts.First().Permissions[User02], Is.EqualTo(TextInfoPermission.Write));
-        Assert.That(sfProject.Texts.First().Chapters.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Write));
-        Assert.That(sfProject.Texts.First().Chapters.First().Permissions[User02], Is.EqualTo(TextInfoPermission.Write));
-        Assert.That(resource.Texts.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Read));
+        Assert.That(sfProject.Texts.First().Chapters.First().Permissions.ContainsKey(User01), Is.False);
+        Assert.That(sfProject.Texts.First().Chapters.First().Permissions[User02], Is.EqualTo(TextInfoPermission.Read));
+        Assert.That(resource.Texts.First().Permissions.ContainsKey(User01), Is.False);
         Assert.That(resource.Texts.First().Permissions[User02], Is.EqualTo(TextInfoPermission.None));
-        Assert.That(resource.Texts.First().Chapters.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Read));
-        Assert.That(resource.Texts.First().Chapters.First().Permissions[User02], Is.EqualTo(TextInfoPermission.None));
+        Assert.That(resource.Texts.First().Chapters.First().Permissions.ContainsKey(User01), Is.False);
+        Assert.That(resource.Texts.First().Chapters.First().Permissions.ContainsKey(User02), Is.False);
     }
 
     [Test]
@@ -2722,7 +2711,8 @@ public class SFProjectServiceTests
             );
         resource = env.GetProject(Resource01);
         Assert.That(resource.UserRoles.ContainsKey(User01), Is.True);
-        Assert.That(resource.Texts.All(t => t.Permissions.ContainsKey(User01)), Is.True);
+        // Book and chapter level read permissions are not written for resources
+        Assert.That(resource.Texts.All(t => t.Permissions.ContainsKey(User01)), Is.False);
     }
 
     [Test]
@@ -3179,11 +3169,9 @@ public class SFProjectServiceTests
         // But we can show that source resource permissions were set:
 
         resource = env.GetProject(Resource01);
-        Assert.That(resource.Texts.First().Permissions[User03], Is.EqualTo(userDBLPermissionForResource));
-        Assert.That(
-            resource.Texts.First().Chapters.First().Permissions[User03],
-            Is.EqualTo(userDBLPermissionForResource)
-        );
+        // Book and chapter level read permissions are not written for resources
+        Assert.That(resource.Texts.First().Permissions.ContainsKey(User03), Is.False);
+        Assert.That(resource.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False);
         Assert.That(
             resource.UserRoles.TryGetValue(User03, out string resourceUserRole),
             Is.True,

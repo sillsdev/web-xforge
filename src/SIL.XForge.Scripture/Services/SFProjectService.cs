@@ -1405,19 +1405,23 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             }
             Models.TextInfo text = projectDoc.Data.Texts[textIndex];
             List<Chapter> chapters = text.Chapters;
-            Dictionary<string, string> bookPermissions = null;
+            Dictionary<string, string> bookPermissions;
             IEnumerable<(
                 int bookIndex,
                 int chapterIndex,
                 Dictionary<string, string> chapterPermissions
-            )> chapterPermissionsInBook = null;
+            )> chapterPermissionsInBook;
 
             if (isResource)
             {
-                bookPermissions = resourcePermissions;
-                // Prepare to write the same resource permission for each chapter in the book/text.
+                // Do not write any read permissions for resources
+                bookPermissions = resourcePermissions
+                    .Where(kvp => kvp.Value != TextInfoPermission.Read)
+                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+                // Chapter permissions will not vary from book permissions for resources
                 chapterPermissionsInBook = chapters.Select(
-                    (Chapter chapter, int chapterIndex) => (textIndex, chapterIndex, bookPermissions)
+                    (_, chapterIndex) => (textIndex, chapterIndex, new Dictionary<string, string>())
                 );
             }
             else
@@ -1444,11 +1448,24 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                                 chapter.Number,
                                 token
                             );
+
+                            // Only save chapter permissions where they differ from the book permissions
+                            chapterPermissions = chapterPermissions
+                                .Where(kvp =>
+                                    !bookPermissions.ContainsKey(kvp.Key) || bookPermissions[kvp.Key] != kvp.Value
+                                )
+                                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
                             return (textIndex, chapterIndex, chapterPermissions);
                         }
                     )
                 );
+
+                // Only save write permissions - all other users will have read if they are on the project
+                bookPermissions = bookPermissions
+                    .Where(kvp => kvp.Value != TextInfoPermission.Read)
+                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
             }
+
             projectChapterPermissions.AddRange(chapterPermissionsInBook);
             projectBookPermissions.Add((textIndex, bookPermissions));
         }
