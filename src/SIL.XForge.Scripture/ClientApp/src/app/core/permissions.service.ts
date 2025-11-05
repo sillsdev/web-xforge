@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { Chapter } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
@@ -58,29 +59,47 @@ export class PermissionsService {
     return isParatextRole(projectDoc.data?.userRoles[currentUserDoc.id] ?? SFProjectRole.None);
   }
 
-  async canAccessText(textDocId: TextDocId): Promise<boolean> {
+  /**
+   * Determines if a user can access the text in the specified project.
+   * @param textDocId The text document id.
+   * @param project The project.
+   * @returns A boolean value.
+   */
+  canAccessText(textDocId?: TextDocId, project?: SFProjectProfile): boolean {
+    // Ensure the user has project level permission to view the text
+    if (
+      textDocId != null &&
+      project != null &&
+      SF_PROJECT_RIGHTS.hasRight(project, this.userService.currentUserId, SFProjectDomain.Texts, Operation.View)
+    ) {
+      // Check chapter permissions
+      const text: TextInfo | undefined = project.texts.find(t => t.bookNum === textDocId.bookNum);
+      const chapter: Chapter | undefined = text?.chapters.find(c => c.number === textDocId.chapterNum);
+      if (text != null && chapter != null) {
+        // If the chapter permission is not present, use the book permission instead
+        const chapterPermission: string | undefined =
+          chapter.permissions[this.userService.currentUserId] ?? text.permissions[this.userService.currentUserId];
+        // If there is no chapter permission, they will have access to the chapter as they have access to the project.
+        // We should only deny access if there is an explicit "None" permission.
+        return chapterPermission !== TextInfoPermission.None;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Determines if a user can access a text.
+   * @param textDocId The text document id.
+   * @returns A promise for a boolean value.
+   */
+  async canAccessTextAsync(textDocId: TextDocId): Promise<boolean> {
     // Get the project doc, if the user is on that project
     let projectDoc: SFProjectProfileDoc | undefined;
     if (textDocId.projectId != null) {
       const isUserOnProject = await this.isUserOnProject(textDocId.projectId);
       projectDoc = isUserOnProject ? await this.projectService.getProfile(textDocId.projectId) : undefined;
-    }
-
-    // Ensure the user has project level permission to view the text
-    if (
-      projectDoc?.data != null &&
-      SF_PROJECT_RIGHTS.hasRight(projectDoc.data, this.userService.currentUserId, SFProjectDomain.Texts, Operation.View)
-    ) {
-      // Check chapter permissions
-      const chapter: Chapter | undefined = projectDoc.data.texts
-        .find(t => t.bookNum === textDocId.bookNum)
-        ?.chapters.find(c => c.number === textDocId.chapterNum);
-      if (chapter != null) {
-        const chapterPermission: string | undefined = chapter.permissions[this.userService.currentUserId];
-        // If there is no chapter permission, they will have access to the chapter as they have access to the project.
-        // We should only deny access if there is an explicit "None" permission.
-        return chapterPermission !== TextInfoPermission.None;
-      }
+      return this.canAccessText(textDocId, projectDoc?.data);
     }
 
     return false;
