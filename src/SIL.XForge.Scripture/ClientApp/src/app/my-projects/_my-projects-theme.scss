@@ -5,7 +5,7 @@
 @mixin color($theme) {
   $is-dark: mat.get-theme-type($theme) == dark;
 
-  --mdc-elevated-card-container-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 20, 98))};
+  --mat-card-elevated-container-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 20, 98))};
 
   .active-project {
     background-color: #{mat.get-theme-color($theme, primary, if($is-dark, 20, 90))};
@@ -28,10 +28,10 @@
       )};
   }
   .user-update-project-btn:not(:disabled) {
-    --mdc-filled-button-label-text-color: #{mat.get-theme-color($theme, primary, 100)};
-    --mdc-filled-button-container-color: #{variables.$info-color};
+    --mat-button-filled-label-text-color: #{mat.get-theme-color($theme, primary, 100)};
+    --mat-button-filled-container-color: #{variables.$info-color};
     &:hover {
-      --mdc-filled-button-container-color: #{color.scale(variables.$info-color, $lightness: -10%)};
+      --mat-button-filled-container-color: #{color.scale(variables.$info-color, $lightness: -10%)};
     }
   }
 }
