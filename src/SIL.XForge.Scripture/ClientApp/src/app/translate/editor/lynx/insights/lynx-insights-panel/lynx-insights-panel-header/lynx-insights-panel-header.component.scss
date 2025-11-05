@@ -13,13 +13,13 @@
 
     // TODO: make responsive (tabs header is cut off on small screens)
     .mat-mdc-tab-header {
-      --mdc-secondary-navigation-tab-container-height: 2.2em;
-      --mat-tab-header-label-text-size: 0.9em;
-      --mat-tab-header-label-text-weight: 400;
-      --mat-tab-header-active-label-text-color: var(--mat-app-text-color);
-      --mat-tab-header-inactive-label-text-color: var(--mat-app-text-color);
-      --mdc-tab-indicator-active-indicator-height: 3px;
-      --mdc-tab-indicator-active-indicator-color: #a3a3a3;
+      --mat-tab-container-height: 2.2em;
+      --mat-tab-label-text-size: 0.9em;
+      --mat-tab-label-text-weight: 400;
+      --mat-tab-active-label-text-color: var(--mat-app-text-color);
+      --mat-tab-inactive-label-text-color: var(--mat-app-text-color);
+      --mat-tab-active-indicator-height: 3px;
+      --mat-tab-active-indicator-color: #a3a3a3;
       text-transform: capitalize;
       border-bottom: 0;
     }

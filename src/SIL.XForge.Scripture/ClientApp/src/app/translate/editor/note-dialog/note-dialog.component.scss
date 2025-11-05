@@ -126,8 +126,8 @@ mat-button-toggle-group {
 }
 
 .save-options {
-  background-color: var(--mdc-filled-button-container-color);
-  color: var(--mdc-filled-button-label-text-color) !important;
+  background-color: var(--mat-button-filled-container-color);
+  color: var(--mat-button-filled-label-text-color) !important;
   ::ng-deep .mat-button-toggle-label-content {
     line-height: 36px;
   }
