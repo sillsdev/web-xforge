@@ -876,7 +876,8 @@ public class ParatextService : DisposableBase, IParatextService
                     || scrText!.Permissions.GetRole(userName) == UserRoles.None
                 )
                 {
-                    permissions.Add(uid, TextInfoPermission.None);
+                    // The user will either have read only access or no access
+                    // This will be handled by their role on the project (or lack of role) on the project
                 }
                 else
                 {
@@ -1775,11 +1776,13 @@ public class ParatextService : DisposableBase, IParatextService
                             {
                                 int chapterIndex = j;
                                 int chapterNumber = text.Chapters[chapterIndex].Number;
-                                if (editableChapters.Contains(chapterNumber) || currentUserIsAdministrator)
+
+                                // Only record chapter level permissions that contradict the book level permissions
+                                if (!(editableChapters.Contains(chapterNumber) || currentUserIsAdministrator))
                                 {
                                     op.Set(
                                         p => p.Texts[textIndex].Chapters[chapterIndex].Permissions[user.SFUserId],
-                                        TextInfoPermission.Write
+                                        TextInfoPermission.Read
                                     );
                                 }
                             }
