@@ -29,9 +29,9 @@ mat-nav-list .mdc-list-item {
   &.activated-nav-item,
   &.active {
     background-color: var(--sf-navigation-list-item-active-background-color);
-    --mdc-list-list-item-label-text-color: var(--sf-navigation-list-item-active);
-    --mdc-list-list-item-hover-label-text-color: var(--sf-navigation-list-item-active);
-    --mdc-list-list-item-focus-label-text-color: var(--sf-navigation-list-item-active);
+    --mat-list-list-item-label-text-color: var(--sf-navigation-list-item-active);
+    --mat-list-list-item-hover-label-text-color: var(--sf-navigation-list-item-active);
+    --mat-list-list-item-focus-label-text-color: var(--sf-navigation-list-item-active);
   }
 }
 
@@ -78,7 +78,7 @@ mat-nav-list .mdc-list-item {
 }
 
 .navigation-header {
-  --mdc-list-list-item-hover-state-layer-opacity: 0;
+  --mat-list-list-item-hover-state-layer-opacity: 0;
   cursor: initial;
 }
 .navigation-header:not(:first-child) {
