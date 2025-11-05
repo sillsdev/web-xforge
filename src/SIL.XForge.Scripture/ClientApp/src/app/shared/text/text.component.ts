@@ -1,5 +1,5 @@
 import { Dir } from '@angular/cdk/bidi';
-import { DOCUMENT, NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -9,7 +9,8 @@ import {
   Inject,
   Input,
   OnDestroy,
-  Output
+  Output,
+  DOCUMENT
 } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
