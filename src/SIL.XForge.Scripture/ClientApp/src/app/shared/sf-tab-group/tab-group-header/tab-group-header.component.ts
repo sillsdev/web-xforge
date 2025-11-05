@@ -1,5 +1,5 @@
 import { CdkDrag, CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
-import { AsyncPipe, NgFor, NgIf, NgTemplateOutlet } from '@angular/common';
+import { AsyncPipe, NgTemplateOutlet } from '@angular/common';
 import {
   AfterViewInit,
   Component,
@@ -41,8 +41,6 @@ import { TabScrollButtonComponent } from './tab-scroll-button/tab-scroll-button.
   imports: [
     CdkDropList,
     CdkDrag,
-    NgFor,
-    NgIf,
     NgTemplateOutlet,
     AsyncPipe,
     MatIcon,

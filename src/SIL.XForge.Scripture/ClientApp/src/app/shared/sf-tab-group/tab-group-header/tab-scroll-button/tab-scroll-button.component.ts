@@ -1,9 +1,19 @@
-import { DOCUMENT } from '@angular/common';
-import { Component, DestroyRef, EventEmitter, HostBinding, Inject, Input, OnInit, Output } from '@angular/core';
-import { BehaviorSubject, distinctUntilChanged, fromEvent, merge } from 'rxjs';
-import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import {
+  Component,
+  DestroyRef,
+  DOCUMENT,
+  EventEmitter,
+  HostBinding,
+  Inject,
+  Input,
+  OnInit,
+  Output
+} from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
+import { BehaviorSubject, distinctUntilChanged, fromEvent, merge } from 'rxjs';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+
 @Component({
   selector: 'app-tab-scroll-button',
   templateUrl: './tab-scroll-button.component.html',

@@ -34,7 +34,8 @@ export function quietTakeUntilDestroyed<T>(
         callback();
         return () => {};
       }
-    }
+    },
+    destroyed: destroyRef.destroyed
   };
   return takeUntilDestroyed(wrappedDestroyRef);
 }
