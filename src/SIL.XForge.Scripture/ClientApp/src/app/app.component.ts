@@ -1,8 +1,8 @@
 import { BidiModule } from '@angular/cdk/bidi';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { CdkScrollable } from '@angular/cdk/scrolling';
-import { AsyncPipe, DOCUMENT } from '@angular/common';
-import { Component, DestroyRef, HostBinding, Inject, OnDestroy, OnInit } from '@angular/core';
+import { AsyncPipe } from '@angular/common';
+import { Component, DestroyRef, DOCUMENT, HostBinding, Inject, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButton, MatIconAnchor, MatIconButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
