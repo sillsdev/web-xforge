@@ -540,7 +540,7 @@
     "confirm_lang_codes_correct": "All the language codes are correct",
     "contact_project_administrator_to_change_settings": "Contact your project administrator if language settings need to be updated",
     "how_to_change_language_codes": "Language codes can be changed in Paratext by going to Project Settings > Project Properties > Language.",
-    "i_understand_and_accept": "I understand the problem and want to continue anyways",
+    "i_understand_and_accept": "I understand the problem and want to continue anyway",
     "if_unsure_contact_us": "If you're not sure how to fix this problem, please contact us at {{ email }}",
     "incorrect_language_codes_reduce_quality": "Incorrect language codes will dramatically reduce draft quality.",
     "please_make_sure_codes_correct": "Before continuing, please make sure all language codes accurately represent the language of each project or resource.",
