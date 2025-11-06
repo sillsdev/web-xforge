@@ -142,12 +142,12 @@
           "options": {
             "main": "src/test.ts",
             "karmaConfig": "./src/karma.conf.js",
-            "polyfills": "src/polyfills.ts",
+            "polyfills": ["src/polyfills.ts"],
             "tsConfig": "src/tsconfig.spec.json",
             "scripts": [],
             "styles": ["src/styles.scss", "src/material-styles.scss"],
             "stylePreprocessorOptions": {
-              "includePaths": ["node_modules"]
+              "includePaths": ["node_modules", "."]
             },
             "assets": ["src/favicon.ico", "src/assets", "src/manifest.json"],
             "sourceMap": false,

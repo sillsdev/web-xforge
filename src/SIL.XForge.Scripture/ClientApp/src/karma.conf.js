@@ -18,7 +18,7 @@ module.exports = function (config) {
     plugins.push(require('karma-parallel'));
   }
 
-  frameworks.push('jasmine', '@angular-devkit/build-angular');
+  frameworks.push('jasmine');
   plugins.push(
     require('karma-jasmine'),
     require('karma-chrome-launcher'),

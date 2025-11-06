@@ -37,7 +37,8 @@ describe('quietTakeUntilDestroyed', () => {
       onDestroy: (callback: () => void) => {
         onDestroyCallback = callback;
         return () => {};
-      }
+      },
+      destroyed: false
     };
 
     let completed = false;
