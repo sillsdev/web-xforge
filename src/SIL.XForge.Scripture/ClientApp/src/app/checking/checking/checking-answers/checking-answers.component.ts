@@ -203,7 +203,7 @@ export class CheckingAnswersComponent implements OnInit {
         // If the user hasn't added an answer yet and is able to, then
         // don't hold back any incoming answers from appearing right away
         // as soon as the user adds their answer.
-        if (this.currentUserTotalAnswers === 0 && this.canAddAnswer && !this.isProjectAdmin) {
+        if (this.currentUserTotalAnswers === 0 && this.canAddAnswer && !this.canManageQuestions) {
           this.showRemoteAnswers();
           return;
         }
@@ -292,15 +292,39 @@ export class CheckingAnswersComponent implements OnInit {
     );
   }
 
+  get canAddAndEditQuestions(): boolean {
+    if (this.project == null) {
+      return false;
+    }
+    const userId: string = this.userService.currentUserId;
+    const canCreateQuestions: boolean = SF_PROJECT_RIGHTS.hasRight(
+      this.project,
+      userId,
+      SFProjectDomain.Questions,
+      Operation.Create
+    );
+    const canEditQuestions: boolean = SF_PROJECT_RIGHTS.hasRight(
+      this.project,
+      userId,
+      SFProjectDomain.Questions,
+      Operation.Edit
+    );
+    return canCreateQuestions && canEditQuestions;
+  }
+
+  get canManageQuestions(): boolean {
+    return this.isProjectAdmin || this.canAddAndEditQuestions;
+  }
+
   get shouldSeeAnswersList(): boolean {
-    return this.canSeeOtherUserResponses || !this.canAddAnswer || this.isProjectAdmin;
+    return this.canSeeOtherUserResponses || !this.canAddAnswer || this.canManageQuestions;
   }
 
   get shouldShowAnswers(): boolean {
     return (
       !this.answerFormVisible &&
       this.totalAnswers > 0 &&
-      (this.currentUserTotalAnswers > 0 || !this.canAddAnswer || this.isProjectAdmin)
+      (this.currentUserTotalAnswers > 0 || !this.canAddAnswer || this.canManageQuestions)
     );
   }
 

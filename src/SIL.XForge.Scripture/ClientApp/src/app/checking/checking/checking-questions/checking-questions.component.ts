@@ -221,6 +221,30 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
     return this._firstUnansweredQuestion.count > 0;
   }
 
+  get canManageQuestions(): boolean {
+    return this.isProjectAdmin || this.canAddAndEditQuestions;
+  }
+
+  get canAddAndEditQuestions(): boolean {
+    if (this.project == null) {
+      return false;
+    }
+    const userId: string = this.userService.currentUserId;
+    const canCreateQuestions: boolean = SF_PROJECT_RIGHTS.hasRight(
+      this.project,
+      userId,
+      SFProjectDomain.Questions,
+      Operation.Create
+    );
+    const canEditQuestions: boolean = SF_PROJECT_RIGHTS.hasRight(
+      this.project,
+      userId,
+      SFProjectDomain.Questions,
+      Operation.Edit
+    );
+    return canCreateQuestions && canEditQuestions;
+  }
+
   protected activateFirstUnansweredQuestion(): void {
     if (!this.hasUnansweredQuestion || this._firstUnansweredQuestion == null) return;
     this.activateQuestion(this._firstUnansweredQuestion.docs[0], { isQuestionListChange: false }, true);
@@ -239,7 +263,7 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
       return [];
     }
 
-    if (this.project.checkingConfig.usersSeeEachOthersResponses || !this.canAddAnswer || this.isProjectAdmin) {
+    if (this.project.checkingConfig.usersSeeEachOthersResponses || !this.canAddAnswer || this.canManageQuestions) {
       return questionDoc.getAnswers();
     } else {
       return questionDoc.getAnswers(this.userService.currentUserId);
@@ -248,7 +272,7 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
 
   getUnreadAnswers(questionDoc: QuestionDoc): number {
     if (
-      (this.canAddAnswer && !this.isProjectAdmin) ||
+      (this.canAddAnswer && !this.canManageQuestions) ||
       this.project == null ||
       !this.project.checkingConfig.usersSeeEachOthersResponses
     ) {
@@ -332,7 +356,7 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
         if (questionDoc != null && questionDoc.data != null && !this.hasUserReadQuestion(questionDoc)) {
           op.add(puc => puc.questionRefsRead, questionDoc.data.dataId);
         }
-        if (this.hasUserAnswered(questionDoc) || !this.canAddAnswer || this.isProjectAdmin) {
+        if (this.hasUserAnswered(questionDoc) || !this.canAddAnswer || this.canManageQuestions) {
           for (const answer of this.getAnswers(questionDoc)) {
             if (!this.hasUserReadAnswer(answer)) {
               op.add(puc => puc.answerRefsRead, answer.dataId);
