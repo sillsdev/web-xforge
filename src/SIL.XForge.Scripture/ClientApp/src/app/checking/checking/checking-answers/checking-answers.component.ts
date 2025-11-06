@@ -296,6 +296,26 @@ export class CheckingAnswersComponent implements OnInit {
     );
   }
 
+  get canAddAndEditQuestions(): boolean {
+    if (this.project == null) {
+      return false;
+    }
+    const userId: string = this.userService.currentUserId;
+    const canCreateQuestions: boolean = SF_PROJECT_RIGHTS.hasRight(
+      this.project,
+      userId,
+      SFProjectDomain.Questions,
+      Operation.Create
+    );
+    const canEditQuestions: boolean = SF_PROJECT_RIGHTS.hasRight(
+      this.project,
+      userId,
+      SFProjectDomain.Questions,
+      Operation.Edit
+    );
+    return canCreateQuestions && canEditQuestions;
+  }
+
   get shouldSeeAnswersList(): boolean {
     return this.canSeeOtherUserResponses || !this.canAddAnswer || this.isProjectAdmin;
   }
@@ -304,7 +324,7 @@ export class CheckingAnswersComponent implements OnInit {
     return (
       !this.answerFormVisible &&
       this.totalAnswers > 0 &&
-      (this.currentUserTotalAnswers > 0 || !this.canAddAnswer || this.isProjectAdmin)
+      (this.currentUserTotalAnswers > 0 || !this.canAddAnswer || this.isProjectAdmin || this.canAddAndEditQuestions)
     );
   }
 
