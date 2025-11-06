@@ -1,5 +1,5 @@
 import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
-import { Component, DestroyRef, EventEmitter } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, OnInit } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MatCard, MatCardActions, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
 import { MatRipple } from '@angular/material/core';
@@ -75,7 +75,7 @@ export interface ProjectStatus {
   templateUrl: './draft-sources.component.html',
   styleUrl: './draft-sources.component.scss'
 })
-export class DraftSourcesComponent extends DataLoadingComponent implements ConfirmOnLeave {
+export class DraftSourcesComponent extends DataLoadingComponent implements OnInit, ConfirmOnLeave {
   /** Indicator that a project setting change is for clearing a value. */
   static readonly projectSettingValueUnset = 'unset';
 
@@ -126,7 +126,9 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
     private readonly fileService: FileService
   ) {
     super(noticeService);
+  }
 
+  ngOnInit(): void {
     this.activatedProjectService.changes$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async projectDoc => {
       if (projectDoc?.data != null) {
         const { trainingSources, trainingTargets, draftingSources } = projectToDraftSources(projectDoc.data);
