@@ -235,7 +235,6 @@
     "delete_timing": "Supprimer le chronométrage",
     "drag_and_drop_files": "Déposez ici les fichiers audio et chronométrage à télécharger",
     "drag_and_drop_overlay": "Déposer le fichier à charger",
-    "drag_and_drop_or_browse": "ou",
     "from_timing_past_to_timing": "Une ou plusieurs valeurs de fin se terminent avant leurs valeurs de début.",
     "help": "Aide",
     "no_audio_file_uploaded": "Pas de fichier audio téléversé",
@@ -343,7 +342,7 @@
   "file_service": {
     "failed_to_save": "Impossible d'enregistrer vos modifications. Veuillez vérifier que vous disposez des 500 Mo d'espace libre recommandé sur votre appareil.",
     "i_understand": "Je comprends",
-    "storage_space_is_limited": "L'espace de stockage sur cet appareil est limité. Il est recommandé de disposer d'un minimum de 500 Mo d'espace libre pour garantir la disponibilité de toutes les fonctionnalités. Veuillez libérer de l'espace de stockage."
+    "storage_space_is_limited": "The storage space on this device is limited. It is recommended to have a minimum of 500 MB of free space to ensure all features are available. Please free up storage space."
   },
   "font_size": {
     "text_size": "Taille du texte"

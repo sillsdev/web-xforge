@@ -235,7 +235,6 @@
     "delete_timing": "Zeitdatei löschen",
     "drag_and_drop_files": "Audio- und Zeitdateien zum Hochladen hier ablegen",
     "drag_and_drop_overlay": "Dateien zum Hochladen ablegen",
-    "drag_and_drop_or_browse": "oder",
     "from_timing_past_to_timing": "Ein oder mehrere Endwerte enden vor ihren Anfangswerten.",
     "help": "Hilfe",
     "no_audio_file_uploaded": "Keine Audiodatei hochgeladen",
@@ -343,7 +342,7 @@
   "file_service": {
     "failed_to_save": "Deine Änderungen konnten nicht gespeichert werden. Bitte überprüfe, ob die empfohlenen 500 MB freier Speicherplatz auf Deinem Gerät vorhanden sind.",
     "i_understand": "Ich verstehe",
-    "storage_space_is_limited": "Der Speicherplatz auf diesem Gerät ist begrenzt. Es wird empfohlen, mindestens 500 MB freier Speicherplatz zur Verfügung haben, um sicherzustellen, dass alle Funktionen verfügbar sind. Bitte gib Speicherplatz frei."
+    "storage_space_is_limited": "The storage space on this device is limited. It is recommended to have a minimum of 500 MB of free space to ensure all features are available. Please free up storage space."
   },
   "font_size": {
     "text_size": "Schriftgröße"

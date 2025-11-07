@@ -235,7 +235,6 @@
     "delete_timing": "Delete Timing",
     "drag_and_drop_files": "Drop audio and timing files here to upload",
     "drag_and_drop_overlay": "Drop files to upload",
-    "drag_and_drop_or_browse": "أو",
     "from_timing_past_to_timing": "One or more ending values end before their beginning values.",
     "help": "المساعدة",
     "no_audio_file_uploaded": "No audio file uploaded",
@@ -343,7 +342,7 @@
   "file_service": {
     "failed_to_save": "لم نتمكن من حفظ تعديلاتك. يُرجى التأكد من أن في جهاز الـ500 ميغابايت الموصى بها من المساحة الحرّة.",
     "i_understand": "أفهم",
-    "storage_space_is_limited": "مساحة التخزين على هذا الجهاز محدودة. يُوصى بأن تتوفر في جهازك مساحة 500 ميغابيت على الأقل من أجل أن تكون جميع ميزات البرنامج متاحة. يُرجى توفير مساحة للتخزين."
+    "storage_space_is_limited": "The storage space on this device is limited. It is recommended to have a minimum of 500 MB of free space to ensure all features are available. Please free up storage space."
   },
   "font_size": {
     "text_size": "Text size"

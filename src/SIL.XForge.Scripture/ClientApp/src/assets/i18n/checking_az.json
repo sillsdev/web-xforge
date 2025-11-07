@@ -235,7 +235,6 @@
     "delete_timing": "Delete Timing",
     "drag_and_drop_files": "Drop audio and timing files here to upload",
     "drag_and_drop_overlay": "Drop files to upload",
-    "drag_and_drop_or_browse": "və ya",
     "from_timing_past_to_timing": "One or more ending values end before their beginning values.",
     "help": "Kömək",
     "no_audio_file_uploaded": "No audio file uploaded",
@@ -343,7 +342,7 @@
   "file_service": {
     "failed_to_save": "Dəyişiklikləri saxlaya bilmədi. Zəhmət olmasa cihazınızda tövsiyə olunan 500 MB boş yerin olduğunu yoxlayın.",
     "i_understand": "Başa düşürəm",
-    "storage_space_is_limited": "Bu cihazdakı saxlama sahəsi məhduddur. Bütün xüsusiyyətlərin mövcudluğunu təmin etmək üçün ən azı 500 MB boş yerə malik olmağa təklif olunur. Zəhmət olmasa saxlama yerini boşaltın."
+    "storage_space_is_limited": "The storage space on this device is limited. It is recommended to have a minimum of 500 MB of free space to ensure all features are available. Please free up storage space."
   },
   "font_size": {
     "text_size": "Mətn ölçüsü"

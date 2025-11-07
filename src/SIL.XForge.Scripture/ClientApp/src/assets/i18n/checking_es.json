@@ -235,7 +235,6 @@
     "delete_timing": "Eliminar Tiempo",
     "drag_and_drop_files": "Suelte aquí los archivos de audio y tiempo para cargarlos",
     "drag_and_drop_overlay": "Suelta los archivos para subirlos",
-    "drag_and_drop_or_browse": "o",
     "from_timing_past_to_timing": "Uno o más valores finales terminan antes que sus valores iniciales.",
     "help": "Ayuda",
     "no_audio_file_uploaded": "No se ha cargado ningún archivo de audio",
@@ -343,7 +342,7 @@
   "file_service": {
     "failed_to_save": "No se guardaron los cambios. Por favor, compruebe que su dispositivo tenga los 500 MB de espacio libre recomendados.",
     "i_understand": "Entiendo",
-    "storage_space_is_limited": "El espacio de almacenamiento en este dispositivo es limitado. Se recomienda tener un mínimo de 500 MB de espacio libre para asegurar que todas las funciones estén disponibles. Por favor, libere espacio de almacenamiento."
+    "storage_space_is_limited": "The storage space on this device is limited. It is recommended to have a minimum of 500 MB of free space to ensure all features are available. Please free up storage space."
   },
   "font_size": {
     "text_size": "Tamaño del texto"
