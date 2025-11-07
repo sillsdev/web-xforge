@@ -330,6 +330,24 @@ describe('TextChooserDialogComponent', () => {
     expect(env.component.isTextRightToLeft).toBe(true);
     env.closeDialog();
   }));
+
+  it('selection-preview inherits project font from CSS custom property', fakeAsync(() => {
+    const env = new TestEnvironment({ start: 0, end: TestEnvironment.segmentLen(1) }, 'verse_1_1', 'verse_1_1');
+    env.fireSelectionChange();
+
+    const rootElement = document.documentElement;
+    rootElement.style.setProperty('--project-font', 'Charis SIL');
+    env.fixture.detectChanges();
+    tick();
+
+    const selectionPreview = document.querySelector('.selection-preview');
+    expect(selectionPreview).toBeTruthy();
+    const computedStyle = window.getComputedStyle(selectionPreview!);
+    expect(computedStyle.fontFamily).toContain('Charis SIL');
+
+    rootElement.style.removeProperty('--project-font');
+    env.closeDialog();
+  }));
 });
 
 interface SimpleRange {

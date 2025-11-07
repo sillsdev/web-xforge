@@ -38,7 +38,6 @@ import * as RichText from 'rich-text';
 import { firstValueFrom } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
-import { FontService } from 'xforge-common/font.service';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -60,7 +59,6 @@ import { getCombinedVerseTextDoc, getTextDoc, paratextUsersFromRoles } from '../
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog.component';
 
 const mockedDialogService = mock(DialogService);
-const mockedFontService = mock(FontService);
 const mockedHttpClient = mock(HttpClient);
 const mockedUserService = mock(UserService);
 
@@ -69,7 +67,6 @@ describe('NoteDialogComponent', () => {
     imports: [NoteDialogComponent, getTestTranslocoModule()],
     providers: [
       { provide: DialogService, useMock: mockedDialogService },
-      { provide: FontService, useMock: mockedFontService },
       { provide: HttpClient, useMock: mockedHttpClient },
       { provide: UserService, useMock: mockedUserService },
       provideTestRealtime(SF_TYPE_REGISTRY),
@@ -695,6 +692,20 @@ describe('NoteDialogComponent', () => {
     });
     expect(env.notes[0].nativeElement.querySelector('.user-name').textContent).toContain('ptuser01');
   }));
+
+  it('text element inherits project font from CSS custom property', fakeAsync(() => {
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
+
+    const rootElement = document.documentElement;
+    rootElement.style.setProperty('--project-font', 'Charis SIL');
+    env.fixture.detectChanges();
+    expect(env.textRowElement).toBeTruthy();
+
+    const computedStyle = window.getComputedStyle(env.textRowElement.nativeElement);
+    expect(computedStyle.fontFamily).toContain('Charis SIL');
+
+    rootElement.style.removeProperty('--project-font');
+  }));
 });
 
 interface TestEnvironmentConstructorArgs {
@@ -1058,6 +1069,10 @@ class TestEnvironment {
 
   get noteText(): DebugElement {
     return this.overlayContainerElement.query(By.css('.note-text'));
+  }
+
+  get textRowElement(): DebugElement {
+    return this.overlayContainerElement.query(By.css('.text-row .text'));
   }
 
   get segmentText(): DebugElement {

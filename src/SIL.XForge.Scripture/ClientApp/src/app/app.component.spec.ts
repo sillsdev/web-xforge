@@ -26,6 +26,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { FileService } from 'xforge-common/file.service';
+import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -63,6 +64,7 @@ const mockedPwaService = mock(PwaService);
 const mockedI18nService = mock(I18nService);
 const mockedUrlService = mock(ExternalUrlService);
 const mockedFileService = mock(FileService);
+const mockedFontService = mock(FontService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedDialogService = mock(DialogService);
 
@@ -117,6 +119,7 @@ describe('AppComponent', () => {
       { provide: ExternalUrlService, useMock: mockedUrlService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: FileService, useMock: mockedFileService },
+      { provide: FontService, useMock: mockedFontService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
       { provide: BreakpointObserver, useClass: TestBreakpointObserver },
       { provide: DialogService, useMock: mockedDialogService },
@@ -631,6 +634,61 @@ describe('AppComponent', () => {
       env.showHideUserMenu();
     }));
   });
+
+  describe('Project Font', () => {
+    it('sets project font when project is selected', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(mockedFontService.getFontFamilyFromProject(anything())).thenReturn('Charis SIL');
+      env.navigate(['/projects', 'project01']);
+      env.init();
+
+      const hostElement = env.fixture.nativeElement as HTMLElement;
+      expect(hostElement.style.getPropertyValue('--project-font')).toEqual('Charis SIL');
+      verify(mockedFontService.getFontFamilyFromProject(anything())).once();
+    }));
+
+    it('clears project font when no project is selected', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(mockedFontService.getFontFamilyFromProject(anything())).thenReturn('Charis SIL');
+      env.navigate(['/projects', 'project01']);
+      env.init();
+
+      const hostElement = env.fixture.nativeElement as HTMLElement;
+      expect(hostElement.style.getPropertyValue('--project-font')).toEqual('Charis SIL');
+
+      env.navigate(['/projects']);
+      env.wait();
+
+      // When null, the property should be empty string
+      expect(hostElement.style.getPropertyValue('--project-font')).toEqual('');
+    }));
+
+    it('updates project font when switching projects', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(mockedFontService.getFontFamilyFromProject(anything())).thenReturn('Charis SIL', 'Andika');
+      env.navigate(['/projects', 'project01']);
+      env.init();
+
+      const hostElement = env.fixture.nativeElement as HTMLElement;
+      expect(hostElement.style.getPropertyValue('--project-font')).toEqual('Charis SIL');
+
+      env.navigate(['/projects', 'project02']);
+      env.wait();
+
+      expect(hostElement.style.getPropertyValue('--project-font')).toEqual('Andika');
+      verify(mockedFontService.getFontFamilyFromProject(anything())).twice();
+    }));
+
+    it('sets CSS custom property on host element', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(mockedFontService.getFontFamilyFromProject(anything())).thenReturn('Noto Sans');
+      env.navigate(['/projects', 'project01']);
+      env.init();
+
+      const hostElement = env.fixture.nativeElement as HTMLElement;
+      expect(hostElement.style.getPropertyValue('--project-font')).toEqual('Noto Sans');
+    }));
+  });
 });
 
 class TestEnvironment {
@@ -730,6 +788,7 @@ class TestEnvironment {
     when(mockedUrlService.helps).thenReturn('helps');
     when(mockedUrlService.announcementPage).thenReturn('community-announcements');
     when(mockedUrlService.communitySupport).thenReturn('community-support');
+    when(mockedFontService.getFontFamilyFromProject(anything())).thenReturn('Charis SIL');
 
     if (initialConnectionStatus === 'offline') {
       this.goFullyOffline();
