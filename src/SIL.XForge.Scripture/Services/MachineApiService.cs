@@ -1177,6 +1177,74 @@ public class MachineApiService(
         return buildDto;
     }
 
+    /// <summary>
+    /// Gets the last pre-translation build (NMT) for the specified project regardless of its final state.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="isServalAdmin">If <c>true</c>, the current user is a Serval Administrator.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The last pre-translation <see cref="ServalBuildDto"/>, or <c>null</c> if none exist.</returns>
+    /// <remarks>
+    /// This differs from <see cref="GetLastCompletedPreTranslationBuildAsync"/> in that it does not restrict
+    /// the result to only completed builds; queued, running, faulted, or canceled builds may be returned if
+    /// they are the most recent. This method intentionally performs no chapter HasDraft verification or
+    /// background job enqueueing – it is a simple convenience accessor.
+    /// </remarks>
+    public async Task<ServalBuildDto?> GetLastPreTranslationBuildAsync(
+        string curUserId,
+        string sfProjectId,
+        bool isServalAdmin,
+        CancellationToken cancellationToken
+    )
+    {
+        ServalBuildDto? buildDto = null;
+
+        // Ensure that the user has permission
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin, cancellationToken);
+
+        // Get the translation engine id for pre-translation builds
+        string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: true);
+
+        try
+        {
+            // Retrieve all builds and select the most recent by DateFinished if present, otherwise by ObjectId creation time
+            IList<TranslationBuild> builds = await translationEnginesClient.GetAllBuildsAsync(
+                translationEngineId,
+                cancellationToken
+            );
+
+            static DateTimeOffset GetSortTimestamp(TranslationBuild b)
+            {
+                if (b.DateFinished.HasValue)
+                {
+                    return b.DateFinished.Value;
+                }
+                // Fallback to the MongoDB ObjectId creation time (assumed UTC)
+                if (ObjectId.TryParse(b.Id, out ObjectId oid))
+                {
+                    return new DateTimeOffset(oid.CreationTime, TimeSpan.Zero);
+                }
+                return DateTimeOffset.MinValue;
+            }
+
+            TranslationBuild? lastBuild = builds.OrderByDescending(GetSortTimestamp).FirstOrDefault();
+
+            if (lastBuild is not null)
+            {
+                buildDto = CreateDto(lastBuild);
+                // Make sure the DTO conforms to the machine-api V2 URLs
+                buildDto = UpdateDto(buildDto, sfProjectId);
+            }
+        }
+        catch (ServalApiException e)
+        {
+            ProcessServalApiException(e);
+        }
+
+        return buildDto;
+    }
+
     public async Task<ServalBuildDto?> GetCurrentBuildAsync(
         string curUserId,
         string sfProjectId,
