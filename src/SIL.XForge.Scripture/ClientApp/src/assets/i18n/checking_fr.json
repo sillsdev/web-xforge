@@ -235,7 +235,6 @@
     "delete_timing": "Supprimer le chronométrage",
     "drag_and_drop_files": "Déposez ici les fichiers audio et chronométrage à télécharger",
     "drag_and_drop_overlay": "Déposer le fichier à charger",
-    "drag_and_drop_or_browse": "ou",
     "from_timing_past_to_timing": "Une ou plusieurs valeurs de fin se terminent avant leurs valeurs de début.",
     "help": "Aide",
     "no_audio_file_uploaded": "Pas de fichier audio téléversé",

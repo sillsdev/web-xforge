@@ -235,7 +235,6 @@
     "delete_timing": "Delete Timing",
     "drag_and_drop_files": "Drop audio and timing files here to upload",
     "drag_and_drop_overlay": "Drop files to upload",
-    "drag_and_drop_or_browse": "və ya",
     "from_timing_past_to_timing": "One or more ending values end before their beginning values.",
     "help": "Kömək",
     "no_audio_file_uploaded": "No audio file uploaded",
