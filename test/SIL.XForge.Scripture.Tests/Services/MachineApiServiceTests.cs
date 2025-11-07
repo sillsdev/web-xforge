@@ -2047,6 +2047,65 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task GetLastPreTranslationBuildAsync_NoBuilds()
+    {
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(Task.FromResult<IList<TranslationBuild>>([]));
+
+        ServalBuildDto? actual = await env.Service.GetLastPreTranslationBuildAsync(
+            User01,
+            Project01,
+            false,
+            CancellationToken.None
+        );
+
+        Assert.IsNull(actual);
+    }
+
+    [Test]
+    public async Task GetLastPreTranslationBuildAsync_LatestByDateFinished_Success()
+    {
+        var env = new TestEnvironment();
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        TranslationBuild completedEarlier = new TranslationBuild
+        {
+            Url = "https://example.com",
+            Id = Build01,
+            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+            Message = MachineApiService.BuildStateCompleted,
+            Progress = 100,
+            Revision = 10,
+            State = JobState.Completed,
+            DateFinished = now.AddMinutes(-10),
+        };
+        TranslationBuild completedLater = new TranslationBuild
+        {
+            Url = "https://example.com",
+            Id = Build02,
+            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+            Message = MachineApiService.BuildStateCompleted,
+            Progress = 100,
+            Revision = 11,
+            State = JobState.Canceled,
+            DateFinished = now.AddMinutes(-5),
+        };
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(Task.FromResult<IList<TranslationBuild>>([completedEarlier, completedLater]));
+
+        ServalBuildDto? actual = await env.Service.GetLastPreTranslationBuildAsync(
+            User01,
+            Project01,
+            false,
+            CancellationToken.None
+        );
+
+        Assert.IsNotNull(actual);
+        Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build02), actual.Href);
+        Assert.AreEqual(Build02, actual.Id.Split('.')[1]);
+    }
+
+    [Test]
     public void GetPreTranslationAsync_EngineNotBuilt()
     {
         // Set up test environment

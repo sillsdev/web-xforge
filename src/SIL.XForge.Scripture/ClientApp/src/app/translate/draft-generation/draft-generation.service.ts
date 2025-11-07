@@ -131,6 +131,33 @@ export class DraftGenerationService {
       );
   }
 
+  /**
+   * Gets the last pre-translation build regardless of state (Completed, Running, Queued, Faulted, or Canceled).
+   * This is a simpler accessor than getLastCompletedBuild() and can be used when the consumer
+   * wants the most recent build even if it has not yet completed.
+   * @param projectId The SF project id for the target translation.
+   * @returns An observable BuildDto for the last pre-translation build, or undefined if no build has ever run.
+   */
+  getLastPreTranslationBuild(projectId: string): Observable<BuildDto | undefined> {
+    if (!this.onlineStatusService.isOnline) {
+      return of(undefined);
+    }
+    return this.httpClient
+      .get<BuildDto>(`translation/engines/project:${projectId}/actions/getLastPreTranslationBuild`)
+      .pipe(
+        map(res => res.data),
+        catchError(err => {
+          // If project doesn't exist on Serval, return undefined
+          if (err.status === 403 || err.status === 404) {
+            return of(undefined);
+          }
+
+          this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
+          return of(undefined);
+        })
+      );
+  }
+
   /** Gets the build exactly as Serval returns it */
   getRawBuild(buildId: string): Observable<Object | undefined> {
     if (!this.onlineStatusService.isOnline) {

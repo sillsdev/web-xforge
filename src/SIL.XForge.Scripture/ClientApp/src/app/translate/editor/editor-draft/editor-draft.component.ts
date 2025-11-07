@@ -30,6 +30,7 @@ import {
   startWith,
   Subject,
   switchMap,
+  take,
   tap,
   throttleTime
 } from 'rxjs';
@@ -47,6 +48,7 @@ import { isString } from '../../../../type-utils';
 import { TextDocId } from '../../../core/models/text-doc';
 import { Revision } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { BuildDto } from '../../../machine-api/build-dto';
 import { BuildStates } from '../../../machine-api/build-states';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { TextComponent } from '../../../shared/text/text.component';
@@ -113,7 +115,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     this.onlineStatusService.onlineStatus$
   ]).pipe(map(([isLoading, isOnline]) => isLoading || !isOnline));
 
-  showDraftOptionsButton$: Observable<boolean> = this.activatedProjectService.projectId$.pipe(
+  isFormattingSupportedForLatest$: Observable<boolean> = this.activatedProjectService.projectId$.pipe(
     filterNullish(),
     switchMap(projectId => this.draftGenerationService.getLastCompletedBuild(projectId)),
     map(build => this.draftOptionsService.areFormattingOptionsSupportedForBuild(build))
@@ -121,6 +123,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
   private draftDelta?: Delta;
   private targetDelta?: Delta;
+  private _latestPreTranslationBuild: BuildDto | undefined;
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
@@ -150,11 +153,23 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     return this.draftHandlingService.canApplyDraft(this.targetProject, this.bookNum, this.chapter, this.draftDelta.ops);
   }
 
-  get doesLatestHaveDraft(): boolean {
+  get canConfigureFormatting(): boolean {
+    return this.doesLatestCompletedHaveDraft && this.isSelectedDraftLatest && this.isLatestBuildCompleted;
+  }
+
+  get doesLatestCompletedHaveDraft(): boolean {
     return (
       this.targetProject?.texts.find(t => t.bookNum === this.bookNum)?.chapters.find(c => c.number === this.chapter)
         ?.hasDraft ?? false
     );
+  }
+
+  get isLatestBuildCompleted(): boolean {
+    return this._latestPreTranslationBuild?.state === BuildStates.Completed;
+  }
+
+  get isSelectedDraftLatest(): boolean {
+    return this.selectedRevision?.timestamp === this._draftRevisions[0].timestamp;
   }
 
   set draftRevisions(value: Revision[]) {
@@ -239,9 +254,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
           // Respond to project changes
           return this.activatedProjectService.changes$.pipe(
             filterNullish(),
-            tap(projectDoc => {
-              this.targetProject = projectDoc.data;
-            }),
             distinctUntilChanged(),
             map(() => initialTimestamp)
           );
@@ -299,6 +311,35 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
         this.isDraftReady = this.draftCheckState === 'draft-present' || this.draftCheckState === 'draft-legacy';
       });
+
+    combineLatest([
+      this.onlineStatusService.onlineStatus$,
+      this.activatedProjectService.projectDoc$,
+      this.draftGenerationService.pollBuildProgress(this.textDocId!.projectId),
+      this.draftText.editorCreated as EventEmitter<any>,
+      this.inputChanged$.pipe(startWith(undefined))
+    ])
+      .pipe(
+        quietTakeUntilDestroyed(this.destroyRef),
+        filter(([_, projectDoc]) => projectDoc !== undefined),
+        tap(([_, projectDoc]) => {
+          this.targetProject = projectDoc!.data;
+        }),
+        filter(([isOnline, _]) => {
+          return isOnline && this.doesLatestCompletedHaveDraft;
+        }),
+        switchMap(() => this.refreshLastPreTranslationBuild())
+      )
+      .subscribe((build: BuildDto | undefined) => {
+        this._latestPreTranslationBuild = build;
+      });
+  }
+
+  private refreshLastPreTranslationBuild(): Observable<BuildDto | undefined> {
+    if (this.projectId == null) {
+      return of<BuildDto | undefined>(undefined);
+    }
+    return this.draftGenerationService.getLastPreTranslationBuild(this.projectId).pipe(take(1));
   }
 
   navigateToFormatting(): void {

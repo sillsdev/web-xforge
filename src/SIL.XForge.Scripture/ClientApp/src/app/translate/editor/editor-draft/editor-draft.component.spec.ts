@@ -86,6 +86,11 @@ describe('EditorDraftComponent', () => {
     buildProgress$.next({ state: BuildStates.Completed } as BuildDto);
     when(mockActivatedProjectService.projectId$).thenReturn(of('targetProjectId'));
     when(mockDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of(undefined));
+    const defaultProjectDoc: SFProjectProfileDoc = { data: createTestProjectProfile() } as SFProjectProfileDoc;
+    when(mockActivatedProjectService.projectDoc$).thenReturn(of(defaultProjectDoc));
+    when(mockDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(
+      of({ state: BuildStates.Completed } as BuildDto)
+    );
 
     fixture = TestBed.createComponent(EditorDraftComponent);
     component = fixture.componentInstance;
@@ -555,6 +560,129 @@ describe('EditorDraftComponent', () => {
       verify(mockNoticeService.showError(anything())).twice();
       verify(mockErrorReportingService.silentError(anything(), anything())).once();
       expect(component.isDraftApplied).toBe(false);
+      flush();
+    }));
+  });
+
+  describe('canConfigureFormatting', () => {
+    beforeEach(() => {
+      when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(true));
+      when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
+        of(draftHistory)
+      );
+      spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops));
+      when(mockDraftHandlingService.getDraft(anything(), anything())).thenReturn(of(draftDelta.ops!));
+      when(mockDraftHandlingService.draftDataToOps(anything(), anything())).thenReturn(draftDelta.ops!);
+    });
+
+    it('should be true when latest build has draft and selected revision is latest', fakeAsync(() => {
+      const testProjectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          texts: [
+            {
+              bookNum: 1,
+              chapters: [{ number: 1, permissions: { user01: SFProjectRole.ParatextAdministrator }, hasDraft: true }]
+            }
+          ]
+        })
+      } as SFProjectProfileDoc;
+      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
+      when(mockActivatedProjectService.projectDoc$).thenReturn(of(testProjectDoc));
+      when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+
+      when(mockDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(
+        of({ state: BuildStates.Completed } as BuildDto)
+      );
+      fixture.detectChanges();
+      tick(EDITOR_READY_TIMEOUT);
+
+      expect(component.isSelectedDraftLatest).toBe(true);
+      expect(component.canConfigureFormatting).toBe(true);
+      flush();
+    }));
+
+    it('should be false when selected revision is not the latest', fakeAsync(() => {
+      const testProjectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          texts: [
+            {
+              bookNum: 1,
+              chapters: [{ number: 1, permissions: { user01: SFProjectRole.ParatextAdministrator }, hasDraft: true }]
+            }
+          ]
+        })
+      } as SFProjectProfileDoc;
+      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
+      when(mockActivatedProjectService.projectDoc$).thenReturn(of(testProjectDoc));
+      when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+
+      when(mockDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(
+        of({ state: BuildStates.Completed } as BuildDto)
+      );
+      fixture.detectChanges();
+      tick(EDITOR_READY_TIMEOUT);
+      expect(component.canConfigureFormatting).toBe(true);
+
+      // Select earlier revision
+      component.onSelectionChanged({ value: draftHistory[1] } as MatSelectChange);
+      fixture.detectChanges();
+      tick(EDITOR_READY_TIMEOUT);
+
+      expect(component.isSelectedDraftLatest).toBe(false);
+      expect(component.canConfigureFormatting).toBe(false);
+      flush();
+    }));
+
+    it('should be false when latest build does not have a draft', fakeAsync(() => {
+      const testProjectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          texts: [
+            {
+              bookNum: 1,
+              chapters: [{ number: 1, permissions: { user01: SFProjectRole.ParatextAdministrator }, hasDraft: false }]
+            }
+          ]
+        })
+      } as SFProjectProfileDoc;
+      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(false));
+      when(mockActivatedProjectService.projectDoc$).thenReturn(of(testProjectDoc));
+      when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+
+      when(mockDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(
+        of({ state: BuildStates.Completed } as BuildDto)
+      );
+      fixture.detectChanges();
+      tick(EDITOR_READY_TIMEOUT);
+      tick();
+      expect(component.isSelectedDraftLatest).toBe(true);
+      expect(component.canConfigureFormatting).toBe(false);
+      flush();
+    }));
+
+    it('should be false when latest build is canceled even if draft exists and selected revision is latest', fakeAsync(() => {
+      const testProjectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          texts: [
+            {
+              bookNum: 1,
+              chapters: [{ number: 1, permissions: { user01: SFProjectRole.ParatextAdministrator }, hasDraft: true }]
+            }
+          ]
+        })
+      } as SFProjectProfileDoc;
+      when(mockDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(
+        of({ state: BuildStates.Canceled } as BuildDto)
+      );
+      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
+      when(mockActivatedProjectService.projectDoc$).thenReturn(of(testProjectDoc));
+      when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+
+      fixture.detectChanges();
+      tick(EDITOR_READY_TIMEOUT);
+
+      expect(component.isSelectedDraftLatest).toBe(true);
+      expect(component.doesLatestCompletedHaveDraft).toBe(true);
+      expect(component.canConfigureFormatting).toBe(false);
       flush();
     }));
   });
