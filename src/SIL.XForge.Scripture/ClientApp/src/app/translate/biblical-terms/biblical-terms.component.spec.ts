@@ -1,5 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
+import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { VerseRef } from '@sillsdev/scripture';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
@@ -444,6 +445,26 @@ describe('BiblicalTermsComponent', () => {
     env.wait();
     expect(env.noDataRow.length).toBe(1);
     expect(env.notFoundMessage.length).toBe(0);
+  }));
+
+  it('renderings column inherits project font from CSS custom property', fakeAsync(() => {
+    const env = new TestEnvironment('project01', 1, 1, '1');
+    env.setupProjectData('en');
+    env.wait();
+
+    // Set the --project-font CSS variable
+    const rootElement = document.documentElement;
+    rootElement.style.setProperty('--project-font', 'Charis SIL');
+    env.wait();
+
+    const renderingsCell = env.fixture.debugElement.query(By.css('td.mat-column-renderings'));
+    expect(renderingsCell).toBeTruthy();
+
+    // Get computed style to verify the CSS property is applied
+    const computedStyle = window.getComputedStyle(renderingsCell.nativeElement);
+    expect(computedStyle.fontFamily).toContain('Charis SIL');
+
+    rootElement.style.removeProperty('--project-font');
   }));
 });
 

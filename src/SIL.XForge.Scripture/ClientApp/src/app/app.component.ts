@@ -2,7 +2,7 @@ import { BidiModule } from '@angular/cdk/bidi';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { AsyncPipe, DOCUMENT } from '@angular/common';
-import { Component, DestroyRef, Inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, HostBinding, Inject, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButton, MatIconAnchor, MatIconButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
@@ -33,6 +33,7 @@ import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FeatureFlagsDialogComponent } from 'xforge-common/feature-flags/feature-flags-dialog.component';
 import { FileService } from 'xforge-common/file.service';
+import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
@@ -94,6 +95,9 @@ declare function gtag(...args: any): void;
   ]
 })
 export class AppComponent extends DataLoadingComponent implements OnInit, OnDestroy {
+  @HostBinding('style.--project-font')
+  protected projectFont: string | null = null;
+
   version: string = versionData.version;
   issueEmail: string = environment.issueEmail;
   versionNumberClickCount = 0;
@@ -133,6 +137,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     readonly featureFlags: FeatureFlagService,
     private readonly pwaService: PwaService,
     private readonly themeService: ThemeService,
+    private readonly fontService: FontService,
     onlineStatusService: OnlineStatusService,
     private destroyRef: DestroyRef
   ) {
@@ -318,8 +323,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       .subscribe(async (selectedProjectDoc?: SFProjectProfileDoc) => {
         this._selectedProjectDoc = selectedProjectDoc;
         if (this._selectedProjectDoc == null || !this._selectedProjectDoc.isLoaded) {
+          this.projectFont = null;
           return;
         }
+        this.projectFont = this.fontService.getFontFamilyFromProject(this._selectedProjectDoc.data);
         void this.userService.setCurrentProjectId(this.currentUserDoc!, this._selectedProjectDoc.id);
         this.projectUserConfigDoc = await this.projectService.getUserConfig(
           this._selectedProjectDoc.id,
