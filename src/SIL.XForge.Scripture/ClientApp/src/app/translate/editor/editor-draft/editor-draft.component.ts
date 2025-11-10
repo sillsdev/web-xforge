@@ -211,42 +211,34 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         filter(([isOnline, build]) => isOnline && build != null && build.state !== BuildStates.Finishing),
         tap(() => this.setInitialState()),
         switchMap(() =>
-          combineLatest([
-            merge(
-              this.draftGenerationService
-                .getGeneratedDraftHistory(
-                  this.textDocId!.projectId,
-                  this.textDocId!.bookNum,
-                  this.textDocId!.chapterNum
-                )
-                .pipe(
-                  map(revisions => {
-                    if (revisions != null) {
-                      // Sort revisions by timestamp descending
-                      this.draftRevisions = [...revisions].sort((a, b) => {
-                        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-                      });
-                      const date = this.timestamp ?? new Date();
-                      // Don't emit this.selectedRevision$, as the merge will handle this
-                      this.selectedRevision = this.findClosestRevision(date, this.draftRevisions);
-                      return date;
-                    } else {
-                      return undefined;
-                    }
-                  })
-                ),
-              this.selectedRevision$.pipe(
-                filter((rev): rev is { timestamp: string } => rev != null),
-                map(revision => new Date(revision.timestamp))
-              )
-            ),
-            this.draftExists()
-          ])
+          merge(
+            this.draftGenerationService
+              .getGeneratedDraftHistory(this.textDocId!.projectId, this.textDocId!.bookNum, this.textDocId!.chapterNum)
+              .pipe(
+                map(revisions => {
+                  if (revisions != null && revisions.length > 0) {
+                    // Sort revisions by timestamp descending
+                    this.draftRevisions = [...revisions].sort((a, b) => {
+                      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+                    });
+                    const date = this.timestamp ?? new Date();
+                    // Don't emit this.selectedRevision$, as the merge will handle this
+                    this.selectedRevision = this.findClosestRevision(date, this.draftRevisions);
+                    return date;
+                  } else {
+                    return undefined;
+                  }
+                })
+              ),
+            this.selectedRevision$.pipe(
+              filter((rev): rev is { timestamp: string } => rev != null),
+              map(revision => new Date(revision.timestamp))
+            )
+          )
         ),
-        switchMap(([timestamp, draftExists]) => {
-          const initialTimestamp: Date | undefined = timestamp ?? this.timestamp;
+        switchMap(timestamp => {
           // If an earlier draft exists, hide it if the draft history feature is not enabled
-          if (!draftExists && (!this.featureFlags.newDraftHistory.enabled || initialTimestamp == null)) {
+          if (timestamp == null) {
             this.draftCheckState = 'draft-empty';
             return EMPTY;
           }
@@ -255,7 +247,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
           return this.activatedProjectService.changes$.pipe(
             filterNullish(),
             distinctUntilChanged(),
-            map(() => initialTimestamp)
+            map(() => timestamp)
           );
         }),
         switchMap((timestamp: Date | undefined) =>
@@ -278,14 +270,8 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         }),
         switchMap(({ targetOps, draftOps }) => {
           // Look for verses that contain text. If these are present, this is a non-empty draft
-          for (const op of draftOps) {
-            if (op.attributes != null && op.attributes.segment != null && typeof op.insert === 'string') {
-              const hasText: boolean = op.insert.trim().length > 0;
-              const segRef: string = op.attributes.segment as string;
-              if (hasText && segRef.startsWith('verse_')) {
-                return of({ targetOps, draftOps });
-              }
-            }
+          if (this.draftHandlingService.opsHaveContent(draftOps)) {
+            return of({ targetOps, draftOps });
           }
 
           // No generated verse segments were found, return an empty draft
@@ -381,11 +367,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     this.isDraftReady = false;
     this.isDraftApplied = false;
     this.userAppliedDraft = false;
-  }
-
-  private draftExists(): Observable<boolean> {
-    // This method of checking for draft may be temporary until there is a better way supplied by serval
-    return this.draftGenerationService.draftExists(this.projectId!, this.bookNum!, this.chapter!);
   }
 
   private findClosestRevision(date: Date, revisions: Revision[]): Revision | undefined {

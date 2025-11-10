@@ -91,6 +91,7 @@ describe('EditorDraftComponent', () => {
     when(mockDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(
       of({ state: BuildStates.Completed } as BuildDto)
     );
+    when(mockDraftHandlingService.opsHaveContent(anything())).thenReturn(true);
 
     fixture = TestBed.createComponent(EditorDraftComponent);
     component = fixture.componentInstance;
@@ -118,7 +119,6 @@ describe('EditorDraftComponent', () => {
       data: createTestProjectProfile()
     } as SFProjectProfileDoc;
     when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(true));
-    when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
     when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
       of(draftHistory)
     );
@@ -154,7 +154,6 @@ describe('EditorDraftComponent', () => {
 
     when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(false));
     when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
-    when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
     when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
       of(draftHistory)
     );
@@ -192,7 +191,6 @@ describe('EditorDraftComponent', () => {
     const testProjectDoc: SFProjectProfileDoc = {
       data: createTestProjectProfile()
     } as SFProjectProfileDoc;
-    when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
     when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
       of(draftHistory)
     );
@@ -217,7 +215,6 @@ describe('EditorDraftComponent', () => {
       data: createTestProjectProfile()
     } as SFProjectProfileDoc;
     when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(true));
-    when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
     when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
       of(draftHistory)
     );
@@ -246,7 +243,6 @@ describe('EditorDraftComponent', () => {
       data: createTestProjectProfile()
     } as SFProjectProfileDoc;
     when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(true));
-    when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
     when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
       of(draftHistory)
     );
@@ -278,7 +274,6 @@ describe('EditorDraftComponent', () => {
       data: createTestProjectProfile()
     } as SFProjectProfileDoc;
     when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(true));
-    when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(false));
     when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
       of(draftHistory)
     );
@@ -304,7 +299,6 @@ describe('EditorDraftComponent', () => {
       data: createTestProjectProfile()
     } as SFProjectProfileDoc;
     when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(true));
-    when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(false));
     when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
       of(draftHistory)
     );
@@ -313,6 +307,7 @@ describe('EditorDraftComponent', () => {
     when(mockDraftHandlingService.getDraft(anything(), anything())).thenReturn(of(cloneDeep(emptyDraftDelta.ops!)));
     when(mockDraftHandlingService.draftDataToOps(anything(), anything())).thenReturn(emptyDraftDelta.ops!);
     when(mockDraftHandlingService.isDraftSegmentMap(anything())).thenReturn(false);
+    when(mockDraftHandlingService.opsHaveContent(anything())).thenReturn(false);
 
     // SUT
     fixture.detectChanges();
@@ -324,17 +319,16 @@ describe('EditorDraftComponent', () => {
     flush();
   }));
 
-  it('should show draft empty if earlier draft exists but history is not enabled', fakeAsync(() => {
+  it('should set editor to empty state when no revision', fakeAsync(() => {
     const testProjectDoc: SFProjectProfileDoc = {
       data: createTestProjectProfile()
     } as SFProjectProfileDoc;
-    when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(false));
-    when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(false));
-    when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
-      of(draftHistory)
-    );
+    when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(of([]));
     when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
     spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
+    when(mockDraftHandlingService.getDraft(anything(), anything())).thenReturn(of(cloneDeep(draftDelta.ops!)));
+    when(mockDraftHandlingService.draftDataToOps(anything(), anything())).thenReturn(draftDelta.ops!);
+    when(mockDraftHandlingService.isDraftSegmentMap(anything())).thenReturn(false);
 
     fixture.detectChanges();
     tick(EDITOR_READY_TIMEOUT);
@@ -345,36 +339,11 @@ describe('EditorDraftComponent', () => {
     flush();
   }));
 
-  it('should return ops and update the editor when no revision', fakeAsync(() => {
-    const testProjectDoc: SFProjectProfileDoc = {
-      data: createTestProjectProfile()
-    } as SFProjectProfileDoc;
-    when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
-    when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
-      of(undefined)
-    );
-    when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
-    spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
-    when(mockDraftHandlingService.getDraft(anything(), anything())).thenReturn(of(cloneDeep(draftDelta.ops!)));
-    when(mockDraftHandlingService.draftDataToOps(anything(), anything())).thenReturn(draftDelta.ops!);
-    when(mockDraftHandlingService.isDraftSegmentMap(anything())).thenReturn(false);
-
-    fixture.detectChanges();
-    tick(EDITOR_READY_TIMEOUT);
-
-    verify(mockDraftHandlingService.getDraft(anything(), anything())).once();
-    verify(mockDraftHandlingService.draftDataToOps(anything(), anything())).once();
-    expect(component.draftCheckState).toEqual('draft-present');
-    expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
-    flush();
-  }));
-
   it('should return ops and update the editor when the selected revision changes', fakeAsync(() => {
     const testProjectDoc: SFProjectProfileDoc = {
       data: createTestProjectProfile()
     } as SFProjectProfileDoc;
     when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(false));
-    when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
     when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
       of(draftHistory)
     );
@@ -417,7 +386,6 @@ describe('EditorDraftComponent', () => {
           }
         })
       } as SFProjectProfileDoc;
-      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
       when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
         of(draftHistory)
       );
@@ -439,7 +407,6 @@ describe('EditorDraftComponent', () => {
       const testProjectDoc: SFProjectProfileDoc = {
         data: createTestProjectProfile()
       } as SFProjectProfileDoc;
-      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
       when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
         of(draftHistory)
       );
@@ -466,7 +433,6 @@ describe('EditorDraftComponent', () => {
       const testProjectDoc: SFProjectProfileDoc = {
         data: createTestProjectProfile()
       } as SFProjectProfileDoc;
-      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
       when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
         of(draftHistory)
       );
@@ -499,7 +465,6 @@ describe('EditorDraftComponent', () => {
       const testProjectDoc: SFProjectProfileDoc = {
         data: createTestProjectProfile()
       } as SFProjectProfileDoc;
-      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
       when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
         of(draftHistory)
       );
@@ -527,7 +492,6 @@ describe('EditorDraftComponent', () => {
       const testProjectDoc: SFProjectProfileDoc = {
         data: createTestProjectProfile()
       } as SFProjectProfileDoc;
-      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
       when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
         of(draftHistory)
       );

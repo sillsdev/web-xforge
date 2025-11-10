@@ -75,7 +75,7 @@
         [book]="bookNum"
         (bookChange)="bookChanged($event)"
         [(chapter)]="chapterNum"
-        [chapters]="chapters"
+        [chapters]="chaptersWithDrafts"
         (chapterChange)="chapterChanged($event)"
       ></app-book-chapter-chooser>
       <div class="viewer-container">
@@ -83,6 +83,7 @@
           [isReadOnly]="true"
           [subscribeToUpdates]="false"
           [isRightToLeft]="isRightToLeft"
+          [placeholder]="isOnline ? t('chapter_draft_does_not_exist') : t('text_unavailable_offline')"
           [class.initializing]="isInitializing"
           [class.loading]="isLoadingData"
           [style.--project-font]="projectFont"
