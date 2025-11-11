@@ -25,7 +25,7 @@ public interface IMachineApiService
         CancellationToken cancellationToken
     );
 
-    [LogEventMetric(EventScope.Drafting, nameof(sfProjectId))]
+    [LogEventMetric(EventScope.Drafting, projectId: nameof(sfProjectId))]
     Task BuildCompletedAsync(string sfProjectId, string buildId, string buildState, Uri websiteUrl);
 
     [LogEventMetric(EventScope.Drafting, nameof(curUserId), nameof(sfProjectId), captureReturnValue: true)]
