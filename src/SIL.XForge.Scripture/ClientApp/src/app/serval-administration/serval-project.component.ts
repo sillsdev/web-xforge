@@ -234,13 +234,13 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           }
 
           this.draftConfig = draftConfig;
-          this.draftJob$ = SFProjectService.hasDraft(project) ? this.getDraftJob(projectDoc.id) : of(undefined);
+          this.draftJob$ = this.projectService.hasDraft(project) ? this.getDraftJob(projectDoc.id) : of(undefined);
 
           // Setup the serval config value
           this.servalConfig.setValue(project.translateConfig.draftConfig.servalConfig);
 
           // Get the last completed build
-          if (this.isOnline && SFProjectService.hasDraft(project)) {
+          if (this.isOnline && this.projectService.hasDraft(project)) {
             return this.draftGenerationService.getLastCompletedBuild(projectDoc.id);
           } else {
             return of(undefined);

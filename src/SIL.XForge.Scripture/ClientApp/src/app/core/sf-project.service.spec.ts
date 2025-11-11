@@ -1,6 +1,7 @@
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { fakeAsync, TestBed } from '@angular/core/testing';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { CommandService } from 'xforge-common/command.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
@@ -19,6 +20,80 @@ describe('SFProjectService', () => {
       provideHttpClientTesting()
     ]
   }));
+
+  describe('hasDraft', () => {
+    it('should return true if the book is in the drafted scripture range', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const project = {
+        translateConfig: { draftConfig: { draftedScriptureRange: 'GEN;EXO;LEV', currentScriptureRange: 'MAT;MRK' } }
+      } as SFProjectProfile;
+      const actual = env.service.hasDraft(project, 2);
+      expect(actual).toBe(true);
+    }));
+
+    it('should return true if the book is in the current scripture range when current build is true', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const project = {
+        translateConfig: { draftConfig: { draftedScriptureRange: 'MAT;MRK', currentScriptureRange: 'GEN;EXO;LEV' } }
+      } as SFProjectProfile;
+      const actual = env.service.hasDraft(project, 2, true);
+      expect(actual).toBe(true);
+    }));
+
+    it('should return true if the drafted scripture range has books', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const project = {
+        translateConfig: { draftConfig: { draftedScriptureRange: 'GEN;EXO;LEV' } }
+      } as SFProjectProfile;
+      const actual = env.service.hasDraft(project);
+      expect(actual).toBe(true);
+    }));
+
+    it('should return true if the current scripture range has books', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const project = {
+        translateConfig: { draftConfig: { currentScriptureRange: 'GEN;EXO;LEV' } }
+      } as SFProjectProfile;
+      const actual = env.service.hasDraft(project, undefined, true);
+      expect(actual).toBe(true);
+    }));
+
+    it('should return false if the book is not in the drafted scripture range', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const project = {
+        translateConfig: { draftConfig: { draftedScriptureRange: 'MAT;MRK', currentScriptureRange: 'GEN;EXO;LEV' } }
+      } as SFProjectProfile;
+      const actual = env.service.hasDraft(project, 2);
+      expect(actual).toBe(false);
+    }));
+
+    it('should return false if the book is not in the current scripture range when current build is true', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const project = {
+        translateConfig: { draftConfig: { draftedScriptureRange: 'GEN;EXO;LEV', currentScriptureRange: 'MAT;MRK' } }
+      } as SFProjectProfile;
+      const actual = env.service.hasDraft(project, 2, true);
+      expect(actual).toBe(false);
+    }));
+
+    it('should return false if the drafted scripture range does not have books', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const project = {
+        translateConfig: { draftConfig: { currentScriptureRange: 'GEN;EXO;LEV' } }
+      } as SFProjectProfile;
+      const actual = env.service.hasDraft(project);
+      expect(actual).toBe(false);
+    }));
+
+    it('should return false if the current scripture range does not have books', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const project = {
+        translateConfig: { draftConfig: { draftedScriptureRange: 'GEN;EXO;LEV' } }
+      } as SFProjectProfile;
+      const actual = env.service.hasDraft(project, undefined, true);
+      expect(actual).toBe(false);
+    }));
+  });
 
   describe('onlineSetRoleProjectPermissions', () => {
     it('should invoke the command service', fakeAsync(async () => {
