@@ -16,7 +16,7 @@
   [cdkDropListSortPredicate]="movablePredicate.bind(this)"
   (cdkDropListDropped)="onTabDrop($event)"
 >
-  @for (tab of tabs; track tab; let i = $index) {
+  @for (tab of tabs; track tab.id; let i = $index) {
     <app-tab-header
       [closeable]="tab.closeable"
       [movable]="tab.movable"
@@ -47,20 +47,17 @@
   </app-tab-header>
 
   <mat-menu #newTabMenu>
-    <!-- Migrating to control flow causes an "Expression changed after check" error when tabs are dragged -->
-    @if ((menuItems$ | async)?.length) {
-      @for (item of menuItems$ | async; track item) {
-        <button mat-menu-item (click)="tabAddRequest.next(item.type)">
-          @if (item.icon) {
-            <mat-icon>{{ item.icon }}</mat-icon>
-          }
-          @if (item.svgIcon) {
-            <mat-icon [svgIcon]="item.svgIcon"></mat-icon>
-          }
-          <span>{{ item.text }}</span>
-        </button>
-      }
-    } @else {
+    @for (item of menuItems$ | async; track item.type) {
+      <button mat-menu-item (click)="tabAddRequest.next(item.type)">
+        @if (item.icon) {
+          <mat-icon>{{ item.icon }}</mat-icon>
+        }
+        @if (item.svgIcon) {
+          <mat-icon [svgIcon]="item.svgIcon"></mat-icon>
+        }
+        <span>{{ item.text }}</span>
+      </button>
+    } @empty {
       <button mat-menu-item disabled>{{ "tab_group_header.no_tabs_available" | transloco }}</button>
     }
   </mat-menu>
