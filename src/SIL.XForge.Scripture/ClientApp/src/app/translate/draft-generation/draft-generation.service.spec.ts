@@ -910,12 +910,12 @@ describe('DraftGenerationService', () => {
             {
               bookNum: 62,
               chapters: [
-                { number: 1, hasDraft: false },
+                { number: 1, hasDraft: true },
                 { number: 2, hasDraft: true }
               ]
             },
             { bookNum: 63, chapters: [{ number: 1, hasDraft: true }] },
-            { bookNum: 64, chapters: [{ number: 1, hasDraft: false }] }
+            { bookNum: 64, chapters: [{ number: 1, hasDraft: true }] }
           ]
         })
       } as SFProjectProfileDoc;

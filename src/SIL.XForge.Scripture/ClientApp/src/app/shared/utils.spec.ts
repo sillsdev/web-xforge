@@ -3,6 +3,7 @@ import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-proj
 import { DeltaOperation } from 'rich-text';
 import { SelectableProject } from '../core/paratext.service';
 import {
+  booksFromScriptureRange,
   compareProjectsForSorting,
   getBookFileNameDigits,
   getUnsupportedTags,
@@ -93,6 +94,21 @@ describe('shared utils', () => {
     const projects = [{ shortName: 'bbb' }, { shortName: 'CCC' }, { shortName: 'AAA' }] as SFProject[];
     projects.sort(compareProjectsForSorting);
     expect(projects.map(project => project.shortName)).toEqual(['AAA', 'bbb', 'CCC']);
+  });
+
+  describe('booksFromScriptureRange', () => {
+    it('should return an empty array for non-scripture book values', () => {
+      expect(booksFromScriptureRange(undefined)).toEqual([]);
+      expect(booksFromScriptureRange('')).toEqual([]);
+      expect(booksFromScriptureRange(' ')).toEqual([]);
+      expect(booksFromScriptureRange('NOT_A_BOOK')).toEqual([]);
+    });
+
+    it('should return numbers for valid scripture book values', () => {
+      expect(booksFromScriptureRange('GEN')).toEqual([1]);
+      expect(booksFromScriptureRange('GEN;EXO')).toEqual([1, 2]);
+      expect(booksFromScriptureRange('GEN;NOT_A_BOOK;EXO')).toEqual([1, 2]);
+    });
   });
 
   describe('Xml Utils', () => {

@@ -130,9 +130,9 @@ describe('DraftUsfmFormatComponent', () => {
           {
             bookNum: 1,
             chapters: [
-              { number: 1, lastVerse: 15, isValid: true, permissions: {}, hasDraft: false },
-              { number: 2, lastVerse: 20, isValid: true, permissions: {}, hasDraft: true },
-              { number: 3, lastVerse: 18, isValid: true, permissions: {}, hasDraft: true }
+              { number: 1, lastVerse: 0, isValid: true, permissions: {} },
+              { number: 2, lastVerse: 20, isValid: true, permissions: {} },
+              { number: 3, lastVerse: 18, isValid: true, permissions: {} }
             ],
             hasSource: true,
             permissions: {}
@@ -140,6 +140,7 @@ describe('DraftUsfmFormatComponent', () => {
         ]
       }
     });
+    when(mockedProjectService.hasDraft(anything(), anything(), anything())).thenReturn(false);
     tick(EDITOR_READY_TIMEOUT);
     env.fixture.detectChanges();
     tick(EDITOR_READY_TIMEOUT);
@@ -163,7 +164,7 @@ describe('DraftUsfmFormatComponent', () => {
 
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
     expect(env.component.chaptersWithDrafts.length).toEqual(1);
-    expect(env.component.booksWithDrafts.length).toEqual(2);
+    expect(env.component.booksWithDrafts.length).toEqual(3);
 
     env.component.bookChanged(2);
     tick();
@@ -304,6 +305,7 @@ class TestEnvironment {
     when(mockedNoticeService.show(anything())).thenResolve();
     when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(true);
     when(mockedServalAdministration.onlineRetrievePreTranslationStatus(anything())).thenResolve();
+    when(mockedProjectService.hasDraft(anything(), anything(), anything())).thenReturn(true);
     this.setupProject(args.project);
     this.fixture = TestBed.createComponent(DraftUsfmFormatComponent);
     this.component = this.fixture.componentInstance;
@@ -333,15 +335,15 @@ class TestEnvironment {
     const texts: TextInfo[] = [
       {
         bookNum: 1,
-        chapters: [{ number: 1, lastVerse: 20, isValid: true, permissions: {}, hasDraft: true }],
+        chapters: [{ number: 1, lastVerse: 20, isValid: true, permissions: {} }],
         hasSource: true,
         permissions: {}
       },
       {
         bookNum: 2,
         chapters: [
-          { number: 1, lastVerse: 20, isValid: true, permissions: {}, hasDraft: true },
-          { number: 2, lastVerse: 20, isValid: true, permissions: {}, hasDraft: true }
+          { number: 1, lastVerse: 20, isValid: true, permissions: {} },
+          { number: 2, lastVerse: 20, isValid: true, permissions: {} }
         ],
         hasSource: true,
         permissions: {}

@@ -284,9 +284,12 @@ export function getUnsupportedTags(deltaOp: DeltaOperation): string[] {
   return [...invalidTags];
 }
 
-export function booksFromScriptureRange(scriptureRange: string): number[] {
-  if (scriptureRange === '') return [];
-  return scriptureRange.split(';').map(book => Canon.bookIdToNumber(book));
+export function booksFromScriptureRange(scriptureRange: string | undefined): number[] {
+  if (scriptureRange == null) return [];
+  return scriptureRange
+    .split(';')
+    .map(book => Canon.bookIdToNumber(book))
+    .filter(bookId => bookId > 0);
 }
 
 export class XmlUtils {

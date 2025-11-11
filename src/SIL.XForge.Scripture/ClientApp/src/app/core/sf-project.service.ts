@@ -25,6 +25,7 @@ import { RetryingRequest, RetryingRequestService } from 'xforge-common/retrying-
 import { TransceleratorQuestion } from '../checking/import-questions-dialog/import-questions-dialog.component';
 import { EventMetric } from '../event-metrics/event-metric';
 import { ShareLinkType } from '../shared/share/share-dialog.component';
+import { booksFromScriptureRange } from '../shared/utils';
 import { InviteeStatus } from '../users/collaborators/collaborators.component';
 import { BiblicalTermDoc } from './models/biblical-term-doc';
 import { NoteThreadDoc } from './models/note-thread-doc';
@@ -53,8 +54,28 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     super(realtimeService, commandService, retryingRequestService, SF_PROJECT_ROLES);
   }
 
-  static hasDraft(project: SFProjectProfile): boolean {
-    return project.texts.some(text => text.chapters.some(chapter => chapter.hasDraft));
+  /**
+   * Determines if there is a draft in the project for the specified scripture range or book number.
+   * @param project The project.
+   * @param scriptureRange The scripture range or book number.
+   * @param currentBuild If true, only return true if the current build on serval contains the scripture range.
+   * @returns true if the project contains a draft for the specified scripture range or book number.
+   */
+  hasDraft(
+    project: SFProjectProfile | undefined,
+    bookNum: number | undefined = undefined,
+    currentBuild: boolean = false
+  ): boolean {
+    const books: number[] = booksFromScriptureRange(
+      currentBuild
+        ? project?.translateConfig.draftConfig.currentScriptureRange
+        : project?.translateConfig.draftConfig.draftedScriptureRange
+    );
+    if (bookNum == null) {
+      return books.length > 0;
+    } else {
+      return books.includes(bookNum);
+    }
   }
 
   async onlineCreate(settings: SFProjectCreateSettings): Promise<string> {
