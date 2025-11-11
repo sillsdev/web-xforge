@@ -5,6 +5,7 @@ import {
   GenericError,
   GetTokenSilentlyVerboseResponse,
   RedirectLoginOptions,
+  ResponseType,
   TimeoutError
 } from '@auth0/auth0-spa-js';
 import { CookieService } from 'ngx-cookie-service';
@@ -211,11 +212,13 @@ describe('AuthService', () => {
             [XF_ROLE_CLAIM]: undefined,
             [XF_USER_ID_CLAIM]: TestEnvironment.userId
           }),
-          expires_in: 720
+          expires_in: 720,
+          token_type: 'Bearer'
         },
         idToken: { __raw: '1', sub: '7890', email: 'test@example.com' },
         loginResult: {
-          appState: JSON.stringify({ returnUrl: '' })
+          appState: JSON.stringify({ returnUrl: '' }),
+          response_type: ResponseType.Code
         }
       }
     });
@@ -236,11 +239,13 @@ describe('AuthService', () => {
             [XF_ROLE_CLAIM]: SystemRole.SystemAdmin,
             [XF_USER_ID_CLAIM]: TestEnvironment.userId
           }),
-          expires_in: 720
+          expires_in: 720,
+          token_type: 'Bearer'
         },
         idToken: { __raw: '1', sub: '7890', email: 'test@example.com' },
         loginResult: {
-          appState: JSON.stringify({ returnUrl: '' })
+          appState: JSON.stringify({ returnUrl: '' }),
+          response_type: ResponseType.Code
         }
       }
     });
@@ -261,11 +266,13 @@ describe('AuthService', () => {
             [XF_ROLE_CLAIM]: [SystemRole.SystemAdmin, SystemRole.User],
             [XF_USER_ID_CLAIM]: TestEnvironment.userId
           }),
-          expires_in: 720
+          expires_in: 720,
+          token_type: 'Bearer'
         },
         idToken: { __raw: '1', sub: '7890', email: 'test@example.com' },
         loginResult: {
-          appState: JSON.stringify({ returnUrl: '' })
+          appState: JSON.stringify({ returnUrl: '' }),
+          response_type: ResponseType.Code
         }
       }
     });
@@ -810,8 +817,8 @@ class TestEnvironment {
   static userId = 'user01';
   auth0Response: AuthDetails | undefined = {
     idToken: undefined,
-    loginResult: { appState: JSON.stringify({}) },
-    token: { id_token: '', access_token: '', expires_in: 0 }
+    loginResult: { appState: JSON.stringify({}), response_type: ResponseType.Code },
+    token: { id_token: '', access_token: '', expires_in: 0, token_type: 'Bearer' }
   };
   readonly service: AuthService;
   readonly language = 'fr';
@@ -950,7 +957,8 @@ class TestEnvironment {
         [XF_ROLE_CLAIM]: SystemRole.SystemAdmin,
         [XF_USER_ID_CLAIM]: TestEnvironment.userId
       }),
-      expires_in: this.tokenExpiryTimer
+      expires_in: this.tokenExpiryTimer,
+      token_type: 'Bearer'
     };
   }
 
@@ -990,7 +998,8 @@ class TestEnvironment {
       token: this.validToken,
       idToken: { __raw: '1', sub: '7890', email: 'test@example.com' },
       loginResult: {
-        appState: this._authLoginState
+        appState: this._authLoginState,
+        response_type: ResponseType.Code
       }
     };
     this.auth0Response = auth0Response;
