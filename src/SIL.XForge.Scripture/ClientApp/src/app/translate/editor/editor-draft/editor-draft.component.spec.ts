@@ -5,12 +5,13 @@ import { MatSelect, MatSelectChange } from '@angular/material/select';
 import { MatTooltip } from '@angular/material/tooltip';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { cloneDeep } from 'lodash-es';
+import { QuillService } from 'ngx-quill';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { Delta } from 'quill';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { ParagraphBreakFormat, QuoteFormat } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
@@ -79,6 +80,12 @@ describe('EditorDraftComponent', () => {
       provideNoopAnimations()
     ]
   }));
+
+  beforeEach(async () => {
+    // Pre-load Quill before each test to avoid async Quill import issues
+    const quillService = TestBed.inject(QuillService);
+    await firstValueFrom(quillService.getQuill());
+  });
 
   beforeEach(() => {
     when(mockFeatureFlagService.usfmFormat).thenReturn(createTestFeatureFlag(true));

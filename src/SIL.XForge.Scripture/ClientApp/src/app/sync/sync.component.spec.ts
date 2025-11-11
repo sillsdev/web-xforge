@@ -283,9 +283,10 @@ class TestEnvironment {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: this.projectId }));
     const ptUsername = isParatextAccountConnected ? 'Paratext User01' : '';
     when(mockedParatextService.getParatextUsername()).thenReturn(of(ptUsername));
-    when(mockedProjectService.onlineSync(anything()))
-      .thenCall(id => this.setQueuedCount(id))
-      .thenResolve();
+    when(mockedProjectService.onlineSync(anything())).thenCall(id => {
+      this.setQueuedCount(id);
+      return Promise.resolve();
+    });
     when(mockedNoticeService.loadingStarted(anything())).thenCall(() => (this.isLoading = true));
     when(mockedNoticeService.loadingFinished(anything())).thenCall(() => (this.isLoading = false));
     when(mockedNoticeService.isAppLoading).thenCall(() => this.isLoading);

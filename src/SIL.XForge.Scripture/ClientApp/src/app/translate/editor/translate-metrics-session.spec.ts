@@ -1,11 +1,12 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { LatinWordTokenizer } from '@sillsdev/machine';
-import { QuillModule } from 'ngx-quill';
+import { QuillModule, QuillService } from 'ngx-quill';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import * as RichText from 'rich-text';
+import { firstValueFrom } from 'rxjs';
 import { anything, deepEqual, instance, mock, objectContaining, resetCalls, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -48,6 +49,12 @@ describe('TranslateMetricsSession', () => {
       { provide: UserService, useMock: mockedUserService }
     ]
   }));
+
+  beforeEach(async () => {
+    // Pre-load Quill before each test to avoid async Quill import issues
+    const quillService = TestBed.inject(QuillService);
+    await firstValueFrom(quillService.getQuill());
+  });
 
   describe('edit', () => {
     it('start with edit keystroke', fakeAsync(() => {

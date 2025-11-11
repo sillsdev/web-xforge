@@ -4,6 +4,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { MatRadioButtonHarness } from '@angular/material/radio/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
+import { QuillService } from 'ngx-quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
@@ -14,7 +15,7 @@ import {
   QuoteFormat,
   TranslateConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -75,8 +76,12 @@ describe('DraftUsfmFormatComponent', () => {
     ]
   }));
 
-  beforeEach(() => {
+  beforeEach(async () => {
     when(mockedActivatedRoute.params).thenReturn(of({}));
+
+    // Pre-load Quill before each test to avoid async Quill import issues
+    const quillService = TestBed.inject(QuillService);
+    await firstValueFrom(quillService.getQuill());
   });
 
   it('shows message if user is not online', fakeAsync(async () => {
