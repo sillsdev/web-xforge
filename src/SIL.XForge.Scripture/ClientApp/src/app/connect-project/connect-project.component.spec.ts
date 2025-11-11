@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { DebugElement, ErrorHandler } from '@angular/core';
+import { DebugElement, ErrorHandler, signal } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
@@ -379,15 +379,19 @@ class TestEnvironment {
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
     if (params.paratextId === undefined) {
-      when(mockedRouter.currentNavigation()).thenReturn({ extras: {} } as any);
+      when(mockedRouter.currentNavigation).thenReturn(signal({ extras: {} } as any));
     } else {
       const paratextId = params.paratextId ?? 'pt01';
       const name: string | undefined = this.paratextProjects.find(p => p.paratextId === paratextId)?.name;
       const shortName: string | undefined = this.paratextProjects.find(p => p.paratextId === paratextId)?.shortName;
 
-      when(mockedRouter.currentNavigation()).thenReturn({
-        extras: { state: { paratextId, name, shortName } }
-      } as any);
+      when(mockedRouter.currentNavigation).thenReturn(
+        signal({
+          extras: {
+            state: { paratextId, name, shortName }
+          }
+        } as any)
+      );
     }
     when(mockedSFProjectService.onlineAddCurrentUser('project01')).thenResolve();
     this.testOnlineStatusService.setIsOnline(params.hasConnection ?? true);

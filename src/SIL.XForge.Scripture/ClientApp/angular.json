@@ -149,7 +149,16 @@
             "stylePreprocessorOptions": {
               "includePaths": ["node_modules", "."]
             },
-            "assets": ["src/favicon.ico", "src/assets", "src/manifest.json"],
+            "assets": [
+              "src/favicon.ico",
+              "src/assets",
+              "src/manifest.json",
+              {
+                "glob": "**/*",
+                "input": "src/app/checking/checking/test-audio",
+                "output": "/assets/audio"
+              }
+            ],
             "sourceMap": false,
             "webWorkerTsConfig": "tsconfig.worker.json"
           }
