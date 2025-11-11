@@ -15,6 +15,7 @@ import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { PermissionsService } from '../../../core/permissions.service';
+import { SFProjectService } from '../../../core/sf-project.service';
 import { TabStateService } from '../../../shared/sf-tab-group';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { DraftOptionsService } from '../../draft-generation/draft-options.service';
@@ -26,6 +27,7 @@ const mockActivatedProject = mock(ActivatedProjectService);
 const mockTabState: TabStateService<any, any> = mock(TabStateService);
 const mockUserService = mock(UserService);
 const mockPermissionsService = mock(PermissionsService);
+const mockSFProjectService = mock(SFProjectService);
 const mockDraftOptionsService = mock(DraftOptionsService);
 const mockDraftGenerationService = mock(DraftGenerationService);
 
@@ -40,6 +42,7 @@ describe('EditorTabMenuService', () => {
       { provide: TabStateService, useMock: mockTabState },
       { provide: UserService, useMock: mockUserService },
       { provide: PermissionsService, useMock: mockPermissionsService },
+      { provide: SFProjectService, useMock: mockSFProjectService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: DraftOptionsService, useMock: mockDraftOptionsService },
       { provide: DraftGenerationService, useMock: mockDraftGenerationService }
@@ -47,7 +50,7 @@ describe('EditorTabMenuService', () => {
   }));
 
   it('should get "history", "draft", and "project-resource" menu items', async () => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment(undefined, { hasCompletedDraftBuild: true });
     env.setExistingTabs([{ id: uuid(), type: 'history', headerText$: of('History'), closeable: true, movable: true }]);
     service['canShowHistory'] = () => true;
     service['canShowResource'] = () => true;
@@ -84,7 +87,7 @@ describe('EditorTabMenuService', () => {
   });
 
   it('should get "draft", "project-resource", and not "history" menu items', async () => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment(undefined, { hasCompletedDraftBuild: true });
     env.setExistingTabs([]);
     service['canShowHistory'] = () => false;
     service['canShowResource'] = () => true;
@@ -160,7 +163,7 @@ describe('EditorTabMenuService', () => {
   });
 
   it('should handle offline', async () => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment(undefined, { hasCompletedDraftBuild: true });
     env.setExistingTabs([]);
     service['canShowHistory'] = () => true;
     service['canShowResource'] = () => true;
@@ -241,8 +244,8 @@ class TestEnvironment {
     id: 'project-no-draft',
     data: createTestProjectProfile({
       texts: [
-        { bookNum: 40, chapters: [{ number: 1, hasDraft: false }] },
-        { bookNum: 41, chapters: [{ number: 1, hasDraft: false }] }
+        { bookNum: 40, chapters: [{ number: 1 }] },
+        { bookNum: 41, chapters: [{ number: 1 }] }
       ]
     })
   } as SFProjectProfileDoc;
@@ -254,8 +257,8 @@ class TestEnvironment {
     id: 'project1',
     data: createTestProjectProfile({
       texts: [
-        { bookNum: 40, chapters: [{ number: 1, hasDraft: false }] },
-        { bookNum: 41, chapters: [{ number: 1, hasDraft: true }] }
+        { bookNum: 40, chapters: [{ number: 1 }] },
+        { bookNum: 41, chapters: [{ number: 1 }] }
       ],
       translateConfig: {
         preTranslate: true
@@ -283,6 +286,7 @@ class TestEnvironment {
     );
     when(mockUserService.currentUserId).thenReturn('user01');
     when(mockPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
+    when(mockSFProjectService.hasDraft(anything())).thenReturn(options?.hasCompletedDraftBuild ?? false);
     service = TestBed.inject(EditorTabMenuService);
   }
 
