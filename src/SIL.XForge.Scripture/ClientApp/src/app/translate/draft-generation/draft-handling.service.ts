@@ -11,7 +11,8 @@ import { isString } from '../../../type-utils';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
-import { getVerseRefFromSegmentRef, isBadDelta, verseSlug } from '../../shared/utils';
+import { isBadDelta } from '../../shared/utils';
+import { getVerseRefFromSegmentRef, verseSlug } from '../../shared/verse-utils';
 import { DraftSegmentMap } from './draft-generation';
 import { DraftGenerationService } from './draft-generation.service';
 

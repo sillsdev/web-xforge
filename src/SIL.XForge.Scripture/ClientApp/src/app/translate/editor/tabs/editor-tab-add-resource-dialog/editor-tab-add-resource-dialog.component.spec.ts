@@ -11,9 +11,10 @@ import { TestOnlineStatusService } from 'xforge-common/test-online-status.servic
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { ParatextProject } from '../../../../core/models/paratext-project';
+import { SelectableProject } from '../../../../core/models/selectable-project';
 import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
-import { ParatextService, SelectableProject } from '../../../../core/paratext.service';
+import { ParatextService } from '../../../../core/paratext.service';
 import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { EditorTabAddResourceDialogComponent } from './editor-tab-add-resource-dialog.component';

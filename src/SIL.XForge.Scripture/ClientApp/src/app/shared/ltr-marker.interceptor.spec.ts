@@ -2,7 +2,7 @@ import { Injector } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Translation, TranslocoService } from '@ngneat/transloco';
 import { LtrMarkerInterceptor } from './ltr-marker.interceptor';
-import { LEFT_TO_RIGHT_EMBEDDING, POP_DIRECTIONAL_FORMATTING } from './utils';
+import { LEFT_TO_RIGHT_EMBEDDING, POP_DIRECTIONAL_FORMATTING } from './verse-utils';
 
 describe('LtrMarkerInterceptor', () => {
   let interceptor: LtrMarkerInterceptor;

@@ -33,7 +33,7 @@ import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { BuildDto } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
-import { RIGHT_TO_LEFT_MARK } from '../../../../shared/utils';
+import { RIGHT_TO_LEFT_MARK } from '../../../../shared/verse-utils';
 import { DraftDownloadButtonComponent } from '../../draft-download-button/draft-download-button.component';
 import { DraftOptionsService } from '../../draft-options.service';
 import { DraftPreviewBooksComponent } from '../../draft-preview-books/draft-preview-books.component';

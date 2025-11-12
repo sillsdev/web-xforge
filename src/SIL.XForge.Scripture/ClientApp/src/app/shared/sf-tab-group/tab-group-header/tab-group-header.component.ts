@@ -29,11 +29,12 @@ import {
 } from 'rxjs';
 import { LocaleDirection } from 'xforge-common/models/i18n-locale';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
-import { TabMenuItem, TabMenuService } from '../../sf-tab-group';
+import { TabMenuItem, TabMenuService } from '../base-services/tab-menu.service';
 import { TabHeaderPointerEvent, TabLocation, TabMoveEvent } from '../sf-tabs.types';
 import { TabHeaderComponent } from '../tab-header/tab-header.component';
 import { TabComponent } from '../tab/tab.component';
 import { TabScrollButtonComponent } from './tab-scroll-button/tab-scroll-button.component';
+
 @Component({
   selector: 'app-tab-group-header',
   templateUrl: './tab-group-header.component.html',

@@ -55,8 +55,8 @@ import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { getVerseNumbers, XmlUtils } from '../../shared/utils';
-import { SaveNoteParameters } from '../editor/editor.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from '../editor/note-dialog/note-dialog.component';
+import { SaveNoteParameters } from '../editor/save-note-parameters';
 import { BiblicalTermDialogComponent, BiblicalTermDialogData } from './biblical-term-dialog.component';
 
 // Material icons matching the biblical term's notes status
