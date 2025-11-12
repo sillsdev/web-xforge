@@ -6,7 +6,7 @@ import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { issuesEmailTemplate } from 'xforge-common/utils';
 import { environment } from '../../../../environments/environment';
-import { SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
+import { SelectableProjectWithLanguageCode } from '../../../core/models/selectable-project';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { DraftSourcesAsSelectableProjectArrays, normalizeLanguageCodeToISO639_3 } from '../draft-utils';
 

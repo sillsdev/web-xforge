@@ -17,7 +17,7 @@ import { BehaviorSubject, combineLatest, fromEvent, Observable } from 'rxjs';
 import { distinctUntilChanged, map, shareReplay, startWith, takeUntil, tap } from 'rxjs/operators';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { hasPropWithValue } from '../../type-utils';
-import { SelectableProject } from '../core/paratext.service';
+import { SelectableProject } from '../core/models/selectable-project';
 import { SFValidators } from '../shared/sfvalidators';
 import { projectLabel } from '../shared/utils';
 

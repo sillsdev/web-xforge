@@ -22,11 +22,9 @@ import { ProjectService } from 'xforge-common/project.service';
 import { QueryParameters, QueryResults } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { RetryingRequest, RetryingRequestService } from 'xforge-common/retrying-request.service';
-import { TransceleratorQuestion } from '../checking/import-questions-dialog/import-questions-dialog.component';
 import { EventMetric } from '../event-metrics/event-metric';
-import { ShareLinkType } from '../shared/share/share-dialog.component';
-import { InviteeStatus } from '../users/collaborators/collaborators.component';
 import { BiblicalTermDoc } from './models/biblical-term-doc';
+import { InviteeStatus } from './models/invitee-status';
 import { NoteThreadDoc } from './models/note-thread-doc';
 import { SFProjectCreateSettings } from './models/sf-project-create-settings';
 import { SFProjectDoc } from './models/sf-project-doc';
@@ -34,8 +32,10 @@ import { SFProjectProfileDoc } from './models/sf-project-profile-doc';
 import { SF_PROJECT_ROLES } from './models/sf-project-role-info';
 import { SFProjectSettings } from './models/sf-project-settings';
 import { SFProjectUserConfigDoc } from './models/sf-project-user-config-doc';
+import { ShareLinkType } from './models/share-link-type';
 import { TextAudioDoc } from './models/text-audio-doc';
 import { TextDoc, TextDocId } from './models/text-doc';
+import { TransceleratorQuestion } from './models/transcelerator-question';
 import { TranslateMetrics } from './models/translate-metrics';
 
 @Injectable({

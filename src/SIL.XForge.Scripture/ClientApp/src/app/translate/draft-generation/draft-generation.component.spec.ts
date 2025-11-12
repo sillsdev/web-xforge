@@ -33,7 +33,8 @@ import { NllbLanguageService } from '../nllb-language.service';
 import { DraftGenerationComponent } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
 import { DraftHandlingService } from './draft-handling.service';
-import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from './draft-sources.service';
+import { DraftSource, DraftSourcesAsArrays } from './draft-source';
+import { DraftSourcesService } from './draft-sources.service';
 import { TrainingDataService } from './training-data/training-data.service';
 
 describe('DraftGenerationComponent', () => {
