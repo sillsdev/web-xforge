@@ -6,6 +6,7 @@ import { submitMigrationOp } from '../../common/realtime-server';
 import { NoteTag } from '../models/note-tag';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from '../models/sf-project-rights';
 import { SFProjectRole } from '../models/sf-project-role';
+import { TextInfo } from '../models/text-info';
 import { TextInfoPermission } from '../models/text-info-permission';
 import { TranslateShareLevel, TranslateSource } from '../models/translate-config';
 
@@ -630,6 +631,37 @@ class SFProjectMigration27 extends DocMigration {
   }
 }
 
+class SFProjectMigration28 extends DocMigration {
+  static readonly VERSION = 28;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops: Op[] = [];
+    if (doc.data?.texts != null && doc.data?.translateConfig?.draftConfig?.currentScriptureRange == null) {
+      const currentScriptureRange = doc.data.texts
+        .filter((t: TextInfo) => t.chapters.some(c => c.hasDraft))
+        .map((t: TextInfo) => Canon.bookNumberToId(t.bookNum, ''))
+        .filter((id: string) => id !== '')
+        .join(';');
+      if (currentScriptureRange !== '' && currentScriptureRange != null) {
+        ops.push({
+          p: ['translateConfig', 'draftConfig', 'currentScriptureRange'],
+          oi: currentScriptureRange
+        });
+        if (doc.data.translateConfig?.draftConfig?.draftedScriptureRange == null) {
+          ops.push({
+            p: ['translateConfig', 'draftConfig', 'draftedScriptureRange'],
+            oi: currentScriptureRange
+          });
+        }
+      }
+    }
+
+    if (ops.length > 0) {
+      await submitMigrationOp(SFProjectMigration28.VERSION, doc, ops);
+    }
+  }
+}
+
 export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = monotonicallyIncreasingMigrationList([
   SFProjectMigration1,
   SFProjectMigration2,
@@ -657,5 +689,6 @@ export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = monotonicallyIncrea
   SFProjectMigration24,
   SFProjectMigration25,
   SFProjectMigration26,
-  SFProjectMigration27
+  SFProjectMigration27,
+  SFProjectMigration28
 ]);
