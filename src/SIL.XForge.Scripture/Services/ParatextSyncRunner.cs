@@ -1241,7 +1241,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 if (oldChapter is not null)
                 {
                     newChapter.HasAudio = oldChapter.HasAudio;
-                    newChapter.HasDraft = oldChapter.HasDraft;
                     newChapter.DraftApplied = oldChapter.DraftApplied;
                 }
             }
