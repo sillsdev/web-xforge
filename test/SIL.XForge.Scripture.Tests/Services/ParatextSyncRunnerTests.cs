@@ -499,7 +499,6 @@ public class ParatextSyncRunnerTests
                 {
                     u.Set(p => p.Texts[0].Chapters[0].LastVerse, 9);
                     u.Set(p => p.Texts[0].Chapters[0].HasAudio, true);
-                    u.Set(p => p.Texts[0].Chapters[0].HasDraft, true);
                     u.Set(p => p.Texts[0].Chapters[0].DraftApplied, true);
                 }
             );
@@ -541,7 +540,6 @@ public class ParatextSyncRunnerTests
         SFProject project = env.GetProject();
         Assert.That(project.Texts[0].Chapters[0].LastVerse, Is.EqualTo(10));
         Assert.That(project.Texts[0].Chapters[0].HasAudio, Is.True);
-        Assert.That(project.Texts[0].Chapters[0].HasDraft, Is.True);
         Assert.That(project.Texts[0].Chapters[0].DraftApplied, Is.True);
     }
 
