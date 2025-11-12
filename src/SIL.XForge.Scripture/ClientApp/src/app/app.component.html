@@ -194,7 +194,7 @@
         (closed)="drawerCollapsed()"
         autoFocus="false"
       >
-        <app-navigation></app-navigation>
+        <app-navigation (menuItemClicked)="collapseDrawer()"></app-navigation>
       </mat-drawer>
     }
     <!-- The cdkScrollable attribute is needed so the CDK can listen to scroll events within this container -->
