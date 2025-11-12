@@ -23,6 +23,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { XFValidators } from 'xforge-common/xfvalidators';
+import { InviteeStatus } from '../../core/models/invitee-status';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { NoticeComponent } from '../../shared/notice/notice.component';
@@ -44,12 +45,6 @@ interface Row {
   readonly canManageAudio: boolean;
   readonly userEligibleForQuestionPermission: boolean;
   readonly paratextMemberNotConnected?: boolean;
-}
-
-export interface InviteeStatus {
-  email: string;
-  role: string;
-  expired: boolean;
 }
 
 interface ProjectUserLists {

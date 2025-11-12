@@ -4,8 +4,9 @@ import { mock, resetCalls, verify, when } from 'ts-mockito';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { ParatextProject } from '../../../../core/models/paratext-project';
+import { SelectableProjectWithLanguageCode } from '../../../../core/models/selectable-project';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
-import { ParatextService, SelectableProjectWithLanguageCode } from '../../../../core/paratext.service';
+import { ParatextService } from '../../../../core/paratext.service';
 import { EditorTabAddResourceDialogService } from './editor-tab-add-resource-dialog.service';
 
 describe('EditorTabAddResourceDialogService', () => {

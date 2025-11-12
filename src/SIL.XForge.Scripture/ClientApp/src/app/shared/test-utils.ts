@@ -3,7 +3,7 @@ import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/mode
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextDocId } from '../core/models/text-doc';
-import { RIGHT_TO_LEFT_MARK } from './utils';
+import { RIGHT_TO_LEFT_MARK } from './verse-utils';
 
 export function getTextDoc(id: TextDocId): TextData {
   const delta = new Delta();

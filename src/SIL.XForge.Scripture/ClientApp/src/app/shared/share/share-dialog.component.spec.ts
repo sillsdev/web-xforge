@@ -22,8 +22,9 @@ import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
+import { ShareLinkType } from '../../core/models/share-link-type';
 import { SFProjectService } from '../../core/sf-project.service';
-import { ShareDialogComponent, ShareDialogData, ShareLinkType } from './share-dialog.component';
+import { ShareDialogComponent, ShareDialogData } from './share-dialog.component';
 
 const mockedProjectService = mock(SFProjectService);
 const mockedNavigator = mock(Navigator);

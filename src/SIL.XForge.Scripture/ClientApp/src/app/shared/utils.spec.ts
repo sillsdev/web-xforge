@@ -1,7 +1,7 @@
 import { VerseRef } from '@sillsdev/scripture';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DeltaOperation } from 'rich-text';
-import { SelectableProject } from '../core/paratext.service';
+import { SelectableProject } from '../core/models/selectable-project';
 import {
   compareProjectsForSorting,
   getBookFileNameDigits,

@@ -17,7 +17,8 @@ import {
 } from 'rxjs';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { EditorReadyService } from '../base-services/editor-ready.service';
-import { LynxableEditor, LynxEditor, LynxEditorAdapterFactory, LynxTextModelConverter } from '../lynx-editor';
+import { LynxableEditor, LynxEditor, LynxTextModelConverter } from '../lynx-editor';
+import { LynxEditorAdapterFactory } from '../lynx-editor-adapter-factory';
 import { LynxInsight } from '../lynx-insight';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 import { getMostNestedInsight } from '../lynx-insight-util';

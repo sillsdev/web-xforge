@@ -10,7 +10,7 @@ import {
 import { RealtimeDoc } from 'xforge-common/models/realtime-doc';
 import { RealtimeDocAdapter } from 'xforge-common/realtime-remote-store';
 import { RealtimeService } from 'xforge-common/realtime.service';
-import { getVerseStrFromSegmentRef } from '../../shared/utils';
+import { getVerseStrFromSegmentRef } from '../../shared/verse-utils';
 
 export type TextDocSource = 'Draft' | 'Editor' | 'History' | 'Paratext';
 

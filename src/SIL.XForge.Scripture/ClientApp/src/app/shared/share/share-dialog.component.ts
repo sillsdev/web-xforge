@@ -19,6 +19,7 @@ import { TranslocoMarkupComponent } from 'ngx-transloco-markup';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { ShareLinkType } from 'src/app/core/models/share-link-type';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
@@ -32,14 +33,10 @@ import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../co
 import { SFProjectService } from '../../core/sf-project.service';
 import { NoticeComponent } from '../notice/notice.component';
 import { ShareBaseComponent } from './share-base.component';
+
 export interface ShareDialogData {
   projectId: string;
   defaultRole: SFProjectRole;
-}
-
-export enum ShareLinkType {
-  Anyone = 'anyone',
-  Recipient = 'recipient'
 }
 
 @Component({

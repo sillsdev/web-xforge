@@ -8,7 +8,8 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../../core/models/text-doc';
 import { TextComponent } from '../../../shared/text/text.component';
-import { verseRefFromMouseEvent } from '../../../shared/utils';
+import { verseRefFromMouseEvent } from '../../../shared/verse-utils';
+
 @Component({
   selector: 'app-checking-text',
   templateUrl: './checking-text.component.html',

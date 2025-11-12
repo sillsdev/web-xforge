@@ -5,12 +5,12 @@ import {
   ChangeDetectorRef,
   Component,
   DestroyRef,
+  DOCUMENT,
   EventEmitter,
   Inject,
   Input,
   OnDestroy,
-  Output,
-  DOCUMENT
+  Output
 } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
@@ -43,13 +43,8 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
 import { LynxInsightEditorObjectsComponent } from '../../translate/editor/lynx/insights/lynx-insight-editor-objects/lynx-insight-editor-objects.component';
 import { MultiCursorViewer } from '../../translate/editor/multi-viewer/multi-viewer.component';
-import {
-  attributeFromMouseEvent,
-  getBaseVerse,
-  getVerseRefFromSegmentRef,
-  getVerseStrFromSegmentRef,
-  VERSE_REGEX
-} from '../utils';
+import { attributeFromMouseEvent } from '../utils';
+import { getBaseVerse, getVerseRefFromSegmentRef, getVerseStrFromSegmentRef, VERSE_REGEX } from '../verse-utils';
 import { QuillFormatRegistryService } from './quill-editor-registration/quill-format-registry.service';
 import { getAttributesAtPosition, getRetainCount } from './quill-util';
 import { Segment } from './segment';
