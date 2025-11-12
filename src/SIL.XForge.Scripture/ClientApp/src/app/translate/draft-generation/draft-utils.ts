@@ -1,7 +1,7 @@
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import language_code_mapping from '../../../../../language_code_mapping.json';
-import { SelectableProjectWithLanguageCode } from '../../core/paratext.service';
+import { SelectableProjectWithLanguageCode } from '../../core/models/selectable-project';
 
 /** Represents draft sources as a set of two {@link TranslateSource} arrays, and one {@link SFProjectProfile} array. */
 export interface DraftSourcesAsTranslateSourceArrays {

@@ -37,6 +37,7 @@ import { ngfModule } from 'angular-file';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { fromVerseRef, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Subject } from 'rxjs';
+import { TransceleratorQuestion } from 'src/app/core/models/transcelerator-question';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
@@ -62,16 +63,6 @@ import {
   ImportQuestionsConfirmationDialogData,
   ImportQuestionsConfirmationDialogResult
 } from './import-questions-confirmation-dialog/import-questions-confirmation-dialog.component';
-
-export interface TransceleratorQuestion {
-  book: string;
-  startChapter: string;
-  startVerse: string;
-  endChapter?: string;
-  endVerse?: string;
-  text: string;
-  id: string;
-}
 
 export interface SourceQuestion {
   verseRef: VerseRef;

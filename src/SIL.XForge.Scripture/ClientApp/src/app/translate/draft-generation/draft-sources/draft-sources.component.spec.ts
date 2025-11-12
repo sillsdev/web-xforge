@@ -28,13 +28,15 @@ import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/te
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { hasData, notNull, WithData } from '../../../../type-utils';
 import { ParatextProject } from '../../../core/models/paratext-project';
+import { SelectableProjectWithLanguageCode } from '../../../core/models/selectable-project';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectSettings } from '../../../core/models/sf-project-settings';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
-import { ParatextService, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
+import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from '../draft-sources.service';
+import { DraftSource, DraftSourcesAsArrays } from '../draft-source';
+import { DraftSourcesService } from '../draft-sources.service';
 import { translateSourceToSelectableProjectWithLanguageTag } from '../draft-utils';
 import { TrainingDataService } from '../training-data/training-data.service';
 import { DraftSourcesComponent, sourceArraysToSettingsChange } from './draft-sources.component';

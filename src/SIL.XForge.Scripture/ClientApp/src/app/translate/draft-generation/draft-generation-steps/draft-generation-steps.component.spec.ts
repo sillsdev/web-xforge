@@ -25,7 +25,8 @@ import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
 import { NllbLanguageService } from '../../nllb-language.service';
-import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from '../draft-sources.service';
+import { DraftSource, DraftSourcesAsArrays } from '../draft-source';
+import { DraftSourcesService } from '../draft-sources.service';
 import { DraftGenerationStepsComponent, DraftGenerationStepsResult } from './draft-generation-steps.component';
 
 describe('DraftGenerationStepsComponent', () => {

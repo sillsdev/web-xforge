@@ -151,13 +151,15 @@ import {
   canInsertNote,
   formatFontSizeToRems,
   getUnsupportedTags,
-  getVerseRefFromSegmentRef,
-  RIGHT_TO_LEFT_MARK,
   threadIdFromMouseEvent,
-  VERSE_REGEX,
-  verseRefFromMouseEvent,
   XmlUtils
 } from '../../shared/utils';
+import {
+  getVerseRefFromSegmentRef,
+  RIGHT_TO_LEFT_MARK,
+  VERSE_REGEX,
+  verseRefFromMouseEvent
+} from '../../shared/verse-utils';
 import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.component';
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { DraftOptionsService } from '../draft-generation/draft-options.service';
@@ -170,6 +172,7 @@ import { LynxInsightStateService } from './lynx/insights/lynx-insight-state.serv
 import { LynxInsightsPanelComponent } from './lynx/insights/lynx-insights-panel/lynx-insights-panel.component';
 import { MultiCursorViewer, MultiViewerComponent } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
+import { SaveNoteParameters } from './save-note-parameters';
 import { Suggestion, SuggestionsComponent } from './suggestions.component';
 import { EditorTabAddRequestService } from './tabs/editor-tab-add-request.service';
 import { EditorTabFactoryService } from './tabs/editor-tab-factory.service';
@@ -183,15 +186,6 @@ import {
 } from './translator-settings-dialog.component';
 
 export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
-
-export interface SaveNoteParameters {
-  content?: string;
-  dataId?: string;
-  threadDataId?: string;
-  verseRef?: VerseRef;
-  biblicalTermId?: string;
-  status?: NoteStatus;
-}
 
 const PUNCT_SPACE_REGEX = /^(?:\p{P}|\p{S}|\p{Cc}|\p{Z})+$/u;
 const UNSUPPORTED_LANGUAGE_CODES = [

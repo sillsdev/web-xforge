@@ -7,8 +7,8 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { SelectableProjectWithLanguageCode } from '../../../core/models/selectable-project';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
-import { SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { projectLabel } from '../../../shared/utils';
 import {
   DraftSourcesAsSelectableProjectArrays,

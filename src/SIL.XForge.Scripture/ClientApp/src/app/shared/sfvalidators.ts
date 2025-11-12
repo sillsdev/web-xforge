@@ -9,8 +9,8 @@ import {
 } from '@angular/forms';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { VerseRef } from '@sillsdev/scripture';
+import { SelectableProject } from '../core/models/selectable-project';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
-import { SelectableProject } from '../core/paratext.service';
 
 export enum CustomValidatorState {
   InvalidProject,
