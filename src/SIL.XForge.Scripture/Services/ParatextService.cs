@@ -2552,7 +2552,9 @@ public class ParatextService : DisposableBase, IParatextService
             // Determine if there is a draft
             bool hasDraft =
                 isDraftingEnabled
-                && correspondingSfProject?.Texts.Any(t => t.Chapters.Any(c => c.HasDraft == true)) == true;
+                && !string.IsNullOrWhiteSpace(
+                    correspondingSfProject?.TranslateConfig.DraftConfig.DraftedScriptureRange
+                );
 
             // Determine if the project has an update pending
             bool hasUpdate =
