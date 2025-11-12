@@ -258,6 +258,14 @@ void Roundtrip(string usfm, string fileName, string path, RoundtripMethod roundt
                 true
             );
         }
+
+        // Output the USX if requested
+        if (outputAllFiles)
+        {
+            actualUsx.Save(
+                Path.Join("output", $"{Path.GetFileName(path)}-{Path.GetFileNameWithoutExtension(fileName)}-usx.xml")
+            );
+        }
     }
     else
     {

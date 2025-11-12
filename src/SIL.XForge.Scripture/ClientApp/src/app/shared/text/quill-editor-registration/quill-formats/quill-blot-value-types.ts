@@ -43,6 +43,11 @@ export interface Note extends UsxStyle {
   contents?: { ops: DeltaOperation[] };
 }
 
+export interface Link extends UsxStyle {
+  'link-href'?: string;
+  contents?: { ops: DeltaOperation[] };
+}
+
 export interface Figure extends UsxStyle {
   alt?: string;
   file: string;

@@ -7,6 +7,7 @@ import {
   CharInline,
   EmptyEmbed,
   FigureEmbed,
+  LinkEmbed,
   NoteEmbed,
   NoteThreadEmbed,
   NotNormalizedText,
@@ -248,6 +249,77 @@ describe('Quill blots', () => {
     });
   });
 
+  describe('LinkEmbed', () => {
+    it('should create link with title', () => {
+      const value = {
+        style: 'xt',
+        'link-href': 'GEN 1:1',
+        contents: {
+          ops: [{ insert: 'Genesis 1:1' }]
+        }
+      };
+      const node = LinkEmbed.create(value) as HTMLElement;
+
+      expect(node.innerText).toBe('Genesis 1:1');
+      expect(node.title).toBe('GEN 1:1');
+    });
+
+    it('should handle partial figure data', () => {
+      const value = {
+        contents: {
+          ops: [{ insert: 'Genesis 1:1' }]
+        }
+      };
+      const node = LinkEmbed.create(value as any) as HTMLElement;
+      expect(node.title).toBe('');
+    });
+
+    it('should handle contents with multiple ops', () => {
+      const value = {
+        'link-href': 'GEN 1:1',
+        contents: {
+          ops: [{ insert: 'Genesis' }, { insert: ' 1:1' }]
+        }
+      };
+      const node = LinkEmbed.create(value) as HTMLElement;
+
+      expect(node.innerText).toBe('Genesis 1:1');
+      expect(node.title).toBe('GEN 1:1');
+    });
+
+    it('should handle contents with unsupported ops', () => {
+      const value = {
+        'link-href': 'GEN 1:1',
+        contents: {
+          ops: [{ insert: 'Genesis 1:1' }, { insert: { ref: 'figure1' } }]
+        }
+      };
+      const node = LinkEmbed.create(value) as HTMLElement;
+
+      expect(node.innerText).toBe('Genesis 1:1');
+      expect(node.title).toBe('GEN 1:1');
+    });
+
+    it('should retrieve stored value', () => {
+      const value = {
+        style: 'xt',
+        'link-href': 'GEN 1:1',
+        contents: {
+          ops: [{ insert: 'Genesis 1:1' }]
+        }
+      };
+      const node = LinkEmbed.create(value as any) as HTMLElement;
+      expect(LinkEmbed.value(node)).toEqual(value as any);
+    });
+
+    it('should maintain DOM structure with empty fields', () => {
+      const value = {};
+      const node = LinkEmbed.create(value as any) as HTMLElement;
+      expect(node.innerText).toBe('');
+      expect(node.title).toBe('');
+    });
+  });
+
   describe('NoteEmbed', () => {
     it('should create note with caller and style', () => {
       const value = { caller: 'a', style: 'footnote' };
@@ -274,6 +346,66 @@ describe('Quill blots', () => {
       const node = NoteEmbed.create(value) as HTMLElement;
 
       expect(node.title).toBe('note text');
+    });
+
+    it('should set title from contents with a link', () => {
+      const value = {
+        caller: 'a',
+        contents: {
+          ops: [
+            { insert: 'note text ' },
+            { insert: { link: { style: 'xt', 'link-href': 'GEN: 1:1', contents: { ops: [{ insert: 'link text' }] } } } }
+          ]
+        }
+      };
+      const node = NoteEmbed.create(value) as HTMLElement;
+
+      expect(node.title).toBe('note text link text');
+    });
+
+    it('should set title from contents ignoring an link with no text', () => {
+      const value = {
+        caller: 'a',
+        contents: {
+          ops: [
+            { insert: 'note text' },
+            {
+              insert: {
+                link: {
+                  style: 'xt',
+                  'link-href': 'GEN: 1:1'
+                }
+              }
+            }
+          ]
+        }
+      };
+      const node = NoteEmbed.create(value) as HTMLElement;
+
+      expect(node.title).toBe('note text');
+    });
+
+    it('should set title from contents with a link containing an unsupported op', () => {
+      const value = {
+        caller: 'a',
+        contents: {
+          ops: [
+            { insert: 'note text ' },
+            {
+              insert: {
+                link: {
+                  style: 'xt',
+                  'link-href': 'GEN: 1:1',
+                  contents: { ops: [{ insert: 'link text' }, { insert: { ref: 'unsupported op' } }] }
+                }
+              }
+            }
+          ]
+        }
+      };
+      const node = NoteEmbed.create(value) as HTMLElement;
+
+      expect(node.title).toBe('note text link text');
     });
 
     it('should handle null style', () => {

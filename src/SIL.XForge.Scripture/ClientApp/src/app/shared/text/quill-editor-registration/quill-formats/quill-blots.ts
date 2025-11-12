@@ -10,6 +10,7 @@ import {
   Book,
   Chapter,
   Figure,
+  Link,
   Note,
   NoteThread,
   Para,
@@ -272,10 +273,22 @@ export class NoteEmbed extends QuillEmbedBlot {
     }
     if (value.contents != null) {
       // ignore blank embeds (checked here as non-string insert)
-      node.title = value.contents.ops.reduce(
-        (text, op) => (typeof op.insert === 'string' ? text + op.insert : text),
-        ''
-      );
+      node.title = value.contents.ops.reduce((text, op) => {
+        if (typeof op.insert === 'string') {
+          return text + op.insert;
+        }
+
+        // Handle link inserts with nested contents
+        const link = op.insert?.link as Link | undefined;
+        if (link?.contents?.ops) {
+          const linkText = link.contents.ops
+            .map(innerOp => (typeof innerOp.insert === 'string' ? innerOp.insert : ''))
+            .join('');
+          return text + linkText;
+        }
+
+        return text;
+      }, '');
     }
     setUsxValue(node, value);
     return node;
@@ -384,6 +397,33 @@ export class FigureEmbed extends QuillEmbedBlot {
   }
 
   static value(node: HTMLElement): Figure {
+    return getUsxValue(node);
+  }
+}
+
+export class LinkEmbed extends QuillEmbedBlot {
+  static blotName = 'link';
+  static tagName = 'usx-link';
+
+  static create(value: Link): Node {
+    const node = super.create(value) as HTMLElement;
+    if (value.style != null) {
+      node.setAttribute(customAttributeName('style'), value.style);
+    }
+    if (value['link-href'] != null) {
+      node.setAttribute(customAttributeName('link-href'), value['link-href']);
+      node.title = value['link-href'];
+    }
+    const contentsSpan = document.createElement('span');
+    contentsSpan.innerText =
+      value.contents?.ops.map(innerOp => (typeof innerOp.insert === 'string' ? innerOp.insert : '')).join('') ?? '';
+
+    node.appendChild(contentsSpan);
+    setUsxValue(node, value);
+    return node;
+  }
+
+  static value(node: HTMLElement): UsxStyle {
     return getUsxValue(node);
   }
 }
