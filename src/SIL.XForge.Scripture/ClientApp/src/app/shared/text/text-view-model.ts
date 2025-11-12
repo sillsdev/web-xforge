@@ -7,7 +7,8 @@ import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { isString } from '../../../type-utils';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { LynxTextModelConverter } from '../../translate/editor/lynx/insights/lynx-editor';
-import { getVerseStrFromSegmentRef, isBadDelta } from '../utils';
+import { isBadDelta } from '../utils';
+import { getVerseStrFromSegmentRef } from '../verse-utils';
 import { getAttributesAtPosition, getRetainCount } from './quill-util';
 import { USFM_STYLE_DESCRIPTIONS } from './usfm-style-descriptions';
 

@@ -10,7 +10,8 @@ import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../../environments/environment';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
-import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from './draft-sources.service';
+import { DraftSource, DraftSourcesAsArrays } from './draft-source';
+import { DraftSourcesService } from './draft-sources.service';
 
 describe('DraftSourcesService', () => {
   let service: DraftSourcesService;

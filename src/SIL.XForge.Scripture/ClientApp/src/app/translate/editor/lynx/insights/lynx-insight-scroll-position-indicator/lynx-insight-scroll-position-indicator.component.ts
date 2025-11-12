@@ -4,7 +4,8 @@ import { LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/l
 import { combineLatest, debounceTime, filter, fromEvent, map, startWith, switchMap } from 'rxjs';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { EditorReadyService } from '../base-services/editor-ready.service';
-import { LynxableEditor, LynxEditor, LynxEditorAdapterFactory } from '../lynx-editor';
+import { LynxableEditor, LynxEditor } from '../lynx-editor';
+import { LynxEditorAdapterFactory } from '../lynx-editor-adapter-factory';
 import { LynxInsight } from '../lynx-insight';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 

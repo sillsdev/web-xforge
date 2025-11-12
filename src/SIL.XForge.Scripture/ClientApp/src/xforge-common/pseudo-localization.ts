@@ -1,4 +1,4 @@
-import { DateFormat } from './i18n.service';
+import { DateFormat } from './models/date-format';
 import { Locale } from './models/i18n-locale';
 
 function pseudoLocalizeCharacter(char: string): string {

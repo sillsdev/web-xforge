@@ -7,8 +7,8 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { filter, firstValueFrom } from 'rxjs';
 import { L10nPercentPipe } from 'xforge-common/l10n-percent.pipe';
-import { Book } from '../../translate/draft-generation/draft-generation-steps/draft-generation-steps.component';
 import { ProgressService } from '../progress-service/progress.service';
+import { Book } from './book-multi-select';
 
 export interface BookOption {
   bookNum: number;

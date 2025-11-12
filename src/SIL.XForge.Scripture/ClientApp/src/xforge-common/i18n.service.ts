@@ -15,11 +15,10 @@ import { DOCUMENT } from './browser-globals';
 import { BugsnagService } from './bugsnag.service';
 import { FeatureFlagService } from './feature-flags/feature-flag.service';
 import { LocationService } from './location.service';
+import { DateFormat } from './models/date-format';
 import { Locale, LocaleDirection } from './models/i18n-locale';
 import { PseudoLocalization } from './pseudo-localization';
 import { ASP_CULTURE_COOKIE_NAME, aspCultureCookieValue, getAspCultureCookieLanguage, getI18nLocales } from './utils';
-
-export type DateFormat = Intl.DateTimeFormatOptions | ((date: Date, options: { showTimeZone?: boolean }) => string);
 
 export interface TextAroundTemplate {
   before: string;
