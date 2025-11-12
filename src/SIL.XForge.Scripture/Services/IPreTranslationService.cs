@@ -20,6 +20,4 @@ public interface IPreTranslationService
         DraftUsfmConfig config,
         CancellationToken cancellationToken
     );
-
-    Task UpdatePreTranslationStatusAsync(string sfProjectId, CancellationToken cancellationToken);
 }
