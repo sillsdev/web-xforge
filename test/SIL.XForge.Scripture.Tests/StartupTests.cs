@@ -145,6 +145,7 @@ public class StartupTests
     [TestCase("/en-Q7R8S9T0.js.map")]
     [TestCase("/quill-U1V2W3X4.js")]
     [TestCase("/quill-U1V2W3X4.js.map")]
+    [TestCase("/ngx-quill-quill-U1V2W3X4.js")]
     [TestCase("/3rdpartylicenses.txt")]
     [TestCase("/safety-worker.js")]
     [TestCase("/sf-service-worker.js")]
