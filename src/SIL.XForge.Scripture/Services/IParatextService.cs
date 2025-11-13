@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Paratext.Data.ProjectComments;
 using SIL.Converters.Usj;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
@@ -53,7 +54,9 @@ public interface IParatextService
         Dictionary<int, string> chapterAuthors = null
     );
     string GetNotes(UserSecret userSecret, string paratextId, int bookNum);
+    IReadOnlyList<ParatextNote> GetNoteThreads(UserSecret userSecret, string paratextId);
     SyncMetricInfo PutNotes(UserSecret userSecret, string paratextId, XElement notesElement);
+    CommentTags? GetCommentTags(UserSecret userSecret, string paratextId);
     Task<SyncMetricInfo> UpdateParatextCommentsAsync(
         UserSecret userSecret,
         string paratextId,

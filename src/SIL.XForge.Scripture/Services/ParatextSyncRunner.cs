@@ -67,15 +67,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
     private static readonly IEqualityComparer<IEnumerable<NoteTag>> _noteTagListEqualityComparer =
         SequenceEqualityComparer.Create(new NoteTagEqualityComparer());
 
-    /// <summary>
-    /// The regular expression for finding whitespace before XML tags.
-    /// </summary>
-    /// <remarks>This is used by <see cref="ParseText"/>.</remarks>
-    private static readonly Regex WhitespaceBeforeTagsRegex = new Regex(
-        @"\n\s*<",
-        RegexOptions.CultureInvariant | RegexOptions.Compiled
-    );
-
     private readonly IRepository<UserSecret> _userSecrets;
     private readonly IUserService _userService;
     private readonly IRepository<SFProjectSecret> _projectSecrets;
@@ -1250,7 +1241,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         XElement oldNotesElem;
         string oldNotesText = _paratextService.GetNotes(_userSecret, _projectDoc.Data.ParatextId, text.BookNum);
         if (oldNotesText != "")
-            oldNotesElem = ParseText(oldNotesText);
+            oldNotesElem = NotesFormatter.ParseNotesToXElement(oldNotesText);
         else
             oldNotesElem = new XElement("notes", new XAttribute("version", "1.1"));
 
@@ -1627,16 +1618,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
         };
         noteTagId = _paratextService.UpdateCommentTag(_userSecret, targetParatextId, newNoteTag);
         await _projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.CheckingConfig.NoteTagId, noteTagId));
-    }
-
-    /// <summary>
-    /// Preserve all whitespace in data but remove whitespace at the beginning of lines and remove line endings.
-    /// </summary>
-    private static XElement ParseText(string text)
-    {
-        text = text.Trim().Replace("\r\n", "\n");
-        text = WhitespaceBeforeTagsRegex.Replace(text, "<");
-        return XElement.Parse(text, LoadOptions.PreserveWhitespace);
     }
 
     /// <summary>
