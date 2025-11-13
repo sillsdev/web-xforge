@@ -19,6 +19,7 @@ import { MatIcon } from '@angular/material/icon';
 import { MatInput } from '@angular/material/input';
 import { MatProgressBar } from '@angular/material/progress-bar';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatOption, MatSelect } from '@angular/material/select';
 import {
   MatCell,
   MatCellDef,
@@ -45,10 +46,13 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { RetryingRequest } from 'xforge-common/retrying-request.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { stripHtml } from 'xforge-common/util/string-util';
 import { objectId } from 'xforge-common/utils';
 import { environment } from '../../../environments/environment';
+import { ParatextProject } from '../../core/models/paratext-project';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
+import { ParatextNote, ParatextNoteTag, ParatextService } from '../../core/paratext.service';
 import { TransceleratorQuestion } from '../../core/models/transcelerator-question';
 import { SFProjectService } from '../../core/sf-project.service';
 import {
@@ -84,7 +88,14 @@ interface DialogListItem {
 }
 
 type DialogErrorState = 'update_transcelerator' | 'file_import_errors' | 'missing_header_row' | 'offline_conversion';
-type DialogStatus = 'initial' | 'no_questions' | 'filter' | 'loading' | 'progress' | DialogErrorState;
+type DialogStatus =
+  | 'initial'
+  | 'no_questions'
+  | 'filter'
+  | 'loading'
+  | 'progress'
+  | 'paratext_tag_selection'
+  | DialogErrorState;
 
 @Component({
   templateUrl: './import-questions-dialog.component.html',
@@ -125,11 +136,13 @@ type DialogStatus = 'initial' | 'no_questions' | 'filter' | 'loading' | 'progres
     MatCheckbox,
     MatProgressBar,
     MatDialogActions,
-    AsyncPipe
+    AsyncPipe,
+    MatSelect,
+    MatOption
   ]
 })
 export class ImportQuestionsDialogComponent implements OnDestroy {
-  questionSource: null | 'transcelerator' | 'csv_file' = null;
+  questionSource: null | 'transcelerator' | 'csv_file' | 'paratext' = null;
 
   questionList: DialogListItem[] = [];
   filteredList: DialogListItem[] = [];
@@ -145,6 +158,15 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
   toImportCount: number = 0;
   importCanceled: boolean = false;
   fileExtensions: string = '.csv,.tsv';
+
+  showParatextTagSelector = false;
+  loadingParatextTags = false;
+  paratextTagLoadError = false;
+  paratextTagConversionError = false;
+  paratextTagOptions: ParatextNoteTag[] = [];
+  selectedParatextTagId: number | null = null;
+  private paratextNotes: ParatextNote[] = [];
+  private paratextProjectsPromise?: Promise<ParatextProject[] | undefined>;
 
   @ViewChild('selectAllCheckbox') selectAllCheckbox!: MatCheckbox;
   @ViewChild('dialogContentBody') dialogContentBody!: ElementRef;
@@ -168,6 +190,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
     private readonly destroyRef: DestroyRef,
     @Inject(MAT_DIALOG_DATA) public readonly data: ImportQuestionsDialogData,
     projectService: SFProjectService,
+    private readonly paratextService: ParatextService,
     private readonly checkingQuestionsService: CheckingQuestionsService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly dialogRef: MatDialogRef<ImportQuestionsDialogComponent>,
@@ -229,6 +252,9 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
     }
     if (this.importing) {
       return 'progress';
+    }
+    if (this.showParatextTagSelector) {
+      return 'paratext_tag_selection';
     }
     if (this.invalidRows.length !== 0) {
       return 'file_import_errors';
@@ -405,6 +431,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
           isArchived: false,
           dateCreated: currentDate,
           dateModified: currentDate,
+          //todo rename
           transceleratorQuestionId: listItem.question.id
         };
         await this.zone.runOutsideAngular(() =>
@@ -455,6 +482,165 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
     }
     this.questionSource = 'transcelerator';
     this.loading = false;
+  }
+
+  async importFromParatext(): Promise<void> {
+    if (this.loadingParatextTags) {
+      return;
+    }
+
+    this.importClicked = false;
+    this.errorState = undefined;
+    this.questionSource = 'paratext';
+    this.questionList = [];
+    this.filteredList = [];
+    this.invalidRows = [];
+    this.loadingParatextTags = true;
+    this.showParatextTagSelector = true;
+    this.paratextTagLoadError = false;
+    this.paratextTagConversionError = false;
+    this.selectedParatextTagId = null;
+    this.paratextNotes = [];
+    this.paratextTagOptions = [];
+
+    try {
+      const paratextId = await this.getParatextProjectId();
+      if (paratextId == null) {
+        this.paratextTagLoadError = true;
+        return;
+      }
+
+      const notes = await this.paratextService.getNotes(paratextId);
+      this.paratextNotes = notes ?? [];
+      this.paratextTagOptions = this.collectParatextTagOptions(this.paratextNotes);
+      if (this.paratextTagOptions.length > 0) {
+        this.selectedParatextTagId = this.paratextTagOptions[0].id;
+      }
+    } catch (error) {
+      this.paratextNotes = [];
+      this.paratextTagOptions = [];
+      this.selectedParatextTagId = null;
+      this.paratextTagLoadError = true;
+    } finally {
+      this.loadingParatextTags = false;
+    }
+  }
+
+  cancelParatextTagSelection(): void {
+    this.showParatextTagSelector = false;
+    this.questionSource = null;
+    this.loadingParatextTags = false;
+    this.paratextTagLoadError = false;
+    this.paratextTagConversionError = false;
+    this.paratextNotes = [];
+    this.paratextTagOptions = [];
+    this.selectedParatextTagId = null;
+    this.importClicked = false;
+  }
+
+  async confirmParatextTagSelection(): Promise<void> {
+    const tagId = this.selectedParatextTagId;
+    if (tagId == null) {
+      return;
+    }
+
+    this.loading = true;
+    this.showParatextTagSelector = false;
+    this.questionList = [];
+    this.filteredList = [];
+    this.invalidRows = [];
+    this.paratextTagConversionError = false;
+
+    try {
+      const questions = this.convertParatextCommentsToQuestions(this.paratextNotes, tagId);
+      await this.setUpQuestionList(questions, true);
+    } catch (error) {
+      this.paratextTagConversionError = true;
+      this.showParatextTagSelector = true;
+      return;
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  private async getParatextProjectId(): Promise<string | undefined> {
+    try {
+      this.paratextProjectsPromise ??= this.paratextService.getProjects();
+      const projects = await this.paratextProjectsPromise;
+      const project = projects?.find(p => p.projectId === this.data.projectId);
+      return project?.paratextId;
+    } catch (error) {
+      console.error('Failed to load Paratext project list', error);
+      this.paratextProjectsPromise = undefined;
+      throw error;
+    }
+  }
+
+  private collectParatextTagOptions(notes: ParatextNote[]): ParatextNoteTag[] {
+    const tagMap = new Map<number, ParatextNoteTag>();
+    for (const note of notes) {
+      for (const comment of note.comments ?? []) {
+        if (comment.tag != null && !tagMap.has(comment.tag.id)) {
+          tagMap.set(comment.tag.id, comment.tag);
+        }
+      }
+    }
+
+    return Array.from(tagMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name, this.i18n.localeCode, { sensitivity: 'base' })
+    );
+  }
+
+  private convertParatextCommentsToQuestions(notes: ParatextNote[], tagId: number): SourceQuestion[] {
+    const questions: SourceQuestion[] = [];
+
+    for (const note of notes) {
+      const comments = note.comments ?? [];
+      for (let index = 0; index < comments.length; index++) {
+        const comment = comments[index];
+        if (comment.tag == null || comment.tag.id !== tagId) {
+          continue;
+        }
+
+        const verseRef = this.parseVerseReference(note.verseRef);
+        if (verseRef == null) {
+          continue;
+        }
+
+        const questionText = stripHtml(comment.content ?? '').trim();
+        if (questionText.length === 0) {
+          continue;
+        }
+
+        questions.push({
+          id: note.id,
+          verseRef,
+          text: questionText
+        });
+
+        break;
+      }
+    }
+
+    return questions;
+  }
+
+  private parseVerseReference(reference: string | undefined): VerseRef | null {
+    if (reference == null) {
+      return null;
+    }
+
+    const trimmedReference = reference.trim();
+    if (trimmedReference.length === 0) {
+      return null;
+    }
+
+    const parseResult = VerseRef.tryParse(trimmedReference);
+    if (parseResult.success !== true || parseResult.verseRef == null) {
+      return null;
+    }
+
+    return parseResult.verseRef;
   }
 
   async fileSelected(file: File): Promise<void> {
