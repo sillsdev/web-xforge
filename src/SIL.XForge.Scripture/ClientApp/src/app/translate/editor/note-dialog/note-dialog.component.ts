@@ -1,6 +1,6 @@
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { NgClass, NgStyle } from '@angular/common';
-import { Component, ElementRef, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
@@ -34,7 +34,6 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DialogService } from 'xforge-common/dialog.service';
-import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { UserService } from 'xforge-common/user.service';
@@ -127,8 +126,6 @@ export class NoteDialogComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) private readonly data: NoteDialogData,
     private readonly dialogRef: MatDialogRef<NoteDialogComponent, NoteDialogResult | undefined>,
     private readonly dialogService: DialogService,
-    private readonly elementRef: ElementRef<HTMLElement>,
-    private readonly fontService: FontService,
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService
@@ -148,10 +145,6 @@ export class NoteDialogComponent implements OnInit {
     }
 
     this.projectProfileDoc = await this.projectService.getProfile(this.projectId);
-    this.elementRef.nativeElement.style.setProperty(
-      '--project-font',
-      this.fontService.getFontFamilyFromProject(this.projectProfileDoc)
-    );
     this.userRole = this.projectProfileDoc?.data?.userRoles[this.userService.currentUserId];
     if (this.userRole != null) {
       const projectDoc: SFProjectDoc | undefined = await this.projectService.tryGetForRole(

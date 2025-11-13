@@ -2708,6 +2708,24 @@ describe('CheckingComponent', () => {
       verify(chapterAudio.pause()).once();
       expect(env.component.showScriptureAudioPlayer).toBe(true);
     }));
+
+    it('answer-scripture-text inherits project font from CSS custom property', fakeAsync(() => {
+      const env = new TestEnvironment({ user: CHECKER_USER });
+      env.selectQuestion(6); // Question 6 has an answer with scripture text
+
+      const rootElement = document.documentElement;
+      rootElement.style.setProperty('--project-font', 'Charis SIL');
+      env.fixture.detectChanges();
+      tick();
+
+      const scriptureText = env.fixture.debugElement.query(By.css('.answer-scripture-text'));
+      expect(scriptureText).toBeTruthy();
+      const computedStyle = window.getComputedStyle(scriptureText.nativeElement);
+      expect(computedStyle.fontFamily).toContain('Charis SIL');
+
+      rootElement.style.removeProperty('--project-font');
+      env.waitForAudioPlayer();
+    }));
   });
 });
 

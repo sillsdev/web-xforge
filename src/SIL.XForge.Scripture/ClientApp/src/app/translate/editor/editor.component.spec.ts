@@ -3670,6 +3670,53 @@ describe('EditorComponent', () => {
       expect(env.translatorSettingsButton).toBeTruthy();
       env.dispose();
     }));
+
+    it('suggestion-words inherits project font from CSS custom property', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
+      env.wait();
+      expect(env.component.showSuggestions).toBe(true);
+
+      const rootElement = document.documentElement;
+      rootElement.style.setProperty('--project-font', 'Charis SIL');
+      env.fixture.detectChanges();
+      tick();
+
+      const suggestionWords = env.fixture.debugElement.query(By.css('.suggestion-words'));
+      expect(suggestionWords).toBeTruthy();
+      const computedStyle = window.getComputedStyle(suggestionWords.nativeElement);
+      expect(computedStyle.fontFamily).toContain('Charis SIL');
+
+      rootElement.style.removeProperty('--project-font');
+      env.dispose();
+    }));
+
+    it('source uses font from source project, not target project', fakeAsync(() => {
+      const env = new TestEnvironment();
+      // Set different fonts for target and source projects
+      env.setupProject({ defaultFont: 'Arial' }, 'project01'); // target project
+      env.setupProject({ defaultFont: 'Andika' }, 'project02'); // source project
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1 });
+      env.wait();
+
+      expect(env.component.source).toBeTruthy();
+      expect(env.component.sourceProjectDoc?.data?.defaultFont).toBe('Andika');
+      expect(env.component.projectDoc?.data?.defaultFont).toBe('Arial');
+
+      // Get the source app-text element
+      const sourceTextElement = env.fixture.debugElement.query(By.css('#source-text-area app-text'));
+      expect(sourceTextElement).toBeTruthy();
+
+      // Check that the source has the correct CSS custom property set
+      const sourceStyle = sourceTextElement.nativeElement.style;
+      const projectFontValue = sourceStyle.getPropertyValue('--project-font');
+
+      // The source should use Andika (from project02), not Arial (from project01)
+      expect(projectFontValue).toContain('Andika');
+      expect(projectFontValue).not.toContain('Arial');
+
+      env.dispose();
+    }));
   });
 
   describe('Translation Suggestions disabled', () => {
@@ -5176,6 +5223,9 @@ class TestEnvironment {
     }
     if (data.defaultFontSize != null) {
       projectProfileData.defaultFontSize = data.defaultFontSize;
+    }
+    if (data.defaultFont != null) {
+      projectProfileData.defaultFont = data.defaultFont;
     }
     if (data.copyrightBanner != null) {
       projectProfileData.copyrightBanner = data.copyrightBanner;
