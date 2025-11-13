@@ -97,6 +97,17 @@
                   <a mat-button [href]="urls.csvImportHelpPage" target="_blank">{{ t("learn_more") }}</a>
                 </mat-card-actions>
               </mat-card>
+              <mat-card>
+                <mat-card-title>{{ t("import_from_paratext") }}</mat-card-title>
+                <mat-card-content>
+                  <p>{{ t("import_from_paratext_description") }}</p>
+                </mat-card-content>
+                <mat-card-actions>
+                  <button mat-flat-button color="primary" (click)="importFromParatext()">
+                    {{ t("import_from_paratext") }}
+                  </button>
+                </mat-card-actions>
+              </mat-card>
             </div>
             <div class="support-message">
               @for (i of helpInstructions | async; track i) {
@@ -109,6 +120,33 @@
                 }
               }
             </div>
+          </div>
+        }
+
+        @case ("paratext_tag_selection") {
+          <div class="paratext-tag-selection">
+            @if (loadingParatextTags) {
+              <mat-spinner></mat-spinner>
+            } @else if (paratextTagLoadError) {
+              <div class="paratext-tag-selection-message error">{{ t("import_from_paratext_tag_load_error") }}</div>
+            } @else if (paratextTagOptions.length === 0) {
+              <div class="paratext-tag-selection-message">{{ t("import_from_paratext_no_tags_available") }}</div>
+            } @else {
+              <p class="paratext-tag-selection-message">{{ t("import_from_paratext_select_tag_instructions") }}</p>
+              @if (paratextTagConversionError) {
+                <div class="paratext-tag-selection-message error">
+                  {{ t("import_from_paratext_tag_conversion_error") }}
+                </div>
+              }
+              <mat-form-field appearance="fill">
+                <mat-label>{{ t("import_from_paratext_select_tag") }}</mat-label>
+                <mat-select [(ngModel)]="selectedParatextTagId" [ngModelOptions]="{ standalone: true }">
+                  @for (tag of paratextTagOptions; track tag.id) {
+                    <mat-option [value]="tag.id">{{ tag.name }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            }
           </div>
         }
 
@@ -247,6 +285,19 @@
   </mat-dialog-content>
   @if (questionSource != null && importCanceled === false) {
     <mat-dialog-actions align="end">
+      @if (status === "paratext_tag_selection") {
+        <button mat-button (click)="cancelParatextTagSelection()">
+          {{ t("cancel") }}
+        </button>
+        <button
+          mat-flat-button
+          color="primary"
+          (click)="confirmParatextTagSelection()"
+          [disabled]="loadingParatextTags"
+        >
+          {{ t("import_from_paratext_next") }}
+        </button>
+      }
       @if (status === "filter" || status === "file_import_errors") {
         <button mat-button mat-dialog-close>
           {{ t("cancel") }}

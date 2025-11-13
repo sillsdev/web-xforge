@@ -131,6 +131,30 @@
   }
 }
 
+.paratext-tag-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5em;
+  align-items: stretch;
+
+  mat-form-field {
+    width: 100%;
+  }
+
+  mat-spinner {
+    align-self: center;
+  }
+}
+
+.paratext-tag-selection-message {
+  margin: 0;
+  text-align: left;
+
+  &.error {
+    color: var(--mdc-theme-error, #b00020);
+  }
+}
+
 // below is to make denser
 :host ::ng-deep {
   mat-form-field.mat-mdc-form-field.mat-form-field-appearance-outline {

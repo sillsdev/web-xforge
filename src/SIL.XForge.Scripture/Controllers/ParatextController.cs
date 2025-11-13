@@ -269,6 +269,48 @@ public class ParatextController : ControllerBase
     }
 
     /// <summary>
+    /// Retrieves the Paratext notes for a specific book within a project.
+    /// </summary>
+    /// <param name="projectId">The Scripture Forge project identifier.</param>
+    /// <response code="200">The notes XML was successfully retrieved.</response>
+    /// <response code="403">The user does not have permission to access Paratext.</response>
+    /// <response code="404">The project or notes could not be found.</response>
+    /// <response code="503">The Paratext registry is unavailable.</response>
+    [HttpGet("projects/{projectId}/notes")]
+    [ProducesResponseType(typeof(IEnumerable<ParatextNote>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<ParatextNote>>> GetNotesAsync(string projectId)
+    {
+        Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
+        if (!attempt.TryResult(out UserSecret userSecret))
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            IReadOnlyList<ParatextNote> notes = _paratextService.GetNoteThreads(userSecret, projectId);
+            if (notes == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(notes);
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+        catch (CannotConnectException)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, ParatextUnavailable);
+        }
+    }
+
+    /// <summary>
     /// Retrieves the Paratext resources the user has access to.
     /// </summary>
     /// <response code="200">
