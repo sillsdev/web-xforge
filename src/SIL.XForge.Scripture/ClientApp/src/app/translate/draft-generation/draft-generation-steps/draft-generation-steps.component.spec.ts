@@ -79,7 +79,7 @@ describe('DraftGenerationStepsComponent', () => {
       { text: { bookNum: 6 }, translated: 20, blank: 2, percentage: 90 } as TextProgress,
       { text: { bookNum: 7 }, translated: 0 } as TextProgress
     ]);
-    const textProgress = [
+    const defaultTextProgress = [
       { text: { bookNum: 1 }, translated: 100, percentage: 100 } as TextProgress,
       { text: { bookNum: 2 }, translated: 100, percentage: 100 } as TextProgress,
       { text: { bookNum: 3 }, translated: 100, percentage: 100 } as TextProgress,
@@ -91,7 +91,7 @@ describe('DraftGenerationStepsComponent', () => {
       { text: { bookNum: 9 }, translated: 100, percentage: 100 } as TextProgress,
       { text: { bookNum: 10 }, translated: 100, percentage: 100 } as TextProgress
     ];
-    when(mockProgressService.getTextProgressForProject(anything())).thenResolve(textProgress);
+    when(mockProgressService.getTextProgressForProject(anything())).thenResolve(defaultTextProgress);
     when(mockOnlineStatusService.isOnline).thenReturn(true);
   }));
 
@@ -304,6 +304,7 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
       when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
       when(mockActivatedProjectService.changes$).thenReturn(targetProjectDoc$);
+      // setup mock source with empty book
       setupProjectProfileMock(
         sourceProjectId,
         sourceBooks.map(b => b.bookNum),
@@ -675,6 +676,7 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockActivatedProjectService.projectDoc$).thenReturn(of({} as any));
       when(mockActivatedProjectService.changes$).thenReturn(of({} as any));
       when(mockActivatedProjectService.projectDoc).thenReturn({} as any);
+      // setup mock sources with empty book
       setupProjectProfileMock(
         draftingSourceId,
         draftingSourceBooks.map(b => b.bookNum),
@@ -1483,7 +1485,7 @@ describe('DraftGenerationStepsComponent', () => {
     const profileDoc = {
       id: projectId,
       data: createTestProjectProfile({
-        texts: texts.map(b => ({ bookNum: b, chapters: [{ number: 1, lastVerse: emptyBooks.includes(b) ? 0 : 10 }] }))
+        texts: texts.map(b => ({ bookNum: b, chapters: [{ number: 1, lastVerse: 10 }] }))
       })
     } as SFProjectProfileDoc;
 

@@ -54,7 +54,8 @@ import { DraftSource, DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataService } from '../training-data/training-data.service';
 
 // We consider books with more than 10 translated segments as translated
-const minimumTranslatedSegments: number = 10;
+const autoSelectMinTranslatedSegments: number = 10;
+const nonEmptyBookMinTranslatedSegments: number = 2;
 
 export interface DraftGenerationStepsResult {
   trainingDataFiles: string[];
@@ -308,7 +309,7 @@ export class DraftGenerationStepsComponent implements OnInit {
             const selected: boolean =
               !hasPreviousTrainingRange &&
               textProgress != null &&
-              textProgress.translated > minimumTranslatedSegments &&
+              textProgress.translated > autoSelectMinTranslatedSegments &&
               (textProgress.percentage >= 99 || textProgress.notTranslated <= 3);
 
             // If books were automatically selected, reflect this in the UI via a notice
@@ -317,10 +318,11 @@ export class DraftGenerationStepsComponent implements OnInit {
             // Training books
             let isPresentInASource = false;
             let isBookEmptyInAllSources = true;
-            if (trainingSourceBooks.has(bookNum)) {
+            const firstTrainingSourceRef = trainingSources[0]?.projectRef;
+            if (firstTrainingSourceRef != null && trainingSourceBooks.has(bookNum)) {
               isPresentInASource = true;
-              if (await this.bookHasVerseContent(trainingSources[0]!.projectRef, bookNum)) {
-                this.availableTrainingBooks[trainingSources[0]!.projectRef].push({
+              if (await this.bookHasVerseContent(firstTrainingSourceRef, bookNum)) {
+                this.availableTrainingBooks[firstTrainingSourceRef].push({
                   number: bookNum,
                   selected: selected
                 });
@@ -329,10 +331,11 @@ export class DraftGenerationStepsComponent implements OnInit {
             } else {
               this.unusableTrainingSourceBooks.push(bookNum);
             }
-            if (trainingSources[1] != null && secondTrainingSourceBooks.has(bookNum)) {
+            const secondTrainingSourceRef = trainingSources[1]?.projectRef;
+            if (secondTrainingSourceRef != null && secondTrainingSourceBooks.has(bookNum)) {
               isPresentInASource = true;
-              if (await this.bookHasVerseContent(trainingSources[1]!.projectRef, bookNum)) {
-                this.availableTrainingBooks[trainingSources[1].projectRef].push({
+              if (await this.bookHasVerseContent(secondTrainingSourceRef, bookNum)) {
+                this.availableTrainingBooks[secondTrainingSourceRef].push({
                   number: bookNum,
                   selected: selected
                 });
@@ -718,8 +721,9 @@ export class DraftGenerationStepsComponent implements OnInit {
 
   /** Check whether a project book has any translated verses. */
   private async bookHasVerseContent(projectId: string, bookNum: number): Promise<boolean> {
-    if (!this.sourceProgress.has(projectId)) return false;
-    return (this.sourceProgress.get(projectId)!.find(p => p.text.bookNum === bookNum)?.translated ?? 0) > 0;
+    const textProgress = this.sourceProgress.get(projectId);
+    if (textProgress == null) return false;
+    return (textProgress.find(p => p.text.bookNum === bookNum)?.translated ?? 0) > nonEmptyBookMinTranslatedSegments;
   }
 
   private setProjectDisplayNames(target: DraftSource | undefined, draftingSource: DraftSource | undefined): void {
