@@ -1,6 +1,10 @@
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
 using Paratext.Data;
@@ -22,6 +26,15 @@ namespace SIL.XForge.Scripture.Services;
 public static class NotesFormatter
 {
     private const string NotesSchemaVersion = "1.1";
+
+    /// <summary>
+    /// The regular expression for finding whitespace before XML tags.
+    /// </summary>
+    /// <remarks>This is used by <see cref="ParseNotesToXElement"/>.</remarks>
+    private static readonly Regex WhitespaceBeforeTagsRegex = new Regex(
+        @"\n\s*<",
+        RegexOptions.CultureInvariant | RegexOptions.Compiled
+    );
 
     #region Public methods
     /// <summary>
@@ -48,6 +61,42 @@ public static class NotesFormatter
     /// </remarks>
     public static List<List<Comment>> ParseNotes(XElement noteXml, ParatextUser ptUser) =>
         [.. noteXml.Elements("thread").Select(threadElem => ParseThread(threadElem, ptUser))];
+
+    /// <summary>
+    /// Parses the string representation of notes from Paratext into nested XElement's.
+    /// </summary>
+    /// <remarks>
+    /// Preserve all whitespace in data but remove whitespace at the beginning of lines and remove line endings.
+    /// </remarks>
+    public static XElement ParseNotesToXElement(string text)
+    {
+        text = text.Trim().Replace("\r\n", "\n");
+        text = WhitespaceBeforeTagsRegex.Replace(text, "<");
+        return XElement.Parse(text, LoadOptions.PreserveWhitespace);
+    }
+
+    /// <summary>
+    /// Replaces numeric tag identifiers in note XML with the corresponding Paratext comment tag data.
+    /// </summary>
+    /// <param name="notesElement">The notes XML element.</param>
+    /// <param name="commentTags">The Paratext comment tag collection.</param>
+    public static void ReplaceTagIdentifiersWithCommentTags(XElement notesElement, CommentTags commentTags)
+    {
+        if (notesElement == null || commentTags == null)
+            return;
+
+        List<XElement> tagElements = [.. notesElement.Descendants("tagAdded")];
+        foreach (XElement tagElement in tagElements)
+        {
+            string elementValue = tagElement.Value;
+            if (!int.TryParse(elementValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out int tagId))
+                continue;
+
+            CommentTag mappedTag = commentTags.Get(tagId);
+            XElement replacement = CreateTagElement(tagElement.Name, mappedTag);
+            tagElement.ReplaceWith(replacement);
+        }
+    }
 
     #endregion
 
@@ -148,6 +197,52 @@ public static class NotesFormatter
             selElem.Add(new XAttribute("afterContext", selection.ContextAfter));
 
         return selElem;
+    }
+
+    private static XElement CreateTagElement(XName elementName, CommentTag commentTag)
+    {
+        XElement element = new XElement(elementName);
+        if (commentTag == null)
+            return element;
+
+        PropertyInfo[] properties = typeof(CommentTag).GetProperties(BindingFlags.Instance | BindingFlags.Public);
+        foreach (PropertyInfo property in properties)
+        {
+            if (!property.CanRead)
+                continue;
+
+            object value = property.GetValue(commentTag);
+            if (value == null)
+                continue;
+
+            string propertyValue;
+            if (value is string stringValue)
+            {
+                if (string.IsNullOrEmpty(stringValue))
+                    continue;
+                propertyValue = stringValue;
+            }
+            else if (value is int intValue)
+            {
+                propertyValue = intValue.ToString(CultureInfo.InvariantCulture);
+            }
+            else if (value is bool boolValue)
+            {
+                propertyValue = boolValue ? bool.TrueString : bool.FalseString;
+            }
+            else if (value is Enum enumValue)
+            {
+                propertyValue = enumValue.ToString();
+            }
+            else
+            {
+                continue;
+            }
+
+            element.Add(new XElement(property.Name, propertyValue));
+        }
+
+        return element;
     }
     #endregion
 
