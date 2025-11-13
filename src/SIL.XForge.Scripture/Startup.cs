@@ -83,6 +83,7 @@ public class Startup
         "styles",
         "en",
         "quill",
+        "ngx-quill",
         // Lynx-related
         "worker",
         "node_modules_sillsdev_lynx",
@@ -370,6 +371,10 @@ public class Startup
         // /polyfills.js as "polyfills".
         string beginning = exact.Split('-', '.').FirstOrDefault();
         if (spaRoutes.Contains(beginning))
+            return true;
+
+        // Check if path starts with route token.  Match paths like '/ngx-quill-quill-SOME_HASH.js'
+        if (spaRoutes.Any(routeToken => exact.StartsWith(routeToken + "-") || exact.StartsWith(routeToken + ".")))
             return true;
 
         return false;
