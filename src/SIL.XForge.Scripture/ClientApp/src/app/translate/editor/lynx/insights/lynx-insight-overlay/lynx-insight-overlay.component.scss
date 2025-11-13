@@ -1,15 +1,18 @@
-@use 'sass:color';
 @use '../lynx-insights' as insights;
 
-$mainSectionBGColor: #343a32;
-$secondaryTextColor: #9b9b9b;
-$applyActionColor: #5485e7;
-$dismissActionColor: $applyActionColor;
-$borderColor: #999;
-$borderColorDark: #777;
-$borderColorDarker: #555;
-$headerColor: #bdbdbd;
-$hoverBackgroundColor: #06395c;
+$mainSectionBGColor: var(--lynx-insights-overlay-main-background);
+$secondaryTextColor: var(--lynx-insights-overlay-secondary-text);
+$secondaryTextHoverColor: var(--lynx-insights-overlay-secondary-text-hover);
+$applyActionColor: var(--lynx-insights-overlay-apply-color);
+$dismissActionColor: var(--lynx-insights-overlay-dismiss-color);
+$borderColor: var(--lynx-insights-overlay-border-color);
+$borderColorDark: var(--lynx-insights-overlay-border-color-dark);
+$borderColorDarker: var(--lynx-insights-overlay-border-color-darker);
+$headerColor: var(--lynx-insights-overlay-header-color);
+$hoverBackgroundColor: var(--lynx-insights-overlay-hover-background);
+$moreInfoBackground: var(--lynx-insights-overlay-more-info-background);
+$moreInfoTextColor: var(--lynx-insights-overlay-more-info-text);
+$moreInfoBorderColor: var(--lynx-insights-overlay-more-info-border-color);
 $borderRadius: 0.3em;
 
 :host {
@@ -113,9 +116,10 @@ mat-icon {
 
 .more-info-section {
   padding: 0.8em 0.7em;
-  background-color: #fff;
+  background-color: $moreInfoBackground;
+  color: $moreInfoTextColor;
   font-size: 0.8em;
-  border: 1px solid $borderColor;
+  border: 1px solid $moreInfoBorderColor;
   border-width: 0 1px 1px 1px;
   border-radius: 0 0 $borderRadius $borderRadius;
 }
@@ -138,7 +142,7 @@ h1 {
     padding-inline-start: 1em;
 
     &:hover {
-      color: color.adjust($secondaryTextColor, $lightness: 20%);
+      color: $secondaryTextHoverColor;
     }
   }
 }
@@ -193,7 +197,7 @@ h1 {
     color: $secondaryTextColor;
 
     &:hover {
-      color: color.adjust($secondaryTextColor, $lightness: 20%);
+      color: $secondaryTextHoverColor;
     }
   }
 }

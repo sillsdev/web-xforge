@@ -24,11 +24,34 @@
     <link rel="apple-touch-icon" href="assets/icons/sf-192x192.png" />
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#343a31" />
+    <style>
+      .app-root-loading {
+        padding: 50px 8px;
+        font-family: sans-serif;
+        line-height: 1.5;
+        justify-content: center;
+        min-height: 100vh;
+        display: flex;
+
+        background-color: white;
+        /* This matches the font color in the application, which is also palette neutral 10. */
+        color: #1a1c1f;
+
+        /* Only apply dark appearance to the loading element. If we apply dark appearance to the body background, it
+        can show through to the application even if the application is using a light appearance. */
+        @media (prefers-color-scheme: dark) {
+          /* This matches the background color in the application, which is close to palette neutral 6-10. */
+          background-color: #121212;
+          /* Using a more muted palette neutral 70, than the application font palette neutral 90. */
+          color: #ababaf;
+        }
+      }
+    </style>
   </head>
   <body>
     <noscript>Please enable JavaScript to run this application.</noscript>
     <app-root>
-      <div style="margin: 50px 8px; font-family: sans-serif; line-height: 1.5; text-align: center">Loading...</div>
+      <div class="app-root-loading">Loading ...</div>
     </app-root>
   </body>
 </html>

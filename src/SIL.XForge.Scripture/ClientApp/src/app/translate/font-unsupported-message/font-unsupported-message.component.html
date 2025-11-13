@@ -13,7 +13,7 @@
 
       @for (portion of suggestedRemedy | async; track $index) {
         @if (portion.id === 1) {
-          <a [href]="issueMailTo" target="_blank" rel="noreferrer">{{ portion.text }}</a>
+          <a class="notice-link-warning" [href]="issueMailTo" target="_blank" rel="noreferrer">{{ portion.text }}</a>
         } @else if (portion.id == null) {
           {{ portion.text }}
         }

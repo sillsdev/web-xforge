@@ -1,3 +1,6 @@
+@use 'sass:color';
+@use 'sass:meta';
+@use 'sass:string';
 @use 'src/variables';
 @use 'src/breakpoints';
 @use '@angular/material' as mat;
@@ -8,24 +11,41 @@
   $is-dark: mat.get-theme-type($theme) == dark;
 
   --sf-quill-background: #{if($is-dark, mat.get-theme-color($theme, neutral, 6), #f5f3ef)};
-  --sf-quill-highlight-marker-color: #{mat.get-theme-color($theme, tertiary, 80)};
-  --sf-quill-highlight-segment-background: #ffeb3b;
-  --sf-quill-highlight-segment-color: #{mat.get-theme-color($theme, neutral, 10)};
+  --sf-quill-highlight-marker-color: #{mat.get-theme-color($theme, tertiary, if($is-dark, 60, 80))};
+  // Source text verse highlight background color
+  --sf-quill-highlight-segment-background: #{if($is-dark, #362e00, #ffeb3b)};
+  --sf-quill-highlight-segment-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 98, 10))};
   --sf-quill-question-count-background: #{mat.get-theme-color($theme, primary, 50)};
   --sf-quill-question-count-color: #{mat.get-theme-color($theme, primary, 98)};
-  --sf-quill-insert-segment-background: #cce8cc;
-  --sf-quill-insert-segment-color: #{mat.get-theme-color($theme, neutral, 10)};
-  --sf-quill-delete-segment-background: #e8cccc;
-  --sf-quill-delete-segment-color: #{mat.get-theme-color($theme, neutral, 10)};
+  // Incoming text of a diff
+  --sf-quill-insert-segment-background: #{if($is-dark, #223d1f, #cce8cc)};
+  --sf-quill-insert-segment-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 96, 10))};
+  // Outgoing text of a diff
+  --sf-quill-delete-segment-background: #{if($is-dark, #531c17, #e8cccc)};
+  --sf-quill-delete-segment-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 96, 10))};
+
+  --sf-usx-toc1-color: #{if($is-dark, #4bb74b, #004000)};
+  --sf-usx-toc2-color: #{if($is-dark, #4bb74b, #004000)};
+  --sf-usx-toc3-color: #{if($is-dark, #cf2f2f, #800000)};
+
+  $invalid-color: mat.get-theme-color($theme, error, if($is-dark, 70, 40));
+  $invalid-color-hex: string.slice(meta.inspect($invalid-color), 2);
+  // Red squiggly underline
+  $invalid-svg: '%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%276%27 height=%279%27 viewBox=%270%200%206%209%27%3E%3Cpath d=%27M0%208.5%20A3%203.5%200%200%201%203%205%20A3%203.5%200%200%200%206%208.5%27 fill=%27none%27 stroke=%27%23#{$invalid-color-hex}%27 stroke-width=%271.2%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E';
+  --sf-invalid-underline-image: url('data:image/svg+xml,#{$invalid-svg}');
 
   --sf-usx-chapter-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 70, 40))};
-  --sf-usx-verse-color: #{mat.get-theme-color($theme, neutral, 10)};
-  --sf-usx-verse-background: #{mat.get-theme-color($theme, neutral, 95)};
+  --sf-usx-verse-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 90, 10))};
+  --sf-usx-verse-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 30, 95))};
   --sf-usx-readonly-verse-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 80, 10))};
   --sf-usx-readonly-verse-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 30, 95))};
 
-  --sf-text-color: #{if($is-dark, black, rgba(0, 0, 0, 0.8))};
-  --sf-text-background: #{if($is-dark, mat.get-theme-color($theme, neutral-variant, 80), white)};
+  --sf-text-color: #{if($is-dark, mat.get-theme-color($theme, neutral, 90), rgba(0, 0, 0, 0.8))};
+  // Background color of the populated or unpopulated input placeholders in the target text.
+  --sf-text-background: #{if($is-dark, black, white)};
+  // Color of text in editor when editor does not have normal content. For example, "Loading" or "This book does not
+  // exist".
+  --sf-text-placeholder-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 70, 60))};
 }
 
 @mixin theme($theme) {
@@ -45,6 +65,10 @@ quill-editor {
       padding: 2em 15px 15px 15px;
       text-align: start;
     }
+  }
+
+  .ql-editor.ql-blank::before {
+    color: var(--sf-text-placeholder-color);
   }
 }
 
@@ -229,7 +253,7 @@ quill-editor {
     }
 
     .highlight-segment {
-      color: black;
+      color: var(--sf-quill-highlight-segment-color);
     }
 
     .highlight-para > usx-para-contents {
@@ -267,8 +291,10 @@ quill-editor {
   .invalid-block > usx-para-contents,
   .invalid-block > span,
   .invalid-inline {
-    background: url(data:image/gif;base64,R0lGODlhCgAEAMIEAP9BGP6pl//Wy/7//P///////////////yH5BAEKAAQALAAAAAAKAAQAAAMROCOhK0oA0MIUMmTAZhsWBCYAOw==)
-      repeat-x scroll 0 100% transparent;
+    background-image: var(--sf-invalid-underline-image);
+    background-repeat: repeat-x;
+    background-position: 0 100%;
+    background-size: 6px 9px;
     padding-bottom: 3px;
   }
 }

@@ -1,55 +1,309 @@
 @use 'sass:list';
+@use 'sass:map';
+@use 'sass:string';
+@use 'sass:color';
+@use 'src/variables' as vars;
+
+$lynx-insights-theme-variables: (
+  '--lynx-insights-info-color-h': (
+    light: 221,
+    dark: 221
+  ),
+  '--lynx-insights-info-color-s': (
+    light: 93%,
+    dark: 93%
+  ),
+  '--lynx-insights-info-color-l': (
+    light: 66%,
+    dark: 66%
+  ),
+  '--lynx-insights-info-text-decoration': (
+    light: dotted underline,
+    dark: dotted underline
+  ),
+  '--lynx-insights-info-text-decoration-thickness': (
+    light: 1.2px,
+    dark: 1.2px
+  ),
+  '--lynx-insights-info-text-underline-offset': (
+    light: 9px,
+    dark: 9px
+  ),
+  '--lynx-insights-info-background': (
+    light: hsla(var(--lynx-insights-info-color-h), var(--lynx-insights-info-color-s), 93%, 1),
+    dark: hsla(var(--lynx-insights-info-color-h), var(--lynx-insights-info-color-s), 93%, 1)
+  ),
+  '--lynx-insights-info-background-hover': (
+    light: hsla(var(--lynx-insights-info-color-h), var(--lynx-insights-info-color-s), 89%, 1),
+    dark: hsla(var(--lynx-insights-info-color-h), var(--lynx-insights-info-color-s), 89%, 1)
+  ),
+  '--lynx-insights-info-icon-color': (
+    light: #578cff,
+    dark: #8faeff
+  ),
+  '--lynx-insights-warning-text-decoration': (
+    light: dashed underline,
+    dark: dashed underline
+  ),
+  '--lynx-insights-warning-text-decoration-thickness': (
+    light: 1.2px,
+    dark: 1.2px
+  ),
+  '--lynx-insights-warning-text-underline-offset': (
+    light: 7px,
+    dark: 7px
+  ),
+  '--lynx-insights-warning-background': (
+    light: hsla(var(--lynx-insights-warning-color-h), var(--lynx-insights-warning-color-s), 93%, 1),
+    dark: hsla(var(--lynx-insights-warning-color-h), var(--lynx-insights-warning-color-s), 93%, 1)
+  ),
+  '--lynx-insights-warning-background-hover': (
+    light: hsla(var(--lynx-insights-warning-color-h), var(--lynx-insights-warning-color-s), 89%, 1),
+    dark: hsla(var(--lynx-insights-warning-color-h), var(--lynx-insights-warning-color-s), 89%, 1)
+  ),
+  '--lynx-insights-warning-color-h': (
+    light: 42,
+    dark: 42
+  ),
+  '--lynx-insights-warning-color-s': (
+    light: 89%,
+    dark: 89%
+  ),
+  '--lynx-insights-warning-color-l': (
+    light: 59%,
+    dark: 53%
+  ),
+  '--lynx-insights-warning-icon-color': (
+    light: #f5bc11,
+    dark: #f5d96b
+  ),
+
+  '--lynx-insights-error-text-decoration': (
+    light: wavy underline,
+    dark: wavy underline
+  ),
+  '--lynx-insights-error-text-decoration-thickness': (
+    light: 1.2px,
+    dark: 1.2px
+  ),
+  '--lynx-insights-error-text-underline-offset': (
+    light: 2px,
+    dark: 2px
+  ),
+  '--lynx-insights-error-background': (
+    light: hsla(var(--lynx-insights-error-color-h), var(--lynx-insights-error-color-s), 93%, 1),
+    dark: hsla(var(--lynx-insights-error-color-h), var(--lynx-insights-error-color-s), 93%, 1)
+  ),
+  '--lynx-insights-error-background-hover': (
+    light: hsla(var(--lynx-insights-error-color-h), var(--lynx-insights-error-color-s), 89%, 1),
+    dark: hsla(var(--lynx-insights-error-color-h), var(--lynx-insights-error-color-s), 89%, 1)
+  ),
+  '--lynx-insights-error-color-h': (
+    light: 356,
+    dark: 356
+  ),
+  '--lynx-insights-error-color-s': (
+    light: 94%,
+    dark: 94%
+  ),
+  '--lynx-insights-error-color-l': (
+    light: 41%,
+    dark: 50%
+  ),
+  '--lynx-insights-error-icon-color': (
+    light: #b00020,
+    dark: var(--sf-error-color)
+  ),
+
+  '--lynx-insights-status-indicator-bg-color': (
+    light: #fff,
+    dark: #1f2125
+  ),
+  '--lynx-insights-status-indicator-border-color': (
+    light: #ccc,
+    dark: complementBlackness(#ccc)
+  ),
+  '--lynx-insights-status-indicator-border-color-hover': (
+    light: #bbb,
+    dark: complementBlackness(#bbb)
+  ),
+  '--lynx-insights-status-indicator-border-color-active': (
+    light: #bbb,
+    dark: complementBlackness(#bbb)
+  ),
+  '--lynx-insights-status-indicator-badge-text-color': (
+    // This text is shown atop colors like --lynx-insights-warning-background. For light mode, specifying #1a1c1f
+    // instead of (currently identical) --mat-sys-on-background since --lynx-insights-warning-background is hard-coded,
+    // not from a theme or system color. Using the same value for dark mode since it is shown on the same colour
+    // background.
+    light: #1a1c1f,
+    dark: #1a1c1f
+  ),
+  '--lynx-insights-checkmark-icon-color': (
+    light: #3bbf3b,
+    dark: #7bd77b
+  ),
+
+  // Something different from the insight colors
+  '--lynx-insights-multi-insight-prompt-color': (
+      light: #483d8b,
+      dark: #bda8ff
+    ),
+
+  '--lynx-insights-panel-show-more-button-disabled-background': (
+    light: #ffffff,
+    dark: #1f2125
+  ),
+  '--lynx-insights-node-hover-background': (
+    light: #eee,
+    dark: #313336
+  ),
+  '--lynx-insights-count-background': (
+    light: #f4f4f4,
+    dark: #3a3c3f
+  ),
+  '--lynx-insights-count-text': (
+    light: #7a7a7a,
+    dark: #d0d0d5
+  ),
+  '--lynx-insights-loading-text': (
+    light: #777,
+    dark: #bdbdc1
+  ),
+  '--lynx-insights-attention-overlay': (
+    light: #fff,
+    dark: rgb(18, 19, 23)
+  ),
+  '--lynx-insights-hidden-indicator-icon-color': (
+    light: #a4a4a4,
+    dark: #bfc3cc
+  ),
+  '--lynx-insights-overlay-main-background': (
+    light: #343a32,
+    dark: #2a2c30
+  ),
+  '--lynx-insights-overlay-secondary-text': (
+    light: #9b9b9b,
+    dark: #bfc3cc
+  ),
+  '--lynx-insights-overlay-secondary-text-hover': (
+    light: #cecece,
+    dark: #e0e4ec
+  ),
+  '--lynx-insights-overlay-apply-color': (
+    light: #5485e7,
+    dark: #86b7ff
+  ),
+  '--lynx-insights-overlay-hover-background': (
+    light: #06395c,
+    dark: #0f3f66
+  ),
+  '--lynx-insights-overlay-border-color': (
+    light: #999,
+    dark: #505255
+  ),
+  '--lynx-insights-overlay-border-color-dark': (
+    light: #777,
+    dark: #484a4d
+  ),
+  '--lynx-insights-overlay-border-color-darker': (
+    light: #555,
+    dark: #3f4145
+  ),
+  '--lynx-insights-overlay-header-color': (
+    light: #bdbdbd,
+    dark: #e0e3ea
+  ),
+  '--lynx-insights-overlay-more-info-background': (
+    light: #ffffff,
+    dark: #202226
+  ),
+  '--lynx-insights-overlay-more-info-text': (
+    light: #1a1c1f,
+    dark: #e6e6eb
+  ),
+  '--lynx-insights-overlay-more-info-border-color': (
+    light: #999,
+    dark: #484a4d
+  ),
+  '--lynx-insights-overlay-dismiss-color': (
+    light: #5485e7,
+    dark: #86b7ff
+  ),
+  '--lynx-insights-header-background': (
+    light: #e0e0e0,
+    dark: #1b1c20
+  ),
+  '--lynx-insights-header-text-color': (
+    light: var(--mat-app-text-color),
+    dark: #e6e6eb
+  ),
+  '--lynx-insights-header-secondary-text-color': (
+    light: var(--mat-app-text-color),
+    dark: #aeb3be
+  ),
+  '--lynx-insights-header-menu-heading-color': (
+    light: #a3a3a3,
+    dark: #8e94a3
+  ),
+  '--lynx-insights-header-tab-indicator-color': (
+    light: #a3a3a3,
+    dark: #63677a
+  ),
+  '--lynx-insights-header-divider-color': (
+    light: black,
+    dark: white
+  ),
+  '--lynx-insights-panel-tree-toggle-leaf-hover-color': (
+    light: vars.$blueMedium,
+    dark: #9dbdff
+  ),
+  '--lynx-insights-panel-tree-toggle-leaf-dismissed-color': (
+    light: #999,
+    dark: #999
+  )
+);
+
+/** Returns a color with the blackness channel complemented, in the HWB color space. */
+@function complementBlackness($color) {
+  $complement: 100 - color.channel($color, 'blackness', $space: hwb);
+  @return color.change($color, $blackness: $complement);
+}
+
+@function lynx-insights-theme-value($value-map, $mode) {
+  @if map.has-key($value-map, $mode) {
+    @return map.get($value-map, $mode);
+  }
+
+  @return map.get($value-map, light);
+}
+
+@mixin lynx-insights-theme($mode) {
+  @each $variable, $value-map in $lynx-insights-theme-variables {
+    #{$variable}: lynx-insights-theme-value($value-map, $mode);
+  }
+}
 
 :root {
-  --lynx-insights-info-color-h: 221;
-  --lynx-insights-info-color-s: 93%;
-  --lynx-insights-info-color-l: 66%;
-  --lynx-insights-info-text-decoration: dotted underline;
-  --lynx-insights-info-text-decoration-thickness: 1.2px;
-  --lynx-insights-info-text-underline-offset: 9px;
-  --lynx-insights-info-icon-color: #578cff;
+  @include lynx-insights-theme(light);
+}
 
-  --lynx-insights-warning-color-h: 42;
-  --lynx-insights-warning-color-s: 89%;
-  --lynx-insights-warning-color-l: 59%;
-  --lynx-insights-warning-text-decoration: dashed underline;
-  --lynx-insights-warning-text-decoration-thickness: 1.2px;
-  --lynx-insights-warning-text-underline-offset: 7px;
-  --lynx-insights-warning-icon-color: #f5bc11;
-
-  --lynx-insights-error-color-h: 356;
-  --lynx-insights-error-color-s: 94%;
-  --lynx-insights-error-color-l: 41%;
-  --lynx-insights-error-text-decoration: wavy underline;
-  --lynx-insights-error-text-decoration-thickness: 1.2px;
-  --lynx-insights-error-text-underline-offset: 2px;
-  --lynx-insights-error-icon-color: #b00020;
-
-  --lynx-insights-status-indicator-bg-color: #fff;
-  --lynx-insights-status-indicator-offset: 19px;
-  --lynx-insights-checkmark-icon-color: #3bbf3b;
-
-  --lynx-insights-multi-insight-prompt-color: #483d8b; // Something different from the insight colors
+html.theme-default-dark {
+  @include lynx-insights-theme(dark);
 }
 
 $insightTypes: 'info', 'warning', 'error';
 $iconTypes: list.append($insightTypes, 'checkmark');
 
-@function insight-color($insight-type, $lightnessFactor: 1) {
+@function insight-color($insight-type) {
   @return hsl(
     var(--lynx-insights-#{$insight-type}-color-h),
     var(--lynx-insights-#{$insight-type}-color-s),
-    calc(var(--lynx-insights-#{$insight-type}-color-l) * $lightnessFactor)
+    var(--lynx-insights-#{$insight-type}-color-l)
   );
 }
 
-@function insight-bg-color($insight-type, $bg-color-l: 93%, $alpha: 1) {
-  $color-h: var(--lynx-insights-#{$insight-type}-color-h);
-  $color-s: var(--lynx-insights-#{$insight-type}-color-s);
-  @return hsla($color-h, $color-s, $bg-color-l, $alpha);
-}
-
-@mixin insight-styles($insight-type, $bg-color-l: 93%) {
+@mixin insight-styles($insight-type) {
   $color-h: var(--lynx-insights-#{$insight-type}-color-h);
   $color-s: var(--lynx-insights-#{$insight-type}-color-s);
   $color-l: var(--lynx-insights-#{$insight-type}-color-l);
@@ -58,19 +312,18 @@ $iconTypes: list.append($insightTypes, 'checkmark');
   $text-underline-offset: var(--lynx-insights-#{$insight-type}-text-underline-offset);
 
   $decorationColor: hsl($color-h, $color-s, $color-l);
-  $bgColor: insight-bg-color($insight-type, $bg-color-l);
 
   text-decoration: $text-decoration;
   text-decoration-color: $decorationColor;
   text-decoration-thickness: $text-decoration-thickness;
   text-underline-offset: $text-underline-offset;
-  background-color: $bgColor;
+  background-color: var(--lynx-insights-#{$insight-type}-background);
 
   // Use instead of ':hover', as insights can be represented by multiple elements when
   // there are partially overlapping insight ranges.
   &.cursor-active {
     // Darken the background color on hover of insight
-    background-color: hsl($color-h, $color-s, $bg-color-l - 4%);
+    background-color: var(--lynx-insights-#{$insight-type}-background-hover);
   }
 }
 
@@ -123,7 +376,7 @@ $iconTypes: list.append($insightTypes, 'checkmark');
 
   &::after {
     content: '';
-    background-color: #fff;
+    background-color: var(--lynx-insights-attention-overlay);
     position: absolute;
     top: 0;
     bottom: 0;

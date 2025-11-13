@@ -37,6 +37,10 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
   background-image: none !important;
 }
 
+as-split > .as-split-gutter .as-split-gutter-icon {
+  background-color: var(--sf-editor-split-gutter-background);
+}
+
 .flex-column {
   display: flex;
   flex-direction: column;
@@ -64,10 +68,13 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
   padding-top: 5px !important;
 }
 
+/** The use of the `snackbar-error` class is specified in code, such as notice.service.ts showError() calling
+ * showSnackBar() with the snackbar-error class. */
 .snackbar-error {
   @include mat.snack-bar-overrides(
     (
-      container-color: variables.$errorColor
+      supporting-text-color: var(--sf-snackbar-error-text-color),
+      container-color: var(--sf-snackbar-error-background-color)
     )
   );
 }
@@ -84,7 +91,7 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
 }
 
 .offline-text {
-  color: variables.$errorColor;
+  color: var(--sf-error-color);
 }
 
 .locale-fonts mat-option {

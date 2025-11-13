@@ -184,7 +184,7 @@ class TestEnvironment {
   }
 
   get recordButton(): HTMLElement {
-    return this.overlayContainerElement.querySelector('.record') as HTMLElement;
+    return this.overlayContainerElement.querySelector('.record-button') as HTMLElement;
   }
 
   get saveRecordingButton(): HTMLElement {
