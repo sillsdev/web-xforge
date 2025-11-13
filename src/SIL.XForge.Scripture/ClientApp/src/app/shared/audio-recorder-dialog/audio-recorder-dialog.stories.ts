@@ -129,7 +129,7 @@ PermissionDenied.args = {
   micPermission: false
 };
 PermissionDenied.play = async ({ canvasElement }) => {
-  const recordButton = canvasElement.querySelector('.record');
+  const recordButton = canvasElement.querySelector('.record-button');
   await userEvent.click(recordButton!);
   const notice = canvasElement.querySelector('simple-snack-bar');
   expect(notice?.textContent?.includes('Access to your microphone was denied')).toBeTruthy();
@@ -140,7 +140,7 @@ MicNotFound.args = {
   micAvailable: false
 };
 MicNotFound.play = async ({ canvasElement }) => {
-  const recordButton = canvasElement.querySelector('.record');
+  const recordButton = canvasElement.querySelector('.record-button');
   await userEvent.click(recordButton!);
   const notice = canvasElement.querySelector('simple-snack-bar');
   expect(notice?.textContent?.includes('No microphone was found')).toBeTruthy();

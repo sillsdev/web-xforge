@@ -1,5 +1,3 @@
-@use 'src/variables';
-
 .root {
   display: flex;
   flex-direction: column;
@@ -26,7 +24,7 @@
 }
 
 .form-helper-text {
-  color: variables.$errorColor;
+  color: var(--sf-error-color);
   font-size: 0.75em;
   padding-inline: 10px;
   font-weight: 400;

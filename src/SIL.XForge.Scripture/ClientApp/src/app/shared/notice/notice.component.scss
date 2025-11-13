@@ -97,6 +97,23 @@ $colors: (
 
         @include mat.checkbox-color($_notice_theme);
       }
+
+      // Dark theme
+      :host-context(html.theme-default-dark) & {
+        --notice-color: #{scaleLightness($colorDark, -35%)};
+        --notice-color-text: #{scaleLightness($colorLight, 45%)};
+        --notice-color-outline-text: #{scaleLightness($colorLight, 55%)};
+        --notice-color-icon: #{scaleLightness($colorLight, 35%)};
+        --notice-color-outline: #{scaleLightness($colorDark, -15%)};
+        --notice-color-light: #{scaleLightness($colorDark, -5%)};
+        --notice-color-extra-dark: #{scaleLightness($colorDark, -55%)};
+        --notice-color-button-bg: #{scaleLightness($colorDark, -25%)};
+        --notice-color-button-hover-bg: #{scaleLightness($colorDark, -20%)};
+        --notice-color-button-bg-alt: #{scaleLightness($colorLight, 20%)};
+        --notice-color-button-hover-bg-alt: #{scaleLightness($colorLight, 35%)};
+        --notice-color-button-text: #{scaleLightness($colorLight, 55%)};
+        --notice-color-button-text-alt: #{scaleLightness($colorLight, -55%)};
+      }
     }
   }
 
