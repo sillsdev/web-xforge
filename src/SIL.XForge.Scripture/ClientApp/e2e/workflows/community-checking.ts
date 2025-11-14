@@ -103,6 +103,10 @@ export async function communityChecking(
   console.log(`Importing ${count} questions`);
   await user.click(importButtonLocator);
   await expect(page.getByRole('heading', { name: /Imported \d+ of \d+ questions/ })).toBeVisible();
+
+  // Wait for the questions to be imported
+  await page.waitForTimeout(10000);
+
   // FIXME(application-bug) We should be able to look for the exact number of questions that should be imported, but the
   // page frequently fails to update after the import is complete. A single digest cycle appears to always fix it.
   await user.click(page.getByRole('button', { name: /John \d+ questions/ }).first());
