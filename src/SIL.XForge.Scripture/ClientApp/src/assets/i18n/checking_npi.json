@@ -342,7 +342,7 @@
   "file_service": {
     "failed_to_save": "तपाइँका परिवर्तनहरू सुरक्षित गर्न असफल भयौ। कृपया तपाइँको उपकरणमा सिफारिस गरिएको ५०० एम्बी  खाली ठाउँ छ की भनी जाँच गर्नुहोस्।",
     "i_understand": "म बुझ्छु",
-    "storage_space_is_limited": "यस उपकरणमा भण्डारण क्षमता सीमित छ। सबै विशेषताहरू उपलब्ध छन् भनी सुनिश्चित गर्न न्यूनतम ५०० एम्बी जती खाली ठाउँ हुन सिफारिस गरिन्छ। कृपया भण्डारण ठाउँ खाली गर्नुहोस्।"
+    "storage_space_is_limited": "The storage space on this device is limited. It is recommended to have a minimum of 500 MB of free space to ensure all features are available. Please free up storage space."
   },
   "font_size": {
     "text_size": "टेक्‍स्‍टको आकार"

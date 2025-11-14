@@ -342,7 +342,7 @@
   "file_service": {
     "failed_to_save": "Falha ao salvar as alterações. Por favor, verifique se você tem os 500 MB de espaço livre recomendado no seu dispositivo.",
     "i_understand": "Entendo",
-    "storage_space_is_limited": "O espaço de armazenamento neste dispositivo é limitado. É recomendado ter um mínimo de 500 MB de espaço livre para garantir que todos os recursos estejam disponíveis. Por favor, libere espaço de armazenamento."
+    "storage_space_is_limited": "The storage space on this device is limited. It is recommended to have a minimum of 500 MB of free space to ensure all features are available. Please free up storage space."
   },
   "font_size": {
     "text_size": "Text size"

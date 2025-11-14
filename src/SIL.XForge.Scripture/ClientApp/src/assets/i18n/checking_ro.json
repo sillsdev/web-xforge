@@ -342,7 +342,7 @@
   "file_service": {
     "failed_to_save": "Nu s-a reușit salvarea modificărilor. Vă rugăm, verificați dacă dispuneți de cel puțin 500 MB spațiu liber pe dispozitivul dvs.",
     "i_understand": "Am înțeles",
-    "storage_space_is_limited": "Spațiul de stocare de pe acest dispozitiv este limitat. Se recomandă să aveți cel puțin 500 MB spațiu liber, pentru a vă asigura că toate funcționaltățile sunt disponibile. Vă rugăm să eliberați spațiu de stocare."
+    "storage_space_is_limited": "The storage space on this device is limited. It is recommended to have a minimum of 500 MB of free space to ensure all features are available. Please free up storage space."
   },
   "font_size": {
     "text_size": "Text size"

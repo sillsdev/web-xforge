@@ -342,7 +342,7 @@
   "file_service": {
     "failed_to_save": "Gagal menyimpan perubahan Anda. Periksa apakah Anda memiliki ruang kosong 500 MB yang disarankan pada perangkat Anda.",
     "i_understand": "Saya Mengerti",
-    "storage_space_is_limited": "Ruang penyimpanan pada perangkat ini terbatas. Disarankan untuk memiliki ruang kosong minimal 500 MB untuk memastikan semua fitur tersedia. Harap kosongkan ruang penyimpanan."
+    "storage_space_is_limited": "The storage space on this device is limited. It is recommended to have a minimum of 500 MB of free space to ensure all features are available. Please free up storage space."
   },
   "font_size": {
     "text_size": "Ukuran teks"
