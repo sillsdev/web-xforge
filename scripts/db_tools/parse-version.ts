@@ -38,6 +38,7 @@ class ParseVersion {
     'Upload Paratext Zip Files for Pre-Translation Drafting',
     'Allow mixing in an additional training source',
     'Updated Learning Rate For Serval',
+    // Note: The 15th item was "Dark Mode", but is no longer a feature flag. It can be replaced or reinstated.
     'Dark Mode',
     'Enable Lynx insights',
     'Preview new draft history interface',

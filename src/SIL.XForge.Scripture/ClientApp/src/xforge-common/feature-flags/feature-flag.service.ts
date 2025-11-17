@@ -7,6 +7,8 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 export interface FeatureFlag {
   readonly key: string;
   readonly description: string;
+  /** Position in application version bitmask, starting from least significant bit. And order in the UI. See discussion
+   * in class FeatureFlagService. */
   readonly position: number;
   readonly readonly: boolean;
   get enabled(): boolean;
@@ -335,13 +337,6 @@ export class FeatureFlagService {
     'UpdatedLearningRateForServal',
     'Updated Learning Rate For Serval',
     14,
-    this.featureFlagStore
-  );
-
-  readonly darkMode: ObservableFeatureFlag = new FeatureFlagFromStorage(
-    'DarkMode',
-    'Dark mode',
-    15,
     this.featureFlagStore
   );
 

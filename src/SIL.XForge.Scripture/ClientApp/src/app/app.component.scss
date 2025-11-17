@@ -148,6 +148,19 @@ header {
       font-family: var(--sf-language-font-family);
     }
   }
+
+  &.appearance-menu {
+    // Angular Material shows icons at the beginning of the text. Make the checkmark icon appear at the end of the text.
+    .mat-mdc-menu-item-text {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      mat-icon {
+        margin-left: 12px;
+        margin-right: 0px;
+      }
+    }
+  }
 }
 
 .mat-toolbar {

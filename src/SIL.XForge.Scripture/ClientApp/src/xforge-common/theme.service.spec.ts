@@ -41,22 +41,22 @@ describe('ThemeService', () => {
 
   it('default theme should be light', () => {
     const env = new TestEnvironment();
-    expect(env.theme).toEqual(Theme.Default);
+    expect(env.appearance).toEqual('light');
     expect(env.bodyClass).toEqual(Theme.Default);
   });
 
   it('can change theme to dark', () => {
     const env = new TestEnvironment();
-    expect(env.theme).toEqual(Theme.Default);
-    env.service.setDarkMode(true);
-    expect(env.theme).toEqual(Theme.DefaultDarkMode);
+    expect(env.appearance).toEqual('light');
+    env.service.set('dark');
+    expect(env.appearance).toEqual('dark');
     expect(env.bodyClass).toEqual(Theme.DefaultDarkMode);
   });
 
   it('sets correct theme based on local storage', () => {
-    when(mockedLocalSettingsService.get(anyString())).thenReturn(Theme.DefaultDarkMode);
+    when(mockedLocalSettingsService.get(anyString())).thenReturn('dark');
     const env = new TestEnvironment();
-    expect(env.theme).toEqual(Theme.DefaultDarkMode);
+    expect(env.appearance).toEqual('dark');
     expect(env.bodyClass).toEqual(Theme.DefaultDarkMode);
   });
 });
@@ -67,8 +67,9 @@ class TestEnvironment {
   constructor() {
     this.service = TestBed.inject(ThemeService);
   }
-  get theme(): string {
-    return this.service.theme;
+
+  get appearance(): string {
+    return this.service.appearanceSetting;
   }
 
   get bodyClass(): string {
