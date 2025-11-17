@@ -528,11 +528,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   get hasSourceViewRight(): boolean {
     const sourceProject = this.sourceProjectDoc?.data;
-    if (sourceProject == null) {
+    const sourceId = this.source?.id;
+    if (sourceProject == null || sourceId == null) {
       return this.isParatextUserRole;
     }
 
-    return this.isParatextUserRole && this.permissionsService.canAccessText(this.source?.id, sourceProject);
+    return this.isParatextUserRole && this.permissionsService.canAccessText(sourceId, sourceProject);
   }
 
   get canInsertNote(): boolean {
