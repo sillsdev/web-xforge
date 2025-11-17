@@ -338,9 +338,9 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
-  readonly darkMode: ObservableFeatureFlag = new FeatureFlagFromStorage(
-    'DarkMode',
-    'Dark mode',
+  readonly appearanceSelection: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'AppearanceSelection',
+    'Appearance selection',
     15,
     this.featureFlagStore
   );
