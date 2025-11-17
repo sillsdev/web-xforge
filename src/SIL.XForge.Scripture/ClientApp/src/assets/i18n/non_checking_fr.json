@@ -357,6 +357,7 @@
   },
   "draft_usfm_format": {
     "cancel": "Annuler",
+    "chapter_draft_does_not_exist": "L'ébauche de ce chapitre n'existe pas",
     "connect_to_the_internet": "Veuillez vous connecter à internet pour modifier le format USFM de votre ébauche",
     "draft_format_description": "L'ébauche a été créée. Voici quelques options de mise en forme pour le texte. Vous pouvez essayer chaque option pour voir la différence qu'elle apporte.",
     "failed_to_save": "Impossible d'enregistrer les modifications. Réessayez plus tard.",
@@ -377,7 +378,8 @@
     "quote_style_straight": "Guillemets droits",
     "quote_style_straight_description": "Utilisez uniquement des guillemets droits dans l'ébauche",
     "quote_style_title": "Style de citation",
-    "save_changes": "Envoyer la réponse"
+    "save_changes": "Envoyer la réponse",
+    "text_unavailable_offline": "Veuillez vous connecter à internet pour prévisualiser l'ébauche"
   },
   "editor": {
     "add_comment": "Ajouter un commentaire",
@@ -539,7 +541,7 @@
     "confirm_lang_codes_correct": "Tous les codes de langue sont corrects",
     "contact_project_administrator_to_change_settings": "Contactez l'administrateur de votre projet si les paramètres de langue doivent être mis à jour",
     "how_to_change_language_codes": "Les codes de langue peuvent être modifiés dans Paratext en allant dans Paramètres du projet > Propriétés du projet > Langue.",
-    "i_understand_and_accept": "Je comprends le problème et je veux continuer quand même",
+    "i_understand_and_accept": "Je comprends le problème et je veux quand même continuer",
     "if_unsure_contact_us": "Si vous ne savez pas comment résoudre ce problème, veuillez nous contacter à {{ email }}",
     "incorrect_language_codes_reduce_quality": "Les codes de langue incorrects réduiront considérablement la qualité des ébauches.",
     "please_make_sure_codes_correct": "Avant de continuer, assurez-vous que tous les codes linguistiques représentent correctement la langue de chaque projet ou ressource.",
