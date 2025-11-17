@@ -65,10 +65,9 @@ export class PermissionsService {
    * @param project The project.
    * @returns A boolean value.
    */
-  canAccessText(textDocId?: TextDocId, project?: SFProjectProfile): boolean {
+  canAccessText(textDocId: TextDocId, project?: SFProjectProfile): boolean {
     // Ensure the user has project level permission to view the text
     if (
-      textDocId != null &&
       project != null &&
       SF_PROJECT_RIGHTS.hasRight(project, this.userService.currentUserId, SFProjectDomain.Texts, Operation.View)
     ) {
