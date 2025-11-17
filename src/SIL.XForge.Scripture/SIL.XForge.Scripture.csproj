@@ -40,7 +40,7 @@
     <PackageReference Include="ParatextData" Version="9.5.0.19" />
     <!-- When updating Serval.Client consider that API changes must be released to Serval Prod
         prior to testing on SF QA -->
-    <PackageReference Include="Serval.Client" Version="1.10.0" />
+    <PackageReference Include="Serval.Client" Version="1.10.1" />
     <PackageReference Include="SIL.Machine" Version="3.7.7" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
     <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="9.0.6" />
