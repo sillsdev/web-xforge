@@ -159,3 +159,11 @@ app-notice {
   --mat-table-row-item-outline-width: 0;
   padding-top: 16px;
 }
+
+.serval-config-toggle {
+  color: var(--mat-stepper-link-color);
+  :hover {
+    cursor: pointer;
+    color: var(--mat-stepper-link-hover-color);
+  }
+}
