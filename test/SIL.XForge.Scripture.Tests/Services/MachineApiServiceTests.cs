@@ -1905,7 +1905,7 @@ public class MachineApiServiceTests
                                         new ParallelCorpusFilter
                                         {
                                             Corpus = { Id = ParallelCorpusId01, Url = "https://example.com" },
-                                            ScriptureRange = "GEN",
+                                            ScriptureRange = "LEV",
                                         },
                                     ],
                                 },
@@ -1914,8 +1914,9 @@ public class MachineApiServiceTests
                     ]
                 )
             );
+        // All chapters have has draft set to false
         SFProject project = env.Projects.Get(Project01);
-        project.Texts[0].Chapters[1].HasDraft = true;
+        Assert.That(project.Texts[1].Chapters.All(c => c.HasDraft ?? false), Is.False);
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
@@ -1987,6 +1988,7 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
+        env.BackgroundJobClient.DidNotReceive().Create(Arg.Any<Job>(), Arg.Any<IState>());
         await env.Service.DidNotReceive().RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
 
         TestEnvironment.AssertCoreBuildProperties(CompletedTranslationBuild, actual);
@@ -4627,6 +4629,7 @@ public class MachineApiServiceTests
                                     new Chapter { Number = 2, HasDraft = false },
                                 ],
                             },
+                            new TextInfo { BookNum = 3, Chapters = [new Chapter { Number = 1, HasDraft = false }] },
                         ],
                         UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator } },
                     },

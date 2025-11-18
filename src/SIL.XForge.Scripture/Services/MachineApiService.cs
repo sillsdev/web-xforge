@@ -1138,7 +1138,7 @@ public class MachineApiService(
                     }
                 }
 
-                // check if any chapters from the scripture range are marked as HasDraft = false or null
+                // check if all chapters from the scripture range are marked as HasDraft = false or null
                 bool hasDraftIsFalseOrNullInScriptureRange =
                     scriptureRangeBooksWithDraft.Count > 0
                     && scriptureRangeBooksWithDraft.All(kvp =>
@@ -1148,7 +1148,7 @@ public class MachineApiService(
                             && text.Chapters.Where(chapter =>
                                     scriptureRangesWithDrafts[kvp.Key].Contains(chapter.Number)
                                 )
-                                .Any(c => !(c.HasDraft ?? false))
+                                .All(c => !(c.HasDraft ?? false))
                         );
                     });
 
