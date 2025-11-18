@@ -1,6 +1,6 @@
 import { Router } from '@angular/router';
 import { Translation, TranslocoService } from '@ngneat/transloco';
-import { Canon, VerseRef } from '@sillsdev/scripture';
+import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
@@ -25,43 +25,6 @@ export function preloadEnglishTranslations(translocoService: TranslocoService): 
   return () => firstValueFrom(translocoService.load('en'));
 }
 
-export function combineVerseRefStrs(startStr?: string, endStr?: string): VerseRef | undefined {
-  if (!startStr) {
-    // no start ref
-    return undefined;
-  }
-
-  const start = VerseRef.tryParse(startStr);
-  if (!start.success) {
-    // invalid start ref
-    return undefined;
-  }
-
-  if (!endStr) {
-    // no end ref
-    return start.verseRef;
-  }
-
-  const end = VerseRef.tryParse(endStr);
-  if (!end.success || start.verseRef.BBBCCC !== end.verseRef.BBBCCC) {
-    // invalid end ref
-    return undefined;
-  }
-
-  if (start.verseRef.equals(end.verseRef)) {
-    // start and end refs are the same
-    return start.verseRef;
-  }
-
-  // range
-  const rangeStr = `${startStr}-${end.verseRef.verse}`;
-  const range = VerseRef.tryParse(rangeStr);
-  if (!range.success) {
-    return undefined;
-  }
-  return range.verseRef;
-}
-
 /**
  * Gets the digit code for Paratext filenames, such as 01 for GEN, 39 for MAL, and 41 for MAT.
  *
@@ -80,34 +43,6 @@ export function getBookFileNameDigits(bookNum: number): string {
   if (bookNum < 110) return 'A' + (bookNum - 100);
   if (bookNum < 120) return 'B' + (bookNum - 110);
   return 'C' + (bookNum - 120);
-}
-
-/**
- * Get the verses numbers from a verse reference.
- * @returns The verse numbers in the VerseRef as integers.
- * */
-export function getVerseNumbers(verseRef: VerseRef): number[] {
-  const verseList: number[] = [];
-  if (verseRef.verse == null) {
-    verseList.push(verseRef.verseNum); // no bridge or segment info included in verse
-    return verseList;
-  }
-
-  let verseStr = '';
-  for (let i = 0; i < verseRef.verse.length; i++) {
-    if (verseRef.verse[i].match(/[0-9]/i)) {
-      verseStr += verseRef.verse[i];
-    } else if (verseStr.length > 0) {
-      verseList.push(parseInt(verseStr));
-      verseStr = '';
-    }
-  }
-
-  if (verseStr.length > 0) {
-    verseList.push(parseInt(verseStr)); // add any accumulated digits
-  }
-
-  return verseList;
 }
 
 export function threadIdFromMouseEvent(event: MouseEvent): string | undefined {
