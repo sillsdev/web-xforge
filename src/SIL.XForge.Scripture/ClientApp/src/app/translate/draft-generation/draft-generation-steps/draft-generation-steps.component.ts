@@ -1,3 +1,4 @@
+import { JsonPipe } from '@angular/common';
 import { Component, DestroyRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
@@ -116,7 +117,8 @@ interface ProjectPendingUpdate {
     TranslocoModule,
     TranslocoMarkupModule,
     BookMultiSelectComponent,
-    ConfirmSourcesComponent
+    ConfirmSourcesComponent,
+    JsonPipe
   ]
 })
 export class DraftGenerationStepsComponent implements OnInit {
@@ -151,6 +153,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   expandUnusableTranslateBooks = false;
   expandUnusableTrainingBooks = false;
   isStepsCompleted = false;
+  showCustomConfig = false;
 
   protected nextClickedOnLanguageVerification = false;
   protected hasLoaded = false;
@@ -159,6 +162,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   protected trainingSources: DraftSource[] = [];
   protected trainingTargets: DraftSource[] = [];
   protected trainingDataFiles: Readonly<TrainingData>[] = [];
+  protected servalConfig?: string;
 
   private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
   private trainingDataQuerySubscription?: Subscription;
@@ -289,6 +293,7 @@ export class DraftGenerationStepsComponent implements OnInit {
             // See if there is an existing training scripture range
             const draftConfig: DraftConfig | undefined =
               this.activatedProject.projectDoc?.data?.translateConfig.draftConfig;
+            this.servalConfig = draftConfig?.servalConfig;
             const hasPreviousTrainingRange: boolean =
               (draftConfig?.lastSelectedTrainingScriptureRanges ?? []).length > 0;
 
