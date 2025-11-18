@@ -6,11 +6,11 @@ import {
   compareProjectsForSorting,
   getBookFileNameDigits,
   getUnsupportedTags,
-  getVerseNumbers,
   isBadDelta,
   projectLabel,
   XmlUtils
 } from './utils';
+import { getVerseNumbers } from './verse-utils';
 
 describe('shared utils', () => {
   describe('projectLabel function', () => {
