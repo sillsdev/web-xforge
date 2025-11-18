@@ -1,16 +1,34 @@
 @if (isOnline) {
-  @if (!isLoading) {
-    <div class="filter-controls">
-      <mat-form-field>
-        <mat-label>Time Period</mat-label>
-        <mat-select [(value)]="daysBack">
-          @for (option of dayOptions; track option.value) {
-            <mat-option [value]="option.value">{{ option.label }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+  <div class="filter-controls">
+    <app-date-range-picker (dateRangeChange)="onDateRangeChange($event)"></app-date-range-picker>
+    <div class="export-button-group">
+      <button mat-raised-button color="primary" class="export-csv-button" (click)="exportCsv()">
+        <mat-icon>download</mat-icon>
+        Export CSV
+      </button>
+      <button mat-raised-button color="primary" class="export-menu-button" [matMenuTriggerFor]="exportMenu">
+        <mat-icon>arrow_drop_down</mat-icon>
+      </button>
     </div>
+    <mat-menu #exportMenu="matMenu" xPosition="before">
+      <button mat-menu-item (click)="exportRsv()">
+        <mat-icon>download</mat-icon>
+        <span>Export RSV</span>
+      </button>
+    </mat-menu>
+    @if (meanDurationFormatted != null || maxDurationFormatted != null) {
+      <div class="duration-statistics">
+        @if (meanDurationFormatted != null) {
+          <span class="stat-item">Mean duration: {{ meanDurationFormatted }}</span>
+        }
+        @if (maxDurationFormatted != null) {
+          <span class="stat-item">Max duration: {{ maxDurationFormatted }}</span>
+        }
+      </div>
+    }
+  </div>
 
+  @if (!isLoading) {
     @if (currentProjectFilter) {
       <app-notice icon="filter_alt" mode="fill-dark">
         <div class="filter-notice-content">

@@ -202,6 +202,7 @@ public class SFProjectsRpcControllerTests
             scopes: null,
             eventTypes: null,
             fromDate: null,
+            toDate: null,
             pageIndex,
             pageSize
         );
@@ -215,6 +216,7 @@ public class SFProjectsRpcControllerTests
                 scopes: null,
                 eventTypes: null,
                 fromDate: null,
+                toDate: null,
                 pageIndex,
                 pageSize
             );
@@ -233,6 +235,7 @@ public class SFProjectsRpcControllerTests
                 scopes: null,
                 eventTypes: null,
                 fromDate: null,
+                toDate: null,
                 pageIndex,
                 pageSize
             )
@@ -244,6 +247,7 @@ public class SFProjectsRpcControllerTests
             scopes: null,
             eventTypes: null,
             fromDate: null,
+            toDate: null,
             pageIndex,
             pageSize
         );
@@ -265,6 +269,7 @@ public class SFProjectsRpcControllerTests
                 scopes: null,
                 eventTypes: null,
                 fromDate: null,
+                toDate: null,
                 pageIndex,
                 pageSize
             )
@@ -276,6 +281,7 @@ public class SFProjectsRpcControllerTests
             scopes: null,
             eventTypes: null,
             fromDate: null,
+            toDate: null,
             pageIndex,
             pageSize
         );
@@ -297,6 +303,7 @@ public class SFProjectsRpcControllerTests
                 scopes: null,
                 eventTypes: null,
                 fromDate: null,
+                toDate: null,
                 pageIndex,
                 pageSize
             )
@@ -308,6 +315,7 @@ public class SFProjectsRpcControllerTests
             scopes: null,
             eventTypes: null,
             fromDate: null,
+            toDate: null,
             pageIndex,
             pageSize
         );
@@ -329,6 +337,7 @@ public class SFProjectsRpcControllerTests
                 scopes: null,
                 eventTypes: null,
                 fromDate: null,
+                toDate: null,
                 pageIndex,
                 pageSize
             )
@@ -336,7 +345,15 @@ public class SFProjectsRpcControllerTests
 
         // SUT
         Assert.ThrowsAsync<ArgumentNullException>(() =>
-            env.Controller.EventMetrics(Project01, scopes: null, eventTypes: null, fromDate: null, pageIndex, pageSize)
+            env.Controller.EventMetrics(
+                Project01,
+                scopes: null,
+                eventTypes: null,
+                fromDate: null,
+                toDate: null,
+                pageIndex,
+                pageSize
+            )
         );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }

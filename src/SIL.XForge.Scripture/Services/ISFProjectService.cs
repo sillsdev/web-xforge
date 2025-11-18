@@ -46,6 +46,7 @@ public interface ISFProjectService : IProjectService
         EventScope[]? scopes,
         string[]? eventTypes,
         DateTime? fromDate = null,
+        DateTime? toDate = null,
         int pageIndex = 0,
         int pageSize = int.MaxValue
     );
