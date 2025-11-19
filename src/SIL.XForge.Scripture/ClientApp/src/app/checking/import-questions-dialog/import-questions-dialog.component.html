@@ -273,6 +273,11 @@
             {{ t("csv_questions_duplicates") }}
           </div>
         }
+        @if (showDuplicateImportNote && questionSource === "paratext") {
+          <div>
+            {{ t("import_from_paratext_duplicate") }}
+          </div>
+        }
       </div>
     } @else if (status === "progress") {
       <div class="dialog-content-footer">
