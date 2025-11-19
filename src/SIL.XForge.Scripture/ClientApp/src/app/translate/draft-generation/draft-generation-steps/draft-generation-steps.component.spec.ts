@@ -79,6 +79,19 @@ describe('DraftGenerationStepsComponent', () => {
       { text: { bookNum: 6 }, translated: 20, blank: 2, percentage: 90 } as TextProgress,
       { text: { bookNum: 7 }, translated: 0 } as TextProgress
     ]);
+    const defaultTextProgress = [
+      { text: { bookNum: 1 }, translated: 100, percentage: 100 } as TextProgress,
+      { text: { bookNum: 2 }, translated: 100, percentage: 100 } as TextProgress,
+      { text: { bookNum: 3 }, translated: 100, percentage: 100 } as TextProgress,
+      { text: { bookNum: 4 }, translated: 100, percentage: 100 } as TextProgress,
+      { text: { bookNum: 5 }, translated: 100, percentage: 100 } as TextProgress,
+      { text: { bookNum: 6 }, translated: 100, percentage: 100 } as TextProgress,
+      { text: { bookNum: 7 }, translated: 100, percentage: 100 } as TextProgress,
+      { text: { bookNum: 8 }, translated: 100, percentage: 100 } as TextProgress,
+      { text: { bookNum: 9 }, translated: 100, percentage: 100 } as TextProgress,
+      { text: { bookNum: 10 }, translated: 100, percentage: 100 } as TextProgress
+    ];
+    when(mockProgressService.getTextProgressForProject(anything())).thenResolve(defaultTextProgress);
     when(mockOnlineStatusService.isOnline).thenReturn(true);
   }));
 
@@ -291,6 +304,7 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
       when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
       when(mockActivatedProjectService.changes$).thenReturn(targetProjectDoc$);
+      // setup mock source with empty book
       setupProjectProfileMock(
         sourceProjectId,
         sourceBooks.map(b => b.bookNum),
@@ -331,14 +345,12 @@ describe('DraftGenerationStepsComponent', () => {
         project01: [
           { number: 1, selected: true },
           { number: 2, selected: true },
-          { number: 3, selected: false },
-          { number: 5, selected: false }
+          { number: 3, selected: false }
         ],
         sourceProject: [
           { number: 1, selected: true },
           { number: 2, selected: true },
-          { number: 3, selected: false },
-          { number: 5, selected: false }
+          { number: 3, selected: false }
         ]
       });
     }));
@@ -347,8 +359,7 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.selectableTrainingBooksByProj('project01')).toEqual([
         { number: 1, selected: true },
         { number: 2, selected: true },
-        { number: 3, selected: false },
-        { number: 5, selected: false }
+        { number: 3, selected: false }
       ]);
       expect(component.selectableTrainingBooksByProj(sourceProjectId)).toEqual([
         { number: 1, selected: true },
@@ -372,6 +383,10 @@ describe('DraftGenerationStepsComponent', () => {
 
     it('should set "emptyTranslateSourceBooks"', fakeAsync(() => {
       expect(component.emptyTranslateSourceBooks).toEqual([5]);
+    }));
+
+    it('should set "emptyTrainingSourceBooks"', fakeAsync(() => {
+      expect(component.emptyTrainingSourceBooks).toEqual([5]);
     }));
 
     it('should set "unusableTranslateTargetBooks" and "unusableTrainingTargetBooks" correctly', fakeAsync(() => {
@@ -496,10 +511,7 @@ describe('DraftGenerationStepsComponent', () => {
       component.tryAdvanceStep();
       fixture.detectChanges();
       component.onTranslatedBookSelect([1]);
-      expect(component.selectableTrainingBooksByProj('project01')).toEqual([
-        { number: 1, selected: true },
-        { number: 5, selected: false }
-      ]);
+      expect(component.selectableTrainingBooksByProj('project01')).toEqual([{ number: 1, selected: true }]);
       expect(component.selectedTrainingBooksByProj('project01')).toEqual([{ number: 1, selected: true }]);
       expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([{ number: 1, selected: true }]);
       component.stepper.selectedIndex = 1;
@@ -511,8 +523,7 @@ describe('DraftGenerationStepsComponent', () => {
       // Exodus becomes a selectable training book
       expect(component.selectableTrainingBooksByProj('project01')).toEqual([
         { number: 1, selected: true },
-        { number: 2, selected: false },
-        { number: 5, selected: false }
+        { number: 2, selected: false }
       ]);
       expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([{ number: 1, selected: true }]);
       expect(component.selectedTrainingBooksByProj('project01')).toEqual([{ number: 1, selected: true }]);
@@ -618,9 +629,11 @@ describe('DraftGenerationStepsComponent', () => {
   });
 
   describe('two training sources', () => {
-    const availableBooks = [{ bookNum: 2 }, { bookNum: 3 }];
+    const availableBooks = [{ bookNum: 2 }, { bookNum: 3 }, { bookNum: 5 }];
     const allBooks = [{ bookNum: 1 }, ...availableBooks, { bookNum: 6 }, { bookNum: 7 }, { bookNum: 8 }];
     const draftingSourceBooks = availableBooks.concat({ bookNum: 7 });
+    const trainingSource1Books = availableBooks.concat({ bookNum: 1 });
+    const trainingSource2Books = availableBooks.concat({ bookNum: 6 });
     const draftingSourceId = 'draftingSource';
     const config = {
       trainingSources: [
@@ -629,14 +642,14 @@ describe('DraftGenerationStepsComponent', () => {
           paratextId: 'PT_SP1',
           shortName: 'sP1',
           writingSystem: { tag: 'eng' },
-          texts: availableBooks.concat({ bookNum: 1 })
+          texts: trainingSource1Books
         },
         {
           projectRef: 'source2',
           paratextId: 'PT_SP2',
           shortName: 'sP2',
           writingSystem: { tag: 'eng' },
-          texts: availableBooks.concat({ bookNum: 6 })
+          texts: trainingSource2Books
         }
       ] as [DraftSource, DraftSource],
       trainingTargets: [
@@ -657,14 +670,27 @@ describe('DraftGenerationStepsComponent', () => {
       ] as [DraftSource]
     };
 
+    const emptyBooks = [5];
     beforeEach(fakeAsync(() => {
       when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
       when(mockActivatedProjectService.projectDoc$).thenReturn(of({} as any));
       when(mockActivatedProjectService.changes$).thenReturn(of({} as any));
       when(mockActivatedProjectService.projectDoc).thenReturn({} as any);
+      // setup mock sources with empty book
       setupProjectProfileMock(
         draftingSourceId,
-        draftingSourceBooks.map(b => b.bookNum)
+        draftingSourceBooks.map(b => b.bookNum),
+        emptyBooks
+      );
+      setupProjectProfileMock(
+        'source1',
+        trainingSource1Books.map(b => b.bookNum),
+        emptyBooks
+      );
+      setupProjectProfileMock(
+        'source2',
+        trainingSource2Books.map(b => b.bookNum),
+        emptyBooks
       );
       when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
       when(mockNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(true);
@@ -680,6 +706,7 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.allAvailableTranslateBooks).toEqual([
         { number: 2, selected: false },
         { number: 3, selected: false },
+        { number: 5, selected: false },
         { number: 7, selected: false }
       ]);
     }));
@@ -720,6 +747,8 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
       expect(component.unusableTranslateSourceBooks).toEqual([1, 6, 8]);
       expect(component.unusableTrainingSourceBooks).toEqual([6, 7, 8]);
+      expect(component.emptyTranslateSourceBooks).toEqual([5]);
+      expect(component.emptyTrainingSourceBooks).toEqual([5]);
 
       // interact with unusable books notice
       const unusableTranslateBooks = fixture.nativeElement.querySelector('.unusable-translate-books');
@@ -1456,10 +1485,18 @@ describe('DraftGenerationStepsComponent', () => {
     const profileDoc = {
       id: projectId,
       data: createTestProjectProfile({
-        texts: texts.map(b => ({ bookNum: b, chapters: [{ number: 1, lastVerse: emptyBooks.includes(b) ? 0 : 10 }] }))
+        texts: texts.map(b => ({ bookNum: b, chapters: [{ number: 1, lastVerse: 10 }] }))
       })
     } as SFProjectProfileDoc;
 
     when(mockProjectService.getProfile(projectId)).thenResolve(profileDoc);
+    const textProgress = texts.map(bookNum => {
+      return {
+        text: { bookNum },
+        translated: emptyBooks.includes(bookNum) ? 0 : 100,
+        percentage: emptyBooks.includes(bookNum) ? 0 : 100
+      } as TextProgress;
+    });
+    when(mockProgressService.getTextProgressForProject(projectId)).thenResolve(textProgress);
   }
 });

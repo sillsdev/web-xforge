@@ -230,6 +230,45 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
     this._allChaptersChangeSub?.unsubscribe();
   }
 
+  /** Calculate the text progress for a project by reading every text doc for each book. */
+  async getTextProgressForProject(projectId: string): Promise<TextProgress[]> {
+    if (!(await this.permissionsService.isUserOnProject(projectId))) return [];
+
+    const projectDoc = await this.projectService.getProfile(projectId);
+    if (projectDoc.data == null) {
+      return [];
+    }
+    const chapterPromises: Promise<TextDoc[]>[] = [];
+    const chaptersByBook: Map<number, TextDoc[]> = new Map();
+
+    // for every book that exists in the project calculate the translated verses
+    for (const book of projectDoc.data.texts) {
+      const bookChapters: TextDocId[] = book.chapters.map(
+        c => new TextDocId(projectDoc.id, book.bookNum, c.number, 'target')
+      );
+      const chapterTextDocPromises = Promise.all(bookChapters.map(c => this.projectService.getText(c)));
+      // set the map of books to text docs
+      void chapterTextDocPromises.then(textDocs => {
+        chaptersByBook.set(book.bookNum, textDocs);
+      });
+      chapterPromises.push(chapterTextDocPromises);
+    }
+
+    await Promise.all(chapterPromises);
+    const textProgressList = projectDoc.data.texts.map(t => new TextProgress(t));
+    for (const textProgress of textProgressList) {
+      const chapterTextDocs: TextDoc[] = chaptersByBook.get(textProgress.text.bookNum) ?? [];
+      for (const chapterTextDoc of chapterTextDocs) {
+        // get the translated and blank segments from the chapter docs
+        const { translated, blank } = chapterTextDoc.getSegmentCount();
+        textProgress.translated += translated;
+        textProgress.blank += blank;
+      }
+    }
+
+    return textProgressList;
+  }
+
   private async initialize(projectId: string): Promise<void> {
     this._canTrainSuggestions = false;
     this._projectDoc = await this.projectService.getProfile(projectId);
