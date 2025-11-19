@@ -818,6 +818,22 @@ public class ParatextService : DisposableBase, IParatextService
                 }
             }
 
+            // Add all other users that are in the project, but we are unaware of
+            foreach (
+                ProjectUser projectUser in remotePtProject.SourceUsers.Users.Where(pu =>
+                    users.All(u => u.Username != pu.UserName)
+                )
+            )
+            {
+                users.Add(
+                    new ParatextProjectUser
+                    {
+                        Role = ConvertFromUserRole(projectUser.Role),
+                        Username = projectUser.UserName,
+                    }
+                );
+            }
+
             // if the project is a back translation, we want to check if user is still
             // on project with permission to sync or return an error to UI
             if (!users.Select(u => u.Id).ToList().Contains(userSecret.Id))
