@@ -512,6 +512,7 @@
     "import_from_spreadsheet": "Import from spreadsheet",
     "import_from_paratext": "Import from Paratext",
     "import_from_paratext_description": "Import Scripture Forge questions directly from Paratext notes.",
+    "import_from_paratext_duplicate": "Note: Some selected questions have already been imported. Questions that have been edited in Paratext will be updated in Scripture Forge, and exact duplicates will be skipped.",
     "import_from_paratext_select_tag": "Choose a Paratext note type",
     "import_from_paratext_select_tag_instructions": "Choose the type of notes you want to select from.",
     "import_from_paratext_no_tags_available": "There are no tagged notes available to import.",
