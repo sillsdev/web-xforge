@@ -47,6 +47,7 @@
 .mat-mdc-card {
   display: flex;
   flex-direction: column;
+  flex: 1 1 0;
 
   mat-card-title {
     padding: 16px 16px 0 16px;
