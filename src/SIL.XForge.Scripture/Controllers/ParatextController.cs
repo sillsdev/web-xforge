@@ -271,7 +271,7 @@ public class ParatextController : ControllerBase
     /// <summary>
     /// Retrieves the Paratext notes for a specific book within a project.
     /// </summary>
-    /// <param name="projectId">The Scripture Forge project identifier.</param>
+    /// <param name="projectId">The Paratext project identifier.</param>
     /// <response code="200">The notes XML was successfully retrieved.</response>
     /// <response code="403">The user does not have permission to access Paratext.</response>
     /// <response code="404">The project or notes could not be found.</response>
