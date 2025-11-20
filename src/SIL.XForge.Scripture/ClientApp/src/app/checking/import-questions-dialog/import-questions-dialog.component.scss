@@ -38,7 +38,7 @@
   display: flex;
   column-gap: 1em;
 
-  @include breakpoints.media-breakpoint-only(xs) {
+  @include breakpoints.media-breakpoint-down(md) {
     flex-direction: column;
     row-gap: 1em;
   }
