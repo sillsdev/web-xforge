@@ -496,6 +496,7 @@
     "transcelerator": "Transcelerator"
   },
   "import_questions_dialog": {
+    "back": "Back",
     "cancel": "Cancel",
     "canceling_import_not_remove_questions": "Note: Cancelling will not delete questions that are already imported.",
     "canceling_import": "Canceling import...",
