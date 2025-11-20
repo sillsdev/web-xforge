@@ -1908,7 +1908,6 @@ public class MachineProjectServiceTests
         const string project01ScriptureRange = "MAT;MRK";
         // No scripture range is supported for target pre-translate translation (project02)
         const string project03ScriptureRange = "LUK;JHN";
-        const string project04ScriptureRange = "ACT;ROM";
         var buildConfig = new BuildConfig
         {
             TranslationScriptureRanges =
@@ -1918,7 +1917,6 @@ public class MachineProjectServiceTests
             TrainingScriptureRanges =
             [
                 new ProjectScriptureRange { ProjectId = Project03, ScriptureRange = project03ScriptureRange },
-                new ProjectScriptureRange { ProjectId = Project04, ScriptureRange = project04ScriptureRange },
             ],
         };
         List<ServalCorpusSyncInfo> corporaSyncInfo =
@@ -1949,7 +1947,7 @@ public class MachineProjectServiceTests
                 CorpusId = Corpus04,
                 IsSource = false,
                 ParallelCorpusId = ParallelCorpus02,
-                ProjectId = Project04,
+                ProjectId = Project02,
             },
         ];
 
@@ -1975,7 +1973,7 @@ public class MachineProjectServiceTests
                 .ScriptureRange
         );
         Assert.AreEqual(
-            project04ScriptureRange,
+            project03ScriptureRange,
             actual
                 .TrainOn!.Single(c => c.ParallelCorpusId == ParallelCorpus02)
                 .TargetFilters!.Single(f => f.CorpusId == Corpus04)
