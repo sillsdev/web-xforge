@@ -101,11 +101,17 @@
                 <mat-card-title>{{ t("import_from_paratext") }}</mat-card-title>
                 <mat-card-content>
                   <p>{{ t("import_from_paratext_description") }}</p>
+                  <ol>
+                    @for (line of paratextInstructions; track line) {
+                      <li [innerHTML]="line"></li>
+                    }
+                  </ol>
                 </mat-card-content>
                 <mat-card-actions>
                   <button mat-flat-button color="primary" (click)="importFromParatext()">
                     {{ t("import_from_paratext") }}
                   </button>
+                  <a mat-button [href]="urls.transceleratorImportHelpPage" target="_blank">{{ t("learn_more") }}</a>
                 </mat-card-actions>
               </mat-card>
             </div>
