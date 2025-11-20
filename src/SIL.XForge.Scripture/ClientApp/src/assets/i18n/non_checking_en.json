@@ -542,6 +542,7 @@
     "transcelerator_instructions": "Translate the questions in Transcelerator.\nWithin Transcelerator, export the questions to Scripture Forge.\nSend and receive the project in Paratext.\nSync the project in Scripture Forge.\nClick {{ boldStart }}{{ importFromTranscelerator }}{{ boldEnd }} below.",
     "transcelerator_paratext": "{1}Transcelerator{2} is a plugin for {3}Paratext{4} to aid with creating and translating scripture checking questions.",
     "transcelerator_some_questions_already_imported": "Note: Some selected questions have already been imported. Questions that have been edited in Transcelerator will be updated in Scripture Forge, and exact duplicates will be skipped.",
+    "paratext_instructions": "In Paratext, open Project Properties, go to the Notes tab, and create a tag for Scripture Forge.\nUse Project Note from the Project menu to add notes with the tag you created.\nSend and receive the project in Paratext.\nSync the project in Scripture Forge.\nClick {{ boldStart }}{{ importFromParatext }}{{ boldEnd }} below to import the tagged notes.",
     "update_transcelerator": "The version of Transcelerator used in this project is not supported. Please update to at least Transcelerator version 1.5.3."
   },
   "language_codes_confirmation": {
