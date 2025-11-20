@@ -296,6 +296,13 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
       .split('\n');
   }
 
+  get paratextInstructions(): string[] {
+    const importFromParatext = this.transloco.translate('import_questions_dialog.import_from_paratext');
+    return this.i18n
+      .translateAndInsertTags('import_questions_dialog.paratext_instructions', { importFromParatext })
+      .split('\n');
+  }
+
   get showDuplicateImportNote(): boolean {
     return this.filteredList.some(item => item.checked && item.sfVersionOfQuestion != null);
   }
