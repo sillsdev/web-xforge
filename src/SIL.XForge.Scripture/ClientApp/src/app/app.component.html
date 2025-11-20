@@ -98,10 +98,10 @@
             (click)="dismissInstallIcon()"
             class="user-menu-btn"
           >
+            <app-avatar id="avatarId" [user]="currentUser"> </app-avatar>
             @if (showInstallIconOnAvatar$ | async) {
               <mat-icon class="user-icon-badge install-badge">install_mobile</mat-icon>
             }
-            <app-avatar id="avatarId" [user]="currentUser"> </app-avatar>
             @if (!isAppOnline) {
               <mat-icon class="user-icon-badge offline-indicator">cloud_off</mat-icon>
             }
