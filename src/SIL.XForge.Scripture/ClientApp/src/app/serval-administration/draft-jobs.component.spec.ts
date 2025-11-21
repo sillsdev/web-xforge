@@ -7,7 +7,7 @@ import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
-import { anything, mock, when } from 'ts-mockito';
+import { anything, capture, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -22,6 +22,7 @@ import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { SFProjectService } from '../core/sf-project.service';
 import { EventMetric, EventScope } from '../event-metrics/event-metric';
 import { DraftJob, DraftJobsComponent } from './draft-jobs.component';
+import { JobDetailsDialogComponent } from './job-details-dialog.component';
 import sampleEvents from './sample-events.json';
 import { ServalAdministrationService } from './serval-administration.service';
 
@@ -94,7 +95,7 @@ describe('DraftJobsComponent', () => {
       expect(draftJob!.startEvent!.id).toEqual('event-metric-05');
       expect(draftJob!.buildEvent!.id).toEqual('event-metric-04');
       expect(draftJob!.cancelEvent).toBeUndefined();
-      expect(draftJob!.finishEvent!.id).toEqual('event-metric-03');
+      expect(draftJob!.finishEvent!.id).toEqual('event-metric-01');
     }));
 
     it('cancelled jobs', fakeAsync(() => {
@@ -109,7 +110,7 @@ describe('DraftJobsComponent', () => {
       expect(draftJob!.startEvent!.id).toEqual('event-metric-14');
       expect(draftJob!.buildEvent!.id).toEqual('event-metric-13');
       expect(draftJob!.cancelEvent!.id).toEqual('event-metric-12');
-      expect(draftJob!.finishEvent).toBeUndefined();
+      expect(draftJob!.finishEvent!.id).toEqual('event-metric-11');
     }));
 
     it('faulted jobs', fakeAsync(() => {
@@ -141,6 +142,227 @@ describe('DraftJobsComponent', () => {
       expect(draftJob!.buildEvent!.id).toEqual('event-metric-06');
       expect(draftJob!.cancelEvent).toBeUndefined();
       expect(draftJob!.finishEvent).toBeUndefined();
+    }));
+  });
+
+  describe('associates older events into jobs', () => {
+    // Older events did not have a draftGenerationRequestId and used another association method. They are stored in the sample events file and have an `A` in the various Ids used.
+
+    it('successful jobs', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.wait();
+      // The Serval build id and event metric ids are written here from looking at the sample data.
+      const servalBuildId = 'serval-build-A1';
+
+      const draftJob: DraftJob = env.component.rows.filter(row => row.job.buildId === servalBuildId)[0].job;
+      // Confirm test setup.
+      expect(draftJob.status).toEqual('success');
+
+      expect(draftJob!.startEvent!.id).toEqual('event-metric-A05');
+      expect(draftJob!.buildEvent!.id).toEqual('event-metric-A04');
+      expect(draftJob!.cancelEvent).toBeUndefined();
+      // Notice that the prior event grouping can use ExecuteWebhookAsync for a finish event rather than BuildCompletedAsync.
+      expect(draftJob!.finishEvent!.id).toEqual('event-metric-A03');
+    }));
+
+    it('cancelled jobs', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.wait();
+      const servalBuildId = 'serval-build-A2';
+
+      const draftJob: DraftJob = env.component.rows.filter(row => row.job.buildId === servalBuildId)[0].job;
+      // Confirm test setup.
+      expect(draftJob.status).toEqual('cancelled');
+
+      expect(draftJob!.startEvent!.id).toEqual('event-metric-A14');
+      expect(draftJob!.buildEvent!.id).toEqual('event-metric-A13');
+      expect(draftJob!.cancelEvent!.id).toEqual('event-metric-A12');
+      // Notice that the prior event grouping did not define a 'finishEvent' for cancelled jobs.
+      expect(draftJob!.finishEvent).toBeUndefined();
+    }));
+
+    it('faulted jobs', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.wait();
+      const servalBuildId = 'serval-build-A4';
+
+      const draftJob: DraftJob = env.component.rows.filter(row => row.job.buildId === servalBuildId)[0].job;
+      // Confirm test setup.
+      expect(draftJob.status).toEqual('failed');
+
+      expect(draftJob!.startEvent!.id).toEqual('event-metric-A17');
+      expect(draftJob!.buildEvent!.id).toEqual('event-metric-A16');
+      expect(draftJob!.cancelEvent).toBeUndefined();
+      expect(draftJob!.finishEvent!.id).toEqual('event-metric-A15');
+    }));
+
+    it('in-progress jobs', fakeAsync(() => {
+      // This Serval job had StartPreTranslationBuildAsync and BuildProjectAsync but nothing more yet.
+      const env = new TestEnvironment();
+      env.wait();
+      const servalBuildId = 'serval-build-A5';
+
+      const draftJob: DraftJob = env.component.rows.filter(row => row.job.buildId === servalBuildId)[0].job;
+      // Confirm test setup.
+      expect(draftJob.status).toEqual('running');
+
+      expect(draftJob!.startEvent!.id).toEqual('event-metric-A07');
+      expect(draftJob!.buildEvent!.id).toEqual('event-metric-A06');
+      expect(draftJob!.cancelEvent).toBeUndefined();
+      expect(draftJob!.finishEvent).toBeUndefined();
+    }));
+  });
+
+  describe('job details dialog data', () => {
+    it('includes draft generation request id in dialog data', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.wait();
+      const jobRow = env.component.rows.find(
+        row => row.job.draftGenerationRequestId != null && row.job.buildId != null
+      );
+
+      expect(jobRow).toBeDefined();
+      if (jobRow == null) {
+        return;
+      }
+
+      resetCalls(mockedDialogService);
+      when(mockedDialogService.openMatDialog(anything(), anything())).thenReturn({} as any);
+
+      env.component.openJobDetailsDialog(jobRow.job);
+
+      verify(mockedDialogService.openMatDialog(anything(), anything())).once();
+      const [component, config] = capture(mockedDialogService.openMatDialog as any).last();
+
+      expect(component).toBe(JobDetailsDialogComponent);
+      const dialogData: any = (config as any)?.data;
+      expect(dialogData.draftGenerationRequestId).toEqual(jobRow.job.draftGenerationRequestId);
+    }));
+  });
+
+  describe('event group validation', () => {
+    it('throws when grouped events contain mismatched request ids', fakeAsync(() => {
+      // Suppose the createJobFromRequestGroup method is called with a set of event metrics that do not have the same draftGenerationRequestId. Throw.
+
+      const env = new TestEnvironment({ hasEvents: false });
+      env.wait();
+      const componentAny: any = env.component;
+      const start = env.createEvent('start-1', 'StartPreTranslationBuildAsync');
+      const build = env.createEvent('build-1', 'BuildProjectAsync', { timeStamp: '2025-01-01T00:01:00.000Z' });
+      const finish = env.createEvent('finish-1', 'BuildCompletedAsync', {
+        timeStamp: '2025-01-01T00:02:00.000Z',
+        payload: { buildState: 'Completed', sfProjectId: 'sf-test-project', buildId: 'build-1' }
+      });
+      const mismatched = env.createEvent('mismatch-1', 'ExecuteWebhookAsync', {
+        tags: { draftGenerationRequestId: 'req-2' },
+        timeStamp: '2025-01-01T00:03:00.000Z'
+      });
+
+      expect(() => componentAny['createJobFromRequestGroup']('req-1', [start, build, finish, mismatched])).toThrowError(
+        /share/i
+      );
+    }));
+
+    it('throws when grouped events contain multiple start events', fakeAsync(() => {
+      const env = new TestEnvironment({ hasEvents: false });
+      env.wait();
+      const componentAny: any = env.component;
+      const startOne = env.createEvent('start-1', 'StartPreTranslationBuildAsync');
+      const startTwo = env.createEvent('start-2', 'StartPreTranslationBuildAsync', {
+        timeStamp: '2025-01-01T00:00:30.000Z'
+      });
+      const build = env.createEvent('build-1', 'BuildProjectAsync', { timeStamp: '2025-01-01T00:01:00.000Z' });
+
+      expect(() => componentAny['createJobFromRequestGroup']('req-1', [startOne, startTwo, build])).toThrowError(
+        /exactly one startpretranslationbuildasync/i
+      );
+    }));
+
+    it('throws when grouped events are missing a start event', fakeAsync(() => {
+      const env = new TestEnvironment({ hasEvents: false });
+      env.wait();
+      const componentAny: any = env.component;
+      const build = env.createEvent('build-1', 'BuildProjectAsync', { timeStamp: '2025-01-01T00:01:00.000Z' });
+
+      expect(() => componentAny['createJobFromRequestGroup']('req-1', [build])).toThrowError(
+        /exactly one startpretranslationbuildasync/i
+      );
+    }));
+
+    it('throws when grouped events contain multiple build events', fakeAsync(() => {
+      const env = new TestEnvironment({ hasEvents: false });
+      env.wait();
+      const componentAny: any = env.component;
+      const start = env.createEvent('start-1', 'StartPreTranslationBuildAsync');
+      const buildOne = env.createEvent('build-1', 'BuildProjectAsync', { timeStamp: '2025-01-01T00:01:00.000Z' });
+      const buildTwo = env.createEvent('build-2', 'BuildProjectAsync', { timeStamp: '2025-01-01T00:01:30.000Z' });
+
+      expect(() => componentAny['createJobFromRequestGroup']('req-1', [start, buildOne, buildTwo])).toThrowError(
+        /more than one buildprojectasync/i
+      );
+    }));
+
+    it('throws when grouped events contain multiple build completed events', fakeAsync(() => {
+      const env = new TestEnvironment({ hasEvents: false });
+      env.wait();
+      const componentAny: any = env.component;
+      const start = env.createEvent('start-1', 'StartPreTranslationBuildAsync');
+      const build = env.createEvent('build-1', 'BuildProjectAsync', { timeStamp: '2025-01-01T00:01:00.000Z' });
+      const finishOne = env.createEvent('finish-1', 'BuildCompletedAsync', {
+        timeStamp: '2025-01-01T00:02:00.000Z',
+        payload: { buildState: 'Completed', sfProjectId: 'sf-test-project', buildId: 'build-1' }
+      });
+      const finishTwo = env.createEvent('finish-2', 'BuildCompletedAsync', {
+        timeStamp: '2025-01-01T00:03:00.000Z',
+        payload: { buildState: 'Completed', sfProjectId: 'sf-test-project', buildId: 'build-1' }
+      });
+
+      expect(() =>
+        componentAny['createJobFromRequestGroup']('req-1', [start, build, finishOne, finishTwo])
+      ).toThrowError(/more than one buildcompletedasync/i);
+    }));
+
+    it('throws when there is a cancel event without a BuildCompleted cancel state', fakeAsync(() => {
+      // When a cancel event happens, the current behavior is that the BuildCompletedAsync event also has a buildState of 'Canceled'. The createJobFromRequestGroup method will expect that.
+
+      const env = new TestEnvironment({ hasEvents: false });
+      env.wait();
+      const componentAny: any = env.component;
+      const start = env.createEvent('start-1', 'StartPreTranslationBuildAsync');
+      const build = env.createEvent('build-1', 'BuildProjectAsync', { timeStamp: '2025-01-01T00:01:00.000Z' });
+      const finish = env.createEvent('finish-1', 'BuildCompletedAsync', {
+        timeStamp: '2025-01-01T00:02:00.000Z',
+        payload: { buildState: 'Completed', sfProjectId: 'sf-test-project', buildId: 'build-1' }
+      });
+      const cancel = env.createEvent('cancel-1', 'CancelPreTranslationBuildAsync', {
+        timeStamp: '2025-01-01T00:02:30.000Z'
+      });
+
+      expect(() => componentAny['createJobFromRequestGroup']('req-1', [start, build, finish, cancel])).toThrowError(
+        /Cancel/i
+      );
+    }));
+  });
+
+  describe('processDraftJobs', () => {
+    it('skips request groups missing a start event', fakeAsync(() => {
+      // Suppose the user selects a dante range such that the start date+time is after a draft generation starts and before it finishes. The list of event metrics will have events about the job being processed, but there will not be a start event. Omit those jobs from the data we present.
+      //
+      // If the end date falls after a start event and before a job's finish event, we'll just show that as in progress.
+
+      const env = new TestEnvironment({ hasEvents: false });
+      env.wait();
+
+      const buildEvent = env.createEvent('build-1', 'BuildProjectAsync', {
+        timeStamp: '2025-01-01T00:01:00.000Z',
+        tags: { draftGenerationRequestId: 'req-1' },
+        result: 'build-1'
+      });
+
+      env.component['draftEvents'] = [buildEvent];
+      env.component['processDraftJobs']();
+      // The job was not included in the data.
+      expect(env.component.rows.length).toBe(0);
     }));
   });
 
@@ -435,6 +657,34 @@ class TestEnvironment {
     });
   }
 
+  createEvent(id: string, eventType: string, overrides: Partial<EventMetric> = {}): EventMetric {
+    const event: EventMetric = {
+      id,
+      eventType,
+      timeStamp: '2025-01-01T00:00:00.000Z',
+      scope: EventScope.Drafting,
+      payload: {},
+      userId: 'user-1',
+      projectId: 'sf-test-project',
+      result: undefined,
+      executionTime: undefined,
+      exception: undefined,
+      tags: { draftGenerationRequestId: 'req-1' }
+    };
+
+    if (overrides.timeStamp != null) event.timeStamp = overrides.timeStamp;
+    if (overrides.scope != null) event.scope = overrides.scope;
+    if (overrides.payload != null) event.payload = overrides.payload;
+    if (overrides.userId !== undefined) event.userId = overrides.userId;
+    if (overrides.projectId !== undefined) event.projectId = overrides.projectId;
+    if (overrides.result !== undefined) event.result = overrides.result;
+    if (overrides.executionTime !== undefined) event.executionTime = overrides.executionTime;
+    if (overrides.exception !== undefined) event.exception = overrides.exception;
+    if (overrides.tags != null) event.tags = overrides.tags;
+
+    return event;
+  }
+
   /**
    * Transforms JSON event data to EventMetric objects.
    * Transforms "timeStamp":{"$date":"foo"} to just "timeStamp".
@@ -450,7 +700,8 @@ class TestEnvironment {
       projectId: event.projectId,
       result: event.result,
       executionTime: event.executionTime,
-      exception: event.exception
+      exception: event.exception,
+      tags: event.tags
     }));
   }
 }
