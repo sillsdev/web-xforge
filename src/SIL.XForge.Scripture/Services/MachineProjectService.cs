@@ -1455,15 +1455,17 @@ public class MachineProjectService(
                 .ToArray() ?? [];
         foreach (string corpusId in corpusIds)
         {
-            // Delete the corpus
+            // Delete the legacy corpus
             try
             {
+#pragma warning disable CS0612 // Type or member is obsolete
                 await translationEnginesClient.DeleteCorpusAsync(
                     translationEngineId,
                     corpusId,
                     deleteFiles: true,
                     cancellationToken
                 );
+#pragma warning restore CS0612 // Type or member is obsolete
             }
             catch (ServalApiException e)
             {
