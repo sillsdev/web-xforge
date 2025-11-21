@@ -355,7 +355,7 @@
     "upcoming_maintenance": "Scripture Forge estará inactiva por mantenimiento durante aproximadamente {{ duration }} a partir de {{ startTime }}."
   },
   "issue_email": {
-    "heading": "Please describe what you were doing when this error happened. Include:\n- What you were trying to do\n- What you expected to happen\n- What actually happened\n- Whether it happens every time, or only once",
+    "heading": "Por favor, describa lo que estaba haciendo cuando ocurrió este error. Incluye:\n- Lo que estabas intentando hacer\n- Lo que esperabas que suceda\n- Lo que realmente sucedió\n- Si sucede cada vez, o solo una vez",
     "technical_details": "Detalles técnicos",
     "unknown": "Desconocido"
   },
