@@ -29,8 +29,8 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f # @v7.0.5
         with:
-          commit-message: Update list of supported SIL fonts
-          title: Update list of supported SIL fonts
+          commit-message: Update list of supported fonts
+          title: Update list of supported fonts
           body: Automated update of file by GitHub action
           branch: fonts/update
           base: master
