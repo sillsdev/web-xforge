@@ -24,6 +24,7 @@ public static class SFServiceCollectionExtensions
         services.AddSingleton<IParatextDataHelper, ParatextDataHelper>();
         services.AddSingleton<IInternetSharedRepositorySourceProvider, InternetSharedRepositorySourceProvider>();
         services.AddSingleton<ITransceleratorService, TransceleratorService>();
+        services.AddSingleton<INotesService, NotesService>();
         services.AddSingleton<ISFRestClientFactory, SFDblRestClientFactory>();
         services.AddSingleton<IHgWrapper, HgWrapper>();
         services.AddSingleton<ISFProjectRights, SFProjectRights>();

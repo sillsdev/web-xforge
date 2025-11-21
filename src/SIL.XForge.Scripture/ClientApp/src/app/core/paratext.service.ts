@@ -47,6 +47,24 @@ export interface SelectableProjectWithLanguageCode extends SelectableProject {
   languageTag: string;
 }
 
+export interface ParatextNote {
+  id: string;
+  verseRef: string;
+  comments: ParatextNoteComment[];
+}
+
+export interface ParatextNoteComment {
+  verseRef: string;
+  content: string;
+  tag?: ParatextNoteTag;
+}
+
+export interface ParatextNoteTag {
+  id: number;
+  name: string;
+  icon: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -127,6 +145,16 @@ export class ParatextService {
           headers: this.headers
         }
       )
+    );
+  }
+
+  async getNotes(projectId: string): Promise<ParatextNote[] | undefined> {
+    return await firstValueFrom(
+      this.http
+        .get<ParatextNote[] | null>(`${PARATEXT_API_NAMESPACE}/projects/${projectId}/notes`, {
+          headers: this.headers
+        })
+        .pipe(map(notes => (notes == null ? undefined : notes)))
     );
   }
 
