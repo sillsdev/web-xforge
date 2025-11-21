@@ -16,9 +16,10 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { hasStringProp } from '../../type-utils';
 import { ParatextProject } from '../core/models/paratext-project';
+import { SelectableProject } from '../core/models/selectable-project';
 import { SFProjectCreateSettings } from '../core/models/sf-project-create-settings';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
-import { ParatextService, SelectableProject } from '../core/paratext.service';
+import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { ProjectSelectComponent } from '../project-select/project-select.component';
 import { compareProjectsForSorting, projectLabel } from '../shared/utils';
@@ -84,9 +85,9 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     super(noticeService);
     this.connectProjectForm.disable();
     this.projectMetadata = {
-      paratextId: this.router.getCurrentNavigation()?.extras.state?.paratextId ?? '',
-      name: this.router.getCurrentNavigation()?.extras.state?.name ?? '',
-      shortName: this.router.getCurrentNavigation()?.extras.state?.shortName ?? ''
+      paratextId: this.router.currentNavigation()?.extras.state?.paratextId ?? '',
+      name: this.router.currentNavigation()?.extras.state?.name ?? '',
+      shortName: this.router.currentNavigation()?.extras.state?.shortName ?? ''
     };
   }
 

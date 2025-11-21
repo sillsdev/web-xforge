@@ -49,6 +49,7 @@ import { objectId } from 'xforge-common/utils';
 import { environment } from '../../../environments/environment';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
+import { TransceleratorQuestion } from '../../core/models/transcelerator-question';
 import { SFProjectService } from '../../core/sf-project.service';
 import {
   ScriptureChooserDialogComponent,
@@ -62,16 +63,6 @@ import {
   ImportQuestionsConfirmationDialogData,
   ImportQuestionsConfirmationDialogResult
 } from './import-questions-confirmation-dialog/import-questions-confirmation-dialog.component';
-
-export interface TransceleratorQuestion {
-  book: string;
-  startChapter: string;
-  startVerse: string;
-  endChapter?: string;
-  endVerse?: string;
-  text: string;
-  id: string;
-}
 
 export interface SourceQuestion {
   verseRef: VerseRef;

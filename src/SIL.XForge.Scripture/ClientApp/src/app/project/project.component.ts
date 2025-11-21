@@ -57,7 +57,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
         subscriber.next(projectId);
       });
       userDoc.remoteChanges$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
-        subscriber.next(projectId);
+        subscriber.next(projectId ?? '');
       });
     });
 

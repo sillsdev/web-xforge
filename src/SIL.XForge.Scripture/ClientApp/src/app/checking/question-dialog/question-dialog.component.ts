@@ -31,7 +31,7 @@ import {
   ScriptureChooserDialogData
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { ParentAndStartErrorStateMatcher, SFValidators } from '../../shared/sfvalidators';
-import { combineVerseRefStrs } from '../../shared/utils';
+import { combineVerseRefStrs } from '../../shared/verse-utils';
 import { AttachAudioComponent } from '../attach-audio/attach-audio.component';
 import { AudioAttachment } from '../checking/checking-audio-player/checking-audio-player.component';
 import { CheckingTextComponent } from '../checking/checking-text/checking-text.component';

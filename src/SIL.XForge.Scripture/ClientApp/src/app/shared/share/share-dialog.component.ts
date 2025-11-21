@@ -29,17 +29,14 @@ import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { environment } from '../../../environments/environment';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
+import { ShareLinkType } from '../../core/models/share-link-type';
 import { SFProjectService } from '../../core/sf-project.service';
 import { NoticeComponent } from '../notice/notice.component';
 import { ShareBaseComponent } from './share-base.component';
+
 export interface ShareDialogData {
   projectId: string;
   defaultRole: SFProjectRole;
-}
-
-export enum ShareLinkType {
-  Anyone = 'anyone',
-  Recipient = 'recipient'
 }
 
 @Component({

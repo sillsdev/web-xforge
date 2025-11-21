@@ -54,7 +54,8 @@ describe('Auth0Service', () => {
       id_token: '',
       access_token: '',
       scope: '',
-      expires_in: 0
+      expires_in: 0,
+      token_type: 'Bearer'
     };
     when(
       mockedHttpClient.post(

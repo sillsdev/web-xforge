@@ -18,7 +18,7 @@ module.exports = function (config) {
     plugins.push(require('karma-parallel'));
   }
 
-  frameworks.push('jasmine', '@angular-devkit/build-angular');
+  frameworks.push('jasmine');
   plugins.push(
     require('karma-jasmine'),
     require('karma-chrome-launcher'),
@@ -28,8 +28,7 @@ module.exports = function (config) {
     require('karma-coverage-istanbul-reporter'),
     require('karma-teamcity-reporter'),
     require('karma-mocha-reporter'),
-    require('karma-junit-reporter'),
-    require('@angular-devkit/build-angular/plugins/karma')
+    require('karma-junit-reporter')
   );
 
   config.set({
@@ -48,32 +47,8 @@ module.exports = function (config) {
       reports: ['html', 'lcovonly'],
       fixWebpackSourcePaths: true
     },
-    files: [
-      {
-        pattern: 'app/checking/checking/test-audio/test-audio-player.webm',
-        watched: false,
-        included: false
-      },
-      {
-        pattern: 'app/checking/checking/test-audio/test-audio-player-b.webm',
-        watched: false,
-        included: false
-      },
-      {
-        // roughly 1s in length
-        pattern: 'app/checking/checking/test-audio/test-audio-short.webm',
-        watched: false,
-        included: false
-      },
-      {
-        pattern: 'app/checking/checking/test-audio/test-audio-short.mp3',
-        watched: false,
-        included: false
-      }
-    ],
+    files: [],
     proxies: {
-      '/assets/audio/audio.mp3': '',
-      '/assets/audio/': '/base/app/checking/checking/test-audio/',
       '/assets/icons/TagIcons/defaultIcon.png': '',
       '/assets/icons/TagIcons/flag01.png': '',
       '/assets/icons/TagIcons/flag04.png': '',

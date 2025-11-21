@@ -2,7 +2,9 @@ import { DestroyRef, Injectable } from '@angular/core';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { ParatextProject } from '../../../../core/models/paratext-project';
-import { ParatextService, SelectableProject } from '../../../../core/paratext.service';
+import { SelectableProject } from '../../../../core/models/selectable-project';
+import { ParatextService } from '../../../../core/paratext.service';
+
 @Injectable({
   providedIn: 'root'
 })

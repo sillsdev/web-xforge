@@ -56,7 +56,8 @@ describe('RealtimeService', () => {
       const destroyedRef = {
         onDestroy: () => {
           throw new Error('View destroyed');
-        }
+        },
+        destroyed: true
       } as DestroyRef;
 
       service['manageQuery'](queryPromise, destroyedRef);

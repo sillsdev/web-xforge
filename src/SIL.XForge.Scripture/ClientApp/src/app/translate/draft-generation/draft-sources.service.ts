@@ -10,21 +10,8 @@ import { environment } from '../../../environments/environment';
 import { hasStringProp } from '../../../type-utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
+import { DraftSource, DraftSourcesAsArrays } from './draft-source';
 import { projectToDraftSources } from './draft-utils';
-
-interface DraftTextInfo {
-  bookNum: number;
-}
-export interface DraftSource extends TranslateSource {
-  texts: DraftTextInfo[];
-  noAccess?: boolean;
-}
-
-export interface DraftSourcesAsArrays {
-  trainingSources: DraftSource[];
-  trainingTargets: DraftSource[];
-  draftingSources: DraftSource[];
-}
 
 @Injectable({
   providedIn: 'root'

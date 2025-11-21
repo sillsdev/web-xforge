@@ -130,34 +130,27 @@ describe('NoteDialogComponent', () => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
 
     // To do
-    expect(env.notes[0].nativeElement.querySelector('img').getAttribute('src'))
-      .withContext('[n0] to do - src')
-      .toEqual('/assets/icons/TagIcons/flag01.png');
-    expect(env.notes[0].nativeElement.querySelector('img').getAttribute('ng-reflect-message'))
-      .withContext('[n0] to do - title')
-      .toEqual('To do');
+    const note0Img = env.notes[0].nativeElement.querySelector('img');
+    expect(note0Img.getAttribute('src')).withContext('[n0] to do - src').toEqual('/assets/icons/TagIcons/flag01.png');
+    expect(env.getTooltipText(note0Img)).withContext('[n0] to do - title').toEqual('To do');
 
     // Resolved
-    expect(env.notes[1].nativeElement.querySelector('img').getAttribute('src'))
+    const note1Img = env.notes[1].nativeElement.querySelector('img');
+    expect(note1Img.getAttribute('src'))
       .withContext('[n1] resolved - src')
       .toEqual('/assets/icons/TagIcons/flag05.png');
-    expect(env.notes[1].nativeElement.querySelector('img').getAttribute('ng-reflect-message'))
-      .withContext('[n1] resolved - title')
-      .toEqual('Resolved');
-    expect(env.notes[3].nativeElement.querySelector('img').getAttribute('src'))
+    expect(env.getTooltipText(note1Img)).withContext('[n1] resolved - title').toEqual('Resolved');
+
+    const note3Img = env.notes[3].nativeElement.querySelector('img');
+    expect(note3Img.getAttribute('src'))
       .withContext('[n3] resolved - src')
       .toEqual('/assets/icons/TagIcons/flag05.png');
-    expect(env.notes[3].nativeElement.querySelector('img').getAttribute('ng-reflect-message'))
-      .withContext('[n3] resolved - title')
-      .toEqual('Resolved');
+    expect(env.getTooltipText(note3Img)).withContext('[n3] resolved - title').toEqual('Resolved');
 
     // Blank/unspecified
-    expect(env.notes[2].nativeElement.querySelector('img').getAttribute('src'))
-      .withContext('[n2] blank - src')
-      .toEqual('');
-    expect(env.notes[2].nativeElement.querySelector('img').getAttribute('ng-reflect-message'))
-      .withContext('[n2] blank - title')
-      .toEqual('');
+    const note2Img = env.notes[2].nativeElement.querySelector('img');
+    expect(note2Img.getAttribute('src')).withContext('[n2] blank - src').toEqual('');
+    expect(env.getTooltipText(note2Img)).withContext('[n2] blank - title').toEqual('');
   }));
 
   it('should show notes for reattachment', fakeAsync(() => {
@@ -166,10 +159,13 @@ describe('NoteDialogComponent', () => {
     const verseText = 'before selection reattached text after selection';
     const expectedSrc = '/assets/icons/TagIcons/ReattachNote.png';
     const reattachNote = env.notes[4].nativeElement as HTMLElement;
+    const img = reattachNote.querySelector('img');
+
     expect(reattachNote.querySelector('.content .text')!.textContent).toContain(verseText);
     expect(reattachNote.querySelector('.content .verse-reattached')!.textContent).toContain('Matthew 1:4');
-    expect(reattachNote.querySelector('img')?.getAttribute('src')).toEqual(expectedSrc);
-    expect(reattachNote.querySelector('img')?.getAttribute('ng-reflect-message')).toEqual('Note reattached');
+    expect(img).toBeTruthy();
+    expect(img!.getAttribute('src')).toEqual(expectedSrc);
+    expect(env.getTooltipText(img!)).withContext('[n2] blank - title').toEqual('Note reattached');
   }));
 
   it('reattached note with content', fakeAsync(() => {
@@ -184,7 +180,7 @@ describe('NoteDialogComponent', () => {
     expect(reattachNote.querySelector('.content .verse-reattached')!.textContent).toContain('Matthew 1:4');
     expect(reattachNote.querySelector('.content .note-content')!.textContent).toContain(reattachedContent);
     expect(reattachNote.querySelector('img')?.getAttribute('src')).toEqual(expectedSrc);
-    expect(reattachNote.querySelector('img')?.getAttribute('ng-reflect-message')).toEqual('To do');
+    expect(env.component.notesToDisplay[4].title).toEqual('To do');
 
     // Check note with no status set
     reattachedContent = 'reattached02';
@@ -193,7 +189,7 @@ describe('NoteDialogComponent', () => {
     expect(reattachNote.querySelector('.content .verse-reattached')!.textContent).toContain('Matthew 1:4');
     expect(reattachNote.querySelector('.content .note-content')!.textContent).toContain(reattachedContent);
     expect(reattachNote.querySelector('img')?.getAttribute('src')).toEqual(expectedSrc);
-    expect(reattachNote.querySelector('img')?.getAttribute('ng-reflect-message')).toEqual('Note reattached');
+    expect(env.component.notesToDisplay[5].title).toEqual('Note reattached');
   }));
 
   it('invalid reattached note', fakeAsync(() => {
@@ -209,7 +205,7 @@ describe('NoteDialogComponent', () => {
     expect(reattachNote.querySelector('.content .verse-reattached')?.textContent).toBeUndefined();
     expect(reattachNote.querySelector('.content .note-content')!.textContent).toContain(reattachedContent);
     expect(reattachNote.querySelector('img')?.getAttribute('src')).toEqual(expectedSrc);
-    expect(reattachNote.querySelector('img')?.getAttribute('ng-reflect-message')).toEqual('To do');
+    expect(env.component.notesToDisplay[4].title).toEqual('To do');
 
     // Check note with no status set
     reattachedContent = 'reattached02';
@@ -218,7 +214,7 @@ describe('NoteDialogComponent', () => {
     expect(reattachNote.querySelector('.content .verse-reattached')?.textContent).toBeUndefined();
     expect(reattachNote.querySelector('.content .note-content')?.textContent).toContain(reattachedContent);
     expect(reattachNote.querySelector('img')?.getAttribute('src')).toEqual(expectedSrc);
-    expect(reattachNote.querySelector('img')?.getAttribute('ng-reflect-message')).toEqual('Note reattached');
+    expect(env.component.notesToDisplay[5].title).toEqual('Note reattached');
   }));
 
   it('shows assigned user', fakeAsync(() => {
@@ -1175,5 +1171,16 @@ class TestEnvironment {
     this.component.toggleSegmentText();
     tick();
     this.fixture.detectChanges();
+  }
+
+  getTooltipText(imgElement: HTMLImageElement): string {
+    const describedById = imgElement.getAttribute('aria-describedby');
+
+    if (describedById == null) {
+      return '';
+    }
+
+    const tooltipElement = document.getElementById(describedById);
+    return tooltipElement?.textContent?.trim() ?? '';
   }
 }

@@ -97,11 +97,13 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
       .then(query => {
         this._firstUnansweredQuestion = query;
         merge(query.ready$, query.localChanges$, query.remoteChanges$, query.remoteDocChanges$)
-          .pipe(quietTakeUntilDestroyed(this.destroyRef))
+          .pipe(
+            quietTakeUntilDestroyed(this.destroyRef),
+            finalize(() => query.dispose())
+          )
           .subscribe(() => {
             this.changeDetector.markForCheck();
-          }),
-          finalize(() => query.dispose());
+          });
       });
   }
 

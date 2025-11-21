@@ -165,7 +165,9 @@ describe('CheckingQuestionComponent', () => {
     await env.wait();
     env.component.question.playScripture();
 
-    await env.wait(3000); //wait for the audio to finish playing
+    // Manually trigger the audio completion
+    env.scriptureAudio.componentInstance.hasFinishedPlayingOnce$.next(true);
+    await env.wait();
     expect(env.component.question.focusedText).toBe('question-audio-label');
 
     env.component.question.selectScripture();
@@ -199,7 +201,10 @@ describe('CheckingQuestionComponent', () => {
     await env.wait();
     await env.wait();
     env.component.question.playScripture();
-    await env.wait(3000); //wait for the audio to finish playing
+
+    // Manually trigger the audio completion
+    env.scriptureAudio.componentInstance.hasFinishedPlayingOnce$.next(true);
+    await env.wait();
     expect(env.component.question.focusedText).toBe('question-audio-label');
 
     env.component.question.selectScripture();

@@ -25,7 +25,7 @@ mat-button-toggle-group
   + mat-button-toggle
   ::ng-deep
   .mat-button-toggle-focus-overlay {
-  opacity: var(--mat-standard-button-toggle-hover-state-layer-opacity);
+  opacity: var(--mat-button-toggle-hover-state-layer-opacity);
 }
 
 .book-more ::ng-deep mat-icon {

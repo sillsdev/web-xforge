@@ -2,7 +2,7 @@ import { Injectable, Injector } from '@angular/core';
 import { Translation, TranslocoInterceptor, TranslocoService } from '@ngneat/transloco';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
-import { LEFT_TO_RIGHT_EMBEDDING, POP_DIRECTIONAL_FORMATTING } from './utils';
+import { LEFT_TO_RIGHT_EMBEDDING, POP_DIRECTIONAL_FORMATTING } from './verse-utils';
 
 /**
  * TranslocoInterceptor to handle bidirectional text for LTR fallbacks in RTL contexts.

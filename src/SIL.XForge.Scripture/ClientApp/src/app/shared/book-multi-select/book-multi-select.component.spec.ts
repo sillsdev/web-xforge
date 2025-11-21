@@ -3,8 +3,8 @@ import { of } from 'rxjs';
 import { mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
-import { Book } from '../../translate/draft-generation/draft-generation-steps/draft-generation-steps.component';
 import { ProgressService, TextProgress } from '../progress-service/progress.service';
+import { Book } from './book-multi-select';
 import { BookMultiSelectComponent } from './book-multi-select.component';
 
 const mockedProgressService = mock(ProgressService);

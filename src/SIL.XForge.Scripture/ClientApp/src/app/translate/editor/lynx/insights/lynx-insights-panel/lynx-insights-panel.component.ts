@@ -28,7 +28,7 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { isWhitespace } from 'xforge-common/util/string-util';
 import { SFProjectService } from '../../../../../core/sf-project.service';
 import { rangeComparer } from '../../../../../shared/text/quill-util';
-import { combineVerseRefStrs, getVerseRefFromSegmentRef } from '../../../../../shared/utils';
+import { combineVerseRefStrs, getVerseRefFromSegmentRef } from '../../../../../shared/verse-utils';
 import { EditorSegmentService } from '../base-services/editor-segment.service';
 import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightConfig, LynxInsightRange } from '../lynx-insight';
 import { LynxInsightStateService } from '../lynx-insight-state.service';

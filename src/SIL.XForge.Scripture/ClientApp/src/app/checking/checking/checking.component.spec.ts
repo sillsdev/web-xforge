@@ -15,6 +15,7 @@ import { Canon, VerseRef } from '@sillsdev/scripture';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
 import { clone, cloneDeep } from 'lodash-es';
+import { QuillService } from 'ngx-quill';
 import { Delta } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
@@ -35,7 +36,7 @@ import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-au
 import { getTextDocId, TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { fromVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
-import { BehaviorSubject, of, Subject } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, of, Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { anyString, anything, instance, mock, reset, resetCalls, spy, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -173,6 +174,12 @@ describe('CheckingComponent', () => {
       provideNoopAnimations()
     ]
   }));
+
+  beforeEach(async () => {
+    // Pre-load Quill before each test to avoid async Quill import issues
+    const quillService = TestBed.inject(QuillService);
+    await firstValueFrom(quillService.getQuill());
+  });
 
   describe('Interface', () => {
     it('should display books in canonical order', fakeAsync(() => {

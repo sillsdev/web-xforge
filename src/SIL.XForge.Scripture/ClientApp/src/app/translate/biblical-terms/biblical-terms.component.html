@@ -44,18 +44,20 @@
             <mat-form-field class="biblical-terms-select" appearance="outline" subscriptSizing="dynamic">
               <mat-label>{{ t("show") }}</mat-label>
               <mat-select panelWidth="''" [(ngModel)]="selectedRangeFilter">
-                <mat-option *ngFor="let rangeFilter of rangeFilters" [value]="rangeFilter">
-                  {{ t(rangeFilter) }}
-                </mat-option>
+                @for (rangeFilter of rangeFilters; track rangeFilter) {
+                  <mat-option [value]="rangeFilter">
+                    {{ t(rangeFilter) }}
+                  </mat-option>
+                }
               </mat-select>
             </mat-form-field>
             <mat-form-field class="biblical-terms-select" appearance="outline" subscriptSizing="dynamic">
               <mat-label>{{ t("category") }}</mat-label>
               <mat-select panelWidth="''" [(ngModel)]="selectedCategory">
                 <mat-option value="show_all">{{ t("all") }}</mat-option>
-                <mat-option *ngFor="let category of categories" [value]="category">{{
-                  category === "" ? t("blank") : category
-                }}</mat-option>
+                @for (category of categories; track category) {
+                  <mat-option [value]="category">{{ category === "" ? t("blank") : category }}</mat-option>
+                }
               </mat-select>
             </mat-form-field>
             <button

@@ -1,5 +1,14 @@
-import { DOCUMENT } from '@angular/common';
-import { Component, DestroyRef, Inject, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  Inject,
+  Input,
+  OnChanges,
+  OnDestroy,
+  OnInit,
+  SimpleChanges,
+  DOCUMENT
+} from '@angular/core';
 import { isEqual } from 'lodash-es';
 import { Delta } from 'quill';
 import {

@@ -26,6 +26,7 @@ import userEvent, { UserEvent } from '@testing-library/user-event';
 import { AngularSplitModule } from 'angular-split';
 import { cloneDeep, merge } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
+import { QuillService } from 'ngx-quill';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import Quill, { Delta, EmitterSource, Range } from 'quill';
 import { User } from 'realtime-server/lib/esm/common/models/user';
@@ -222,6 +223,12 @@ describe('EditorComponent', () => {
       provideNoopAnimations()
     ]
   }));
+
+  beforeEach(async () => {
+    // Pre-load Quill before each test to avoid async Quill import issues
+    const quillService = TestBed.inject(QuillService);
+    await firstValueFrom(quillService.getQuill());
+  });
 
   it('sharing is only enabled for administrators', fakeAsync(() => {
     const env = new TestEnvironment();

@@ -3,6 +3,7 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { VerseRef } from '@sillsdev/scripture';
 import { CookieService } from 'ngx-cookie-service';
+import { QuillService } from 'ngx-quill';
 import { Delta } from 'quill';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -42,6 +43,12 @@ describe('TextChooserDialogComponent', () => {
       provideNoopAnimations()
     ]
   }));
+
+  beforeEach(async () => {
+    // Pre-load Quill before each test to avoid async Quill import issues
+    const quillService = TestBed.inject(QuillService);
+    await firstValueFrom(quillService.getQuill());
+  });
 
   it('allows switching chapters', fakeAsync(() => {
     const env = new TestEnvironment();

@@ -64,7 +64,7 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
 }
 
 .mdc-snackbar.snackbar-error {
-  --mdc-snackbar-container-color: #{variables.$errorColor};
+  --mat-snackbar-container-color: #{variables.$errorColor};
 }
 
 .mdc-button.mat-mdc-unelevated-button,
@@ -95,7 +95,7 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
 }
 
 .mat-mdc-checkbox {
-  --mdc-checkbox-unselected-focus-state-layer-opacity: 0.08;
+  --mat-checkbox-unselected-focus-state-layer-opacity: 0.08;
 }
 
 // Make checkbox labels inherit parent element's font-weight e.g. if within a table heading

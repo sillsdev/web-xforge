@@ -47,13 +47,15 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { Book } from '../../../shared/book-multi-select/book-multi-select';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
 import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
-import { DraftSource, DraftSourcesService } from '../draft-sources.service';
+import { DraftSource } from '../draft-source';
+import { DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataService } from '../training-data/training-data.service';
 
 // We consider books with more than 10 translated segments as translated
@@ -66,11 +68,6 @@ export interface DraftGenerationStepsResult {
   fastTraining: boolean;
   useEcho: boolean;
   sendEmailOnBuildFinished: boolean;
-}
-
-export interface Book {
-  number: number;
-  selected: boolean;
 }
 
 export interface TrainingBook extends Book, TrainingPair {}
