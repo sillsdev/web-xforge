@@ -27,7 +27,7 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
     map(
       projectDoc =>
         projectDoc?.data != null &&
-        SFProjectService.hasDraft(projectDoc.data) &&
+        this.projectService.hasDraft(projectDoc.data) &&
         this.permissionsService.canAccessDrafts(projectDoc, this.userService.currentUserId)
     ),
     distinctUntilChanged()
@@ -57,7 +57,8 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
     private readonly permissionsService: PermissionsService,
     private readonly i18n: I18nService,
     private readonly draftOptionsService: DraftOptionsService,
-    private readonly draftGenerationService: DraftGenerationService
+    private readonly draftGenerationService: DraftGenerationService,
+    private readonly projectService: SFProjectService
   ) {}
 
   getMenuItems(): Observable<TabMenuItem[]> {

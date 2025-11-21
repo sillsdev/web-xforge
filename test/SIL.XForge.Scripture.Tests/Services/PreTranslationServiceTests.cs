@@ -7,9 +7,7 @@ using NSubstitute.Extensions;
 using NUnit.Framework;
 using Serval.Client;
 using SIL.XForge.DataAccess;
-using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
-using SIL.XForge.Scripture.Realtime;
 using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services;
@@ -611,149 +609,6 @@ public class PreTranslationServiceTests
         Assert.IsEmpty(usfm);
     }
 
-    [Test]
-    public void UpdatePreTranslationStatusAsync_ThrowsExceptionWhenProjectMissing()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.UpdatePreTranslationStatusAsync("invalid_project_id", CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public async Task UpdatePreTranslationStatusAsync_NoDrafts()
-    {
-        // Set up test environment
-        var env = new TestEnvironment(new TestEnvironmentOptions { MockPreTranslationParameters = true });
-
-        env.TranslationEnginesClient.GetAllPretranslationsAsync(
-                TranslationEngine01,
-                Corpus01,
-                textId: null,
-                CancellationToken.None
-            )
-            .Returns(Task.FromResult<IList<Pretranslation>>([]));
-
-        // SUT
-        await env.Service.UpdatePreTranslationStatusAsync(Project01, CancellationToken.None);
-        var project = env.RealtimeService.GetRepository<SFProject>().Get(Project01);
-
-        // Validate HasDraft status for Matthew
-        Assert.AreEqual(40, project.Texts[0].BookNum);
-        Assert.AreEqual(1, project.Texts[0].Chapters[0].Number);
-        Assert.IsFalse(project.Texts[0].Chapters[0].HasDraft);
-        Assert.AreEqual(2, project.Texts[0].Chapters[1].Number);
-        Assert.IsFalse(project.Texts[0].Chapters[1].HasDraft);
-        Assert.AreEqual(3, project.Texts[0].Chapters[2].Number);
-        Assert.IsFalse(project.Texts[0].Chapters[2].HasDraft);
-
-        // Validate HasDraft status for Mark
-        Assert.AreEqual(41, project.Texts[1].BookNum);
-        Assert.AreEqual(1, project.Texts[1].Chapters[0].Number);
-        Assert.IsFalse(project.Texts[1].Chapters[0].HasDraft);
-        Assert.AreEqual(2, project.Texts[1].Chapters[1].Number);
-        Assert.IsFalse(project.Texts[1].Chapters[1].HasDraft);
-        Assert.AreEqual(3, project.Texts[1].Chapters[2].Number);
-        Assert.IsFalse(project.Texts[1].Chapters[2].HasDraft);
-    }
-
-    [Test]
-    public async Task UpdatePreTranslationStatusAsync_Paratext()
-    {
-        // Set up test environment
-        var env = new TestEnvironment(
-            new TestEnvironmentOptions { MockPreTranslationParameters = true, UseParatextZipFile = true }
-        );
-
-        env.TranslationEnginesClient.GetAllPretranslationsAsync(
-                TranslationEngine01,
-                Corpus01,
-                textId: null,
-                CancellationToken.None
-            )
-            .Returns(
-                Task.FromResult<IList<Pretranslation>>(
-                    [
-                        new Pretranslation { TextId = "MAT", Refs = ["MAT 1:1"] },
-                        new Pretranslation { TextId = "MRK", Refs = ["MRK 1:1"] },
-                        new Pretranslation { TextId = "MRK", Refs = ["MRK 1:2"] },
-                        new Pretranslation { TextId = "MRK", Refs = ["MRK 2:1/3:h"] },
-                    ]
-                )
-            );
-
-        // SUT
-        await env.Service.UpdatePreTranslationStatusAsync(Project01, CancellationToken.None);
-        var project = env.RealtimeService.GetRepository<SFProject>().Get(Project01);
-
-        // Validate HasDraft status for Matthew
-        Assert.AreEqual(40, project.Texts[0].BookNum);
-        Assert.AreEqual(1, project.Texts[0].Chapters[0].Number);
-        Assert.IsTrue(project.Texts[0].Chapters[0].HasDraft);
-        Assert.AreEqual(2, project.Texts[0].Chapters[1].Number);
-        Assert.IsFalse(project.Texts[0].Chapters[1].HasDraft);
-        Assert.AreEqual(3, project.Texts[0].Chapters[2].Number);
-        Assert.IsFalse(project.Texts[0].Chapters[2].HasDraft);
-
-        // Validate HasDraft status for Mark
-        Assert.AreEqual(41, project.Texts[1].BookNum);
-        Assert.AreEqual(1, project.Texts[1].Chapters[0].Number);
-        Assert.IsTrue(project.Texts[1].Chapters[0].HasDraft);
-        Assert.AreEqual(2, project.Texts[1].Chapters[1].Number);
-        Assert.IsTrue(project.Texts[1].Chapters[1].HasDraft);
-        Assert.AreEqual(3, project.Texts[1].Chapters[2].Number);
-        Assert.IsFalse(project.Texts[1].Chapters[2].HasDraft);
-    }
-
-    [Test]
-    public async Task UpdatePreTranslationStatusAsync_Text()
-    {
-        // Set up test environment
-        var env = new TestEnvironment(new TestEnvironmentOptions { MockPreTranslationParameters = true });
-
-        env.TranslationEnginesClient.GetAllPretranslationsAsync(
-                TranslationEngine01,
-                Corpus01,
-                textId: null,
-                CancellationToken.None
-            )
-            .Returns(
-                Task.FromResult<IList<Pretranslation>>(
-                    [
-                        new Pretranslation { TextId = "40_1" },
-                        new Pretranslation { TextId = "41_1" },
-                        new Pretranslation { TextId = "41_1" },
-                        new Pretranslation { TextId = "41_2" },
-                    ]
-                )
-            );
-
-        // SUT
-        await env.Service.UpdatePreTranslationStatusAsync(Project01, CancellationToken.None);
-        var project = env.RealtimeService.GetRepository<SFProject>().Get(Project01);
-
-        // Validate HasDraft status for Matthew
-        Assert.AreEqual(40, project.Texts[0].BookNum);
-        Assert.AreEqual(1, project.Texts[0].Chapters[0].Number);
-        Assert.IsTrue(project.Texts[0].Chapters[0].HasDraft);
-        Assert.AreEqual(2, project.Texts[0].Chapters[1].Number);
-        Assert.IsFalse(project.Texts[0].Chapters[1].HasDraft);
-        Assert.AreEqual(3, project.Texts[0].Chapters[2].Number);
-        Assert.IsFalse(project.Texts[0].Chapters[2].HasDraft);
-
-        // Validate HasDraft status for Mark
-        Assert.AreEqual(41, project.Texts[1].BookNum);
-        Assert.AreEqual(1, project.Texts[1].Chapters[0].Number);
-        Assert.IsTrue(project.Texts[1].Chapters[0].HasDraft);
-        Assert.AreEqual(2, project.Texts[1].Chapters[1].Number);
-        Assert.IsTrue(project.Texts[1].Chapters[1].HasDraft);
-        Assert.AreEqual(3, project.Texts[1].Chapters[2].Number);
-        Assert.IsFalse(project.Texts[1].Chapters[2].HasDraft);
-    }
-
     private class TestEnvironmentOptions
     {
         public bool MockPreTranslationParameters { get; init; }
@@ -771,39 +626,6 @@ public class PreTranslationServiceTests
         {
             options ??= new TestEnvironmentOptions();
             ProjectSecrets = new MemoryRepository<SFProjectSecret>([new SFProjectSecret { Id = Project01 }]);
-
-            RealtimeService = new SFMemoryRealtimeService();
-            SFProject[] sfProjects =
-            [
-                new SFProject
-                {
-                    Id = Project01,
-                    Texts =
-                    [
-                        new TextInfo
-                        {
-                            BookNum = 40,
-                            Chapters =
-                            [
-                                new Chapter { Number = 1, HasDraft = true },
-                                new Chapter { Number = 2, HasDraft = false },
-                                new Chapter { Number = 3, HasDraft = true },
-                            ],
-                        },
-                        new TextInfo
-                        {
-                            BookNum = 41,
-                            Chapters =
-                            [
-                                new Chapter { Number = 1, HasDraft = false },
-                                new Chapter { Number = 2, HasDraft = null },
-                                new Chapter { Number = 3, HasDraft = null },
-                            ],
-                        },
-                    ],
-                },
-            ];
-            RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(sfProjects));
             TranslationEnginesClient = Substitute.For<ITranslationEnginesClient>();
             TranslationEnginesClient
                 .GetPretranslatedUsfmAsync(
@@ -819,11 +641,7 @@ public class PreTranslationServiceTests
                     cancellationToken: CancellationToken.None
                 )
                 .Returns(MatthewBookUsfm);
-            Service = Substitute.ForPartsOf<PreTranslationService>(
-                ProjectSecrets,
-                RealtimeService,
-                TranslationEnginesClient
-            );
+            Service = Substitute.ForPartsOf<PreTranslationService>(ProjectSecrets, TranslationEnginesClient);
             if (options.MockPreTranslationParameters)
             {
                 Service
@@ -838,7 +656,6 @@ public class PreTranslationServiceTests
         }
 
         private MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
-        public SFMemoryRealtimeService RealtimeService { get; }
         public PreTranslationService Service { get; }
         public ITranslationEnginesClient TranslationEnginesClient { get; }
 

@@ -4135,6 +4135,7 @@ describe('EditorComponent', () => {
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
+        when(mockedSFProjectService.hasDraft(anything(), anything())).thenReturn(true);
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
@@ -4153,6 +4154,7 @@ describe('EditorComponent', () => {
           Object.defineProperty(env.component, 'showSource', { get: () => false });
         });
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
+        when(mockedSFProjectService.hasDraft(anything(), anything())).thenReturn(true);
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
@@ -4191,6 +4193,7 @@ describe('EditorComponent', () => {
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
+        when(mockedSFProjectService.hasDraft(anything(), anything())).thenReturn(true);
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
 
@@ -4198,6 +4201,7 @@ describe('EditorComponent', () => {
         expect(sourceTabGroup?.tabs[1].type).toEqual('draft');
         expect(env.component.chapter).toBe(1);
 
+        when(mockedSFProjectService.hasDraft(anything(), anything())).thenReturn(false);
         env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
         env.wait();
 
@@ -4227,6 +4231,7 @@ describe('EditorComponent', () => {
           Object.defineProperty(env.component, 'showSource', { get: () => false });
         });
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
+        when(mockedSFProjectService.hasDraft(anything(), anything())).thenReturn(true);
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
 
@@ -4234,6 +4239,7 @@ describe('EditorComponent', () => {
         expect(targetTabGroup?.tabs[1].type).toEqual('draft');
         expect(env.component.chapter).toBe(1);
 
+        when(mockedSFProjectService.hasDraft(anything(), anything())).thenReturn(false);
         env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
         env.wait();
 
@@ -4276,6 +4282,7 @@ describe('EditorComponent', () => {
       it('should not select the draft tab if url query param is not set', fakeAsync(() => {
         const env = new TestEnvironment();
         when(mockedActivatedRoute.snapshot).thenReturn({ queryParams: {} } as any);
+        when(mockedSFProjectService.hasDraft(anything(), anything())).thenReturn(true);
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
@@ -4773,8 +4780,7 @@ class TestEnvironment {
             number: 1,
             lastVerse: 3,
             isValid: true,
-            permissions: this.textInfoPermissions,
-            hasDraft: true
+            permissions: this.textInfoPermissions
           },
           {
             number: 2,
@@ -4784,15 +4790,13 @@ class TestEnvironment {
               user01: TextInfoPermission.Write,
               user02: TextInfoPermission.None,
               user03: TextInfoPermission.Write
-            },
-            hasDraft: false
+            }
           },
           {
             number: 3,
             lastVerse: 3,
             isValid: true,
-            permissions: this.textInfoPermissions,
-            hasDraft: false
+            permissions: this.textInfoPermissions
           }
         ],
         hasSource: false,

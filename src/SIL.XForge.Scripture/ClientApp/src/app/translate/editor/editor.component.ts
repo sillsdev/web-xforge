@@ -1540,7 +1540,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private async updateDraftTabVisibility(): Promise<void> {
     const chapter: Chapter | undefined = this.text?.chapters.find(c => c.number === this.chapter);
-    const hasDraft: boolean = chapter?.hasDraft ?? false;
+    const hasDraft: boolean = this.projectService.hasDraft(this.projectDoc?.data, this.bookNum);
     const draftApplied: boolean = chapter?.draftApplied ?? false;
     const existingDraftTab: { groupId: EditorTabGroupType; index: number } | undefined =
       this.tabState.getFirstTabOfTypeIndex('draft');

@@ -312,7 +312,7 @@ public class ParatextServiceTests
         // 1: Pre-translation enabled and a draft is present
         SFProject project1 = env.NewSFProject(env.Project01);
         project1.TranslateConfig.PreTranslate = true;
-        project1.Texts[0].Chapters[0].HasDraft = true;
+        project1.TranslateConfig.DraftConfig.DraftedScriptureRange = "MAT";
 
         // 2: Pre-translation enabled and no draft is present
         SFProject project2 = env.NewSFProject(env.Project02);

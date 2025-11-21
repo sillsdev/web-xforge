@@ -411,29 +411,19 @@ class TestEnvironment {
         {
           bookNum: 1,
           hasSource: true,
-          chapters: [
-            { number: 1, hasDraft: true },
-            { number: 2, hasDraft: true },
-            { number: 3, hasDraft: true }
-          ],
+          chapters: [{ number: 1 }, { number: 2 }, { number: 3 }],
           permissions: { user01: TextInfoPermission.Write }
         },
         {
           bookNum: 2,
           hasSource: true,
-          chapters: [
-            { number: 1, hasDraft: true },
-            { number: 2, hasDraft: false }
-          ],
+          chapters: [{ number: 1 }, { number: 2 }],
           permissions: { user01: TextInfoPermission.Write }
         },
         {
           bookNum: 3,
           hasSource: true,
-          chapters: [
-            { number: 1, hasDraft: true },
-            { number: 2, hasDraft: true }
-          ],
+          chapters: [{ number: 1 }, { number: 2 }],
           permissions: { user01: TextInfoPermission.Read }
         }
       ],
@@ -458,6 +448,7 @@ class TestEnvironment {
     ).thenResolve();
     when(mockedActivatedProjectService.projectId).thenReturn('project01');
     when(mockedUserService.currentUserId).thenReturn('user01');
+    when(mockedProjectService.hasDraft(anything(), anything())).thenReturn(true);
     when(mockedProjectService.getProfile(anything())).thenResolve(this.mockProjectDoc);
     this.fixture = TestBed.createComponent(DraftPreviewBooksComponent);
     this.component = this.fixture.componentInstance;

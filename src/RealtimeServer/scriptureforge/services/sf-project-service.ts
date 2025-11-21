@@ -269,6 +269,12 @@ export class SFProjectService extends ProjectService<SFProject> {
               },
               sendEmailOnBuildFinished: {
                 bsonType: 'bool'
+              },
+              currentScriptureRange: {
+                bsonType: 'string'
+              },
+              draftedScriptureRange: {
+                bsonType: 'string'
               }
             },
             additionalProperties: false

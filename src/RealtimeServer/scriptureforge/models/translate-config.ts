@@ -69,6 +69,8 @@ export interface DraftConfig {
   servalConfig?: string;
   usfmConfig?: DraftUsfmConfig;
   sendEmailOnBuildFinished?: boolean;
+  currentScriptureRange?: string;
+  draftedScriptureRange?: string;
 }
 
 export interface TranslateConfig {

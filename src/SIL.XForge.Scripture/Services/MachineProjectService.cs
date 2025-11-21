@@ -637,6 +637,9 @@ public class MachineProjectService(
             cancellationToken
         );
 
+        // Clear the current scripture range, as the corpora will be replaced, clearing the draft on Serval
+        await projectDoc.SubmitJson0OpAsync(u => u.Unset(p => p.TranslateConfig.DraftConfig.CurrentScriptureRange));
+
         // Perform the file and corpora sync with Serval
         IList<ServalCorpusSyncInfo> corporaSyncInfo = await SyncProjectCorporaAsync(
             curUserId,

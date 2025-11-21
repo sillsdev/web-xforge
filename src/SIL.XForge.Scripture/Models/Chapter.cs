@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace SIL.XForge.Scripture.Models;
@@ -22,6 +23,8 @@ public class Chapter
     public bool IsValid { get; set; }
     public Dictionary<string, string> Permissions { get; set; } = [];
     public bool? HasAudio { get; set; }
+
+    [Obsolete("Use DraftedScriptureRange instead.")]
     public bool? HasDraft { get; set; }
     public bool? DraftApplied { get; set; }
 }

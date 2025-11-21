@@ -27,6 +27,7 @@ import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/te
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { Revision } from '../../../core/paratext.service';
+import { SFProjectService } from '../../../core/sf-project.service';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { BuildStates } from '../../../machine-api/build-states';
 import { provideQuillRegistrations } from '../../../shared/text/quill-editor-registration/quill-providers';
@@ -45,6 +46,7 @@ const mockDialogService = mock(DialogService);
 const mockNoticeService = mock(NoticeService);
 const mockErrorReportingService = mock(ErrorReportingService);
 const mockFeatureFlagService = mock(FeatureFlagService);
+const mockSFProjectService = mock(SFProjectService);
 
 describe('EditorDraftComponent', () => {
   let fixture: ComponentFixture<EditorDraftComponent>;
@@ -76,6 +78,7 @@ describe('EditorDraftComponent', () => {
       { provide: NoticeService, useMock: mockNoticeService },
       { provide: ErrorReportingService, useMock: mockErrorReportingService },
       { provide: FeatureFlagService, useMock: mockFeatureFlagService },
+      { provide: SFProjectService, useMock: mockSFProjectService },
       provideNoopAnimations()
     ]
   }));
@@ -92,6 +95,7 @@ describe('EditorDraftComponent', () => {
       of({ state: BuildStates.Completed } as BuildDto)
     );
     when(mockDraftHandlingService.opsHaveContent(anything())).thenReturn(true);
+    when(mockSFProjectService.hasDraft(anything(), anything())).thenReturn(true);
 
     fixture = TestBed.createComponent(EditorDraftComponent);
     component = fixture.componentInstance;
@@ -376,7 +380,7 @@ describe('EditorDraftComponent', () => {
           texts: [
             {
               bookNum: 1,
-              chapters: [{ number: 1, permissions: { user01: SFProjectRole.ParatextAdministrator }, hasDraft: true }]
+              chapters: [{ number: 1, permissions: { user01: SFProjectRole.ParatextAdministrator } }]
             }
           ],
           translateConfig: {
@@ -545,7 +549,7 @@ describe('EditorDraftComponent', () => {
           texts: [
             {
               bookNum: 1,
-              chapters: [{ number: 1, permissions: { user01: SFProjectRole.ParatextAdministrator }, hasDraft: true }]
+              chapters: [{ number: 1, permissions: { user01: SFProjectRole.ParatextAdministrator } }]
             }
           ]
         })
@@ -571,7 +575,7 @@ describe('EditorDraftComponent', () => {
           texts: [
             {
               bookNum: 1,
-              chapters: [{ number: 1, permissions: { user01: SFProjectRole.ParatextAdministrator }, hasDraft: true }]
+              chapters: [{ number: 1, permissions: { user01: SFProjectRole.ParatextAdministrator } }]
             }
           ]
         })
@@ -603,7 +607,7 @@ describe('EditorDraftComponent', () => {
           texts: [
             {
               bookNum: 1,
-              chapters: [{ number: 1, permissions: { user01: SFProjectRole.ParatextAdministrator }, hasDraft: false }]
+              chapters: [{ number: 1, permissions: { user01: SFProjectRole.ParatextAdministrator } }]
             }
           ]
         })
@@ -611,6 +615,7 @@ describe('EditorDraftComponent', () => {
       when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(false));
       when(mockActivatedProjectService.projectDoc$).thenReturn(of(testProjectDoc));
       when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+      when(mockSFProjectService.hasDraft(anything(), anything())).thenReturn(false);
 
       when(mockDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(
         of({ state: BuildStates.Completed } as BuildDto)
@@ -629,7 +634,7 @@ describe('EditorDraftComponent', () => {
           texts: [
             {
               bookNum: 1,
-              chapters: [{ number: 1, permissions: { user01: SFProjectRole.ParatextAdministrator }, hasDraft: true }]
+              chapters: [{ number: 1, permissions: { user01: SFProjectRole.ParatextAdministrator } }]
             }
           ]
         })

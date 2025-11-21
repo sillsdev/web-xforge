@@ -1052,6 +1052,123 @@ describe('SFProjectMigrations', () => {
       expect(projectDoc.data.translateConfig.draftConfig.additionalTrainingSourceEnabled).toBeUndefined();
     });
   });
+
+  describe('version 28', () => {
+    it('adds currentScriptureRange to draftConfig', async () => {
+      const env = new TestEnvironment(27);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { draftConfig: {} },
+        texts: [
+          { bookNum: 1, chapters: [{ hasDraft: true }] },
+          { bookNum: 2, chapters: [{ hasDraft: false }] },
+          { bookNum: 3, chapters: [{ hasDraft: true }] },
+          { bookNum: 0, chapters: [{ hasDraft: true }] }
+        ]
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.currentScriptureRange).not.toBeDefined();
+      expect(projectDoc.data.translateConfig.draftConfig.draftedScriptureRange).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.currentScriptureRange).toBe('GEN;LEV');
+      expect(projectDoc.data.translateConfig.draftConfig.draftedScriptureRange).toBe('GEN;LEV');
+    });
+
+    it('does not add currentScriptureRange to draftConfig if it exists', async () => {
+      const env = new TestEnvironment(27);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { draftConfig: { currentScriptureRange: 'NUM;DEU' } },
+        texts: [
+          { bookNum: 1, chapters: [{ hasDraft: true }] },
+          { bookNum: 2, chapters: [{ hasDraft: false }] },
+          { bookNum: 3, chapters: [{ hasDraft: true }] },
+          { bookNum: 0, chapters: [{ hasDraft: true }] }
+        ]
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.currentScriptureRange).toBe('NUM;DEU');
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.currentScriptureRange).toBe('NUM;DEU');
+    });
+
+    it('does not add draftedScriptureRange to draftConfig if it exists', async () => {
+      const env = new TestEnvironment(27);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { draftConfig: { draftedScriptureRange: 'NUM;DEU' } },
+        texts: [
+          { bookNum: 1, chapters: [{ hasDraft: true }] },
+          { bookNum: 2, chapters: [{ hasDraft: false }] },
+          { bookNum: 3, chapters: [{ hasDraft: true }] },
+          { bookNum: 0, chapters: [{ hasDraft: true }] }
+        ]
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.currentScriptureRange).not.toBeDefined();
+      expect(projectDoc.data.translateConfig.draftConfig.draftedScriptureRange).toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.currentScriptureRange).toBe('GEN;LEV');
+      expect(projectDoc.data.translateConfig.draftConfig.draftedScriptureRange).toBe('NUM;DEU');
+    });
+
+    it('does not add currentScriptureRange to draftConfig if no drafted chapters', async () => {
+      const env = new TestEnvironment(27);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { draftConfig: {} },
+        texts: [
+          { bookNum: 1, chapters: [{ hasDraft: false }] },
+          { bookNum: 2, chapters: [{ hasDraft: false }] }
+        ]
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.currentScriptureRange).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.currentScriptureRange).not.toBeDefined();
+    });
+
+    it('does not add currentScriptureRange to draftConfig if there are no texts', async () => {
+      const env = new TestEnvironment(27);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { draftConfig: {} },
+        texts: []
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.currentScriptureRange).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.currentScriptureRange).not.toBeDefined();
+    });
+
+    it('does not add currentScriptureRange to draftConfig if the project is null', async () => {
+      const env = new TestEnvironment(27);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', null);
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data?.translateConfig?.draftConfig?.currentScriptureRange).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data?.translateConfig?.draftConfig?.currentScriptureRange).not.toBeDefined();
+    });
+  });
 });
 
 class TestEnvironment {

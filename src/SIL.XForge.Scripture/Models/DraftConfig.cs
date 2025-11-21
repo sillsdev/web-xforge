@@ -14,4 +14,14 @@ public class DraftConfig
     public string? ServalConfig { get; set; }
     public DraftUsfmConfig? UsfmConfig { get; set; }
     public bool? SendEmailOnBuildFinished { get; set; }
+
+    /// <summary>
+    /// A scripture range containing the books that are in the current draft on Serval.
+    /// </summary>
+    public string? CurrentScriptureRange { get; set; }
+
+    /// <summary>
+    /// A scripture range containing the books that have been drafted and are available in Scripture Forge.
+    /// </summary>
+    public string? DraftedScriptureRange { get; set; }
 }
