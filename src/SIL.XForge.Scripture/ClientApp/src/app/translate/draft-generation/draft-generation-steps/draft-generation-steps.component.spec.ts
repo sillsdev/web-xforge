@@ -1317,7 +1317,8 @@ describe('DraftGenerationStepsComponent', () => {
               { projectId: 'source1', scriptureRange: 'LEV;NUM;DEU;JOS' },
               { projectId: 'source2', scriptureRange: 'DEU;JOS;1SA' }
             ],
-            lastSelectedTranslationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'GEN;EXO' }]
+            lastSelectedTranslationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'GEN;EXO' }],
+            servalConfig: '{ "custom": "value" }'
           }
         }
       })
@@ -1355,6 +1356,10 @@ describe('DraftGenerationStepsComponent', () => {
       expect(trainingGroups[1].ranges.length).toEqual(2);
       expect(trainingGroups[1].ranges[0]).toEqual('Deuteronomy');
       expect(trainingGroups[1].ranges[1]).toEqual('1 Samuel');
+    });
+
+    it('records the custom serval config', () => {
+      expect(component['servalConfig']).toEqual('{ "custom": "value" }');
     });
   });
 
