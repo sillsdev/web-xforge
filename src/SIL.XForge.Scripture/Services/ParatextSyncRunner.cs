@@ -1150,6 +1150,22 @@ public class ParatextSyncRunner : IParatextSyncRunner
         SortedList<int, IDocument<TextData>> textDocs
     )
     {
+        bool hasWritePermission(string userId, Chapter chapter)
+        {
+            // If the user has a chapter permission, use that, otherwise fall back to the book permission
+            if (!text.Permissions.TryGetValue(userId, out string bookPermission))
+            {
+                bookPermission = TextInfoPermission.None;
+            }
+
+            if (!chapter.Permissions.TryGetValue(userId, out string chapterPermission))
+            {
+                chapterPermission = bookPermission;
+            }
+
+            return chapterPermission == TextInfoPermission.Write;
+        }
+
         // Get all of the last editors for the chapters.
         var chapterAuthors = new Dictionary<int, string>();
         foreach (Chapter chapter in text.Chapters)
@@ -1167,11 +1183,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 userSFId = await _realtimeService.GetLastModifiedUserIdAsync<TextData>(textId, version);
 
                 // Check that this user still has write permissions
-                if (
-                    string.IsNullOrEmpty(userSFId)
-                    || !chapter.Permissions.TryGetValue(userSFId, out string permission)
-                    || permission != TextInfoPermission.Write
-                )
+                if (string.IsNullOrEmpty(userSFId) || !hasWritePermission(userSFId, chapter))
                 {
                     // They no longer have write access, so reset the user id, and find it below
                     userSFId = null;
@@ -1182,10 +1194,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             if (string.IsNullOrEmpty(userSFId))
             {
                 // See if the current user has permissions
-                if (
-                    chapter.Permissions.TryGetValue(_userSecret.Id, out string permission)
-                    && permission == TextInfoPermission.Write
-                )
+                if (hasWritePermission(_userSecret.Id, chapter))
                 {
                     userSFId = _userSecret.Id;
                 }
@@ -1193,7 +1202,9 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 {
                     // Get the first user with write permission
                     // NOTE: As a KeyValuePair is a struct, we do not need a null-conditional (key will be null)
-                    userSFId = chapter.Permissions.FirstOrDefault(p => p.Value == TextInfoPermission.Write).Key;
+                    userSFId =
+                        chapter.Permissions.FirstOrDefault(p => p.Value == TextInfoPermission.Write).Key
+                        ?? text.Permissions.FirstOrDefault(p => p.Value == TextInfoPermission.Write).Key;
 
                     // If the userId is still null, find a project administrator, as they can escalate privilege
                     if (string.IsNullOrEmpty(userSFId))

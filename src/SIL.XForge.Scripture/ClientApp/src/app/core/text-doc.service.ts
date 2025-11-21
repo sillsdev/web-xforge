@@ -187,10 +187,12 @@ export class TextDocService {
    */
   hasChapterEditPermissionForText(text: TextInfo | undefined, chapterNum: number | undefined): boolean | undefined {
     const chapter: Chapter | undefined = text?.chapters.find(c => c.number === chapterNum);
+    if (chapter == null) return undefined;
     // Even though permissions is guaranteed to be there in the model, its not in IndexedDB the first time the project
     // is accessed after migration
-    const permission: string | undefined = chapter?.permissions?.[this.userService.currentUserId];
-    return permission == null ? undefined : permission === TextInfoPermission.Write;
+    const permission: string | undefined =
+      chapter?.permissions?.[this.userService.currentUserId] ?? text?.permissions?.[this.userService.currentUserId];
+    return permission === TextInfoPermission.Write;
   }
 
   /**
