@@ -264,6 +264,7 @@
     "summary_translate_title": "Entwerfen von [b]{{ draftingSourceProjectName }}[/b]",
     "summary_translate": "Das Sprachmodell wird dann diese Bücher übersetzen:",
     "these_source_books_are_blank": "Die folgenden Bücher können nicht übersetzt werden, da sie im Ausgangstext für Entwürfe ({{ draftingSourceProjectName }}) leer sind.",
+    "these_training_source_books_are_blank": "Die folgenden Bücher können nicht für die Schulungen verwendet werden, da sie im Ausgangstext ({{ firstTrainingSource }}) leer sind.",
     "these_source_books_cannot_be_used_for_training": "Die folgenden Bücher können nicht für die Schulungen verwendet werden, da sie nicht im Ausgangstext für die Schulung ({{ firstTrainingSource }}) enthalten sind.",
     "these_source_books_cannot_be_used_for_translating": "Die folgenden Bücher können nicht übersetzt werden, da sie nicht im Ausgangstext für Entwürfe ({{ draftingSourceProjectName }}) enthalten sind.",
     "training_books_will_appear": "Bücher für die Schulung werden angezeigt, wenn Du Bücher unter übersetzten Büchern auswählst",
@@ -357,6 +358,7 @@
   },
   "draft_usfm_format": {
     "cancel": "Abbrechen",
+    "chapter_draft_does_not_exist": "Der Entwurf für dieses Kapitel existiert nicht",
     "connect_to_the_internet": "Bitte stelle eine Verbindung zum Internet her, um das USFM-Format für Deinen Entwurf zu ändern",
     "draft_format_description": "Der Entwurf wurde generiert. Hier findest Du einige Formatierungsoptionen für den Text. Du kannst jede Option ausprobieren, um zu sehen, wie sie sich auswirkt.",
     "failed_to_save": "Speichern der Änderungen fehlgeschlagen. Versuche es später nochmals.",
@@ -377,7 +379,8 @@
     "quote_style_straight": "Gerade Anführungszeichen",
     "quote_style_straight_description": "Verwende im Entwurf nur gerade Anführungszeichen.",
     "quote_style_title": "Zeichensetzung bei Zitaten",
-    "save_changes": "Speichern"
+    "save_changes": "Speichern",
+    "text_unavailable_offline": "Bitte verbinde Dich mit dem Internet, um eine Voransicht des Entwurfs zu sehen"
   },
   "editor": {
     "add_comment": "Kommentar hinzufügen",
