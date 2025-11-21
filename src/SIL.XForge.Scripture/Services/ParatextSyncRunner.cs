@@ -1723,7 +1723,9 @@ public class ParatextSyncRunner : IParatextSyncRunner
         }
         else
         {
-            ptUserRoles = _paratextUsers.ToDictionary(u => u.ParatextId, u => u.Role);
+            ptUserRoles = _paratextUsers
+                .Where(u => !string.IsNullOrWhiteSpace(u.ParatextId))
+                .ToDictionary(u => u.ParatextId, u => u.Role);
         }
 
         var userIdsToRemove = new List<string>();

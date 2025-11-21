@@ -381,7 +381,7 @@ public class ParatextSyncRunnerTests
         env.ParatextService.DidNotReceive().PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<XElement>());
 
         SFProject project = env.VerifyProjectSync(true);
-        Assert.That(project.ParatextUsers.Count, Is.EqualTo(2));
+        Assert.That(project.ParatextUsers.Count, Is.EqualTo(4));
         Assert.That(project.UserRoles["user01"], Is.EqualTo(SFProjectRole.Administrator));
         Assert.That(project.UserRoles["user02"], Is.EqualTo(SFProjectRole.Translator));
     }
@@ -425,7 +425,7 @@ public class ParatextSyncRunnerTests
         env.ParatextService.Received(2).PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<XElement>());
 
         SFProject project = env.GetProject();
-        Assert.That(project.ParatextUsers.Count, Is.EqualTo(2));
+        Assert.That(project.ParatextUsers.Count, Is.EqualTo(4));
         env.VerifyProjectSync(true);
     }
 
@@ -468,7 +468,7 @@ public class ParatextSyncRunnerTests
         Assert.That(env.GetText("project02", "MRK", 2).DeepEquals(delta), Is.True);
 
         SFProject project = env.GetProject();
-        Assert.That(project.ParatextUsers.Count, Is.EqualTo(2));
+        Assert.That(project.ParatextUsers.Count, Is.EqualTo(4));
         env.VerifyProjectSync(true);
 
         // Verify the sync metrics
@@ -1822,7 +1822,7 @@ public class ParatextSyncRunnerTests
         var book = new Book("MAT", 1, true);
         env.SetupSFData(true, false, false, true, book);
         env.SetupPTData(book);
-        string dataId = "dataId01";
+        const string dataId = "dataId01";
         env.SetupNoteChanges(dataId, "thread01", "MAT 1:1", false);
         SyncMetricInfo info = new SyncMetricInfo(0, 0, 1);
         env.ParatextService.UpdateParatextCommentsAsync(
@@ -1848,7 +1848,10 @@ public class ParatextSyncRunnerTests
             );
 
         SFProject project = env.GetProject();
-        Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
+        Assert.That(
+            project.ParatextUsers.Select(u => u.Username),
+            Is.EquivalentTo(["User 1", "User 2", "User 4", "User 5"])
+        );
         SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
         Assert.That(syncMetrics.ParatextNotes, Is.EqualTo(info));
     }
@@ -1897,7 +1900,10 @@ public class ParatextSyncRunnerTests
         SFProject project = env.GetProject();
         NoteThread noteThread = env.GetNoteThread("project01", "dataId01");
         Assert.That(noteThread.Notes[0].OwnerRef, Is.EqualTo("user03"));
-        Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
+        Assert.That(
+            project.ParatextUsers.Select(u => u.Username),
+            Is.EquivalentTo(["User 1", "User 2", "User 4", "User 5"])
+        );
         SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
         Assert.That(syncMetrics.ParatextNotes, Is.EqualTo(info));
     }
@@ -1909,7 +1915,7 @@ public class ParatextSyncRunnerTests
         env.SetupSFData(false, false, false, true);
         env.SetupPTData(new Book("MAT", 1, true));
         SFProject project = env.GetProject();
-        Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
+        Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(["User 1", "User 2"]));
 
         ParatextProjectUser newUser = new ParatextProjectUser
         {
@@ -1923,10 +1929,7 @@ public class ParatextSyncRunnerTests
 
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
         project = env.GetProject();
-        Assert.That(
-            project.ParatextUsers.Select(u => u.Username),
-            Is.EquivalentTo(new[] { "User 1", "User 2", "New User 1" })
-        );
+        Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(["User 1", "User 2", "New User 1"]));
 
         ParatextUserProfile newPtUser = project.ParatextUsers.Single(u => u.Username == "New User 1");
         Assert.That(newPtUser.SFUserId, Is.EqualTo("user01"));
@@ -2019,9 +2022,9 @@ public class ParatextSyncRunnerTests
         var book = new Book("MAT", 1, true);
         env.SetupSFData(true, false, false, true, book);
         env.SetupPTData(book);
-        string dataId = "dataId01";
+        const string dataId = "dataId01";
         NoteThread thread01Before = env.GetNoteThread("project01", "dataId01");
-        int startingNoteCount = 2;
+        const int startingNoteCount = 2;
         Assert.That(thread01Before.Notes.Count, Is.EqualTo(startingNoteCount), "setup");
         env.SetupNoteChanges(dataId, "thread01");
         // One note is added. One note is marked as Deleted but not actually removed.
@@ -2031,8 +2034,8 @@ public class ParatextSyncRunnerTests
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
         NoteThread thread01 = env.GetNoteThread("project01", dataId);
-        int expectedNoteTagId = 3;
-        string threadExpected = "Context before Scripture text in project context after-Start:0-Length:0-MAT 1:1";
+        const int expectedNoteTagId = 3;
+        const string threadExpected = "Context before Scripture text in project context after-Start:0-Length:0-MAT 1:1";
         Assert.That(thread01.NoteThreadToString(), Is.EqualTo(threadExpected));
         Assert.That(thread01.Assignment, Is.EqualTo(CommentThread.teamUser));
         env.DeltaUsxMapper.ReceivedWithAnyArgs(1).ToChapterDeltas(default);
@@ -2050,10 +2053,7 @@ public class ParatextSyncRunnerTests
 
         SFProject project = env.GetProject();
         // User 3 was added as a sync user
-        Assert.That(
-            project.ParatextUsers.Select(u => u.Username),
-            Is.EquivalentTo(new[] { "User 1", "User 2", "User 3" })
-        );
+        Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(["User 1", "User 2", "User 3"]));
         Assert.That(project.ParatextUsers.Single(u => u.Username == "User 1").SFUserId, Is.EqualTo("user01"));
         Assert.That(project.ParatextUsers.Single(u => u.Username == "User 2").SFUserId, Is.EqualTo("user02"));
         Assert.That(project.ParatextUsers.Single(u => u.Username == "User 3").SFUserId, Is.EqualTo("user03"));
@@ -2662,7 +2662,7 @@ public class ParatextSyncRunnerTests
         ;
 
         SFProject project = env.GetProject();
-        Assert.That(project.ParatextUsers.Count, Is.EqualTo(2));
+        Assert.That(project.ParatextUsers.Count, Is.EqualTo(4));
         env.VerifyProjectSync(true);
 
         // Check that as PutBookText was run twice, the metrics will be that two books are added
@@ -2740,24 +2740,24 @@ public class ParatextSyncRunnerTests
                     DataId = "dataId01",
                     TermId = "termId01",
                     Transliteration = "transliteration01",
-                    Renderings = new[] { "rendering01", "rendering02" },
+                    Renderings = ["rendering01", "rendering02"],
                     Description = "description01",
                     Language = "language01",
-                    Links = new[] { "link01", "link02" },
-                    References = new[] { VerseRef.GetBBBCCCVVV(1, 1, 1), VerseRef.GetBBBCCCVVV(2, 2, 2) },
+                    Links = ["link01", "link02"],
+                    References = [VerseRef.GetBBBCCCVVV(1, 1, 1), VerseRef.GetBBBCCCVVV(2, 2, 2)],
                     Definitions = new Dictionary<string, BiblicalTermDefinition>
                     {
                         ["en"] = new BiblicalTermDefinition
                         {
-                            Categories = new[] { "category01_en", "category02_en" },
-                            Domains = new[] { "domain01_en", "domain02_en" },
+                            Categories = ["category01_en", "category02_en"],
+                            Domains = ["domain01_en", "domain02_en"],
                             Gloss = "gloss01_en",
                             Notes = "notes01_en",
                         },
                         ["fr"] = new BiblicalTermDefinition
                         {
-                            Categories = new[] { "category01_fr", "category02_fr" },
-                            Domains = new[] { "domain01_fr", "domain02_fr" },
+                            Categories = ["category01_fr", "category02_fr"],
+                            Domains = ["domain01_fr", "domain02_fr"],
                             Gloss = "gloss01_fr",
                             Notes = "notes01_fr",
                         },
@@ -2789,24 +2789,24 @@ public class ParatextSyncRunnerTests
                             {
                                 TermId = "termId01",
                                 Transliteration = "transliteration02",
-                                Renderings = new[] { "rendering02", "rendering03" },
+                                Renderings = ["rendering02", "rendering03"],
                                 Description = "description02",
                                 Language = "language02",
-                                Links = new[] { "link02", "link03" },
-                                References = new[] { VerseRef.GetBBBCCCVVV(2, 2, 2), VerseRef.GetBBBCCCVVV(3, 3, 3) },
+                                Links = ["link02", "link03"],
+                                References = [VerseRef.GetBBBCCCVVV(2, 2, 2), VerseRef.GetBBBCCCVVV(3, 3, 3)],
                                 Definitions = new Dictionary<string, BiblicalTermDefinition>
                                 {
                                     ["en"] = new BiblicalTermDefinition
                                     {
-                                        Categories = new[] { "category02_en", "category03_en" },
-                                        Domains = new[] { "domain02_en", "domain03_en" },
+                                        Categories = ["category02_en", "category03_en"],
+                                        Domains = ["domain02_en", "domain03_en"],
                                         Gloss = "gloss02_en",
                                         Notes = "notes02_en",
                                     },
                                     ["de"] = new BiblicalTermDefinition
                                     {
-                                        Categories = new[] { "category01_de", "category02_de" },
-                                        Domains = new[] { "domain01_de", "domain02_de" },
+                                        Categories = ["category01_de", "category02_de"],
+                                        Domains = ["domain01_de", "domain02_de"],
                                         Gloss = "gloss01_de",
                                         Notes = "notes01_de",
                                     },
@@ -2828,7 +2828,7 @@ public class ParatextSyncRunnerTests
             .UpdateBiblicalTerms(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<IReadOnlyList<BiblicalTerm>>());
 
         SFProject project = env.GetProject();
-        Assert.That(project.ParatextUsers.Count, Is.EqualTo(2));
+        Assert.That(project.ParatextUsers.Count, Is.EqualTo(4));
         env.VerifyProjectSync(true);
 
         // dataId02 should be deleted
@@ -2934,7 +2934,10 @@ public class ParatextSyncRunnerTests
         Assert.That(noteThread.ExtraHeadingInfo?.Language, Is.EqualTo("language01"));
         Assert.That(noteThread.ExtraHeadingInfo?.Lemma, Is.EqualTo("lemma01"));
         Assert.That(noteThread.ExtraHeadingInfo?.Transliteration, Is.EqualTo("transliteration01"));
-        Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
+        Assert.That(
+            project.ParatextUsers.Select(u => u.Username),
+            Is.EquivalentTo(["User 1", "User 2", "User 4", "User 5"])
+        );
         SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
         Assert.That(syncMetrics.ParatextNotes, Is.EqualTo(info));
     }
@@ -3525,6 +3528,18 @@ public class ParatextSyncRunnerTests
             Username = "User 3",
         };
 
+        public static readonly ParatextProjectUser ParatextProjectUnknownUser01 = new ParatextProjectUser
+        {
+            Role = SFProjectRole.PTObserver,
+            Username = "User 4",
+        };
+
+        public static readonly ParatextProjectUser ParatextProjectUnknownUser02 = new ParatextProjectUser
+        {
+            Role = SFProjectRole.PTObserver,
+            Username = "User 5",
+        };
+
         /// <summary>
         /// Initializes a new instance of the <see cref="TestEnvironment" /> class.
         /// </summary>
@@ -3574,7 +3589,14 @@ public class ParatextSyncRunnerTests
                     Arg.Is((SFProject project) => project.ParatextId == "target"),
                     Arg.Any<CancellationToken>()
                 )
-                .Returns([ParatextProjectUser01, ParatextProjectUser02]);
+                .Returns(
+                    [
+                        ParatextProjectUser01,
+                        ParatextProjectUser02,
+                        ParatextProjectUnknownUser01,
+                        ParatextProjectUnknownUser02,
+                    ]
+                );
             ParatextService
                 .When(x =>
                     x.SendReceiveAsync(

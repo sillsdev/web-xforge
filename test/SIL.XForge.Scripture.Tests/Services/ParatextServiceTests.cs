@@ -4688,9 +4688,11 @@ public class ParatextServiceTests
             project,
             CancellationToken.None
         );
-        Assert.That(users.Count, Is.EqualTo(2));
-        Assert.That(users.First(), Is.EqualTo(env.ParatextProjectUser01));
-        Assert.That(users.Last(), Is.EqualTo(env.ParatextProjectUser02));
+        Assert.That(
+            users,
+            Is.EqualTo([env.ParatextProjectUser01, env.ParatextProjectUser02, env.ParatextProjectUser03]),
+            "map of PT roles should only include PT users"
+        );
     }
 
     [Test]
@@ -4752,7 +4754,7 @@ public class ParatextServiceTests
         proj.UserRoles.Add(env.User04, SFProjectRole.CommunityChecker);
         env.AddProjectRepository(proj);
         env.SetSharedRepositorySource(userSecret, UserRoles.Administrator);
-        var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
+        IReadOnlyList<SFProject> projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
         SFProject project = projects.First();
         Assert.That(project.UserRoles.Count, Is.EqualTo(4), "setup");
         env.MakeRegistryClientReturn(env.NotFoundHttpResponseMessage);
@@ -4762,9 +4764,11 @@ public class ParatextServiceTests
             project,
             CancellationToken.None
         );
-        Assert.That(users.Count, Is.EqualTo(2), "map of PT roles should only include PT users");
-        Assert.That(users.First(), Is.EqualTo(env.ParatextProjectUser01));
-        Assert.That(users.Last(), Is.EqualTo(env.ParatextProjectUser02));
+        Assert.That(
+            users,
+            Is.EqualTo([env.ParatextProjectUser01, env.ParatextProjectUser02, env.ParatextProjectUser03]),
+            "map of PT roles should only include PT users"
+        );
     }
 
     [Test]
@@ -7014,6 +7018,9 @@ public class ParatextServiceTests
                 Role = SFProjectRole.Administrator,
                 Username = Username02,
             };
+
+        public ParatextProjectUser ParatextProjectUser03 =>
+            new ParatextProjectUser { Role = SFProjectRole.Administrator, Username = Username03 };
 
         public static HttpResponseMessage MakeOkHttpResponseMessage(string content) =>
             new HttpResponseMessage(HttpStatusCode.OK)
