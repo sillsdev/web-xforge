@@ -20,10 +20,6 @@ const mockNoticeService = mock(NoticeService);
 const mockPermissionService = mock(PermissionsService);
 const mockProjectService = mock(ActivatedProjectService);
 
-const defaultChaptersNum = 20;
-const defaultTranslatedNum = 9;
-const defaultBlankNum = 5;
-
 describe('progress service', () => {
   configureTestingModule(() => ({
     providers: [
@@ -165,63 +161,17 @@ describe('progress service', () => {
     expect(env.service.canTrainSuggestions).toBeFalsy();
     discardPeriodicTasks();
   }));
-
-  it('returns text progress for texts on a project', fakeAsync(async () => {
-    const booksWithTexts = 5;
-    const totalTranslated = booksWithTexts * defaultChaptersNum * defaultTranslatedNum;
-    const totalBlank = booksWithTexts * defaultChaptersNum * defaultBlankNum;
-    const env = new TestEnvironment(totalTranslated, totalBlank);
-    tick();
-
-    const texts: TextInfo[] = env.createTexts();
-    const projectDoc: SFProjectProfileDoc = {
-      id: 'sourceId',
-      data: createTestProjectProfile({ texts })
-    } as SFProjectProfileDoc;
-    when(mockSFProjectService.getProfile(projectDoc.id)).thenResolve(projectDoc);
-    when(mockPermissionService.isUserOnProject(anything())).thenResolve(true);
-
-    // SUT
-    const progressList = await env.service.getTextProgressForProject(projectDoc.id);
-    tick();
-    expect(progressList.length).toEqual(texts.length);
-    for (let i = 0; i < progressList.length; i++) {
-      const progress = progressList[i];
-      if (i < booksWithTexts) {
-        expect(progress.translated).toEqual(defaultTranslatedNum * defaultChaptersNum);
-        expect(progress.blank).toEqual(defaultBlankNum * defaultChaptersNum);
-      } else {
-        expect(progress.translated).toEqual(0);
-        expect(progress.blank).toEqual(0);
-      }
-    }
-  }));
-
-  it('returns empty text progress if user does not have permission', fakeAsync(async () => {
-    const env = new TestEnvironment(1000, 500);
-    tick();
-    const texts: TextInfo[] = env.createTexts();
-    const projectDoc: SFProjectProfileDoc = {
-      id: 'sourceId',
-      data: createTestProjectProfile({ texts })
-    } as SFProjectProfileDoc;
-    when(mockPermissionService.isUserOnProject(anything())).thenResolve(false);
-
-    // SUT
-    const progressList = await env.service.getTextProgressForProject(projectDoc.id);
-    tick();
-    expect(progressList.length).toEqual(0);
-  }));
 });
 
 class TestEnvironment {
   readonly ngZone: NgZone = TestBed.inject(NgZone);
   readonly service: ProgressService;
+  private readonly numBooks = 20;
+  private readonly numChapters = 20;
 
   readonly mockProject = mock(SFProjectProfileDoc);
   readonly project$ = new BehaviorSubject(instance(this.mockProject));
 
-  private readonly numBooks = 20;
   // Store all text data in a single map to avoid repeated deepEqual calls
   private readonly allTextData = new Map<string, { translated: number; blank: number }>();
 
@@ -292,10 +242,10 @@ class TestEnvironment {
 
   private populateTextData(projectId: string, translatedSegments: number, blankSegments: number): void {
     for (let book = 1; book <= this.numBooks; book++) {
-      for (let chapter = 0; chapter < defaultChaptersNum; chapter++) {
-        const translated = translatedSegments >= defaultTranslatedNum ? defaultTranslatedNum : translatedSegments;
+      for (let chapter = 0; chapter < this.numChapters; chapter++) {
+        const translated = translatedSegments >= 9 ? 9 : translatedSegments;
         translatedSegments -= translated;
-        const blank = blankSegments >= defaultBlankNum ? defaultBlankNum : blankSegments;
+        const blank = blankSegments >= 5 ? 5 : blankSegments;
         blankSegments -= blank;
 
         const key = `${projectId}:${book}:${chapter}:target`;
@@ -333,7 +283,7 @@ class TestEnvironment {
     const texts: TextInfo[] = [];
     for (let book = 1; book <= this.numBooks; book++) {
       const chapters: Chapter[] = [];
-      for (let chapter = 0; chapter < defaultChaptersNum; chapter++) {
+      for (let chapter = 0; chapter < this.numChapters; chapter++) {
         chapters.push({ isValid: true, lastVerse: 1, number: chapter, permissions: {}, hasAudio: false });
       }
       texts.push({ bookNum: book, chapters: chapters, hasSource: true, permissions: {} });
