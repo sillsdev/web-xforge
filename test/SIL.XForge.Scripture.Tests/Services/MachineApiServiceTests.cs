@@ -3670,7 +3670,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task RetrievePreTranslationStatusAsync_UpdatesPreTranslationStatusAndTextDocuments()
+    public async Task RetrievePreTranslationStatusAsync_UpdatesPreTranslationTextDocuments()
     {
         // Set up test environment with a completed build
         var env = new TestEnvironment();

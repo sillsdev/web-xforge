@@ -4,6 +4,7 @@ import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { provideRouter } from '@angular/router';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
@@ -157,8 +158,6 @@ describe('DraftGenerationComponent', () => {
         newDraftHistory: createTestFeatureFlag(false),
         usfmFormat: createTestFeatureFlag(false)
       });
-      mockSFProjectService = jasmine.createSpyObj<SFProjectService>(['hasDraft']);
-      mockSFProjectService.hasDraft.and.returnValue(true);
     }
 
     static initProject(currentUserId: string, preTranslate: boolean = true): void {
@@ -210,6 +209,13 @@ describe('DraftGenerationComponent', () => {
         projectDoc$: of(projectDoc),
         changes$: of(projectDoc)
       });
+      const matchThisProject = {
+        asymmetricMatch: (proj: SFProjectProfile | undefined) =>
+          proj != null && proj.paratextId === projectDoc.data?.paratextId
+      };
+      mockSFProjectService = jasmine.createSpyObj<SFProjectService>(['hasDraft']);
+      mockSFProjectService.hasDraft.withArgs(matchThisProject).and.returnValue(preTranslate);
+      mockSFProjectService.hasDraft.withArgs(matchThisProject, jasmine.anything()).and.returnValue(preTranslate);
     }
 
     get configureDraftButton(): HTMLElement | null {
