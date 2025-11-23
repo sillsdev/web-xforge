@@ -389,8 +389,7 @@ export class DraftGenerationService {
       if (books.size === 0) {
         books = new Set<number>(
           // Legacy calculation for very old drafts
-          // eslint-disable-next-line @typescript-eslint/no-deprecated
-          projectDoc.data.texts.filter(text => text.chapters.some(c => c.hasDraft)).map(text => text.bookNum)
+          booksFromScriptureRange(projectDoc.data.translateConfig.draftConfig.currentScriptureRange)
         );
       }
 

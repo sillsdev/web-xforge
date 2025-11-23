@@ -1072,73 +1072,9 @@ public class MachineApiService(
                 .MaxBy(b => b.DateFinished);
             if (translationBuild is not null)
             {
-                // Verify that each book/chapter from the translationBuild is marked HasDraft = true
-                // If the projects texts chapters are not all marked as having a draft, then the webhook likely failed
-                // and we want to retrieve the pre-translation status to update the chapters as having a draft
-                Dictionary<string, List<int>> scriptureRangesWithDrafts = [];
-
-                IList<PretranslateCorpus> pretranslateCorpus = translationBuild.Pretranslate ?? [];
-
-                // Retrieve the user secret
-                Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(curUserId, cancellationToken);
-                if (!attempt.TryResult(out UserSecret userSecret))
-                {
-                    throw new DataNotFoundException("The user does not exist.");
-                }
-
-                ScrVers versification =
-                    paratextService.GetParatextSettings(userSecret, project.ParatextId)?.Versification
-                    ?? VerseRef.defaultVersification;
-
-                ScriptureRangeParser scriptureRangeParser = new ScriptureRangeParser(versification);
-                foreach (PretranslateCorpus ptc in pretranslateCorpus)
-                {
-                    // We are using the TranslationBuild.Pretranslate.SourceFilters.ScriptureRange to find the
-                    // books selected for drafting. Some projects may have used the now obsolete field
-                    // TranslationBuild.Pretranslate.ScriptureRange and will not get checked for webhook failures.
-                    foreach (
-                        ParallelCorpusFilter source in ptc.SourceFilters?.Where(s => s.ScriptureRange is not null) ?? []
-                    )
-                    {
-                        foreach (
-                            (string book, List<int> bookChapters) in scriptureRangeParser.GetChapters(
-                                source.ScriptureRange
-                            )
-                        )
-                        {
-                            int bookNum = Canon.BookIdToNumber(book);
-                            // Ensure that if chapters is blank, it contains every chapter in the book
-                            List<int> chapters = bookChapters;
-                            if (chapters.Count == 0)
-                            {
-                                chapters = [.. Enumerable.Range(1, versification.GetLastChapter(bookNum))];
-                            }
-
-                            // Set or merge the list of chapters
-                            if (!scriptureRangesWithDrafts.TryGetValue(book, out List<int> existingChapters))
-                            {
-                                scriptureRangesWithDrafts[book] = chapters;
-                            }
-                            else
-                            {
-                                // Merge new chapters into existing list, avoiding duplicates
-                                foreach (int chapter in chapters.Where(chapter => !existingChapters.Contains(chapter)))
-                                {
-                                    existingChapters.Add(chapter);
-                                }
-
-                                // Add existing chapters to the books chapter list
-                                scriptureRangesWithDrafts[book].AddRange(existingChapters);
-                            }
-                        }
-                    }
-                }
-
                 // See if the current scripture range has changed
-                if (
-                    project.TranslateConfig.DraftConfig.CurrentScriptureRange
-                    != string.Join(';', scriptureRangesWithDrafts.Keys)
-                )
+                string currentScriptureRange = GetDraftedScriptureRange(translationBuild);
+                if (project.TranslateConfig.DraftConfig.CurrentScriptureRange != currentScriptureRange)
                 {
                     backgroundJobClient.Enqueue<IMachineApiService>(r =>
                         r.RetrievePreTranslationStatusAsync(sfProjectId, CancellationToken.None)
@@ -1890,13 +1826,7 @@ public class MachineApiService(
                 }
 
                 // Store the CurrentScriptureRange based on the books we asked Serval to draft
-                string currentScriptureRange = string.Join(
-                    ';',
-                    translationBuild
-                        .Pretranslate?.SelectMany(p => p.SourceFilters)
-                        .Where(f => f.ScriptureRange != null)
-                        .Select(f => f.ScriptureRange) ?? []
-                );
+                string currentScriptureRange = GetDraftedScriptureRange(translationBuild);
                 if (string.IsNullOrWhiteSpace(currentScriptureRange))
                 {
                     throw new DataNotFoundException(
@@ -2391,6 +2321,35 @@ public class MachineApiService(
             SourceLanguageTag = translationEngine.SourceLanguage,
             TargetLanguageTag = translationEngine.TargetLanguage,
         };
+
+    /// <summary>
+    /// Gets the drafted scripture range for a translation build.
+    /// </summary>
+    /// <param name="translationBuild">The  translation build.</param>
+    /// <returns>The scripture range that was drafted.</returns>
+    private static string GetDraftedScriptureRange(TranslationBuild translationBuild)
+    {
+        List<string> booksWithDrafts = [];
+        ScriptureRangeParser scriptureRangeParser = new ScriptureRangeParser();
+        foreach (PretranslateCorpus ptc in translationBuild.Pretranslate ?? [])
+        {
+            // We are using the TranslationBuild.Pretranslate.SourceFilters.ScriptureRange to find the
+            // books selected for drafting. Some projects may have used the now obsolete field
+            // TranslationBuild.Pretranslate.ScriptureRange and will not get checked for webhook failures.
+            foreach (ParallelCorpusFilter source in ptc.SourceFilters?.Where(s => s.ScriptureRange is not null) ?? [])
+            {
+                foreach ((string book, List<int> _) in scriptureRangeParser.GetChapters(source.ScriptureRange))
+                {
+                    if (!booksWithDrafts.Contains(book))
+                    {
+                        booksWithDrafts.Add(book);
+                    }
+                }
+            }
+        }
+
+        return string.Join(';', booksWithDrafts);
+    }
 
     /// <summary>
     /// Gets the highest ranked user id on a project.

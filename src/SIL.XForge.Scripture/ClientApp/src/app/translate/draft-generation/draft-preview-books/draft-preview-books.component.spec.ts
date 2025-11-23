@@ -142,21 +142,6 @@ describe('DraftPreviewBooks', () => {
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).times(3);
   }));
 
-  it('can apply chapters with drafts and skips chapters without drafts', fakeAsync(() => {
-    env = new TestEnvironment();
-    const bookWithDraft: BookWithDraft = env.booksWithDrafts[1];
-    setupDialog('project01');
-    when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).thenResolve(
-      undefined
-    );
-    expect(env.getBookButtonAtIndex(1).querySelector('.book-more')).toBeTruthy();
-    env.component.chooseProjectToAddDraft(bookWithDraft);
-    tick();
-    env.fixture.detectChanges();
-    verify(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).once();
-    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).times(1);
-  }));
-
   it('can apply a historic draft', fakeAsync(() => {
     env = new TestEnvironment({
       additionalInfo: {
@@ -174,7 +159,7 @@ describe('DraftPreviewBooks', () => {
     tick();
     env.fixture.detectChanges();
     verify(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).once();
-    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).times(1);
+    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).times(2);
   }));
 
   it('can open dialog with the current project', fakeAsync(() => {
@@ -436,7 +421,7 @@ class TestEnvironment {
 
   booksWithDrafts: BookWithDraft[] = [
     { bookNumber: 1, bookId: 'GEN', canEdit: true, chaptersWithDrafts: [1, 2, 3], draftApplied: false },
-    { bookNumber: 2, bookId: 'EXO', canEdit: true, chaptersWithDrafts: [1], draftApplied: false },
+    { bookNumber: 2, bookId: 'EXO', canEdit: true, chaptersWithDrafts: [1, 2], draftApplied: false },
     { bookNumber: 3, bookId: 'LEV', canEdit: false, chaptersWithDrafts: [1, 2], draftApplied: false }
   ];
 

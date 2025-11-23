@@ -906,16 +906,18 @@ describe('DraftGenerationService', () => {
       const projectDoc: SFProjectProfileDoc = {
         id: projectId,
         data: createTestProjectProfile({
+          translateConfig: {
+            draftConfig: {
+              currentScriptureRange: '1JN;2JN;3JN'
+            }
+          },
           texts: [
             {
               bookNum: 62,
-              chapters: [
-                { number: 1, hasDraft: true },
-                { number: 2, hasDraft: true }
-              ]
+              chapters: [{ number: 1 }, { number: 2 }]
             },
-            { bookNum: 63, chapters: [{ number: 1, hasDraft: true }] },
-            { bookNum: 64, chapters: [{ number: 1, hasDraft: true }] }
+            { bookNum: 63, chapters: [{ number: 1 }] },
+            { bookNum: 64, chapters: [{ number: 1 }] }
           ]
         })
       } as SFProjectProfileDoc;
@@ -951,7 +953,12 @@ describe('DraftGenerationService', () => {
       const projectDoc: SFProjectProfileDoc = {
         id: projectId,
         data: createTestProjectProfile({
-          texts: [{ bookNum: 62, chapters: [{ number: 1, hasDraft: true }] }]
+          translateConfig: {
+            draftConfig: {
+              currentScriptureRange: '1JN'
+            }
+          },
+          texts: [{ bookNum: 62, chapters: [{ number: 1 }] }]
         })
       } as SFProjectProfileDoc;
       const lastCompletedBuild: BuildDto = {
