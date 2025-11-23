@@ -638,6 +638,7 @@ class SFProjectMigration28 extends DocMigration {
     const ops: Op[] = [];
     if (doc.data?.texts != null && doc.data?.translateConfig?.draftConfig?.currentScriptureRange == null) {
       const currentScriptureRange = doc.data.texts
+        // eslint-disable-next-line @typescript-eslint/no-deprecated
         .filter((t: TextInfo) => t.chapters.some(c => c.hasDraft))
         .map((t: TextInfo) => Canon.bookNumberToId(t.bookNum, ''))
         .filter((id: string) => id !== '')

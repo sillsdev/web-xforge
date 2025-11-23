@@ -740,7 +740,7 @@ public class PreTranslationServiceTests
                 )
                 .Returns(MatthewBookUsfm);
             Service = Substitute.ForPartsOf<PreTranslationService>(ProjectSecrets, TranslationEnginesClient);
-            if (options.MockPreTranslationParameters)
+            if (options.MockLegacyPreTranslationParameters)
             {
                 Service
                     .Configure()

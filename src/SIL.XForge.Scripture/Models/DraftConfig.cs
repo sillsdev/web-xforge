@@ -23,5 +23,8 @@ public class DraftConfig
     /// <summary>
     /// A scripture range containing the books that have been drafted and are available in Scripture Forge.
     /// </summary>
+    /// <remarks>
+    /// This is a combination of the scripture ranges of previous drafts.
+    /// </remarks>
     public string? DraftedScriptureRange { get; set; }
 }
