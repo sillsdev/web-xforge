@@ -410,18 +410,19 @@ describe('TextDocService', () => {
       expect(actual).toBeUndefined();
     });
 
-    it('should return undefined if the user does not have the permission', () => {
+    it('should return false if the user does not have the permission', () => {
       const env = new TestEnvironment();
       const text: Partial<TextInfo> = { chapters: [{ number: 1 } as Chapter] };
 
       // SUT
       const actual: boolean | undefined = env.textDocService.hasChapterEditPermissionForText(text as TextInfo, 1);
-      expect(actual).toBeUndefined();
+      expect(actual).toBe(false);
     });
 
-    it('should return false if the user does not have the edit permission', () => {
+    it('should return false if the user does not have the write permission for the chapter', () => {
       const env = new TestEnvironment();
       const text: Partial<TextInfo> = {
+        permissions: { user01: TextInfoPermission.Write },
         chapters: [
           { number: 1, permissions: { user01: TextInfoPermission.Read }, lastVerse: 0, isValid: true } as Chapter
         ]
@@ -432,12 +433,24 @@ describe('TextDocService', () => {
       expect(actual).toBe(false);
     });
 
-    it('should return true if the user has the write permission', () => {
+    it('should return true if the user has the write permission for the chapter', () => {
       const env = new TestEnvironment();
       const text: Partial<TextInfo> = {
         chapters: [
           { number: 1, permissions: { user01: TextInfoPermission.Write }, lastVerse: 0, isValid: true } as Chapter
         ]
+      };
+
+      // SUT
+      const actual: boolean | undefined = env.textDocService.hasChapterEditPermissionForText(text as TextInfo, 1);
+      expect(actual).toBe(true);
+    });
+
+    it('should return true if the user has the write permission for the book and no chapter permission set', () => {
+      const env = new TestEnvironment();
+      const text: Partial<TextInfo> = {
+        permissions: { user01: TextInfoPermission.Write },
+        chapters: [{ number: 1, lastVerse: 0, isValid: true } as Chapter]
       };
 
       // SUT

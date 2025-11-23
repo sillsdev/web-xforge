@@ -105,16 +105,16 @@ describe('PermissionsService', () => {
 
     const textDoc: Partial<TextDocId> = { projectId: 'project01', bookNum: 41, chapterNum: 1 };
 
-    expect(await env.service.canAccessText(cloneDeep(textDoc) as TextDocId)).toBe(true);
+    expect(await env.service.canAccessTextAsync(cloneDeep(textDoc) as TextDocId)).toBe(true);
   }));
 
   it('allows access to text if user is on project and does not have chapter permission', fakeAsync(async () => {
     const env = new TestEnvironment();
-    env.setupProjectData(undefined);
+    env.setupProjectData(undefined, false);
 
     const textDoc: Partial<TextDocId> = { projectId: 'project01', bookNum: 41, chapterNum: 1 };
 
-    expect(await env.service.canAccessText(cloneDeep(textDoc) as TextDocId)).toBe(true);
+    expect(await env.service.canAccessTextAsync(cloneDeep(textDoc) as TextDocId)).toBe(true);
   }));
 
   it('does not allow access to text if user is not on project', fakeAsync(async () => {
@@ -123,7 +123,7 @@ describe('PermissionsService', () => {
 
     const textDoc: Partial<TextDocId> = { projectId: 'project01', bookNum: 41, chapterNum: 1 };
 
-    expect(await env.service.canAccessText(cloneDeep(textDoc) as TextDocId)).toBe(false);
+    expect(await env.service.canAccessTextAsync(cloneDeep(textDoc) as TextDocId)).toBe(false);
   }));
 
   it('does not allow access to text if user has no access', fakeAsync(async () => {
@@ -132,7 +132,7 @@ describe('PermissionsService', () => {
 
     const textDoc: Partial<TextDocId> = { projectId: 'project01', bookNum: 41, chapterNum: 1 };
 
-    expect(await env.service.canAccessText(cloneDeep(textDoc) as TextDocId)).toBe(false);
+    expect(await env.service.canAccessTextAsync(cloneDeep(textDoc) as TextDocId)).toBe(false);
   }));
 
   it('does not allow access to text if the chapter does not exist', fakeAsync(async () => {
@@ -141,7 +141,7 @@ describe('PermissionsService', () => {
 
     const textDoc: Partial<TextDocId> = { projectId: 'project01', bookNum: 41, chapterNum: 2 };
 
-    expect(await env.service.canAccessText(cloneDeep(textDoc) as TextDocId)).toBe(false);
+    expect(await env.service.canAccessTextAsync(cloneDeep(textDoc) as TextDocId)).toBe(false);
   }));
 
   it('checks current user doc to determine if user is on project', fakeAsync(async () => {
@@ -264,7 +264,7 @@ class TestEnvironment {
     this.setupUserData();
   }
 
-  setupProjectData(textPermission?: TextInfoPermission | undefined): void {
+  setupProjectData(textPermission?: TextInfoPermission | undefined, chapterPermissions: boolean = true): void {
     const projectId: string = 'project01';
     const permission: TextInfoPermission = textPermission ?? TextInfoPermission.Write;
 
@@ -284,10 +284,12 @@ class TestEnvironment {
                 number: 1,
                 lastVerse: 3,
                 isValid: true,
-                permissions: {
-                  user01: permission,
-                  user02: permission
-                }
+                permissions: chapterPermissions
+                  ? {
+                      user01: permission,
+                      user02: permission
+                    }
+                  : {}
               }
             ],
             hasSource: true,

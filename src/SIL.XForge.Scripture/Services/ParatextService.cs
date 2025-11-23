@@ -892,7 +892,8 @@ public class ParatextService : DisposableBase, IParatextService
                     || scrText!.Permissions.GetRole(userName) == UserRoles.None
                 )
                 {
-                    permissions.Add(uid, TextInfoPermission.None);
+                    // The user will either have read only access or no access
+                    // This will be handled by their role on the project (or lack of role) on the project
                 }
                 else
                 {
@@ -1708,6 +1709,22 @@ public class ParatextService : DisposableBase, IParatextService
         return syncMetricInfo;
     }
 
+    /// <summary>
+    /// Updates the Paratext Permissions when new books are created in Scripture Forge.
+    /// </summary>
+    /// <param name="userSecret">The user secret.</param>
+    /// <param name="paratextId">The Paratext project identifier.</param>
+    /// <param name="projectDoc">The Scripture Forge project document.</param>
+    /// <param name="writeToParatext">
+    /// If <c>true</c>, the permissions will be written to the Paratext project on disk (only useful when syncing).
+    /// Otherwise, the permissions will be written to the project document in Mongo (useful when importing a draft).
+    /// </param>
+    /// <returns>Information on how many permissions were updated for each user per book.</returns>
+    /// <remarks>
+    /// <paramref name="writeToParatext"/> will be <c>true</c> and write permissions when a book has been imported into
+    /// Scripture Forge from another source, such as a draft from Serval, and it is not yet present in the Paratext
+    /// project on disk.
+    /// </remarks>
     public async Task<SyncMetricInfo> UpdateParatextPermissionsForNewBooksAsync(
         UserSecret userSecret,
         string paratextId,
@@ -1791,11 +1808,13 @@ public class ParatextService : DisposableBase, IParatextService
                             {
                                 int chapterIndex = j;
                                 int chapterNumber = text.Chapters[chapterIndex].Number;
-                                if (editableChapters.Contains(chapterNumber) || currentUserIsAdministrator)
+
+                                // Only record chapter level permissions that contradict the book level permissions
+                                if (!(editableChapters.Contains(chapterNumber) || currentUserIsAdministrator))
                                 {
                                     op.Set(
                                         p => p.Texts[textIndex].Chapters[chapterIndex].Permissions[user.SFUserId],
-                                        TextInfoPermission.Write
+                                        TextInfoPermission.Read
                                     );
                                 }
                             }
