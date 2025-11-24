@@ -21,7 +21,7 @@ import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/te
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { SFProjectService } from '../core/sf-project.service';
 import { EventMetric, EventScope } from '../event-metrics/event-metric';
-import { DraftJob, DraftJobsComponent } from './draft-jobs.component';
+import { DraftJob, DraftJobsComponent, DraftJobsTableRow, DraftJobStatus } from './draft-jobs.component';
 import { JobDetailsDialogComponent } from './job-details-dialog.component';
 import sampleEvents from './sample-events.json';
 import { ServalAdministrationService } from './serval-administration.service';
@@ -523,6 +523,19 @@ describe('DraftJobsComponent', () => {
         // Mean: (3600000 + 7200000) / 2 = 5400000
         expect(env.component.meanDuration).toBe(5400000);
       }));
+
+      it('should ignore non-successful jobs when calculating mean', fakeAsync(() => {
+        const env = new TestEnvironment({ hasEvents: false });
+        env.wait();
+        env.component.rows = [
+          env.createRowWithDuration(3600000, 'success'), // counts
+          env.createRowWithDuration(5400000, 'running'), // excluded because not success
+          env.createRowWithDuration(7200000, 'failed') // excluded because not success
+        ];
+
+        // Mean: only the successful job's duration should be counted
+        expect(env.component.meanDuration).toBe(3600000);
+      }));
     });
 
     describe('maxDuration', () => {
@@ -727,12 +740,13 @@ class TestEnvironment {
     this.component.onGroupingModeChange(mode);
   }
 
-  createRowWithDuration(duration: number | undefined): any {
+  createRowWithDuration(duration: number | undefined, statusOverride?: DraftJobStatus): DraftJobsTableRow {
+    const jobStatus: DraftJobStatus = statusOverride ?? (duration != null ? 'success' : 'running');
     return {
       job: {
         buildId: 'build-123',
         projectId: 'project1',
-        status: duration != null ? 'success' : 'running',
+        status: jobStatus,
         startTime: new Date('2025-01-15T10:00:00Z'),
         finishTime: duration != null ? new Date('2025-01-15T11:00:00Z') : undefined,
         duration: duration,
@@ -747,7 +761,7 @@ class TestEnvironment {
       projectDeleted: false,
       startTimeStamp: '2025-01-15 10:00 UTC',
       duration: duration != null ? '1h 0m 0s' : undefined,
-      status: duration != null ? 'Success' : 'Running',
+      status: this.component['getStatusDisplay'](jobStatus),
       userId: 'user123',
       trainingBooks: [],
       translationBooks: []

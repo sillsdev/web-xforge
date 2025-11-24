@@ -16,16 +16,16 @@
         <span>Export RSV</span>
       </button>
     </mat-menu>
-    @if (meanDurationFormatted != null || maxDurationFormatted != null) {
-      <div class="duration-statistics">
-        @if (meanDurationFormatted != null) {
-          <span class="stat-item">Mean duration: {{ meanDurationFormatted }}</span>
-        }
-        @if (maxDurationFormatted != null) {
-          <span class="stat-item">Max duration: {{ maxDurationFormatted }}</span>
-        }
+    <div class="duration-area">
+      <div class="duration-area-stat">
+        <span class="duration-area-stat-label"> Mean successful duration </span>
+        <span> {{ meanDurationFormatted ?? "n/a" }} </span>
       </div>
-    }
+      <div class="duration-area-stat">
+        <span class="duration-area-stat-label"> Max any duration </span
+        ><span> {{ maxDurationFormatted ?? "n/a" }} </span>
+      </div>
+    </div>
     <div class="grouping-toggle">
       <div class="grouping-toggle-label">
         Determination
