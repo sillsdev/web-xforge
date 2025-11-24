@@ -13,7 +13,7 @@ import { MatTab, MatTabGroup } from '@angular/material/tabs';
 import { MatTooltip } from '@angular/material/tooltip';
 import { I18nService } from 'xforge-common/i18n.service';
 import { L10nNumberPipe } from 'xforge-common/l10n-number.pipe';
-import { isPopulatedString } from 'xforge-common/utils';
+import { isPopulatedString } from '../../type-utils';
 import { EventMetric } from '../event-metrics/event-metric';
 import { JsonViewerComponent } from '../shared/json-viewer/json-viewer.component';
 import { NoticeComponent } from '../shared/notice/notice.component';

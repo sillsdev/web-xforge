@@ -106,6 +106,10 @@ This repository contains three interconnected applications:
 - Corner-cases happen. They should be handled in code.
 - Please don't change existing code without good justification. Existing code largely works and changing it will cause work for code review. Leave existing code as is when possible.
 
+# Frontend code
+
+- Pay attention to available types and type guards in src/SIL.XForge.Scripture/ClientApp/src/type-utils.ts.
+
 # Running commands
 
 - If you run frontend tests, run them in the `src/SIL.XForge.Scripture/ClientApp` directory with a command such as `npm run test:headless -- --watch=false --include '**/text.component.spec.ts' --include '**/settings.component.spec.ts'`

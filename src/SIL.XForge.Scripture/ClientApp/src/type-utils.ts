@@ -131,3 +131,10 @@ export type PopulatedArray<T> = [T, ...T[]] | [...T[], T] | [T, ...T[], T];
 export function hasElements<T>(array: T[]): array is PopulatedArray<T> {
   return array.length > 0;
 }
+
+/** The input is a string, and it is not empty (''). It is not null or undefined. This method could alternatively be known as "isNonEmptyString".
+ *
+ * If the negation of this is true, then the input is '' or null or undefined or another non-string. */
+export function isPopulatedString(value: unknown): value is Exclude<string, ''> {
+  return typeof value === 'string' && value !== '';
+}
