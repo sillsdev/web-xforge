@@ -29,8 +29,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
-import { isPopulatedString } from 'xforge-common/utils';
-import { hasElements, notNull, PopulatedArray } from '../../type-utils';
+import { hasElements, isPopulatedString, notNull, PopulatedArray } from '../../type-utils';
 import { SFProjectService } from '../core/sf-project.service';
 import { EventMetric } from '../event-metrics/event-metric';
 import { InfoComponent } from '../shared/info/info.component';
@@ -40,6 +39,10 @@ import { DateRangePickerComponent, NormalizedDateRange } from './date-range-pick
 import { DraftJobsExportService } from './draft-jobs-export.service';
 import { JobDetailsDialogComponent } from './job-details-dialog.component';
 import { ServalAdministrationService } from './serval-administration.service';
+
+/** Outcome or in-progress situation of a draft generation request job. */
+export type DraftJobStatus = 'running' | 'success' | 'failed' | 'cancelled' | 'incomplete';
+
 interface ProjectBooks {
   projectId: string;
   books: string[];
@@ -60,7 +63,7 @@ export interface DraftJob {
   events: EventMetric[];
   /** Events with the same build ID that weren't included in the main job tracking */
   additionalEvents: EventMetric[];
-  status: 'running' | 'success' | 'failed' | 'cancelled' | 'incomplete';
+  status: DraftJobStatus;
   startTime: Date | undefined;
   finishTime: Date | undefined;
   duration: number | undefined;
@@ -183,9 +186,12 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
 
   /** Of jobs in the table. */
   get meanDuration(): number | undefined {
-    const durations = this.rows.map(r => r.job.duration).filter((d): d is number => d != null);
-    if (durations.length === 0) return undefined;
-    return durations.reduce((sum, d) => sum + d, 0) / durations.length;
+    const successfulDurations: number[] = this.rows
+      .filter(row => row.job.status === 'success')
+      .map(row => row.job.duration)
+      .filter(notNull);
+    if (successfulDurations.length === 0) return undefined;
+    return successfulDurations.reduce((sum, duration) => sum + duration, 0) / successfulDurations.length;
   }
 
   get maxDuration(): number | undefined {
@@ -660,7 +666,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
   }
 
   private finalizeJobStatus(job: DraftJob): void {
-    let status: 'running' | 'success' | 'failed' | 'cancelled' | 'incomplete';
+    let status: DraftJobStatus;
     let finishTime: Date | undefined = undefined;
     let duration: number | undefined = undefined;
     let errorMessage: string | undefined;

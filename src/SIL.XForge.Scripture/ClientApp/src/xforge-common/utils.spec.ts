@@ -2,7 +2,7 @@ import { Component, DestroyRef, OnDestroy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { BehaviorSubject } from 'rxjs';
 import { quietTakeUntilDestroyed } from './util/rxjs-util';
-import { getAspCultureCookieLanguage, getLinkHTML, isPopulatedString } from './utils';
+import { getAspCultureCookieLanguage, getLinkHTML } from './utils';
 
 describe('xforge-common utils', () => {
   it('should parse ASP Culture cookie', () => {
@@ -26,33 +26,6 @@ describe('xforge-common utils', () => {
     expect(getLinkHTML('example', 'https://example.com')).toEqual(
       `<a href="https://example.com" target="_blank">example</a>`
     );
-  });
-
-  describe('isPopulatedString', () => {
-    it('should return true for non-empty strings', () => {
-      expect(isPopulatedString('a')).toBe(true);
-      expect(isPopulatedString('  a  ')).toBe(true);
-      expect(isPopulatedString(' ')).toBe(true);
-      expect(isPopulatedString('0')).toBe(true);
-      expect(isPopulatedString('false')).toBe(true);
-      const value: string | null | undefined = 'abc';
-      expect(isPopulatedString(value)).toBe(true);
-    });
-
-    it('should return false for null, undefined, empty strings, or non-strings', () => {
-      expect(isPopulatedString(null)).toBe(false);
-      expect(isPopulatedString(undefined)).toBe(false);
-      expect(isPopulatedString('')).toBe(false);
-      let value: string | null | undefined = '';
-      expect(isPopulatedString(value)).toBe(false);
-      value = null;
-      expect(isPopulatedString(value)).toBe(false);
-      value = undefined;
-      expect(isPopulatedString(value)).toBe(false);
-      expect(isPopulatedString(0)).toBe(false);
-      expect(isPopulatedString({})).toBe(false);
-      expect(isPopulatedString([])).toBe(false);
-    });
   });
 });
 

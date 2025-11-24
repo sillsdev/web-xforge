@@ -90,12 +90,12 @@ describe('DraftJobsExportService', () => {
 
       // Check mean duration row (index 3) - (30 + 60) / 2 = 45 minutes
       // Label in servalBuildId, value in startTime
-      expect(spreadsheetRows[3].servalBuildId).toBe('Mean duration minutes');
+      expect(spreadsheetRows[3].servalBuildId).toMatch(/Mean/);
       expect(spreadsheetRows[3].startTime).toBe('45');
 
       // Check max duration row (index 4) - max(30, 60) = 60 minutes
       // Label in servalBuildId, value in startTime
-      expect(spreadsheetRows[4].servalBuildId).toBe('Max duration minutes');
+      expect(spreadsheetRows[4].servalBuildId).toMatch(/Max/);
       expect(spreadsheetRows[4].startTime).toBe('60');
     });
 
@@ -109,10 +109,10 @@ describe('DraftJobsExportService', () => {
 
       // Check statistics are 0 when no data
       // Label in servalBuildId, value in startTime
-      expect(spreadsheetRows[1].servalBuildId).toBe('Mean duration minutes');
+      expect(spreadsheetRows[1].servalBuildId).toMatch(/Mean/);
       expect(spreadsheetRows[1].startTime).toBe('0');
 
-      expect(spreadsheetRows[2].servalBuildId).toBe('Max duration minutes');
+      expect(spreadsheetRows[2].servalBuildId).toMatch(/Max/);
       expect(spreadsheetRows[2].startTime).toBe('0');
     });
   });

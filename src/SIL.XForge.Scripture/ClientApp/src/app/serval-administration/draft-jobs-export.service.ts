@@ -124,7 +124,7 @@ export class DraftJobsExportService {
 
     // Append mean duration row. This is not in a 'correct column', but puts some desired data into the output.
     const meanRow: SpreadsheetRow = {
-      servalBuildId: 'Mean duration minutes',
+      servalBuildId: 'Mean successful duration minutes',
       startTime: meanDuration != null ? this.msToMinutes(meanDuration).toFixed(0) : '0',
       status: '',
       sfProjectId: '',
@@ -135,7 +135,7 @@ export class DraftJobsExportService {
 
     // Append max duration row
     const maxRow: SpreadsheetRow = {
-      servalBuildId: 'Max duration minutes',
+      servalBuildId: 'Max all durations minutes',
       startTime: maxDuration != null ? this.msToMinutes(maxDuration).toFixed(0) : '0',
       status: '',
       sfProjectId: '',
