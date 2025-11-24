@@ -35,19 +35,35 @@ public class PreTranslationService(
         List<PreTranslation> preTranslations = [];
 
         // Ensure we have the parameters to retrieve the pre-translation
-        (string? translationEngineId, string corpusId, bool useParatextVerseRef) =
+        (string? translationEngineId, string? corpusId, string? parallelCorpusId, bool useParatextVerseRef) =
             await GetPreTranslationParametersAsync(sfProjectId);
 
         // Get the pre-translation data from Serval
         string textId = useParatextVerseRef ? GetTextId(bookNum) : GetTextId(bookNum, chapterNum);
-        foreach (
-            Pretranslation preTranslation in await translationEnginesClient.GetAllPretranslationsAsync(
+        IList<Pretranslation> servalPreTranslations;
+        if (parallelCorpusId is not null)
+        {
+            servalPreTranslations = await translationEnginesClient.GetAllPretranslationsAsync(
+                translationEngineId,
+                parallelCorpusId,
+                textId,
+                cancellationToken
+            );
+        }
+        else
+        {
+            // Retrieve the pre-translations from a legacy corpus
+#pragma warning disable CS0612 // Type or member is obsolete
+            servalPreTranslations = await translationEnginesClient.GetAllCorpusPretranslationsAsync(
                 translationEngineId,
                 corpusId,
                 textId,
                 cancellationToken
-            )
-        )
+            );
+#pragma warning restore CS0612 // Type or member is obsolete
+        }
+
+        foreach (Pretranslation preTranslation in servalPreTranslations)
         {
             // A reference will be in one of the formats:
             // FileFormat.Text: "40_1:verse_001_002"
@@ -185,32 +201,59 @@ public class PreTranslationService(
     )
     {
         // Ensure we have the parameters to retrieve the pre-translation
-        (string? translationEngineId, string corpusId, bool _) = await GetPreTranslationParametersAsync(sfProjectId);
+        (string? translationEngineId, string? corpusId, string? parallelCorpusId, bool _) =
+            await GetPreTranslationParametersAsync(sfProjectId);
+
+        // Generate the paragraph marker and quote normalization behaviors
+        PretranslationUsfmMarkerBehavior paragraphMarkerBehavior = config.ParagraphFormat switch
+        {
+            ParagraphBreakFormatOptions.Remove => PretranslationUsfmMarkerBehavior.Strip,
+            ParagraphBreakFormatOptions.BestGuess => PretranslationUsfmMarkerBehavior.PreservePosition,
+            ParagraphBreakFormatOptions.MoveToEnd => PretranslationUsfmMarkerBehavior.Preserve,
+            _ => PretranslationUsfmMarkerBehavior.PreservePosition,
+        };
+        PretranslationNormalizationBehavior quoteNormalizationBehavior = config.QuoteFormat switch
+        {
+            QuoteStyleOptions.Denormalized => PretranslationNormalizationBehavior.Denormalized,
+            QuoteStyleOptions.Normalized => PretranslationNormalizationBehavior.Normalized,
+            _ => PretranslationNormalizationBehavior.Denormalized,
+        };
 
         // Get the USFM
-        string usfm = await translationEnginesClient.GetPretranslatedUsfmAsync(
-            id: translationEngineId,
-            corpusId: corpusId,
-            textId: GetTextId(bookNum),
-            textOrigin: PretranslationUsfmTextOrigin.OnlyPretranslated,
-            template: PretranslationUsfmTemplate.Source,
-            paragraphMarkerBehavior: config.ParagraphFormat switch
-            {
-                ParagraphBreakFormatOptions.Remove => PretranslationUsfmMarkerBehavior.Strip,
-                ParagraphBreakFormatOptions.BestGuess => PretranslationUsfmMarkerBehavior.PreservePosition,
-                ParagraphBreakFormatOptions.MoveToEnd => PretranslationUsfmMarkerBehavior.Preserve,
-                _ => PretranslationUsfmMarkerBehavior.PreservePosition,
-            },
-            quoteNormalizationBehavior: config.QuoteFormat switch
-            {
-                QuoteStyleOptions.Denormalized => PretranslationNormalizationBehavior.Denormalized,
-                QuoteStyleOptions.Normalized => PretranslationNormalizationBehavior.Normalized,
-                _ => PretranslationNormalizationBehavior.Denormalized,
-            },
-            embedBehavior: PretranslationUsfmMarkerBehavior.Strip,
-            styleMarkerBehavior: PretranslationUsfmMarkerBehavior.Strip,
-            cancellationToken: cancellationToken
-        );
+        string usfm;
+        if (parallelCorpusId is not null)
+        {
+            usfm = await translationEnginesClient.GetPretranslatedUsfmAsync(
+                id: translationEngineId,
+                parallelCorpusId: parallelCorpusId,
+                textId: GetTextId(bookNum),
+                textOrigin: PretranslationUsfmTextOrigin.OnlyPretranslated,
+                template: PretranslationUsfmTemplate.Source,
+                paragraphMarkerBehavior: paragraphMarkerBehavior,
+                embedBehavior: PretranslationUsfmMarkerBehavior.Strip,
+                styleMarkerBehavior: PretranslationUsfmMarkerBehavior.Strip,
+                quoteNormalizationBehavior: quoteNormalizationBehavior,
+                cancellationToken: cancellationToken
+            );
+        }
+        else
+        {
+            // Retrieve the USFM from a legacy corpus
+#pragma warning disable CS0612 // Type or member is obsolete
+            usfm = await translationEnginesClient.GetCorpusPretranslatedUsfmAsync(
+                id: translationEngineId,
+                corpusId: corpusId,
+                textId: GetTextId(bookNum),
+                textOrigin: PretranslationUsfmTextOrigin.OnlyPretranslated,
+                template: PretranslationUsfmTemplate.Source,
+                paragraphMarkerBehavior: paragraphMarkerBehavior,
+                embedBehavior: PretranslationUsfmMarkerBehavior.Strip,
+                styleMarkerBehavior: PretranslationUsfmMarkerBehavior.Strip,
+                quoteNormalizationBehavior: quoteNormalizationBehavior,
+                cancellationToken: cancellationToken
+            );
+#pragma warning restore CS0612 // Type or member is obsolete
+        }
 
         // Return the entire book
         if (chapterNum == 0)
@@ -243,19 +286,34 @@ public class PreTranslationService(
         }
 
         // Ensure we have the parameters to retrieve the pre-translation
-        (string? translationEngineId, string corpusId, bool useParatextVerseRef) =
+        (string? translationEngineId, string corpusId, string parallelCorpusId, bool useParatextVerseRef) =
             await GetPreTranslationParametersAsync(sfProjectId);
 
         // Get all the pre-translations and update the chapters
-        Dictionary<int, HashSet<int>> bookChapters = [];
-        foreach (
-            Pretranslation preTranslation in await translationEnginesClient.GetAllPretranslationsAsync(
+        IList<Pretranslation> preTranslations;
+        if (parallelCorpusId is not null)
+        {
+            preTranslations = await translationEnginesClient.GetAllPretranslationsAsync(
+                translationEngineId,
+                parallelCorpusId,
+                textId: null,
+                cancellationToken
+            );
+        }
+        else
+        {
+            // Retrieve the pre-translations from a legacy corpus
+#pragma warning disable CS0612 // Type or member is obsolete
+            preTranslations = await translationEnginesClient.GetAllCorpusPretranslationsAsync(
                 translationEngineId,
                 corpusId,
                 textId: null,
                 cancellationToken
-            )
-        )
+            );
+#pragma warning restore CS0612 // Type or member is obsolete
+        }
+        Dictionary<int, HashSet<int>> bookChapters = [];
+        foreach (Pretranslation preTranslation in preTranslations)
         {
             // Get the book and chapter number
             int bookNum;
@@ -341,7 +399,8 @@ public class PreTranslationService(
     /// <exception cref="DataNotFoundException">The pre-translation engine is not configured, or the project secret cannot be found.</exception>
     protected internal virtual async Task<(
         string translationEngineId,
-        string corpusId,
+        string? corpusId,
+        string? parallelCorpusId,
         bool useParatextVerseRef
     )> GetPreTranslationParametersAsync(string sfProjectId)
     {
@@ -352,11 +411,12 @@ public class PreTranslationService(
         }
 
         string translationEngineId = projectSecret.ServalData?.PreTranslationEngineId;
-        string corpusId;
+        string? corpusId = null;
+        string? parallelCorpusId = null;
         bool useParatextVerseRef = false;
         if (!string.IsNullOrWhiteSpace(projectSecret.ServalData?.ParallelCorpusIdForPreTranslate))
         {
-            corpusId = projectSecret.ServalData.ParallelCorpusIdForPreTranslate;
+            parallelCorpusId = projectSecret.ServalData.ParallelCorpusIdForPreTranslate;
             useParatextVerseRef = true;
         }
         else
@@ -371,11 +431,14 @@ public class PreTranslationService(
             }
         }
 
-        if (string.IsNullOrWhiteSpace(translationEngineId) || string.IsNullOrWhiteSpace(corpusId))
+        if (
+            string.IsNullOrWhiteSpace(translationEngineId)
+            || (string.IsNullOrWhiteSpace(corpusId) && string.IsNullOrWhiteSpace(parallelCorpusId))
+        )
         {
             throw new DataNotFoundException("The pre-translation engine is not configured.");
         }
 
-        return (translationEngineId, corpusId, useParatextVerseRef);
+        return (translationEngineId, corpusId, parallelCorpusId, useParatextVerseRef);
     }
 }
