@@ -99,7 +99,7 @@ export class DraftJobsExportService {
 
     // Create filename and download
     const filename: string = this.getExportFilename(dateRange, 'rsv');
-    const blob: Blob = new Blob([rsvData], { type: 'application/octet-stream' });
+    const blob: Blob = new Blob([rsvData as BlobPart], { type: 'application/octet-stream' });
     saveAs(blob, filename);
   }
 

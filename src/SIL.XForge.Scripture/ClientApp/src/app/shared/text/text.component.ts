@@ -1,10 +1,11 @@
 import { Dir } from '@angular/cdk/bidi';
-import { DOCUMENT, NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
   DestroyRef,
+  DOCUMENT,
   EventEmitter,
   Inject,
   Input,
@@ -42,13 +43,8 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
 import { LynxInsightEditorObjectsComponent } from '../../translate/editor/lynx/insights/lynx-insight-editor-objects/lynx-insight-editor-objects.component';
 import { MultiCursorViewer } from '../../translate/editor/multi-viewer/multi-viewer.component';
-import {
-  attributeFromMouseEvent,
-  getBaseVerse,
-  getVerseRefFromSegmentRef,
-  getVerseStrFromSegmentRef,
-  VERSE_REGEX
-} from '../utils';
+import { attributeFromMouseEvent } from '../utils';
+import { getBaseVerse, getVerseRefFromSegmentRef, getVerseStrFromSegmentRef, VERSE_REGEX } from '../verse-utils';
 import { QuillFormatRegistryService } from './quill-editor-registration/quill-format-registry.service';
 import { getAttributesAtPosition, getRetainCount } from './quill-util';
 import { Segment } from './segment';

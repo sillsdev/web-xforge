@@ -5,6 +5,7 @@ import {
   AuthorizationParams,
   CacheEntry,
   CacheKey,
+  ConnectAccountRedirectResult,
   GetTokenSilentlyVerboseResponse,
   IdToken,
   LogoutOptions,
@@ -57,7 +58,7 @@ export interface AuthState {
 
 export interface AuthDetails {
   idToken: IdToken | undefined;
-  loginResult: RedirectLoginResult;
+  loginResult: RedirectLoginResult | ConnectAccountRedirectResult;
   token: GetTokenSilentlyVerboseResponse;
 }
 
@@ -459,7 +460,8 @@ export class AuthService {
           return { loggedIn: true, newlyLoggedIn: false, anonymousUser: false };
         }
         // Handle the callback response from auth0
-        const loginResult: RedirectLoginResult = await this.auth0.handleRedirectCallback();
+        const loginResult: RedirectLoginResult | ConnectAccountRedirectResult =
+          await this.auth0.handleRedirectCallback();
         const token = await this.checkSession();
         if (token == null) {
           this.clearState();

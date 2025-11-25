@@ -10,12 +10,8 @@ import { TextDocId } from '../../../../../core/models/text-doc';
 import { provideCustomIcons } from '../../../../../shared/custom-icons';
 import { EditorReadyService } from '../base-services/editor-ready.service';
 import { InsightRenderService } from '../base-services/insight-render.service';
-import {
-  LynxableEditor,
-  LynxEditorAdapterFactory,
-  LynxTextModelConverter,
-  TestLynxEditorAdapterFactory
-} from '../lynx-editor';
+import { LynxableEditor, LynxTextModelConverter } from '../lynx-editor';
+import { LynxEditorAdapterFactory, TestLynxEditorAdapterFactory } from '../lynx-editor-adapter-factory';
 import { LynxInsight, LynxInsightDisplayState, LynxInsightRange } from '../lynx-insight';
 import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
 import { LynxInsightStateService } from '../lynx-insight-state.service';

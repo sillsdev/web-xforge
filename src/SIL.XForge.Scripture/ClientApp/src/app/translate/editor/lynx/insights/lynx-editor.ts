@@ -1,7 +1,5 @@
-import { Injectable } from '@angular/core';
 import Quill, { Delta, Op, Range } from 'quill';
 import { Observable } from 'rxjs';
-import { QuillLynxEditorAdapter } from './quill-services/quill-lynx-editor-adapter';
 
 export type LynxableEditor = Quill; // Add future editor as union type
 export type LynxCountToOffsetFunc = (offset: number) => number;
@@ -52,21 +50,4 @@ export interface LynxTextModelConverter {
    * which affect the mapping between data model positions and editor positions.
    */
   readonly embedPositionsChanged$: Observable<void>;
-}
-
-@Injectable({ providedIn: 'root' })
-export class LynxEditorAdapterFactory {
-  getAdapter(editor: LynxableEditor): LynxEditor {
-    if (editor instanceof Quill) {
-      return new QuillLynxEditorAdapter(editor);
-    }
-    throw new Error('Unsupported editor type');
-  }
-}
-
-@Injectable({ providedIn: 'root' })
-export class TestLynxEditorAdapterFactory extends LynxEditorAdapterFactory {
-  getAdapter(mockEditor: any): LynxEditor {
-    return mockEditor;
-  }
 }

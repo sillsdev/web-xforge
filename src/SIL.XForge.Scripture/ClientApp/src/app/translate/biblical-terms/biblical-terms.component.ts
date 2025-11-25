@@ -1,4 +1,4 @@
-import { NgFor, SlicePipe } from '@angular/common';
+import { SlicePipe } from '@angular/common';
 import { Component, DestroyRef, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconButton } from '@angular/material/button';
@@ -54,9 +54,10 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
-import { getVerseNumbers, XmlUtils } from '../../shared/utils';
-import { SaveNoteParameters } from '../editor/editor.component';
+import { XmlUtils } from '../../shared/utils';
+import { getVerseNumbers } from '../../shared/verse-utils';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from '../editor/note-dialog/note-dialog.component';
+import { SaveNoteParameters } from '../editor/save-note-parameters';
 import { BiblicalTermDialogComponent, BiblicalTermDialogData } from './biblical-term-dialog.component';
 
 // Material icons matching the biblical term's notes status
@@ -195,7 +196,6 @@ class Row {
   templateUrl: './biblical-terms.component.html',
   styleUrls: ['./biblical-terms.component.scss'],
   imports: [
-    NgFor,
     FormsModule,
     TranslocoModule,
     MatTooltip,

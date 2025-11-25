@@ -22,15 +22,12 @@ import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoMo
 import { TestingRetryingRequestService } from 'xforge-common/testing-retrying-request.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
+import { TransceleratorQuestion } from '../../core/models/transcelerator-question';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ScriptureChooserDialogComponent } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { CheckingQuestionsService } from '../checking/checking-questions.service';
 import { ImportQuestionsConfirmationDialogComponent } from './import-questions-confirmation-dialog/import-questions-confirmation-dialog.component';
-import {
-  ImportQuestionsDialogComponent,
-  ImportQuestionsDialogData,
-  TransceleratorQuestion
-} from './import-questions-dialog.component';
+import { ImportQuestionsDialogComponent, ImportQuestionsDialogData } from './import-questions-dialog.component';
 
 const mockedProjectService = mock(SFProjectService);
 const mockedQuestionsService = mock(CheckingQuestionsService);

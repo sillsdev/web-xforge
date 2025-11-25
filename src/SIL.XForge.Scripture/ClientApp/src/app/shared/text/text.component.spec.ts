@@ -2,6 +2,7 @@ import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { TranslocoService } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
+import { QuillService } from 'ngx-quill';
 import Quill, { Delta, EmitterSource, Range as QuillRange } from 'quill';
 import QuillCursors from 'quill-cursors';
 import { User } from 'realtime-server/lib/esm/common/models/user';
@@ -12,6 +13,7 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import * as RichText from 'rich-text';
+import { firstValueFrom } from 'rxjs';
 import { LocalPresence } from 'sharedb/lib/sharedb';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -61,8 +63,13 @@ describe('TextComponent', () => {
       { provide: DialogService, useMock: mockedDialogService }
     ]
   }));
-  beforeEach(() => {
+
+  beforeEach(async () => {
     mockedConsole.reset();
+
+    // Pre-load Quill before each test to avoid async Quill import issues
+    const quillService = TestBed.inject(QuillService);
+    await firstValueFrom(quillService.getQuill());
   });
 
   it('shows proper placeholder messages for situations', fakeAsync(() => {

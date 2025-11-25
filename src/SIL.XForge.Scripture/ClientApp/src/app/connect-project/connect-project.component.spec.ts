@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { DebugElement, ErrorHandler } from '@angular/core';
+import { DebugElement, ErrorHandler, signal } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
@@ -18,10 +18,11 @@ import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { ParatextProject } from '../core/models/paratext-project';
+import { SelectableProjectWithLanguageCode } from '../core/models/selectable-project';
 import { SFProjectCreateSettings } from '../core/models/sf-project-create-settings';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
-import { ParatextService, SelectableProjectWithLanguageCode } from '../core/paratext.service';
+import { ParatextService } from '../core/paratext.service';
 import { ProjectNotificationService } from '../core/project-notification.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { ProjectSelectComponent } from '../project-select/project-select.component';
@@ -379,15 +380,19 @@ class TestEnvironment {
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
     if (params.paratextId === undefined) {
-      when(mockedRouter.getCurrentNavigation()).thenReturn({ extras: {} } as any);
+      when(mockedRouter.currentNavigation).thenReturn(signal({ extras: {} } as any));
     } else {
       const paratextId = params.paratextId ?? 'pt01';
       const name: string | undefined = this.paratextProjects.find(p => p.paratextId === paratextId)?.name;
       const shortName: string | undefined = this.paratextProjects.find(p => p.paratextId === paratextId)?.shortName;
 
-      when(mockedRouter.getCurrentNavigation()).thenReturn({
-        extras: { state: { paratextId, name, shortName } }
-      } as any);
+      when(mockedRouter.currentNavigation).thenReturn(
+        signal({
+          extras: {
+            state: { paratextId, name, shortName }
+          }
+        } as any)
+      );
     }
     when(mockedSFProjectService.onlineAddCurrentUser('project01')).thenResolve();
     this.testOnlineStatusService.setIsOnline(params.hasConnection ?? true);

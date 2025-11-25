@@ -1,5 +1,5 @@
 import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
-import { Component, DestroyRef, EventEmitter } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, OnInit } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MatCard, MatCardActions, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
 import { MatRipple } from '@angular/material/core';
@@ -26,9 +26,10 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { hasData, notNull } from '../../../../type-utils';
+import { SelectableProject, SelectableProjectWithLanguageCode } from '../../../core/models/selectable-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
-import { ParatextService, SelectableProject, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
+import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { ProjectSelectComponent } from '../../../project-select/project-select.component';
 import { ConfirmOnLeave } from '../../../shared/project-router.guard';
@@ -75,7 +76,7 @@ export interface ProjectStatus {
   templateUrl: './draft-sources.component.html',
   styleUrl: './draft-sources.component.scss'
 })
-export class DraftSourcesComponent extends DataLoadingComponent implements ConfirmOnLeave {
+export class DraftSourcesComponent extends DataLoadingComponent implements OnInit, ConfirmOnLeave {
   /** Indicator that a project setting change is for clearing a value. */
   static readonly projectSettingValueUnset = 'unset';
 
@@ -126,7 +127,9 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
     private readonly fileService: FileService
   ) {
     super(noticeService);
+  }
 
+  ngOnInit(): void {
     this.activatedProjectService.changes$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async projectDoc => {
       if (projectDoc?.data != null) {
         const { trainingSources, trainingTargets, draftingSources } = projectToDraftSources(projectDoc.data);

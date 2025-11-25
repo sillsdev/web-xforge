@@ -1,5 +1,4 @@
-import { DOCUMENT } from '@angular/common';
-import { Inject, Injectable, InjectionToken } from '@angular/core';
+import { DOCUMENT, Inject, Injectable, InjectionToken } from '@angular/core';
 
 export enum Breakpoint {
   XS,

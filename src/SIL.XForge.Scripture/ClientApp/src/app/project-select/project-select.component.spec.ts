@@ -4,7 +4,7 @@ import { ReactiveFormsModule, UntypedFormControl, UntypedFormGroup } from '@angu
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { getTestTranslocoModule } from 'xforge-common/test-utils';
 import { isSafari } from 'xforge-common/utils';
-import { SelectableProject } from '../core/paratext.service';
+import { SelectableProject } from '../core/models/selectable-project';
 import { CustomValidatorState, SFValidators } from '../shared/sfvalidators';
 import { ProjectSelectComponent } from './project-select.component';
 

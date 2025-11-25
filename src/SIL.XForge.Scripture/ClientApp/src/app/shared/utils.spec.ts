@@ -1,16 +1,16 @@
 import { VerseRef } from '@sillsdev/scripture';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DeltaOperation } from 'rich-text';
-import { SelectableProject } from '../core/paratext.service';
+import { SelectableProject } from '../core/models/selectable-project';
 import {
   compareProjectsForSorting,
   getBookFileNameDigits,
   getUnsupportedTags,
-  getVerseNumbers,
   isBadDelta,
   projectLabel,
   XmlUtils
 } from './utils';
+import { getVerseNumbers } from './verse-utils';
 
 describe('shared utils', () => {
   describe('projectLabel function', () => {

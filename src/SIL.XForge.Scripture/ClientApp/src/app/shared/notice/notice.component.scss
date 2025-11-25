@@ -137,8 +137,8 @@ $colors: (
     .mat-mdc-button-base {
       flex-shrink: 0;
       // set the button theme vars to our specific colors
-      --mdc-filled-button-container-color: var(--notice-color-button-bg);
-      --mdc-filled-button-label-text-color: var(--notice-color-button-text);
+      --mat-button-filled-container-color: var(--notice-color-button-bg);
+      --mat-button-filled-label-text-color: var(--notice-color-button-text);
 
       &:hover {
         background-color: var(--notice-color-button-hover-bg) !important;
