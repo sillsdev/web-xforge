@@ -29,6 +29,8 @@
     "storybook": "ng run SIL.XForge.Scripture:storybook",
     "build-storybook": "ng run SIL.XForge.Scripture:build-storybook",
     "chromatic": "chromatic --exit-zero-on-changes",
+    "compress": "gzipper compress ./dist/browser --brotli",
+    "postbuild": "npm run compress",
     "postinstall": "patch-package"
   },
   "private": true,
@@ -136,6 +138,7 @@
     "eslint-plugin-jsdoc": "^60.5.0",
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-storybook": "10.0.5",
+    "gzipper": "^8.2.1",
     "husky": "^7.0.4",
     "jasmine-core": "~3.9.0",
     "karma": "~6.3.19",
