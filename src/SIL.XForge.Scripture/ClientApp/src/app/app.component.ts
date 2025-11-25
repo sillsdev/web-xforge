@@ -113,7 +113,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   private isLoggedInUserAnonymous: boolean = false;
   private _selectedProjectDoc?: SFProjectProfileDoc;
   private selectedProjectDeleteSub?: Subscription;
-  private permissionsChangedSub?: Subscription;
+  private selectedProjectChangedSub?: Subscription;
   private _isDrawerPermanent: boolean = true;
 
   constructor(
@@ -343,9 +343,11 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
           }
         });
 
-        this.permissionsChangedSub?.unsubscribe();
-        this.permissionsChangedSub = this._selectedProjectDoc?.remoteChanges$.subscribe(() => {
+        this.selectedProjectChangedSub?.unsubscribe();
+        this.selectedProjectChangedSub = this._selectedProjectDoc?.remoteChanges$.subscribe(() => {
           if (this._selectedProjectDoc?.data != null && this.currentUserDoc != null) {
+            // Ensure the project font is up to date
+            this.projectFont = this.fontService.getFontFamilyFromProject(this._selectedProjectDoc.data);
             // If the user is in the Serval administration area, do not check access, as they will be modifying the
             // project's properties. We suppress this in the event log, as if a sync occurs while a serval admin is
             // viewing it, it will result in the project deleted dialog erroneously being shown.
@@ -391,7 +393,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   ngOnDestroy(): void {
     this.selectedProjectDeleteSub?.unsubscribe();
-    this.permissionsChangedSub?.unsubscribe();
+    this.selectedProjectChangedSub?.unsubscribe();
   }
 
   setLocale(locale: string): void {
