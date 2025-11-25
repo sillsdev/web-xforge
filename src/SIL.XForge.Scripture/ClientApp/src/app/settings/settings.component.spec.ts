@@ -20,6 +20,7 @@ import { createTestTextAudio } from 'realtime-server/lib/esm/scriptureforge/mode
 import { of } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
@@ -44,6 +45,7 @@ import { SettingsComponent } from './settings.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedAuthService = mock(AuthService);
+const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedNoticeService = mock(NoticeService);
 const mockedParatextService = mock(ParatextService);
 const mockedSFProjectService = mock(SFProjectService);
@@ -73,6 +75,7 @@ describe('SettingsComponent', () => {
       provideTestOnlineStatus(),
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: AuthService, useMock: mockedAuthService },
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
@@ -98,7 +101,7 @@ describe('SettingsComponent', () => {
 
     it('changing state of top-level setting results in status icon', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setupProject();
+      env.setupProject({ biblicalTermsConfig: { biblicalTermsEnabled: true } });
       env.wait();
       expect(env.statusDone(env.checkingStatus)).toBeNull();
       expect(env.inputElement(env.checkingCheckbox).checked).toBe(false);
@@ -107,12 +110,12 @@ describe('SettingsComponent', () => {
       env.fixture.detectChanges();
       expect(env.statusDone(env.checkingStatus)).not.toBeNull();
 
-      expect(env.statusDone(env.translationSuggestionsStatus)).toBeNull();
-      expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
-      env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
+      expect(env.statusDone(env.biblicalTermsStatus)).toBeNull();
+      expect(env.inputElement(env.biblicalTermsCheckbox).checked).toBe(true);
+      env.clickElement(env.inputElement(env.biblicalTermsCheckbox));
       tick();
       env.fixture.detectChanges();
-      expect(env.statusDone(env.translationSuggestionsStatus)).not.toBeNull();
+      expect(env.statusDone(env.biblicalTermsStatus)).not.toBeNull();
     }));
 
     it('error on data submit shows error icon', fakeAsync(() => {
@@ -157,7 +160,7 @@ describe('SettingsComponent', () => {
       env.wait();
 
       expect(env.component.form.disabled).toBe(false);
-      expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(false);
+      expect(env.inputElement(env.biblicalTermsCheckbox).disabled).toBe(false);
       expect(env.basedOnSelectErrorMessage.textContent).toContain('error fetching projects and resources');
       expect(env.basedOnSelectComponent.isDisabled).toBe(true);
     }));
@@ -172,7 +175,7 @@ describe('SettingsComponent', () => {
       expect(env.component.form.disabled).toBe(false);
       expect(env.basedOnSelectErrorMessage.textContent).toContain('error fetching projects.');
       expect(env.basedOnSelectComponent.isDisabled).toBe(false);
-      expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(false);
+      expect(env.inputElement(env.biblicalTermsCheckbox).disabled).toBe(false);
     }));
 
     it('enables form even when resources fail to load', fakeAsync(() => {
@@ -185,13 +188,13 @@ describe('SettingsComponent', () => {
       expect(env.component.form.disabled).toBe(false);
       expect(env.basedOnSelectErrorMessage.textContent).toContain('error fetching the Digital Bible Library resources');
       expect(env.basedOnSelectComponent.isDisabled).toBe(false);
-      expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(false);
+      expect(env.inputElement(env.biblicalTermsCheckbox).disabled).toBe(false);
     }));
 
     describe('Translation Suggestions options', () => {
       it('should see login button when Paratext account not connected', fakeAsync(() => {
         const env = new TestEnvironment();
-        env.setupProject();
+        env.setupProject({ translateConfig: { translationSuggestionsEnabled: true } });
         when(mockedParatextService.getParatextUsername()).thenReturn(of(undefined));
         env.wait();
         expect(env.loginButton).not.toBeNull();
@@ -214,7 +217,7 @@ describe('SettingsComponent', () => {
 
       it('should hide Translation Suggestions when Based On is not set', fakeAsync(() => {
         const env = new TestEnvironment();
-        env.setupProject();
+        env.setupProject({ translateConfig: { translationSuggestionsEnabled: true } });
         env.wait();
         expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
         expect(env.basedOnSelect).not.toBeNull();
@@ -226,17 +229,10 @@ describe('SettingsComponent', () => {
         expect(env.basedOnSelectValue).toEqual('');
       }));
 
-      it('should show Translation Suggestions when Based On is set', fakeAsync(() => {
+      it('should show Translation Suggestions when Based On is set and the feature flag is enabled', fakeAsync(() => {
         const env = new TestEnvironment();
-        env.setupProject(
-          {
-            translateConfig: {
-              translationSuggestionsEnabled: false,
-              source: undefined
-            }
-          },
-          true
-        );
+        when(mockedFeatureFlagService.allowEnablingTranslationSuggestions).thenReturn(createTestFeatureFlag(true));
+        env.setupProject({ translateConfig: { translationSuggestionsEnabled: false, source: undefined } }, true);
         env.wait();
         expect(env.translationSuggestionsCheckbox).toBeNull();
         expect(env.basedOnSelectValue).toEqual('');
@@ -247,9 +243,23 @@ describe('SettingsComponent', () => {
         expect(env.basedOnSelectValue).toEqual('ParatextP1');
       }));
 
+      it('should not show Translation Suggestions when Based On is set and the feature flag is not enabled', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({ translateConfig: { translationSuggestionsEnabled: false, source: undefined } }, true);
+        env.wait();
+        expect(env.translationSuggestionsCheckbox).toBeNull();
+        expect(env.basedOnSelectValue).toEqual('');
+
+        env.setBasedOnValue('paratextId01');
+
+        expect(env.translationSuggestionsCheckbox).toBeNull();
+        expect(env.basedOnSelectValue).toEqual('ParatextP1');
+      }));
+
       it('should retain Based On value when Translation Suggestions is disabled', fakeAsync(() => {
         const env = new TestEnvironment();
-        env.setupProject();
+        when(mockedFeatureFlagService.allowEnablingTranslationSuggestions).thenReturn(createTestFeatureFlag(true));
+        env.setupProject({ translateConfig: { translationSuggestionsEnabled: true } });
         env.wait();
         env.clickElement(env.inputElement(env.checkingCheckbox));
         expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
@@ -273,7 +283,7 @@ describe('SettingsComponent', () => {
 
       it('should change Based On select value', fakeAsync(() => {
         const env = new TestEnvironment();
-        env.setupProject();
+        env.setupProject({ translateConfig: { translationSuggestionsEnabled: true } });
         env.wait();
         env.wait();
         expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
@@ -289,7 +299,7 @@ describe('SettingsComponent', () => {
 
       it('should display Based On project even if user is not a member', fakeAsync(() => {
         const env = new TestEnvironment();
-        env.setupProject();
+        env.setupProject({ translateConfig: { translationSuggestionsEnabled: true } });
         when(mockedParatextService.getProjects()).thenResolve([
           {
             paratextId: 'paratextId02',
@@ -315,7 +325,7 @@ describe('SettingsComponent', () => {
 
       it('should display projects then resources', fakeAsync(() => {
         const env = new TestEnvironment();
-        env.setupProject();
+        env.setupProject({ translateConfig: { translationSuggestionsEnabled: true } });
         env.wait();
         env.wait();
         expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
@@ -327,14 +337,8 @@ describe('SettingsComponent', () => {
 
       it('Translation Suggestions should remain unchanged when Based On is changed', fakeAsync(() => {
         const env = new TestEnvironment();
-        env.setupProject(
-          {
-            translateConfig: {
-              translationSuggestionsEnabled: false
-            }
-          },
-          true
-        );
+        when(mockedFeatureFlagService.allowEnablingTranslationSuggestions).thenReturn(createTestFeatureFlag(true));
+        env.setupProject({ translateConfig: { translationSuggestionsEnabled: false } }, true);
         env.wait();
         expect(env.translationSuggestionsCheckbox).toBeNull();
         expect(env.basedOnSelectValue).toEqual('');
@@ -362,20 +366,8 @@ describe('SettingsComponent', () => {
 
       it('should save Translation Suggestions only if Based On is set', fakeAsync(() => {
         const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            translationSuggestionsEnabled: false,
-            source: {
-              paratextId: 'paratextId01',
-              projectRef: 'paratext01',
-              name: 'ParatextP1',
-              shortName: 'PT1',
-              writingSystem: {
-                tag: 'qaa'
-              }
-            }
-          }
-        });
+        when(mockedFeatureFlagService.allowEnablingTranslationSuggestions).thenReturn(createTestFeatureFlag(true));
+        env.setupProject({ translateConfig: { translationSuggestionsEnabled: false } });
         env.wait();
         expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(false);
 
@@ -391,9 +383,9 @@ describe('SettingsComponent', () => {
       it('should hide options when Checking is disabled', fakeAsync(() => {
         const env = new TestEnvironment();
         env.makeProjectHaveTextAudio();
-        env.setupProject();
+        env.setupProject({ biblicalTermsConfig: { biblicalTermsEnabled: true } });
         env.wait();
-        expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
+        expect(env.inputElement(env.biblicalTermsCheckbox).checked).toBe(true);
         expect(env.inputElement(env.checkingCheckbox).checked).toBe(false);
         expect(env.seeOthersResponsesCheckbox).toBeNull();
         expect(env.communityCheckersShareCheckbox).toBeNull();
@@ -702,7 +694,7 @@ describe('SettingsComponent', () => {
 
     it('should hide/disabled settings while loading', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setupProject();
+      env.setupProject({ translateConfig: { translationSuggestionsEnabled: true } });
       env.fixture.detectChanges();
       expect(env.translationSuggestionsCheckbox).toBeNull();
       expect(env.basedOnSelect).toBeNull();
@@ -773,6 +765,7 @@ class TestEnvironment {
   constructor(hasConnection: boolean = true, isSource: boolean = false) {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(mockedAuthService.currentUserRoles).thenReturn([]);
+    when(mockedFeatureFlagService.allowEnablingTranslationSuggestions).thenReturn(createTestFeatureFlag(false));
     when(mockedSFProjectService.onlineIsSourceProject('project01')).thenResolve(isSource);
     when(mockedSFProjectService.onlineDelete(anything())).thenResolve();
     when(mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();
@@ -925,6 +918,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#checkbox-biblical-terms'));
   }
 
+  get biblicalTermsStatus(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#biblical-terms-status'));
+  }
+
   set onlineStatus(hasConnection: boolean) {
     this.testOnlineStatusService.setIsOnline(hasConnection);
     tick();
@@ -1032,7 +1029,6 @@ class TestEnvironment {
 
   testProject: SFProject = createTestProject({
     translateConfig: {
-      translationSuggestionsEnabled: true,
       source: {
         paratextId: 'paratextId01',
         projectRef: 'paratext01',
