@@ -35,8 +35,9 @@ cat <<EOF >"$BUILD_OUTPUT/app/secrets.json"
     "HealthCheckApiKey": "${AUTH_HEALTH_CHECK_API_KEY}"
   },
   "Site": {
-    "Origin": "https://${HOSTNAME};${ALTERNATE_DOMAIN}",
-  }
+    "Origin": "https://${HOSTNAME};${ALTERNATE_DOMAIN}"
+  },
+  "node-options": "${NODE_OPTIONS}"
 }
 EOF
 
