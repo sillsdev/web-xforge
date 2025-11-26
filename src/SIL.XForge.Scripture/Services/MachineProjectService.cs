@@ -1271,14 +1271,26 @@ public class MachineProjectService(
                             .Select(s => new ParallelCorpusFilterConfig
                             {
                                 CorpusId = s.CorpusId,
-                                ScriptureRange = buildConfig
-                                    .TrainingScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
-                                    ?.ScriptureRange,
+                                // NOTE: The scripture range will be set to match the matching source filter's scripture range below
                             }),
                     ],
                 },
             ],
         };
+
+        // Set the training target filter scripture ranges to the same as the source filter scripture ranges
+        foreach (TrainingCorpusConfig trainingCorpusConfig in translationBuildConfig.TrainOn)
+        {
+            for (int j = 0; j < trainingCorpusConfig.SourceFilters?.Count; j++)
+            {
+                if (trainingCorpusConfig.TargetFilters?[j] is not null)
+                {
+                    trainingCorpusConfig.TargetFilters[j].ScriptureRange = trainingCorpusConfig
+                        .SourceFilters[j]
+                        .ScriptureRange;
+                }
+            }
+        }
 
         // Add the additional training data
         if (
