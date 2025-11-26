@@ -4967,7 +4967,6 @@ class TestEnvironment {
     when(mockedDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of({} as BuildDto));
     when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected(anything())).thenReturn(false);
     when(mockedPermissionsService.isUserOnProject(anything())).thenResolve(true);
-    when(mockedPermissionsService.canAccessText(anything(), anything())).thenReturn(true);
     when(mockedFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(false));
     when(mockedLynxWorkspaceService.rawInsightSource$).thenReturn(of([]));
 
