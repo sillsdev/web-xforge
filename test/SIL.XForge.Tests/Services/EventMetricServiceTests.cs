@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
@@ -8,8 +9,10 @@ using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NSubstitute;
 using NUnit.Framework;
+using SIL.Linq;
 using SIL.XForge.DataAccess;
 using SIL.XForge.EventMetrics;
 using SIL.XForge.Models;
@@ -393,8 +396,164 @@ public class EventMetricServiceTests
         Assert.AreEqual(BsonNull.Value, eventMetric.Result);
     }
 
+    [Test]
+    public async Task SaveEventMetricAsync_ActivityTags()
+    {
+        var env = new TestEnvironment();
+        Dictionary<string, object> argumentsWithNames = new Dictionary<string, object>
+        {
+            { "projectId", Project01 },
+            { "userId", User01 },
+        };
+
+        // Set up Activity tags
+        using var activity = new Activity("test");
+        activity.AddTag(TestEnvironment.SomeActivityTagKey, "abc-123-def-456");
+        activity.AddTag("someOtherThing", "xyz-789");
+        activity.AddTag("someNumber", 42);
+        activity.Start();
+
+        // SUT
+        await env.Service.SaveEventMetricAsync(Project01, User01, EventType01, EventScope01, argumentsWithNames);
+
+        activity.Stop();
+
+        EventMetric eventMetric = env.EventMetrics.Query().OrderByDescending(e => e.TimeStamp).First();
+        Assert.IsNotNull(eventMetric.Tags);
+        Assert.AreEqual(3, eventMetric.Tags.Count);
+        Assert.AreEqual("abc-123-def-456", eventMetric.Tags[TestEnvironment.SomeActivityTagKey]?.AsString);
+        Assert.AreEqual("xyz-789", eventMetric.Tags["someOtherThing"]?.AsString);
+        Assert.AreEqual(42, eventMetric.Tags["someNumber"]?.AsInt64);
+    }
+
+    [Test]
+    public async Task SaveEventMetricAsync_ActivityTags_FromParentActivity()
+    {
+        var env = new TestEnvironment();
+        Dictionary<string, object> argumentsWithNames = new Dictionary<string, object> { { "projectId", Project01 } };
+
+        // Set up parent activity with tags
+        using var parentActivity = new Activity("parent");
+        parentActivity.AddTag(TestEnvironment.SomeActivityTagKey, "parent-123");
+        parentActivity.AddTag("parentTag", "parent-value");
+        parentActivity.AddTag("someNumber", 42);
+        parentActivity.Start();
+
+        // Create child activity (simulating what EventMetricLogger does)
+        using var childActivity = new Activity("child");
+        childActivity.AddTag("childTag", "child-value");
+        childActivity.AddTag(TestEnvironment.SomeActivityTagKey, "child-override-456"); // Override parent
+        childActivity.AddTag("someNumber", 99); // Different than parent value.
+        childActivity.Start();
+
+        // SUT - should collect tags from both parent and child
+        await env.Service.SaveEventMetricAsync(Project01, User01, EventType01, EventScope01, argumentsWithNames);
+
+        childActivity.Stop();
+        parentActivity.Stop();
+
+        // Verify the saved event metric
+        EventMetric eventMetric = env.EventMetrics.Query().OrderByDescending(e => e.TimeStamp).First();
+        Assert.IsNotNull(eventMetric.Tags);
+        Assert.AreEqual(4, eventMetric.Tags.Count);
+
+        // Child tag should be present
+        Assert.AreEqual("child-value", eventMetric.Tags["childTag"]?.AsString);
+
+        // Parent tag should be present
+        Assert.AreEqual("parent-value", eventMetric.Tags["parentTag"]?.AsString);
+
+        // Child should override parent for same key
+        Assert.AreEqual("child-override-456", eventMetric.Tags[TestEnvironment.SomeActivityTagKey]?.AsString);
+        Assert.AreEqual(99, eventMetric.Tags["someNumber"]?.AsInt64);
+    }
+
+    [Test]
+    public async Task SaveEventMetricAsync_ActivityTags_VariousTypes()
+    {
+        var env = new TestEnvironment();
+        Dictionary<string, object> argumentsWithNames = new Dictionary<string, object> { { "projectId", Project01 } };
+
+        // Suppose various types of object are added as tags. They should be stored and converted as expected.
+
+        const bool boolean = true;
+        DateTime dateAndTime = DateTime.UtcNow;
+        const decimal decimalNumber = 12.34M;
+        const double doubleFloat = 56.78;
+        const int integer = 1234;
+        const long longInteger = 5678L;
+        const float singleFloat = 90.12F;
+        string[] stringArray = ["string1", "string2"];
+        Uri uri = new Uri("https://example.com", UriKind.Absolute);
+
+        TestClass someObject = new() { Records = [new TestRecord { ProjectId = Project01, UserId = User01 }] };
+        string someObjectAsJson = JsonConvert.SerializeObject(someObject);
+
+        JObject someJObject = JObject.FromObject(someObject);
+        string someJObjectAsJson = JsonConvert.SerializeObject(someJObject);
+
+        string serializedJsonInput = someObjectAsJson.ToString();
+        string serializedJsonOutput = serializedJsonInput.ToString();
+
+        Dictionary<string, object> items = new Dictionary<string, object>
+        {
+            { "projectId", Project01 },
+            { "userId", User01 },
+            { "boolean", boolean },
+            { "dateAndTime", dateAndTime },
+            { "decimalNumber", decimalNumber },
+            { "doubleFloat", doubleFloat },
+            { "integer", integer },
+            { "longInteger", longInteger },
+            { "singleFloat", singleFloat },
+            { "stringArray", stringArray },
+            { "uri", uri },
+            { "nullValue", null },
+            { "someObject", someObject },
+            { "someJObject", someJObject },
+            { "someJsonString", serializedJsonInput },
+        };
+        Dictionary<string, BsonValue> expectBsonItems = new Dictionary<string, BsonValue>
+        {
+            { "projectId", BsonValue.Create(Project01) },
+            { "userId", BsonValue.Create(User01) },
+            { "boolean", BsonBoolean.Create(boolean) },
+            { "dateAndTime", BsonDateTime.Create(dateAndTime) },
+            { "decimalNumber", BsonString.Create(decimalNumber.ToString(CultureInfo.InvariantCulture)) }, // Decimals are stored as strings in JSON
+            { "doubleFloat", BsonDouble.Create(doubleFloat) },
+            { "integer", BsonInt64.Create(integer) }, // Note it is marked as 64-bit
+            { "longInteger", BsonInt64.Create(longInteger) },
+            { "singleFloat", BsonDouble.Create(singleFloat) },
+            { "stringArray", BsonArray.Create(stringArray) },
+            { "uri", BsonValue.Create(uri.ToString()) },
+            { "nullValue", BsonNull.Value },
+            { "someObject", BsonDocument.Parse(someObjectAsJson) },
+            { "someJObject", BsonDocument.Parse(someJObjectAsJson) },
+            { "someJsonString", BsonString.Create(serializedJsonOutput) },
+        };
+
+        using var parentActivity = new Activity("parent");
+        items.ForEach(kvp => parentActivity.AddTag(kvp.Key, kvp.Value));
+        parentActivity.Start();
+        using var childActivity = new Activity("child");
+        childActivity.Start();
+
+        // SUT - Should store tag objects, to be later fetched
+        await env.Service.SaveEventMetricAsync(Project01, User01, EventType01, EventScope01, argumentsWithNames);
+        childActivity.Stop();
+        parentActivity.Stop();
+
+        EventMetric eventMetric = env.EventMetrics.Query().OrderByDescending(e => e.TimeStamp).First();
+        Assert.IsNotNull(eventMetric.Tags);
+        Assert.AreEqual(expectBsonItems.Count, eventMetric.Tags.Count);
+        expectBsonItems.ForEach(kvp => Assert.AreEqual(kvp.Value, eventMetric.Tags[kvp.Key]));
+    }
+
     private class TestEnvironment
     {
+        /// <summary>Example name of an activity tag key.</summary>
+        public static readonly string SomeActivityTagKey = "someImportantIdKey";
+
         public TestEnvironment()
         {
             EventMetrics = new MemoryRepository<EventMetric>(

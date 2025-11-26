@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -599,6 +600,12 @@ public class MachineApiService(
     {
         try
         {
+            string? draftGenerationRequestId = await GetDraftGenerationRequestIdForBuildAsync(buildId);
+            if (!string.IsNullOrEmpty(draftGenerationRequestId))
+            {
+                Activity.Current?.AddTag(MachineProjectService.DraftGenerationRequestIdKey, draftGenerationRequestId);
+            }
+
             // Retrieve the build started from the event metric. We do this as there may be multiple builds started,
             // and this ensures that only builds that want to send an email will have one sent.
             var eventMetrics = await eventMetricService.GetEventMetricsAsync(
@@ -695,8 +702,15 @@ public class MachineApiService(
                 cancellationToken
             );
 
+            string buildId = translationBuild.Id;
+            string? draftGenerationRequestId = await GetDraftGenerationRequestIdForBuildAsync(buildId);
+            if (!string.IsNullOrEmpty(draftGenerationRequestId))
+            {
+                Activity.Current?.AddTag(MachineProjectService.DraftGenerationRequestIdKey, draftGenerationRequestId);
+            }
+
             // Return the build id so it can be logged
-            return translationBuild.Id;
+            return buildId;
         }
         catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
         {
@@ -778,6 +792,13 @@ public class MachineApiService(
                 r.BuildCompletedAsync(projectId, buildId, buildState, httpRequestAccessor.SiteRoot)
             );
             return;
+        }
+
+        // Add the draftGenerationRequestId to associate with other events.
+        string? draftGenerationRequestId = await GetDraftGenerationRequestIdForBuildAsync(buildId);
+        if (!string.IsNullOrEmpty(draftGenerationRequestId))
+        {
+            Activity.Current?.AddTag(MachineProjectService.DraftGenerationRequestIdKey, draftGenerationRequestId);
         }
 
         // Record that the webhook was run successfully
@@ -1911,17 +1932,26 @@ public class MachineApiService(
                 );
 
                 // Notify any SignalR clients subscribed to the project
+                string? buildId = translationBuild?.Id;
                 await hubContext.NotifyBuildProgress(
                     sfProjectId,
-                    new ServalBuildState
-                    {
-                        BuildId = translationBuild?.Id,
-                        State = nameof(ServalData.PreTranslationsRetrieved),
-                    }
+                    new ServalBuildState { BuildId = buildId, State = nameof(ServalData.PreTranslationsRetrieved) }
                 );
 
+                if (!string.IsNullOrEmpty(buildId))
+                {
+                    string? draftGenerationRequestId = await GetDraftGenerationRequestIdForBuildAsync(buildId);
+                    if (!string.IsNullOrEmpty(draftGenerationRequestId))
+                    {
+                        Activity.Current?.AddTag(
+                            MachineProjectService.DraftGenerationRequestIdKey,
+                            draftGenerationRequestId
+                        );
+                    }
+                }
+
                 // Return the build id
-                return translationBuild?.Id;
+                return buildId;
             }
         }
         catch (TaskCanceledException e) when (e.InnerException is not TimeoutException)
@@ -1990,6 +2020,7 @@ public class MachineApiService(
                     curUserId,
                     new BuildConfig { ProjectId = sfProjectId },
                     false,
+                    null,
                     CancellationToken.None
                 ),
             null,
@@ -2015,6 +2046,8 @@ public class MachineApiService(
         CancellationToken cancellationToken
     )
     {
+        string draftGenerationRequestId = ObjectId.GenerateNewId().ToString();
+        Activity.Current?.AddTag(MachineProjectService.DraftGenerationRequestIdKey, draftGenerationRequestId);
         // Load the project from the realtime service
         await using IConnection conn = await realtimeService.ConnectAsync(curUserId);
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(buildConfig.ProjectId);
@@ -2093,7 +2126,14 @@ public class MachineApiService(
         //       so that the interceptor functions for BuildProjectAsync().
         jobId = backgroundJobClient.ContinueJobWith<MachineProjectService>(
             jobId,
-            r => r.BuildProjectForBackgroundJobAsync(curUserId, buildConfig, true, CancellationToken.None)
+            r =>
+                r.BuildProjectForBackgroundJobAsync(
+                    curUserId,
+                    buildConfig,
+                    true,
+                    draftGenerationRequestId,
+                    CancellationToken.None
+                )
         );
 
         // Set the pre-translation queued date and time, and hang fire job id
@@ -2659,6 +2699,32 @@ public class MachineApiService(
 
         // Return the project, in case the caller needs it
         return project;
+    }
+
+    /// <summary>
+    /// Gets the SF-specific draft generation request identifier for a build by looking up the BuildProjectAsync event.
+    /// </summary>
+    /// <param name="buildId">The Serval build identifier.</param>
+    /// <returns>The draft generation request identifier, or null if not found.</returns>
+    private async Task<string?> GetDraftGenerationRequestIdForBuildAsync(string buildId)
+    {
+        // BuildProjectAsync events serve as a record of what Serval build id corresponds to what draft generation
+        // request id.
+        const int lookupTimeframeDays = 60;
+        DateTime startDate = DateTime.UtcNow.AddDays(-lookupTimeframeDays);
+        QueryResults<EventMetric> buildProjectEvents = await eventMetricService.GetEventMetricsAsync(
+            projectId: null,
+            scopes: [EventScope.Drafting],
+            eventTypes: [nameof(MachineProjectService.BuildProjectAsync)],
+            fromDate: startDate
+        );
+        EventMetric? buildEvent = buildProjectEvents.Results.FirstOrDefault(e => e.Result?.ToString() == buildId);
+        return (
+            buildEvent?.Tags?.TryGetValue(MachineProjectService.DraftGenerationRequestIdKey, out BsonValue? requestId)
+            == true
+        )
+            ? requestId?.AsString
+            : null;
     }
 
     private async Task<string> GetTranslationIdAsync(
