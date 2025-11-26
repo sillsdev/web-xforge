@@ -4,6 +4,9 @@ export interface Chapter {
   isValid: boolean;
   permissions: { [userRef: string]: string };
   hasAudio?: boolean;
+  /**
+   * @deprecated Use SFProjectService.hasDraft() instead
+   */
   hasDraft?: boolean;
   draftApplied?: boolean;
 }

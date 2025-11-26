@@ -293,10 +293,10 @@ describe('ServalProjectComponent', () => {
           name: 'Project 01',
           shortName: 'P1',
           texts: [
-            { bookNum: 1, chapters: [{ number: 1, hasDraft: false }] },
-            { bookNum: 2, chapters: [{ number: 1, hasDraft: false }] },
-            { bookNum: 3, chapters: [{ number: 1, hasDraft: args.preTranslate }] },
-            { bookNum: 4, chapters: [{ number: 1, hasDraft: args.preTranslate }] }
+            { bookNum: 1, chapters: [{ number: 1 }] },
+            { bookNum: 2, chapters: [{ number: 1 }] },
+            { bookNum: 3, chapters: [{ number: 1 }] },
+            { bookNum: 4, chapters: [{ number: 1 }] }
           ],
           translateConfig: {
             draftConfig: {
@@ -358,6 +358,7 @@ describe('ServalProjectComponent', () => {
       when(mockServalAdministrationService.downloadProject(anything())).thenReturn(of(new Blob()));
       when(mockAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
       when(mockDraftGenerationService.getBuildProgress(anything())).thenReturn(of({ additionalInfo: {} } as BuildDto));
+      when(mockSFProjectService.hasDraft(anything())).thenReturn(args.preTranslate);
       when(mockSFProjectService.onlineSetServalConfig(this.mockProjectId, anything())).thenResolve();
 
       spyOn(saveAs, 'saveAs').and.stub();

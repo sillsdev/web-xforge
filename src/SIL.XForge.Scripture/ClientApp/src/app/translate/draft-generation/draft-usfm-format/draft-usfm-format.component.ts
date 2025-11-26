@@ -144,7 +144,9 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
         if (projectDoc?.data == null) return;
         this.setUsfmConfig(projectDoc.data.translateConfig.draftConfig.usfmConfig);
         const texts: TextInfo[] = projectDoc.data.texts;
-        this.booksWithDrafts = texts.filter(t => t.chapters.some(c => c.hasDraft)).map(t => t.bookNum);
+        this.booksWithDrafts = texts
+          .filter(t => this.projectService.hasDraft(projectDoc.data, t.bookNum, true))
+          .map(t => t.bookNum);
 
         if (this.booksWithDrafts.length === 0) return;
         this.loadingStarted();
@@ -258,8 +260,8 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   private getChaptersWithDrafts(bookNum: number, project: SFProjectProfile): number[] {
     return (
       project.texts
-        .find(t => t.bookNum === bookNum)
-        ?.chapters.filter(c => !!c.hasDraft && c.lastVerse > 0)
+        .find(t => t.bookNum === bookNum && this.projectService.hasDraft(project, t.bookNum, true))
+        ?.chapters.filter(c => c.lastVerse > 0)
         .map(c => c.number) ?? []
     );
   }

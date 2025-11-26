@@ -1072,90 +1072,10 @@ public class MachineApiService(
                 .MaxBy(b => b.DateFinished);
             if (translationBuild is not null)
             {
-                // Verify that each book/chapter from the translationBuild is marked HasDraft = true
-                // If the projects texts chapters are not all marked as having a draft, then the webhook likely failed
-                // and we want to retrieve the pre-translation status to update the chapters as having a draft
-                Dictionary<string, List<int>> scriptureRangesWithDrafts = [];
-
-                IList<PretranslateCorpus> pretranslateCorpus = translationBuild.Pretranslate ?? [];
-
-                // Retrieve the user secret
-                Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(curUserId, cancellationToken);
-                if (!attempt.TryResult(out UserSecret userSecret))
+                // See if the current scripture range has changed
+                string currentScriptureRange = GetDraftedScriptureRange(translationBuild);
+                if (project.TranslateConfig.DraftConfig.CurrentScriptureRange != currentScriptureRange)
                 {
-                    throw new DataNotFoundException("The user does not exist.");
-                }
-
-                ScrVers versification =
-                    paratextService.GetParatextSettings(userSecret, project.ParatextId)?.Versification
-                    ?? VerseRef.defaultVersification;
-
-                ScriptureRangeParser scriptureRangeParser = new ScriptureRangeParser(versification);
-
-                // Create the dictionary of scripture range bookIds and bookNums to check against the project texts
-                Dictionary<string, int> scriptureRangeBooksWithDraft = [];
-
-                foreach (PretranslateCorpus ptc in pretranslateCorpus)
-                {
-                    // We are using the TranslationBuild.Pretranslate.SourceFilters.ScriptureRange to find the
-                    // books selected for drafting. Some projects may have used the now obsolete field
-                    // TranslationBuild.Pretranslate.ScriptureRange and will not get checked for webhook failures.
-                    foreach (
-                        ParallelCorpusFilter source in ptc.SourceFilters?.Where(s => s.ScriptureRange is not null) ?? []
-                    )
-                    {
-                        foreach (
-                            (string book, List<int> bookChapters) in scriptureRangeParser.GetChapters(
-                                source.ScriptureRange
-                            )
-                        )
-                        {
-                            int bookNum = Canon.BookIdToNumber(book);
-                            scriptureRangeBooksWithDraft.Add(book, bookNum);
-                            // Ensure that if chapters is blank, it contains every chapter in the book
-                            List<int> chapters = bookChapters;
-                            if (chapters.Count == 0)
-                            {
-                                chapters = [.. Enumerable.Range(1, versification.GetLastChapter(bookNum))];
-                            }
-
-                            // Set or merge the list of chapters
-                            if (!scriptureRangesWithDrafts.TryGetValue(book, out List<int> existingChapters))
-                            {
-                                scriptureRangesWithDrafts[book] = chapters;
-                            }
-                            else
-                            {
-                                // Merge new chapters into existing list, avoiding duplicates
-                                foreach (int chapter in chapters.Where(chapter => !existingChapters.Contains(chapter)))
-                                {
-                                    existingChapters.Add(chapter);
-                                }
-
-                                // Add existing chapters to the books chapter list
-                                scriptureRangesWithDrafts[book].AddRange(existingChapters);
-                            }
-                        }
-                    }
-                }
-
-                // check if any chapters from the scripture range are marked as HasDraft = false or null
-                bool hasDraftIsFalseOrNullInScriptureRange =
-                    scriptureRangeBooksWithDraft.Count > 0
-                    && scriptureRangeBooksWithDraft.All(kvp =>
-                    {
-                        return project.Texts.Any(text =>
-                            text.BookNum == kvp.Value
-                            && text.Chapters.Where(chapter =>
-                                    scriptureRangesWithDrafts[kvp.Key].Contains(chapter.Number)
-                                )
-                                .Any(c => !(c.HasDraft ?? false))
-                        );
-                    });
-
-                if (hasDraftIsFalseOrNullInScriptureRange)
-                {
-                    // Chapters HasDraft is missing or false but should be true, retrieve the pre-translation status to update them.
                     backgroundJobClient.Enqueue<IMachineApiService>(r =>
                         r.RetrievePreTranslationStatusAsync(sfProjectId, CancellationToken.None)
                     );
@@ -1884,11 +1804,11 @@ public class MachineApiService(
             {
                 // Get the last completed build
                 string translationEngineId = GetTranslationEngineId(projectSecret, preTranslate: true);
-                TranslationBuild? translationBuild = (
-                    await translationEnginesClient.GetAllBuildsAsync(translationEngineId, cancellationToken)
-                )
-                    .Where(b => b.State == JobState.Completed)
-                    .MaxBy(b => b.DateFinished);
+                TranslationBuild translationBuild =
+                    (await translationEnginesClient.GetAllBuildsAsync(translationEngineId, cancellationToken))
+                        .Where(b => b.State == JobState.Completed)
+                        .MaxBy(b => b.DateFinished)
+                    ?? throw new DataNotFoundException("The build does not exist.");
 
                 // Set the retrieved flag as in progress
                 await projectSecrets.UpdateAsync(
@@ -1897,11 +1817,42 @@ public class MachineApiService(
                     cancellationToken: cancellationToken
                 );
 
-                // Get the pre-translations
-                await preTranslationService.UpdatePreTranslationStatusAsync(sfProjectId, cancellationToken);
+                // Connect to the realtime server to get the project
+                await using IConnection conn = await realtimeService.ConnectAsync();
+                IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
+                if (!projectDoc.IsLoaded)
+                {
+                    throw new DataNotFoundException("The project does not exist.");
+                }
+
+                // Store the CurrentScriptureRange based on the books we asked Serval to draft
+                string currentScriptureRange = GetDraftedScriptureRange(translationBuild);
+                if (string.IsNullOrWhiteSpace(currentScriptureRange))
+                {
+                    throw new DataNotFoundException(
+                        "The latest completed build does not have a valid scripture range."
+                    );
+                }
+
+                // Store the current scripture range
+                await projectDoc.SubmitJson0OpAsync(u =>
+                    u.Set(p => p.TranslateConfig.DraftConfig.CurrentScriptureRange, currentScriptureRange)
+                );
 
                 // Update the pre-translation text documents
                 await UpdatePreTranslationTextDocumentsAsync(sfProjectId, cancellationToken);
+
+                // Update the drafted scripture range to include the current scripture range
+                string draftedScriptureRange =
+                    projectDoc.Data.TranslateConfig.DraftConfig.DraftedScriptureRange ?? string.Empty;
+                ScriptureRangeParser scriptureRangeParser = new ScriptureRangeParser();
+                List<string> currentBooks = [.. scriptureRangeParser.GetChapters(currentScriptureRange).Keys];
+                List<string> draftedBooks = [.. scriptureRangeParser.GetChapters(draftedScriptureRange).Keys];
+                List<string> allBooks = [.. currentBooks, .. draftedBooks];
+                draftedScriptureRange = string.Join(';', allBooks.Distinct());
+                await projectDoc.SubmitJson0OpAsync(u =>
+                    u.Set(p => p.TranslateConfig.DraftConfig.DraftedScriptureRange, draftedScriptureRange)
+                );
 
                 // Set the retrieved flag as complete
                 await projectSecrets.UpdateAsync(
@@ -1915,13 +1866,13 @@ public class MachineApiService(
                     sfProjectId,
                     new ServalBuildState
                     {
-                        BuildId = translationBuild?.Id,
+                        BuildId = translationBuild.Id,
                         State = nameof(ServalData.PreTranslationsRetrieved),
                     }
                 );
 
                 // Return the build id
-                return translationBuild?.Id;
+                return translationBuild.Id;
             }
         }
         catch (TaskCanceledException e) when (e.InnerException is not TimeoutException)
@@ -2261,11 +2212,15 @@ public class MachineApiService(
         }
 
         // For every text we have a draft applied to, get the pre-translation
-        foreach (TextInfo textInfo in projectDoc.Data.Texts.Where(t => t.Chapters.Any(c => c.HasDraft == true)))
+        foreach (
+            string bookId in ScriptureRangeParser
+                .GetChapters(projectDoc.Data.TranslateConfig.DraftConfig.CurrentScriptureRange)
+                .Keys
+        )
         {
             // Set up variables
             string paratextId = projectDoc.Data.ParatextId;
-            int bookNum = textInfo.BookNum;
+            int bookNum = Canon.BookIdToNumber(bookId);
             int chapterNum = 0;
 
             // Get the USFM
@@ -2366,6 +2321,35 @@ public class MachineApiService(
             SourceLanguageTag = translationEngine.SourceLanguage,
             TargetLanguageTag = translationEngine.TargetLanguage,
         };
+
+    /// <summary>
+    /// Gets the drafted scripture range for a translation build.
+    /// </summary>
+    /// <param name="translationBuild">The  translation build.</param>
+    /// <returns>The scripture range that was drafted.</returns>
+    private static string GetDraftedScriptureRange(TranslationBuild translationBuild)
+    {
+        List<string> booksWithDrafts = [];
+        ScriptureRangeParser scriptureRangeParser = new ScriptureRangeParser();
+        foreach (PretranslateCorpus ptc in translationBuild.Pretranslate ?? [])
+        {
+            // We are using the TranslationBuild.Pretranslate.SourceFilters.ScriptureRange to find the
+            // books selected for drafting. Some projects may have used the now obsolete field
+            // TranslationBuild.Pretranslate.ScriptureRange and will not get checked for webhook failures.
+            foreach (ParallelCorpusFilter source in ptc.SourceFilters?.Where(s => s.ScriptureRange is not null) ?? [])
+            {
+                foreach ((string book, List<int> _) in scriptureRangeParser.GetChapters(source.ScriptureRange))
+                {
+                    if (!booksWithDrafts.Contains(book))
+                    {
+                        booksWithDrafts.Add(book);
+                    }
+                }
+            }
+        }
+
+        return string.Join(';', booksWithDrafts);
+    }
 
     /// <summary>
     /// Gets the highest ranked user id on a project.

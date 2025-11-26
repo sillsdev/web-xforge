@@ -142,21 +142,6 @@ describe('DraftPreviewBooks', () => {
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).times(3);
   }));
 
-  it('can apply chapters with drafts and skips chapters without drafts', fakeAsync(() => {
-    env = new TestEnvironment();
-    const bookWithDraft: BookWithDraft = env.booksWithDrafts[1];
-    setupDialog('project01');
-    when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).thenResolve(
-      undefined
-    );
-    expect(env.getBookButtonAtIndex(1).querySelector('.book-more')).toBeTruthy();
-    env.component.chooseProjectToAddDraft(bookWithDraft);
-    tick();
-    env.fixture.detectChanges();
-    verify(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).once();
-    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).times(1);
-  }));
-
   it('can apply a historic draft', fakeAsync(() => {
     env = new TestEnvironment({
       additionalInfo: {
@@ -174,7 +159,7 @@ describe('DraftPreviewBooks', () => {
     tick();
     env.fixture.detectChanges();
     verify(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).once();
-    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).times(1);
+    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).times(2);
   }));
 
   it('can open dialog with the current project', fakeAsync(() => {
@@ -411,29 +396,19 @@ class TestEnvironment {
         {
           bookNum: 1,
           hasSource: true,
-          chapters: [
-            { number: 1, hasDraft: true },
-            { number: 2, hasDraft: true },
-            { number: 3, hasDraft: true }
-          ],
+          chapters: [{ number: 1 }, { number: 2 }, { number: 3 }],
           permissions: { user01: TextInfoPermission.Write }
         },
         {
           bookNum: 2,
           hasSource: true,
-          chapters: [
-            { number: 1, hasDraft: true },
-            { number: 2, hasDraft: false }
-          ],
+          chapters: [{ number: 1 }, { number: 2 }],
           permissions: { user01: TextInfoPermission.Write }
         },
         {
           bookNum: 3,
           hasSource: true,
-          chapters: [
-            { number: 1, hasDraft: true },
-            { number: 2, hasDraft: true }
-          ],
+          chapters: [{ number: 1 }, { number: 2 }],
           permissions: { user01: TextInfoPermission.Read }
         }
       ],
@@ -446,7 +421,7 @@ class TestEnvironment {
 
   booksWithDrafts: BookWithDraft[] = [
     { bookNumber: 1, bookId: 'GEN', canEdit: true, chaptersWithDrafts: [1, 2, 3], draftApplied: false },
-    { bookNumber: 2, bookId: 'EXO', canEdit: true, chaptersWithDrafts: [1], draftApplied: false },
+    { bookNumber: 2, bookId: 'EXO', canEdit: true, chaptersWithDrafts: [1, 2], draftApplied: false },
     { bookNumber: 3, bookId: 'LEV', canEdit: false, chaptersWithDrafts: [1, 2], draftApplied: false }
   ];
 
@@ -458,6 +433,7 @@ class TestEnvironment {
     ).thenResolve();
     when(mockedActivatedProjectService.projectId).thenReturn('project01');
     when(mockedUserService.currentUserId).thenReturn('user01');
+    when(mockedProjectService.hasDraft(anything(), anything())).thenReturn(true);
     when(mockedProjectService.getProfile(anything())).thenResolve(this.mockProjectDoc);
     this.fixture = TestBed.createComponent(DraftPreviewBooksComponent);
     this.component = this.fixture.componentInstance;
