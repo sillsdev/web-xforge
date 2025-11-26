@@ -58,6 +58,7 @@ import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scripture
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DeltaOperation } from 'rich-text';
@@ -316,6 +317,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private isParatextUserRole: boolean = false;
   private projectUserConfigChangesSub?: Subscription;
   private text?: TextInfo;
+  private sourceText?: TextInfo;
   sourceProjectDoc?: SFProjectProfileDoc;
   private _unsupportedTags = new Set<string>();
   private sourceLoaded: boolean = false;
@@ -522,12 +524,24 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   get hasSourceViewRight(): boolean {
     const sourceProject = this.sourceProjectDoc?.data;
-    const sourceId = this.source?.id;
-    if (sourceProject == null || sourceId == null) {
+    if (sourceProject == null) {
       return this.isParatextUserRole;
     }
 
-    return this.isParatextUserRole && this.permissionsService.canAccessText(sourceId, sourceProject);
+    if (
+      SF_PROJECT_RIGHTS.hasRight(sourceProject, this.userService.currentUserId, SFProjectDomain.Texts, Operation.View)
+    ) {
+      // Check for chapter rights
+      const chapter = this.sourceText?.chapters.find(c => c.number === this.chapter);
+      // Even though permissions is guaranteed to be there in the model, its not in IndexedDB the first time the project
+      // is accessed after migration
+      if (chapter != null && chapter.permissions != null && !this.isParatextUserRole) {
+        const chapterPermission: string = chapter.permissions[this.userService.currentUserId];
+        return chapterPermission === TextInfoPermission.Write || chapterPermission === TextInfoPermission.Read;
+      }
+    }
+
+    return this.isParatextUserRole;
   }
 
   get canInsertNote(): boolean {
@@ -822,6 +836,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         if (this.text == null) {
           void this.router.navigateByUrl('projects', { replaceUrl: true });
           return;
+        }
+
+        if (this.sourceProjectDoc?.data != null) {
+          this.sourceText = this.sourceProjectDoc.data.texts.find(t => t.bookNum === bookNum);
         }
 
         this.chapters = this.text.chapters.map(c => c.number);
