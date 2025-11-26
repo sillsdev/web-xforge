@@ -364,9 +364,7 @@ class TestEnvironment {
     const projectId: string = projectConfig.projectId ?? 'project01';
     const translationSuggestionsEnabled = projectConfig.translationSuggestionsEnabled ?? true;
     const textPermission: TextInfoPermission = projectConfig?.textPermission ?? TextInfoPermission.Write;
-    when(mockedPermissionService.canAccessTextAsync(anything())).thenResolve(
-      textPermission !== TextInfoPermission.None
-    );
+    when(mockedPermissionService.canAccessText(anything())).thenResolve(textPermission !== TextInfoPermission.None);
 
     // Setup the project data
     this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {

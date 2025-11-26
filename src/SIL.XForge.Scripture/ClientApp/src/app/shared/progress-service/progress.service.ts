@@ -304,7 +304,7 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
 
         // Only retrieve the source text if the user has permission
         let sourceNonEmptyVerses: string[] = [];
-        if (await this.permissionsService.canAccessTextAsync(sourceTextDocId)) {
+        if (await this.permissionsService.canAccessText(sourceTextDocId)) {
           const sourceChapterText: TextDoc = await this.projectService.getText(sourceTextDocId);
           sourceNonEmptyVerses = sourceChapterText.getNonEmptyVerses();
         }
