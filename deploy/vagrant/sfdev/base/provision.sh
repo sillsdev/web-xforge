@@ -599,9 +599,6 @@ cd ~/code/web-xforge && dotnet clean
 # Undo temporary changes and/or clean up
 cd ~/code/web-xforge && git checkout -- .config/dotnet-tools.json
 
-# Use system hg.
-tee --append ~/.pam_environment >/dev/null <<<'HG_PATH=/usr/bin/hg'
-
 # Docker
 
 # https://docs.docker.com/desktop/install/linux-install/

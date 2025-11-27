@@ -479,8 +479,6 @@ jobs:
           npx playwright install
 
       - name: Run E2E tests
-        env:
-          HG_PATH: /usr/bin/hg
         run: ./src/SIL.XForge.Scripture/ClientApp/e2e/pre_merge_ci.sh
 
       - name: Publish test results
