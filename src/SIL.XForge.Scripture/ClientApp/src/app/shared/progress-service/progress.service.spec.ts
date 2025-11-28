@@ -139,7 +139,7 @@ describe('progress service', () => {
 
   it('cannot train suggestions if no source permission', fakeAsync(async () => {
     const env = new TestEnvironment();
-    when(mockPermissionService.canAccessTextAsync(anything())).thenCall((textDocId: TextDocId) => {
+    when(mockPermissionService.canAccessText(anything())).thenCall((textDocId: TextDocId) => {
       return Promise.resolve(textDocId.projectId !== 'sourceId');
     });
     tick();
@@ -192,7 +192,7 @@ class TestEnvironment {
     when(this.mockProject.id).thenReturn('project01');
     when(mockProjectService.changes$).thenReturn(this.project$);
 
-    when(mockPermissionService.canAccessTextAsync(anything())).thenResolve(true);
+    when(mockPermissionService.canAccessText(anything())).thenResolve(true);
     when(mockSFProjectService.getProfile('project01')).thenResolve({
       data,
       id: 'project01',

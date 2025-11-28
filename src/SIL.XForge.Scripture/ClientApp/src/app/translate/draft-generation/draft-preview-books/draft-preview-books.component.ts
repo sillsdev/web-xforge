@@ -73,8 +73,10 @@ export class DraftPreviewBooksComponent {
             bookNumber: text.bookNum,
             bookId: Canon.bookNumberToId(text.bookNum),
             canEdit: text.permissions[this.userService.currentUserId] === TextInfoPermission.Write,
-            chaptersWithDrafts: text.chapters.filter(chapter => chapter.hasDraft).map(chapter => chapter.number),
-            draftApplied: text.chapters.filter(chapter => chapter.hasDraft).every(chapter => chapter.draftApplied)
+            chaptersWithDrafts: this.projectService.hasDraft(projectDoc.data, text.bookNum)
+              ? text.chapters.map(chapter => chapter.number)
+              : [],
+            draftApplied: text.chapters.every(chapter => chapter.draftApplied)
           }))
           .sort((a, b) => a.bookNumber - b.bookNumber)
           .filter(book => book.chaptersWithDrafts.length > 0) as BookWithDraft[];
@@ -89,7 +91,7 @@ export class DraftPreviewBooksComponent {
               bookId: Canon.bookNumberToId(bookNum),
               canEdit: text?.permissions?.[this.userService.currentUserId] === TextInfoPermission.Write,
               chaptersWithDrafts: text?.chapters?.map(ch => ch.number) ?? [],
-              draftApplied: text?.chapters?.filter(ch => ch.hasDraft).every(ch => ch.draftApplied) ?? false
+              draftApplied: text?.chapters?.every(ch => ch.draftApplied) ?? false
             };
           })
           // Do not filter chapters with drafts, as the book or chapters may have been removed.

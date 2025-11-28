@@ -1914,8 +1914,7 @@ public class MachineApiServiceTests
                     ]
                 )
             );
-        SFProject project = env.Projects.Get(Project01);
-        project.Texts[0].Chapters[1].HasDraft = true;
+        _ = env.Projects.Get(Project01);
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
@@ -3556,9 +3555,20 @@ public class MachineApiServiceTests
     [Test]
     public async Task RetrievePreTranslationStatusAsync_DoesNotRecordTaskCancellation()
     {
-        // Set up test environment
+        // Set up test environment with a completed build
         var env = new TestEnvironment();
-        env.PreTranslationService.UpdatePreTranslationStatusAsync(Project01, CancellationToken.None)
+        env.ConfigureTranslationBuild(
+            new TranslationBuild
+            {
+                State = JobState.Completed,
+                Pretranslate =
+                [
+                    new PretranslateCorpus { SourceFilters = [new ParallelCorpusFilter { ScriptureRange = "MAT" }] },
+                ],
+            }
+        );
+        env.Service.Configure()
+            .UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None)
             .Throws(new TaskCanceledException());
 
         // SUT
@@ -3571,25 +3581,46 @@ public class MachineApiServiceTests
     [Test]
     public async Task RetrievePreTranslationStatusAsync_DoesNotUpdateIfAlreadyRunning()
     {
-        // Set up test environment
+        // Set up test environment with a completed build
         var env = new TestEnvironment();
+        env.ConfigureTranslationBuild(
+            new TranslationBuild
+            {
+                State = JobState.Completed,
+                Pretranslate =
+                [
+                    new PretranslateCorpus { SourceFilters = [new ParallelCorpusFilter { ScriptureRange = "MAT" }] },
+                ],
+            }
+        );
+        env.Service.Configure()
+            .UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None)
+            .Returns(Task.CompletedTask);
         await env.ProjectSecrets.UpdateAsync(Project01, u => u.Set(p => p.ServalData.PreTranslationsRetrieved, false));
 
         // SUT
         await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
 
-        await env
-            .PreTranslationService.DidNotReceive()
-            .UpdatePreTranslationStatusAsync(Project01, CancellationToken.None);
+        await env.Service.DidNotReceive().UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None);
     }
 
     [Test]
     public void RetrievePreTranslationStatusAsync_ReportsErrors()
     {
-        // Set up test environment
+        // Set up test environment with a completed build
         var env = new TestEnvironment();
+        env.ConfigureTranslationBuild(
+            new TranslationBuild
+            {
+                State = JobState.Completed,
+                Pretranslate =
+                [
+                    new PretranslateCorpus { SourceFilters = [new ParallelCorpusFilter { ScriptureRange = "MAT" }] },
+                ],
+            }
+        );
         ServalApiException ex = ServalApiExceptions.Forbidden;
-        env.PreTranslationService.UpdatePreTranslationStatusAsync(Project01, CancellationToken.None).Throws(ex);
+        env.Service.Configure().UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None).Throws(ex);
 
         // SUT
         Assert.ThrowsAsync<ServalApiException>(() =>
@@ -3606,19 +3637,53 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
+        await env.Projects.DeleteAllAsync(_ => true);
+        env.ConfigureTranslationBuild(
+            new TranslationBuild
+            {
+                State = JobState.Completed,
+                Pretranslate =
+                [
+                    new PretranslateCorpus { SourceFilters = [new ParallelCorpusFilter { ScriptureRange = "MAT" }] },
+                ],
+            }
+        );
 
         // SUT
-        await env.Service.RetrievePreTranslationStatusAsync("invalid_project_id", CancellationToken.None);
+        await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
 
         env.ExceptionHandler.Received().ReportException(Arg.Any<Exception>());
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationsRetrieved);
     }
 
     [Test]
-    public async Task RetrievePreTranslationStatusAsync_UpdatesPreTranslationStatusAndTextDocuments()
+    public async Task RetrievePreTranslationStatusAsync_ReportsErrorWhenProjectSecretDoesNotExist()
     {
         // Set up test environment
         var env = new TestEnvironment();
+        await env.ProjectSecrets.DeleteAllAsync(_ => true);
+
+        // SUT
+        await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
+
+        env.ExceptionHandler.Received().ReportException(Arg.Any<Exception>());
+    }
+
+    [Test]
+    public async Task RetrievePreTranslationStatusAsync_UpdatesPreTranslationTextDocuments()
+    {
+        // Set up test environment with a completed build
+        var env = new TestEnvironment();
+        env.ConfigureTranslationBuild(
+            new TranslationBuild
+            {
+                State = JobState.Completed,
+                Pretranslate =
+                [
+                    new PretranslateCorpus { SourceFilters = [new ParallelCorpusFilter { ScriptureRange = "MAT" }] },
+                ],
+            }
+        );
         env.Service.Configure()
             .UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None)
             .Returns(Task.CompletedTask);
@@ -3626,21 +3691,33 @@ public class MachineApiServiceTests
         // SUT
         await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
 
-        await env.PreTranslationService.Received().UpdatePreTranslationStatusAsync(Project01, CancellationToken.None);
         await env.Service.Received().UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None);
     }
 
     [Test]
     public async Task RetrievePreTranslationStatusAsync_UpdatesPreTranslationStatusIfPreviouslyRun()
     {
-        // Set up test environment
+        // Set up test environment with a completed build
         var env = new TestEnvironment();
+        env.ConfigureTranslationBuild(
+            new TranslationBuild
+            {
+                State = JobState.Completed,
+                Pretranslate =
+                [
+                    new PretranslateCorpus { SourceFilters = [new ParallelCorpusFilter { ScriptureRange = "MAT" }] },
+                ],
+            }
+        );
+        env.Service.Configure()
+            .UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None)
+            .Returns(Task.CompletedTask);
         await env.ProjectSecrets.UpdateAsync(Project01, u => u.Set(p => p.ServalData.PreTranslationsRetrieved, true));
 
         // SUT
         await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
 
-        await env.PreTranslationService.Received().UpdatePreTranslationStatusAsync(Project01, CancellationToken.None);
+        await env.Service.Received().UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None);
     }
 
     [Test]
@@ -4621,11 +4698,7 @@ public class MachineApiServiceTests
                             new TextInfo
                             {
                                 BookNum = 1,
-                                Chapters =
-                                [
-                                    new Chapter { Number = 1, HasDraft = true },
-                                    new Chapter { Number = 2, HasDraft = false },
-                                ],
+                                Chapters = [new Chapter { Number = 1 }, new Chapter { Number = 2 }],
                             },
                         ],
                         UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator } },
@@ -5121,6 +5194,10 @@ public class MachineApiServiceTests
         /// </param>
         public void SetupTextDocument(string textDocumentId, int bookNum, bool alreadyExists)
         {
+            Projects.UpdateAsync(
+                Project01,
+                u => u.Set(p => p.TranslateConfig.DraftConfig.CurrentScriptureRange, Canon.BookNumberToId(bookNum))
+            );
             PreTranslationService
                 .GetPreTranslationUsfmAsync(Project01, bookNum, 0, Arg.Any<DraftUsfmConfig>(), CancellationToken.None)
                 .Returns(Task.FromResult(TestUsfm));

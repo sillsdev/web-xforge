@@ -32,13 +32,13 @@ export class CacheService {
           }
 
           const textDocId = new TextDocId(project.id, text.bookNum, chapter.number, 'target');
-          if (await this.permissionsService.canAccessTextAsync(textDocId)) {
+          if (await this.permissionsService.canAccessText(textDocId)) {
             await this.projectService.getText(textDocId);
           }
 
           if (text.hasSource && sourceId != null) {
             const sourceTextDocId = new TextDocId(sourceId, text.bookNum, chapter.number, 'target');
-            if (await this.permissionsService.canAccessTextAsync(sourceTextDocId)) {
+            if (await this.permissionsService.canAccessText(sourceTextDocId)) {
               await this.projectService.getText(sourceTextDocId);
             }
           }

@@ -388,7 +388,8 @@ export class DraftGenerationService {
       // If no books were found in the build, use the project document
       if (books.size === 0) {
         books = new Set<number>(
-          projectDoc.data.texts.filter(text => text.chapters.some(c => c.hasDraft)).map(text => text.bookNum)
+          // Legacy calculation for very old drafts
+          booksFromScriptureRange(projectDoc.data.translateConfig.draftConfig.currentScriptureRange)
         );
       }
 

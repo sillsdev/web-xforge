@@ -168,6 +168,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     protected readonly noticeService: NoticeService,
     protected readonly urlService: ExternalUrlService,
     protected readonly featureFlags: FeatureFlagService,
+    private readonly projectService: SFProjectService,
     private destroyRef: DestroyRef
   ) {
     super(noticeService);
@@ -245,7 +246,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
           this.isBackTranslation = translateConfig?.projectType === ProjectType.BackTranslation;
           this.targetLanguage = projectDoc.data?.writingSystem.tag;
           this.isPreTranslationApproved = translateConfig?.preTranslate ?? false;
-          this.hasDraftBooksAvailable = projectDoc.data != null && SFProjectService.hasDraft(projectDoc.data);
+          this.hasDraftBooksAvailable = projectDoc.data != null && this.projectService.hasDraft(projectDoc.data);
         })
       ),
       this.draftSourcesService.getDraftProjectSources().pipe(

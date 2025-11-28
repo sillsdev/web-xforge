@@ -4,6 +4,7 @@ import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { provideRouter } from '@angular/router';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
@@ -48,6 +49,7 @@ describe('DraftGenerationComponent', () => {
   let mockNllbLanguageService: jasmine.SpyObj<NllbLanguageService>;
   let mockTrainingDataService: jasmine.SpyObj<TrainingDataService>;
   let mockFeatureFlagService: jasmine.SpyObj<FeatureFlagService>;
+  let mockSFProjectService: jasmine.SpyObj<SFProjectService>;
 
   const buildDto: BuildDto = {
     id: 'testId',
@@ -88,7 +90,7 @@ describe('DraftGenerationComponent', () => {
           { provide: DraftSourcesService, useValue: mockDraftSourcesService },
           { provide: DraftHandlingService, useValue: undefined },
           { provide: ActivatedProjectService, useValue: mockActivatedProjectService },
-          { provide: SFProjectService, useValue: undefined },
+          { provide: SFProjectService, useValue: mockSFProjectService },
           { provide: UserService, useValue: mockUserService },
           { provide: TextDocService, useValue: undefined },
           { provide: DialogService, useValue: mockDialogService },
@@ -184,7 +186,7 @@ describe('DraftGenerationComponent', () => {
             { bookNum: 1, chapters: [{ number: 1 }], permissions: { user01: TextInfoPermission.Write } },
             {
               bookNum: 2,
-              chapters: [{ number: 1, hasDraft: preTranslate }],
+              chapters: [{ number: 1 }],
               permissions: { user01: TextInfoPermission.Write }
             }
           ],
@@ -208,6 +210,13 @@ describe('DraftGenerationComponent', () => {
         projectDoc$: of(projectDoc),
         changes$: of(projectDoc)
       });
+      const matchThisProject = {
+        asymmetricMatch: (proj: SFProjectProfile | undefined) =>
+          proj != null && proj.paratextId === projectDoc.data?.paratextId
+      };
+      mockSFProjectService = jasmine.createSpyObj<SFProjectService>(['hasDraft']);
+      mockSFProjectService.hasDraft.withArgs(matchThisProject).and.returnValue(preTranslate);
+      mockSFProjectService.hasDraft.withArgs(matchThisProject, jasmine.anything()).and.returnValue(preTranslate);
     }
 
     get configureDraftButton(): HTMLElement | null {
@@ -1399,7 +1408,7 @@ describe('DraftGenerationComponent', () => {
       expect(env.downloadButton).toBeNull();
     });
 
-    it('button should display if the project updates the hasDraft field', fakeAsync(() => {
+    it('button should display if the project has a draft complete', fakeAsync(() => {
       // Setup the project and subject
       const projectDoc: SFProjectProfileDoc = {
         data: createTestProjectProfile({
@@ -1416,7 +1425,7 @@ describe('DraftGenerationComponent', () => {
           texts: [
             {
               bookNum: 1,
-              chapters: [{ number: 1, hasDraft: false }],
+              chapters: [{ number: 1 }],
               permissions: { user01: TextInfoPermission.Write }
             }
           ]
@@ -1439,6 +1448,7 @@ describe('DraftGenerationComponent', () => {
         mockDraftGenerationService.getBuildProgress.and.returnValue(buildObservable);
         mockDraftGenerationService.pollBuildProgress.and.returnValue(buildObservable);
         mockDraftGenerationService.getLastCompletedBuild.and.returnValue(buildObservable);
+        mockSFProjectService.hasDraft.and.returnValue(false);
       });
       tick(500);
       env.fixture.detectChanges();
@@ -1447,7 +1457,7 @@ describe('DraftGenerationComponent', () => {
       expect(env.downloadButton).toBeNull();
 
       // Update the has draft flag for the project
-      projectDoc.data!.texts[0].chapters[0].hasDraft = true;
+      mockSFProjectService.hasDraft.and.returnValue(true);
       projectDoc.data!.translateConfig.draftConfig.lastSelectedTranslationScriptureRanges = [
         { projectId: 'testSourceProjectId', scriptureRange: 'GEN' }
       ];

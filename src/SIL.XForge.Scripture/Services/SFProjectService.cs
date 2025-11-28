@@ -1407,23 +1407,19 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             }
             Models.TextInfo text = projectDoc.Data.Texts[textIndex];
             List<Chapter> chapters = text.Chapters;
-            Dictionary<string, string> bookPermissions;
+            Dictionary<string, string> bookPermissions = null;
             IEnumerable<(
                 int bookIndex,
                 int chapterIndex,
                 Dictionary<string, string> chapterPermissions
-            )> chapterPermissionsInBook;
+            )> chapterPermissionsInBook = null;
 
             if (isResource)
             {
-                // Do not write any read permissions for resources
-                bookPermissions = resourcePermissions
-                    .Where(kvp => kvp.Value != TextInfoPermission.Read)
-                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-
-                // Chapter permissions will not vary from book permissions for resources
+                bookPermissions = resourcePermissions;
+                // Prepare to write the same resource permission for each chapter in the book/text.
                 chapterPermissionsInBook = chapters.Select(
-                    (_, chapterIndex) => (textIndex, chapterIndex, new Dictionary<string, string>())
+                    (Chapter chapter, int chapterIndex) => (textIndex, chapterIndex, bookPermissions)
                 );
             }
             else
@@ -1450,25 +1446,11 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                                 chapter.Number,
                                 token
                             );
-
-                            // Only save chapter permissions where they differ from the book permissions
-                            chapterPermissions = chapterPermissions
-                                .Where(kvp =>
-                                    !bookPermissions.TryGetValue(kvp.Key, out string bookPermission)
-                                    || bookPermission != kvp.Value
-                                )
-                                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
                             return (textIndex, chapterIndex, chapterPermissions);
                         }
                     )
                 );
-
-                // Only save write permissions - all other users will have read if they are on the project
-                bookPermissions = bookPermissions
-                    .Where(kvp => kvp.Value != TextInfoPermission.Read)
-                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
             }
-
             projectChapterPermissions.AddRange(chapterPermissionsInBook);
             projectBookPermissions.Add((textIndex, bookPermissions));
         }
@@ -1595,24 +1577,19 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             throw new DataNotFoundException("The chapter does not exist.");
         }
 
-        // Ensure the user can write to this chapter
-        if (!projectDoc.Data.Texts[textIndex].Permissions.TryGetValue(userId, out string bookPermission))
-        {
-            bookPermission = TextInfoPermission.None;
-        }
-
+        // Ensure the user has permission for this chapter
         if (
             !projectDoc
                 .Data.Texts[textIndex]
                 .Chapters[chapterIndex]
-                .Permissions.TryGetValue(userId, out string chapterPermission)
+                .Permissions.TryGetValue(userId, out string permission)
         )
         {
-            chapterPermission = bookPermission;
+            throw new ForbiddenException();
         }
 
         // Ensure the user can write to this chapter
-        if (chapterPermission != TextInfoPermission.Write)
+        if (permission != TextInfoPermission.Write)
         {
             throw new ForbiddenException();
         }
@@ -1669,24 +1646,19 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             throw new DataNotFoundException("The chapter does not exist.");
         }
 
-        // Ensure the user can write to this chapter
-        if (!projectDoc.Data.Texts[textIndex].Permissions.TryGetValue(userId, out string bookPermission))
-        {
-            bookPermission = TextInfoPermission.None;
-        }
-
+        // Ensure the user has permission for this chapter
         if (
             !projectDoc
                 .Data.Texts[textIndex]
                 .Chapters[chapterIndex]
-                .Permissions.TryGetValue(userId, out string chapterPermission)
+                .Permissions.TryGetValue(userId, out string permission)
         )
         {
-            chapterPermission = bookPermission;
+            throw new ForbiddenException();
         }
 
         // Ensure the user can write to this chapter
-        if (chapterPermission != TextInfoPermission.Write)
+        if (permission != TextInfoPermission.Write)
         {
             throw new ForbiddenException();
         }
