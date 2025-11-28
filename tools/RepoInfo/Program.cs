@@ -61,7 +61,7 @@ if (string.IsNullOrWhiteSpace(projectPath))
 }
 
 // Set up Mercurial
-string customHgPath = Environment.GetEnvironmentVariable("HG_PATH") ?? "/usr/local/bin/hg";
+string customHgPath = Environment.GetEnvironmentVariable("HG_PATH") ?? "/usr/bin/hg";
 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 {
     customHgPath = Path.GetExtension(customHgPath.ToLowerInvariant()) != ".exe" ? customHgPath + ".exe" : customHgPath;

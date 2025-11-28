@@ -24,8 +24,7 @@ RUN apt-get install -y \
     nodejs \
     && rm -rf /var/lib/apt/lists/*
 # Setup Scripture Forge Paths
-RUN ln -s /usr/bin/hg /usr/local/bin/hg \
-    && mkdir -p /var/lib/scriptureforge/sync \
+RUN mkdir -p /var/lib/scriptureforge/sync \
     && mkdir -p /var/lib/scriptureforge/audio \
     && mkdir -p /var/lib/scriptureforge/training-data \
     && mkdir -p /var/lib/xforge/avatars \
