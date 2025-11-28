@@ -488,13 +488,12 @@ public class MachineApiService(
                     continue;
                 }
 
-                // If a user does not have permission set at chapter level, use the book level permission
-                bool canWriteChapter = targetProjectDoc
-                    .Data.Texts[textIndex]
-                    .Chapters[chapterIndex]
-                    .Permissions.TryGetValue(curUserId, out string chapterPermission)
-                    ? chapterPermission == TextInfoPermission.Write
-                    : canWriteBook;
+                bool canWriteChapter =
+                    targetProjectDoc
+                        .Data.Texts[textIndex]
+                        .Chapters[chapterIndex]
+                        .Permissions.TryGetValue(curUserId, out string chapterPermission)
+                    && chapterPermission == TextInfoPermission.Write;
                 if (!canWriteChapter)
                 {
                     // Remove the chapter from the project if we created it, and proceed to add the next chapter
