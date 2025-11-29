@@ -307,6 +307,16 @@
           <div class="confirm-translate confirm-books">
             {{ selectedTranslateBooksAsString() }}
           </div>
+          @if (servalConfig != null) {
+            <div class="serval-config-toggle">
+              <u (click)="showCustomConfig = !showCustomConfig">{{
+                showCustomConfig ? t("hide_custom_serval_config") : t("show_custom_config")
+              }}</u>
+            </div>
+            @if (showCustomConfig) {
+              <pre class="custom-config">{{ servalConfig | json }}</pre>
+            }
+          }
         </mat-card>
         <h2>{{ t("summary_notifications") }}</h2>
         @if (currentUserEmail != null) {
