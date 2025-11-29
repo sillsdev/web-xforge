@@ -366,6 +366,13 @@ export class FeatureFlagService {
     new StaticFeatureFlagStore(true)
   );
 
+  readonly allowEnablingTranslationSuggestions: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'AllowEnablingTranslationSuggestions',
+    'Allow Enabling Translation Suggestions',
+    19,
+    this.featureFlagStore
+  );
+
   get featureFlags(): FeatureFlag[] {
     return Object.values(this).filter(value => value instanceof FeatureFlagFromStorage);
   }
