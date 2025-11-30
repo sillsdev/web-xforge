@@ -23,13 +23,13 @@ import { Canon } from '@sillsdev/scripture';
 import { isEqual } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import {
   DraftConfig,
   ProjectScriptureRange,
   TranslateSource
 } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { TextInfo } from 'realtime-server/scriptureforge/models/text-info';
 import { combineLatest, merge, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
