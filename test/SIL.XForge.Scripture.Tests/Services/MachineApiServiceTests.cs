@@ -1938,7 +1938,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetLastCompletedPreTranslationBuildAsync_NoRetrievePreTranslationStatusAsyncCall_Success()
+    public async Task GetLastCompletedPreTranslationBuildAsync_NoRetrievePreTranslationStatusAsyncCallWhenActiveBuild_Success()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1974,6 +1974,13 @@ public class MachineApiServiceTests
                                 },
                             ],
                         },
+                        new TranslationBuild
+                        {
+                            Url = "https://example.com",
+                            Id = Build02,
+                            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                            State = JobState.Active,
+                        },
                     ]
                 )
             );
@@ -1986,7 +1993,68 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
-        await env.Service.DidNotReceive().RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
+        // RetrievePreTranslationStatusAsync is run via a background job, so we verify that no new job was scheduled
+        env.BackgroundJobClient.DidNotReceive().Create(Arg.Any<Job>(), Arg.Any<IState>());
+
+        TestEnvironment.AssertCoreBuildProperties(CompletedTranslationBuild, actual);
+    }
+
+    [Test]
+    public async Task GetLastCompletedPreTranslationBuildAsync_NoRetrievePreTranslationStatusAsyncCallWhenAlreadyRun_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string scriptureRange = "GEN";
+        await env.Projects.UpdateAsync(
+            Project01,
+            u => u.Set(p => p.TranslateConfig.DraftConfig.CurrentScriptureRange, scriptureRange)
+        );
+        const double percentCompleted = 0;
+        const int revision = 43;
+        const JobState state = JobState.Completed;
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(
+                Task.FromResult<IList<TranslationBuild>>(
+                    [
+                        new TranslationBuild
+                        {
+                            Url = "https://example.com",
+                            Id = Build01,
+                            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                            Message = MachineApiService.BuildStateCompleted,
+                            Progress = percentCompleted,
+                            Revision = revision,
+                            State = state,
+                            DateFinished = DateTimeOffset.UtcNow,
+                            Pretranslate =
+                            [
+                                new PretranslateCorpus
+                                {
+                                    SourceFilters =
+                                    [
+                                        new ParallelCorpusFilter
+                                        {
+                                            Corpus = new ResourceLink { Id = "corpusId", Url = "https://example.com" },
+                                            ScriptureRange = scriptureRange,
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ]
+                )
+            );
+
+        // SUT
+        ServalBuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
+            User01,
+            Project01,
+            false,
+            CancellationToken.None
+        );
+
+        // RetrievePreTranslationStatusAsync is run via a background job, so we verify that no new job was scheduled
+        env.BackgroundJobClient.DidNotReceive().Create(Arg.Any<Job>(), Arg.Any<IState>());
 
         TestEnvironment.AssertCoreBuildProperties(CompletedTranslationBuild, actual);
     }
@@ -2040,7 +2108,8 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
-        await env.Service.DidNotReceive().RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
+        // RetrievePreTranslationStatusAsync is run via a background job, so we verify that no new job was scheduled
+        env.BackgroundJobClient.DidNotReceive().Create(Arg.Any<Job>(), Arg.Any<IState>());
 
         TestEnvironment.AssertCoreBuildProperties(CompletedTranslationBuild, actual);
     }
