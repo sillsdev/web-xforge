@@ -222,6 +222,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     });
   }
 
+  onlineAddBookWithChapters(projectId: string, book: number, chapters: number[]): Promise<void> {
+    return this.onlineInvoke<void>('addBookWithChapters', { projectId, book, chapters });
+  }
+
   onlineAddChapters(projectId: string, book: number, chapters: number[]): Promise<void> {
     return this.onlineInvoke<void>('addChapters', { projectId, book, chapters });
   }

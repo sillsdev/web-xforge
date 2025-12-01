@@ -3883,6 +3883,48 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task AddBookWithChaptersAsync_CreatesBook()
+    {
+        var env = new TestEnvironment();
+        const int book = 42;
+        int[] chapters = [2, 1];
+
+        Assert.That(env.GetProject(Project01).Texts.Any(t => t.BookNum == book), Is.False, "setup");
+
+        await env.Service.AddBookWithChaptersAsync(User01, Project01, book, chapters);
+
+        TextInfo text = env.GetProject(Project01).Texts.Single(t => t.BookNum == book);
+        Assert.That(text.Chapters.Select(c => c.Number), Is.EqualTo([1, 2]));
+        Assert.That(text.Permissions[User01], Is.EqualTo(TextInfoPermission.Write));
+        Assert.That(text.Chapters.All(c => c.Permissions[User01] == TextInfoPermission.Write), Is.True);
+    }
+
+    [Test]
+    public void AddBookWithChaptersAsync_UserMustHaveCreateRight()
+    {
+        var env = new TestEnvironment();
+        const int book = 43;
+        int[] chapters = [1];
+
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.AddBookWithChaptersAsync(User02, Project01, book, chapters)
+        );
+    }
+
+    [Test]
+    public async Task AddBookWithChaptersAsync_ExistingBookAddsChapters()
+    {
+        var env = new TestEnvironment();
+        const int book = 41;
+        int[] chapters = [3];
+
+        await env.Service.AddBookWithChaptersAsync(User01, Project01, book, chapters);
+
+        TextInfo text = env.GetProject(Project01).Texts.Single(t => t.BookNum == book);
+        Assert.That(text.Chapters.Select(c => c.Number), Is.EquivalentTo(new[] { 1, 2, 3 }));
+    }
+
+    [Test]
     public void AddChaptersAsync_BookMustBeInProject()
     {
         var env = new TestEnvironment();

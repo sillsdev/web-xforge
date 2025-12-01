@@ -630,6 +630,47 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    public async Task AddBookWithChapters_Success()
+    {
+        var env = new TestEnvironment();
+        const int book = 50;
+        int[] chapters = [1, 2];
+
+        var result = await env.Controller.AddBookWithChapters(Project01, book, chapters);
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().AddBookWithChaptersAsync(User01, Project01, book, chapters);
+    }
+
+    [Test]
+    public async Task AddBookWithChapters_Forbidden()
+    {
+        var env = new TestEnvironment();
+        const int book = 50;
+        int[] chapters = [1, 2];
+        env.SFProjectService.AddBookWithChaptersAsync(User01, Project01, book, chapters)
+            .Throws(new ForbiddenException());
+
+        var result = await env.Controller.AddBookWithChapters(Project01, book, chapters);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task AddBookWithChapters_NotFound()
+    {
+        var env = new TestEnvironment();
+        const int book = 50;
+        int[] chapters = [1, 2];
+        const string errorMessage = "Not Found";
+        env.SFProjectService.AddBookWithChaptersAsync(User01, Project01, book, chapters)
+            .Throws(new DataNotFoundException(errorMessage));
+
+        var result = await env.Controller.AddBookWithChapters(Project01, book, chapters);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
     public async Task AddChapters_Success()
     {
         var env = new TestEnvironment();

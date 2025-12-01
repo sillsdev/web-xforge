@@ -88,6 +88,7 @@ public interface ISFProjectService : IProjectService
     Task SetServalConfigAsync(string curUserId, string[] systemRoles, string projectId, string? servalConfig);
 
     Task SetUsfmConfigAsync(string curUserId, string projectId, DraftUsfmConfig config);
+    Task AddBookWithChaptersAsync(string userId, string projectId, int book, int[] chapters);
     Task AddChaptersAsync(string userId, string projectId, int book, int[] chapters);
 
     [LogEventMetric(EventScope.Drafting)]

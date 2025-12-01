@@ -1479,6 +1479,54 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         });
     }
 
+    public async Task AddBookWithChaptersAsync(string userId, string projectId, int book, int[] chapters)
+    {
+        chapters ??= [];
+        await using IConnection conn = await RealtimeService.ConnectAsync();
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
+        if (!projectDoc.IsLoaded)
+        {
+            throw new DataNotFoundException("The project does not exist.");
+        }
+
+        int textIndex = projectDoc.Data.Texts.FindIndex(t => t.BookNum == book);
+        if (textIndex != -1)
+        {
+            await AddChaptersAsync(userId, projectId, book, chapters);
+            return;
+        }
+
+        if (!_projectRights.HasRight(projectDoc.Data, userId, SFProjectDomain.Texts, Operation.Create))
+        {
+            throw new ForbiddenException();
+        }
+
+        var newText = new TextInfo
+        {
+            BookNum = book,
+            HasSource = false,
+            Permissions = new Dictionary<string, string> { { userId, TextInfoPermission.Write } },
+            Chapters = [],
+        };
+
+        SortedSet<int> orderedChapters = [.. chapters];
+        foreach (int chapter in orderedChapters)
+        {
+            newText.Chapters.Add(
+                new Chapter
+                {
+                    Number = chapter,
+                    Permissions = new Dictionary<string, string> { { userId, TextInfoPermission.Write } },
+                    IsValid = true,
+                    LastVerse = 0,
+                }
+            );
+        }
+
+        int insertIndex = projectDoc.Data.Texts.TakeWhile(t => t.BookNum < book).Count();
+        await projectDoc.SubmitJson0OpAsync(op => op.Insert(pd => pd.Texts, insertIndex, newText));
+    }
+
     public async Task AddChaptersAsync(string userId, string projectId, int book, int[] chapters)
     {
         await using IConnection conn = await RealtimeService.ConnectAsync();

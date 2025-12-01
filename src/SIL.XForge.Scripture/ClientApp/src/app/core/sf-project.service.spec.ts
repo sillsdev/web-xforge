@@ -119,6 +119,15 @@ describe('SFProjectService', () => {
     }));
   });
 
+  describe('onlineAddBookWithChapters', () => {
+    it('should invoke the command service', fakeAsync(async () => {
+      const env = new TestEnvironment();
+      await env.service.onlineAddBookWithChapters('project01', 1, [1, 2]);
+      verify(mockedCommandService.onlineInvoke(anything(), 'addBookWithChapters', anything())).once();
+      expect().nothing();
+    }));
+  });
+
   describe('onlineAddChapters', () => {
     it('should invoke the command service', fakeAsync(async () => {
       const env = new TestEnvironment();

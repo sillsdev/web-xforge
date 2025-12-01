@@ -1050,6 +1050,36 @@ public class SFProjectsRpcController(
         }
     }
 
+    public async Task<IRpcMethodResult> AddBookWithChapters(string projectId, int book, int[] chapters)
+    {
+        try
+        {
+            await projectService.AddBookWithChaptersAsync(UserId, projectId, book, chapters);
+            return Ok();
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", "AddBookWithChapters" },
+                    { "projectId", projectId },
+                    { "book", book.ToString() },
+                    { "chapters", string.Join(',', chapters) },
+                }
+            );
+            throw;
+        }
+    }
+
     public async Task<IRpcMethodResult> AddChapters(string projectId, int book, int[] chapters)
     {
         try
