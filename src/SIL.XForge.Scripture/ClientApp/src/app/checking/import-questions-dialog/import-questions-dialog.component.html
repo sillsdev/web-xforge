@@ -180,62 +180,12 @@
           </div>
         }
 
-        @case ("filter") {
-          <form [formGroup]="filterForm" autocomplete="off">
-            <div class="filter-references">
-              <mat-form-field appearance="outline">
-                <mat-label>{{ t("reference_from") }}</mat-label>
-                <input matInput type="text" formControlName="from" />
-                <button mat-icon-button matSuffix #fromRef id="from-btn" (click)="openScriptureChooser(fromControl)">
-                  <mat-icon>expand_more</mat-icon>
-                </button>
-                @if (fromControl.invalid) {
-                  <mat-error>{{ t("must_be_valid_reference") }}</mat-error>
-                }
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>{{ t("reference_to") }}</mat-label>
-                <input matInput type="text" formControlName="to" />
-                <button mat-icon-button matSuffix (click)="openScriptureChooser(toControl)">
-                  <mat-icon>expand_more</mat-icon>
-                </button>
-                @if (toControl.invalid) {
-                  <mat-error>{{ t("must_be_valid_reference") }}</mat-error>
-                }
-              </mat-form-field>
-            </div>
-            <div colspan="2" class="filter-text">
-              <div>
-                <mat-form-field appearance="fill" subscriptSizing="dynamic">
-                  <input matInput type="text" formControlName="filter" [placeholder]="t('filter_questions')" />
-                </mat-form-field>
-                <button mat-button type="button" (click)="clearFilters()">{{ t("show_all") }}</button>
-              </div>
-            </div>
-            <table mat-table [dataSource]="questionsForDisplay" class="question-list">
-              <ng-container matColumnDef="verse">
-                <th mat-header-cell *matHeaderCellDef>
-                  <mat-checkbox #selectAllCheckbox (change)="selectAllChanged($event.checked)">{{
-                    t("select_all")
-                  }}</mat-checkbox>
-                </th>
-                <td mat-cell *matCellDef="let element">
-                  <mat-checkbox
-                    [(ngModel)]="element.checked"
-                    [ngModelOptions]="{ standalone: true }"
-                    (ngModelChange)="checkboxChanged(element)"
-                    >{{ referenceForDisplay(element.question) }}</mat-checkbox
-                  >
-                </td>
-              </ng-container>
-              <ng-container matColumnDef="question">
-                <th mat-header-cell *matHeaderCellDef>{{ t("question") }}</th>
-                <td mat-cell *matCellDef="let element">{{ element.question.text }}</td>
-              </ng-container>
-              <tr mat-header-row *matHeaderRowDef="['verse', 'question']"></tr>
-              <tr mat-row *matRowDef="let row; columns: ['verse', 'question']"></tr>
-            </table>
-          </form>
+        @case ("filter_questions") {
+          <ng-container *ngTemplateOutlet="filterImportTemplate"></ng-container>
+        }
+
+        @case ("filter_notes") {
+          <ng-container *ngTemplateOutlet="filterImportTemplate"></ng-container>
         }
 
         @case ("no_questions") {
@@ -262,7 +212,7 @@
       }
     </div>
 
-    @if (status === "filter") {
+    @if (status === "filter_questions" || status === "filter_notes") {
       <div class="dialog-content-footer">
         @if (importClicked && selectedCount < 1) {
           <mat-error>
@@ -294,10 +244,67 @@
       </div>
     }
   </mat-dialog-content>
+  <ng-template #filterImportTemplate>
+    <form [formGroup]="filterForm" autocomplete="off">
+      <div class="filter-references">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t("reference_from") }}</mat-label>
+          <input matInput type="text" formControlName="from" />
+          <button mat-icon-button matSuffix #fromRef id="from-btn" (click)="openScriptureChooser(fromControl)">
+            <mat-icon>expand_more</mat-icon>
+          </button>
+          @if (fromControl.invalid) {
+            <mat-error>{{ t("must_be_valid_reference") }}</mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t("reference_to") }}</mat-label>
+          <input matInput type="text" formControlName="to" />
+          <button mat-icon-button matSuffix (click)="openScriptureChooser(toControl)">
+            <mat-icon>expand_more</mat-icon>
+          </button>
+          @if (toControl.invalid) {
+            <mat-error>{{ t("must_be_valid_reference") }}</mat-error>
+          }
+        </mat-form-field>
+      </div>
+      <div colspan="2" class="filter-text">
+        <div>
+          <mat-form-field appearance="fill" subscriptSizing="dynamic">
+            <input matInput type="text" formControlName="filter" [placeholder]="t('filter_questions')" />
+          </mat-form-field>
+          <button mat-button type="button" (click)="clearFilters()">{{ t("show_all") }}</button>
+        </div>
+      </div>
+      <table mat-table [dataSource]="questionsForDisplay" class="question-list">
+        <ng-container matColumnDef="verse">
+          <th mat-header-cell *matHeaderCellDef>
+            <mat-checkbox #selectAllCheckbox (change)="selectAllChanged($event.checked)">{{
+              t("select_all")
+            }}</mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let element">
+            <mat-checkbox
+              [(ngModel)]="element.checked"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="checkboxChanged(element)"
+              >{{ referenceForDisplay(element.question) }}</mat-checkbox
+            >
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="question">
+          <th mat-header-cell *matHeaderCellDef>{{ t("question") }}</th>
+          <td mat-cell *matCellDef="let element">{{ element.question.text }}</td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="['verse', 'question']"></tr>
+        <tr mat-row *matRowDef="let row; columns: ['verse', 'question']"></tr>
+      </table>
+    </form>
+  </ng-template>
   @if (questionSource != null && importCanceled === false) {
     <mat-dialog-actions align="end">
       @if (status === "paratext_tag_selection") {
-        <button mat-button (click)="cancelParatextTagSelection()">
+        <button mat-button (click)="reset()">
           {{ t("back") }}
         </button>
         <button
@@ -309,9 +316,14 @@
           {{ t("import_from_paratext_next") }}
         </button>
       }
-      @if (status === "filter" || status === "file_import_errors") {
-        <button mat-button mat-dialog-close>
-          {{ t("cancel") }}
+      @if (status === "filter_questions" || status === "file_import_errors") {
+        <button mat-button (click)="reset()">
+          {{ t("back") }}
+        </button>
+      }
+      @if (status === "filter_notes") {
+        <button mat-button (click)="importFromParatext()">
+          {{ t("back") }}
         </button>
       }
       @if (status === "no_questions" || status === "update_transcelerator" || status === "missing_header_row") {
@@ -324,7 +336,7 @@
           {{ t("continue_import") }}
         </button>
       }
-      @if (status === "filter") {
+      @if (status === "filter_questions" || status === "filter_notes") {
         <button id="import-button" mat-flat-button color="primary" (click)="importQuestions()">
           <span class="hide-lt-sm">{{ t("import_count_questions", { count: selectedCount }) }}</span>
           <span class="hide-gt-sm">{{ t("import") }}</span>
