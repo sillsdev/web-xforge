@@ -1,5 +1,5 @@
 import { CdkScrollable } from '@angular/cdk/scrolling';
-import { AsyncPipe } from '@angular/common';
+import { AsyncPipe, NgTemplateOutlet } from '@angular/common';
 import { Component, DestroyRef, ElementRef, Inject, NgZone, OnDestroy, ViewChild } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatAnchor, MatButton, MatIconButton } from '@angular/material/button';
@@ -52,8 +52,8 @@ import { environment } from '../../../environments/environment';
 import { ParatextProject } from '../../core/models/paratext-project';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
-import { ParatextNote, ParatextNoteTag, ParatextService } from '../../core/paratext.service';
 import { TransceleratorQuestion } from '../../core/models/transcelerator-question';
+import { ParatextNote, ParatextNoteTag, ParatextService } from '../../core/paratext.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import {
   ScriptureChooserDialogComponent,
@@ -91,7 +91,8 @@ type DialogErrorState = 'update_transcelerator' | 'file_import_errors' | 'missin
 type DialogStatus =
   | 'initial'
   | 'no_questions'
-  | 'filter'
+  | 'filter_questions'
+  | 'filter_notes'
   | 'loading'
   | 'progress'
   | 'paratext_tag_selection'
@@ -137,6 +138,7 @@ type DialogStatus =
     MatProgressBar,
     MatDialogActions,
     AsyncPipe,
+    NgTemplateOutlet,
     MatSelect,
     MatOption
   ]
@@ -260,7 +262,8 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
       return 'file_import_errors';
     }
     if (this.questionSource != null) {
-      return this.questionList.length === 0 ? 'no_questions' : 'filter';
+      if (this.questionList.length === 0) return 'no_questions';
+      return this.selectedParatextTagId !== null ? 'filter_notes' : 'filter_questions';
     } else {
       return 'initial';
     }
@@ -316,7 +319,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
   }
 
   dialogScroll(): void {
-    if (this.status === 'file_import_errors' || this.status === 'filter') {
+    if (this.status === 'file_import_errors' || this.status === 'filter_notes' || this.status === 'filter_questions') {
       const element = this.dialogContentBody.nativeElement;
       // add more list items if the user has scrolled to within 1000 pixels of the bottom of the list
       if (element.scrollHeight <= element.scrollTop + element.clientHeight + 1000) {
@@ -533,7 +536,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
     }
   }
 
-  cancelParatextTagSelection(): void {
+  reset(): void {
     this.showParatextTagSelector = false;
     this.questionSource = null;
     this.loadingParatextTags = false;
