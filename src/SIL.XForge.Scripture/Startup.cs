@@ -292,7 +292,11 @@ public class Startup
             endpoints.MapHub<NotificationHub>(pattern: $"/{UrlConstants.ProjectNotifications}");
             var authOptions = Configuration.GetOptions<AuthOptions>();
             endpoints.MapHangfireDashboard(
-                new DashboardOptions { Authorization = [new HangfireDashboardAuthorizationFilter(authOptions)] }
+                new DashboardOptions
+                {
+                    Authorization = [new HangfireDashboardAuthorizationFilter(authOptions)],
+                    IgnoreAntiforgeryToken = true,
+                }
             );
         });
 
