@@ -206,11 +206,8 @@ public static class NotesFormatter
             return element;
 
         PropertyInfo[] properties = typeof(CommentTag).GetProperties(BindingFlags.Instance | BindingFlags.Public);
-        foreach (PropertyInfo property in properties)
+        foreach (PropertyInfo property in properties.Where(property => property.CanRead))
         {
-            if (!property.CanRead)
-                continue;
-
             object value = property.GetValue(commentTag);
             if (value == null)
                 continue;
