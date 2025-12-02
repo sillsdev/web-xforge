@@ -12,3 +12,9 @@ mat-form-field {
   gap: 4px;
   white-space: nowrap;
 }
+
+.projects-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}

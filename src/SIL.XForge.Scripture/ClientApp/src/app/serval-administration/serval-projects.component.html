@@ -3,10 +3,10 @@
     <mat-label>Filter projects...</mat-label>
     <input matInput (keyup)="updateSearchTerm($event.target)" id="project-filter" />
   </mat-form-field>
+  <mat-checkbox [(ngModel)]="showProjectsWithCustomServalConfig" (change)="updateServalConfigFilter()">
+    Projects with custom Serval Configuration only
+  </mat-checkbox>
 </div>
-<mat-checkbox [(ngModel)]="showProjectsWithCustomServalConfig" (change)="updateServalConfigFilter()"
-  >Projects with custom serval configs only</mat-checkbox
->
 @if (!isLoading) {
   @if (length > 0) {
     <table mat-table id="projects-table" [dataSource]="rows">

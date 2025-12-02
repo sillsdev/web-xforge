@@ -1359,8 +1359,8 @@ describe('DraftGenerationStepsComponent', () => {
       expect(trainingGroups[1].ranges[1]).toEqual('1 Samuel');
     });
 
-    it('records the custom serval config', () => {
-      expect(component['servalConfig']).toEqual('{ "custom": "value" }');
+    it('sets the custom serval config flag', () => {
+      expect(component['isCustomConfigSet']).toEqual(true);
     });
   });
 

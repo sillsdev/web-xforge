@@ -8,8 +8,6 @@
   --mat-stepper-header-icon-foreground-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 90, 98))};
   --mat-stepper-header-edit-state-icon-background-color: #{mat.get-theme-color($theme, primary, if($is-dark, 30, 10))};
   --mat-stepper-header-edit-state-icon-foreground-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 90, 98))};
-  --mat-stepper-link-color: #{mat.get-theme-color($theme, primary, if($is-dark, 60, 50))};
-  --mat-stepper-link-hover-color: #{mat.get-theme-color($theme, primary, if($is-dark, 70, 60))};
 }
 
 @mixin theme($theme) {
