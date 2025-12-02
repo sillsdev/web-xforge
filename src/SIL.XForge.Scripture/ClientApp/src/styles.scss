@@ -63,8 +63,8 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
   padding-top: 5px !important;
 }
 
-.mdc-snackbar.snackbar-error {
-  --mat-snackbar-container-color: #{variables.$errorColor};
+.mdc-snackbar.snackbar-error > div {
+  background-color: #{variables.$errorColor};
 }
 
 .mdc-button.mat-mdc-unelevated-button,
