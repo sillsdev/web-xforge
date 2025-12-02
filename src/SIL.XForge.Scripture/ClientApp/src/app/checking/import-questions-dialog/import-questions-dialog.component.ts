@@ -87,7 +87,12 @@ interface DialogListItem {
   sfVersionOfQuestion?: QuestionDoc;
 }
 
-type DialogErrorState = 'update_transcelerator' | 'file_import_errors' | 'missing_header_row' | 'offline_conversion';
+type DialogErrorState =
+  | 'update_transcelerator'
+  | 'file_import_errors'
+  | 'missing_header_row'
+  | 'offline_conversion'
+  | 'paratext_tag_load_error';
 type DialogStatus =
   | 'initial'
   | 'no_questions'
@@ -162,9 +167,6 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
   fileExtensions: string = '.csv,.tsv';
 
   showParatextTagSelector = false;
-  loadingParatextTags = false;
-  paratextTagLoadError = false;
-  paratextTagConversionError = false;
   paratextTagOptions: ParatextNoteTag[] = [];
   selectedParatextTagId: number | null = null;
   private paratextNotes: ParatextNote[] = [];
@@ -495,20 +497,14 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
   }
 
   async importFromParatext(): Promise<void> {
-    if (this.loadingParatextTags) {
-      return;
-    }
-
+    this.loading = true;
     this.importClicked = false;
     this.errorState = undefined;
     this.questionSource = 'paratext';
     this.questionList = [];
     this.filteredList = [];
     this.invalidRows = [];
-    this.loadingParatextTags = true;
     this.showParatextTagSelector = true;
-    this.paratextTagLoadError = false;
-    this.paratextTagConversionError = false;
     this.selectedParatextTagId = null;
     this.paratextNotes = [];
     this.paratextTagOptions = [];
@@ -516,7 +512,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
     try {
       const paratextId = await this.getParatextProjectId();
       if (paratextId == null) {
-        this.paratextTagLoadError = true;
+        this.errorState = 'paratext_tag_load_error';
         return;
       }
 
@@ -526,22 +522,22 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
       if (this.paratextTagOptions.length > 0) {
         this.selectedParatextTagId = this.paratextTagOptions[0].id;
       }
+      throw new Error();
     } catch (error) {
+      console.error('Failed to load notes from Paratext: ', error);
       this.paratextNotes = [];
       this.paratextTagOptions = [];
       this.selectedParatextTagId = null;
-      this.paratextTagLoadError = true;
+      this.errorState = 'paratext_tag_load_error';
     } finally {
-      this.loadingParatextTags = false;
+      this.loading = false;
     }
   }
 
   reset(): void {
     this.showParatextTagSelector = false;
     this.questionSource = null;
-    this.loadingParatextTags = false;
-    this.paratextTagLoadError = false;
-    this.paratextTagConversionError = false;
+    this.errorState = undefined;
     this.paratextNotes = [];
     this.paratextTagOptions = [];
     this.selectedParatextTagId = null;
@@ -559,18 +555,12 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
     this.questionList = [];
     this.filteredList = [];
     this.invalidRows = [];
-    this.paratextTagConversionError = false;
+    this.errorState = undefined;
 
-    try {
-      const questions = this.convertParatextCommentsToQuestions(this.paratextNotes, tagId);
-      await this.setUpQuestionList(questions, true);
-    } catch (error) {
-      this.paratextTagConversionError = true;
-      this.showParatextTagSelector = true;
-      return;
-    } finally {
-      this.loading = false;
-    }
+    const questions = this.convertParatextCommentsToQuestions(this.paratextNotes, tagId);
+    await this.setUpQuestionList(questions, true);
+
+    this.loading = false;
   }
 
   private async getParatextProjectId(): Promise<string | undefined> {
@@ -580,7 +570,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
       const project = projects?.find(p => p.projectId === this.data.projectId);
       return project?.paratextId;
     } catch (error) {
-      console.error('Failed to load Paratext project list', error);
+      console.error('Failed to load Paratext project list: ', error);
       this.paratextProjectsPromise = undefined;
       throw error;
     }
