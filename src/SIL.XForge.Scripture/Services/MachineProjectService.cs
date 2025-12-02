@@ -1286,11 +1286,44 @@ public class MachineProjectService(
         {
             for (int j = 0; j < trainingCorpusConfig.SourceFilters?.Count; j++)
             {
-                if (trainingCorpusConfig.TargetFilters?[j] is not null)
+                if (trainingCorpusConfig.TargetFilters is not null)
                 {
-                    trainingCorpusConfig.TargetFilters[j].ScriptureRange = trainingCorpusConfig
-                        .SourceFilters[j]
-                        .ScriptureRange;
+                    if (
+                        trainingCorpusConfig.TargetFilters.Count > j
+                        && trainingCorpusConfig.TargetFilters[j] is not null
+                    )
+                    {
+                        // Set the scripture range for the matching target filter
+                        trainingCorpusConfig.TargetFilters[j].ScriptureRange = trainingCorpusConfig
+                            .SourceFilters[j]
+                            .ScriptureRange;
+                    }
+                    else if (trainingCorpusConfig.TargetFilters[0] is not null)
+                    {
+                        // There is no matching target filter, so update the first target filter
+                        if (string.IsNullOrWhiteSpace(trainingCorpusConfig.TargetFilters[0].ScriptureRange))
+                        {
+                            // No previous target filter
+                            trainingCorpusConfig.TargetFilters[0].ScriptureRange = trainingCorpusConfig
+                                .SourceFilters[j]
+                                .ScriptureRange;
+                        }
+                        else if (!string.IsNullOrWhiteSpace(trainingCorpusConfig.SourceFilters[j].ScriptureRange))
+                        {
+                            // Merge the two scripture ranges by getting the distinct book names
+                            // This will also preserve any chapter ranges that are specified
+                            trainingCorpusConfig.TargetFilters[0].ScriptureRange = string.Join(
+                                ';',
+                                string.Join(
+                                        ';',
+                                        trainingCorpusConfig.TargetFilters[0].ScriptureRange,
+                                        trainingCorpusConfig.SourceFilters[j].ScriptureRange
+                                    )
+                                    .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                                    .Distinct()
+                            );
+                        }
+                    }
                 }
             }
         }
