@@ -50,6 +50,7 @@ public class MachineProjectServiceTests
     private const string Corpus02 = "corpus02";
     private const string Corpus03 = "corpus03";
     private const string Corpus04 = "corpus04";
+    private const string Corpus05 = "corpus04";
     private const string Data01 = "data01";
     private const string File01 = "file01";
     private const string File02 = "file02";
@@ -1908,6 +1909,7 @@ public class MachineProjectServiceTests
         const string project01ScriptureRange = "MAT;MRK";
         // No scripture range is supported for target pre-translate translation (project02)
         const string project03ScriptureRange = "LUK;JHN";
+        const string project04ScriptureRange = "ACT;ROM";
         var buildConfig = new BuildConfig
         {
             TranslationScriptureRanges =
@@ -1917,6 +1919,7 @@ public class MachineProjectServiceTests
             TrainingScriptureRanges =
             [
                 new ProjectScriptureRange { ProjectId = Project03, ScriptureRange = project03ScriptureRange },
+                new ProjectScriptureRange { ProjectId = Project04, ScriptureRange = project04ScriptureRange },
             ],
         };
         List<ServalCorpusSyncInfo> corporaSyncInfo =
@@ -1945,6 +1948,13 @@ public class MachineProjectServiceTests
             new ServalCorpusSyncInfo
             {
                 CorpusId = Corpus04,
+                IsSource = true,
+                ParallelCorpusId = ParallelCorpus02,
+                ProjectId = Project04,
+            },
+            new ServalCorpusSyncInfo
+            {
+                CorpusId = Corpus05,
                 IsSource = false,
                 ParallelCorpusId = ParallelCorpus02,
                 ProjectId = Project02,
@@ -1973,7 +1983,7 @@ public class MachineProjectServiceTests
                 .ScriptureRange
         );
         Assert.AreEqual(
-            project03ScriptureRange,
+            string.Join(';', project03ScriptureRange, project04ScriptureRange),
             actual
                 .TrainOn!.Single(c => c.ParallelCorpusId == ParallelCorpus02)
                 .TargetFilters!.Single(f => f.CorpusId == Corpus04)
