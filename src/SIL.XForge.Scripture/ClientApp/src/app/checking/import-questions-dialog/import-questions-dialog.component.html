@@ -131,19 +131,10 @@
 
         @case ("paratext_tag_selection") {
           <div class="paratext-tag-selection">
-            @if (loadingParatextTags) {
-              <mat-spinner></mat-spinner>
-            } @else if (paratextTagLoadError) {
-              <div class="paratext-tag-selection-message error">{{ t("import_from_paratext_tag_load_error") }}</div>
-            } @else if (paratextTagOptions.length === 0) {
+            @if (paratextTagOptions.length === 0) {
               <div class="paratext-tag-selection-message">{{ t("import_from_paratext_no_tags_available") }}</div>
             } @else {
               <p class="paratext-tag-selection-message">{{ t("import_from_paratext_select_tag_instructions") }}</p>
-              @if (paratextTagConversionError) {
-                <div class="paratext-tag-selection-message error">
-                  {{ t("import_from_paratext_tag_conversion_error") }}
-                </div>
-              }
               <mat-form-field appearance="fill">
                 <mat-label>{{ t("import_from_paratext_select_tag") }}</mat-label>
                 <mat-select [(ngModel)]="selectedParatextTagId" [ngModelOptions]="{ standalone: true }">
@@ -202,6 +193,10 @@
 
         @case ("missing_header_row") {
           <div [innerHTML]="i18n.translateAndInsertTags('import_questions_dialog.missing_header_row')"></div>
+        }
+
+        @case ("paratext_tag_load_error") {
+          <div class="paratext-tag-selection-message error">{{ t("import_from_paratext_tag_load_error") }}</div>
         }
 
         @case ("progress") {
@@ -303,7 +298,7 @@
   </ng-template>
   @if (questionSource != null && importCanceled === false) {
     <mat-dialog-actions align="end">
-      @if (status === "paratext_tag_selection") {
+      @if (status === "paratext_tag_selection" || errorState === "paratext_tag_load_error") {
         <button mat-button (click)="reset()">
           {{ t("back") }}
         </button>
@@ -311,7 +306,7 @@
           mat-flat-button
           color="primary"
           (click)="confirmParatextTagSelection()"
-          [disabled]="loadingParatextTags"
+          [disabled]="errorState === 'paratext_tag_load_error'"
         >
           {{ t("import_from_paratext_next") }}
         </button>
