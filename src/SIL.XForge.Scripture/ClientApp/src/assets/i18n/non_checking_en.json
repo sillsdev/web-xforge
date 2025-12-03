@@ -344,7 +344,6 @@
     "next": "Next",
     "no_books_ready_for_import": "No draft chapters are ready for import. Generate a draft and try again.",
     "no_write_permissions": "You do not have write permissions for the selected book(s)",
-    "missing_chapter_needs_creation": "Chapter must be created in the project before importing.",
     "num_chapters": "{{ count }} chapters",
     "overwrite_book_description": "{{ bookName }} has {{ numChapters }} chapters with existing text that will be overwritten.",
     "overwrite_book_question": "Overwrite {{ bookName }}?",
