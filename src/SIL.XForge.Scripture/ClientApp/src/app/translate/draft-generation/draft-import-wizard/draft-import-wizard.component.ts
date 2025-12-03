@@ -38,7 +38,6 @@ import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { CustomValidatorState as CustomErrorState, SFValidators } from '../../../shared/sfvalidators';
 import { booksFromScriptureRange } from '../../../shared/utils';
 import { SyncProgressComponent } from '../../../sync/sync-progress/sync-progress.component';
-import { DraftHandlingService } from '../draft-handling.service';
 
 /**
  * Represents a book available for import with its draft chapters.
@@ -102,8 +101,7 @@ export class DraftImportWizardComponent implements OnInit {
 
   // Step 1: Project selection
   projectSelectionForm = new FormGroup({
-    targetParatextId: new FormControl<string | undefined>(undefined, Validators.required),
-    createChapters: new FormControl(false)
+    targetParatextId: new FormControl<string | undefined>(undefined, Validators.required)
   });
   projects: ParatextProject[] = [];
   isLoadingProjects = true;
@@ -116,7 +114,6 @@ export class DraftImportWizardComponent implements OnInit {
   missingBookNames: string[] = [];
   bookCreationError?: string;
   isEnsuringBooks = false;
-  projectHasMissingChapters = false;
   projectLoadingFailed = false;
   private sourceProjectId?: string;
   noDraftsAvailable = false;
@@ -240,7 +237,6 @@ export class DraftImportWizardComponent implements OnInit {
     private readonly paratextService: ParatextService,
     private readonly projectService: SFProjectService,
     private readonly textDocService: TextDocService,
-    private readonly draftHandlingService: DraftHandlingService,
     readonly i18n: I18nService,
     private readonly userService: UserService,
     private readonly onlineStatusService: OnlineStatusService,
@@ -257,8 +253,14 @@ export class DraftImportWizardComponent implements OnInit {
     return Array.from(new Set(bookNumbers));
   }
 
+  private _selectedBooks: BookForImport[] = [];
   get selectedBooks(): BookForImport[] {
-    return this.availableBooksForImport.filter(b => b.selected);
+    const value = this.availableBooksForImport.filter(b => b.selected);
+    if (this._selectedBooks.toString() !== value.toString()) {
+      this._selectedBooks = value;
+    }
+
+    return this._selectedBooks;
   }
 
   private getBooksToImport(): BookForImport[] {
@@ -386,7 +388,6 @@ export class DraftImportWizardComponent implements OnInit {
   }
 
   async projectSelected(paratextId: string): Promise<void> {
-    this.projectSelectionForm.controls.createChapters.setValue(false);
     if (paratextId == null) {
       this.targetProject$.next(undefined);
       this.targetProjectDoc$.next(undefined);
@@ -462,35 +463,6 @@ export class DraftImportWizardComponent implements OnInit {
     // Connection status comes from ParatextProject
     this.needsConnection = !paratextProject.isConnected && hasWritePermissionForSelection;
 
-    // Update chapters for available books and check for missing chapters
-    this.projectHasMissingChapters = false;
-    for (const book of this.getBooksToImport()) {
-      if (book.chapters.length === 0) {
-        continue;
-      }
-      const targetBook = project.texts.find(t => t.bookNum === book.bookNum);
-      if (targetBook == null) {
-        continue;
-      }
-      const targetChapterNumbers = targetBook.chapters.map(c => c.number);
-      const missingChapters = book.chapters.filter(chapter => !targetChapterNumbers.includes(chapter));
-      if (missingChapters.length > 0) {
-        this.projectHasMissingChapters = true;
-      }
-      const bookIsEmpty =
-        targetBook.chapters.length === 0 || (targetBook.chapters.length === 1 && targetBook.chapters[0].lastVerse < 1);
-      if (bookIsEmpty) {
-        this.projectHasMissingChapters = true;
-      }
-    }
-
-    if (this.projectHasMissingChapters) {
-      this.projectSelectionForm.controls.createChapters.addValidators(Validators.requiredTrue);
-    } else {
-      this.projectSelectionForm.controls.createChapters.clearValidators();
-    }
-    this.projectSelectionForm.controls.createChapters.updateValueAndValidity();
-
     if (this.canEditProject && this.targetProjectId != null) {
       this.targetProject$.next(project);
       // Load the full project doc for sync component
@@ -554,6 +526,7 @@ export class DraftImportWizardComponent implements OnInit {
           continue;
         }
         // Was onlineAddBookWithChapters()
+        // TODO: Remove? I don't think this should be called
         await this.projectService.onlineAddChapters(this.targetProjectId, book.bookNum, book.chapters);
         for (const chapter of book.chapters) {
           const textDocId = new TextDocId(this.targetProjectId, book.bookNum, chapter);
@@ -577,7 +550,6 @@ export class DraftImportWizardComponent implements OnInit {
     this.booksMissingWithoutPermission = false;
     this.bookCreationError = undefined;
     this.missingBookNames = [];
-    this.projectHasMissingChapters = false;
   }
 
   private async validateProject(): Promise<void> {
@@ -736,76 +708,22 @@ export class DraftImportWizardComponent implements OnInit {
     }
   }
 
-  private async performImport(books: BookForImport[]): Promise<void> {
+  private async performImport(_books: BookForImport[]): Promise<void> {
     if (this.targetProjectId == null || this.sourceProjectId == null) {
       throw new Error('Missing project context for import');
     }
 
-    const targetProjectDoc = await this.projectService.getProfile(this.targetProjectId);
-    const targetProject = targetProjectDoc.data;
-    if (targetProject == null) {
-      throw new Error('Target project not found');
-    }
-
-    const sourceProjectId = this.sourceProjectId;
-    const allowChapterCreation = this.projectSelectionForm.value.createChapters === true;
-
-    for (const book of books) {
-      const progress = this.importProgress.find(p => p.bookNum === book.bookNum);
-      if (progress == null) continue;
-
-      // Create missing chapters if needed
-      const targetBook = targetProject.texts.find(t => t.bookNum === book.bookNum);
-      const existingChapters = targetBook?.chapters.map(c => c.number) ?? [];
-      const missingChapters = book.chapters.filter(c => !existingChapters.includes(c));
-
-      if (missingChapters.length > 0) {
-        if (!allowChapterCreation) {
-          for (const chapter of missingChapters) {
-            progress.failedChapters.push({
-              chapter,
-              message: this.i18n.translateStatic('draft_import_wizard.missing_chapter_needs_creation')
-            });
-          }
-          continue;
-        }
-
-        await this.projectService.onlineAddChapters(this.targetProjectId, book.bookNum, missingChapters);
-        for (const chapter of missingChapters) {
-          const textDocId = new TextDocId(this.targetProjectId, book.bookNum, chapter);
-          await this.textDocService.createTextDoc(textDocId);
-        }
-      }
-
-      // Apply draft to each chapter
-      for (const chapter of book.chapters) {
-        try {
-          const sourceTextDocId = new TextDocId(sourceProjectId, book.bookNum, chapter);
-          const targetTextDocId = new TextDocId(this.targetProjectId, book.bookNum, chapter);
-
-          let timestamp: Date | undefined;
+    // TODO: Generate a scripture range
+    // TODO: Get timestamp
+    /*
+         let timestamp: Date | undefined;
           if (this.data.additionalInfo?.dateGenerated != null) {
             timestamp = new Date(this.data.additionalInfo.dateGenerated);
           }
-
-          const error = await this.draftHandlingService.getAndApplyDraftAsync(
-            targetProject,
-            sourceTextDocId,
-            targetTextDocId,
-            timestamp
-          );
-
-          if (error != null) {
-            progress.failedChapters.push({ chapter, message: error });
-          } else {
-            progress.completedChapters++;
-          }
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          progress.failedChapters.push({ chapter, message: errorMessage });
-        }
-      }
-    }
+    */
+    // TODO: Submit to the backend
+    // TODO: Update this.progress.failedChapters
+    // TODO: Update this.progress.completedChapters
   }
 
   retryImport(): void {
