@@ -318,6 +318,11 @@
             </div>
           </mat-card>
         }
+        @if (isCustomConfigSet) {
+          <app-notice icon="info" type="info">
+            {{ t("custom_configurations_apply") }}
+          </app-notice>
+        }
 
         <div class="button-strip">
           <button mat-stroked-button matStepperPrevious>

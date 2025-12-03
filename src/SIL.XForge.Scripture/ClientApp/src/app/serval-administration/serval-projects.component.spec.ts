@@ -1,7 +1,10 @@
+import { HarnessLoader } from '@angular/cdk/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { DebugElement, getDebugNode } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { MatCheckboxHarness } from '@angular/material/checkbox/testing';
 import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
@@ -91,6 +94,23 @@ describe('ServalProjectsComponent', () => {
     expect(env.rows.length).toEqual(1);
   }));
 
+  it('should filter projects with custom serval config set', fakeAsync(async () => {
+    const env = new TestEnvironment();
+    env.setupProjectData();
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+
+    expect(env.rows.length).toEqual(3);
+    // Toggle the checkbox to filter projects with servalConfig
+    await env.toggleServalConfigFilter();
+    // Only project01 has servalConfig set, so only 1 row should be displayed
+    expect(env.rows.length).toEqual(1);
+
+    await env.toggleServalConfigFilter();
+    expect(env.rows.length).toEqual(3);
+  }));
+
   it('should page', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupProjectData();
@@ -116,6 +136,7 @@ class TestProjectDoc extends ProjectDoc {
 class TestEnvironment {
   readonly component: ServalProjectsComponent;
   readonly fixture: ComponentFixture<ServalProjectsComponent>;
+  readonly loader: HarnessLoader;
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
@@ -139,6 +160,7 @@ class TestEnvironment {
 
     this.fixture = TestBed.createComponent(ServalProjectsComponent);
     this.component = this.fixture.componentInstance;
+    this.loader = TestbedHarnessEnvironment.loader(this.fixture);
   }
 
   get table(): DebugElement {
@@ -181,6 +203,14 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
+  async toggleServalConfigFilter(): Promise<void> {
+    const checkbox = await this.loader.getHarness(MatCheckboxHarness);
+    await checkbox.toggle();
+    this.fixture.detectChanges();
+    tick();
+    this.fixture.detectChanges();
+  }
+
   setupProjectData(): void {
     this.realtimeService.addSnapshots<SFProject>(TestProjectDoc.COLLECTION, [
       {
@@ -204,7 +234,8 @@ class TestEnvironment {
                   name: 'Project 04',
                   shortName: 'P4'
                 }
-              ]
+              ],
+              servalConfig: '{ "custom": "value" }'
             },
             preTranslate: true,
             source: {

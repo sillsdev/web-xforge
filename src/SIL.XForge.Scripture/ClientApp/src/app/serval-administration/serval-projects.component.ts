@@ -1,5 +1,7 @@
 import { Component, DestroyRef, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
+import { MatCheckbox } from '@angular/material/checkbox';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
 import { MatInput } from '@angular/material/input';
@@ -83,6 +85,7 @@ class Row {
   templateUrl: './serval-projects.component.html',
   styleUrls: ['./serval-projects.component.scss'],
   imports: [
+    FormsModule,
     MatButton,
     MatTable,
     MatColumnDef,
@@ -90,6 +93,7 @@ class Row {
     MatHeaderCellDef,
     MatCell,
     MatCellDef,
+    MatCheckbox,
     MatHeaderRow,
     MatHeaderRowDef,
     MatIcon,
@@ -109,6 +113,7 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
   length: number = 0;
   pageIndex: number = 0;
   pageSize: number = 50;
+  showProjectsWithCustomServalConfig: boolean = false;
 
   private projectDocs?: Readonly<SFProjectProfileDoc[]>;
 
@@ -160,6 +165,11 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
     this.queryParameters$.next(this.getQueryParameters());
   }
 
+  updateServalConfigFilter(): void {
+    this.pageIndex = 0;
+    this.queryParameters$.next(this.getQueryParameters());
+  }
+
   viewDraftJobs(projectId: string): void {
     void this.router.navigate(['/serval-administration'], {
       queryParams: {
@@ -182,12 +192,19 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
   }
 
   private getQueryParameters(): QueryParameters {
-    return {
+    const params: QueryParameters = {
       // Do not return resources
       [obj<SFProject>().pathStr(q => q.resourceConfig)]: null,
       $sort: { [obj<Project>().pathStr(p => p.name)]: 1 },
       $skip: this.pageIndex * this.pageSize,
       $limit: this.pageSize
     };
+
+    // Filter for projects with servalConfig set
+    if (this.showProjectsWithCustomServalConfig) {
+      params[obj<SFProject>().pathStr(q => q.translateConfig.draftConfig?.servalConfig)] = { $ne: null };
+    }
+
+    return params;
   }
 }

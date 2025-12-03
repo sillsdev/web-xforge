@@ -159,6 +159,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   protected trainingSources: DraftSource[] = [];
   protected trainingTargets: DraftSource[] = [];
   protected trainingDataFiles: Readonly<TrainingData>[] = [];
+  protected isCustomConfigSet = false;
 
   private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
   private trainingDataQuerySubscription?: Subscription;
@@ -289,6 +290,7 @@ export class DraftGenerationStepsComponent implements OnInit {
             // See if there is an existing training scripture range
             const draftConfig: DraftConfig | undefined =
               this.activatedProject.projectDoc?.data?.translateConfig.draftConfig;
+            this.isCustomConfigSet = draftConfig?.servalConfig != null;
             const hasPreviousTrainingRange: boolean =
               (draftConfig?.lastSelectedTrainingScriptureRanges ?? []).length > 0;
 
