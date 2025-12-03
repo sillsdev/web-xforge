@@ -3955,6 +3955,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    [Obsolete]
     public void AddChaptersAsync_BookMustBeInProject()
     {
         var env = new TestEnvironment();
@@ -3968,6 +3969,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    [Obsolete]
     public void AddChaptersAsync_UserMustHaveBookPermission()
     {
         var env = new TestEnvironment();
@@ -3979,6 +3981,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    [Obsolete]
     public async Task AddChaptersAsync_Success()
     {
         var env = new TestEnvironment();
@@ -3996,6 +3999,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    [Obsolete]
     public async Task AddChaptersAsync_SuccessSkipsExistingChapters()
     {
         var env = new TestEnvironment();
