@@ -48,6 +48,9 @@
               <app-draft-preview-books [build]="entry" />
             </p>
             <div class="draft-options">
+              <button mat-stroked-button class="add-to-project" (click)="openImportWizard()">
+                <mat-icon>input</mat-icon> {{ t("add_to_project") }}
+              </button>
               <app-draft-download-button [build]="entry" [flat]="true" />
               @if (formattingOptionsSupported && isLatestBuild) {
                 <button mat-button class="format-usfm" [routerLink]="['format']">
