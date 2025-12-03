@@ -1,0 +1,362 @@
+<ng-container *transloco="let t; read: 'draft_import_wizard'">
+  <div mat-dialog-content>
+    <mat-stepper linear [disableRipple]="true" labelPosition="bottom" (selectionChange)="onStepSelectionChange($event)">
+      <!-- Icon overrides -->
+      <ng-template matStepperIcon="edit" let-index="index">{{ index + 1 }}</ng-template>
+
+      <!-- Step 1: Project Selection -->
+      <mat-step
+        [stepControl]="projectSelectionForm"
+        [completed]="projectSelectionForm.valid"
+        [editable]="!isConnecting && !isImporting"
+      >
+        <ng-template matStepLabel>{{ t("select_project") }}</ng-template>
+
+        <h1>{{ t("select_project") }}</h1>
+        <p>{{ t("select_project_description") }}</p>
+
+        @if (isLoadingProjects) {
+          <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
+        }
+
+        <form [formGroup]="projectSelectionForm">
+          @if (!isLoadingProjects && !projectLoadingFailed) {
+            <app-project-select
+              [projects]="projects"
+              [placeholder]="t('choose_project')"
+              [isDisabled]="projects.length === 0 || isImporting || projectLoadingFailed"
+              [invalidMessageMapper]="invalidMessageMapper"
+              (projectSelect)="projectSelected($event.paratextId)"
+              formControlName="targetParatextId"
+            ></app-project-select>
+          }
+
+          @if (projectLoadingFailed) {
+            <app-notice type="error">{{ t("failed_to_load_projects") }}</app-notice>
+            <div class="project-retry-row">
+              <button mat-stroked-button color="primary" (click)="reloadProjects()" [disabled]="isLoadingProjects">
+                <mat-icon>refresh</mat-icon>
+                {{ t("retry") }}
+              </button>
+            </div>
+          }
+
+          @if (!isAppOnline) {
+            <mat-error class="offline-message">{{ t("connect_to_the_internet") }}</mat-error>
+          }
+
+          @if (noDraftsAvailable) {
+            <app-notice type="warning">{{ t("no_books_ready_for_import") }}</app-notice>
+          }
+
+          @if (projectSelectionForm.valid && (targetProject$ | async); as project) {
+            <app-notice [icon]="'verified'">
+              {{ t("ready_to_import", { projectShortName: $any(project).shortName, projectName: $any(project).name }) }}
+            </app-notice>
+
+            @if (projectHasMissingChapters) {
+              <mat-checkbox formControlName="createChapters">
+                {{ t("create_missing_chapters") }}
+              </mat-checkbox>
+            }
+          }
+
+          @if (bookCreationError != null) {
+            <app-notice type="error">{{ bookCreationError }}</app-notice>
+          }
+
+          @if (isEnsuringBooks) {
+            <app-notice type="info">{{ t("creating_missing_books") }}</app-notice>
+            <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
+          }
+        </form>
+
+        <div class="button-strip">
+          <button mat-stroked-button (click)="cancel()" [disabled]="isImporting">
+            <mat-icon>close</mat-icon>
+            {{ t("cancel") }}
+          </button>
+          <button
+            mat-flat-button
+            color="primary"
+            (click)="advanceFromProjectSelection()"
+            [disabled]="
+              !projectSelectionForm.valid ||
+              isConnecting ||
+              isImporting ||
+              noDraftsAvailable ||
+              projectLoadingFailed ||
+              booksMissingWithoutPermission ||
+              isEnsuringBooks
+            "
+          >
+            {{ t("next") }}
+            <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
+          </button>
+        </div>
+      </mat-step>
+
+      <!-- Step 2: Connect Confirmation (conditional) -->
+      @if (needsConnection) {
+        <mat-step
+          [completed]="!needsConnection || isConnecting || connectionError != null"
+          [editable]="!isConnecting && !isImporting"
+        >
+          <ng-template matStepLabel>{{ t("connect_project") }}</ng-template>
+
+          <h1>{{ t("connect_project") }}</h1>
+
+          @if (selectedParatextProject != null) {
+            <p>
+              {{
+                t("connect_project_description", {
+                  projectShortName: selectedParatextProject.shortName,
+                  projectName: selectedParatextProject.name
+                })
+              }}
+            </p>
+          }
+
+          <div class="button-strip">
+            <button mat-stroked-button matStepperPrevious [disabled]="isConnecting || isImporting">
+              <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
+              {{ t("back") }}
+            </button>
+            <button
+              mat-flat-button
+              color="primary"
+              (click)="connectToProject()"
+              [disabled]="isConnecting || isImporting"
+            >
+              {{ t("connect") }}
+              <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
+            </button>
+          </div>
+        </mat-step>
+
+        <!-- Step 3: Connecting (conditional) -->
+        <mat-step [completed]="!isConnecting && connectionError == null" [editable]="!isConnecting && !isImporting">
+          <ng-template matStepLabel>{{ t("connecting") }}</ng-template>
+
+          @if (isConnecting) {
+            <h1>{{ t("connecting_project") }}</h1>
+            @if (targetProjectDoc$ | async; as projectDoc) {
+              <app-sync-progress [projectDoc]="$any(projectDoc)" [showSyncStatus]="true"></app-sync-progress>
+            } @else {
+              <p>{{ t("setting_up_project") }}</p>
+              <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
+            }
+          }
+
+          @if (connectionError != null) {
+            <h1>{{ t("connection_failed") }}</h1>
+            <app-notice type="error">{{ connectionError }}</app-notice>
+            <div class="button-strip">
+              <button mat-stroked-button matStepperPrevious [disabled]="isImporting">
+                <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
+                {{ t("back") }}
+              </button>
+              <button mat-flat-button color="primary" (click)="retryProjectConnection()" [disabled]="isImporting">
+                <mat-icon>refresh</mat-icon>
+                {{ t("retry") }}
+              </button>
+            </div>
+          }
+        </mat-step>
+      }
+
+      <!-- Step 4: Book Selection (conditional - only if multiple books) -->
+      @if (showBookSelection) {
+        <mat-step [completed]="selectedBooks.length > 0" [editable]="!isConnecting && !isImporting">
+          <ng-template matStepLabel>{{ t("select_books") }}</ng-template>
+
+          <h1>{{ t("select_books_to_import") }}</h1>
+          <app-book-multi-select
+            [availableBooks]="availableBooksForImport"
+            [selectedBooks]="selectedBooks"
+            [basicMode]="true"
+            [readonly]="isImporting || noDraftsAvailable"
+            (bookSelect)="onBookSelect($event)"
+          ></app-book-multi-select>
+
+          <div class="button-strip">
+            <button mat-stroked-button matStepperPrevious [disabled]="isConnecting || isImporting">
+              <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
+              {{ t("back") }}
+            </button>
+            <button
+              mat-flat-button
+              color="primary"
+              matStepperNext
+              [disabled]="selectedBooks.length === 0 || isConnecting || isImporting || noDraftsAvailable"
+            >
+              {{ t("next") }}
+              <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
+            </button>
+          </div>
+        </mat-step>
+      }
+
+      <!-- Step 5: Overwrite Confirmation (conditional - shows appropriate variant) -->
+      @if (showOverwriteConfirmation) {
+        <mat-step
+          [stepControl]="overwriteForm"
+          [completed]="overwriteForm.valid"
+          [editable]="!isConnecting && !isImporting"
+        >
+          <ng-template matStepLabel>{{ t("confirm_overwrite") }}</ng-template>
+
+          @if (booksWithExistingText.length === 1) {
+            <!-- Single book variant -->
+            <h1>{{ t("overwrite_book_question", { bookName: singleBookName }) }}</h1>
+            <p>
+              {{
+                t("overwrite_book_description", {
+                  bookName: singleBookName,
+                  numChapters: booksWithExistingText[0].chaptersWithText.length
+                })
+              }}
+            </p>
+          } @else {
+            <!-- Multiple books variant -->
+            <h1>{{ t("overwrite_books_question") }}</h1>
+            <p>{{ t("overwrite_books_description") }}</p>
+            <ul>
+              @for (book of booksWithExistingText; track book.bookNum) {
+                <li>{{ book.bookName }}: {{ t("num_chapters", { count: book.chaptersWithText.length }) }}</li>
+              }
+            </ul>
+          }
+
+          @if (isConnecting || isImporting) {
+            <app-notice type="info">
+              {{ isConnecting ? t("waiting_for_connection_to_finish") : t("waiting_for_import_to_finish") }}
+            </app-notice>
+            <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
+          }
+
+          <form [formGroup]="overwriteForm">
+            <mat-checkbox formControlName="confirmOverwrite">
+              {{ t("i_understand_overwrite_content") }}
+            </mat-checkbox>
+          </form>
+
+          <div class="button-strip">
+            <button mat-stroked-button matStepperPrevious [disabled]="isConnecting || isImporting">
+              <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
+              {{ t("back") }}
+            </button>
+            <button
+              mat-flat-button
+              color="primary"
+              matStepperNext
+              [disabled]="!overwriteForm.valid || isConnecting || isImporting"
+            >
+              {{ t("continue") }}
+              <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
+            </button>
+          </div>
+        </mat-step>
+      }
+
+      <!-- Step 6: Import Progress -->
+      <mat-step #importStep [completed]="importComplete" [editable]="!isConnecting && !isImporting">
+        <ng-template matStepLabel>{{ t("importing") }}</ng-template>
+
+        <h1>{{ t("importing_draft") }}</h1>
+
+        @if (isImporting || importComplete || importError != null) {
+          @for (progress of importProgress; track progress.bookNum) {
+            <div class="book-progress">
+              <p>{{ progress.bookName }}</p>
+              <mat-progress-bar
+                mode="determinate"
+                [value]="(progress.completedChapters / progress.totalChapters) * 100"
+              ></mat-progress-bar>
+              <span class="progress-text">
+                {{ progress.completedChapters }} / {{ progress.totalChapters }} {{ t("chapters") }}
+              </span>
+              @if (progress.failedChapters.length > 0 && !isImporting) {
+                <div class="failed-chapters">
+                  <mat-icon class="error-icon">error</mat-icon>
+                  <span>Failed: {{ getFailedChapters(progress) }}</span>
+                </div>
+              }
+            </div>
+          }
+        }
+
+        @if (importError != null) {
+          <app-notice type="error">{{ importError }}</app-notice>
+          <div class="button-strip align-end">
+            <button mat-stroked-button (click)="retryImport()" [disabled]="isImporting">
+              <mat-icon>refresh</mat-icon>
+              {{ t("retry") }}
+            </button>
+          </div>
+        }
+
+        @if (importComplete) {
+          <app-notice [icon]="'check_circle'" type="success">{{ t("import_complete") }}</app-notice>
+          <div class="button-strip align-end">
+            <button mat-flat-button color="primary" matStepperNext [disabled]="isConnecting || isImporting">
+              {{ t("next") }}
+              <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
+            </button>
+          </div>
+        }
+      </mat-step>
+
+      <!-- Step 7: Sync Confirmation and Completion -->
+      <mat-step [completed]="syncComplete || skipSync" [editable]="!isConnecting && !isImporting && !isSyncing">
+        <ng-template matStepLabel>{{ t("complete") }}</ng-template>
+
+        @if (!isSyncing && !syncComplete && !skipSync) {
+          <h1>{{ t("sync_project_question") }}</h1>
+          <p>{{ t("sync_project_description") }}</p>
+
+          <div class="button-strip">
+            <button mat-stroked-button (click)="selectSkipSync()" [disabled]="isSyncing || isImporting">
+              {{ t("skip_sync") }}
+            </button>
+            <button mat-flat-button color="primary" (click)="selectSync()" [disabled]="isSyncing || isImporting">
+              {{ t("sync") }}
+              <mat-icon iconPositionEnd>sync</mat-icon>
+            </button>
+          </div>
+        }
+
+        @if (isSyncing) {
+          <h1>{{ t("syncing_project") }}</h1>
+          @if (targetProjectDoc$ | async; as projectDoc) {
+            <app-sync-progress [projectDoc]="$any(projectDoc)"></app-sync-progress>
+          }
+        }
+
+        @if (syncError != null) {
+          <app-notice type="error">{{ syncError }}</app-notice>
+          <div class="button-strip">
+            <button mat-stroked-button (click)="selectSkipSync()" [disabled]="isImporting">
+              {{ t("skip_sync") }}
+            </button>
+            <button mat-flat-button color="primary" (click)="retrySync()" [disabled]="isImporting">
+              <mat-icon>refresh</mat-icon>
+              {{ t("retry") }}
+            </button>
+          </div>
+        }
+
+        @if (syncComplete || skipSync) {
+          <app-notice [icon]="'check_circle'" type="success">
+            {{ skipSync ? t("import_complete_no_sync") : t("import_and_sync_complete") }}
+          </app-notice>
+          <div class="button-strip align-end">
+            <button mat-flat-button color="primary" (click)="close()" [disabled]="isImporting || isSyncing">
+              {{ t("done") }}
+            </button>
+          </div>
+        }
+      </mat-step>
+    </mat-stepper>
+  </div>
+</ng-container>
