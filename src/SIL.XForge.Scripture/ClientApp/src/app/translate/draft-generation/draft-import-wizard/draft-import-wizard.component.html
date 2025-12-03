@@ -53,12 +53,6 @@
             <app-notice [icon]="'verified'">
               {{ t("ready_to_import", { projectShortName: $any(project).shortName, projectName: $any(project).name }) }}
             </app-notice>
-
-            @if (projectHasMissingChapters) {
-              <mat-checkbox formControlName="createChapters">
-                {{ t("create_missing_chapters") }}
-              </mat-checkbox>
-            }
           }
 
           @if (bookCreationError != null) {
