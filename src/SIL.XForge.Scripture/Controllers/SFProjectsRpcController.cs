@@ -1079,6 +1079,7 @@ public class SFProjectsRpcController(
         }
     }
 
+    [Obsolete("Use ApplyPreTranslationToProject instead. Deprecated 2025-12")]
     public async Task<IRpcMethodResult> AddChapters(string projectId, int book, int[] chapters)
     {
         try
