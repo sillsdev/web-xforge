@@ -27,7 +27,6 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { QuotationAnalysis } from '../../../machine-api/quotation-denormalization';
 import { ServalAdministrationService } from '../../../serval-administration/serval-administration.service';
 import { BookChapterChooserComponent } from '../../../shared/book-chapter-chooser/book-chapter-chooser.component';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
@@ -79,7 +78,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
 
   private updateDraftConfig$: Subject<DraftUsfmConfig | undefined> = new Subject<DraftUsfmConfig | undefined>();
   private lastSavedState?: DraftUsfmConfig;
-  private quotationDenormalization: QuotationAnalysis = QuotationAnalysis.Successful;
+  private canDenormalizeQuotes?: boolean = undefined;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -100,10 +99,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
       .pipe(filterNullish(), first(), quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(async projectId => {
         const currentBuild = await firstValueFrom(this.draftGenerationService.getLastCompletedBuild(projectId));
-        this.quotationDenormalization =
-          currentBuild?.additionalInfo?.quotationDenormalization === QuotationAnalysis.Successful
-            ? QuotationAnalysis.Successful
-            : QuotationAnalysis.Unsuccessful;
+        this.canDenormalizeQuotes = currentBuild?.additionalInfo?.canDenormalizeQuotes;
       });
   }
 
@@ -125,7 +121,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   }
 
   get showQuoteFormatWarning(): boolean {
-    return this.quotationDenormalization !== QuotationAnalysis.Successful;
+    return this.canDenormalizeQuotes === false;
   }
 
   private get currentFormat(): DraftUsfmConfig | undefined {

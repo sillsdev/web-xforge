@@ -2201,6 +2201,8 @@ public class MachineApiService(
     private static ServalBuildDto CreateDto(TranslationBuild translationBuild)
     {
         string? parallelCorpusId = translationBuild.Pretranslate?.FirstOrDefault()?.ParallelCorpus?.Id;
+        var matchingCorpus = translationBuild.Analysis?.FirstOrDefault(a => a.ParallelCorpusRef == parallelCorpusId);
+
         var buildDto = new ServalBuildDto
         {
             Id = translationBuild.Id,
@@ -2235,16 +2237,7 @@ public class MachineApiService(
                             .Where(id => !string.IsNullOrEmpty(id)) ?? [],
                     ]
                 ),
-                QuotationDenormalization =
-                    parallelCorpusId is not null
-                    && translationBuild.Analysis?.FirstOrDefault(a =>
-                        a.ParallelCorpusRef == parallelCorpusId
-                        && !string.IsNullOrEmpty(a.SourceQuoteConvention)
-                        && !string.IsNullOrEmpty(a.TargetQuoteConvention)
-                    )
-                        is not null
-                        ? QuotationAnalysis.Successful
-                        : QuotationAnalysis.Unsuccessful,
+                CanDenormalizeQuotes = matchingCorpus?.CanDenormalizeQuotes == true,
                 DateFinished = translationBuild.DateFinished,
                 Step = translationBuild.Step,
                 TranslationEngineId = translationBuild.Engine.Id,
