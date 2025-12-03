@@ -146,9 +146,7 @@
                     ><transloco
                       key="draft_generation.warning_generation_faulted"
                       [params]="{
-                        generateButtonText: featureFlags.newDraftHistory.enabled
-                          ? t('generate_new_draft')
-                          : t('generate_draft_button')
+                        generateButtonText: hasAnyCompletedBuild ? t('generate_new_draft') : t('generate_draft_button')
                       }"
                     ></transloco
                   ></span>
