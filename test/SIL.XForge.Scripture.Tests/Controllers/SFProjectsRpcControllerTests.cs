@@ -630,6 +630,7 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    [Obsolete]
     public async Task AddChapters_Success()
     {
         var env = new TestEnvironment();
@@ -643,6 +644,7 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    [Obsolete]
     public async Task AddChapters_Forbidden()
     {
         var env = new TestEnvironment();
@@ -657,6 +659,7 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    [Obsolete]
     public async Task AddChapters_NotFound()
     {
         var env = new TestEnvironment();
