@@ -989,6 +989,7 @@ public class MachineApiServiceTests
                     ParallelCorpusRef = parallelCorpusId1,
                     SourceQuoteConvention = "standard_english",
                     TargetQuoteConvention = "standard_english",
+                    CanDenormalizeQuotes = true,
                 },
             ],
         };
@@ -1027,7 +1028,7 @@ public class MachineApiServiceTests
         Assert.AreEqual(parallelCorpusId1, actual.AdditionalInfo.ParallelCorporaIds!.ElementAt(0));
         Assert.AreEqual(parallelCorpusId2, actual.AdditionalInfo.ParallelCorporaIds.ElementAt(1));
         Assert.AreEqual(TrainingDataId01, actual.AdditionalInfo.TrainingDataFileIds.Single());
-        Assert.AreEqual(actual.AdditionalInfo.QuotationDenormalization, QuotationAnalysis.Successful);
+        Assert.That(actual.AdditionalInfo.CanDenormalizeQuotes, Is.True);
     }
 
     [Test]
@@ -1274,6 +1275,7 @@ public class MachineApiServiceTests
                 ParallelCorpusRef = ParallelCorpusId01,
                 SourceQuoteConvention = "standard_english",
                 TargetQuoteConvention = "standard_english",
+                CanDenormalizeQuotes = true,
             },
         ];
         translationBuild.Pretranslate =
@@ -1361,7 +1363,7 @@ public class MachineApiServiceTests
             builds[0].AdditionalInfo.TrainingScriptureRanges.Single().ScriptureRange
         );
         Assert.AreEqual(TrainingDataId01, builds[0].AdditionalInfo.TrainingDataFileIds.Single());
-        Assert.AreEqual(builds[0].AdditionalInfo!.QuotationDenormalization, QuotationAnalysis.Successful);
+        Assert.That(builds[0].AdditionalInfo.CanDenormalizeQuotes, Is.True);
     }
 
     [Test]
@@ -1403,7 +1405,7 @@ public class MachineApiServiceTests
             trainingScriptureRange,
             builds[0].AdditionalInfo?.TrainingScriptureRanges.Single().ScriptureRange
         );
-        Assert.AreEqual(builds[0].AdditionalInfo!.QuotationDenormalization, QuotationAnalysis.Unsuccessful);
+        Assert.That(builds[0].AdditionalInfo!.CanDenormalizeQuotes, Is.False);
     }
 
     [Test]
@@ -1455,7 +1457,7 @@ public class MachineApiServiceTests
             trainingScriptureRange,
             builds[0].AdditionalInfo?.TrainingScriptureRanges.Single().ScriptureRange
         );
-        Assert.AreEqual(builds[0].AdditionalInfo!.QuotationDenormalization, QuotationAnalysis.Unsuccessful);
+        Assert.That(builds[0].AdditionalInfo!.CanDenormalizeQuotes, Is.False);
     }
 
     [Test]
