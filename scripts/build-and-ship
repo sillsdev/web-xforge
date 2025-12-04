@@ -36,8 +36,7 @@ cat <<EOF >"$BUILD_OUTPUT/app/secrets.json"
   },
   "Site": {
     "Origin": "https://${HOSTNAME};${ALTERNATE_DOMAIN}"
-  },
-  "node-options": "${NODE_OPTIONS}"
+  }
 }
 EOF
 

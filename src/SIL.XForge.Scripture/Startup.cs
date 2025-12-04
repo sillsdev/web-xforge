@@ -155,7 +155,7 @@ public class Startup
 
         services.AddSignalR();
 
-        string? nodeOptions = Configuration.GetValue<string>("node-options");
+        string? nodeOptions = Configuration.GetValue<string>("Realtime:NodeOptions");
         services.AddSFRealtimeServer(LoggerFactory, Configuration, nodeOptions);
 
         services.AddSFServices();
