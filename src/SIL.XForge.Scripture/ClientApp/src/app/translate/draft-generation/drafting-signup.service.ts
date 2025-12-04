@@ -19,22 +19,22 @@ export interface DraftRequestComment {
 export interface DraftingSignupFormData {
   name: string;
   email: string;
-  organization?: string;
-  partnerOrganization?: string;
+  organization: string;
+  partnerOrganization: string;
 
-  translationLanguageName?: string;
-  translationLanguageIsoCode?: string;
+  translationLanguageName: string;
+  translationLanguageIsoCode: string;
 
-  completedBooks?: number[];
-  nextBooksToDraft?: number[];
+  completedBooks: number[];
+  nextBooksToDraft: number[];
 
-  primarySourceProject?: string | null;
-  secondarySourceProject?: string | null;
-  additionalSourceProject?: string | null;
-  draftingSourceProject?: string | null;
+  primarySourceProject: string;
+  secondarySourceProject?: string;
+  additionalSourceProject?: string;
+  draftingSourceProject: string;
 
-  backTranslationStage?: string;
-  backTranslationProject?: string | null;
+  backTranslationStage: string;
+  backTranslationProject: string | null;
   backTranslationLanguageName?: string;
   backTranslationLanguageIsoCode?: string;
 
@@ -99,6 +99,11 @@ export class DraftingSignupService {
   /** Adds a comment to a drafting signup request (Serval admin only). */
   async addComment(requestId: string, commentText: string): Promise<DraftingSignupRequest> {
     return (await this.onlineInvoke<DraftingSignupRequest>('addComment', { requestId, commentText }))!;
+  }
+
+  /** Deletes a drafting signup request (Serval admin only). */
+  async deleteRequest(requestId: string): Promise<void> {
+    await this.onlineInvoke<boolean>('deleteRequest', { requestId });
   }
 
   protected onlineInvoke<T>(method: string, params?: any): Promise<T | undefined> {

@@ -365,6 +365,34 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
     }
   }
 
+  /** Deletes the current draft request after confirmation, then returns to the list. */
+  async deleteRequest(): Promise<void> {
+    if (this.request == null) {
+      return;
+    }
+
+    const result = await this.dialogService.confirm(
+      of('Are you sure you want to delete this draft request? This action cannot be undone.'),
+      of('Delete')
+    );
+
+    if (!result) {
+      return;
+    }
+
+    this.loadingStarted();
+    try {
+      await this.draftingSignupService.deleteRequest(this.request.id);
+      this.noticeService.show('Draft request deleted');
+      void this.router.navigate(['/serval-administration'], { queryParams: { tab: 'draft-requests' } });
+    } catch (error) {
+      console.error('Error deleting draft request:', error);
+      this.noticeService.showError('Failed to delete draft request');
+    } finally {
+      this.loadingFinished();
+    }
+  }
+
   async approveRequest(): Promise<void> {
     const shortName = this.projectShortNames.get(this.request?.submission.projectId ?? '');
     const result = await this.dialogService.confirm(

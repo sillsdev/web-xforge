@@ -364,4 +364,40 @@ public class DraftingSignupRpcController(
             throw;
         }
     }
+
+    /// <summary>
+    /// Deletes a drafting signup request from the database.
+    /// Only accessible to Serval admins.
+    /// </summary>
+    public async Task<IRpcMethodResult> DeleteRequest(string requestId)
+    {
+        try
+        {
+            // Check if user is a Serval admin
+            if (!SystemRoles.Contains(SystemRole.ServalAdmin))
+            {
+                return ForbiddenError();
+            }
+
+            DraftingSignupRequest deletedRequest = await draftingSignupRequestRepository.DeleteAsync(requestId);
+
+            if (deletedRequest == null)
+            {
+                return NotFoundError("Drafting signup request not found");
+            }
+
+            return Ok(true);
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string> { { "method", "DeleteRequest" }, { "requestId", requestId } }
+            );
+            throw;
+        }
+    }
 }

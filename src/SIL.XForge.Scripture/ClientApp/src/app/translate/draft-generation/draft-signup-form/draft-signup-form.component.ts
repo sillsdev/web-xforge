@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatOption } from '@angular/material/core';
-import { MatError, MatFormFieldModule, MatHint, MatLabel } from '@angular/material/form-field';
+import { MatError, MatFormFieldModule, MatLabel } from '@angular/material/form-field';
 import { MatIcon, MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -59,7 +59,6 @@ export const DRAFT_SIGNUP_RESPONSE_DAYS = { min: 1, max: 3 } as const;
     BookMultiSelectComponent,
     MatLabel,
     MatError,
-    MatHint,
     MatOption,
     MatIcon,
     MatCardModule,
@@ -346,7 +345,7 @@ export class DraftSignupFormComponent extends DataLoadingComponent implements On
       }
 
       // Get form data BEFORE disabling the form (disabled forms don't include values)
-      const formData: DraftingSignupFormData = this.signupForm.getRawValue();
+      const formData: DraftingSignupFormData = this.signupForm.getRawValue() as DraftingSignupFormData;
 
       this.submitting = true;
       this.signupForm.disable();

@@ -73,6 +73,7 @@
           <button mat-button color="primary" (click)="approveRequest()">
             <mat-icon>check_circle</mat-icon> Approve & Enable
           </button>
+          <button mat-button color="warn" (click)="deleteRequest()"><mat-icon>delete</mat-icon> Delete Request</button>
         </div>
       </mat-card-content>
     </mat-card>
@@ -143,39 +144,47 @@
     </mat-card>
 
     <mat-card>
-      <mat-card-header> <mat-card-title>Translation Progress</mat-card-title> </mat-card-header>
+      <mat-card-header> <mat-card-title>Translation Project</mat-card-title> </mat-card-header>
       <mat-card-content>
         <div class="info-row">
-          <span class="label">Completed Books:</span>
+          <span class="label">Translation language name:</span>
+          <span class="value">{{ formData.translationLanguageName }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Translation language ISO code:</span>
+          <span class="value">{{ formData.translationLanguageIsoCode }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Completed books:</span>
           <span class="value">{{ formatBookList(formData.completedBooks) }}</span>
         </div>
         <div class="info-row">
-          <span class="label">Planned Books to Draft:</span>
+          <span class="label">Planned books to draft:</span>
           <span class="value">{{ formatBookList(formData.nextBooksToDraft) }}</span>
         </div>
       </mat-card-content>
     </mat-card>
 
     <mat-card>
-      <mat-card-header> <mat-card-title>Source Materials</mat-card-title> </mat-card-header>
+      <mat-card-header> <mat-card-title>Reference projects</mat-card-title> </mat-card-header>
       <mat-card-content>
         <div class="info-row">
-          <span class="label">Primary Source Project:</span>
+          <span class="label">First reference project:</span>
           <ng-container *ngTemplateOutlet="project; context: { projectId: formData.primarySourceProject }">
           </ng-container>
         </div>
         <div class="info-row">
-          <span class="label">Secondary Source Project:</span>
+          <span class="label">Second reference project:</span>
           <ng-container *ngTemplateOutlet="project; context: { projectId: formData.secondarySourceProject }">
           </ng-container>
         </div>
         <div class="info-row">
-          <span class="label">Additional Source Project:</span>
+          <span class="label">Third reference project:</span>
           <ng-container *ngTemplateOutlet="project; context: { projectId: formData.additionalSourceProject }">
           </ng-container>
         </div>
         <div class="info-row">
-          <span class="label">Drafting Source Project:</span>
+          <span class="label">Draft source project:</span>
           <ng-container *ngTemplateOutlet="project; context: { projectId: formData.draftingSourceProject }">
           </ng-container>
         </div>
@@ -186,13 +195,21 @@
       <mat-card-header> <mat-card-title>Back Translation</mat-card-title> </mat-card-header>
       <mat-card-content>
         <div class="info-row">
-          <span class="label">Back Translation Stage:</span>
+          <span class="label">Back translation stage:</span>
           <span class="value">{{ formData.backTranslationStage }}</span>
         </div>
         <div class="info-row">
-          <span class="label">Back Translation Project:</span>
+          <span class="label">Back translation project:</span>
           <ng-container *ngTemplateOutlet="project; context: { projectId: formData.backTranslationProject }">
           </ng-container>
+        </div>
+        <div class="info-row">
+          <span class="label">Back translation language name:</span>
+          <span class="value">{{ formData.backTranslationLanguageName }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Back translation language ISO code:</span>
+          <span class="value">{{ formData.backTranslationLanguageIsoCode }}</span>
         </div>
       </mat-card-content>
     </mat-card>
