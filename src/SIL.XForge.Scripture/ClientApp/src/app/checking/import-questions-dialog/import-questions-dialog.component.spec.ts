@@ -245,7 +245,7 @@ describe('ImportQuestionsDialogComponent', () => {
       verseNum: 1,
       verse: '1-3'
     });
-    expect(question.transceleratorQuestionId).toBe('2');
+    expect(question.sourceQuestionId).toBe('2');
   }));
 
   it('should properly import questions that are on a single verse', fakeAsync(() => {
@@ -754,7 +754,7 @@ class TestEnvironment {
       this.existingQuestions.push({
         data: {
           text: doc.text + ' [before edit]',
-          transceleratorQuestionId: doc.id,
+          sourceQuestionId: doc.id,
           answers: [] as Answer[],
           verseRef: fromVerseRef(new VerseRef(doc.book, doc.startChapter, verse))
         } as Question,
