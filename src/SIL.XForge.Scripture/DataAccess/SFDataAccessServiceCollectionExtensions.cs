@@ -44,6 +44,16 @@ public static class SFDataAccessServiceCollectionExtensions
                     new CreateIndexModel<SyncMetrics>(Builders<SyncMetrics>.IndexKeys.Ascending(sm => sm.ProjectRef))
                 )
         );
+        services.AddMongoRepository<DraftingSignupRequest>(
+            "drafting_signup_requests",
+            cm => cm.MapIdProperty(dsr => dsr.Id),
+            im =>
+                im.CreateOne(
+                    new CreateIndexModel<DraftingSignupRequest>(
+                        Builders<DraftingSignupRequest>.IndexKeys.Ascending(dsr => dsr.Submission.ProjectId)
+                    )
+                )
+        );
 
         return services;
     }

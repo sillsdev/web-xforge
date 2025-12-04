@@ -131,9 +131,43 @@
     } @else {
       @if (!draftEnabled) {
         <section data-test-id="approval-needed">
-          <a [href]="signupFormUrl" mat-flat-button color="primary" target="_blank" rel="noopener noreferrer">
-            {{ t("sign_up_for_drafting") }}
-          </a>
+          @if (featureFlags.inAppDraftSignupForm.enabled && !userSignupRequest) {
+            <button mat-flat-button color="primary" [routerLink]="['signup']">
+              {{ t("sign_up_for_drafting") }}
+            </button>
+          } @else if (!userSignupRequest) {
+            <a [href]="signupFormUrl" mat-flat-button color="primary" target="_blank" rel="noopener noreferrer">
+              {{ t("sign_up_for_drafting") }}
+            </a>
+          } @else {
+            <app-notice type="primary" icon="checkmark" mode="fill-dark">
+              <p>
+                {{
+                  t("signup_already_submitted", {
+                    name: userSignupRequest.submittedBy.name,
+                    date: userSignupRequest.submittedAt | date: "medium",
+                    min: responseDays.min,
+                    max: responseDays.max
+                  })
+                }}
+              </p>
+              @if (draftRequestAged(userSignupRequest)) {
+                <p>
+                  @for (
+                    portion of i18n.interpolateVariables("draft_generation.have_not_heard_back", { issueEmail });
+                    track portion.text
+                  ) {
+                    @if (portion.id == null) {
+                      {{ portion.text }}
+                    }
+                    @if (portion.id === "issueEmail") {
+                      <a href="mailto:{{ issueEmail }}" target="_blank" rel="noopener noreferrer">{{ issueEmail }}</a>
+                    }
+                  }
+                </p>
+              }
+            </app-notice>
+          }
         </section>
       }
       @if (isDraftJobFetched) {
@@ -352,13 +386,11 @@
           type="button"
           (click)="generateDraft({ withConfirm: !featureFlags.newDraftHistory.enabled })"
         >
-          <mat-icon>add</mat-icon>
-          {{ t("generate_new_draft") }}
+          <mat-icon>add</mat-icon> {{ t("generate_new_draft") }}
         </button>
         @if (hasConfigureSourcePermission) {
           <button mat-button data-test-id="configure-button" [routerLink]="['sources']">
-            <mat-icon>settings</mat-icon>
-            {{ t("configure_sources") }}
+            <mat-icon>settings</mat-icon> {{ t("configure_sources") }}
           </button>
         }
       } @else if (hasConfigureSourcePermission) {
@@ -370,8 +402,7 @@
         @if (!isGenerationSupported || isDraftInProgress(draftJob) || hasAnyCompletedBuild) {
           @if (draftEnabled && isOnline) {
             <button mat-button data-test-id="configure-button" color="primary" [routerLink]="['sources']">
-              <mat-icon>settings</mat-icon>
-              {{ t("configure_sources") }}
+              <mat-icon>settings</mat-icon> {{ t("configure_sources") }}
             </button>
           }
         }

@@ -1,4 +1,4 @@
-import { AsyncPipe } from '@angular/common';
+import { AsyncPipe, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, ViewChild } from '@angular/core';
 import { MatAnchor, MatButton } from '@angular/material/button';
@@ -38,6 +38,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { issuesEmailTemplate } from 'xforge-common/utils';
+import { environment } from '../../../environments/environment';
 import { SelectableProject } from '../../core/models/selectable-project';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -58,8 +59,10 @@ import { DraftGenerationService } from './draft-generation.service';
 import { DraftHistoryListComponent } from './draft-history-list/draft-history-list.component';
 import { DraftInformationComponent } from './draft-information/draft-information.component';
 import { DraftPreviewBooksComponent } from './draft-preview-books/draft-preview-books.component';
+import { DRAFT_SIGNUP_RESPONSE_DAYS } from './draft-signup-form/draft-signup-form.component';
 import { DraftSource } from './draft-source';
 import { DraftSourcesService } from './draft-sources.service';
+import { DraftingSignupService, UserSignupRequest } from './drafting-signup.service';
 import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
 import { SupportedBackTranslationLanguagesDialogComponent } from './supported-back-translation-languages-dialog/supported-back-translation-languages-dialog.component';
 
@@ -69,6 +72,7 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
   styleUrls: ['./draft-generation.component.scss'],
   imports: [
     AsyncPipe,
+    DatePipe,
     MatAnchor,
     MatButton,
     MatIcon,
@@ -142,6 +146,8 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   isPreTranslationApproved = false;
   signupFormUrl?: string;
+  userSignupRequest?: UserSignupRequest | null;
+  responseDays = DRAFT_SIGNUP_RESPONSE_DAYS;
 
   cancelDialogRef?: MatDialogRef<any>;
 
@@ -165,6 +171,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     protected readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly preTranslationSignupUrlService: PreTranslationSignupUrlService,
+    private readonly draftingSignupService: DraftingSignupService,
     protected readonly noticeService: NoticeService,
     protected readonly urlService: ExternalUrlService,
     protected readonly featureFlags: FeatureFlagService,
@@ -191,8 +198,18 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     return this.isTargetLanguageSupported && this.draftEnabled;
   }
 
+  get issueEmail(): string {
+    return environment.issueEmail;
+  }
+
   get issueMailTo(): string {
     return issuesEmailTemplate();
+  }
+
+  draftRequestAged(userSignupRequest: UserSignupRequest): boolean {
+    const elapsedTime = new Date().getTime() - new Date(userSignupRequest.submittedAt).getTime();
+    const elapsedDays = elapsedTime / (1000 * 60 * 60 * 24);
+    return elapsedDays > this.responseDays.max;
   }
 
   /**
@@ -264,6 +281,18 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
         if (!this.draftEnabled) {
           this.signupFormUrl = await this.preTranslationSignupUrlService.generateSignupUrl();
+        }
+
+        // Check if user has already submitted a signup for this project
+        if (this.activatedProject.projectId != null) {
+          try {
+            this.userSignupRequest = await this.draftingSignupService.getOpenDraftSignupRequest(
+              this.activatedProject.projectId
+            );
+          } catch {
+            // Default to no existing signup if check fails
+            this.userSignupRequest = undefined;
+          }
         }
       });
 

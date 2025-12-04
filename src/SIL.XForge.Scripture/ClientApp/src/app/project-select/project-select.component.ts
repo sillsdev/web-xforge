@@ -1,15 +1,16 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, DestroyRef, EventEmitter, forwardRef, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import {
+  AbstractControl,
   ControlValueAccessor,
   FormControl,
   FormsModule,
   NG_VALUE_ACCESSOR,
   ReactiveFormsModule,
+  ValidationErrors,
   ValidatorFn
 } from '@angular/forms';
 import { MatAutocomplete, MatAutocompleteTrigger, MatOptgroup, MatOption } from '@angular/material/autocomplete';
-import { ShowOnDirtyErrorStateMatcher } from '@angular/material/core';
 import { MatError, MatFormField } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { translate, TranslocoModule } from '@ngneat/transloco';
@@ -18,11 +19,10 @@ import { distinctUntilChanged, map, shareReplay, startWith, takeUntil, tap } fro
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { hasPropWithValue } from '../../type-utils';
 import { SelectableProject } from '../core/models/selectable-project';
-import { SFValidators } from '../shared/sfvalidators';
 import { projectLabel } from '../shared/utils';
 
 // A value accessor is necessary in order to create a custom form control
-export const PROJECT_SELECT_VALUE_ACCESSOR: any = {
+const PROJECT_SELECT_VALUE_ACCESSOR: any = {
   provide: NG_VALUE_ACCESSOR,
   useExisting: forwardRef(() => ProjectSelectComponent),
   multi: true
@@ -34,6 +34,7 @@ export const PROJECT_SELECT_VALUE_ACCESSOR: any = {
   templateUrl: 'project-select.component.html',
   styleUrls: ['project-select.component.scss'],
   providers: [PROJECT_SELECT_VALUE_ACCESSOR],
+  standalone: true,
   imports: [
     TranslocoModule,
     MatFormField,
@@ -58,7 +59,7 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
   @ViewChild(MatAutocompleteTrigger)
   autocompleteTrigger!: MatAutocompleteTrigger;
 
-  readonly paratextIdControl = new FormControl<string | SelectableProject>('', [SFValidators.selectableProject(true)]);
+  readonly paratextIdControl = new FormControl<string | SelectableProject>('', this.validateProject.bind(this));
   private allProjects$ = new BehaviorSubject<SelectableProject[] | undefined>(undefined);
   private allResources$ = new BehaviorSubject<SelectableProject[] | undefined>(undefined);
   private inputSelected = false;
@@ -81,8 +82,6 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
 
   /** Projects that can be an already selected value, but not necessarily given as an option in the menu */
   @Input() nonSelectableProjects?: SelectableProject[];
-  @Input() invalidMessageMapper?: { [key: string]: string };
-  readonly matcher = new ShowOnDirtyErrorStateMatcher();
 
   hiddenParatextIds$ = new BehaviorSubject<string[]>([]);
 
@@ -158,26 +157,47 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
     if (value.some(id => hasPropWithValue(this.paratextIdControl?.value, 'paratextId', id))) {
       this.paratextIdControl.setValue('');
     }
-    this.hiddenParatextIds$.next(value);
+    const currentHiddenIds = this.hiddenParatextIds$.getValue();
+    if (value.length !== currentHiddenIds.length || value.some((id, index) => id !== currentHiddenIds[index])) {
+      this.hiddenParatextIds$.next(value);
+    }
   }
 
   get hiddenParatextIds(): string[] {
     return this.hiddenParatextIds$.getValue();
   }
 
-  get invalidMessage(): string {
-    if (this.invalidMessageMapper != null && this.paratextIdControl.errors != null) {
-      const error: string = Object.keys(this.paratextIdControl.errors)[0];
-      return this.invalidMessageMapper[error];
-    }
-    return translate('project_select.please_select_valid_project_or_resource');
+  @Input()
+  required: boolean = false;
+
+  @Input()
+  errorMessageMapper?: null | ((errors: ValidationErrors) => string | null) = null;
+
+  private externalValidators: ValidatorFn[] = [];
+  @Input()
+  set validators(value: ValidatorFn[]) {
+    this.externalValidators = value;
+    const validators = [this.validateProject.bind(this)].concat(value);
+    for (const validator of validators)
+      if (typeof validator !== 'function') throw new Error('the validator is not a function', validator);
+    this.paratextIdControl.setValidators(validators);
+  }
+  get validators(): ValidatorFn[] {
+    return this.externalValidators;
   }
 
-  customValidate(customValidator: ValidatorFn): void {
-    this.paratextIdControl.clearValidators();
-    this.paratextIdControl.setValidators([SFValidators.selectableProject(true), customValidator]);
-    this.paratextIdControl.markAsDirty();
-    this.paratextIdControl.updateValueAndValidity();
+  get error(): string | null {
+    const errorStates = this.paratextIdControl.errors;
+    if (errorStates == null) return null;
+    else if (errorStates.invalidSelection === true) {
+      return translate('project_select.please_select_valid_project_or_resource');
+    } else if (this.externalValidators.length > 0) {
+      const errorMessageMapper = this.errorMessageMapper;
+      if (errorMessageMapper == null) {
+        throw new Error('ProjectSelectComponent requires `errorMessageMapper` when `validators` are provided.');
+      }
+      return errorMessageMapper(errorStates);
+    } else return null;
   }
 
   writeValue(value: any): void {
@@ -185,6 +205,8 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
   }
 
   private destroyed = false;
+  private onTouched: (() => void) | null = null;
+
   ngOnDestroy(): void {
     this.destroyed = true;
   }
@@ -198,7 +220,9 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
   registerOnTouched(fn: any): void {
     // Angular calls registerOnTouched during tear-down to "remove" the callback. Make this a noop to prevent NG0911
     // https://angular.dev/api/forms/ControlValueAccessor#registerOnTouched
-    if (!this.destroyed) this.valueChange.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(fn);
+    if (!this.destroyed) {
+      this.onTouched = fn;
+    }
   }
 
   autocompleteOpened(): void {
@@ -222,6 +246,11 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
 
   inputBlurred(): void {
     this.inputSelected = false;
+    // Mark internal control as touched and notify parent
+    this.paratextIdControl.markAsTouched();
+    if (this.onTouched != null) {
+      this.onTouched();
+    }
   }
 
   inputClicked(event: MouseEvent): void {
@@ -239,6 +268,18 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
       return NaN;
     }
     return project.length;
+  }
+
+  validateProject(control: AbstractControl): ValidationErrors | null {
+    const canBeBlank = this.required === false;
+    if (control.value == null || (canBeBlank && control.value === '')) return null;
+    const selectedProject = control.value as SelectableProject;
+    if (selectedProject.paratextId != null && selectedProject.name != null) return null;
+    return { invalidSelection: true };
+  }
+
+  get isValid(): boolean {
+    return this.paratextIdControl.valid;
   }
 
   private filterGroup(

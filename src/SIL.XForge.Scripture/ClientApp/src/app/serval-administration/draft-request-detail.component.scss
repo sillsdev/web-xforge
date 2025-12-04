@@ -1,0 +1,121 @@
+.detail-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.header {
+  margin-bottom: 20px;
+
+  button {
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    margin: 0;
+  }
+}
+
+.info-row {
+  display: flex;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .label {
+    font-weight: 500;
+    min-width: 200px;
+    flex-shrink: 0;
+  }
+
+  .label,
+  .value {
+    display: flex;
+    align-items: center;
+  }
+}
+
+.comments {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.download-button {
+  margin-left: 10px;
+}
+
+.command-text {
+  display: block;
+  padding: 16px;
+  border-radius: 4px;
+  background-color: #263238;
+  color: #aed581;
+  font-family: monospace;
+}
+
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 24px;
+
+  .comment {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .comment-text {
+      white-space: pre-wrap;
+      word-break: break-word;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .comment-footer {
+      flex-shrink: 0;
+      font-size: 0.875rem;
+      align-self: flex-end;
+    }
+  }
+}
+
+.add-comment {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+
+  .comment-input {
+    width: 100%;
+  }
+
+  button {
+    align-self: flex-end;
+
+    mat-spinner {
+      display: inline-block;
+      margin-right: 8px;
+    }
+  }
+}

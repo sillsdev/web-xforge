@@ -89,9 +89,12 @@ export class NoticeService {
     });
   }
 
+  private nextLoadingValue = this.isAppLoading;
   private setAppLoadingAsync(value: boolean): void {
-    setTimeout(() => {
-      this._isAppLoading = value;
+    this.nextLoadingValue = value;
+    queueMicrotask(() => {
+      // Set nextLoadingValue in case it changed again during the wait
+      this._isAppLoading = this.nextLoadingValue;
     });
   }
 }

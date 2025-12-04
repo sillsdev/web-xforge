@@ -1,0 +1,250 @@
+@if (isLoadingData) {
+  <div class="loading-container">
+    <mat-spinner></mat-spinner>
+  </div>
+} @else if (request != null) {
+  <div class="detail-container">
+    <div class="header">
+      <button mat-button (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+        Back to Draft Requests
+      </button>
+      <h1>{{ pageTitle }}</h1>
+    </div>
+
+    <mat-card>
+      <mat-card-header> <mat-card-title>Comments</mat-card-title> </mat-card-header>
+      <mat-card-content>
+        @if (request.comments.length > 0) {
+          <div class="comments-list">
+            @for (comment of request.comments; track comment.id) {
+              <div class="comment">
+                <div class="comment-text">{{ comment.text }}</div>
+                <div class="comment-footer">
+                  <app-owner
+                    [ownerRef]="comment.userId"
+                    [dateTime]="comment.dateCreated"
+                    [includeAvatar]="true"
+                  ></app-owner>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <p><em>No comments yet.</em></p>
+        }
+
+        <div class="add-comment">
+          <mat-form-field appearance="outline" class="comment-input" subscriptSizing="dynamic">
+            <mat-label>Add a comment</mat-label>
+            <textarea
+              matInput
+              [(ngModel)]="newCommentText"
+              placeholder="Enter your comment here..."
+              rows="2"
+              [disabled]="isAddingComment"
+            ></textarea>
+          </mat-form-field>
+          <button mat-flat-button (click)="addComment()" [disabled]="isAddingComment">
+            @if (isAddingComment) {
+              <mat-spinner diameter="16"></mat-spinner>
+            } @else {
+              <mat-icon>add</mat-icon>
+            }
+            Add Comment
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card>
+      <mat-card-header> <mat-card-title>Actions</mat-card-title> </mat-card-header>
+      <mat-card-content>
+        <div class="actions-container">
+          <button mat-button color="primary" (click)="exportData()">
+            <mat-icon>file_download</mat-icon> Export Data
+          </button>
+          <button mat-button color="primary" (click)="downloadProjects()">
+            <mat-icon>file_download</mat-icon> Download Projects
+          </button>
+          <button mat-button color="primary" (click)="downloadProjectsAndResources()">
+            <mat-icon>file_download</mat-icon> Download Projects & Resources
+          </button>
+          <button mat-button color="primary" (click)="approveRequest()">
+            <mat-icon>check_circle</mat-icon> Approve & Enable
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card>
+      <mat-card-header> <mat-card-title>Request Information</mat-card-title> </mat-card-header>
+      <mat-card-content>
+        <div class="info-row skip-in-data-export">
+          <span class="label">Assignee:</span>
+          <span class="value">
+            @if (request.assigneeId) {
+              <app-owner [ownerRef]="request.assigneeId" [includeAvatar]="true"></app-owner>
+            } @else {
+              <em>Unassigned</em>
+            }
+          </span>
+        </div>
+        <div class="info-row skip-in-data-export">
+          <span class="label">Status:</span>
+          <span class="value">{{ getStatusLabel(request.status) }}</span>
+        </div>
+        <div class="info-row skip-in-data-export">
+          <span class="label">Resolution:</span>
+          <span class="value">{{ getResolutionLabelDisplay(request.resolution) }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <h2>Form submission</h2>
+
+    <mat-card>
+      <mat-card-header> <mat-card-title>Main information</mat-card-title> </mat-card-header>
+      <mat-card-content>
+        <div class="info-row">
+          <span class="label">Project:</span>
+          <ng-container *ngTemplateOutlet="project; context: { projectId: request.submission.projectId }">
+          </ng-container>
+        </div>
+        <div class="info-row">
+          <span class="label">Name:</span>
+          <span class="value">{{ formData.name }}</span>
+        </div>
+        <div class="info-row skip-in-data-export">
+          <span class="label">User:</span>
+          <span class="value">
+            <app-owner
+              [ownerRef]="request.submission.userId"
+              [dateTime]="request.submission.timestamp"
+              [includeAvatar]="true"
+            ></app-owner>
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="label">Email:</span>
+          <span class="value">
+            <a href="mailto:{{ formData.email }}" target="_blank">{{ formData.email }}</a>
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="label">Organization:</span>
+          <span class="value">{{ formData.organization }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Partner Organization:</span>
+          <span class="value">{{ formData.partnerOrganization }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card>
+      <mat-card-header> <mat-card-title>Translation Progress</mat-card-title> </mat-card-header>
+      <mat-card-content>
+        <div class="info-row">
+          <span class="label">Completed Books:</span>
+          <span class="value">{{ formatBookList(formData.completedBooks) }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Planned Books to Draft:</span>
+          <span class="value">{{ formatBookList(formData.nextBooksToDraft) }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card>
+      <mat-card-header> <mat-card-title>Source Materials</mat-card-title> </mat-card-header>
+      <mat-card-content>
+        <div class="info-row">
+          <span class="label">Primary Source Project:</span>
+          <ng-container *ngTemplateOutlet="project; context: { projectId: formData.primarySourceProject }">
+          </ng-container>
+        </div>
+        <div class="info-row">
+          <span class="label">Secondary Source Project:</span>
+          <ng-container *ngTemplateOutlet="project; context: { projectId: formData.secondarySourceProject }">
+          </ng-container>
+        </div>
+        <div class="info-row">
+          <span class="label">Additional Source Project:</span>
+          <ng-container *ngTemplateOutlet="project; context: { projectId: formData.additionalSourceProject }">
+          </ng-container>
+        </div>
+        <div class="info-row">
+          <span class="label">Drafting Source Project:</span>
+          <ng-container *ngTemplateOutlet="project; context: { projectId: formData.draftingSourceProject }">
+          </ng-container>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card>
+      <mat-card-header> <mat-card-title>Back Translation</mat-card-title> </mat-card-header>
+      <mat-card-content>
+        <div class="info-row">
+          <span class="label">Back Translation Stage:</span>
+          <span class="value">{{ formData.backTranslationStage }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Back Translation Project:</span>
+          <ng-container *ngTemplateOutlet="project; context: { projectId: formData.backTranslationProject }">
+          </ng-container>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card>
+      <mat-card-header> <mat-card-title>Additional Comments</mat-card-title> </mat-card-header>
+      <mat-card-content>
+        @if (formData.additionalComments) {
+          <p class="comments">{{ formData.additionalComments }}</p>
+        } @else {
+          <p class="comments"><em>No additional comments provided.</em></p>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <h2>Tools</h2>
+
+    @if (getSuggestedCommand()) {
+      <mat-card>
+        <mat-card-header> <mat-card-title>Suggested Onboarding Command</mat-card-title> </mat-card-header>
+        <mat-card-content>
+          <p>After downloading all project files, run this command to onboard them:</p>
+          <code class="command-text">{{ getSuggestedCommand() }}</code>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <app-dev-only>
+      <mat-accordion class="json-accordion" multi>
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>Raw Submission Data (JSON)</mat-panel-title>
+          </mat-expansion-panel-header>
+          <app-json-viewer [data]="request.submission"></app-json-viewer>
+        </mat-expansion-panel>
+      </mat-accordion>
+    </app-dev-only>
+  </div>
+}
+
+<ng-template #project let-projectId="projectId">
+  @if (projectId) {
+    @if (getProjectId(projectId); as sfProjectId) {
+      <span class="value">
+        <a [appRouterLink]="['/serval-administration', sfProjectId]">{{ getProjectName(projectId) }}</a>
+      </span>
+      <button mat-button (click)="downloadProject(sfProjectId)" [disabled]="isLoadingData" class="download-button">
+        <mat-icon>download</mat-icon>
+        {{ getDownloadButtonText(projectId) }}
+      </button>
+    } @else {
+      <span class="value">{{ getProjectName(projectId) }}</span>
+    }
+  }
+</ng-template>
