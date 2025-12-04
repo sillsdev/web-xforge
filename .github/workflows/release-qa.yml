@@ -146,6 +146,6 @@ jobs:
       app_suffix: "_qa"
       version_number: "${{ needs.determine_version.outputs.next_version }}"
       vcs_tag_prefix: "SF-QAv"
-      node_options: "--optimize_for_size --max_old_space_size=4096"
+      node_options: "--max_old_space_size=4096"
       project: "SIL.XForge.Scripture"
       server_domain_name: "qa.scriptureforge.org"
