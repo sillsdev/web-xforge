@@ -344,7 +344,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
       const sfVersionOfQuestion: QuestionDoc | undefined = questionQuery.docs.find(
         doc =>
           doc.data != null &&
-          (useQuestionIds ? doc.data.transceleratorQuestionId === question.id : doc.data.text === question.text) &&
+          (useQuestionIds ? doc.data.sourceQuestionId === question.id : doc.data.text === question.text) &&
           toVerseRef(doc.data.verseRef).equals(question.verseRef)
       );
 
@@ -443,8 +443,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
           isArchived: false,
           dateCreated: currentDate,
           dateModified: currentDate,
-          //todo rename
-          transceleratorQuestionId: listItem.question.id
+          sourceQuestionId: listItem.question.id
         };
         await this.zone.runOutsideAngular(() =>
           this.checkingQuestionsService.createQuestion(this.data.projectId, newQuestion, undefined, undefined)
