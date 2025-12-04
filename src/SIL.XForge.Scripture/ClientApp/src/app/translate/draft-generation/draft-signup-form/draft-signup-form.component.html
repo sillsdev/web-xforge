@@ -109,6 +109,7 @@
               [resources]="availableResources"
               [hiddenParatextIds]="hiddenParatextIds"
               [required]="true"
+              formControlName="primarySourceProject"
             ></app-project-select>
 
             <app-project-select
@@ -116,6 +117,7 @@
               [projects]="availableProjects"
               [resources]="availableResources"
               [hiddenParatextIds]="hiddenParatextIds"
+              formControlName="secondarySourceProject"
             ></app-project-select>
 
             <app-project-select
@@ -123,6 +125,7 @@
               [projects]="availableProjects"
               [resources]="availableResources"
               [hiddenParatextIds]="hiddenParatextIds"
+              formControlName="additionalSourceProject"
             ></app-project-select>
           </mat-card-content>
         </mat-card>

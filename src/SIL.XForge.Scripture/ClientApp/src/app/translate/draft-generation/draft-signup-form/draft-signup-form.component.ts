@@ -319,6 +319,23 @@ export class DraftSignupFormComponent extends DataLoadingComponent implements On
       });
   }
 
+  private logValidationErrors(): void {
+    const errorsByControl: { name: string; value: unknown; errors: unknown }[] = [];
+
+    Object.keys(this.signupForm.controls).forEach(controlName => {
+      const ctrl = this.signupForm.controls[controlName as keyof typeof this.signupForm.controls];
+      if (ctrl != null && ctrl.invalid) {
+        errorsByControl.push({
+          name: controlName,
+          value: ctrl.value,
+          errors: ctrl.errors
+        });
+      }
+    });
+
+    console.warn('Draft signup form validation errors:', errorsByControl);
+  }
+
   onCompletedBooksSelect(ids: number[]): void {
     // set the form control value when user selects books
     this.signupForm.controls.completedBooks.setValue(ids);
@@ -363,10 +380,8 @@ export class DraftSignupFormComponent extends DataLoadingComponent implements On
         this.submitting = false;
       }
     } else {
-      console.log('Form is invalid:', this.signupForm.errors);
-      if (this.signupForm.errors == null) {
-        // debugger;
-      }
+      console.log('Form is invalid at top-level:', this.signupForm.errors);
+      this.logValidationErrors();
       // Mark all fields as touched to show validation errors
       this.signupForm.markAllAsTouched();
       this.noticeService.showError('Please fill in all required fields');
