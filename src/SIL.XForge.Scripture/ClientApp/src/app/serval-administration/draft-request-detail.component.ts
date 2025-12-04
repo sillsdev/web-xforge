@@ -27,7 +27,7 @@ import { ParatextService } from '../core/paratext.service';
 import { DevOnlyComponent } from '../shared/dev-only/dev-only.component';
 import { JsonViewerComponent } from '../shared/json-viewer/json-viewer.component';
 import { projectLabel } from '../shared/utils';
-import { DraftingSignupService } from '../translate/draft-generation/drafting-signup.service';
+import { DraftingSignupFormData, DraftingSignupService } from '../translate/draft-generation/drafting-signup.service';
 import { getResolutionLabel, getStatusLabel } from './draft-request-constants';
 import { ServalAdministrationService } from './serval-administration.service';
 
@@ -38,28 +38,7 @@ interface DraftingSignupRequest {
     projectId: string;
     userId: string;
     timestamp: string;
-    formData: {
-      name: string;
-      email: string;
-      organization?: string;
-      projectLanguageName?: string;
-      projectLanguageCode?: string;
-      ntStage?: string;
-      otStage?: string;
-      completedBooks?: number[];
-      nextBooksToDraft?: number[];
-      sourcesUsed?: string;
-      isAdaptation?: string;
-      primarySourceProject?: string;
-      primarySourceIsoCode?: string;
-      secondarySourceProject?: string;
-      additionalSourceProject?: string;
-      draftingSourceProject?: string;
-      backTranslationStage?: string;
-      backTranslationProject?: string;
-      additionalComments?: string;
-      partnerOrganization?: string;
-    };
+    formData: DraftingSignupFormData;
   };
   assigneeId: string;
   status: string;
@@ -308,7 +287,7 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
     const formData = this.request.submission.formData;
 
     // Helper function to add a zip file name if the project exists (for Paratext IDs)
-    const addZipFileName = (paratextId: string | undefined): void => {
+    const addZipFileName = (paratextId: string | null | undefined): void => {
       if (paratextId == null) {
         return;
       }

@@ -25,7 +25,7 @@ import { ProjectSelectComponent } from '../../../project-select/project-select.c
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { JsonViewerComponent } from '../../../shared/json-viewer/json-viewer.component';
 import { compareProjectsForSorting, projectLabel } from '../../../shared/utils';
-import { DraftingSignupService } from '../drafting-signup.service';
+import { DraftingSignupFormData, DraftingSignupService } from '../drafting-signup.service';
 
 export const DRAFT_SIGNUP_RESPONSE_DAYS = { min: 1, max: 3 } as const;
 
@@ -145,15 +145,8 @@ export class DraftSignupFormComponent extends DataLoadingComponent implements On
       partnerOrganization: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
 
       // Translation Language Information
-      translationLanguageName: new FormControl<string>('', {
-        nonNullable: true,
-        validators: [Validators.required]
-      }),
-      translationLanguageIsoCode: new FormControl<string>('', {
-        nonNullable: true,
-        validators: [Validators.required]
-      }),
-
+      translationLanguageName: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+      translationLanguageIsoCode: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
       // Project Information
       completedBooks: new FormControl<number[]>([], { nonNullable: true, validators: [Validators.required] }),
       nextBooksToDraft: new FormControl<number[]>([], { nonNullable: true, validators: [Validators.required] }),
@@ -353,7 +346,7 @@ export class DraftSignupFormComponent extends DataLoadingComponent implements On
       }
 
       // Get form data BEFORE disabling the form (disabled forms don't include values)
-      const formData = this.signupForm.value;
+      const formData: DraftingSignupFormData = this.signupForm.getRawValue();
 
       this.submitting = true;
       this.signupForm.disable();

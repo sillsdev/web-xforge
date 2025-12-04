@@ -16,46 +16,9 @@ import { UserService } from 'xforge-common/user.service';
 import { RouterLinkDirective } from '../../xforge-common/router-link.directive';
 import { NoticeComponent } from '../shared/notice/notice.component';
 import { projectLabel } from '../shared/utils';
-import { DraftingSignupService } from '../translate/draft-generation/drafting-signup.service';
+import { DraftingSignupRequest, DraftingSignupService } from '../translate/draft-generation/drafting-signup.service';
 import { DRAFT_REQUEST_RESOLUTION_OPTIONS, getResolutionLabel, getStatusLabel } from './draft-request-constants';
 import { ServalAdministrationService } from './serval-administration.service';
-
-/** Represents a draft request as returned from the backend. */
-interface DraftingSignupRequest {
-  id: string;
-  submission: {
-    projectId: string;
-    userId: string;
-    timestamp: string;
-    formData: {
-      name: string;
-      email: string;
-      organization?: string;
-      projectLanguageName?: string;
-      projectLanguageCode?: string;
-      ntStage?: string;
-      otStage?: string;
-      completedBooks?: number[];
-      nextBooksToDraft?: number[];
-      sourcesUsed?: string;
-      isAdaptation?: string;
-      primarySourceProject?: string;
-      primarySourceIsoCode?: string;
-      secondarySourceProject?: string;
-      additionalSourceProject?: string;
-      draftingSourceProject?: string;
-      backTranslationStage?: string;
-      backTranslationProject?: string;
-      additionalComments?: string;
-      partnerOrganization?: string;
-      partnerName?: string;
-    };
-  };
-  // Assignee ID - empty string represents "Unassigned"
-  assigneeId: string;
-  // Status of the request: "new", "in_progress", "completed", etc.
-  status: string;
-}
 
 type RequestFilterFunction = (request: DraftingSignupRequest, currentUserId: string | undefined) => boolean;
 

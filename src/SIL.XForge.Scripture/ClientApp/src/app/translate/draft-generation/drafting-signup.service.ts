@@ -16,13 +16,38 @@ export interface DraftRequestComment {
   dateCreated: string;
 }
 
+export interface DraftingSignupFormData {
+  name: string;
+  email: string;
+  organization?: string;
+  partnerOrganization?: string;
+
+  translationLanguageName?: string;
+  translationLanguageIsoCode?: string;
+
+  completedBooks?: number[];
+  nextBooksToDraft?: number[];
+
+  primarySourceProject?: string | null;
+  secondarySourceProject?: string | null;
+  additionalSourceProject?: string | null;
+  draftingSourceProject?: string | null;
+
+  backTranslationStage?: string;
+  backTranslationProject?: string | null;
+  backTranslationLanguageName?: string;
+  backTranslationLanguageIsoCode?: string;
+
+  additionalComments?: string;
+}
+
 export interface DraftingSignupRequest {
   id: string;
   submission: {
     projectId: string;
     userId: string;
     timestamp: string;
-    formData: any;
+    formData: DraftingSignupFormData;
   };
   assigneeId: string;
   status: string;
@@ -47,7 +72,7 @@ export class DraftingSignupService {
   }
 
   /** Submits a new signup request. */
-  async submitSignupRequest(projectId: string, formData: any): Promise<string> {
+  async submitSignupRequest(projectId: string, formData: DraftingSignupFormData): Promise<string> {
     return (await this.onlineInvoke<string>('submitSignupRequest', { projectId, formData }))!;
   }
 
