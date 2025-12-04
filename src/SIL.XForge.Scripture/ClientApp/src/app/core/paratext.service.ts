@@ -47,7 +47,6 @@ export interface ParatextNoteComment {
 export interface ParatextNoteTag {
   id: number;
   name: string;
-  icon: string;
 }
 
 @Injectable({
