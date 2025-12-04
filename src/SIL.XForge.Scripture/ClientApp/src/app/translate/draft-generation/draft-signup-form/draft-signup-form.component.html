@@ -65,22 +65,16 @@
               <div class="form-field-label">Translation language</div>
               <mat-form-field>
                 <mat-label>Language Name</mat-label>
-                <input matInput />
+                <input matInput formControlName="translationLanguageName" />
               </mat-form-field>
-              <!-- @if (showCompletedBooksRequiredError) {
-                <mat-error>{{ t("completed_books_required") }}</mat-error>
-              } -->
             </div>
 
             <div>
               <div class="form-field-label">Translation language</div>
               <mat-form-field>
                 <mat-label>Language ISO Code</mat-label>
-                <input matInput />
+                <input matInput formControlName="translationLanguageIsoCode" />
               </mat-form-field>
-              <!-- @if (showCompletedBooksRequiredError) {
-                <mat-error>{{ t("completed_books_required") }}</mat-error>
-              } -->
             </div>
 
             <div>
@@ -199,22 +193,16 @@
                 <div class="form-field-label">Back translation language</div>
                 <mat-form-field>
                   <mat-label>Back translation language name</mat-label>
-                  <input matInput />
+                  <input matInput formControlName="backTranslationLanguageName" />
                 </mat-form-field>
-                <!-- @if (showCompletedBooksRequiredError) {
-                <mat-error>{{ t("completed_books_required") }}</mat-error>
-              } -->
               </div>
 
               <div>
                 <div class="form-field-label">Back translation ISO code</div>
                 <mat-form-field>
                   <mat-label>Back translation ISO Code</mat-label>
-                  <input matInput />
+                  <input matInput formControlName="backTranslationLanguageIsoCode" />
                 </mat-form-field>
-                <!-- @if (showCompletedBooksRequiredError) {
-                <mat-error>{{ t("completed_books_required") }}</mat-error>
-              } -->
               </div>
             }
           </mat-card-content>

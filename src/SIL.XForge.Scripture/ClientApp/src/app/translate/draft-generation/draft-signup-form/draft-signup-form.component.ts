@@ -79,12 +79,17 @@ export class DraftSignupFormComponent extends DataLoadingComponent implements On
     name: FormControl<string>;
     email: FormControl<string>;
     organization: FormControl<string>;
+    partnerOrganization: FormControl<string>;
+
+    // Translation Language Information
+    translationLanguageName: FormControl<string>;
+    translationLanguageIsoCode: FormControl<string>;
 
     // Project Information
     completedBooks: FormControl<number[]>;
     nextBooksToDraft: FormControl<number[]>;
 
-    // Source Text Information
+    // Reference projects (source text information)
     primarySourceProject: FormControl<string | null>;
     secondarySourceProject: FormControl<string | null>;
     additionalSourceProject: FormControl<string | null>;
@@ -94,11 +99,12 @@ export class DraftSignupFormComponent extends DataLoadingComponent implements On
     backTranslationStage: FormControl<string>;
     backTranslationProject: FormControl<string | null>;
 
+    // Back translation language information
+    backTranslationLanguageName: FormControl<string>;
+    backTranslationLanguageIsoCode: FormControl<string>;
+
     // Additional Information
     additionalComments: FormControl<string>;
-
-    // Partner Organization
-    partnerOrganization: FormControl<string>;
   }>;
 
   availableProjects: SelectableProject[] = [];
@@ -136,12 +142,23 @@ export class DraftSignupFormComponent extends DataLoadingComponent implements On
       name: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
       email: new FormControl<string>('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
       organization: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+      partnerOrganization: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+
+      // Translation Language Information
+      translationLanguageName: new FormControl<string>('', {
+        nonNullable: true,
+        validators: [Validators.required]
+      }),
+      translationLanguageIsoCode: new FormControl<string>('', {
+        nonNullable: true,
+        validators: [Validators.required]
+      }),
 
       // Project Information
       completedBooks: new FormControl<number[]>([], { nonNullable: true, validators: [Validators.required] }),
       nextBooksToDraft: new FormControl<number[]>([], { nonNullable: true, validators: [Validators.required] }),
 
-      // Source Text Information
+      // Reference projects (source text information)
       primarySourceProject: new FormControl<string | null>(null, { validators: [Validators.required] }),
       secondarySourceProject: new FormControl<string | null>(null),
       additionalSourceProject: new FormControl<string | null>(null),
@@ -151,11 +168,12 @@ export class DraftSignupFormComponent extends DataLoadingComponent implements On
       backTranslationStage: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
       backTranslationProject: new FormControl<string | null>(null),
 
-      // Additional Information
-      additionalComments: new FormControl<string>('', { nonNullable: true }),
+      // Back translation language information
+      backTranslationLanguageName: new FormControl<string>('', { nonNullable: true }),
+      backTranslationLanguageIsoCode: new FormControl<string>('', { nonNullable: true }),
 
-      // Partner Organization
-      partnerOrganization: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] })
+      // Additional Information
+      additionalComments: new FormControl<string>('', { nonNullable: true })
     });
   }
 
@@ -278,13 +296,26 @@ export class DraftSignupFormComponent extends DataLoadingComponent implements On
     this.signupForm.controls.backTranslationStage.valueChanges
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(value => {
-        if (value === 'Written (Incomplete or Out-of-Date)' || value === 'Written (Up-to-Date)') {
+        const showProject = value === 'Written (Incomplete or Out-of-Date)' || value === 'Written (Up-to-Date)';
+
+        if (showProject) {
           this.signupForm.controls.backTranslationProject.setValidators([Validators.required]);
+          this.signupForm.controls.backTranslationLanguageName.setValidators([Validators.required]);
+          this.signupForm.controls.backTranslationLanguageIsoCode.setValidators([Validators.required]);
         } else {
           this.signupForm.controls.backTranslationProject.clearValidators();
           this.signupForm.controls.backTranslationProject.setValue(null);
+
+          this.signupForm.controls.backTranslationLanguageName.clearValidators();
+          this.signupForm.controls.backTranslationLanguageName.setValue('');
+
+          this.signupForm.controls.backTranslationLanguageIsoCode.clearValidators();
+          this.signupForm.controls.backTranslationLanguageIsoCode.setValue('');
         }
+
         this.signupForm.controls.backTranslationProject.updateValueAndValidity();
+        this.signupForm.controls.backTranslationLanguageName.updateValueAndValidity();
+        this.signupForm.controls.backTranslationLanguageIsoCode.updateValueAndValidity();
       });
   }
 

@@ -100,6 +100,9 @@ public class DraftingSignupFormData
     public string Name { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string? Organization { get; set; }
+    public string PartnerOrganization { get; set; } = string.Empty;
+    public string TranslationLanguageName { get; set; } = string.Empty;
+    public string TranslationLanguageIsoCode { get; set; } = string.Empty;
     public int[]? CompletedBooks { get; set; }
     public int[]? NextBooksToDraft { get; set; }
     public string? PrimarySourceProject { get; set; }
@@ -108,8 +111,9 @@ public class DraftingSignupFormData
     public string? DraftingSourceProject { get; set; }
     public string? BackTranslationStage { get; set; }
     public string? BackTranslationProject { get; set; }
+    public string BackTranslationLanguageName { get; set; } = string.Empty;
+    public string BackTranslationLanguageIsoCode { get; set; } = string.Empty;
     public string? AdditionalComments { get; set; }
-    public string? PartnerOrganization { get; set; }
 }
 
 /// <summary>
