@@ -62,17 +62,17 @@
           </mat-card-header>
           <mat-card-content>
             <div>
-              <div class="form-field-label">Translation language</div>
+              <div class="form-field-label">{{ t("translation_language_label") }}</div>
               <mat-form-field>
-                <mat-label>Language Name</mat-label>
+                <mat-label>{{ t("translation_language_name_label") }}</mat-label>
                 <input matInput formControlName="translationLanguageName" />
               </mat-form-field>
             </div>
 
             <div>
-              <div class="form-field-label">Translation language</div>
+              <div class="form-field-label">{{ t("translation_language_label") }}</div>
               <mat-form-field>
-                <mat-label>Language ISO Code</mat-label>
+                <mat-label>{{ t("translation_language_iso_label") }}</mat-label>
                 <input matInput formControlName="translationLanguageIsoCode" />
               </mat-form-field>
             </div>
@@ -97,14 +97,14 @@
         <!-- Source Text Information Section -->
         <mat-card>
           <mat-card-header>
-            <mat-card-title>Reference projects</mat-card-title>
+            <mat-card-title>{{ t("reference_projects_section_title") }}</mat-card-title>
           </mat-card-header>
           <mat-card-content>
             <p class="field-description">
-              These are the projects you refer to most as you translate. Please select at least one.
+              {{ t("reference_projects_description") }}
             </p>
             <app-project-select
-              placeholder="First reference project"
+              [placeholder]="t('first_reference_project_placeholder')"
               [projects]="availableProjects"
               [resources]="availableResources"
               [hiddenParatextIds]="hiddenParatextIds"
@@ -113,7 +113,7 @@
             ></app-project-select>
 
             <app-project-select
-              placeholder="Second reference project (optional)"
+              [placeholder]="t('second_reference_project_placeholder')"
               [projects]="availableProjects"
               [resources]="availableResources"
               [hiddenParatextIds]="hiddenParatextIds"
@@ -121,7 +121,7 @@
             ></app-project-select>
 
             <app-project-select
-              placeholder="Third reference project (optional)"
+              [placeholder]="t('third_reference_project_placeholder')"
               [projects]="availableProjects"
               [resources]="availableResources"
               [hiddenParatextIds]="hiddenParatextIds"
@@ -132,7 +132,7 @@
 
         <mat-card>
           <mat-card-header>
-            <mat-card-title>Draft source</mat-card-title>
+            <mat-card-title>{{ t("draft_source_section_title") }}</mat-card-title>
           </mat-card-header>
           <mat-card-content>
             <p class="field-description">{{ t("drafting_source_project_hint") }}</p>
