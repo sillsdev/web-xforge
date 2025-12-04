@@ -52,10 +52,6 @@ on:
         description: "The version number to use for the deployment."
         type: string
         required: true
-      node_options:
-        description: "Node-related options when building RealtimeServer."
-        type: string
-        required: true
       project:
         description: "The project to deploy."
         type: string
@@ -174,7 +170,6 @@ jobs:
           DEPLOY_CREDENTIALS: ~/.ssh/deploy_key
           HOSTNAME: ${{inputs.server_domain_name}}
           ALTERNATE_DOMAIN: ${{secrets.alternate_domain}}
-          NODE_OPTIONS: ${{inputs.node_options}}
           PARATEXT_CLIENT_ID: ${{secrets.paratext_client_id}}
           PROJECT: ${{inputs.project}}
           SERVAL_CLIENT_ID: ${{secrets.serval_client_id}}
