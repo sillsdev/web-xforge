@@ -112,6 +112,10 @@ This repository contains three interconnected applications:
 
 - Pay attention to available types and type guards in src/SIL.XForge.Scripture/ClientApp/src/type-utils.ts.
 
+# Tests
+
+- Place a line with "// SUT" before the line that causes the code being tested to be exercised.
+
 # Running commands
 
 - If you run frontend tests, run them in the `src/SIL.XForge.Scripture/ClientApp` directory with a command such as `npm run test:headless -- --watch=false --include '**/text.component.spec.ts' --include '**/settings.component.spec.ts'`
