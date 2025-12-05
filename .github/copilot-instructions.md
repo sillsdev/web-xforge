@@ -97,6 +97,7 @@ This repository contains three interconnected applications:
 - Use `@if {}` syntax rather than `*ngIf` syntax.
 - Although interacting with existing code and APIs may necessitate the use of `null`, when writing new code, prefer using `undefined` rather than `null`.
 - Fields that are of type Subject or BehaviorSubject should have names that end with a `$`.
+- When refactoring a method to be static, you should not need to start passing in `this` as an argument.
 
 # Code
 
