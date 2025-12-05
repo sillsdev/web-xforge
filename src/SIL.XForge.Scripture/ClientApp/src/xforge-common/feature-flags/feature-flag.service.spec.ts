@@ -162,8 +162,8 @@ describe('FeatureFlagService', () => {
   it('getEnabledFlags returns an array of strings when feature flags are selected', fakeAsync(() => {
     const env = new TestEnvironment();
     env.disableAllFeatureFlags();
-    env.service.darkMode.enabled = true;
-    expect(env.service.getEnabledFlags()).toEqual(['DarkMode']);
+    env.service.showDeveloperTools.enabled = true;
+    expect(env.service.getEnabledFlags()).toEqual(['SHOW_DEVELOPER_TOOLS']);
   }));
 });
 

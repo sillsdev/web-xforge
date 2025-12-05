@@ -3,7 +3,6 @@ import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { AsyncPipe } from '@angular/common';
 import { Component, DestroyRef, DOCUMENT, HostBinding, Inject, OnDestroy, OnInit } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButton, MatIconAnchor, MatIconButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
 import { MatIcon } from '@angular/material/icon';
@@ -46,7 +45,7 @@ import {
   BrowserIssue,
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
-import { ThemeService } from 'xforge-common/theme.service';
+import { Appearance, ThemeService } from 'xforge-common/theme.service';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
@@ -186,6 +185,14 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     }
   }
 
+  setAppearance(appearanceSetting: Appearance): void {
+    this.themeService.set(appearanceSetting);
+  }
+
+  get appearanceSetting(): Appearance {
+    return this.themeService.appearanceSetting;
+  }
+
   get canInstallOnDevice$(): Observable<boolean> {
     return this.pwaService.canInstall$;
   }
@@ -285,9 +292,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   async ngOnInit(): Promise<void> {
     await this.authService.loggedIn;
     this.document.title = environment.siteName;
-    this.featureFlags.darkMode.enabled$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(enabled => {
-      this.themeService.setDarkMode(enabled);
-    });
     this.loadingStarted();
     this.currentUserDoc = await this.userService.getCurrentUser();
     const userData: User | undefined = cloneDeep(this.currentUserDoc.data);
