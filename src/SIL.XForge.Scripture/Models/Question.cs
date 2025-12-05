@@ -15,5 +15,5 @@ public class Question : ProjectData
     public DateTime? DateArchived { get; set; }
     public DateTime DateModified { get; set; }
     public DateTime DateCreated { get; set; }
-    public string TransceleratorQuestionId { get; set; }
+    public string SourceQuestionId { get; set; }
 }
