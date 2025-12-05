@@ -1,5 +1,5 @@
 import { expect } from 'npm:@playwright/test';
-import { Locator, Page } from 'npm:playwright';
+import { Page } from 'npm:playwright';
 import { preset, ScreenshotContext } from '../e2e-globals.ts';
 import {
   enableFeatureFlag,
@@ -21,7 +21,7 @@ import { UserEmulator } from '../user-emulator.mts';
 const SIGNUP_PROJECT_SHORT_NAME = 'SEEDSP2';
 const INCLUDE_BACK_TRANSLATION = true; // set to false to skip BT section
 const REFERENCE_PROJECT_COUNT = 2; // 1..3
-const COMPLETED_BOOKS = ['Genesis', 'Exodus']; // books shown in the current project
+const COMPLETED_BOOKS = ['Mark']; // books shown in the current project
 const NEXT_BOOKS_TO_DRAFT = ['Obadiah', 'Jonah']; // any canonical OT/NT books
 
 export async function submitDraftSignupForm(
@@ -70,102 +70,91 @@ export async function submitDraftSignupForm(
     await page.goto(`/projects/${SIGNUP_PROJECT_SHORT_NAME}/draft-generation/signup`).catch(() => {});
   }
 
-  // Verify we are on the signup form
-  await expect(
-    page
-      .getByRole('heading', { name: 'Draft signup' })
-      .or(page.getByRole('heading', { name: 'Drafting sign up' }))
-      .or(page.getByRole('heading', { name: 'Sign up for drafting' }))
-      .or(page.getByRole('heading', { name: 'Draft signup form' }))
-      .or(page.getByRole('heading', { name: 'Submit draft signup' }))
-      .or(page.locator('form.signup-form'))
-  ).toBeVisible();
+  // Verify we are on the signup form deterministically
+  const formRoot = page.locator('form.signup-form');
+  await expect(formRoot).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Sign up for draft generation' })).toBeVisible();
   await screenshot(page, { pageName: 'signup_form_loaded', ...context });
 
-  // Helper: locate form container
-  const formRoot = page.locator('form.signup-form');
+  // Directly locate each field without scoping to sections
 
   // Contact Information
-  await user.click(formRoot.getByLabel('Name').or(formRoot.getByPlaceholder('Your full name')));
+  const nameField = page.getByRole('textbox', { name: 'Name', exact: true });
+  await user.click(nameField);
+  await user.clearField(nameField);
   await user.type('Test User');
-  await user.click(formRoot.getByLabel('Email').or(formRoot.getByPlaceholder('you@example.org')));
+  const emailField = page.getByRole('textbox', { name: 'Email' });
+  await user.click(emailField);
+  await user.clearField(emailField);
   await user.type('tester@example.org');
-  await user.click(formRoot.getByLabel('Organization').or(formRoot.getByPlaceholder('Your organization')));
+  const orgField = page.getByRole('textbox', { name: 'Your organization' });
+  await user.click(orgField);
   await user.type('Test Org');
-  await user.click(
-    formRoot
-      .getByRole('combobox')
-      .filter({ hasText: /Partner organization/i })
-      .first()
-      .or(
-        formRoot
-          .getByLabel('Partner organization')
-          .or(formRoot.getByText('Partner organization').locator('..').getByRole('combobox'))
-      )
-  );
-  // Choose a concrete partner or "none"
-  // Prefer selecting "none" to avoid dependency on external lists
-  const partnerOption = page
-    .getByRole('option', { name: /None|none/i })
-    .or(page.getByRole('option', { name: 'Seed Company' }));
-  await user.click(partnerOption);
+  const partnerCombo = page.getByRole('combobox', { name: 'Select partner organization' });
+  await user.click(partnerCombo);
+  const partnerNone = page.getByRole('option', { name: 'None of the above' });
+  await user.click(partnerNone);
 
   // Project Information: translation language
-  await user.click(formRoot.getByLabel('Translation language name').or(formRoot.getByLabel(/language name/i)));
-  await user.type('SampleLang');
-  await user.click(formRoot.getByLabel('Translation language ISO Code').or(formRoot.getByLabel(/ISO/i)));
-  await user.type('smp');
-
-  // Completed books (from project)
-  await selectBooksInMultiSelect(formRoot, /*sectionLabel*/ 'Completed books', COMPLETED_BOOKS);
+  await user.click(page.getByRole('textbox', { name: 'Language name' }));
+  await user.type('Some language');
+  await user.click(page.getByRole('textbox', { name: 'Language ISO code' }));
+  await user.type('unk');
+  const completedBookSelection = page
+    .locator('mat-card')
+    .filter({ hasText: 'Completed books' })
+    .locator('app-book-multi-select');
+  for (const book of COMPLETED_BOOKS) {
+    await user.click(completedBookSelection.getByRole('option', { name: book }));
+  }
 
   // Reference Projects section - primary + optional secondary/additional
-  await selectReferenceProjects(formRoot, REFERENCE_PROJECT_COUNT);
+  await selectReferenceProjects(page, user, REFERENCE_PROJECT_COUNT);
 
   // Drafting source project (required)
-  await selectProjectByPlaceholder(formRoot, /Drafting source project/i, 'NTV');
+  await selectProjectByFieldName(page, user, 'Select source text for drafting', 'NTV');
 
   // Planned books to draft next
-  await selectBooksInMultiSelect(formRoot, /*sectionLabel*/ 'Planned books', NEXT_BOOKS_TO_DRAFT);
+  const plannedBooksSelection = page
+    .locator('mat-card')
+    .filter({ hasText: 'Planned for Translation' })
+    .locator('app-book-multi-select');
+  for (const book of NEXT_BOOKS_TO_DRAFT) {
+    await user.click(plannedBooksSelection.getByRole('option', { name: book }));
+  }
 
   // Back Translation section (optional)
   if (INCLUDE_BACK_TRANSLATION) {
-    await user.click(
-      formRoot
-        .getByRole('combobox', { name: /Back translation stage/i })
-        .or(formRoot.getByLabel(/Back translation stage/i))
-    );
-    await user.click(page.getByRole('option', { name: /Written \(Up-to-Date\)/i }));
+    const btStage = page.getByRole('combobox', { name: 'Do you have a written back translation?' });
+    await user.click(btStage);
+    await user.click(page.getByRole('option', { name: 'Yes (Up-to-Date)' }));
 
     // Back translation project (required when stage is written)
-    await selectProjectByPlaceholder(formRoot, /Back translation project/i, 'DHH94');
+    await selectProjectByFieldName(page, user, 'Select your back translation', 'DHH94');
 
-    await user.click(formRoot.getByLabel(/Back translation language name/i));
+    const btLangName = page.getByText('Back translation language name');
+    await user.click(btLangName);
     await user.type('BT-Lang');
-    await user.click(formRoot.getByLabel(/Back translation ISO Code/i));
+    const btIso = page.getByRole('textbox', { name: 'Back translation ISO Code' });
+    await user.click(btIso);
     await user.type('btl');
   } else {
-    await user.click(
-      formRoot
-        .getByRole('combobox', { name: /Back translation stage/i })
-        .or(formRoot.getByLabel(/Back translation stage/i))
-    );
-    await user.click(page.getByRole('option', { name: /No written back translation/i }));
+    const btStage = page.getByRole('combobox', { name: 'Do you have a written back translation?' });
+    await user.click(btStage);
+    await user.click(page.getByRole('option', { name: 'No written back translation' }));
   }
 
   await screenshot(page, { pageName: 'signup_form_filled', ...context });
 
   // Submit
-  const submitBtn = formRoot
-    .getByRole('button', { name: /Submit/i })
-    .or(formRoot.getByRole('button', { name: /Send/i }));
+  const submitBtn = page.getByRole('button', { name: 'Submit', exact: true });
+  await expect(submitBtn).toBeVisible();
   await user.click(submitBtn);
 
   // Expect success message
-  const successHeading = page
-    .getByRole('heading', { name: /Thanks|Success|Submission/i })
-    .or(page.getByRole('heading', { name: /submission success/i }));
-  await expect(successHeading).toBeVisible({ timeout: 60_000 });
+  // Success: after submission, the dev-only JSON viewer appears with submitted data
+  const devJsonViewer = page.locator('app-dev-only app-json-viewer');
+  await expect(devJsonViewer).toBeVisible({ timeout: 60_000 });
   await screenshot(page, { pageName: 'signup_form_submitted', ...context });
 
   // Log out to clean up session
@@ -174,46 +163,25 @@ export async function submitDraftSignupForm(
 
 // ---- Helpers ----
 
-async function selectProjectByPlaceholder(
-  formRoot: Locator,
-  placeholder: RegExp | string,
-  quickFilter: string
+async function selectProjectByFieldName(
+  page: Page,
+  user: UserEmulator,
+  name: string,
+  projectShortName: string
 ): Promise<void> {
-  // Click the app-project-select's combobox by placeholder text and pick the first filtered option
-  const selectRoot = formRoot.getByPlaceholder(placeholder).or(formRoot.getByText(placeholder).locator('..'));
-  const combo = selectRoot.getByRole('combobox').first();
-  await combo.click();
-  await combo.type(quickFilter);
-  const firstOption = combo.page().getByRole('option').first();
-  await firstOption.click();
+  await user.click(page.getByRole('combobox', { name }));
+  await user.type(projectShortName);
+  await user.click(page.getByRole('option', { name: `${projectShortName} - ` }));
 }
 
-async function selectReferenceProjects(formRoot: Locator, count: number): Promise<void> {
+async function selectReferenceProjects(page: Page, user: UserEmulator, count: number): Promise<void> {
   // Primary source project (required)
-  await selectProjectByPlaceholder(formRoot, /First reference project/i, 'NTV');
+  await selectProjectByFieldName(page, user, 'First reference project', 'NTV');
 
   if (count >= 2) {
-    await selectProjectByPlaceholder(formRoot, /Second reference project/i, 'DHH94');
+    await selectProjectByFieldName(page, user, 'Second reference project', 'DHH94');
   }
   if (count >= 3) {
-    await selectProjectByPlaceholder(formRoot, /Third reference project/i, 'RVR60');
-  }
-}
-
-async function selectBooksInMultiSelect(formRoot: Locator, sectionLabel: string, books: string[]): Promise<void> {
-  // Locate the section by its visible label, then interact with options inside
-  const section = formRoot.getByText(new RegExp(sectionLabel, 'i')).locator('..');
-  // Click each desired book option by name
-  for (const book of books) {
-    const option = section.getByRole('option', { name: book });
-    // Some multi-selects require opening a panel; attempt click and fall back to searching globally
-    if (!(await option.isVisible().catch(() => false))) {
-      // fallback search in the step content
-      const globalOption = formRoot.getByRole('option', { name: book });
-      await expect(globalOption).toBeVisible();
-      await globalOption.click();
-    } else {
-      await option.click();
-    }
+    await selectProjectByFieldName(page, user, 'Third reference project', 'NIV84');
   }
 }
