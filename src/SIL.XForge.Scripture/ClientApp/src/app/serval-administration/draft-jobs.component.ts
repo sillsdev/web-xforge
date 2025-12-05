@@ -136,6 +136,10 @@ const DRAFTING_EVENTS = [
   ]
 })
 export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
+  /** Time when draftGenerationRequestId began to be used, which was in SFv5.46.1 shortly before
+   * 2025-12-18T17:48:57Z. */
+  private static readonly requestIdIntroductionDate: Date = new Date('2025-12-18T17:48:57Z');
+
   columnsToDisplay: string[] = [
     'status',
     'projectId',
@@ -208,6 +212,12 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
   get maxDurationFormatted(): string | undefined {
     if (this.maxDuration == null) return undefined;
     return this.formatDurationInHours(this.maxDuration);
+  }
+
+  /** Whether to show a caution notice about comparing older durations. */
+  get shouldShowDurationComparisonCaution(): boolean {
+    if (this.currentDateRange == null) return false;
+    return this.currentDateRange.start < DraftJobsComponent.requestIdIntroductionDate;
   }
 
   ngOnInit(): void {
