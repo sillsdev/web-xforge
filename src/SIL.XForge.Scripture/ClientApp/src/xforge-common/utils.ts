@@ -181,3 +181,10 @@ export function tryParseJSON(data: unknown): unknown {
     return null;
   }
 }
+
+/** The input is a string, and it is not empty (''). It is not null or undefined. This method could alternatively be known as "isNonEmptyString".
+ *
+ * If the negation of this is true, then the input is '' or null or undefined or another non-string. */
+export function isPopulatedString(value: unknown): value is Exclude<string, ''> {
+  return typeof value === 'string' && value !== '';
+}

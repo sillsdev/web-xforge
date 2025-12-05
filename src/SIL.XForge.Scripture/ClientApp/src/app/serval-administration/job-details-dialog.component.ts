@@ -13,6 +13,7 @@ import { MatTab, MatTabGroup } from '@angular/material/tabs';
 import { MatTooltip } from '@angular/material/tooltip';
 import { I18nService } from 'xforge-common/i18n.service';
 import { L10nNumberPipe } from 'xforge-common/l10n-number.pipe';
+import { isPopulatedString } from 'xforge-common/utils';
 import { EventMetric } from '../event-metrics/event-metric';
 import { JsonViewerComponent } from '../shared/json-viewer/json-viewer.component';
 import { NoticeComponent } from '../shared/notice/notice.component';
@@ -28,6 +29,7 @@ interface JobDetailsDialogData {
   startTime?: string;
   clearmlUrl?: string;
   buildsStartedSince: number;
+  draftGenerationRequestId?: string;
 }
 
 const EVENT_TYPE_LABELS: {
@@ -189,6 +191,11 @@ export class JobDetailsDialogComponent implements OnInit {
         `so the engine may have been modified and may not reflect the configuration used for this build.`
       );
     }
+  }
+
+  get draftGenerationRequestIdDisplay(): string {
+    if (!isPopulatedString(this.data.draftGenerationRequestId)) return 'none';
+    return this.data.draftGenerationRequestId;
   }
 
   formatDate(timestamp: string): string {
