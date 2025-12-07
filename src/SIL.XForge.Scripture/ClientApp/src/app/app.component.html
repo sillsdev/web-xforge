@@ -149,6 +149,35 @@
           <button mat-menu-item appRouterLink="/projects" id="project-home-link">
             <mat-icon>home</mat-icon> {{ "my_projects.my_projects" | transloco }}
           </button>
+          @if (featureFlags.showDeveloperTools.enabled) {
+            <button mat-menu-item [matMenuTriggerFor]="appearanceMenu">
+              <mat-icon>palette</mat-icon>
+              {{ t("appearance") }}
+            </button>
+            <mat-menu #appearanceMenu="matMenu" class="appearance-menu">
+              <button mat-menu-item (click)="setAppearance('device')">
+                <mat-icon>devices</mat-icon>
+                <span class="appearance-text">{{ t("appearance_device") }}</span>
+                @if (appearanceSetting === "device") {
+                  <span><mat-icon>check</mat-icon></span>
+                }
+              </button>
+              <button mat-menu-item (click)="setAppearance('dark')">
+                <mat-icon>dark_mode</mat-icon>
+                <span class="appearance-text">{{ t("appearance_dark") }}</span>
+                @if (appearanceSetting === "dark") {
+                  <span><mat-icon>check</mat-icon></span>
+                }
+              </button>
+              <button mat-menu-item (click)="setAppearance('light')">
+                <mat-icon>light_mode</mat-icon>
+                <span class="appearance-text">{{ t("appearance_light") }}</span>
+                @if (appearanceSetting === "light") {
+                  <span><mat-icon>check</mat-icon></span>
+                }
+              </button>
+            </mat-menu>
+          }
           @if (canChangePassword) {
             <button mat-menu-item (click)="changePassword()" [disabled]="!isAppOnline">
               <mat-icon>vpn_key</mat-icon>
