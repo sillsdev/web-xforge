@@ -231,6 +231,7 @@ export class DraftSignupFormComponent extends DataLoadingComponent implements On
       if (resources != null) {
         this.availableResources = resources.sort(compareProjectsForSorting);
       }
+      this.cd.markForCheck();
       // Populate the projectBooks list from the currently activated project's texts (if available)
       this.setProjectBooks();
 
