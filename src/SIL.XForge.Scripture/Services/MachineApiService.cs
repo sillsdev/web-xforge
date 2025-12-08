@@ -2288,9 +2288,7 @@ public class MachineApiService(
                 QuotationDenormalization =
                     parallelCorpusId is not null
                     && translationBuild.Analysis?.FirstOrDefault(a =>
-                        a.ParallelCorpusRef == parallelCorpusId
-                        && !string.IsNullOrEmpty(a.SourceQuoteConvention)
-                        && !string.IsNullOrEmpty(a.TargetQuoteConvention)
+                        a.ParallelCorpusRef == parallelCorpusId && a.CanDenormalizeQuotes
                     )
                         is not null
                         ? QuotationAnalysis.Successful
