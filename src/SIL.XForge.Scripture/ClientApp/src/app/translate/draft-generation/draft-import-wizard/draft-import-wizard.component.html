@@ -29,6 +29,10 @@
               (projectSelect)="projectSelected($event.paratextId)"
               formControlName="targetParatextId"
             ></app-project-select>
+
+            @if (isLoadingProject) {
+              <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
+            }
           }
 
           @if (projectLoadingFailed) {
@@ -58,11 +62,6 @@
           @if (bookCreationError != null) {
             <app-notice type="error">{{ bookCreationError }}</app-notice>
           }
-
-          @if (isEnsuringBooks) {
-            <app-notice type="info">{{ t("creating_missing_books") }}</app-notice>
-            <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
-          }
         </form>
 
         <div class="button-strip">
@@ -80,8 +79,7 @@
               isImporting ||
               noDraftsAvailable ||
               projectLoadingFailed ||
-              booksMissingWithoutPermission ||
-              isEnsuringBooks
+              booksMissingWithoutPermission
             "
           >
             {{ t("next") }}
