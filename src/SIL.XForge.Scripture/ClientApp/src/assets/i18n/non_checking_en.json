@@ -319,7 +319,6 @@
     "choose_project": "Choose a project",
     "complete": "Complete",
     "confirm_overwrite": "Confirm overwrite",
-    "creating_missing_books": "Creating the selected books in the project...",
     "connect_project_description": "The project you selected, {{ projectShortName }} - {{ projectName }}, has not yet been connected in Scripture Forge. Do you want to connect it so you can import the draft to it?",
     "connect_project": "Connect project",
     "connect_to_the_internet": "Connect to the internet to import drafts",
