@@ -344,7 +344,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
       const sfVersionOfQuestion: QuestionDoc | undefined = questionQuery.docs.find(
         doc =>
           doc.data != null &&
-          (useQuestionIds ? doc.data.sourceQuestionId === question.id : doc.data.text === question.text) &&
+          (useQuestionIds ? doc.data.transceleratorQuestionId === question.id : doc.data.text === question.text) &&
           toVerseRef(doc.data.verseRef).equals(question.verseRef)
       );
 
@@ -443,7 +443,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
           isArchived: false,
           dateCreated: currentDate,
           dateModified: currentDate,
-          sourceQuestionId: listItem.question.id
+          transceleratorQuestionId: listItem.question.id
         };
         await this.zone.runOutsideAngular(() =>
           this.checkingQuestionsService.createQuestion(this.data.projectId, newQuestion, undefined, undefined)
@@ -521,7 +521,6 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
       if (this.paratextTagOptions.length > 0) {
         this.selectedParatextTagId = this.paratextTagOptions[0].id;
       }
-      throw new Error();
     } catch (error) {
       console.error('Failed to load notes from Paratext: ', error);
       this.paratextNotes = [];
