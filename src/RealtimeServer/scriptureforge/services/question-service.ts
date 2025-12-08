@@ -187,7 +187,7 @@ export class QuestionService extends SFProjectDataService<Question> {
       dateCreated: {
         bsonType: 'string'
       },
-      sourceQuestionId: {
+      transceleratorQuestionId: {
         bsonType: 'string'
       }
     },
