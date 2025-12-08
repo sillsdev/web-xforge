@@ -190,6 +190,44 @@ describe('DraftJobsComponent', () => {
       expect(job.finishEvent).toBeUndefined();
       expect(job.status).toBe('running');
     }));
+
+    it('uses the earliest of multiple retrieve status events', fakeAsync(() => {
+      // Suppose something causes us to generate multiple RetrievePreTranslationStatusAsync events. Use the one that is
+      // earliest in time.
+      const env = new TestEnvironment({ hasEvents: false });
+      env.wait();
+      const start = env.createEvent('start-req', 'StartPreTranslationBuildAsync', {
+        timeStamp: '2025-01-01T00:00:00.000Z'
+      });
+      const build = env.createEvent('build-req', 'BuildProjectAsync', {
+        timeStamp: '2025-01-01T00:01:00.000Z',
+        result: 'build-req'
+      });
+      const retrieveA = env.createEvent('retrieve-reqA', 'RetrievePreTranslationStatusAsync', {
+        timeStamp: '2025-01-01T00:04:02.000Z',
+        result: 'build-req'
+      });
+      // B has the earliest timestamp.
+      const retrieveB = env.createEvent('retrieve-reqB', 'RetrievePreTranslationStatusAsync', {
+        timeStamp: '2025-01-01T00:04:01.000Z',
+        result: 'build-req'
+      });
+      const retrieveC = env.createEvent('retrieve-reqC', 'RetrievePreTranslationStatusAsync', {
+        timeStamp: '2025-01-01T00:04:03.000Z',
+        result: 'build-req'
+      });
+
+      const jobs: DraftJob[] = DraftJobsComponent['buildDraftJobs'](
+        [start, build, retrieveA, retrieveB, retrieveC],
+        'requestId'
+      );
+
+      expect(jobs.length).toBe(1);
+      const job = jobs[0];
+      expect(job.finishEvent?.id).toBe('retrieve-reqB');
+      expect(job.status).toBe('success');
+      expect(job.duration).toBe(4 * 60 * 1000 + 1 * 1000);
+    }));
   });
 
   describe('associates older events into jobs', () => {
