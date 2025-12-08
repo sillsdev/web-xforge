@@ -19,12 +19,10 @@ import {
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { BehaviorSubject } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
@@ -104,6 +102,7 @@ export class DraftImportWizardComponent implements OnInit {
     targetParatextId: new FormControl<string | undefined>(undefined, Validators.required)
   });
   projects: ParatextProject[] = [];
+  isLoadingProject = false;
   isLoadingProjects = true;
   targetProjectId?: string;
   selectedParatextProject?: ParatextProject;
@@ -113,7 +112,6 @@ export class DraftImportWizardComponent implements OnInit {
   booksMissingWithoutPermission = false;
   missingBookNames: string[] = [];
   bookCreationError?: string;
-  isEnsuringBooks = false;
   projectLoadingFailed = false;
   private sourceProjectId?: string;
   noDraftsAvailable = false;
@@ -238,7 +236,6 @@ export class DraftImportWizardComponent implements OnInit {
     private readonly projectService: SFProjectService,
     private readonly textDocService: TextDocService,
     readonly i18n: I18nService,
-    private readonly userService: UserService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly activatedProjectService: ActivatedProjectService
   ) {}
@@ -339,52 +336,30 @@ export class DraftImportWizardComponent implements OnInit {
 
   private async loadSourceProjectContext(): Promise<void> {
     this.sourceProjectId = this.activatedProjectService.projectId;
-    const cachedDoc = this.activatedProjectService.projectDoc;
-    if (cachedDoc?.data != null) {
-      this.applySourceProject(cachedDoc.data);
-      return;
-    }
-
     if (this.sourceProjectId == null) {
       this.noDraftsAvailable = this.availableBooksForImport.length === 0;
       return;
     }
 
-    const projectProfileDoc = await this.projectService.getProfile(this.sourceProjectId);
-    if (projectProfileDoc.data != null) {
-      this.applySourceProject(projectProfileDoc.data);
-    } else {
-      this.noDraftsAvailable = true;
-    }
+    await this.applySourceProject(this.sourceProjectId);
   }
 
-  private applySourceProject(project: SFProjectProfile): void {
-    const updatedBooks: BookForImport[] = [];
-    for (const book of this.availableBooksForImport) {
-      const chaptersWithDrafts = this.getDraftChapters(project, book.bookNum);
-      if (chaptersWithDrafts.length === 0) {
-        continue;
-      }
-      updatedBooks.push({
-        ...book,
-        chapters: chaptersWithDrafts,
-        selected: book.selected !== false
-      });
-    }
-    this.availableBooksForImport = updatedBooks;
-    this.showBookSelection = this.availableBooksForImport.length > 1;
-    this.noDraftsAvailable = this.availableBooksForImport.length === 0;
+  private async applySourceProject(projectId: string): Promise<void> {
+    // Build a scripture range and timestamp to import
+    const scriptureRange = this.availableBooksForImport.map(b => b.bookId).join(';');
+    const timestamp: Date =
+      this.data.additionalInfo?.dateGenerated != null ? new Date(this.data.additionalInfo.dateGenerated) : new Date();
+
+    // Apply the pre-translation draft to the project
+    await this.projectService.onlineApplyPreTranslationToProject(
+      this.activatedProjectService.projectId!,
+      scriptureRange,
+      projectId,
+      timestamp
+    );
+
+    // TODO: Subscribe to SignalR for import status/updates
     this.resetImportState();
-  }
-
-  private getDraftChapters(project: SFProjectProfile, bookNum: number): number[] {
-    const text = project.texts.find(t => t.bookNum === bookNum);
-    if (text == null) {
-      return [];
-    }
-    return text.chapters
-      .filter(chapter => chapter.hasDraft === true && chapter.number > 0)
-      .map(chapter => chapter.number);
   }
 
   async projectSelected(paratextId: string): Promise<void> {
@@ -422,9 +397,14 @@ export class DraftImportWizardComponent implements OnInit {
       this.needsConnection = !paratextProject.isConnected;
 
       // Get the project profile to analyze
-      const projectDoc = await this.projectService.get(this.targetProjectId);
-      if (projectDoc.data != null) {
-        await this.analyzeTargetProject(projectDoc.data, paratextProject);
+      this.isLoadingProject = true;
+      try {
+        const projectDoc = await this.projectService.getProfile(this.targetProjectId);
+        if (projectDoc.data != null) {
+          await this.analyzeTargetProject(projectDoc.data, paratextProject);
+        }
+      } finally {
+        this.isLoadingProject = false;
       }
     } else {
       // Need to create SF project - this will happen after connection step
@@ -439,29 +419,10 @@ export class DraftImportWizardComponent implements OnInit {
 
   private async analyzeTargetProject(project: SFProjectProfile, paratextProject: ParatextProject): Promise<void> {
     // Check permissions for all books
-    const hasGeneralEditRight = this.textDocService.userHasGeneralEditRight(project);
-    let hasWritePermissionForSelection = hasGeneralEditRight;
-    const booksToImport = this.getBooksToImport().map(book => book.bookNum);
-
-    if (hasWritePermissionForSelection) {
-      for (const bookNum of booksToImport) {
-        const targetBook = project.texts.find(t => t.bookNum === bookNum);
-        if (targetBook == null) {
-          continue;
-        }
-
-        const userPermission = targetBook.permissions?.[this.userService.currentUserId];
-        if (userPermission !== TextInfoPermission.Write) {
-          hasWritePermissionForSelection = false;
-          break;
-        }
-      }
-    }
-
-    this.canEditProject = hasWritePermissionForSelection;
+    this.canEditProject = this.textDocService.userHasGeneralEditRight(project);
 
     // Connection status comes from ParatextProject
-    this.needsConnection = !paratextProject.isConnected && hasWritePermissionForSelection;
+    this.needsConnection = !paratextProject.isConnected && this.canEditProject;
 
     if (this.canEditProject && this.targetProjectId != null) {
       this.targetProject$.next(project);
@@ -518,31 +479,7 @@ export class DraftImportWizardComponent implements OnInit {
 
     this.booksMissingWithoutPermission = false;
     this.bookCreationError = undefined;
-    this.isEnsuringBooks = true;
-
-    try {
-      for (const book of missingBooks) {
-        if (book.chapters.length === 0) {
-          continue;
-        }
-        // Was onlineAddBookWithChapters()
-        // TODO: Remove? I don't think this should be called
-        await this.projectService.onlineAddChapters(this.targetProjectId, book.bookNum, book.chapters);
-        for (const chapter of book.chapters) {
-          const textDocId = new TextDocId(this.targetProjectId, book.bookNum, chapter);
-          await this.textDocService.createTextDoc(textDocId);
-        }
-      }
-
-      const refreshedProfile = await this.projectService.getProfile(this.targetProjectId);
-      if (refreshedProfile.data != null && this.selectedParatextProject != null) {
-        await this.analyzeTargetProject(refreshedProfile.data, this.selectedParatextProject);
-      }
-
-      return true;
-    } finally {
-      this.isEnsuringBooks = false;
-    }
+    return true;
   }
 
   private resetProjectValidation(): void {
@@ -674,7 +611,7 @@ export class DraftImportWizardComponent implements OnInit {
     this.importError = undefined;
     this.importComplete = false;
 
-    const booksToImport = this.getBooksToImport().filter(book => book.selected && book.chapters.length > 0);
+    const booksToImport = this.getBooksToImport().filter(book => book.selected);
 
     if (booksToImport.length === 0) {
       this.isImporting = false;
@@ -748,6 +685,7 @@ export class DraftImportWizardComponent implements OnInit {
     this.syncError = undefined;
 
     try {
+      // TODO: Register for SignalR updates for sync
       await this.projectService.onlineSync(this.targetProjectId);
       this.syncComplete = true;
       this.stepper?.next();
