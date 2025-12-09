@@ -16,4 +16,5 @@ public class Question : ProjectData
     public DateTime DateModified { get; set; }
     public DateTime DateCreated { get; set; }
     public string TransceleratorQuestionId { get; set; }
+    public string ParatextNoteId { get; set; }
 }

@@ -343,9 +343,10 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
       // Questions imported from a file should be skipped only if they are exactly the same as what is currently in SF.
       const sfVersionOfQuestion: QuestionDoc | undefined = questionQuery.docs.find(
         doc =>
-          doc.data != null &&
-          (useQuestionIds ? doc.data.transceleratorQuestionId === question.id : doc.data.text === question.text) &&
-          toVerseRef(doc.data.verseRef).equals(question.verseRef)
+          (doc.data != null &&
+            (useQuestionIds ? doc.data.transceleratorQuestionId === question.id : doc.data.text === question.text) &&
+            toVerseRef(doc.data.verseRef).equals(question.verseRef)) ||
+          (useQuestionIds ? doc.data?.paratextNoteId === question.id : doc.data?.text === question.text)
       );
 
       this.questionList.push({
@@ -414,6 +415,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
 
   async importQuestions(): Promise<void> {
     this.importClicked = true;
+    const status = this.status; //capture the state before we update it
 
     if (this.selectedCount < 1) {
       return;
@@ -442,9 +444,15 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
           answers: [],
           isArchived: false,
           dateCreated: currentDate,
-          dateModified: currentDate,
-          transceleratorQuestionId: listItem.question.id
+          dateModified: currentDate
         };
+
+        if (status === 'filter_questions') {
+          newQuestion.transceleratorQuestionId = listItem.question.id;
+        } else if (status === 'filter_notes') {
+          newQuestion.paratextNoteId = listItem.question.id;
+        }
+
         await this.zone.runOutsideAngular(() =>
           this.checkingQuestionsService.createQuestion(this.data.projectId, newQuestion, undefined, undefined)
         );
