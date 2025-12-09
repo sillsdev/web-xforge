@@ -7,22 +7,28 @@ import { ActivatedRoute } from '@angular/router';
 import { saveAs } from 'file-saver';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { DraftConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, of, throwError } from 'rxjs';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
+import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
+import { FileType } from '../../xforge-common/models/file-offline-data';
+import { RealtimeQuery } from '../../xforge-common/models/realtime-query';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
+import { TrainingDataDoc } from '../core/models/training-data-doc';
 import { SFProjectService } from '../core/sf-project.service';
 import { BuildDto } from '../machine-api/build-dto';
 import { DraftZipProgress } from '../translate/draft-generation/draft-generation';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
+import { TrainingDataService } from '../translate/draft-generation/training-data/training-data.service';
 import { ServalAdministrationService } from './serval-administration.service';
 import { ServalProjectComponent } from './serval-project.component';
 
@@ -36,10 +42,12 @@ const mockActivatedProjectService = mock(ActivatedProjectService);
 const mockActivatedRoute = mock(ActivatedRoute);
 const mockAuthService = mock(AuthService);
 const mockDraftGenerationService = mock(DraftGenerationService);
+const mockFileService = mock(FileService);
 const mockedI18nService = mock(I18nService);
 const mockNoticeService = mock(NoticeService);
 const mockSFProjectService = mock(SFProjectService);
 const mockServalAdministrationService = mock(ServalAdministrationService);
+const mockTrainingDataService = mock(TrainingDataService);
 
 describe('ServalProjectComponent', () => {
   configureTestingModule(() => ({
@@ -49,10 +57,12 @@ describe('ServalProjectComponent', () => {
       { provide: ActivatedRoute, useMock: mockActivatedRoute },
       { provide: AuthService, useMock: mockAuthService },
       { provide: DraftGenerationService, useMock: mockDraftGenerationService },
+      { provide: FileService, useMock: mockFileService },
       { provide: I18nService, useMock: mockedI18nService },
       { provide: NoticeService, useMock: mockNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: ServalAdministrationService, useMock: mockServalAdministrationService },
+      { provide: TrainingDataService, useMock: mockTrainingDataService },
       { provide: SFProjectService, useMock: mockSFProjectService },
       provideNoopAnimations()
     ]
@@ -116,8 +126,8 @@ describe('ServalProjectComponent', () => {
     it('should disable the download button when offline', fakeAsync(() => {
       const env = new TestEnvironment();
       env.onlineStatus = false;
-      expect(env.firstDownloadButton.innerText).toContain('Download');
-      expect(env.firstDownloadButton.disabled).toBe(true);
+      expect(env.firstSourceDownloadButton.innerText).toContain('Download');
+      expect(env.firstSourceDownloadButton.disabled).toBe(true);
     }));
 
     it('should display a notice if the project cannot be downloaded', fakeAsync(() => {
@@ -125,24 +135,24 @@ describe('ServalProjectComponent', () => {
       when(mockServalAdministrationService.downloadProject(anything())).thenReturn(
         throwError(() => new HttpErrorResponse({ status: 404 }))
       );
-      expect(env.firstDownloadButton.innerText).toContain('Download');
-      expect(env.firstDownloadButton.disabled).toBe(false);
-      env.clickElement(env.firstDownloadButton);
+      expect(env.firstSourceDownloadButton.innerText).toContain('Download');
+      expect(env.firstSourceDownloadButton.disabled).toBe(false);
+      env.clickElement(env.firstSourceDownloadButton);
       verify(mockNoticeService.showError(anything())).once();
     }));
 
     it('should have a download button', fakeAsync(() => {
       const env = new TestEnvironment();
-      expect(env.downloadButtons.length).toBe(4);
-      expect(env.firstDownloadButton.innerText).toContain('Download');
-      expect(env.firstDownloadButton.disabled).toBe(false);
+      expect(env.sourceDownloadButtons.length).toBe(4);
+      expect(env.firstSourceDownloadButton.innerText).toContain('Download');
+      expect(env.firstSourceDownloadButton.disabled).toBe(false);
     }));
 
     it('should allow clicking of the button to download', fakeAsync(() => {
       const env = new TestEnvironment();
-      expect(env.firstDownloadButton.innerText).toContain('Download');
-      expect(env.firstDownloadButton.disabled).toBe(false);
-      env.clickElement(env.firstDownloadButton);
+      expect(env.firstSourceDownloadButton.innerText).toContain('Download');
+      expect(env.firstSourceDownloadButton.disabled).toBe(false);
+      env.clickElement(env.firstSourceDownloadButton);
       expect(saveAs).toHaveBeenCalled();
     }));
   });
@@ -183,6 +193,33 @@ describe('ServalProjectComponent', () => {
       expect(env.downloadDraftButton.disabled).toBe(false);
       env.clickElement(env.downloadDraftButton);
       verify(mockNoticeService.showError(anything())).once();
+    }));
+  });
+
+  describe('download training data', () => {
+    it('should show training data saved on a project', fakeAsync(() => {
+      const env = new TestEnvironment();
+      tick();
+      env.fixture.detectChanges();
+      expect(env.component.trainingDataFiles).toBeDefined();
+      expect(env.component.trainingDataFiles.length).toBe(1);
+      expect(env.component.trainingDataFiles[0].dataId).toBe('dataId01');
+      expect(env.component.trainingDataFiles[0].fileUrl).toBe('file-url');
+    }));
+
+    it('should disable the download button when offline', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.onlineStatus = false;
+      expect(env.downloadTrainingDataButton.disabled).toBe(true);
+    }));
+
+    it('can download the training data', fakeAsync(() => {
+      const env = new TestEnvironment();
+      tick();
+      env.fixture.detectChanges();
+      expect(env.downloadTrainingDataButton).not.toBeNull();
+      env.clickElement(env.downloadTrainingDataButton);
+      verify(mockFileService.onlineDownloadFile(FileType.TrainingData, 'file-url', 'training-data-01.csv')).once();
     }));
   });
 
@@ -360,6 +397,19 @@ describe('ServalProjectComponent', () => {
       when(mockDraftGenerationService.getBuildProgress(anything())).thenReturn(of({ additionalInfo: {} } as BuildDto));
       when(mockSFProjectService.hasDraft(anything())).thenReturn(args.preTranslate);
       when(mockSFProjectService.onlineSetServalConfig(this.mockProjectId, anything())).thenResolve();
+      const trainingData: TrainingDataDoc[] = [
+        {
+          id: 'training01',
+          data: {
+            fileUrl: 'file-url',
+            dataId: 'dataId01',
+            title: 'training-data-01.csv'
+          } as TrainingData
+        } as TrainingDataDoc
+      ];
+      const mockQuery: RealtimeQuery<TrainingDataDoc> = mock(RealtimeQuery<TrainingDataDoc>);
+      when(mockQuery.docs).thenReturn(trainingData);
+      when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(instance(mockQuery));
 
       spyOn(saveAs, 'saveAs').and.stub();
 
@@ -380,16 +430,20 @@ describe('ServalProjectComponent', () => {
       return this.fixture.nativeElement.querySelector('#view-event-log');
     }
 
-    get firstDownloadButton(): HTMLInputElement {
-      return this.fixture.nativeElement.querySelector('td button');
+    get firstSourceDownloadButton(): HTMLInputElement {
+      return this.fixture.nativeElement.querySelector('.draft-sources-table td button');
     }
 
-    get downloadButtons(): NodeListOf<HTMLButtonElement> {
-      return this.fixture.nativeElement.querySelectorAll('td button');
+    get sourceDownloadButtons(): NodeListOf<HTMLButtonElement> {
+      return this.fixture.nativeElement.querySelectorAll('.draft-sources-table td button');
     }
 
     get downloadDraftButton(): HTMLInputElement {
-      return this.fixture.nativeElement.querySelector('#download-draft');
+      return this.fixture.nativeElement.querySelector('#download-draft')!;
+    }
+
+    get downloadTrainingDataButton(): HTMLInputElement {
+      return this.fixture.nativeElement.querySelector('.training-data-table td button');
     }
 
     get saveServalConfigButton(): HTMLInputElement {
