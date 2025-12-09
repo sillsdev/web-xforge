@@ -1,5 +1,6 @@
 import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { DestroyRef, Injectable } from '@angular/core';
+import { saveAs } from 'file-saver';
 import { lastValueFrom, Observable, Subject } from 'rxjs';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { environment } from '../environments/environment';
@@ -217,6 +218,15 @@ export class FileService {
         .message('file_service.storage_space_is_limited')
         .then(() => (this.limitedStorageDialogPromise = undefined));
     }
+  }
+
+  onlineDownloadFile(fileType: FileType, source: string, filename: string): void {
+    const url: string = formatFileSource(fileType, source);
+    void this.onlineRequestFile(url).then(blob => {
+      if (blob != null) {
+        saveAs(blob, filename);
+      }
+    });
   }
 
   private convertToPascalCase(input: string): string {
