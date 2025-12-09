@@ -30,4 +30,5 @@ export interface Question extends ProjectData {
   dateModified: string;
   dateCreated: string;
   transceleratorQuestionId?: string;
+  paratextNoteId?: string;
 }
