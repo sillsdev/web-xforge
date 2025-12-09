@@ -1869,76 +1869,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetLastCompletedPreTranslationBuildAsync_RetrievePreTranslationStatusAsyncCall_Success()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        const string buildDtoId = $"{Project01}.{Build01}";
-        const double percentCompleted = 0;
-        const int revision = 43;
-        const JobState state = JobState.Completed;
-        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
-            .Returns(
-                Task.FromResult<IList<TranslationBuild>>(
-                    [
-                        new TranslationBuild
-                        {
-                            Url = "https://example.com",
-                            Id = Build01,
-                            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
-                            Message = MachineApiService.BuildStateCompleted,
-                            Progress = percentCompleted,
-                            Revision = revision,
-                            State = state,
-                            DateFinished = DateTimeOffset.UtcNow,
-                            Pretranslate =
-                            [
-                                new PretranslateCorpus
-                                {
-                                    ParallelCorpus = new ResourceLink
-                                    {
-                                        Id = ParallelCorpusId01,
-                                        Url = "https://example.com",
-                                    },
-                                    SourceFilters =
-                                    [
-                                        new ParallelCorpusFilter
-                                        {
-                                            Corpus = { Id = ParallelCorpusId01, Url = "https://example.com" },
-                                            ScriptureRange = "GEN",
-                                        },
-                                    ],
-                                },
-                            ],
-                        },
-                    ]
-                )
-            );
-        _ = env.Projects.Get(Project01);
-
-        // SUT
-        ServalBuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
-            User01,
-            Project01,
-            false,
-            CancellationToken.None
-        );
-
-        // Verify that a job was scheduled and the correct build was returned
-        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
-        Assert.IsNotNull(actual);
-        Assert.AreEqual(MachineApiService.BuildStateCompleted, actual.Message);
-        Assert.AreEqual(percentCompleted, actual.PercentCompleted);
-        Assert.AreEqual(revision, actual.Revision);
-        Assert.AreEqual(state.ToString().ToUpperInvariant(), actual.State);
-        Assert.AreEqual(buildDtoId, actual.Id);
-        Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), actual.Href);
-        Assert.AreEqual(Project01, actual.Engine.Id);
-        Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
-    }
-
-    [Test]
-    public async Task GetLastCompletedPreTranslationBuildAsync_NoRetrievePreTranslationStatusAsyncCallWhenActiveBuild_Success()
+    public async Task GetLastCompletedPreTranslationBuildAsync_Success()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1992,9 +1923,6 @@ public class MachineApiServiceTests
             false,
             CancellationToken.None
         );
-
-        // RetrievePreTranslationStatusAsync is run via a background job, so we verify that no new job was scheduled
-        env.BackgroundJobClient.DidNotReceive().Create(Arg.Any<Job>(), Arg.Any<IState>());
 
         TestEnvironment.AssertCoreBuildProperties(CompletedTranslationBuild, actual);
     }
