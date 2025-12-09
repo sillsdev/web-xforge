@@ -1063,36 +1063,16 @@ public class MachineApiService(
 
         try
         {
-            // Get the last build and the last completed build
+            // Get the last completed build
             IList<TranslationBuild> translationBuilds = await translationEnginesClient.GetAllBuildsAsync(
                 translationEngineId,
                 cancellationToken
             );
-            TranslationBuild? lastTranslationBuild = translationBuilds.LastOrDefault();
             TranslationBuild? lastCompletedTranslationBuild = translationBuilds
                 .Where(b => b.State == JobState.Completed)
                 .MaxBy(b => b.DateFinished);
-
-            // See if the very last build has completed
-            if (lastTranslationBuild?.State == JobState.Completed)
+            if (lastCompletedTranslationBuild is not null)
             {
-                // See if the current scripture range has changed
-                string currentScriptureRange = GetDraftedScriptureRange(lastTranslationBuild);
-                if (
-                    !string.IsNullOrWhiteSpace(currentScriptureRange)
-                    && project.TranslateConfig.DraftConfig.CurrentScriptureRange != currentScriptureRange
-                )
-                {
-                    backgroundJobClient.Enqueue<IMachineApiService>(r =>
-                        r.RetrievePreTranslationStatusAsync(sfProjectId, CancellationToken.None)
-                    );
-                }
-
-                buildDto = CreateDto(lastTranslationBuild);
-            }
-            else if (lastCompletedTranslationBuild is not null)
-            {
-                // The very last build is active, so return the last completed build
                 buildDto = CreateDto(lastCompletedTranslationBuild);
             }
         }
