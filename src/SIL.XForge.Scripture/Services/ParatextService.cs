@@ -2254,6 +2254,10 @@ public class ParatextService : DisposableBase, IParatextService
         {
             string ptProjectId = projectDoc.Data.ParatextId;
             scrText = GetScrText(userSecret, ptProjectId);
+
+            // The ScrText Settings maintains a non-thread safe dictionary cache of book filenames to book numbers.
+            // We initialize it here to prevent issues when iterating over revisions below.
+            _ = scrText.Settings.GetBookNumberFromFilename(string.Empty);
         }
         catch (DataNotFoundException)
         {
