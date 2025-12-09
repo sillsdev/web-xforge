@@ -83,7 +83,6 @@ public class ParatextService : DisposableBase, IParatextService
     private readonly DotNetCoreAlert _alertSystem;
     private readonly IDeltaUsxMapper _deltaUsxMapper;
     private readonly IAuthService _authService;
-    private readonly INotesService _notesService;
     private readonly Dictionary<string, string> _forcedUsernames = [];
 
     public ParatextService(
@@ -102,8 +101,7 @@ public class ParatextService : DisposableBase, IParatextService
         ISFRestClientFactory restClientFactory,
         IHgWrapper hgWrapper,
         IDeltaUsxMapper deltaUsxMapper,
-        IAuthService authService,
-        INotesService notesService
+        IAuthService authService
     )
     {
         _paratextOptions = paratextOptions;
@@ -123,7 +121,6 @@ public class ParatextService : DisposableBase, IParatextService
         _alertSystem = new DotNetCoreAlert(_logger);
         _deltaUsxMapper = deltaUsxMapper;
         _authService = authService;
-        _notesService = notesService;
 
         _httpClientHandler = new HttpClientHandler();
         _registryClient = new HttpClient(_httpClientHandler);
@@ -1272,7 +1269,7 @@ public class ParatextService : DisposableBase, IParatextService
     }
 
     /// <summary> Gets note threads from the Paratext project and maps them to Scripture Forge models. </summary>
-    public IReadOnlyList<ParatextNote> GetNoteThreads(UserSecret userSecret, string paratextId)
+    public IReadOnlyList<ParatextNote>? GetNoteThreads(UserSecret userSecret, string paratextId)
     {
         using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
         if (scrText == null)
@@ -1281,7 +1278,7 @@ public class ParatextService : DisposableBase, IParatextService
         CommentManager manager = CommentManager.Get(scrText);
         CommentTags? commentTags = CommentTags.Get(scrText);
 
-        return _notesService.GetNotes(manager, commentTags);
+        return _paratextDataHelper.GetNotes(manager, commentTags);
     }
 
     /// <summary> Get notes from the Paratext project folder. </summary>
@@ -1492,7 +1489,7 @@ public class ParatextService : DisposableBase, IParatextService
         return PutCommentThreads(userSecret, paratextId, noteThreadChangeList);
     }
 
-    public CommentTags? GetCommentTags(UserSecret userSecret, string paratextId)
+    internal CommentTags? GetCommentTags(UserSecret userSecret, string paratextId)
     {
         string? ptUsername = GetParatextUsername(userSecret);
         if (ptUsername == null)

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 namespace SIL.XForge.Scripture.Models;
@@ -8,11 +7,11 @@ namespace SIL.XForge.Scripture.Models;
 /// </summary>
 public class ParatextNote
 {
-    public string Id { get; set; } = string.Empty;
+    public required string Id { get; init; }
 
-    public string VerseRef { get; set; } = string.Empty;
+    public required string VerseRef { get; init; }
 
-    public IReadOnlyList<ParatextNoteComment> Comments { get; set; } = Array.Empty<ParatextNoteComment>();
+    public required IReadOnlyList<ParatextNoteComment> Comments { get; init; }
 }
 
 /// <summary>
@@ -20,11 +19,11 @@ public class ParatextNote
 /// </summary>
 public class ParatextNoteComment
 {
-    public string VerseRef { get; set; } = string.Empty;
+    public required string VerseRef { get; init; }
 
-    public string Content { get; set; } = string.Empty;
+    public required string Content { get; init; }
 
-    public ParatextNoteTag? Tag { get; set; }
+    public ParatextNoteTag? Tag { get; init; }
 }
 
 /// <summary>
@@ -32,9 +31,9 @@ public class ParatextNoteComment
 /// </summary>
 public class ParatextNoteTag
 {
-    public int Id { get; set; }
+    public int Id { get; init; }
 
-    public string Name { get; set; } = string.Empty;
+    public required string Name { get; init; }
 
-    public string Icon { get; set; } = string.Empty;
+    public required string Icon { get; init; }
 }

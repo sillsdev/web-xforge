@@ -559,7 +559,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
             if (!_paratextService.IsResource(paratextId))
             {
                 LogMetric("Updating Paratext notes for questions");
-                await UpdateParatextNotesAsync(text, questionDocsByBook[text.BookNum]);
+                if (questionDocsByBook[text.BookNum].Count > 0)
+                {
+                    await UpdateParatextNotesAsync(text, questionDocsByBook[text.BookNum]);
+                }
 
                 List<IDocument<NoteThread>> noteThreadDocs =
                 [

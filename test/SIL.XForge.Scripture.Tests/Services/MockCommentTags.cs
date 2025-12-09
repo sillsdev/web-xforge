@@ -5,11 +5,8 @@ using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services;
 
-public class MockCommentTags : CommentTags
+public class MockCommentTags(ScrText scrText) : CommentTags(scrText)
 {
-    public MockCommentTags(ScrText scrText)
-        : base(scrText) { }
-
     public CommentTags.CommentTagList TagsList
     {
         set => list = value;
