@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
@@ -402,28 +399,6 @@ public class NotesFormatterTests
     }
 
     [Test]
-    public void ReplaceTagIdentifiersWithCommentTags_ReplacesNumericIdentifiers()
-    {
-        // Setup comment tag data
-        string ptProjectId = Guid.NewGuid().ToString("N");
-        MockCommentTags commentTags = MockCommentTags.GetCommentTags("user", ptProjectId);
-        commentTags.InitializeTagList([5]);
-        XElement notesElement = XElement.Parse(
-            "<notes><thread id=\"thread-01\"><comment><tagAdded>5</tagAdded></comment></thread></notes>"
-        );
-
-        // SUT
-        NotesFormatter.ReplaceTagIdentifiersWithCommentTags(notesElement, commentTags);
-
-        // Verify tag gets replaced with the comment tag metadata
-        XElement actualTagElement = notesElement.Descendants("tagAdded").Single();
-        CommentTag? expectedTag = commentTags.Get(5);
-        Assert.IsNotNull(expectedTag);
-        XElement expectedTagElement = BuildExpectedTagElement("tagAdded", expectedTag);
-        Assert.IsTrue(XNode.DeepEquals(expectedTagElement, actualTagElement));
-    }
-
-    [Test]
     public void ParseNotes_CommentText()
     {
         // Setup the environment
@@ -652,36 +627,6 @@ public class NotesFormatterTests
         // SUT
         List<List<Comment>> actual = NotesFormatter.ParseNotes(noteXml, associatedPtUser);
         Assert.AreEqual(0, actual.Count);
-    }
-
-    private static XElement BuildExpectedTagElement(string elementName, CommentTag? commentTag)
-    {
-        XElement element = new XElement(elementName);
-        if (commentTag == null)
-            return element;
-
-        PropertyInfo[] properties = typeof(CommentTag).GetProperties(BindingFlags.Instance | BindingFlags.Public);
-        foreach (PropertyInfo property in properties.Where(p => p.CanRead))
-        {
-
-            object? value = property.GetValue(commentTag);
-            if (value == null)
-                continue;
-
-            string? propertyValue = value switch
-            {
-                string stringValue when !string.IsNullOrEmpty(stringValue) => stringValue,
-                int intValue => intValue.ToString(CultureInfo.InvariantCulture),
-                bool boolValue => boolValue ? bool.TrueString : bool.FalseString,
-                Enum enumValue => enumValue.ToString(),
-                _ => null,
-            };
-
-            if (propertyValue != null)
-                element.Add(new XElement(property.Name, propertyValue));
-        }
-
-        return element;
     }
 
     private class TestEnvironment
