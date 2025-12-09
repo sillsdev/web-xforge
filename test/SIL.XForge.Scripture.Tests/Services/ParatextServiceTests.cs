@@ -852,7 +852,7 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public void GetNoteThreads_ReturnsNotesFromNotesService()
+    public void GetNoteThreads_ReturnsNotesFromDataHelper()
     {
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -860,9 +860,14 @@ public class ParatextServiceTests
         string paratextId = env.SetupProject(env.Project01, associatedPtUser);
         IReadOnlyList<ParatextNote> expectedNotes = new List<ParatextNote>
         {
-            new ParatextNote { Id = "thread-01", VerseRef = "RUT 1:1" },
+            new ParatextNote
+            {
+                Id = "thread-01",
+                VerseRef = "RUT 1:1",
+                Comments = Array.Empty<ParatextNoteComment>(),
+            },
         };
-        env.MockNotesService.GetNotes(
+        env.MockParatextDataHelper.GetNotes(
                 Arg.Any<CommentManager>(),
                 Arg.Any<CommentTags>(),
                 Arg.Any<Func<CommentThread, bool>>(),
@@ -873,7 +878,7 @@ public class ParatextServiceTests
         IReadOnlyList<ParatextNote> actual = env.Service.GetNoteThreads(userSecret, paratextId);
 
         Assert.AreSame(expectedNotes, actual);
-        env.MockNotesService.Received(1)
+        env.MockParatextDataHelper.Received(1)
             .GetNotes(
                 env.ProjectCommentManager,
                 Arg.Is<CommentTags>(tags => tags != null),
@@ -6895,7 +6900,6 @@ public class ParatextServiceTests
         public readonly IInternetSharedRepositorySourceProvider MockInternetSharedRepositorySourceProvider;
         public readonly ISFRestClientFactory MockRestClientFactory;
         public readonly IGuidService MockGuidService;
-        public readonly INotesService MockNotesService;
         public readonly ParatextService Service;
         public readonly HttpClient MockRegistryHttpClient;
         public readonly IDeltaUsxMapper MockDeltaUsxMapper;
@@ -6922,7 +6926,6 @@ public class ParatextServiceTests
             MockRegistryHttpClient = Substitute.For<HttpClient>();
             MockDeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
             MockAuthService = Substitute.For<IAuthService>();
-            MockNotesService = Substitute.For<INotesService>();
 
             DateTime aSecondAgo = DateTime.Now - TimeSpan.FromSeconds(1);
             string accessToken1 = TokenHelper.CreateAccessToken(
@@ -6993,8 +6996,7 @@ public class ParatextServiceTests
                 MockRestClientFactory,
                 MockHgWrapper,
                 MockDeltaUsxMapper,
-                MockAuthService,
-                MockNotesService
+                MockAuthService
             )
             {
                 ScrTextCollection = MockScrTextCollection,
