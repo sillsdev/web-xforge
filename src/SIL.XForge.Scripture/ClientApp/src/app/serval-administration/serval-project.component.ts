@@ -23,17 +23,32 @@ import {
 import { Router } from '@angular/router';
 import { saveAs } from 'file-saver';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { DraftConfig, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { catchError, firstValueFrom, lastValueFrom, Observable, of, Subscription, switchMap, throwError } from 'rxjs';
+import {
+  catchError,
+  filter,
+  firstValueFrom,
+  lastValueFrom,
+  Observable,
+  of,
+  Subscription,
+  switchMap,
+  throwError
+} from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
+import { FileType } from 'xforge-common/models/file-offline-data';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
+import { TrainingDataDoc } from '../core/models/training-data-doc';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { BuildDto } from '../machine-api/build-dto';
@@ -46,6 +61,7 @@ import { DraftZipProgress } from '../translate/draft-generation/draft-generation
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { DraftInformationComponent } from '../translate/draft-generation/draft-information/draft-information.component';
 import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../translate/draft-generation/draft-utils';
+import { TrainingDataService } from '../translate/draft-generation/training-data/training-data.service';
 import { ServalAdministrationService } from './serval-administration.service';
 interface Row {
   id: string;
@@ -133,14 +149,19 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   lastCompletedBuild: BuildDto | undefined;
   rawLastCompletedBuild: any;
   zipSubscription: Subscription | undefined;
+  trainingDataFiles: TrainingData[] = [];
+
+  private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly i18n: I18nService,
     noticeService: NoticeService,
+    private readonly trainingDataService: TrainingDataService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
+    private readonly fileService: FileService,
     private readonly router: Router,
     private readonly servalAdministrationService: ServalAdministrationService,
     private destroyRef: DestroyRef
@@ -254,6 +275,17 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           this.rawLastCompletedBuild = await firstValueFrom(this.draftGenerationService.getRawBuild(build.id));
         }
       });
+
+    this.activatedProjectService.projectId$
+      .pipe(
+        filter(p => p != null),
+        quietTakeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(async projectId => {
+        this.trainingDataQuery?.dispose();
+        this.trainingDataQuery = await this.trainingDataService.queryTrainingDataAsync(projectId, this.destroyRef);
+        this.trainingDataFiles = this.trainingDataQuery.docs.map(doc => doc.data).filter(d => d != null);
+      });
   }
 
   async downloadDraft(): Promise<void> {
@@ -297,6 +329,13 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     saveAs(blob, fileName);
 
     this.loadingFinished();
+  }
+
+  downloadTrainingData(dataId: string): void {
+    const trainingData: TrainingData | undefined = this.trainingDataFiles.find(t => t.dataId === dataId);
+    if (trainingData == null) return this.noticeService.show('File not found');
+
+    this.fileService.onlineDownloadFile(FileType.TrainingData, trainingData.fileUrl, trainingData.title);
   }
 
   onUpdatePreTranslate(newValue: boolean): Promise<void> {
