@@ -135,7 +135,7 @@ export async function submitDraftSignupForm(
     const btLangName = page.getByText('Back translation language name');
     await user.click(btLangName);
     await user.type('BT-Lang');
-    const btIso = page.getByRole('textbox', { name: 'Back translation ISO Code' });
+    const btIso = page.getByRole('textbox', { name: 'Back translation language ISO code' });
     await user.click(btIso);
     await user.type('btl');
   } else {
