@@ -22,15 +22,16 @@ public class DraftingSignupRpcController(
     IExceptionHandler exceptionHandler,
     IUserAccessor userAccessor,
     IRepository<DraftingSignupRequest> draftingSignupRequestRepository,
+    IUserService userService,
     IRealtimeService realtimeService,
     ISFProjectService projectService,
-    IParatextService paratextService
+    IEmailService emailService,
+    IHttpRequestAccessor httpRequestAccessor
 ) : RpcControllerBase(userAccessor, exceptionHandler)
 {
     private readonly IExceptionHandler _exceptionHandler = exceptionHandler;
     private readonly IRealtimeService _realtimeService = realtimeService;
     private readonly ISFProjectService _projectService = projectService;
-    private readonly IParatextService _paratextService = paratextService;
 
     public async Task<IRpcMethodResult> SubmitSignupRequest(string projectId, DraftingSignupFormData formData)
     {
@@ -61,6 +62,51 @@ public class DraftingSignupRpcController(
             };
 
             await draftingSignupRequestRepository.InsertAsync(request);
+
+            // Email notification to Serval admins
+            try
+            {
+                // Query for assignees in drafting signup requests, filter out duplicates, and then look up their email
+                var adminUserIds = draftingSignupRequestRepository
+                    .Query()
+                    .Where(r => !string.IsNullOrEmpty(r.AssigneeId))
+                    .Select(r => r.AssigneeId)
+                    .Distinct()
+                    .ToList();
+
+                await using IConnection conn = await _realtimeService.ConnectAsync(UserId);
+                var adminEmails = (await conn.GetAndFetchDocsAsync<User>(adminUserIds)).Select(u => u.Data.Email);
+
+                // Send email to each admin using EmailService
+                // string userName = await userRepository.Query().Where(u => u.Id == UserId).Select(u => u.Name).FirstOrDefaultAsync() ?? "[unknown User]";
+                string userName = await userService.GetUsernameFromUserId(UserId, UserId);
+                string subject = $"Onboarding request for {projectDoc.ShortName}";
+                string link = $"{httpRequestAccessor.SiteRoot}/serval-administration/draft-requests/{request.Id}";
+                string body =
+                    $@"
+                    <p>A new drafting signup request has been submitted for the project <strong>{projectDoc.ShortName} - {projectDoc.Name}</strong>.</p>
+                    <p><strong>Submitted by:</strong> {userName}</p>
+                    <p><strong>Submission Time:</strong> {request.Submission.Timestamp:u}</p>
+                    <p>The request can be viewed at <a href=""{link}"">{link}</a></p>
+                ";
+                foreach (var email in adminEmails)
+                {
+                    await emailService.SendEmailAsync(email, subject, body);
+                }
+            }
+            catch (Exception exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "SubmitSignupRequest" },
+                        { "projectId", projectId },
+                        { "userId", UserId },
+                    }
+                );
+                // report the exception without failing the whole request
+                _exceptionHandler.ReportException(exception);
+            }
 
             // Find all the paratext project ids in the sign up request
             // Start by collecting them into a set
