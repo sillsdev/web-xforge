@@ -1819,13 +1819,13 @@ public class MachineProjectServiceTests
                 .SourceFilters!.Single(f => f.CorpusId == Corpus01)
                 .ScriptureRange
         );
-        Assert.IsNull(
+        Assert.IsEmpty(
             actual
                 .TrainOn!.Single(c => c.ParallelCorpusId == ParallelCorpus02)
                 .SourceFilters!.Single(f => f.CorpusId == Corpus03)
                 .ScriptureRange
         );
-        Assert.IsNull(
+        Assert.IsEmpty(
             actual
                 .TrainOn!.Single(c => c.ParallelCorpusId == ParallelCorpus02)
                 .TargetFilters!.Single(f => f.CorpusId == Corpus04)

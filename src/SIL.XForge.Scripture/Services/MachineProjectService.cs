@@ -1262,9 +1262,11 @@ public class MachineProjectService(
                             .Select(s => new ParallelCorpusFilterConfig
                             {
                                 CorpusId = s.CorpusId,
-                                ScriptureRange = buildConfig
-                                    .TrainingScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
-                                    ?.ScriptureRange,
+                                ScriptureRange =
+                                    buildConfig
+                                        .TrainingScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
+                                        ?.ScriptureRange
+                                    ?? string.Empty,
                             }),
                     ],
                     TargetFilters =
@@ -1294,9 +1296,8 @@ public class MachineProjectService(
                     )
                     {
                         // Set the scripture range for the matching target filter
-                        trainingCorpusConfig.TargetFilters[j].ScriptureRange = trainingCorpusConfig
-                            .SourceFilters[j]
-                            .ScriptureRange;
+                        trainingCorpusConfig.TargetFilters[j].ScriptureRange =
+                            trainingCorpusConfig.SourceFilters[j].ScriptureRange ?? string.Empty;
                     }
                     else if (trainingCorpusConfig.TargetFilters[0] is not null)
                     {
@@ -1314,10 +1315,10 @@ public class MachineProjectService(
                                 .Distinct()
                         );
 
-                        // Ensure that the scripture range is null if it is empty, so that all books will be trained on
+                        // Ensure that the scripture range is empty if it is null, so that no books will be trained on
                         if (string.IsNullOrWhiteSpace(trainingCorpusConfig.TargetFilters[0].ScriptureRange))
                         {
-                            trainingCorpusConfig.TargetFilters[0].ScriptureRange = null;
+                            trainingCorpusConfig.TargetFilters[0].ScriptureRange = string.Empty;
                         }
                     }
                 }
