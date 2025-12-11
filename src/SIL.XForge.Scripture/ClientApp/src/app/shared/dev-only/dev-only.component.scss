@@ -1,0 +1,20 @@
+:host:not(.dev-mode) {
+  display: none;
+}
+
+:host.dev-mode.dev-only-annotate {
+  display: block;
+  border: 1px dashed black;
+  padding: 8px;
+
+  &:before {
+    content: 'dev';
+    position: relative;
+    background-color: black;
+    color: white;
+    font-size: 10px;
+    padding: 2px 4px;
+    top: -14px;
+    left: -10px;
+  }
+}

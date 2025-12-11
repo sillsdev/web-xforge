@@ -12,14 +12,6 @@ import { VerseRef } from '@sillsdev/scripture';
 import { SelectableProject } from '../core/models/selectable-project';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
 
-export enum CustomValidatorState {
-  InvalidProject,
-  BookNotFound,
-  NoWritePermissions,
-  MissingChapters,
-  None
-}
-
 export class SFValidators {
   static verseStr(textsByBookId?: TextsByBookId): ValidatorFn {
     return function validateVerseStr(control: AbstractControl): ValidationErrors | null {
@@ -76,23 +68,6 @@ export class SFValidators {
         return null;
       }
       return { invalidSelection: true };
-    };
-  }
-
-  static customValidator(state: CustomValidatorState): ValidatorFn {
-    return function validateProject(): ValidationErrors | null {
-      switch (state) {
-        case CustomValidatorState.InvalidProject:
-          return { invalidProject: true };
-        case CustomValidatorState.BookNotFound:
-          return { bookNotFound: true };
-        case CustomValidatorState.NoWritePermissions:
-          return { noWritePermissions: true };
-        case CustomValidatorState.MissingChapters:
-          return { missingChapters: true };
-        default:
-          return null;
-      }
     };
   }
 
