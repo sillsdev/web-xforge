@@ -42,9 +42,35 @@ This repository contains three interconnected applications:
 
 - Write unit tests for new components and services
 - Follow existing patterns for mocking dependencies
-- Use TestEnvironment pattern from existing tests. Use the TestEnvironment class pattern rather than using a `beforeEach`.
+- Use TestEnvironment pattern from existing tests. Use the TestEnvironment class pattern rather than using a `beforeEach`. Do not put helper functions outside of TestEnvironment classes; helper functions or setup functions should be in the TestEnvironment class.
 - Test both online and offline scenarios
 - Test permission boundaries
+- When a TestEnvironment class is being given many optional arguments, prefer using object destructuring with default values, and the argument type definition specified inline rather than as an interface. For example,
+  ```typescript
+  class TestEnvironment {
+    constructor({
+      someRequired,
+      someOptional = 'abc',
+    }: {
+      someRequired: string;
+      someOptional?: string;
+    }) {
+      ...
+    }
+  }
+  ```
+  Example using `= {}` when all items are optional:
+  ```typescript
+  class TestEnvironment {
+    constructor({
+      someOptional = 'abc',
+    }: {
+      someOptional?: string;
+    } = {}) {
+      ...
+    }
+  }
+  ```
 
 # Code comments
 
@@ -53,14 +79,20 @@ This repository contains three interconnected applications:
 - Do not add method comments unless the method would be unclear to an experienced developer.
 - Do put comments into the code to make it more clear what is going on if it would not be obvious to an experienced developer.
 - Do put comments into the code if the intent is not clear from the code.
-- All classes should have a comment to briefly explain why it is there and what its purpose is in the overall system, even if it seems obvious.
-- Please do not fail to add a comment to any classes that are created. All classes should have a comment.
+- All classes and interfaces should have a comment to briefly explain why it is there and what its purpose is in the overall system, even if it seems obvious.
+- Please do not fail to add a comment to any classes or interfaces that are created. All classes and interfaces should have a comment.
 
 # TypeScript language
 
 - Use explicit true/false/null/undefined rather than truthy/falsy
 - Never rely on JavaScript's truthy or falsy. Instead, work with actual true, false, null, and undefined values, rather than relying on their interpretation as truthy or falsy. For example, if `count` might be null, or undefined, or zero, don't write code like `if (count)` or `const foo:string = someVariable ? 'a' : 'b'`. Instead, inspect for the null, undefined, or zero rather than letting the value be interpreted as truthy for falsy. For example, use `if (count == null)` or `const foo:string = someVariable != null 'a' : 'b'` or `if (count > 0)`.
-- Specify types where not obvious, such as when declaring variables and arguments, and for function return types.
+- Specify types when declaring variables, arguments, and for function return types. For example, don't write
+  `const projectId = this.determineProjectId();` or
+  `const buildEvents = eventsSorted.filter(...);` or
+  `const buildEvent = buildEvents[0];`. Instead, write
+  `const projectId: string | undefined = this.determineProjectId();` and
+  `const buildEvents: EventMetric[] = eventsSorted.filter(...);` and
+  `const buildEvent: EventMetric | undefined = buildEvents[0];`.
 - Use `@if {}` syntax rather than `*ngIf` syntax.
 - Although interacting with existing code and APIs may necessitate the use of `null`, when writing new code, prefer using `undefined` rather than `null`.
 - Fields that are of type Subject or BehaviorSubject should have names that end with a `$`.
@@ -72,6 +104,7 @@ This repository contains three interconnected applications:
 - It is better to write code that is verbose and understandable than terse and concise.
 - It is better to explicitly check for and handle problems, or prevent problems from happening, than to assume problems will not happen.
 - Corner-cases happen. They should be handled in code.
+- Please don't change existing code without good justification. Existing code largely works and changing it will cause work for code review. Leave existing code as is when possible.
 
 # Running commands
 

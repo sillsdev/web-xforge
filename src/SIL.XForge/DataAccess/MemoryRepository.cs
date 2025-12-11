@@ -92,6 +92,9 @@ public class MemoryRepository<T> : IRepository<T>
 
     public void SetOps(string id, Op[] ops) => _entityOps[id] = ops;
 
+    /// <summary>
+    /// Note that 32-bit integers will come back marked as 64-bit integers.
+    /// </summary>
     public IQueryable<T> Query() => _entities.Select(kvp => DeserializeEntity(kvp.Key, kvp.Value)).AsQueryable();
 
     public Task InsertAsync(T entity, CancellationToken _ = default)
