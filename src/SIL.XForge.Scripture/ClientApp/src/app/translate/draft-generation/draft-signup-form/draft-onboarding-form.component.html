@@ -1,0 +1,286 @@
+<ng-container *transloco="let t; read: 'draft_signup'">
+  <div class="draft-signup-container">
+    @if (!submittedData) {
+      <h1>{{ t("title") }}</h1>
+      <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="signup-form">
+        <!-- Contact Information Section -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>{{ t("contact_section_title") }}</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <mat-form-field>
+              <mat-label>{{ t("name_label") }}</mat-label>
+              <input matInput formControlName="name" [placeholder]="t('name_placeholder')" />
+              @if (signupForm.controls.name.hasError("required")) {
+                <mat-error>{{ t("name_required") }}</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field>
+              <mat-label>{{ t("email_label") }}</mat-label>
+              <input matInput type="email" formControlName="email" [placeholder]="t('email_placeholder')" />
+              @if (signupForm.controls.email.hasError("required")) {
+                <mat-error>{{ t("email_required") }}</mat-error>
+              }
+              @if (signupForm.controls.email.hasError("email")) {
+                <mat-error>{{ t("email_invalid") }}</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field>
+              <mat-label>{{ t("organization_label") }}</mat-label>
+              <input matInput formControlName="organization" [placeholder]="t('organization_placeholder')" />
+              @if (signupForm.controls.organization.hasError("required")) {
+                <mat-error>{{ t("organization_required") }}</mat-error>
+              }
+            </mat-form-field>
+
+            <div class="form-field-label">{{ t("partner_organization_label") }}</div>
+            <p class="field-description">{{ t("partner_organization_hint") }}</p>
+            <mat-form-field>
+              <mat-label>{{ t("partner_organization_select_label") }}</mat-label>
+              <mat-select formControlName="partnerOrganization">
+                <mat-option value="Bolshoi Group">Bolshoi Group</mat-option>
+                <mat-option value="Seed Company">Seed Company</mat-option>
+                <mat-option value="none">{{ t("partner_none") }}</mat-option>
+              </mat-select>
+              @if (signupForm.controls.partnerOrganization.hasError("required")) {
+                <mat-error>{{ t("partner_organization_required") }}</mat-error>
+              }
+            </mat-form-field>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Project Information Section -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>{{ t("project_info_section_title") }}</mat-card-title>
+            <mat-card-subtitle>
+              {{ t("project_info_section_subtitle", { project: currentProjectDisplayName }) }}
+            </mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div>
+              <div class="form-field-label">{{ t("translation_language_name_label") }}</div>
+              <mat-form-field>
+                <mat-label>{{ t("translation_language_name_label") }}</mat-label>
+                <input
+                  matInput
+                  formControlName="translationLanguageName"
+                  [placeholder]="t('translation_language_name_placeholder')"
+                />
+              </mat-form-field>
+            </div>
+
+            <div>
+              <!-- <div class="form-field-label">{{ t("translation_language_iso_label") }}</div> -->
+              <mat-form-field>
+                <mat-label>{{ t("translation_language_iso_label") }}</mat-label>
+                <input
+                  matInput
+                  formControlName="translationLanguageIsoCode"
+                  [placeholder]="t('translation_language_iso_placeholder')"
+                />
+              </mat-form-field>
+            </div>
+
+            <div>
+              <div class="form-field-label">{{ t("completed_books_label") }}</div>
+              <p class="field-description">{{ t("completed_books_hint") }}</p>
+              <app-book-multi-select
+                [availableBooks]="projectBooks"
+                [selectedBooks]="selectedCompletedBooks"
+                (bookSelect)="onCompletedBooksSelect($event)"
+                [basicMode]="false"
+                [projectName]="currentProjectDisplayName"
+              ></app-book-multi-select>
+              @if (showCompletedBooksRequiredError) {
+                <mat-error>{{ t("completed_books_required") }}</mat-error>
+              }
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Source Text Information Section -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>{{ t("reference_projects_section_title") }}</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <p class="field-description">
+              {{ t("reference_projects_description") }}
+            </p>
+            <app-project-select
+              [placeholder]="t('first_reference_project_placeholder')"
+              [projects]="availableProjects"
+              [resources]="availableResources"
+              [hiddenParatextIds]="hiddenParatextIds"
+              [required]="true"
+              formControlName="primarySourceProject"
+            ></app-project-select>
+
+            <app-project-select
+              [placeholder]="t('second_reference_project_placeholder')"
+              [projects]="availableProjects"
+              [resources]="availableResources"
+              [hiddenParatextIds]="hiddenParatextIds"
+              formControlName="secondarySourceProject"
+            ></app-project-select>
+
+            <app-project-select
+              [placeholder]="t('third_reference_project_placeholder')"
+              [projects]="availableProjects"
+              [resources]="availableResources"
+              [hiddenParatextIds]="hiddenParatextIds"
+              formControlName="additionalSourceProject"
+            ></app-project-select>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>{{ t("draft_source_section_title") }}</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <p class="field-description">{{ t("drafting_source_project_hint") }}</p>
+            <app-project-select
+              formControlName="draftingSourceProject"
+              [placeholder]="t('drafting_source_project_placeholder')"
+              [projects]="availableProjects"
+              [resources]="availableResources"
+              [hiddenParatextIds]="hiddenParatextIds"
+              [required]="true"
+            ></app-project-select>
+
+            <div>
+              <div class="form-field-label">{{ t("planned_books_label") }}</div>
+              <p class="field-description">{{ t("planned_books_hint") }}</p>
+              <app-book-multi-select
+                [availableBooks]="allCanonicalBooks"
+                [selectedBooks]="selectedSubmittedBooks"
+                (bookSelect)="onSubmittedBooksSelect($event)"
+                [basicMode]="true"
+                [projectName]="currentProjectDisplayName"
+              ></app-book-multi-select>
+              @if (showPlannedBooksRequiredError) {
+                <mat-error>{{ t("planned_books_required") }}</mat-error>
+              }
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Back Translation Information Section -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>{{ t("back_translation_section_title") }}</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <mat-form-field>
+              <mat-label>{{ t("bt_stage_label") }}</mat-label>
+              <mat-select formControlName="backTranslationStage">
+                <mat-option value="No written back translation">{{ t("bt_no_written") }}</mat-option>
+                <mat-option value="Written (Incomplete or Out-of-Date)">{{ t("bt_written_incomplete") }}</mat-option>
+                <mat-option value="Written (Up-to-Date)">{{ t("bt_written_uptodate") }}</mat-option>
+              </mat-select>
+              @if (signupForm.controls.backTranslationStage.hasError("required")) {
+                <mat-error>{{ t("bt_stage_required") }}</mat-error>
+              }
+            </mat-form-field>
+
+            @if (showBackTranslationProject) {
+              <div class="form-field-label">{{ t("bt_project_label") }}</div>
+              <p class="field-description">{{ t("bt_project_hint") }}</p>
+              <app-project-select
+                formControlName="backTranslationProject"
+                [placeholder]="t('bt_project_placeholder')"
+                [projects]="availableProjects"
+                [resources]="availableResources"
+                [hiddenParatextIds]="hiddenParatextIds"
+                [required]="true"
+              ></app-project-select>
+
+              <div>
+                <mat-form-field>
+                  <mat-label>{{ t("bt_language_name_label") }}</mat-label>
+                  <input
+                    matInput
+                    formControlName="backTranslationLanguageName"
+                    [placeholder]="t('bt_language_name_placeholder')"
+                  />
+                </mat-form-field>
+              </div>
+
+              <div>
+                <mat-form-field>
+                  <mat-label>{{ t("bt_language_iso_label") }}</mat-label>
+                  <input
+                    matInput
+                    formControlName="backTranslationLanguageIsoCode"
+                    [placeholder]="t('bt_language_iso_placeholder')"
+                  />
+                </mat-form-field>
+              </div>
+            }
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Additional Information Section -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>{{ t("additional_info_section_title") }}</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <mat-form-field>
+              <mat-label>{{ t("additional_comments_label") }}</mat-label>
+              <textarea
+                matInput
+                formControlName="additionalComments"
+                [placeholder]="t('additional_comments_placeholder')"
+                rows="4"
+              ></textarea>
+            </mat-form-field>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <button mat-button type="button" (click)="cancel()" [disabled]="submitting">
+            <mat-icon>close</mat-icon>
+            {{ t("cancel") }}
+          </button>
+          <button mat-flat-button color="primary" type="submit" [disabled]="submitting">
+            @if (submitting) {
+              <mat-icon>hourglass_empty</mat-icon>
+            } @else {
+              <mat-icon>send</mat-icon>
+            }
+            @if (submitting) {
+              {{ t("submitting") }}
+            } @else {
+              {{ t("submit") }}
+            }
+          </button>
+        </div>
+      </form>
+    } @else {
+      <!-- User Success Message -->
+      <h1>{{ t("submission_success_title") }}</h1>
+      <p class="submission-note">
+        {{ t("submission_success_message", responseDays) }}
+      </p>
+
+      <!-- Developer View with JSON Data -->
+      <app-dev-only [annotate]="true">
+        <app-json-viewer [data]="submittedData"></app-json-viewer>
+      </app-dev-only>
+
+      <div class="form-actions">
+        <button mat-flat-button color="primary" (click)="cancel()">
+          <mat-icon>arrow_back</mat-icon>
+          {{ t("return_to_draft_generation") }}
+        </button>
+      </div>
+    }
+  </div>
+</ng-container>

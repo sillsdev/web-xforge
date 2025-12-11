@@ -4,18 +4,6 @@
   justify-content: flex-end;
 }
 
-.mat-mdc-dialog-content {
-  padding-bottom: 0;
-
-  .form-error {
-    display: none;
-
-    &.visible {
-      display: block;
-    }
-  }
-}
-
 .target-project-content {
   display: flex;
   align-items: center;
