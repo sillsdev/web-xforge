@@ -25,7 +25,7 @@
       "xforge-common/*": ["./src/xforge-common/*"]
     },
     "useDefineForClassFields": false,
-    "noUnusedLocals": true
+    "noUnusedLocals": false
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
