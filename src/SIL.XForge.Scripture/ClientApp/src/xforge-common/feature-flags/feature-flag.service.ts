@@ -363,6 +363,13 @@ export class FeatureFlagService {
     new StaticFeatureFlagStore(true)
   );
 
+  readonly inAppDraftSignupForm: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'InAppDraftSignupForm',
+    'Show in-app draft signup form instead of external link',
+    19,
+    this.featureFlagStore
+  );
+
   get featureFlags(): FeatureFlag[] {
     return Object.values(this).filter(value => value instanceof FeatureFlagFromStorage);
   }

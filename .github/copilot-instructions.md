@@ -29,6 +29,7 @@ This repository contains three interconnected applications:
 - Follow MVVM design, where domain objects and business logic are in Models, templates represent information to the user in Views, and ViewModels transform and bridge data between Models and Views.
 - Component templates should be in separate .html files, rather than specified inline in the component decorator.
 - Component template stylesheets should be in separate .scss files, rather than specified inline in the component decorator.
+- Avoid hard-coding colors in SCSS files when styling components. Instead, use existing CSS variables or create an Angular Material theme file and import it into src/SIL.XForge.Scripture/ClientApp/src/material-styles.scss
 
 # Frontend localization
 

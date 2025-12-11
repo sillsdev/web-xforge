@@ -8,9 +8,10 @@
       [matAutocomplete]="auto"
       (click)="inputClicked($event)"
       (blur)="inputBlurred()"
-      [errorStateMatcher]="matcher"
     />
-    <mat-error id="invalidSelection">{{ invalidMessage }}</mat-error>
+    @if (error != null) {
+      <mat-error>{{ error }}</mat-error>
+    }
     <mat-autocomplete
       #auto="matAutocomplete"
       [displayWith]="projectLabel"
