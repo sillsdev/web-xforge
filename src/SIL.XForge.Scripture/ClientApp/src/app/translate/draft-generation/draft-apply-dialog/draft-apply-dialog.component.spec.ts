@@ -1,7 +1,9 @@
+import { OverlayContainer } from '@angular/cdk/overlay';
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Component } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { MatAutocompleteHarness } from '@angular/material/autocomplete/testing';
 import { MatCheckboxHarness } from '@angular/material/checkbox/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
@@ -21,7 +23,7 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { TextDoc } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
-import { CustomValidatorState } from '../../../shared/sfvalidators';
+import { projectLabel } from '../../../shared/utils';
 import { DraftApplyDialogComponent } from './draft-apply-dialog.component';
 
 const mockedUserProjectsService = mock(SFUserProjectsService);
@@ -76,18 +78,18 @@ describe('DraftApplyDialogComponent', () => {
 
   it('add button does not work until form is valid', fakeAsync(async () => {
     expect(env.addButton).toBeTruthy();
-    env.selectParatextProject('paratextId1');
-    expect(env.confirmOverwriteErrorMessage).toBeNull();
+    await env.selectParatextProject('paratextId1');
+    expect(env.matErrorMessage).toBeNull();
     env.addButton.click();
     tick();
     env.fixture.detectChanges();
     verify(mockedDialogRef.close()).never();
-    expect(env.confirmOverwriteErrorMessage).not.toBeNull();
+    expect(env.matErrorMessage).toBe('Please confirm you want to overwrite the book.');
     const harness = await env.overwriteCheckboxHarness();
     harness.check();
     tick();
     env.fixture.detectChanges();
-    expect(env.confirmOverwriteErrorMessage).toBeNull();
+    expect(env.matErrorMessage).toBeNull();
     env.addButton.click();
     tick();
     env.fixture.detectChanges();
@@ -95,7 +97,7 @@ describe('DraftApplyDialogComponent', () => {
   }));
 
   it('can add draft to project when project selected', fakeAsync(async () => {
-    env.selectParatextProject('paratextId1');
+    await env.selectParatextProject('paratextId1');
     const harness = await env.overwriteCheckboxHarness();
     harness.check();
     tick();
@@ -108,54 +110,70 @@ describe('DraftApplyDialogComponent', () => {
   }));
 
   it('checks if the user has edit permissions', fakeAsync(async () => {
-    env.selectParatextProject('paratextId1');
+    await env.selectParatextProject('paratextId1');
     const harness = await env.overwriteCheckboxHarness();
     harness.check();
     tick();
     env.fixture.detectChanges();
     expect(env.targetProjectContent).not.toBeNull();
     expect(env.component['targetProjectId']).toBe('project01');
-    verify(mockedTextDocService.userHasGeneralEditRight(anything())).once();
+    verify(mockedTextDocService.userHasGeneralEditRight(anything())).twice();
     tick();
     env.fixture.detectChanges();
-    expect(env.component['getCustomErrorState']()).toBe(CustomValidatorState.None);
+    expect(env.component.isValid).toBeTrue();
+    expect(env.matErrorMessage).toBeNull();
   }));
 
-  it('notifies user if no edit permissions', fakeAsync(() => {
-    env.selectParatextProject('paratextId2');
+  it('notifies user if no edit permissions', fakeAsync(async () => {
+    await env.selectParatextProject('paratextId2');
     expect(env.component['targetProjectId']).toBe('project02');
-    verify(mockedTextDocService.userHasGeneralEditRight(anything())).once();
+    verify(mockedTextDocService.userHasGeneralEditRight(anything())).twice();
     tick();
     env.fixture.detectChanges();
-    expect(env.component['getCustomErrorState']()).toBe(CustomValidatorState.NoWritePermissions);
+    flush();
+    tick();
+    env.fixture.detectChanges();
+    flush();
+    tick();
+    env.fixture.detectChanges();
+    flush();
+    // FIXME
+    expect(env.component.isValid).toBeFalse();
+    expect(env.matErrorMessage).toBe(
+      "You do not have permission to write to this book on this project. Contact the project's administrator to get permission."
+    );
     // hides the message when an invalid project is selected
-    env.selectParatextProject('');
+    await env.selectParatextProject('');
     tick();
     env.fixture.detectChanges();
-    expect(env.component['getCustomErrorState']()).toBe(CustomValidatorState.InvalidProject);
+    expect(env.matErrorMessage).toBe('Please select a valid project or resource');
+    expect(env.component.isValid).toBeFalse();
   }));
 
   it('user must confirm create chapters if book has missing chapters', fakeAsync(async () => {
     const projectDoc = {
       id: 'project03',
-      data: createTestProjectProfile({
-        paratextId: 'paratextId3',
-        userRoles: { user01: SFProjectRole.ParatextAdministrator },
-        texts: [
-          {
-            bookNum: 1,
-            chapters: [{ number: 1, permissions: { user01: TextInfoPermission.Write }, lastVerse: 31 }],
-            permissions: { user01: TextInfoPermission.Write }
-          }
-        ]
-      })
+      data: createTestProjectProfile(
+        {
+          paratextId: 'paratextId3',
+          userRoles: { user01: SFProjectRole.ParatextAdministrator },
+          texts: [
+            {
+              bookNum: 1,
+              chapters: [{ number: 1, permissions: { user01: TextInfoPermission.Write }, lastVerse: 31 }],
+              permissions: { user01: TextInfoPermission.Write }
+            }
+          ]
+        },
+        3
+      )
     } as SFProjectProfileDoc;
     env = new TestEnvironment({ projectDoc });
-    env.selectParatextProject('paratextId3');
+    await env.selectParatextProject('paratextId3');
     expect(env.component['targetProjectId']).toBe('project03');
     tick();
     env.fixture.detectChanges();
-    expect(env.component.projectHasMissingChapters).toBe(true);
+    expect(env.component.projectHasMissingChapters()).toBe(true);
     const overwriteHarness = await env.overwriteCheckboxHarness();
     await overwriteHarness.check();
     const createChapters = await env.createChaptersCheckboxHarnessAsync();
@@ -178,24 +196,27 @@ describe('DraftApplyDialogComponent', () => {
   it('user must confirm create chapters if book is empty', fakeAsync(async () => {
     const projectDoc = {
       id: 'project03',
-      data: createTestProjectProfile({
-        paratextId: 'paratextId3',
-        userRoles: { user01: SFProjectRole.ParatextAdministrator },
-        texts: [
-          {
-            bookNum: 1,
-            chapters: [{ number: 1, permissions: { user01: TextInfoPermission.Write }, lastVerse: 0 }],
-            permissions: { user01: TextInfoPermission.Write }
-          }
-        ]
-      })
+      data: createTestProjectProfile(
+        {
+          paratextId: 'paratextId3',
+          userRoles: { user01: SFProjectRole.ParatextAdministrator },
+          texts: [
+            {
+              bookNum: 1,
+              chapters: [{ number: 1, permissions: { user01: TextInfoPermission.Write }, lastVerse: 0 }],
+              permissions: { user01: TextInfoPermission.Write }
+            }
+          ]
+        },
+        3
+      )
     } as SFProjectProfileDoc;
     env = new TestEnvironment({ projectDoc });
-    env.selectParatextProject('paratextId3');
+    await env.selectParatextProject('paratextId3');
     expect(env.component['targetProjectId']).toBe('project03');
     tick();
     env.fixture.detectChanges();
-    expect(env.component.projectHasMissingChapters).toBe(true);
+    expect(env.component.projectHasMissingChapters()).toBe(true);
     const overwriteHarness = await env.overwriteCheckboxHarness();
     await overwriteHarness.check();
     const createChapters = await env.createChaptersCheckboxHarnessAsync();
@@ -206,27 +227,34 @@ describe('DraftApplyDialogComponent', () => {
     verify(mockedDialogRef.close(anything())).never();
 
     // select a valid project
-    env.selectParatextProject('paratextId1');
+    await env.selectParatextProject('paratextId1');
     expect(env.component['targetProjectId']).toBe('project01');
     tick();
     env.fixture.detectChanges();
-    expect(env.component.projectHasMissingChapters).toBe(false);
+    expect(env.component.projectHasMissingChapters()).toBe(false);
     env.component.addToProject();
     tick();
     env.fixture.detectChanges();
     verify(mockedDialogRef.close(anything())).once();
   }));
 
-  it('updates the target project info when updating the project in the selector', fakeAsync(() => {
-    env.selectParatextProject('paratextId1');
+  it('updates the target project info when updating the project in the selector', fakeAsync(async () => {
+    await env.selectParatextProject('paratextId1');
     expect(env.targetProjectContent.textContent).toContain('Test project 1');
     // the user does not have permission to edit 'paratextId2' so the info section is hidden
-    env.selectParatextProject('paratextId2');
+    await env.selectParatextProject('paratextId2');
+    tick();
+    flush();
+    env.fixture.detectChanges();
+    tick();
+    flush();
+    env.fixture.detectChanges();
+    // FIXME
     expect(env.targetProjectContent).toBeNull();
   }));
 
   it('notifies user if offline', fakeAsync(async () => {
-    env.selectParatextProject('paratextId1');
+    await env.selectParatextProject('paratextId1');
     expect(env.offlineWarning).toBeNull();
     const harness = await env.overwriteCheckboxHarness();
     harness.check();
@@ -239,12 +267,14 @@ describe('DraftApplyDialogComponent', () => {
   }));
 });
 
+// Helper harness that wires the component under test with mocked services and DOM helpers.
 class TestEnvironment {
   component: DraftApplyDialogComponent;
   fixture: ComponentFixture<DraftApplyDialogComponent>;
   loader: HarnessLoader;
 
   onlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
+  private readonly overlayContainer = TestBed.inject(OverlayContainer);
 
   constructor(args: { projectDoc?: SFProjectProfileDoc } = {}) {
     when(mockedUserService.currentUserId).thenReturn('user01');
@@ -279,12 +309,11 @@ class TestEnvironment {
     return this.fixture.nativeElement.querySelector('.offline-message');
   }
 
-  get confirmOverwriteErrorMessage(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('.form-error.overwrite-content-error.visible');
-  }
-
-  get confirmCreateChaptersErrorMessage(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('.form-error.create-chapters-error.visible');
+  get matErrorMessage(): string | null {
+    const matErrors: HTMLElement[] = Array.from(this.fixture.nativeElement.querySelectorAll('mat-error'));
+    if (matErrors.length === 0) return null;
+    expect(matErrors.length).toBe(1);
+    return matErrors[0].textContent!.trim();
   }
 
   set onlineStatus(online: boolean) {
@@ -301,10 +330,43 @@ class TestEnvironment {
     return await this.loader.getHarness(MatCheckboxHarness.with({ selector: '.create-chapters' }));
   }
 
-  selectParatextProject(paratextId: string): void {
-    env.component.addToProjectForm.controls.targetParatextId.setValue(paratextId);
+  async selectParatextProject(paratextId: string): Promise<void> {
+    const autocomplete = await this.loader.getHarness(MatAutocompleteHarness);
+    await autocomplete.focus();
+
+    if (paratextId === '') {
+      await autocomplete.clear();
+      await autocomplete.blur();
+      await this.stabilizeFormAsync();
+      return;
+    }
+
+    const project = this.component.projects.find(p => p.paratextId === paratextId);
+    expect(project).withContext(`Missing project for ${paratextId}`).toBeDefined();
+    if (project == null) {
+      return;
+    }
+
+    const searchText = project.shortName ?? project.name ?? paratextId;
+    await autocomplete.clear();
+    await autocomplete.enterText(searchText);
+    await autocomplete.selectOption({ text: projectLabel(project) });
+    await autocomplete.blur();
+    await this.stabilizeFormAsync();
+  }
+
+  private async stabilizeFormAsync(): Promise<void> {
+    await this.fixture.whenStable();
     tick();
     this.fixture.detectChanges();
+    this.clearOverlayContainer();
+  }
+
+  private clearOverlayContainer(): void {
+    const container = this.overlayContainer.getContainerElement();
+    if (container.childElementCount > 0) {
+      container.innerHTML = '';
+    }
   }
 
   private setupProject(projectDoc?: SFProjectProfileDoc): void {

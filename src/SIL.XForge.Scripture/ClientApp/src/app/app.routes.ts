@@ -11,6 +11,7 @@ import { JoinComponent } from './join/join.component';
 import { MyProjectsComponent } from './my-projects/my-projects.component';
 import { PermissionsViewerComponent } from './permissions-viewer/permissions-viewer.component';
 import { ProjectComponent } from './project/project.component';
+import { DraftRequestDetailComponent } from './serval-administration/draft-request-detail.component';
 import { ServalAdminAuthGuard } from './serval-administration/serval-admin-auth.guard';
 import { ServalAdministrationComponent } from './serval-administration/serval-administration.component';
 import { ServalProjectComponent } from './serval-administration/serval-project.component';
@@ -27,6 +28,7 @@ import {
 } from './shared/project-router.guard';
 import { SyncComponent } from './sync/sync.component';
 import { DraftGenerationComponent } from './translate/draft-generation/draft-generation.component';
+import { DraftOnboardingFormComponent } from './translate/draft-generation/draft-signup-form/draft-onboarding-form.component';
 import { DraftSourcesComponent } from './translate/draft-generation/draft-sources/draft-sources.component';
 import { DraftUsfmFormatComponent } from './translate/draft-generation/draft-usfm-format/draft-usfm-format.component';
 import { EditorComponent } from './translate/editor/editor.component';
@@ -71,6 +73,11 @@ export const APP_ROUTES: Routes = [
     canDeactivate: [DraftNavigationAuthGuard]
   },
   {
+    path: 'projects/:projectId/draft-generation/signup',
+    component: DraftOnboardingFormComponent,
+    canActivate: [NmtDraftAuthGuard]
+  },
+  {
     path: 'projects/:projectId/draft-generation',
     component: DraftGenerationComponent,
     canActivate: [NmtDraftAuthGuard]
@@ -88,6 +95,11 @@ export const APP_ROUTES: Routes = [
   { path: 'projects/:projectId/users', component: UsersComponent, canActivate: [UsersAuthGuard] },
   { path: 'projects/:projectId', component: ProjectComponent, canActivate: [AuthGuard] },
   { path: 'projects', component: MyProjectsComponent, canActivate: [AuthGuard] },
+  {
+    path: 'serval-administration/draft-requests/:id',
+    component: DraftRequestDetailComponent,
+    canActivate: [ServalAdminAuthGuard]
+  },
   { path: 'system-administration/permissions-viewer', component: PermissionsViewerComponent },
   { path: 'serval-administration/:projectId', component: ServalProjectComponent, canActivate: [ServalAdminAuthGuard] },
   { path: 'serval-administration', component: ServalAdministrationComponent, canActivate: [ServalAdminAuthGuard] },
