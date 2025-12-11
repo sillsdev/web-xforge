@@ -1,12 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatButton } from '@angular/material/button';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCard, MatCardActions, MatCardContent, MatCardTitle } from '@angular/material/card';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatDialogConfig } from '@angular/material/dialog';
 import { MatError, MatHint } from '@angular/material/form-field';
-import { MatIcon } from '@angular/material/icon';
+import { MatIconModule } from '@angular/material/icon';
 import { MatRadioButton, MatRadioGroup } from '@angular/material/radio';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
@@ -55,8 +55,8 @@ import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-pro
     MatCard,
     MatCardContent,
     MatCardTitle,
-    MatButton,
-    MatIcon,
+    MatButtonModule,
+    MatIconModule,
     ProjectSelectComponent,
     WriteStatusComponent,
     MatError,

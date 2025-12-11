@@ -1,0 +1,55 @@
+.requests-container {
+  padding: 20px;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.no-requests {
+  color: var(--color-text-secondary);
+  font-style: italic;
+  text-align: center;
+  padding: 40px;
+}
+
+.requests-table {
+  width: 100%;
+  margin-top: 20px;
+
+  tr:nth-child(odd) {
+    background-color: var(--sf-draft-onboarding-requests-table-row-background-color);
+  }
+}
+
+.mat-mdc-header-cell {
+  font-weight: 500;
+}
+
+.mat-mdc-cell,
+.mat-mdc-header-cell {
+  padding: 12px;
+}
+
+.assignee-field {
+  width: 200px;
+  font-size: 14px;
+
+  select {
+    padding: 4px;
+  }
+
+  .unassigned-option {
+    font-style: italic;
+    color: var(--color-text-secondary);
+  }
+}
+
+.assignee-field,
+.resolution-field {
+  --mat-form-field-container-vertical-padding: 8px;
+  --mat-form-field-container-height: 40px;
+}

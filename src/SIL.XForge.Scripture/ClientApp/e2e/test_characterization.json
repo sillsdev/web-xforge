@@ -19,6 +19,10 @@
     "success": 13,
     "failure": 0
   },
+  "submit_draft_signup": {
+    "success": 0,
+    "failure": 0
+  },
   "edit_translation": {
     "success": 33,
     "failure": 3
