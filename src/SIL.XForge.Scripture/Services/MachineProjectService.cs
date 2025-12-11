@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
@@ -54,6 +55,11 @@ public class MachineProjectService(
     IRepository<UserSecret> userSecrets
 ) : IMachineProjectService
 {
+    /// <summary>
+    /// The name of the key storing draft generation request id, which may be present in some event metrics in a set of tags.
+    /// </summary>
+    public static readonly string DraftGenerationRequestIdKey = "draftGenerationRequestId";
+
     // Supported translation engines (Serval 1.2 format)
     // Serval 1.2 accepts the translation engine type in 1.1 (PascalCase) and 1.2 (kebab-case) format
     internal const string Echo = "echo";
@@ -106,6 +112,9 @@ public class MachineProjectService(
     /// <param name="curUserId">The current user identifier.</param>
     /// <param name="buildConfig">The build configuration.</param>
     /// <param name="preTranslate">If <c>true</c> use NMT; otherwise if <c>false</c> use SMT.</param>
+    /// <param name="draftGenerationRequestId">
+    /// The draft generation request identifier (NMT only). Pass null for SMT builds.
+    /// </param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>An asynchronous task.</returns>
     /// <remarks>
@@ -115,12 +124,18 @@ public class MachineProjectService(
         string curUserId,
         BuildConfig buildConfig,
         bool preTranslate,
+        string? draftGenerationRequestId,
         CancellationToken cancellationToken
     )
     {
+        if (!string.IsNullOrEmpty(draftGenerationRequestId))
+        {
+            Activity.Current?.AddTag(DraftGenerationRequestIdKey, draftGenerationRequestId);
+        }
+
         try
         {
-            await BuildProjectAsync(curUserId, buildConfig, preTranslate, cancellationToken);
+            await BuildProjectAsync(curUserId, buildConfig, preTranslate, draftGenerationRequestId, cancellationToken);
         }
         catch (TaskCanceledException e) when (e.InnerException is not TimeoutException)
         {
@@ -575,8 +590,11 @@ public class MachineProjectService(
     /// <param name="curUserId">The current user identifier.</param>
     /// <param name="buildConfig">The build configuration.</param>
     /// <param name="preTranslate">If <c>true</c> use NMT; otherwise if <c>false</c> use SMT.</param>
+    /// <param name="draftGenerationRequestId">
+    /// The draft generation request identifier (NMT only). Pass null for SMT builds.
+    /// </param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>An asynchronous task.</returns>
+    /// <returns>Serval build ID</returns>
     /// <exception cref="DataNotFoundException">The project or project secret could not be found.</exception>
     /// <exception cref="InvalidDataException">The language of the source project was not specified.</exception>
     /// <remarks>
@@ -593,9 +611,15 @@ public class MachineProjectService(
         string curUserId,
         BuildConfig buildConfig,
         bool preTranslate,
+        string? draftGenerationRequestId,
         CancellationToken cancellationToken
     )
     {
+        if (!string.IsNullOrEmpty(draftGenerationRequestId))
+        {
+            Activity.Current?.AddTag(DraftGenerationRequestIdKey, draftGenerationRequestId);
+        }
+
         // Load the target project secrets, so we can get the translation engine ID
         if (
             !(await projectSecrets.TryGetAsync(buildConfig.ProjectId, cancellationToken)).TryResult(
@@ -1262,9 +1286,11 @@ public class MachineProjectService(
                             .Select(s => new ParallelCorpusFilterConfig
                             {
                                 CorpusId = s.CorpusId,
-                                ScriptureRange = buildConfig
-                                    .TrainingScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
-                                    ?.ScriptureRange,
+                                ScriptureRange =
+                                    buildConfig
+                                        .TrainingScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
+                                        ?.ScriptureRange
+                                    ?? string.Empty,
                             }),
                     ],
                     TargetFilters =
@@ -1294,9 +1320,8 @@ public class MachineProjectService(
                     )
                     {
                         // Set the scripture range for the matching target filter
-                        trainingCorpusConfig.TargetFilters[j].ScriptureRange = trainingCorpusConfig
-                            .SourceFilters[j]
-                            .ScriptureRange;
+                        trainingCorpusConfig.TargetFilters[j].ScriptureRange =
+                            trainingCorpusConfig.SourceFilters[j].ScriptureRange ?? string.Empty;
                     }
                     else if (trainingCorpusConfig.TargetFilters[0] is not null)
                     {
@@ -1314,10 +1339,10 @@ public class MachineProjectService(
                                 .Distinct()
                         );
 
-                        // Ensure that the scripture range is null if it is empty, so that all books will be trained on
+                        // Ensure that the scripture range is empty if it is null, so that no books will be trained on
                         if (string.IsNullOrWhiteSpace(trainingCorpusConfig.TargetFilters[0].ScriptureRange))
                         {
-                            trainingCorpusConfig.TargetFilters[0].ScriptureRange = null;
+                            trainingCorpusConfig.TargetFilters[0].ScriptureRange = string.Empty;
                         }
                     }
                 }

@@ -1,6 +1,7 @@
 import { Component, DestroyRef, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatDialogConfig } from '@angular/material/dialog';
 import { MatIcon } from '@angular/material/icon';
@@ -28,9 +29,11 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
-import { notNull } from '../../type-utils';
+import { isPopulatedString } from 'xforge-common/utils';
+import { hasElements, notNull, PopulatedArray } from '../../type-utils';
 import { SFProjectService } from '../core/sf-project.service';
 import { EventMetric } from '../event-metrics/event-metric';
+import { InfoComponent } from '../shared/info/info.component';
 import { NoticeComponent } from '../shared/notice/notice.component';
 import { projectLabel } from '../shared/utils';
 import { DateRangePickerComponent, NormalizedDateRange } from './date-range-picker.component';
@@ -46,6 +49,8 @@ interface ProjectBooks {
 export interface DraftJob {
   /** Serval build ID */
   buildId: string | undefined;
+  /** Unique draft job request identifier on event metrics */
+  draftGenerationRequestId?: string;
   projectId: string;
   /** This is optional since incomplete jobs might not have a start event */
   startEvent?: EventMetric;
@@ -65,6 +70,7 @@ export interface DraftJob {
   translationBooks?: ProjectBooks[];
 }
 
+/** Data that makes up a row of information in the Draft Jobs table. */
 export interface DraftJobsTableRow {
   job: DraftJob;
   projectId: string;
@@ -80,6 +86,7 @@ export interface DraftJobsTableRow {
   clearmlUrl?: string;
 }
 
+/** Names of events that are relevant for pre-translation draft generation requests and processing. */
 const DRAFTING_EVENTS = [
   'StartPreTranslationBuildAsync',
   'BuildProjectAsync',
@@ -109,6 +116,8 @@ const DRAFTING_EVENTS = [
     MatHeaderRowDef,
     MatIcon,
     MatIconButton,
+    MatButtonToggle,
+    MatButtonToggleGroup,
     MatMenu,
     MatMenuItem,
     MatMenuTrigger,
@@ -119,7 +128,8 @@ const DRAFTING_EVENTS = [
     NoticeComponent,
     OwnerComponent,
     RouterLink,
-    DateRangePickerComponent
+    DateRangePickerComponent,
+    InfoComponent
   ]
 })
 export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
@@ -133,6 +143,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     'author'
   ];
   rows: DraftJobsTableRow[] = [];
+  groupingMode: 'requestId' | 'timing' = 'timing';
 
   currentProjectFilter: string | null = null;
 
@@ -142,8 +153,10 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
 
   private draftEvents?: EventMetric[];
   private draftJobs: DraftJob[] = [];
-  private projectNames = new Map<string, string | undefined>(); // Cache for project names
-  private projectShortNames = new Map<string, string | undefined>(); // Cache for project short names
+  /** Cache for project names */
+  private projectNames = new Map<string, string | undefined>();
+  /** Cache for project short names */
+  private projectShortNames = new Map<string, string | undefined>();
   filteredProjectName = '';
   private currentDateRange: NormalizedDateRange | undefined;
   private readonly dateRange$ = new BehaviorSubject<NormalizedDateRange | undefined>(undefined);
@@ -168,33 +181,26 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     return this.draftEvents == null;
   }
 
+  /** Of jobs in the table. */
   get meanDuration(): number | undefined {
     const durations = this.rows.map(r => r.job.duration).filter((d): d is number => d != null);
-    if (durations.length === 0) {
-      return undefined;
-    }
+    if (durations.length === 0) return undefined;
     return durations.reduce((sum, d) => sum + d, 0) / durations.length;
   }
 
   get maxDuration(): number | undefined {
     const durations = this.rows.map(r => r.job.duration).filter((d): d is number => d != null);
-    if (durations.length === 0) {
-      return undefined;
-    }
+    if (durations.length === 0) return undefined;
     return Math.max(...durations);
   }
 
   get meanDurationFormatted(): string | undefined {
-    if (this.meanDuration == null) {
-      return undefined;
-    }
+    if (this.meanDuration == null) return undefined;
     return this.formatDurationInHours(this.meanDuration);
   }
 
   get maxDurationFormatted(): string | undefined {
-    if (this.maxDuration == null) {
-      return undefined;
-    }
+    if (this.maxDuration == null) return undefined;
     return this.formatDurationInHours(this.maxDuration);
   }
 
@@ -265,7 +271,8 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
       eventBasedDuration,
       startTime,
       clearmlUrl,
-      buildsStartedSince
+      buildsStartedSince,
+      draftGenerationRequestId: job.draftGenerationRequestId
     };
 
     const dialogConfig: MatDialogConfig<any> = { data: dialogData, width: '1000px', maxHeight: '80vh' };
@@ -278,6 +285,15 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
       queryParams: { projectId: null },
       queryParamsHandling: 'merge'
     });
+  }
+
+  onGroupingModeChange(mode: 'requestId' | 'timing'): void {
+    if (this.groupingMode === mode) return;
+    this.groupingMode = mode;
+    if (this.draftEvents != null) {
+      // Re-group events into jobs.
+      this.processDraftJobs();
+    }
   }
 
   private async loadDraftJobs(
@@ -325,17 +341,16 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     }
   }
 
-  private processDraftJobs(): void {
-    if (this.draftEvents == null) {
-      this.draftJobs = [];
-      this.generateRows();
-      return;
+  /** Group together events using information that was available prior to introducing draftGenerationRequestId. */
+  private createJobsUsingLegacyCorrelation(events: EventMetric[]): DraftJob[] {
+    if (events.length === 0) {
+      return [];
     }
 
     const jobs: DraftJob[] = [];
 
     // Step 1: Find all build events (BuildProjectAsync) - these are our anchors
-    const buildEvents = this.draftEvents.filter(event => event.eventType === 'BuildProjectAsync');
+    const buildEvents = events.filter(event => event.eventType === 'BuildProjectAsync');
 
     // Step 2: For each build event, find the nearest preceding start event
     for (const buildEvent of buildEvents) {
@@ -347,7 +362,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
       const buildTime = new Date(buildEvent.timeStamp);
 
       // Find all StartPreTranslationBuildAsync events for this project that precede the build
-      const candidateStartEvents = this.draftEvents.filter(
+      const candidateStartEvents = events.filter(
         event =>
           event.eventType === 'StartPreTranslationBuildAsync' &&
           event.projectId === buildEvent.projectId &&
@@ -365,7 +380,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
       });
 
       // Step 3: Find the first completion event after the build
-      const candidateCompletionEvents = this.draftEvents.filter(event => {
+      const candidateCompletionEvents = events.filter(event => {
         if (event.projectId !== buildEvent.projectId && event.payload.sfProjectId !== buildEvent.projectId)
           return false;
         if (new Date(event.timeStamp) <= buildTime) return false;
@@ -431,7 +446,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
       }
 
       // Step 4: Collect additional events (any events with same build ID that weren't already included)
-      const additionalEvents = this.draftEvents.filter(event => {
+      const additionalEvents = events.filter(event => {
         // Don't include events we've already tracked
         if (event === startEvent || event === buildEvent || event === completionEvent) {
           return false;
@@ -455,14 +470,179 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     }
 
     // Sort by start time (most recent first)
-    this.draftJobs = jobs.sort((a, b) => {
+    return jobs.sort((a, b) => {
       const aTime = a.startTime?.getTime() ?? 0;
       const bTime = b.startTime?.getTime() ?? 0;
       return bTime - aTime;
     });
+  }
 
-    // Generate rows
+  private processDraftJobs(): void {
+    if (this.draftEvents == null) {
+      this.draftJobs = [];
+      this.generateRows();
+      return;
+    }
+
+    const jobs: DraftJob[] = [];
+
+    if (this.groupingMode === 'timing') {
+      jobs.push(...this.createJobsUsingLegacyCorrelation(this.draftEvents));
+    } else {
+      const eventsGroupedByRequestId = Map.groupBy(this.draftEvents, this.getDraftGenerationRequestId);
+      for (const [requestId, groupedEvents] of eventsGroupedByRequestId.entries()) {
+        if (!hasElements(groupedEvents)) continue;
+        if (requestId != null) {
+          // Omit jobs that started before the beginning of the date range.
+          const hasStartEvent: boolean = groupedEvents.some(
+            event => event.eventType === 'StartPreTranslationBuildAsync'
+          );
+          if (!hasStartEvent) continue;
+
+          jobs.push(this.createJobFromRequestGroup(requestId, groupedEvents));
+        } else {
+          jobs.push(...this.createJobsUsingLegacyCorrelation(groupedEvents));
+        }
+      }
+    }
+    this.draftJobs = this.sortJobsByStartTime(jobs);
     this.generateRows();
+  }
+
+  private createJobFromRequestGroup(requestId: string, groupedEvents: PopulatedArray<EventMetric>): DraftJob {
+    const eventsSorted: EventMetric[] = [...groupedEvents].sort((left, right) => this.compareEventTimes(left, right));
+    const [startEvent, buildEvent, finishEvent, cancelEvent, additionalEvents] = this.validateAndExtractEvents(
+      requestId,
+      eventsSorted
+    );
+
+    const projectId: string | undefined = startEvent.projectId;
+    if (projectId == null) throw new Error(`Request group ${requestId} is missing projectId on start event.`);
+
+    const books = this.extractBooksFromEvent(startEvent);
+    const servalBuildId: string | undefined = buildEvent?.result;
+    // servalBuildId might be undefined if we don't have a BuildProjectAsync event.
+
+    const startTime: Date | undefined = this.createEventDate(startEvent);
+    const sfUserId: string | undefined = startEvent.userId;
+    const job: DraftJob = {
+      projectId,
+      buildId: servalBuildId,
+      draftGenerationRequestId: requestId,
+      startEvent,
+      buildEvent,
+      finishEvent,
+      cancelEvent,
+      events: eventsSorted,
+      additionalEvents,
+      startTime,
+      userId: sfUserId,
+      trainingBooks: books.trainingBooks,
+      translationBooks: books.translationBooks,
+      status: 'running',
+      errorMessage: undefined,
+      finishTime: undefined,
+      duration: undefined
+    };
+    this.finalizeJobStatus(job);
+    return job;
+  }
+
+  /** Validates event group contents and extracts specific events. The received events should all be part of the same draft generation request. */
+  private validateAndExtractEvents(
+    requestId: string,
+    events: EventMetric[]
+  ): [EventMetric, EventMetric | undefined, EventMetric | undefined, EventMetric | undefined, EventMetric[]] {
+    for (const event of events) {
+      const eventRequestId: string | undefined = this.getDraftGenerationRequestId(event);
+      if (eventRequestId !== requestId) {
+        throw new Error(
+          `Erroneously given a group of events which did not all share draftGenerationRequestId ${requestId}.`
+        );
+      }
+    }
+
+    const startEvents: EventMetric[] = events.filter(event => event.eventType === 'StartPreTranslationBuildAsync');
+    if (startEvents.length !== 1) {
+      throw new Error(`Request group ${requestId} must include exactly one StartPreTranslationBuildAsync event.`);
+    }
+    const startEvent: EventMetric = startEvents[0];
+
+    const buildEvents: EventMetric[] = events.filter(event => event.eventType === 'BuildProjectAsync');
+    if (buildEvents.length > 1) {
+      throw new Error(`Request group ${requestId} may not have more than one BuildProjectAsync event.`);
+    }
+    const buildEvent: EventMetric | undefined = buildEvents[0];
+
+    const buildCompletedEvents: EventMetric[] = events.filter(event => event.eventType === 'BuildCompletedAsync');
+    if (buildCompletedEvents.length > 1) {
+      throw new Error(`Request group ${requestId} may not have more than one BuildCompletedAsync event.`);
+    }
+    const retrieveFinishingEvents: EventMetric[] = events.filter(
+      event => event.eventType === 'RetrievePreTranslationStatusAsync' && event.result === buildEvent?.result
+    );
+    const finishEvent: EventMetric | undefined = buildCompletedEvents[0] ?? retrieveFinishingEvents[0];
+
+    const cancelEvents: EventMetric[] = events.filter(event => event.eventType === 'CancelPreTranslationBuildAsync');
+    if (cancelEvents.length > 1) {
+      console.log(`Request group ${requestId} has more than one CancelPreTranslationBuildAsync event.`);
+    }
+    const cancelEvent: EventMetric | undefined = cancelEvents[0];
+
+    if (cancelEvent != null) {
+      if (finishEvent == null) {
+        // Probably possible if examining at the wrong moment or the BuildCompletedAsync event never came over the network.
+        console.log(
+          `Request group ${requestId} has a CancelPreTranslationBuildAsync event but no BuildCompletedAsync event.`
+        );
+      } else {
+        const buildState: any = finishEvent.payload?.buildState;
+        if (buildState !== 'Canceled') {
+          throw new Error(
+            `Unexpected data. Request ${requestId} had a CancelPreTranslationBuildAsync event, but BuildCompletedAsync says buildState is ${buildState}.`
+          );
+        }
+      }
+    }
+
+    const additionalEvents: EventMetric[] = events.filter(
+      event => event !== startEvent && event !== buildEvent && event !== finishEvent && event !== cancelEvent
+    );
+
+    return [startEvent, buildEvent, finishEvent, cancelEvent, additionalEvents];
+  }
+
+  private getDraftGenerationRequestId(event: EventMetric): string | undefined {
+    if (event.tags == null) return undefined;
+    const requestId: unknown = event.tags['draftGenerationRequestId'];
+    if (!isPopulatedString(requestId)) return undefined;
+    return requestId;
+  }
+
+  private sortJobsByStartTime(jobs: DraftJob[]): DraftJob[] {
+    return jobs.sort((left, right) => {
+      const leftTime = left.startTime != null ? left.startTime.getTime() : 0;
+      const rightTime = right.startTime != null ? right.startTime.getTime() : 0;
+      // Newer events first
+      return rightTime - leftTime;
+    });
+  }
+
+  private compareEventTimes(left: EventMetric, right: EventMetric): number {
+    const leftTime = this.getEventTimeMs(left) ?? 0;
+    const rightTime = this.getEventTimeMs(right) ?? 0;
+    return leftTime - rightTime;
+  }
+
+  private getEventTimeMs(event: EventMetric): number | undefined {
+    const timeMs = new Date(event.timeStamp).getTime();
+    return Number.isNaN(timeMs) ? undefined : timeMs;
+  }
+
+  private createEventDate(event: EventMetric): Date | undefined {
+    const timeMs: number | undefined = this.getEventTimeMs(event);
+    if (timeMs == null) return undefined;
+    return new Date(timeMs);
   }
 
   private extractBuildIdFromEvent(event: EventMetric): string | null {

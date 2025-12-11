@@ -198,6 +198,7 @@ public class SyncService(
                                 syncConfig.UserId,
                                 new BuildConfig { ProjectId = syncConfig.ProjectId },
                                 false,
+                                null,
                                 CancellationToken.None
                             ),
                         null,

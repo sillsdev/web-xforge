@@ -417,9 +417,15 @@ export async function localizedScreenshots(
   await navLocator(page, 'settings').click();
   await navLocator(page, 'generate_draft').click();
   await expect(page.getByText('The draft is ready')).toBeVisible();
-  // Wait for the draft to finalize
-  await expect(page.getByText('Draft is Finishing')).toBeVisible();
-  await expect(page.getByText('Draft is Finishing')).not.toBeVisible({ timeout: 15_000 });
+  // Wait for draft to finalize. In some cases it may already have finalized, so if it doesn't show up, skip it
+  let finishing: boolean;
+  try {
+    await expect(page.getByText('Draft is Finishing')).toBeVisible({ timeout: 15_000 });
+    finishing = true;
+  } catch {
+    finishing = false;
+  }
+  if (finishing) await expect(page.getByText('Draft is Finishing')).not.toBeVisible({ timeout: 15_000 });
 
   // Select formatting options
   await user.click(page.getByRole('button', { name: 'Formatting options' }));
