@@ -107,9 +107,9 @@
       },
       "Serval.Client": {
         "type": "Direct",
-        "requested": "[1.12.1, )",
-        "resolved": "1.12.1",
-        "contentHash": "qRySQeyCJkFGMgotwzQac9HTasYqVGUjpgI1sMG1QyLT7oqEEpNMc0C33UEoXNBrSJJQFBs37AOQZaJxkO3oNA==",
+        "requested": "[1.13.0, )",
+        "resolved": "1.13.0",
+        "contentHash": "bHmmnEt3JmzmJkZV1DKNcRmxVtwO1n3Ub1OLQfheQpB8U1jXbmzpsLjtDbOT45SksEotTTj34obcMWbQIa6LfA==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.3",
           "System.ComponentModel.Annotations": "5.0.0"
