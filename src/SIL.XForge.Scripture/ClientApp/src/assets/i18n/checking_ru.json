@@ -35,7 +35,11 @@
     "report_issue_email": "электронная почта {{ email }}",
     "report_issue": "Сообщить о проблеме",
     "scripture_checking_not_available": "Проверка Писания в этом проекте недоступна.",
-    "update_is_available": "An update is available. Please refresh the page."
+    "update_is_available": "An update is available. Please refresh the page.",
+    "appearance": "Внешний вид",
+    "appearance_device": "Устройство",
+    "appearance_dark": "Темный, лишенный света",
+    "appearance_light": "Свет, освещение"
   },
   "attach_audio": {
     "tooltip_record": "Record audio",

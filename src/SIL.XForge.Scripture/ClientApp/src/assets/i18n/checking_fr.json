@@ -35,7 +35,11 @@
     "report_issue_email": "e-mail {{ email }}",
     "report_issue": "Signaler un problème",
     "scripture_checking_not_available": "La vérification des écritures n'est pas disponible dans ce projet.",
-    "update_is_available": "Une mise à jour est disponible. Veuillez rafraîchir la page."
+    "update_is_available": "Une mise à jour est disponible. Veuillez rafraîchir la page.",
+    "appearance": "Apparence",
+    "appearance_device": "Appareil",
+    "appearance_dark": "Sombre",
+    "appearance_light": "Lumière"
   },
   "attach_audio": {
     "tooltip_record": "Enregistrer l'audio",

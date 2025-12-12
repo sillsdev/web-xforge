@@ -35,7 +35,11 @@
     "report_issue_email": "电子邮件{{ email }}",
     "report_issue": "报告问题",
     "scripture_checking_not_available": "圣经检查在该项目中不可用。",
-    "update_is_available": "An update is available. Please refresh the page."
+    "update_is_available": "An update is available. Please refresh the page.",
+    "appearance": "外表",
+    "appearance_device": "设备",
+    "appearance_dark": "昏暗",
+    "appearance_light": "光"
   },
   "attach_audio": {
     "tooltip_record": "Record audio",

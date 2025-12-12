@@ -242,7 +242,7 @@
     "configure_advanced_settings_header": "Avancé",
     "configure_advanced_settings_title": "Paramètres avancés",
     "confirm_codes_correct_to_continue": "Veuillez confirmer que les codes de langue sont corrects avant de continuer",
-    "custom_configurations_apply": "Custom draft configurations have been applied by an administrator.",
+    "custom_configurations_apply": "Des configurations des ébauches personnalisées ont été appliquées par un administrateur.",
     "email_me": "Envoyez-moi un e-mail à {{ email }} lorsque l'ébauche est terminée.",
     "fast_training_warning": "L'activation de ceci permettra de gagner du temps mais réduira considérablement la précision.",
     "fast_training": "Activer un apprentissage rapide",
