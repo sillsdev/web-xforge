@@ -1,4 +1,13 @@
-import { hasData, hasFunctionProp, hasProp, hasStringProp, isObj, isString, notNull } from './type-utils';
+import {
+  hasData,
+  hasFunctionProp,
+  hasProp,
+  hasStringProp,
+  isObj,
+  isPopulatedString,
+  isString,
+  notNull
+} from './type-utils';
 
 const miscValues = [undefined, null, NaN, true, false, Infinity, -1, 0, Symbol(), '', '\0', () => {}, BigInt(3)];
 
@@ -87,5 +96,30 @@ describe('type utils', () => {
     expect(notNull({})).toBeTrue();
     expect(notNull(1)).toBeTrue();
     expect(notNull({ a: 'b' })).toBeTrue();
+  });
+
+  it('isPopulatedString should return true for non-empty strings', () => {
+    expect(isPopulatedString('a')).toBe(true);
+    expect(isPopulatedString('  a  ')).toBe(true);
+    expect(isPopulatedString(' ')).toBe(true);
+    expect(isPopulatedString('0')).toBe(true);
+    expect(isPopulatedString('false')).toBe(true);
+    const value: string | null | undefined = 'abc';
+    expect(isPopulatedString(value)).toBe(true);
+  });
+
+  it('isPopulatedString should return false for null, undefined, empty strings, or non-strings', () => {
+    expect(isPopulatedString(null)).toBe(false);
+    expect(isPopulatedString(undefined)).toBe(false);
+    expect(isPopulatedString('')).toBe(false);
+    let value: string | null | undefined = '';
+    expect(isPopulatedString(value)).toBe(false);
+    value = null;
+    expect(isPopulatedString(value)).toBe(false);
+    value = undefined;
+    expect(isPopulatedString(value)).toBe(false);
+    expect(isPopulatedString(0)).toBe(false);
+    expect(isPopulatedString({})).toBe(false);
+    expect(isPopulatedString([])).toBe(false);
   });
 });
