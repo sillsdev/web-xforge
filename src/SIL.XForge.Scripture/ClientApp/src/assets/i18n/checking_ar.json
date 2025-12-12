@@ -35,7 +35,11 @@
     "report_issue_email": "البريد الإلكتروني {{ email }}",
     "report_issue": "الإبلاغ عن مشكلة",
     "scripture_checking_not_available": "التحقُّق من النصوص الكتابية غير متوفر في هذا المشروع.",
-    "update_is_available": "يتوفَّر تحديثٌ للبرنامج. يُرجى تحديث الصفحة."
+    "update_is_available": "يتوفَّر تحديثٌ للبرنامج. يُرجى تحديث الصفحة.",
+    "appearance": "المظهر",
+    "appearance_device": "Device",
+    "appearance_dark": "مُظلم",
+    "appearance_light": "ضوء"
   },
   "attach_audio": {
     "tooltip_record": "Record audio",

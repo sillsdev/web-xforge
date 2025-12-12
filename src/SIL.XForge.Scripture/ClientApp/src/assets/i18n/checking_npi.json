@@ -35,7 +35,11 @@
     "report_issue_email": "इमेल {{ email }}",
     "report_issue": "समस्‍या रिपोर्ट गर्नुहोस्",
     "scripture_checking_not_available": "यस प्रोजेक्टमा ​​धर्मशास्त्र जाँच उपलब्ध छैन।",
-    "update_is_available": "अद्यावधिक उपलब्ध छ। कृपया पृष्ठ रिफ्रेस गर्नुहोस्।"
+    "update_is_available": "अद्यावधिक उपलब्ध छ। कृपया पृष्ठ रिफ्रेस गर्नुहोस्।",
+    "appearance": "रुपरंग",
+    "appearance_device": "Device",
+    "appearance_dark": "अँध्‍यारो",
+    "appearance_light": "चम्किलो"
   },
   "attach_audio": {
     "tooltip_record": "Record audio",

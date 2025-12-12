@@ -35,7 +35,11 @@
     "report_issue_email": "E-Mail {{ email }}",
     "report_issue": "Problem melden",
     "scripture_checking_not_available": "Überprüfung des Bibeltextes ist in diesem Projekt nicht verfügbar.",
-    "update_is_available": "Ein Update ist verfügbar. Bitte aktualisiere die Seite."
+    "update_is_available": "Ein Update ist verfügbar. Bitte aktualisiere die Seite.",
+    "appearance": "Darstellung",
+    "appearance_device": "Gerät",
+    "appearance_dark": "Dunkel",
+    "appearance_light": "Hell"
   },
   "attach_audio": {
     "tooltip_record": "Audio aufnehmen",
