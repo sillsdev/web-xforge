@@ -35,7 +35,11 @@
     "report_issue_email": "email {{ email }}",
     "report_issue": "Raportați o problemă",
     "scripture_checking_not_available": "Verificarea textului Scripturii nu este disponibilă în acest proiect.",
-    "update_is_available": "Este disponibilă o actualizare. Vă rugăm, reîncărcați pagina."
+    "update_is_available": "Este disponibilă o actualizare. Vă rugăm, reîncărcați pagina.",
+    "appearance": "Appearance",
+    "appearance_device": "Device",
+    "appearance_dark": "Întunecat",
+    "appearance_light": "Deschis"
   },
   "attach_audio": {
     "tooltip_record": "Record audio",

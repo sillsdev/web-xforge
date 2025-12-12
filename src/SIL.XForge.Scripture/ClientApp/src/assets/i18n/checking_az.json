@@ -35,7 +35,11 @@
     "report_issue_email": "e-poçt {{ email }}",
     "report_issue": "Problemi bildirin.",
     "scripture_checking_not_available": "Bu layihədə Kəlamın yoxlanması mövcud deyil. ",
-    "update_is_available": "Yeniləmə mümkündür Xahiş edirəm səhifəni yeniləyin."
+    "update_is_available": "Yeniləmə mümkündür Xahiş edirəm səhifəni yeniləyin.",
+    "appearance": "Appearance",
+    "appearance_device": "Cihaz",
+    "appearance_dark": "Dark",
+    "appearance_light": "Açıq rəngli"
   },
   "attach_audio": {
     "tooltip_record": "Səs yazın",
