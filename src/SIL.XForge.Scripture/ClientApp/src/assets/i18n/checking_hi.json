@@ -35,7 +35,11 @@
     "report_issue_email": "email {{ email }}",
     "report_issue": "Report an issue",
     "scripture_checking_not_available": "Scripture checking is not available in this project.",
-    "update_is_available": "An update is available. Please refresh the page."
+    "update_is_available": "An update is available. Please refresh the page.",
+    "appearance": "रूप",
+    "appearance_device": "डिवाइस",
+    "appearance_dark": "अंधेरा",
+    "appearance_light": "प्रकाश"
   },
   "attach_audio": {
     "tooltip_record": "Record audio",

@@ -35,7 +35,11 @@
     "report_issue_email": "surel {{ email }}",
     "report_issue": "Laporkan masalah",
     "scripture_checking_not_available": "Pemeriksaan Alkitab tidak tersedia pada proyek ini.",
-    "update_is_available": "Pembaruan telah tersedia. Silakan muat ulang halaman."
+    "update_is_available": "Pembaruan telah tersedia. Silakan muat ulang halaman.",
+    "appearance": "Tampak, wujud",
+    "appearance_device": "Perangkat",
+    "appearance_dark": "Gelap",
+    "appearance_light": "Cahaya"
   },
   "attach_audio": {
     "tooltip_record": "Rekam suara",

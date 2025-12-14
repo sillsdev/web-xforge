@@ -35,7 +35,11 @@
     "report_issue_email": "e-mail {{ email }}",
     "report_issue": "Relatar um problema",
     "scripture_checking_not_available": "A verificação do Texto Bíblico não está disponível neste projeto.",
-    "update_is_available": "Uma atualização está disponível. Por favor, atualize a página."
+    "update_is_available": "Uma atualização está disponível. Por favor, atualize a página.",
+    "appearance": "Aparência",
+    "appearance_device": "Device",
+    "appearance_dark": "Escuro",
+    "appearance_light": "Luz"
   },
   "attach_audio": {
     "tooltip_record": "Record audio",
