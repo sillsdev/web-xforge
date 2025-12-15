@@ -96,7 +96,7 @@
         >
           <ng-template matStepLabel>{{ t("connect_project") }}</ng-template>
 
-          <h1>{{ t("connect_project") }}</h1>
+          <h1>{{ t("connect_to_project") }}</h1>
 
           @if (selectedParatextProject != null) {
             <p>
@@ -131,9 +131,12 @@
           <ng-template matStepLabel>{{ t("connecting") }}</ng-template>
 
           @if (isConnecting) {
-            <h1>{{ t("connecting_project") }}</h1>
+            <h1>{{ t("connecting_to_project") }}</h1>
             @if (targetProjectDoc$ | async; as projectDoc) {
-              <app-sync-progress [projectDoc]="$any(projectDoc)" [showSyncStatus]="true"></app-sync-progress>
+              <app-sync-progress
+                [projectDoc]="$any(projectDoc)"
+                (inProgress)="updateConnectStatus($event)"
+              ></app-sync-progress>
             } @else {
               <p>{{ t("setting_up_project") }}</p>
               <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
@@ -182,7 +185,7 @@
               matStepperNext
               [disabled]="selectedBooks.length === 0 || isConnecting || isImporting || noDraftsAvailable"
             >
-              {{ t("next") }}
+              {{ showOverwriteConfirmation ? t("next") : t("import") }}
               <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
             </button>
           </div>
@@ -244,7 +247,7 @@
               matStepperNext
               [disabled]="!overwriteForm.valid || isConnecting || isImporting"
             >
-              {{ t("continue") }}
+              {{ t("import") }}
               <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
             </button>
           </div>
@@ -321,7 +324,10 @@
         @if (isSyncing) {
           <h1>{{ t("syncing_project") }}</h1>
           @if (targetProjectDoc$ | async; as projectDoc) {
-            <app-sync-progress [projectDoc]="$any(projectDoc)"></app-sync-progress>
+            <app-sync-progress
+              [projectDoc]="$any(projectDoc)"
+              (inProgress)="updateSyncStatus($event)"
+            ></app-sync-progress>
           }
         }
 
