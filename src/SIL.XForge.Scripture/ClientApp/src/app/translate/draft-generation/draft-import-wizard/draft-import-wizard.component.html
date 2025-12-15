@@ -91,7 +91,7 @@
       <!-- Step 2: Connect Confirmation (conditional) -->
       @if (needsConnection) {
         <mat-step
-          [completed]="!needsConnection || isConnecting || connectionError != null"
+          [completed]="!needsConnection || isConnecting || connectionError == null"
           [editable]="!isConnecting && !isImporting"
         >
           <ng-template matStepLabel>{{ t("connect_project") }}</ng-template>
@@ -109,6 +109,10 @@
             </p>
           }
 
+          @if (connectionError != null) {
+            <app-notice type="error">{{ connectionError }}</app-notice>
+          }
+
           <div class="button-strip">
             <button mat-stroked-button matStepperPrevious [disabled]="isConnecting || isImporting">
               <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
@@ -118,7 +122,7 @@
               mat-flat-button
               color="primary"
               (click)="connectToProject()"
-              [disabled]="isConnecting || isImporting"
+              [disabled]="isConnecting || isImporting || connectionError != null"
             >
               {{ t("connect") }}
               <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
@@ -154,6 +158,25 @@
               <button mat-flat-button color="primary" (click)="retryProjectConnection()" [disabled]="isImporting">
                 <mat-icon>refresh</mat-icon>
                 {{ t("retry") }}
+              </button>
+            </div>
+          } @else if (!isConnecting) {
+            <h1>{{ t("connected_to_project") }}</h1>
+            @if (targetProject$ | async; as project) {
+              <app-notice [icon]="'verified'">
+                {{
+                  t("ready_to_import", { projectShortName: $any(project).shortName, projectName: $any(project).name })
+                }}
+              </app-notice>
+            }
+            <div class="button-strip">
+              <button mat-stroked-button matStepperPrevious [disabled]="isImporting">
+                <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
+                {{ t("back") }}
+              </button>
+              <button mat-flat-button matStepperNext color="primary" [disabled]="isImporting">
+                {{ t("next") }}
+                <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
               </button>
             </div>
           }

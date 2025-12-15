@@ -174,7 +174,7 @@ export class DraftImportWizardComponent implements OnInit {
           checkingEnabled: false
         });
 
-        // updateSyncStatus() will handle the sync finishing and move to the next step after "connecting"
+        // updateConnectStatus() will handle the sync finishing and move to the next step after "connecting"
         this.stepper?.next();
 
         if (this.targetProjectId != null) {
@@ -200,7 +200,6 @@ export class DraftImportWizardComponent implements OnInit {
       const projectDoc = this.targetProjectDoc$.value;
       if (projectDoc?.data == null) {
         this.isConnecting = false;
-        this.stepper?.next();
         return;
       }
 
@@ -214,9 +213,6 @@ export class DraftImportWizardComponent implements OnInit {
         })
         .finally(() => {
           this.isConnecting = false;
-          this.stepper?.next();
-          // TODO: Why is this step not advancing?
-          // TODO: Why is the book step shown as ticked?
         });
     }
   }
