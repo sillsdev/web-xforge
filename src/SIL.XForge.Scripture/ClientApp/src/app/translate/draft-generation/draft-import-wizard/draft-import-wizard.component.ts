@@ -155,30 +155,33 @@ export class DraftImportWizardComponent implements OnInit {
         const projectDoc = await this.projectService.get(this.targetProjectId);
         this.targetProjectDoc$.next(projectDoc);
         if (projectDoc.data != null) {
-          await this.analyzeTargetProject(projectDoc.data, paratextProject);
+          await this.analyzeTargetProject(projectDoc.data, paratextProject.isConnected);
         }
+
+        try {
+          await this.analyzeBooksForOverwrite();
+        } catch (analysisError) {
+          console.error('Failed to analyze books for overwrite', analysisError);
+        }
+
+        this.isConnecting = false;
+        this.stepper?.next();
       } else {
         // Create SF project for this Paratext project
-        this.targetProjectId = await this.projectService.onlineCreateResourceProject(paratextId);
+        this.targetProjectId = await this.projectService.onlineCreate({
+          paratextId: paratextId,
+          sourceParatextId: null,
+          checkingEnabled: false
+        });
+
+        // updateSyncStatus() will handle the sync finishing and move to the next step after "connecting"
+        this.stepper?.next();
 
         if (this.targetProjectId != null) {
           const projectDoc = await this.projectService.get(this.targetProjectId);
           this.targetProjectDoc$.next(projectDoc);
-          if (projectDoc.data != null) {
-            await this.analyzeTargetProject(projectDoc.data, paratextProject);
-          }
         }
       }
-
-      try {
-        await this.analyzeBooksForOverwrite();
-      } catch (analysisError) {
-        console.error('Failed to analyze books for overwrite', analysisError);
-      }
-
-      this.isConnecting = false;
-      this.stepper?.next();
-      this.needsConnection = false;
     } catch (error) {
       this.connectionError =
         error instanceof Error && error.message.length > 0
@@ -190,6 +193,36 @@ export class DraftImportWizardComponent implements OnInit {
 
   retryProjectConnection(): void {
     void this.connectToProject(true);
+  }
+
+  updateConnectStatus(inProgress: boolean): void {
+    if (!inProgress) {
+      const projectDoc = this.targetProjectDoc$.value;
+      if (projectDoc?.data == null) {
+        this.isConnecting = false;
+        this.stepper?.next();
+        return;
+      }
+
+      void this.analyzeTargetProject(projectDoc.data, false)
+        .then(async () => {
+          try {
+            return await this.analyzeBooksForOverwrite();
+          } catch (analysisError) {
+            console.error('Failed to analyze books for overwrite', analysisError);
+          }
+        })
+        .finally(() => {
+          this.isConnecting = false;
+          this.stepper?.next();
+          // TODO: Why is this step not advancing?
+          // TODO: Why is the book step shown as ticked?
+        });
+    }
+  }
+
+  updateSyncStatus(inProgress: boolean): void {
+    if (!inProgress) this.syncComplete = true;
   }
 
   onStepSelectionChange(event: StepperSelectionEvent): void {
@@ -340,11 +373,10 @@ export class DraftImportWizardComponent implements OnInit {
       this.noDraftsAvailable = this.availableBooksForImport.length === 0;
       return;
     }
-
-    await this.applySourceProject(this.sourceProjectId);
   }
 
-  private async applySourceProject(projectId: string): Promise<void> {
+  async applyDraftToProject(projectId: string): Promise<void> {
+    // TODO: Use this function!
     // Build a scripture range and timestamp to import
     const scriptureRange = this.availableBooksForImport.map(b => b.bookId).join(';');
     const timestamp: Date =
@@ -401,28 +433,33 @@ export class DraftImportWizardComponent implements OnInit {
       try {
         const projectDoc = await this.projectService.getProfile(this.targetProjectId);
         if (projectDoc.data != null) {
-          await this.analyzeTargetProject(projectDoc.data, paratextProject);
+          await this.analyzeTargetProject(projectDoc.data, paratextProject.isConnected);
         }
       } finally {
         this.isLoadingProject = false;
       }
     } else {
       // Need to create SF project - this will happen after connection step
-      this.targetProjectId = undefined;
-      this.needsConnection = true;
-      this.canEditProject = paratextProject.isConnectable;
-      this.targetProject$.next(undefined);
-      this.targetProjectDoc$.next(undefined);
-      await this.validateProject();
+      this.isLoadingProject = true;
+      try {
+        this.targetProjectId = undefined;
+        this.needsConnection = true;
+        this.canEditProject = paratextProject.isConnectable;
+        this.targetProject$.next(undefined);
+        this.targetProjectDoc$.next(undefined);
+        await this.validateProject();
+      } finally {
+        this.isLoadingProject = false;
+      }
     }
   }
 
-  private async analyzeTargetProject(project: SFProjectProfile, paratextProject: ParatextProject): Promise<void> {
+  private async analyzeTargetProject(project: SFProjectProfile, isConnected: boolean): Promise<void> {
     // Check permissions for all books
     this.canEditProject = this.textDocService.userHasGeneralEditRight(project);
 
     // Connection status comes from ParatextProject
-    this.needsConnection = !paratextProject.isConnected && this.canEditProject;
+    this.needsConnection = !isConnected && this.canEditProject;
 
     if (this.canEditProject && this.targetProjectId != null) {
       this.targetProject$.next(project);
@@ -685,9 +722,7 @@ export class DraftImportWizardComponent implements OnInit {
     this.syncError = undefined;
 
     try {
-      // TODO: Register for SignalR updates for sync
       await this.projectService.onlineSync(this.targetProjectId);
-      this.syncComplete = true;
       this.stepper?.next();
     } catch (error) {
       this.syncError = error instanceof Error ? error.message : 'Sync failed';
