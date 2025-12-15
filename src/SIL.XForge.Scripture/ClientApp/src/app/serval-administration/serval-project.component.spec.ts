@@ -15,13 +15,13 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { AuthService } from 'xforge-common/auth.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { FileType } from 'xforge-common/models/file-offline-data';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
-import { FileType } from '../../xforge-common/models/file-offline-data';
-import { RealtimeQuery } from '../../xforge-common/models/realtime-query';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { TrainingDataDoc } from '../core/models/training-data-doc';
 import { SFProjectService } from '../core/sf-project.service';
