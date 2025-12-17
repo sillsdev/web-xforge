@@ -1,4 +1,5 @@
 import { DestroyRef, Injectable } from '@angular/core';
+import { VerseRef } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
@@ -178,9 +179,21 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.realtimeService.subscribeQuery(TextAudioDoc.COLLECTION, queryParams, destroyRef);
   }
 
-  queryBiblicalTerms(sfProjectId: string, destroyRef: DestroyRef): Promise<RealtimeQuery<BiblicalTermDoc>> {
+  queryBiblicalTerms(
+    sfProjectId: string,
+    bookNum: number,
+    destroyRef: DestroyRef
+  ): Promise<RealtimeQuery<BiblicalTermDoc>> {
+    const bookStart = VerseRef.getBBBCCCVVV(bookNum, 0, 0);
+    const bookEnd = VerseRef.getBBBCCCVVV(bookNum + 1, 0, 0);
     const queryParams: QueryParameters = {
-      [obj<BiblicalTerm>().pathStr(t => t.projectRef)]: sfProjectId
+      [obj<BiblicalTerm>().pathStr(t => t.projectRef)]: sfProjectId,
+      [obj<BiblicalTerm>().pathStr(q => q.references)]: {
+        $elemMatch: {
+          $gte: bookStart,
+          $lt: bookEnd
+        }
+      }
     };
     return this.realtimeService.subscribeQuery(BiblicalTermDoc.COLLECTION, queryParams, destroyRef);
   }
