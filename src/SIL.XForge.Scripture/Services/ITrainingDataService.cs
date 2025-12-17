@@ -18,5 +18,6 @@ public interface ITrainingDataService
         IList<ISFText> sourceTexts,
         IList<ISFText> targetTexts
     );
+    Task MarkFileDeleted(string userId, string projectId, string fileId);
     Task<Uri> SaveTrainingDataAsync(string userId, string projectId, string dataId, string path);
 }

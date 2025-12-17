@@ -7,6 +7,7 @@ import { MatCheckboxHarness } from '@angular/material/checkbox/testing';
 import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { getTrainingDataId, TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -16,11 +17,13 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
+import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
@@ -1262,6 +1265,60 @@ describe('DraftGenerationStepsComponent', () => {
         sendEmailOnBuildFinished: false
       });
     });
+
+    it('sets trainingDataFiles from realtime query results', fakeAsync(() => {
+      const realtimeService = TestBed.inject(TestRealtimeService);
+      realtimeService.addSnapshots<TrainingData>(TrainingDataDoc.COLLECTION, [
+        {
+          id: getTrainingDataId('project01', 'keep1'),
+          data: {
+            projectRef: 'project01',
+            dataId: 'keep1',
+            fileUrl: 'project01/keep1.csv',
+            mimeType: 'text/csv',
+            skipRows: 0,
+            title: 'keep1.csv',
+            ownerRef: 'user01',
+            deleted: false
+          }
+        },
+        {
+          id: getTrainingDataId('project01', 'skip-deleted'),
+          data: {
+            projectRef: 'project01',
+            dataId: 'skip-deleted',
+            fileUrl: 'project01/deleted.csv',
+            mimeType: 'text/csv',
+            skipRows: 0,
+            title: 'deleted.csv',
+            ownerRef: 'user01',
+            deleted: true
+          }
+        },
+        {
+          id: getTrainingDataId('otherProject', 'other'),
+          data: {
+            projectRef: 'otherProject',
+            dataId: 'other',
+            fileUrl: 'other/other.csv',
+            mimeType: 'text/csv',
+            skipRows: 0,
+            title: 'other.csv',
+            ownerRef: 'user02',
+            deleted: false
+          }
+        }
+      ]);
+
+      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      const trainingDataFiles: Readonly<TrainingData>[] = (component as any).trainingDataFiles;
+      expect(trainingDataFiles.map(td => td.dataId)).toEqual(['keep1']);
+    }));
   });
 
   describe('confirm step', () => {

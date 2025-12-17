@@ -1,8 +1,7 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { getTrainingDataId, TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
-import { anything, mock, verify } from 'ts-mockito';
-import { FileService } from 'xforge-common/file.service';
-import { FileType } from 'xforge-common/models/file-offline-data';
+import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
+import { CommandService } from 'xforge-common/command.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { noopDestroyRef } from 'xforge-common/realtime.service';
@@ -10,6 +9,7 @@ import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { TypeRegistry } from 'xforge-common/type-registry';
+import { PROJECTS_URL } from 'xforge-common/url-constants';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { TrainingDataService } from './training-data.service';
 
@@ -24,7 +24,8 @@ describe('TrainingDataService', () => {
         mimeType: 'text/csv',
         skipRows: 0,
         title: 'test.csv',
-        ownerRef: 'user01'
+        ownerRef: 'user01',
+        deleted: false
       }
     },
     {
@@ -36,18 +37,19 @@ describe('TrainingDataService', () => {
         mimeType: 'text/csv',
         skipRows: 0,
         title: 'test2.csv',
-        ownerRef: 'user01'
+        ownerRef: 'user01',
+        deleted: false
       }
     }
   ];
   let trainingDataService: TrainingDataService;
   let realtimeService: TestRealtimeService;
-  const mockedFileService = mock(FileService);
+  const mockedCommandService = mock(CommandService);
 
   configureTestingModule(() => ({
     providers: [
-      provideTestRealtime(new TypeRegistry([TrainingDataDoc], [FileType.TrainingData], [])),
-      { provide: FileService, useMock: mockedFileService }
+      provideTestRealtime(new TypeRegistry([TrainingDataDoc], [], [])),
+      { provide: CommandService, useMock: mockedCommandService }
     ]
   }));
 
@@ -55,6 +57,8 @@ describe('TrainingDataService', () => {
     realtimeService = TestBed.inject(TestRealtimeService);
     realtimeService.addSnapshots<TrainingData>(TrainingDataDoc.COLLECTION, trainingData);
     trainingDataService = TestBed.inject(TrainingDataService);
+
+    when(mockedCommandService.onlineInvoke<void>(anything(), anything(), anything())).thenResolve();
   });
 
   it('should create a training data doc', fakeAsync(async () => {
@@ -65,7 +69,8 @@ describe('TrainingDataService', () => {
       mimeType: 'text/csv',
       skipRows: 0,
       title: 'test3.csv',
-      ownerRef: 'user01'
+      ownerRef: 'user01',
+      deleted: false
     };
     await trainingDataService.createTrainingDataAsync(newTrainingData);
     tick();
@@ -77,16 +82,7 @@ describe('TrainingDataService', () => {
     expect(trainingDataDoc.data).toEqual(newTrainingData);
   }));
 
-  it('should delete a training data doc', fakeAsync(async () => {
-    // Verify the document exists
-    const existingTrainingDataDoc = realtimeService.get<TrainingDataDoc>(
-      TrainingDataDoc.COLLECTION,
-      getTrainingDataId('project01', 'data01')
-    );
-    expect(existingTrainingDataDoc.data?.dataId).toBe('data01');
-    expect(existingTrainingDataDoc.data?.projectRef).toBe('project01');
-
-    // SUT
+  it('should request deletion via RPC', fakeAsync(async () => {
     const trainingDataToDelete: TrainingData = {
       projectRef: 'project01',
       dataId: 'data01',
@@ -94,23 +90,18 @@ describe('TrainingDataService', () => {
       mimeType: '',
       skipRows: 0,
       title: '',
-      ownerRef: 'user01'
+      ownerRef: 'user01',
+      deleted: false
     };
+
     await trainingDataService.deleteTrainingDataAsync(trainingDataToDelete);
     tick();
 
-    const trainingDataDoc = realtimeService.get<TrainingDataDoc>(
-      TrainingDataDoc.COLLECTION,
-      getTrainingDataId('project01', 'data01')
-    );
-    expect(trainingDataDoc.data).toBeUndefined();
     verify(
-      mockedFileService.deleteFile(
-        FileType.TrainingData,
-        'project01',
-        TrainingDataDoc.COLLECTION,
-        anything(),
-        anything()
+      mockedCommandService.onlineInvoke<void>(
+        PROJECTS_URL,
+        'markTrainingDataDeleted',
+        deepEqual({ projectId: 'project01', dataId: 'data01' })
       )
     ).once();
   }));
