@@ -11,4 +11,5 @@ public class TrainingData : ProjectData
     public string MimeType { get; set; } = string.Empty;
     public int SkipRows { get; set; }
     public string Title { get; set; } = string.Empty;
+    public bool Deleted { get; set; } = false;
 }
