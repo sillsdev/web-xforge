@@ -184,7 +184,8 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
           this.savedTrainingFiles?.filter(saved => !this.availableTrainingFiles.includes(saved)) ?? [];
         const addedFiles = this.availableTrainingFiles.filter(selected => !this.savedTrainingFiles?.includes(selected));
 
-        this.savedTrainingFiles = this.trainingDataQuery?.docs.filter(d => d.data != null).map(d => d.data!) ?? [];
+        this.savedTrainingFiles =
+          this.trainingDataQuery?.docs.filter(d => d.data != null && !d.data.deleted).map(d => d.data!) ?? [];
         this.availableTrainingFiles = this.savedTrainingFiles
           .filter(d => removedFiles.findIndex(f => f.dataId === d.dataId) === -1)
           .concat(addedFiles);

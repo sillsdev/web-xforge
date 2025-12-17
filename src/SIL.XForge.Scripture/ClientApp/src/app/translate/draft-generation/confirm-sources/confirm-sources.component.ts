@@ -58,7 +58,10 @@ export class ConfirmSourcesComponent {
         )
           .pipe(quietTakeUntilDestroyed(this.destroyRef, { logWarnings: false }))
           .subscribe(() => {
-            this.trainingDataFiles = this.trainingDataQuery?.docs.map(doc => doc.data).filter(d => d != null) ?? [];
+            this.trainingDataFiles =
+              (this.trainingDataQuery?.docs
+                .map(doc => doc.data)
+                .filter(d => d != null && !d.deleted) as TrainingData[]) ?? [];
           });
       }
     });
