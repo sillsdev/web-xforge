@@ -501,6 +501,35 @@ public class TrainingDataServiceTests
         );
     }
 
+    [Test]
+    public async Task MarkFileDeleted_SetsDeletedFlag()
+    {
+        var env = new TestEnvironment();
+
+        await using IConnection conn = await env.RealtimeService.ConnectAsync(User01);
+        IDocument<TrainingData> trainingDataDoc = await conn.FetchAsync<TrainingData>(
+            TrainingData.GetDocId(Project01, Data01)
+        );
+
+        Assert.That(trainingDataDoc.IsLoaded, Is.True);
+        conn.Dispose();
+
+        await env.Service.MarkFileDeleted(User01, Project01, Data01);
+
+        await using IConnection conn2 = await env.RealtimeService.ConnectAsync(User01);
+        trainingDataDoc = await conn2.FetchAsync<TrainingData>(TrainingData.GetDocId(Project01, Data01));
+
+        Assert.That(trainingDataDoc.Data.Deleted, Is.True);
+    }
+
+    [Test]
+    public void MarkFileDeleted_TrainingDataMissing()
+    {
+        var env = new TestEnvironment();
+
+        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.MarkFileDeleted(User01, Project01, "missing_id"));
+    }
+
     /// <summary>
     /// A memory stream that must be manually disposed.
     /// </summary>
@@ -584,10 +613,12 @@ public class TrainingDataServiceTests
                 .HasRight(Arg.Any<SFProject>(), User01, SFProjectDomain.TrainingData, Arg.Any<string>())
                 .Returns(true);
             Service = new TrainingDataService(FileSystemService, realtimeService, projectRights, SiteOptions);
+            RealtimeService = realtimeService;
         }
 
         public IFileSystemService FileSystemService { get; }
         public TrainingDataService Service { get; }
         public IOptions<SiteOptions> SiteOptions { get; }
+        public IRealtimeService RealtimeService { get; }
     }
 }

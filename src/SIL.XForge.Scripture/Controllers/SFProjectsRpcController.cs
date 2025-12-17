@@ -707,6 +707,35 @@ public class SFProjectsRpcController(
         }
     }
 
+    public async Task<IRpcMethodResult> MarkTrainingDataDeleted(string projectId, string dataId)
+    {
+        try
+        {
+            await trainingDataService.MarkFileDeleted(UserId, projectId, dataId);
+            return Ok();
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", "MarkTrainingDataDeleted" },
+                    { "projectId", projectId },
+                    { "dataId", dataId },
+                }
+            );
+            throw;
+        }
+    }
+
     public async Task<IRpcMethodResult> EventMetrics(
         string? projectId,
         EventScope[]? scopes = null,
