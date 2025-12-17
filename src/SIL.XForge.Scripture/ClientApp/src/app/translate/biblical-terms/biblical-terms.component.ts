@@ -381,11 +381,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
             this.loadingFinished();
           });
 
-        if (
-          !this.appOnline &&
-          (biblicalTermsNotesChanges$.pipe(filter(val => val == null)) ||
-            biblicalTermsChanges$.pipe(filter(val => val == null)))
-        ) {
+        if (!this.appOnline && !this.biblicalTermsLoaded) {
           this.loadingFinished();
         } else {
           this.biblicalTermsLoaded = true;

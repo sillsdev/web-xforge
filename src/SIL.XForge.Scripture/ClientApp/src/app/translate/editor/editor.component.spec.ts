@@ -4921,7 +4921,7 @@ class TestEnvironment {
         noopDestroyRef
       )
     );
-    when(mockedSFProjectService.queryBiblicalTerms(anything(), anything())).thenCall(id =>
+    when(mockedSFProjectService.queryBiblicalTerms(anything(), anything(), anything())).thenCall(id =>
       this.realtimeService.subscribeQuery(
         BiblicalTermDoc.COLLECTION,
         {

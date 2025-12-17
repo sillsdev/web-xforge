@@ -437,6 +437,8 @@ describe('BiblicalTermsComponent', () => {
     env.setupProjectData('en');
     env.onlineStatus = false;
     env.wait();
+    env.component.biblicalTermsLoaded = false;
+    env.wait();
     expect(env.offlineMessage.length).toBe(1);
   }));
 
@@ -483,7 +485,7 @@ class TestEnvironment {
 
   constructor(projectId: string | undefined, bookNum: number, chapter: number, verse: string = '0') {
     when(mockedI18nService.locale$).thenReturn(this.locale$);
-    when(mockedProjectService.queryBiblicalTerms(anything(), anything())).thenCall(sfProjectId => {
+    when(mockedProjectService.queryBiblicalTerms(anything(), anything(), anything())).thenCall(sfProjectId => {
       const parameters: QueryParameters = {
         [obj<BiblicalTerm>().pathStr(t => t.projectRef)]: sfProjectId
       };
