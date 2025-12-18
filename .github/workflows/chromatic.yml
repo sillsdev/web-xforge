@@ -60,6 +60,11 @@ jobs:
         run: cd src/RealtimeServer && (npm ci || (sleep 3m && npm ci))
       - name: "Deps: Frontend npm"
         run: cd src/SIL.XForge.Scripture/ClientApp && (npm ci || (sleep 3m && npm ci))
+      - name: "Deps: Update CA certificates"
+        run: |
+          sudo apt update
+          sudo apt install ca-certificates
+          sudo update-ca-certificates
       - name: "Deps: Playwright dependencies"
         run: |
           set -xueo pipefail
