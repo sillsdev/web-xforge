@@ -316,6 +316,10 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
     return this.status === 'initial' || this.status === 'loading';
   }
 
+  get isOnline(): boolean {
+    return this.onlineStatusService.isOnline;
+  }
+
   ngOnDestroy(): void {
     void this.promiseForQuestionDocQuery.then(query => query.dispose());
   }
