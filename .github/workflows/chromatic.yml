@@ -46,6 +46,7 @@ jobs:
           node --version
           which npm
           npm --version
+          curl -I https://644bffe327c540a62f0fd260-dogskmzbvg.chromatic.com/
       - name: "Ensure desired tool versions"
         # The build machine may come with newer tools than we are ready for.
         env:
@@ -60,11 +61,6 @@ jobs:
         run: cd src/RealtimeServer && (npm ci || (sleep 3m && npm ci))
       - name: "Deps: Frontend npm"
         run: cd src/SIL.XForge.Scripture/ClientApp && (npm ci || (sleep 3m && npm ci))
-      - name: "Deps: Update CA certificates"
-        run: |
-          sudo apt update
-          sudo apt install ca-certificates
-          sudo update-ca-certificates
       - name: "Deps: Playwright dependencies"
         run: |
           set -xueo pipefail
