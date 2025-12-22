@@ -59,9 +59,36 @@ describe('TrainingDataMultiSelectComponent', () => {
 
   beforeEach(fakeAsync(() => {
     mockTrainingData = [
-      { dataId: 'data01', fileUrl: '', mimeType: '', skipRows: 0, title: '', projectRef: '', ownerRef: 'user01' },
-      { dataId: 'data02', fileUrl: '', mimeType: '', skipRows: 0, title: '', projectRef: '', ownerRef: 'user01' },
-      { dataId: 'data03', fileUrl: '', mimeType: '', skipRows: 0, title: '', projectRef: '', ownerRef: 'user01' }
+      {
+        dataId: 'data01',
+        fileUrl: '',
+        mimeType: '',
+        skipRows: 0,
+        title: '',
+        projectRef: '',
+        ownerRef: 'user01',
+        deleted: false
+      },
+      {
+        dataId: 'data02',
+        fileUrl: '',
+        mimeType: '',
+        skipRows: 0,
+        title: '',
+        projectRef: '',
+        ownerRef: 'user01',
+        deleted: false
+      },
+      {
+        dataId: 'data03',
+        fileUrl: '',
+        mimeType: '',
+        skipRows: 0,
+        title: '',
+        projectRef: '',
+        ownerRef: 'user01',
+        deleted: false
+      }
     ];
     when(mockActivatedProjectService.projectId).thenReturn(mockProjectId);
     when(mockActivatedProjectService.projectId$).thenReturn(mockProjectId$);

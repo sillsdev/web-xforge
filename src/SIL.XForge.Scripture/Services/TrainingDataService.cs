@@ -12,6 +12,7 @@ using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using SIL.XForge.Configuration;
 using SIL.XForge.Realtime;
+using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
@@ -125,6 +126,26 @@ public class TrainingDataService(
         {
             fileSystemService.DeleteFile(filePath);
         }
+    }
+
+    public async Task MarkFileDeleted(string userId, string projectId, string fileId)
+    {
+        await using IConnection conn = await realtimeService.ConnectAsync(userId);
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
+        if (!projectDoc.IsLoaded)
+        {
+            throw new DataNotFoundException("The project does not exist.");
+        }
+
+        IDocument<TrainingData> trainingDataDoc = await conn.FetchAsync<TrainingData>(
+            TrainingData.GetDocId(projectId, fileId)
+        );
+        if (!trainingDataDoc.IsLoaded)
+        {
+            throw new DataNotFoundException("The training data does not exist.");
+        }
+
+        await trainingDataDoc.SubmitJson0OpAsync(op => op.Set(td => td.Deleted, true));
     }
 
     /// <summary>
