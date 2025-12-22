@@ -238,6 +238,29 @@ public class ParatextControllerTests
     }
 
     [Test]
+    public async Task GetNotesAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var expectedNotes = new[]
+        {
+            new ParatextNote
+            {
+                Id = "thread-01",
+                VerseRef = "GEN 1:1",
+                Comments = [new ParatextNoteComment { VerseRef = "GEN 1:1", Content = "<p>Content</p>" }],
+            },
+        };
+        env.ParatextService.GetNoteThreads(Arg.Any<UserSecret>(), Project01).Returns(expectedNotes);
+
+        // SUT
+        ActionResult<IEnumerable<ParatextNote>> actual = await env.Controller.GetNotesAsync(Project01);
+
+        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+        Assert.AreSame(expectedNotes, ((OkObjectResult)actual.Result!).Value);
+    }
+
+    [Test]
     public async Task GetRevisionHistoryAsync_Forbidden()
     {
         // Set up test environment
