@@ -33,7 +33,6 @@ import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { BuildStates } from '../../../machine-api/build-states';
-import { QuotationAnalysis } from '../../../machine-api/quotation-denormalization';
 import { ServalAdministrationService } from '../../../serval-administration/serval-administration.service';
 import { provideQuillRegistrations } from '../../../shared/text/quill-editor-registration/quill-providers';
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
@@ -184,7 +183,7 @@ describe('DraftUsfmFormatComponent', () => {
   }));
 
   it('should initialize and default to best guess and automatic quotes', fakeAsync(async () => {
-    const env = new TestEnvironment({ quotationAnalysis: QuotationAnalysis.Successful });
+    const env = new TestEnvironment({ canDenormalizeQuotes: true });
     expect(env.component.paragraphFormat.value).toBe(ParagraphBreakFormat.BestGuess);
     expect(env.component.quoteFormat.value).toBe(QuoteFormat.Denormalized);
     expect(await env.component.confirmLeave()).toBe(true);
@@ -278,7 +277,7 @@ describe('DraftUsfmFormatComponent', () => {
   }));
 
   it('shows a notice if unable to detect the quote convention for the project', fakeAsync(() => {
-    const env = new TestEnvironment({ quotationAnalysis: QuotationAnalysis.Unsuccessful });
+    const env = new TestEnvironment({ canDenormalizeQuotes: false });
     expect(env.quoteFormatWarning).not.toBeNull();
   }));
 });
@@ -290,11 +289,11 @@ class TestEnvironment {
   readonly projectId = 'project01';
   onlineStatusService: TestOnlineStatusService;
 
-  constructor(args: { project?: Partial<SFProjectProfile>; quotationAnalysis?: QuotationAnalysis } = {}) {
+  constructor(args: { project?: Partial<SFProjectProfile>; canDenormalizeQuotes?: boolean } = {}) {
     const userDoc = mock(UserDoc);
     this.onlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
     when(mockedDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(
-      of(this.getTestBuildDto(args.quotationAnalysis ?? QuotationAnalysis.Successful))
+      of(this.getTestBuildDto(args.canDenormalizeQuotes ?? true))
     );
     when(mockedUserService.getCurrentUser()).thenResolve(userDoc);
     when(mockedDraftHandlingService.getDraft(anything(), anything())).thenReturn(
@@ -369,7 +368,7 @@ class TestEnvironment {
     when(mockedActivatedProjectService.projectDoc).thenReturn(projectDoc);
   }
 
-  private getTestBuildDto(quotationAnalysis: QuotationAnalysis): BuildDto {
+  private getTestBuildDto(canDenormalizeQuotes: boolean): BuildDto {
     return {
       id: 'build01',
       state: BuildStates.Completed,
@@ -387,7 +386,7 @@ class TestEnvironment {
         translationScriptureRanges: [{ projectId: 'source01', scriptureRange: 'EXO' }],
         trainingScriptureRanges: [{ projectId: 'source01', scriptureRange: 'GEN' }],
         trainingDataFileIds: [] as string[],
-        quotationDenormalization: quotationAnalysis
+        canDenormalizeQuotes
       }
     };
   }

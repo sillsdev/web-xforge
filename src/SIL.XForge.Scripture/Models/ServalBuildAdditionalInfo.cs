@@ -1,8 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using SIL.Converters.Usj;
 
 namespace SIL.XForge.Scripture.Models;
 
@@ -20,13 +17,5 @@ public class ServalBuildAdditionalInfo
     public HashSet<string> TrainingDataFileIds { get; init; } = [];
     public string TranslationEngineId { get; init; } = string.Empty;
     public HashSet<ProjectScriptureRange> TranslationScriptureRanges { get; init; } = [];
-
-    [JsonConverter(typeof(StringEnumConverter), typeof(LowerCaseNamingStrategy))]
-    public QuotationAnalysis QuotationDenormalization { get; set; } = QuotationAnalysis.Unsuccessful;
-}
-
-public enum QuotationAnalysis
-{
-    Successful,
-    Unsuccessful,
+    public bool CanDenormalizeQuotes { get; set; } = false;
 }
