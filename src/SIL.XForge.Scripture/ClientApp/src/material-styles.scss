@@ -14,6 +14,7 @@
   sf-draft-generation-steps;
 @use 'src/app/translate/draft-generation/confirm-sources/confirm-sources-theme' as sf-confirm-sources;
 @use 'src/app/translate/draft-generation/draft-sources/draft-sources-theme' as sf-draft-sources;
+@use 'src/app/translate/draft-generation/draft-signup-form/draft-onboarding-form-theme' as sf-draft-onboarding-form;
 @use 'src/app/translate/draft-generation/draft-history-list/draft-history-entry/draft-history-entry-theme' as
   sf-draft-history-entry;
 @use 'src/app/translate/draft-generation/draft-usfm-format/draft-usfm-format-theme' as sf-draft-usfm-format;
@@ -25,6 +26,7 @@
 @use 'src/app/permissions-viewer/permissions-viewer-theme' as sf-permissions-viewer;
 @use 'src/app/serval-administration/draft-jobs-theme' as sf-draft-jobs;
 @use 'src/app/serval-administration/job-details-dialog-theme' as sf-job-details-dialog;
+@use 'src/app/serval-administration/onboarding-requests/onboarding-requests-theme' as sf-onboarding-requests;
 
 @use 'text' as sf-text;
 
@@ -46,6 +48,7 @@
   @include sf-draft-generation-steps.theme($theme);
   @include sf-draft-history-entry.theme($theme);
   @include sf-draft-sources.theme($theme);
+  @include sf-draft-onboarding-form.theme($theme);
   @include sf-draft-usfm-format.theme($theme);
   @include sf-editor.theme($theme);
   @include sf-editor-draft.theme($theme);
@@ -59,6 +62,7 @@
   @include sf-permissions-viewer.theme($theme);
   @include sf-draft-jobs.theme($theme);
   @include sf-job-details-dialog.theme($theme);
+  @include sf-onboarding-requests.theme($theme);
 
   // Custom variables
   --sf-disabled-foreground: #{mat.get-theme-color($theme, neutral, 70)};
