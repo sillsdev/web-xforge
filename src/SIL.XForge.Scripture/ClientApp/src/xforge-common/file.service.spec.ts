@@ -249,6 +249,29 @@ describe('FileService', () => {
     expect(saveAs).toHaveBeenCalled();
     env.httpMock.verify();
   }));
+
+  it('detects csv MIME type and adds the file extension', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const filename: string = 'training-data.xlsx';
+    const source: string = '/path/to/training-data.xlsx';
+
+    // Spy on the saveAs function
+    const saveAsSpy = spyOn(saveAs, 'saveAs').and.stub();
+
+    env.service.onlineDownloadFile(FileType.TrainingData, source, filename);
+
+    // Verify the HTTP request was made with the correct URL
+    const expectedUrl: string = formatFileSource(FileType.TrainingData, source);
+    const req = env.httpMock.expectOne(expectedUrl);
+    expect(req.request.method).toBe('GET');
+
+    // Respond with a blob
+    const testBlob: Blob = new Blob([], { type: 'text/csv' });
+    req.flush(testBlob);
+    tick();
+    expect(saveAsSpy).toHaveBeenCalledWith(testBlob, 'training-data.csv');
+    env.httpMock.verify();
+  }));
 });
 
 interface ChildData {

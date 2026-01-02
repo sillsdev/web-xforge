@@ -224,6 +224,10 @@ export class FileService {
     const url: string = formatFileSource(fileType, source);
     void this.onlineRequestFile(url).then(blob => {
       if (blob != null) {
+        if (blob.type === 'text/csv') {
+          // use the .csv extension explicitly if the MIME type is csv
+          filename = filename.split('.')[0] + '.csv';
+        }
         saveAs(blob, filename);
       }
     });
