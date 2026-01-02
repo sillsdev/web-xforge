@@ -37,8 +37,8 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { BehaviorSubject, combineLatest, firstValueFrom, merge, Observable, Subscription } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, defer, firstValueFrom, from, merge, Observable, Subscription } from 'rxjs';
+import { filter, switchMap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -354,7 +354,11 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
         // Subscribe to any project, book, chapter, verse, locale, biblical term, or note changes
         this.loadingStarted();
         this.categoriesLoading = true;
-        const biblicalTermsAndNotesChanges$: Observable<any> = await this.getBiblicalTermsAndNotesChanges(projectId);
+        const biblicalTermsNotesChanges$: Observable<any> = await this.getBiblicalTermsNotesChanges(projectId);
+        const biblicalTermsChanges$: Observable<any> = this.bookNum$.pipe(
+          filter(bookNum => bookNum !== 0),
+          switchMap(bookNum => this.getBiblicalTermsChanges(projectId, bookNum))
+        );
 
         this.biblicalTermSub?.unsubscribe();
 
@@ -363,7 +367,8 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
           this.chapter$,
           this.verse$,
           this.i18n.locale$,
-          biblicalTermsAndNotesChanges$
+          biblicalTermsChanges$,
+          biblicalTermsNotesChanges$
         ])
           .pipe(
             filter(([bookNum, chapter, verse]) => bookNum !== 0 && chapter !== 0 && verse !== null),
@@ -371,10 +376,12 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
           )
           .subscribe(([bookNum, chapter, verse]) => {
             this.filterBiblicalTerms(bookNum, chapter, verse);
+            this.biblicalTermsLoaded = true;
             this.categoriesLoading = false;
+            this.loadingFinished();
           });
 
-        if (!this.appOnline && biblicalTermsAndNotesChanges$.pipe(filter(val => val == null))) {
+        if (!this.appOnline && !this.biblicalTermsLoaded) {
           this.loadingFinished();
         } else {
           this.biblicalTermsLoaded = true;
@@ -533,23 +540,27 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     this.loadingFinished();
   }
 
-  private async getBiblicalTermsAndNotesChanges(sfProjectId: string): Promise<Observable<any>> {
-    // Clean up existing queries
-    this.biblicalTermQuery?.dispose();
+  private getBiblicalTermsChanges(sfProjectId: string, bookNum: number): Observable<any> {
+    return defer(() => {
+      this.biblicalTermQuery?.dispose();
+      return from(this.projectService.queryBiblicalTerms(sfProjectId, bookNum, this.destroyRef)).pipe(
+        switchMap(query => {
+          this.biblicalTermQuery = query;
+          return merge(query.ready$.pipe(filter(isReady => isReady)), query.remoteChanges$, query.remoteDocChanges$);
+        })
+      );
+    });
+  }
+
+  private async getBiblicalTermsNotesChanges(sfProjectId: string): Promise<Observable<any>> {
+    // Clean up existing query
     this.noteThreadQuery?.dispose();
 
-    // Get the Biblical Terms and Notes
-    [this.biblicalTermQuery, this.noteThreadQuery] = await Promise.all([
-      this.projectService.queryBiblicalTerms(sfProjectId, this.destroyRef),
-      this.projectService.queryBiblicalTermNoteThreads(sfProjectId, this.destroyRef)
-    ]);
+    // Get the Biblical Terms Notes
+    this.noteThreadQuery = await this.projectService.queryBiblicalTermNoteThreads(sfProjectId, this.destroyRef);
 
     // Return a merged observable to monitor changes
-
     return merge(
-      this.biblicalTermQuery.ready$.pipe(filter(isReady => isReady)),
-      this.biblicalTermQuery.remoteChanges$,
-      this.biblicalTermQuery.remoteDocChanges$,
       this.noteThreadQuery.localChanges$,
       this.noteThreadQuery.ready$.pipe(filter(isReady => isReady)),
       this.noteThreadQuery.remoteChanges$,

@@ -1,8 +1,16 @@
 import { PROJECT_DATA_INDEX_PATHS, ProjectData } from '../../common/models/project-data';
+import { obj } from '../../common/utils/obj-path';
 import { BiblicalTermDefinition } from './biblical-term-definition';
 
 export const BIBLICAL_TERM_COLLECTION = 'biblical_terms';
-export const BIBLICAL_TERM_INDEX_PATHS = PROJECT_DATA_INDEX_PATHS;
+export const BIBLICAL_TERM_INDEX_PATHS = [
+  ...PROJECT_DATA_INDEX_PATHS,
+  // Index for SFProjectService.queryBiblicalTerms()
+  {
+    [obj<BiblicalTerm>().pathStr(n => n.projectRef)]: 1,
+    [obj<BiblicalTerm>().pathStr(n => n.references)]: 1
+  }
+];
 
 export function getBiblicalTermDocId(projectId: string, dataId: string): string {
   return `${projectId}:${dataId}`;
