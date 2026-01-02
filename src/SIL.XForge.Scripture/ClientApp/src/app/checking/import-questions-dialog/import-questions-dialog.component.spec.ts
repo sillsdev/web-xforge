@@ -3,7 +3,6 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { ngfModule } from 'angular-file';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
@@ -11,7 +10,7 @@ import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { BehaviorSubject, of, throwError } from 'rxjs';
-import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
+import { anything, capture, instance, mock, reset, verify, when } from 'ts-mockito';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
@@ -20,9 +19,11 @@ import { provideTestOnlineStatus } from 'xforge-common/test-online-status-provid
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { TestingRetryingRequestService } from 'xforge-common/testing-retrying-request.service';
+import { ParatextProject } from '../../core/models/paratext-project';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { TransceleratorQuestion } from '../../core/models/transcelerator-question';
+import { ParatextNote, ParatextNoteTag, ParatextService } from '../../core/paratext.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ScriptureChooserDialogComponent } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { CheckingQuestionsService } from '../checking/checking-questions.service';
@@ -34,6 +35,7 @@ const mockedQuestionsService = mock(CheckingQuestionsService);
 const mockedDialogService = mock(DialogService);
 const mockedCsvService = mock(CsvService);
 const mockedRealtimeQuery: RealtimeQuery<QuestionDoc> = mock(RealtimeQuery);
+const mockedParatextService = mock(ParatextService);
 
 describe('ImportQuestionsDialogComponent', () => {
   configureTestingModule(() => ({
@@ -50,8 +52,8 @@ describe('ImportQuestionsDialogComponent', () => {
       { provide: CheckingQuestionsService, useMock: mockedQuestionsService },
       { provide: DialogService, useMock: mockedDialogService },
       { provide: CsvService, useMock: mockedCsvService },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      provideNoopAnimations()
+      { provide: ParatextService, useMock: mockedParatextService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
 
@@ -73,7 +75,7 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.getRowQuestion(questions[0])).toBe('Transcelerator question 1:1');
     expect(env.getRowReference(questions[1])).toBe('MAT 1:2');
     expect(env.getRowQuestion(questions[1])).toBe('Transcelerator question 1:2');
-    env.click(env.cancelButton);
+    env.click(env.backButton);
   }));
 
   it('can select questions in the list', fakeAsync(() => {
@@ -101,7 +103,7 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.component.filteredList[0].checked).toBe(false);
     expect(env.selectAllCheckbox.checked).toBe(false);
     expect(env.selectAllCheckbox.indeterminate).toBe(true);
-    env.click(env.cancelButton);
+    env.click(env.backButton);
   }));
 
   it('select all selects and deselects all visible questions', fakeAsync(() => {
@@ -131,7 +133,7 @@ describe('ImportQuestionsDialogComponent', () => {
     env.clickSelectAll();
     expect(env.component.filteredList[0].checked).toBe(true);
     expect(env.component.filteredList[1].checked).toBe(true);
-    env.click(env.cancelButton);
+    env.click(env.backButton);
   }));
 
   it('can filter questions for text', fakeAsync(() => {
@@ -140,7 +142,7 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.tableRows.length).toBe(2);
     env.setControlValue(env.component.filterControl, '1:2');
     expect(env.tableRows.length).toBe(1);
-    env.click(env.cancelButton);
+    env.click(env.backButton);
   }));
 
   it('clears text from filter when show all is clicked', fakeAsync(() => {
@@ -156,7 +158,7 @@ describe('ImportQuestionsDialogComponent', () => {
     env.click(env.showAllButton);
     expect(env.component.fromControl.value).toBe('');
     expect(env.component.toControl.value).toBe('');
-    env.click(env.cancelButton);
+    env.click(env.backButton);
   }));
 
   it('can filter questions with verse reference', fakeAsync(() => {
@@ -177,7 +179,7 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.tableRows.length).toBe(1);
     env.setControlValue(env.component.toControl, 'MAL 1:1');
     expect(env.tableRows.length).toBe(0);
-    env.click(env.cancelButton);
+    env.click(env.backButton);
   }));
 
   it('show scripture chooser dialog', fakeAsync(() => {
@@ -187,7 +189,7 @@ describe('ImportQuestionsDialogComponent', () => {
     env.openFromScriptureChooser();
     verify(mockedDialogService.openMatDialog(anything(), anything())).once();
     expect(env.component.fromControl.value).toBe('MAT 1:1');
-    env.click(env.cancelButton);
+    env.click(env.backButton);
   }));
 
   it('prompts for edited questions that have already been imported', fakeAsync(() => {
@@ -207,7 +209,7 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.component.filteredList[1].checked).toBe(false);
     expect(env.component.filteredList[2].checked).toBe(true);
     expect(env.component.filteredList[3].checked).toBe(true);
-    env.click(env.cancelButton);
+    env.click(env.backButton);
   }));
 
   it('allows updating questions that have been edited in Transcelerator', fakeAsync(() => {
@@ -330,7 +332,7 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.tableRows.length).toBe(1);
     expect(env.getColumnTwoText(env.tableRows[0])).toEqual('Genesis 1:1');
     env.click(env.continueImportButton);
-    env.click(env.cancelButton);
+    env.click(env.backButton);
   }));
 
   it('can import from an Excel 97-2003 file', fakeAsync(() => {
@@ -344,7 +346,7 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.tableRows.length).toBe(1);
     expect(env.getColumnTwoText(env.tableRows[0])).toEqual('Genesis 1:1');
     env.click(env.continueImportButton);
-    env.click(env.cancelButton);
+    env.click(env.backButton);
   }));
 
   it('can import from an Excel 2007 file', fakeAsync(() => {
@@ -358,7 +360,7 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.tableRows.length).toBe(1);
     expect(env.getColumnTwoText(env.tableRows[0])).toEqual('Genesis 1:1');
     env.click(env.continueImportButton);
-    env.click(env.cancelButton);
+    env.click(env.backButton);
   }));
 
   it('does not import from an Excel file when offline', fakeAsync(() => {
@@ -388,7 +390,7 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.footerText).toBe(
       'Note: Some of the selected questions are exact duplicates of questions that are already part of your project. They will not be re-imported.'
     );
-    env.click(env.cancelButton);
+    env.click(env.backButton);
   }));
 
   it('it informs the user about invalid rows in the CSV file and skips them', fakeAsync(() => {
@@ -413,7 +415,7 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(questionRows.length).toBe(1);
     expect(env.getRowReference(env.tableRows[0])).toEqual('MAT 1:2');
 
-    env.click(env.cancelButton);
+    env.click(env.backButton);
   }));
 
   it('allows reference and questions columns to be anywhere and ignores irrelevant columns', fakeAsync(() => {
@@ -430,7 +432,7 @@ describe('ImportQuestionsDialogComponent', () => {
 
     expect(env.tableRows.length).toBe(2);
     expect(env.getRowReference(env.tableRows[1])).toEqual('MAT 1:2');
-    env.click(env.cancelButton);
+    env.click(env.backButton);
   }));
 
   it('allows ignores white space and capitalization in question and reference heading', fakeAsync(() => {
@@ -447,7 +449,7 @@ describe('ImportQuestionsDialogComponent', () => {
 
     expect(env.tableRows.length).toBe(2);
     expect(env.getRowReference(env.tableRows[1])).toEqual('GEN 1:2');
-    env.click(env.cancelButton);
+    env.click(env.backButton);
   }));
 
   it('informs when there are no questions', fakeAsync(() => {
@@ -461,7 +463,7 @@ describe('ImportQuestionsDialogComponent', () => {
     const env = new TestEnvironment();
     env.click(env.importFromTransceleratorButton);
     expect(env.bodyText).not.toContain('There are no questions for the books in this project.');
-    env.click(env.cancelButton);
+    env.click(env.backButton);
   }));
 
   it('infinite scrolls questions', fakeAsync(() => {
@@ -479,7 +481,7 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.tableRows.length).toBe(125);
     env.scrollDialogContentBodyToBottom();
     expect(env.tableRows.length).toBe(150);
-    env.click(env.cancelButton);
+    env.click(env.backButton);
   }));
 
   it('does not try to load transcelerator questions when the user is online', fakeAsync(() => {
@@ -490,7 +492,7 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.importFromTransceleratorButton.disabled).toBe(false);
     expect(env.errorMessages).toEqual([]);
     env.click(env.importFromTransceleratorButton);
-    env.click(env.cancelButton);
+    env.click(env.backButton);
   }));
 
   it('has a close button on the initial view', fakeAsync(() => {
@@ -498,6 +500,116 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.overlayContainerElement.hasChildNodes()).toBeTrue();
     env.click(env.closeButton);
     expect(env.overlayContainerElement.hasChildNodes()).withContext('close button closes dialog').toBeFalse();
+  }));
+
+  it('collects unique Paratext tags in alphabetical order', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const tagAlpha: ParatextNoteTag = { id: 1, name: 'Alpha' };
+    const tagBeta: ParatextNoteTag = { id: 3, name: 'Beta' };
+    const tagGamma: ParatextNoteTag = { id: 2, name: 'Gamma' };
+    const notes: ParatextNote[] = [
+      {
+        id: 'note-1',
+        verseRef: 'MAT 1:1',
+        comments: [
+          { verseRef: 'MAT 1:1', content: '<p>Alpha</p>', tag: tagGamma },
+          { verseRef: 'MAT 1:1', content: '<p>Alpha again</p>', tag: tagAlpha }
+        ]
+      },
+      {
+        id: 'note-2',
+        verseRef: 'MAT 1:2',
+        comments: [
+          { verseRef: 'MAT 1:2', content: '<p>Beta</p>', tag: tagBeta },
+          { verseRef: 'MAT 1:2', content: '<p>Beta duplicate</p>', tag: tagBeta }
+        ]
+      }
+    ];
+
+    const tags = env.collectParatextTagOptions(env.component, notes);
+
+    expect(tags.length).toBe(3);
+    expect(tags.map(tag => tag.name)).toEqual(['Alpha', 'Beta', 'Gamma']);
+    expect(tags.map(tag => tag.id)).toEqual([1, 3, 2]);
+  }));
+
+  it('shows a message when no notes have tagged comments', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const notes: ParatextNote[] = [
+      {
+        id: 'note-1',
+        verseRef: 'MAT 1:1',
+        comments: [{ verseRef: 'MAT 1:1', content: '<p>Note without tag</p>' }]
+      }
+    ];
+    env.setParatextNotes(env.component, notes);
+    env.setParatextTagOptions(env.component, env.collectParatextTagOptions(env.component, notes));
+    env.component.questionSource = 'paratext';
+    env.component.showParatextTagSelector = true;
+    env.component.selectedParatextTagId = null;
+    env.component.errorState = undefined;
+
+    env.fixture.detectChanges();
+    tick();
+
+    expect(env.component.status).toBe('paratext_tag_selection');
+    expect(env.getParatextTagMessage()).toBe('There are no tagged notes available to import.');
+  }));
+
+  it('converts Paratext notes for the selected tag into questions', fakeAsync(() => {
+    const tagQuestions: ParatextNoteTag = { id: 7, name: 'Questions' };
+    const notes: ParatextNote[] = [
+      {
+        id: 'note-1',
+        verseRef: 'MAT 1:1',
+        comments: [
+          { verseRef: 'MAT 1:1', content: '<p>Ignore</p>', tag: { id: 6, name: 'Other' } },
+          { verseRef: 'MAT 1:1', content: ' <p>Question <strong>text</strong></p> ', tag: tagQuestions }
+        ]
+      },
+      {
+        id: 'note-2',
+        verseRef: 'MAT 1:2',
+        comments: [{ verseRef: 'MAT 1:2', content: '<p>Question 2</p>', tag: tagQuestions }]
+      },
+      {
+        id: 'note-3',
+        verseRef: 'GEN 1:1',
+        comments: [{ verseRef: 'GEN 1:1', content: '<p>Different book</p>', tag: tagQuestions }]
+      }
+    ];
+    const preexistingQuestion = TestEnvironment.createQuestionDocWithSource('note-1', new VerseRef('MAT 1:1'), 'text');
+    const env = new TestEnvironment({ existingQuestions: [preexistingQuestion], paratextNotes: notes });
+    env.setParatextNotes(env.component, notes);
+    env.setParatextTagOptions(env.component, env.collectParatextTagOptions(env.component, notes));
+    env.component.selectedParatextTagId = tagQuestions.id;
+    env.component.questionSource = 'paratext';
+    env.component.showParatextTagSelector = true;
+
+    void env.component.confirmParatextTagSelection();
+    tick();
+    env.fixture.detectChanges();
+
+    expect(env.component.status).toBe('filter_notes');
+    expect(env.component.filteredList.length).toBe(2);
+    const questionAlreadyImported = env.component.filteredList[0];
+    expect(questionAlreadyImported.question.id).toBe('note-1');
+    expect(questionAlreadyImported.question.text).toBe('Question text');
+    expect(questionAlreadyImported.sfVersionOfQuestion).not.toBeUndefined();
+
+    expect(env.component.showDuplicateImportNote).toBeFalse();
+    questionAlreadyImported.checked = true;
+    expect(env.component.showDuplicateImportNote).toBeTrue();
+  }));
+
+  it('shows an error when no Paratext project can be found', fakeAsync(() => {
+    const env = new TestEnvironment({ paratextProjects: [], paratextNotes: [] });
+
+    env.click(env.importFromParatextButton);
+
+    expect(env.component.errorState).toBe('paratext_tag_load_error');
+    expect(env.component.status).toBe('paratext_tag_load_error');
+    expect(env.getParatextTagOptions(env.component).length).toBe(0);
   }));
 });
 
@@ -559,6 +671,9 @@ class TestEnvironment {
       transceleratorQuestions?: TransceleratorQuestion[];
       offline?: boolean;
       existingQuestions?: QuestionDoc[];
+      paratextProjects?: ParatextProject[];
+      paratextNotes?: ParatextNote[];
+      paratextNotesError?: Error;
     } = {}
   ) {
     this.questions = options.transceleratorQuestions || this.questions;
@@ -574,6 +689,7 @@ class TestEnvironment {
     if (options.existingQuestions) {
       this.existingQuestions = options.existingQuestions;
     }
+    this.setupParatext(options.paratextProjects, options.paratextNotes, options.paratextNotesError);
     this.setupTransceleratorQuestions();
 
     const gen: TextInfo = {
@@ -624,7 +740,11 @@ class TestEnvironment {
   }
 
   get importFromCsvFile(): HTMLButtonElement {
-    return this.overlayContainerElement.querySelector('mat-card:last-child button') as HTMLButtonElement;
+    return this.overlayContainerElement.querySelector('mat-card:nth-child(2) button') as HTMLButtonElement;
+  }
+
+  get importFromParatextButton(): HTMLButtonElement {
+    return this.overlayContainerElement.querySelector('mat-card:nth-child(3) button') as HTMLButtonElement;
   }
 
   get tableRows(): HTMLElement[] {
@@ -647,6 +767,15 @@ class TestEnvironment {
     return this.dialogContentBody.textContent || '';
   }
 
+  getParatextTagMessage(): string {
+    const element = this.overlayContainerElement.querySelector('.paratext-tag-selection-message');
+    if (element == null) {
+      return '';
+    }
+    const text = element.textContent;
+    return text != null ? text.trim() : '';
+  }
+
   get errorMessages(): string[] {
     return Array.from(this.overlayContainerElement.querySelectorAll('mat-error')).map(node =>
       (node.textContent || '').trim()
@@ -665,12 +794,20 @@ class TestEnvironment {
     return this.getButtonByText('Show All');
   }
 
+  get backButton(): HTMLButtonElement {
+    return this.getButtonByText('Back');
+  }
+
   get closeButton(): HTMLButtonElement {
     return this.getButtonByText('Close');
   }
 
   get continueImportButton(): HTMLButtonElement {
     return this.getButtonByText('Continue Import');
+  }
+
+  get nextButton(): HTMLButtonElement {
+    return this.getButtonByText('Next');
   }
 
   get headerText(): string {
@@ -764,6 +901,64 @@ class TestEnvironment {
         getAnswers: () => [] as Answer[]
       } as QuestionDoc);
     });
+  }
+
+  collectParatextTagOptions(component: ImportQuestionsDialogComponent, notes: ParatextNote[]): ParatextNoteTag[] {
+    return (
+      component as unknown as { collectParatextTagOptions(notes: ParatextNote[]): ParatextNoteTag[] }
+    ).collectParatextTagOptions(notes);
+  }
+
+  setParatextNotes(component: ImportQuestionsDialogComponent, notes: ParatextNote[]): void {
+    (component as unknown as { paratextNotes: ParatextNote[] }).paratextNotes = notes;
+  }
+
+  setParatextTagOptions(component: ImportQuestionsDialogComponent, tags: ParatextNoteTag[]): void {
+    (component as unknown as { paratextTagOptions: ParatextNoteTag[] }).paratextTagOptions = tags;
+  }
+
+  getParatextTagOptions(component: ImportQuestionsDialogComponent): ParatextNoteTag[] {
+    return (component as unknown as { paratextTagOptions: ParatextNoteTag[] }).paratextTagOptions;
+  }
+
+  static createQuestionDocWithSource(sourceId: string, verse: VerseRef, text: string): QuestionDoc {
+    return {
+      data: {
+        transceleratorQuestionId: sourceId,
+        verseRef: fromVerseRef(verse),
+        text,
+        answers: [] as Answer[]
+      } as Question,
+      submitJson0Op: () => Promise.resolve(),
+      getAnswers: () => [] as Answer[]
+    } as unknown as QuestionDoc;
+  }
+
+  private setupParatext(
+    projects: ParatextProject[] | undefined,
+    notes: ParatextNote[] | undefined,
+    notesError: Error | undefined
+  ): void {
+    reset(mockedParatextService);
+    const defaultProjects: ParatextProject[] = [
+      {
+        paratextId: `pt-project01`,
+        name: 'Project 01',
+        shortName: 'P01',
+        languageTag: 'en',
+        projectId: 'project01',
+        isConnectable: false,
+        isConnected: true,
+        hasUserRoleChanged: false,
+        hasUpdate: false
+      }
+    ];
+    when(mockedParatextService.getProjects()).thenResolve(projects ?? defaultProjects);
+    if (notesError !== undefined) {
+      when(mockedParatextService.getNotes(anything())).thenReject(notesError);
+    } else {
+      when(mockedParatextService.getNotes(anything())).thenResolve(notes ?? []);
+    }
   }
 
   private setupTransceleratorQuestions(): void {
