@@ -7,6 +7,8 @@ public static class SFJsonRpcApplicationBuilderExtensions
 {
     public static void UseSFJsonRpc(this IApplicationBuilder app) =>
         app.UseXFJsonRpc(options =>
-            options.AddControllerWithCustomPath<SFProjectsRpcController>(UrlConstants.Projects)
-        );
+        {
+            options.AddControllerWithCustomPath<SFProjectsRpcController>(UrlConstants.Projects);
+            options.AddControllerWithCustomPath<OnboardingRequestRpcController>(UrlConstants.OnboardingRequests);
+        });
 }
