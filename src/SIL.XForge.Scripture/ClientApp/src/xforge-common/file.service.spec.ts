@@ -1,5 +1,6 @@
 import { HttpTestingController, RequestMatch } from '@angular/common/http/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { saveAs } from 'file-saver';
 import { ProjectData } from 'realtime-server/lib/esm/common/models/project-data';
 import { obj, PathItem } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { anything, mock, verify, when } from 'ts-mockito';
@@ -224,6 +225,52 @@ describe('FileService', () => {
     tick();
     verify(mockedDialogService.message(anything(), anything())).once();
     expect(env.doc!.data!.audioUrl).toBeUndefined();
+  }));
+
+  it('should download the file', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const filename: string = 'training-data.csv';
+    const source: string = '/path/to/training-data.csv';
+
+    // Spy on the saveAs function
+    spyOn(saveAs, 'saveAs').and.stub();
+
+    env.service.onlineDownloadFile(FileType.TrainingData, source, filename);
+
+    // Verify the HTTP request was made with the correct URL
+    const expectedUrl: string = formatFileSource(FileType.TrainingData, source);
+    const req = env.httpMock.expectOne(expectedUrl);
+    expect(req.request.method).toBe('GET');
+
+    // Respond with a blob
+    const testBlob: Blob = new Blob();
+    req.flush(testBlob);
+    tick();
+    expect(saveAs).toHaveBeenCalled();
+    env.httpMock.verify();
+  }));
+
+  it('detects csv MIME type and adds the file extension', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const filename: string = 'training-data.xlsx';
+    const source: string = '/path/to/training-data.xlsx';
+
+    // Spy on the saveAs function
+    const saveAsSpy = spyOn(saveAs, 'saveAs').and.stub();
+
+    env.service.onlineDownloadFile(FileType.TrainingData, source, filename);
+
+    // Verify the HTTP request was made with the correct URL
+    const expectedUrl: string = formatFileSource(FileType.TrainingData, source);
+    const req = env.httpMock.expectOne(expectedUrl);
+    expect(req.request.method).toBe('GET');
+
+    // Respond with a blob
+    const testBlob: Blob = new Blob([], { type: 'text/csv' });
+    req.flush(testBlob);
+    tick();
+    expect(saveAsSpy).toHaveBeenCalledWith(testBlob, 'training-data.csv');
+    env.httpMock.verify();
   }));
 });
 

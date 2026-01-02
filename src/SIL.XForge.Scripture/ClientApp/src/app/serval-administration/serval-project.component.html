@@ -83,7 +83,7 @@
   <em>any edits made in Scripture Forge</em> since the last sync will not be included
 </app-notice>
 <div class="table-container">
-  <table mat-table [dataSource]="rows">
+  <table mat-table [dataSource]="rows" class="draft-sources-table">
     @for (column of columnsToDisplay | slice: 0 : columnsToDisplay.length - 1; track column) {
       <ng-container [matColumnDef]="column">
         <th mat-header-cell *matHeaderCellDef>{{ headingsToDisplay[column] }}</th>
@@ -108,6 +108,26 @@
 
     <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
     <tr mat-row *matRowDef="let myRowData; columns: columnsToDisplay"></tr>
+  </table>
+  <h3>Training Files</h3>
+  <table mat-table [dataSource]="trainingDataFiles" class="training-data-table">
+    <ng-container matColumnDef="title">
+      <th mat-header-cell *matHeaderCellDef>File Name</th>
+      <td mat-cell *matCellDef="let file">{{ file.title }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="download">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let file" class="data-table-end">
+        <button mat-flat-button color="primary" (click)="downloadTrainingData(file.dataId)" [disabled]="!isOnline">
+          <mat-icon>download</mat-icon>
+          Download
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="['title', 'download']"></tr>
+    <tr mat-row *matRowDef="let row; columns: ['title', 'download']"></tr>
   </table>
 </div>
 
