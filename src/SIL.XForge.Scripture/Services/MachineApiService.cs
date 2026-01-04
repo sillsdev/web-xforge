@@ -840,19 +840,11 @@ public class MachineApiService(
         CancellationToken cancellationToken
     )
     {
-        ServalBuildDto? buildDto = null;
-
         // Ensure that the user has permission
-        SFProject project = await EnsureProjectPermissionAsync(
-            curUserId,
-            sfProjectId,
-            isServalAdmin,
-            cancellationToken
-        );
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin, cancellationToken);
 
         // Execute on Serval, if it is enabled
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate);
-
         try
         {
             TranslationBuild translationBuild = await translationEnginesClient.GetBuildAsync(
@@ -861,21 +853,13 @@ public class MachineApiService(
                 minRevision,
                 cancellationToken
             );
-            buildDto = CreateDto(translationBuild);
+            return await MapDtoAsync(sfProjectId, translationBuild, preTranslate);
         }
         catch (ServalApiException e)
         {
             ProcessServalApiException(e);
+            return null;
         }
-
-        // Make sure the DTO conforms to the machine-api V2 URLs
-        if (buildDto is not null)
-        {
-            buildDto = UpdateDto(buildDto, project.TranslateConfig.DraftConfig);
-            buildDto = UpdateDto(buildDto, sfProjectId);
-        }
-
-        return buildDto;
     }
 
     public async Task<TranslationBuild?> GetRawBuildAsync(
@@ -931,9 +915,6 @@ public class MachineApiService(
         CancellationToken cancellationToken
     )
     {
-        // Set up the list of builds to be returned
-        List<ServalBuildDto> builds = [];
-
         // Ensure that the user has permission
         await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin, cancellationToken);
 
@@ -970,72 +951,13 @@ public class MachineApiService(
             );
         }
 
-        // Return the builds as DTOs
-        foreach (TranslationBuild translationBuild in translationBuilds)
-        {
-            ServalBuildDto buildDto = CreateDto(translationBuild);
-
-            // See if we have event metrics for downloading the pre-translation USFM to Scripture Forge
-            EventMetric eventMetric = eventMetrics.Results.FirstOrDefault(e =>
-                e.Result == translationBuild.Id && e.EventType == nameof(RetrievePreTranslationStatusAsync)
-            );
-            if (eventMetric is not null)
-            {
-                buildDto.AdditionalInfo!.DateGenerated = new DateTimeOffset(eventMetric.TimeStamp, TimeSpan.Zero);
-            }
-
-            // If we have event metrics for sending the build to Serval, add the scripture ranges to the DTO
-            eventMetric = eventMetrics.Results.FirstOrDefault(e =>
-                e.Result == translationBuild.Id && e.EventType == nameof(MachineProjectService.BuildProjectAsync)
-            );
-            if (eventMetric is not null)
-            {
-                buildDto = UpdateDto(buildDto, eventMetric);
-            }
-            else if (preTranslate)
-            {
-                // Fallback for builds previous to the event metric being recorded:
-                //  - As there is no event metric, get the translation scripture range from the pre-translation corpus
-                //  - We cannot accurately determine the source projects, so do not record the training scripture ranges.
-
-                // Get the translation scripture range
-                PretranslateCorpus translationCorpus = translationBuild.Pretranslate?.FirstOrDefault();
-                if (translationCorpus is not null)
-                {
-#pragma warning disable CS0612 // Type or member is obsolete
-                    string scriptureRange =
-                        translationCorpus.SourceFilters?.FirstOrDefault()?.ScriptureRange
-                        ?? translationCorpus.ScriptureRange;
-#pragma warning restore CS0612 // Type or member is obsolete
-                    if (!string.IsNullOrWhiteSpace(scriptureRange))
-                    {
-                        buildDto.AdditionalInfo!.TranslationScriptureRanges.Add(
-                            new ProjectScriptureRange { ProjectId = sfProjectId, ScriptureRange = scriptureRange }
-                        );
-                    }
-                }
-
-                // Get the training scripture range
-                TrainingCorpus trainingCorpus = translationBuild.TrainOn?.FirstOrDefault();
-                if (trainingCorpus is not null)
-                {
-#pragma warning disable CS0612 // Type or member is obsolete
-                    string scriptureRange =
-                        trainingCorpus.SourceFilters?.FirstOrDefault()?.ScriptureRange ?? trainingCorpus.ScriptureRange;
-#pragma warning restore CS0612 // Type or member is obsolete
-                    if (!string.IsNullOrWhiteSpace(scriptureRange))
-                    {
-                        // We do not accurately know the training, project, so leave it blank
-                        buildDto.AdditionalInfo!.TrainingScriptureRanges.Add(
-                            new ProjectScriptureRange { ProjectId = string.Empty, ScriptureRange = scriptureRange }
-                        );
-                    }
-                }
-            }
-
-            // Make sure the DTO conforms to the machine-api URLs
-            builds.Add(UpdateDto(buildDto, sfProjectId));
-        }
+        // Map the builds to DTOs
+        List<ServalBuildDto> builds =
+        [
+            .. translationBuilds.Select(translationBuild =>
+                MapDto(sfProjectId, translationBuild, preTranslate, eventMetrics)
+            ),
+        ];
 
         // See if any builds are queued at our end
         ServalBuildDto? queuedState = await GetQueuedStateAsync(
@@ -1069,15 +991,8 @@ public class MachineApiService(
         CancellationToken cancellationToken
     )
     {
-        ServalBuildDto? buildDto = null;
-
         // Ensure that the user has permission
-        SFProject project = await EnsureProjectPermissionAsync(
-            curUserId,
-            sfProjectId,
-            isServalAdmin,
-            cancellationToken
-        );
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin, cancellationToken);
 
         // Get the translation engine
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: true);
@@ -1094,7 +1009,7 @@ public class MachineApiService(
                 .MaxBy(b => b.DateFinished);
             if (lastCompletedTranslationBuild is not null)
             {
-                buildDto = CreateDto(lastCompletedTranslationBuild);
+                return await MapDtoAsync(sfProjectId, lastCompletedTranslationBuild, preTranslate: true);
             }
         }
         catch (ServalApiException e)
@@ -1102,13 +1017,8 @@ public class MachineApiService(
             ProcessServalApiException(e);
         }
 
-        // Make sure the DTO conforms to the machine-api V2 URLs
-        if (buildDto is not null)
-        {
-            buildDto = UpdateDto(buildDto, sfProjectId);
-        }
-
-        return buildDto;
+        // No completed build found
+        return null;
     }
 
     /// <summary>
@@ -1132,8 +1042,6 @@ public class MachineApiService(
         CancellationToken cancellationToken
     )
     {
-        ServalBuildDto? buildDto = null;
-
         // Ensure that the user has permission
         await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin, cancellationToken);
 
@@ -1166,9 +1074,7 @@ public class MachineApiService(
 
             if (lastBuild is not null)
             {
-                buildDto = CreateDto(lastBuild);
-                // Make sure the DTO conforms to the machine-api V2 URLs
-                buildDto = UpdateDto(buildDto, sfProjectId);
+                return await MapDtoAsync(sfProjectId, lastBuild, preTranslate: true);
             }
         }
         catch (ServalApiException e)
@@ -1176,7 +1082,7 @@ public class MachineApiService(
             ProcessServalApiException(e);
         }
 
-        return buildDto;
+        return null;
     }
 
     public async Task<ServalBuildDto?> GetCurrentBuildAsync(
@@ -2497,6 +2403,85 @@ public class MachineApiService(
     }
 
     /// <summary>
+    /// Maps a translation build to a Serval build DTO, including the scripture ranges from the event metrics.
+    /// </summary>
+    /// <param name="sfProjectId">The scripture forge project identifier.</param>
+    /// <param name="translationBuild">The translation build from Serval.</param>
+    /// <param name="preTranslate">If <c>true</c>, return NMT builds only; otherwise, return SMT builds.</param>
+    /// <param name="eventMetrics">(Optional) The event metrics for the project's builds or this specific build.</param>
+    /// <returns>The Serval build DTO.</returns>
+    private static ServalBuildDto MapDto(
+        string sfProjectId,
+        TranslationBuild translationBuild,
+        bool preTranslate,
+        QueryResults<EventMetric> eventMetrics
+    )
+    {
+        // Create the initial DTO
+        ServalBuildDto buildDto = CreateDto(translationBuild);
+
+        // See if we have event metrics for downloading the pre-translation USFM to Scripture Forge
+        EventMetric? eventMetric = eventMetrics.Results.FirstOrDefault(e =>
+            e.Result == translationBuild.Id && e.EventType == nameof(RetrievePreTranslationStatusAsync)
+        );
+        if (eventMetric is not null)
+        {
+            buildDto.AdditionalInfo!.DateGenerated = new DateTimeOffset(eventMetric.TimeStamp, TimeSpan.Zero);
+        }
+
+        // If we have event metrics for sending the build to Serval, add the scripture ranges to the DTO
+        eventMetric = eventMetrics.Results.FirstOrDefault(e =>
+            e.Result == translationBuild.Id && e.EventType == nameof(MachineProjectService.BuildProjectAsync)
+        );
+        if (eventMetric is not null)
+        {
+            buildDto = UpdateDto(buildDto, eventMetric);
+        }
+        else if (preTranslate)
+        {
+            // Fallback for builds previous to the event metric being recorded:
+            //  - As there is no event metric, get the translation scripture range from the pre-translation corpus
+            //  - We cannot accurately determine the source projects, so do not record the training scripture ranges.
+
+            // Get the translation scripture range
+            PretranslateCorpus translationCorpus = translationBuild.Pretranslate?.FirstOrDefault();
+            if (translationCorpus is not null)
+            {
+#pragma warning disable CS0612 // Type or member is obsolete
+                string scriptureRange =
+                    translationCorpus.SourceFilters?.FirstOrDefault()?.ScriptureRange
+                    ?? translationCorpus.ScriptureRange;
+#pragma warning restore CS0612 // Type or member is obsolete
+                if (!string.IsNullOrWhiteSpace(scriptureRange))
+                {
+                    buildDto.AdditionalInfo!.TranslationScriptureRanges.Add(
+                        new ProjectScriptureRange { ProjectId = sfProjectId, ScriptureRange = scriptureRange }
+                    );
+                }
+            }
+
+            // Get the training scripture range
+            TrainingCorpus trainingCorpus = translationBuild.TrainOn?.FirstOrDefault();
+            if (trainingCorpus is not null)
+            {
+#pragma warning disable CS0612 // Type or member is obsolete
+                string scriptureRange =
+                    trainingCorpus.SourceFilters?.FirstOrDefault()?.ScriptureRange ?? trainingCorpus.ScriptureRange;
+#pragma warning restore CS0612 // Type or member is obsolete
+                if (!string.IsNullOrWhiteSpace(scriptureRange))
+                {
+                    // We do not accurately know the training, project, so leave it blank
+                    buildDto.AdditionalInfo!.TrainingScriptureRanges.Add(
+                        new ProjectScriptureRange { ProjectId = string.Empty, ScriptureRange = scriptureRange }
+                    );
+                }
+            }
+        }
+
+        return UpdateDto(buildDto, sfProjectId);
+    }
+
+    /// <summary>
     /// This method maps Serval API exceptions to the exceptions that Machine.js understands.
     /// </summary>
     /// <param name="e">The Serval API Exception</param>>
@@ -2566,27 +2551,42 @@ public class MachineApiService(
         return buildDto;
     }
 
+    /// <summary>
+    /// Updates the Serval build DTO with the scripture ranges and training files for the latest build.
+    /// </summary>
+    /// <param name="buildDto">The Serval build DTO.</param>
+    /// <param name="draftConfig">The draft configuration from the project document.</param>
+    /// <returns>The updated Serval build DTO.</returns>
+    /// <remarks>This should only be called for queued or current builds.</remarks>
     private static ServalBuildDto UpdateDto(ServalBuildDto buildDto, DraftConfig draftConfig)
     {
+        ArgumentNullException.ThrowIfNull(buildDto.AdditionalInfo);
+
         // Add the training scripture ranges
-        buildDto.AdditionalInfo.TrainingScriptureRanges.Clear();
-        foreach (ProjectScriptureRange scriptureRange in draftConfig.LastSelectedTrainingScriptureRanges)
+        if (buildDto.AdditionalInfo.TrainingScriptureRanges.Count == 0)
         {
-            buildDto.AdditionalInfo.TrainingScriptureRanges.Add(scriptureRange);
+            foreach (ProjectScriptureRange scriptureRange in draftConfig.LastSelectedTrainingScriptureRanges)
+            {
+                buildDto.AdditionalInfo.TrainingScriptureRanges.Add(scriptureRange);
+            }
         }
 
         // Add the translation scripture ranges
-        buildDto.AdditionalInfo.TranslationScriptureRanges.Clear();
-        foreach (ProjectScriptureRange scriptureRange in draftConfig.LastSelectedTranslationScriptureRanges)
+        if (buildDto.AdditionalInfo.TranslationScriptureRanges.Count == 0)
         {
-            buildDto.AdditionalInfo.TranslationScriptureRanges.Add(scriptureRange);
+            foreach (ProjectScriptureRange scriptureRange in draftConfig.LastSelectedTranslationScriptureRanges)
+            {
+                buildDto.AdditionalInfo.TranslationScriptureRanges.Add(scriptureRange);
+            }
         }
 
         // Add training data files
-        buildDto.AdditionalInfo.TrainingDataFileIds.Clear();
-        foreach (string trainingFileDataId in draftConfig.LastSelectedTrainingDataFiles)
+        if (buildDto.AdditionalInfo.TrainingDataFileIds.Count == 0)
         {
-            buildDto.AdditionalInfo.TrainingDataFileIds.Add(trainingFileDataId);
+            foreach (string trainingFileDataId in draftConfig.LastSelectedTrainingDataFiles)
+            {
+                buildDto.AdditionalInfo.TrainingDataFileIds.Add(trainingFileDataId);
+            }
         }
 
         return buildDto;
@@ -2720,5 +2720,37 @@ public class MachineApiService(
         }
 
         return GetTranslationEngineId(projectSecret, preTranslate, returnEmptyStringIfMissing);
+    }
+
+    /// <summary>
+    /// Maps a translation build to a Serval build DTO, including the scripture ranges from the event metrics.
+    /// </summary>
+    /// <param name="sfProjectId">The scripture forge project identifier.</param>
+    /// <param name="translationBuild">The translation build from Serval.</param>
+    /// <param name="preTranslate">If <c>true</c>, return NMT builds only; otherwise, return SMT builds.</param>
+    /// <returns>The Serval build DTO.</returns>
+    private async Task<ServalBuildDto> MapDtoAsync(
+        string sfProjectId,
+        TranslationBuild translationBuild,
+        bool preTranslate
+    )
+    {
+        // Get the event metrics for build configurations, if we are pre-translating
+        QueryResults<EventMetric> eventMetrics = QueryResults<EventMetric>.Empty;
+        if (preTranslate)
+        {
+            eventMetrics = await eventMetricService.GetEventMetricsAsync(
+                sfProjectId,
+                scopes: [EventScope.Drafting],
+                eventTypes:
+                [
+                    nameof(MachineProjectService.BuildProjectAsync),
+                    nameof(RetrievePreTranslationStatusAsync),
+                    nameof(StartPreTranslationBuildAsync),
+                ]
+            );
+        }
+
+        return MapDto(sfProjectId, translationBuild, preTranslate, eventMetrics);
     }
 }
