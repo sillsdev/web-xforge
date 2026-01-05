@@ -43,6 +43,39 @@ public class ParatextDataHelperTests
     }
 
     [Test]
+    public void GetNotes_SkipsUnknownTags()
+    {
+        var env = new NotesTestEnvironment();
+        env.CommentTags.InitializeTagList([5]);
+        env.AddComment("thread-02", "RUT 1:2", "Unknown tag", "6");
+        var helper = new ParatextDataHelper();
+
+        IReadOnlyList<ParatextNote> notes = helper.GetNotes(env.CommentManager, env.CommentTags);
+
+        Assert.AreEqual(1, notes.Count);
+        ParatextNoteComment comment = notes[0].Comments[0];
+        Assert.IsNull(comment.Tag);
+        Assert.AreEqual("<p>Unknown tag</p>", comment.Content);
+    }
+
+    [Test]
+    public void GetNotes_SkipsNegativeTagIds()
+    {
+        var env = new NotesTestEnvironment();
+        env.CommentTags.InitializeTagList([5]);
+        env.AddComment("thread-03", "RUT 1:3", "Negative tag id", "-3");
+        var helper = new ParatextDataHelper();
+
+        IReadOnlyList<ParatextNote> notes = helper.GetNotes(env.CommentManager, env.CommentTags);
+
+        Assert.AreEqual(1, notes.Count);
+        ParatextNoteComment comment = notes[0].Comments[0];
+        Assert.IsNull(comment.Tag);
+        Assert.AreEqual("<p>Negative tag id</p>", comment.Content);
+        Assert.AreEqual("RUT 1:3", notes[0].VerseRef);
+    }
+
+    [Test]
     public void GetNotes_SkipsThreadsWithOnlyDeletedComments()
     {
         var env = new NotesTestEnvironment();
