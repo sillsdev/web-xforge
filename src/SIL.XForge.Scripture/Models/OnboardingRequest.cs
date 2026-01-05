@@ -99,21 +99,21 @@ public class OnboardingRequestFormData
 {
     public string Name { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
-    public string? Organization { get; set; }
+    public string Organization { get; set; } = string.Empty;
     public string PartnerOrganization { get; set; } = string.Empty;
     public string TranslationLanguageName { get; set; } = string.Empty;
     public string TranslationLanguageIsoCode { get; set; } = string.Empty;
-    public int[]? CompletedBooks { get; set; }
-    public int[]? NextBooksToDraft { get; set; }
-    public string? PrimarySourceProject { get; set; }
-    public string? SecondarySourceProject { get; set; }
-    public string? AdditionalSourceProject { get; set; }
+    public int[] CompletedBooks { get; set; } = [];
+    public int[] NextBooksToDraft { get; set; } = [];
+    public string? sourceProjectA { get; set; }
+    public string? sourceProjectB { get; set; }
+    public string? sourceProjectC { get; set; }
     public string? DraftingSourceProject { get; set; }
-    public string? BackTranslationStage { get; set; }
+    public string BackTranslationStage { get; set; } = string.Empty;
     public string? BackTranslationProject { get; set; }
     public string BackTranslationLanguageName { get; set; } = string.Empty;
     public string BackTranslationLanguageIsoCode { get; set; } = string.Empty;
-    public string? AdditionalComments { get; set; }
+    public string AdditionalComments { get; set; } = string.Empty;
 }
 
 /// <summary>

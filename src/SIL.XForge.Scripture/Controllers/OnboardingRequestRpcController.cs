@@ -33,6 +33,12 @@ public class OnboardingRequestRpcController(
     private readonly IRealtimeService _realtimeService = realtimeService;
     private readonly ISFProjectService _projectService = projectService;
 
+    /// <summary>
+    /// Submits a drafting signup request for the specified project.
+    /// The user must be on the project and have a Paratext role.
+    /// This stores the request, attempts to notify Serval admins by email, and connects any Paratext projects or DBL
+    /// resources that were listed in the form that aren't already connected.
+    /// </summary>
     public async Task<IRpcMethodResult> SubmitOnboardingRequest(string projectId, OnboardingRequestFormData formData)
     {
         try
@@ -112,9 +118,9 @@ public class OnboardingRequestRpcController(
             // Start by collecting them into a set
             var paratextProjectIds = new List<string>
             {
-                formData.PrimarySourceProject,
-                formData.SecondarySourceProject,
-                formData.AdditionalSourceProject,
+                formData.sourceProjectA,
+                formData.sourceProjectB,
+                formData.sourceProjectC,
                 formData.DraftingSourceProject,
                 formData.BackTranslationProject,
             }

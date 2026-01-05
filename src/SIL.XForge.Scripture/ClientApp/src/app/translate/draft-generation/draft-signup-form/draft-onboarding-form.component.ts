@@ -89,9 +89,9 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
     nextBooksToDraft: FormControl<number[]>;
 
     // Reference projects (source text information)
-    primarySourceProject: FormControl<string | null>;
-    secondarySourceProject: FormControl<string | null>;
-    additionalSourceProject: FormControl<string | null>;
+    sourceProjectA: FormControl<string | null>;
+    sourceProjectB: FormControl<string | null>;
+    sourceProjectC: FormControl<string | null>;
     draftingSourceProject: FormControl<string | null>;
 
     // Back Translation Information
@@ -151,9 +151,9 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
       nextBooksToDraft: new FormControl<number[]>([], { nonNullable: true, validators: [Validators.required] }),
 
       // Reference projects (source text information)
-      primarySourceProject: new FormControl<string | null>(null, { validators: [Validators.required] }),
-      secondarySourceProject: new FormControl<string | null>(null),
-      additionalSourceProject: new FormControl<string | null>(null),
+      sourceProjectA: new FormControl<string | null>(null, { validators: [Validators.required] }),
+      sourceProjectB: new FormControl<string | null>(null),
+      sourceProjectC: new FormControl<string | null>(null),
       draftingSourceProject: new FormControl<string | null>(null, { validators: [Validators.required] }),
 
       // Back Translation Information
@@ -217,6 +217,115 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
     // Initialize selected arrays from the current form values (and projectBooks if available).
     // This ensures the child `BookMultiSelectComponent` receives stable references on init.
     this.syncSelectedFromForm();
+  }
+
+  onCompletedBooksSelect(ids: number[]): void {
+    // set the form control value when user selects books
+    this.signupForm.controls.completedBooks.setValue(ids);
+  }
+
+  onSubmittedBooksSelect(ids: number[]): void {
+    this.signupForm.controls.nextBooksToDraft.setValue(ids);
+  }
+
+  async onSubmit(): Promise<void> {
+    if (this.signupForm.valid) {
+      if (this.activatedProject.projectId == null) {
+        this.noticeService.showError('No project selected');
+        return;
+      }
+
+      // Get form data BEFORE disabling the form (disabled forms don't include values)
+      const formData: DraftingSignupFormData = this.signupForm.getRawValue() as DraftingSignupFormData;
+
+      this.submitting = true;
+      this.signupForm.disable();
+      try {
+        const requestId = await this.draftingSignupService.submitOnboardingRequest(
+          this.activatedProject.projectId,
+          formData
+        );
+
+        // For testing purposes, store and display the submitted data
+        this.submittedData = {
+          requestId,
+          projectId: this.activatedProject.projectId,
+          formData
+        };
+
+        this.noticeService.show('Draft signup request submitted successfully');
+        this.cd.detectChanges();
+      } catch (error) {
+        console.error('Error submitting draft signup request:', error);
+        this.noticeService.showError('Failed to submit draft signup request');
+        this.signupForm.enable();
+      } finally {
+        this.submitting = false;
+      }
+    } else {
+      console.log('Form is invalid at top-level:', this.signupForm.errors);
+      this.logValidationErrors();
+      // Mark all fields as touched to show validation errors
+      this.signupForm.markAllAsTouched();
+      this.noticeService.showError('Please fill in all required fields');
+    }
+  }
+
+  cancel(): void {
+    // Navigate back to draft generation page
+    if (this.activatedProject.projectId != null) {
+      void this.router.navigate(['/projects', this.activatedProject.projectId, 'draft-generation']);
+    }
+  }
+
+  get showBackTranslationProject(): boolean {
+    const stage = this.signupForm.controls.backTranslationStage.value;
+    return stage === 'Written (Incomplete or Out-of-Date)' || stage === 'Written (Up-to-Date)';
+  }
+
+  // Whether to show the "completed books is required" error message.
+  get showCompletedBooksRequiredError(): boolean {
+    const ctrl = this.signupForm.controls.completedBooks;
+    return ctrl.hasError('required') && (ctrl.touched || ctrl.dirty);
+  }
+
+  // Whether to show the "planned books is required" error message.
+  get showPlannedBooksRequiredError(): boolean {
+    const ctrl = this.signupForm.controls.nextBooksToDraft;
+    return ctrl.hasError('required') && (ctrl.touched || ctrl.dirty);
+  }
+
+  get currentProjectDisplayName(): string {
+    return projectLabel(this.activatedProject.projectDoc!.data!);
+  }
+
+  get hiddenParatextIds(): string[] {
+    const currentProjectParatextId = this.activatedProject.projectDoc?.data?.paratextId;
+    return currentProjectParatextId ? [currentProjectParatextId] : [];
+  }
+
+  get sourceProjectAErrorMessage(): string | undefined {
+    const ctrl = this.signupForm.controls.sourceProjectA;
+    if (ctrl.hasError('required') && ctrl.touched) {
+      return translate('draft_signup.primary_source_project_required');
+    }
+    return undefined;
+  }
+
+  get draftingSourceProjectErrorMessage(): string | undefined {
+    const ctrl = this.signupForm.controls.draftingSourceProject;
+    if (ctrl.hasError('required') && ctrl.touched) {
+      return translate('draft_signup.drafting_source_project_required');
+    }
+    return undefined;
+  }
+
+  get backTranslationProjectErrorMessage(): string | undefined {
+    const ctrl = this.signupForm.controls.backTranslationProject;
+    if (ctrl.hasError('required') && ctrl.touched) {
+      return translate('draft_signup.bt_project_required');
+    }
+    return undefined;
   }
 
   private async loadProjectsAndResources(): Promise<void> {
@@ -327,114 +436,5 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
     });
 
     console.warn('Draft signup form validation errors:', errorsByControl);
-  }
-
-  onCompletedBooksSelect(ids: number[]): void {
-    // set the form control value when user selects books
-    this.signupForm.controls.completedBooks.setValue(ids);
-  }
-
-  onSubmittedBooksSelect(ids: number[]): void {
-    this.signupForm.controls.nextBooksToDraft.setValue(ids);
-  }
-
-  async onSubmit(): Promise<void> {
-    if (this.signupForm.valid) {
-      if (this.activatedProject.projectId == null) {
-        this.noticeService.showError('No project selected');
-        return;
-      }
-
-      // Get form data BEFORE disabling the form (disabled forms don't include values)
-      const formData: DraftingSignupFormData = this.signupForm.getRawValue() as DraftingSignupFormData;
-
-      this.submitting = true;
-      this.signupForm.disable();
-      try {
-        const requestId = await this.draftingSignupService.submitOnboardingRequest(
-          this.activatedProject.projectId,
-          formData
-        );
-
-        // For testing purposes, store and display the submitted data
-        this.submittedData = {
-          requestId,
-          projectId: this.activatedProject.projectId,
-          formData
-        };
-
-        this.noticeService.show('Draft signup request submitted successfully');
-        this.cd.detectChanges();
-      } catch (error) {
-        console.error('Error submitting draft signup request:', error);
-        this.noticeService.showError('Failed to submit draft signup request');
-        this.signupForm.enable();
-      } finally {
-        this.submitting = false;
-      }
-    } else {
-      console.log('Form is invalid at top-level:', this.signupForm.errors);
-      this.logValidationErrors();
-      // Mark all fields as touched to show validation errors
-      this.signupForm.markAllAsTouched();
-      this.noticeService.showError('Please fill in all required fields');
-    }
-  }
-
-  cancel(): void {
-    // Navigate back to draft generation page
-    if (this.activatedProject.projectId != null) {
-      void this.router.navigate(['/projects', this.activatedProject.projectId, 'draft-generation']);
-    }
-  }
-
-  get showBackTranslationProject(): boolean {
-    const stage = this.signupForm.controls.backTranslationStage.value;
-    return stage === 'Written (Incomplete or Out-of-Date)' || stage === 'Written (Up-to-Date)';
-  }
-
-  // Whether to show the "completed books is required" error message.
-  get showCompletedBooksRequiredError(): boolean {
-    const ctrl = this.signupForm.controls.completedBooks;
-    return ctrl.hasError('required') && (ctrl.touched || ctrl.dirty);
-  }
-
-  // Whether to show the "planned books is required" error message.
-  get showPlannedBooksRequiredError(): boolean {
-    const ctrl = this.signupForm.controls.nextBooksToDraft;
-    return ctrl.hasError('required') && (ctrl.touched || ctrl.dirty);
-  }
-
-  get currentProjectDisplayName(): string {
-    return projectLabel(this.activatedProject.projectDoc!.data!);
-  }
-
-  get hiddenParatextIds(): string[] {
-    const currentProjectParatextId = this.activatedProject.projectDoc?.data?.paratextId;
-    return currentProjectParatextId ? [currentProjectParatextId] : [];
-  }
-
-  get primarySourceProjectErrorMessage(): string | undefined {
-    const ctrl = this.signupForm.controls.primarySourceProject;
-    if (ctrl.hasError('required') && ctrl.touched) {
-      return translate('draft_signup.primary_source_project_required');
-    }
-    return undefined;
-  }
-
-  get draftingSourceProjectErrorMessage(): string | undefined {
-    const ctrl = this.signupForm.controls.draftingSourceProject;
-    if (ctrl.hasError('required') && ctrl.touched) {
-      return translate('draft_signup.drafting_source_project_required');
-    }
-    return undefined;
-  }
-
-  get backTranslationProjectErrorMessage(): string | undefined {
-    const ctrl = this.signupForm.controls.backTranslationProject;
-    if (ctrl.hasError('required') && ctrl.touched) {
-      return translate('draft_signup.bt_project_required');
-    }
-    return undefined;
   }
 }
