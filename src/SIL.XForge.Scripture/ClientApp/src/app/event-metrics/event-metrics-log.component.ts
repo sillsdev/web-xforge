@@ -130,8 +130,8 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
           this.loadingStarted();
           if (isOnline) {
             const queryResults = await this.projectService.onlineEventMetrics(projectId, pageIndex, pageSize);
-            this.length = queryResults?.unpagedCount ?? 0;
-            if (Array.isArray(queryResults?.results)) {
+            this.length = queryResults.unpagedCount ?? 0;
+            if (Array.isArray(queryResults.results)) {
               this.eventMetrics = queryResults.results as EventMetric[];
             } else {
               this.eventMetrics = [];

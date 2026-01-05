@@ -334,7 +334,7 @@ class TestEnvironment {
 
     when(
       mockedProjectService.onlineInvite(anything(), 'unknown-address@example.com', anything(), anything())
-    ).thenResolve(undefined);
+    ).thenResolve({} as any);
     when(
       mockedProjectService.onlineInvite(anything(), 'already-project-member@example.com', anything(), anything())
     ).thenResolve(this.component.alreadyProjectMemberResponse);

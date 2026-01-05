@@ -144,7 +144,7 @@ describe('EditorTabAddResourceDialogComponent', () => {
 
     it('should set projectFetchFailed to true when fetchProject returns undefined', fakeAsync(() => {
       const env = new TestEnvironment();
-      when(mockSFProjectService.onlineCreateResourceProject(env.paratextId)).thenReturn(Promise.resolve(undefined));
+      when(mockSFProjectService.onlineCreateResourceProject(env.paratextId)).thenResolve({} as any);
       env.component.confirmSelection();
       tick();
       verify(mockSFProjectService.onlineCreateResourceProject(env.paratextId)).once();
