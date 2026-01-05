@@ -112,9 +112,9 @@ public class OnboardingRequestRpcController(
             // Start by collecting them into a set
             var paratextProjectIds = new List<string>
             {
-                formData.PrimarySourceProject,
-                formData.SecondarySourceProject,
-                formData.AdditionalSourceProject,
+                formData.sourceProjectA,
+                formData.sourceProjectB,
+                formData.sourceProjectC,
                 formData.DraftingSourceProject,
                 formData.BackTranslationProject,
             }
