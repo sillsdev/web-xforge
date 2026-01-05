@@ -226,7 +226,8 @@ export class FileService {
       if (blob != null) {
         if (blob.type === 'text/csv') {
           // use the .csv extension explicitly if the MIME type is csv
-          filename = filename.split('.')[0] + '.csv';
+          const extensionIndex: number = filename.lastIndexOf('.');
+          filename = extensionIndex > -1 ? filename.substring(0, extensionIndex) + '.csv' : filename + '.csv';
         }
         saveAs(blob, filename);
       }
