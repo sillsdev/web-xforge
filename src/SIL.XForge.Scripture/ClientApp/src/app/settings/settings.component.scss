@@ -73,11 +73,6 @@ a {
   color: variables.$blueMedium;
 }
 
-mat-icon {
-  color: variables.$greyLight;
-  overflow: visible;
-}
-
 .indent {
   margin-block-start: 16px;
   margin-inline-start: 16px;
@@ -127,16 +122,6 @@ mat-icon {
   .project-syncing-msg {
     color: var(---mat-sys-error);
   }
-}
-
-// Use enabled class to work around changing styles while loading
-#delete-btn:not(.enabled) {
-  background-color: rgba(0, 0, 0, 0.12);
-  color: rgba(0, 0, 0, 0.38);
-}
-#delete-btn:not(:disabled) {
-  background-color: var(--mat-sys-error);
-  color: var(--mat-sys-on-error);
 }
 
 mat-radio-group.tool-setting {
