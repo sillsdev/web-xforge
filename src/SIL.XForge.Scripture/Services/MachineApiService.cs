@@ -1516,6 +1516,13 @@ public class MachineApiService(
         // If the user is a serval admin, get the highest ranked user on the project
         string userId = isServalAdmin ? GetHighestRankedUserId(project) : curUserId;
 
+        // Retrieve the user secret
+        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(userId, cancellationToken);
+        if (!attempt.TryResult(out UserSecret userSecret))
+        {
+            throw new DataNotFoundException("The user does not exist.");
+        }
+
         // Connect to the realtime server
         await using IConnection connection = await realtimeService.ConnectAsync(userId);
         string id = TextDocument.GetDocId(sfProjectId, bookNum, chapterNum, TextDocument.Draft);
@@ -1536,10 +1543,18 @@ public class MachineApiService(
             // Retrieve the chapters for this book from the realtime server, if the chapter is zero
             if (chapterNum == 0)
             {
+                // Get the draft project versification so we can get the number of chapters in the book
+                ScrVers versification =
+                    paratextService.GetParatextSettings(userSecret, project.ParatextId)?.Versification
+                    ?? VerseRef.defaultVersification;
+                // Just in case the versification is incorrect, use the last chapter in Mongo if it is larger
+                int lastChapterInMongo =
+                    project.Texts.SingleOrDefault(t => t.BookNum == bookNum)?.Chapters.Max(c => c.Number) ?? 0;
+                int lastChapter = Math.Max(versification.GetLastChapter(bookNum), lastChapterInMongo);
                 List<object> content = [];
-                foreach (Chapter chapter in project.Texts.SingleOrDefault(t => t.BookNum == bookNum)?.Chapters ?? [])
+                for (int chapter = 1; chapter <= lastChapter; chapter++)
                 {
-                    id = TextDocument.GetDocId(sfProjectId, bookNum, chapter.Number, TextDocument.Draft);
+                    id = TextDocument.GetDocId(sfProjectId, bookNum, chapter, TextDocument.Draft);
                     textDocument = await connection.FetchAsync<TextDocument>(id);
                     if (textDocument.IsLoaded)
                     {
@@ -1587,13 +1602,6 @@ public class MachineApiService(
                     throw new DataNotFoundException("A draft cannot be retrieved at that timestamp");
                 }
             }
-        }
-
-        // Retrieve the user secret
-        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(userId, cancellationToken);
-        if (!attempt.TryResult(out UserSecret userSecret))
-        {
-            throw new DataNotFoundException("The user does not exist.");
         }
 
         DraftUsfmConfig config =
