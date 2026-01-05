@@ -89,7 +89,7 @@ export class NoticeService {
     });
   }
 
-  private nextLoadingValue = this.isAppLoading;
+  private nextLoadingValue: boolean = this.isAppLoading;
   private setAppLoadingAsync(value: boolean): void {
     this.nextLoadingValue = value;
     // A microtask will run sooner than setTimeout would call back
