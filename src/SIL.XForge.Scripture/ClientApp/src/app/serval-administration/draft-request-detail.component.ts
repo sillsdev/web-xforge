@@ -163,9 +163,9 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
     // Collect Paratext project IDs from form data (these are different from the main projectId)
     const paratextIds = new Set<string>();
     const formData = this.request.submission.formData;
-    if (formData.primarySourceProject) paratextIds.add(formData.primarySourceProject);
-    if (formData.secondarySourceProject) paratextIds.add(formData.secondarySourceProject);
-    if (formData.additionalSourceProject) paratextIds.add(formData.additionalSourceProject);
+    if (formData.sourceProjectA) paratextIds.add(formData.sourceProjectA);
+    if (formData.sourceProjectB) paratextIds.add(formData.sourceProjectB);
+    if (formData.sourceProjectC) paratextIds.add(formData.sourceProjectC);
     if (formData.draftingSourceProject) paratextIds.add(formData.draftingSourceProject);
     if (formData.backTranslationProject) paratextIds.add(formData.backTranslationProject);
 
@@ -308,9 +308,9 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
     }
 
     // Add all source project zip file names
-    addZipFileName(formData.primarySourceProject);
-    addZipFileName(formData.secondarySourceProject);
-    addZipFileName(formData.additionalSourceProject);
+    addZipFileName(formData.sourceProjectA);
+    addZipFileName(formData.sourceProjectB);
+    addZipFileName(formData.sourceProjectC);
     addZipFileName(formData.draftingSourceProject);
     addZipFileName(formData.backTranslationProject);
 
@@ -320,9 +320,9 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
   getAllProjectSFIds(options = { includeResources: true }): string[] {
     const mainProject = this.request?.submission.projectId;
     const sourceIds = [
-      this.formData.primarySourceProject,
-      this.formData.secondarySourceProject,
-      this.formData.additionalSourceProject,
+      this.formData.sourceProjectA,
+      this.formData.sourceProjectB,
+      this.formData.sourceProjectC,
       this.formData.draftingSourceProject,
       this.formData.backTranslationProject
     ]
