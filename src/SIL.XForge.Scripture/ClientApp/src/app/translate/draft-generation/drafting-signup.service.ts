@@ -22,9 +22,9 @@ export interface DraftingSignupFormData {
   completedBooks: number[];
   nextBooksToDraft: number[];
 
-  primarySourceProject: string;
-  secondarySourceProject?: string;
-  additionalSourceProject?: string;
+  sourceProjectA: string;
+  sourceProjectB?: string;
+  sourceProjectC?: string;
   draftingSourceProject: string;
 
   backTranslationStage: string;

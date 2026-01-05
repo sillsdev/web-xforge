@@ -170,18 +170,15 @@
       <mat-card-content>
         <div class="info-row">
           <span class="label">First reference project:</span>
-          <ng-container *ngTemplateOutlet="project; context: { projectId: formData.primarySourceProject }">
-          </ng-container>
+          <ng-container *ngTemplateOutlet="project; context: { projectId: formData.sourceProjectA }"> </ng-container>
         </div>
         <div class="info-row">
           <span class="label">Second reference project:</span>
-          <ng-container *ngTemplateOutlet="project; context: { projectId: formData.secondarySourceProject }">
-          </ng-container>
+          <ng-container *ngTemplateOutlet="project; context: { projectId: formData.sourceProjectB }"> </ng-container>
         </div>
         <div class="info-row">
           <span class="label">Third reference project:</span>
-          <ng-container *ngTemplateOutlet="project; context: { projectId: formData.additionalSourceProject }">
-          </ng-container>
+          <ng-container *ngTemplateOutlet="project; context: { projectId: formData.sourceProjectC }"> </ng-container>
         </div>
         <div class="info-row">
           <span class="label">Draft source project:</span>

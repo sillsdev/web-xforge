@@ -45,7 +45,7 @@ public static class SFDataAccessServiceCollectionExtensions
                 )
         );
         services.AddMongoRepository<OnboardingRequest>(
-            "drafting_signup_requests",
+            "drafting_onboarding_requests",
             cm => cm.MapIdProperty(dsr => dsr.Id),
             im =>
                 im.CreateOne(
