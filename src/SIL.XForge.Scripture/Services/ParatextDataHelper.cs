@@ -162,7 +162,13 @@ public class ParatextDataHelper(IFileSystemService fileSystemService) : IParatex
         if (comment.TagsAdded is { Length: > 0 })
         {
             string tagValue = comment.TagsAdded[0];
-            if (int.TryParse(tagValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out int tagId))
+            //Based on Paratext's CommentTags.cs, their reserved tag ID's are -3 through -1.
+            //We don't want to show those to the users when they're dealing with their notes.
+            if (
+                int.TryParse(tagValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out int tagId)
+                && tagId >= 0
+                && commentTags.IsKnown(tagId)
+            )
                 tag = CreateNoteTag(tagId, commentTags);
         }
 
