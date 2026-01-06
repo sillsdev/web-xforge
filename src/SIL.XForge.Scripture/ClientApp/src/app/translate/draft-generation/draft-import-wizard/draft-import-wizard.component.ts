@@ -1,6 +1,6 @@
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
 import { AsyncPipe } from '@angular/common';
-import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, DestroyRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
 import { MatCheckbox } from '@angular/material/checkbox';
@@ -27,6 +27,7 @@ import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { ParatextService } from '../../../core/paratext.service';
+import { ProjectNotificationService } from '../../../core/project-notification.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { BuildDto } from '../../../machine-api/build-dto';
@@ -45,7 +46,6 @@ interface BookForImport {
   bookNum: number;
   bookId: string;
   bookName: string;
-  chapters: number[];
   selected: boolean;
 }
 
@@ -54,10 +54,27 @@ interface BookForImport {
  */
 interface ImportProgress {
   bookNum: number;
+  bookId: string;
   bookName: string;
   totalChapters: number;
-  completedChapters: number;
-  failedChapters: { chapter: number; message: string }[];
+  completedChapters: number[];
+  failedChapters: { chapterNum: number; message?: string }[];
+}
+
+interface DraftApplyState {
+  bookNum: number;
+  chapterNum: number;
+  totalChapters: number;
+  message?: string;
+  status: DraftApplyStatus;
+}
+
+enum DraftApplyStatus {
+  None = 0,
+  InProgress = 1,
+  Successful = 2,
+  Warning = 3,
+  Failed = 4
 }
 
 /**
@@ -236,7 +253,7 @@ export class DraftImportWizardComponent implements OnInit {
   showBookSelection = false;
 
   // Step 5: Overwrite confirmation (conditional)
-  showOverwriteConfirmation = false;
+  showOverwriteConfirmation = true;
   overwriteForm = new FormGroup({
     confirmOverwrite: new FormControl(false, Validators.requiredTrue)
   });
@@ -261,13 +278,25 @@ export class DraftImportWizardComponent implements OnInit {
   constructor(
     @Inject(MAT_DIALOG_DATA) readonly data: BuildDto,
     @Inject(MatDialogRef) private readonly dialogRef: MatDialogRef<DraftImportWizardComponent, boolean>,
+    readonly destroyRef: DestroyRef,
     private readonly paratextService: ParatextService,
+    private readonly projectNotificationService: ProjectNotificationService,
     private readonly projectService: SFProjectService,
     private readonly textDocService: TextDocService,
     readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly activatedProjectService: ActivatedProjectService
-  ) {}
+  ) {
+    this.projectNotificationService.setNotifyDraftApplyProgressHandler(
+      (projectId: string, draftApplyState: DraftApplyState) => {
+        this.updateDraftApplyState(projectId, draftApplyState);
+      }
+    );
+    destroyRef.onDestroy(async () => {
+      // Stop the SignalR connection when the component is destroyed
+      await projectNotificationService.stop();
+    });
+  }
 
   get isAppOnline(): boolean {
     return this.onlineStatusService.isOnline;
@@ -355,7 +384,6 @@ export class DraftImportWizardComponent implements OnInit {
       bookNum,
       bookId: Canon.bookNumberToId(bookNum),
       bookName: this.i18n.localizeBook(bookNum),
-      chapters: [], // Will be populated when we have project context
       selected: true // Pre-select all books by default
     }));
 
@@ -369,25 +397,6 @@ export class DraftImportWizardComponent implements OnInit {
       this.noDraftsAvailable = this.availableBooksForImport.length === 0;
       return;
     }
-  }
-
-  async applyDraftToProject(projectId: string): Promise<void> {
-    // TODO: Use this function!
-    // Build a scripture range and timestamp to import
-    const scriptureRange = this.availableBooksForImport.map(b => b.bookId).join(';');
-    const timestamp: Date =
-      this.data.additionalInfo?.dateGenerated != null ? new Date(this.data.additionalInfo.dateGenerated) : new Date();
-
-    // Apply the pre-translation draft to the project
-    await this.projectService.onlineApplyPreTranslationToProject(
-      this.activatedProjectService.projectId!,
-      scriptureRange,
-      projectId,
-      timestamp
-    );
-
-    // TODO: Subscribe to SignalR for import status/updates
-    this.resetImportState();
   }
 
   async projectSelected(paratextId: string): Promise<void> {
@@ -576,8 +585,10 @@ export class DraftImportWizardComponent implements OnInit {
       return;
     }
 
+    this.isLoadingProject = true;
     const booksReady = await this.ensureSelectedBooksExist();
     if (!booksReady) {
+      this.isLoadingProject = false;
       return;
     }
 
@@ -585,6 +596,7 @@ export class DraftImportWizardComponent implements OnInit {
     await this.analyzeBooksForOverwrite();
 
     this.stepper?.next();
+    this.isLoadingProject = false;
   }
 
   private async analyzeBooksForOverwrite(): Promise<void> {
@@ -655,45 +667,94 @@ export class DraftImportWizardComponent implements OnInit {
     // Initialize progress tracking
     this.importProgress = booksToImport.map(book => ({
       bookNum: book.bookNum,
+      bookId: book.bookId,
       bookName: book.bookName,
-      totalChapters: book.chapters.length,
-      completedChapters: 0,
+      totalChapters: 0,
+      completedChapters: [],
       failedChapters: []
     }));
 
     try {
       await this.performImport(booksToImport);
-
-      // Check if there were any failures
-      const totalFailures = this.importProgress.reduce((sum, p) => sum + p.failedChapters.length, 0);
-      if (totalFailures > 0) {
-        this.importError = `Failed to import ${totalFailures} chapter(s). See details above.`;
-      } else {
-        this.importComplete = true;
-      }
     } catch (error) {
       this.importError = error instanceof Error ? error.message : 'Unknown error occurred';
-    } finally {
       this.isImporting = false;
     }
   }
 
-  private async performImport(_books: BookForImport[]): Promise<void> {
+  private async performImport(books: BookForImport[]): Promise<void> {
     if (this.targetProjectId == null || this.sourceProjectId == null) {
       throw new Error('Missing project context for import');
     }
 
-    // TODO: Generate a scripture range
-    // TODO: Get timestamp
-    /*
-         let timestamp: Date | undefined;
-          if (this.data.additionalInfo?.dateGenerated != null) {
-            timestamp = new Date(this.data.additionalInfo.dateGenerated);
+    // Subscribe to SignalR updates
+    await this.projectNotificationService.start();
+    await this.projectNotificationService.subscribeToProject(this.sourceProjectId);
+
+    // Build a scripture range and timestamp to import
+    const scriptureRange = books.map(b => b.bookId).join(';');
+    const timestamp: Date =
+      this.data.additionalInfo?.dateGenerated != null ? new Date(this.data.additionalInfo.dateGenerated) : new Date();
+
+    // Apply the pre-translation draft to the project
+    await this.projectService.onlineApplyPreTranslationToProject(
+      this.sourceProjectId,
+      scriptureRange,
+      this.targetProjectId,
+      timestamp
+    );
+  }
+
+  /**
+   * Handler for SignalR notifications when applying a draft.
+   *
+   * @param projectId The project identifier.
+   * @param draftApplyState The draft apply state from the backend.
+   */
+  updateDraftApplyState(projectId: string, draftApplyState: DraftApplyState): void {
+    if (projectId !== this.sourceProjectId) return;
+
+    // Update based on book or chapter
+    if (draftApplyState.bookNum === 0 && draftApplyState.chapterNum === 0) {
+      // Handle the final states
+      if (draftApplyState.status === DraftApplyStatus.Successful) {
+        // Check if there were any failures
+        this.isImporting = false;
+        const totalFailures = this.importProgress.reduce((sum, p) => sum + p.failedChapters.length, 0);
+        if (totalFailures > 0) {
+          this.importError = `Failed to import ${totalFailures} chapter(s). See details above.`;
+        } else {
+          this.importComplete = true;
+        }
+      } else if (draftApplyState.status === DraftApplyStatus.Failed) {
+        // Clear all completed chapters
+        this.importProgress.forEach(p => {
+          p.completedChapters.length = 0;
+        });
+        this.isImporting = false;
+        this.importError = draftApplyState.message;
+      }
+    } else if (draftApplyState.bookNum > 0) {
+      // Handle the in-progress states
+      const progress: ImportProgress | undefined = this.importProgress.find(p => p.bookNum === draftApplyState.bookNum);
+      if (progress != null) {
+        if (draftApplyState.status === DraftApplyStatus.Failed) {
+          const failedChapter = progress.failedChapters.find(c => c.chapterNum === draftApplyState.chapterNum);
+          if (failedChapter != null && draftApplyState.message != null) {
+            failedChapter.message = draftApplyState.message;
+          } else {
+            progress.failedChapters.push({ chapterNum: draftApplyState.chapterNum, message: draftApplyState.message });
           }
-    */
-    // TODO: Submit to the backend
-    // TODO: Update this.progress.failedChapters
-    // TODO: Update this.progress.completedChapters
+        } else if (
+          draftApplyState.status === DraftApplyStatus.Successful &&
+          !progress.completedChapters.includes(draftApplyState.chapterNum)
+        ) {
+          progress.completedChapters.push(draftApplyState.chapterNum);
+        } else if (draftApplyState.status === DraftApplyStatus.InProgress && draftApplyState.totalChapters > 0) {
+          progress.totalChapters = draftApplyState.totalChapters;
+        }
+      }
+    }
   }
 
   retryImport(): void {
@@ -741,7 +802,7 @@ export class DraftImportWizardComponent implements OnInit {
   }
 
   getFailedChapters(progress: ImportProgress): string {
-    return progress.failedChapters.map(f => f.chapter).join(', ');
+    return progress.failedChapters.map(f => f.chapterNum).join(', ');
   }
 
   private resetImportState(): void {
