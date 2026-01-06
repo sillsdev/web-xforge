@@ -599,7 +599,9 @@ public class TrainingDataServiceTests
         using var reader = new StreamReader(outputStream);
         string text = await reader.ReadToEndAsync();
         text = text.TrimEnd(); // Remove trailing new lines
-        Assert.AreEqual($"Test,Data{Environment.NewLine}Skip,Row", text);
+        text = text.Replace("\r\n", " "); // Handle newlines in both linux and windows environments
+        text = text.Replace("\n", " ");
+        Assert.AreEqual($"Test,Data Skip,Row", text);
         outputStream.ForceDispose();
     }
 
