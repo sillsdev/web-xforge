@@ -24,6 +24,7 @@ import { QueryParameters, QueryResults } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { RetryingRequest, RetryingRequestService } from 'xforge-common/retrying-request.service';
 import { EventMetric } from '../event-metrics/event-metric';
+import { BookProgress } from '../shared/progress-service/progress.service';
 import { booksFromScriptureRange } from '../shared/utils';
 import { BiblicalTermDoc } from './models/biblical-term-doc';
 import { InviteeStatus } from './models/invitee-status';
@@ -409,5 +410,11 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     }
 
     return await this.onlineInvoke<QueryResults<EventMetric>>('eventMetrics', params);
+  }
+
+  /** Gets project progress by calling the backend aggregation endpoint. */
+  async getProjectProgress(projectId: string): Promise<BookProgress[]> {
+    // TODO remove non-null assertion after #3622 is merged
+    return (await this.onlineInvoke<BookProgress[]>('getProjectProgress', { projectId }))!;
   }
 }

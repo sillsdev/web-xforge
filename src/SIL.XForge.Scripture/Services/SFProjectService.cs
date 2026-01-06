@@ -11,6 +11,7 @@ using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
+using MongoDB.Driver;
 using Newtonsoft.Json.Linq;
 using SIL.Extensions;
 using SIL.XForge.Configuration;
@@ -50,10 +51,12 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     private readonly IEventMetricService _eventMetricService;
     private readonly ISFProjectRights _projectRights;
     private readonly IGuidService _guidService;
+    private readonly IMongoDatabase _database;
 
     public SFProjectService(
         IRealtimeService realtimeService,
         IOptions<SiteOptions> siteOptions,
+        IOptions<DataAccessOptions> dataAccessOptions,
         IAudioService audioService,
         IEmailService emailService,
         IRepository<SFProjectSecret> projectSecrets,
@@ -70,7 +73,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         IBackgroundJobClient backgroundJobClient,
         IEventMetricService eventMetricService,
         ISFProjectRights projectRights,
-        IGuidService guidService
+        IGuidService guidService,
+        IMongoClient mongoClient
     )
         : base(realtimeService, siteOptions, audioService, projectSecrets, fileSystemService)
     {
@@ -89,6 +93,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         _backgroundJobClient = backgroundJobClient;
         _projectRights = projectRights;
         _guidService = guidService;
+        _database = mongoClient.GetDatabase(dataAccessOptions.Value.MongoDatabaseName);
     }
 
     protected override string ProjectAdminRole => SFProjectRole.Administrator;
@@ -1822,6 +1827,110 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
 
         return Attempt.Failure(ProjectRole.None);
+    }
+
+    /// <summary>
+    /// Calculates project progress by aggregating verse segment data from the MongoDB texts collection.
+    /// This method uses a MongoDB aggregation pipeline to efficiently compute progress at the database level.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="projectId">The project identifier.</param>
+    /// <returns>The calculated project progress data.</returns>
+    /// <exception cref="DataNotFoundException">The project does not exist.</exception>
+    /// <exception cref="ForbiddenException">The user does not have permission to view the project.</exception>
+    public async Task<BookProgress[]> GetProjectProgressAsync(string curUserId, string projectId)
+    {
+        // Check that the project exists and user has permission to view it
+        SFProject project = await GetProjectAsync(projectId);
+        if (!project.UserRoles.ContainsKey(curUserId))
+            throw new ForbiddenException();
+
+        // Checks whether a segment is a verse segment by checking if the attributes.segment field starts with "verse_"
+        BsonDocument isVerseSegmentIdExpression = new BsonDocument(
+            "$regexMatch",
+            new BsonDocument
+            {
+                { "input", new BsonDocument("$ifNull", new BsonArray { "$$segment.attributes.segment", "" }) },
+                { "regex", "^verse_" },
+            }
+        );
+
+        // Filters for ops that are verse segments (i.e., attributes.segment starts with "verse_")
+        BsonDocument verseSegmentOpsFilterExpression = new BsonDocument
+        {
+            { "input", "$ops" },
+            { "as", "segment" },
+            { "cond", isVerseSegmentIdExpression },
+        };
+        // Same as above filter, except that insert.blank must also be true in order to match a segment
+        BsonDocument blankVerseSegmentOpsFilterExpression = new BsonDocument
+        {
+            { "input", "$ops" },
+            { "as", "segment" },
+            {
+                "cond",
+                new BsonDocument(
+                    "$and",
+                    new BsonArray
+                    {
+                        isVerseSegmentIdExpression,
+                        new BsonDocument("$eq", new BsonArray { "$$segment.insert.blank", true }),
+                    }
+                )
+            },
+        };
+
+        List<BsonDocument> results = await _database
+            .GetCollection<BsonDocument>("texts")
+            .Aggregate()
+            // Filter for text documents that belong to the specified project
+            .Match(Builders<BsonDocument>.Filter.Regex("_id", new BsonRegularExpression($"^{projectId}:")))
+            // Project:
+            // - Extract the book ID from the document ID
+            // - Count the number of verse segments
+            // - Count the number of blank verse segments
+            .Project(
+                new BsonDocument
+                {
+                    { "_id", 1 },
+                    {
+                        "book",
+                        new BsonDocument(
+                            "$arrayElemAt",
+                            new BsonArray { new BsonDocument("$split", new BsonArray { "$_id", ":" }), 1 }
+                        )
+                    },
+                    {
+                        "verseSegments",
+                        new BsonDocument("$size", new BsonDocument("$filter", verseSegmentOpsFilterExpression))
+                    },
+                    {
+                        "blankVerseSegments",
+                        new BsonDocument("$size", new BsonDocument("$filter", blankVerseSegmentOpsFilterExpression))
+                    },
+                }
+            )
+            // Group progress by book and count the total verse segments and blank verse segments for each book
+            .Group(
+                new BsonDocument
+                {
+                    { "_id", "$book" },
+                    { "verseSegments", new BsonDocument("$sum", "$verseSegments") },
+                    { "blankVerseSegments", new BsonDocument("$sum", "$blankVerseSegments") },
+                }
+            )
+            .ToListAsync();
+
+        var books = results
+            .Select(doc => new BookProgress
+            {
+                BookId = doc["_id"].AsString,
+                VerseSegments = doc["verseSegments"].AsInt32,
+                BlankVerseSegments = doc["blankVerseSegments"].AsInt32,
+            })
+            .ToArray();
+
+        return books;
     }
 
     private async Task AddUserToSourceProjectAsync(
