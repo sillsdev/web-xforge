@@ -23,7 +23,7 @@ import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-proj
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { asyncScheduler, firstValueFrom, Subscription, timer } from 'rxjs';
+import { asyncScheduler, Subscription, timer } from 'rxjs';
 import { filter, map, repeat, retry, tap, throttleTime } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -40,7 +40,7 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
-import { ProgressService, TextProgress } from '../../shared/progress-service/progress.service';
+import { BookProgress, ProgressService, ProjectProgress } from '../../shared/progress-service/progress.service';
 import { FontUnsupportedMessageComponent } from '../font-unsupported-message/font-unsupported-message.component';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 const ENGINE_QUALITY_STAR_COUNT = 3;
@@ -83,6 +83,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   engineQuality: number = 0;
   engineConfidence: number = 0;
   trainedSegmentCount: number = 0;
+  projectProgress?: ProjectProgress;
 
   private trainingSub?: Subscription;
   private translationEngine?: RemoteTranslationEngine;
@@ -153,7 +154,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
               this.setupTranslationEngine();
             }
             await this.updateEngineStats();
-            await firstValueFrom(this.progressService.isLoaded$.pipe(filter(loaded => loaded)));
+            this.projectProgress = await this.progressService.getProgress(this.projectId!, { maxStalenessMs: 30_000 });
           } finally {
             this.loadingFinished();
           }
@@ -177,7 +178,9 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
             this.loadingStarted();
             try {
               await this.updateEngineStats();
-              await firstValueFrom(this.progressService.isLoaded$.pipe(filter(loaded => loaded)));
+              this.projectProgress = await this.progressService.getProgress(this.projectId!, {
+                maxStalenessMs: 30_000
+              });
             } finally {
               this.loadingFinished();
             }
@@ -210,6 +213,15 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
       .then(() => void this.listenForStatus());
   }
 
+  getBookNameFromId(bookId: string): string {
+    const bookNum = Canon.bookIdToNumber(bookId);
+    return this.i18n.localizeBook(bookNum);
+  }
+
+  get hasMinimumSegmentsToTrainStatisticalEngine(): boolean {
+    return this.projectProgress == null ? false : this.projectProgress?.translatedVerseSegments >= 10;
+  }
+
   getBookName(text: TextInfo): string {
     return this.i18n.localizeBook(text.bookNum);
   }
@@ -218,8 +230,8 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     return Canon.bookNumberToId(text.bookNum);
   }
 
-  trackTextByBookNum(_index: number, item: TextProgress): number {
-    return item.text.bookNum;
+  trackTextByBookId(_index: number, item: BookProgress): string {
+    return item.bookId;
   }
 
   get isPTUser(): boolean {

@@ -12,7 +12,6 @@ import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
@@ -34,7 +33,7 @@ import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { PermissionsService } from '../../core/permissions.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
-import { Progress, ProgressService, TextProgress } from '../../shared/progress-service/progress.service';
+import { ProgressService, ProjectProgress } from '../../shared/progress-service/progress.service';
 import { FontUnsupportedMessageComponent } from '../font-unsupported-message/font-unsupported-message.component';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { TranslateOverviewComponent } from './translate-overview.component';
@@ -76,7 +75,7 @@ describe('TranslateOverviewComponent', () => {
       env.wait();
 
       expect(env.progressTitle.textContent).toContain('Progress');
-      expect(env.component.progressService.texts.length).toEqual(4);
+      // expect(env.component.progressService.texts.length).toEqual(4);
       env.expectContainsTextProgress(0, 'Matthew', '10 of 20 segments');
       env.expectContainsTextProgress(1, 'Mark', '10 of 20 segments');
       env.expectContainsTextProgress(2, 'Luke', '10 of 20 segments');
@@ -268,14 +267,14 @@ class TestEnvironment {
     when(this.mockedRemoteTranslationEngine.getStats()).thenResolve({ confidence: 0.25, trainedSegmentCount: 100 });
     when(this.mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
     when(this.mockedRemoteTranslationEngine.startTraining()).thenResolve();
-    when(mockedProgressService.isLoaded$).thenReturn(of(true));
-    when(mockedProgressService.overallProgress).thenReturn(new Progress());
-    when(mockedProgressService.texts).thenReturn([
-      { translated: 10, blank: 10, total: 20, percentage: 50, text: { bookNum: 40 } as TextInfo } as TextProgress,
-      { translated: 10, blank: 10, total: 20, percentage: 50, text: { bookNum: 41 } as TextInfo } as TextProgress,
-      { translated: 10, blank: 10, total: 20, percentage: 50, text: { bookNum: 42 } as TextInfo } as TextProgress,
-      { translated: 10, blank: 10, total: 20, percentage: 50, text: { bookNum: 43 } as TextInfo } as TextProgress
-    ]);
+    when(mockedProgressService.getProgress(anything(), anything())).thenResolve(
+      new ProjectProgress([
+        { bookId: 'MAT', verseSegments: 20, blankVerseSegments: 10 },
+        { bookId: 'MRK', verseSegments: 20, blankVerseSegments: 10 },
+        { bookId: 'LUK', verseSegments: 20, blankVerseSegments: 10 },
+        { bookId: 'JHN', verseSegments: 20, blankVerseSegments: 10 }
+      ])
+    );
 
     this.setCurrentUser();
 

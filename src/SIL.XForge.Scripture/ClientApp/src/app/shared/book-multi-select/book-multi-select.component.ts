@@ -5,9 +5,8 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatTooltip } from '@angular/material/tooltip';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
-import { filter, firstValueFrom } from 'rxjs';
 import { L10nPercentPipe } from 'xforge-common/l10n-percent.pipe';
-import { ProgressService } from '../progress-service/progress.service';
+import { estimatedActualBookProgress, ProgressService } from '../progress-service/progress.service';
 import { Book } from './book-multi-select';
 
 export interface BookOption {
@@ -37,6 +36,7 @@ export class BookMultiSelectComponent implements OnChanges {
   @Input() availableBooks: Book[] = [];
   @Input() selectedBooks: Book[] = [];
   @Input() readonly: boolean = false;
+  @Input() projectId?: string;
   @Input() projectName?: string;
   @Input() basicMode: boolean = false;
   @Output() bookSelect = new EventEmitter<number[]>();
@@ -66,15 +66,19 @@ export class BookMultiSelectComponent implements OnChanges {
   }
 
   async initBookOptions(): Promise<void> {
-    await firstValueFrom(this.progressService.isLoaded$.pipe(filter(loaded => loaded)));
+    const progress = await this.progressService.getProgress(this.projectId!, { maxStalenessMs: 30_000 });
     this.loaded = true;
-    const progress = this.progressService.texts;
+
+    const progressPercentageByBookNum = progress.books.map(b => ({
+      bookNum: Canon.bookIdToNumber(b.bookId),
+      percentage: estimatedActualBookProgress(b) * 100
+    }));
 
     this.bookOptions = this.availableBooks.map((book: Book) => ({
       bookNum: book.number,
       bookId: Canon.bookNumberToId(book.number),
       selected: this.selectedBooks.find(b => book.number === b.number) !== undefined,
-      progressPercentage: progress.find(p => p.text.bookNum === book.number)?.percentage ?? 0
+      progressPercentage: progressPercentageByBookNum.find(p => p.bookNum === book.number)?.percentage ?? 0
     }));
 
     this.booksOT = this.selectedBooks.filter(n => Canon.isBookOT(n.number));
