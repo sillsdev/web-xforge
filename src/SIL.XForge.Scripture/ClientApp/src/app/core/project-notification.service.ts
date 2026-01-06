@@ -29,6 +29,10 @@ export class ProjectNotificationService {
     return this.onlineService.isOnline && this.onlineService.isBrowserOnline;
   }
 
+  setNotifyDraftApplyProgressHandler(handler: any): void {
+    this.connection.on('notifyDraftApplyProgress', handler);
+  }
+
   setNotifyBuildProgressHandler(handler: any): void {
     this.connection.on('notifyBuildProgress', handler);
   }
