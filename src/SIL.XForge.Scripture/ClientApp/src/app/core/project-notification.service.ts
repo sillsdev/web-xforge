@@ -41,6 +41,10 @@ export class ProjectNotificationService {
     this.connection.off('notifySyncProgress', handler);
   }
 
+  setNotifyDraftApplyProgressHandler(handler: any): void {
+    this.connection.on('notifyDraftApplyProgress', handler);
+  }
+
   setNotifyBuildProgressHandler(handler: any): void {
     this.connection.on('notifyBuildProgress', handler);
   }
