@@ -11,6 +11,8 @@ using Hangfire.States;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using MongoDB.Bson;
+using MongoDB.Driver;
 using Newtonsoft.Json;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -59,6 +61,66 @@ public class SFProjectServiceTests
         SFProjectRights.JoinRight(SFProjectDomain.Answers, Operation.Create),
         SFProjectRights.JoinRight(SFProjectDomain.AnswerComments, Operation.Create),
     ];
+
+    [Test]
+    public void GetProjectProgressAsync_UserNotOnProject_Forbidden()
+    {
+        var env = new TestEnvironment();
+        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.GetProjectProgressAsync(User04, Project01));
+    }
+
+    [Test]
+    public async Task GetProjectProgressAsync_ReturnsBookProgress()
+    {
+        var env = new TestEnvironment();
+
+        // Return two grouped book results from the MongoDB aggregation.
+        // We stub the final aggregation output rather than exercising the MongoDB server.
+        var resultDocs = new[]
+        {
+            new BsonDocument
+            {
+                { "_id", "MAT" },
+                { "verseSegments", 10 },
+                { "blankVerseSegments", 2 },
+            },
+            new BsonDocument
+            {
+                { "_id", "MRK" },
+                { "verseSegments", 3 },
+                { "blankVerseSegments", 0 },
+            },
+        };
+
+        FilterDefinition<BsonDocument>? capturedMatchFilter = null;
+        env.AggregateFluent.Match(Arg.Do<FilterDefinition<BsonDocument>>(f => capturedMatchFilter = f))
+            .Returns(env.AggregateFluent);
+        env.AggregateFluent.Project(Arg.Any<ProjectionDefinition<BsonDocument, BsonDocument>>())
+            .Returns(env.AggregateFluent);
+        env.AggregateFluent.Group(Arg.Any<ProjectionDefinition<BsonDocument, BsonDocument>>())
+            .Returns(env.AggregateFluent);
+
+        var cursorMock = Substitute.For<IAsyncCursor<BsonDocument>>();
+        cursorMock.MoveNextAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(true), Task.FromResult(false));
+        cursorMock.Current.Returns(resultDocs);
+        env.AggregateFluent.ToCursorAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(cursorMock));
+
+        BookProgress[] progress = await env.Service.GetProjectProgressAsync(User01, Project01);
+
+        // Ensure the projectId filter was applied.
+        Assert.IsNotNull(capturedMatchFilter);
+        // Render() overloads differ across MongoDB.Driver versions; ToString() is sufficient
+        // for verifying the regex prefix in this unit test.
+        StringAssert.Contains($"^{Project01}:", capturedMatchFilter!.ToString());
+
+        Assert.That(progress.Select(p => p.BookId), Is.EquivalentTo(new[] { "MAT", "MRK" }));
+        BookProgress mat = progress.Single(p => p.BookId == "MAT");
+        Assert.That(mat.VerseSegments, Is.EqualTo(10));
+        Assert.That(mat.BlankVerseSegments, Is.EqualTo(2));
+        BookProgress mrk = progress.Single(p => p.BookId == "MRK");
+        Assert.That(mrk.VerseSegments, Is.EqualTo(3));
+        Assert.That(mrk.BlankVerseSegments, Is.EqualTo(0));
+    }
 
     [Test]
     public void InviteAsync_InvalidEmail()
@@ -5137,6 +5199,19 @@ public class SFProjectServiceTests
                     SiteDir = "xforge",
                 }
             );
+
+            IOptions<DataAccessOptions> dataAccessOptions = Microsoft.Extensions.Options.Options.Create(
+                new DataAccessOptions { MongoDatabaseName = "mongoDatabaseName" }
+            );
+
+            MongoClient = Substitute.For<IMongoClient>();
+            MongoDatabase = Substitute.For<IMongoDatabase>();
+            MongoClient.GetDatabase(dataAccessOptions.Value.MongoDatabaseName).Returns(MongoDatabase);
+            TextsCollection = Substitute.For<IMongoCollection<BsonDocument>>();
+            MongoDatabase.GetCollection<BsonDocument>("texts").Returns(TextsCollection);
+            AggregateFluent = Substitute.For<IAggregateFluent<BsonDocument>>();
+            TextsCollection.Aggregate().Returns(AggregateFluent);
+
             var audioService = Substitute.For<IAudioService>();
             EmailService = Substitute.For<IEmailService>();
             EmailService.ValidateEmail(Arg.Any<string>()).Returns(true);
@@ -5510,6 +5585,7 @@ public class SFProjectServiceTests
             Service = new SFProjectService(
                 RealtimeService,
                 siteOptions,
+                dataAccessOptions,
                 audioService,
                 EmailService,
                 ProjectSecrets,
@@ -5526,7 +5602,8 @@ public class SFProjectServiceTests
                 BackgroundJobClient,
                 EventMetricService,
                 ProjectRights,
-                GuidService
+                GuidService,
+                MongoClient
             );
         }
 
@@ -5547,6 +5624,10 @@ public class SFProjectServiceTests
         public IBackgroundJobClient BackgroundJobClient { get; }
         public ISFProjectRights ProjectRights { get; }
         public IGuidService GuidService { get; }
+        public IMongoClient MongoClient { get; }
+        public IMongoDatabase MongoDatabase { get; }
+        public IMongoCollection<BsonDocument> TextsCollection { get; }
+        public IAggregateFluent<BsonDocument> AggregateFluent { get; }
 
         public SFProject GetProject(string id) => RealtimeService.GetRepository<SFProject>().Get(id);
 

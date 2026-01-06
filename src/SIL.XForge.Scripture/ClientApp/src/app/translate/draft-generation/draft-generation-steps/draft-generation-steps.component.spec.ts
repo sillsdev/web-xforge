@@ -23,7 +23,7 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
+import { ProgressService, ProjectProgress } from '../../../shared/progress-service/progress.service';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { DraftSource, DraftSourcesAsArrays } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
@@ -72,14 +72,15 @@ describe('DraftGenerationStepsComponent', () => {
   beforeEach(fakeAsync(() => {
     when(mockActivatedProjectService.projectId).thenReturn('project01');
     when(mockActivatedProjectService.projectId$).thenReturn(of('project01'));
-    when(mockProgressService.isLoaded$).thenReturn(of(true));
-    when(mockProgressService.texts).thenReturn([
-      { text: { bookNum: 1 }, translated: 100, percentage: 100 } as TextProgress,
-      { text: { bookNum: 2 }, translated: 100, percentage: 100 } as TextProgress,
-      { text: { bookNum: 3 }, translated: 0 } as TextProgress,
-      { text: { bookNum: 6 }, translated: 20, blank: 2, percentage: 90 } as TextProgress,
-      { text: { bookNum: 7 }, translated: 0 } as TextProgress
-    ]);
+    when(mockProgressService.getProgress(anything(), anything())).thenResolve(
+      new ProjectProgress([
+        { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 0 },
+        { bookId: 'EXO', verseSegments: 100, blankVerseSegments: 0 },
+        { bookId: 'LEV', verseSegments: 100, blankVerseSegments: 100 },
+        { bookId: 'NUM', verseSegments: 22, blankVerseSegments: 2 },
+        { bookId: 'DEU', verseSegments: 0, blankVerseSegments: 0 }
+      ])
+    );
     when(mockOnlineStatusService.isOnline).thenReturn(true);
   }));
 
