@@ -1,293 +1,304 @@
-import { NgZone } from '@angular/core';
-import { discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { BehaviorSubject, of } from 'rxjs';
-import { anything, instance, mock, when } from 'ts-mockito';
-import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { fakeAsync, flushMicrotasks } from '@angular/core/testing';
+import { instance, mock, reset, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
-import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
-import { configureTestingModule } from 'xforge-common/test-utils';
-import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
-import { TextDocId } from '../../core/models/text-doc';
-import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
-import { ProgressService, TextProgress } from './progress.service';
+import { BookProgress, estimatedActualBookProgress, ProgressService, ProjectProgress } from './progress.service';
 
-const mockSFProjectService = mock(SFProjectService);
-const mockNoticeService = mock(NoticeService);
-const mockPermissionService = mock(PermissionsService);
-const mockProjectService = mock(ActivatedProjectService);
+const mockedNoticeService = mock(NoticeService);
+const mockedProjectService = mock(SFProjectService);
 
-describe('progress service', () => {
-  configureTestingModule(() => ({
-    providers: [
-      provideTestOnlineStatus(),
-      { provide: NoticeService, useMock: mockNoticeService },
-      { provide: PermissionsService, useMock: mockPermissionService },
-      { provide: SFProjectService, useMock: mockSFProjectService },
-      { provide: ActivatedProjectService, useMock: mockProjectService }
-    ]
-  }));
+describe('ProgressService', () => {
+  beforeEach(() => {
+    reset(mockedNoticeService);
+    reset(mockedProjectService);
+  });
 
-  it('populates progress and texts on construction', fakeAsync(() => {
-    // Create segments for 20 chapters multiplied by 20 books
-    const env = new TestEnvironment(3600, 2000);
-    // Override the verse counts to be less than half of the number created for each book
-    spyOn(TextProgress.prototype as any, 'getVerseCount').and.callFake(() => 200);
-    const calculate = spyOn<any>(env.service, 'calculateProgress').and.callThrough();
-
-    tick();
-
-    expect(env.service.overallProgress.translated).toEqual(3600);
-    expect(env.service.overallProgress.notTranslated).toEqual(2000);
-    expect(env.service.overallProgress.blank).toEqual(2000);
-    expect(env.service.overallProgress.total).toEqual(5600);
-    expect(env.service.overallProgress.percentage).toEqual(64);
-    expect(env.service.texts.length).toBeGreaterThan(0);
-    let i = 0;
-    for (const book of env.service.texts) {
-      expect(book.text.bookNum).toEqual(++i);
-      expect(book.expectedNumberOfVerses).toEqual(200);
-      expect(book.useExpectedNumberOfVerses).toEqual(false);
-      expect(book.blank).toEqual(100);
-      expect(book.translated).toEqual(180);
-      expect(book.total).toEqual(280);
-      expect(book.text.chapters.length).toBeGreaterThan(0);
-      let j = 0;
-      for (const chapter of book.text.chapters) {
-        expect(chapter.number).toEqual(j++);
-      }
-    }
-    expect(calculate).toHaveBeenCalledTimes(1);
-
-    discardPeriodicTasks();
-  }));
-
-  it('re-initializes when project changes', fakeAsync(() => {
-    const env = new TestEnvironment(100, 50);
-    tick();
-
-    const initialize = spyOn<any>(env.service, 'initialize').and.callThrough();
-
-    when(env.mockProject.id).thenReturn('project02');
-    env.project$.next(instance(env.mockProject));
-    tick();
-
-    expect(initialize).toHaveBeenCalledTimes(1);
-    discardPeriodicTasks();
-  }));
-
-  it('updates total progress when chapter content changes', fakeAsync(async () => {
+  it('should get fresh progress data', fakeAsync(() => {
     const env = new TestEnvironment();
-    const changeEvent = new BehaviorSubject({});
-    env.setTextData('project01', 1, 2, 'target', 12, 2, changeEvent);
+    const projectId = 'project1';
+    const expectedBooks: BookProgress[] = [
+      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20 },
+      { bookId: 'MAT', verseSegments: 50, blankVerseSegments: 10 }
+    ];
+    when(mockedProjectService.getProjectProgress(projectId)).thenResolve(expectedBooks);
 
-    tick();
+    let result: ProjectProgress | undefined;
+    env.service.getProgress(projectId, { maxStalenessMs: 1000 }).then(r => (result = r));
+    flushMicrotasks();
 
-    // mock a change
-    env.setTextData('project01', 1, 2, 'target', 13, 1, changeEvent);
-
-    const originalProgress = env.service.overallProgress.translated;
-    tick(1000); // wait for the throttle time
-
-    changeEvent.next({});
-
-    expect(env.service.overallProgress.translated).toEqual(originalProgress + 1);
-    discardPeriodicTasks();
+    expect(result).toBeInstanceOf(ProjectProgress);
+    expect(result?.books).toEqual(expectedBooks);
+    expect(result?.verseSegments).toBe(150);
+    expect(result?.blankVerseSegments).toBe(30);
+    expect(result?.translatedVerseSegments).toBe(120);
+    expect(result?.ratio).toBeCloseTo(0.8);
+    verify(mockedProjectService.getProjectProgress(projectId)).once();
   }));
 
-  it('uses the verse counts when there are too few segments', fakeAsync(() => {
-    const notTranslatedVerses = 17380;
-    const translatedVerses = 5;
-    const env = new TestEnvironment(translatedVerses, 1);
-    tick();
-
-    expect(env.service.overallProgress.translated).toEqual(translatedVerses);
-    expect(env.service.overallProgress.notTranslated).toEqual(notTranslatedVerses);
-    expect(env.service.overallProgress.blank).toEqual(notTranslatedVerses);
-    expect(env.service.overallProgress.total).toEqual(notTranslatedVerses + translatedVerses);
-    expect(env.service.overallProgress.percentage).toEqual(0);
-    expect(env.service.texts.length).toBeGreaterThan(0);
-    let i = 0;
-    for (const book of env.service.texts) {
-      expect(book.text.bookNum).toEqual(++i);
-      expect(book.useExpectedNumberOfVerses).toEqual(true);
-      expect(book.total).toEqual(book.expectedNumberOfVerses);
-      expect(book.text.chapters.length).toBeGreaterThan(0);
-    }
-
-    discardPeriodicTasks();
-  }));
-
-  it('can train suggestions', fakeAsync(async () => {
+  it('should return cached data when fresh', fakeAsync(() => {
     const env = new TestEnvironment();
-    tick();
+    const projectId = 'project1';
+    const expectedBooks: BookProgress[] = [{ bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20 }];
+    when(mockedProjectService.getProjectProgress(projectId)).thenResolve(expectedBooks);
 
-    expect(env.service.canTrainSuggestions).toBeTruthy();
-    discardPeriodicTasks();
+    let result1: ProjectProgress | undefined;
+    let result2: ProjectProgress | undefined;
+
+    env.service.getProgress(projectId, { maxStalenessMs: 10000 }).then(r => (result1 = r));
+    flushMicrotasks();
+    env.service.getProgress(projectId, { maxStalenessMs: 10000 }).then(r => (result2 = r));
+    flushMicrotasks();
+
+    expect(result1?.books).toEqual(expectedBooks);
+    expect(result2?.books).toEqual(expectedBooks);
+    verify(mockedProjectService.getProjectProgress(projectId)).once();
   }));
 
-  it('cannot train suggestions if too few segments', fakeAsync(async () => {
-    const env = new TestEnvironment(9);
-    tick();
-
-    expect(env.service.canTrainSuggestions).toBeFalsy();
-    discardPeriodicTasks();
-  }));
-
-  it('cannot train suggestions if no source permission', fakeAsync(async () => {
+  it('should fetch fresh data when cache is stale', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockPermissionService.canAccessText(anything())).thenCall((textDocId: TextDocId) => {
-      return Promise.resolve(textDocId.projectId !== 'sourceId');
+    const projectId = 'project1';
+    const firstBooks: BookProgress[] = [{ bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20 }];
+    const secondBooks: BookProgress[] = [{ bookId: 'GEN', verseSegments: 120, blankVerseSegments: 15 }];
+
+    when(mockedProjectService.getProjectProgress(projectId)).thenResolve(firstBooks).thenResolve(secondBooks);
+
+    const nowSpy = spyOn(Date, 'now');
+    nowSpy.and.returnValues(1000, 2000, 2000);
+
+    let result1: ProjectProgress | undefined;
+    let result2: ProjectProgress | undefined;
+    env.service.getProgress(projectId, { maxStalenessMs: 1000 }).then(r => (result1 = r));
+    flushMicrotasks();
+    env.service.getProgress(projectId, { maxStalenessMs: 5 }).then(r => (result2 = r));
+    flushMicrotasks();
+
+    expect(result1?.books).toEqual(firstBooks);
+    expect(result2?.books).toEqual(secondBooks);
+    verify(mockedProjectService.getProjectProgress(projectId)).twice();
+  }));
+
+  it('should deduplicate concurrent requests for the same project', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const projectId = 'project1';
+    const expectedBooks: BookProgress[] = [{ bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20 }];
+
+    let resolvePromise: ((value: BookProgress[]) => void) | undefined;
+    const delayedPromise: Promise<BookProgress[]> = new Promise<BookProgress[]>(resolve => {
+      resolvePromise = resolve;
     });
-    tick();
+    when(mockedProjectService.getProjectProgress(projectId)).thenReturn(delayedPromise);
 
-    expect(env.service.canTrainSuggestions).toBeFalsy();
-    discardPeriodicTasks();
+    let result1: ProjectProgress | undefined;
+    let result2: ProjectProgress | undefined;
+
+    env.service.getProgress(projectId, { maxStalenessMs: 1000 }).then(r => (result1 = r));
+    env.service.getProgress(projectId, { maxStalenessMs: 1000 }).then(r => (result2 = r));
+
+    resolvePromise!(expectedBooks);
+    flushMicrotasks();
+
+    expect(result1?.books).toEqual(expectedBooks);
+    expect(result2?.books).toEqual(expectedBooks);
+    verify(mockedProjectService.getProjectProgress(projectId)).once();
   }));
 
-  it('resets train suggestions flag when switching projects', fakeAsync(async () => {
+  it('should clean up request cache on error and allow retry', fakeAsync(() => {
     const env = new TestEnvironment();
-    tick();
+    const projectId = 'project1';
+    const error = new Error('Network error');
+    when(mockedProjectService.getProjectProgress(projectId))
+      .thenReject(error)
+      .thenResolve([{ bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20 }]);
 
-    expect(env.service.canTrainSuggestions).toBeTruthy();
+    let firstError: unknown;
+    env.service.getProgress(projectId, { maxStalenessMs: 1000 }).catch(e => (firstError = e));
+    flushMicrotasks();
 
-    when(env.mockProject.id).thenReturn('project02');
-    env.project$.next(instance(env.mockProject));
-    tick();
+    expect(firstError).toBe(error);
 
-    expect(env.service.canTrainSuggestions).toBeFalsy();
-    discardPeriodicTasks();
+    let result2: ProjectProgress | undefined;
+    env.service.getProgress(projectId, { maxStalenessMs: 1000 }).then(r => (result2 = r));
+    flushMicrotasks();
+
+    expect(result2?.books).toEqual([{ bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20 }]);
+    verify(mockedProjectService.getProjectProgress(projectId)).twice();
+  }));
+
+  it('should cache independently per project', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const project1Books: BookProgress[] = [{ bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20 }];
+    const project2Books: BookProgress[] = [{ bookId: 'MAT', verseSegments: 50, blankVerseSegments: 10 }];
+
+    when(mockedProjectService.getProjectProgress('project1')).thenReturn(Promise.resolve(project1Books));
+    when(mockedProjectService.getProjectProgress('project2')).thenReturn(Promise.resolve(project2Books));
+
+    let result1: ProjectProgress | undefined;
+    let result2: ProjectProgress | undefined;
+    env.service.getProgress('project1', { maxStalenessMs: 1000 }).then(r => (result1 = r));
+    env.service.getProgress('project2', { maxStalenessMs: 1000 }).then(r => (result2 = r));
+    flushMicrotasks();
+
+    expect(result1?.books).toEqual(project1Books);
+    expect(result2?.books).toEqual(project2Books);
+    verify(mockedProjectService.getProjectProgress('project1')).once();
+    verify(mockedProjectService.getProjectProgress('project2')).once();
   }));
 });
 
 class TestEnvironment {
-  readonly ngZone: NgZone = TestBed.inject(NgZone);
   readonly service: ProgressService;
-  private readonly numBooks = 20;
-  private readonly numChapters = 20;
 
-  readonly mockProject = mock(SFProjectProfileDoc);
-  readonly project$ = new BehaviorSubject(instance(this.mockProject));
-
-  // Store all text data in a single map to avoid repeated deepEqual calls
-  private readonly allTextData = new Map<string, { translated: number; blank: number }>();
-
-  constructor(
-    private readonly translatedSegments: number = 1000,
-    private readonly blankSegments: number = 500
-  ) {
-    const data = createTestProjectProfile({
-      texts: this.createTexts(),
-      translateConfig: {
-        translationSuggestionsEnabled: true,
-        source: {
-          projectRef: 'sourceId'
-        }
-      }
-    });
-
-    when(this.mockProject.id).thenReturn('project01');
-    when(mockProjectService.changes$).thenReturn(this.project$);
-
-    when(mockPermissionService.canAccessText(anything())).thenResolve(true);
-    when(mockSFProjectService.getProfile('project01')).thenResolve({
-      data,
-      id: 'project01',
-      remoteChanges$: new BehaviorSubject([])
-    } as unknown as SFProjectProfileDoc);
-
-    // set up blank project
-    when(mockSFProjectService.getProfile('project02')).thenResolve({
-      data,
-      id: 'project02',
-      remoteChanges$: new BehaviorSubject([])
-    } as unknown as SFProjectProfileDoc);
-    this.populateTextData('project02', 0, 1000);
-
-    this.populateTextData('sourceId', this.translatedSegments, this.blankSegments);
-    this.populateTextData('project01', this.translatedSegments, this.blankSegments);
-
-    // Set up a single mock for getText that handles all TextDocId instances
-    when(mockSFProjectService.getText(anything())).thenCall((textDocId: TextDocId) => {
-      const key = `${textDocId.projectId}:${textDocId.bookNum}:${textDocId.chapterNum}:${textDocId.textType}`;
-      const data = this.allTextData.get(key);
-      const changeKey = `${key}:changes`;
-      const customChanges = (this.allTextData as any).get(changeKey);
-
-      if (data != null) {
-        return {
-          getSegmentCount: () => {
-            return { translated: data.translated, blank: data.blank };
-          },
-          getNonEmptyVerses: () => this.createVerses(data.translated),
-          changes$: customChanges ?? of({} as TextData)
-        };
-      }
-
-      // Return a default value if not found
-      return {
-        getSegmentCount: () => {
-          return { translated: 0, blank: 0 };
-        },
-        getNonEmptyVerses: () => [],
-        changes$: of({} as TextData)
-      };
-    });
-
-    this.service = TestBed.inject(ProgressService);
-  }
-
-  private populateTextData(projectId: string, translatedSegments: number, blankSegments: number): void {
-    for (let book = 1; book <= this.numBooks; book++) {
-      for (let chapter = 0; chapter < this.numChapters; chapter++) {
-        const translated = translatedSegments >= 9 ? 9 : translatedSegments;
-        translatedSegments -= translated;
-        const blank = blankSegments >= 5 ? 5 : blankSegments;
-        blankSegments -= blank;
-
-        const key = `${projectId}:${book}:${chapter}:target`;
-        this.allTextData.set(key, { translated, blank });
-      }
-    }
-  }
-
-  setTextData(
-    projectId: string,
-    book: number,
-    chapter: number,
-    textType: string,
-    translated: number,
-    blank: number,
-    changes$?: BehaviorSubject<any>
-  ): void {
-    const key = `${projectId}:${book}:${chapter}:${textType}`;
-    this.allTextData.set(key, { translated, blank });
-
-    // If a custom changes$ observable is provided, we need to store it
-    // so the mock can return it
-    if (changes$ != null) {
-      const changeKey = `${key}:changes`;
-      (this.allTextData as any).set(changeKey, changes$);
-    }
-  }
-
-  createVerses(num: number): string[] {
-    let count = 0;
-    return Array.from({ length: num }, () => 'verse' + ++count);
-  }
-
-  createTexts(): TextInfo[] {
-    const texts: TextInfo[] = [];
-    for (let book = 1; book <= this.numBooks; book++) {
-      const chapters: Chapter[] = [];
-      for (let chapter = 0; chapter < this.numChapters; chapter++) {
-        chapters.push({ isValid: true, lastVerse: 1, number: chapter, permissions: {}, hasAudio: false });
-      }
-      texts.push({ bookNum: book, chapters: chapters, hasSource: true, permissions: {} });
-    }
-    return texts;
+  constructor() {
+    this.service = new ProgressService(instance(mockedNoticeService), instance(mockedProjectService));
   }
 }
+
+describe('ProjectProgress', () => {
+  it('should calculate totals correctly with multiple books', () => {
+    const books: BookProgress[] = [
+      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20 },
+      { bookId: 'EXO', verseSegments: 80, blankVerseSegments: 15 },
+      { bookId: 'MAT', verseSegments: 50, blankVerseSegments: 5 }
+    ];
+
+    const progress = new ProjectProgress(books);
+
+    expect(progress.verseSegments).toBe(230);
+    expect(progress.blankVerseSegments).toBe(40);
+    expect(progress.translatedVerseSegments).toBe(190);
+    expect(progress.ratio).toBeCloseTo(0.8261);
+  });
+
+  it('should handle empty books array', () => {
+    const progress = new ProjectProgress([]);
+
+    expect(progress.verseSegments).toBe(0);
+    expect(progress.blankVerseSegments).toBe(0);
+    expect(progress.translatedVerseSegments).toBe(0);
+    expect(progress.ratio).toBe(0);
+  });
+
+  it('should handle all blank verses', () => {
+    const books: BookProgress[] = [{ bookId: 'GEN', verseSegments: 100, blankVerseSegments: 100 }];
+
+    const progress = new ProjectProgress(books);
+
+    expect(progress.verseSegments).toBe(100);
+    expect(progress.blankVerseSegments).toBe(100);
+    expect(progress.translatedVerseSegments).toBe(0);
+    expect(progress.ratio).toBe(0);
+  });
+
+  it('should handle no blank verses', () => {
+    const books: BookProgress[] = [{ bookId: 'GEN', verseSegments: 100, blankVerseSegments: 0 }];
+
+    const progress = new ProjectProgress(books);
+
+    expect(progress.verseSegments).toBe(100);
+    expect(progress.blankVerseSegments).toBe(0);
+    expect(progress.translatedVerseSegments).toBe(100);
+    expect(progress.ratio).toBe(1);
+  });
+});
+
+describe('estimatedActualBookProgress', () => {
+  it('should return normal ratio for books with sufficient segments', () => {
+    const bookProgress: BookProgress = {
+      bookId: 'GEN',
+      verseSegments: 1500, // Close to expected 1533
+      blankVerseSegments: 300
+    };
+
+    const result = estimatedActualBookProgress(bookProgress);
+
+    expect(result).toBeCloseTo(0.8); // 1200 / 1500
+  });
+
+  it('should return estimated ratio for books with very few segments compared to expected verses', () => {
+    const bookProgress: BookProgress = {
+      bookId: 'GEN', // Expected verses: 1533
+      verseSegments: 50, // Much less than 10% of 1533 (153.3)
+      blankVerseSegments: 10
+    };
+
+    const result = estimatedActualBookProgress(bookProgress);
+
+    // Should use 40 / 1533 instead of 40 / 50
+    expect(result).toBeCloseTo(40 / 1533);
+  });
+
+  it('should handle books at the threshold (exactly 10% of expected verses)', () => {
+    const bookProgress: BookProgress = {
+      bookId: 'GEN', // Expected verses: 1533
+      // 10% of 1533 is 153.3, and the implementation uses a strict "<" comparison.
+      // Use a value just above the threshold to ensure we are in the "normal" ratio branch.
+      verseSegments: 154,
+      blankVerseSegments: 50
+    };
+
+    const result = estimatedActualBookProgress(bookProgress);
+
+    // Should use normal ratio since it's at 10%
+    expect(result).toBeCloseTo(104 / 154);
+  });
+
+  it('should handle books with no expected verse count', () => {
+    const bookProgress: BookProgress = {
+      bookId: 'UNKNOWN',
+      verseSegments: 10,
+      blankVerseSegments: 2
+    };
+
+    const result = estimatedActualBookProgress(bookProgress);
+
+    expect(result).toBeCloseTo(0.8); // 8 / 10
+  });
+
+  it('should handle books with zero segments', () => {
+    const bookProgress: BookProgress = {
+      bookId: 'GEN',
+      verseSegments: 0,
+      blankVerseSegments: 0
+    };
+
+    const result = estimatedActualBookProgress(bookProgress);
+
+    expect(result).toBe(0);
+  });
+
+  it('should handle books with all blank segments', () => {
+    const bookProgress: BookProgress = {
+      bookId: 'GEN',
+      verseSegments: 100,
+      blankVerseSegments: 100
+    };
+
+    const result = estimatedActualBookProgress(bookProgress);
+
+    expect(result).toBe(0);
+  });
+
+  it('should handle various book IDs correctly', () => {
+    // Ensure the "estimated" branch is used for each book by keeping verseSegments < 10% of expected verses.
+    const testCases = [
+      { bookId: 'MAT', expectedVerses: 1071, verseSegments: 5, blankVerseSegments: 1 },
+      { bookId: 'RUT', expectedVerses: 85, verseSegments: 5, blankVerseSegments: 1 },
+      { bookId: 'PSA', expectedVerses: 2527, verseSegments: 5, blankVerseSegments: 1 },
+      // For JUD (25 verses), 10% is 2.5, so 5 segments would *not* trigger the estimated branch.
+      { bookId: 'JUD', expectedVerses: 25, verseSegments: 2, blankVerseSegments: 1 }
+    ];
+
+    testCases.forEach(testCase => {
+      const bookProgress: BookProgress = {
+        bookId: testCase.bookId,
+        verseSegments: testCase.verseSegments,
+        blankVerseSegments: testCase.blankVerseSegments
+      };
+
+      const result = estimatedActualBookProgress(bookProgress);
+
+      const translatedSegments: number = testCase.verseSegments - testCase.blankVerseSegments;
+      expect(result).toBeCloseTo(translatedSegments / testCase.expectedVerses);
+    });
+  });
+});

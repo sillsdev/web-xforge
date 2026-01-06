@@ -11,6 +11,7 @@ using Hangfire.States;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using MongoDB.Driver;
 using Newtonsoft.Json;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -5137,6 +5138,12 @@ public class SFProjectServiceTests
                     SiteDir = "xforge",
                 }
             );
+            IOptions<DataAccessOptions> dataAccessOptions = Microsoft.Extensions.Options.Options.Create(
+                new DataAccessOptions { MongoDatabaseName = "mongoDatabaseName" }
+            );
+
+            MongoClient = Substitute.For<IMongoClient>();
+
             var audioService = Substitute.For<IAudioService>();
             EmailService = Substitute.For<IEmailService>();
             EmailService.ValidateEmail(Arg.Any<string>()).Returns(true);
@@ -5510,6 +5517,7 @@ public class SFProjectServiceTests
             Service = new SFProjectService(
                 RealtimeService,
                 siteOptions,
+                dataAccessOptions,
                 audioService,
                 EmailService,
                 ProjectSecrets,
@@ -5526,7 +5534,8 @@ public class SFProjectServiceTests
                 BackgroundJobClient,
                 EventMetricService,
                 ProjectRights,
-                GuidService
+                GuidService,
+                MongoClient
             );
         }
 
@@ -5547,6 +5556,7 @@ public class SFProjectServiceTests
         public IBackgroundJobClient BackgroundJobClient { get; }
         public ISFProjectRights ProjectRights { get; }
         public IGuidService GuidService { get; }
+        public IMongoClient MongoClient { get; }
 
         public SFProject GetProject(string id) => RealtimeService.GetRepository<SFProject>().Get(id);
 

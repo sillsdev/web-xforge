@@ -130,6 +130,7 @@
           [availableBooks]="selectableTrainingBooksByProj(activatedProject.projectId)"
           [selectedBooks]="selectedTrainingBooksByProj(activatedProject.projectId)"
           [projectName]="targetProjectName"
+          [projectId]="activatedProject.projectId"
           (bookSelect)="onTranslatedBookSelect($event)"
           data-test-id="draft-stepper-training-books"
         ></app-book-multi-select>
