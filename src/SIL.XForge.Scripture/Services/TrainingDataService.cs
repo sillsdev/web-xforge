@@ -28,8 +28,9 @@ public class TrainingDataService(
     /// <summary>
     /// The training directory name. This is not the full path to the directory.
     /// </summary>
-    ///
     public const string DirectoryName = "training-data";
+    public const int NumTrainingDataColumns = 2;
+
     private static readonly CsvConfiguration _csvConfiguration = new CsvConfiguration(CultureInfo.InvariantCulture)
     {
         BadDataFound = null,
@@ -50,7 +51,7 @@ public class TrainingDataService(
         // Verify there is a worksheet
         if (workbook.NumberOfSheets == 0)
         {
-            throw new FormatException("The Excel file does not contain a worksheet");
+            throw new FormatException("The Excel file contains a row with fewer than two columns");
         }
 
         // Load the Excel file
@@ -59,10 +60,14 @@ public class TrainingDataService(
         for (int rowNum = sheet.FirstRowNum; rowNum <= sheet.LastRowNum; rowNum++)
         {
             IRow row = sheet.GetRow(rowNum);
-            if (row is null || row.FirstCellNum == -1 || row.LastCellNum - row.FirstCellNum < 2)
+            if (row is null || row.FirstCellNum == -1)
             {
                 // Skip if there are not two columns of data in this row that are side-by-side
                 continue;
+            }
+            if (row.LastCellNum - row.FirstCellNum < NumTrainingDataColumns)
+            {
+                throw new FormatException("The Excel file contains a row with fewer than two columns");
             }
 
             string firstColumn =
@@ -309,9 +314,26 @@ public class TrainingDataService(
                         using StreamReader streamReader = new StreamReader(fileStream);
                         using CsvReader csvReader = new CsvReader(streamReader, _csvConfiguration);
                         await csvReader.ReadAsync();
-                        if (csvReader.ColumnCount != 2)
+                        if (csvReader.ColumnCount != NumTrainingDataColumns)
                         {
                             throw new FormatException("The CSV file does not contain two columns");
+                        }
+
+                        // Detect if a row has fewer than two columns of data
+                        while (await csvReader.ReadAsync())
+                        {
+                            if (csvReader.Parser.Record.All(r => string.IsNullOrEmpty(r)))
+                            {
+                                // Skip empty rows
+                                continue;
+                            }
+                            if (
+                                csvReader.ColumnCount != NumTrainingDataColumns
+                                || csvReader.Parser.Record.Any(r => string.IsNullOrEmpty(r))
+                            )
+                            {
+                                throw new FormatException("The CSV file contains a row with fewer than two columns");
+                            }
                         }
                     }
 

@@ -333,6 +333,43 @@ public class TrainingDataServiceTests
     }
 
     [Test]
+    public async Task SaveTrainingDataAsync_RowWithMissingEntry()
+    {
+        var env = new TestEnvironment();
+
+        // Set up the input file
+        await using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data\nValue1,"));
+        env.FileSystemService.OpenFile(FileCsv, FileMode.Open).Returns(fileStream);
+
+        // SUT
+        Assert.ThrowsAsync<FormatException>(() =>
+            env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileCsv)
+        );
+    }
+
+    [Test]
+    public async Task SaveTrainingDataAsync_RowWithNoData()
+    {
+        var env = new TestEnvironment();
+
+        // Set up the input file
+        await using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data\n\"\","));
+        env.FileSystemService.OpenFile(FileCsv, FileMode.Open).Returns(fileStream);
+
+        // SUT
+        Uri actual = await env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileCsv);
+        Assert.That(
+            actual
+                .ToString()
+                .StartsWith($"/assets/{TrainingDataService.DirectoryName}/{Project01}/{User01}_{Data01}.csv?t="),
+            Is.True
+        );
+
+        env.FileSystemService.Received(1).DeleteFile(Arg.Any<string>());
+        env.FileSystemService.Received(1).MoveFile(Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Test]
     public async Task SaveTrainingDataAsync_SupportsCsvFiles()
     {
         var env = new TestEnvironment();
@@ -483,6 +520,86 @@ public class TrainingDataServiceTests
         string text = await reader.ReadToEndAsync();
         text = text.TrimEnd(); // Remove trailing new lines
         Assert.AreEqual("Test,Data", text);
+        outputStream.ForceDispose();
+    }
+
+    [Test]
+    public async Task SaveTrainingDataAsync_ExcelFileRowWithMissingColumn()
+    {
+        var env = new TestEnvironment();
+
+        // Create the input file
+        await using var fileStream = new MemoryStream();
+        using var workbook = new HSSFWorkbook();
+        ISheet sheet = workbook.CreateSheet("Sheet1");
+        IRow row1 = sheet.CreateRow(0);
+        row1.CreateCell(0).SetCellValue("Test"); // A1
+        row1.CreateCell(1).SetCellValue("Data"); // A2
+        IRow row2 = sheet.CreateRow(1);
+        row2.CreateCell(0).SetCellValue("Missing"); // B1
+        workbook.Write(fileStream, leaveOpen: true);
+        fileStream.Seek(0, SeekOrigin.Begin);
+        env.FileSystemService.OpenFile(FileExcel2003, FileMode.Open).Returns(fileStream);
+
+        // Create the output file
+        string path = Path.Join(
+            env.SiteOptions.Value.SiteDir,
+            TrainingDataService.DirectoryName,
+            Project01,
+            $"{User01}_{Data01}.csv"
+        );
+        await using var outputStream = new NonDisposingMemoryStream();
+        env.FileSystemService.CreateFile(path).Returns(outputStream);
+
+        // SUT
+        Assert.ThrowsAsync<FormatException>(() =>
+            env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel2003)
+        );
+        outputStream.ForceDispose();
+    }
+
+    [Test]
+    public async Task SaveTrainingDataAsync_ExcelFileRowWithEmptyRow()
+    {
+        var env = new TestEnvironment();
+
+        // Create the input file
+        await using var fileStream = new MemoryStream();
+        using var workbook = new HSSFWorkbook();
+        ISheet sheet = workbook.CreateSheet("Sheet1");
+        IRow row1 = sheet.CreateRow(0);
+        row1.CreateCell(0).SetCellValue("Test"); // A1
+        row1.CreateCell(1).SetCellValue("Data"); // A2
+        IRow row3 = sheet.CreateRow(2);
+        row3.CreateCell(0).SetCellValue("Skip"); // C1
+        row3.CreateCell(1).SetCellValue("Row"); // C2
+        workbook.Write(fileStream, leaveOpen: true);
+        fileStream.Seek(0, SeekOrigin.Begin);
+        env.FileSystemService.OpenFile(FileExcel2003, FileMode.Open).Returns(fileStream);
+
+        // Create the output file
+        string path = Path.Join(
+            env.SiteOptions.Value.SiteDir,
+            TrainingDataService.DirectoryName,
+            Project01,
+            $"{User01}_{Data01}.csv"
+        );
+        await using var outputStream = new NonDisposingMemoryStream();
+        env.FileSystemService.CreateFile(path).Returns(outputStream);
+
+        // SUT
+        Uri actual = await env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel2003);
+        Assert.That(
+            actual
+                .ToString()
+                .StartsWith($"/assets/{TrainingDataService.DirectoryName}/{Project01}/{User01}_{Data01}.csv?t="),
+            Is.True
+        );
+
+        using var reader = new StreamReader(outputStream);
+        string text = await reader.ReadToEndAsync();
+        text = text.TrimEnd(); // Remove trailing new lines
+        Assert.AreEqual($"Test,Data{Environment.NewLine}Skip,Row", text);
         outputStream.ForceDispose();
     }
 
