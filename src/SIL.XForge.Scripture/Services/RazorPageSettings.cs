@@ -21,7 +21,14 @@ public class RazorPageSettings(
     IOptions<SiteOptions> siteOptions
 ) : IRazorPageSettings
 {
-    public PublicAuthOptions GetAuthOptions() => authOptions.Value;
+    public PublicAuthOptions GetAuthOptions() =>
+        new PublicAuthOptions
+        {
+            Audience = authOptions.Value.Audience,
+            Domain = authOptions.Value.Domain,
+            FrontendClientId = authOptions.Value.FrontendClientId,
+            Scope = authOptions.Value.Scope,
+        };
 
     public string GetBugsnagConfig() =>
         JsonConvert.SerializeObject(
