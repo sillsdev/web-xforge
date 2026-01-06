@@ -1209,4 +1209,28 @@ public class SFProjectsRpcController(
             throw;
         }
     }
+
+    public async Task<IRpcMethodResult> GetProjectProgress(string projectId)
+    {
+        try
+        {
+            BookProgress[] progress = await projectService.GetProjectProgressAsync(UserId, projectId);
+            return Ok(progress);
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string> { { "method", "GetProjectProgress" }, { "projectId", projectId } }
+            );
+            throw;
+        }
+    }
 }
