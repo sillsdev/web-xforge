@@ -1,18 +1,16 @@
 <ng-container *transloco="let t; read: 'training_data_multi_select'">
-  <div class="flex-row">
-    <mat-list class="training-data-multi-select" hideSingleSelectionIndicator>
-      @for (trainingData of availableTrainingData; track trainingData.dataId) {
-        <mat-list-item>
-          {{ trainingData.title }}
-          @if (canDeleteTrainingData(trainingData)) {
-            <button matListItemMeta mat-icon-button (click)="deleteTrainingData(trainingData)">
-              <mat-icon>cancel</mat-icon>
-            </button>
-          }
-        </mat-list-item>
-      }
-    </mat-list>
-  </div>
+  <mat-list class="training-data-multi-select" hideSingleSelectionIndicator>
+    @for (trainingData of availableTrainingData; track trainingData.dataId) {
+      <mat-list-item>
+        {{ trainingData.title }}
+        @if (canDeleteTrainingData(trainingData)) {
+          <button matListItemMeta mat-icon-button (click)="deleteTrainingData(trainingData)">
+            <mat-icon>cancel</mat-icon>
+          </button>
+        }
+      </mat-list-item>
+    }
+  </mat-list>
   <button mat-flat-button (click)="openUploadDialog()" color="primary">
     <mat-icon>file_upload</mat-icon>
     {{ t("upload_spreadsheet") }}
