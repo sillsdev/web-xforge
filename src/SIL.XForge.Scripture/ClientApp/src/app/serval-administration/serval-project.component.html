@@ -111,7 +111,7 @@
   </table>
   @if (trainingDataFiles.length > 0) {
     <h3>Training Files</h3>
-    <table mat-table [dataSource]="trainingDataFiles">
+    <table mat-table [dataSource]="trainingDataFiles" class="training-data-table">
       <ng-container matColumnDef="title">
         <th mat-header-cell *matHeaderCellDef>File Name</th>
         <td mat-cell *matCellDef="let file">
@@ -121,7 +121,7 @@
 
       <ng-container matColumnDef="download">
         <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let file" class="data-table-end">
+        <td mat-cell *matCellDef="let file">
           <button mat-flat-button color="primary" (click)="downloadTrainingData(file.dataId)" [disabled]="!isOnline">
             <mat-icon>download</mat-icon>
             Download
