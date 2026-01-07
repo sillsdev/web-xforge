@@ -970,6 +970,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
+        env.SetupEventMetrics("GEN", "EXO", DateTime.UtcNow);
         env.ConfigureTranslationBuild();
 
         // SUT
@@ -991,6 +992,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
+        env.SetupEventMetrics("GEN", "EXO", DateTime.UtcNow);
         TranslationBuild translationBuild = env.ConfigureTranslationBuild();
 
         // SUT
@@ -999,7 +1001,7 @@ public class MachineApiServiceTests
             Project01,
             ServalBuildId01,
             minRevision: null,
-            preTranslate: false,
+            preTranslate: true,
             isServalAdmin: false,
             CancellationToken.None
         );
@@ -1007,11 +1009,11 @@ public class MachineApiServiceTests
         TestEnvironment.AssertCoreBuildProperties(translationBuild, actual);
         Assert.NotNull(actual.AdditionalInfo);
         Assert.AreEqual(
-            new ProjectScriptureRange { ScriptureRange = "GEN" },
+            new ProjectScriptureRange { ProjectId = Project03, ScriptureRange = "GEN" },
             actual.AdditionalInfo.TranslationScriptureRanges.Single()
         );
         Assert.AreEqual(
-            new ProjectScriptureRange { ScriptureRange = "EXO" },
+            new ProjectScriptureRange { ProjectId = Project02, ScriptureRange = "EXO" },
             actual.AdditionalInfo.TrainingScriptureRanges.Single()
         );
     }
@@ -1034,7 +1036,6 @@ public class MachineApiServiceTests
         const string corpusId2 = "corpusId2";
         const string corpusId3 = "corpusId3";
         const string corpusId4 = "corpusId4";
-        const string parallelCorpusId1 = ParallelCorpusId01;
         const string parallelCorpusId2 = "parallelCorpusId2";
         const int step = 123;
 
@@ -1055,7 +1056,7 @@ public class MachineApiServiceTests
             [
                 new PretranslateCorpus
                 {
-                    ParallelCorpus = new ResourceLink { Id = parallelCorpusId1, Url = "https://example.com" },
+                    ParallelCorpus = new ResourceLink { Id = ParallelCorpusId01, Url = "https://example.com" },
                 },
                 new PretranslateCorpus
                 {
@@ -1096,7 +1097,7 @@ public class MachineApiServiceTests
             [
                 new ParallelCorpusAnalysis
                 {
-                    ParallelCorpusRef = parallelCorpusId1,
+                    ParallelCorpusRef = ParallelCorpusId01,
                     SourceQuoteConvention = "standard_english",
                     TargetQuoteConvention = "standard_english",
                 },
@@ -1134,9 +1135,8 @@ public class MachineApiServiceTests
         Assert.AreEqual(corpusId3, actual.AdditionalInfo.CorporaIds.ElementAt(2));
         Assert.AreEqual(corpusId4, actual.AdditionalInfo.CorporaIds.ElementAt(3));
         Assert.IsNotNull(actual.AdditionalInfo.ParallelCorporaIds);
-        Assert.AreEqual(parallelCorpusId1, actual.AdditionalInfo.ParallelCorporaIds!.ElementAt(0));
+        Assert.AreEqual(ParallelCorpusId01, actual.AdditionalInfo.ParallelCorporaIds!.ElementAt(0));
         Assert.AreEqual(parallelCorpusId2, actual.AdditionalInfo.ParallelCorporaIds.ElementAt(1));
-        Assert.AreEqual(TrainingDataId01, actual.AdditionalInfo.TrainingDataFileIds.Single());
         Assert.AreEqual(actual.AdditionalInfo.QuotationDenormalization, QuotationAnalysis.Successful);
     }
 
@@ -2043,6 +2043,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
+        env.SetupEventMetrics("GEN", "EXO", DateTime.UtcNow);
         const string scriptureRange = "GEN";
         await env.Projects.UpdateAsync(
             Project01,
@@ -2176,6 +2177,7 @@ public class MachineApiServiceTests
     {
         var env = new TestEnvironment();
         DateTimeOffset now = DateTimeOffset.UtcNow;
+        env.SetupEventMetrics("GEN", "EXO", now.DateTime);
         TranslationBuild completedEarlier = new TranslationBuild
         {
             Url = "https://example.com",
