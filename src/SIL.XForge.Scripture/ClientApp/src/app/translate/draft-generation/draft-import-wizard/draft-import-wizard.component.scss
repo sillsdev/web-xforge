@@ -80,4 +80,9 @@ app-sync-progress {
   mat-dialog-content {
     min-height: 400px;
   }
+
+  /* Hide the wizard headings at the top of the dialog */
+  mat-stepper .mat-horizontal-stepper-header-container {
+    display: none;
+  }
 }
