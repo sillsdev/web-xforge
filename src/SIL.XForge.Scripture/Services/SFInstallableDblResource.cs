@@ -414,22 +414,38 @@ public class SFInstallableDblResource : InstallableResource
 
     private async Task ExtractAllAsync(ZipFile zip, string path)
     {
+        string destinationRoot = Path.GetFullPath(path);
+        string rootWithSeparator = destinationRoot.EndsWith(Path.DirectorySeparatorChar)
+            ? destinationRoot
+            : destinationRoot + Path.DirectorySeparatorChar;
         foreach (ZipEntry entry in zip)
         {
-            if (!entry.IsFile)
-                continue; // Skip directories
+            if (!entry.IsFile || string.IsNullOrEmpty(entry.Name))
+            {
+                continue; // Skip directories and entries without a valid name
+            }
 
-            string entryPath = Path.Join(path, entry.Name);
+            string entryFullPath = Path.GetFullPath(Path.Join(destinationRoot, entry.Name));
 
-            if (_fileSystemService.FileExists(entryPath))
-                continue; // Don't overwrite
+            if (!entryFullPath.StartsWith(rootWithSeparator, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("ZIP entry resolves outside the extraction directory.");
+            }
 
-            // Ensure directories in the ZIP entry are created
-            _fileSystemService.CreateDirectory(Path.GetDirectoryName(entryPath));
+            if (_fileSystemService.FileExists(entryFullPath))
+            {
+                continue; // Do not overwrite existing files
+            }
 
-            // Extract the file
+            string entryDirectory = Path.GetDirectoryName(entryFullPath);
+            if (!string.IsNullOrEmpty(entryDirectory))
+            {
+                _fileSystemService.CreateDirectory(entryDirectory); // Ensure destination directory exists
+            }
+
+            // Extract the file while keeping the write target within the allowed directory
             await using Stream zipStream = zip.GetInputStream(entry);
-            await using Stream output = _fileSystemService.CreateFile(entryPath);
+            await using Stream output = _fileSystemService.CreateFile(entryFullPath);
             await zipStream.CopyToAsync(output);
         }
     }

@@ -83,11 +83,7 @@ public sealed class SFInstallableDblResourceTests
                     null
                 );
 
-            this.DestinationRoot = Path.Combine(
-                Path.GetTempPath(),
-                "sf-dbl-extract-tests",
-                Guid.NewGuid().ToString("N")
-            );
+            this.DestinationRoot = Path.Join(Path.GetTempPath(), "sf-dbl-extract-tests", Guid.NewGuid().ToString("N"));
         }
 
         public IFileSystemService FileSystem { get; }
