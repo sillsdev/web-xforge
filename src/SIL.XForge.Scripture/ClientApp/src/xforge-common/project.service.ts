@@ -94,7 +94,7 @@ export abstract class ProjectService<
     return this.onlineInvoke<void>('setSyncDisabled', { projectId, isDisabled });
   }
 
-  protected onlineInvoke<T>(method: string, params?: any): Promise<T | undefined> {
+  protected onlineInvoke<T>(method: string, params?: any): Promise<T> {
     return this.commandService.onlineInvoke<T>(PROJECTS_URL, method, params);
   }
 

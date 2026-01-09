@@ -25,17 +25,28 @@ interface JsonRpcRequest {
   id?: string;
 }
 
-export interface JsonRpcResponse<T> {
+interface JsonRpcFailure {
   jsonrpc: '2.0';
-  result?: T;
-  error?: JsonRpcError;
   id: string;
+  error: JsonRpcError;
 }
+
+interface JsonRpcSuccess<T> {
+  jsonrpc: '2.0';
+  id: string;
+  result: T;
+}
+
+export type JsonRpcResponse<T> = JsonRpcSuccess<T> | JsonRpcFailure;
 
 export interface JsonRpcError {
   code: number;
   message: string;
   data?: any;
+}
+
+function isJsonRpcFailure<T>(response: JsonRpcResponse<T>): response is JsonRpcFailure {
+  return 'error' in response && response.error != null;
 }
 
 export function isNetworkError(error: any): boolean {
@@ -70,7 +81,7 @@ export class CommandService {
     private readonly bugsnagService: BugsnagService
   ) {}
 
-  async onlineInvoke<T>(url: string, method: string, params: any = {}): Promise<T | undefined> {
+  async onlineInvoke<T>(url: string, method: string, params: any = {}): Promise<T> {
     url = `${COMMAND_API_NAMESPACE}/${url}`;
     const request: JsonRpcRequest = {
       jsonrpc: '2.0',
@@ -92,7 +103,7 @@ export class CommandService {
       const response = await lastValueFrom(
         this.http.post<JsonRpcResponse<T>>(url, request, { headers: { 'Content-Type': 'application/json' } })
       );
-      if (response.error != null) {
+      if (isJsonRpcFailure(response)) {
         throw response.error;
       }
       return response.result;

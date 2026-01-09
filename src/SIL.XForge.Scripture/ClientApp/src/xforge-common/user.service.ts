@@ -139,7 +139,7 @@ export class UserService {
     }
   }
 
-  private onlineInvoke<T>(method: string, params?: any): Promise<T | undefined> {
+  private onlineInvoke<T>(method: string, params?: any): Promise<T> {
     return this.commandService.onlineInvoke<T>(USERS_URL, method, params);
   }
 }

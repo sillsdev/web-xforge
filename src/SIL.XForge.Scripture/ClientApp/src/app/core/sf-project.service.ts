@@ -80,7 +80,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   async onlineCreate(settings: SFProjectCreateSettings): Promise<string> {
-    return (await this.onlineInvoke<string>('create', { settings }))!;
+    return await this.onlineInvoke<string>('create', { settings });
   }
 
   /**
@@ -88,7 +88,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
    * @param paratextId The paratext id of the project or resource.
    * @returns The SF project id.
    */
-  async onlineCreateResourceProject(paratextId: string): Promise<string | undefined> {
+  async onlineCreateResourceProject(paratextId: string): Promise<string> {
     return this.onlineInvoke<string>('createResourceProject', { paratextId });
   }
 
@@ -219,7 +219,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     scriptureRange: string,
     targetProjectId: string,
     timestamp: Date
-  ): Promise<string | undefined> {
+  ): Promise<string> {
     return this.onlineInvoke<string>('applyPreTranslationToProject', {
       projectId,
       scriptureRange,
@@ -244,40 +244,40 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   async onlineIsAlreadyInvited(id: string, email: string): Promise<boolean> {
-    return (await this.onlineInvoke<boolean>('isAlreadyInvited', {
+    return await this.onlineInvoke<boolean>('isAlreadyInvited', {
       projectId: id,
       email
-    }))!;
+    });
   }
 
   /** Get list of email addresses that have outstanding invitations on project.
    * Caller must be an admin on the project. */
   async onlineInvitedUsers(projectId: string): Promise<InviteeStatus[]> {
-    return (await this.onlineInvoke<InviteeStatus[]>('invitedUsers', {
+    return await this.onlineInvoke<InviteeStatus[]>('invitedUsers', {
       projectId
-    }))!;
+    });
   }
 
   /** Get added into project with specified shareKey code. */
   async onlineJoinWithShareKey(shareKey: string): Promise<string> {
-    return (await this.onlineInvoke<string>('joinWithShareKey', { shareKey }))!;
+    return await this.onlineInvoke<string>('joinWithShareKey', { shareKey });
   }
 
-  onlineInvite(id: string, email: string, locale: string, role: string): Promise<string | undefined> {
+  onlineInvite(id: string, email: string, locale: string, role: string): Promise<string> {
     return this.onlineInvoke('invite', { projectId: id, email, locale, role });
   }
 
   async onlineUninviteUser(projectId: string, emailToUninvite: string): Promise<string> {
-    return (await this.onlineInvoke<string>('uninviteUser', {
+    return await this.onlineInvoke<string>('uninviteUser', {
       projectId,
       emailToUninvite
-    }))!;
+    });
   }
 
   async onlineIsSourceProject(projectId: string): Promise<boolean> {
-    return (await this.onlineInvoke<boolean>('isSourceProject', {
+    return await this.onlineInvoke<boolean>('isSourceProject', {
       projectId
-    }))!;
+    });
   }
 
   async onlineGetLinkSharingKey(
@@ -286,14 +286,12 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     shareLinkType: ShareLinkType,
     daysBeforeExpiration: number
   ): Promise<string> {
-    return (
-      (await this.onlineInvoke<string>('linkSharingKey', {
-        projectId,
-        role,
-        shareLinkType,
-        daysBeforeExpiration
-      })) ?? ''
-    );
+    return await this.onlineInvoke<string>('linkSharingKey', {
+      projectId,
+      role,
+      shareLinkType,
+      daysBeforeExpiration
+    });
   }
 
   async onlineReserveLinkSharingKey(shareKey: string, daysBeforeExpiration: number): Promise<void> {
@@ -305,19 +303,19 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   async onlineSetRoleProjectPermissions(projectId: string, role: string, permissions: string[]): Promise<void> {
-    return (await this.onlineInvoke<void>('setRoleProjectPermissions', {
+    return await this.onlineInvoke<void>('setRoleProjectPermissions', {
       projectId,
       role,
       permissions
-    }))!;
+    });
   }
 
   async onlineSetUserProjectPermissions(projectId: string, userId: string, permissions: string[]): Promise<void> {
-    return (await this.onlineInvoke<void>('setUserProjectPermissions', {
+    return await this.onlineInvoke<void>('setUserProjectPermissions', {
       projectId,
       userId,
       permissions
-    }))!;
+    });
   }
 
   async onlineCreateAudioTimingData(
@@ -383,11 +381,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     });
   }
 
-  async onlineEventMetrics(
-    projectId: string,
-    pageIndex: number,
-    pageSize: number
-  ): Promise<QueryResults<EventMetric> | undefined> {
+  async onlineEventMetrics(projectId: string, pageIndex: number, pageSize: number): Promise<QueryResults<EventMetric>> {
     return await this.onlineInvoke<QueryResults<EventMetric>>('eventMetrics', { projectId, pageIndex, pageSize });
   }
 
@@ -396,7 +390,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     projectId?: string,
     startDate?: Date,
     endDate?: Date
-  ): Promise<QueryResults<EventMetric> | undefined> {
+  ): Promise<QueryResults<EventMetric>> {
     const params: any = {
       projectId: projectId ?? null,
       scopes: [3], // Drafting scope

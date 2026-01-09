@@ -187,7 +187,7 @@ class TestEnvironment {
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedAuthService.currentUserRoles).thenReturn([]);
     when(mockDialogService.openMatDialog(EventMetricDialogComponent, anything())).thenReturn(instance(this.dialogRef));
-    when(mockedProjectService.onlineEventMetrics(anything(), anything(), anything())).thenResolve(undefined);
+    when(mockedProjectService.onlineEventMetrics(anything(), anything(), anything())).thenResolve({} as any);
 
     this.fixture = TestBed.createComponent(EventMetricsLogComponent);
     this.component = this.fixture.componentInstance;
