@@ -329,7 +329,11 @@ describe('DraftSourcesComponent', () => {
       env.clickLanguageCodesConfirmationCheckbox();
 
       const savedFile = {} as TrainingData;
-      when(mockTrainingDataQuery.docs).thenReturn([{ data: savedFile } as TrainingDataDoc]);
+      const deletedFile: TrainingData = { dataId: 'deleted', deleted: true } as TrainingData;
+      when(mockTrainingDataQuery.docs).thenReturn([
+        { data: savedFile } as TrainingDataDoc,
+        { data: deletedFile } as TrainingDataDoc
+      ]);
       trainingDataQueryLocalChanges$.next();
 
       expect(env.component.availableTrainingFiles.length).toEqual(1);
@@ -349,9 +353,11 @@ describe('DraftSourcesComponent', () => {
 
       const savedFile1 = { dataId: 'file1' } as TrainingData;
       const savedFile2 = { dataId: 'file2' } as TrainingData;
+      const deletedFile: TrainingData = { dataId: 'deleted', deleted: true } as TrainingData;
       when(mockTrainingDataQuery.docs).thenReturn([
         { data: savedFile1 } as TrainingDataDoc,
-        { data: savedFile2 } as TrainingDataDoc
+        { data: savedFile2 } as TrainingDataDoc,
+        { data: deletedFile } as TrainingDataDoc
       ]);
       trainingDataQueryLocalChanges$.next();
       tick();
@@ -375,7 +381,11 @@ describe('DraftSourcesComponent', () => {
       when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(true);
 
       const savedFile = { dataId: 'saved_file', ownerRef: 'user01' } as TrainingData;
-      when(mockTrainingDataQuery.docs).thenReturn([{ data: savedFile } as TrainingDataDoc]);
+      const deletedFile: TrainingData = { dataId: 'deleted', ownerRef: 'user01', deleted: true } as TrainingData;
+      when(mockTrainingDataQuery.docs).thenReturn([
+        { data: savedFile } as TrainingDataDoc,
+        { data: deletedFile } as TrainingDataDoc
+      ]);
       trainingDataQueryLocalChanges$.next();
       tick();
 
@@ -419,9 +429,11 @@ describe('DraftSourcesComponent', () => {
 
       const initialFile1 = { dataId: 'file1' } as TrainingData;
       const initialFile2 = { dataId: 'file2' } as TrainingData;
+      const deletedFile: TrainingData = { dataId: 'deleted', deleted: true } as TrainingData;
       when(mockTrainingDataQuery.docs).thenReturn([
         { data: initialFile1 } as TrainingDataDoc,
-        { data: initialFile2 } as TrainingDataDoc
+        { data: initialFile2 } as TrainingDataDoc,
+        { data: deletedFile } as TrainingDataDoc
       ]);
       trainingDataQueryLocalChanges$.next();
       tick();
@@ -438,10 +450,12 @@ describe('DraftSourcesComponent', () => {
 
       // Another client updates the query
       const remoteFile = { dataId: 'remote_file' } as TrainingData;
+      const remoteDeletedFile: TrainingData = { dataId: 'remote_deleted', deleted: true } as TrainingData;
       when(mockTrainingDataQuery.docs).thenReturn([
         { data: initialFile1 } as TrainingDataDoc,
         { data: initialFile2 } as TrainingDataDoc,
-        { data: remoteFile } as TrainingDataDoc
+        { data: remoteFile } as TrainingDataDoc,
+        { data: remoteDeletedFile } as TrainingDataDoc
       ]);
       trainingDataQueryLocalChanges$.next();
       tick();

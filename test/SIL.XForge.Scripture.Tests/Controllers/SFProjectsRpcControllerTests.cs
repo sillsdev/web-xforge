@@ -1235,6 +1235,708 @@ public class SFProjectsRpcControllerTests
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
+    [Test]
+    public async Task AddUser_WithRole_Success()
+    {
+        var env = new TestEnvironment();
+        const string projectRole = SFProjectRole.Viewer;
+
+        var result = await env.Controller.AddUser(Project01, projectRole);
+
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().AddUserAsync(User01, Project01, projectRole);
+    }
+
+    [Test]
+    public async Task AddUser_WithRole_Forbidden()
+    {
+        var env = new TestEnvironment();
+        const string projectRole = SFProjectRole.Viewer;
+        env.SFProjectService.AddUserAsync(User01, Project01, projectRole).Throws(new ForbiddenException());
+
+        var result = await env.Controller.AddUser(Project01, projectRole);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task AddUser_WithRole_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string projectRole = SFProjectRole.Viewer;
+        const string errorMessage = "Not Found";
+        env.SFProjectService.AddUserAsync(User01, Project01, projectRole)
+            .Throws(new DataNotFoundException(errorMessage));
+
+        var result = await env.Controller.AddUser(Project01, projectRole);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void AddUser_WithRole_UnknownError()
+    {
+        var env = new TestEnvironment();
+        const string projectRole = SFProjectRole.Viewer;
+        env.SFProjectService.AddUserAsync(User01, Project01, projectRole).Throws(new ArgumentNullException());
+
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.AddUser(Project01, projectRole));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task AddUser_WithoutRole_Success()
+    {
+        var env = new TestEnvironment();
+
+        var result = await env.Controller.AddUser(Project01);
+
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().AddUserAsync(User01, Project01, null);
+    }
+
+    [Test]
+    public async Task RemoveUser_Success()
+    {
+        var env = new TestEnvironment();
+
+        var result = await env.Controller.RemoveUser(Project01, User02);
+
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().RemoveUserAsync(User01, Project01, User02);
+    }
+
+    [Test]
+    public async Task RemoveUser_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.RemoveUserAsync(User01, Project01, User02).Throws(new ForbiddenException());
+
+        var result = await env.Controller.RemoveUser(Project01, User02);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task RemoveUser_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.RemoveUserAsync(User01, Project01, User02).Throws(new DataNotFoundException(errorMessage));
+
+        var result = await env.Controller.RemoveUser(Project01, User02);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void RemoveUser_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.RemoveUserAsync(User01, Project01, User02).Throws(new ArgumentNullException());
+
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.RemoveUser(Project01, User02));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task GetProjectRole_Success()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.GetProjectRoleAsync(User01, Project01).Returns(Role01);
+
+        var result = await env.Controller.GetProjectRole(Project01);
+
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        Assert.AreEqual(Role01, (result as RpcMethodSuccessResult)!.ReturnObject);
+    }
+
+    [Test]
+    public async Task GetProjectRole_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.GetProjectRoleAsync(User01, Project01).Throws(new DataNotFoundException(errorMessage));
+
+        var result = await env.Controller.GetProjectRole(Project01);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void GetProjectRole_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.GetProjectRoleAsync(User01, Project01).Throws(new ArgumentNullException());
+
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.GetProjectRole(Project01));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task SyncUserRole_Success()
+    {
+        var env = new TestEnvironment();
+
+        var result = await env.Controller.SyncUserRole(Project01);
+
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().SyncUserRoleAsync(User01, Project01);
+    }
+
+    [Test]
+    public async Task SyncUserRole_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SyncUserRoleAsync(User01, Project01).Throws(new ForbiddenException());
+
+        var result = await env.Controller.SyncUserRole(Project01);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task SyncUserRole_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.SyncUserRoleAsync(User01, Project01).Throws(new DataNotFoundException(errorMessage));
+
+        var result = await env.Controller.SyncUserRole(Project01);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void SyncUserRole_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SyncUserRoleAsync(User01, Project01).Throws(new ArgumentNullException());
+
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.SyncUserRole(Project01));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task IsAlreadyInvited_Success()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.IsAlreadyInvitedAsync(User01, Project01, Email).Returns(true);
+
+        var result = await env.Controller.IsAlreadyInvited(Project01, Email);
+
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        Assert.AreEqual(true, (result as RpcMethodSuccessResult)!.ReturnObject);
+    }
+
+    [Test]
+    public async Task IsAlreadyInvited_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.IsAlreadyInvitedAsync(User01, Project01, Email).Throws(new ForbiddenException());
+
+        var result = await env.Controller.IsAlreadyInvited(Project01, Email);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task IsAlreadyInvited_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.IsAlreadyInvitedAsync(User01, Project01, Email)
+            .Throws(new DataNotFoundException(errorMessage));
+
+        var result = await env.Controller.IsAlreadyInvited(Project01, Email);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void IsAlreadyInvited_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.IsAlreadyInvitedAsync(User01, Project01, Email).Throws(new ArgumentNullException());
+
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.IsAlreadyInvited(Project01, Email));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task JoinWithShareKey_Success()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.JoinWithShareKeyAsync(User01, Data01).Returns(Project01);
+
+        var result = await env.Controller.JoinWithShareKey(Data01);
+
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        Assert.AreEqual(Project01, (result as RpcMethodSuccessResult)!.ReturnObject);
+    }
+
+    [Test]
+    public async Task JoinWithShareKey_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.JoinWithShareKeyAsync(User01, Data01).Throws(new ForbiddenException());
+
+        var result = await env.Controller.JoinWithShareKey(Data01);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task JoinWithShareKey_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.JoinWithShareKeyAsync(User01, Data01).Throws(new DataNotFoundException(errorMessage));
+
+        var result = await env.Controller.JoinWithShareKey(Data01);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void JoinWithShareKey_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.JoinWithShareKeyAsync(User01, Data01).Throws(new ArgumentNullException());
+
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.JoinWithShareKey(Data01));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public void IsSourceProject_ReturnsValue()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.IsSourceProject(Project01).Returns(true);
+
+        var result = env.Controller.IsSourceProject(Project01);
+
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        Assert.AreEqual(true, (result as RpcMethodSuccessResult)!.ReturnObject);
+    }
+
+    [Test]
+    public async Task ReserveLinkSharingKey_Success()
+    {
+        var env = new TestEnvironment();
+
+        var result = await env.Controller.ReserveLinkSharingKey(Data01, DaysBeforeExpiration);
+
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().ReserveLinkSharingKeyAsync(User01, Data01, DaysBeforeExpiration);
+    }
+
+    [Test]
+    public async Task ReserveLinkSharingKey_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.ReserveLinkSharingKeyAsync(User01, Data01, DaysBeforeExpiration)
+            .Throws(new DataNotFoundException(errorMessage));
+
+        var result = await env.Controller.ReserveLinkSharingKey(Data01, DaysBeforeExpiration);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void ReserveLinkSharingKey_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.ReserveLinkSharingKeyAsync(User01, Data01, DaysBeforeExpiration)
+            .Throws(new ArgumentNullException());
+
+        Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Controller.ReserveLinkSharingKey(Data01, DaysBeforeExpiration)
+        );
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task AddTranslateMetrics_Success()
+    {
+        var env = new TestEnvironment();
+        var metrics = new TranslateMetrics { Id = Data01 };
+
+        var result = await env.Controller.AddTranslateMetrics(Project01, metrics);
+
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().AddTranslateMetricsAsync(User01, Project01, metrics);
+    }
+
+    [Test]
+    public async Task AddTranslateMetrics_Forbidden()
+    {
+        var env = new TestEnvironment();
+        var metrics = new TranslateMetrics { Id = Data01 };
+        env.SFProjectService.AddTranslateMetricsAsync(User01, Project01, metrics).Throws(new ForbiddenException());
+
+        var result = await env.Controller.AddTranslateMetrics(Project01, metrics);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task AddTranslateMetrics_NotFound()
+    {
+        var env = new TestEnvironment();
+        var metrics = new TranslateMetrics { Id = Data01 };
+        const string errorMessage = "Not Found";
+        env.SFProjectService.AddTranslateMetricsAsync(User01, Project01, metrics)
+            .Throws(new DataNotFoundException(errorMessage));
+
+        var result = await env.Controller.AddTranslateMetrics(Project01, metrics);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void AddTranslateMetrics_UnknownError()
+    {
+        var env = new TestEnvironment();
+        var metrics = new TranslateMetrics { Id = Data01 };
+        env.SFProjectService.AddTranslateMetricsAsync(User01, Project01, metrics).Throws(new ArgumentNullException());
+
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.AddTranslateMetrics(Project01, metrics));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task CancelSync_Success()
+    {
+        var env = new TestEnvironment();
+
+        var result = await env.Controller.CancelSync(Project01);
+
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().CancelSyncAsync(User01, Project01);
+    }
+
+    [Test]
+    public async Task CancelSync_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.CancelSyncAsync(User01, Project01).Throws(new ForbiddenException());
+
+        var result = await env.Controller.CancelSync(Project01);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task CancelSync_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.CancelSyncAsync(User01, Project01).Throws(new DataNotFoundException(errorMessage));
+
+        var result = await env.Controller.CancelSync(Project01);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void CancelSync_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.CancelSyncAsync(User01, Project01).Throws(new ArgumentNullException());
+
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.CancelSync(Project01));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task DeleteAudio_Success()
+    {
+        var env = new TestEnvironment();
+
+        var result = await env.Controller.DeleteAudio(Project01, User02, Data01);
+
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().DeleteAudioAsync(User01, Project01, User02, Data01);
+    }
+
+    [Test]
+    public async Task DeleteAudio_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.DeleteAudioAsync(User01, Project01, User02, Data01).Throws(new ForbiddenException());
+
+        var result = await env.Controller.DeleteAudio(Project01, User02, Data01);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task DeleteAudio_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.DeleteAudioAsync(User01, Project01, User02, Data01)
+            .Throws(new DataNotFoundException(errorMessage));
+
+        var result = await env.Controller.DeleteAudio(Project01, User02, Data01);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task DeleteAudio_InvalidParams()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Invalid format";
+        env.SFProjectService.DeleteAudioAsync(User01, Project01, User02, Data01)
+            .Throws(new FormatException(errorMessage));
+
+        var result = await env.Controller.DeleteAudio(Project01, User02, Data01);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual((int)RpcErrorCode.InvalidParams, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void DeleteAudio_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.DeleteAudioAsync(User01, Project01, User02, Data01).Throws(new ArgumentNullException());
+
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.DeleteAudio(Project01, User02, Data01));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task MarkTrainingDataDeleted_Success()
+    {
+        var env = new TestEnvironment();
+
+        var result = await env.Controller.MarkTrainingDataDeleted(Project01, Data01);
+
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.TrainingDataService.Received().MarkFileDeleted(User01, Project01, Data01);
+    }
+
+    [Test]
+    public async Task MarkTrainingDataDeleted_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.TrainingDataService.MarkFileDeleted(User01, Project01, Data01).Throws(new ForbiddenException());
+
+        var result = await env.Controller.MarkTrainingDataDeleted(Project01, Data01);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task MarkTrainingDataDeleted_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.TrainingDataService.MarkFileDeleted(User01, Project01, Data01)
+            .Throws(new DataNotFoundException(errorMessage));
+
+        var result = await env.Controller.MarkTrainingDataDeleted(Project01, Data01);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void MarkTrainingDataDeleted_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.TrainingDataService.MarkFileDeleted(User01, Project01, Data01).Throws(new ArgumentNullException());
+
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.MarkTrainingDataDeleted(Project01, Data01));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task CreateAudioTimingData_Success()
+    {
+        var env = new TestEnvironment();
+        var timingData = new List<AudioTiming>();
+
+        var result = await env.Controller.CreateAudioTimingData(Project01, 1, 2, timingData, "url");
+
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().CreateAudioTimingData(User01, Project01, 1, 2, timingData, "url");
+    }
+
+    [Test]
+    public async Task CreateAudioTimingData_Forbidden()
+    {
+        var env = new TestEnvironment();
+        var timingData = new List<AudioTiming>();
+        env.SFProjectService.CreateAudioTimingData(User01, Project01, 1, 2, timingData, "url")
+            .Throws(new ForbiddenException());
+
+        var result = await env.Controller.CreateAudioTimingData(Project01, 1, 2, timingData, "url");
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task CreateAudioTimingData_NotFound()
+    {
+        var env = new TestEnvironment();
+        var timingData = new List<AudioTiming>();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.CreateAudioTimingData(User01, Project01, 1, 2, timingData, "url")
+            .Throws(new DataNotFoundException(errorMessage));
+
+        var result = await env.Controller.CreateAudioTimingData(Project01, 1, 2, timingData, "url");
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void CreateAudioTimingData_UnknownError()
+    {
+        var env = new TestEnvironment();
+        var timingData = new List<AudioTiming>();
+        env.SFProjectService.CreateAudioTimingData(User01, Project01, 1, 2, timingData, "url")
+            .Throws(new ArgumentNullException());
+
+        Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Controller.CreateAudioTimingData(Project01, 1, 2, timingData, "url")
+        );
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task DeleteAudioTimingData_Success()
+    {
+        var env = new TestEnvironment();
+
+        var result = await env.Controller.DeleteAudioTimingData(Project01, 1, 2);
+
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().DeleteAudioTimingData(User01, Project01, 1, 2);
+    }
+
+    [Test]
+    public async Task DeleteAudioTimingData_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.DeleteAudioTimingData(User01, Project01, 1, 2).Throws(new ForbiddenException());
+
+        var result = await env.Controller.DeleteAudioTimingData(Project01, 1, 2);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task DeleteAudioTimingData_NotFound()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.DeleteAudioTimingData(User01, Project01, 1, 2)
+            .Throws(new DataNotFoundException("missing"));
+
+        var result = await env.Controller.DeleteAudioTimingData(Project01, 1, 2);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual("Audio timing data not found", (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void DeleteAudioTimingData_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.DeleteAudioTimingData(User01, Project01, 1, 2).Throws(new ArgumentNullException());
+
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.DeleteAudioTimingData(Project01, 1, 2));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task SetIsValid_Success()
+    {
+        var env = new TestEnvironment();
+
+        var result = await env.Controller.SetIsValid(Project01, 1, 2, true);
+
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().SetIsValidAsync(User01, Project01, 1, 2, true);
+    }
+
+    [Test]
+    public async Task SetIsValid_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SetIsValidAsync(User01, Project01, 1, 2, true).Throws(new ForbiddenException());
+
+        var result = await env.Controller.SetIsValid(Project01, 1, 2, true);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task SetIsValid_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.SetIsValidAsync(User01, Project01, 1, 2, true)
+            .Throws(new DataNotFoundException(errorMessage));
+
+        var result = await env.Controller.SetIsValid(Project01, 1, 2, true);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void SetIsValid_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SetIsValidAsync(User01, Project01, 1, 2, true).Throws(new ArgumentNullException());
+
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.SetIsValid(Project01, 1, 2, true));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
     private class TestEnvironment
     {
         public TestEnvironment()

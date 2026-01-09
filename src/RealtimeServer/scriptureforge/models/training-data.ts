@@ -13,4 +13,5 @@ export interface TrainingData extends ProjectData {
   mimeType: string;
   skipRows: number;
   title: string;
+  deleted?: boolean;
 }

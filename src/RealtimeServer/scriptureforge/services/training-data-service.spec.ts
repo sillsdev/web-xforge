@@ -95,7 +95,8 @@ class TestEnvironment {
       fileUrl: 'project01/user01_file01.csv?t=123456789123456789',
       mimeType: 'text/csv',
       skipRows: 0,
-      title: 'Test File'
+      title: 'Test File',
+      deleted: false
     });
   }
 }

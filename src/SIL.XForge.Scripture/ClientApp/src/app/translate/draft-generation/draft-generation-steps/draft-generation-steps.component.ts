@@ -254,7 +254,10 @@ export class DraftGenerationStepsComponent implements OnInit {
           )
             .pipe(quietTakeUntilDestroyed(this.destroyRef, { logWarnings: false }))
             .subscribe(() => {
-              this.trainingDataFiles = this.trainingDataQuery?.docs.map(doc => doc.data).filter(d => d != null) ?? [];
+              this.trainingDataFiles =
+                (this.trainingDataQuery?.docs
+                  .map(doc => doc.data)
+                  .filter(d => d != null && !d.deleted) as Readonly<TrainingData>[]) ?? [];
             });
 
           // Reset the field that toggles a notice that books were automatically selected

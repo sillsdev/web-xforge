@@ -1,3 +1,5 @@
+import { provideHttpClient, withFetch } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
@@ -31,6 +33,8 @@ describe('DraftHistoryListComponent', () => {
     providers: [
       provideRouter([]),
       provideTestRealtime(SF_TYPE_REGISTRY),
+      provideHttpClient(withFetch()),
+      provideHttpClientTesting(),
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
       { provide: I18nService, useMock: mockedI18nService },
