@@ -189,6 +189,9 @@ export class QuestionService extends SFProjectDataService<Question> {
       },
       transceleratorQuestionId: {
         bsonType: 'string'
+      },
+      paratextNoteId: {
+        bsonType: 'string'
       }
     },
     additionalProperties: false
