@@ -97,4 +97,5 @@ public interface ISFProjectService : IProjectService
     Task SetIsValidAsync(string userId, string projectId, int book, int chapter, bool isValid);
     Task SetRoleProjectPermissionsAsync(string curUserId, string projectId, string role, string[] permissions);
     Task SetUserProjectPermissionsAsync(string curUserId, string projectId, string userId, string[] permissions);
+    Task<BookProgress[]> GetProjectProgressAsync(string curUserId, string projectId);
 }

@@ -49,11 +49,11 @@
         [disabled]="readonly"
         (change)="onChipListChange(book)"
       >
-        @if (!basicMode) {
+        @if (book.progressPercentage != null && basicMode === false) {
           <mat-chip-option
             [value]="book"
             [selected]="book.selected"
-            [matTooltip]="t('book_progress', { percent: getPercentage(book) | l10nPercent })"
+            [matTooltip]="t('book_progress', { percent: normalizePercentage(book.progressPercentage) | l10nPercent })"
           >
             {{ "canon.book_names." + book.bookId | transloco }}
             <div class="border-fill" [style.width]="book.progressPercentage + '%'"></div>
