@@ -17,6 +17,8 @@ export class MemoryRealtimeRemoteStore extends RealtimeRemoteStore {
     // getAccessToken is not used in this memory implementation
   }
 
+  /** Write a realtime doc into the store, for a given collection. An existing realtime doc with the same id is
+   * overwritten. */
   addSnapshot<T>(collection: string, snapshot: Snapshot<T>): void {
     let collectionSnapshots = this.snapshots.get(collection);
     if (collectionSnapshots == null) {
@@ -132,7 +134,7 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
     return Promise.resolve();
   }
 
-  submitOp(op: any, source?: any): Promise<void> {
+  submitOpWithoutEmitting(op: any): void {
     if (this.type == null) {
       throw new Error('The doc has not been loaded.');
     }
@@ -143,6 +145,11 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
     }
     this.data = this.type.apply(this.data, op);
     this.version++;
+  }
+
+  /** Multiple operations are received for the `op` argument. */
+  submitOp(op: any, source?: any): Promise<void> {
+    this.submitOpWithoutEmitting(op);
     this.emitChange(op);
     if (!source) {
       this.emitRemoteChange(op);
