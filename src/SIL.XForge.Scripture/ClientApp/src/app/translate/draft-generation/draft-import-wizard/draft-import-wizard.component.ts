@@ -134,8 +134,16 @@ export class DraftImportWizardComponent implements OnInit {
   noDraftsAvailable = false;
 
   // Step 2-3: Project connection (conditional)
+  private _isConnecting = false;
+  public get isConnecting(): boolean {
+    return this._isConnecting;
+  }
+  public set isConnecting(value: boolean) {
+    this.dialogRef.disableClose = value;
+    this._isConnecting = value;
+  }
+
   needsConnection = false;
-  isConnecting = false;
   connectionError?: string;
 
   async connectToProject(skipStepperAdvance: boolean = false): Promise<void> {
@@ -235,7 +243,10 @@ export class DraftImportWizardComponent implements OnInit {
   }
 
   updateSyncStatus(inProgress: boolean): void {
-    if (!inProgress) this.syncComplete = true;
+    if (!inProgress && this.isSyncing) {
+      this.isSyncing = false;
+      this.syncComplete = true;
+    }
   }
 
   onStepSelectionChange(event: StepperSelectionEvent): void {
@@ -260,7 +271,15 @@ export class DraftImportWizardComponent implements OnInit {
   booksWithExistingText: { bookNum: number; bookName: string; chaptersWithText: number[] }[] = [];
 
   // Step 6: Import progress
-  isImporting = false;
+  private _isImporting = false;
+  public get isImporting(): boolean {
+    return this._isImporting;
+  }
+  public set isImporting(value: boolean) {
+    this.dialogRef.disableClose = value;
+    this._isImporting = value;
+  }
+
   importProgress: ImportProgress[] = [];
   importError?: string;
   importComplete = false;
@@ -440,6 +459,9 @@ export class DraftImportWizardComponent implements OnInit {
         if (projectDoc.data != null) {
           await this.analyzeTargetProject(projectDoc.data, paratextProject.isConnected);
         }
+
+        // Analyze books for overwrite confirmation
+        await this.analyzeBooksForOverwrite();
       } finally {
         this.isLoadingProject = false;
       }
@@ -775,15 +797,14 @@ export class DraftImportWizardComponent implements OnInit {
   private async performSync(): Promise<void> {
     if (this.targetProjectId == null) return;
 
-    this.isSyncing = true;
     this.syncError = undefined;
 
     try {
-      await this.projectService.onlineSync(this.targetProjectId);
       this.stepper?.next();
+      await this.projectService.onlineSync(this.targetProjectId);
+      this.isSyncing = true;
     } catch (error) {
       this.syncError = error instanceof Error ? error.message : 'Sync failed';
-    } finally {
       this.isSyncing = false;
     }
   }

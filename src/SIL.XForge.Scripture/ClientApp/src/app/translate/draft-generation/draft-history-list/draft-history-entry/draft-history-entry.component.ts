@@ -366,7 +366,7 @@ export class DraftHistoryEntryComponent {
       data: this._entry,
       width: '800px',
       maxWidth: '90vw',
-      disableClose: true
+      disableClose: false
     });
   }
 }
