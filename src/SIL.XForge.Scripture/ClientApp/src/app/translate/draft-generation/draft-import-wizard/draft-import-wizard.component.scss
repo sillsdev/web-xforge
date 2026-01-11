@@ -78,7 +78,8 @@ app-sync-progress {
 
 ::ng-deep {
   mat-dialog-content {
-    min-height: 400px;
+    /* Use the same text color as the main application body, not the lighter dialog text color */
+    color: var(--mat-sidenav-content-text-color, var(--mat-sys-on-background)) !important;
   }
 
   /* Hide the wizard headings at the top of the dialog */
