@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { MatButton } from '@angular/material/button';
+import { MatButton, MatButtonAppearance } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslocoModule } from '@ngneat/transloco';
@@ -26,7 +26,7 @@ export class DraftDownloadButtonComponent {
   zipSubscription?: Subscription;
 
   @Input() build: BuildDto | undefined;
-  @Input() flat: boolean = false;
+  @Input() matButton: MatButtonAppearance = 'text';
 
   constructor(
     private readonly activatedProject: ActivatedProjectService,
