@@ -26,7 +26,7 @@
             {{ t("select_formatting_options") }}
           </p>
           <div class="formatting-options-container">
-            <button mat-flat-button class="format-usfm" [routerLink]="['format']">
+            <button matButton="filled" class="format-usfm" [routerLink]="['format']">
               <mat-icon>build</mat-icon>
               <span class="hide-lt-lg">{{ t("formatting_options") }}</span>
               <span class="hide-gt-lg">{{ t("formatting") }}</span>
@@ -48,12 +48,12 @@
               <app-draft-preview-books [build]="entry" />
             </p>
             <div class="draft-options">
-              <button mat-stroked-button class="add-to-project" (click)="openImportWizard()">
+              <button matButton="filled" class="add-to-project" (click)="openImportWizard()">
                 <mat-icon>input</mat-icon> {{ t("add_to_project") }}
               </button>
-              <app-draft-download-button [build]="entry" [flat]="true" />
+              <app-draft-download-button matButton="outlined" [build]="entry" />
               @if (formattingOptionsSupported && isLatestBuild) {
-                <button mat-button class="format-usfm" [routerLink]="['format']">
+                <button matButton class="format-usfm" [routerLink]="['format']">
                   <mat-icon>build</mat-icon> {{ t("formatting_options") }}
                 </button>
               }
