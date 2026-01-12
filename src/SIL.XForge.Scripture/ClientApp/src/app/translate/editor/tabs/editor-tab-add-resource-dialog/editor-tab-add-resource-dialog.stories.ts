@@ -86,8 +86,8 @@ const meta: Meta = {
         resources = undefined;
       }
 
-      when(mockEditorTabAddResourceDialogService.getProjects()).thenReturn(Promise.resolve(projects));
-      when(mockEditorTabAddResourceDialogService.getResources()).thenReturn(Promise.resolve(resources));
+      when(mockEditorTabAddResourceDialogService.getProjects()).thenResolve(projects);
+      when(mockEditorTabAddResourceDialogService.getResources()).thenResolve(resources);
 
       if (context.args.stillFetchingProjects) {
         when(mockEditorTabAddResourceDialogService.getProjects()).thenReturn(

@@ -76,9 +76,10 @@ describe('EventMetricsLogComponent', () => {
 
   it('should not display table if invalid results', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedProjectService.onlineEventMetrics(anything(), anything(), anything())).thenReturn(
-      Promise.resolve({ results: null as unknown, unpagedCount: 0 } as QueryResults<EventMetric>)
-    );
+    when(mockedProjectService.onlineEventMetrics(anything(), anything(), anything())).thenResolve({
+      results: null as unknown,
+      unpagedCount: 0
+    } as QueryResults<EventMetric>);
     env.wait();
     env.wait();
 
@@ -87,9 +88,10 @@ describe('EventMetricsLogComponent', () => {
 
   it('should not display table if no event metrics', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedProjectService.onlineEventMetrics(anything(), anything(), anything())).thenReturn(
-      Promise.resolve({ results: [], unpagedCount: 0 } as QueryResults<EventMetric>)
-    );
+    when(mockedProjectService.onlineEventMetrics(anything(), anything(), anything())).thenResolve({
+      results: [],
+      unpagedCount: 0
+    } as QueryResults<EventMetric>);
     env.wait();
     env.wait();
 
@@ -223,12 +225,10 @@ class TestEnvironment {
       { scope: EventScope.Sync, timeStamp: new Date().toISOString(), eventType: 'SyncAsync' } as EventMetric,
       { scope: EventScope.Settings, timeStamp: new Date().toISOString(), eventType: 'UnknownType' } as EventMetric
     ];
-    when(mockedProjectService.onlineEventMetrics(anything(), anything(), anything())).thenReturn(
-      Promise.resolve({
-        results: eventMetrics,
-        unpagedCount: eventMetrics.length * 2
-      } as QueryResults<EventMetric>)
-    );
+    when(mockedProjectService.onlineEventMetrics(anything(), anything(), anything())).thenResolve({
+      results: eventMetrics,
+      unpagedCount: eventMetrics.length * 2
+    } as QueryResults<EventMetric>);
   }
 
   setBrowserOnlineStatus(status: boolean): void {

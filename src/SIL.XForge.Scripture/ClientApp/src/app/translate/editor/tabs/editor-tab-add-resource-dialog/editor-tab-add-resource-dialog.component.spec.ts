@@ -87,7 +87,7 @@ describe('EditorTabAddResourceDialogComponent', () => {
         env.createTestParatextProject(4, { projectId: undefined, isConnectable: false }),
         env.createTestParatextProject(5, { projectId: undefined, isConnectable: false })
       ];
-      when(mockParatextService.getProjects()).thenReturn(Promise.resolve(projects));
+      when(mockParatextService.getProjects()).thenResolve(projects);
       env.component['getProjectsAndResources']();
       tick();
       expect(env.component.projects).toEqual(expectedResult);
@@ -248,13 +248,13 @@ class TestEnvironment {
   constructor() {
     this.setupProject();
 
-    when(mockParatextService.getProjects()).thenReturn(Promise.resolve(this.projects));
-    when(mockParatextService.getResources()).thenReturn(Promise.resolve(this.resources));
+    when(mockParatextService.getProjects()).thenResolve(this.projects);
+    when(mockParatextService.getResources()).thenResolve(this.resources);
     when(mockSFProjectService.onlineCreateResourceProject(this.paratextId)).thenCall(() =>
       Promise.resolve(this.testProjectDoc.id)
     );
     when(mockSFProjectService.get(this.projectId)).thenCall(() => Promise.resolve(this.testProjectDoc));
-    when(mockSFProjectService.onlineSync(this.projectId)).thenReturn(Promise.resolve());
+    when(mockSFProjectService.onlineSync(this.projectId)).thenResolve();
 
     this.fixture = TestBed.createComponent(EditorTabAddResourceDialogComponent);
     this.component = this.fixture.componentInstance;

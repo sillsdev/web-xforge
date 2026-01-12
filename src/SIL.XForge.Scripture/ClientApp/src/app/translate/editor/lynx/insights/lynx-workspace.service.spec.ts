@@ -76,14 +76,55 @@ describe('LynxWorkspaceService', () => {
       when(mockDestroyRef.onDestroy(anything())).thenCall((callback: () => void) => callback());
 
       when(mockWorkspace.diagnosticsChanged$).thenReturn(this.diagnosticsChangedTestSubject$);
-      when(mockWorkspace.init()).thenReturn(Promise.resolve());
-      when(mockWorkspace.changeLanguage(anything())).thenReturn(Promise.resolve());
+      when(mockWorkspace.init()).thenResolve();
+      when(mockWorkspace.changeLanguage(anything())).thenResolve();
       when(mockWorkspace.getOnTypeTriggerCharacters()).thenReturn(['.', ',']);
-      when(mockWorkspace.getOnTypeEdits(anything(), anything(), anything())).thenReturn(
-        Promise.resolve([{ retain: 5 }, { insert: ' ' }])
-      );
-      when(mockWorkspace.getDiagnosticFixes(anything(), anything())).thenReturn(
-        Promise.resolve([
+      when(mockWorkspace.getOnTypeEdits(anything(), anything(), anything())).thenResolve([
+        { retain: 5 },
+        { insert: ' ' }
+      ]);
+      when(mockWorkspace.getDiagnosticFixes(anything(), anything())).thenResolve([
+        {
+          title: 'Fix issue',
+          isPreferred: true,
+          diagnostic: {
+            code: 123,
+            source: 'test',
+            range: { start: { line: 0, character: 0 }, end: { line: 0, character: 10 } },
+            severity: DiagnosticSeverity.Warning,
+            message: 'Test diagnostic'
+          },
+          edits: [{ retain: 0 }, { insert: 'corrected' }, { delete: 10 }]
+        }
+      ]);
+
+      const mockDoc = this.createMockScriptureDeltaDoc();
+      when(mockDocumentManager.get(anything())).thenResolve(mockDoc);
+      when(mockDocumentManager.reset()).thenResolve();
+      when(mockDocumentManager.fireOpened(anything(), anything())).thenResolve();
+      when(mockDocumentManager.fireClosed(anything())).thenResolve();
+
+      when(mockTextDocReader.keys()).thenResolve([]);
+      when(mockTextDocReader.read(anything())).thenResolve({
+        content: new Delta(),
+        format: 'scripture-delta',
+        version: 0
+      });
+
+      // These mock setups create a fresh workspace mock for each factory call
+      when(mockWorkspaceFactory.createWorkspace(anything(), anything())).thenCall(() => {
+        const workspaceMock = mock<Workspace<Op>>();
+        const changeLanguageSpy = jasmine.createSpy('changeLanguage').and.returnValue(Promise.resolve());
+        workspaceMock.changeLanguage = changeLanguageSpy;
+
+        when(workspaceMock.diagnosticsChanged$).thenReturn(this.diagnosticsChangedTestSubject$.asObservable());
+        when(workspaceMock.init()).thenResolve();
+        when(workspaceMock.getOnTypeTriggerCharacters()).thenReturn(['.', ',']);
+        when(workspaceMock.getOnTypeEdits(anything(), anything(), anything())).thenResolve([
+          { retain: 5 },
+          { insert: ' ' }
+        ]);
+        when(workspaceMock.getDiagnosticFixes(anything(), anything())).thenResolve([
           {
             title: 'Fix issue',
             isPreferred: true,
@@ -96,52 +137,7 @@ describe('LynxWorkspaceService', () => {
             },
             edits: [{ retain: 0 }, { insert: 'corrected' }, { delete: 10 }]
           }
-        ])
-      );
-
-      const mockDoc = this.createMockScriptureDeltaDoc();
-      when(mockDocumentManager.get(anything())).thenReturn(Promise.resolve(mockDoc));
-      when(mockDocumentManager.reset()).thenReturn(Promise.resolve());
-      when(mockDocumentManager.fireOpened(anything(), anything())).thenReturn(Promise.resolve());
-      when(mockDocumentManager.fireClosed(anything())).thenReturn(Promise.resolve());
-
-      when(mockTextDocReader.keys()).thenReturn(Promise.resolve([]));
-      when(mockTextDocReader.read(anything())).thenReturn(
-        Promise.resolve({
-          content: new Delta(),
-          format: 'scripture-delta',
-          version: 0
-        })
-      );
-
-      // These mock setups create a fresh workspace mock for each factory call
-      when(mockWorkspaceFactory.createWorkspace(anything(), anything())).thenCall(() => {
-        const workspaceMock = mock<Workspace<Op>>();
-        const changeLanguageSpy = jasmine.createSpy('changeLanguage').and.returnValue(Promise.resolve());
-        workspaceMock.changeLanguage = changeLanguageSpy;
-
-        when(workspaceMock.diagnosticsChanged$).thenReturn(this.diagnosticsChangedTestSubject$.asObservable());
-        when(workspaceMock.init()).thenReturn(Promise.resolve());
-        when(workspaceMock.getOnTypeTriggerCharacters()).thenReturn(['.', ',']);
-        when(workspaceMock.getOnTypeEdits(anything(), anything(), anything())).thenReturn(
-          Promise.resolve([{ retain: 5 }, { insert: ' ' }])
-        );
-        when(workspaceMock.getDiagnosticFixes(anything(), anything())).thenReturn(
-          Promise.resolve([
-            {
-              title: 'Fix issue',
-              isPreferred: true,
-              diagnostic: {
-                code: 123,
-                source: 'test',
-                range: { start: { line: 0, character: 0 }, end: { line: 0, character: 10 } },
-                severity: DiagnosticSeverity.Warning,
-                message: 'Test diagnostic'
-              },
-              edits: [{ retain: 0 }, { insert: 'corrected' }, { delete: 10 }]
-            }
-          ])
-        );
+        ]);
 
         // Apply any custom mock setup provided by the test
         if (this.customWorkspaceMockSetup) {
@@ -814,12 +810,14 @@ describe('LynxWorkspaceService', () => {
       const env = new TestEnvironment();
 
       env.setCustomWorkspaceMock((workspaceMock: any) => {
-        when(workspaceMock.getOnTypeEdits(anything(), anything(), ',')).thenReturn(
-          Promise.resolve([{ retain: 6 }, { insert: ' ' }])
-        );
-        when(workspaceMock.getOnTypeEdits(anything(), anything(), '.')).thenReturn(
-          Promise.resolve([{ retain: 13 }, { insert: ' ' }])
-        );
+        when(workspaceMock.getOnTypeEdits(anything(), anything(), ',')).thenResolve([
+          { retain: 6 },
+          { insert: ' ' }
+        ] as any);
+        when(workspaceMock.getOnTypeEdits(anything(), anything(), '.')).thenResolve([
+          { retain: 13 },
+          { insert: ' ' }
+        ] as any);
       });
 
       // Set up project with auto-corrections enabled
@@ -850,7 +848,7 @@ describe('LynxWorkspaceService', () => {
     it('should handle null document when getting on-type edits', fakeAsync(() => {
       const env = new TestEnvironment();
       env.service['textDocId'] = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
-      when(mockDocumentManager.get(anything())).thenReturn(Promise.resolve(undefined));
+      when(mockDocumentManager.get(anything())).thenResolve(undefined);
       const delta = new Delta().insert('Hello,');
       const mockEmbedCountsToOffset = (_offset: number): number => 0; // No embeds in this test
       let result: Delta[] = [];
@@ -891,9 +889,10 @@ describe('LynxWorkspaceService', () => {
       const env = new TestEnvironment();
 
       env.setCustomWorkspaceMock((workspaceMock: any) => {
-        when(workspaceMock.getOnTypeEdits(anything(), anything(), anything())).thenReturn(
-          Promise.resolve([{ retain: 5 }, { insert: ' ' }])
-        );
+        when(workspaceMock.getOnTypeEdits(anything(), anything(), anything())).thenResolve([
+          { retain: 5 },
+          { insert: ' ' }
+        ] as any);
       });
 
       // Create project with auto-corrections enabled
@@ -970,22 +969,20 @@ describe('LynxWorkspaceService', () => {
       const env = new TestEnvironment();
 
       env.setCustomWorkspaceMock((workspaceMock: any) => {
-        when(workspaceMock.getDiagnosticFixes(anything(), anything())).thenReturn(
-          Promise.resolve([
-            {
-              title: 'Fix issue',
-              isPreferred: true,
-              diagnostic: {
-                code: 123,
-                source: 'test',
-                range: { start: { line: 0, character: 0 }, end: { line: 0, character: 10 } },
-                severity: DiagnosticSeverity.Warning,
-                message: 'Test diagnostic'
-              },
-              edits: [{ retain: 0 }, { insert: 'corrected' }, { delete: 10 }]
-            }
-          ])
-        );
+        when(workspaceMock.getDiagnosticFixes(anything(), anything())).thenResolve([
+          {
+            title: 'Fix issue',
+            isPreferred: true,
+            diagnostic: {
+              code: 123,
+              source: 'test',
+              range: { start: { line: 0, character: 0 }, end: { line: 0, character: 10 } },
+              severity: DiagnosticSeverity.Warning,
+              message: 'Test diagnostic'
+            },
+            edits: [{ retain: 0 }, { insert: 'corrected' }, { delete: 10 }]
+          }
+        ] as any);
       });
 
       const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
@@ -1013,7 +1010,7 @@ describe('LynxWorkspaceService', () => {
 
     it('should handle null document when getting actions', fakeAsync(() => {
       const env = new TestEnvironment();
-      when(mockDocumentManager.get(anything())).thenReturn(Promise.resolve(undefined));
+      when(mockDocumentManager.get(anything())).thenResolve(undefined);
       const insight = env.createTestInsight();
       let actions: LynxInsightAction[] = [];
 

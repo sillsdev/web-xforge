@@ -101,7 +101,7 @@ describe('LynxInsightStateService', () => {
         }
       })
     );
-    when(mockProjectUserConfigDoc.submitJson0Op(anything(), anything())).thenReturn(Promise.resolve(true));
+    when(mockProjectUserConfigDoc.submitJson0Op(anything(), anything())).thenResolve(true);
 
     const projectUserConfigDoc$ = new BehaviorSubject<SFProjectUserConfigDoc | undefined>(
       instance(mockProjectUserConfigDoc)
