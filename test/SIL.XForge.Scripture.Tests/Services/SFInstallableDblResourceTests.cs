@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
+using ICSharpCode.SharpZipLib.Core;
 using ICSharpCode.SharpZipLib.Zip;
 using NSubstitute;
 using NUnit.Framework;
@@ -19,6 +21,20 @@ namespace SIL.XForge.Scripture.Services;
 public sealed class SFInstallableDblResourceTests
 {
     [Test]
+    public async Task ExtractAllAsync_Success()
+    {
+        TestEnvironment env = new TestEnvironment();
+        using MemoryStream zipStream = TestEnvironment.CreateZipStream(".dbl/dbl_id_here", string.Empty);
+        using ZipFile zip = new ZipFile(zipStream);
+        zip.IsStreamOwner = false;
+
+        await env.Resource.ExtractAllAsync(zip, env.DestinationRoot);
+
+        env.FileSystem.Received().CreateDirectory(Path.Combine(env.DestinationRoot, ".dbl"));
+        env.FileSystem.Received().CreateFile(Path.Combine(env.DestinationRoot, ".dbl", "dbl_id_here"));
+    }
+
+    [Test]
     public void ExtractAllAsync_WithDirectoryTraversalEntry_ThrowsInvalidOperation()
     {
         TestEnvironment env = new TestEnvironment();
@@ -26,13 +42,13 @@ public sealed class SFInstallableDblResourceTests
         using ZipFile zip = new ZipFile(zipStream);
         zip.IsStreamOwner = false;
 
-        InvalidOperationException exception = Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        InvalidNameException exception = Assert.ThrowsAsync<InvalidNameException>(async () =>
             await env.Resource.ExtractAllAsync(zip, env.DestinationRoot)
         );
 
-        Assert.That(exception.Message, Does.Contain("outside the extraction directory"));
-        env.FileSystem.DidNotReceive().CreateFile(Arg.Any<string>());
+        Assert.That(exception.Message, Does.Contain("Parent traversal in paths is not allowed"));
         env.FileSystem.DidNotReceive().CreateDirectory(Arg.Any<string>());
+        env.FileSystem.DidNotReceive().CreateFile(Arg.Any<string>());
     }
 
     /// <summary>
