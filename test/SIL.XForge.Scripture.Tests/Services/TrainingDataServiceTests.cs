@@ -606,18 +606,25 @@ public class TrainingDataServiceTests
     }
 
     [Test]
-    public async Task SaveTrainingDataAsync_TooManyColumns()
+    public async Task SaveTrainingDataAsync_AllowsMoreThanTwoColumns()
     {
         var env = new TestEnvironment();
 
         // Set up the input file
-        await using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data,More"));
+        await using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data,More\nSecond,Row,\"\""));
         env.FileSystemService.OpenFile(FileCsv, FileMode.Open).Returns(fileStream);
 
         // SUT
-        Assert.ThrowsAsync<FormatException>(() =>
-            env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileCsv)
+        Uri actual = await env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileCsv);
+        Assert.That(
+            actual
+                .ToString()
+                .StartsWith($"/assets/{TrainingDataService.DirectoryName}/{Project01}/{User01}_{Data01}.csv?t="),
+            Is.True
         );
+
+        env.FileSystemService.Received(1).DeleteFile(Arg.Any<string>());
+        env.FileSystemService.Received(1).MoveFile(Arg.Any<string>(), Arg.Any<string>());
     }
 
     /// <summary>

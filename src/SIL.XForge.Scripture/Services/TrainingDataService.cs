@@ -314,7 +314,7 @@ public class TrainingDataService(
                         using StreamReader streamReader = new StreamReader(fileStream);
                         using CsvReader csvReader = new CsvReader(streamReader, _csvConfiguration);
                         await csvReader.ReadAsync();
-                        if (csvReader.ColumnCount != NumTrainingDataColumns)
+                        if (csvReader.ColumnCount < NumTrainingDataColumns)
                         {
                             throw new FormatException("The CSV file does not contain two columns");
                         }
@@ -327,9 +327,10 @@ public class TrainingDataService(
                                 // Skip empty rows
                                 continue;
                             }
+                            int[] columnsToCheck = [0, 1];
                             if (
-                                csvReader.ColumnCount != NumTrainingDataColumns
-                                || csvReader.Parser.Record.Any(r => string.IsNullOrEmpty(r))
+                                csvReader.ColumnCount < NumTrainingDataColumns
+                                || columnsToCheck.Any(i => string.IsNullOrEmpty(csvReader.Parser.Record[i]))
                             )
                             {
                                 throw new FormatException("The CSV file contains a row with fewer than two columns");
