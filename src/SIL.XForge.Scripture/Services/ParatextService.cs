@@ -2728,7 +2728,21 @@ public class ParatextService : DisposableBase, IParatextService
             // Extract the resource to the source directory
             if (needsToBeCloned)
             {
+                // Remove the backup directory if it exists
+                string backupDirectory = Path.Join(SyncDir, "_Backups", targetParatextId);
+                if (_fileSystemService.DirectoryExists(backupDirectory))
+                {
+                    _fileSystemService.DeleteDirectory(backupDirectory);
+                }
+
+                // Backup the existing resource directory
                 string path = LocalProjectDir(targetParatextId);
+                if (_fileSystemService.DirectoryExists(path))
+                {
+                    _fileSystemService.MoveDirectory(path, backupDirectory);
+                }
+
+                // Extract to the resource directory
                 _fileSystemService.CreateDirectory(path);
                 await resource.InstallableResource.ExtractToDirectoryAsync(path);
                 MigrateResourceIfRequired(username, targetParatextId, overrideLanguageId);
@@ -2859,13 +2873,16 @@ public class ParatextService : DisposableBase, IParatextService
         };
     }
 
-    /// <summary>Path for project directory on local filesystem. Whether or not that directory
-    /// exists. </summary>
+    /// <summary>
+    /// The path for project directory on local filesystem (it may not exist).
+    /// </summary>
+    /// <param name="paratextId">The paratext identifier.</param>
+    /// <returns>The local project directory.</returns>
     private string LocalProjectDir(string paratextId)
     {
         // Historically, SF used both "target" and "source" projects in adjacent directories. Then
         // moved to just using "target".
-        string subDirForMainProject = "target";
+        const string subDirForMainProject = "target";
         return Path.Join(SyncDir, paratextId, subDirForMainProject);
     }
 
