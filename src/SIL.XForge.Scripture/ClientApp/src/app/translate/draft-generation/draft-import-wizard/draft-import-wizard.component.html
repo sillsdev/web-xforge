@@ -61,6 +61,12 @@
         @if (bookCreationError != null) {
           <app-notice type="error">{{ bookCreationError }}</app-notice>
         }
+
+        @if (cannotAdvanceFromProjectSelection && !projectReadyToImport) {
+          <app-notice type="error" icon="error">{{
+            !projectSelectionForm.valid ? t("select_project_description") : t("waiting_for_project_to_load")
+          }}</app-notice>
+        }
       </form>
 
       <div class="button-strip">
@@ -68,20 +74,7 @@
           <mat-icon>close</mat-icon>
           {{ t("cancel") }}
         </button>
-        <button
-          matButton="filled"
-          color="primary"
-          (click)="advanceFromProjectSelection()"
-          [disabled]="
-            !projectSelectionForm.valid ||
-            isConnecting ||
-            isImporting ||
-            isLoadingProject ||
-            noDraftsAvailable ||
-            projectLoadingFailed ||
-            booksMissingWithoutPermission
-          "
-        >
+        <button matButton="filled" color="primary" (click)="advanceFromProjectSelection()">
           {{ needsConnection || showBookSelection || showOverwriteConfirmation ? t("next") : t("import") }}
           <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
         </button>

@@ -132,6 +132,7 @@ export class DraftImportWizardComponent implements OnInit {
   projectLoadingFailed = false;
   private sourceProjectId?: string;
   noDraftsAvailable = false;
+  cannotAdvanceFromProjectSelection = false;
 
   // Step 2-3: Project connection (conditional)
   private _isConnecting = false;
@@ -587,13 +588,24 @@ export class DraftImportWizardComponent implements OnInit {
     void this.validateProject();
   }
 
-  async advanceFromProjectSelection(): Promise<void> {
-    if (!this.projectSelectionForm.valid) {
-      return;
-    }
+  get projectReadyToImport(): boolean {
+    return (
+      this.projectSelectionForm.valid &&
+      !this.isConnecting &&
+      !this.isImporting &&
+      !this.isLoadingProject &&
+      !this.noDraftsAvailable &&
+      !this.projectLoadingFailed &&
+      !this.booksMissingWithoutPermission
+    );
+  }
 
-    if (this.noDraftsAvailable) {
+  async advanceFromProjectSelection(): Promise<void> {
+    if (!this.projectReadyToImport) {
+      this.cannotAdvanceFromProjectSelection = true;
       return;
+    } else {
+      this.cannotAdvanceFromProjectSelection = false;
     }
 
     // If project needs connection, advance to connection step (targetProjectId may be undefined)
