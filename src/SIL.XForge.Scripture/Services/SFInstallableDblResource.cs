@@ -417,10 +417,19 @@ public class SFInstallableDblResource : InstallableResource
         WindowsNameTransform extractNameTransform = new WindowsNameTransform(path);
         foreach (ZipEntry entry in zip)
         {
+            // Skip directories
             if (!entry.IsFile || string.IsNullOrEmpty(entry.Name))
-                continue; // Skip directories
+                continue;
 
             string entryPath = extractNameTransform.TransformFile(entry.Name);
+
+            // Don't overwrite existing files
+            if (_fileSystemService.FileExists(entryPath))
+                continue;
+
+            // Throw an exception if the entry is a symbolic link
+            if (entry.IsSymLink())
+                throw new InvalidOperationException("The zip file contains a symbolic link");
 
             // Ensure directories in the ZIP entry are created
             string entryDirectory = Path.GetDirectoryName(entryPath);

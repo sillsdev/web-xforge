@@ -20,25 +20,43 @@ namespace SIL.XForge.Scripture.Services;
 [TestFixture]
 public sealed class SFInstallableDblResourceTests
 {
-    [Test]
-    public async Task ExtractAllAsync_Success()
+    [TestCase(".dbl/dbl_id_here")]
+    [TestCase("08RUT.SFM")]
+    [TestCase("foo/../file.txt")]
+    public async Task ExtractAllAsync_Success(string entryName)
     {
         TestEnvironment env = new TestEnvironment();
-        using MemoryStream zipStream = TestEnvironment.CreateZipStream(".dbl/dbl_id_here", string.Empty);
+        using MemoryStream zipStream = TestEnvironment.CreateZipStream(entryName, string.Empty);
         using ZipFile zip = new ZipFile(zipStream);
         zip.IsStreamOwner = false;
 
         await env.Resource.ExtractAllAsync(zip, env.DestinationRoot);
 
-        env.FileSystem.Received().CreateDirectory(Path.Combine(env.DestinationRoot, ".dbl"));
-        env.FileSystem.Received().CreateFile(Path.Combine(env.DestinationRoot, ".dbl", "dbl_id_here"));
+        string? directory = Path.GetDirectoryName(entryName);
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            env.FileSystem.Received().CreateDirectory(env.DestinationRoot);
+        }
+        else
+        {
+            env.FileSystem.Received().CreateDirectory(Path.Join(env.DestinationRoot, directory));
+        }
+
+        env.FileSystem.Received()
+            .CreateFile(Path.Join(env.DestinationRoot, entryName.Replace('/', Path.DirectorySeparatorChar)));
     }
 
-    [Test]
-    public void ExtractAllAsync_WithDirectoryTraversalEntry_ThrowsInvalidOperation()
+    [TestCase(".")]
+    [TestCase("..")]
+    [TestCase("..\\evil.txt")]
+    [TestCase("foo\\..\\..\\evil.txt")]
+    [TestCase("foo/..\\../evil.txt")]
+    [TestCase("../evil.txt")]
+    [TestCase("foo/../../evil.txt")]
+    public void ExtractAllAsync_WithDirectoryTraversalEntry_ThrowsInvalidOperation(string entryName)
     {
         TestEnvironment env = new TestEnvironment();
-        using MemoryStream zipStream = TestEnvironment.CreateZipStream("../evil.txt", "malicious");
+        using MemoryStream zipStream = TestEnvironment.CreateZipStream(entryName, "malicious");
         using ZipFile zip = new ZipFile(zipStream);
         zip.IsStreamOwner = false;
 
@@ -47,6 +65,27 @@ public sealed class SFInstallableDblResourceTests
         );
 
         Assert.That(exception.Message, Does.Contain("Parent traversal in paths is not allowed"));
+        env.FileSystem.DidNotReceive().CreateDirectory(Arg.Any<string>());
+        env.FileSystem.DidNotReceive().CreateFile(Arg.Any<string>());
+    }
+
+    [Test]
+    public void ExtractAllAsync_SymbolicLink_ThrowsInvalidOperation()
+    {
+        TestEnvironment env = new TestEnvironment();
+        using MemoryStream zipStream = TestEnvironment.CreateZipStream(
+            "symlink.txt",
+            "../destination.txt",
+            symlink: true
+        );
+        using ZipFile zip = new ZipFile(zipStream);
+        zip.IsStreamOwner = false;
+
+        InvalidOperationException exception = Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await env.Resource.ExtractAllAsync(zip, env.DestinationRoot)
+        );
+
+        Assert.That(exception.Message, Does.Contain("The zip file contains a symbolic link"));
         env.FileSystem.DidNotReceive().CreateDirectory(Arg.Any<string>());
         env.FileSystem.DidNotReceive().CreateFile(Arg.Any<string>());
     }
@@ -92,12 +131,17 @@ public sealed class SFInstallableDblResourceTests
 
         public string DestinationRoot { get; }
 
-        public static MemoryStream CreateZipStream(string entryName, string content)
+        public static MemoryStream CreateZipStream(string entryName, string content, bool symlink = false)
         {
             MemoryStream stream = new MemoryStream();
             using ZipOutputStream zipStream = new ZipOutputStream(stream);
             zipStream.IsStreamOwner = false;
             ZipEntry entry = new ZipEntry(entryName);
+            if (symlink)
+            {
+                entry.ExternalFileAttributes = 0xA000 << 16;
+            }
+
             zipStream.PutNextEntry(entry);
             byte[] payload = Encoding.UTF8.GetBytes(content);
             zipStream.Write(payload, 0, payload.Length);
