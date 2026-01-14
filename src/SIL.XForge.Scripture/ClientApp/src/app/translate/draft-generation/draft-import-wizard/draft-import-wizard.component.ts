@@ -594,8 +594,6 @@ export class DraftImportWizardComponent implements OnInit {
       !this.isConnecting &&
       !this.isImporting &&
       !this.isLoadingProject &&
-      !this.noDraftsAvailable &&
-      !this.projectLoadingFailed &&
       !this.booksMissingWithoutPermission
     );
   }
