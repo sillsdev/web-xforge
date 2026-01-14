@@ -100,7 +100,7 @@ public class SFInstallableDblResource : InstallableResource
     /// <param name="migrationOperations">The migration operations.</param>
     /// <param name="passwordProvider">The password provider.</param>
     /// <exception cref="ArgumentNullException">restClientFactory</exception>
-    private SFInstallableDblResource(
+    internal SFInstallableDblResource(
         UserSecret userSecret,
         ParatextOptions paratextOptions,
         ISFRestClientFactory restClientFactory,
@@ -412,20 +412,29 @@ public class SFInstallableDblResource : InstallableResource
         }
     }
 
-    private async Task ExtractAllAsync(ZipFile zip, string path)
+    internal async Task ExtractAllAsync(ZipFile zip, string path)
     {
+        WindowsNameTransform extractNameTransform = new WindowsNameTransform(path);
         foreach (ZipEntry entry in zip)
         {
-            if (!entry.IsFile)
-                continue; // Skip directories
+            // Skip directories
+            if (!entry.IsFile || string.IsNullOrEmpty(entry.Name))
+                continue;
 
-            string entryPath = Path.Join(path, entry.Name);
+            string entryPath = extractNameTransform.TransformFile(entry.Name);
 
+            // Don't overwrite existing files
             if (_fileSystemService.FileExists(entryPath))
-                continue; // Don't overwrite
+                continue;
+
+            // Throw an exception if the entry is a symbolic link
+            if (entry.IsSymLink())
+                throw new InvalidOperationException("The zip file contains a symbolic link");
 
             // Ensure directories in the ZIP entry are created
-            _fileSystemService.CreateDirectory(Path.GetDirectoryName(entryPath));
+            string entryDirectory = Path.GetDirectoryName(entryPath);
+            if (!string.IsNullOrEmpty(entryDirectory))
+                _fileSystemService.CreateDirectory(entryDirectory);
 
             // Extract the file
             await using Stream zipStream = zip.GetInputStream(entry);
