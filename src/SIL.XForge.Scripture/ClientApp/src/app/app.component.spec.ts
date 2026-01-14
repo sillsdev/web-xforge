@@ -770,7 +770,7 @@ class TestEnvironment {
     when(mockedLocationService.pathname).thenReturn('/projects/project01/checking');
 
     when(mockedAuthService.currentUserRoles).thenReturn([]);
-    when(mockedAuthService.getAccessToken()).thenReturn(Promise.resolve('access_token'));
+    when(mockedAuthService.getAccessToken()).thenResolve('access_token');
     when(mockedAuthService.isLoggedIn).thenCall(() => Promise.resolve(this.loggedInState$.getValue().loggedIn));
     when(mockedAuthService.loggedIn).thenCall(() =>
       firstValueFrom(this.loggedInState$.pipe(filter((state: any) => state.loggedIn)))

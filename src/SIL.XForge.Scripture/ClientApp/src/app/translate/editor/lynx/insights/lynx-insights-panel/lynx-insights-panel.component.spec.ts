@@ -888,10 +888,10 @@ class TestEnvironment {
     when(mockTextDoc.data).thenReturn(mockTextDocData);
 
     // This is the critical fix - ensure getText returns a Promise, not null
-    when(mockSFProjectService.getText(anything())).thenReturn(Promise.resolve(instance(mockTextDoc)));
+    when(mockSFProjectService.getText(anything())).thenResolve(instance(mockTextDoc));
     when(mockTextDoc.getSegmentText(anything())).thenReturn('Sample text content for testing');
 
-    when(mockRouter.navigate(anything(), anything())).thenReturn(Promise.resolve(true));
+    when(mockRouter.navigate(anything(), anything())).thenResolve(true);
     when(mockI18nService.translate(anything())).thenReturn(of('Translated text'));
     when(mockI18nService.localizeBook(anything())).thenReturn('Book');
     when(mockI18nService.translateStatic(anything())).thenReturn('Loading...');

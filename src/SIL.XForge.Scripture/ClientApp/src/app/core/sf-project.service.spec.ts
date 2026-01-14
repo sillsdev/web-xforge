@@ -153,8 +153,8 @@ describe('SFProjectService', () => {
     it('should invoke the command service', fakeAsync(async () => {
       const jobId: string = 'job01';
       const env = new TestEnvironment();
-      when(mockedCommandService.onlineInvoke(anything(), 'applyPreTranslationToProject', anything())).thenReturn(
-        Promise.resolve(jobId)
+      when(mockedCommandService.onlineInvoke(anything(), 'applyPreTranslationToProject', anything())).thenResolve(
+        jobId
       );
       const projectId = 'project01';
       const scriptureRange = 'GEN-REV';

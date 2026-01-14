@@ -76,7 +76,7 @@ describe('EditorHistoryComponent', () => {
   it('should load the project document when the project id is set', fakeAsync(() => {
     const testProjectId = 'test_project_id';
     const projectDoc = { data: createTestProjectProfile(), id: testProjectId } as SFProjectProfileDoc;
-    when(mockSFProjectService.getProfile(testProjectId)).thenReturn(Promise.resolve(projectDoc));
+    when(mockSFProjectService.getProfile(testProjectId)).thenResolve(projectDoc);
     expect(component.projectDoc).toBeUndefined();
 
     component.projectId = testProjectId;
@@ -101,7 +101,7 @@ describe('EditorHistoryComponent', () => {
       editor: mockEditor
     });
 
-    when(mockSFProjectService.getText(anything())).thenReturn(Promise.resolve(textDoc));
+    when(mockSFProjectService.getText(anything())).thenResolve(textDoc);
 
     component.historyChooser = mockHistoryChooserComponent;
     component.snapshotText = mockTextComponent;
@@ -132,7 +132,7 @@ describe('EditorHistoryComponent', () => {
       editor: mockEditor
     });
 
-    when(mockSFProjectService.getText(anything())).thenReturn(Promise.resolve(textDoc));
+    when(mockSFProjectService.getText(anything())).thenResolve(textDoc);
 
     component.historyChooser = mockHistoryChooserComponent;
     component.snapshotText = mockTextComponent;

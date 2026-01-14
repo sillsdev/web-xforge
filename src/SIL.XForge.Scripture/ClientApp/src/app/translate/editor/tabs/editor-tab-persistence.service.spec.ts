@@ -81,7 +81,7 @@ class TestEnvironment {
 
     when(this.mockActivatedProjectService.projectId$).thenReturn(of('project01'));
     when(this.mockUserService.currentUserId).thenReturn('user01');
-    when(this.mockProjectService.getUserConfig('project01', 'user01')).thenReturn(Promise.resolve(this.pucDoc));
+    when(this.mockProjectService.getUserConfig('project01', 'user01')).thenResolve(this.pucDoc);
 
     this.service = new EditorTabPersistenceService(
       instance(this.mockActivatedProjectService),
