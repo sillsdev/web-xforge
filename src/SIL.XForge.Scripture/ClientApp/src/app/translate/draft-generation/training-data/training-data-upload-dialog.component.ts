@@ -142,7 +142,8 @@ export class TrainingDataUploadDialogComponent implements AfterViewInit {
       fileUrl,
       mimeType: 'text/csv',
       skipRows: (this.skipFirstRow?.checked ?? false) ? 1 : 0,
-      title: this.trainingDataFile!.fileName!
+      title: this.trainingDataFile!.fileName!,
+      deleted: false
     };
 
     this.dialogRef.close(trainingData);

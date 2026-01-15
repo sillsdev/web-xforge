@@ -36,6 +36,9 @@ export class TrainingDataService extends SFProjectDataService<TrainingData> {
       },
       title: {
         bsonType: 'string'
+      },
+      deleted: {
+        bsonType: 'bool'
       }
     },
     additionalProperties: false
