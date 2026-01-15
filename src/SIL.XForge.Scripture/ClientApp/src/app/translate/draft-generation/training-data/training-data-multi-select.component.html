@@ -2,10 +2,12 @@
   <mat-list class="training-data-multi-select" hideSingleSelectionIndicator>
     @for (trainingData of availableTrainingData; track trainingData.dataId) {
       <mat-list-item>
-        {{ trainingData.title }}
+        <!-- Tooltip shows full name of file since longer titles will be truncated. This can probably be removed if/when
+             we add the ability to click a file and open a dialog to see the data, along with the full title -->
+        <span [matTooltip]="trainingData.title">{{ trainingData.title }}</span>
         @if (canDeleteTrainingData(trainingData)) {
           <button matListItemMeta mat-icon-button (click)="deleteTrainingData(trainingData)">
-            <mat-icon>cancel</mat-icon>
+            <mat-icon [matTooltip]="t('delete')">cancel</mat-icon>
           </button>
         }
       </mat-list-item>
