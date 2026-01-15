@@ -1741,6 +1741,29 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task AddUserAsync_DoesNotAddExistingUser()
+    {
+        var env = new TestEnvironment();
+        SFProject project = env.GetProject(Project02);
+
+        Assert.That(project.UserRoles.ContainsKey(User05), Is.False, "setup");
+        Assert.That(project.ParatextUsers.Count, Is.EqualTo(3), "setup");
+        Assert.That(project.ParatextUsers.Exists(u => u.Username == "User 05"), Is.True, "setup");
+        env.ParatextService.TryGetProjectRoleAsync(
+                Arg.Any<UserSecret>(),
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Translator)));
+
+        await env.Service.AddUserAsync(User05, Project02, null);
+        project = env.GetProject(Project02);
+
+        Assert.That(project.UserRoles.ContainsKey(User05), Is.True, "User should have been added to project");
+        Assert.That(project.ParatextUsers.Count, Is.EqualTo(3), "No new ParatextUser should have been added");
+    }
+
+    [Test]
     public async Task AddUserAsync_ShareKeyExists_AddsUserAndRemovesKey()
     {
         var env = new TestEnvironment();
@@ -4574,6 +4597,13 @@ public class SFProjectServiceTests
     private class TestEnvironment
     {
         public static readonly Uri WebsiteUrl = new Uri("http://localhost/", UriKind.Absolute);
+        public readonly Dictionary<string, string> UserIdsToParatextUsernames = new Dictionary<string, string>
+        {
+            { User01, "User 01" },
+            { User02, "User 02" },
+            { User03, "User 03" },
+            { User05, "User 05" },
+        };
 
         public TestEnvironment()
         {
@@ -4648,13 +4678,13 @@ public class SFProjectServiceTests
                             Id = User05,
                             Email = "user05@example.com",
                             ParatextId = "pt-user05",
-                            Name = "User 05",
+                            Name = "user05@example.com",
                             Roles = [SystemRole.User],
                             Sites = new Dictionary<string, Site>
                             {
                                 {
                                     SiteId,
-                                    new Site { Projects = { Project01 } }
+                                    new Site { Projects = { Project01, Project02 } }
                                 },
                             },
                         },
@@ -4844,6 +4874,12 @@ public class SFProjectServiceTests
                                     SFUserId = string.Empty,
                                     Username = "User 01",
                                     OpaqueUserId = "syncuser01",
+                                },
+                                new ParatextUserProfile
+                                {
+                                    Username = "User 05",
+                                    Role = SFProjectRole.Translator,
+                                    OpaqueUserId = "syncuser05",
                                 },
                             },
                         },
@@ -5380,12 +5416,7 @@ public class SFProjectServiceTests
             ParatextService.CanUserAuthenticateToPTRegistryAsync(Arg.Any<UserSecret>()).Returns(Task.FromResult(true));
             ParatextService.CanUserAuthenticateToPTArchivesAsync(Arg.Any<string>()).Returns(Task.FromResult(true));
             UserSecrets = new MemoryRepository<UserSecret>(
-                [
-                    new UserSecret { Id = User01 },
-                    new UserSecret { Id = User02 },
-                    new UserSecret { Id = User03 },
-                    new UserSecret { Id = User05 },
-                ]
+                UserIdsToParatextUsernames.Keys.Select(id => new UserSecret { Id = id })
             );
             var translateMetrics = new MemoryRepository<TranslateMetrics>();
             FileSystemService = Substitute.For<IFileSystemService>();
@@ -5506,6 +5537,10 @@ public class SFProjectServiceTests
             ParatextService
                 .GetResourcePermissionAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None)
                 .Returns(TextInfoPermission.Read);
+
+            ParatextService
+                .GetParatextUsername(Arg.Any<UserSecret>())
+                .Returns(u => UserIdsToParatextUsernames[((UserSecret)u[0]).Id]);
 
             Service = new SFProjectService(
                 RealtimeService,
