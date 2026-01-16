@@ -158,7 +158,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   }
 
   get doesLatestCompletedHaveDraft(): boolean {
-    return this.projectService.hasDraft(this.targetProject, this.bookNum);
+    return this.projectService.hasDraft(this.targetProject, this.bookNum, true);
   }
 
   get isLatestBuildCompleted(): boolean {
