@@ -810,7 +810,7 @@
     "no_training_data_file_uploaded": "Aucun fichier de données d'entraînement n'a été téléversé",
     "no_upload_offline": "Les données de formation ne peuvent pas être téléversées sans connexion à Internet.",
     "save": "Enregistrer",
-    "upload_failed": "Le fichier de données de formation n'a pas pu être téléversé. Veuillez réessayer ou utiliser un autre fichier.",
+    "upload_failed": "The training data file could not be uploaded. Please ensure that the spreadsheet contains two columns and try again.",
     "upload_training_data": "Téléverser les données de formation",
     "uploading": "Téléversement..."
   },

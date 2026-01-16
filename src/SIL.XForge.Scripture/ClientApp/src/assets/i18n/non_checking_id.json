@@ -810,7 +810,7 @@
     "no_training_data_file_uploaded": "Tidak ada file data pelatihan yang diunggah",
     "no_upload_offline": "Data pelatihan tidak dapat diunggah tanpa terhubung ke internet.",
     "save": "Simpan",
-    "upload_failed": "File data pelatihan tidak dapat diunggah. Silakan coba lagi atau gunakan file lain.",
+    "upload_failed": "The training data file could not be uploaded. Please ensure that the spreadsheet contains two columns and try again.",
     "upload_training_data": "Unggah Data Pelatihan",
     "uploading": "Mengunggah..."
   },

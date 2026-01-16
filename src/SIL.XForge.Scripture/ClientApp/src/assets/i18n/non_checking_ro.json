@@ -810,7 +810,7 @@
     "no_training_data_file_uploaded": "No training data file uploaded",
     "no_upload_offline": "Training data cannot be uploaded without connecting to the internet.",
     "save": "Salvează",
-    "upload_failed": "The training data file could not be uploaded. Please try again or use a different file.",
+    "upload_failed": "The training data file could not be uploaded. Please ensure that the spreadsheet contains two columns and try again.",
     "upload_training_data": "Upload Training Data",
     "uploading": "Uploading..."
   },
