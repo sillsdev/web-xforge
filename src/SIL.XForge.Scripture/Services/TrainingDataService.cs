@@ -57,6 +57,7 @@ public class TrainingDataService(
 
         // Load the Excel file
         var data = new List<(string, string)>();
+        int initialColumn = 0;
         ISheet sheet = workbook.GetSheetAt(0);
         for (int rowNum = sheet.FirstRowNum; rowNum <= sheet.LastRowNum; rowNum++)
         {
@@ -66,16 +67,22 @@ public class TrainingDataService(
                 // Skip if there are not two columns of data in this row that are side-by-side
                 continue;
             }
-            if (row.LastCellNum - row.FirstCellNum < NumTrainingDataColumns)
+
+            // Explicitly retrieve the data from the first two columns. If a third columns exists
+            // in the spreadsheet we do not want that column to be interpreted as data which could
+            // happen if the first column of a row is empty.
+            string firstColumnData =
+                row.GetCell(initialColumn, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString() ?? string.Empty;
+            string secondColumnData =
+                row.GetCell(initialColumn + 1, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString() ?? string.Empty;
+            if (string.IsNullOrEmpty(firstColumnData) || string.IsNullOrEmpty(secondColumnData))
             {
+                if (string.IsNullOrEmpty(firstColumnData) && string.IsNullOrEmpty(secondColumnData))
+                    continue;
+                // One column has data missing
                 throw new FormatException("The Excel file contains a row with fewer than two columns");
             }
-
-            string firstColumn =
-                row.GetCell(row.FirstCellNum, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString() ?? string.Empty;
-            string secondColumn =
-                row.GetCell(row.FirstCellNum + 1, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString() ?? string.Empty;
-            data.Add((firstColumn, secondColumn));
+            data.Add((firstColumnData, secondColumnData));
         }
 
         if (data.Count == 0)
