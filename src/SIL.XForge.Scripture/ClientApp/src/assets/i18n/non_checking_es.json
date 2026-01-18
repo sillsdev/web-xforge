@@ -810,7 +810,7 @@
     "no_training_data_file_uploaded": "No se ha cargado ningún archivo de datos de entrenamiento",
     "no_upload_offline": "Los datos de entrenamiento no pueden cargarse sin conectarse a Internet.",
     "save": "Guardar",
-    "upload_failed": "No se ha podido cargar el archivo de datos de entrenamiento. Por favor, inténtelo de nuevo o utilice un archivo diferente.",
+    "upload_failed": "The training data file could not be uploaded. Please ensure that the spreadsheet contains two columns and try again.",
     "upload_training_data": "Cargar datos de entrenamiento",
     "uploading": "Subiendo..."
   },

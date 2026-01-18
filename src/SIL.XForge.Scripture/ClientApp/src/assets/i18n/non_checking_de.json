@@ -810,7 +810,7 @@
     "no_training_data_file_uploaded": "Keine Schulungsdatendatei hochgeladen",
     "no_upload_offline": "Schulungsdaten können nicht ohne Internetverbindung hochgeladen werden.",
     "save": "Speichern",
-    "upload_failed": "Die Schulungsdatendatei konnte nicht hochgeladen werden. Bitte versuche es erneut oder verwende eine andere Datei.",
+    "upload_failed": "Die Datei mit den Schulungsdaten konnte nicht hochgeladen werden. Bitte vergewissere Dich, dass das Arbeitsblatt zwei Spalten enthält und versuche es erneut.",
     "upload_training_data": "Schulungsdaten hochladen",
     "uploading": "Hochladen im Gange..."
   },
