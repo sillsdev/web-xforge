@@ -70,7 +70,7 @@ export interface ImportProgress {
   failedChapters: { chapterNum: number; message?: string }[];
 }
 
-interface DraftApplyState {
+export interface DraftApplyState {
   bookNum: number;
   chapterNum: number;
   totalChapters: number;
@@ -78,7 +78,7 @@ interface DraftApplyState {
   status: DraftApplyStatus;
 }
 
-enum DraftApplyStatus {
+export enum DraftApplyStatus {
   None = 0,
   InProgress = 1,
   Successful = 2,
