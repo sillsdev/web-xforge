@@ -41,7 +41,7 @@ import { SyncProgressComponent } from '../../../sync/sync-progress/sync-progress
 /**
  * Represents a book available for import with its draft chapters.
  */
-interface BookForImport {
+export interface BookForImport {
   number: number; // Alias for bookNum to match Book interface
   bookNum: number;
   bookId: string;
@@ -50,9 +50,18 @@ interface BookForImport {
 }
 
 /**
+ * A book that the user will be prompted to overwrite.
+ */
+export interface BookWithExistingText {
+  bookNum: number;
+  bookName: string;
+  chaptersWithText: number[];
+}
+
+/**
  * Tracks the progress of importing drafts.
  */
-interface ImportProgress {
+export interface ImportProgress {
   bookNum: number;
   bookId: string;
   bookName: string;
@@ -130,7 +139,7 @@ export class DraftImportWizardComponent implements OnInit {
   missingBookNames: string[] = [];
   bookCreationError?: string;
   projectLoadingFailed = false;
-  private sourceProjectId?: string;
+  sourceProjectId?: string;
   noDraftsAvailable = false;
   cannotAdvanceFromProjectSelection = false;
 
@@ -269,7 +278,7 @@ export class DraftImportWizardComponent implements OnInit {
   overwriteForm = new FormGroup({
     confirmOverwrite: new FormControl(false, Validators.requiredTrue)
   });
-  booksWithExistingText: { bookNum: number; bookName: string; chaptersWithText: number[] }[] = [];
+  booksWithExistingText: BookWithExistingText[] = [];
 
   // Step 6: Import progress
   private _isImporting = false;
@@ -284,7 +293,7 @@ export class DraftImportWizardComponent implements OnInit {
   importProgress: ImportProgress[] = [];
   importError?: string;
   importComplete = false;
-  private importStepTriggered = false;
+  importStepTriggered = false;
 
   // Step 7: Sync confirmation and completion
   showSyncConfirmation = false;
