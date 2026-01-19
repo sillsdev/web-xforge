@@ -107,7 +107,7 @@
           ></p>
         }
 
-        @if (connectionError != null) {
+        @if (connectionError != null && connectionError.length > 0) {
           <app-notice type="error">{{ connectionError }}</app-notice>
         }
 
@@ -120,7 +120,7 @@
             matButton="filled"
             color="primary"
             (click)="connectToProject()"
-            [disabled]="isConnecting || isImporting || connectionError != null"
+            [disabled]="isConnecting || isImporting || (connectionError != null && connectionError.length > 0)"
           >
             {{ t("connect") }}
             <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
@@ -145,7 +145,7 @@
           }
         }
 
-        @if (connectionError != null) {
+        @if (connectionError != null && connectionError.length > 0) {
           <h1>{{ t("connection_failed") }}</h1>
           <app-notice type="error">{{ connectionError }}</app-notice>
           <div class="button-strip">
@@ -292,7 +292,7 @@
 
       <h1>{{ t("importing_draft") }}</h1>
 
-      @if (isImporting || importComplete || importError != null) {
+      @if (isImporting || importComplete || (importError != null && importError.length > 0)) {
         @for (progress of importProgress; track progress.bookNum) {
           <div class="book-progress">
             <p>{{ progress.bookName }}</p>
@@ -303,7 +303,7 @@
             <span class="progress-text">
               {{ progress.completedChapters.length }} / {{ progress.totalChapters }} {{ t("chapters") }}
             </span>
-            @if (progress.failedChapters.length > 0 && !isImporting) {
+            @if (progress.failedChapters.length > 0) {
               <div class="failed-chapters">
                 <mat-icon class="error-icon">error</mat-icon>
                 <span>Failed: {{ getFailedChapters(progress) }}</span>
@@ -313,7 +313,7 @@
         }
       }
 
-      @if (importError != null) {
+      @if (importError != null && importError.length > 0) {
         <app-notice type="error">{{ importError }}</app-notice>
         <div class="button-strip">
           <button matButton="outlined" matStepperPrevious [disabled]="isConnecting || isImporting">
