@@ -77,6 +77,7 @@
         <button
           matButton="filled"
           color="primary"
+          data-test-id="step-1-next"
           (click)="advanceFromProjectSelection()"
           [disabled]="!isAppOnline || noDraftsAvailable || projectLoadingFailed"
         >
@@ -119,6 +120,7 @@
           <button
             matButton="filled"
             color="primary"
+            data-test-id="step-2-next"
             (click)="connectToProject()"
             [disabled]="isConnecting || isImporting || (connectionError != null && connectionError.length > 0)"
           >
@@ -170,7 +172,13 @@
               <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
               {{ t("back") }}
             </button>
-            <button matButton="filled" matStepperNext color="primary" [disabled]="isImporting">
+            <button
+              matButton="filled"
+              matStepperNext
+              color="primary"
+              data-test-id="step-3-next"
+              [disabled]="isImporting"
+            >
               {{ showBookSelection || showOverwriteConfirmation ? t("next") : t("import") }}
               <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
             </button>
@@ -202,6 +210,7 @@
             matButton="filled"
             color="primary"
             matStepperNext
+            data-test-id="step-4-next"
             [disabled]="selectedBooks.length === 0 || isConnecting || isImporting || noDraftsAvailable"
           >
             {{ showOverwriteConfirmation ? t("next") : t("import") }}
@@ -273,6 +282,7 @@
             matButton="filled"
             color="primary"
             matStepperNext
+            data-test-id="step-5-next"
             [disabled]="!overwriteForm.valid || isConnecting || isImporting"
           >
             {{ t("import") }}
@@ -330,7 +340,13 @@
       @if (importComplete) {
         <app-notice [icon]="'check_circle'" type="success">{{ t("import_complete") }}</app-notice>
         <div class="button-strip align-end">
-          <button matButton="filled" color="primary" matStepperNext [disabled]="isConnecting || isImporting">
+          <button
+            matButton="filled"
+            color="primary"
+            matStepperNext
+            data-test-id="step-6-next"
+            [disabled]="isConnecting || isImporting"
+          >
             {{ t("next") }}
             <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
           </button>
@@ -354,10 +370,21 @@
         ></p>
 
         <div class="button-strip">
-          <button matButton="outlined" (click)="selectSkipSync()" [disabled]="isSyncing || isImporting">
+          <button
+            matButton="outlined"
+            data-test-id="step-7-skip"
+            (click)="selectSkipSync()"
+            [disabled]="isSyncing || isImporting"
+          >
             {{ t("skip_sync") }}
           </button>
-          <button matButton="filled" color="primary" (click)="selectSync()" [disabled]="isSyncing || isImporting">
+          <button
+            matButton="filled"
+            color="primary"
+            data-test-id="step-7-sync"
+            (click)="selectSync()"
+            [disabled]="isSyncing || isImporting"
+          >
             {{ t("sync") }}
             <mat-icon iconPositionEnd>sync</mat-icon>
           </button>
@@ -414,7 +441,13 @@
         }
 
         <div class="button-strip align-end">
-          <button matButton="filled" color="primary" (click)="close()" [disabled]="isImporting || isSyncing">
+          <button
+            matButton="filled"
+            color="primary"
+            data-test-id="step-7-done"
+            (click)="close()"
+            [disabled]="isImporting || isSyncing"
+          >
             {{ t("done") }}
           </button>
         </div>
