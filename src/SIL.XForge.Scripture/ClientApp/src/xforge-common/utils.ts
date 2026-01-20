@@ -28,23 +28,26 @@ export function supportedBrowser(): boolean {
   // https://caniuse.com/mdn-css_properties_inset-inline-start
   // https://developer.mozilla.org/en-US/docs/Web/CSS/margin-inline-start#browser_compatibility
   // ES2022 (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Static_initialization_blocks)
-  const isSupportedBrowser = BROWSER.satisfies({
-    chrome: '>=94',
-    chromium: '>=94',
-    edge: '>=94',
-    firefox: '>=93',
-    safari: '>=16.4',
-
-    mobile: {
+  const isSupportedBrowser: boolean =
+    BROWSER.satisfies({
       chrome: '>=94',
+      chromium: '>=94',
+      edge: '>=94',
       firefox: '>=93',
-      opera: '>=80',
       safari: '>=16.4',
-      'android browser': '>=94',
-      'samsung internet': '>=17.0'
-    }
-  });
-  return isSupportedBrowser ?? false;
+
+      mobile: {
+        chrome: '>=94',
+        firefox: '>=93',
+        opera: '>=80',
+        safari: '>=16.4',
+        'android browser': '>=94',
+        'samsung internet': '>=17.0'
+      }
+    }) ?? false;
+  // Brave's user agent string is not correctly read by bowser.
+  // Brave on iOS requires iOS 16 or higher
+  return isSupportedBrowser || (isIosDevice() && isBrave());
 }
 
 export function isIosDevice(): boolean {
