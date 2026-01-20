@@ -4350,80 +4350,30 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public async Task SendReceiveAsync_SourceResource_DoesNotRemigrateLdml()
+    public async Task SendReceiveAsync_SourceResource_Valid()
     {
         var env = new TestEnvironment();
         var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
         UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
         env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
         env.SetupSuccessfulSendReceive();
         env.SetRestClientFactory(user01Secret);
-
-        // Set up the Resource ScrText
-        string resourceId = env.Resource3Id; // See the XML in SetRestClientFactory for this
-        using MockScrText scrText = env.GetScrText(associatedPtUser, resourceId);
-        env.MockScrTextCollection.FindById(Arg.Any<string>(), resourceId).Returns(scrText);
         ScrTextCollection.Initialize("/srv/scriptureforge/projects");
-
-        // Set up the mock file system calls used by the migration
-        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith("ldml.xml"))).Returns(true);
-        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".ldml"))).Returns(true);
-
-        // SUT
-        ParatextProject sourceProject = await env.Service.SendReceiveAsync(
-            user01Secret,
-            resourceId,
-            null,
-            default,
-            Substitute.For<SyncMetrics>()
-        );
-        Assert.IsNotNull(sourceProject);
-        Assert.IsInstanceOf(typeof(ParatextResource), sourceProject);
-        env.MockFileSystemService.DidNotReceive()
-            .MoveFile(Arg.Is<string>(p => p.EndsWith("ldml.xml")), Arg.Is<string>(p => p.EndsWith(".ldml")));
-    }
-
-    [Test]
-    public async Task SendReceiveAsync_SourceResource_MigratesLdml()
-    {
-        var env = new TestEnvironment();
-        var associatedPtUser = new SFParatextUser(env.Username01);
-        UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-        env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
-        env.SetupSuccessfulSendReceive();
-        env.SetRestClientFactory(user01Secret);
-
-        // Set up the Resource ScrText before it is installed on disk
-        string resourceId = env.Resource3Id; // See the XML in SetRestClientFactory for this
-        using MockResourceScrText resourceScrText = env.GetResourceScrText(associatedPtUser, resourceId, "RV1895");
-        env.MockScrTextCollection.CreateResourceScrText(
-                Arg.Any<string>(),
-                Arg.Any<ProjectName>(),
-                Arg.Any<IZippedResourcePasswordProvider>()
-            )
-            .Returns(resourceScrText);
-        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".p8z"))).Returns(true);
-        await using var zipStream = await TestEnvironment.CreateZipStubAsync();
-        env.MockFileSystemService.OpenFile(
-                Arg.Is<string>(p => p.EndsWith(".p8z")),
-                FileMode.Open,
-                FileAccess.Read,
-                FileShare.Read
-            )
-            .Returns(zipStream);
-        await using var stream = new MemoryStream();
-        env.MockFileSystemService.CreateFile(Arg.Any<string>()).Returns(stream);
 
         // Set up the Resource ScrText when it is installed on disk
+        string resourceId = env.Resource3Id; // See the XML in SetRestClientFactory for this
         using MockScrText scrText = env.GetScrText(associatedPtUser, resourceId);
         env.MockScrTextCollection.FindById(Arg.Any<string>(), resourceId).Returns(scrText);
-        ScrTextCollection.Initialize("/srv/scriptureforge/projects");
 
-        // Set up the mock file system calls used by the migration
-        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith("ldml.xml"))).Returns(true);
-        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".ldml"))).Returns(false);
-
-        // SUT
+        ParatextProject targetProject = await env.Service.SendReceiveAsync(
+            user01Secret,
+            ptProjectId,
+            null,
+            default,
+            Substitute.For<SyncMetrics>()
+        );
+        Assert.IsNotNull(targetProject);
         ParatextProject sourceProject = await env.Service.SendReceiveAsync(
             user01Secret,
             resourceId,
@@ -4433,8 +4383,9 @@ public class ParatextServiceTests
         );
         Assert.IsNotNull(sourceProject);
         Assert.IsInstanceOf(typeof(ParatextResource), sourceProject);
-        env.MockFileSystemService.Received(1)
-            .MoveFile(Arg.Is<string>(p => p.EndsWith("ldml.xml")), Arg.Is<string>(p => p.EndsWith(".ldml")));
+        await env
+            .MockParatextDataHelper.Received()
+            .MigrateResourceIfRequiredAsync(Arg.Any<ScrText>(), Arg.Any<LanguageId>());
     }
 
     [Test]
@@ -4479,19 +4430,6 @@ public class ParatextServiceTests
         env.MockScrTextCollection.FindById(Arg.Any<string>(), resourceId).Returns(scrText);
         ScrTextCollection.Initialize("/srv/scriptureforge/projects");
 
-        // The FileManager will be disposed via the using statement in ParatextService.MigrateResourceIfRequired(),
-        // so capture the saving of the settings here
-        bool settingsSaved = false;
-        scrText
-            .FileManager.When(fm =>
-                fm.WriteFileCreatingBackup("Settings.xml", Arg.Any<Action<string>>(), Arg.Any<Action<string>>())
-            )
-            .Do(_ => settingsSaved = true);
-
-        // Set up the mock file system calls used by the migration
-        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith("ldml.xml"))).Returns(true);
-        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".ldml"))).Returns(false);
-
         // Confirm that the language code is different
         Assert.AreNotEqual(scrText.Settings.LanguageID.Code, zipLanguageCode);
 
@@ -4505,10 +4443,9 @@ public class ParatextServiceTests
         );
         Assert.IsNotNull(sourceProject);
         Assert.IsInstanceOf(typeof(ParatextResource), sourceProject);
-        env.MockFileSystemService.Received(1)
-            .MoveFile(Arg.Is<string>(p => p.EndsWith("ldml.xml")), Arg.Is<string>(p => p.EndsWith(".ldml")));
-        Assert.AreEqual(scrText.Settings.LanguageID.Code, zipLanguageCode);
-        Assert.IsTrue(settingsSaved);
+        await env
+            .MockParatextDataHelper.Received()
+            .MigrateResourceIfRequiredAsync(Arg.Any<ScrText>(), Arg.Is<LanguageId>(l => l.Code == zipLanguageCode));
     }
 
     [Test]
@@ -4552,19 +4489,6 @@ public class ParatextServiceTests
         env.MockScrTextCollection.FindById(Arg.Any<string>(), resourceId).Returns(scrText);
         ScrTextCollection.Initialize("/srv/scriptureforge/projects");
 
-        // The FileManager will be disposed via the using statement in ParatextService.MigrateResourceIfRequired(),
-        // so capture the saving of the settings here
-        bool settingsSaved = false;
-        scrText
-            .FileManager.When(fm =>
-                fm.WriteFileCreatingBackup("Settings.xml", Arg.Any<Action<string>>(), Arg.Any<Action<string>>())
-            )
-            .Do(_ => settingsSaved = true);
-
-        // Set up the mock file system calls used by the migration
-        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith("ldml.xml"))).Returns(true);
-        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".ldml"))).Returns(false);
-
         // SUT
         ParatextProject sourceProject = await env.Service.SendReceiveAsync(
             user01Secret,
@@ -4575,41 +4499,9 @@ public class ParatextServiceTests
         );
         Assert.IsNotNull(sourceProject);
         Assert.IsInstanceOf(typeof(ParatextResource), sourceProject);
-        env.MockFileSystemService.Received(1)
-            .MoveFile(Arg.Is<string>(p => p.EndsWith("ldml.xml")), Arg.Is<string>(p => p.EndsWith(".ldml")));
-        Assert.AreEqual(resourceScrText.Settings.LanguageID?.Code, "en");
-        Assert.IsTrue(settingsSaved);
-    }
-
-    [Test]
-    public async Task SendReceiveAsync_SourceResource_Valid()
-    {
-        var env = new TestEnvironment();
-        var associatedPtUser = new SFParatextUser(env.Username01);
-        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
-        UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-        env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
-        env.SetupSuccessfulSendReceive();
-        env.SetRestClientFactory(user01Secret);
-        ScrTextCollection.Initialize("/srv/scriptureforge/projects");
-        string resourceId = env.Resource3Id; // See the XML in SetRestClientFactory for this
-        ParatextProject targetProject = await env.Service.SendReceiveAsync(
-            user01Secret,
-            ptProjectId,
-            null,
-            default,
-            Substitute.For<SyncMetrics>()
-        );
-        Assert.IsNotNull(targetProject);
-        ParatextProject sourceProject = await env.Service.SendReceiveAsync(
-            user01Secret,
-            resourceId,
-            null,
-            default,
-            Substitute.For<SyncMetrics>()
-        );
-        Assert.IsNotNull(sourceProject);
-        Assert.IsInstanceOf(typeof(ParatextResource), sourceProject);
+        await env
+            .MockParatextDataHelper.Received()
+            .MigrateResourceIfRequiredAsync(Arg.Any<ScrText>(), Arg.Is<LanguageId>(l => l.Code == "en"));
     }
 
     [Test]
