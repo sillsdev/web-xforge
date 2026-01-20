@@ -241,6 +241,9 @@ header {
 
     .add-question-button.mat-mdc-icon-button {
       display: none;
+      .mat-icon {
+        color: var(--mat-button-text-label-text-color, var(--mat-sys-primary));
+      }
     }
 
     @include media-breakpoint('<=', sm) {
