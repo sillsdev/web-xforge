@@ -253,7 +253,12 @@ export class DraftHistoryEntryComponent {
   }
 
   get hasDetails(): boolean {
-    return this.hasTrainingConfiguration || this.draftIsAvailable || this.buildFaulted;
+    return (
+      this.hasTrainingConfiguration ||
+      this.draftIsAvailable ||
+      this.buildFaulted ||
+      this.buildRequestedByUserName != null
+    );
   }
 
   get hasTrainingConfiguration(): boolean {
