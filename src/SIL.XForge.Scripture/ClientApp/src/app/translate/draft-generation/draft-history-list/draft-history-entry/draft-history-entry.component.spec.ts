@@ -86,6 +86,8 @@ describe('DraftHistoryEntryComponent', () => {
     );
     when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected(anything())).thenReturn(true);
     when(mockedPermissionsService.isUserOnProject(anything())).thenResolve(true);
+    const userDoc = { id: 'sf-user-id', data: { displayName: 'User 01' } } as UserProfileDoc;
+    when(mockedUserService.getProfile(anything())).thenResolve(userDoc);
     fixture = TestBed.createComponent(DraftHistoryEntryComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -363,6 +365,20 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.buildFaulted).toBe(true);
       expect(component.buildFaultDetails.length).toBe(2);
     });
+
+    it('should show details when build is canceled and user requesting the build is defined', fakeAsync(() => {
+      const entry = {
+        state: BuildStates.Canceled,
+        message: 'Build was canceled',
+        engine: { id: 'project01' },
+        additionalInfo: { requestedByUserId: 'sf-user-id' }
+      } as BuildDto;
+      component.entry = entry;
+      tick();
+      fixture.detectChanges();
+      expect(component.hasDetails).toBe(true);
+      expect(fixture.nativeElement.querySelector('.requested-label')).not.toBeNull();
+    }));
   });
 
   describe('setDraftFormat', () => {
