@@ -1260,7 +1260,15 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         await base.AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, shareKey);
         if (SFProjectRole.IsParatextRole(projectRole))
         {
-            int index = projectDoc.Data.ParatextUsers.FindIndex(u => u.Username == userDoc.Data.Name);
+            UserSecret userSecret = _userSecrets.Query().FirstOrDefault(u => u.Id == userDoc.Id);
+            if (userSecret == null)
+            {
+                // No user secret means we cannot get a Paratext username. Skip adding the user to ParatextUsers
+                return;
+            }
+
+            string username = _paratextService.GetParatextUsername(userSecret);
+            int index = projectDoc.Data.ParatextUsers.FindIndex(u => u.Username == username);
             if (index > -1)
                 await projectDoc.SubmitJson0OpAsync(op =>
                 {
@@ -1275,7 +1283,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                         new ParatextUserProfile
                         {
                             SFUserId = userDoc.Id,
-                            Username = userDoc.Data.Name,
+                            Username = username,
                             Role = projectRole,
                             OpaqueUserId = _guidService.NewObjectId(),
                         }
