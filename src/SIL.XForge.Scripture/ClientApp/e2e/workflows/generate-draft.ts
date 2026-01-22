@@ -19,6 +19,8 @@ type EngineMode = 'echo' | 'fast';
 
 const ENGINE_MODE: EngineMode = 'echo';
 const DRAFT_PROJECT_SHORT_NAME = 'SEEDSP2';
+// When true, the e2e test will select the same book for both drafting and training
+const USE_SAME_BOOK_FOR_DRAFTING_AND_TRAINING = true;
 
 export async function generateDraft(
   page: Page,
@@ -113,7 +115,13 @@ export async function generateDraft(
   await screenshot(page, { pageName: 'generate_draft_select_books_to_draft', ...context });
 
   await goToNextStepExpectingHeading('Select books to train on');
-  await user.check(page.getByRole('checkbox', { name: 'New Testament' }));
+  if (USE_SAME_BOOK_FOR_DRAFTING_AND_TRAINING) {
+    // Select the same book for training that was selected for drafting
+    await user.click(getStep().getByRole('option', { name: bookToDraft }));
+  } else {
+    // Select New Testament for training
+    await user.check(page.getByRole('checkbox', { name: 'New Testament' }));
+  }
   await screenshot(page, { pageName: 'generate_draft_select_books_to_train', ...context });
 
   await goToNextStepExpectingHeading('Advanced');

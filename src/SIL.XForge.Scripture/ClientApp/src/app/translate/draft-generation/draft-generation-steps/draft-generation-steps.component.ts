@@ -493,18 +493,17 @@ export class DraftGenerationStepsComponent implements OnInit {
     if (this.activatedProject.projectId == null || projectRef == null) return [];
     //start with the books in source and target
     const booksInTargetAndSource = this.availableTrainingBooks[projectRef] ?? [];
-    //filter out selected books to draft
-    const booksNotBeingTranslated = booksInTargetAndSource.filter(
-      b => this.allAvailableTranslateBooks.find(x => x.number === b.number)?.selected === false
-    );
+    // Allow books selected for drafting to also be used for training
+    // The translation server supports training and drafting on the same book
+    const booksAvailableForTraining = booksInTargetAndSource;
 
     let value: Book[];
     if (projectRef === this.activatedProject.projectId) {
-      value = booksNotBeingTranslated;
+      value = booksAvailableForTraining;
     } else {
       //filter out any book not translated
       const translatedBooks = this.selectedTrainingBooksByProj(this.activatedProject.projectId);
-      value = booksNotBeingTranslated.filter(b => translatedBooks.find(x => x.number === b.number));
+      value = booksAvailableForTraining.filter(b => translatedBooks.find(x => x.number === b.number));
     }
 
     if (this._selectableTrainingBooks[projectRef]?.toString() !== value.toString()) {
@@ -632,11 +631,8 @@ export class DraftGenerationStepsComponent implements OnInit {
   }
 
   private updateSelectedTrainingBooks(): void {
-    const booksForTranslation: number[] = this.allAvailableTranslateBooks.filter(b => b.selected).map(b => b.number);
-    for (const [, trainingBooks] of Object.entries(this.availableTrainingBooks)) {
-      // set the selected state of any training book to false if it is selected for translation
-      trainingBooks.forEach(b => (b.selected = booksForTranslation.includes(b.number) ? false : b.selected));
-    }
+    // Allow books selected for translation to also be selected for training
+    // The translation server supports training and drafting on the same book
 
     // If books were auto-selected for training, but none are selected now, clear the notice
     if (
