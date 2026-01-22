@@ -468,7 +468,7 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([]);
     });
 
-    it('clears selected translated and reference books in training when translate book selected', () => {
+    it('allows books selected for translation to also be selected for training', () => {
       component.tryAdvanceStep();
       fixture.detectChanges();
       component.onTranslateBookSelect([3], config.draftingSources[0]);
@@ -485,14 +485,22 @@ describe('DraftGenerationStepsComponent', () => {
       ]);
       component.stepper.selectedIndex = 1;
       fixture.detectChanges();
+      // Select books 2 and 3 for translation
       component.onTranslateBookSelect([2, 3], config.draftingSources[0]);
       component.tryAdvanceStep();
       fixture.detectChanges();
-      expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([{ number: 1, selected: true }]);
-      expect(component.selectedTrainingBooksByProj('project01')).toEqual([{ number: 1, selected: true }]);
+      // Books selected for training should remain selected, even if also selected for translation
+      expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([
+        { number: 1, selected: true },
+        { number: 2, selected: true }
+      ]);
+      expect(component.selectedTrainingBooksByProj('project01')).toEqual([
+        { number: 1, selected: true },
+        { number: 2, selected: true }
+      ]);
     });
 
-    it('shows unselected translate book on training page', () => {
+    it('shows all translated books on training page regardless of translate book selection', () => {
       component.tryAdvanceStep();
       fixture.detectChanges();
       // select Exodus and Leviticus
@@ -500,8 +508,11 @@ describe('DraftGenerationStepsComponent', () => {
       component.tryAdvanceStep();
       fixture.detectChanges();
       component.onTranslatedBookSelect([1]);
+      // All translated books should be available for training, including those selected for drafting
       expect(component.selectableTrainingBooksByProj('project01')).toEqual([
         { number: 1, selected: true },
+        { number: 2, selected: false },
+        { number: 3, selected: false },
         { number: 5, selected: false }
       ]);
       expect(component.selectedTrainingBooksByProj('project01')).toEqual([{ number: 1, selected: true }]);
@@ -512,10 +523,11 @@ describe('DraftGenerationStepsComponent', () => {
       component.onTranslateBookSelect([3], config.draftingSources[0]);
       component.tryAdvanceStep();
       fixture.detectChanges();
-      // Exodus becomes a selectable training book
+      // All books remain available including those selected for drafting
       expect(component.selectableTrainingBooksByProj('project01')).toEqual([
         { number: 1, selected: true },
         { number: 2, selected: false },
+        { number: 3, selected: false },
         { number: 5, selected: false }
       ]);
       expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([{ number: 1, selected: true }]);
@@ -592,29 +604,32 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
     }));
 
-    it('shows error when project has no translated books', () => {
+    it('allows selecting books for training even when all books are selected for translation', () => {
       component.tryAdvanceStep();
       fixture.detectChanges();
-      // all books
+      // select all books for translation
       component.onTranslateBookSelect([1, 2, 3], config.draftingSources[0]);
       fixture.detectChanges();
       component.tryAdvanceStep();
       fixture.detectChanges();
-      expect(component.selectedTrainingBooksByProj('project01').length).toBe(0);
-      expect(fixture.nativeElement.querySelector('.error-no-translated-books')).not.toBeNull();
+      // Books 1 and 2 should still be auto-selected for training despite being selected for translation
+      expect(component.selectedTrainingBooksByProj('project01').length).toBe(2);
+      // Since training is optional and books are available, no error should be shown
+      expect(fixture.nativeElement.querySelector('.error-no-translated-books')).toBeNull();
       component.tryAdvanceStep();
       fixture.detectChanges();
-      expect(component.showBookSelectionError).toBe(true);
+      expect(component.showBookSelectionError).toBe(false);
       component.stepper.selectedIndex = 1;
       fixture.detectChanges();
-      // deselect Genesis and Exodus
+      // deselect Genesis and Exodus from translation
       component.onTranslateBookSelect([3], config.draftingSources[0]);
       component.tryAdvanceStep();
       fixture.detectChanges();
-      // Genesis and Exodus becomes a selectable training book
+      // Genesis and Exodus are still selectable training books
       expect(component.selectableTrainingBooksByProj('project01')).toEqual([
-        { number: 1, selected: false },
-        { number: 2, selected: false }
+        { number: 1, selected: true },
+        { number: 2, selected: true },
+        { number: 3, selected: false }
       ]);
       expect(fixture.nativeElement.querySelector('.error-no-translated-books')).toBeNull();
       expect(component.showBookSelectionError).toBe(false);
