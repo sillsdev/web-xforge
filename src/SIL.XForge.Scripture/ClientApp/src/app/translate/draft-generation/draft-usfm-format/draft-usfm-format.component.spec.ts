@@ -38,6 +38,8 @@ import { provideQuillRegistrations } from '../../../shared/text/quill-editor-reg
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftHandlingService } from '../draft-handling.service';
+import { DraftSourcesAsArrays } from '../draft-source';
+import { DraftSourcesService } from '../draft-sources.service';
 import { DraftUsfmFormatComponent } from './draft-usfm-format.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
@@ -45,6 +47,7 @@ const mockedDraftHandlingService = mock(DraftHandlingService);
 const mockedDraftGenerationService = mock(DraftGenerationService);
 const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedProjectService = mock(SFProjectService);
+const mockedDraftSourcesService = mock(DraftSourcesService);
 const mockedUserService = mock(UserService);
 const mockedServalAdministration = mock(ServalAdministrationService);
 const mockedLocation = mock(Location);
@@ -64,6 +67,7 @@ describe('DraftUsfmFormatComponent', () => {
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: SFProjectService, useMock: mockedProjectService },
+      { provide: DraftSourcesService, useMock: mockedDraftSourcesService },
       { provide: UserService, useMock: mockedUserService },
       { provide: ServalAdministrationService, useMock: mockedServalAdministration },
       { provide: Location, useMock: mockedLocation },
@@ -132,12 +136,8 @@ describe('DraftUsfmFormatComponent', () => {
       project: {
         texts: [
           {
-            bookNum: 1,
-            chapters: [
-              { number: 1, lastVerse: 0, isValid: true, permissions: {} },
-              { number: 2, lastVerse: 20, isValid: true, permissions: {} },
-              { number: 3, lastVerse: 18, isValid: true, permissions: {} }
-            ],
+            bookNum: 3,
+            chapters: [{ number: 1, lastVerse: 0, isValid: true, permissions: {} }],
             hasSource: true,
             permissions: {}
           }
@@ -148,9 +148,34 @@ describe('DraftUsfmFormatComponent', () => {
     tick(EDITOR_READY_TIMEOUT);
     env.fixture.detectChanges();
     tick(EDITOR_READY_TIMEOUT);
-    expect(env.component.bookNum).toBe(1);
+    expect(env.component.bookNum).toBe(3);
+    // book 3 on the source starts at chapter 2
     expect(env.component.chapterNum).toBe(2);
     expect(env.component.chaptersWithDrafts).toEqual([2, 3]);
+    verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
+  }));
+
+  it('determines chapters with drafts based on translation source chapters', fakeAsync(() => {
+    const env = new TestEnvironment({
+      project: {
+        texts: [
+          {
+            bookNum: 1,
+            chapters: [{ number: 1, lastVerse: 0, isValid: true, permissions: {} }],
+            hasSource: true,
+            permissions: {}
+          }
+        ]
+      }
+    });
+    when(mockedProjectService.hasDraft(anything(), anything(), anything())).thenReturn(true);
+    tick(EDITOR_READY_TIMEOUT);
+    env.fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+    expect(env.component.bookNum).toBe(1);
+    expect(env.component.chapterNum).toBe(1);
+    // source has 3 chapters on book 1
+    expect(env.component.chaptersWithDrafts).toEqual([1, 2, 3]);
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
   }));
 
@@ -167,7 +192,7 @@ describe('DraftUsfmFormatComponent', () => {
     });
 
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
-    expect(env.component.chaptersWithDrafts.length).toEqual(1);
+    expect(env.component.chaptersWithDrafts.length).toEqual(3);
     expect(env.component.booksWithDrafts.length).toEqual(3);
 
     env.component.bookChanged(2);
@@ -211,7 +236,15 @@ describe('DraftUsfmFormatComponent', () => {
           draftConfig: {
             usfmConfig: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Denormalized }
           } as DraftConfig
-        } as TranslateConfig
+        } as TranslateConfig,
+        texts: [
+          {
+            bookNum: 1,
+            chapters: [{ number: 1, lastVerse: 20, isValid: true, permissions: {} }],
+            hasSource: true,
+            permissions: {}
+          }
+        ]
       }
     });
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
@@ -339,7 +372,11 @@ class TestEnvironment {
     const texts: TextInfo[] = [
       {
         bookNum: 1,
-        chapters: [{ number: 1, lastVerse: 20, isValid: true, permissions: {} }],
+        chapters: [
+          { number: 1, lastVerse: 20, isValid: true, permissions: {} },
+          { number: 2, lastVerse: 20, isValid: true, permissions: {} },
+          { number: 3, lastVerse: 18, isValid: true, permissions: {} }
+        ],
         hasSource: true,
         permissions: {}
       },
@@ -354,7 +391,10 @@ class TestEnvironment {
       },
       {
         bookNum: 3,
-        chapters: [{ number: 1, lastVerse: 20, isValid: true, permissions: {} }],
+        chapters: [
+          { number: 2, lastVerse: 20, isValid: true, permissions: {} },
+          { number: 3, lastVerse: 20, isValid: true, permissions: {} }
+        ],
         hasSource: true,
         permissions: {}
       }
@@ -366,6 +406,46 @@ class TestEnvironment {
     when(mockedActivatedProjectService.projectId).thenReturn(this.projectId);
     when(mockedActivatedProjectService.projectDoc$).thenReturn(of(projectDoc));
     when(mockedActivatedProjectService.projectDoc).thenReturn(projectDoc);
+
+    const translateSourceProjectDoc = {
+      id: 'source01',
+      data: createTestProjectProfile({ texts })
+    } as SFProjectProfileDoc;
+    when(mockedProjectService.getProfile('source01')).thenResolve(translateSourceProjectDoc);
+
+    const draftSources: DraftSourcesAsArrays = {
+      trainingSources: [
+        {
+          projectRef: 'source01',
+          texts: [{ bookNum: 1 }, { bookNum: 2 }],
+          writingSystem: { tag: 'es' },
+          paratextId: 'ptsource01',
+          name: 'Project 01',
+          shortName: 'P01'
+        }
+      ],
+      draftingSources: [
+        {
+          projectRef: 'source01',
+          texts: [{ bookNum: 1 }, { bookNum: 2 }],
+          writingSystem: { tag: 'es' },
+          paratextId: 'ptsource01',
+          name: 'Project 01',
+          shortName: 'P01'
+        }
+      ],
+      trainingTargets: [
+        {
+          projectRef: 'project01',
+          texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }],
+          writingSystem: { tag: 'en' },
+          paratextId: 'paratextId1',
+          name: 'Test Project 1',
+          shortName: 'P1'
+        }
+      ]
+    };
+    when(mockedDraftSourcesService.getDraftProjectSources()).thenReturn(of(draftSources));
   }
 
   private getTestBuildDto(canDenormalizeQuotes: boolean): BuildDto {
