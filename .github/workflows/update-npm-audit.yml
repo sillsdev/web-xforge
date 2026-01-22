@@ -31,18 +31,21 @@ jobs:
       - name: Run npm audit fix on RealtimeServer
         run: |
           cd src/RealtimeServer
+          npm ci
           npm audit fix
         continue-on-error: true
 
       - name: Run npm audit fix on ClientApp
         run: |
           cd src/SIL.XForge.Scripture/ClientApp
+          npm ci
           npm audit fix
         continue-on-error: true
 
       - name: Run npm audit fix on db_tools
         run: |
           cd scripts/db_tools
+          npm ci
           npm audit fix
         continue-on-error: true
 
