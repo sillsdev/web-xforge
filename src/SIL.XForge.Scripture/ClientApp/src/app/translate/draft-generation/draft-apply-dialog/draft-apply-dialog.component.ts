@@ -179,7 +179,14 @@ export class DraftApplyDialogComponent implements OnInit {
   async addToProject(): Promise<void> {
     this.addToProjectClicked = true;
     this.addToProjectForm.controls.createChapters.updateValueAndValidity();
-    if (!this.isAppOnline || !this.isFormValid || this.targetProjectId == null || !this.canEditProject) {
+    const project = this.targetProject$.getValue();
+    if (
+      !this.isAppOnline ||
+      !this.isFormValid ||
+      this.targetProjectId == null ||
+      project == null ||
+      !this.canEditProject(project)
+    ) {
       return;
     }
     this.dialogRef.close({ projectId: this.targetProjectId });
