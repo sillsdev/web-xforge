@@ -11,3 +11,5 @@ updates:
       interval: "daily"
     allow:
       - dependency-name: "Serval.Client"
+    cooldown:
+      default-days: 7
