@@ -3,6 +3,16 @@
   margin: 0 auto;
   padding: 24px;
 
+  .submitting-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 48px 0;
+    text-align: center;
+  }
+
   .subtitle {
     color: var(--sf-draft-signup-subtitle-color);
     margin-bottom: 32px;

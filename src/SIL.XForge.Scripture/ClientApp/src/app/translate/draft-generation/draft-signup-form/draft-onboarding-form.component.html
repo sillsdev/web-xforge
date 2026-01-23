@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; read: 'draft_signup'">
   <div class="draft-signup-container">
-    @if (!submittedData) {
+    @if (isEditing) {
       <h1>{{ t("title") }}</h1>
       <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="signup-form">
         <!-- Contact Information Section -->
@@ -243,26 +243,23 @@
 
         <!-- Form Actions -->
         <div class="form-actions">
-          <button mat-button type="button" (click)="cancel()" [disabled]="submitting">
+          <button mat-button type="button" (click)="cancel()">
             <mat-icon>close</mat-icon>
             {{ t("cancel") }}
           </button>
-          <button mat-flat-button color="primary" type="submit" [disabled]="submitting">
-            @if (submitting) {
-              <mat-icon>hourglass_empty</mat-icon>
-            } @else {
-              <mat-icon>send</mat-icon>
-            }
-            @if (submitting) {
-              {{ t("submitting") }}
-            } @else {
-              {{ t("submit") }}
-            }
+          <button mat-flat-button color="primary" type="submit">
+            <mat-icon>send</mat-icon>
+            {{ t("submit") }}
           </button>
         </div>
       </form>
-    } @else {
-      <!-- User Success Message -->
+    } @else if (isSubmitting) {
+      <div class="submitting-container" aria-live="polite">
+        <mat-progress-spinner mode="indeterminate" diameter="48"></mat-progress-spinner>
+        <h1>{{ t("submitting_title") }}</h1>
+        <p class="submission-note">{{ t("submitting_message") }}</p>
+      </div>
+    } @else if (isSubmitted) {
       <h1>{{ t("submission_success_title") }}</h1>
       <p class="submission-note">
         {{ t("submission_success_message", responseDays) }}
