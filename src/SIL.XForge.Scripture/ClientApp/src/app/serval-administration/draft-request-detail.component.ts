@@ -26,6 +26,7 @@ import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { ParatextService } from '../core/paratext.service';
 import { DevOnlyComponent } from '../shared/dev-only/dev-only.component';
 import { JsonViewerComponent } from '../shared/json-viewer/json-viewer.component';
+import { MobileNotSupportedComponent } from '../shared/mobile-not-supported/mobile-not-supported.component';
 import { projectLabel } from '../shared/utils';
 import {
   DraftingSignupFormData,
@@ -84,7 +85,8 @@ interface DraftRequestComment {
     MatButtonModule,
     DevOnlyComponent,
     MatFormFieldModule,
-    MatInputModule
+    MatInputModule,
+    MobileNotSupportedComponent
   ]
 })
 export class DraftRequestDetailComponent extends DataLoadingComponent implements OnInit {
