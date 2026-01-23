@@ -8,6 +8,7 @@ import { MatOption } from '@angular/material/core';
 import { MatError, MatFormFieldModule, MatLabel } from '@angular/material/form-field';
 import { MatIcon, MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
 import { translate, TranslocoModule } from '@ngneat/transloco';
@@ -28,6 +29,8 @@ import { compareProjectsForSorting, projectLabel } from '../../../shared/utils';
 import { DraftingSignupFormData, OnboardingRequestService } from '../drafting-signup.service';
 
 export const DRAFT_SIGNUP_RESPONSE_DAYS = { min: 1, max: 3 } as const;
+
+type DraftOnboardingFormUiState = 'editing' | 'submitting' | 'submitted';
 
 /**
  * Component for the in-app draft signup form.
@@ -66,6 +69,7 @@ export const DRAFT_SIGNUP_RESPONSE_DAYS = { min: 1, max: 3 } as const;
     MatFormFieldModule,
     MatInputModule,
     MatIconModule,
+    MatProgressSpinnerModule,
     MatSelectModule,
     MatCheckboxModule,
     MatButtonModule,
@@ -120,7 +124,8 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
     .map(n => ({ number: n, selected: false }));
 
   submittedData?: any;
-  submitting: boolean = false;
+
+  uiState: DraftOnboardingFormUiState = 'editing';
 
   readonly responseDays = DRAFT_SIGNUP_RESPONSE_DAYS;
 
@@ -229,17 +234,21 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
   }
 
   async onSubmit(): Promise<void> {
-    if (this.signupForm.valid) {
+    if (this.uiState === 'submitting') {
+      return;
+    }
+
+    if (this.signupForm.valid === true) {
       if (this.activatedProject.projectId == null) {
         this.noticeService.showError('No project selected');
         return;
       }
 
-      // Get form data BEFORE disabling the form (disabled forms don't include values)
+      this.uiState = 'submitting';
+      this.cd.markForCheck();
+
       const formData: DraftingSignupFormData = this.signupForm.getRawValue() as DraftingSignupFormData;
 
-      this.submitting = true;
-      this.signupForm.disable();
       try {
         const requestId = await this.draftingSignupService.submitOnboardingRequest(
           this.activatedProject.projectId,
@@ -253,14 +262,16 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
           formData
         };
 
+        this.uiState = 'submitted';
+
         this.noticeService.show('Draft signup request submitted successfully');
         this.cd.detectChanges();
       } catch (error) {
         console.error('Error submitting draft signup request:', error);
         this.noticeService.showError('Failed to submit draft signup request');
-        this.signupForm.enable();
+        this.uiState = 'editing';
       } finally {
-        this.submitting = false;
+        this.cd.markForCheck();
       }
     } else {
       console.log('Form is invalid at top-level:', this.signupForm.errors);
@@ -276,6 +287,18 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
     if (this.activatedProject.projectId != null) {
       void this.router.navigate(['/projects', this.activatedProject.projectId, 'draft-generation']);
     }
+  }
+
+  get isEditing(): boolean {
+    return this.uiState === 'editing';
+  }
+
+  get isSubmitting(): boolean {
+    return this.uiState === 'submitting';
+  }
+
+  get isSubmitted(): boolean {
+    return this.uiState === 'submitted';
   }
 
   get showBackTranslationProject(): boolean {
