@@ -1,9 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
-import { mock, when } from 'ts-mockito';
+import { anything, mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
-import { ProgressService, TextProgress } from '../progress-service/progress.service';
+import { ProgressService, ProjectProgress } from '../progress-service/progress.service';
 import { Book } from './book-multi-select';
 import { BookMultiSelectComponent } from './book-multi-select.component';
 
@@ -35,22 +34,24 @@ describe('BookMultiSelectComponent', () => {
       { number: 1, selected: true },
       { number: 3, selected: true }
     ];
-    when(mockedProgressService.isLoaded$).thenReturn(of(true));
-    when(mockedProgressService.texts).thenReturn([
-      { text: { bookNum: 1 }, percentage: 0 } as TextProgress,
-      { text: { bookNum: 2 }, percentage: 15 } as TextProgress,
-      { text: { bookNum: 3 }, percentage: 30 } as TextProgress,
-      { text: { bookNum: 40 }, percentage: 45 } as TextProgress,
-      { text: { bookNum: 42 }, percentage: 60 } as TextProgress,
-      { text: { bookNum: 67 }, percentage: 80 } as TextProgress,
-      { text: { bookNum: 70 }, percentage: 100 } as TextProgress
-    ]);
+    when(mockedProgressService.getProgress(anything(), anything())).thenResolve(
+      new ProjectProgress([
+        { bookId: 'GEN', verseSegments: 0, blankVerseSegments: 0 },
+        { bookId: 'EXO', verseSegments: 10_000, blankVerseSegments: 8_500 },
+        { bookId: 'LEV', verseSegments: 10_000, blankVerseSegments: 7_000 },
+        { bookId: 'MAT', verseSegments: 10_000, blankVerseSegments: 5_500 },
+        { bookId: 'LUK', verseSegments: 10_000, blankVerseSegments: 4_000 },
+        { bookId: 'TOB', verseSegments: 10_000, blankVerseSegments: 2_000 },
+        { bookId: 'WIS', verseSegments: 10_000, blankVerseSegments: 0 }
+      ])
+    );
     when(mockedI18nService.localeCode).thenReturn('en');
 
     fixture = TestBed.createComponent(BookMultiSelectComponent);
     component = fixture.componentInstance;
     component.availableBooks = mockBooks;
     component.selectedBooks = mockSelectedBooks;
+    component.projectId = 'test-project-id';
     fixture.detectChanges();
   });
 
@@ -65,28 +66,28 @@ describe('BookMultiSelectComponent', () => {
   it('should initialize book options on ngOnChanges', async () => {
     await component.ngOnChanges();
     expect(component.bookOptions).toEqual([
-      { bookNum: 1, bookId: 'GEN', selected: true, progressPercentage: 0 },
-      { bookNum: 2, bookId: 'EXO', selected: false, progressPercentage: 15 },
-      { bookNum: 3, bookId: 'LEV', selected: true, progressPercentage: 30 },
-      { bookNum: 40, bookId: 'MAT', selected: false, progressPercentage: 45 },
-      { bookNum: 42, bookId: 'LUK', selected: false, progressPercentage: 60 },
-      { bookNum: 67, bookId: 'TOB', selected: false, progressPercentage: 80 },
-      { bookNum: 70, bookId: 'WIS', selected: false, progressPercentage: 100 }
+      { bookNum: 1, bookId: 'GEN', selected: true, progress: 0.0 },
+      { bookNum: 2, bookId: 'EXO', selected: false, progress: 0.15 },
+      { bookNum: 3, bookId: 'LEV', selected: true, progress: 0.3 },
+      { bookNum: 40, bookId: 'MAT', selected: false, progress: 0.45 },
+      { bookNum: 42, bookId: 'LUK', selected: false, progress: 0.6 },
+      { bookNum: 67, bookId: 'TOB', selected: false, progress: 0.8 },
+      { bookNum: 70, bookId: 'WIS', selected: false, progress: 1 }
     ]);
   });
 
   it('should not crash when texts have not yet loaded', async () => {
-    when(mockedProgressService.texts).thenReturn([]);
+    when(mockedProgressService.getProgress(anything(), anything())).thenResolve(new ProjectProgress([]));
     await component.ngOnChanges();
 
     expect(component.bookOptions).toEqual([
-      { bookNum: 1, bookId: 'GEN', selected: true, progressPercentage: 0 },
-      { bookNum: 2, bookId: 'EXO', selected: false, progressPercentage: 0 },
-      { bookNum: 3, bookId: 'LEV', selected: true, progressPercentage: 0 },
-      { bookNum: 40, bookId: 'MAT', selected: false, progressPercentage: 0 },
-      { bookNum: 42, bookId: 'LUK', selected: false, progressPercentage: 0 },
-      { bookNum: 67, bookId: 'TOB', selected: false, progressPercentage: 0 },
-      { bookNum: 70, bookId: 'WIS', selected: false, progressPercentage: 0 }
+      { bookNum: 1, bookId: 'GEN', selected: true, progress: null },
+      { bookNum: 2, bookId: 'EXO', selected: false, progress: null },
+      { bookNum: 3, bookId: 'LEV', selected: true, progress: null },
+      { bookNum: 40, bookId: 'MAT', selected: false, progress: null },
+      { bookNum: 42, bookId: 'LUK', selected: false, progress: null },
+      { bookNum: 67, bookId: 'TOB', selected: false, progress: null },
+      { bookNum: 70, bookId: 'WIS', selected: false, progress: null }
     ]);
   });
 

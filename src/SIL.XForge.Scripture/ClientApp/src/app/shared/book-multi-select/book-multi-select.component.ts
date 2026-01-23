@@ -5,16 +5,16 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatTooltip } from '@angular/material/tooltip';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
-import { filter, firstValueFrom } from 'rxjs';
 import { L10nPercentPipe } from 'xforge-common/l10n-percent.pipe';
-import { ProgressService } from '../progress-service/progress.service';
+import { estimatedActualBookProgress, ProgressService, ProjectProgress } from '../progress-service/progress.service';
 import { Book } from './book-multi-select';
 
 export interface BookOption {
   bookNum: number;
   bookId: string;
   selected: boolean;
-  progressPercentage: number;
+  /** The progress of the book as a ratio between 0 and 1, or null if not available. */
+  progress: number | null;
 }
 
 type Scope = 'OT' | 'NT' | 'DC';
@@ -37,6 +37,8 @@ export class BookMultiSelectComponent implements OnChanges {
   @Input() availableBooks: Book[] = [];
   @Input() selectedBooks: Book[] = [];
   @Input() readonly: boolean = false;
+  /** The ID of the project to get the progress. */
+  @Input() projectId?: string;
   @Input() projectName?: string;
   @Input() basicMode: boolean = false;
   @Output() bookSelect = new EventEmitter<number[]>();
@@ -66,15 +68,26 @@ export class BookMultiSelectComponent implements OnChanges {
   }
 
   async initBookOptions(): Promise<void> {
-    await firstValueFrom(this.progressService.isLoaded$.pipe(filter(loaded => loaded)));
+    // Only load progress if not in basic mode
+    let progress: ProjectProgress | undefined;
+    if (this.basicMode === false) {
+      if (this.projectId == null) {
+        throw new Error('app-book-multi-select requires a projectId input to initialize when not in basic mode');
+      }
+      progress = await this.progressService.getProgress(this.projectId, { maxStalenessMs: 30_000 });
+    }
     this.loaded = true;
-    const progress = this.progressService.texts;
+
+    const progressByBookNum = (progress?.books ?? []).map(b => ({
+      bookNum: Canon.bookIdToNumber(b.bookId),
+      progress: estimatedActualBookProgress(b)
+    }));
 
     this.bookOptions = this.availableBooks.map((book: Book) => ({
       bookNum: book.number,
       bookId: Canon.bookNumberToId(book.number),
       selected: this.selectedBooks.find(b => book.number === b.number) !== undefined,
-      progressPercentage: progress.find(p => p.text.bookNum === book.number)?.percentage ?? 0
+      progress: progressByBookNum.find(p => p.bookNum === book.number)?.progress ?? null
     }));
 
     this.booksOT = this.selectedBooks.filter(n => Canon.isBookOT(n.number));
@@ -136,8 +149,11 @@ export class BookMultiSelectComponent implements OnChanges {
     return this.availableBooks.findIndex(n => Canon.isBookDC(n.number)) > -1;
   }
 
-  getPercentage(book: BookOption): number {
-    // avoid showing 100% when it's not quite there
-    return (book.progressPercentage > 99 && book.progressPercentage < 100 ? 99 : book.progressPercentage) / 100;
+  /**
+   * Takes a number between 0 and 1, and if it's between 0.99 and 1, returns 0.99 to prevent showing a book as 100%
+   * complete when it's not.
+   */
+  normalizeRatioForDisplay(ratio: number): number {
+    return ratio > 0.99 && ratio < 1 ? 0.99 : ratio;
   }
 }

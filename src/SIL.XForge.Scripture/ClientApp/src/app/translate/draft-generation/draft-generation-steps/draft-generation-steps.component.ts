@@ -50,7 +50,7 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { Book } from '../../../shared/book-multi-select/book-multi-select';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
-import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
+import { BookProgress, ProgressService } from '../../../shared/progress-service/progress.service';
 import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
@@ -58,8 +58,7 @@ import { DraftSource } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataService } from '../training-data/training-data.service';
 
-// We consider books with more than 10 translated segments as translated
-const minimumTranslatedSegments: number = 10;
+const MIN_TRANSLATED_SEGMENTS_TO_AUTO_SELECT_BOOK = 10 as const;
 
 export interface DraftGenerationStepsResult {
   trainingDataFiles: string[];
@@ -267,6 +266,9 @@ export class DraftGenerationStepsComponent implements OnInit {
           // Otherwise, add to unusable books.
           // Ensure books are displayed in ascending canonical order.
           const targetBooks = new Set<number>();
+          const projectProgress = await this.progressService.getProgress(projectId, {
+            maxStalenessMs: 30_000
+          });
           for (const text of target.texts.slice().sort((a, b) => a.bookNum - b.bookNum)) {
             const bookNum = text.bookNum;
             targetBooks.add(bookNum);
@@ -299,16 +301,17 @@ export class DraftGenerationStepsComponent implements OnInit {
 
             // Determine if this book should be auto selected. The requirements are:
             // 1. The project does not have any previous training selections made.
-            // 2. At least 10 verses have been translated.
+            // 2. At least 10 non-blank segments in the book
             // 3. At least 99 percent of the book has been translated or 3 or fewer blank segments.
-            const textProgress: TextProgress | undefined = this.progressService.texts.find(
-              t => t.text.bookNum === bookNum
-            );
+            const bookId = Canon.bookNumberToId(bookNum);
+            const bookProgress: BookProgress | undefined = projectProgress.books.find(b => b.bookId === bookId);
             const selected: boolean =
               !hasPreviousTrainingRange &&
-              textProgress != null &&
-              textProgress.translated > minimumTranslatedSegments &&
-              (textProgress.percentage >= 99 || textProgress.notTranslated <= 3);
+              bookProgress != null &&
+              bookProgress.verseSegments - bookProgress.blankVerseSegments >
+                MIN_TRANSLATED_SEGMENTS_TO_AUTO_SELECT_BOOK &&
+              (bookProgress.blankVerseSegments / bookProgress.verseSegments <= 0.01 ||
+                bookProgress.blankVerseSegments <= 3);
 
             // If books were automatically selected, reflect this in the UI via a notice
             this.trainingBooksWereAutoSelected ||= selected;
