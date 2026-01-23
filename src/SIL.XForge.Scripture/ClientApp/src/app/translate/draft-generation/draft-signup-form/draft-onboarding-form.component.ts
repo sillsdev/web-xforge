@@ -318,6 +318,10 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
     return ctrl.hasError('required') && (ctrl.touched || ctrl.dirty);
   }
 
+  get currentProjectId(): string | undefined {
+    return this.activatedProject.projectId;
+  }
+
   get currentProjectDisplayName(): string {
     return projectLabel(this.activatedProject.projectDoc!.data!);
   }
