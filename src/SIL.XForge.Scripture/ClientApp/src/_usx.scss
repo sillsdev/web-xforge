@@ -19,18 +19,18 @@ usx-para {
   &[data-style='toc1'] {
     font-weight: bold;
     font-style: italic;
-    color: #004000;
+    color: var(--sf-usx-toc1-color);
   }
 
   &[data-style='toc2'] {
     font-style: italic;
-    color: #004000;
+    color: var(--sf-usx-toc2-color);
   }
 
   &[data-style='toc3'] {
     font-weight: bold;
     font-style: italic;
-    color: #800000;
+    color: var(--sf-usx-toc3-color);
   }
 
   &[data-style='mt'] {

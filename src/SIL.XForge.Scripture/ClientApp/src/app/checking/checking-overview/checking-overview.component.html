@@ -38,7 +38,15 @@
       </ng-container>
     } @else {
       <div id="overall-progress-chart">
-        <app-donut-chart [colors]="['#3a3a3a', '#edecec', '#B8D332']" [data]="overallProgress()"></app-donut-chart>
+        <app-donut-chart
+          [colors]="[
+            'var(--sf-community-checking-donut-unread)',
+            'var(--sf-community-checking-overview-donut-read)',
+            'var(--sf-community-checking-donut-answered)'
+          ]"
+          backgroundColor="var(--sf-community-checking-donut-container-edge)"
+          [data]="overallProgress()"
+        ></app-donut-chart>
       </div>
     }
   </div>
@@ -175,7 +183,12 @@
                 <span class="flex">{{ getBookName(text) }}</span>
                 <span>
                   <app-donut-chart
-                    [colors]="['#3a3a3a', '#edecec', '#B8D332']"
+                    [colors]="[
+                      'var(--sf-community-checking-donut-unread)',
+                      'var(--sf-community-checking-overview-donut-read)',
+                      'var(--sf-community-checking-donut-answered)'
+                    ]"
+                    backgroundColor="var(--sf-community-checking-donut-container-edge)"
                     [data]="bookProgress(text)"
                   ></app-donut-chart>
                 </span>

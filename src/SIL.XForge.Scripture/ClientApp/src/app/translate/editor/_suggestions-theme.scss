@@ -1,0 +1,20 @@
+@use '@angular/material' as mat;
+@use 'src/variables' as *;
+
+@mixin color($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
+  --sf-suggestions-background-color: #{if(
+      $is-dark,
+      mat.get-theme-color($theme, neutral, 20),
+      mat.get-theme-color($theme, neutral, 98)
+    )};
+  --sf-suggestions-confidence-color: #{if($is-dark, mat.get-theme-color($theme, neutral, 70), $lighterTextColor)};
+  --sf-suggestions-loading-dot-color: #{if($is-dark, mat.get-theme-color($theme, neutral, 70), #9e9ea1)};
+  --sf-suggestions-selected-item-background-color: #{mat.get-theme-color($theme, neutral, 87)};
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}

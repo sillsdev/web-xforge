@@ -43,10 +43,10 @@
 
       @keyframes attention {
         from {
-          background: var(--sf-community-checking-new-answer-background);
+          background: var(--sf-community-checking-new-answer-background-fade-from);
         }
         to {
-          background: var(--sf-community-checking-new-answer-fade-background);
+          background: var(--sf-community-checking-new-answer-background-fade-to);
         }
       }
     }
