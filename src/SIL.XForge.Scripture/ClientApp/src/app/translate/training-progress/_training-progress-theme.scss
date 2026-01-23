@@ -1,0 +1,23 @@
+@use 'sass:color';
+@use '@angular/material' as mat;
+@use 'src/variables' as *;
+
+@mixin color($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
+
+  --sf-training-progress-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 17, 100))};
+  --sf-training-progress-header-background: #{if($is-dark, #{mat.get-theme-color($theme, neutral, 30)}, $sf_grey)};
+  --sf-training-progress-header-text: #{mat.get-theme-color($theme, neutral, if($is-dark, 98, 100))};
+  --sf-training-progress-text: #{mat.get-theme-color($theme, neutral, if($is-dark, 90, 20))};
+  --sf-training-progress-complete: #{if($is-dark, mat.get-theme-color($theme, tertiary, 70), #b8d332)};
+  --sf-training-progress-remaining: #{if($is-dark, color.change(mat.get-theme-color($theme, neutral, 40)), #ececec)};
+  // The donut background functions both as a background color for the circle as well as an inside and outside edge
+  // color.
+  --sf-training-progress-track: #00000000; // transparent
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}
