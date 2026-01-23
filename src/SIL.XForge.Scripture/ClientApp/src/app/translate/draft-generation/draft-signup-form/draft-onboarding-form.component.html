@@ -92,6 +92,7 @@
                 (bookSelect)="onCompletedBooksSelect($event)"
                 [basicMode]="false"
                 [projectName]="currentProjectDisplayName"
+                [projectId]="currentProjectId"
               ></app-book-multi-select>
               @if (showCompletedBooksRequiredError) {
                 <mat-error>{{ t("completed_books_required") }}</mat-error>
