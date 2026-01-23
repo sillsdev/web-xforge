@@ -274,7 +274,7 @@ public class ParatextService : DisposableBase, IParatextService
                         + $"{paratextId}"
                 );
             }
-            await EnsureProjectReposExistsAsync(userSecret, ptProject, source);
+            await EnsureProjectReposExistsAsync(userSecret, ptProject, source, token);
             if (ptProject is not ParatextResource)
             {
                 StartProgressReporting(progress);
@@ -2660,7 +2660,8 @@ public class ParatextService : DisposableBase, IParatextService
     private async Task EnsureProjectReposExistsAsync(
         UserSecret userSecret,
         ParatextProject target,
-        IInternetSharedRepositorySource repositorySource
+        IInternetSharedRepositorySource repositorySource,
+        CancellationToken token
     )
     {
         string username = GetParatextUsername(userSecret);
@@ -2669,7 +2670,7 @@ public class ParatextService : DisposableBase, IParatextService
         if (target is ParatextResource resource)
         {
             // If the target is a resource, install it
-            await InstallResourceAsync(username, resource, target.ParatextId, targetNeedsCloned);
+            await InstallResourceAsync(username, resource, target.ParatextId, targetNeedsCloned, token);
         }
         else if (targetNeedsCloned)
         {
@@ -2689,6 +2690,7 @@ public class ParatextService : DisposableBase, IParatextService
     /// <param name="resource">The resource.</param>
     /// <param name="targetParatextId">The target paratext identifier.</param>
     /// <param name="needsToBeCloned">If set to <c>true</c>, the resource needs to be cloned.</param>
+    /// <param name="token">The cancellation token.</param>
     /// <remarks>
     ///   <paramref name="targetParatextId" /> is required because the resource may be a source or target.
     /// </remarks>
@@ -2696,7 +2698,8 @@ public class ParatextService : DisposableBase, IParatextService
         string username,
         ParatextResource resource,
         string targetParatextId,
-        bool needsToBeCloned
+        bool needsToBeCloned,
+        CancellationToken token
     )
     {
         if (resource.InstallableResource != null)
@@ -2745,7 +2748,7 @@ public class ParatextService : DisposableBase, IParatextService
                 // Extract to the resource directory
                 _fileSystemService.CreateDirectory(path);
                 await resource.InstallableResource.ExtractToDirectoryAsync(path);
-                MigrateResourceIfRequired(username, targetParatextId, overrideLanguageId);
+                await MigrateResourceIfRequiredAsync(username, targetParatextId, overrideLanguageId, token);
             }
         }
         else
@@ -2804,8 +2807,14 @@ public class ParatextService : DisposableBase, IParatextService
     /// <param name="username">The username.</param>
     /// <param name="paratextId">The paratext project identifier.</param>
     /// <param name="overrideLanguage">The language to override, if the project's language is incorrect.</param>
-    /// <remarks>This only performs one basic migration. Full migration can only be performed by Paratext.</remarks>
-    private void MigrateResourceIfRequired(string username, string paratextId, LanguageId? overrideLanguage)
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>An asynchronous task.</returns>
+    private async Task MigrateResourceIfRequiredAsync(
+        string username,
+        string paratextId,
+        LanguageId? overrideLanguage,
+        CancellationToken token
+    )
     {
         // Ensure that we have the ScrText to migrate
         using ScrText scrText = ScrTextCollection.FindById(username, paratextId);
@@ -2814,29 +2823,8 @@ public class ParatextService : DisposableBase, IParatextService
             return;
         }
 
-        // Migrate the language id if it is missing. It will be missing as the project has changed from a resource (p8z)
-        // to a project (directory based), and we did not write to the p8z file as Paratext does in its migrators.
-        // The ScrText created above will not have the values defined in DetermineBestLanguageForResource() above, so
-        // we will need to override them again before migrating the LDML (an action which requires the LanguageID).
-        if (overrideLanguage is not null)
-        {
-            scrText.Settings.LanguageID = overrideLanguage;
-
-            // This will create Settings.xml with the correct LanguageIsoCode value
-            scrText.Settings.Save();
-        }
-
-        // Perform a simple migration of the Paratext 7 LDML file to the new Paratext 8+ location.
-        // Paratext performs a much more complex migration, but we do not need that level of detail.
-        // If the publisher updates this resource, this file will be overwritten with the fully migrated language file,
-        // stopping this migration from running in the future and negating its need.
-        string path = LocalProjectDir(paratextId);
-        string oldLdmlFile = Path.Join(path, "ldml.xml");
-        string newLdmlFile = Path.Join(path, scrText.Settings.LdmlFileName);
-        if (_fileSystemService.FileExists(oldLdmlFile) && !_fileSystemService.FileExists(newLdmlFile))
-        {
-            _fileSystemService.MoveFile(oldLdmlFile, newLdmlFile);
-        }
+        // Perform the migration
+        await _paratextDataHelper.MigrateResourceIfRequiredAsync(scrText, overrideLanguage, token);
     }
 
     /// <summary> Create a shared project object for a given project. </summary>
