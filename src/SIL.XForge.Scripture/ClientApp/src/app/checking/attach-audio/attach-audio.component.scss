@@ -1,9 +1,9 @@
-@use 'src/variables';
+@use 'src/variables' as variables;
 
 .audio-added {
   display: flex;
   align-items: center;
-  background: rgba(0, 0, 0, 0.05);
+  background-color: var(--sf-attach-audio-added-background);
   padding-inline-start: 6px;
   border-radius: 4px;
   margin-inline-end: 2px;
@@ -14,11 +14,11 @@
 }
 
 .clear {
-  color: variables.$greenDark;
+  color: var(--sf-attach-audio-clear-icon);
 }
 
 .add-audio {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: var(--sf-attach-audio-adder-background);
   padding-inline: 4px;
   margin-block-start: 2px;
 }

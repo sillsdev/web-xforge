@@ -19,10 +19,10 @@
 
     @keyframes comment-unread {
       from {
-        background: var(--sf-community-checking-new-comment-background);
+        background: var(--sf-community-checking-new-comment-background-fade-from);
       }
       to {
-        background: var(--sf-community-checking-new-comment-fade-background);
+        background: var(--sf-community-checking-new-comment-background-fade-to);
       }
     }
   }

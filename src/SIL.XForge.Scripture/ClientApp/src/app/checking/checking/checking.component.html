@@ -242,7 +242,12 @@
             </button>
             <a [appRouterLink]="routerLink" id="project-summary">
               <app-donut-chart
-                [colors]="['#3a3a3a', '#fff', '#B8D332']"
+                [colors]="[
+                  'var(--sf-community-checking-donut-unread)',
+                  'var(--sf-community-checking-qa-area-donut-read)',
+                  'var(--sf-community-checking-donut-answered)'
+                ]"
+                backgroundColor="var(--sf-community-checking-donut-container-edge)"
                 [data]="[summary.unread, summary.read, summary.answered]"
               ></app-donut-chart>
             </a>
