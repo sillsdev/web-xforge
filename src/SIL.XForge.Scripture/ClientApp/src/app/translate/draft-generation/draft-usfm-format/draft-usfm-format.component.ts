@@ -266,9 +266,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     combineLatest([this.draftSources$, this.bookNum$])
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(async ([source, bookNum]) => {
-        if (this.translateSource == null) {
-          this.translateSource = (await this.projectService.getProfile(source.draftingSources[0].projectRef)).data;
-        }
+        this.translateSource ??= (await this.projectService.getProfile(source.draftingSources[0].projectRef)).data;
 
         // determine the chapter to navigate to, using the initial chapter if it exists and no chapter is defined yet
         this.chaptersWithDrafts =
