@@ -1,0 +1,14 @@
+@use '@angular/material' as mat;
+
+@mixin theme($theme) {
+  .use-application-text-color {
+    .mat-mdc-dialog-container {
+      /* Use the same text color as the main application body, not the lighter dialog text color */
+      @include mat.dialog-overrides(
+        (
+          supporting-text-color: var(--mat-sys-on-surface)
+        )
+      );
+    }
+  }
+}

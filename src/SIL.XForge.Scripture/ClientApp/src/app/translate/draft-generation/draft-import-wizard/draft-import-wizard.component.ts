@@ -190,14 +190,10 @@ export class DraftImportWizardComponent implements OnInit {
         const projectDoc = await this.projectService.get(this.targetProjectId);
         this.targetProjectDoc$.next(projectDoc);
         if (projectDoc.data != null) {
-          await this.analyzeTargetProject(projectDoc.data, paratextProject.isConnected);
+          await this.loadTargetProjectAndValidate(projectDoc.data, paratextProject.isConnected);
         }
 
-        try {
-          await this.analyzeBooksForOverwrite();
-        } catch (analysisError) {
-          console.error('Failed to analyze books for overwrite', analysisError);
-        }
+        await this.determineBooksAndChaptersWithText();
 
         this.isConnecting = false;
         this.stepper?.next();
@@ -212,10 +208,8 @@ export class DraftImportWizardComponent implements OnInit {
         // updateConnectStatus() will handle the sync finishing and move to the next step after "connecting"
         this.stepper?.next();
 
-        if (this.targetProjectId != null) {
-          const projectDoc = await this.projectService.get(this.targetProjectId);
-          this.targetProjectDoc$.next(projectDoc);
-        }
+        const projectDoc = await this.projectService.get(this.targetProjectId);
+        this.targetProjectDoc$.next(projectDoc);
       }
     } catch (error) {
       this.connectionError =
@@ -238,13 +232,9 @@ export class DraftImportWizardComponent implements OnInit {
         return;
       }
 
-      void this.analyzeTargetProject(projectDoc.data, false)
+      void this.loadTargetProjectAndValidate(projectDoc.data, false)
         .then(async () => {
-          try {
-            return await this.analyzeBooksForOverwrite();
-          } catch (analysisError) {
-            console.error('Failed to analyze books for overwrite', analysisError);
-          }
+          return await this.determineBooksAndChaptersWithText();
         })
         .finally(() => {
           this.isConnecting = false;
@@ -468,11 +458,11 @@ export class DraftImportWizardComponent implements OnInit {
       try {
         const projectDoc = await this.projectService.getProfile(this.targetProjectId);
         if (projectDoc.data != null) {
-          await this.analyzeTargetProject(projectDoc.data, paratextProject.isConnected);
+          await this.loadTargetProjectAndValidate(projectDoc.data, paratextProject.isConnected);
         }
 
         // Analyze books for overwrite confirmation
-        await this.analyzeBooksForOverwrite();
+        await this.determineBooksAndChaptersWithText();
       } finally {
         this.isLoadingProject = false;
       }
@@ -492,7 +482,7 @@ export class DraftImportWizardComponent implements OnInit {
     }
   }
 
-  private async analyzeTargetProject(project: SFProjectProfile, isConnected: boolean): Promise<void> {
+  private async loadTargetProjectAndValidate(project: SFProjectProfile, isConnected: boolean): Promise<void> {
     // Check permissions for all books
     this.canEditProject = this.textDocService.userHasGeneralEditRight(project);
 
@@ -566,6 +556,7 @@ export class DraftImportWizardComponent implements OnInit {
 
   private async validateProject(): Promise<void> {
     await new Promise<void>(resolve => {
+      // setTimeout prevents a "changed after checked" exception (may be removable after SF-3014)
       setTimeout(() => {
         this.projectSelect?.customValidate(SFValidators.customValidator(this.getCustomErrorState()));
         resolve();
@@ -594,7 +585,7 @@ export class DraftImportWizardComponent implements OnInit {
     this.booksMissingWithoutPermission = false;
     this.bookCreationError = undefined;
     this.missingBookNames = [];
-    void this.analyzeBooksForOverwrite();
+    void this.determineBooksAndChaptersWithText();
     void this.validateProject();
   }
 
@@ -635,13 +626,13 @@ export class DraftImportWizardComponent implements OnInit {
     }
 
     // Analyze books for overwrite confirmation
-    await this.analyzeBooksForOverwrite();
+    await this.determineBooksAndChaptersWithText();
 
     this.stepper?.next();
     this.isLoadingProject = false;
   }
 
-  private async analyzeBooksForOverwrite(): Promise<void> {
+  private async determineBooksAndChaptersWithText(): Promise<void> {
     if (this.targetProjectId == null) return;
 
     this.booksWithExistingText = [];
