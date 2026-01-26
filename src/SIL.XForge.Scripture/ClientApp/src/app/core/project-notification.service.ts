@@ -33,6 +33,10 @@ export class ProjectNotificationService {
     return this.onlineService.isOnline && this.onlineService.isBrowserOnline;
   }
 
+  removeNotifyDraftApplyProgressHandler(handler: any): void {
+    this.connection.off('notifyDraftApplyProgress', handler);
+  }
+
   removeNotifyBuildProgressHandler(handler: any): void {
     this.connection.off('notifyBuildProgress', handler);
   }
