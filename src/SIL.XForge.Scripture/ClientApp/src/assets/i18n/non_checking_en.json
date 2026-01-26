@@ -364,8 +364,6 @@
     "sync_project_question": "Sync project now?",
     "sync": "Sync",
     "syncing_project": "Syncing project",
-    "waiting_for_connection_to_finish": "Please wait while the project finishes connecting.",
-    "waiting_for_import_to_finish": "Please wait until the current import finishes.",
     "waiting_for_project_to_load": "Please wait for the project to load before proceeding."
   },
   "draft_preview_books": {
