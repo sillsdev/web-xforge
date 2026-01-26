@@ -4,11 +4,7 @@
     <ng-template matStepperIcon="edit" let-index="index">{{ index + 1 }}</ng-template>
 
     <!-- Step 1: Project Selection -->
-    <mat-step
-      [stepControl]="projectSelectionForm"
-      [completed]="projectSelectionForm.valid"
-      [editable]="!isConnecting && !isImporting"
-    >
+    <mat-step [stepControl]="projectSelectionForm" [completed]="projectSelectionForm.valid">
       <ng-template matStepLabel>{{ t("select_project") }}</ng-template>
 
       <h1>{{ t("select_project") }}</h1>
@@ -89,10 +85,7 @@
 
     <!-- Step 2: Connect Confirmation (conditional) -->
     @if (needsConnection) {
-      <mat-step
-        [completed]="!needsConnection || isConnecting || connectionError == null"
-        [editable]="!isConnecting && !isImporting"
-      >
+      <mat-step [completed]="!needsConnection || isConnecting || connectionError == null">
         <ng-template matStepLabel>{{ t("connect_project") }}</ng-template>
 
         <h1>{{ t("connect_to_project") }}</h1>
@@ -131,7 +124,7 @@
       </mat-step>
 
       <!-- Step 3: Connecting (conditional) -->
-      <mat-step [completed]="!isConnecting && connectionError == null" [editable]="!isConnecting && !isImporting">
+      <mat-step [completed]="!isConnecting && connectionError == null">
         <ng-template matStepLabel>{{ t("connecting") }}</ng-template>
 
         @if (isConnecting) {
@@ -189,7 +182,7 @@
 
     <!-- Step 4: Book Selection (conditional - only if multiple books) -->
     @if (showBookSelection) {
-      <mat-step [completed]="selectedBooks.length > 0" [editable]="!isConnecting && !isImporting">
+      <mat-step [completed]="selectedBooks.length > 0">
         <ng-template matStepLabel>{{ t("select_books") }}</ng-template>
 
         <h1>{{ t("select_books_to_import") }}</h1>
@@ -222,11 +215,7 @@
 
     <!-- Step 5: Overwrite Confirmation (conditional - shows appropriate variant) -->
     @if (showOverwriteConfirmation) {
-      <mat-step
-        [stepControl]="overwriteForm"
-        [completed]="overwriteForm.valid"
-        [editable]="!isConnecting && !isImporting"
-      >
+      <mat-step [stepControl]="overwriteForm" [completed]="overwriteForm.valid">
         <ng-template matStepLabel>{{ t("confirm_overwrite") }}</ng-template>
 
         @if (booksWithExistingText.length === 1) {
@@ -260,13 +249,6 @@
           </ul>
         }
 
-        @if (isConnecting || isImporting) {
-          <app-notice type="info">
-            {{ isConnecting ? t("waiting_for_connection_to_finish") : t("waiting_for_import_to_finish") }}
-          </app-notice>
-          <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
-        }
-
         <form [formGroup]="overwriteForm">
           <mat-checkbox formControlName="confirmOverwrite">
             {{ t("i_understand_overwrite_content") }}
@@ -293,11 +275,7 @@
     }
 
     <!-- Step 6: Import Progress -->
-    <mat-step
-      #importStep
-      [completed]="importComplete"
-      [editable]="!isConnecting && !isImporting && (!showOverwriteConfirmation || overwriteForm.valid)"
-    >
+    <mat-step #importStep [completed]="importComplete">
       <ng-template matStepLabel>{{ t("importing") }}</ng-template>
 
       <h1>{{ t("importing_draft") }}</h1>
@@ -355,7 +333,7 @@
     </mat-step>
 
     <!-- Step 7: Sync Confirmation and Completion -->
-    <mat-step [completed]="syncComplete || skipSync" [editable]="!isConnecting && !isImporting && !isSyncing">
+    <mat-step [completed]="syncComplete || skipSync">
       <ng-template matStepLabel>{{ t("complete") }}</ng-template>
 
       @if (!isSyncing && !syncComplete && !skipSync) {
