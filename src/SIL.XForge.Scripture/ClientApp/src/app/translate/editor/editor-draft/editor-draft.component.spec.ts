@@ -129,7 +129,6 @@ describe('EditorDraftComponent', () => {
     const testProjectDoc: SFProjectProfileDoc = {
       data: createTestProjectProfile()
     } as SFProjectProfileDoc;
-    when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(true));
     when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
       of(draftHistory)
     );
@@ -163,7 +162,6 @@ describe('EditorDraftComponent', () => {
       data: createTestProjectProfile()
     } as SFProjectProfileDoc;
 
-    when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(false));
     when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
     when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
       of(draftHistory)
@@ -225,7 +223,6 @@ describe('EditorDraftComponent', () => {
     const testProjectDoc: SFProjectProfileDoc = {
       data: createTestProjectProfile()
     } as SFProjectProfileDoc;
-    when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(true));
     when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
       of(draftHistory)
     );
@@ -253,7 +250,6 @@ describe('EditorDraftComponent', () => {
     const testProjectDoc: SFProjectProfileDoc = {
       data: createTestProjectProfile()
     } as SFProjectProfileDoc;
-    when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(true));
     when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
       of(draftHistory)
     );
@@ -284,7 +280,6 @@ describe('EditorDraftComponent', () => {
     const testProjectDoc: SFProjectProfileDoc = {
       data: createTestProjectProfile()
     } as SFProjectProfileDoc;
-    when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(true));
     when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
       of(draftHistory)
     );
@@ -309,7 +304,6 @@ describe('EditorDraftComponent', () => {
     const testProjectDoc: SFProjectProfileDoc = {
       data: createTestProjectProfile()
     } as SFProjectProfileDoc;
-    when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(true));
     when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
       of(draftHistory)
     );
@@ -354,7 +348,6 @@ describe('EditorDraftComponent', () => {
     const testProjectDoc: SFProjectProfileDoc = {
       data: createTestProjectProfile()
     } as SFProjectProfileDoc;
-    when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(false));
     when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
       of(draftHistory)
     );
@@ -541,7 +534,6 @@ describe('EditorDraftComponent', () => {
 
   describe('canConfigureFormatting', () => {
     beforeEach(() => {
-      when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(true));
       when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
         of(draftHistory)
       );
