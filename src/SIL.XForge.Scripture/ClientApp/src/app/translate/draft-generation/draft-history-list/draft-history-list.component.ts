@@ -25,6 +25,9 @@ export class DraftHistoryListComponent {
   // This is just after SFv5.33.0 was released
   readonly draftHistoryCutOffDate: Date = new Date('2025-06-03T21:00:00Z');
   readonly draftHistoryCutOffDateFormatted: string = this.i18n.formatDate(this.draftHistoryCutOffDate);
+  private readonly notifyBuildProgressHandler = (projectId: string): void => {
+    this.loadHistory(projectId);
+  };
 
   constructor(
     activatedProject: ActivatedProjectService,
@@ -48,13 +51,12 @@ export class DraftHistoryListComponent {
         await projectNotificationService.subscribeToProject(projectId);
         // When build notifications are received, reload the build history
         // NOTE: We do not need the build state, so just ignore it.
-        projectNotificationService.setNotifyBuildProgressHandler((projectId: string) => {
-          this.loadHistory(projectId);
-        });
+        projectNotificationService.setNotifyBuildProgressHandler(this.notifyBuildProgressHandler);
       });
     destroyRef.onDestroy(async () => {
       // Stop the SignalR connection when the component is destroyed
       await projectNotificationService.stop();
+      projectNotificationService.removeNotifyBuildProgressHandler(this.notifyBuildProgressHandler);
     });
   }
 
