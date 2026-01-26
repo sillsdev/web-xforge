@@ -33,7 +33,7 @@
 
   .progress-text {
     font-size: 0.875rem;
-    color: var(--mdc-theme-text-secondary-on-background, rgba(0, 0, 0, 0.6));
+    color: var(--mat-sys-on-surface-variant);
   }
 
   .failed-chapters {
@@ -41,7 +41,7 @@
     align-items: center;
     column-gap: 0.35rem;
     margin-top: 0.35rem;
-    color: var(--mdc-theme-error, #b00020);
+    color: var(--mat-sys-error);
 
     .error-icon {
       font-size: 1.1rem;
@@ -77,11 +77,6 @@ app-sync-progress {
 }
 
 ::ng-deep {
-  mat-dialog-content {
-    /* Use the same text color as the main application body, not the lighter dialog text color */
-    color: var(--mat-sidenav-content-text-color, var(--mat-sys-on-background)) !important;
-  }
-
   /* Hide the wizard headings at the top of the dialog */
   mat-stepper .mat-horizontal-stepper-header-container {
     display: none;

@@ -361,7 +361,8 @@ export class DraftHistoryEntryComponent {
       data: this._entry,
       width: '800px',
       maxWidth: '90vw',
-      disableClose: false
+      disableClose: false,
+      panelClass: 'use-application-text-color'
     });
   }
 }
