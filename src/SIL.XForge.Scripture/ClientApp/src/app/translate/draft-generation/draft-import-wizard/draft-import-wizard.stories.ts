@@ -4,7 +4,7 @@ import { Canon } from '@sillsdev/scripture';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { defaultTranslocoMarkupTranspilers } from 'ngx-transloco-markup';
 import { of } from 'rxjs';
-import { instance, mock, when } from 'ts-mockito';
+import { anything, instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
@@ -14,7 +14,7 @@ import { ProjectNotificationService } from '../../../core/project-notification.s
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { BuildDto } from '../../../machine-api/build-dto';
-import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
+import { ProgressService, ProjectProgress } from '../../../shared/progress-service/progress.service';
 import {
   BookForImport,
   BookWithExistingText,
@@ -403,12 +403,13 @@ function setUpMocks(args: DraftImportWizardComponentState): void {
       // Else, never resolve.
     })
   );
-  when(mockProgressService.isLoaded$).thenReturn(of(true));
-  when(mockProgressService.texts).thenReturn([
-    { text: { bookNum: 1 } } as TextProgress,
-    { text: { bookNum: 2 } } as TextProgress,
-    { text: { bookNum: 3 } } as TextProgress,
-    { text: { bookNum: 4 } } as TextProgress,
-    { text: { bookNum: 5 } } as TextProgress
-  ]);
+  when(mockProgressService.getProgress(anything(), anything())).thenResolve(
+    new ProjectProgress([
+      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 0 },
+      { bookId: 'EXO', verseSegments: 100, blankVerseSegments: 0 },
+      { bookId: 'LEV', verseSegments: 100, blankVerseSegments: 100 },
+      { bookId: 'NUM', verseSegments: 22, blankVerseSegments: 2 },
+      { bookId: 'DEU', verseSegments: 0, blankVerseSegments: 0 }
+    ])
+  );
 }
