@@ -304,6 +304,10 @@ export class DraftImportWizardComponent implements OnInit {
 
   invalidMessageMapper: { [key: string]: string } = {};
 
+  private readonly notifyDraftApplyProgressHandler = (projectId: string, draftApplyState: DraftApplyState): void => {
+    this.updateDraftApplyState(projectId, draftApplyState);
+  };
+
   constructor(
     @Inject(MAT_DIALOG_DATA) readonly data: BuildDto,
     @Inject(MatDialogRef) private readonly dialogRef: MatDialogRef<DraftImportWizardComponent, boolean>,
@@ -316,14 +320,11 @@ export class DraftImportWizardComponent implements OnInit {
     private readonly onlineStatusService: OnlineStatusService,
     private readonly activatedProjectService: ActivatedProjectService
   ) {
-    this.projectNotificationService.setNotifyDraftApplyProgressHandler(
-      (projectId: string, draftApplyState: DraftApplyState) => {
-        this.updateDraftApplyState(projectId, draftApplyState);
-      }
-    );
+    this.projectNotificationService.setNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
     destroyRef.onDestroy(async () => {
       // Stop the SignalR connection when the component is destroyed
       await projectNotificationService.stop();
+      this.projectNotificationService.removeNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
     });
   }
 
