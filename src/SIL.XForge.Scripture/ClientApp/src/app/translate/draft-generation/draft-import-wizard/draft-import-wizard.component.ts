@@ -135,6 +135,10 @@ export class DraftImportWizardComponent implements OnInit {
   targetProject$ = new BehaviorSubject<SFProjectProfile | undefined>(undefined);
   targetProjectDoc$ = new BehaviorSubject<SFProjectDoc | undefined>(undefined);
   canEditProject = true;
+  /**
+   * If true, text is to be imported to books in the target project which do not exist,
+   * and which the user does not have permission to create those books.
+   */
   booksMissingWithoutPermission = false;
   missingBookNames: string[] = [];
   bookCreationError?: string;
@@ -232,7 +236,7 @@ export class DraftImportWizardComponent implements OnInit {
         return;
       }
 
-      void this.loadTargetProjectAndValidate(projectDoc.data, false)
+      void this.loadTargetProjectAndValidate(projectDoc.data, true)
         .then(async () => {
           return await this.determineBooksAndChaptersWithText();
         })
@@ -353,7 +357,7 @@ export class DraftImportWizardComponent implements OnInit {
     this.setupInvalidMessageMapper();
     void this.loadProjects();
     this.initializeAvailableBooks();
-    void this.loadSourceProjectContext();
+    this.sourceProjectId = this.activatedProjectService.projectId;
   }
 
   private setupInvalidMessageMapper(): void {
@@ -409,14 +413,6 @@ export class DraftImportWizardComponent implements OnInit {
 
     // Show book selection only if multiple books
     this.showBookSelection = this.availableBooksForImport.length > 1;
-  }
-
-  private async loadSourceProjectContext(): Promise<void> {
-    this.sourceProjectId = this.activatedProjectService.projectId;
-    if (this.sourceProjectId == null) {
-      this.noDraftsAvailable = this.availableBooksForImport.length === 0;
-      return;
-    }
   }
 
   async projectSelected(paratextId: string): Promise<void> {
@@ -510,12 +506,11 @@ export class DraftImportWizardComponent implements OnInit {
     let project = this.targetProject$.value;
     if (project == null) {
       const profileDoc = await this.projectService.getProfile(this.targetProjectId);
-      project = profileDoc.data ?? undefined;
-      if (project != null) {
-        this.targetProject$.next(project);
-      } else {
+      project = profileDoc.data;
+      if (project == null) {
         return false;
       }
+      this.targetProject$.next(project);
     }
 
     const booksToImport = this.getBooksToImport();
@@ -534,7 +529,7 @@ export class DraftImportWizardComponent implements OnInit {
     const canCreateBooks = this.textDocService.userHasGeneralEditRight(project);
     if (!canCreateBooks) {
       this.booksMissingWithoutPermission = true;
-      const booksDescription = this.missingBookNames.length > 0 ? ` (${this.missingBookNames.join(', ')})` : '';
+      const booksDescription = ` (${this.missingBookNames.join(', ')})`;
       this.bookCreationError = this.i18n.translateStatic('draft_import_wizard.books_missing_no_permission', {
         booksDescription
       });
