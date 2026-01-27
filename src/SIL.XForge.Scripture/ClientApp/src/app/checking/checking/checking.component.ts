@@ -47,7 +47,7 @@ import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { BookChapterChooserComponent } from '../../shared/book-chapter-chooser/book-chapter-chooser.component';
 import { ShareButtonComponent } from '../../shared/share/share-button.component';
-import { getVerseStrFromSegmentRef } from '../../shared/verse-utils';
+import { getVerseRefFromSegmentRef, getVerseStrFromSegmentRef } from '../../shared/verse-utils';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
 import { BookChapter, CheckingUtils, isQuestionScope, QuestionScope } from '../checking.utils';
@@ -1054,12 +1054,21 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this._scriptureAudioPlayer?.pause();
     this.answersPanel?.questionComponent?.stopAudio();
 
+    // Get the segment to set the scripture reference
+    let verseRef: VerseRef | undefined = undefined;
+    const segmentRef: string | undefined = this.scripturePanel?.textComponent.segmentRef;
+    if (segmentRef != null && this.book != null) {
+      verseRef = getVerseRefFromSegmentRef(this.book, segmentRef);
+    }
+
+    verseRef ??= new VerseRef(this.book ?? 0, this.chapter ?? 1, 1);
+
     const data: QuestionDialogData = {
       questionDoc: undefined,
       projectDoc: this.projectDoc,
       textsByBookId: this.textsByBookId,
       projectId: this.projectDoc.id,
-      defaultVerse: new VerseRef(this.book ?? 0, this.chapter ?? 1, 1),
+      defaultVerse: verseRef,
       isRightToLeft: this.projectDoc.data?.isRightToLeft
     };
     const newQuestion: QuestionDoc | undefined = await this.questionDialogService.questionDialog(data);
@@ -1715,6 +1724,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       }
     }
 
+    // Clear the segment so the add question dialog will not select an incorrect verse
+    this.scripturePanel?.textComponent.setSegment('');
+    // Clear the selection so the editor won't select the wrong segment
+    this.scripturePanel?.textComponent.editor?.setSelection(null);
+    // Perform the navigation
     void this.router.navigate(['projects', projectId, 'checking', ...bookChapterPathTokens], {
       ...navigationExtras,
       queryParams: { scope: scope },
