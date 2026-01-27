@@ -244,7 +244,10 @@
           ></p>
           <ul>
             @for (book of booksWithExistingText; track book.bookNum) {
-              <li>{{ book.bookName }}: {{ t("num_chapters", { count: book.chaptersWithText.length }) }}</li>
+              <li>
+                {{ book.bookName }}: {{ book.chaptersWithText.length }}
+                {{ book.chaptersWithText.length === 1 ? t("chapter") : t("chapters") }}
+              </li>
             }
           </ul>
         }
