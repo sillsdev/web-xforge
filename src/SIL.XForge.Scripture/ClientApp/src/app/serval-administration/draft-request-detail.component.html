@@ -72,9 +72,11 @@
           <button mat-button color="primary" (click)="downloadProjectsAndResources()">
             <mat-icon>file_download</mat-icon> Download Projects & Resources
           </button>
-          <button mat-button color="primary" (click)="approveRequest()">
-            <mat-icon>check_circle</mat-icon> Approve & Enable
-          </button>
+          @if (!isResolved) {
+            <button mat-button color="primary" (click)="approveRequest()">
+              <mat-icon>check_circle</mat-icon> Approve & Enable
+            </button>
+          }
           <button mat-button color="warn" (click)="deleteRequest()"><mat-icon>delete</mat-icon> Delete Request</button>
         </div>
       </mat-card-content>
@@ -95,11 +97,17 @@
         </div>
         <div class="info-row skip-in-data-export">
           <span class="label">Status:</span>
-          <span class="value">{{ getStatusLabel(request.status) }}</span>
+          <span class="value" [style.color]="getStatus(request.status).color">
+            <mat-icon>{{ getStatus(request.status).icon }}</mat-icon>
+            {{ getStatus(request.status).label }}
+          </span>
         </div>
         <div class="info-row skip-in-data-export">
           <span class="label">Resolution:</span>
-          <span class="value">{{ getResolutionLabelDisplay(request.resolution) }}</span>
+          <span class="value" [style.color]="getResolution(request.resolution).color">
+            <mat-icon>{{ getResolution(request.resolution).icon }}</mat-icon>
+            {{ getResolution(request.resolution).label }}</span
+          >
         </div>
       </mat-card-content>
     </mat-card>
