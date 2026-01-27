@@ -297,7 +297,7 @@ export const StepFive: Story = {
     step: 5,
     selectedParatextProject: { shortName: 'P01', name: 'Project 01' } as ParatextProject,
     booksWithExistingText: [
-      getBookWithExistingText(1, 3),
+      getBookWithExistingText(1, 1),
       getBookWithExistingText(2, 4),
       getBookWithExistingText(3, 7),
       getBookWithExistingText(4, 5),
@@ -329,7 +329,7 @@ export const StepSix: Story = {
     ],
     // importProgress is used if importStepTriggered is true
     importProgress: [
-      getImportProgress(1, 3, 3, 0),
+      getImportProgress(1, 1, 1, 0),
       getImportProgress(2, 4, 3, 1),
       getImportProgress(3, 7, 3, 0),
       getImportProgress(4, 5, 0, 0)
