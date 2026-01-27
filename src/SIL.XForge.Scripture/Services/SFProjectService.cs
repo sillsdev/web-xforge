@@ -1866,14 +1866,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         // Filters for ops that are verse segments (i.e., attributes.segment starts with "verse_")
         BsonDocument verseSegmentOpsFilterExpression = new BsonDocument
         {
-            { "input", "$ops" },
+            { "input", new BsonDocument("$ifNull", new BsonArray { "$ops", new BsonArray() }) },
             { "as", "segment" },
             { "cond", isVerseSegmentIdExpression },
         };
         // Same as above filter, except that insert.blank must also be true in order to match a segment
         BsonDocument blankVerseSegmentOpsFilterExpression = new BsonDocument
         {
-            { "input", "$ops" },
+            { "input", new BsonDocument("$ifNull", new BsonArray { "$ops", new BsonArray() }) },
             { "as", "segment" },
             {
                 "cond",
