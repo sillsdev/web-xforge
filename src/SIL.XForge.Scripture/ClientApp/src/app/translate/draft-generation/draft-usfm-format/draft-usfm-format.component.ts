@@ -17,7 +17,17 @@ import {
   ParagraphBreakFormat,
   QuoteFormat
 } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { combineLatest, first, firstValueFrom, Observable, Subject, switchMap } from 'rxjs';
+import {
+  BehaviorSubject,
+  combineLatest,
+  EMPTY,
+  first,
+  firstValueFrom,
+  map,
+  Observable,
+  Subject,
+  switchMap
+} from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -81,8 +91,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   private lastSavedState?: DraftUsfmConfig;
   private canDenormalizeQuotes?: boolean = undefined;
   private draftSources$: Observable<DraftSourcesAsArrays> = this.draftSourcesService.getDraftProjectSources();
-  private _bookNum: number = 1;
-  private bookNum$ = new Subject<number>();
+  private bookNum$ = new BehaviorSubject<number | undefined>(undefined);
   private translateSource?: SFProjectProfile;
 
   constructor(
@@ -118,7 +127,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   }
 
   get textDocId(): TextDocId | undefined {
-    if (this.projectId == null || this.chapterNum == null) return undefined;
+    if (this.projectId == null || this.bookNum == null || this.chapterNum == null) return undefined;
     return new TextDocId(this.projectId, this.bookNum, this.chapterNum);
   }
 
@@ -130,13 +139,8 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     return this.canDenormalizeQuotes === false;
   }
 
-  get bookNum(): number {
-    return this._bookNum;
-  }
-
-  set bookNum(value: number) {
-    this._bookNum = value;
-    this.bookNum$.next(value);
+  get bookNum(): number | undefined {
+    return this.bookNum$.getValue();
   }
 
   private get currentFormat(): DraftUsfmConfig | undefined {
@@ -176,7 +180,12 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     this.updateDraftConfig$
       .pipe(
         quietTakeUntilDestroyed(this.destroyRef),
-        switchMap(config => this.draftHandlingService.getDraft(this.textDocId!, { isDraftLegacy: false, config }))
+        map(config => ({ config, textDocId: this.textDocId })),
+        switchMap(({ config, textDocId }) => {
+          // the textDocId would only be empty if a user unexpectedly navigates to formatting options by URL
+          if (textDocId == null) return EMPTY;
+          return this.draftHandlingService.getDraft(textDocId, { isDraftLegacy: false, config });
+        })
       )
       .subscribe(ops => {
         const draftDelta: Delta = new Delta(this.draftHandlingService.draftDataToOps(ops, []));
@@ -196,7 +205,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   }
 
   bookChanged(bookNum: number): void {
-    this.bookNum = bookNum;
+    this.bookNum$.next(bookNum);
   }
 
   chapterChanged(chapterNum: number): void {
@@ -263,7 +272,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   }
 
   private subscribeBookAndChapters(initialBookNum: number, initialChapterNum?: number): void {
-    combineLatest([this.draftSources$, this.bookNum$])
+    combineLatest([this.draftSources$, this.bookNum$.pipe(filterNullish())])
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(async ([source, bookNum]) => {
         this.translateSource ??= (await this.projectService.getProfile(source.draftingSources[0].projectRef)).data;
