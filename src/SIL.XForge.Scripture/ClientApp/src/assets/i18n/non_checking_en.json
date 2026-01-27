@@ -311,7 +311,6 @@
     "previously_generated_drafts": "Previously generated drafts"
   },
   "draft_import_wizard": {
-    "add_to_project": "Add to project",
     "book_does_not_exist": "One or more selected books do not exist in this project, and you do not have permission to create them",
     "books_missing_no_permission": "The selected books{{ booksDescription }} do not exist in this project, and you do not have permission to create them. Choose another project or contact a project administrator for access.",
     "back": "Back",
@@ -329,7 +328,6 @@
     "connecting_to_project": "Connecting to project",
     "connecting": "Connecting",
     "connection_failed": "Connection failed",
-    "create_missing_chapters": "Create missing chapters in the project",
     "done": "Done",
     "failed_to_connect_project": "Something went wrong while connecting. Please try again.",
     "failed_to_load_projects": "We couldn't load your Paratext projects. Check your internet connection and try again.",
@@ -366,11 +364,7 @@
     "waiting_for_project_to_load": "Please wait for the project to load before proceeding."
   },
   "draft_preview_books": {
-    "add_to_project": "Add to project",
-    "add_to_different_project": "Add to a different project",
-    "no_books_have_drafts": "No books have any drafts.",
-    "no_permission_to_edit_book": "You do not have permission to write to this book. Contact your project administrator to get permission.",
-    "readd_to_project": "Re-add to project"
+    "no_books_have_drafts": "No books have any drafts."
   },
   "draft_sources": {
     "add_another_reference_project": "Add another reference project",
