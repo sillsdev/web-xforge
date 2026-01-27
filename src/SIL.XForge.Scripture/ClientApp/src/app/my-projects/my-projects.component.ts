@@ -21,6 +21,7 @@ import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { environment } from '../../environments/environment';
 import { ObjectPaths } from '../../type-utils';
+import { CommandError, CommandErrorCode } from '../../xforge-common/command.service';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
@@ -143,7 +144,11 @@ export class MyProjectsComponent implements OnInit {
       this.joiningProjects.push(projectId);
       await this.projectService.onlineAddCurrentUser(projectId);
       void this.router.navigate(['projects', projectId]);
-    } catch {
+    } catch (error) {
+      if (error instanceof CommandError && error.code === CommandErrorCode.Forbidden) {
+        this.noticeService.show(this.i18n.translateStatic('my_projects.user_no_permission_on_project'));
+        return;
+      }
       this.noticeService.show(this.i18n.translateStatic('my_projects.failed_to_join_project'));
     } finally {
       this.noticeService.loadingFinished(this.constructor.name);
