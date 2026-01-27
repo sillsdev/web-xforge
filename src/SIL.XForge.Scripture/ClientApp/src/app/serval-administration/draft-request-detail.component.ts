@@ -30,33 +30,12 @@ import { MobileNotSupportedComponent } from '../shared/mobile-not-supported/mobi
 import { projectLabel } from '../shared/utils';
 import {
   DraftingSignupFormData,
+  DraftRequestResolutionKey,
+  DraftRequestResolutionMetadata,
+  OnboardingRequest,
   OnboardingRequestService
 } from '../translate/draft-generation/drafting-signup.service';
-import { getResolutionLabel, getStatusLabel } from './draft-request-constants';
 import { ServalAdministrationService } from './serval-administration.service';
-
-/** Represents a draft request detail. */
-interface DraftingOnboardingRequest {
-  id: string;
-  submission: {
-    projectId: string;
-    userId: string;
-    timestamp: string;
-    formData: DraftingSignupFormData;
-  };
-  assigneeId: string;
-  status: string;
-  resolution: string | null;
-  comments: DraftRequestComment[];
-}
-
-/** Represents a comment on a draft request. */
-interface DraftRequestComment {
-  id: string;
-  userId: string;
-  text: string;
-  dateCreated: string;
-}
 
 /**
  * Component for displaying a single draft request's full details.
@@ -90,7 +69,7 @@ interface DraftRequestComment {
   ]
 })
 export class DraftRequestDetailComponent extends DataLoadingComponent implements OnInit {
-  request?: DraftingOnboardingRequest;
+  request?: OnboardingRequest;
   projectName?: string;
   projectNames: Map<string, string> = new Map();
   projectIds: Map<string, string> = new Map(); // Maps Paratext ID to SF project ID
@@ -102,7 +81,7 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly servalAdministrationService: ServalAdministrationService,
-    private readonly draftingSignupService: OnboardingRequestService,
+    private readonly onboardingRequestService: OnboardingRequestService,
     private readonly dialogService: DialogService,
     protected readonly noticeService: NoticeService
   ) {
@@ -123,7 +102,7 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
     this.loadingStarted();
     try {
       // Get all requests and find the one we need
-      const requests = await this.draftingSignupService.getAllRequests();
+      const requests = await this.onboardingRequestService.getAllRequests();
 
       if (requests != null) {
         this.request = requests.find(r => r.id === requestId);
@@ -251,15 +230,15 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
     return ParatextService.isResource(paratextId) ? 'Download DBL resource' : 'Download Paratext project';
   }
 
-  /** Gets the user-friendly label for a resolution value. */
-  getResolutionLabelDisplay(resolution: string | null): string {
-    return getResolutionLabel(resolution);
+  getResolution(resolution: DraftRequestResolutionKey): DraftRequestResolutionMetadata {
+    return this.onboardingRequestService.getResolution(resolution);
   }
 
-  /** Gets the user-friendly label for a status value. */
-  getStatusLabel(status: string): string {
-    return getStatusLabel(status);
+  get isResolved(): boolean {
+    return this.request?.resolution != null;
   }
+
+  getStatus = this.onboardingRequestService.getStatus;
 
   get formData(): DraftingSignupFormData {
     return this.request!.submission.formData;
@@ -351,7 +330,10 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
 
     this.isAddingComment = true;
     try {
-      const updatedRequest = await this.draftingSignupService.addComment(this.request.id, this.newCommentText.trim());
+      const updatedRequest = await this.onboardingRequestService.addComment(
+        this.request.id,
+        this.newCommentText.trim()
+      );
 
       // Update the local request object with the server response
       this.request = updatedRequest;
@@ -385,7 +367,7 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
 
     this.loadingStarted();
     try {
-      await this.draftingSignupService.deleteRequest(this.request.id);
+      await this.onboardingRequestService.deleteRequest(this.request.id);
       this.noticeService.show('Draft request deleted');
       void this.router.navigate(['/serval-administration'], { queryParams: { tab: 'draft-requests' } });
     } catch (error) {
@@ -405,7 +387,7 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
     if (result && this.request != null) {
       this.loadingStarted();
       try {
-        const request = await this.draftingSignupService.approveRequest({
+        const request = await this.onboardingRequestService.approveRequest({
           requestId: this.request.id,
           sfProjectId: this.request.submission.projectId
         });

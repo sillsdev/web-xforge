@@ -16,8 +16,12 @@ import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { UserService } from 'xforge-common/user.service';
 import { NoticeComponent } from '../../shared/notice/notice.component';
 import { projectLabel } from '../../shared/utils';
-import { OnboardingRequest, OnboardingRequestService } from '../../translate/draft-generation/drafting-signup.service';
-import { DRAFT_REQUEST_RESOLUTION_OPTIONS, getResolutionLabel, getStatusLabel } from '../draft-request-constants';
+import {
+  DRAFT_REQUEST_RESOLUTION_OPTIONS,
+  DraftRequestResolutionKey,
+  OnboardingRequest,
+  OnboardingRequestService
+} from '../../translate/draft-generation/drafting-signup.service';
 import { ServalAdministrationService } from '../serval-administration.service';
 
 type RequestFilterFunction = (request: OnboardingRequest, currentUserId: string | undefined) => boolean;
@@ -214,15 +218,9 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
     return this.userDisplayNames.get(userId) || 'Loading...';
   }
 
-  /** Gets the user-friendly label for a status value. */
-  getStatusLabel(status: string): string {
-    return getStatusLabel(status);
-  }
+  getStatus = this.onboardingRequestService.getStatus;
 
-  /** Gets the display label for a resolution value. */
-  getResolutionLabelDisplay(resolution: string | null): string {
-    return getResolutionLabel(resolution);
-  }
+  getResolution = this.onboardingRequestService.getResolution;
 
   /**
    * Comparison function for resolution values.
@@ -283,7 +281,7 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
    * Handles resolution change for a request.
    * Calls the backend to persist the change and updates local state with the response.
    */
-  async onResolutionChange(request: OnboardingRequest, newResolution: string | null): Promise<void> {
+  async onResolutionChange(request: OnboardingRequest, newResolution: DraftRequestResolutionKey | null): Promise<void> {
     try {
       // Call backend to update resolution
       const updatedRequest = await this.onboardingRequestService.setResolution(request.id, newResolution);
