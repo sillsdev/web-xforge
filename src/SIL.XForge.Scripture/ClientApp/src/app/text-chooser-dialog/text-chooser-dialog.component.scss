@@ -43,7 +43,7 @@ app-text {
 }
 
 .error-message {
-  color: variables.$errorColor;
+  color: var(--sf-error-color);
   font-size: 0.85em;
 }
 

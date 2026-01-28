@@ -1,0 +1,27 @@
+@use 'sass:color';
+@use '@angular/material' as mat;
+@use 'src/variables' as *;
+
+@mixin color($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
+
+  --sf-list-item-hover-color: #{if(
+      $is-dark,
+      mat.get-theme-color($theme, neutral, 17),
+      color.scale($sf_grey, $lightness: 75%)
+    )};
+  // The donut background functions both as a background color for the circle as well as an inside and outside edge
+  // color.
+  --sf-translate-progress-track: #00000000; // transparent
+  --sf-translate-progress-complete: #{if($is-dark, mat.get-theme-color($theme, tertiary, 50), #b8d332)};
+  --sf-translate-progress-remaining: #{if($is-dark, color.change(mat.get-theme-color($theme, neutral, 30)), #ececec)};
+  --sf-translate-progress-icon-color: #{if($is-dark, mat.get-theme-color($theme, neutral, 87), rgba(0, 0, 0, 0.6))};
+  --sf-translate-engine-card-background: #{if($is-dark, mat.get-theme-color($theme, tertiary, 40), $greenLight)};
+  --sf-translate-suggestions-info-color: #{if($is-dark, mat.get-theme-color($theme, neutral, 80), $lighterTextColor)};
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}

@@ -1,16 +1,12 @@
-@use 'src/variables' as *;
-
-$progressBackgroundColor: rgba(205, 219, 204, 0.33);
-
 .primary {
-  --theme: #{$purpleLight};
+  --theme: var(--sf-single-audio-button-progress-played-primary);
 }
 
 .secondary {
-  --theme: black;
+  --theme: var(--sf-single-audio-button-progress-played-secondary);
 }
 
-button {
+:host button {
   padding: 0;
   display: flex;
   align-items: center;
@@ -24,22 +20,18 @@ button {
   // Create a radial gradient and then remove the center of it with a conic gradient to create a circular progress bar
   // The transition between white and transparent happens over several percentage points to avoid aliasing
   background:
-    radial-gradient(white 57%, transparent 61% 100%),
-    conic-gradient(var(--theme) var(--audio-progress), $progressBackgroundColor 0);
+    radial-gradient(var(--sf-single-audio-button-background) 57%, transparent 61% 100%),
+    conic-gradient(var(--theme) var(--audio-progress), var(--sf-single-audio-button-progress-track) 0);
 }
-
-button:hover {
+:host button:hover {
   cursor: pointer;
 }
-
-button:focus-visible {
+:host button:focus-visible {
   outline: none;
 }
-
 mat-icon {
-  color: $greyLight;
+  color: var(--sf-single-audio-button-icon);
 }
-
 .ng-star-inserted {
   color: var(--theme);
 }

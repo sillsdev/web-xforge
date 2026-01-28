@@ -5,6 +5,7 @@
 
   --sf-editor-note-fab-background-color: #{mat.get-theme-color($theme, tertiary, 80)};
   --sf-editor-note-fab-foreground-color: #{mat.get-theme-color($theme, tertiary, 10)};
+  --sf-editor-split-gutter-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 22, 95))};
 }
 
 @mixin theme($theme) {

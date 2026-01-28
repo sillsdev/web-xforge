@@ -1,0 +1,47 @@
+@use 'sass:color';
+@use '@angular/material' as mat;
+@use 'src/variables';
+
+@mixin color($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
+  --sf-chapter-audio-dialog-content-warning: #{variables.$orange};
+  --sf-chapter-audio-dialog-audio-player-manage-background-color: #{if(
+      $is-dark,
+      var(--mat-sys-surface-container),
+      #e8eae6
+    )};
+  --sf-chapter-audio-dialog-overlay-background: #{rgba(variables.$info-color, 0.75)};
+  --sf-chapter-audio-dialog-dashed-border-color: #{if(
+      $is-dark,
+      var(--mat-sys-outline-variant),
+      variables.$border-color
+    )};
+  --sf-chapter-audio-dialog-browse-button-hover-background-color: #{variables.$greenLight};
+  --sf-chapter-audio-dialog-browse-button-hover-color: #{variables.$greyDark};
+  --sf-chapter-audio-dialog-data-blocks-border-color: #{if(
+      $is-dark,
+      var(--mat-sys-outline-variant),
+      variables.$border-color
+    )};
+  --sf-chapter-audio-dialog-data-blocks-color: #{if($is-dark, var(--mat-sys-on-surface-disabled), variables.$greyLight)};
+  --sf-chapter-audio-dialog-data-blocks-divider-border-color: #{if(
+      $is-dark,
+      var(--mat-sys-outline-variant),
+      variables.$border-color
+    )};
+  --sf-chapter-audio-dialog-data-blocks-text-color-valid: #{if(
+      $is-dark,
+      var(--mat-dialog-supporting-text-color),
+      variables.$greyDark
+    )};
+  --sf-chapter-audio-dialog-data-blocks-border-valid: #{if($is-dark, variables.$purpleLight, variables.$purpleLight)};
+  --sf-chapter-audio-dialog-data-blocks-text-color-invalid: #{if($is-dark, var(--mat-sys-error), var(--sf-error-color))};
+  --sf-chapter-audio-dialog-data-blocks-border-invalid: #{if($is-dark, var(--mat-sys-error), var(--sf-error-color))};
+  --sf-chapter-audio-dialog-spinner-color: #{if($is-dark, black, white)};
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}

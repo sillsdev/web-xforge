@@ -4,7 +4,7 @@
   > button {
     &.menu-open {
       // Keep trigger button highlight while menu is open
-      background: #e0e0e0;
+      background: var(--sf-font-size-menu-open-background);
     }
   }
 }

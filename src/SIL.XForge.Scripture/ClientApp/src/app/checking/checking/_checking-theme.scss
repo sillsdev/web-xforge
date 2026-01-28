@@ -2,9 +2,14 @@
 
 @mixin color($theme) {
   $is-dark: mat.get-theme-type($theme) == dark;
-
   --sf-community-checking-questions-nav-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 20, 95))};
   --sf-community-checking-audio-player-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 20, 98))};
+  --sf-community-checking-notify-color: #{mat.get-theme-color($theme, error, if($is-dark, 70, 40))};
+  --sf-community-checking-donut-unread: #{if($is-dark, mat.get-theme-color($theme, neutral, 35), #3a3a3a)}; // #3a3a3a is dark grey
+  --sf-community-checking-overview-donut-read: #{if($is-dark, mat.get-theme-color($theme, neutral, 50), #edecec)}; // #edecec is whitish
+  --sf-community-checking-qa-area-donut-read: #{if($is-dark, mat.get-theme-color($theme, neutral, 50), #fff)};
+  --sf-community-checking-donut-answered: #{if($is-dark, mat.get-theme-color($theme, tertiary, 80), #b8d332)}; // #b8d332 is light greenish
+  --sf-community-checking-donut-container-edge: #00000000; // transparent
 }
 
 @mixin theme($theme) {

@@ -2,8 +2,11 @@ import { Inject, Injectable, Renderer2, RendererFactory2 } from '@angular/core';
 import { DOCUMENT } from 'xforge-common/browser-globals';
 import { LocalSettingsService } from './local-settings.service';
 
+/** Type values are defined before the type so they can also be used in Storybook. */
+export const appearanceValues = ['device', 'dark', 'light'] as const;
+
 /** Choice of what color styling the application should use. This is an abstract user-facing setting. */
-export type Appearance = 'device' | 'dark' | 'light';
+export type Appearance = (typeof appearanceValues)[number];
 
 /** Color styling set that can be applied to the application.  This is a concrete internal specification. */
 export enum Theme {

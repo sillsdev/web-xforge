@@ -12,7 +12,7 @@ $answerResolved: $greenLight;
 $answerExportable: $purpleLight;
 $commentUnread: $attention;
 $borderColor: rgba(0, 0, 0, 0.1);
-$notifyUser: $errorColor;
+$notifyUser: var(--sf-error-color);
 $shadedBackgroundColor: rgba(0, 0, 0, 0.05);
 
 @mixin md-icon-size($size: 24px) {

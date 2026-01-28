@@ -22,7 +22,7 @@ $restoreActionColor: #5485e7;
   gap: 0.1rem;
 
   &:hover {
-    background-color: #eee;
+    background-color: var(--lynx-insights-node-hover-background);
   }
 
   &:not(.loading) {
@@ -58,7 +58,7 @@ $restoreActionColor: #5485e7;
 // Link to insight in editor
 .tree-toggle.leaf {
   &:hover {
-    color: vars.$blueMedium;
+    color: var(--lynx-insights-panel-tree-toggle-leaf-hover-color);
   }
 
   .restore-icon {
@@ -137,8 +137,8 @@ $restoreActionColor: #5485e7;
   }
 
   .count {
-    color: #7a7a7a;
-    background-color: #f4f4f4;
+    color: var(--lynx-insights-count-text);
+    background-color: var(--lynx-insights-count-background);
     flex-shrink: 0;
     border-radius: 1rem;
     padding: 0.4rem;
@@ -161,7 +161,7 @@ $restoreActionColor: #5485e7;
 }
 
 .insight-loading-text {
-  color: #777;
+  color: var(--lynx-insights-loading-text);
   font-style: italic;
 }
 
@@ -176,7 +176,8 @@ $restoreActionColor: #5485e7;
   min-width: 7rem;
 
   &[disabled] {
-    background-color: #fff;
+    background-color: var(--lynx-insights-panel-show-more-button-disabled-background);
+    color: var(--lynx-insights-header-secondary-text-color);
     font-style: italic;
   }
 

@@ -233,7 +233,7 @@ strong {
   color: green;
 }
 .failure {
-  color: variables.$errorColor;
+  color: var(--sf-error-color);
 }
 
 .training-files {

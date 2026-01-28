@@ -40,7 +40,7 @@ header {
 
   .audio-checking-warning {
     padding: 8px;
-    color: checkingVars.$notifyUser;
+    color: var(--sf-community-checking-notify-color);
   }
 
   header {
@@ -156,7 +156,7 @@ header {
     }
 
     .no-audio-message {
-      color: checkingVars.$notifyUser;
+      color: var(--sf-community-checking-notify-color);
       padding: 8px;
     }
 

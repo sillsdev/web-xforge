@@ -1,31 +1,29 @@
-@use 'src/variables';
-
 :host {
   display: flex;
   align-items: center;
-}
 
-a {
-  cursor: pointer;
-  display: flex;
+  a {
+    cursor: pointer;
+    display: flex;
 
-  mat-icon {
-    font-size: 18px;
-    // Work around weird pixelation that happens when icons are scaled down
-    // https://github.com/google/material-design-icons/issues/648
-    transform: rotate(0.03deg);
-    width: unset;
-    height: unset;
-    overflow: unset;
+    mat-icon {
+      font-size: 18px;
+      // Work around weird pixelation that happens when icons are scaled down
+      // https://github.com/google/material-design-icons/issues/648
+      transform: rotate(0.03deg);
+      width: unset;
+      height: unset;
+      overflow: unset;
 
-    &.normal {
-      color: variables.$blueMedium;
-    }
-    &.error {
-      color: variables.$errorColor;
-    }
-    &.warning {
-      color: variables.$orange;
+      &.normal {
+        color: var(--sf-info-icon-normal);
+      }
+      &.error {
+        color: var(--sf-info-icon-error);
+      }
+      &.warning {
+        color: var(--sf-info-icon-warning);
+      }
     }
   }
 }

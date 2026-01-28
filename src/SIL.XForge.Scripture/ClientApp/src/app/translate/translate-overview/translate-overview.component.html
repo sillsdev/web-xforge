@@ -12,9 +12,9 @@
           {{ t("progress") }}
           <div class="progress" [matTooltip]="projectProgress?.ratio ?? 0 | l10nPercent">
             <app-donut-chart
-              [colors]="['#b8d332', 'transparent']"
+              [colors]="['var(--sf-translate-progress-complete)', 'var(--sf-translate-progress-remaining)']"
               [data]="[projectProgress?.translatedVerseSegments ?? 0, projectProgress?.blankVerseSegments ?? 0]"
-              backgroundColor="#ececec"
+              backgroundColor="var(--sf-translate-progress-track)"
               [innerThicknessDelta]="0"
               [thickness]="22"
             ></app-donut-chart>
@@ -36,9 +36,9 @@
               }}</span>
               <div class="progress" matListItemMeta [matTooltip]="bookTranslationRatio(bookProgress) | l10nPercent">
                 <app-donut-chart
-                  [colors]="['#b8d332', 'transparent']"
+                  [colors]="['var(--sf-translate-progress-complete)', 'var(--sf-translate-progress-remaining)']"
                   [data]="[bookTranslatedSegments(bookProgress), bookProgress.blankVerseSegments]"
-                  backgroundColor="#ececec"
+                  backgroundColor="var(--sf-translate-progress-track)"
                   [innerThicknessDelta]="0"
                   [thickness]="22"
                 ></app-donut-chart>

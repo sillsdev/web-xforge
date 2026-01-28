@@ -3,6 +3,7 @@ import { MatIcon } from '@angular/material/icon';
 import { ICONS_TO_MIRROR_RTL } from '../utils';
 import { NoticeMode, NoticeType } from './notice.types';
 
+/** Shows highlighted messages inline with other elements on a page. */
 @Component({
   selector: 'app-notice',
   templateUrl: './notice.component.html',
