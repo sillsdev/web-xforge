@@ -1,17 +1,22 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 using NSubstitute;
 using NUnit.Framework;
 using Paratext.Data;
 using Paratext.Data.Languages;
+using Paratext.Data.ProjectComments;
+using Paratext.Data.ProjectFileAccess;
 using Paratext.Data.ProjectSettingsAccess;
 using Paratext.Data.Repository;
 using SIL.WritingSystems;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
+using ParatextComment = Paratext.Data.ProjectComments.Comment;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -21,6 +26,126 @@ public class ParatextDataHelperTests
     private const string DefaultStylesheetFileName = "usfm.sty";
     private const string ParatextUser01 = "ParatextUser01";
     private const string ResourceId01 = "9bb76cd3e5a7f9b4";
+
+    [Test]
+    public void GetNotes_ReturnsMappedTagData()
+    {
+        var env = new TestEnvironment();
+        using MockScrText scrText = env.GetScrText(HexId.CreateNew().ToString());
+        var commentManager = CommentManager.Get(scrText);
+        var commentTags = new MockCommentTags(scrText);
+        commentTags.InitializeTagList([5]);
+        TestEnvironment.AddComment(scrText, "thread-01", "RUT 1:1", "Mapped tag", "5");
+
+        // SUT
+        IReadOnlyList<ParatextNote> notes = env.Service.GetNotes(commentManager, commentTags);
+
+        Assert.AreEqual(1, notes.Count);
+        ParatextNote note = notes[0];
+        Assert.AreEqual("thread-01", note.Id);
+        Assert.AreEqual("RUT 1:1", note.VerseRef);
+        Assert.AreEqual(1, note.Comments.Count);
+        ParatextNoteComment comment = note.Comments[0];
+        Assert.AreEqual("<p>Mapped tag</p>", comment.Content);
+        Assert.IsNotNull(comment.Tag);
+        Assert.AreEqual(5, comment.Tag!.Id);
+        Assert.AreEqual("tag5", comment.Tag!.Name);
+        Assert.AreEqual("icon5", comment.Tag!.Icon);
+    }
+
+    [Test]
+    public void GetNotes_SkipsUnknownTags()
+    {
+        var env = new TestEnvironment();
+        using MockScrText scrText = env.GetScrText(HexId.CreateNew().ToString());
+        var commentManager = CommentManager.Get(scrText);
+        var commentTags = new MockCommentTags(scrText);
+        commentTags.InitializeTagList([5]);
+        TestEnvironment.AddComment(scrText, "thread-02", "RUT 1:2", "Unknown tag", "6");
+
+        // SUT
+        IReadOnlyList<ParatextNote> notes = env.Service.GetNotes(commentManager, commentTags);
+
+        Assert.AreEqual(1, notes.Count);
+        ParatextNoteComment comment = notes[0].Comments[0];
+        Assert.IsNull(comment.Tag);
+        Assert.AreEqual("<p>Unknown tag</p>", comment.Content);
+    }
+
+    [Test]
+    public void GetNotes_SkipsNegativeTagIds()
+    {
+        var env = new TestEnvironment();
+        using MockScrText scrText = env.GetScrText(HexId.CreateNew().ToString());
+        var commentManager = CommentManager.Get(scrText);
+        var commentTags = new MockCommentTags(scrText);
+        commentTags.InitializeTagList([5]);
+        TestEnvironment.AddComment(scrText, "thread-03", "RUT 1:3", "Negative tag id", "-3");
+
+        // SUT
+        IReadOnlyList<ParatextNote> notes = env.Service.GetNotes(commentManager, commentTags);
+
+        Assert.AreEqual(1, notes.Count);
+        ParatextNoteComment comment = notes[0].Comments[0];
+        Assert.IsNull(comment.Tag);
+        Assert.AreEqual("<p>Negative tag id</p>", comment.Content);
+        Assert.AreEqual("RUT 1:3", notes[0].VerseRef);
+    }
+
+    [Test]
+    public void GetNotes_SkipsThreadsWithOnlyDeletedComments()
+    {
+        var env = new TestEnvironment();
+        using MockScrText scrText = env.GetScrText(HexId.CreateNew().ToString());
+        var commentManager = CommentManager.Get(scrText);
+        var commentTags = new MockCommentTags(scrText);
+        commentTags.InitializeTagList([5]);
+        TestEnvironment.AddComment(scrText, "thread-04", "RUT 1:4", "Deleted", "5", deleted: true);
+
+        // SUT
+        IReadOnlyList<ParatextNote> notes = env.Service.GetNotes(commentManager, commentTags);
+
+        Assert.AreEqual(0, notes.Count);
+    }
+
+    [Test]
+    public void GetNotes_IncludesThreadsWithDeletedComments()
+    {
+        var env = new TestEnvironment();
+        using MockScrText scrText = env.GetScrText(HexId.CreateNew().ToString());
+        var commentManager = CommentManager.Get(scrText);
+        var commentTags = new MockCommentTags(scrText);
+        commentTags.InitializeTagList([5]);
+        TestEnvironment.AddComment(scrText, "thread-04", "RUT 1:4", "Deleted", "5", deleted: true);
+        TestEnvironment.AddComment(scrText, "thread-04", "RUT 1:4", "Active", "5");
+
+        // SUT
+        IReadOnlyList<ParatextNote> notes = env.Service.GetNotes(commentManager, commentTags);
+
+        Assert.AreEqual(1, notes.Count);
+    }
+
+    [Test]
+    public void GetNotes_FiltersThreadsWithPredicate()
+    {
+        var env = new TestEnvironment();
+        using MockScrText scrText = env.GetScrText(HexId.CreateNew().ToString());
+        var commentManager = CommentManager.Get(scrText);
+        var commentTags = new MockCommentTags(scrText);
+        commentTags.InitializeTagList([2]);
+        TestEnvironment.AddComment(scrText, "thread-05", "RUT 1:5", "First", "2");
+        TestEnvironment.AddComment(scrText, "thread-06", "RUT 1:6", "Second", "2");
+
+        // SUT
+        IReadOnlyList<ParatextNote> notes = env.Service.GetNotes(
+            commentManager,
+            commentTags,
+            thread => string.Equals(thread.Id, "thread-06", StringComparison.Ordinal)
+        );
+
+        Assert.AreEqual(1, notes.Count);
+        Assert.AreEqual("thread-06", notes[0].Id);
+    }
 
     [Test]
     public void CommitVersionedText_Success()
@@ -214,6 +339,37 @@ public class ParatextDataHelperTests
 
         public ParatextDataHelper Service { get; }
 
+        public static void AddComment(
+            ScrText scrText,
+            string threadId,
+            string verseRef,
+            string content,
+            string? tagValue,
+            bool deleted = false
+        )
+        {
+            XmlDocument doc = new XmlDocument();
+            XmlElement root = doc.CreateElement("content");
+            XmlElement paragraph = doc.CreateElement("p");
+            paragraph.InnerText = content;
+            root.AppendChild(paragraph);
+            doc.AppendChild(root);
+
+            var comment = new ParatextComment(scrText.User)
+            {
+                Thread = threadId,
+                VerseRefStr = verseRef,
+                Contents = root,
+                DateTime = DateTimeOffset.UtcNow,
+                Deleted = deleted,
+                SelectedText = string.Empty,
+                StartPosition = 0,
+            };
+            if (tagValue != null)
+                comment.TagsAdded = [tagValue];
+            CommentManager.Get(scrText).AddComment(comment);
+        }
+
         /// <summary>
         /// Gets a mock scripture text for testing.
         /// </summary>
@@ -234,6 +390,11 @@ public class ParatextDataHelperTests
             {
                 scrText.Settings.DefaultStylesheetFileName = DefaultStylesheetFileName;
             }
+
+            // Set up the file manager for the comment manager
+            ProjectFileManager fileManager = Substitute.For<ProjectFileManager>(scrText, null);
+            fileManager.IsWritable.Returns(true);
+            scrText.SetFileManager(fileManager);
 
             return scrText;
         }

@@ -852,6 +852,42 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public void GetNoteThreads_ReturnsNotesFromDataHelper()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string paratextId = env.SetupProject(env.Project01, associatedPtUser);
+        IReadOnlyList<ParatextNote> expectedNotes = new List<ParatextNote>
+        {
+            new ParatextNote
+            {
+                Id = "thread-01",
+                VerseRef = "RUT 1:1",
+                Comments = Array.Empty<ParatextNoteComment>(),
+            },
+        };
+        env.MockParatextDataHelper.GetNotes(
+                Arg.Any<CommentManager>(),
+                Arg.Any<CommentTags>(),
+                Arg.Any<Func<CommentThread, bool>>(),
+                Arg.Any<bool>()
+            )
+            .Returns(expectedNotes);
+
+        IReadOnlyList<ParatextNote> actual = env.Service.GetNoteThreads(userSecret, paratextId);
+
+        Assert.AreSame(expectedNotes, actual);
+        env.MockParatextDataHelper.Received(1)
+            .GetNotes(
+                env.ProjectCommentManager,
+                Arg.Is<CommentTags>(tags => tags != null),
+                Arg.Any<Func<CommentThread, bool>>(),
+                true
+            );
+    }
+
+    [Test]
     public void PutNotes_AddEditDeleteComment_ThreadCorrectlyUpdated()
     {
         var env = new TestEnvironment();
@@ -3929,6 +3965,24 @@ public class ParatextServiceTests
         NoteTag? resultTag = settings?.NoteTags.Single(t => t.Name == noteTag.Name);
         Assert.That(resultTag, Is.Not.Null);
         Assert.That(resultTag.CreatorResolve, Is.True);
+    }
+
+    [Test]
+    public void GetCommentTags_ReturnsProjectTags()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string paratextId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.SetupCommentTags(env.ProjectScrText, null);
+        CommentTags.ClearCacheForProject(env.ProjectScrText);
+
+        CommentTags? tags = env.Service.GetCommentTags(userSecret, paratextId);
+
+        Assert.That(tags, Is.Not.Null);
+        List<CommentTag> projectTags = tags == null ? [] : [.. tags.GetAllTags()];
+        Assert.AreEqual(projectTags.Count, env.TagCount - 1); //indexing starts at 1
+        Assert.That(projectTags.Select(t => t.Name), Does.Contain("tag1"));
     }
 
     [Test]
