@@ -17,7 +17,17 @@ import {
   ParagraphBreakFormat,
   QuoteFormat
 } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { combineLatest, first, firstValueFrom, Subject, switchMap } from 'rxjs';
+import {
+  BehaviorSubject,
+  combineLatest,
+  EMPTY,
+  first,
+  firstValueFrom,
+  map,
+  Observable,
+  Subject,
+  switchMap
+} from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -34,6 +44,8 @@ import { ConfirmOnLeave } from '../../../shared/project-router.guard';
 import { TextComponent } from '../../../shared/text/text.component';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftHandlingService } from '../draft-handling.service';
+import { DraftSourcesAsArrays } from '../draft-source';
+import { DraftSourcesService } from '../draft-sources.service';
 
 @Component({
   selector: 'app-draft-usfm-format',
@@ -59,9 +71,8 @@ import { DraftHandlingService } from '../draft-handling.service';
 })
 export class DraftUsfmFormatComponent extends DataLoadingComponent implements AfterViewInit, ConfirmOnLeave {
   @ViewChild(TextComponent) draftText!: TextComponent;
-  bookNum: number = 1;
   booksWithDrafts: number[] = [];
-  chapterNum: number = 1;
+  chapterNum?: number;
   chaptersWithDrafts: number[] = [];
   isInitializing: boolean = true;
   paragraphBreakFormat = ParagraphBreakFormat;
@@ -79,12 +90,16 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   private updateDraftConfig$: Subject<DraftUsfmConfig | undefined> = new Subject<DraftUsfmConfig | undefined>();
   private lastSavedState?: DraftUsfmConfig;
   private canDenormalizeQuotes?: boolean = undefined;
+  private draftSources$: Observable<DraftSourcesAsArrays> = this.draftSourcesService.getDraftProjectSources();
+  private bookNum$ = new BehaviorSubject<number | undefined>(undefined);
+  private translateSource?: SFProjectProfile;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly draftHandlingService: DraftHandlingService,
     private readonly draftGenerationService: DraftGenerationService,
+    private readonly draftSourcesService: DraftSourcesService,
     private readonly projectService: SFProjectService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly servalAdministration: ServalAdministrationService,
@@ -112,7 +127,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   }
 
   get textDocId(): TextDocId | undefined {
-    if (this.projectId == null) return undefined;
+    if (this.projectId == null || this.bookNum == null || this.chapterNum == null) return undefined;
     return new TextDocId(this.projectId, this.bookNum, this.chapterNum);
   }
 
@@ -122,6 +137,10 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
 
   get showQuoteFormatWarning(): boolean {
     return this.canDenormalizeQuotes === false;
+  }
+
+  get bookNum(): number | undefined {
+    return this.bookNum$.getValue();
   }
 
   private get currentFormat(): DraftUsfmConfig | undefined {
@@ -147,24 +166,26 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
         if (this.booksWithDrafts.length === 0) return;
         this.loadingStarted();
 
-        let defaultBook = this.booksWithDrafts[0];
+        let initialBookNum = this.booksWithDrafts[0];
         if (params['bookId'] !== undefined && this.booksWithDrafts.includes(Canon.bookIdToNumber(params['bookId']))) {
-          defaultBook = Canon.bookIdToNumber(params['bookId']);
+          initialBookNum = Canon.bookIdToNumber(params['bookId']);
         }
-        let defaultChapter = 1;
-        this.chaptersWithDrafts = this.getChaptersWithDrafts(defaultBook, projectDoc.data);
-        if (params['chapter'] !== undefined && this.chaptersWithDrafts.includes(Number(params['chapter']))) {
-          defaultChapter = Number(params['chapter']);
-        } else if (this.chaptersWithDrafts.length > 0) {
-          defaultChapter = this.chaptersWithDrafts[0];
+        let initialChapterNum: number | undefined;
+        if (params['chapter'] !== undefined) {
+          initialChapterNum = Number(params['chapter']);
         }
-        this.bookChanged(defaultBook, defaultChapter);
+        this.subscribeBookAndChapters(initialBookNum, initialChapterNum);
       });
 
     this.updateDraftConfig$
       .pipe(
         quietTakeUntilDestroyed(this.destroyRef),
-        switchMap(config => this.draftHandlingService.getDraft(this.textDocId!, { isDraftLegacy: false, config }))
+        map(config => ({ config, textDocId: this.textDocId })),
+        switchMap(({ config, textDocId }) => {
+          // the textDocId would only be empty if a user unexpectedly navigates to formatting options by URL
+          if (textDocId == null) return EMPTY;
+          return this.draftHandlingService.getDraft(textDocId, { isDraftLegacy: false, config });
+        })
       )
       .subscribe(ops => {
         const draftDelta: Delta = new Delta(this.draftHandlingService.draftDataToOps(ops, []));
@@ -183,11 +204,8 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     });
   }
 
-  bookChanged(bookNum: number, chapterNum?: number): void {
-    this.bookNum = bookNum;
-    this.chaptersWithDrafts = this.getChaptersWithDrafts(bookNum, this.activatedProjectService.projectDoc!.data!);
-    this.chapterNum = chapterNum ?? this.chaptersWithDrafts[0] ?? 1;
-    this.reloadText();
+  bookChanged(bookNum: number): void {
+    this.bookNum$.next(bookNum);
   }
 
   chapterChanged(chapterNum: number): void {
@@ -253,12 +271,20 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
       });
   }
 
-  private getChaptersWithDrafts(bookNum: number, project: SFProjectProfile): number[] {
-    return (
-      project.texts
-        .find(t => t.bookNum === bookNum && this.projectService.hasDraft(project, t.bookNum, true))
-        ?.chapters.filter(c => c.lastVerse > 0)
-        .map(c => c.number) ?? []
-    );
+  private subscribeBookAndChapters(initialBookNum: number, initialChapterNum?: number): void {
+    combineLatest([this.draftSources$, this.bookNum$.pipe(filterNullish())])
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(async ([source, bookNum]) => {
+        this.translateSource ??= (await this.projectService.getProfile(source.draftingSources[0].projectRef)).data;
+
+        // determine the chapter to navigate to, using the initial chapter if it exists and no chapter is defined yet
+        this.chaptersWithDrafts =
+          this.translateSource?.texts.find(t => t.bookNum === bookNum)?.chapters.map(c => c.number) ?? [];
+        const chapter: number =
+          this.chapterNum == null ? (initialChapterNum ?? this.chaptersWithDrafts[0]) : this.chaptersWithDrafts[0];
+        this.chapterChanged(chapter);
+      });
+
+    this.bookChanged(initialBookNum);
   }
 }
