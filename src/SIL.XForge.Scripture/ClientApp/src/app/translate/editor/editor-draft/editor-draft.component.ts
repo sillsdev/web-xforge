@@ -147,10 +147,15 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   }
 
   get canApplyDraft(): boolean {
-    if (this.targetProject == null || this.bookNum == null || this.chapter == null || this.draftDelta?.ops == null) {
+    if (!this.hasDraftToApply) {
       return false;
     }
-    return this.draftHandlingService.canApplyDraft(this.targetProject, this.bookNum, this.chapter, this.draftDelta.ops);
+    return this.draftHandlingService.canApplyDraft(
+      this.targetProject!,
+      this.bookNum!,
+      this.chapter!,
+      this.draftDelta!.ops
+    );
   }
 
   get canConfigureFormatting(): boolean {
