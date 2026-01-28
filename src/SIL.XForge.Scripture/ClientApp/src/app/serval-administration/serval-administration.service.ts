@@ -7,6 +7,7 @@ import { ProjectService } from 'xforge-common/project.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { RetryingRequestService } from 'xforge-common/retrying-request.service';
 import { PARATEXT_API_NAMESPACE } from 'xforge-common/url-constants';
+import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_PROJECT_ROLES } from '../core/models/sf-project-role-info';
 
@@ -44,5 +45,17 @@ export class ServalAdministrationService extends ProjectService<SFProjectProfile
    */
   onlineRetrievePreTranslationStatus(projectId: string): Promise<void> {
     return this.onlineInvoke<void>('retrievePreTranslationStatus', { projectId });
+  }
+
+  /**
+   * Gets a project document by its Paratext ID.
+   * @param paratextId The Paratext project identifier.
+   * @returns A promise containing the project document, or undefined if not found.
+   */
+  async getByParatextId(paratextId: string): Promise<SFProjectDoc | undefined> {
+    const query = await this.realtimeService.onlineQuery<SFProjectDoc>(SFProjectDoc.COLLECTION, {
+      paratextId
+    });
+    return query.docs.length > 0 ? query.docs[0] : undefined;
   }
 }

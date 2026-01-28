@@ -1,0 +1,78 @@
+.draft-signup-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px;
+
+  .submitting-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 48px 0;
+    text-align: center;
+  }
+
+  .subtitle {
+    color: var(--sf-draft-signup-subtitle-color);
+    margin-bottom: 32px;
+  }
+
+  .signup-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    mat-card {
+      mat-card-content {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding-top: 20px;
+      }
+    }
+
+    mat-form-field {
+      width: 100%;
+    }
+
+    mat-radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .form-field-label {
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--sf-draft-signup-label-color);
+    }
+
+    .field-description {
+      margin: 0 0 8px 0;
+      font-size: 0.95rem; // slightly larger for readability
+      color: var(--sf-draft-signup-description-color);
+      font-style: normal; // remove italic to improve legibility
+      line-height: 1.3;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 8px;
+    }
+  }
+}
+
+// Mobile responsiveness
+@media (max-width: 600px) {
+  .draft-signup-container {
+    padding: 16px;
+  }
+}
+
+mat-error {
+  font-size: var(--mat-form-field-subscript-text-size);
+}
