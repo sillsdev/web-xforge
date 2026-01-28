@@ -289,7 +289,10 @@ public class Startup
         {
             endpoints.MapControllers();
             endpoints.MapRazorPages();
-            endpoints.MapHub<NotificationHub>(pattern: $"/{UrlConstants.ProjectNotifications}");
+            endpoints.MapHub<NotificationHub>(
+                pattern: $"/{UrlConstants.ProjectNotifications}",
+                options => options.AllowStatefulReconnects = true
+            );
             var authOptions = Configuration.GetOptions<AuthOptions>();
             endpoints.MapHangfireDashboard(
                 new DashboardOptions
