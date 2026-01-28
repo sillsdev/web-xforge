@@ -16,7 +16,11 @@ export class ProjectNotificationService {
     private authService: AuthService,
     private readonly onlineService: OnlineStatusService
   ) {
-    this.connection = new HubConnectionBuilder().withUrl('/project-notifications', this.options).build();
+    this.connection = new HubConnectionBuilder()
+      .withUrl('/project-notifications', this.options)
+      .withAutomaticReconnect()
+      .withStatefulReconnect()
+      .build();
   }
 
   get appOnline(): boolean {
