@@ -4,12 +4,14 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { By } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, Router } from '@angular/router';
+import { translate } from '@ngneat/transloco';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
+import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -108,6 +110,20 @@ describe('MyProjectsComponent', () => {
     tick();
     env.fixture.detectChanges();
     verify(mockedNoticeService.show(anything())).once();
+  }));
+
+  it('user notified joining a project fails', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.waitUntilLoaded();
+    when(mockedSFProjectService.onlineAddCurrentUser(anything())).thenReject(
+      new CommandError(CommandErrorCode.Forbidden, 'No Permission')
+    );
+    env.click(env.buttonForUnconnectedProject('pt-connButNotThisUser'));
+    tick();
+    env.fixture.detectChanges();
+    const message = translate('my_projects.user_no_permission_on_project');
+    verify(mockedNoticeService.show(message)).once();
+    expect(env.buttonForUnconnectedProject('pt-connButNotThisUser').nativeElement.disabled).toBe(false);
   }));
 
   it('lists my connected projects', fakeAsync(() => {
