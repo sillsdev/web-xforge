@@ -65,6 +65,9 @@ export class SyncProgressComponent {
   private sourceProjectDoc?: SFProjectDoc;
   private _projectDoc?: SFProjectDoc;
 
+  private readonly syncProgressHandler = (projectId: string, progressState: ProgressState): void =>
+    this.updateProgressState(projectId, progressState);
+
   constructor(
     private readonly projectService: SFProjectService,
     private readonly projectNotificationService: ProjectNotificationService,
@@ -73,11 +76,10 @@ export class SyncProgressComponent {
     private readonly onlineStatus: OnlineStatusService,
     private destroyRef: DestroyRef
   ) {
-    this.projectNotificationService.setNotifySyncProgressHandler((projectId: string, progressState: ProgressState) => {
-      this.updateProgressState(projectId, progressState);
-    });
+    this.projectNotificationService.setNotifySyncProgressHandler(this.syncProgressHandler);
     this.destroyRef.onDestroy(async () => {
       await this.projectNotificationService.stop();
+      this.projectNotificationService.removeNotifySyncProgressHandler(this.syncProgressHandler);
     });
   }
 

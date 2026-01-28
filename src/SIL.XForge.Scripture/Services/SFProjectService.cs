@@ -1492,6 +1492,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         });
     }
 
+    [Obsolete("Use MachineApiService.ApplyPreTranslationToProjectAsync instead. Deprecated 2025-12")]
     public async Task AddChaptersAsync(string userId, string projectId, int book, int[] chapters)
     {
         await using IConnection conn = await RealtimeService.ConnectAsync();
