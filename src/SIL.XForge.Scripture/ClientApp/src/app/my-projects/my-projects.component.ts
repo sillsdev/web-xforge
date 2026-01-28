@@ -11,6 +11,7 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { isPTUser } from 'realtime-server/lib/esm/common/models/user';
 import { isResource } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { Observable } from 'rxjs';
+import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { en, I18nService } from 'xforge-common/i18n.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -21,7 +22,6 @@ import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { environment } from '../../environments/environment';
 import { ObjectPaths } from '../../type-utils';
-import { CommandError, CommandErrorCode } from '../../xforge-common/command.service';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
@@ -147,9 +147,9 @@ export class MyProjectsComponent implements OnInit {
     } catch (error) {
       if (error instanceof CommandError && error.code === CommandErrorCode.Forbidden) {
         this.noticeService.show(this.i18n.translateStatic('my_projects.user_no_permission_on_project'));
-        return;
+      } else {
+        this.noticeService.show(this.i18n.translateStatic('my_projects.failed_to_join_project'));
       }
-      this.noticeService.show(this.i18n.translateStatic('my_projects.failed_to_join_project'));
     } finally {
       this.noticeService.loadingFinished(this.constructor.name);
       this.joiningProjects.pop();
