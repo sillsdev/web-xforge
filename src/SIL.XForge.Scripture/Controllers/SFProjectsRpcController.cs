@@ -874,6 +874,38 @@ public class SFProjectsRpcController(
         }
     }
 
+    public async Task<IRpcMethodResult> GetProjectIdByParatextId(string paratextId)
+    {
+        try
+        {
+            string projectId = await projectService.GetProjectIdFromParatextIdAsync(SystemRoles, paratextId);
+            return Ok(projectId);
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch (InvalidOperationException e)
+        {
+            return InvalidParamsError(e.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", "GetProjectIdByParatextId" },
+                    { "paratextId", paratextId },
+                }
+            );
+            throw;
+        }
+    }
+
     public async Task<IRpcMethodResult> SetServalConfig(string projectId, string? servalConfig)
     {
         try

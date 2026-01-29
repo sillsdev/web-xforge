@@ -3772,6 +3772,54 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public void GetProjectIdFromParatextIdAsync_RequiresServalAdminOrSystemAdmin()
+    {
+        var env = new TestEnvironment();
+        string? paratextId = env.GetProject(Project01).ParatextId;
+        Assert.IsNotNull(paratextId, "setup");
+
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.GetProjectIdFromParatextIdAsync([SystemRole.User], paratextId!)
+        );
+        Assert.DoesNotThrowAsync(() =>
+            env.Service.GetProjectIdFromParatextIdAsync([SystemRole.SystemAdmin], paratextId!)
+        );
+        Assert.DoesNotThrowAsync(() =>
+            env.Service.GetProjectIdFromParatextIdAsync([SystemRole.ServalAdmin], paratextId!)
+        );
+    }
+
+    [Test]
+    public void GetProjectIdFromParatextIdAsync_ParatextIdRequired()
+    {
+        var env = new TestEnvironment();
+        Assert.ThrowsAsync<InvalidOperationException>(() =>
+            env.Service.GetProjectIdFromParatextIdAsync([SystemRole.ServalAdmin], "  ")
+        );
+    }
+
+    [Test]
+    public void GetProjectIdFromParatextIdAsync_ProjectMustExist()
+    {
+        var env = new TestEnvironment();
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetProjectIdFromParatextIdAsync([SystemRole.ServalAdmin], "missing-pt-id")
+        );
+    }
+
+    [Test]
+    public async Task GetProjectIdFromParatextIdAsync_ReturnsProjectId()
+    {
+        var env = new TestEnvironment();
+        string? paratextId = env.GetProject(Project01).ParatextId;
+        Assert.IsNotNull(paratextId, "setup");
+
+        string projectId = await env.Service.GetProjectIdFromParatextIdAsync([SystemRole.ServalAdmin], paratextId!);
+
+        Assert.AreEqual(Project01, projectId);
+    }
+
+    [Test]
     public async Task SetServalConfigAsync_AllowsNull()
     {
         var env = new TestEnvironment();
