@@ -11,6 +11,7 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { isPTUser } from 'realtime-server/lib/esm/common/models/user';
 import { isResource } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { Observable } from 'rxjs';
+import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { en, I18nService } from 'xforge-common/i18n.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -143,8 +144,12 @@ export class MyProjectsComponent implements OnInit {
       this.joiningProjects.push(projectId);
       await this.projectService.onlineAddCurrentUser(projectId);
       void this.router.navigate(['projects', projectId]);
-    } catch {
-      this.noticeService.show(this.i18n.translateStatic('my_projects.failed_to_join_project'));
+    } catch (error) {
+      if (error instanceof CommandError && error.code === CommandErrorCode.Forbidden) {
+        this.noticeService.show(this.i18n.translateStatic('my_projects.user_no_permission_on_project'));
+      } else {
+        this.noticeService.show(this.i18n.translateStatic('my_projects.failed_to_join_project'));
+      }
     } finally {
       this.noticeService.loadingFinished(this.constructor.name);
       this.joiningProjects.pop();
