@@ -854,6 +854,77 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    public async Task GetProjectIdByParatextId_Success()
+    {
+        var env = new TestEnvironment();
+        const string paratextId = "paratext-id";
+        const string projectId = "project-id";
+        env.SFProjectService.GetProjectIdFromParatextIdAsync(Roles, paratextId).Returns(projectId);
+
+        var result = await env.Controller.GetProjectIdByParatextId(paratextId);
+
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        Assert.AreEqual(projectId, (result as RpcMethodSuccessResult)!.ReturnObject);
+        await env.SFProjectService.Received().GetProjectIdFromParatextIdAsync(Roles, paratextId);
+    }
+
+    [Test]
+    public async Task GetProjectIdByParatextId_Forbidden()
+    {
+        var env = new TestEnvironment();
+        const string paratextId = "paratext-id";
+        env.SFProjectService.GetProjectIdFromParatextIdAsync(Roles, paratextId).Throws(new ForbiddenException());
+
+        var result = await env.Controller.GetProjectIdByParatextId(paratextId);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task GetProjectIdByParatextId_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string paratextId = "paratext-id";
+        const string errorMessage = "Not Found";
+        env.SFProjectService.GetProjectIdFromParatextIdAsync(Roles, paratextId)
+            .Throws(new DataNotFoundException(errorMessage));
+
+        var result = await env.Controller.GetProjectIdByParatextId(paratextId);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task GetProjectIdByParatextId_InvalidParams()
+    {
+        var env = new TestEnvironment();
+        const string paratextId = "paratext-id";
+        const string errorMessage = "The Paratext ID must be provided.";
+        env.SFProjectService.GetProjectIdFromParatextIdAsync(Roles, paratextId)
+            .Throws(new InvalidOperationException(errorMessage));
+
+        var result = await env.Controller.GetProjectIdByParatextId(paratextId);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual((int)RpcErrorCode.InvalidParams, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void GetProjectIdByParatextId_UnknownError()
+    {
+        var env = new TestEnvironment();
+        const string paratextId = "paratext-id";
+        env.SFProjectService.GetProjectIdFromParatextIdAsync(Roles, paratextId).Throws(new ArgumentNullException());
+
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.GetProjectIdByParatextId(paratextId));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
     public async Task SetServalConfig_Success()
     {
         var env = new TestEnvironment();

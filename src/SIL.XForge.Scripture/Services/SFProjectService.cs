@@ -1233,6 +1233,23 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         );
     }
 
+    public Task<string> GetProjectIdFromParatextIdAsync(string[] systemRoles, string paratextId)
+    {
+        if (!(systemRoles.Contains(SystemRole.ServalAdmin) || systemRoles.Contains(SystemRole.SystemAdmin)))
+            throw new ForbiddenException();
+
+        if (string.IsNullOrWhiteSpace(paratextId))
+            throw new InvalidOperationException("The Paratext ID must be provided.");
+
+        SFProject project =
+            RealtimeService
+                .QuerySnapshots<SFProject>()
+                .FirstOrDefault(p => string.Equals(p.ParatextId, paratextId, StringComparison.Ordinal))
+            ?? throw new DataNotFoundException("The project does not exist.");
+
+        return Task.FromResult(project.Id);
+    }
+
     public async Task SetUsfmConfigAsync(string curUserId, string projectId, DraftUsfmConfig config)
     {
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
