@@ -27,19 +27,19 @@ jobs:
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
       - name: "Cache realtimeserver backend"
         id: cache-realtimeserver-backend
-        uses: actions/cache@v4
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           key: realtimeserver-backend-${{ runner.os }}-${{ hashFiles('src/RealtimeServer/**') }}
           path: |
             src/RealtimeServer/lib
             src/RealtimeServer/node_modules
       - name: "Deps: Node"
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: ${{matrix.node_version}}
           cache: "npm"
@@ -85,12 +85,12 @@ jobs:
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
       - name: "Cache frontend"
         id: cache-frontend
-        uses: actions/cache@v4
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           key: frontend-${{ runner.os }}-${{ hashFiles('src/SIL.XForge.Scripture/ClientApp/**') }}
           path: |
@@ -99,7 +99,7 @@ jobs:
             src/SIL.XForge.Scripture/ClientApp/node_modules
       - name: "Restore cached backend realtimeserver"
         id: cache-restore-realtimeserver
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           key: realtimeserver-backend-${{ runner.os }}-${{ hashFiles('src/RealtimeServer/**') }}
           # (Cache miss here means a mistake in workflow design.)
@@ -108,7 +108,7 @@ jobs:
             src/RealtimeServer/lib
             src/RealtimeServer/node_modules
       - name: "Deps: Node"
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: ${{matrix.node_version}}
           cache: "npm"
@@ -155,7 +155,7 @@ jobs:
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
       - name: "Generate dotnet backend source hash"
@@ -174,7 +174,7 @@ jobs:
             cut --delimiter ' ' --fields 1)" >> $GITHUB_OUTPUT
       - name: "Cache backend"
         id: cache-backend
-        uses: actions/cache@v4
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           key: backend-${{ runner.os }}-${{ steps.dotnet-backend-source-hash.outputs.hash }}
           path: |
@@ -197,7 +197,7 @@ jobs:
             ~/.nuget
       - name: "Restore cached backend realtimeserver"
         id: cache-restore-realtimeserver
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           key: realtimeserver-backend-${{ runner.os }}-${{ hashFiles('src/RealtimeServer/**') }}
           # (Cache miss here means a mistake in workflow design.)
@@ -206,7 +206,7 @@ jobs:
             src/RealtimeServer/lib
             src/RealtimeServer/node_modules
       - name: "Deps: .NET"
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@baa11fbfe1d6520db94683bd5c7a3818018e4309 # v5.1.0
         with:
           dotnet-version: ${{matrix.dotnet_version}}
           cache: true
@@ -237,12 +237,12 @@ jobs:
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
       - name: "Deps: Node"
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: ${{matrix.node_version}}
           cache: "npm"
@@ -272,7 +272,7 @@ jobs:
           echo "year_month_stamp=$(date +%Y-%m)" >> $GITHUB_OUTPUT
       - name: "Cache Playwright browsers"
         id: cache-playwright-browsers
-        uses: actions/cache@v4
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           key: playwright-browsers-${{ runner.os }}-${{ steps.year-month-stamp.outputs.year_month_stamp }}
           restore-keys: |
@@ -298,7 +298,7 @@ jobs:
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
@@ -319,7 +319,7 @@ jobs:
 
       - name: "Restore cached backend realtimeserver"
         id: cache-restore-realtimeserver
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           key: realtimeserver-backend-${{ runner.os }}-${{ hashFiles('src/RealtimeServer/**') }}
           # (Cache miss here means a mistake in workflow design.)
@@ -330,7 +330,7 @@ jobs:
 
       - name: "Restore cached frontend"
         id: cache-restore-frontend
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           key: frontend-${{ runner.os }}-${{ hashFiles('src/SIL.XForge.Scripture/ClientApp/**') }}
           # (Cache miss here means a mistake in workflow design.)
@@ -342,7 +342,7 @@ jobs:
 
       - name: "Restore cached backend dotnet"
         id: cache-restore-dotnet
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           key: backend-${{ runner.os }}-${{ steps.dotnet-backend-source-hash.outputs.hash }}
           # (Cache miss here means a mistake in workflow design.)
@@ -373,7 +373,7 @@ jobs:
           echo "year_month_stamp=$(date +%Y-%m)" >> $GITHUB_OUTPUT
       - name: "Restore cache e2e dependencies"
         id: cache-restore-e2e-dependencies
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           key: playwright-browsers-${{ runner.os }}-${{ steps.year-month-stamp.outputs.year_month_stamp }}
           restore-keys: |
@@ -384,14 +384,14 @@ jobs:
             ~/.cache/ms-playwright
 
       - name: "Deps: .NET"
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@baa11fbfe1d6520db94683bd5c7a3818018e4309 # v5.1.0
         with:
           dotnet-version: ${{matrix.dotnet_version}}
           cache: true
           cache-dependency-path: src/SIL.XForge.Scripture/packages.lock.json
 
       - name: "Deps: Node"
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: ${{matrix.node_version}}
           cache: "npm"
@@ -482,7 +482,7 @@ jobs:
         run: ./src/SIL.XForge.Scripture/ClientApp/e2e/pre_merge_ci.sh
 
       - name: Publish test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         # Run this step even if the job fails.
         if: always()
         with:
