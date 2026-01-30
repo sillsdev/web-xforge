@@ -273,11 +273,21 @@ export async function deleteProject(page: Page, shortName: string): Promise<void
   }
 }
 
-export async function enableFeatureFlag(page: Page, flag: string): Promise<void> {
-  await enableDeveloperMode(page);
+export async function setFeatureFlagState(page: Page, flag: string, enabled: boolean): Promise<void> {
+  await enableDeveloperMode(page, { closeMenu: false });
   await page.getByRole('menuitem', { name: 'Developer settings' }).click();
-  await page.getByRole('checkbox', { name: flag }).check();
+  const checkbox = await page.getByRole('checkbox', { name: flag });
+  if (enabled) await checkbox.check();
+  else await checkbox.uncheck();
   await page.keyboard.press('Escape');
+}
+
+export async function enableFeatureFlag(page: Page, flag: string): Promise<void> {
+  await setFeatureFlagState(page, flag, true);
+}
+
+export async function disableFeatureFlag(page: Page, flag: string): Promise<void> {
+  await setFeatureFlagState(page, flag, false);
 }
 
 export async function enableDeveloperMode(page: Page, options = { closeMenu: false }): Promise<void> {
