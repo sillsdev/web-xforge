@@ -1,5 +1,5 @@
 import { CdkScrollable } from '@angular/cdk/scrolling';
-import { AsyncPipe } from '@angular/common';
+import { AsyncPipe, NgTemplateOutlet } from '@angular/common';
 import { Component, DestroyRef, ElementRef, Inject, NgZone, OnDestroy, ViewChild } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatAnchor, MatButton, MatIconButton } from '@angular/material/button';
@@ -19,6 +19,7 @@ import { MatIcon } from '@angular/material/icon';
 import { MatInput } from '@angular/material/input';
 import { MatProgressBar } from '@angular/material/progress-bar';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatOption, MatSelect } from '@angular/material/select';
 import {
   MatCell,
   MatCellDef,
@@ -45,11 +46,14 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { RetryingRequest } from 'xforge-common/retrying-request.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { stripHtml } from 'xforge-common/util/string-util';
 import { objectId } from 'xforge-common/utils';
 import { environment } from '../../../environments/environment';
+import { ParatextProject } from '../../core/models/paratext-project';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { TransceleratorQuestion } from '../../core/models/transcelerator-question';
+import { ParatextNote, ParatextNoteTag, ParatextService } from '../../core/paratext.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import {
   ScriptureChooserDialogComponent,
@@ -83,8 +87,21 @@ interface DialogListItem {
   sfVersionOfQuestion?: QuestionDoc;
 }
 
-type DialogErrorState = 'update_transcelerator' | 'file_import_errors' | 'missing_header_row' | 'offline_conversion';
-type DialogStatus = 'initial' | 'no_questions' | 'filter' | 'loading' | 'progress' | DialogErrorState;
+type DialogErrorState =
+  | 'update_transcelerator'
+  | 'file_import_errors'
+  | 'missing_header_row'
+  | 'offline_conversion'
+  | 'paratext_tag_load_error';
+type DialogStatus =
+  | 'initial'
+  | 'no_questions'
+  | 'filter_questions'
+  | 'filter_notes'
+  | 'loading'
+  | 'progress'
+  | 'paratext_tag_selection'
+  | DialogErrorState;
 
 @Component({
   templateUrl: './import-questions-dialog.component.html',
@@ -125,11 +142,14 @@ type DialogStatus = 'initial' | 'no_questions' | 'filter' | 'loading' | 'progres
     MatCheckbox,
     MatProgressBar,
     MatDialogActions,
-    AsyncPipe
+    AsyncPipe,
+    NgTemplateOutlet,
+    MatSelect,
+    MatOption
   ]
 })
 export class ImportQuestionsDialogComponent implements OnDestroy {
-  questionSource: null | 'transcelerator' | 'csv_file' = null;
+  questionSource: null | 'transcelerator' | 'csv_file' | 'paratext' = null;
 
   questionList: DialogListItem[] = [];
   filteredList: DialogListItem[] = [];
@@ -145,6 +165,12 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
   toImportCount: number = 0;
   importCanceled: boolean = false;
   fileExtensions: string = '.csv,.tsv';
+
+  showParatextTagSelector = false;
+  paratextTagOptions: ParatextNoteTag[] = [];
+  selectedParatextTagId: number | null = null;
+  private paratextNotes: ParatextNote[] = [];
+  private paratextProjectsPromise?: Promise<ParatextProject[] | undefined>;
 
   @ViewChild('selectAllCheckbox') selectAllCheckbox!: MatCheckbox;
   @ViewChild('dialogContentBody') dialogContentBody!: ElementRef;
@@ -168,6 +194,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
     private readonly destroyRef: DestroyRef,
     @Inject(MAT_DIALOG_DATA) public readonly data: ImportQuestionsDialogData,
     projectService: SFProjectService,
+    private readonly paratextService: ParatextService,
     private readonly checkingQuestionsService: CheckingQuestionsService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly dialogRef: MatDialogRef<ImportQuestionsDialogComponent>,
@@ -230,11 +257,15 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
     if (this.importing) {
       return 'progress';
     }
+    if (this.showParatextTagSelector) {
+      return 'paratext_tag_selection';
+    }
     if (this.invalidRows.length !== 0) {
       return 'file_import_errors';
     }
     if (this.questionSource != null) {
-      return this.questionList.length === 0 ? 'no_questions' : 'filter';
+      if (this.questionList.length === 0) return 'no_questions';
+      return this.selectedParatextTagId !== null ? 'filter_notes' : 'filter_questions';
     } else {
       return 'initial';
     }
@@ -270,6 +301,13 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
       .split('\n');
   }
 
+  get paratextInstructions(): string[] {
+    const importFromParatext = this.transloco.translate('import_questions_dialog.import_from_paratext');
+    return this.i18n
+      .translateAndInsertTags('import_questions_dialog.paratext_instructions', { importFromParatext })
+      .split('\n');
+  }
+
   get showDuplicateImportNote(): boolean {
     return this.filteredList.some(item => item.checked && item.sfVersionOfQuestion != null);
   }
@@ -278,12 +316,16 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
     return this.status === 'initial' || this.status === 'loading';
   }
 
+  get isOnline(): boolean {
+    return this.onlineStatusService.isOnline;
+  }
+
   ngOnDestroy(): void {
     void this.promiseForQuestionDocQuery.then(query => query.dispose());
   }
 
   dialogScroll(): void {
-    if (this.status === 'file_import_errors' || this.status === 'filter') {
+    if (this.status === 'file_import_errors' || this.status === 'filter_notes' || this.status === 'filter_questions') {
       const element = this.dialogContentBody.nativeElement;
       // add more list items if the user has scrolled to within 1000 pixels of the bottom of the list
       if (element.scrollHeight <= element.scrollTop + element.clientHeight + 1000) {
@@ -305,9 +347,10 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
       // Questions imported from a file should be skipped only if they are exactly the same as what is currently in SF.
       const sfVersionOfQuestion: QuestionDoc | undefined = questionQuery.docs.find(
         doc =>
-          doc.data != null &&
-          (useQuestionIds ? doc.data.transceleratorQuestionId === question.id : doc.data.text === question.text) &&
-          toVerseRef(doc.data.verseRef).equals(question.verseRef)
+          (doc.data != null &&
+            (useQuestionIds ? doc.data.transceleratorQuestionId === question.id : doc.data.text === question.text) &&
+            toVerseRef(doc.data.verseRef).equals(question.verseRef)) ||
+          (useQuestionIds ? doc.data?.paratextNoteId === question.id : doc.data?.text === question.text)
       );
 
       this.questionList.push({
@@ -376,6 +419,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
 
   async importQuestions(): Promise<void> {
     this.importClicked = true;
+    const status = this.status; //capture the state before we update it
 
     if (this.selectedCount < 1) {
       return;
@@ -404,9 +448,15 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
           answers: [],
           isArchived: false,
           dateCreated: currentDate,
-          dateModified: currentDate,
-          transceleratorQuestionId: listItem.question.id
+          dateModified: currentDate
         };
+
+        if (status === 'filter_questions') {
+          newQuestion.transceleratorQuestionId = listItem.question.id;
+        } else if (status === 'filter_notes') {
+          newQuestion.paratextNoteId = listItem.question.id;
+        }
+
         await this.zone.runOutsideAngular(() =>
           this.checkingQuestionsService.createQuestion(this.data.projectId, newQuestion, undefined, undefined)
         );
@@ -455,6 +505,152 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
     }
     this.questionSource = 'transcelerator';
     this.loading = false;
+  }
+
+  async importFromParatext(): Promise<void> {
+    this.loading = true;
+    this.importClicked = false;
+    this.errorState = undefined;
+    this.questionSource = 'paratext';
+    this.questionList = [];
+    this.filteredList = [];
+    this.invalidRows = [];
+    this.showParatextTagSelector = true;
+    this.selectedParatextTagId = null;
+    this.paratextNotes = [];
+    this.paratextTagOptions = [];
+
+    try {
+      const paratextId = await this.getParatextProjectId();
+      if (paratextId == null) {
+        this.errorState = 'paratext_tag_load_error';
+        return;
+      }
+
+      const notes = await this.paratextService.getNotes(paratextId);
+      this.paratextNotes = notes ?? [];
+      this.paratextTagOptions = this.collectParatextTagOptions(this.paratextNotes);
+      if (this.paratextTagOptions.length > 0) {
+        this.selectedParatextTagId = this.paratextTagOptions[0].id;
+      }
+    } catch (error) {
+      console.error('Failed to load notes from Paratext: ', error);
+      this.paratextNotes = [];
+      this.paratextTagOptions = [];
+      this.selectedParatextTagId = null;
+      this.errorState = 'paratext_tag_load_error';
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  reset(): void {
+    this.showParatextTagSelector = false;
+    this.questionSource = null;
+    this.errorState = undefined;
+    this.paratextNotes = [];
+    this.paratextTagOptions = [];
+    this.selectedParatextTagId = null;
+    this.importClicked = false;
+  }
+
+  async confirmParatextTagSelection(): Promise<void> {
+    const tagId = this.selectedParatextTagId;
+    if (tagId == null) {
+      return;
+    }
+
+    this.loading = true;
+    this.showParatextTagSelector = false;
+    this.questionList = [];
+    this.filteredList = [];
+    this.invalidRows = [];
+    this.errorState = undefined;
+
+    const questions = this.convertParatextCommentsToQuestions(this.paratextNotes, tagId);
+    await this.setUpQuestionList(questions, true);
+
+    this.loading = false;
+  }
+
+  private async getParatextProjectId(): Promise<string | undefined> {
+    try {
+      this.paratextProjectsPromise ??= this.paratextService.getProjects();
+      const projects = await this.paratextProjectsPromise;
+      const project = projects?.find(p => p.projectId === this.data.projectId);
+      return project?.paratextId;
+    } catch (error) {
+      console.error('Failed to load Paratext project list: ', error);
+      this.paratextProjectsPromise = undefined;
+      throw error;
+    }
+  }
+
+  private collectParatextTagOptions(notes: ParatextNote[]): ParatextNoteTag[] {
+    const tagMap = new Map<number, ParatextNoteTag>();
+    for (const note of notes) {
+      for (const comment of note.comments ?? []) {
+        if (comment.tag != null && !tagMap.has(comment.tag.id)) {
+          tagMap.set(comment.tag.id, comment.tag);
+        }
+      }
+    }
+
+    return Array.from(tagMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name, this.i18n.localeCode, { sensitivity: 'base' })
+    );
+  }
+
+  private convertParatextCommentsToQuestions(notes: ParatextNote[], tagId: number): SourceQuestion[] {
+    const questions: SourceQuestion[] = [];
+
+    for (const note of notes) {
+      const comments = note.comments ?? [];
+      for (let index = 0; index < comments.length; index++) {
+        const comment = comments[index];
+        if (comment.tag == null || comment.tag.id !== tagId) {
+          continue;
+        }
+
+        const verseRef = this.parseVerseReference(note.verseRef);
+        if (verseRef == null) {
+          continue;
+        }
+
+        const questionText = stripHtml(comment.content ?? '').trim();
+        if (questionText.length === 0) {
+          continue;
+        }
+
+        questions.push({
+          id: note.id,
+          verseRef,
+          text: questionText
+        });
+
+        break;
+      }
+    }
+
+    return questions;
+  }
+
+  private parseVerseReference(reference: string | undefined): VerseRef | null {
+    if (reference == null) {
+      return null;
+    }
+
+    const trimmedReference = reference.trim();
+    if (trimmedReference.length === 0) {
+      return null;
+    }
+
+    const parseResult = VerseRef.tryParse(trimmedReference);
+    if (parseResult.success !== true || parseResult.verseRef == null) {
+      return null;
+    }
+
+    return parseResult.verseRef;
   }
 
   async fileSelected(file: File): Promise<void> {

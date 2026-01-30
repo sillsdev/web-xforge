@@ -53,6 +53,7 @@ public interface IParatextService
         Dictionary<int, string> chapterAuthors = null
     );
     string GetNotes(UserSecret userSecret, string paratextId, int bookNum);
+    IReadOnlyList<ParatextNote>? GetNoteThreads(UserSecret userSecret, string paratextId);
     SyncMetricInfo PutNotes(UserSecret userSecret, string paratextId, XElement notesElement);
     Task<SyncMetricInfo> UpdateParatextCommentsAsync(
         UserSecret userSecret,

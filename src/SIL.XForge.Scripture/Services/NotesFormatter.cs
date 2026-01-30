@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
 using Paratext.Data;
@@ -19,9 +20,16 @@ namespace SIL.XForge.Scripture.Services;
 ///  * Additional null checking
 ///  * Code reformatting
 /// </remarks>
-public static class NotesFormatter
+public static partial class NotesFormatter
 {
     private const string NotesSchemaVersion = "1.1";
+
+    /// <summary>
+    /// The regular expression for finding whitespace before XML tags.
+    /// </summary>
+    /// <remarks>This is used by <see cref="ParseNotesToXElement"/>.</remarks>
+    [GeneratedRegex(@"\n\s*<", RegexOptions.CultureInvariant)]
+    private static partial Regex WhitespaceBeforeTagsRegex();
 
     #region Public methods
     /// <summary>
@@ -48,6 +56,19 @@ public static class NotesFormatter
     /// </remarks>
     public static List<List<Comment>> ParseNotes(XElement noteXml, ParatextUser ptUser) =>
         [.. noteXml.Elements("thread").Select(threadElem => ParseThread(threadElem, ptUser))];
+
+    /// <summary>
+    /// Parses the string representation of notes from Paratext into nested XElement's.
+    /// </summary>
+    /// <remarks>
+    /// Preserve all whitespace in data but remove whitespace at the beginning of lines and remove line endings.
+    /// </remarks>
+    public static XElement ParseNotesToXElement(string text)
+    {
+        text = text.Trim().Replace("\r\n", "\n");
+        text = WhitespaceBeforeTagsRegex().Replace(text, "<");
+        return XElement.Parse(text, LoadOptions.PreserveWhitespace);
+    }
 
     #endregion
 
@@ -149,6 +170,7 @@ public static class NotesFormatter
 
         return selElem;
     }
+
     #endregion
 
     #region Private helper methods for parsing

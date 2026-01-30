@@ -1268,6 +1268,19 @@ public class ParatextService : DisposableBase, IParatextService
         return booksUpdated;
     }
 
+    /// <summary> Gets note threads from the Paratext project and maps them to Scripture Forge models. </summary>
+    public IReadOnlyList<ParatextNote>? GetNoteThreads(UserSecret userSecret, string paratextId)
+    {
+        using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
+        if (scrText == null)
+            return null;
+
+        CommentManager manager = CommentManager.Get(scrText);
+        CommentTags? commentTags = CommentTags.Get(scrText);
+
+        return _paratextDataHelper.GetNotes(manager, commentTags);
+    }
+
     /// <summary> Get notes from the Paratext project folder. </summary>
     public string GetNotes(UserSecret userSecret, string paratextId, int bookNum)
     {
@@ -1474,6 +1487,15 @@ public class ParatextService : DisposableBase, IParatextService
         );
 
         return PutCommentThreads(userSecret, paratextId, noteThreadChangeList);
+    }
+
+    internal CommentTags? GetCommentTags(UserSecret userSecret, string paratextId)
+    {
+        string? ptUsername = GetParatextUsername(userSecret);
+        if (ptUsername == null)
+            return null;
+        ScrText? scrText = ScrTextCollection.FindById(ptUsername, paratextId);
+        return scrText == null ? null : CommentTags.Get(scrText);
     }
 
     /// <summary> Adds the comment tag to the list of comment tags if that tag does not already exist. </summary>
@@ -3006,15 +3028,6 @@ public class ParatextService : DisposableBase, IParatextService
         string path = Path.Join(commentManager.ScrText.Directory, fileName);
         using Stream stream = _fileSystemService.CreateFile(path);
         _fileSystemService.WriteXmlFile(stream, userComments);
-    }
-
-    private CommentTags? GetCommentTags(UserSecret userSecret, string paratextId)
-    {
-        string? ptUsername = GetParatextUsername(userSecret);
-        if (ptUsername == null)
-            return null;
-        ScrText? scrText = ScrTextCollection.FindById(ptUsername, paratextId);
-        return scrText == null ? null : CommentTags.Get(scrText);
     }
 
     private async Task<string> CallApiAsync(
