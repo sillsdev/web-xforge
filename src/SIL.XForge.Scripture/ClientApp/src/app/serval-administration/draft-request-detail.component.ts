@@ -235,7 +235,7 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
   }
 
   get isResolved(): boolean {
-    return this.request?.resolution != null;
+    return this.request?.resolution !== 'unresolved';
   }
 
   getStatus = this.onboardingRequestService.getStatus;

@@ -28,9 +28,9 @@ public class OnboardingRequest : IIdentifiable
     public string AssigneeId { get; set; } = string.Empty;
 
     /// <summary>
-    /// The resolution of this request: null (default), "approved", "declined", or "outsourced".
+    /// The resolution of this request: "unresolved' (default), "approved", "declined", or "outsourced".
     /// </summary>
-    public string? Resolution { get; set; }
+    public string Resolution { get; set; }
 
     /// <summary>
     /// Gets the status of this request based on assignee and resolution.
@@ -41,7 +41,7 @@ public class OnboardingRequest : IIdentifiable
     {
         get
         {
-            if (!string.IsNullOrEmpty(Resolution))
+            if (Resolution != "unresolved")
             {
                 return "completed";
             }
