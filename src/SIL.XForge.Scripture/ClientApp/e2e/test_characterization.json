@@ -26,5 +26,9 @@
   "edit_translation": {
     "success": 33,
     "failure": 3
+  },
+  "onboarding_flow": {
+    "success": 7,
+    "failure": 0
   }
 }
