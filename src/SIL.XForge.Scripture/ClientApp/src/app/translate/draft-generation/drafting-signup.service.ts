@@ -70,7 +70,7 @@ export type DraftRequestStatusOption = (typeof DRAFT_REQUEST_STATUS_OPTIONS)[num
 export type DraftRequestStatusMetadata = (typeof DRAFT_REQUEST_STATUS_OPTIONS)[number];
 
 export const DRAFT_REQUEST_RESOLUTION_OPTIONS = [
-  { key: null, label: 'Unresolved', icon: 'help_outline', color: 'gray' },
+  { key: 'unresolved', label: 'Unresolved', icon: 'help_outline', color: 'gray' },
   { key: 'approved', label: 'Approved', icon: 'check_circle', color: 'green' },
   { key: 'declined', label: 'Declined', icon: 'cancel', color: 'red' },
   { key: 'outsourced', label: 'Outsourced', icon: 'launch', color: 'blue' }
@@ -91,9 +91,7 @@ export class OnboardingRequestService {
   }
 
   getResolution(resolution: DraftRequestResolutionKey): DraftRequestResolutionMetadata {
-    // Use weak equality so status can be undefined or null
-    // eslint-disable-next-line eqeqeq
-    return DRAFT_REQUEST_RESOLUTION_OPTIONS.find(opt => opt.key == resolution)!;
+    return DRAFT_REQUEST_RESOLUTION_OPTIONS.find(opt => opt.key === resolution)!;
   }
 
   /** Approves an onboarding request and enables pre-translation for the project. */

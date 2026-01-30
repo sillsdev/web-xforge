@@ -65,6 +65,7 @@ public class OnboardingRequestRpcController(
                     Timestamp = DateTime.UtcNow,
                     FormData = formData,
                 },
+                Resolution = "unresolved",
             };
 
             await onboardingRequestRepository.InsertAsync(request);
