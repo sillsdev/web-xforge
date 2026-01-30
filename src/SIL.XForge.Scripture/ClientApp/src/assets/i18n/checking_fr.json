@@ -407,6 +407,7 @@
     "update_role": "Mettre à jour le rôle",
     "updated_roles": "Rôles actualisés",
     "update_paratext_role": "Votre rôle dans ce projet a changé dans Paratext.",
+    "user_no_permission_on_project": "Vous n'avez pas la permission d'accéder à ce projet. Contactez un administrateur du projet pour obtenir l'accès.",
     "user_role_updated": "Votre rôle dans ce projet a été mis à jour avec succès."
   },
   "roles": {

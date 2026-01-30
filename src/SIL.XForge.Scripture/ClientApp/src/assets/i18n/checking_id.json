@@ -407,6 +407,7 @@
     "update_role": "Perbarui Peran",
     "updated_roles": "Perbarui Peran",
     "update_paratext_role": "Peran Anda dalam proyek ini telah berubah di Paratext.",
+    "user_no_permission_on_project": "You do not have permission to access this project. Contact an administrator of the project to get access.",
     "user_role_updated": "Peran Anda dalam proyek ini telah berhasil diperbarui."
   },
   "roles": {
