@@ -6,6 +6,9 @@ html {
   @include mat.elevation-classes();
   @include mat.app-background();
   @include mat.all-component-themes($default-theme);
+  // Enable M2-style `color="primary" | "accent" | "warn"` variants for M3 themes.
+  // This keeps existing templates working (e.g. `<button mat-button color="accent">`).
+  @include mat.color-variants-backwards-compatibility($default-theme);
   @include mat.all-component-typographies($default-theme);
   @include mat.typography-hierarchy($default-theme);
 }

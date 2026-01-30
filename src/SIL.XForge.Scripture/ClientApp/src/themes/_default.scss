@@ -162,5 +162,7 @@ $_dark-theme: mat.define-theme(
 html.theme-default-dark {
   color-scheme: dark;
   @include mat.all-component-colors($_dark-theme);
+  // Keep `color="primary" | "accent" | "warn"` working in dark mode too.
+  @include mat.color-variants-backwards-compatibility($_dark-theme);
   @include mat-styles.theme($_dark-theme);
 }

@@ -97,7 +97,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   generateDraftUrl?: string;
   targetProject?: SFProjectProfile;
   textDocId?: TextDocId;
-  isDraftReady = false;
+  canSelectDraft = false;
   isDraftApplied = false;
   userAppliedDraft = false;
 
@@ -147,10 +147,15 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   }
 
   get canApplyDraft(): boolean {
-    if (this.targetProject == null || this.bookNum == null || this.chapter == null || this.draftDelta?.ops == null) {
+    if (!this.hasDraftToApply) {
       return false;
     }
-    return this.draftHandlingService.canApplyDraft(this.targetProject, this.bookNum, this.chapter, this.draftDelta.ops);
+    return this.draftHandlingService.canApplyDraft(
+      this.targetProject!,
+      this.bookNum!,
+      this.chapter!,
+      this.draftDelta!.ops
+    );
   }
 
   get canConfigureFormatting(): boolean {
@@ -159,6 +164,10 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
   get doesLatestCompletedHaveDraft(): boolean {
     return this.projectService.hasDraft(this.targetProject, this.bookNum, true);
+  }
+
+  get hasDraftToApply(): boolean {
+    return this.targetProject != null && this.bookNum != null && this.chapter != null && this.draftDelta?.ops != null;
   }
 
   get isLatestBuildCompleted(): boolean {
@@ -271,6 +280,13 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
             return of({ targetOps, draftOps });
           }
 
+          // If there are previous draft revisions, we should still show the selector to choose them
+          this.canSelectDraft = this._draftRevisions.length > 1;
+
+          // Clear the ops used to calculate whether the draft can be applied
+          this.draftDelta = undefined;
+          this.targetDelta = undefined;
+
           // No generated verse segments were found, return an empty draft
           this.draftCheckState = 'draft-empty';
           return EMPTY;
@@ -292,7 +308,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
           this.draftCheckState = 'draft-present';
         }
 
-        this.isDraftReady = this.draftCheckState === 'draft-present' || this.draftCheckState === 'draft-legacy';
+        this.canSelectDraft = this.draftCheckState === 'draft-present' || this.draftCheckState === 'draft-legacy';
       });
 
     combineLatest([
@@ -361,7 +377,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
   private setInitialState(): void {
     this.draftCheckState = 'draft-unknown';
-    this.isDraftReady = false;
+    this.canSelectDraft = false;
     this.isDraftApplied = false;
     this.userAppliedDraft = false;
   }

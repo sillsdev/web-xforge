@@ -360,10 +360,12 @@
             id="delete-btn"
             mat-flat-button
             type="button"
+            color="warn"
             (click)="openDeleteProjectDialog()"
             [class.enabled]="!deleteButtonDisabled"
             [disabled]="deleteButtonDisabled"
           >
+            <mat-icon>delete</mat-icon>
             {{ t("delete_this_project") }}
           </button>
         </mat-card-actions>
