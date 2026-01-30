@@ -1,6 +1,14 @@
-import { AsyncPipe, NgClass } from '@angular/common';
-import { Component, Inject, OnInit, ViewChild } from '@angular/core';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AsyncPipe } from '@angular/common';
+import { Component, Inject, OnInit } from '@angular/core';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators
+} from '@angular/forms';
 import { MatButton } from '@angular/material/button';
 import { MatCheckbox } from '@angular/material/checkbox';
 import {
@@ -31,7 +39,6 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { ProjectSelectComponent } from '../../../project-select/project-select.component';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
-import { CustomValidatorState as CustomErrorState, SFValidators } from '../../../shared/sfvalidators';
 import { compareProjectsForSorting } from '../../../shared/utils';
 
 export interface DraftApplyDialogResult {
@@ -60,7 +67,6 @@ export interface DraftApplyDialogConfig {
     ReactiveFormsModule,
     TranslocoModule,
     AsyncPipe,
-    NgClass,
     NoticeComponent,
     ProjectSelectComponent
   ],
@@ -68,38 +74,27 @@ export interface DraftApplyDialogConfig {
   styleUrl: './draft-apply-dialog.component.scss'
 })
 export class DraftApplyDialogComponent implements OnInit {
-  @ViewChild(ProjectSelectComponent) projectSelect?: ProjectSelectComponent;
+  /** An observable that emits the target project profile if the user has permission to write to the book. */
+  targetProject$: BehaviorSubject<SFProjectProfile | undefined> = new BehaviorSubject<SFProjectProfile | undefined>(
+    undefined
+  );
 
   _projects?: SFProjectProfile[];
   protected isLoading: boolean = true;
   addToProjectForm = new FormGroup({
     targetParatextId: new FormControl<string | undefined>(this.data.initialParatextId, Validators.required),
     overwrite: new FormControl(false, Validators.requiredTrue),
-    createChapters: new FormControl(false)
+    createChapters: new FormControl(false, control =>
+      !this.projectHasMissingChapters() || control.value ? null : { mustConfirmCreateChapters: true }
+    )
   });
   /** An observable that emits the number of chapters in the target project that have some text. */
   targetChapters$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
-  canEditProject: boolean = true;
-  targetBookExists: boolean = true;
-  projectHasMissingChapters: boolean = false;
   addToProjectClicked: boolean = false;
-  /** An observable that emits the target project profile if the user has permission to write to the book. */
-  targetProject$: BehaviorSubject<SFProjectProfile | undefined> = new BehaviorSubject<SFProjectProfile | undefined>(
-    undefined
-  );
-  invalidMessageMapper: { [key: string]: string } = {
-    invalidProject: this.i18n.translateStatic('draft_apply_dialog.please_select_valid_project'),
-    bookNotFound: this.i18n.translateStatic('draft_apply_dialog.book_does_not_exist', { bookName: this.bookName }),
-    noWritePermissions: this.i18n.translateStatic('draft_apply_dialog.no_write_permissions'),
-    missingChapters: this.i18n.translateStatic('draft_apply_dialog.project_has_chapters_missing', {
-      bookName: this.bookName
-    })
-  };
 
   // the project id to add the draft to
   private targetProjectId?: string;
   private paratextIdToProjectId: Map<string, string> = new Map<string, string>();
-  isValid: boolean = false;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) private data: DraftApplyDialogConfig,
@@ -115,6 +110,10 @@ export class DraftApplyDialogComponent implements OnInit {
       const chapters: number = await this.chaptersWithTextAsync(project);
       this.targetChapters$.next(chapters);
     });
+  }
+
+  get isValid(): boolean {
+    return this.addToProjectForm.controls.targetParatextId.valid;
   }
 
   get projects(): SFProjectProfile[] {
@@ -179,8 +178,15 @@ export class DraftApplyDialogComponent implements OnInit {
 
   async addToProject(): Promise<void> {
     this.addToProjectClicked = true;
-    await this.validateProject();
-    if (!this.isAppOnline || !this.isFormValid || this.targetProjectId == null || !this.canEditProject) {
+    this.addToProjectForm.controls.createChapters.updateValueAndValidity();
+    const project = this.targetProject$.getValue();
+    if (
+      !this.isAppOnline ||
+      !this.isFormValid ||
+      this.targetProjectId == null ||
+      project == null ||
+      !this.canEditProject(project)
+    ) {
       return;
     }
     this.dialogRef.close({ projectId: this.targetProjectId });
@@ -191,56 +197,49 @@ export class DraftApplyDialogComponent implements OnInit {
       this.targetProject$.next(undefined);
       return;
     }
+
     const project: SFProjectProfile | undefined = this.projects.find(p => p.paratextId === paratextId);
+    this.createChaptersControl.updateValueAndValidity();
+
     if (project == null) {
-      this.canEditProject = false;
-      this.targetBookExists = false;
       this.targetProject$.next(undefined);
-      void this.validateProject();
       return;
     }
 
     this.targetProjectId = this.paratextIdToProjectId.get(paratextId);
-    const targetBook: TextInfo | undefined = project.texts.find(t => t.bookNum === this.data.bookNum);
-    this.targetBookExists = targetBook != null;
-    this.canEditProject =
-      this.textDocService.userHasGeneralEditRight(project) &&
-      targetBook?.permissions[this.userService.currentUserId] === TextInfoPermission.Write;
 
-    // also check if this is an empty book
-    const bookIsEmpty: boolean = targetBook?.chapters.length === 1 && targetBook?.chapters[0].lastVerse < 1;
-    const targetBookChapters: number[] = targetBook?.chapters.map(c => c.number) ?? [];
-    this.projectHasMissingChapters =
-      bookIsEmpty || this.data.chapters.filter(c => !targetBookChapters.includes(c)).length > 0;
-    if (this.projectHasMissingChapters) {
-      this.createChaptersControl.addValidators(Validators.requiredTrue);
-      this.createChaptersControl.updateValueAndValidity();
-    } else {
-      this.createChaptersControl.clearValidators();
-      this.createChaptersControl.updateValueAndValidity();
-    }
     // emit the project profile document
-    if (this.canEditProject) {
+    if (this.canEditProject(project)) {
       this.targetProject$.next(project);
     } else {
       this.targetProject$.next(undefined);
     }
-    void this.validateProject();
+  }
+
+  projectHasMissingChapters(): boolean {
+    const project = this.targetProject$.getValue();
+    const targetBook: TextInfo | undefined = project?.texts.find(t => t.bookNum === this.data.bookNum);
+    const bookIsEmpty: boolean = targetBook?.chapters.length === 1 && targetBook?.chapters[0].lastVerse < 1;
+    const targetBookChapters: number[] = targetBook?.chapters.map(c => c.number) ?? [];
+    return bookIsEmpty || this.data.chapters.filter(c => !targetBookChapters.includes(c)).length > 0;
+  }
+
+  targetBookExists(project: SFProjectProfile): boolean {
+    const targetBook: TextInfo | undefined = project.texts.find(t => t.bookNum === this.data.bookNum);
+    return targetBook != null;
+  }
+
+  canEditProject(project: SFProjectProfile): boolean {
+    const targetBook: TextInfo | undefined = project.texts.find(t => t.bookNum === this.data.bookNum);
+
+    return (
+      this.textDocService.userHasGeneralEditRight(project) &&
+      targetBook?.permissions[this.userService.currentUserId] === TextInfoPermission.Write
+    );
   }
 
   close(): void {
     this.dialogRef.close();
-  }
-
-  private async validateProject(): Promise<void> {
-    await new Promise<void>(resolve => {
-      // setTimeout prevents a "changed after checked" exception (may be removable after SF-3014)
-      setTimeout(() => {
-        this.isValid = this.getCustomErrorState() === CustomErrorState.None;
-        this.projectSelect?.customValidate(SFValidators.customValidator(this.getCustomErrorState()));
-        resolve();
-      });
-    });
   }
 
   private async chaptersWithTextAsync(project: SFProjectProfile): Promise<number> {
@@ -260,16 +259,27 @@ export class DraftApplyDialogComponent implements OnInit {
     return textDoc.getNonEmptyVerses().length > 0;
   }
 
-  private getCustomErrorState(): CustomErrorState {
-    if (!this.projectSelectValid) {
-      return CustomErrorState.InvalidProject;
-    }
-    if (!this.targetBookExists) {
-      return CustomErrorState.BookNotFound;
-    }
-    if (!this.canEditProject) {
-      return CustomErrorState.NoWritePermissions;
-    }
-    return CustomErrorState.None;
+  private _projectSelectCustomValidator(control: AbstractControl): ValidationErrors | null {
+    const project = control.value as SFProjectProfile | string | null;
+    if (project == null || typeof project === 'string') return null;
+
+    const errors: { [key: string]: boolean } = {};
+    if (!this.targetBookExists(project)) errors.bookNotFound = true;
+    if (!this.canEditProject(project)) errors.noWritePermissions = true;
+    return Object.keys(errors).length > 0 ? errors : null;
   }
+
+  projectSelectCustomValidator = this._projectSelectCustomValidator.bind(this);
+
+  private _errorMessageMapper(errors: ValidationErrors): string | null {
+    if (errors.bookNotFound) {
+      return this.i18n.translateStatic('draft_apply_dialog.book_does_not_exist', { bookName: this.bookName });
+    }
+    if (errors.noWritePermissions) {
+      return this.i18n.translateStatic('draft_apply_dialog.no_write_permissions');
+    }
+    return null;
+  }
+
+  errorMessageMapper = this._errorMessageMapper.bind(this);
 }

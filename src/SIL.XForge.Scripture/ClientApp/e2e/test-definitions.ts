@@ -5,7 +5,9 @@ import { communityChecking } from './workflows/community-checking.ts';
 import { editTranslation } from './workflows/edit-translation.ts';
 import { generateDraft } from './workflows/generate-draft.ts';
 import { localizedScreenshots } from './workflows/localized-screenshots.ts';
+import { onboardingFlow } from './workflows/onboarding-flow.ts';
 import { runSmokeTests, traverseHomePageAndLoginPage } from './workflows/smoke-tests.mts';
+import { submitDraftSignupForm } from './workflows/submit-draft-signup.ts';
 
 export const tests = {
   home_and_login: async (_engine: BrowserType, page: Page, screenshotContext: ScreenshotContext) => {
@@ -22,6 +24,12 @@ export const tests = {
   },
   generate_draft: async (_engine: BrowserType, page: Page, screenshotContext: ScreenshotContext) => {
     await generateDraft(page, screenshotContext, secrets.users[0]);
+  },
+  submit_draft_signup: async (_engine: BrowserType, page: Page, screenshotContext: ScreenshotContext) => {
+    await submitDraftSignupForm(page, screenshotContext, secrets.users[0]);
+  },
+  onboarding_flow: async (engine: BrowserType, page: Page, screenshotContext: ScreenshotContext) => {
+    await onboardingFlow(engine, page, screenshotContext, secrets.users[0]);
   },
   edit_translation: async (_engine: BrowserType, page: Page, screenshotContext: ScreenshotContext) => {
     await editTranslation(page, screenshotContext, secrets.users[0]);
