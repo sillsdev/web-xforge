@@ -1,0 +1,64 @@
+name: Update NPM Dependencies
+permissions:
+  contents: write
+  pull-requests: write
+
+on:
+  schedule:
+    - cron: "0 17 * * *" # Run every day at noon Eastern Time (17:00 UTC)
+  workflow_dispatch:
+
+jobs:
+  update-npm-audit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # 5.0.1
+        with:
+          persist-credentials: true
+
+      - name: Set up Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # 5.0.0
+        with:
+          node-version: "22.13.0"
+          cache: "npm"
+          cache-dependency-path: |
+            src/SIL.XForge.Scripture/ClientApp/package-lock.json
+            src/RealtimeServer/package-lock.json
+            scripts/db_tools/package-lock.json
+
+      - name: Run npm audit fix on RealtimeServer
+        run: |
+          cd src/RealtimeServer
+          npm ci
+          npm audit fix
+        continue-on-error: true
+
+      - name: Run npm audit fix on ClientApp
+        run: |
+          cd src/SIL.XForge.Scripture/ClientApp
+          npm ci
+          npm audit fix
+        continue-on-error: true
+
+      - name: Run npm audit fix on db_tools
+        run: |
+          cd scripts/db_tools
+          npm ci
+          npm audit fix
+        continue-on-error: true
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f # @v7.0.5
+        with:
+          commit-message: Update NPM dependencies via npm audit fix
+          title: Update NPM dependencies via npm audit fix
+          body: |
+            Automated update of NPM dependencies by running `npm audit fix` on all package.json files.
+
+            This PR was automatically created by the GitHub action.
+
+            Please review the changes carefully before merging.
+          branch: npm/update-dependencies
+          base: master
