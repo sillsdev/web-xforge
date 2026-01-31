@@ -1,22 +1,4 @@
-@use 'sass:color';
-@use '@angular/material' as mat;
 @use 'src/variables' as *;
-
-@mixin color($theme) {
-  $is-dark: mat.get-theme-type($theme) == dark;
-
-  --sf-list-item-hover-color: #{if(
-      $is-dark,
-      mat.get-theme-color($theme, neutral, 17),
-      color.scale($sf_grey, $lightness: 75%)
-    )};
-}
-
-@mixin theme($theme) {
-  @if mat.theme-has($theme, color) {
-    @include color($theme);
-  }
-}
 
 :host {
   .title {
@@ -40,7 +22,7 @@
   }
 
   .translation-suggestions-info {
-    color: $lighterTextColor;
+    color: var(--sf-translate-suggestions-info-color);
     padding: 16px;
   }
 
@@ -71,7 +53,7 @@
           background-color: var(--sf-list-item-hover-color);
         }
         .mat-icon {
-          color: rgba(0, 0, 0, 0.6);
+          color: var(--sf-translate-progress-icon-color);
           margin-block: 0;
           margin-inline: 16px;
           align-self: center;
@@ -109,7 +91,7 @@
         display: flex;
         flex-direction: column;
         align-self: stretch;
-        background-color: $greenLight;
+        background-color: var(--sf-translate-engine-card-background);
         padding: 26px 16px 15px 16px;
 
         .engine-card-quality-stars {

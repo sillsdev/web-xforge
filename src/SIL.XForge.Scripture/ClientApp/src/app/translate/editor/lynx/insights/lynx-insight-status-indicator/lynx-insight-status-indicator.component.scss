@@ -10,15 +10,15 @@
   padding: 0.5em;
   background-color: var(--lynx-insights-status-indicator-bg-color);
   border-radius: 0 0 0.4em 0.4em;
-  box-shadow: 0 0 5px 0px #ccc;
+  box-shadow: 0 0 5px 0 var(--lynx-insights-status-indicator-border-color);
   cursor: pointer;
 
   &:hover {
-    box-shadow: 0 0 10px 0px #bbb;
+    box-shadow: 0 0 10px 0 var(--lynx-insights-status-indicator-border-color-hover);
   }
 
   &:active {
-    box-shadow: 0 0 5px 0px #bbb;
+    box-shadow: 0 0 5px 0 var(--lynx-insights-status-indicator-border-color-active);
   }
 }
 
@@ -42,7 +42,7 @@ mat-icon {
     position: absolute;
     bottom: 0.3em;
     inset-inline-end: 0.3em;
-    color: #a4a4a4;
+    color: var(--lynx-insights-hidden-indicator-icon-color);
   }
 }
 
@@ -61,10 +61,11 @@ mat-icon {
     justify-content: center;
     align-items: center;
     padding: 0.4em;
+    color: var(--lynx-insights-status-indicator-badge-text-color);
 
     @each $type in insights.$insightTypes {
       &.#{$type} {
-        background-color: insights.insight-bg-color($type);
+        background-color: var(--lynx-insights-#{$type}-background);
       }
     }
   }

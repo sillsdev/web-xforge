@@ -1,0 +1,20 @@
+@use 'sass:color';
+@use '@angular/material' as mat;
+
+@mixin color($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
+
+  $primary-light-link: mat.get-theme-color($theme, primary, 50);
+  $primary-light-hover: mat.get-theme-color($theme, primary, 35);
+  $primary-dark-link: color.mix(mat.get-theme-color($theme, primary, 60), white, 55%);
+  $primary-dark-hover: color.mix($primary-dark-link, white, 25%);
+
+  --sf-notice-link-warning-color: #{if($is-dark, $primary-dark-link, $primary-light-link)};
+  --sf-notice-link-warning-color-hover: #{if($is-dark, $primary-dark-hover, $primary-light-hover)};
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}

@@ -331,8 +331,7 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
 
   private resetCanvasContext(): void {
     if (this.canvasContext == null) return;
-    this.canvasContext.fillStyle = 'white';
-    this.canvasContext.fillRect(0, 0, this.visualizerWidth, this.visualizerHeight);
+    this.canvasContext.clearRect(0, 0, this.visualizerWidth, this.visualizerHeight);
   }
 
   private addRippleEffect(dataArray: Uint8Array): void {

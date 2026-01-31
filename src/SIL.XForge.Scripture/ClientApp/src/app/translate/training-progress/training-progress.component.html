@@ -13,9 +13,9 @@
           @if (trainingPercentage < 100) {
             <app-donut-chart
               id="training-progress-spinner"
-              [colors]="['#b8d332', 'transparent']"
+              [colors]="['var(--sf-training-progress-complete)', 'var(--sf-training-progress-remaining)']"
               [data]="[trainingPercentage, 100 - trainingPercentage]"
-              backgroundColor="#ececec"
+              backgroundColor="var(--sf-training-progress-track)"
               [animationDuration]="0"
               [innerThicknessDelta]="0"
               [thickness]="22"

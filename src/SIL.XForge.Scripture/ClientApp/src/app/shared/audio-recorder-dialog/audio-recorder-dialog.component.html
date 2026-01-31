@@ -5,7 +5,7 @@
       @if (!hasAudioAttachment && !showCountdown) {
         <div class="no-attachment" id="audioRecordContainer">
           @if (!isRecording) {
-            <div (click)="startRecording()" class="record">
+            <div (click)="startRecording()" class="record-button">
               <mat-icon class="record-icon">mic</mat-icon>
               <span class="record-message">{{ t("record") }}</span>
             </div>

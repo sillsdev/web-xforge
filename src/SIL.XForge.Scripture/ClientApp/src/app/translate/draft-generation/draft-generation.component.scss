@@ -52,7 +52,7 @@ h3 {
       color: green;
     }
     &.criteria-not-met {
-      color: variables.$errorColor;
+      color: var(--sf-error-color);
     }
   }
 }
@@ -116,7 +116,7 @@ mat-divider.mat-divider-inset {
 }
 
 .error-text {
-  color: variables.$errorColor;
+  color: var(--sf-error-color);
 }
 
 section {

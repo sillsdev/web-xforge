@@ -1,3 +1,5 @@
+@use '../lynx-insights' as insights;
+
 // These are approximations
 $scrollButtonHeight: 16px;
 $trackWidth: 18px; // Width of the scrollbar track
@@ -23,28 +25,16 @@ $trackWidth: 18px; // Width of the scrollbar track
 }
 
 .info {
-  background-color: hsl(
-    var(--lynx-insights-info-color-h),
-    var(--lynx-insights-info-color-s),
-    var(--lynx-insights-info-color-l)
-  );
+  background-color: insights.insight-color('info');
   z-index: 1;
 }
 
 .warning {
-  background-color: hsl(
-    var(--lynx-insights-warning-color-h),
-    var(--lynx-insights-warning-color-s),
-    var(--lynx-insights-warning-color-l)
-  );
+  background-color: insights.insight-color('warning');
   z-index: 2;
 }
 
 .error {
-  background-color: hsl(
-    var(--lynx-insights-error-color-h),
-    var(--lynx-insights-error-color-s),
-    var(--lynx-insights-error-color-l)
-  );
+  background-color: insights.insight-color('error');
   z-index: 3;
 }

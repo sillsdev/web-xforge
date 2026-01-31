@@ -2,9 +2,12 @@
 
 @mixin color($theme) {
   $is-dark: mat.get-theme-type($theme) == dark;
-
-  --sf-community-checking-new-comment-background: #{mat.get-theme-color($theme, tertiary, if($is-dark, 60, 98))};
-  --sf-community-checking-new-comment-fade-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 6, 100))};
+  --sf-community-checking-new-comment-background-fade-from: #{mat.get-theme-color(
+      $theme,
+      tertiary,
+      if($is-dark, 10, 98)
+    )};
+  --sf-community-checking-new-comment-background-fade-to: #{mat.get-theme-color($theme, neutral, if($is-dark, 6, 100))};
   --sf-community-checking-comment-alt-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 10, 98))};
 }
 
