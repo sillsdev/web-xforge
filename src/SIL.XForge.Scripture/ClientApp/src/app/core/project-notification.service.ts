@@ -16,11 +16,23 @@ export class ProjectNotificationService {
     private authService: AuthService,
     private readonly onlineService: OnlineStatusService
   ) {
-    this.connection = new HubConnectionBuilder().withUrl('/project-notifications', this.options).build();
+    this.connection = new HubConnectionBuilder()
+      .withUrl('/project-notifications', this.options)
+      .withAutomaticReconnect()
+      .withStatefulReconnect()
+      .build();
   }
 
   get appOnline(): boolean {
     return this.onlineService.isOnline && this.onlineService.isBrowserOnline;
+  }
+
+  removeNotifyBuildProgressHandler(handler: any): void {
+    this.connection.off('notifyBuildProgress', handler);
+  }
+
+  removeNotifySyncProgressHandler(handler: any): void {
+    this.connection.off('notifySyncProgress', handler);
   }
 
   setNotifyBuildProgressHandler(handler: any): void {
