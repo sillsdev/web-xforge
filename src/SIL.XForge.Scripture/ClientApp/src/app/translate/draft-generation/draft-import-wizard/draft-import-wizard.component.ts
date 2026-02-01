@@ -34,7 +34,6 @@ import { BuildDto } from '../../../machine-api/build-dto';
 import { ProjectSelectComponent } from '../../../project-select/project-select.component';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
-import { CustomValidatorState as CustomErrorState, SFValidators } from '../../../shared/sfvalidators';
 import { booksFromScriptureRange } from '../../../shared/utils';
 import { SyncProgressComponent } from '../../../sync/sync-progress/sync-progress.component';
 
@@ -120,7 +119,6 @@ export enum DraftApplyStatus {
 })
 export class DraftImportWizardComponent implements OnInit {
   @ViewChild(MatStepper) stepper?: MatStepper;
-  @ViewChild(ProjectSelectComponent) projectSelect?: ProjectSelectComponent;
   @ViewChild('importStep') importStep?: MatStep;
 
   // Step 1: Project selection
@@ -135,13 +133,6 @@ export class DraftImportWizardComponent implements OnInit {
   targetProject$ = new BehaviorSubject<SFProjectProfile | undefined>(undefined);
   targetProjectDoc$ = new BehaviorSubject<SFProjectDoc | undefined>(undefined);
   canEditProject = true;
-  /**
-   * If true, text is to be imported to books in the target project which do not exist,
-   * and which the user does not have permission to create those books.
-   */
-  booksMissingWithoutPermission = false;
-  missingBookNames: string[] = [];
-  bookCreationError?: string;
   projectLoadingFailed = false;
   sourceProjectId?: string;
   noDraftsAvailable = false;
@@ -296,8 +287,6 @@ export class DraftImportWizardComponent implements OnInit {
   syncComplete = false;
   skipSync = false;
 
-  invalidMessageMapper: { [key: string]: string } = {};
-
   private readonly notifyDraftApplyProgressHandler = (projectId: string, draftApplyState: DraftApplyState): void => {
     this.updateDraftApplyState(projectId, draftApplyState);
   };
@@ -354,18 +343,9 @@ export class DraftImportWizardComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.setupInvalidMessageMapper();
     void this.loadProjects();
     this.initializeAvailableBooks();
     this.sourceProjectId = this.activatedProjectService.projectId;
-  }
-
-  private setupInvalidMessageMapper(): void {
-    this.invalidMessageMapper = {
-      invalidProject: this.i18n.translateStatic('draft_import_wizard.please_select_valid_project'),
-      bookNotFound: this.i18n.translateStatic('draft_import_wizard.book_does_not_exist'),
-      noWritePermissions: this.i18n.translateStatic('draft_import_wizard.no_write_permissions')
-    };
   }
 
   private async loadProjects(): Promise<void> {
@@ -428,13 +408,9 @@ export class DraftImportWizardComponent implements OnInit {
     const paratextProject = this.projects.find(p => p.paratextId === paratextId);
     if (paratextProject == null) {
       this.canEditProject = false;
-      this.booksMissingWithoutPermission = false;
-      this.bookCreationError = undefined;
-      this.missingBookNames = [];
       this.targetProject$.next(undefined);
       this.targetProjectDoc$.next(undefined);
       this.selectedParatextProject = undefined;
-      await this.validateProject();
       this.resetImportState();
       return;
     }
@@ -449,18 +425,21 @@ export class DraftImportWizardComponent implements OnInit {
       this.targetProjectId = paratextProject.projectId;
       this.needsConnection = !paratextProject.isConnected;
 
-      // Get the project profile to analyze
-      this.isLoadingProject = true;
-      try {
-        const projectDoc = await this.projectService.getProfile(this.targetProjectId);
-        if (projectDoc.data != null) {
-          await this.loadTargetProjectAndValidate(projectDoc.data, paratextProject.isConnected);
-        }
+      // If the project still needs connection, we will analyze after connecting
+      if (!this.needsConnection) {
+        // Get the project profile to analyze
+        this.isLoadingProject = true;
+        try {
+          const projectDoc = await this.projectService.getProfile(this.targetProjectId);
+          if (projectDoc.data != null) {
+            await this.loadTargetProjectAndValidate(projectDoc.data, paratextProject.isConnected);
+          }
 
-        // Analyze books for overwrite confirmation
-        await this.determineBooksAndChaptersWithText();
-      } finally {
-        this.isLoadingProject = false;
+          // Analyze books for overwrite confirmation
+          await this.determineBooksAndChaptersWithText();
+        } finally {
+          this.isLoadingProject = false;
+        }
       }
     } else {
       // Need to create SF project - this will happen after connection step
@@ -471,7 +450,6 @@ export class DraftImportWizardComponent implements OnInit {
         this.canEditProject = paratextProject.isConnectable;
         this.targetProject$.next(undefined);
         this.targetProjectDoc$.next(undefined);
-        await this.validateProject();
       } finally {
         this.isLoadingProject = false;
       }
@@ -494,11 +472,9 @@ export class DraftImportWizardComponent implements OnInit {
       this.targetProject$.next(undefined);
       this.targetProjectDoc$.next(undefined);
     }
-
-    await this.validateProject();
   }
 
-  private async ensureSelectedBooksExist(): Promise<boolean> {
+  private async ensureProjectExists(): Promise<boolean> {
     if (this.targetProjectId == null) {
       return false;
     }
@@ -513,63 +489,11 @@ export class DraftImportWizardComponent implements OnInit {
       this.targetProject$.next(project);
     }
 
-    const booksToImport = this.getBooksToImport();
-    const missingBooks: BookForImport[] = booksToImport.filter(book =>
-      project.texts.every(text => text.bookNum !== book.bookNum)
-    );
-
-    this.missingBookNames = missingBooks.map(book => book.bookName);
-
-    if (missingBooks.length === 0) {
-      this.booksMissingWithoutPermission = false;
-      this.bookCreationError = undefined;
-      return true;
-    }
-
-    const canCreateBooks = this.textDocService.userHasGeneralEditRight(project);
-    if (!canCreateBooks) {
-      this.booksMissingWithoutPermission = true;
-      const booksDescription = ` (${this.missingBookNames.join(', ')})`;
-      this.bookCreationError = this.i18n.translateStatic('draft_import_wizard.books_missing_no_permission', {
-        booksDescription
-      });
-      await this.validateProject();
-      return false;
-    }
-
-    this.booksMissingWithoutPermission = false;
-    this.bookCreationError = undefined;
     return true;
   }
 
   private resetProjectValidation(): void {
     this.canEditProject = true;
-    this.booksMissingWithoutPermission = false;
-    this.bookCreationError = undefined;
-    this.missingBookNames = [];
-  }
-
-  private async validateProject(): Promise<void> {
-    await new Promise<void>(resolve => {
-      // setTimeout prevents a "changed after checked" exception (may be removable after SF-3014)
-      setTimeout(() => {
-        this.projectSelect?.customValidate(SFValidators.customValidator(this.getCustomErrorState()));
-        resolve();
-      });
-    });
-  }
-
-  private getCustomErrorState(): CustomErrorState {
-    if (!this.projectSelectionForm.controls.targetParatextId.valid) {
-      return CustomErrorState.InvalidProject;
-    }
-    if (this.booksMissingWithoutPermission) {
-      return CustomErrorState.BookNotFound;
-    }
-    if (!this.canEditProject) {
-      return CustomErrorState.NoWritePermissions;
-    }
-    return CustomErrorState.None;
   }
 
   onBookSelect(selectedBooks: number[]): void {
@@ -577,21 +501,11 @@ export class DraftImportWizardComponent implements OnInit {
       book.selected = selectedBooks.includes(book.bookNum);
     }
     this.resetImportState();
-    this.booksMissingWithoutPermission = false;
-    this.bookCreationError = undefined;
-    this.missingBookNames = [];
     void this.determineBooksAndChaptersWithText();
-    void this.validateProject();
   }
 
   get projectReadyToImport(): boolean {
-    return (
-      this.projectSelectionForm.valid &&
-      !this.isConnecting &&
-      !this.isImporting &&
-      !this.isLoadingProject &&
-      !this.booksMissingWithoutPermission
-    );
+    return this.projectSelectionForm.valid && !this.isConnecting && !this.isImporting && !this.isLoadingProject;
   }
 
   async advanceFromProjectSelection(): Promise<void> {
@@ -614,8 +528,8 @@ export class DraftImportWizardComponent implements OnInit {
     }
 
     this.isLoadingProject = true;
-    const booksReady = await this.ensureSelectedBooksExist();
-    if (!booksReady) {
+    const projectExists = await this.ensureProjectExists();
+    if (!projectExists) {
       this.isLoadingProject = false;
       return;
     }
@@ -761,6 +675,10 @@ export class DraftImportWizardComponent implements OnInit {
         });
         this.isImporting = false;
         this.importError = draftApplyState.message;
+        const totalFailures = this.importProgress.reduce((sum, p) => sum + p.failedChapters.length, 0);
+        if (totalFailures > 0 && (this.importError == null || this.importError.length === 0)) {
+          this.importError = `Failed to import ${totalFailures} chapter(s). See details above.`;
+        }
       }
     } else if (draftApplyState.bookNum > 0) {
       // Handle the in-progress states
@@ -829,7 +747,17 @@ export class DraftImportWizardComponent implements OnInit {
   }
 
   getFailedChapters(progress: ImportProgress): string {
-    return progress.failedChapters.map(f => f.chapterNum).join(', ');
+    const failedChapters: number[] = progress.failedChapters.filter(f => f.chapterNum !== 0).map(f => f.chapterNum);
+    if (!progress.failedChapters.some(f => f.chapterNum === 0)) {
+      // A subset of chapters failed
+      return failedChapters.join(', ');
+    } else if (progress.totalChapters > 1) {
+      // All chapters failed, so display as a range
+      return `1-${progress.totalChapters}`;
+    } else {
+      // The only chapter in the book failed
+      return `${progress.totalChapters}`;
+    }
   }
 
   private resetImportState(): void {
