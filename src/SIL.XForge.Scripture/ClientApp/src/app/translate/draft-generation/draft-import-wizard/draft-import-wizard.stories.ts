@@ -41,6 +41,7 @@ const mockOnlineStatusService = mock(OnlineStatusService);
 class DraftImportWizardWrapperComponent implements AfterViewInit, OnChanges {
   @ViewChild(DraftImportWizardComponent) component!: DraftImportWizardComponent;
   @Input() online: boolean = false;
+  @Input() canEditProject: boolean = true;
   @Input() importComplete: boolean = false;
   @Input() importStepTriggered: boolean = false;
   @Input() isConnecting: boolean = false;
@@ -55,7 +56,6 @@ class DraftImportWizardWrapperComponent implements AfterViewInit, OnChanges {
   @Input() showOverwriteConfirmation: boolean = false;
   @Input() skipSync: boolean = false;
   @Input() syncComplete: boolean = false;
-  @Input() bookCreationError?: string;
   @Input() connectionError?: string;
   @Input() importError?: string;
   @Input() targetProjectId?: string;
@@ -77,6 +77,7 @@ class DraftImportWizardWrapperComponent implements AfterViewInit, OnChanges {
     if (!this.component) return;
     setTimeout(() => {
       // Set the story specific arguments
+      this.component.canEditProject = this.canEditProject;
       this.component.importComplete = this.importComplete;
       this.component.importStepTriggered = this.importStepTriggered;
       this.component.isConnecting = this.isConnecting;
@@ -91,7 +92,6 @@ class DraftImportWizardWrapperComponent implements AfterViewInit, OnChanges {
       this.component.showOverwriteConfirmation = this.showOverwriteConfirmation;
       this.component.skipSync = this.skipSync;
       this.component.syncComplete = this.syncComplete;
-      this.component.bookCreationError = this.bookCreationError;
       this.component.connectionError = this.connectionError;
       this.component.importError = this.importError;
       this.component.targetProjectId = this.targetProjectId;
@@ -119,6 +119,7 @@ class DraftImportWizardWrapperComponent implements AfterViewInit, OnChanges {
 interface DraftImportWizardComponentState {
   online: boolean;
   step: number;
+  canEditProject: boolean;
   importComplete: boolean;
   importStepTriggered: boolean;
   isConnecting: boolean;
@@ -133,7 +134,6 @@ interface DraftImportWizardComponentState {
   showOverwriteConfirmation: boolean;
   skipSync: boolean;
   syncComplete: boolean;
-  bookCreationError?: string;
   connectionError?: string;
   importError?: string;
   targetProjectId?: string;
@@ -146,6 +146,7 @@ interface DraftImportWizardComponentState {
 const defaultArgs: DraftImportWizardComponentState = {
   online: true,
   step: 0,
+  canEditProject: true,
   importComplete: false,
   importStepTriggered: false,
   isConnecting: false,
@@ -160,7 +161,6 @@ const defaultArgs: DraftImportWizardComponentState = {
   showOverwriteConfirmation: false,
   skipSync: false,
   syncComplete: false,
-  bookCreationError: undefined,
   connectionError: undefined,
   importError: undefined,
   targetProjectId: undefined,
@@ -213,6 +213,7 @@ export default {
   },
   argTypes: {
     online: { control: 'boolean' },
+    canEditProject: { control: 'boolean' },
     importComplete: { control: 'boolean' },
     importStepTriggered: { control: 'boolean' },
     isConnecting: { control: 'boolean' },
@@ -227,7 +228,6 @@ export default {
     showOverwriteConfirmation: { control: 'boolean' },
     skipSync: { control: 'boolean' },
     syncComplete: { control: 'boolean' },
-    bookCreationError: { control: 'text' },
     connectionError: { control: 'text' },
     importError: { control: 'text' },
     targetProjectId: { control: 'text' },
