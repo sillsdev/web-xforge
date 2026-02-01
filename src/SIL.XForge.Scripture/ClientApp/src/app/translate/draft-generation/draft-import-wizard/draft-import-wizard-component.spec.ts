@@ -286,7 +286,7 @@ class TestEnvironment {
       getNonEmptyVerses: (): string[] => ['verse_1_1']
     } as TextDoc);
     when(mockProjectService.onlineCreate(anything())).thenResolve('project02');
-    when(mockProjectService.getProfile(anything())).thenCall(id =>
+    when(mockProjectService.get(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
     );
     when(mockTextDocService.userHasGeneralEditRight(anything())).thenReturn(true);
