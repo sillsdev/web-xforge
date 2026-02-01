@@ -47,13 +47,14 @@
           <app-notice type="error">{{ t("cannot_edit_project") }}</app-notice>
         }
 
-        @if (noDraftsAvailable) {
-          <app-notice type="warning">{{ t("no_books_ready_for_import") }}</app-notice>
-        }
-
-        @if (projectSelectionForm.valid && !isLoadingProject && (targetProject$ | async); as project) {
+        @if (projectSelectionForm.valid && !isLoadingProject && (targetProjectDoc$ | async); as project) {
           <app-notice [icon]="'verified'">
-            {{ t("ready_to_import", { projectShortName: $any(project).shortName, projectName: $any(project).name }) }}
+            {{
+              t("ready_to_import", {
+                projectShortName: project?.data?.shortName,
+                projectName: project?.data?.name
+              })
+            }}
           </app-notice>
         }
 
@@ -74,7 +75,7 @@
           color="primary"
           data-test-id="step-1-next"
           (click)="advanceFromProjectSelection()"
-          [disabled]="!isAppOnline || noDraftsAvailable || projectLoadingFailed || !canEditProject"
+          [disabled]="!isAppOnline || projectLoadingFailed || !canEditProject"
         >
           {{ needsConnection || showBookSelection || showOverwriteConfirmation ? t("next") : t("import") }}
           <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
@@ -129,10 +130,7 @@
         @if (isConnecting) {
           <h1>{{ t("connecting_to_project") }}</h1>
           @if (targetProjectDoc$ | async; as projectDoc) {
-            <app-sync-progress
-              [projectDoc]="$any(projectDoc)"
-              (inProgress)="updateConnectStatus($event)"
-            ></app-sync-progress>
+            <app-sync-progress [projectDoc]="projectDoc" (inProgress)="updateConnectStatus($event)"></app-sync-progress>
           } @else {
             <p>{{ t("setting_up_project", { projectName: selectedParatextProject?.name }) }}</p>
             <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
@@ -154,9 +152,14 @@
           </div>
         } @else if (!isConnecting) {
           <h1>{{ t("connected_to_project") }}</h1>
-          @if (targetProject$ | async; as project) {
+          @if (targetProjectDoc$ | async; as projectDoc) {
             <app-notice [icon]="'verified'">
-              {{ t("ready_to_import", { projectShortName: $any(project).shortName, projectName: $any(project).name }) }}
+              {{
+                t("ready_to_import", {
+                  projectShortName: projectDoc?.data?.shortName,
+                  projectName: projectDoc?.data?.name
+                })
+              }}
             </app-notice>
           }
           <div class="button-strip">
@@ -189,7 +192,7 @@
           [availableBooks]="availableBooksForImport"
           [selectedBooks]="selectedBooks"
           [basicMode]="true"
-          [readonly]="isImporting || noDraftsAvailable"
+          [readonly]="isImporting"
           (bookSelect)="onBookSelect($event)"
         ></app-book-multi-select>
 
@@ -203,7 +206,7 @@
             color="primary"
             matStepperNext
             data-test-id="step-4-next"
-            [disabled]="selectedBooks.length === 0 || isConnecting || isImporting || noDraftsAvailable"
+            [disabled]="selectedBooks.length === 0 || isConnecting || isImporting"
           >
             {{ showOverwriteConfirmation ? t("next") : t("import") }}
             <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
@@ -374,10 +377,7 @@
       @if (isSyncing) {
         <h1>{{ t("syncing_project") }}</h1>
         @if (targetProjectDoc$ | async; as projectDoc) {
-          <app-sync-progress
-            [projectDoc]="$any(projectDoc)"
-            (inProgress)="updateSyncStatus($event)"
-          ></app-sync-progress>
+          <app-sync-progress [projectDoc]="projectDoc" (inProgress)="updateSyncStatus($event)"></app-sync-progress>
         }
       }
 
