@@ -15,7 +15,6 @@ import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { BuildDto } from '../../../machine-api/build-dto';
-import { DraftApplyProgress } from '../draft-apply-progress-dialog/draft-apply-progress-dialog.component';
 import { BookWithDraft, DraftPreviewBooksComponent } from './draft-preview-books.component';
 
 const mockedActivatedProjectService = mock(ActivatedProjectService);
@@ -72,7 +71,6 @@ describe('DraftPreviewBooks', () => {
 class TestEnvironment {
   component: DraftPreviewBooksComponent;
   fixture: ComponentFixture<DraftPreviewBooksComponent>;
-  draftApplyProgress?: DraftApplyProgress;
   progressSubscription?: Subscription;
   loader: HarnessLoader;
   readonly paratextId = 'pt01';
