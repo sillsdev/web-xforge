@@ -50,7 +50,6 @@ class DraftImportWizardWrapperComponent implements AfterViewInit, OnChanges {
   @Input() isLoadingProjects: boolean = false;
   @Input() isSyncing: boolean = false;
   @Input() needsConnection: boolean = false;
-  @Input() noDraftsAvailable: boolean = false;
   @Input() projectLoadingFailed: boolean = false;
   @Input() showBookSelection: boolean = false;
   @Input() showOverwriteConfirmation: boolean = false;
@@ -86,7 +85,6 @@ class DraftImportWizardWrapperComponent implements AfterViewInit, OnChanges {
       this.component.isLoadingProjects = this.isLoadingProjects;
       this.component.isSyncing = this.isSyncing;
       this.component.needsConnection = this.needsConnection;
-      this.component.noDraftsAvailable = this.noDraftsAvailable;
       this.component.projectLoadingFailed = this.projectLoadingFailed;
       this.component.showBookSelection = this.showBookSelection;
       this.component.showOverwriteConfirmation = this.showOverwriteConfirmation;
@@ -128,7 +126,6 @@ interface DraftImportWizardComponentState {
   isLoadingProjects: boolean;
   isSyncing: boolean;
   needsConnection: boolean;
-  noDraftsAvailable: boolean;
   projectLoadingFailed: boolean;
   showBookSelection: boolean;
   showOverwriteConfirmation: boolean;
@@ -155,7 +152,6 @@ const defaultArgs: DraftImportWizardComponentState = {
   isLoadingProjects: false,
   isSyncing: false,
   needsConnection: false,
-  noDraftsAvailable: false,
   projectLoadingFailed: false,
   showBookSelection: false,
   showOverwriteConfirmation: false,
@@ -222,7 +218,6 @@ export default {
     isLoadingProjects: { control: 'boolean' },
     isSyncing: { control: 'boolean' },
     needsConnection: { control: 'boolean' },
-    noDraftsAvailable: { control: 'boolean' },
     projectLoadingFailed: { control: 'boolean' },
     showBookSelection: { control: 'boolean' },
     showOverwriteConfirmation: { control: 'boolean' },
