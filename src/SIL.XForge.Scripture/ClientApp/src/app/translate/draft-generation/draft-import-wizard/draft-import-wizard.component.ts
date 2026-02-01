@@ -18,7 +18,6 @@ import {
 } from '@angular/material/stepper';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
-import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { BehaviorSubject } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -130,12 +129,10 @@ export class DraftImportWizardComponent implements OnInit {
   isLoadingProjects = true;
   targetProjectId?: string;
   selectedParatextProject?: ParatextProject;
-  targetProject$ = new BehaviorSubject<SFProjectProfile | undefined>(undefined);
   targetProjectDoc$ = new BehaviorSubject<SFProjectDoc | undefined>(undefined);
   canEditProject = true;
   projectLoadingFailed = false;
   sourceProjectId?: string;
-  noDraftsAvailable = false;
   cannotAdvanceFromProjectSelection = false;
 
   // Step 2-3: Project connection (conditional)
@@ -183,12 +180,7 @@ export class DraftImportWizardComponent implements OnInit {
 
         // Reload project data after connection
         const projectDoc = await this.projectService.get(this.targetProjectId);
-        this.targetProjectDoc$.next(projectDoc);
-        if (projectDoc.data != null) {
-          await this.loadTargetProjectAndValidate(projectDoc.data, paratextProject.isConnected);
-        }
-
-        await this.determineBooksAndChaptersWithText();
+        await this.loadTargetProjectAndValidate(projectDoc);
 
         this.isConnecting = false;
         this.stepper?.next();
@@ -226,14 +218,9 @@ export class DraftImportWizardComponent implements OnInit {
         this.isConnecting = false;
         return;
       }
-
-      void this.loadTargetProjectAndValidate(projectDoc.data, true)
-        .then(async () => {
-          return await this.determineBooksAndChaptersWithText();
-        })
-        .finally(() => {
-          this.isConnecting = false;
-        });
+      void this.loadTargetProjectAndValidate(projectDoc).finally(() => {
+        this.isConnecting = false;
+      });
     }
   }
 
@@ -246,9 +233,6 @@ export class DraftImportWizardComponent implements OnInit {
 
   onStepSelectionChange(event: StepperSelectionEvent): void {
     if (event.selectedStep === this.importStep && !this.importStepTriggered) {
-      if (this.noDraftsAvailable) {
-        return;
-      }
       this.importStepTriggered = true;
       void this.startImport();
     }
@@ -397,7 +381,6 @@ export class DraftImportWizardComponent implements OnInit {
 
   async projectSelected(paratextId: string): Promise<void> {
     if (paratextId == null) {
-      this.targetProject$.next(undefined);
       this.targetProjectDoc$.next(undefined);
       this.selectedParatextProject = undefined;
       this.resetProjectValidation();
@@ -408,7 +391,6 @@ export class DraftImportWizardComponent implements OnInit {
     const paratextProject = this.projects.find(p => p.paratextId === paratextId);
     if (paratextProject == null) {
       this.canEditProject = false;
-      this.targetProject$.next(undefined);
       this.targetProjectDoc$.next(undefined);
       this.selectedParatextProject = undefined;
       this.resetImportState();
@@ -430,13 +412,8 @@ export class DraftImportWizardComponent implements OnInit {
         // Get the project profile to analyze
         this.isLoadingProject = true;
         try {
-          const projectDoc = await this.projectService.getProfile(this.targetProjectId);
-          if (projectDoc.data != null) {
-            await this.loadTargetProjectAndValidate(projectDoc.data, paratextProject.isConnected);
-          }
-
-          // Analyze books for overwrite confirmation
-          await this.determineBooksAndChaptersWithText();
+          const projectDoc = await this.projectService.get(this.targetProjectId);
+          await this.loadTargetProjectAndValidate(projectDoc);
         } finally {
           this.isLoadingProject = false;
         }
@@ -448,7 +425,6 @@ export class DraftImportWizardComponent implements OnInit {
         this.targetProjectId = undefined;
         this.needsConnection = true;
         this.canEditProject = paratextProject.isConnectable;
-        this.targetProject$.next(undefined);
         this.targetProjectDoc$.next(undefined);
       } finally {
         this.isLoadingProject = false;
@@ -456,22 +432,16 @@ export class DraftImportWizardComponent implements OnInit {
     }
   }
 
-  private async loadTargetProjectAndValidate(project: SFProjectProfile, isConnected: boolean): Promise<void> {
+  private async loadTargetProjectAndValidate(projectDoc: SFProjectDoc): Promise<void> {
     // Check permissions for all books
-    this.canEditProject = this.textDocService.userHasGeneralEditRight(project);
-
-    // Connection status comes from ParatextProject
-    this.needsConnection = !isConnected && this.canEditProject;
-
-    if (this.canEditProject && this.targetProjectId != null) {
-      this.targetProject$.next(project);
-      // Load the full project doc for sync component
-      const projectDoc = await this.projectService.get(this.targetProjectId);
+    this.canEditProject = this.textDocService.userHasGeneralEditRight(projectDoc?.data);
+    if (this.canEditProject) {
       this.targetProjectDoc$.next(projectDoc);
     } else {
-      this.targetProject$.next(undefined);
       this.targetProjectDoc$.next(undefined);
     }
+
+    await this.analyzeBooksForOverwriteConfirmation();
   }
 
   private async ensureProjectExists(): Promise<boolean> {
@@ -479,14 +449,12 @@ export class DraftImportWizardComponent implements OnInit {
       return false;
     }
 
-    let project = this.targetProject$.value;
-    if (project == null) {
-      const profileDoc = await this.projectService.getProfile(this.targetProjectId);
-      project = profileDoc.data;
-      if (project == null) {
+    if (this.targetProjectDoc$.value?.data == null) {
+      const profileDoc = await this.projectService.get(this.targetProjectId);
+      if (profileDoc?.data == null) {
         return false;
       }
-      this.targetProject$.next(project);
+      this.targetProjectDoc$.next(profileDoc);
     }
 
     return true;
@@ -501,7 +469,7 @@ export class DraftImportWizardComponent implements OnInit {
       book.selected = selectedBooks.includes(book.bookNum);
     }
     this.resetImportState();
-    void this.determineBooksAndChaptersWithText();
+    void this.analyzeBooksForOverwriteConfirmation();
   }
 
   get projectReadyToImport(): boolean {
@@ -524,6 +492,7 @@ export class DraftImportWizardComponent implements OnInit {
 
     // For connected projects, ensure we have a targetProjectId before proceeding
     if (this.targetProjectId == null) {
+      this.cannotAdvanceFromProjectSelection = true;
       return;
     }
 
@@ -534,14 +503,13 @@ export class DraftImportWizardComponent implements OnInit {
       return;
     }
 
-    // Analyze books for overwrite confirmation
-    await this.determineBooksAndChaptersWithText();
+    await this.analyzeBooksForOverwriteConfirmation();
 
     this.stepper?.next();
     this.isLoadingProject = false;
   }
 
-  private async determineBooksAndChaptersWithText(): Promise<void> {
+  private async analyzeBooksForOverwriteConfirmation(): Promise<void> {
     if (this.targetProjectId == null) return;
 
     this.booksWithExistingText = [];
@@ -564,7 +532,7 @@ export class DraftImportWizardComponent implements OnInit {
   private async getChaptersWithText(bookNum: number): Promise<number[]> {
     if (this.targetProjectId == null) return [];
 
-    const project = this.targetProject$.value;
+    const project = this.targetProjectDoc$.value?.data;
     if (project == null) return [];
 
     const targetBook = project.texts.find(t => t.bookNum === bookNum);
