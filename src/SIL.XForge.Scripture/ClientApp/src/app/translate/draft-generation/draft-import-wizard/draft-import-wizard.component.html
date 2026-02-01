@@ -20,7 +20,6 @@
             [projects]="projects"
             [placeholder]="t('choose_project')"
             [isDisabled]="projects.length === 0 || isImporting || projectLoadingFailed"
-            [invalidMessageMapper]="invalidMessageMapper"
             (projectSelect)="projectSelected($event.paratextId)"
             formControlName="targetParatextId"
           ></app-project-select>
@@ -44,6 +43,10 @@
           <mat-error class="offline-message">{{ t("connect_to_the_internet") }}</mat-error>
         }
 
+        @if (!canEditProject) {
+          <app-notice type="error">{{ t("cannot_edit_project") }}</app-notice>
+        }
+
         @if (noDraftsAvailable) {
           <app-notice type="warning">{{ t("no_books_ready_for_import") }}</app-notice>
         }
@@ -52,10 +55,6 @@
           <app-notice [icon]="'verified'">
             {{ t("ready_to_import", { projectShortName: $any(project).shortName, projectName: $any(project).name }) }}
           </app-notice>
-        }
-
-        @if (bookCreationError != null && bookCreationError.length > 0) {
-          <app-notice type="error">{{ bookCreationError }}</app-notice>
         }
 
         @if (cannotAdvanceFromProjectSelection && !projectReadyToImport) {
@@ -75,7 +74,7 @@
           color="primary"
           data-test-id="step-1-next"
           (click)="advanceFromProjectSelection()"
-          [disabled]="!isAppOnline || noDraftsAvailable || projectLoadingFailed"
+          [disabled]="!isAppOnline || noDraftsAvailable || projectLoadingFailed || !canEditProject"
         >
           {{ needsConnection || showBookSelection || showOverwriteConfirmation ? t("next") : t("import") }}
           <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
@@ -297,7 +296,7 @@
             @if (progress.failedChapters.length > 0) {
               <div class="failed-chapters">
                 <mat-icon class="error-icon">error</mat-icon>
-                <span>Failed: {{ getFailedChapters(progress) }}</span>
+                <span>{{ t("failed") }} {{ getFailedChapters(progress) }}</span>
               </div>
             }
           </div>
