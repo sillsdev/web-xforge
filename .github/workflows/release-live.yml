@@ -30,7 +30,7 @@ on:
 jobs:
   determine_build_commit:
     name: "Determine commit from which to build"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       build_commit: "${{ steps.get_commit.outputs.build_commit }}"
     steps:
@@ -118,7 +118,7 @@ jobs:
       node_version: "22.13.0"
       npm_version: "11.11.0"
       # When bumping OS version, the server will need to authorize the new default rsync args.
-      os: "ubuntu-22.04"
+      os: "ubuntu-24.04"
 
       angular_config: "production"
       app_name: "scriptureforge"
