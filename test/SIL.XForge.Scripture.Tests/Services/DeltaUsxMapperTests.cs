@@ -1153,6 +1153,57 @@ public class DeltaUsxMapperTests
     }
 
     [Test]
+    public void ToUsx_ImpliedParagraphForVerseWithEmptyParagraphAfter()
+    {
+        var chapterDelta = new ChapterDelta(
+            1,
+            1,
+            true,
+            Delta
+                .New()
+                .InsertBook("PHM")
+                .InsertChapter("1")
+                .InsertVerse("1")
+                .InsertBlank("verse_1_1")
+                .Insert("\n")
+                .InsertBlank("verse_1_1/p_1")
+                .InsertPara("p")
+        );
+
+        var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
+
+        XDocument expected = Usx("PHM", Chapter("1"), Verse("1"), Para("p"));
+        Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+    }
+
+    [Test]
+    public void ToUsx_ImpliedParagraphMissingForVerseWithEmptyParagraphAfter()
+    {
+        // This is the same test as ToUsx_ImpliedParagraphForVerseWithEmptyParagraphAfter
+        // but with deltas created before SF-3680
+        var chapterDelta = new ChapterDelta(
+            1,
+            1,
+            true,
+            Delta
+                .New()
+                .InsertBook("PHM")
+                .InsertChapter("1")
+                .InsertVerse("1")
+                .Insert("\n")
+                .InsertBlank("verse_1_1/p_1")
+                .InsertPara("p")
+        );
+
+        var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
+
+        XDocument expected = Usx("PHM", Chapter("1"), Verse("1"), Para("p"));
+        Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+    }
+
+    [Test]
     public void ToUsx_ImpliedParagraphInVerse()
     {
         var chapterDelta = new ChapterDelta(
@@ -3263,6 +3314,30 @@ public class DeltaUsxMapperTests
             .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertBlank("verse_1_1")
+            .InsertPara("p");
+
+        Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
+        Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
+        Assert.That(chapterDeltas[0].IsValid, Is.True);
+        Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
+    }
+
+    [Test]
+    public void ToDelta_ImpliedParagraphForVerseWithEmptyParagraphAfter()
+    {
+        XDocument usxDoc = Usx("PHM", Chapter("1"), Verse("1"), Para("p"));
+
+        var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+        List<ChapterDelta> chapterDeltas = [.. mapper.ToChapterDeltas(usxDoc)];
+
+        var expected = Delta
+            .New()
+            .InsertBook("PHM")
+            .InsertChapter("1")
+            .InsertVerse("1")
+            .InsertBlank("verse_1_1")
+            .Insert("\n")
+            .InsertBlank("verse_1_1/p_1")
             .InsertPara("p");
 
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
