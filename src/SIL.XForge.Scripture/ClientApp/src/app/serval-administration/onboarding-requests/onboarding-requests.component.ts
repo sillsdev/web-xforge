@@ -49,6 +49,10 @@ const filterOptions = {
     name: 'In Progress',
     filter: (request: OnboardingRequest, _currentUserId: string | undefined) => request.status === 'in_progress'
   },
+  outsources: {
+    name: 'Outsourced',
+    filter: (request: OnboardingRequest, _currentUserId: string | undefined) => request.resolution === 'outsourced'
+  },
   completed: {
     name: 'Completed',
     filter: (request: OnboardingRequest, _currentUserId: string | undefined) => request.status === 'completed'
@@ -89,7 +93,7 @@ type FilterName = keyof typeof filterOptions;
 export class OnboardingRequestsComponent extends DataLoadingComponent implements OnInit {
   requests: OnboardingRequest[] = [];
   filteredRequests: OnboardingRequest[] = [];
-  displayedColumns: string[] = ['project', 'user', 'status', 'assignee', 'resolution'];
+  displayedColumns: string[] = ['project', 'languageCode', 'user', 'status', 'assignee', 'resolution'];
   currentUserId?: string;
   assignedUserIds: Set<string> = new Set();
   userDisplayNames: Map<string, string> = new Map();
