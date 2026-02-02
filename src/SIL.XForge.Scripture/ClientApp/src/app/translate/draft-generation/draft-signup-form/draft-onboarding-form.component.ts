@@ -186,7 +186,7 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
           // Omit email if it's a noreply email
           const userEmail = user.email?.includes('@users.noreply.scriptureforge.org') ? '' : (user.email ?? '');
           this.signupForm.patchValue({
-            name: user.name ?? '',
+            name: user.displayName || user.name || '',
             email: userEmail
           });
         }
