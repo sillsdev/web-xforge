@@ -32,6 +32,14 @@
           </td>
         </ng-container>
 
+        <!-- Language code Column -->
+        <ng-container matColumnDef="languageCode">
+          <th mat-header-cell *matHeaderCellDef>Language Code</th>
+          <td mat-cell *matCellDef="let request">
+            {{ request.submission.formData.translationLanguageIsoCode }}
+          </td>
+        </ng-container>
+
         <!-- User Column -->
         <ng-container matColumnDef="user">
           <th mat-header-cell *matHeaderCellDef>User</th>
