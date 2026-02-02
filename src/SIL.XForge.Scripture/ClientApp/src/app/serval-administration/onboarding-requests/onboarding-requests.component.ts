@@ -49,6 +49,10 @@ const filterOptions = {
     name: 'In Progress',
     filter: (request: OnboardingRequest, _currentUserId: string | undefined) => request.status === 'in_progress'
   },
+  outsources: {
+    name: 'Outsourced',
+    filter: (request: OnboardingRequest, _currentUserId: string | undefined) => request.resolution === 'outsourced'
+  },
   completed: {
     name: 'Completed',
     filter: (request: OnboardingRequest, _currentUserId: string | undefined) => request.status === 'completed'
