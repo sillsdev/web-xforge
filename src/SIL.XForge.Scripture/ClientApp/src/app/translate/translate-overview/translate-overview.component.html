@@ -5,98 +5,111 @@
     <app-font-unsupported-message></app-font-unsupported-message>
   }
 
-  <div class="card-wrapper">
-    <mat-card class="books-card">
-      <mat-card-header id="translate-overview-title" class="books-card-title">
-        <mat-card-title class="progress-header">
-          {{ t("progress") }}
-          <div class="progress" [matTooltip]="projectProgress?.ratio ?? 0 | l10nPercent">
-            <app-donut-chart
-              [colors]="['var(--sf-translate-progress-complete)', 'var(--sf-translate-progress-remaining)']"
-              [data]="[projectProgress?.translatedVerseSegments ?? 0, projectProgress?.blankVerseSegments ?? 0]"
-              backgroundColor="var(--sf-translate-progress-track)"
-              [innerThicknessDelta]="0"
-              [thickness]="22"
-            ></app-donut-chart>
-          </div>
-        </mat-card-title>
-      </mat-card-header>
-      <mat-divider></mat-divider>
-      @if (projectProgress != null) {
-        <mat-list role="list">
-          @for (bookProgress of projectProgress.books; track bookProgress.bookId) {
-            <mat-list-item role="listitem" [appRouterLink]="['./', bookProgress.bookId]">
-              <mat-icon matListItemIcon class="mirror-rtl">book</mat-icon>
-              <span matListItemTitle>{{ getBookNameFromId(bookProgress.bookId) }}</span>
-              <span matListItemLine>{{
-                t("translated_segments", {
-                  translatedSegments: (bookTranslatedSegments(bookProgress) | l10nNumber),
-                  total: (bookProgress.verseSegments | l10nNumber)
-                })
-              }}</span>
-              <div class="progress" matListItemMeta [matTooltip]="bookTranslationRatio(bookProgress) | l10nPercent">
-                <app-donut-chart
-                  [colors]="['var(--sf-translate-progress-complete)', 'var(--sf-translate-progress-remaining)']"
-                  [data]="[bookTranslatedSegments(bookProgress), bookProgress.blankVerseSegments]"
-                  backgroundColor="var(--sf-translate-progress-track)"
-                  [innerThicknessDelta]="0"
-                  [thickness]="22"
-                ></app-donut-chart>
-              </div>
-            </mat-list-item>
-          }
-        </mat-list>
-      }
-    </mat-card>
-
-    @if (translationSuggestionsEnabled && canEditTexts) {
-      <mat-card class="engine-card">
-        <mat-progress-bar
-          id="training-progress-bar"
-          [mode]="trainingPercentage > 0 ? 'determinate' : 'indeterminate'"
-          [class.mat-progress-bar--closed]="!isTraining"
-          [value]="trainingPercentage"
-        ></mat-progress-bar>
-        <mat-card-header>
-          <mat-card-title class="engine-card-title">{{ t("suggestion_engine") }}</mat-card-title>
+  @if (isOnline) {
+    <div class="card-wrapper">
+      <mat-card class="books-card">
+        <mat-card-header id="translate-overview-title" class="books-card-title">
+          <mat-card-title class="progress-header">
+            {{ t("progress") }}
+            <div class="progress" [matTooltip]="projectProgress?.ratio ?? 0 | l10nPercent">
+              <app-donut-chart
+                [colors]="['var(--sf-translate-progress-complete)', 'var(--sf-translate-progress-remaining)']"
+                [data]="[projectProgress?.translatedVerseSegments ?? 0, projectProgress?.blankVerseSegments ?? 0]"
+                backgroundColor="var(--sf-translate-progress-track)"
+                [innerThicknessDelta]="0"
+                [thickness]="22"
+              ></app-donut-chart>
+            </div>
+          </mat-card-title>
         </mat-card-header>
-        <mat-card-content class="engine-card-content">
-          <div class="engine-card-quality">
-            <div class="engine-card-quality-stars mirror-rtl" [matTooltip]="(engineConfidence | l10nNumber) + ' BLEU'">
-              @for (star of engineQualityStars; track $index) {
-                <mat-icon>{{
-                  engineQuality >= star + 1 ? "star" : engineQuality === star + 0.5 ? "star_half" : "star_border"
-                }}</mat-icon>
-              }
-            </div>
-            <div class="engine-card-quality-subtitle">{{ t("quality") }}</div>
-          </div>
-          <div class="engine-card-segments">
-            <span class="engine-card-segments-count">{{ trainedSegmentCount | l10nNumber }}</span
-            ><span>{{ t("trained_segments") }}</span>
-          </div>
-          @if (showCannotTrainEngineMessage || !hasMinimumSegmentsToTrainStatisticalEngine) {
-            <div class="translation-suggestions-info">
-              {{
-                showCannotTrainEngineMessage ? t("cannot_train_suggestion_engine") : t("not_enough_verses_translated")
-              }}
-            </div>
-          }
-        </mat-card-content>
         <mat-divider></mat-divider>
-        <mat-card-actions>
-          <button
-            id="retrain-button"
-            mat-button
-            [disabled]="isTraining || !isOnline"
-            type="button"
-            (click)="startTraining()"
-          >
-            {{ isTraining ? t("training") : t("retrain") }}
-          </button>
-        </mat-card-actions>
+        @if (projectProgress != null) {
+          <mat-list role="list">
+            @for (bookProgress of projectProgress.books; track bookProgress.bookId) {
+              <mat-list-item role="listitem" [appRouterLink]="['./', bookProgress.bookId]">
+                <mat-icon matListItemIcon class="mirror-rtl">book</mat-icon>
+                <span matListItemTitle>{{ getBookNameFromId(bookProgress.bookId) }}</span>
+                <span matListItemLine>{{
+                  t("translated_segments", {
+                    translatedSegments: (bookTranslatedSegments(bookProgress) | l10nNumber),
+                    total: (bookProgress.verseSegments | l10nNumber)
+                  })
+                }}</span>
+                <div class="progress" matListItemMeta [matTooltip]="bookTranslationRatio(bookProgress) | l10nPercent">
+                  <app-donut-chart
+                    [colors]="['var(--sf-translate-progress-complete)', 'var(--sf-translate-progress-remaining)']"
+                    [data]="[bookTranslatedSegments(bookProgress), bookProgress.blankVerseSegments]"
+                    backgroundColor="var(--sf-translate-progress-track)"
+                    [innerThicknessDelta]="0"
+                    [thickness]="22"
+                  ></app-donut-chart>
+                </div>
+              </mat-list-item>
+            }
+          </mat-list>
+        }
       </mat-card>
-    }
-  </div>
-  <app-training-progress [projectId]="projectId"></app-training-progress>
+
+      @if (translationSuggestionsEnabled && canEditTexts) {
+        <mat-card class="engine-card">
+          <mat-progress-bar
+            id="training-progress-bar"
+            [mode]="trainingPercentage > 0 ? 'determinate' : 'indeterminate'"
+            [class.mat-progress-bar--closed]="!isTraining"
+            [value]="trainingPercentage"
+          ></mat-progress-bar>
+          <mat-card-header>
+            <mat-card-title class="engine-card-title">{{ t("suggestion_engine") }}</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="engine-card-content">
+            <div class="engine-card-quality">
+              <div
+                class="engine-card-quality-stars mirror-rtl"
+                [matTooltip]="(engineConfidence | l10nNumber) + ' BLEU'"
+              >
+                @for (star of engineQualityStars; track $index) {
+                  <mat-icon>{{
+                    engineQuality >= star + 1 ? "star" : engineQuality === star + 0.5 ? "star_half" : "star_border"
+                  }}</mat-icon>
+                }
+              </div>
+              <div class="engine-card-quality-subtitle">{{ t("quality") }}</div>
+            </div>
+            <div class="engine-card-segments">
+              <span class="engine-card-segments-count">{{ trainedSegmentCount | l10nNumber }}</span
+              ><span>{{ t("trained_segments") }}</span>
+            </div>
+            @if (showCannotTrainEngineMessage || !hasMinimumSegmentsToTrainStatisticalEngine) {
+              <div class="translation-suggestions-info">
+                {{
+                  showCannotTrainEngineMessage ? t("cannot_train_suggestion_engine") : t("not_enough_verses_translated")
+                }}
+              </div>
+            }
+          </mat-card-content>
+          <mat-divider></mat-divider>
+          <mat-card-actions>
+            <button
+              id="retrain-button"
+              mat-button
+              [disabled]="isTraining || !isOnline"
+              type="button"
+              (click)="startTraining()"
+            >
+              {{ isTraining ? t("training") : t("retrain") }}
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      }
+    </div>
+    <app-training-progress [projectId]="projectId"></app-training-progress>
+  } @else {
+    <app-notice type="info" icon="cloud_off" mode="fill-dark">
+      {{
+        translationSuggestionsEnabled && canEditTexts
+          ? t("progress_and_suggestions_not_available_offline")
+          : t("progress_not_available_offline")
+      }}
+    </app-notice>
+  }
 </ng-container>

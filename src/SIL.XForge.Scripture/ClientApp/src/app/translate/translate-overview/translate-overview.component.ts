@@ -40,6 +40,7 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
+import { NoticeComponent } from '../../shared/notice/notice.component';
 import { BookProgress, ProgressService, ProjectProgress } from '../../shared/progress-service/progress.service';
 import { FontUnsupportedMessageComponent } from '../font-unsupported-message/font-unsupported-message.component';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
@@ -72,6 +73,7 @@ const TEXT_PATH_TEMPLATE = obj<SFProject>().pathTemplate(p => p.texts[ANY_INDEX]
     MatCardActions,
     MatButton,
     TrainingProgressComponent,
+    NoticeComponent,
     L10nNumberPipe,
     L10nPercentPipe
   ]
