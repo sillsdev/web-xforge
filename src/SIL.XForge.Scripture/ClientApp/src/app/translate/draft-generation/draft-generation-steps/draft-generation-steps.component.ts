@@ -22,8 +22,6 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { isEqual } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
-import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import {
   DraftConfig,
@@ -43,14 +41,13 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { ParatextProject } from '../../../core/models/paratext-project';
-import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { Book } from '../../../shared/book-multi-select/book-multi-select';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
-import { BookProgress, ProgressService } from '../../../shared/progress-service/progress.service';
+import { BookProgress, ProgressService, ProjectProgress } from '../../../shared/progress-service/progress.service';
 import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
@@ -59,6 +56,7 @@ import { DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataService } from '../training-data/training-data.service';
 
 const MIN_TRANSLATED_SEGMENTS_TO_AUTO_SELECT_BOOK = 10 as const;
+const MIN_TRANSLATED_SEGMENTS_FOR_NON_EMPTY_BOOK = 3 as const;
 
 export interface DraftGenerationStepsResult {
   trainingDataFiles: string[];
@@ -133,6 +131,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   unusableTranslateSourceBooks: number[] = [];
   unusableTranslateTargetBooks: number[] = [];
   emptyTranslateSourceBooks: number[] = [];
+  trainingBooksWithoutEnoughData: number[] = [];
   unusableTrainingSourceBooks: number[] = [];
   unusableTrainingTargetBooks: number[] = [];
 
@@ -163,11 +162,12 @@ export class DraftGenerationStepsComponent implements OnInit {
   private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
   private trainingDataQuerySubscription?: Subscription;
   private currentUserDoc?: UserDoc;
+  private projectProgress: Map<string, ProjectProgress> = new Map<string, ProjectProgress>();
 
   constructor(
     private readonly destroyRef: DestroyRef,
     protected readonly activatedProject: ActivatedProjectService,
-    private readonly projectService: SFProjectService,
+    readonly projectService: SFProjectService,
     private readonly draftSourcesService: DraftSourcesService,
     protected readonly featureFlags: FeatureFlagService,
     private readonly nllbLanguageService: NllbLanguageService,
@@ -209,7 +209,7 @@ export class DraftGenerationStepsComponent implements OnInit {
 
           // The null values will have been filtered above
           const target = trainingTargets[0]!;
-          const draftingSource = draftingSources[0]!;
+          const draftingSource: DraftSource = draftingSources[0]!;
           // If both source and target project languages are in the NLLB,
           // training book selection is optional (and discouraged).
           this.isTrainingOptional =
@@ -222,23 +222,37 @@ export class DraftGenerationStepsComponent implements OnInit {
 
           // TODO: When implementing multiple drafting sources, this will need to be updated to handle multiple sources
           const draftingSourceBooks = new Set<number>();
-          const draftingSourceProfileDoc: SFProjectProfileDoc = await this.projectService.getProfile(
-            draftingSource.projectRef
-          );
           for (const text of draftingSource.texts) {
             draftingSourceBooks.add(text.bookNum);
           }
 
           const trainingSourceBooks: Set<number> = new Set<number>(trainingSources[0]?.texts.map(t => t.bookNum));
           const secondTrainingSourceBooks: Set<number> = new Set<number>(trainingSources[1]?.texts.map(t => t.bookNum));
+          this.projectProgress.clear();
+          for (const target of this.trainingTargets) {
+            const targetProgress: ProjectProgress = await this.progressService.getProgress(target.projectRef, {
+              maxStalenessMs: 30000
+            });
+            this.projectProgress.set(target.projectRef, targetProgress);
+          }
 
           for (const source of this.draftingSources) {
             this.availableTranslateBooks[source?.projectRef] = [];
+            if (source.noAccess) continue;
+            const draftSourceProgress: ProjectProgress = await this.progressService.getProgress(source.projectRef, {
+              maxStalenessMs: 30000
+            });
+            this.projectProgress.set(source.projectRef, draftSourceProgress);
           }
 
           this.availableTrainingBooks[projectId!] = [];
           for (const source of this.trainingSources) {
             this.availableTrainingBooks[source?.projectRef] = [];
+            if (source.noAccess || this.projectProgress.has(source.projectRef)) continue;
+            const trainingSourceProgress: ProjectProgress = await this.progressService.getProgress(source.projectRef, {
+              maxStalenessMs: 30000
+            });
+            this.projectProgress.set(source.projectRef, trainingSourceProgress);
           }
 
           this.trainingDataQuery?.dispose();
@@ -283,8 +297,8 @@ export class DraftGenerationStepsComponent implements OnInit {
             if (draftingSourceBooks.has(bookNum)) {
               const book: Book = { number: bookNum, selected: false };
               this.allAvailableTranslateBooks.push(book);
-              if (this.sourceBookHasContent(draftingSourceProfileDoc.data, bookNum)) {
-                this.availableTranslateBooks[draftingSources[0]!.projectRef].push(book);
+              if (this.bookHasVerseContent(draftingSource.projectRef, bookNum)) {
+                this.availableTranslateBooks[draftingSource.projectRef].push(book);
               } else {
                 this.emptyTranslateSourceBooks.push(bookNum);
               }
@@ -318,18 +332,38 @@ export class DraftGenerationStepsComponent implements OnInit {
 
             // Training books
             let isPresentInASource = false;
-            if (trainingSourceBooks.has(bookNum)) {
-              this.availableTrainingBooks[trainingSources[0]!.projectRef].push({ number: bookNum, selected: selected });
+            let isBookEmptyInAllSources = true;
+            const firstTrainingSourceRef = trainingSources[0]?.projectRef;
+            if (firstTrainingSourceRef != null && trainingSourceBooks.has(bookNum)) {
               isPresentInASource = true;
+              if (this.bookHasVerseContent(firstTrainingSourceRef, bookNum)) {
+                this.availableTrainingBooks[firstTrainingSourceRef].push({
+                  number: bookNum,
+                  selected: selected
+                });
+                isBookEmptyInAllSources = false;
+              }
             } else {
               this.unusableTrainingSourceBooks.push(bookNum);
             }
-            if (trainingSources[1] != null && secondTrainingSourceBooks.has(bookNum)) {
-              this.availableTrainingBooks[trainingSources[1].projectRef].push({ number: bookNum, selected: selected });
+            const secondTrainingSourceRef = trainingSources[1]?.projectRef;
+            if (secondTrainingSourceRef != null && secondTrainingSourceBooks.has(bookNum)) {
               isPresentInASource = true;
+              if (this.bookHasVerseContent(secondTrainingSourceRef, bookNum)) {
+                this.availableTrainingBooks[secondTrainingSourceRef].push({
+                  number: bookNum,
+                  selected: selected
+                });
+                isBookEmptyInAllSources = false;
+              }
             }
             if (isPresentInASource) {
-              this.availableTrainingBooks[projectId!].push({ number: bookNum, selected: selected });
+              if (isBookEmptyInAllSources || !this.bookHasVerseContent(projectId!, bookNum)) {
+                // the books is present but is empty
+                this.trainingBooksWithoutEnoughData.push(bookNum);
+              } else {
+                this.availableTrainingBooks[projectId!].push({ number: bookNum, selected: selected });
+              }
             }
           }
 
@@ -700,9 +734,14 @@ export class DraftGenerationStepsComponent implements OnInit {
     }
   }
 
-  private sourceBookHasContent(project: SFProjectProfile | undefined, bookNum: number): boolean {
-    const sourceProjectText: TextInfo | undefined = project?.texts.find(t => t.bookNum === bookNum);
-    return (sourceProjectText?.chapters ?? []).some(c => c.lastVerse > 0);
+  /** Check whether a project book has any translated verses. */
+  private bookHasVerseContent(projectId: string, bookNum: number): boolean {
+    const textProgress: ProjectProgress | undefined = this.projectProgress.get(projectId);
+    if (textProgress == null) return false;
+    const bookId: string = Canon.bookNumberToId(bookNum);
+    const bookProgress: BookProgress | undefined = textProgress.books.find(p => p.bookId === bookId);
+    if (bookProgress == null) return false;
+    return bookProgress.verseSegments - bookProgress.blankVerseSegments >= MIN_TRANSLATED_SEGMENTS_FOR_NON_EMPTY_BOOK;
   }
 
   private setProjectDisplayNames(target: DraftSource | undefined, draftingSource: DraftSource | undefined): void {
