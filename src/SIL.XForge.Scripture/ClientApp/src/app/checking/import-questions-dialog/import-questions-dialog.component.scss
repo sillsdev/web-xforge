@@ -31,7 +31,7 @@
 // Section: Initial import screen
 
 .initial-import-screen {
-  max-width: 60em;
+  max-width: 70em;
 }
 
 .card-wrapper {
@@ -108,28 +108,20 @@
 
 // Section: Question list screen
 
-.filter-text {
-  padding: 0;
+// Make reference inputs and filter input denser
+.filter-references,
+.filter-area {
+  --mat-form-field-container-height: 40px;
+  --mat-form-field-container-vertical-padding: 10px;
+}
 
-  // below is to make denser
-  ::ng-deep div {
-    display: flex;
-    align-items: center;
-    mat-form-field:not(.mdc-text-field--textarea) {
-      height: 36px;
-      flex: 1;
-      max-width: 70%;
-      @include breakpoints.media-breakpoint-up(sm) {
-        max-width: unset;
-      }
-      // below is to make denser
-      .mat-mdc-text-field-wrapper {
-        div.mat-mdc-form-field-infix {
-          padding: 10px 0;
-        }
-      }
-    }
-  }
+.filter-area {
+  display: flex;
+  align-items: center;
+}
+
+.filter-area mat-form-field {
+  flex-grow: 1;
 }
 
 .paratext-tag-selection {
@@ -156,20 +148,6 @@
   }
 }
 
-// below is to make denser
-:host ::ng-deep {
-  mat-form-field.mat-mdc-form-field.mat-form-field-appearance-outline {
-    .mat-mdc-form-field-infix {
-      min-height: initial;
-      padding: 10px 0 5px;
-    }
-
-    label.mat-mdc-floating-label:not(.mdc-floating-label--float-above) {
-      transform: translateY(-100%);
-    }
-  }
-}
-
 .filter-references {
   margin-top: 0.4em;
   @include breakpoints.media-breakpoint-up(sm) {
@@ -177,7 +155,7 @@
     ::ng-deep {
       mat-form-field:first-child .mdc-notched-outline__trailing,
       mat-form-field:last-child .mdc-notched-outline__leading {
-        border-radius: 0;
+        --mat-form-field-outlined-container-shape: 0;
       }
     }
   }
