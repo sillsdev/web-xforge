@@ -101,26 +101,11 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
   private async loadRequest(requestId: string): Promise<void> {
     this.loadingStarted();
     try {
-      // Get all requests and find the one we need
-      const requests = await this.onboardingRequestService.getAllRequests();
-
-      if (requests != null) {
-        this.request = requests.find(r => r.id === requestId);
-
-        if (this.request == null) {
-          this.noticeService.showError('Request not found');
-          void this.router.navigate(['/serval-administration'], { queryParams: { tab: 'draft-requests' } });
-        } else {
-          // Load all project names
-          await this.loadProjectNames();
-        }
-      }
+      this.request = await this.onboardingRequestService.getRequestById(requestId);
+      await this.loadProjectNames();
       this.loadingFinished();
-    } catch (error) {
-      console.error('Error loading draft request:', error);
-      this.noticeService.showError('Failed to load draft request');
+    } finally {
       this.loadingFinished();
-      void this.router.navigate(['/serval-administration'], { queryParams: { tab: 'draft-requests' } });
     }
   }
 

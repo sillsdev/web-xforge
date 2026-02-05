@@ -114,6 +114,10 @@ export class OnboardingRequestService {
     return (await this.onlineInvoke<OnboardingRequest | null>('getOpenOnboardingRequest', { projectId }))!;
   }
 
+  async getRequestById(requestId: string): Promise<OnboardingRequest> {
+    return (await this.onlineInvoke<OnboardingRequest>('getRequestById', { requestId }))!;
+  }
+
   /** Gets all onboarding requests (Serval admin only). */
   async getAllRequests(): Promise<OnboardingRequest[]> {
     return (await this.onlineInvoke<OnboardingRequest[]>('getAllRequests'))!;
