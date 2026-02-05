@@ -85,7 +85,6 @@ public class OnboardingRequestRpcController(
                 var adminEmails = (await conn.GetAndFetchDocsAsync<User>(adminUserIds)).Select(u => u.Data.Email);
 
                 // Send email to each admin using EmailService
-                // string userName = await userRepository.Query().Where(u => u.Id == UserId).Select(u => u.Name).FirstOrDefaultAsync() ?? "[unknown User]";
                 string userName = await userService.GetUsernameFromUserId(UserId, UserId);
                 string subject = $"Onboarding request for {projectDoc.ShortName}";
                 string link = $"{httpRequestAccessor.SiteRoot}/serval-administration/draft-requests/{request.Id}";
@@ -259,6 +258,41 @@ public class OnboardingRequestRpcController(
         {
             _exceptionHandler.RecordEndpointInfoForException(
                 new Dictionary<string, string> { { "method", "GetAllRequests" } }
+            );
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets a drafting signup request by its ID. Only accessible to Serval admins.
+    /// </summary>
+    public async Task<IRpcMethodResult> GetRequestById(string requestId)
+    {
+        try
+        {
+            // Check if user is a Serval admin
+            if (!SystemRoles.Contains(SystemRole.ServalAdmin))
+            {
+                return ForbiddenError();
+            }
+
+            var request = await onboardingRequestRepository.Query().FirstOrDefaultAsync(r => r.Id == requestId);
+
+            if (request == null)
+            {
+                return NotFoundError("Drafting signup request not found");
+            }
+
+            return Ok(request);
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string> { { "method", "GetRequestById" }, { "requestId", requestId } }
             );
             throw;
         }
