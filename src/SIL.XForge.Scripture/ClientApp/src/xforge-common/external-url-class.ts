@@ -31,6 +31,10 @@ export class ExternalUrls {
     return this.helps + '/adding-questions#1850d745ac9e8003815fc894b8baaeb7';
   }
 
+  get paratextImportHelpPage(): string {
+    return this.helps + '/adding-questions#27f4373ac9934884976eacc1cc3a4a25';
+  }
+
   get csvImportHelpPage(): string {
     return this.helps + '/adding-questions#1850d745ac9e8085960dd88b648f0c7a';
   }
