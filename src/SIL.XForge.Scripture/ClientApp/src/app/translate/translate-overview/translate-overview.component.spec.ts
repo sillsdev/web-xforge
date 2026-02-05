@@ -69,6 +69,24 @@ describe('TranslateOverviewComponent', () => {
     ]
   }));
 
+  it('should display a notice if offline', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.wait();
+
+    // Verify message hidden if offline
+    expect(env.offlineNotice).toBeNull();
+    expect(env.booksCard).toBeTruthy();
+    expect(env.engineCard).toBeTruthy();
+
+    // Go offline
+    env.isOnline = false;
+    expect(env.offlineNotice).toBeTruthy();
+    expect(env.booksCard).toBeNull();
+    expect(env.engineCard).toBeNull();
+
+    discardPeriodicTasks();
+  }));
+
   describe('Progress Card', () => {
     it('should list all books in project', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -220,19 +238,6 @@ describe('TranslateOverviewComponent', () => {
 
       discardPeriodicTasks();
     }));
-
-    it('retrain should be disabled if offline', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.wait();
-
-      expect(env.retrainButton).toBeTruthy();
-      expect(env.retrainButton.nativeElement.disabled).toBe(false);
-
-      env.isOnline = false;
-      expect(env.retrainButton.nativeElement.disabled).toBe(true);
-
-      discardPeriodicTasks();
-    }));
   });
 });
 
@@ -282,6 +287,14 @@ class TestEnvironment {
     this.component = this.fixture.componentInstance;
     this.setupProjectData(projectConfig);
     this.setupUserData();
+  }
+
+  get offlineNotice(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('app-notice[icon="cloud_off"]');
+  }
+
+  get booksCard(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.books-card'));
   }
 
   get progressTextList(): HTMLElement {
