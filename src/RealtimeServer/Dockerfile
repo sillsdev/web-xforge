@@ -1,6 +1,6 @@
 ARG ARCHITECTURE=amd64
 ARG DOTNET_VERSION=8.0
-ARG UBUNTU_NAME=jammy # 22.04
+ARG UBUNTU_NAME=noble # 24.04
 ARG NODE_VERSION=22.13.0
 
 # Build Jering node web server to RealtimeServer
