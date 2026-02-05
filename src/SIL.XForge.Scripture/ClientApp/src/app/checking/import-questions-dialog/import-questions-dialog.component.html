@@ -135,7 +135,7 @@
               <div class="paratext-tag-selection-message">{{ t("import_from_paratext_no_tags_available") }}</div>
             } @else {
               <p class="paratext-tag-selection-message">{{ t("import_from_paratext_select_tag_instructions") }}</p>
-              <mat-form-field appearance="fill">
+              <mat-form-field>
                 <mat-label>{{ t("import_from_paratext_select_tag") }}</mat-label>
                 <mat-select [(ngModel)]="selectedParatextTagId" [ngModelOptions]="{ standalone: true }">
                   @for (tag of paratextTagOptions; track tag.id) {
@@ -263,13 +263,11 @@
           }
         </mat-form-field>
       </div>
-      <div colspan="2" class="filter-text">
-        <div>
-          <mat-form-field appearance="fill" subscriptSizing="dynamic">
-            <input matInput type="text" formControlName="filter" [placeholder]="t('filter_questions')" />
-          </mat-form-field>
-          <button mat-button type="button" (click)="clearFilters()">{{ t("show_all") }}</button>
-        </div>
+      <div class="filter-area">
+        <mat-form-field subscriptSizing="dynamic">
+          <input matInput type="text" formControlName="filter" [placeholder]="t('filter_questions')" />
+        </mat-form-field>
+        <button mat-button type="button" (click)="clearFilters()">{{ t("show_all") }}</button>
       </div>
       <table mat-table [dataSource]="questionsForDisplay" class="question-list">
         <ng-container matColumnDef="verse">
