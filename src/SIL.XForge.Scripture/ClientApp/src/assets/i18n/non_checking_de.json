@@ -266,6 +266,7 @@
     "summary_translate_title": "Entwerfen von [b]{{ draftingSourceProjectName }}[/b]",
     "summary_translate": "Das Sprachmodell wird dann diese Bücher übersetzen:",
     "these_source_books_are_blank": "Die folgenden Bücher können nicht übersetzt werden, da sie im Ausgangstext für Entwürfe ({{ draftingSourceProjectName }}) leer sind.",
+    "these_training_source_books_are_blank": "The following books cannot be used for training as they are blank in the source or target text.",
     "these_source_books_cannot_be_used_for_training": "Die folgenden Bücher können nicht für die Schulungen verwendet werden, da sie nicht im Ausgangstext für die Schulung ({{ firstTrainingSource }}) enthalten sind.",
     "these_source_books_cannot_be_used_for_translating": "Die folgenden Bücher können nicht übersetzt werden, da sie nicht im Ausgangstext für Entwürfe ({{ draftingSourceProjectName }}) enthalten sind.",
     "training_books_will_appear": "Bücher für die Schulung werden angezeigt, wenn Du Bücher unter übersetzten Büchern auswählst",
