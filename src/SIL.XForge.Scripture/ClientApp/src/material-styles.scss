@@ -2,14 +2,21 @@
 @use '@angular/material' as mat;
 @use 'src/app/my-projects/my-projects-theme' as sf-my-projects;
 @use 'src/app/app-theme' as sf-app;
+@use 'src/app/checking/chapter-audio-dialog/chapter-audio-dialog-theme' as sf-chapter-audio-dialog;
 @use 'src/app/checking/checking/checking-theme' as sf-checking;
+@use 'src/app/checking/checking/font-size/font-size-theme' as sf-font-size;
 @use 'src/app/checking/checking/checking-answers/checking-answers-theme' as sf-checking-answer;
 @use 'src/app/checking/checking/checking-answers/checking-comments/checking-comments-theme' as sf-checking-comments;
 @use 'src/app/checking/checking/checking-questions/checking-questions-theme' as sf-checking-questions;
+@use 'src/app/checking/attach-audio/attach-audio-theme' as sf-attach-audio;
+@use 'src/app/checking/checking/single-button-audio-player/single-button-audio-player-theme' as
+  sf-single-button-audio-player;
+@use 'src/app/shared/info/info-theme' as sf-info;
 @use 'src/app/navigation/navigation-theme' as sf-navigation;
 @use 'src/app/shared/sf-tab-group/sf-tab-group-theme' as sf-tab-group;
 @use 'src/app/shared/book-multi-select/book-multi-select-theme' as sf-book-multi-select;
 @use 'src/app/shared/json-viewer/json-viewer-theme' as sf-json-viewer;
+@use 'src/app/shared/audio-recorder-dialog/audio-recorder-dialog-theme' as sf-audio-recorder-dialog;
 @use 'src/app/translate/draft-generation/draft-generation-steps/draft-generation-steps-theme' as
   sf-draft-generation-steps;
 @use 'src/app/translate/draft-generation/confirm-sources/confirm-sources-theme' as sf-confirm-sources;
@@ -18,11 +25,16 @@
 @use 'src/app/translate/draft-generation/draft-history-list/draft-history-entry/draft-history-entry-theme' as
   sf-draft-history-entry;
 @use 'src/app/translate/draft-generation/draft-usfm-format/draft-usfm-format-theme' as sf-draft-usfm-format;
+@use 'src/app/translate/draft-generation/training-data/training-data-upload-dialog-theme' as
+  sf-training-data-upload-dialog;
 @use 'src/app/translate/editor/editor-theme' as sf-editor;
+@use 'src/app/translate/editor/suggestions-theme' as sf-suggestions;
 @use 'src/app/translate/editor/note-dialog/note-dialog-theme' as sf-note-dialog;
 @use 'src/app/translate/editor/editor-draft/editor-draft-theme' as sf-editor-draft;
 @use 'src/app/translate/biblical-terms/biblical-terms-theme' as sf-biblical-terms;
-@use 'src/app/translate/translate-overview/translate-overview.component' as sf-translate-overview;
+@use 'src/app/translate/font-unsupported-message/font-unsupported-message-theme' as sf-font-unsupported-message;
+@use 'src/app/translate/translate-overview/translate-overview-theme' as sf-translate-overview;
+@use 'src/app/translate/training-progress/training-progress-theme' as sf-training-progress;
 @use 'src/app/permissions-viewer/permissions-viewer-theme' as sf-permissions-viewer;
 @use 'src/app/serval-administration/draft-jobs-theme' as sf-draft-jobs;
 @use 'src/app/serval-administration/job-details-dialog-theme' as sf-job-details-dialog;
@@ -40,25 +52,35 @@
   @include sf-app.theme($theme);
   @include sf-book-multi-select.theme($theme);
   @include sf-biblical-terms.theme($theme);
+  @include sf-chapter-audio-dialog.theme($theme);
   @include sf-checking.theme($theme);
+  @include sf-font-size.theme($theme);
   @include sf-checking-answer.theme($theme);
   @include sf-checking-comments.theme($theme);
   @include sf-checking-questions.theme($theme);
+  @include sf-attach-audio.theme($theme);
+  @include sf-single-button-audio-player.theme($theme);
+  @include sf-info.theme($theme);
   @include sf-confirm-sources.theme($theme);
   @include sf-draft-generation-steps.theme($theme);
   @include sf-draft-history-entry.theme($theme);
   @include sf-draft-sources.theme($theme);
   @include sf-draft-onboarding-form.theme($theme);
   @include sf-draft-usfm-format.theme($theme);
+  @include sf-training-data-upload-dialog.theme($theme);
   @include sf-editor.theme($theme);
+  @include sf-suggestions.theme($theme);
   @include sf-editor-draft.theme($theme);
   @include sf-json-viewer.theme($theme);
+  @include sf-font-unsupported-message.theme($theme);
+  @include sf-audio-recorder-dialog.theme($theme);
   @include sf-my-projects.theme($theme);
   @include sf-navigation.theme($theme);
   @include sf-note-dialog.theme($theme);
   @include sf-tab-group.theme($theme);
   @include sf-text.theme($theme);
   @include sf-translate-overview.theme($theme);
+  @include sf-training-progress.theme($theme);
   @include sf-permissions-viewer.theme($theme);
   @include sf-draft-jobs.theme($theme);
   @include sf-job-details-dialog.theme($theme);
@@ -69,17 +91,46 @@
   --sf-border-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 60, 90))};
   --sf-error-foreground: #{mat.get-theme-color($theme, error, if($is-dark, 80, 40))};
   --sf-language-font-family: language_picker, language_picker_fallback, Arial, Helvetica, sans-serif;
+  --sf-snackbar-background-color: #{if(
+      $is-dark,
+      mat.get-theme-color($theme, primary, 70),
+      mat.get-theme-color($theme, neutral, 20)
+    )};
+  --sf-snackbar-error-text-color: var(--mat-sys-on-error);
+  --sf-snackbar-error-background-color: var(--mat-sys-error);
+  --sf-error-color: #{mat.get-theme-color($theme, error, if($is-dark, 60, 30))};
 
-  a:not(.mdc-button):not(.mat-mdc-menu-item) {
-    color: mat.get-theme-color($theme, primary, 50);
+  // Helper additions for material
+  --mat-sys-on-surface-disabled: #{color-mix(in srgb, var(--mat-sys-on-surface) 38%, transparent)};
+
+  a:not(.mdc-button):not(.mat-mdc-menu-item):not(.notice-link-warning) {
+    color: mat.get-theme-color($theme, primary, if($is-dark, 60, 50));
     &:hover {
-      color: mat.get-theme-color($theme, primary, 60);
+      color: mat.get-theme-color($theme, primary, if($is-dark, 70, 60));
     }
     &:visited {
-      color: mat.get-theme-color($theme, primary, 60);
+      color: mat.get-theme-color($theme, primary, if($is-dark, 50, 60));
     }
     &:visited:hover {
-      color: mat.get-theme-color($theme, primary, 70);
+      color: mat.get-theme-color($theme, primary, if($is-dark, 60, 70));
+    }
+  }
+
+  a.notice-link-warning {
+    color: var(--sf-notice-link-warning-color);
+
+    &:hover,
+    &:focus-visible {
+      color: var(--sf-notice-link-warning-color-hover);
+    }
+
+    &:visited {
+      color: var(--sf-notice-link-warning-color);
+    }
+
+    &:visited:hover,
+    &:visited:focus-visible {
+      color: var(--sf-notice-link-warning-color-hover);
     }
   }
 
@@ -122,6 +173,14 @@
       container-text-color: mat.get-theme-color($theme, primary, 100)
     )
   );
+
+  @include mat.snack-bar-overrides(
+    (
+      /** See also styles.scss for custom snackbar colouring, such as for errors. */
+      container-color: var(--sf-snackbar-background-color)
+    )
+  );
+
   @if not $is-dark {
     mat-toolbar {
       @include mat.icon-overrides(

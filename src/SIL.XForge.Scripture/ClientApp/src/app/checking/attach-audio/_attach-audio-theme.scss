@@ -1,0 +1,15 @@
+@use '@angular/material' as mat;
+@use 'src/variables' as variables;
+
+@mixin color($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
+  --sf-attach-audio-adder-background: #{if($is-dark, mat.get-theme-color($theme, neutral, 25), rgba(0, 0, 0, 0.05))};
+  --sf-attach-audio-added-background: #{if($is-dark, mat.get-theme-color($theme, neutral, 25), rgba(0, 0, 0, 0.05))};
+  --sf-attach-audio-clear-icon: #{if($is-dark, variables.$greenLight, variables.$greenDark)};
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}

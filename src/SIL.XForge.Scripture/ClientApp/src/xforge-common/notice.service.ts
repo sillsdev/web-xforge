@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
 import { I18nService } from './i18n.service';
 
-/** Manages and provides access to notices shown to user on the web site. */
+/** Manages and provides access to notices that pop up from the bottom of the page to be seen by the user on the web
+ * site. */
 @Injectable({ providedIn: 'root' })
 export class NoticeService {
   private _isAppLoading: boolean = false;

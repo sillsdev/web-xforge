@@ -1,0 +1,65 @@
+@use '@angular/material' as mat;
+@use 'src/variables';
+
+@mixin color($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
+
+  --sf-training-data-upload-warning-color: #{if($is-dark, mat.get-theme-color($theme, tertiary, 70), variables.$orange)};
+  --sf-training-data-upload-dropzone-border-color: #{if(
+      $is-dark,
+      mat.get-theme-color($theme, neutral, 30),
+      variables.$border-color
+    )};
+  --sf-training-data-upload-dropzone-dragover-background: #{if(
+      $is-dark,
+      mat.get-theme-color($theme, neutral, 30),
+      variables.$border-color
+    )};
+  --sf-training-data-upload-dropzone-button-background-hover: #{if(
+      $is-dark,
+      mat.get-theme-color($theme, tertiary, 80),
+      variables.$greenLight
+    )};
+  --sf-training-data-upload-dropzone-button-color-hover: #{if(
+      $is-dark,
+      var(--mat-sys-on-tertiary),
+      variables.$greyDark
+    )};
+  --sf-training-data-upload-data-blocks-border-color: #{if(
+      $is-dark,
+      mat.get-theme-color($theme, neutral, 30),
+      variables.$border-color
+    )};
+  --sf-training-data-upload-data-blocks-text-color: #{if(
+      $is-dark,
+      mat.get-theme-color($theme, neutral, 30),
+      variables.$greyLight
+    )};
+  --sf-training-data-upload-data-blocks-icon-color: #{if(
+      $is-dark,
+      mat.get-theme-color($theme, neutral, 30),
+      variables.$border-color
+    )};
+  --sf-training-data-upload-data-blocks-divider-border-color: #{if(
+      $is-dark,
+      mat.get-theme-color($theme, neutral, 30),
+      variables.$border-color
+    )};
+  --sf-training-data-upload-data-blocks-delete-color: #{if(
+      $is-dark,
+      mat.get-theme-color($theme, neutral, 30),
+      variables.$border-color
+    )};
+  --sf-training-data-upload-data-blocks-text-color-valid: #{if(
+      $is-dark,
+      var(--mat-dialog-supporting-text-color),
+      variables.$greyDark
+    )};
+  --sf-training-data-upload-data-blocks-border-valid: #{if($is-dark, variables.$purpleLight, variables.$purpleLight)};
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}

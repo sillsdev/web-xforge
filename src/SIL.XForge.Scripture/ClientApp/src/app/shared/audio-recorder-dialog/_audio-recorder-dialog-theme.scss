@@ -1,0 +1,17 @@
+@use '@angular/material' as mat;
+@use 'src/variables';
+
+@mixin color($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
+  --sf-audio-recorder-text: #{if($is-dark, mat.get-theme-color($theme, neutral, 70), variables.$sf_grey)};
+  --sf-audio-recorder-record-bg: #{if($is-dark, mat.get-theme-color($theme, neutral, 22), rgba(0, 0, 0, 0.08))};
+  --sf-audio-recorder-record-hover-bg: #{if($is-dark, mat.get-theme-color($theme, neutral, 12), rgba(0, 0, 0, 0.15))};
+  --sf-audio-recorder-shadow: #{if($is-dark, mat.get-theme-color($theme, neutral, 6), rgba(0, 0, 0, 0.15))};
+  --sf-audio-recorder-pulse-final: #{mat.get-theme-color($theme, neutral, if($is-dark, 30, 100))};
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}

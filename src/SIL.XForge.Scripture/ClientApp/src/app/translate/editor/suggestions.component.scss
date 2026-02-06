@@ -1,7 +1,7 @@
 @use 'src/variables' as *;
 
 :host {
-  background-color: #faf9f7;
+  background-color: var(--sf-suggestions-background-color);
   position: absolute;
   z-index: 2;
   border-radius: 2px;
@@ -21,7 +21,7 @@
     width: 10px;
     float: left;
     margin: 0 1px;
-    background-color: #9e9ea1;
+    background-color: var(--sf-suggestions-loading-dot-color);
     display: block;
     border-radius: 50%;
     opacity: 0.4;
@@ -49,7 +49,8 @@ mat-selection-list[dense] {
 
 mat-list-option {
   padding: 6px 8px !important;
-  --mat-list-list-item-selected-container-color: rgba(0, 0, 0, 0.12);
+  // Background color of selected item in suggestion list.
+  --mat-list-list-item-selected-container-color: var(--sf-suggestions-selected-item-background-color);
 }
 
 :host ::ng-deep .mdc-list-item__content {
@@ -62,7 +63,7 @@ mat-list-option {
 
 .suggestion-confidence {
   font-size: smaller;
-  color: $lighterTextColor;
+  color: var(--sf-suggestions-confidence-color);
 }
 
 .suggestion {
