@@ -26,6 +26,7 @@ export class CheckingTextComponent implements AfterViewInit {
 
   private clickSubs: Subscription[] = [];
   private _activeVerse?: VerseRef;
+  private _highlightSegment: boolean = false;
   private _id?: TextDocId;
   private _questionVerses?: VerseRef[];
   private _placeholder?: string;
@@ -67,6 +68,14 @@ export class CheckingTextComponent implements AfterViewInit {
 
   get activeVerse(): VerseRef | undefined {
     return this._activeVerse;
+  }
+
+  @Input() set highlightSegment(value: boolean) {
+    this._highlightSegment = value;
+  }
+
+  get highlightSegment(): boolean {
+    return this._highlightSegment;
   }
 
   @Input() set id(textDocId: TextDocId | undefined) {
