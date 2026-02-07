@@ -235,6 +235,7 @@ public partial class DeltaUsxMapper(
                         case "para":
                             if (state.ImpliedParagraph)
                             {
+                                SegmentEnded(chapterDelta, state.CurRef);
                                 chapterDelta.Insert('\n');
                                 state.ImpliedParagraph = false;
                             }
