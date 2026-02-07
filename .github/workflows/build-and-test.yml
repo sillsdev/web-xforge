@@ -26,18 +26,18 @@ jobs:
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
       - name: "Deps: .NET"
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@baa11fbfe1d6520db94683bd5c7a3818018e4309 # v5.1.0
         with:
           dotnet-version: ${{matrix.dotnet_version}}
           cache: true
           cache-dependency-path: src/SIL.XForge.Scripture/packages.lock.json
       - name: "Deps: Node"
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: ${{matrix.node_version}}
           cache: "npm"
@@ -120,12 +120,12 @@ jobs:
             -targetdir:coverage \
             "-reporttypes:HTML;TeamCitySummary"
       - name: "Coverage: Publish to Codecov"
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
       - name: "Test: Publish test results to Codecov"
         if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@v1
+        uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1.2.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -141,18 +141,18 @@ jobs:
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
       - name: "Deps: .NET"
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@baa11fbfe1d6520db94683bd5c7a3818018e4309 # v5.1.0
         with:
           dotnet-version: ${{matrix.dotnet_version}}
           cache: true
           cache-dependency-path: src/SIL.XForge.Scripture/packages.lock.json
       - name: "Deps: Node"
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: ${{matrix.node_version}}
           cache: "npm"
