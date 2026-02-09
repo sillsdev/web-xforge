@@ -33,6 +33,7 @@ jobs:
           cd src/RealtimeServer
           npm ci
           npm audit fix
+          npm dedupe
         continue-on-error: true
 
       - name: Run npm audit fix on ClientApp
@@ -40,6 +41,7 @@ jobs:
           cd src/SIL.XForge.Scripture/ClientApp
           npm ci
           npm audit fix
+          npm dedupe
         continue-on-error: true
 
       - name: Run npm audit fix on db_tools
@@ -47,6 +49,7 @@ jobs:
           cd scripts/db_tools
           npm ci
           npm audit fix
+          npm dedupe
         continue-on-error: true
 
       - name: Create Pull Request
