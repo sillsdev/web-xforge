@@ -541,8 +541,9 @@ export class TextDocReader implements DocumentReader<Delta> {
     return Promise.resolve([...this.textDocIds]);
   }
 
-  async read(uri: string): Promise<DocumentData<Delta>> {
+  async read(uri: string): Promise<DocumentData<Delta> | undefined> {
     const textDoc = await this.projectService.getText(uri);
+    if (textDoc.data == null) return undefined;
     return {
       format: 'scripture-delta',
       content: textDoc.data as Delta,
