@@ -1,4 +1,4 @@
-<mat-dialog-content *transloco="let t; read: 'draft_import_wizard'">
+<mat-dialog-content *transloco="let t; read: 'draft_import_wizard'" [dir]="i18n.direction">
   <mat-stepper linear [disableRipple]="true" labelPosition="bottom" (selectionChange)="onStepSelectionChange($event)">
     <!-- Icon overrides -->
     <ng-template matStepperIcon="edit" let-index="index">{{ index + 1 }}</ng-template>
@@ -22,6 +22,7 @@
             [isDisabled]="projects.length === 0 || isImporting || projectLoadingFailed"
             (projectSelect)="projectSelected($event.paratextId)"
             formControlName="targetParatextId"
+            validators="disabled"
           ></app-project-select>
 
           @if (isLoadingProject) {
@@ -187,7 +188,8 @@
       <mat-step [completed]="selectedBooks.length > 0">
         <ng-template matStepLabel>{{ t("select_books") }}</ng-template>
 
-        <h1>{{ t("select_books_to_import") }}</h1>
+        <h1>{{ t("confirm_books_to_import") }}</h1>
+        <p>{{ t("confirm_books_to_import_description") }}</p>
         <app-book-multi-select
           [availableBooks]="availableBooksForImport"
           [selectedBooks]="selectedBooks"
