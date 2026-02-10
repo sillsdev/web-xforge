@@ -1,5 +1,6 @@
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
 import { AsyncPipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
@@ -20,6 +21,7 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { BehaviorSubject } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { AuthService } from 'xforge-common/auth.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
@@ -285,7 +287,8 @@ export class DraftImportWizardComponent implements OnInit {
     private readonly textDocService: TextDocService,
     readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
-    private readonly activatedProjectService: ActivatedProjectService
+    private readonly activatedProjectService: ActivatedProjectService,
+    private readonly authService: AuthService
   ) {
     this.projectNotificationService.setNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
     destroyRef.onDestroy(async () => {
@@ -341,7 +344,9 @@ export class DraftImportWizardComponent implements OnInit {
     } catch (error) {
       this.projectLoadingFailed = true;
       this.projects = [];
-      console.error('Failed to load projects:', error);
+      if (error instanceof HttpErrorResponse && error.status === 401) {
+        this.authService.requestParatextCredentialUpdate();
+      }
     } finally {
       this.isLoadingProjects = false;
     }
@@ -669,6 +674,11 @@ export class DraftImportWizardComponent implements OnInit {
         }
       }
     }
+  }
+
+  clearImport(): void {
+    this.resetImportState();
+    this.stepper?.previous();
   }
 
   retryImport(): void {
