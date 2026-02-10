@@ -8,6 +8,7 @@ import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { AuthService } from 'xforge-common/auth.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -34,6 +35,7 @@ const mockProjectNotificationService = mock(ProjectNotificationService);
 const mockProjectService = mock(SFProjectService);
 const mockTextDocService = mock(TextDocService);
 const mockActivatedProjectService = mock(ActivatedProjectService);
+const mockAuthService = mock(AuthService);
 
 describe('DraftImportWizardComponent', () => {
   const buildDto: BuildDto = {
@@ -57,6 +59,7 @@ describe('DraftImportWizardComponent', () => {
       { provide: TextDocService, useMock: mockTextDocService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
+      { provide: AuthService, useMock: mockAuthService },
       provideNoopAnimations()
     ]
   }));

@@ -30,7 +30,7 @@
           }
         }
 
-        @if (projectLoadingFailed) {
+        @if (projectLoadingFailed && isAppOnline) {
           <app-notice type="error">{{ t("failed_to_load_projects") }}</app-notice>
           <div class="project-retry-row">
             <button matButton="outlined" color="primary" (click)="reloadProjects()" [disabled]="isLoadingProjects">
@@ -41,7 +41,7 @@
         }
 
         @if (!isAppOnline) {
-          <mat-error class="offline-message">{{ t("connect_to_the_internet") }}</mat-error>
+          <app-notice type="error">{{ t("connect_to_the_internet") }}</app-notice>
         }
 
         @if (!canEditProject) {
@@ -173,7 +173,7 @@
               matStepperNext
               color="primary"
               data-test-id="step-3-next"
-              [disabled]="isImporting"
+              [disabled]="!isAppOnline || isImporting"
             >
               {{ showBookSelection || showOverwriteConfirmation ? t("next") : t("import") }}
               <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
@@ -208,7 +208,7 @@
             color="primary"
             matStepperNext
             data-test-id="step-4-next"
-            [disabled]="selectedBooks.length === 0 || isConnecting || isImporting"
+            [disabled]="!isAppOnline || selectedBooks.length === 0 || isConnecting || isImporting"
           >
             {{ showOverwriteConfirmation ? t("next") : t("import") }}
             <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
@@ -272,7 +272,7 @@
             color="primary"
             matStepperNext
             data-test-id="step-5-next"
-            [disabled]="!overwriteForm.valid || isConnecting || isImporting"
+            [disabled]="!overwriteForm.valid || isConnecting || isImporting || !isAppOnline"
           >
             {{ t("import") }}
             <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
@@ -311,11 +311,11 @@
       @if (importError != null && importError.length > 0) {
         <app-notice type="error">{{ importError }}</app-notice>
         <div class="button-strip">
-          <button matButton="outlined" matStepperPrevious [disabled]="isConnecting || isImporting">
+          <button matButton="outlined" (click)="clearImport()" [disabled]="isConnecting || isImporting">
             <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
             {{ t("back") }}
           </button>
-          <button matButton="outlined" (click)="retryImport()" [disabled]="isImporting">
+          <button matButton="outlined" (click)="retryImport()" [disabled]="isImporting || !isAppOnline">
             <mat-icon>refresh</mat-icon>
             {{ t("retry") }}
           </button>
@@ -368,7 +368,7 @@
             color="primary"
             data-test-id="step-7-sync"
             (click)="selectSync()"
-            [disabled]="isSyncing || isImporting"
+            [disabled]="isSyncing || isImporting || !isAppOnline"
           >
             {{ t("sync") }}
             <mat-icon iconPositionEnd>sync</mat-icon>
@@ -390,7 +390,7 @@
           <button matButton="outlined" (click)="selectSkipSync()" [disabled]="isImporting">
             {{ t("skip_sync") }}
           </button>
-          <button matButton="filled" color="primary" (click)="retrySync()" [disabled]="isImporting">
+          <button matButton="filled" color="primary" (click)="retrySync()" [disabled]="isImporting || !isAppOnline">
             <mat-icon>refresh</mat-icon>
             {{ t("retry") }}
           </button>
