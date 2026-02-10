@@ -334,7 +334,7 @@
     "done": "Done",
     "failed": "Failed:",
     "failed_to_connect_project": "Something went wrong while connecting. Please try again.",
-    "failed_to_load_projects": "We couldn't load your Paratext projects. Check your internet connection and try again.",
+    "failed_to_load_projects": "We couldn't load your Paratext projects. Check your internet connection and try again, or log out then log back in again.",
     "i_understand_overwrite_content": "I understand that existing content will be overwritten",
     "import": "Import",
     "import_and_sync_complete": "The draft has been imported into {{ boldStart }}{{ projectShortName }} - {{ projectName }}{{ boldEnd }} and synced with Paratext.",
