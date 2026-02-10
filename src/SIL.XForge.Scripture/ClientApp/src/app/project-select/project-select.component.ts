@@ -172,16 +172,16 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
   @Input()
   errorMessageMapper?: null | ((errors: ValidationErrors) => string | null) = null;
 
-  private externalValidators: ValidatorFn[] = [];
+  private externalValidators: ValidatorFn[] | 'disabled' = [];
   @Input()
-  set validators(value: ValidatorFn[]) {
+  set validators(value: ValidatorFn[] | 'disabled') {
     this.externalValidators = value;
-    const validators = [this.validateProject.bind(this)].concat(value);
+    const validators = value === 'disabled' ? [] : [this.validateProject.bind(this)].concat(value);
     for (const validator of validators)
       if (typeof validator !== 'function') throw new Error(`The validator is not a function: ${validator}`);
     this.paratextIdControl.setValidators(validators);
   }
-  get validators(): ValidatorFn[] {
+  get validators(): ValidatorFn[] | 'disabled' {
     return this.externalValidators;
   }
 
