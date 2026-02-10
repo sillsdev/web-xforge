@@ -6,6 +6,7 @@ import { defaultTranslocoMarkupTranspilers } from 'ngx-transloco-markup';
 import { of } from 'rxjs';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { AuthService } from 'xforge-common/auth.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
@@ -30,6 +31,7 @@ const mockProjectNotificationService = mock(ProjectNotificationService);
 const mockProjectService = mock(SFProjectService);
 const mockTextDocService = mock(TextDocService);
 const mockActivatedProjectService = mock(ActivatedProjectService);
+const mockAuthService = mock(AuthService);
 const mockOnlineStatusService = mock(OnlineStatusService);
 
 @Component({
@@ -190,6 +192,7 @@ export default {
         { provide: OnlineStatusService, useValue: instance(mockOnlineStatusService) },
         { provide: ActivatedProjectService, useValue: instance(mockActivatedProjectService) },
         { provide: ProgressService, useValue: instance(mockProgressService) },
+        { provide: AuthService, useValue: instance(mockAuthService) },
         defaultTranslocoMarkupTranspilers()
       ]
     })
