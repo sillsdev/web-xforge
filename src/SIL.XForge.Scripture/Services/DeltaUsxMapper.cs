@@ -28,7 +28,7 @@ public partial class DeltaUsxMapper(
         return schemas;
     }
 
-    [GeneratedRegex("(\\d+)[a-zA-Z]?$", RegexOptions.Compiled)]
+    [GeneratedRegex("(\\d+)\\w?$", RegexOptions.CultureInvariant)]
     private static partial Regex VerseNumRegex();
 
     ///<summary>
