@@ -28,6 +28,9 @@ public partial class DeltaUsxMapper(
         return schemas;
     }
 
+    [GeneratedRegex("(\\d+)[a-zA-Z]?$", RegexOptions.Compiled)]
+    private static partial Regex VerseNumRegex();
+
     ///<summary>
     /// Paragraph, Poetry, and List styles. This indicates paragraph styles that can contain verse text. For example, s
     /// is not included in the set, because it cannot contain verse text. See also text-view-model.ts PARA_STYLES.
@@ -139,9 +142,9 @@ public partial class DeltaUsxMapper(
                 if (value != null)
                 {
                     int lastVerse = LastVerse;
-                    int dashIndex = value.IndexOf('-');
-                    if (dashIndex != -1)
-                        value = value[(dashIndex + 1)..];
+                    Match match = VerseNumRegex().Match(value);
+                    if (match.Success)
+                        value = match.Groups[1].Value;
                     if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int lastVerseInt))
                         lastVerse = lastVerseInt;
                     LastVerse = lastVerse;
