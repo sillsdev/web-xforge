@@ -6,7 +6,6 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { MatButton } from '@angular/material/button';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MAT_DIALOG_DATA, MatDialogContent, MatDialogRef } from '@angular/material/dialog';
-import { MatError } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressBar } from '@angular/material/progress-bar';
 import {
@@ -100,7 +99,6 @@ export enum DraftApplyStatus {
     MatButton,
     MatCheckbox,
     MatDialogContent,
-    MatError,
     MatIcon,
     MatProgressBar,
     MatStep,

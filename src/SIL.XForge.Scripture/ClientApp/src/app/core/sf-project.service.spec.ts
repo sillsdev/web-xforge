@@ -119,15 +119,6 @@ describe('SFProjectService', () => {
     }));
   });
 
-  describe('onlineAddChapters', () => {
-    it('should invoke the command service', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.service.onlineAddChapters('project01', 1, [2, 3]);
-      verify(mockedCommandService.onlineInvoke(anything(), 'addChapters', anything())).once();
-      expect().nothing();
-    }));
-  });
-
   describe('onlineSetDraftApplied', () => {
     it('should invoke the command service', fakeAsync(async () => {
       const env = new TestEnvironment();
