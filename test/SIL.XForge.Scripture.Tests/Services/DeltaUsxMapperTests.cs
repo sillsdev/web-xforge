@@ -1858,6 +1858,114 @@ public class DeltaUsxMapperTests
     }
 
     [Test]
+    public void ToDelta_FinalVerseWithLetter()
+    {
+        XDocument usxDoc = Usx("PHM", Chapter("1"), Para("p", Verse("1"), Verse("2"), Verse("3a")));
+
+        var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+        List<ChapterDelta> chapterDeltas = [.. mapper.ToChapterDeltas(usxDoc)];
+
+        var expected = Delta
+            .New()
+            .InsertBook("PHM")
+            .InsertChapter("1")
+            .InsertBlank("p_1")
+            .InsertVerse("1")
+            .InsertBlank("verse_1_1")
+            .InsertVerse("2")
+            .InsertBlank("verse_1_2")
+            .InsertVerse("3a")
+            .InsertBlank("verse_1_3a")
+            .InsertPara("p");
+
+        Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
+        Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(3));
+        Assert.That(chapterDeltas[0].IsValid, Is.True);
+        Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
+    }
+
+    [Test]
+    public void ToDelta_FinalVerseRange()
+    {
+        XDocument usxDoc = Usx("PHM", Chapter("1"), Para("p", Verse("1"), Verse("2"), Verse("3-4")));
+
+        var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+        List<ChapterDelta> chapterDeltas = [.. mapper.ToChapterDeltas(usxDoc)];
+
+        var expected = Delta
+            .New()
+            .InsertBook("PHM")
+            .InsertChapter("1")
+            .InsertBlank("p_1")
+            .InsertVerse("1")
+            .InsertBlank("verse_1_1")
+            .InsertVerse("2")
+            .InsertBlank("verse_1_2")
+            .InsertVerse("3-4")
+            .InsertBlank("verse_1_3-4")
+            .InsertPara("p");
+
+        Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
+        Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(4));
+        Assert.That(chapterDeltas[0].IsValid, Is.True);
+        Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
+    }
+
+    [Test]
+    public void ToDelta_FinalRTLVerseRange()
+    {
+        XDocument usxDoc = Usx("PHM", Chapter("1"), Para("p", Verse("1"), Verse("2"), Verse("3\u200F-4")));
+
+        var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+        List<ChapterDelta> chapterDeltas = [.. mapper.ToChapterDeltas(usxDoc)];
+
+        var expected = Delta
+            .New()
+            .InsertBook("PHM")
+            .InsertChapter("1")
+            .InsertBlank("p_1")
+            .InsertVerse("1")
+            .InsertBlank("verse_1_1")
+            .InsertVerse("2")
+            .InsertBlank("verse_1_2")
+            .InsertVerse("3\u200F-4")
+            .InsertBlank("verse_1_3\u200F-4")
+            .InsertPara("p");
+
+        Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
+        Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(4));
+        Assert.That(chapterDeltas[0].IsValid, Is.True);
+        Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
+    }
+
+    [Test]
+    public void ToDelta_FinalVerseWithComma()
+    {
+        XDocument usxDoc = Usx("PHM", Chapter("1"), Para("p", Verse("1"), Verse("2"), Verse("3,5")));
+
+        var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+        List<ChapterDelta> chapterDeltas = [.. mapper.ToChapterDeltas(usxDoc)];
+
+        var expected = Delta
+            .New()
+            .InsertBook("PHM")
+            .InsertChapter("1")
+            .InsertBlank("p_1")
+            .InsertVerse("1")
+            .InsertBlank("verse_1_1")
+            .InsertVerse("2")
+            .InsertBlank("verse_1_2")
+            .InsertVerse("3,5")
+            .InsertBlank("verse_1_3,5")
+            .InsertPara("p");
+
+        Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
+        Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(5));
+        Assert.That(chapterDeltas[0].IsValid, Is.True);
+        Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
+    }
+
+    [Test]
     public void ToDelta_InvalidChapterNumber()
     {
         XDocument usxDoc = Usx(
