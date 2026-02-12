@@ -436,14 +436,17 @@ export class I18nService {
   /**
    * Uses browser `Intl` to get the language name for the specified language code rendered in the current locale.
    * @param languageCode The language code for the language name to be displayed.
+   * @param @optional displaylanguage The language code for the language in which the name should be displayed. Defaults
+   * to the current locale.
    * @returns The display name or undefined if language code is not set.
    */
-  getLanguageDisplayName(languageCode: string | undefined): string | undefined {
+  getLanguageDisplayName(languageCode: string | undefined, displaylanguage?: string): string | undefined {
     if (!languageCode) {
       return undefined;
     }
+    displaylanguage ??= this.localeCode;
 
-    const languageNames: Intl.DisplayNames = new Intl.DisplayNames([this.localeCode], { type: 'language' });
+    const languageNames: Intl.DisplayNames = new Intl.DisplayNames([displaylanguage], { type: 'language' });
     try {
       return languageNames.of(languageCode);
     } catch {

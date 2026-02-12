@@ -17,9 +17,11 @@ import { User } from 'realtime-server/lib/esm/common/models/user';
 import { DevOnlyComponent } from 'src/app/shared/dev-only/dev-only.component';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { hasStringProp } from '../../../../type-utils';
 import { SelectableProject } from '../../../core/models/selectable-project';
 import { ParatextService } from '../../../core/paratext.service';
 import { ProjectSelectComponent } from '../../../project-select/project-select.component';
@@ -77,38 +79,37 @@ type DraftOnboardingFormUiState = 'editing' | 'submitting' | 'submitted';
   ]
 })
 export class DraftOnboardingFormComponent extends DataLoadingComponent implements OnInit {
-  signupForm: FormGroup<{
+  signupForm = new FormGroup({
     // Contact Information
-    name: FormControl<string>;
-    email: FormControl<string>;
-    organization: FormControl<string>;
-    partnerOrganization: FormControl<string>;
+    name: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+    email: new FormControl<string>('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
+    organization: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+    partnerOrganization: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
 
     // Translation Language Information
-    translationLanguageName: FormControl<string>;
-    translationLanguageIsoCode: FormControl<string>;
-
+    translationLanguageName: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+    translationLanguageIsoCode: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
     // Project Information
-    completedBooks: FormControl<number[]>;
-    nextBooksToDraft: FormControl<number[]>;
+    completedBooks: new FormControl<number[]>([], { nonNullable: true, validators: [Validators.required] }),
+    nextBooksToDraft: new FormControl<number[]>([], { nonNullable: true, validators: [Validators.required] }),
 
     // Reference projects (source text information)
-    sourceProjectA: FormControl<string | null>;
-    sourceProjectB: FormControl<string | null>;
-    sourceProjectC: FormControl<string | null>;
-    draftingSourceProject: FormControl<string | null>;
+    sourceProjectA: new FormControl<string | null>(null, { validators: [Validators.required] }),
+    sourceProjectB: new FormControl<string | null>(null),
+    sourceProjectC: new FormControl<string | null>(null),
+    draftingSourceProject: new FormControl<string | null>(null, { validators: [Validators.required] }),
 
     // Back Translation Information
-    backTranslationStage: FormControl<string>;
-    backTranslationProject: FormControl<string | null>;
+    backTranslationStage: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+    backTranslationProject: new FormControl<string | null>(null),
 
     // Back translation language information
-    backTranslationLanguageName: FormControl<string>;
-    backTranslationLanguageIsoCode: FormControl<string>;
+    backTranslationLanguageName: new FormControl<string>('', { nonNullable: true }),
+    backTranslationLanguageIsoCode: new FormControl<string>('', { nonNullable: true }),
 
     // Additional Information
-    additionalComments: FormControl<string>;
-  }>;
+    additionalComments: new FormControl<string>('', { nonNullable: true })
+  });
 
   availableProjects: SelectableProject[] = [];
   availableResources: SelectableProject[] = [];
@@ -137,41 +138,10 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
     private readonly draftingSignupService: OnboardingRequestService,
     protected readonly noticeService: NoticeService,
     private readonly destroyRef: DestroyRef,
-    private readonly cd: ChangeDetectorRef
+    private readonly cd: ChangeDetectorRef,
+    private readonly i18n: I18nService
   ) {
     super(noticeService);
-
-    this.signupForm = new FormGroup({
-      // Contact Information
-      name: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
-      email: new FormControl<string>('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
-      organization: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
-      partnerOrganization: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
-
-      // Translation Language Information
-      translationLanguageName: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
-      translationLanguageIsoCode: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
-      // Project Information
-      completedBooks: new FormControl<number[]>([], { nonNullable: true, validators: [Validators.required] }),
-      nextBooksToDraft: new FormControl<number[]>([], { nonNullable: true, validators: [Validators.required] }),
-
-      // Reference projects (source text information)
-      sourceProjectA: new FormControl<string | null>(null, { validators: [Validators.required] }),
-      sourceProjectB: new FormControl<string | null>(null),
-      sourceProjectC: new FormControl<string | null>(null),
-      draftingSourceProject: new FormControl<string | null>(null, { validators: [Validators.required] }),
-
-      // Back Translation Information
-      backTranslationStage: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
-      backTranslationProject: new FormControl<string | null>(null),
-
-      // Back translation language information
-      backTranslationLanguageName: new FormControl<string>('', { nonNullable: true }),
-      backTranslationLanguageIsoCode: new FormControl<string>('', { nonNullable: true }),
-
-      // Additional Information
-      additionalComments: new FormControl<string>('', { nonNullable: true })
-    });
   }
 
   ngOnInit(): void {
@@ -353,6 +323,29 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
       return translate('draft_signup.bt_project_required');
     }
     return undefined;
+  }
+
+  backTranslationProjectSelected(selectedProject: SelectableProject): void {
+    const languageTagInForm = this.signupForm.controls.backTranslationLanguageIsoCode.value;
+    const projectLanguageTag = this.activatedProject.projectDoc?.data?.writingSystem.tag;
+
+    // Only fill in the language information if the back translation ISO code differs from the main project ISO code
+    if (
+      hasStringProp(selectedProject, 'languageTag') &&
+      selectedProject.languageTag !== languageTagInForm &&
+      selectedProject.languageTag !== projectLanguageTag
+    ) {
+      this.signupForm.controls.backTranslationLanguageIsoCode.setValue(selectedProject.languageTag);
+
+      // Attempt to get the English name of the language from the browser
+      const englishName = this.i18n.getLanguageDisplayName(selectedProject.languageTag, 'en');
+      if (englishName && englishName !== selectedProject.languageTag) {
+        this.signupForm.controls.backTranslationLanguageName.setValue(englishName);
+      } else {
+        // Clear the language name if we couldn't determine a reasonable value
+        this.signupForm.controls.backTranslationLanguageName.setValue('');
+      }
+    }
   }
 
   private async loadProjectsAndResources(): Promise<void> {
