@@ -1098,7 +1098,6 @@ public class MachineApiServiceTests
                 new ParallelCorpusAnalysis
                 {
                     ParallelCorpusRef = ParallelCorpusId01,
-                    SourceQuoteConvention = "standard_english",
                     TargetQuoteConvention = "standard_english",
                     CanDenormalizeQuotes = true,
                 },
@@ -1383,7 +1382,6 @@ public class MachineApiServiceTests
             new ParallelCorpusAnalysis
             {
                 ParallelCorpusRef = ParallelCorpusId01,
-                SourceQuoteConvention = "standard_english",
                 TargetQuoteConvention = "standard_english",
                 CanDenormalizeQuotes = true,
             },
