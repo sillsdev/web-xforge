@@ -42,14 +42,15 @@ public class ParatextDataHelper(IFileSystemService fileSystemService) : IParatex
         CommentManager? commentManager,
         CommentTags? commentTags,
         Func<CommentThread, bool>? predicate = null,
-        bool includeInactiveThreads = true
+        bool activeThreadsOnly = true
     )
     {
         if (commentManager == null)
             return Array.Empty<ParatextNote>();
 
-        Func<CommentThread, bool> filter = predicate ?? (_ => true);
-        IEnumerable<CommentThread> threads = commentManager.FindThreads(filter, includeInactiveThreads);
+        // When no predicate is provided, return note threads that are unresolved
+        Func<CommentThread, bool> filter = predicate ?? (t => t.Status != NoteStatus.Resolved);
+        IEnumerable<CommentThread> threads = commentManager.FindThreads(filter, activeThreadsOnly);
 
         var notes = new List<ParatextNote>();
         foreach (CommentThread thread in threads)
