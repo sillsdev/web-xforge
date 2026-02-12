@@ -13,6 +13,7 @@ using Paratext.Data.ProjectComments;
 using Paratext.Data.ProjectFileAccess;
 using Paratext.Data.ProjectSettingsAccess;
 using Paratext.Data.Repository;
+using PtxUtils;
 using SIL.WritingSystems;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
@@ -123,6 +124,23 @@ public class ParatextDataHelperTests
         IReadOnlyList<ParatextNote> notes = env.Service.GetNotes(commentManager, commentTags);
 
         Assert.AreEqual(1, notes.Count);
+    }
+
+    [Test]
+    public void GetNotes_ExcludeResolvedThreads()
+    {
+        var env = new TestEnvironment();
+        using MockScrText scrText = env.GetScrText(HexId.CreateNew().ToString());
+        var commentManager = CommentManager.Get(scrText);
+        var commentTags = new MockCommentTags(scrText);
+        commentTags.InitializeTagList([5]);
+        TestEnvironment.AddComment(scrText, "thread-04", "RUT 1:4", "Note to resolve", "5");
+        TestEnvironment.AddComment(scrText, "thread-04", "RUT 1:4", "This is resolved", "5", resolved: true);
+
+        // SUT
+        IReadOnlyList<ParatextNote> notes = env.Service.GetNotes(commentManager, commentTags);
+
+        Assert.AreEqual(0, notes.Count);
     }
 
     [Test]
@@ -345,7 +363,8 @@ public class ParatextDataHelperTests
             string verseRef,
             string content,
             string? tagValue,
-            bool deleted = false
+            bool deleted = false,
+            bool resolved = false
         )
         {
             XmlDocument doc = new XmlDocument();
@@ -362,6 +381,7 @@ public class ParatextDataHelperTests
                 Contents = root,
                 DateTime = DateTimeOffset.UtcNow,
                 Deleted = deleted,
+                Status = resolved ? NoteStatus.Resolved : NoteStatus.Todo,
                 SelectedText = string.Empty,
                 StartPosition = 0,
             };
