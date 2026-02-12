@@ -487,4 +487,57 @@ public class OnboardingRequestRpcController(
             throw;
         }
     }
+
+    /// <summary>
+    /// Gets basic project metadata by Paratext ID. Only accessible to Serval admins.
+    /// Note: This is intended for external use by the onboarding script, not internal Scripture Forge use.
+    /// </summary>
+    public async Task<IRpcMethodResult> GetProjectMetadataByParatextId(string paratextId)
+    {
+        try
+        {
+            // Check if user is a Serval admin
+            if (!SystemRoles.Contains(SystemRole.ServalAdmin))
+            {
+                return ForbiddenError();
+            }
+
+            if (string.IsNullOrEmpty(paratextId))
+            {
+                return InvalidParamsError("Paratext ID is required");
+            }
+
+            SFProject? project = _realtimeService
+                .QuerySnapshots<SFProject>()
+                .FirstOrDefault(p => p.ParatextId == paratextId);
+            if (project is null)
+            {
+                return NotFoundError("Project not found");
+            }
+
+            object result = new
+            {
+                ProjectId = project.Id,
+                ProjectName = project.Name,
+                ProjectShortName = project.ShortName,
+            };
+
+            return Ok(result);
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", "GetProjectMetadataByParatextId" },
+                    { "paratextId", paratextId },
+                }
+            );
+            throw;
+        }
+    }
 }
