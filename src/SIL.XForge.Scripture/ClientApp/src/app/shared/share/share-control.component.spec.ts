@@ -9,7 +9,6 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
-import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
@@ -18,6 +17,7 @@ import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
+import { BrandingService } from '../../core/branding.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -28,7 +28,7 @@ import { ShareControlComponent } from './share-control.component';
 const mockedProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
 const mockedUserService = mock(UserService);
-const mockedLocationService = mock(LocationService);
+const mockedBrandingService = mock(BrandingService);
 
 describe('ShareControlComponent', () => {
   configureTestingModule(() => ({
@@ -42,7 +42,7 @@ describe('ShareControlComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: LocationService, useMock: mockedLocationService },
+      { provide: BrandingService, useMock: mockedBrandingService },
       provideNoopAnimations()
     ]
   }));
@@ -259,7 +259,7 @@ describe('ShareControlComponent', () => {
   }));
 
   it('hides email sharing for the scribdocs hostname', fakeAsync(() => {
-    const env = new TestEnvironment({ hostname: 'scribdocs.com' });
+    const env = new TestEnvironment({ useSFBranding: false });
     expect(env.fetchElement('#email-form')).toBeNull();
   }));
 });
@@ -287,7 +287,7 @@ interface TestEnvironmentArgs {
   defaultRole: SFProjectRole;
   userId: string;
   checkingEnabled: boolean;
-  hostname: string;
+  useSFBranding: boolean;
 }
 
 class TestEnvironment {
@@ -333,7 +333,7 @@ class TestEnvironment {
       () => `/join/${(this.component as any).linkSharingKey}`
     );
     when(mockedProjectService.isProjectAdmin('project01', 'user02')).thenResolve(true);
-    when(mockedLocationService.hostname).thenReturn(args.hostname ?? 'scriptureforge.org');
+    when(mockedBrandingService.useScriptureForgeBranding).thenReturn(args.useSFBranding ?? true);
     this.fixture = TestBed.createComponent(TestHostComponent);
     this.fixture.componentInstance.projectId = args.projectId!;
     this.fixture.componentInstance.defaultRole = args.defaultRole;
