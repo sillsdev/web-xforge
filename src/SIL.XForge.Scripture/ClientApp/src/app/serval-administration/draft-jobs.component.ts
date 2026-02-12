@@ -348,7 +348,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
   }
 
   /** Group together events using information that was available prior to introducing draftGenerationRequestId. */
-  private createJobsUsingLegacyCorrelation(events: EventMetric[]): DraftJob[] {
+  private static createJobsUsingLegacyCorrelation(events: EventMetric[]): DraftJob[] {
     if (events.length === 0) {
       return [];
     }
@@ -362,7 +362,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     for (const buildEvent of buildEvents) {
       if (buildEvent.projectId == null) continue;
 
-      const buildId = this.extractBuildIdFromEvent(buildEvent);
+      const buildId = DraftJobsComponent.extractBuildIdFromEvent(buildEvent);
       if (buildId == null) continue;
 
       const buildTime = new Date(buildEvent.timeStamp);
@@ -403,7 +403,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
             return true;
           }
           // For other completion events, verify build ID matches
-          const completionBuildId = this.extractBuildIdFromEvent(event);
+          const completionBuildId = DraftJobsComponent.extractBuildIdFromEvent(event);
           return completionBuildId === buildId;
         }
 
@@ -421,7 +421,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
       }
 
       // Create the job from these events
-      const { trainingBooks, translationBooks } = this.extractBooksFromEvent(startEvent);
+      const { trainingBooks, translationBooks } = DraftJobsComponent.extractBooksFromEvent(startEvent);
 
       const job: DraftJob = {
         projectId: buildEvent.projectId,
@@ -459,7 +459,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
         }
 
         // Check if this event has the same build ID
-        const eventBuildId = this.extractBuildIdFromEvent(event);
+        const eventBuildId = DraftJobsComponent.extractBuildIdFromEvent(event);
         return eventBuildId === buildId;
       });
 
@@ -472,7 +472,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
 
     // Finalize job statuses
     for (const job of jobs) {
-      this.finalizeJobStatus(job);
+      DraftJobsComponent.finalizeJobStatus(job);
     }
 
     // Sort by start time (most recent first)
@@ -484,18 +484,23 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
   }
 
   private processDraftJobs(): void {
-    if (this.draftEvents == null) {
-      this.draftJobs = [];
-      this.generateRows();
-      return;
+    const jobs: DraftJob[] = DraftJobsComponent.buildDraftJobs(this.draftEvents, this.groupingMode);
+    this.draftJobs = jobs;
+    this.generateRows();
+  }
+
+  /** Builds draft job objects from grouped event metrics. */
+  private static buildDraftJobs(events: EventMetric[] | undefined, groupingMode: 'requestId' | 'timing'): DraftJob[] {
+    if (events == null) {
+      return [];
     }
 
     const jobs: DraftJob[] = [];
 
-    if (this.groupingMode === 'timing') {
-      jobs.push(...this.createJobsUsingLegacyCorrelation(this.draftEvents));
+    if (groupingMode === 'timing') {
+      jobs.push(...DraftJobsComponent.createJobsUsingLegacyCorrelation(events));
     } else {
-      const eventsGroupedByRequestId = Map.groupBy(this.draftEvents, this.getDraftGenerationRequestId);
+      const eventsGroupedByRequestId = Map.groupBy(events, DraftJobsComponent.getDraftGenerationRequestId);
       for (const [requestId, groupedEvents] of eventsGroupedByRequestId.entries()) {
         if (!hasElements(groupedEvents)) continue;
         if (requestId != null) {
@@ -505,31 +510,31 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
           );
           if (!hasStartEvent) continue;
 
-          jobs.push(this.createJobFromRequestGroup(requestId, groupedEvents));
+          jobs.push(DraftJobsComponent.createJobFromRequestGroup(requestId, groupedEvents));
         } else {
-          jobs.push(...this.createJobsUsingLegacyCorrelation(groupedEvents));
+          jobs.push(...DraftJobsComponent.createJobsUsingLegacyCorrelation(groupedEvents));
         }
       }
     }
-    this.draftJobs = this.sortJobsByStartTime(jobs);
-    this.generateRows();
+
+    return DraftJobsComponent.sortJobsByStartTime(jobs);
   }
 
-  private createJobFromRequestGroup(requestId: string, groupedEvents: PopulatedArray<EventMetric>): DraftJob {
-    const eventsSorted: EventMetric[] = [...groupedEvents].sort((left, right) => this.compareEventTimes(left, right));
-    const [startEvent, buildEvent, finishEvent, cancelEvent, additionalEvents] = this.validateAndExtractEvents(
-      requestId,
-      eventsSorted
+  private static createJobFromRequestGroup(requestId: string, groupedEvents: PopulatedArray<EventMetric>): DraftJob {
+    const eventsSorted: EventMetric[] = [...groupedEvents].sort((left, right) =>
+      DraftJobsComponent.compareEventTimes(left, right)
     );
+    const [startEvent, buildEvent, finishEvent, cancelEvent, additionalEvents] =
+      DraftJobsComponent.validateAndExtractEvents(requestId, eventsSorted);
 
     const projectId: string | undefined = startEvent.projectId;
     if (projectId == null) throw new Error(`Request group ${requestId} is missing projectId on start event.`);
 
-    const books = this.extractBooksFromEvent(startEvent);
+    const books = DraftJobsComponent.extractBooksFromEvent(startEvent);
     const servalBuildId: string | undefined = buildEvent?.result;
     // servalBuildId might be undefined if we don't have a BuildProjectAsync event.
 
-    const startTime: Date | undefined = this.createEventDate(startEvent);
+    const startTime: Date | undefined = DraftJobsComponent.createEventDate(startEvent);
     const sfUserId: string | undefined = startEvent.userId;
     const job: DraftJob = {
       projectId,
@@ -550,17 +555,17 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
       finishTime: undefined,
       duration: undefined
     };
-    this.finalizeJobStatus(job);
+    DraftJobsComponent.finalizeJobStatus(job);
     return job;
   }
 
   /** Validates event group contents and extracts specific events. The received events should all be part of the same draft generation request. */
-  private validateAndExtractEvents(
+  private static validateAndExtractEvents(
     requestId: string,
     events: EventMetric[]
   ): [EventMetric, EventMetric | undefined, EventMetric | undefined, EventMetric | undefined, EventMetric[]] {
     for (const event of events) {
-      const eventRequestId: string | undefined = this.getDraftGenerationRequestId(event);
+      const eventRequestId: string | undefined = DraftJobsComponent.getDraftGenerationRequestId(event);
       if (eventRequestId !== requestId) {
         throw new Error(
           `Erroneously given a group of events which did not all share draftGenerationRequestId ${requestId}.`
@@ -618,14 +623,14 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     return [startEvent, buildEvent, finishEvent, cancelEvent, additionalEvents];
   }
 
-  private getDraftGenerationRequestId(event: EventMetric): string | undefined {
+  private static getDraftGenerationRequestId(event: EventMetric): string | undefined {
     if (event.tags == null) return undefined;
     const requestId: unknown = event.tags['draftGenerationRequestId'];
     if (!isPopulatedString(requestId)) return undefined;
     return requestId;
   }
 
-  private sortJobsByStartTime(jobs: DraftJob[]): DraftJob[] {
+  private static sortJobsByStartTime(jobs: DraftJob[]): DraftJob[] {
     return jobs.sort((left, right) => {
       const leftTime = left.startTime != null ? left.startTime.getTime() : 0;
       const rightTime = right.startTime != null ? right.startTime.getTime() : 0;
@@ -634,24 +639,24 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     });
   }
 
-  private compareEventTimes(left: EventMetric, right: EventMetric): number {
-    const leftTime = this.getEventTimeMs(left) ?? 0;
-    const rightTime = this.getEventTimeMs(right) ?? 0;
+  private static compareEventTimes(left: EventMetric, right: EventMetric): number {
+    const leftTime = DraftJobsComponent.getEventTimeMs(left) ?? 0;
+    const rightTime = DraftJobsComponent.getEventTimeMs(right) ?? 0;
     return leftTime - rightTime;
   }
 
-  private getEventTimeMs(event: EventMetric): number | undefined {
+  private static getEventTimeMs(event: EventMetric): number | undefined {
     const timeMs = new Date(event.timeStamp).getTime();
     return Number.isNaN(timeMs) ? undefined : timeMs;
   }
 
-  private createEventDate(event: EventMetric): Date | undefined {
-    const timeMs: number | undefined = this.getEventTimeMs(event);
+  private static createEventDate(event: EventMetric): Date | undefined {
+    const timeMs: number | undefined = DraftJobsComponent.getEventTimeMs(event);
     if (timeMs == null) return undefined;
     return new Date(timeMs);
   }
 
-  private extractBuildIdFromEvent(event: EventMetric): string | null {
+  private static extractBuildIdFromEvent(event: EventMetric): string | null {
     // First try the result field (common for many event types)
     if (event.result != null) {
       return String(event.result);
@@ -665,7 +670,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     return null;
   }
 
-  private finalizeJobStatus(job: DraftJob): void {
+  private static finalizeJobStatus(job: DraftJob): void {
     let status: DraftJobStatus;
     let finishTime: Date | undefined = undefined;
     let duration: number | undefined = undefined;
@@ -793,7 +798,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     this.generateRows();
   }
 
-  private extractBooksFromEvent(event: EventMetric): {
+  private static extractBooksFromEvent(event: EventMetric): {
     trainingBooks: ProjectBooks[];
     translationBooks: ProjectBooks[];
   } {

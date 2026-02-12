@@ -147,7 +147,6 @@ describe('DraftJobsComponent', () => {
     it('treats retrieve status events with matching build id as finishing events', fakeAsync(() => {
       const env = new TestEnvironment({ hasEvents: false });
       env.wait();
-      const componentAny: any = env.component;
       const start = env.createEvent('start-req', 'StartPreTranslationBuildAsync', {
         timeStamp: '2025-01-01T00:00:00.000Z'
       });
@@ -160,11 +159,10 @@ describe('DraftJobsComponent', () => {
         result: 'build-req'
       });
 
-      componentAny['draftEvents'] = [start, build, retrieve];
-      componentAny['processDraftJobs']();
+      const jobs: DraftJob[] = DraftJobsComponent['buildDraftJobs']([start, build, retrieve], 'requestId');
 
-      expect(env.component.rows.length).toBe(1);
-      const job = env.component.rows[0].job;
+      expect(jobs.length).toBe(1);
+      const job = jobs[0];
       expect(job.finishEvent?.id).toBe('retrieve-req');
       expect(job.status).toBe('success');
       expect(job.duration).toBe(4 * 60 * 1000);
@@ -173,7 +171,6 @@ describe('DraftJobsComponent', () => {
     it('ignores retrieve status events when build id does not match', fakeAsync(() => {
       const env = new TestEnvironment({ hasEvents: false });
       env.wait();
-      const componentAny: any = env.component;
       const start = env.createEvent('start-req', 'StartPreTranslationBuildAsync', {
         timeStamp: '2025-01-01T00:00:00.000Z'
       });
@@ -186,11 +183,10 @@ describe('DraftJobsComponent', () => {
         result: 'some-other-build'
       });
 
-      componentAny['draftEvents'] = [start, build, retrieve];
-      componentAny['processDraftJobs']();
+      const jobs: DraftJob[] = DraftJobsComponent['buildDraftJobs']([start, build, retrieve], 'requestId');
 
-      expect(env.component.rows.length).toBe(1);
-      const job = env.component.rows[0].job;
+      expect(jobs.length).toBe(1);
+      const job = jobs[0];
       expect(job.finishEvent).toBeUndefined();
       expect(job.status).toBe('running');
     }));
@@ -297,7 +293,6 @@ describe('DraftJobsComponent', () => {
 
       const env = new TestEnvironment({ hasEvents: false });
       env.wait();
-      const componentAny: any = env.component;
       const start = env.createEvent('start-1', 'StartPreTranslationBuildAsync');
       const build = env.createEvent('build-1', 'BuildProjectAsync', { timeStamp: '2025-01-01T00:01:00.000Z' });
       const finish = env.createEvent('finish-1', 'BuildCompletedAsync', {
@@ -309,22 +304,21 @@ describe('DraftJobsComponent', () => {
         timeStamp: '2025-01-01T00:03:00.000Z'
       });
 
-      expect(() => componentAny['createJobFromRequestGroup']('req-1', [start, build, finish, mismatched])).toThrowError(
-        /share/i
-      );
+      expect(() =>
+        DraftJobsComponent['createJobFromRequestGroup']('req-1', [start, build, finish, mismatched])
+      ).toThrowError(/share/i);
     }));
 
     it('throws when grouped events contain multiple start events', fakeAsync(() => {
       const env = new TestEnvironment({ hasEvents: false });
       env.wait();
-      const componentAny: any = env.component;
       const startOne = env.createEvent('start-1', 'StartPreTranslationBuildAsync');
       const startTwo = env.createEvent('start-2', 'StartPreTranslationBuildAsync', {
         timeStamp: '2025-01-01T00:00:30.000Z'
       });
       const build = env.createEvent('build-1', 'BuildProjectAsync', { timeStamp: '2025-01-01T00:01:00.000Z' });
 
-      expect(() => componentAny['createJobFromRequestGroup']('req-1', [startOne, startTwo, build])).toThrowError(
+      expect(() => DraftJobsComponent['createJobFromRequestGroup']('req-1', [startOne, startTwo, build])).toThrowError(
         /exactly one startpretranslationbuildasync/i
       );
     }));
@@ -332,10 +326,9 @@ describe('DraftJobsComponent', () => {
     it('throws when grouped events are missing a start event', fakeAsync(() => {
       const env = new TestEnvironment({ hasEvents: false });
       env.wait();
-      const componentAny: any = env.component;
       const build = env.createEvent('build-1', 'BuildProjectAsync', { timeStamp: '2025-01-01T00:01:00.000Z' });
 
-      expect(() => componentAny['createJobFromRequestGroup']('req-1', [build])).toThrowError(
+      expect(() => DraftJobsComponent['createJobFromRequestGroup']('req-1', [build])).toThrowError(
         /exactly one startpretranslationbuildasync/i
       );
     }));
@@ -343,12 +336,11 @@ describe('DraftJobsComponent', () => {
     it('throws when grouped events contain multiple build events', fakeAsync(() => {
       const env = new TestEnvironment({ hasEvents: false });
       env.wait();
-      const componentAny: any = env.component;
       const start = env.createEvent('start-1', 'StartPreTranslationBuildAsync');
       const buildOne = env.createEvent('build-1', 'BuildProjectAsync', { timeStamp: '2025-01-01T00:01:00.000Z' });
       const buildTwo = env.createEvent('build-2', 'BuildProjectAsync', { timeStamp: '2025-01-01T00:01:30.000Z' });
 
-      expect(() => componentAny['createJobFromRequestGroup']('req-1', [start, buildOne, buildTwo])).toThrowError(
+      expect(() => DraftJobsComponent['createJobFromRequestGroup']('req-1', [start, buildOne, buildTwo])).toThrowError(
         /more than one buildprojectasync/i
       );
     }));
@@ -356,7 +348,6 @@ describe('DraftJobsComponent', () => {
     it('throws when grouped events contain multiple build completed events', fakeAsync(() => {
       const env = new TestEnvironment({ hasEvents: false });
       env.wait();
-      const componentAny: any = env.component;
       const start = env.createEvent('start-1', 'StartPreTranslationBuildAsync');
       const build = env.createEvent('build-1', 'BuildProjectAsync', { timeStamp: '2025-01-01T00:01:00.000Z' });
       const finishOne = env.createEvent('finish-1', 'BuildCompletedAsync', {
@@ -369,7 +360,7 @@ describe('DraftJobsComponent', () => {
       });
 
       expect(() =>
-        componentAny['createJobFromRequestGroup']('req-1', [start, build, finishOne, finishTwo])
+        DraftJobsComponent['createJobFromRequestGroup']('req-1', [start, build, finishOne, finishTwo])
       ).toThrowError(/more than one buildcompletedasync/i);
     }));
 
@@ -378,7 +369,6 @@ describe('DraftJobsComponent', () => {
 
       const env = new TestEnvironment({ hasEvents: false });
       env.wait();
-      const componentAny: any = env.component;
       const start = env.createEvent('start-1', 'StartPreTranslationBuildAsync');
       const build = env.createEvent('build-1', 'BuildProjectAsync', { timeStamp: '2025-01-01T00:01:00.000Z' });
       const finish = env.createEvent('finish-1', 'BuildCompletedAsync', {
@@ -389,15 +379,15 @@ describe('DraftJobsComponent', () => {
         timeStamp: '2025-01-01T00:02:30.000Z'
       });
 
-      expect(() => componentAny['createJobFromRequestGroup']('req-1', [start, build, finish, cancel])).toThrowError(
-        /Cancel/i
-      );
+      expect(() =>
+        DraftJobsComponent['createJobFromRequestGroup']('req-1', [start, build, finish, cancel])
+      ).toThrowError(/Cancel/i);
     }));
   });
 
-  describe('processDraftJobs', () => {
+  describe('buildDraftJobs', () => {
     it('skips request groups missing a start event', fakeAsync(() => {
-      // Suppose the user selects a dante range such that the start date+time is after a draft generation starts and before it finishes. The list of event metrics will have events about the job being processed, but there will not be a start event. Omit those jobs from the data we present.
+      // Suppose the user selects a date range such that the start date+time is after a draft generation starts and before it finishes. The list of event metrics will have events about the job being processed, but there will not be a start event. Omit those jobs from the data we present.
       //
       // If the end date falls after a start event and before a job's finish event, we'll just show that as in progress.
 
@@ -410,10 +400,9 @@ describe('DraftJobsComponent', () => {
         result: 'build-1'
       });
 
-      env.component['draftEvents'] = [buildEvent];
-      env.component['processDraftJobs']();
-      // The job was not included in the data.
-      expect(env.component.rows.length).toBe(0);
+      const jobs: DraftJob[] = DraftJobsComponent['buildDraftJobs']([buildEvent], 'requestId');
+      // There is no job for the event in the output.
+      expect(jobs.length).toBe(0);
     }));
   });
 
@@ -421,7 +410,6 @@ describe('DraftJobsComponent', () => {
     it('uses request grouping when toggle is set', fakeAsync(() => {
       const env = new TestEnvironment({ hasEvents: false, initialGrouping: 'timing' });
       env.wait();
-      const componentAny: any = env.component;
 
       const start = env.createEvent('start-1', 'StartPreTranslationBuildAsync');
       const build = env.createEvent('build-1', 'BuildProjectAsync', {
@@ -433,9 +421,9 @@ describe('DraftJobsComponent', () => {
         payload: { buildState: 'Completed', sfProjectId: 'sf-test-project', buildId: 'build-1' }
       });
 
-      componentAny['draftEvents'] = [start, build, finish];
-      const requestSpy = spyOn(componentAny, 'createJobFromRequestGroup').and.callThrough();
-      const timingSpy = spyOn(componentAny, 'createJobsUsingLegacyCorrelation').and.callThrough();
+      env.component['draftEvents'] = [start, build, finish];
+      const requestSpy = spyOn(DraftJobsComponent as any, 'createJobFromRequestGroup').and.callThrough();
+      const timingSpy = spyOn(DraftJobsComponent as any, 'createJobsUsingLegacyCorrelation').and.callThrough();
 
       env.component.onGroupingModeChange('requestId');
 
@@ -447,7 +435,6 @@ describe('DraftJobsComponent', () => {
     it('uses timing grouping when toggle is set', fakeAsync(() => {
       const env = new TestEnvironment({ hasEvents: false });
       env.wait();
-      const componentAny: any = env.component;
 
       const start = env.createEvent('start-1', 'StartPreTranslationBuildAsync');
       const build = env.createEvent('build-1', 'BuildProjectAsync', {
@@ -459,9 +446,9 @@ describe('DraftJobsComponent', () => {
         payload: { buildState: 'Completed', sfProjectId: 'sf-test-project', buildId: 'build-1' }
       });
 
-      componentAny['draftEvents'] = [start, build, finish];
-      const requestSpy = spyOn(componentAny, 'createJobFromRequestGroup').and.callThrough();
-      const timingSpy = spyOn(componentAny, 'createJobsUsingLegacyCorrelation').and.callThrough();
+      env.component['draftEvents'] = [start, build, finish];
+      const requestSpy = spyOn(DraftJobsComponent as any, 'createJobFromRequestGroup').and.callThrough();
+      const timingSpy = spyOn(DraftJobsComponent as any, 'createJobsUsingLegacyCorrelation').and.callThrough();
 
       env.component.onGroupingModeChange('timing');
 
