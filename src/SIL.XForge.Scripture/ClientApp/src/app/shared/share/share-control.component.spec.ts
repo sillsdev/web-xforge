@@ -9,6 +9,7 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
+import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
@@ -27,6 +28,7 @@ import { ShareControlComponent } from './share-control.component';
 const mockedProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
 const mockedUserService = mock(UserService);
+const mockedLocationService = mock(LocationService);
 
 describe('ShareControlComponent', () => {
   configureTestingModule(() => ({
@@ -40,6 +42,7 @@ describe('ShareControlComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: UserService, useMock: mockedUserService },
+      { provide: LocationService, useMock: mockedLocationService },
       provideNoopAnimations()
     ]
   }));
@@ -254,6 +257,11 @@ describe('ShareControlComponent', () => {
     verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).once();
     expect(env.fetchElement('#email mat-error')).toBeNull();
   }));
+
+  it('hides email sharing for the scribdocs hostname', fakeAsync(() => {
+    const env = new TestEnvironment({ hostname: 'scribdocs.com' });
+    expect(env.fetchElement('#email-form')).toBeNull();
+  }));
 });
 
 @Component({
@@ -279,6 +287,7 @@ interface TestEnvironmentArgs {
   defaultRole: SFProjectRole;
   userId: string;
   checkingEnabled: boolean;
+  hostname: string;
 }
 
 class TestEnvironment {
@@ -324,6 +333,7 @@ class TestEnvironment {
       () => `/join/${(this.component as any).linkSharingKey}`
     );
     when(mockedProjectService.isProjectAdmin('project01', 'user02')).thenResolve(true);
+    when(mockedLocationService.hostname).thenReturn(args.hostname ?? 'scriptureforge.org');
     this.fixture = TestBed.createComponent(TestHostComponent);
     this.fixture.componentInstance.projectId = args.projectId!;
     this.fixture.componentInstance.defaultRole = args.defaultRole;

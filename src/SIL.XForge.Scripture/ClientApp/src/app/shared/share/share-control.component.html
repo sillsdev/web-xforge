@@ -1,68 +1,73 @@
 <ng-container *transloco="let t; read: 'share_control'">
   <h2>{{ t("invite_people") }}</h2>
   <p class="mat-hint">{{ t("invite_people_intro") }}</p>
-  <p class="mat-hint">{{ t("email_sharing") }}</p>
   @if (!isAppOnline) {
     <div class="offline-text">{{ t("share_not_available_offline") }}</div>
   }
   <div class="invite-forms">
-    <div class="invite-by-email">
-      <h3>{{ t("send_a_link") }}</h3>
-      <div>
-        <form id="email-form" [formGroup]="sendInviteForm" #form="ngForm">
-          <mat-form-field id="email">
-            <mat-label>{{ t("email") }}</mat-label>
-            <input matInput type="email" formControlName="email" (input)="onEmailInput()" />
-            @if (email.hasError("pattern") || email.hasError("required")) {
-              <mat-error>
-                {{ t("email_invalid") }}
-              </mat-error>
-            }
-          </mat-form-field>
-          <mat-form-field id="invitation-role">
-            <mat-label>{{ t("invitation_role") }}</mat-label>
-            <mat-select formControlName="role" panelClass="invitation-role-panel" [hideSingleSelectionIndicator]="true">
-              <mat-select-trigger>
-                {{ roleControl.value ? i18n.localizeRole(roleControl.value) : "" }}
-              </mat-select-trigger>
-              @for (role of availableRoles; track role) {
-                <mat-option [value]="role">
-                  <div class="role-name">{{ i18n.localizeRole(role) }}</div>
-                  <div class="role-description">{{ i18n.localizeRoleDescription(role) }}</div>
-                </mat-option>
+    @if (showEmailInvite) {
+      <div class="invite-by-email">
+        <h3>{{ t("send_a_link") }}</h3>
+        <div>
+          <form id="email-form" [formGroup]="sendInviteForm" #form="ngForm">
+            <mat-form-field id="email">
+              <mat-label>{{ t("email") }}</mat-label>
+              <input matInput type="email" formControlName="email" (input)="onEmailInput()" />
+              @if (email.hasError("pattern") || email.hasError("required")) {
+                <mat-error>
+                  {{ t("email_invalid") }}
+                </mat-error>
               }
-            </mat-select>
-            @if (roleControl.hasError("required")) {
-              <mat-error>{{ t("select_invitation_role") }}</mat-error>
-            }
-          </mat-form-field>
-          <mat-form-field id="invitation-language">
-            <mat-label>{{ t("invitation_language") }}</mat-label>
-            <mat-select formControlName="locale" panelClass="locale-fonts" [hideSingleSelectionIndicator]="true">
-              @for (locale of i18n.locales; track locale) {
-                <mat-option [value]="locale.canonicalTag">
-                  {{ locale.localName }}
-                </mat-option>
+            </mat-form-field>
+            <mat-form-field id="invitation-role">
+              <mat-label>{{ t("invitation_role") }}</mat-label>
+              <mat-select
+                formControlName="role"
+                panelClass="invitation-role-panel"
+                [hideSingleSelectionIndicator]="true"
+              >
+                <mat-select-trigger>
+                  {{ roleControl.value ? i18n.localizeRole(roleControl.value) : "" }}
+                </mat-select-trigger>
+                @for (role of availableRoles; track role) {
+                  <mat-option [value]="role">
+                    <div class="role-name">{{ i18n.localizeRole(role) }}</div>
+                    <div class="role-description">{{ i18n.localizeRoleDescription(role) }}</div>
+                  </mat-option>
+                }
+              </mat-select>
+              @if (roleControl.hasError("required")) {
+                <mat-error>{{ t("select_invitation_role") }}</mat-error>
               }
-            </mat-select>
-            @if (localeControl.hasError("required")) {
-              <mat-error>{{ t("select_invitation_language") }}</mat-error>
-            }
-          </mat-form-field>
-          <button
-            id="send-btn"
-            mat-flat-button
-            color="primary"
-            form="email-form"
-            type="submit"
-            (click)="sendEmail(form)"
-            [disabled]="isSubmitted"
-          >
-            {{ isAlreadyInvited ? t("resend") : t("send") }}
-          </button>
-        </form>
+            </mat-form-field>
+            <mat-form-field id="invitation-language">
+              <mat-label>{{ t("invitation_language") }}</mat-label>
+              <mat-select formControlName="locale" panelClass="locale-fonts" [hideSingleSelectionIndicator]="true">
+                @for (locale of i18n.locales; track locale) {
+                  <mat-option [value]="locale.canonicalTag">
+                    {{ locale.localName }}
+                  </mat-option>
+                }
+              </mat-select>
+              @if (localeControl.hasError("required")) {
+                <mat-error>{{ t("select_invitation_language") }}</mat-error>
+              }
+            </mat-form-field>
+            <button
+              id="send-btn"
+              mat-flat-button
+              color="primary"
+              form="email-form"
+              type="submit"
+              (click)="sendEmail(form)"
+              [disabled]="isSubmitted"
+            >
+              {{ isAlreadyInvited ? t("resend") : t("send") }}
+            </button>
+          </form>
+        </div>
       </div>
-    </div>
+    }
     @if (isLinkSharingEnabled) {
       <div class="invite-by-link">
         <h3>{{ t("share_a_link") }}</h3>

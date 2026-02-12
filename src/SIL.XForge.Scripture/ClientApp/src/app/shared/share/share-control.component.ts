@@ -19,6 +19,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { BehaviorSubject, combineLatest, startWith } from 'rxjs';
 import { CommandError } from 'xforge-common/command.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
@@ -66,16 +67,18 @@ export class ShareControlComponent extends ShareBaseComponent {
   isAlreadyInvited: boolean = false;
   isProjectAdmin: boolean = false;
   readonly alreadyProjectMemberResponse: string = 'alreadyProjectMember';
+  readonly invalidEmailAddress: string = 'invalid-email-address';
 
+  private readonly hostname: string = this.locationService.hostname;
   private _projectId?: string;
   private projectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
-  readonly invalidEmailAddress: string = 'invalid-email-address';
 
   constructor(
     readonly i18n: I18nService,
     private readonly noticeService: NoticeService,
     private readonly projectService: SFProjectService,
     private readonly onlineStatusService: OnlineStatusService,
+    private readonly locationService: LocationService,
     userService: UserService,
     private destroyRef: DestroyRef
   ) {
@@ -116,6 +119,10 @@ export class ShareControlComponent extends ShareBaseComponent {
 
   get isAppOnline(): boolean {
     return this.onlineStatusService.isOnline;
+  }
+
+  get showEmailInvite(): boolean {
+    return !this.hostname.includes('scribdocs');
   }
 
   get isLinkSharingEnabled(): boolean {
