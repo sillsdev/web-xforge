@@ -25,6 +25,8 @@ export interface DraftDiff {
   ops: Delta;
 }
 
+const VERSE_NUM_REGEX = /(\d+)\w?$/;
+
 @Injectable({
   providedIn: 'root'
 })
@@ -209,8 +211,9 @@ export class DraftHandlingService {
     let lastVerse: number = 0;
     if (verseOps.length > 0 && verseOps[verseOps.length - 1].insert!['verse']['number'] != null) {
       let lastVerseStr: string = verseOps[verseOps.length - 1].insert!['verse']['number'].toString();
-      if (lastVerseStr.includes('-')) {
-        lastVerseStr = lastVerseStr.split('-')[1];
+      const match: RegExpExecArray | null = VERSE_NUM_REGEX.exec(lastVerseStr);
+      if (match != null) {
+        lastVerseStr = match[1];
       }
       lastVerse = parseInt(lastVerseStr, 10);
     }
