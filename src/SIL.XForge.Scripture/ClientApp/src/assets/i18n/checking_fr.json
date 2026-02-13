@@ -428,7 +428,6 @@
   "share_control": {
     "copy_link": "Copier le lien",
     "email_invalid": "L'adresse e-mail est invalide",
-    "email_sharing": "Envoyez l'invitation ci-dessous par e-mail ou partagez un lien en utilisant votre plateforme de communication préférée.",
     "email": "E-mail",
     "invitation_language": "Langue d'invitation",
     "invitation_role": "Rôle",
