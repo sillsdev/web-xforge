@@ -836,6 +836,8 @@
     "cannot_train_suggestion_engine": "Saran terjemahan tidak tersedia. Pilihlah proyek sumber yang memiliki kesamaan kitab dengan proyek ini untuk mendapatkan saran penerjemahan.",
     "not_enough_verses_translated": "Saran terjemahan tidak tersedia. Harap pastikan bahwa setidaknya ada 10 ayat yang cocok yang diterjemahkan dalam proyek sumber dan target.",
     "progress": "Kemajuan",
+    "progress_and_suggestions_not_available_offline": "Translation progress and suggestions are not available when offline.",
+    "progress_not_available_offline": "Translation progress is not available when offline.",
     "quality": "Kualitas",
     "retrain": "Melatih kembali",
     "suggestion_engine": "Mesin Saran",

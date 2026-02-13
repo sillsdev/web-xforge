@@ -836,6 +836,8 @@
     "cannot_train_suggestion_engine": "As sugestões de tradução não estão disponíveis. Por favor, selecione um projeto de origem que compartilhe livros em comum com este projeto para obter sugestões de tradução.",
     "not_enough_verses_translated": "Translation suggestions are unavailable. Please ensure that there are at least 10 matching verses translated in the source and target projects.",
     "progress": "Progresso",
+    "progress_and_suggestions_not_available_offline": "Translation progress and suggestions are not available when offline.",
+    "progress_not_available_offline": "Translation progress is not available when offline.",
     "quality": "Qualidade",
     "retrain": "Treinar novamente",
     "suggestion_engine": "Mecanismo de Sugestão",

@@ -194,9 +194,9 @@
                 formControlName="backTranslationProject"
                 [placeholder]="t('bt_project_placeholder')"
                 [projects]="availableProjects"
-                [resources]="availableResources"
                 [hiddenParatextIds]="hiddenParatextIds"
                 [required]="true"
+                (projectSelect)="backTranslationProjectSelected($event)"
               ></app-project-select>
 
               <div>

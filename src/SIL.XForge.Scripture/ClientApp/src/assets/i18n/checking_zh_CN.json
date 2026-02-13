@@ -428,7 +428,6 @@
   "share_control": {
     "copy_link": "复制链接",
     "email_invalid": "电子邮箱地址不可用",
-    "email_sharing": "Send an email invite below or share a link using your preferred communication platform.",
     "email": "电子邮件",
     "invitation_language": "Invitation language",
     "invitation_role": "角色",
