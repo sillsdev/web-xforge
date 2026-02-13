@@ -24,6 +24,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { XFValidators } from 'xforge-common/xfvalidators';
+import { BrandingService } from '../../core/branding.service';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ShareBaseComponent } from './share-base.component';
@@ -66,16 +67,17 @@ export class ShareControlComponent extends ShareBaseComponent {
   isAlreadyInvited: boolean = false;
   isProjectAdmin: boolean = false;
   readonly alreadyProjectMemberResponse: string = 'alreadyProjectMember';
+  readonly invalidEmailAddress: string = 'invalid-email-address';
 
   private _projectId?: string;
   private projectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
-  readonly invalidEmailAddress: string = 'invalid-email-address';
 
   constructor(
     readonly i18n: I18nService,
     private readonly noticeService: NoticeService,
     private readonly projectService: SFProjectService,
     private readonly onlineStatusService: OnlineStatusService,
+    private readonly brandingService: BrandingService,
     userService: UserService,
     private destroyRef: DestroyRef
   ) {
@@ -116,6 +118,10 @@ export class ShareControlComponent extends ShareBaseComponent {
 
   get isAppOnline(): boolean {
     return this.onlineStatusService.isOnline;
+  }
+
+  get showEmailInvite(): boolean {
+    return this.brandingService.useScriptureForgeBranding;
   }
 
   get isLinkSharingEnabled(): boolean {

@@ -17,6 +17,7 @@ import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
+import { BrandingService } from '../../core/branding.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -27,6 +28,7 @@ import { ShareControlComponent } from './share-control.component';
 const mockedProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
 const mockedUserService = mock(UserService);
+const mockedBrandingService = mock(BrandingService);
 
 describe('ShareControlComponent', () => {
   configureTestingModule(() => ({
@@ -40,6 +42,7 @@ describe('ShareControlComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: UserService, useMock: mockedUserService },
+      { provide: BrandingService, useMock: mockedBrandingService },
       provideNoopAnimations()
     ]
   }));
@@ -254,6 +257,11 @@ describe('ShareControlComponent', () => {
     verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).once();
     expect(env.fetchElement('#email mat-error')).toBeNull();
   }));
+
+  it('hides email sharing for the scribdocs hostname', fakeAsync(() => {
+    const env = new TestEnvironment({ useSFBranding: false });
+    expect(env.fetchElement('#email-form')).toBeNull();
+  }));
 });
 
 @Component({
@@ -279,6 +287,7 @@ interface TestEnvironmentArgs {
   defaultRole: SFProjectRole;
   userId: string;
   checkingEnabled: boolean;
+  useSFBranding: boolean;
 }
 
 class TestEnvironment {
@@ -324,6 +333,7 @@ class TestEnvironment {
       () => `/join/${(this.component as any).linkSharingKey}`
     );
     when(mockedProjectService.isProjectAdmin('project01', 'user02')).thenResolve(true);
+    when(mockedBrandingService.useScriptureForgeBranding).thenReturn(args.useSFBranding ?? true);
     this.fixture = TestBed.createComponent(TestHostComponent);
     this.fixture.componentInstance.projectId = args.projectId!;
     this.fixture.componentInstance.defaultRole = args.defaultRole;
