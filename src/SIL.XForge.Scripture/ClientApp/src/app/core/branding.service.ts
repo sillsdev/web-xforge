@@ -7,6 +7,6 @@ export class BrandingService {
   constructor(private readonly locationService: LocationService) {}
 
   get useScriptureForgeBranding(): boolean {
-    return this.locationService.host !== new URL(environment.masterUrl).host;
+    return this.locationService.host === new URL(environment.masterUrl).host;
   }
 }
