@@ -836,6 +836,8 @@
     "cannot_train_suggestion_engine": "Übersetzungsvorschläge sind nicht verfügbar. Bitte wähle ein Ausgangsprojekt, das Bücher mit diesem Projekt gemeinsam hat, um Übersetzungsvorschläge zu erhalten.",
     "not_enough_verses_translated": "Übersetzungsvorschläge sind nicht verfügbar. Bitte stelle sicher, dass mindestens 10 übereinstimmende Verse in den Ausgangs- und Zielprojekten übersetzt sind.",
     "progress": "Fortschritt",
+    "progress_and_suggestions_not_available_offline": "Translation progress and suggestions are not available when offline.",
+    "progress_not_available_offline": "Translation progress is not available when offline.",
     "quality": "Qualität",
     "retrain": "Neu schulen",
     "suggestion_engine": "Funktion Vorschlagen",

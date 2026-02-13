@@ -428,7 +428,6 @@
   "share_control": {
     "copy_link": "نسخ الرابط",
     "email_invalid": "عنوان البريد الإلكتروني غير صحيح",
-    "email_sharing": "Send an email invite below or share a link using your preferred communication platform.",
     "email": "عنوان البريد الإلكتروني",
     "invitation_language": "لغة الدعوة",
     "invitation_role": "الدور",

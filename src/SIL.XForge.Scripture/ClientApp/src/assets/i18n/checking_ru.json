@@ -428,7 +428,6 @@
   "share_control": {
     "copy_link": "Скопировать ссылку",
     "email_invalid": "Адрес электронной почты недействителен",
-    "email_sharing": "Send an email invite below or share a link using your preferred communication platform.",
     "email": "Электронная почта",
     "invitation_language": "Invitation language",
     "invitation_role": "Роль",
