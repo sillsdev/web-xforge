@@ -144,28 +144,6 @@ public class ParatextDataHelperTests
     }
 
     [Test]
-    public void GetNotes_FiltersThreadsWithPredicate()
-    {
-        var env = new TestEnvironment();
-        using MockScrText scrText = env.GetScrText(HexId.CreateNew().ToString());
-        var commentManager = CommentManager.Get(scrText);
-        var commentTags = new MockCommentTags(scrText);
-        commentTags.InitializeTagList([2]);
-        TestEnvironment.AddComment(scrText, "thread-05", "RUT 1:5", "First", "2");
-        TestEnvironment.AddComment(scrText, "thread-06", "RUT 1:6", "Second", "2");
-
-        // SUT
-        IReadOnlyList<ParatextNote> notes = env.Service.GetNotes(
-            commentManager,
-            commentTags,
-            thread => string.Equals(thread.Id, "thread-06", StringComparison.Ordinal)
-        );
-
-        Assert.AreEqual(1, notes.Count);
-        Assert.AreEqual("thread-06", notes[0].Id);
-    }
-
-    [Test]
     public void CommitVersionedText_Success()
     {
         // Setup

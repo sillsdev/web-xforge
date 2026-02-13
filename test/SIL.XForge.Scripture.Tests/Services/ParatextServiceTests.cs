@@ -867,24 +867,13 @@ public class ParatextServiceTests
                 Comments = Array.Empty<ParatextNoteComment>(),
             },
         };
-        env.MockParatextDataHelper.GetNotes(
-                Arg.Any<CommentManager>(),
-                Arg.Any<CommentTags>(),
-                Arg.Any<Func<CommentThread, bool>>(),
-                Arg.Any<bool>()
-            )
-            .Returns(expectedNotes);
+        env.MockParatextDataHelper.GetNotes(Arg.Any<CommentManager>(), Arg.Any<CommentTags>()).Returns(expectedNotes);
 
         IReadOnlyList<ParatextNote> actual = env.Service.GetNoteThreads(userSecret, paratextId);
 
         Assert.AreSame(expectedNotes, actual);
         env.MockParatextDataHelper.Received(1)
-            .GetNotes(
-                env.ProjectCommentManager,
-                Arg.Is<CommentTags>(tags => tags != null),
-                Arg.Any<Func<CommentThread, bool>>(),
-                true
-            );
+            .GetNotes(env.ProjectCommentManager, Arg.Is<CommentTags>(tags => tags != null));
     }
 
     [Test]
