@@ -195,6 +195,13 @@ describe('I18nService', () => {
       service.setLocale('en');
       expect(service.getLanguageDisplayName('123')).toBe('123');
     });
+
+    it('should return the display name in the specified display language', () => {
+      const service = getI18nService();
+      service.setLocale('en');
+      expect(service.getLanguageDisplayName('es', 'en')).toBe('Spanish');
+      expect(service.getLanguageDisplayName('es', 'es')).toBe('español');
+    });
   });
 
   describe('getPluralRule', () => {
