@@ -1,5 +1,11 @@
 import { Injectable } from '@angular/core';
-import { AbortError, HubConnection, HubConnectionBuilder, IHttpConnectionOptions } from '@microsoft/signalr';
+import {
+  AbortError,
+  HubConnection,
+  HubConnectionBuilder,
+  HubConnectionState,
+  IHttpConnectionOptions
+} from '@microsoft/signalr';
 import { AuthService } from 'xforge-common/auth.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 
@@ -27,12 +33,20 @@ export class ProjectNotificationService {
     return this.onlineService.isOnline && this.onlineService.isBrowserOnline;
   }
 
+  removeNotifyDraftApplyProgressHandler(handler: any): void {
+    this.connection.off('notifyDraftApplyProgress', handler);
+  }
+
   removeNotifyBuildProgressHandler(handler: any): void {
     this.connection.off('notifyBuildProgress', handler);
   }
 
   removeNotifySyncProgressHandler(handler: any): void {
     this.connection.off('notifySyncProgress', handler);
+  }
+
+  setNotifyDraftApplyProgressHandler(handler: any): void {
+    this.connection.on('notifyDraftApplyProgress', handler);
   }
 
   setNotifyBuildProgressHandler(handler: any): void {
@@ -44,6 +58,9 @@ export class ProjectNotificationService {
   }
 
   async start(): Promise<void> {
+    if (this.connection.state !== HubConnectionState.Disconnected) {
+      await this.connection.stop();
+    }
     await this.connection.start().catch(err => {
       // Suppress AbortErrors, as they are not caused by server error, but the SignalR connection state
       // These will be thrown if a user navigates away quickly after
