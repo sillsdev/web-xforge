@@ -113,7 +113,7 @@ export async function onboardingFlow(
     await user.click(btStage);
     await user.click(page.getByRole('option', { name: 'Yes (Up-to-Date)' }));
 
-    await selectProjectByFieldName(page, user, 'Select your back translation', 'DHH94');
+    await selectProjectByFieldName(page, user, 'Select your back translation', 'SEEC2');
 
     const btLangName = page.getByText('Back translation language name');
     await user.click(btLangName);
