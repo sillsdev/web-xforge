@@ -38,18 +38,16 @@ public class ParatextDataHelper(IFileSystemService fileSystemService) : IParatex
         vText.Commit(comment, null, false);
     }
 
-    public IReadOnlyList<ParatextNote> GetNotes(
-        CommentManager? commentManager,
-        CommentTags? commentTags,
-        Func<CommentThread, bool>? predicate = null,
-        bool includeInactiveThreads = true
-    )
+    public IReadOnlyList<ParatextNote> GetNotes(CommentManager? commentManager, CommentTags? commentTags)
     {
         if (commentManager == null)
             return Array.Empty<ParatextNote>();
 
-        Func<CommentThread, bool> filter = predicate ?? (_ => true);
-        IEnumerable<CommentThread> threads = commentManager.FindThreads(filter, includeInactiveThreads);
+        // Only return note threads that are not resolved and active
+        IEnumerable<CommentThread> threads = commentManager.FindThreads(
+            t => t.Status != NoteStatus.Resolved,
+            activeOnly: true
+        );
 
         var notes = new List<ParatextNote>();
         foreach (CommentThread thread in threads)
