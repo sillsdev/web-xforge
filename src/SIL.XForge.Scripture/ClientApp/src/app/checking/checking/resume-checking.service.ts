@@ -114,7 +114,9 @@ export class ResumeCheckingService extends ResumeBaseService {
       chapterNum = verseRef.chapterNum;
     } else {
       // No questions, or all questions already answered.  Send user to first book/chapter.
-      const firstTextWithChapters = projectDoc.data?.texts.find(t => t.chapters.length > 0);
+      const firstTextWithChapters = projectDoc.data?.texts
+        .sort((a, b) => a.bookNum - b.bookNum)
+        .find(t => t.chapters.length > 0);
 
       if (firstTextWithChapters == null) {
         return undefined;
