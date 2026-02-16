@@ -17,6 +17,7 @@ import { TypeRegistry } from 'xforge-common/type-registry';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { Revision } from '../../../core/paratext.service';
+import { ProjectNotificationService } from '../../../core/project-notification.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextComponent } from '../../../shared/text/text.component';
 import { EditorHistoryComponent } from './editor-history.component';
@@ -28,6 +29,7 @@ describe('EditorHistoryComponent', () => {
   const mockSFProjectService = mock(SFProjectService);
   const mockI18nService = mock(I18nService);
   const mockHistoryChooserComponent = mock(HistoryChooserComponent);
+  const mockProjectNotificationService = mock(ProjectNotificationService);
 
   const revisionSelect$ = new Subject<RevisionSelectEvent>();
   const showDiffChange$ = new Subject<boolean>();
@@ -39,6 +41,7 @@ describe('EditorHistoryComponent', () => {
       provideTestRealtime(new TypeRegistry([TextDoc], [FileType.Audio], [])),
       provideTestOnlineStatus(),
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      { provide: ProjectNotificationService, useMock: mockProjectNotificationService },
       { provide: SFProjectService, useMock: mockSFProjectService },
       { provide: I18nService, useMock: mockI18nService }
     ]

@@ -1,5 +1,14 @@
 import { AsyncPipe, NgClass } from '@angular/common';
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  DestroyRef,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges
+} from '@angular/core';
 import { MatOption } from '@angular/material/autocomplete';
 import { MatButton } from '@angular/material/button';
 import { MatFormField } from '@angular/material/form-field';
@@ -19,6 +28,7 @@ import {
   observeOn,
   startWith,
   Subject,
+  take,
   tap
 } from 'rxjs';
 import { BlurOnClickDirective } from 'xforge-common/blur-on-click.directive';
@@ -30,11 +40,17 @@ import { Snapshot } from 'xforge-common/models/snapshot';
 import { TextSnapshot } from 'xforge-common/models/textsnapshot';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../../../core/models/text-doc';
 import { ParatextService, Revision } from '../../../../core/paratext.service';
+import { ProjectNotificationService } from '../../../../core/project-notification.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { TextDocService } from '../../../../core/text-doc.service';
+import {
+  DraftApplyState,
+  DraftApplyStatus
+} from '../../../draft-generation/draft-import-wizard/draft-import-wizard.component';
 import { HistoryRevisionFormatPipe } from './history-revision-format.pipe';
 
 export interface RevisionSelectEvent {
@@ -62,7 +78,19 @@ export interface RevisionSelectEvent {
   ]
 })
 export class HistoryChooserComponent implements AfterViewInit, OnChanges {
-  @Input() projectId?: string;
+  private _projectId?: string;
+  private projectId$: Subject<string> = new Subject<string>();
+  @Input() set projectId(id: string | undefined) {
+    if (id == null) {
+      return;
+    }
+    this._projectId = id;
+    this.projectId$.next(id);
+  }
+  get projectId(): string | undefined {
+    return this._projectId;
+  }
+
   @Input() bookNum?: number;
   @Input() chapter?: number;
   @Input() showDiff = true;
@@ -72,6 +100,18 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
   historyRevisions: Revision[] = [];
   selectedRevision: Revision | undefined;
   selectedSnapshot: TextSnapshot | undefined;
+
+  private readonly notifyDraftApplyProgressHandler = (projectId: string, draftApplyState: DraftApplyState): void => {
+    if (
+      draftApplyState.bookNum === this.bookNum &&
+      draftApplyState.chapterNum === this.chapter &&
+      draftApplyState.status === DraftApplyStatus.Successful
+    ) {
+      // Clear then reload the history revisions
+      this.historyRevisions = [];
+      void this.loadHistory();
+    }
+  };
 
   // 'asyncScheduler' prevents ExpressionChangedAfterItHasBeenCheckedError
   private loading$ = new BehaviorSubject<boolean>(false);
@@ -87,15 +127,32 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
   private projectDoc: SFProjectProfileDoc | undefined;
 
   constructor(
+    destroyRef: DestroyRef,
     private readonly dialogService: DialogService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly noticeService: NoticeService,
     private readonly paratextService: ParatextService,
+    projectNotificationService: ProjectNotificationService,
     private readonly projectService: SFProjectService,
     private readonly textDocService: TextDocService,
     private readonly errorReportingService: ErrorReportingService,
     private readonly i18n: I18nService
-  ) {}
+  ) {
+    this.projectId$.pipe(quietTakeUntilDestroyed(destroyRef), filterNullish(), take(1)).subscribe(async projectId => {
+      // Start the connection to SignalR
+      await projectNotificationService.start();
+      // Subscribe to notifications for this project
+      await projectNotificationService.subscribeToProject(projectId);
+      // When build notifications are received, reload the build history
+      // NOTE: We do not need the build state, so just ignore it.
+      projectNotificationService.setNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
+    });
+    destroyRef.onDestroy(async () => {
+      // Stop the SignalR connection when the component is destroyed
+      await projectNotificationService.stop();
+      projectNotificationService.setNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
+    });
+  }
 
   get canRestoreSnapshot(): boolean {
     return (
@@ -117,10 +174,6 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
   }
 
   ngAfterViewInit(): void {
-    this.loadHistory();
-  }
-
-  loadHistory(): void {
     combineLatest([
       this.onlineStatusService.onlineStatus$,
       this.inputChanged$.pipe(
@@ -133,23 +186,29 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
         })
       )
     ]).subscribe(async ([isOnline]) => {
-      if (isOnline && this.projectId != null && this.bookNum != null && this.chapter != null) {
-        this.loading$.next(true);
-        try {
-          this.projectDoc = await this.projectService.getProfile(this.projectId);
-          if (this.historyRevisions.length === 0) {
-            this.historyRevisions =
-              (await this.paratextService.getRevisions(this.projectId, this.bookId, this.chapter)) ?? [];
-
-            if (this.historyRevisions.length > 0) {
-              await this.selectRevision(this.historyRevisions[0]);
-            }
-          }
-        } finally {
-          this.loading$.next(false);
-        }
+      if (isOnline) {
+        await this.loadHistory();
       }
     });
+  }
+
+  async loadHistory(): Promise<void> {
+    if (this.projectId != null && this.bookNum != null && this.chapter != null) {
+      this.loading$.next(true);
+      try {
+        this.projectDoc = await this.projectService.getProfile(this.projectId);
+        if (this.historyRevisions.length === 0) {
+          this.historyRevisions =
+            (await this.paratextService.getRevisions(this.projectId, this.bookId, this.chapter)) ?? [];
+
+          if (this.historyRevisions.length > 0) {
+            await this.selectRevision(this.historyRevisions[0]);
+          }
+        }
+      } finally {
+        this.loading$.next(false);
+      }
+    }
   }
 
   async onSelectionChanged(e: MatSelectChange): Promise<void> {
