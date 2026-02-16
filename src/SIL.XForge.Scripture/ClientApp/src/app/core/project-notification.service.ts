@@ -19,7 +19,6 @@ export class ProjectNotificationService {
     this.connection = new HubConnectionBuilder()
       .withUrl('/project-notifications', this.options)
       .withAutomaticReconnect()
-      .withStatefulReconnect()
       .build();
   }
 
