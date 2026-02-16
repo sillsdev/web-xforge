@@ -6,6 +6,12 @@ namespace SIL.XForge.Scripture.Services;
 
 public static class NotificationHubExtensions
 {
+    public static Task NotifyDraftApplyProgress(
+        this IHubContext<DraftNotificationHub, IDraftNotifier> hubContext,
+        string projectId,
+        DraftApplyState draftApplyState
+    ) => hubContext.Clients.Groups(projectId).NotifyDraftApplyProgress(projectId, draftApplyState);
+
     public static Task NotifyBuildProgress(
         this IHubContext<NotificationHub, INotifier> hubContext,
         string projectId,
@@ -13,7 +19,7 @@ public static class NotificationHubExtensions
     ) => hubContext.Clients.Groups(projectId).NotifyBuildProgress(projectId, buildState);
 
     public static Task NotifyDraftApplyProgress(
-        this IHubContext<DraftNotificationHub, IDraftNotifier> hubContext,
+        this IHubContext<NotificationHub, INotifier> hubContext,
         string projectId,
         DraftApplyState draftApplyState
     ) => hubContext.Clients.Groups(projectId).NotifyDraftApplyProgress(projectId, draftApplyState);
