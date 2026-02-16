@@ -46,6 +46,7 @@ public class MachineApiService(
     IExceptionHandler exceptionHandler,
     IHttpRequestAccessor httpRequestAccessor,
     IHubContext<NotificationHub, INotifier> hubContext,
+    IHubContext<DraftNotificationHub, IDraftNotifier> draftHubContext,
     ILogger<MachineApiService> logger,
     IMachineProjectService machineProjectService,
     IParatextService paratextService,
@@ -169,7 +170,7 @@ public class MachineApiService(
                         + $" while the target project ({targetProjectDoc.Data.ShortName.Sanitize()}) has {targetLastChapter} chapters.";
                     logger.LogWarning(message);
                     result.Log += $"{message}\n";
-                    await hubContext.NotifyDraftApplyProgress(
+                    await draftHubContext.NotifyDraftApplyProgress(
                         sfProjectId,
                         new DraftApplyState
                         {
@@ -189,7 +190,7 @@ public class MachineApiService(
                 {
                     chapters = [.. Enumerable.Range(1, lastChapter)];
                 }
-                await hubContext.NotifyDraftApplyProgress(
+                await draftHubContext.NotifyDraftApplyProgress(
                     sfProjectId,
                     new DraftApplyState
                     {
@@ -236,7 +237,7 @@ public class MachineApiService(
                             if (string.IsNullOrWhiteSpace(usfm))
                             {
                                 result.Failures.Add(book);
-                                await hubContext.NotifyDraftApplyProgress(
+                                await draftHubContext.NotifyDraftApplyProgress(
                                     sfProjectId,
                                     new DraftApplyState
                                     {
@@ -253,7 +254,7 @@ public class MachineApiService(
                             if (DeltaUsxMapper.ExtractBookId(usfm) != book)
                             {
                                 result.Failures.Add(book);
-                                await hubContext.NotifyDraftApplyProgress(
+                                await draftHubContext.NotifyDraftApplyProgress(
                                     sfProjectId,
                                     new DraftApplyState
                                     {
@@ -290,7 +291,7 @@ public class MachineApiService(
                         {
                             // A blank chapter from Serval
                             result.Failures.Add($"{Canon.BookNumberToId(bookNum)} {chapterNum}");
-                            await hubContext.NotifyDraftApplyProgress(
+                            await draftHubContext.NotifyDraftApplyProgress(
                                 sfProjectId,
                                 new DraftApplyState
                                 {
@@ -313,7 +314,7 @@ public class MachineApiService(
                     {
                         // Likely a blank draft in the database
                         result.Failures.Add($"{Canon.BookNumberToId(bookNum)} {chapterNum}");
-                        await hubContext.NotifyDraftApplyProgress(
+                        await draftHubContext.NotifyDraftApplyProgress(
                             sfProjectId,
                             new DraftApplyState
                             {
@@ -340,7 +341,7 @@ public class MachineApiService(
                     }
                 }
 
-                await hubContext.NotifyDraftApplyProgress(
+                await draftHubContext.NotifyDraftApplyProgress(
                     sfProjectId,
                     new DraftApplyState
                     {
@@ -362,7 +363,7 @@ public class MachineApiService(
             exceptionHandler.ReportException(e);
             result.Log += $"{message}\n";
             result.Log += $"{e}\n";
-            await hubContext.NotifyDraftApplyProgress(
+            await draftHubContext.NotifyDraftApplyProgress(
                 sfProjectId,
                 new DraftApplyState
                 {
@@ -445,7 +446,7 @@ public class MachineApiService(
             // Update the permissions
             if (chapterDeltas.Count > 0)
             {
-                await hubContext.NotifyDraftApplyProgress(
+                await draftHubContext.NotifyDraftApplyProgress(
                     sfProjectId,
                     new DraftApplyState
                     {
@@ -489,7 +490,7 @@ public class MachineApiService(
                     if (result.Failures.Add(bookId))
                     {
                         // Only notify the book failure once per book
-                        await hubContext.NotifyDraftApplyProgress(
+                        await draftHubContext.NotifyDraftApplyProgress(
                             sfProjectId,
                             new DraftApplyState
                             {
@@ -519,7 +520,7 @@ public class MachineApiService(
                     if (result.Failures.Add(bookId))
                     {
                         // Only notify the book failure once per book
-                        await hubContext.NotifyDraftApplyProgress(
+                        await draftHubContext.NotifyDraftApplyProgress(
                             sfProjectId,
                             new DraftApplyState
                             {
@@ -541,7 +542,7 @@ public class MachineApiService(
                 if (chapterIndex == -1)
                 {
                     result.Failures.Add($"{Canon.BookNumberToId(bookNum)} {chapterDelta.Number}");
-                    await hubContext.NotifyDraftApplyProgress(
+                    await draftHubContext.NotifyDraftApplyProgress(
                         sfProjectId,
                         new DraftApplyState
                         {
@@ -575,7 +576,7 @@ public class MachineApiService(
                     }
 
                     result.Failures.Add($"{Canon.BookNumberToId(bookNum)} {chapterDelta.Number}");
-                    await hubContext.NotifyDraftApplyProgress(
+                    await draftHubContext.NotifyDraftApplyProgress(
                         sfProjectId,
                         new DraftApplyState
                         {
@@ -602,7 +603,7 @@ public class MachineApiService(
                     {
                         await textDataDoc.SubmitOpAsync(diffDelta, OpSource.Draft);
                     }
-                    await hubContext.NotifyDraftApplyProgress(
+                    await draftHubContext.NotifyDraftApplyProgress(
                         sfProjectId,
                         new DraftApplyState
                         {
@@ -617,7 +618,7 @@ public class MachineApiService(
                 {
                     // Create a new text data document
                     await textDataDoc.CreateAsync(newTextData);
-                    await hubContext.NotifyDraftApplyProgress(
+                    await draftHubContext.NotifyDraftApplyProgress(
                         sfProjectId,
                         new DraftApplyState
                         {
@@ -657,7 +658,7 @@ public class MachineApiService(
                 connection.RollbackTransaction();
             }
 
-            await hubContext.NotifyDraftApplyProgress(
+            await draftHubContext.NotifyDraftApplyProgress(
                 sfProjectId,
                 new DraftApplyState
                 {

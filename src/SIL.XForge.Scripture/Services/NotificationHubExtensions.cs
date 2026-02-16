@@ -13,7 +13,7 @@ public static class NotificationHubExtensions
     ) => hubContext.Clients.Groups(projectId).NotifyBuildProgress(projectId, buildState);
 
     public static Task NotifyDraftApplyProgress(
-        this IHubContext<NotificationHub, INotifier> hubContext,
+        this IHubContext<DraftNotificationHub, IDraftNotifier> hubContext,
         string projectId,
         DraftApplyState draftApplyState
     ) => hubContext.Clients.Groups(projectId).NotifyDraftApplyProgress(projectId, draftApplyState);

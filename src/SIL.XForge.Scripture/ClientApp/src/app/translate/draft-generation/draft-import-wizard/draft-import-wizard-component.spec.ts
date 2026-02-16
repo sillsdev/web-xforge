@@ -26,11 +26,13 @@ import { TextDocService } from '../../../core/text-doc.service';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { ProjectSelectComponent } from '../../../project-select/project-select.component';
 import { ProgressService, ProjectProgress } from '../../../shared/progress-service/progress.service';
+import { DraftNotificationService } from '../draft-notification.service';
 import { DraftApplyState, DraftApplyStatus, DraftImportWizardComponent } from './draft-import-wizard.component';
 
 const mockMatDialogRef = mock(MatDialogRef<DraftImportWizardComponent, boolean>);
 const mockParatextService = mock(ParatextService);
 const mockProgressService = mock(ProgressService);
+const mockDraftNotificationService = mock(DraftNotificationService);
 const mockProjectNotificationService = mock(ProjectNotificationService);
 const mockProjectService = mock(SFProjectService);
 const mockTextDocService = mock(TextDocService);
@@ -54,6 +56,7 @@ describe('DraftImportWizardComponent', () => {
       { provide: MAT_DIALOG_DATA, useValue: buildDto },
       { provide: ParatextService, useMock: mockParatextService },
       { provide: ProgressService, useMock: mockProgressService },
+      { provide: DraftNotificationService, useMock: mockDraftNotificationService },
       { provide: ProjectNotificationService, useMock: mockProjectNotificationService },
       { provide: SFProjectService, useMock: mockProjectService },
       { provide: TextDocService, useMock: mockTextDocService },
