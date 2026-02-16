@@ -18,6 +18,7 @@ import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/te
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../../core/models/sf-type-registry';
 import { ParatextService } from '../../../../core/paratext.service';
+import { ProjectNotificationService } from '../../../../core/project-notification.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { TextDocService } from '../../../../core/text-doc.service';
 import { HistoryChooserComponent } from './history-chooser.component';
@@ -26,6 +27,7 @@ import { HistoryRevisionFormatPipe } from './history-revision-format.pipe';
 const mockedDialogService = mock(DialogService);
 const mockedNoticeService = mock(NoticeService);
 const mockedParatextService = mock(ParatextService);
+const mockedProjectNotificationService = mock(ProjectNotificationService);
 const mockedProjectService = mock(SFProjectService);
 const mockedTextDocService = mock(TextDocService);
 const mockedErrorReportingService = mock(ErrorReportingService);
@@ -43,6 +45,7 @@ describe('HistoryChooserComponent', () => {
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: TextDocService, useMock: mockedTextDocService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
+      { provide: ProjectNotificationService, useMock: mockedProjectNotificationService },
       provideNoopAnimations()
     ]
   }));
