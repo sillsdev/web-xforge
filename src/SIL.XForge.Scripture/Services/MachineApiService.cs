@@ -132,6 +132,7 @@ public class MachineApiService(
         IDocument<SFProject> targetProjectDoc;
         List<int> createdBooks = [];
         Dictionary<int, List<int>> createdChapters = [];
+        List<(int bookNum, int chapterNum)> chaptersToNotify = [];
         List<(ChapterDelta chapterDelta, int bookNum)> chapterDeltas = [];
         try
         {
@@ -631,6 +632,7 @@ public class MachineApiService(
                 }
 
                 // A draft has been applied
+                chaptersToNotify.Add((bookNum, chapterDelta.Number));
                 successful = true;
             }
         }
@@ -668,6 +670,24 @@ public class MachineApiService(
                     Message = result.Log,
                 }
             );
+
+            // Notify any listening users for each chapter that was updated in the target project
+            if (successful)
+            {
+                foreach ((int bookNum, int chapterNum) in chaptersToNotify)
+                {
+                    // Use the non-blocking hub context which does not have stateful reconnect enabled
+                    await hubContext.NotifyDraftApplyProgress(
+                        targetProjectId,
+                        new DraftApplyState
+                        {
+                            BookNum = bookNum,
+                            ChapterNum = chapterNum,
+                            Status = DraftApplyStatus.Successful,
+                        }
+                    );
+                }
+            }
 
             result.ChangesSaved = successful;
         }
