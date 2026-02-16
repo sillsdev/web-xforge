@@ -27,7 +27,6 @@ import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { ParatextService } from '../../../core/paratext.service';
-import { ProjectNotificationService } from '../../../core/project-notification.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { BuildDto } from '../../../machine-api/build-dto';
@@ -36,6 +35,7 @@ import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { booksFromScriptureRange } from '../../../shared/utils';
 import { SyncProgressComponent } from '../../../sync/sync-progress/sync-progress.component';
+import { DraftNotificationService } from '../draft-notification.service';
 
 /**
  * Represents a book available for import with its draft chapters.
@@ -280,7 +280,7 @@ export class DraftImportWizardComponent implements OnInit {
     @Inject(MatDialogRef) private readonly dialogRef: MatDialogRef<DraftImportWizardComponent, boolean>,
     readonly destroyRef: DestroyRef,
     private readonly paratextService: ParatextService,
-    private readonly projectNotificationService: ProjectNotificationService,
+    private readonly draftNotificationService: DraftNotificationService,
     private readonly projectService: SFProjectService,
     private readonly textDocService: TextDocService,
     readonly i18n: I18nService,
@@ -288,11 +288,11 @@ export class DraftImportWizardComponent implements OnInit {
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly authService: AuthService
   ) {
-    this.projectNotificationService.setNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
+    this.draftNotificationService.setNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
     destroyRef.onDestroy(async () => {
       // Stop the SignalR connection when the component is destroyed
-      await projectNotificationService.stop();
-      this.projectNotificationService.removeNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
+      await draftNotificationService.stop();
+      this.draftNotificationService.removeNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
     });
   }
 
@@ -601,8 +601,8 @@ export class DraftImportWizardComponent implements OnInit {
     }
 
     // Subscribe to SignalR updates
-    await this.projectNotificationService.start();
-    await this.projectNotificationService.subscribeToProject(this.sourceProjectId);
+    await this.draftNotificationService.start();
+    await this.draftNotificationService.subscribeToProject(this.sourceProjectId);
 
     // Build a scripture range and timestamp to import
     const scriptureRange = books.map(b => b.bookId).join(';');
