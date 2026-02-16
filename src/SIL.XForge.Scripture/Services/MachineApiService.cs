@@ -617,7 +617,7 @@ public class MachineApiService(
                 else
                 {
                     // Create a new text data document
-                    await textDataDoc.CreateAsync(newTextData);
+                    await textDataDoc.CreateAsync(newTextData, OpSource.Draft);
                     await draftHubContext.NotifyDraftApplyProgress(
                         sfProjectId,
                         new DraftApplyState
@@ -2614,7 +2614,7 @@ public class MachineApiService(
         // Create or update the text document
         if (!textDocument.IsLoaded)
         {
-            await textDocument.CreateAsync(chapterTextDocument);
+            await textDocument.CreateAsync(chapterTextDocument, OpSource.Draft);
         }
         else
         {

@@ -41,19 +41,24 @@ public static class RealtimeExtensions
         return doc;
     }
 
-    public static async Task<IDocument<T>> CreateAsync<T>(this IConnection conn, string id, T data)
+    public static async Task<IDocument<T>> CreateAsync<T>(this IConnection conn, string id, T data, OpSource? source)
         where T : IIdentifiable
     {
         IDocument<T> doc = conn.Get<T>(id);
-        await doc.CreateAsync(data);
+        await doc.CreateAsync(data, source);
         return doc;
     }
 
-    public static async Task<IDocument<T>> FetchOrCreateAsync<T>(this IConnection conn, string id, Func<T> createData)
+    public static async Task<IDocument<T>> FetchOrCreateAsync<T>(
+        this IConnection conn,
+        string id,
+        Func<T> createData,
+        OpSource? source
+    )
         where T : IIdentifiable
     {
         IDocument<T> doc = conn.Get<T>(id);
-        await doc.FetchOrCreateAsync(createData);
+        await doc.FetchOrCreateAsync(createData, source);
         return doc;
     }
 }

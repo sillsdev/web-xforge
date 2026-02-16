@@ -210,7 +210,8 @@ export = {
     collection: string,
     id: string,
     data: any,
-    typeName: OTType
+    typeName: OTType,
+    source: string | undefined
   ): void => {
     if (server == null) {
       callback(new Error('Server not started.'));
@@ -221,7 +222,17 @@ export = {
       callback(new Error('Connection not found.'));
       return;
     }
-    doc.create(data, typeName, err => callback(err, createSnapshot(doc)));
+    const options: any = {};
+    doc.submitSource = source != null;
+    if (source != null) {
+      options.source = source;
+    }
+    doc.create(data, typeName, options, err => {
+      if (source != null) {
+        doc.submitSource = false;
+      }
+      callback(err, createSnapshot(doc));
+    });
   },
 
   fetchDoc: (callback: InteropCallback, handle: number, collection: string, id: string): void => {

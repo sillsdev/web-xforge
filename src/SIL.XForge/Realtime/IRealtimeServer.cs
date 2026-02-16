@@ -8,7 +8,14 @@ public interface IRealtimeServer
 {
     Task<T> ApplyOpAsync<T>(string otTypeName, T data, object op);
     Task<int> ConnectAsync(string userId = null);
-    Task<Snapshot<T>> CreateDocAsync<T>(int handle, string collection, string id, T data, string otTypeName);
+    Task<Snapshot<T>> CreateDocAsync<T>(
+        int handle,
+        string collection,
+        string id,
+        T data,
+        string otTypeName,
+        OpSource? source
+    );
     Task DeleteDocAsync(int handle, string collection, string id);
     void Disconnect(int handle);
     Task DisconnectAsync(int handle);
