@@ -14,11 +14,11 @@ public interface IDocument<T>
     T Data { get; }
     bool IsLoaded { get; }
 
-    Task CreateAsync(T data);
+    Task CreateAsync(T data, OpSource? source);
 
     Task FetchAsync();
 
-    Task FetchOrCreateAsync(Func<T> createData);
+    Task FetchOrCreateAsync(Func<T> createData, OpSource? source);
 
     Task SubmitOpAsync(object op, OpSource? source);
 

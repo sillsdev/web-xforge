@@ -38,12 +38,12 @@ public class Document<T> : IDocument<T>
 
     public bool IsLoaded => Data != null;
 
-    public async Task CreateAsync(T data)
+    public async Task CreateAsync(T data, OpSource? source)
     {
         await _lock.WaitAsync();
         try
         {
-            Snapshot<T> snapshot = await _connection.CreateDocAsync(Collection, Id, data, OTTypeName);
+            Snapshot<T> snapshot = await _connection.CreateDocAsync(Collection, Id, data, OTTypeName, source);
             UpdateFromSnapshot(snapshot);
         }
         finally
@@ -66,14 +66,14 @@ public class Document<T> : IDocument<T>
         }
     }
 
-    public async Task FetchOrCreateAsync(Func<T> createData)
+    public async Task FetchOrCreateAsync(Func<T> createData, OpSource? source)
     {
         await _lock.WaitAsync();
         try
         {
             Snapshot<T> snapshot = await _connection.FetchDocAsync<T>(Collection, Id);
             if (snapshot.Data == null)
-                snapshot = await _connection.CreateDocAsync(Collection, Id, createData(), OTTypeName);
+                snapshot = await _connection.CreateDocAsync(Collection, Id, createData(), OTTypeName, source);
             UpdateFromSnapshot(snapshot);
         }
         finally
