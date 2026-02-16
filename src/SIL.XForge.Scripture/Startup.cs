@@ -293,6 +293,10 @@ public class Startup
                 pattern: $"/{UrlConstants.ProjectNotifications}",
                 options => options.AllowStatefulReconnects = false
             );
+            endpoints.MapHub<DraftNotificationHub>(
+                pattern: $"/{UrlConstants.DraftNotifications}",
+                options => options.AllowStatefulReconnects = true
+            );
             var authOptions = Configuration.GetOptions<AuthOptions>();
             endpoints.MapHangfireDashboard(
                 new DashboardOptions

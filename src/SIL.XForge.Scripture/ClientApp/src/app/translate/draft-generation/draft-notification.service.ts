@@ -12,7 +12,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 @Injectable({
   providedIn: 'root'
 })
-export class ProjectNotificationService {
+export class DraftNotificationService {
   private connection: HubConnection;
   private options: IHttpConnectionOptions = {
     accessTokenFactory: async () => (await this.authService.getAccessToken()) ?? ''
@@ -23,8 +23,9 @@ export class ProjectNotificationService {
     private readonly onlineService: OnlineStatusService
   ) {
     this.connection = new HubConnectionBuilder()
-      .withUrl('/project-notifications', this.options)
+      .withUrl('/draft-notifications', this.options)
       .withAutomaticReconnect()
+      .withStatefulReconnect()
       .build();
   }
 
@@ -32,20 +33,12 @@ export class ProjectNotificationService {
     return this.onlineService.isOnline && this.onlineService.isBrowserOnline;
   }
 
-  removeNotifyBuildProgressHandler(handler: any): void {
-    this.connection.off('notifyBuildProgress', handler);
+  removeNotifyDraftApplyProgressHandler(handler: any): void {
+    this.connection.off('notifyDraftApplyProgress', handler);
   }
 
-  removeNotifySyncProgressHandler(handler: any): void {
-    this.connection.off('notifySyncProgress', handler);
-  }
-
-  setNotifyBuildProgressHandler(handler: any): void {
-    this.connection.on('notifyBuildProgress', handler);
-  }
-
-  setNotifySyncProgressHandler(handler: any): void {
-    this.connection.on('notifySyncProgress', handler);
+  setNotifyDraftApplyProgressHandler(handler: any): void {
+    this.connection.on('notifyDraftApplyProgress', handler);
   }
 
   async start(): Promise<void> {
