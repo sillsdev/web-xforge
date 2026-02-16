@@ -104,6 +104,7 @@ describe('TrainingDataService', () => {
         deepEqual({ projectId: 'project01', dataId: 'data01' })
       )
     ).once();
+    expect().nothing();
   }));
 
   it('should query training data docs', fakeAsync(async () => {
