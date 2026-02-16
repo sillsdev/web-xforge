@@ -66,8 +66,14 @@ public class RealtimeServer : IRealtimeServer
         return InvokeExportAsync<int>("connect");
     }
 
-    public Task<Snapshot<T>> CreateDocAsync<T>(int handle, string collection, string id, T data, string otTypeName) =>
-        InvokeExportAsync<Snapshot<T>>("createDoc", handle, collection, id, data, otTypeName);
+    public Task<Snapshot<T>> CreateDocAsync<T>(
+        int handle,
+        string collection,
+        string id,
+        T data,
+        string otTypeName,
+        OpSource? source
+    ) => InvokeExportAsync<Snapshot<T>>("createDoc", handle, collection, id, data, otTypeName, source);
 
     public Task<Snapshot<T>> FetchDocAsync<T>(int handle, string collection, string id) =>
         InvokeExportAsync<Snapshot<T>>("fetchDoc", handle, collection, id);

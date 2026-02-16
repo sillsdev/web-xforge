@@ -27,12 +27,12 @@ public class DocumentTests
     public async Task CreateAsync_Success()
     {
         var env = new TestEnvironment();
-        env.Connection.CreateDocAsync(Collection, Id, _data, OtTypeName).Returns(Task.FromResult(_snapshot));
+        env.Connection.CreateDocAsync(Collection, Id, _data, OtTypeName, Source).Returns(Task.FromResult(_snapshot));
 
         // SUT
-        await env.Document.CreateAsync(_data);
+        await env.Document.CreateAsync(_data, Source);
 
-        await env.Connection.Received(1).CreateDocAsync(Collection, Id, _data, OtTypeName);
+        await env.Connection.Received(1).CreateDocAsync(Collection, Id, _data, OtTypeName, Source);
     }
 
     [Test]
@@ -62,15 +62,15 @@ public class DocumentTests
     public async Task FetchAsyncOrCreate_Creates()
     {
         var env = new TestEnvironment();
-        env.Connection.CreateDocAsync(Collection, Id, _data, OtTypeName).Returns(Task.FromResult(_snapshot));
+        env.Connection.CreateDocAsync(Collection, Id, _data, OtTypeName, Source).Returns(Task.FromResult(_snapshot));
         env.Connection.FetchDocAsync<Json0Snapshot>(Collection, Id)
             .Returns(Task.FromResult(new Snapshot<Json0Snapshot>()));
 
         // SUT
-        await env.Document.FetchOrCreateAsync(() => _data);
+        await env.Document.FetchOrCreateAsync(() => _data, Source);
 
         await env.Connection.Received(1).FetchDocAsync<Json0Snapshot>(Collection, Id);
-        await env.Connection.Received(1).CreateDocAsync(Collection, Id, _data, OtTypeName);
+        await env.Connection.Received(1).CreateDocAsync(Collection, Id, _data, OtTypeName, Source);
     }
 
     [Test]
@@ -80,10 +80,10 @@ public class DocumentTests
         env.Connection.FetchDocAsync<Json0Snapshot>(Collection, Id).Returns(Task.FromResult(_snapshot));
 
         // SUT
-        await env.Document.FetchOrCreateAsync(() => _data);
+        await env.Document.FetchOrCreateAsync(() => _data, Source);
 
         await env.Connection.Received(1).FetchDocAsync<Json0Snapshot>(Collection, Id);
-        await env.Connection.Received(0).CreateDocAsync(Collection, Id, _data, OtTypeName);
+        await env.Connection.Received(0).CreateDocAsync(Collection, Id, _data, OtTypeName, Source);
     }
 
     [Test]

@@ -20,8 +20,19 @@ export async function hasDoc(conn: Connection, collection: string, id: string): 
   return doc.data != null;
 }
 
-export function createDoc<T>(conn: Connection, collection: string, id: string, data: T, type?: OTType): Promise<void> {
-  return docCreate(conn.get(collection, id), data, type);
+export function createDoc<T>(
+  conn: Connection,
+  collection: string,
+  id: string,
+  data: T,
+  type?: OTType,
+  source: boolean | any | undefined = undefined
+): Promise<void> {
+  const doc = conn.get(collection, id);
+  if (source != null) {
+    doc.submitSource = true;
+  }
+  return docCreate(doc, data, type, source);
 }
 
 export async function submitOp(

@@ -128,7 +128,8 @@ public class Connection : DisposableBase, IConnection
                             queuedOperation.Collection,
                             queuedOperation.Id,
                             queuedOperation.Data,
-                            queuedOperation.OtTypeName
+                            queuedOperation.OtTypeName,
+                            queuedOperation.Source
                         );
                         break;
                     case QueuedAction.Delete:
@@ -178,10 +179,17 @@ public class Connection : DisposableBase, IConnection
     /// <param name="id">The identifier.</param>
     /// <param name="data">The data.</param>
     /// <param name="otTypeName">Name of the OT type.</param>
+    /// <param name="source">The source of the op. This is currently only used by text documents.</param>
     /// <returns>
     /// A snapshot of the created document from the realtime server.
     /// </returns>
-    public async Task<Snapshot<T>> CreateDocAsync<T>(string collection, string id, T data, string otTypeName)
+    public async Task<Snapshot<T>> CreateDocAsync<T>(
+        string collection,
+        string id,
+        T data,
+        string otTypeName,
+        OpSource? source
+    )
     {
         if (_isTransaction)
         {
@@ -195,6 +203,7 @@ public class Connection : DisposableBase, IConnection
                     Handle = _handle,
                     Id = id,
                     OtTypeName = otTypeName,
+                    Source = source,
                 }
             );
 
@@ -203,7 +212,7 @@ public class Connection : DisposableBase, IConnection
         }
         else
         {
-            return await _realtimeServer.CreateDocAsync(_handle, collection, id, data, otTypeName);
+            return await _realtimeServer.CreateDocAsync(_handle, collection, id, data, otTypeName, source);
         }
     }
 

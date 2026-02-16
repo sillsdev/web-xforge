@@ -45,8 +45,13 @@ public class MemoryConnection(MemoryRealtimeService realtimeService) : IConnecti
     /// <exception cref="NotImplementedException">
     /// This is not supported by a <see cref="MemoryConnection" />.
     /// </exception>
-    public Task<Snapshot<T>> CreateDocAsync<T>(string collection, string id, T data, string otTypeName) =>
-        throw new NotImplementedException();
+    public Task<Snapshot<T>> CreateDocAsync<T>(
+        string collection,
+        string id,
+        T data,
+        string otTypeName,
+        OpSource? source
+    ) => throw new NotImplementedException();
 
     /// <summary>
     /// Deletes a document asynchronously.
