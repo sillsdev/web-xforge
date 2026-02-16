@@ -16,6 +16,7 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { ProgressService, ProjectProgress } from '../../../shared/progress-service/progress.service';
+import { DraftNotificationService } from '../draft-notification.service';
 import {
   BookForImport,
   BookWithExistingText,
@@ -27,6 +28,7 @@ const mockDestroyRef = mock(DestroyRef);
 const mockMatDialogRef = mock(MatDialogRef<DraftImportWizardComponent, boolean>);
 const mockParatextService = mock(ParatextService);
 const mockProgressService = mock(ProgressService);
+const mockDraftNotificationService = mock(DraftNotificationService);
 const mockProjectNotificationService = mock(ProjectNotificationService);
 const mockProjectService = mock(SFProjectService);
 const mockTextDocService = mock(TextDocService);
@@ -186,6 +188,7 @@ export default {
         { provide: MAT_DIALOG_DATA, useValue: buildDto },
         { provide: MatDialogRef, useValue: instance(mockMatDialogRef) },
         { provide: ParatextService, useValue: instance(mockParatextService) },
+        { provide: DraftNotificationService, useValue: instance(mockDraftNotificationService) },
         { provide: ProjectNotificationService, useValue: instance(mockProjectNotificationService) },
         { provide: SFProjectService, useValue: instance(mockProjectService) },
         { provide: TextDocService, useValue: instance(mockTextDocService) },
