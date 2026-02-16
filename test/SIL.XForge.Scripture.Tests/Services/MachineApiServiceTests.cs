@@ -4791,6 +4791,7 @@ public class MachineApiServiceTests
             HttpRequestAccessor = Substitute.For<IHttpRequestAccessor>();
             HttpRequestAccessor.SiteRoot.Returns(new Uri("https://scriptureforge.org", UriKind.Absolute));
             var hubContext = Substitute.For<IHubContext<NotificationHub, INotifier>>();
+            var draftHubContext = Substitute.For<IHubContext<DraftNotificationHub, IDraftNotifier>>();
             MachineProjectService = Substitute.For<IMachineProjectService>();
             MockLogger = new MockLogger<MachineApiService>();
             ParatextService = Substitute.For<IParatextService>();
@@ -4928,6 +4929,7 @@ public class MachineApiServiceTests
                 ExceptionHandler,
                 HttpRequestAccessor,
                 hubContext,
+                draftHubContext,
                 MockLogger,
                 MachineProjectService,
                 ParatextService,
