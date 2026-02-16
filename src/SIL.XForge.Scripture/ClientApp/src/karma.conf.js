@@ -49,6 +49,7 @@ module.exports = function (config) {
     },
     files: [],
     proxies: {
+      '/assets/icons/TagIcons/circle01.png': '',
       '/assets/icons/TagIcons/defaultIcon.png': '',
       '/assets/icons/TagIcons/flag01.png': '',
       '/assets/icons/TagIcons/flag04.png': '',
