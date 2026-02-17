@@ -350,7 +350,7 @@
     <mat-step [completed]="syncComplete || skipSync">
       <ng-template matStepLabel>{{ t("complete") }}</ng-template>
 
-      @if (!isSyncing && !syncComplete && !skipSync) {
+      @if (!isSyncing && !syncComplete && !skipSync && syncError == null) {
         <h1>{{ t("sync_project_question") }}</h1>
         <p
           [innerHtml]="
@@ -390,8 +390,8 @@
         }
       }
 
-      @if (syncError != null) {
-        <h1>{{ t("sync") }}</h1>
+      @if (syncError != null && !syncComplete && !skipSync) {
+        <h1>{{ t("sync_failed") }}</h1>
         <app-notice type="error">{{ syncError }}</app-notice>
         <div class="button-strip">
           <button matButton="outlined" (click)="selectSkipSync()" [disabled]="isImporting">
