@@ -47,6 +47,10 @@ export class ExternalUrls {
     return this.helps + '/managing-checkers#1850d745ac9e8097ad4efcb063fc2603';
   }
 
+  get newTestamentDrafting(): string {
+    return this.helps + '/new-testament-drafting';
+  }
+
   get graphite(): string {
     return 'https://graphite.sil.org/';
   }
