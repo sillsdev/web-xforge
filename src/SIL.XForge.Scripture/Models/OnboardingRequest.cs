@@ -41,17 +41,21 @@ public class OnboardingRequest : IIdentifiable
     {
         get
         {
-            if (Resolution != "unresolved")
+            bool hasAssignee = !string.IsNullOrEmpty(AssigneeId);
+            bool isResolved = !string.IsNullOrEmpty(Resolution) && Resolution != "unresolved";
+
+            if (isResolved)
             {
                 return "completed";
             }
-
-            if (!string.IsNullOrEmpty(AssigneeId))
+            else if (hasAssignee)
             {
                 return "in_progress";
             }
-
-            return "new";
+            else
+            {
+                return "new";
+            }
         }
     }
 }
