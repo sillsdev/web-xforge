@@ -21,6 +21,7 @@ import { Canon } from '@sillsdev/scripture';
 import { BehaviorSubject } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
+import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
@@ -610,12 +611,21 @@ export class DraftImportWizardComponent implements OnInit {
       this.data.additionalInfo?.dateGenerated != null ? new Date(this.data.additionalInfo.dateGenerated) : new Date();
 
     // Apply the pre-translation draft to the project
-    await this.projectService.onlineApplyPreTranslationToProject(
-      this.sourceProjectId,
-      scriptureRange,
-      this.targetProjectId,
-      timestamp
-    );
+    try {
+      await this.projectService.onlineApplyPreTranslationToProject(
+        this.sourceProjectId,
+        scriptureRange,
+        this.targetProjectId,
+        timestamp
+      );
+    } catch (error) {
+      if (error instanceof CommandError && error.code === CommandErrorCode.NotFound) {
+        this.importError = this.i18n.translateStatic('draft_import_wizard.project_deleted');
+      } else {
+        this.importError = error instanceof Error ? error.message : 'Unknown error occurred';
+      }
+      this.isImporting = false;
+    }
   }
 
   /**
@@ -704,7 +714,11 @@ export class DraftImportWizardComponent implements OnInit {
       await this.projectService.onlineSync(this.targetProjectId);
       this.isSyncing = true;
     } catch (error) {
-      this.syncError = error instanceof Error ? error.message : 'Sync failed';
+      if (error instanceof CommandError && error.code === CommandErrorCode.NotFound) {
+        this.syncError = this.i18n.translateStatic('draft_import_wizard.project_deleted');
+      } else {
+        this.syncError = error instanceof Error ? error.message : 'Sync failed';
+      }
       this.isSyncing = false;
     }
   }
