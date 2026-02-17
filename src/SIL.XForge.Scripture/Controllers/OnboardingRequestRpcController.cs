@@ -372,12 +372,6 @@ public class OnboardingRequestRpcController(
             // Update resolution
             request.Resolution = resolution;
 
-            // If marking with a resolution (non-null), clear the assignee
-            if (!string.IsNullOrEmpty(resolution))
-            {
-                request.AssigneeId = string.Empty;
-            }
-
             // Save changes
             await onboardingRequestRepository.ReplaceAsync(request);
 
