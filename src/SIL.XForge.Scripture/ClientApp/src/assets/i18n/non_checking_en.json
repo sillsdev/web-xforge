@@ -352,6 +352,7 @@
     "overwrite_books_question": "Overwrite books?",
     "please_select_valid_project": "Please select a valid project",
     "project_context_unavailable": "Project context unavailable. Please close the dialog and try again.",
+    "project_deleted": "This project has been deleted. Please contact your project administrator.",
     "ready_to_import": "Ready to import draft to “{{ projectShortName }} - {{ projectName }}”",
     "retry": "Retry",
     "setting_up_project": "Setting up {{ projectName }} ...",
@@ -362,6 +363,7 @@
     "sync_project_description": "It is recommended to sync {{ boldStart }}{{ projectShortName }} - {{ projectName }}{{ boldEnd }} to save your changes to Paratext.",
     "sync_project_question": "Sync project now?",
     "sync": "Sync",
+    "sync_failed": "Sync failed",
     "syncing_project": "Syncing project",
     "waiting_for_project_to_load": "Please wait for the project to load before proceeding."
   },
