@@ -281,7 +281,8 @@
   },
   "draft_history_entry": {
     "add_to_project": "Add to project",
-    "click_book_to_preview": "Click a book below to preview the draft and add it to your project",
+    "click_add_to_project": "Click [b]Add to project[/b] to save the draft to a project of your choosing.",
+    "click_book_to_preview_draft": "Click a book below to preview the draft.",
     "download_zip": "Download draft as ZIP file",
     "draft_active": "Running",
     "draft_canceled": "Canceled",
