@@ -874,6 +874,9 @@ public class SFProjectsRpcController(
         }
     }
 
+    [Obsolete(
+        "Use OnboardingRequestRpcController.GetProjectMetadata with either paratextId or scriptureForgeId instead for more flexible querying"
+    )]
     public async Task<IRpcMethodResult> GetProjectIdByParatextId(string paratextId)
     {
         try
