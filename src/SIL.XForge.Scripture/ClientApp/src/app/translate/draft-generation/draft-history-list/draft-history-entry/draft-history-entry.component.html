@@ -43,9 +43,12 @@
           </div>
         } @else {
           @if (draftIsAvailable) {
-            <p>{{ t("click_book_to_preview") }}</p>
+            <p>{{ t("click_book_to_preview_draft") }}</p>
             <p class="book-buttons">
               <app-draft-preview-books [build]="entry" />
+            </p>
+            <p>
+              <transloco key="draft_history_entry.click_add_to_project"></transloco>
             </p>
             <div class="draft-options">
               <button matButton="filled" class="add-to-project" (click)="openImportWizard()">
