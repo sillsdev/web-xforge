@@ -62,7 +62,7 @@ import { DraftPreviewBooksComponent } from './draft-preview-books/draft-preview-
 import { DRAFT_SIGNUP_RESPONSE_DAYS } from './draft-signup-form/draft-onboarding-form.component';
 import { DraftSource } from './draft-source';
 import { DraftSourcesService } from './draft-sources.service';
-import { OnboardingRequest, OnboardingRequestService } from './drafting-signup.service';
+import { OnboardingRequest, OnboardingRequestService } from './onboarding-request.service';
 import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
 import { SupportedBackTranslationLanguagesDialogComponent } from './supported-back-translation-languages-dialog/supported-back-translation-languages-dialog.component';
 
