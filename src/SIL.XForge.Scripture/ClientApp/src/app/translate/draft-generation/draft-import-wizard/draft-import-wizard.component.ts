@@ -583,7 +583,7 @@ export class DraftImportWizardComponent implements OnInit {
       bookNum: book.bookNum,
       bookId: book.bookId,
       bookName: book.bookName,
-      totalChapters: 0,
+      totalChapters: this.booksWithExistingText.find(b => b.bookNum === book.bookNum)?.chaptersWithText.length ?? 0,
       completedChapters: [],
       failedChapters: []
     }));

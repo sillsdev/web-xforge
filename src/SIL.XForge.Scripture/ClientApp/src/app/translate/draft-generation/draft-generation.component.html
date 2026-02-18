@@ -421,7 +421,7 @@
     </section>
 
     @if (featureFlags.newDraftHistory.enabled) {
-      <app-draft-history-list [style.display]="isOnline ? 'block' : 'none'"></app-draft-history-list>
+      <app-draft-history-list [style.display]="isOnline ? 'flex' : 'none'"></app-draft-history-list>
       @if (isOnline && isServalAdmin()) {
         <h2>Further information</h2>
       }

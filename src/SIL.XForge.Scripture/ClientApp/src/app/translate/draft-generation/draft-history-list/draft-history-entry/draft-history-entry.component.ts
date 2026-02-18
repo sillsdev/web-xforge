@@ -23,6 +23,7 @@ import {
 } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
+import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -84,8 +85,9 @@ interface TrainingConfigurationRow {
     MatHeaderRowDef,
     MatRow,
     MatRowDef,
+    RouterLink,
     TranslocoModule,
-    RouterLink
+    TranslocoMarkupModule
   ],
   templateUrl: './draft-history-entry.component.html',
   styleUrl: './draft-history-entry.component.scss'
