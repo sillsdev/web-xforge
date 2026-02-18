@@ -316,7 +316,7 @@
   "draft_import_wizard": {
     "back": "Back",
     "cancel": "Cancel",
-    "cannot_edit_project": "You do not have permission to edit this project",
+    "cannot_edit_project": "You do not have permission to edit this project, or it has been deleted. Please contact your project administrator",
     "chapter": "chapter",
     "chapters": "chapters",
     "choose_project": "Choose a project",
