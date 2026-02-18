@@ -21,7 +21,7 @@ import {
   DraftRequestResolutionKey,
   OnboardingRequest,
   OnboardingRequestService
-} from '../../translate/draft-generation/drafting-signup.service';
+} from '../../translate/draft-generation/onboarding-request.service';
 import { ServalAdministrationService } from '../serval-administration.service';
 
 type RequestFilterFunction = (request: OnboardingRequest, currentUserId: string | undefined) => boolean;

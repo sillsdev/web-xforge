@@ -34,7 +34,7 @@ import {
   DraftRequestResolutionMetadata,
   OnboardingRequest,
   OnboardingRequestService
-} from '../translate/draft-generation/drafting-signup.service';
+} from '../translate/draft-generation/onboarding-request.service';
 import { ServalAdministrationService } from './serval-administration.service';
 
 /**
@@ -220,7 +220,7 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
   }
 
   get isResolved(): boolean {
-    return this.request?.resolution !== 'unresolved';
+    return this.request?.resolution != null && this.request.resolution !== 'unresolved';
   }
 
   getStatus = this.onboardingRequestService.getStatus;
@@ -304,7 +304,7 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
     if (zipFileNames.length === 0) {
       return '';
     }
-    return `python -m silnlp.common.onboard_project --copy-from --clean-project --extract-corpora --collect-verse-counts --wildebeest --timestamp ${zipFileNames.join(' ')}`;
+    return `python -m silnlp.common.onboard_project --copy-from --clean-project --extract-corpora --collect-verse-counts --wildebeest --datestamp ${zipFileNames.join(' ')}`;
   }
 
   /** Adds a comment to the current draft request. */

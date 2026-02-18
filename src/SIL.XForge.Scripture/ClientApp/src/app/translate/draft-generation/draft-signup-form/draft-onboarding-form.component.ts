@@ -28,7 +28,7 @@ import { ProjectSelectComponent } from '../../../project-select/project-select.c
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { JsonViewerComponent } from '../../../shared/json-viewer/json-viewer.component';
 import { compareProjectsForSorting, projectLabel } from '../../../shared/utils';
-import { DraftingSignupFormData, OnboardingRequestService } from '../drafting-signup.service';
+import { DraftingSignupFormData, OnboardingRequestService } from '../onboarding-request.service';
 
 export const DRAFT_SIGNUP_RESPONSE_DAYS = { min: 1, max: 3 } as const;
 
