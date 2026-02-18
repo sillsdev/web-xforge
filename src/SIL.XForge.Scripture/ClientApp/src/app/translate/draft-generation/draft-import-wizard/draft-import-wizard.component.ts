@@ -177,7 +177,17 @@ export class DraftImportWizardComponent implements OnInit {
     try {
       if (this.targetProjectId != null) {
         // SF project exists, just add user to it
-        await this.projectService.onlineAddCurrentUser(this.targetProjectId);
+        try {
+          await this.projectService.onlineAddCurrentUser(this.targetProjectId);
+        } catch (error) {
+          if (error instanceof CommandError && error.code === CommandErrorCode.NotFound) {
+            // The project was deleted, so just connect to it
+            await this.connectToNewProject(paratextId);
+            return;
+          } else {
+            throw error;
+          }
+        }
 
         // Reload project data after connection
         const projectDoc = await this.projectService.get(this.targetProjectId);
@@ -186,18 +196,7 @@ export class DraftImportWizardComponent implements OnInit {
         this.isConnecting = false;
         this.stepper?.next();
       } else {
-        // Create SF project for this Paratext project
-        this.targetProjectId = await this.projectService.onlineCreate({
-          paratextId: paratextId,
-          sourceParatextId: null,
-          checkingEnabled: false
-        });
-
-        // updateConnectStatus() will handle the sync finishing and move to the next step after "connecting"
-        this.stepper?.next();
-
-        const projectDoc = await this.projectService.get(this.targetProjectId);
-        this.targetProjectDoc$.next(projectDoc);
+        await this.connectToNewProject(paratextId);
       }
     } catch (error) {
       this.connectionError =
@@ -206,6 +205,21 @@ export class DraftImportWizardComponent implements OnInit {
           : this.i18n.translateStatic('draft_import_wizard.failed_to_connect_project');
       this.isConnecting = false;
     }
+  }
+
+  async connectToNewProject(paratextId: string): Promise<void> {
+    // Create SF project for this Paratext project
+    this.targetProjectId = await this.projectService.onlineCreate({
+      paratextId: paratextId,
+      sourceParatextId: null,
+      checkingEnabled: false
+    });
+
+    // updateConnectStatus() will handle the sync finishing and move to the next step after "connecting"
+    this.stepper?.next();
+
+    const projectDoc = await this.projectService.get(this.targetProjectId);
+    this.targetProjectDoc$.next(projectDoc);
   }
 
   retryProjectConnection(): void {
