@@ -8,6 +8,17 @@
       </h1>
     }
 
+    <app-notice type="primary" mode="fill-dark">
+      @for (entry of ntDraftingNotice | async; track $index) {
+        @if (entry.id == null) {
+          {{ entry.text }}
+        }
+        @if (entry.id === 1) {
+          <a [href]="urlService.newTestamentDrafting" target="_blank">{{ entry.text }}</a>
+        }
+      }
+    </app-notice>
+
     <section>
       @if (isDraftJobFetched && !isDraftInProgress(draftJob) && !hasAnyCompletedBuild) {
         <div class="drafting-instructions">
