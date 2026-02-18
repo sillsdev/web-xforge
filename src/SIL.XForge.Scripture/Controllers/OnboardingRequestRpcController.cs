@@ -349,7 +349,6 @@ public class OnboardingRequestRpcController(
     /// <summary>
     /// Sets the resolution for a drafting signup request.
     /// Only accessible to Serval admins.
-    /// If resolution is set to a non-null value, the assignee is cleared.
     /// Status is automatically calculated based on assignee and resolution.
     /// </summary>
     public async Task<IRpcMethodResult> SetResolution(string requestId, string? resolution)
