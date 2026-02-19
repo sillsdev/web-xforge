@@ -38,11 +38,8 @@ public class ParatextDataHelper(IFileSystemService fileSystemService) : IParatex
         vText.Commit(comment, null, false);
     }
 
-    public IReadOnlyList<ParatextNote> GetNotes(CommentManager? commentManager, CommentTags? commentTags)
+    public IReadOnlyList<ParatextNote> GetNotes(CommentManager commentManager, CommentTags commentTags)
     {
-        if (commentManager == null)
-            return Array.Empty<ParatextNote>();
-
         // Only return note threads that are not resolved and active
         IEnumerable<CommentThread> threads = commentManager.FindThreads(
             t => t.Status != NoteStatus.Resolved,
@@ -154,7 +151,7 @@ public class ParatextDataHelper(IFileSystemService fileSystemService) : IParatex
         }
     }
 
-    private static ParatextNoteComment CreateNoteComment(ParatextComment comment, CommentTags? commentTags)
+    private static ParatextNoteComment CreateNoteComment(ParatextComment comment, CommentTags commentTags)
     {
         ParatextNoteTag? tag = null;
         if (comment.TagsAdded is { Length: > 0 })
@@ -179,24 +176,14 @@ public class ParatextDataHelper(IFileSystemService fileSystemService) : IParatex
         };
     }
 
-    private static ParatextNoteTag CreateNoteTag(int tagId, CommentTags? commentTags)
+    private static ParatextNoteTag CreateNoteTag(int tagId, CommentTags commentTags)
     {
-        if (commentTags != null)
-        {
-            CommentTag commentTag = commentTags.Get(tagId);
-            return new ParatextNoteTag
-            {
-                Id = commentTag.Id,
-                Name = commentTag.Name ?? string.Empty,
-                Icon = commentTag.Icon ?? string.Empty,
-            };
-        }
-
+        CommentTag commentTag = commentTags.Get(tagId);
         return new ParatextNoteTag
         {
-            Id = tagId,
-            Name = string.Empty,
-            Icon = string.Empty,
+            Id = commentTag.Id,
+            Name = commentTag.Name ?? string.Empty,
+            Icon = commentTag.Icon ?? string.Empty,
         };
     }
 

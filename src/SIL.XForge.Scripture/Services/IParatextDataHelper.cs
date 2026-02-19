@@ -11,6 +11,6 @@ namespace SIL.XForge.Scripture.Services;
 public interface IParatextDataHelper
 {
     void CommitVersionedText(ScrText scrText, string comment);
-    IReadOnlyList<ParatextNote> GetNotes(CommentManager? commentManager, CommentTags? commentTags);
+    IReadOnlyList<ParatextNote> GetNotes(CommentManager commentManager, CommentTags commentTags);
     Task MigrateResourceIfRequiredAsync(ScrText scrText, LanguageId? overrideLanguage, CancellationToken token);
 }
