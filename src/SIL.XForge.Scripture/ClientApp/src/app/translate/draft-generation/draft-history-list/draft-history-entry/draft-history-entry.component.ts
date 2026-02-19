@@ -33,6 +33,7 @@ import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { BuildDto } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
+import { booksFromScriptureRange } from '../../../../shared/utils';
 import { RIGHT_TO_LEFT_MARK } from '../../../../shared/verse-utils';
 import { DraftDownloadButtonComponent } from '../../draft-download-button/draft-download-button.component';
 import { DraftOptionsService } from '../../draft-options.service';
@@ -349,5 +350,9 @@ export class DraftHistoryEntryComponent {
 
   trainingFilesString(files: string[]): string {
     return this.i18n.enumerateList(files);
+  }
+
+  getScriptureRangeAsLocalizedBooks(scriptureRange: string): string {
+    return this.i18n.enumerateList(booksFromScriptureRange(scriptureRange).map(b => this.i18n.localizeBook(b)));
   }
 }

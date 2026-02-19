@@ -9,7 +9,6 @@ import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
@@ -28,7 +27,6 @@ import { TrainingDataService } from '../../training-data/training-data.service';
 import { DraftHistoryEntryComponent } from './draft-history-entry.component';
 
 const mockedDraftGenerationService = mock(DraftGenerationService);
-const mockedI18nService = mock(I18nService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedTrainingDataService = mock(TrainingDataService);
@@ -51,7 +49,6 @@ describe('DraftHistoryEntryComponent', () => {
       provideRouter([]),
       provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
-      { provide: I18nService, useMock: mockedI18nService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: TrainingDataService, useMock: mockedTrainingDataService },
@@ -109,7 +106,6 @@ describe('DraftHistoryEntryComponent', () => {
     });
 
     it('should handle builds with additional info', fakeAsync(() => {
-      when(mockedI18nService.enumerateList(anything())).thenReturn('src');
       const user = 'user-display-name';
       const date = dateAfterFormattingSupported;
       const trainingBooks = ['EXO'];
@@ -132,7 +128,6 @@ describe('DraftHistoryEntryComponent', () => {
       expect(fixture.nativeElement.querySelector('.title').innerText).toBe('Genesis');
       expect(component.translationSource).toEqual('src \u2022');
       expect(component.buildRequestedByUserName).toBe(user);
-      expect(component.buildRequestedAtDate).toBe(date);
       expect(component.draftIsAvailable).toBe(true);
       expect(fixture.nativeElement.querySelector('.format-usfm')).toBeNull();
       expect(component.columnsToDisplay).toEqual(['scriptureRange', 'source', 'target']);
@@ -173,7 +168,6 @@ describe('DraftHistoryEntryComponent', () => {
     }));
 
     it('should state that the model did not have training configuration', fakeAsync(() => {
-      when(mockedI18nService.enumerateList(anything())).thenReturn('src');
       const user = 'user-display-name';
       const date = dateAfterFormattingSupported;
       const trainingBooks = [];
@@ -213,9 +207,6 @@ describe('DraftHistoryEntryComponent', () => {
     }));
 
     it('should handle builds where the draft cannot be downloaded yet', fakeAsync(() => {
-      when(mockedI18nService.formatAndLocalizeScriptureRange('GEN')).thenReturn('Genesis');
-      when(mockedI18nService.formatAndLocalizeScriptureRange('EXO')).thenReturn('Exodus');
-      when(mockedI18nService.translateStatic('draft_history_entry.draft_unknown')).thenReturn('Unknown');
       const targetProjectDoc = {
         id: 'project01'
       } as SFProjectProfileDoc;
@@ -266,9 +257,6 @@ describe('DraftHistoryEntryComponent', () => {
     it('should handle builds with additional info referencing a deleted user', fakeAsync(() => {
       when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected(anything())).thenReturn(false);
       when(mockedDraftOptionsService.areFormattingOptionsSupportedForBuild(anything())).thenReturn(true);
-      when(mockedI18nService.formatDate(anything())).thenReturn('formatted-date');
-      when(mockedI18nService.formatAndLocalizeScriptureRange('GEN')).thenReturn('Genesis');
-      when(mockedI18nService.formatAndLocalizeScriptureRange('EXO')).thenReturn('Exodus');
       const userDoc = { id: 'sf-user-id', data: undefined } as UserProfileDoc;
       when(mockedUserService.getProfile(anything())).thenResolve(userDoc);
       const targetProjectDoc = {
@@ -296,7 +284,6 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.scriptureRange).toEqual('GEN');
       expect(fixture.nativeElement.querySelector('.title').innerText).toBe('Genesis');
       expect(component.buildRequestedByUserName).toBeUndefined();
-      expect(component.buildRequestedAtDate).toBe('formatted-date');
       expect(component.draftIsAvailable).toBe(true);
       expect(fixture.nativeElement.querySelector('.format-usfm')).not.toBeNull();
       expect(component.hasDetails).toBe(true);
@@ -386,7 +373,6 @@ describe('DraftHistoryEntryComponent', () => {
       const projectDoc = getProjectProfileDoc();
       when(mockedActivatedProjectService.projectDoc).thenReturn(projectDoc);
       when(mockedActivatedProjectService.changes$).thenReturn(of(projectDoc));
-      when(mockedI18nService.formatDate(anything())).thenReturn('formatted-date');
     });
 
     it('should show set draft format UI', fakeAsync(() => {
@@ -483,12 +469,6 @@ describe('DraftHistoryEntryComponent', () => {
     it('should handle undefined values', () => {
       expect(component.formatDate(undefined)).toBe('');
     });
-
-    it('should handle date values', () => {
-      const date = new Date();
-      when(mockedI18nService.formatDate(anything())).thenReturn('formatted-date');
-      expect(component.formatDate(date.toISOString())).toBe('formatted-date');
-    });
   });
 
   describe('getStatus', () => {
@@ -514,9 +494,6 @@ describe('DraftHistoryEntryComponent', () => {
     translateBooks: string[];
     trainingDataFiles: string[];
   }): BuildDto {
-    when(mockedI18nService.formatDate(anything())).thenReturn(date);
-    when(mockedI18nService.formatAndLocalizeScriptureRange('GEN')).thenReturn('Genesis');
-    when(mockedI18nService.formatAndLocalizeScriptureRange('EXO')).thenReturn('Exodus');
     const userDoc = {
       id: 'sf-user-id',
       data: createTestUserProfile({ displayName: user })
