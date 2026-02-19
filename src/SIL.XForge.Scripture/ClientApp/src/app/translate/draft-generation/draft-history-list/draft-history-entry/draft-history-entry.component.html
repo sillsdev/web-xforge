@@ -7,7 +7,7 @@
     >
       <mat-expansion-panel-header [collapsedHeight]="'auto'" [expandedHeight]="'auto'">
         <mat-panel-title>
-          <span class="title">{{ i18n.formatAndLocalizeScriptureRange(scriptureRange) }}</span>
+          <span class="title">{{ getScriptureRangeAsLocalizedBooks(scriptureRange) }}</span>
           <span class="subtitle">
             {{ translationSource }}
             {{ t("finished_at", { finishedAtTime: formatDate(entry.additionalInfo?.dateFinished) }) }}
