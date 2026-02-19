@@ -487,7 +487,7 @@ describe('ImportQuestionsDialogComponent', () => {
   it('does not try to load transcelerator questions when the user is online', fakeAsync(() => {
     const env = new TestEnvironment({ offline: true });
     expect(env.importFromTransceleratorButton.disabled).toBe(true);
-    expect(env.errorMessages).toEqual(['Importing from Transcelerator is not available offline.']);
+    expect(env.errorMessages[0]).toEqual('Importing from Transcelerator is not available offline.');
     env.setOnline(true);
     expect(env.importFromTransceleratorButton.disabled).toBe(false);
     expect(env.errorMessages).toEqual([]);
@@ -502,115 +502,135 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.overlayContainerElement.hasChildNodes()).withContext('close button closes dialog').toBeFalse();
   }));
 
-  it('collects unique Paratext tags in alphabetical order', fakeAsync(() => {
-    const env = new TestEnvironment();
-    const tagAlpha: ParatextNoteTag = { id: 1, name: 'Alpha' };
-    const tagBeta: ParatextNoteTag = { id: 3, name: 'Beta' };
-    const tagGamma: ParatextNoteTag = { id: 2, name: 'Gamma' };
-    const notes: ParatextNote[] = [
-      {
-        id: 'note-1',
-        verseRef: 'MAT 1:1',
-        comments: [
-          { verseRef: 'MAT 1:1', content: '<p>Alpha</p>', tag: tagGamma },
-          { verseRef: 'MAT 1:1', content: '<p>Alpha again</p>', tag: tagAlpha }
-        ]
-      },
-      {
-        id: 'note-2',
-        verseRef: 'MAT 1:2',
-        comments: [
-          { verseRef: 'MAT 1:2', content: '<p>Beta</p>', tag: tagBeta },
-          { verseRef: 'MAT 1:2', content: '<p>Beta duplicate</p>', tag: tagBeta }
-        ]
-      }
-    ];
+  describe('Import from Paratext', () => {
+    it('disables import button when user is offline', fakeAsync(() => {
+      const env = new TestEnvironment({ offline: true });
+      tick();
+      env.fixture.detectChanges();
 
-    const tags = env.collectParatextTagOptions(env.component, notes);
+      expect(env.importFromParatextButton.disabled).toBe(true);
+      expect(env.errorMessages[1]).toEqual('Importing from Paratext is not available offline.');
+      env.testOnlineStatusService.setIsOnline(true);
+      tick();
+      env.fixture.detectChanges();
 
-    expect(tags.length).toBe(3);
-    expect(tags.map(tag => tag.name)).toEqual(['Alpha', 'Beta', 'Gamma']);
-    expect(tags.map(tag => tag.id)).toEqual([1, 3, 2]);
-  }));
+      expect(env.importFromParatextButton.disabled).toBe(false);
+    }));
 
-  it('shows a message when no notes have tagged comments', fakeAsync(() => {
-    const env = new TestEnvironment();
-    const notes: ParatextNote[] = [
-      {
-        id: 'note-1',
-        verseRef: 'MAT 1:1',
-        comments: [{ verseRef: 'MAT 1:1', content: '<p>Note without tag</p>' }]
-      }
-    ];
-    env.setParatextNotes(env.component, notes);
-    env.setParatextTagOptions(env.component, env.collectParatextTagOptions(env.component, notes));
-    env.component.questionSource = 'paratext';
-    env.component.showParatextTagSelector = true;
-    env.component.selectedParatextTagId = null;
-    env.component.errorState = undefined;
+    it('collects unique Paratext tags in alphabetical order', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const tagAlpha: ParatextNoteTag = { id: 1, name: 'Alpha' };
+      const tagBeta: ParatextNoteTag = { id: 3, name: 'Beta' };
+      const tagGamma: ParatextNoteTag = { id: 2, name: 'Gamma' };
+      const notes: ParatextNote[] = [
+        {
+          id: 'note-1',
+          verseRef: 'MAT 1:1',
+          comments: [
+            { verseRef: 'MAT 1:1', content: '<p>Alpha</p>', tag: tagGamma },
+            { verseRef: 'MAT 1:1', content: '<p>Alpha again</p>', tag: tagAlpha }
+          ]
+        },
+        {
+          id: 'note-2',
+          verseRef: 'MAT 1:2',
+          comments: [
+            { verseRef: 'MAT 1:2', content: '<p>Beta</p>', tag: tagBeta },
+            { verseRef: 'MAT 1:2', content: '<p>Beta duplicate</p>', tag: tagBeta }
+          ]
+        }
+      ];
 
-    env.fixture.detectChanges();
-    tick();
+      const tags = env.collectParatextTagOptions(env.component, notes);
 
-    expect(env.component.status).toBe('paratext_tag_selection');
-    expect(env.getParatextTagMessage()).toBe('There are no tagged notes available to import.');
-  }));
+      expect(tags.length).toBe(3);
+      expect(tags.map(tag => tag.name)).toEqual(['Alpha', 'Beta', 'Gamma']);
+      expect(tags.map(tag => tag.id)).toEqual([1, 3, 2]);
+    }));
 
-  it('converts Paratext notes for the selected tag into questions', fakeAsync(() => {
-    const tagQuestions: ParatextNoteTag = { id: 7, name: 'Questions' };
-    const notes: ParatextNote[] = [
-      {
-        id: 'note-1',
-        verseRef: 'MAT 1:1',
-        comments: [
-          { verseRef: 'MAT 1:1', content: '<p>Ignore</p>', tag: { id: 6, name: 'Other' } },
-          { verseRef: 'MAT 1:1', content: ' <p>Question <strong>text</strong></p> ', tag: tagQuestions }
-        ]
-      },
-      {
-        id: 'note-2',
-        verseRef: 'MAT 1:2',
-        comments: [{ verseRef: 'MAT 1:2', content: '<p>Question 2</p>', tag: tagQuestions }]
-      },
-      {
-        id: 'note-3',
-        verseRef: 'GEN 1:1',
-        comments: [{ verseRef: 'GEN 1:1', content: '<p>Different book</p>', tag: tagQuestions }]
-      }
-    ];
-    const preexistingQuestion = TestEnvironment.createQuestionDocWithSource('note-1', new VerseRef('MAT 1:1'), 'text');
-    const env = new TestEnvironment({ existingQuestions: [preexistingQuestion], paratextNotes: notes });
-    env.setParatextNotes(env.component, notes);
-    env.setParatextTagOptions(env.component, env.collectParatextTagOptions(env.component, notes));
-    env.component.selectedParatextTagId = tagQuestions.id;
-    env.component.questionSource = 'paratext';
-    env.component.showParatextTagSelector = true;
+    it('shows a message when no notes have tagged comments', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const notes: ParatextNote[] = [
+        {
+          id: 'note-1',
+          verseRef: 'MAT 1:1',
+          comments: [{ verseRef: 'MAT 1:1', content: '<p>Note without tag</p>' }]
+        }
+      ];
+      env.setParatextNotes(env.component, notes);
+      env.setParatextTagOptions(env.component, env.collectParatextTagOptions(env.component, notes));
+      env.component.questionSource = 'paratext';
+      env.component.showParatextTagSelector = true;
+      env.component.selectedParatextTagId = null;
+      env.component.errorState = undefined;
 
-    void env.component.confirmParatextTagSelection();
-    tick();
-    env.fixture.detectChanges();
+      env.fixture.detectChanges();
+      tick();
 
-    expect(env.component.status).toBe('filter_notes');
-    expect(env.component.filteredList.length).toBe(2);
-    const questionAlreadyImported = env.component.filteredList[0];
-    expect(questionAlreadyImported.question.id).toBe('note-1');
-    expect(questionAlreadyImported.question.text).toBe('Question text');
-    expect(questionAlreadyImported.sfVersionOfQuestion).not.toBeUndefined();
+      expect(env.component.status).toBe('paratext_tag_selection');
+      expect(env.getParatextTagMessage()).toBe('There are no tagged notes available to import.');
+    }));
 
-    expect(env.component.showDuplicateImportNote).toBeFalse();
-    questionAlreadyImported.checked = true;
-    expect(env.component.showDuplicateImportNote).toBeTrue();
-  }));
+    it('converts Paratext notes for the selected tag into questions', fakeAsync(() => {
+      const tagQuestions: ParatextNoteTag = { id: 7, name: 'Questions' };
+      const notes: ParatextNote[] = [
+        {
+          id: 'note-1',
+          verseRef: 'MAT 1:1',
+          comments: [
+            { verseRef: 'MAT 1:1', content: '<p>Ignore</p>', tag: { id: 6, name: 'Other' } },
+            { verseRef: 'MAT 1:1', content: ' <p>Question <strong>text</strong></p> ', tag: tagQuestions }
+          ]
+        },
+        {
+          id: 'note-2',
+          verseRef: 'MAT 1:2',
+          comments: [{ verseRef: 'MAT 1:2', content: '<p>Question 2</p>', tag: tagQuestions }]
+        },
+        {
+          id: 'note-3',
+          verseRef: 'GEN 1:1',
+          comments: [{ verseRef: 'GEN 1:1', content: '<p>Different book</p>', tag: tagQuestions }]
+        }
+      ];
+      const preexistingQuestion = TestEnvironment.createQuestionDocWithSource(
+        'note-1',
+        new VerseRef('MAT 1:1'),
+        'text'
+      );
+      const env = new TestEnvironment({ existingQuestions: [preexistingQuestion], paratextNotes: notes });
+      env.setParatextNotes(env.component, notes);
+      env.setParatextTagOptions(env.component, env.collectParatextTagOptions(env.component, notes));
+      env.component.selectedParatextTagId = tagQuestions.id;
+      env.component.questionSource = 'paratext';
+      env.component.showParatextTagSelector = true;
 
-  it('shows an error when no Paratext project can be found', fakeAsync(() => {
-    const env = new TestEnvironment({ paratextProjects: [], paratextNotes: [] });
+      void env.component.confirmParatextTagSelection();
+      tick();
+      env.fixture.detectChanges();
 
-    env.click(env.importFromParatextButton);
+      expect(env.component.status).toBe('filter_notes');
+      expect(env.component.filteredList.length).toBe(2);
+      const questionAlreadyImported = env.component.filteredList[0];
+      expect(questionAlreadyImported.question.id).toBe('note-1');
+      expect(questionAlreadyImported.question.text).toBe('Question text');
+      expect(questionAlreadyImported.sfVersionOfQuestion).not.toBeUndefined();
 
-    expect(env.component.errorState).toBe('paratext_tag_load_error');
-    expect(env.component.status).toBe('paratext_tag_load_error');
-    expect(env.getParatextTagOptions(env.component).length).toBe(0);
-  }));
+      expect(env.component.showDuplicateImportNote).toBeFalse();
+      questionAlreadyImported.checked = true;
+      expect(env.component.showDuplicateImportNote).toBeTrue();
+    }));
+
+    it('shows an error when no Paratext project can be found', fakeAsync(() => {
+      const env = new TestEnvironment({ paratextProjects: [], paratextNotes: [] });
+
+      env.click(env.importFromParatextButton);
+
+      expect(env.component.errorState).toBe('paratext_tag_load_error');
+      expect(env.component.status).toBe('paratext_tag_load_error');
+      expect(env.getParatextTagOptions(env.component).length).toBe(0);
+    }));
+  });
 });
 
 class TestEnvironment {
@@ -678,11 +698,13 @@ class TestEnvironment {
   ) {
     this.questions = options.transceleratorQuestions || this.questions;
     this.errorOnFetchQuestions = !!options.errorOnFetchQuestions;
-    if (options.offline === true) {
-      this.online$.next(false);
-    }
 
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
+
+    if (options.offline === true) {
+      this.setOnline(false);
+    }
+
     if (options.editedQuestionIds) {
       this.simulateTransceleratorQuestionsAlreadyExisting(options.editedQuestionIds || []);
     }
@@ -834,6 +856,7 @@ class TestEnvironment {
 
   setOnline(value: boolean): void {
     this.online$.next(value);
+    this.testOnlineStatusService.setIsOnline(value);
     tick();
     this.fixture.detectChanges();
   }
