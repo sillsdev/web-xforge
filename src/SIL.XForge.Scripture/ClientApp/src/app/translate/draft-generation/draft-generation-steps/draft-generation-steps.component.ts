@@ -469,7 +469,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   }
 
   selectedTranslateBooksAsString(): string {
-    return this.i18n.formatAndLocalizeBookRange(this.booksToTranslate().map(b => b.number));
+    return this.i18n.enumerateList(this.booksToTranslate().map(b => this.i18n.localizeBook(b.number)));
   }
 
   selectedTrainingBooksCollapsed(): TrainingGroup[] {
