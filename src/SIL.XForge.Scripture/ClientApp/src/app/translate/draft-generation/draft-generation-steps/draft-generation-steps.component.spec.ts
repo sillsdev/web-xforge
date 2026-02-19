@@ -1170,18 +1170,6 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
       tick();
     }));
-
-    it('should restore previously selected ranges', () => {
-      expect(component.selectedTranslateBooksAsString()).toEqual('Exodus and Leviticus');
-      expect(component.booksToTranslate()).toEqual([
-        { number: 2, selected: true },
-        { number: 3, selected: true }
-      ]);
-      expect(component.selectedTrainingBooksByProj('project01')).toEqual([{ number: 1, selected: true }]);
-      //for source1, Genesis was previously selected, but it's no longer present on both source and target
-      expect(component.selectedTrainingBooksByProj('source1')).toEqual([{ number: 1, selected: true }]);
-      expect(component.selectedTrainingBooksByProj('source2')).toEqual([]);
-    });
   });
 
   describe('can add additional training data', () => {
@@ -1403,6 +1391,8 @@ describe('DraftGenerationStepsComponent', () => {
     }));
 
     it('should localize and concatenate the books to translate', () => {
+      expect(component.selectedTranslateBooksAsString()).toEqual('');
+      component.onTranslateBookSelect([3], config.draftingSources[0]);
       expect(component.selectedTranslateBooksAsString()).toEqual('Leviticus');
     });
 
