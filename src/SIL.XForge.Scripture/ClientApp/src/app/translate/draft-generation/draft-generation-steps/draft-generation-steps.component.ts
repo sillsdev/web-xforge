@@ -70,7 +70,7 @@ export interface DraftGenerationStepsResult {
 export interface TrainingBook extends Book, TrainingPair {}
 
 export interface TrainingGroup extends TrainingPair {
-  ranges: string[];
+  ranges: string;
 }
 
 interface TrainingPair {
@@ -469,60 +469,25 @@ export class DraftGenerationStepsComponent implements OnInit {
   }
 
   selectedTranslateBooksAsString(): string {
-    return this.i18n.enumerateList(this.booksToTranslate().map(b => this.i18n.localizeBook(b.number)));
+    return this.i18n.formatAndLocalizeBookRange(this.booksToTranslate().map(b => b.number));
   }
 
   selectedTrainingBooksCollapsed(): TrainingGroup[] {
-    const contiguousGroups: TrainingGroup[] = [];
+    const trainingRanges: TrainingGroup[] = [];
     for (const projectRef in this.availableTrainingBooks) {
       if (projectRef === this.activatedProject.projectId) continue; //target would be a duplicate here
       const source = this.trainingSources.find(s => s.projectRef === projectRef);
       if (source == null) return []; // during updates, trainingSources can briefly differ from availableTrainingBooks
 
-      const currentGroup: Book[] = [];
-      for (const book of this.availableTrainingBooks[projectRef].filter(b => b.selected)) {
-        const isBookConsecutive = book.number === currentGroup[currentGroup.length - 1]?.number + 1;
-        if (currentGroup.length > 0 && !isBookConsecutive) {
-          //process and reset current group
-          addGroup(currentGroup, source.shortName, this.i18n);
-          currentGroup.length = 0;
-        }
-        //add book to current group
-        currentGroup.push(book);
-      }
-
-      //add last group
-      if (currentGroup.length > 0) {
-        addGroup(currentGroup, source.shortName, this.i18n);
-      }
-    }
-
-    const groupsCollapsed: TrainingGroup[] = [];
-    for (const group of contiguousGroups) {
-      const matchIndex = groupsCollapsed.findIndex(g => g.sourceName === group.sourceName);
-      if (matchIndex === -1) {
-        //make a new group for this source/target
-        groupsCollapsed.push(group);
-      } else {
-        //append the current group onto the matching group
-        groupsCollapsed[matchIndex].ranges.push(group.ranges[0]);
-      }
-    }
-
-    return groupsCollapsed;
-
-    function addGroup(group: Book[], sourceShortName: string, i18n: I18nService): void {
-      let range: string;
-      if (group.length === 1) {
-        range = i18n.localizeBook(group[0].number);
-      } else {
-        range = i18n.localizeBook(group[0].number) + ' - ' + i18n.localizeBook(group[group.length - 1].number);
-      }
-      contiguousGroups.push({
-        ranges: [range],
-        sourceName: sourceShortName
+      const trainingBooksBySource: number[] = this.availableTrainingBooks[projectRef]
+        .filter(b => b.selected)
+        .map(b => b.number);
+      trainingRanges.push({
+        ranges: this.i18n.formatAndLocalizeBookRange(trainingBooksBySource),
+        sourceName: source.shortName
       });
     }
+    return trainingRanges;
   }
 
   private _selectableTrainingBooks: { [projectRef: string]: Book[] } = {};
