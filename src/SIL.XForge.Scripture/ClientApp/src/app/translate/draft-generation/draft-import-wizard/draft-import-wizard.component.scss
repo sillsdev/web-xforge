@@ -1,0 +1,84 @@
+.button-strip {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+  gap: 0.5rem;
+
+  &.align-end {
+    justify-content: flex-end;
+  }
+}
+
+.offline-message {
+  margin-top: 1rem;
+  display: block;
+}
+
+.project-retry-row {
+  margin: 0.5rem 0 1.5rem;
+  display: flex;
+}
+
+.book-progress {
+  margin-bottom: 1.5rem;
+
+  p {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+
+  mat-progress-bar {
+    margin-bottom: 0.25rem;
+  }
+
+  .progress-text {
+    font-size: 0.875rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  .failed-chapters {
+    display: flex;
+    align-items: center;
+    column-gap: 0.35rem;
+    margin-top: 0.35rem;
+    color: var(--mat-sys-error);
+
+    .error-icon {
+      font-size: 1.1rem;
+    }
+  }
+}
+
+h1 {
+  margin-bottom: 1rem;
+}
+
+mat-checkbox {
+  margin-top: 1rem;
+  display: block;
+}
+
+ul {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+
+  li {
+    margin-bottom: 0.5rem;
+  }
+}
+
+app-notice {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+app-sync-progress {
+  margin: 2rem 0;
+}
+
+::ng-deep {
+  /* Hide the wizard headings at the top of the dialog */
+  mat-stepper .mat-horizontal-stepper-header-container {
+    display: none;
+  }
+}

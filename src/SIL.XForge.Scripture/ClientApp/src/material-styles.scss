@@ -24,6 +24,7 @@
 @use 'src/app/translate/draft-generation/draft-signup-form/draft-onboarding-form-theme' as sf-draft-onboarding-form;
 @use 'src/app/translate/draft-generation/draft-history-list/draft-history-entry/draft-history-entry-theme' as
   sf-draft-history-entry;
+@use 'src/app/translate/draft-generation/draft-import-wizard/draft-import-wizard-theme' as sf-draft-import-wizard;
 @use 'src/app/translate/draft-generation/draft-usfm-format/draft-usfm-format-theme' as sf-draft-usfm-format;
 @use 'src/app/translate/draft-generation/training-data/training-data-upload-dialog-theme' as
   sf-training-data-upload-dialog;
@@ -64,6 +65,7 @@
   @include sf-confirm-sources.theme($theme);
   @include sf-draft-generation-steps.theme($theme);
   @include sf-draft-history-entry.theme($theme);
+  @include sf-draft-import-wizard.theme($theme);
   @include sf-draft-sources.theme($theme);
   @include sf-draft-onboarding-form.theme($theme);
   @include sf-draft-usfm-format.theme($theme);

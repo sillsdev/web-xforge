@@ -23,7 +23,7 @@ public class MemoryDocument<T>(MemoryRepository<T> repo, string otTypeName, stri
 
     public bool IsLoaded => Data != null;
 
-    public async Task CreateAsync(T data)
+    public async Task CreateAsync(T data, OpSource? source)
     {
         if (IsLoaded)
             throw new InvalidOperationException("The doc already exists.");
@@ -57,11 +57,11 @@ public class MemoryDocument<T>(MemoryRepository<T> repo, string otTypeName, stri
         }
     }
 
-    public async Task FetchOrCreateAsync(Func<T> createData)
+    public async Task FetchOrCreateAsync(Func<T> createData, OpSource? source)
     {
         await FetchAsync();
         if (!IsLoaded)
-            await CreateAsync(createData());
+            await CreateAsync(createData(), source);
     }
 
     public async Task SubmitOpAsync(object op, OpSource? source)

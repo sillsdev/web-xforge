@@ -1,6 +1,7 @@
 import { NgClass } from '@angular/common';
 import { Component, DestroyRef, Input } from '@angular/core';
 import { MatButton } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import {
   MatExpansionPanel,
   MatExpansionPanelDescription,
@@ -22,6 +23,7 @@ import {
 } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
+import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -35,6 +37,7 @@ import { BuildDto } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
 import { RIGHT_TO_LEFT_MARK } from '../../../../shared/verse-utils';
 import { DraftDownloadButtonComponent } from '../../draft-download-button/draft-download-button.component';
+import { DraftImportWizardComponent } from '../../draft-import-wizard/draft-import-wizard.component';
 import { DraftOptionsService } from '../../draft-options.service';
 import { DraftPreviewBooksComponent } from '../../draft-preview-books/draft-preview-books.component';
 import { TrainingDataService } from '../../training-data/training-data.service';
@@ -82,8 +85,9 @@ interface TrainingConfigurationRow {
     MatHeaderRowDef,
     MatRow,
     MatRowDef,
+    RouterLink,
     TranslocoModule,
-    RouterLink
+    TranslocoMarkupModule
   ],
   templateUrl: './draft-history-entry.component.html',
   styleUrl: './draft-history-entry.component.scss'
@@ -335,7 +339,8 @@ export class DraftHistoryEntryComponent {
     readonly featureFlags: FeatureFlagService,
     private readonly draftOptionsService: DraftOptionsService,
     private readonly permissionsService: PermissionsService,
-    private readonly destroyRef: DestroyRef
+    private readonly destroyRef: DestroyRef,
+    private readonly dialog: MatDialog
   ) {}
 
   formatDate(date?: string): string {
@@ -349,5 +354,17 @@ export class DraftHistoryEntryComponent {
 
   trainingFilesString(files: string[]): string {
     return this.i18n.enumerateList(files);
+  }
+
+  openImportWizard(): void {
+    if (this._entry == null) return;
+
+    this.dialog.open(DraftImportWizardComponent, {
+      data: this._entry,
+      width: '800px',
+      maxWidth: '90vw',
+      disableClose: false,
+      panelClass: 'use-application-text-color'
+    });
   }
 }

@@ -1,0 +1,446 @@
+<mat-dialog-content *transloco="let t; read: 'draft_import_wizard'" [dir]="i18n.direction">
+  <mat-stepper linear [disableRipple]="true" labelPosition="bottom" (selectionChange)="onStepSelectionChange($event)">
+    <!-- Icon overrides -->
+    <ng-template matStepperIcon="edit" let-index="index">{{ index + 1 }}</ng-template>
+
+    <!-- Step 1: Project Selection -->
+    <mat-step [stepControl]="projectSelectionForm" [completed]="projectSelectionForm.valid">
+      <ng-template matStepLabel>{{ t("select_project") }}</ng-template>
+
+      <h1>{{ t("select_project") }}</h1>
+      <p>{{ t("select_project_description") }}</p>
+
+      @if (isLoadingProjects) {
+        <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
+      }
+
+      <form [formGroup]="projectSelectionForm">
+        @if (!isLoadingProjects && !projectLoadingFailed) {
+          <app-project-select
+            [projects]="projects"
+            [placeholder]="t('choose_project')"
+            [isDisabled]="!isAppOnline || projects.length === 0 || isImporting || projectLoadingFailed"
+            (projectSelect)="projectSelected($event.paratextId)"
+            formControlName="targetParatextId"
+            validators="disabled"
+          ></app-project-select>
+
+          @if (isLoadingProject) {
+            <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
+          }
+        }
+
+        @if (projectLoadingFailed && isAppOnline) {
+          <app-notice type="error">{{ t("failed_to_load_projects") }}</app-notice>
+          <div class="project-retry-row">
+            <button matButton="outlined" color="primary" (click)="reloadProjects()" [disabled]="isLoadingProjects">
+              <mat-icon>refresh</mat-icon>
+              {{ t("retry") }}
+            </button>
+          </div>
+        }
+
+        @if (!isAppOnline) {
+          <app-notice type="error">{{ t("connect_to_the_internet") }}</app-notice>
+        }
+
+        @if (!canEditProject) {
+          <app-notice type="error">{{ t("cannot_edit_project") }}</app-notice>
+        }
+
+        @if (projectSelectionForm.valid && !isLoadingProject && (targetProjectDoc$ | async); as project) {
+          <app-notice [icon]="'verified'">
+            {{
+              t("ready_to_import", {
+                projectShortName: project?.data?.shortName,
+                projectName: project?.data?.name
+              })
+            }}
+          </app-notice>
+        }
+
+        @if (cannotAdvanceFromProjectSelection && !projectReadyToImport) {
+          <app-notice type="error" icon="error">{{
+            !projectSelectionForm.valid ? t("select_project_description") : t("waiting_for_project_to_load")
+          }}</app-notice>
+        }
+      </form>
+
+      <div class="button-strip">
+        <button matButton="text" (click)="cancel()" [disabled]="isImporting">
+          <mat-icon>close</mat-icon>
+          {{ t("cancel") }}
+        </button>
+        <button
+          matButton="filled"
+          color="primary"
+          data-test-id="step-1-next"
+          (click)="advanceFromProjectSelection()"
+          [disabled]="!isAppOnline || projectLoadingFailed || !canEditProject"
+        >
+          {{ needsConnection || showBookSelection || showOverwriteConfirmation ? t("next") : t("import") }}
+          <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
+        </button>
+      </div>
+    </mat-step>
+
+    <!-- Step 2: Connect Confirmation (conditional) -->
+    @if (needsConnection) {
+      <mat-step [completed]="!needsConnection || isConnecting || connectionError == null">
+        <ng-template matStepLabel>{{ t("connect_project") }}</ng-template>
+
+        <h1>{{ t("connect_to_project") }}</h1>
+
+        @if (selectedParatextProject != null) {
+          <p
+            [innerHtml]="
+              i18n.translateAndInsertTags('draft_import_wizard.connect_project_description', {
+                projectShortName: selectedParatextProject.shortName,
+                projectName: selectedParatextProject.name
+              })
+            "
+          ></p>
+        }
+
+        @if (connectionError != null && connectionError.length > 0) {
+          <app-notice type="error">{{ connectionError }}</app-notice>
+        }
+
+        <div class="button-strip">
+          <button matButton="outlined" matStepperPrevious [disabled]="isConnecting || isImporting">
+            <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
+            {{ t("back") }}
+          </button>
+          <button
+            matButton="filled"
+            color="primary"
+            data-test-id="step-2-next"
+            (click)="connectToProject()"
+            [disabled]="
+              !isAppOnline || isConnecting || isImporting || (connectionError != null && connectionError.length > 0)
+            "
+          >
+            {{ t("connect") }}
+            <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
+          </button>
+        </div>
+      </mat-step>
+
+      <!-- Step 3: Connecting (conditional) -->
+      <mat-step [completed]="!isConnecting && connectionError == null">
+        <ng-template matStepLabel>{{ t("connecting") }}</ng-template>
+
+        @if (isConnecting) {
+          <h1>{{ t("connecting_to_project") }}</h1>
+          @if (targetProjectDoc$ | async; as projectDoc) {
+            <app-sync-progress [projectDoc]="projectDoc" (inProgress)="updateConnectStatus($event)"></app-sync-progress>
+          } @else {
+            <p>{{ t("setting_up_project", { projectName: selectedParatextProject?.name }) }}</p>
+            <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
+          }
+        }
+
+        @if (connectionError != null && connectionError.length > 0) {
+          <h1>{{ t("connection_failed") }}</h1>
+          <app-notice type="error">{{ connectionError }}</app-notice>
+          <div class="button-strip">
+            <button matButton="outlined" matStepperPrevious [disabled]="isImporting">
+              <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
+              {{ t("back") }}
+            </button>
+            <button
+              matButton="filled"
+              color="primary"
+              (click)="retryProjectConnection()"
+              [disabled]="!isAppOnline && isImporting"
+            >
+              <mat-icon>refresh</mat-icon>
+              {{ t("retry") }}
+            </button>
+          </div>
+        } @else if (!isConnecting) {
+          <h1>{{ t("connected_to_project") }}</h1>
+          @if (targetProjectDoc$ | async; as projectDoc) {
+            <app-notice [icon]="'verified'">
+              {{
+                t("ready_to_import", {
+                  projectShortName: projectDoc?.data?.shortName,
+                  projectName: projectDoc?.data?.name
+                })
+              }}
+            </app-notice>
+          }
+          <div class="button-strip">
+            <button matButton="outlined" matStepperPrevious [disabled]="isImporting">
+              <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
+              {{ t("back") }}
+            </button>
+            <button
+              matButton="filled"
+              matStepperNext
+              color="primary"
+              data-test-id="step-3-next"
+              [disabled]="!isAppOnline || isImporting"
+            >
+              {{ showBookSelection || showOverwriteConfirmation ? t("next") : t("import") }}
+              <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
+            </button>
+          </div>
+        }
+      </mat-step>
+    }
+
+    <!-- Step 4: Book Selection (conditional - only if multiple books) -->
+    @if (showBookSelection) {
+      <mat-step [completed]="selectedBooks.length > 0">
+        <ng-template matStepLabel>{{ t("select_books") }}</ng-template>
+
+        <h1>{{ t("confirm_books_to_import") }}</h1>
+        <p>{{ t("confirm_books_to_import_description") }}</p>
+        <app-book-multi-select
+          [availableBooks]="availableBooksForImport"
+          [selectedBooks]="selectedBooks"
+          [basicMode]="true"
+          [readonly]="isImporting"
+          (bookSelect)="onBookSelect($event)"
+        ></app-book-multi-select>
+
+        <div class="button-strip">
+          <button matButton="outlined" matStepperPrevious [disabled]="isConnecting || isImporting">
+            <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
+            {{ t("back") }}
+          </button>
+          <button
+            matButton="filled"
+            color="primary"
+            matStepperNext
+            data-test-id="step-4-next"
+            [disabled]="!isAppOnline || selectedBooks.length === 0 || isConnecting || isImporting"
+          >
+            {{ showOverwriteConfirmation ? t("next") : t("import") }}
+            <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
+          </button>
+        </div>
+      </mat-step>
+    }
+
+    <!-- Step 5: Overwrite Confirmation (conditional - shows appropriate variant) -->
+    @if (showOverwriteConfirmation) {
+      <mat-step [stepControl]="overwriteForm" [completed]="overwriteForm.valid">
+        <ng-template matStepLabel>{{ t("confirm_overwrite") }}</ng-template>
+
+        @if (booksWithExistingText.length === 1) {
+          <!-- Single book variant -->
+          <h1>{{ t("overwrite_book_question", { bookName: singleBookName }) }}</h1>
+          <p
+            [innerHTML]="
+              i18n.translateAndInsertTags('draft_import_wizard.overwrite_book_description', {
+                bookName: singleBookName,
+                numChapters: booksWithExistingText[0].chaptersWithText.length,
+                projectShortName: selectedParatextProject?.shortName,
+                projectName: selectedParatextProject?.name
+              })
+            "
+          ></p>
+        } @else {
+          <!-- Multiple books variant -->
+          <h1>{{ t("overwrite_books_question") }}</h1>
+          <p
+            [innerHTML]="
+              i18n.translateAndInsertTags('draft_import_wizard.overwrite_books_description', {
+                projectShortName: selectedParatextProject?.shortName,
+                projectName: selectedParatextProject?.name
+              })
+            "
+          ></p>
+          <ul>
+            @for (book of booksWithExistingText; track book.bookNum) {
+              <li>
+                {{ book.bookName }}: {{ book.chaptersWithText.length }}
+                {{ book.chaptersWithText.length === 1 ? t("chapter") : t("chapters") }}
+              </li>
+            }
+          </ul>
+        }
+
+        <form [formGroup]="overwriteForm">
+          <mat-checkbox formControlName="confirmOverwrite">
+            {{ t("i_understand_overwrite_content") }}
+          </mat-checkbox>
+        </form>
+
+        <div class="button-strip">
+          <button matButton="outlined" matStepperPrevious [disabled]="isConnecting || isImporting">
+            <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
+            {{ t("back") }}
+          </button>
+          <button
+            matButton="filled"
+            color="primary"
+            matStepperNext
+            data-test-id="step-5-next"
+            [disabled]="!overwriteForm.valid || isConnecting || isImporting || !isAppOnline"
+          >
+            {{ t("import") }}
+            <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
+          </button>
+        </div>
+      </mat-step>
+    }
+
+    <!-- Step 6: Import Progress -->
+    <mat-step #importStep [completed]="importComplete">
+      <ng-template matStepLabel>{{ t("importing") }}</ng-template>
+
+      <h1>{{ t("importing_draft") }}</h1>
+
+      @if (isImporting || importComplete || (importError != null && importError.length > 0)) {
+        @for (progress of importProgress; track progress.bookNum) {
+          <div class="book-progress">
+            <p>{{ progress.bookName }}</p>
+            <mat-progress-bar
+              mode="determinate"
+              [value]="(progress.completedChapters.length / progress.totalChapters) * 100"
+            ></mat-progress-bar>
+            <span class="progress-text">
+              {{ progress.completedChapters.length }} / {{ progress.totalChapters }} {{ t("chapters") }}
+            </span>
+            @if (progress.failedChapters.length > 0) {
+              <div class="failed-chapters">
+                <mat-icon class="error-icon">error</mat-icon>
+                <span>{{ t("failed") }} {{ getFailedChapters(progress) }}</span>
+              </div>
+            }
+          </div>
+        }
+      }
+
+      @if (importError != null && importError.length > 0) {
+        <app-notice type="error">{{ importError }}</app-notice>
+        <div class="button-strip">
+          <button matButton="outlined" (click)="clearImport()" [disabled]="isConnecting || isImporting">
+            <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
+            {{ t("back") }}
+          </button>
+          <button matButton="outlined" (click)="retryImport()" [disabled]="isImporting || !isAppOnline">
+            <mat-icon>refresh</mat-icon>
+            {{ t("retry") }}
+          </button>
+        </div>
+      }
+
+      @if (importComplete) {
+        <app-notice [icon]="'check_circle'" type="success">{{ t("import_complete") }}</app-notice>
+        <div class="button-strip align-end">
+          <button
+            matButton="filled"
+            color="primary"
+            matStepperNext
+            data-test-id="step-6-next"
+            [disabled]="isConnecting || isImporting"
+          >
+            {{ t("next") }}
+            <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
+          </button>
+        </div>
+      }
+    </mat-step>
+
+    <!-- Step 7: Sync Confirmation and Completion -->
+    <mat-step [completed]="syncComplete || skipSync">
+      <ng-template matStepLabel>{{ t("complete") }}</ng-template>
+
+      @if (!isSyncing && !syncComplete && !skipSync && syncError == null) {
+        <h1>{{ t("sync_project_question") }}</h1>
+        <p
+          [innerHtml]="
+            i18n.translateAndInsertTags('draft_import_wizard.sync_project_description', {
+              projectShortName: selectedParatextProject?.shortName,
+              projectName: selectedParatextProject?.name
+            })
+          "
+        ></p>
+
+        <div class="button-strip">
+          <button
+            matButton="outlined"
+            data-test-id="step-7-skip"
+            (click)="selectSkipSync()"
+            [disabled]="isSyncing || isImporting"
+          >
+            {{ t("skip_sync") }}
+          </button>
+          <button
+            matButton="filled"
+            color="primary"
+            data-test-id="step-7-sync"
+            (click)="selectSync()"
+            [disabled]="isSyncing || isImporting || !isAppOnline"
+          >
+            {{ t("sync") }}
+            <mat-icon iconPositionEnd>sync</mat-icon>
+          </button>
+        </div>
+      }
+
+      @if (isSyncing) {
+        <h1>{{ t("syncing_project") }}</h1>
+        @if (targetProjectDoc$ | async; as projectDoc) {
+          <app-sync-progress [projectDoc]="projectDoc" (inProgress)="updateSyncStatus($event)"></app-sync-progress>
+        }
+      }
+
+      @if (syncError != null && !syncComplete && !skipSync) {
+        <h1>{{ t("sync_failed") }}</h1>
+        <app-notice type="error">{{ syncError }}</app-notice>
+        <div class="button-strip">
+          <button matButton="outlined" (click)="selectSkipSync()" [disabled]="isImporting">
+            {{ t("skip_sync") }}
+          </button>
+          <button matButton="filled" color="primary" (click)="retrySync()" [disabled]="isImporting || !isAppOnline">
+            <mat-icon>refresh</mat-icon>
+            {{ t("retry") }}
+          </button>
+        </div>
+      }
+
+      @if (syncComplete || skipSync) {
+        <h1>{{ t("complete") }}</h1>
+        @if (skipSync) {
+          <p
+            [innerHtml]="
+              i18n.translateAndInsertTags('draft_import_wizard.import_complete_no_sync', {
+                projectShortName: selectedParatextProject?.shortName,
+                projectName: selectedParatextProject?.name
+              })
+            "
+          ></p>
+        } @else {
+          <p
+            [innerHtml]="
+              i18n.translateAndInsertTags('draft_import_wizard.import_and_sync_complete', {
+                projectShortName: selectedParatextProject?.shortName,
+                projectName: selectedParatextProject?.name
+              })
+            "
+          ></p>
+          <p>
+            <b>{{ t("import_and_sync_complete_reminder") }}</b>
+          </p>
+        }
+
+        <div class="button-strip align-end">
+          <button
+            matButton="filled"
+            color="primary"
+            data-test-id="step-7-done"
+            (click)="close()"
+            [disabled]="isImporting || isSyncing"
+          >
+            {{ t("done") }}
+          </button>
+        </div>
+      }
+    </mat-step>
+  </mat-stepper>
+</mat-dialog-content>

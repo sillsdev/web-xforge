@@ -35,7 +35,7 @@ public class SFProjectsRpcController(
     // Keep a reference in this class to prevent duplicate allocation (Warning CS9107)
     private readonly IExceptionHandler _exceptionHandler = exceptionHandler;
 
-    public IRpcMethodResult ApplyPreTranslationToProject(
+    public async Task<IRpcMethodResult> ApplyPreTranslationToProject(
         string projectId,
         string scriptureRange,
         string targetProjectId,
@@ -44,6 +44,9 @@ public class SFProjectsRpcController(
     {
         try
         {
+            // Ensure the target project exists
+            _ = await projectService.GetProjectAsync(targetProjectId);
+
             // Run the background job
             string jobId = backgroundJobClient.Enqueue<IMachineApiService>(r =>
                 r.ApplyPreTranslationToProjectAsync(
@@ -56,6 +59,10 @@ public class SFProjectsRpcController(
                 )
             );
             return Ok(jobId);
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
         }
         catch (Exception)
         {
@@ -1111,6 +1118,7 @@ public class SFProjectsRpcController(
         }
     }
 
+    [Obsolete("Use ApplyPreTranslationToProject instead. Deprecated 2025-12")]
     public async Task<IRpcMethodResult> AddChapters(string projectId, int book, int[] chapters)
     {
         try

@@ -75,7 +75,8 @@ public class UserService : IUserService
                                 ? (string)userProfile["nickname"]
                                 : name,
                         IsDisplayNameConfirmed = displayNameSetAtSignup,
-                    }
+                    },
+                source: null
             );
             await userDoc.SubmitJson0OpAsync(op =>
             {

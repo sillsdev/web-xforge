@@ -157,7 +157,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             {
                 throw new InvalidOperationException(ErrorAlreadyConnectedKey);
             }
-            IDocument<SFProject> projectDoc = await conn.CreateAsync<SFProject>(projectId, project);
+            IDocument<SFProject> projectDoc = await conn.CreateAsync<SFProject>(projectId, project, source: null);
             await ProjectSecrets.InsertAsync(new SFProjectSecret { Id = projectDoc.Id });
 
             IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
@@ -1142,7 +1142,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                     ProjectRef = projectId,
                     // TODO (scripture audio) Should the ID be set here? How does the DataId differ from the document ID?
                     DataId = textAudioId,
-                }
+                },
+            source: null
         );
 
         await textAudioDoc.SubmitJson0OpAsync(op =>
@@ -1275,7 +1276,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         {
             await conn.CreateAsync(
                 SFProjectUserConfig.GetDocId(projectDoc.Id, userDoc.Id),
-                new SFProjectUserConfig { ProjectRef = projectDoc.Id, OwnerRef = userDoc.Id }
+                new SFProjectUserConfig { ProjectRef = projectDoc.Id, OwnerRef = userDoc.Id },
+                source: null
             );
         }
         // Listeners can now assume the ProjectUserConfig is ready when the user is added.
@@ -1509,6 +1511,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         });
     }
 
+    [Obsolete("Use MachineApiService.ApplyPreTranslationToProjectAsync instead. Deprecated 2025-12")]
     public async Task AddChaptersAsync(string userId, string projectId, int book, int[] chapters)
     {
         await using IConnection conn = await RealtimeService.ConnectAsync();
@@ -2066,7 +2069,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             throw new InvalidOperationException(ErrorAlreadyConnectedKey);
         }
 
-        IDocument<SFProject> projectDoc = await conn.CreateAsync(projectId, project);
+        IDocument<SFProject> projectDoc = await conn.CreateAsync(projectId, project, source: null);
         await ProjectSecrets.InsertAsync(new SFProjectSecret { Id = projectDoc.Id });
 
         // Resource projects do not have administrators, so users are added as needed

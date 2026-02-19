@@ -31,7 +31,7 @@ public class RealtimeServerTests
         object data = new { };
 
         // SUT
-        await env.Service.CreateDocAsync(0, string.Empty, string.Empty, data, OTType.Json0);
+        await env.Service.CreateDocAsync(0, string.Empty, string.Empty, data, OTType.Json0, source: null);
 
         await env
             .NodeJsProcess.Received(1)

@@ -10,7 +10,7 @@ public interface IConnection : IDisposable, IAsyncDisposable
 {
     void BeginTransaction();
     Task CommitTransactionAsync();
-    Task<Snapshot<T>> CreateDocAsync<T>(string collection, string id, T data, string otTypeName);
+    Task<Snapshot<T>> CreateDocAsync<T>(string collection, string id, T data, string otTypeName, OpSource? source);
     Task DeleteDocAsync(string collection, string id);
     void ExcludePropertyFromTransaction<T>(Expression<Func<T, object>> field);
     Task<Snapshot<T>> FetchDocAsync<T>(string collection, string id);

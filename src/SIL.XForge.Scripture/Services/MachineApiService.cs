@@ -46,6 +46,7 @@ public class MachineApiService(
     IExceptionHandler exceptionHandler,
     IHttpRequestAccessor httpRequestAccessor,
     IHubContext<NotificationHub, INotifier> hubContext,
+    IHubContext<DraftNotificationHub, IDraftNotifier> draftHubContext,
     ILogger<MachineApiService> logger,
     IMachineProjectService machineProjectService,
     IParatextService paratextService,
@@ -131,6 +132,7 @@ public class MachineApiService(
         IDocument<SFProject> targetProjectDoc;
         List<int> createdBooks = [];
         Dictionary<int, List<int>> createdChapters = [];
+        List<(int bookNum, int chapterNum)> chaptersToNotify = [];
         List<(ChapterDelta chapterDelta, int bookNum)> chapterDeltas = [];
         try
         {
@@ -158,13 +160,8 @@ public class MachineApiService(
             // Get the drafts for the scripture range
             foreach ((string book, List<int> bookChapters) in booksAndChapters)
             {
-                await hubContext.NotifyDraftApplyProgress(
-                    sfProjectId,
-                    new DraftApplyState { State = $"Retrieving draft for {book}." }
-                );
+                // Warn if the last chapter is different (this will affect chapter creation)
                 int bookNum = Canon.BookIdToNumber(book);
-
-                // Warn if the last chapter is different (this will affect chapter creation
                 int lastChapter = versification.GetLastChapter(bookNum);
                 int targetLastChapter = targetVersification.GetLastChapter(bookNum);
                 if (lastChapter != targetLastChapter)
@@ -174,7 +171,16 @@ public class MachineApiService(
                         + $" while the target project ({targetProjectDoc.Data.ShortName.Sanitize()}) has {targetLastChapter} chapters.";
                     logger.LogWarning(message);
                     result.Log += $"{message}\n";
-                    await hubContext.NotifyDraftApplyProgress(sfProjectId, new DraftApplyState { State = message });
+                    await draftHubContext.NotifyDraftApplyProgress(
+                        sfProjectId,
+                        new DraftApplyState
+                        {
+                            BookNum = bookNum,
+                            ChapterNum = 0,
+                            Status = DraftApplyStatus.Warning,
+                            Message = message,
+                        }
+                    );
                 }
 
                 // Ensure that if chapters is blank, it contains every chapter in the book.
@@ -185,6 +191,16 @@ public class MachineApiService(
                 {
                     chapters = [.. Enumerable.Range(1, lastChapter)];
                 }
+                await draftHubContext.NotifyDraftApplyProgress(
+                    sfProjectId,
+                    new DraftApplyState
+                    {
+                        BookNum = bookNum,
+                        ChapterNum = 0,
+                        Status = DraftApplyStatus.InProgress,
+                        Message = $"Retrieving draft for {book}.",
+                    }
+                );
 
                 // Store the USJ for each chapter, so if we download form Serval we only do it once per book
                 List<Usj> chapterUsj = [];
@@ -222,11 +238,14 @@ public class MachineApiService(
                             if (string.IsNullOrWhiteSpace(usfm))
                             {
                                 result.Failures.Add(book);
-                                await hubContext.NotifyDraftApplyProgress(
+                                await draftHubContext.NotifyDraftApplyProgress(
                                     sfProjectId,
                                     new DraftApplyState
                                     {
-                                        State = $"No draft available for {Canon.BookNumberToId(bookNum)}.",
+                                        BookNum = bookNum,
+                                        ChapterNum = 0,
+                                        Status = DraftApplyStatus.Failed,
+                                        Message = $"No draft available for {Canon.BookNumberToId(bookNum)}.",
                                     }
                                 );
                                 break;
@@ -236,11 +255,14 @@ public class MachineApiService(
                             if (DeltaUsxMapper.ExtractBookId(usfm) != book)
                             {
                                 result.Failures.Add(book);
-                                await hubContext.NotifyDraftApplyProgress(
+                                await draftHubContext.NotifyDraftApplyProgress(
                                     sfProjectId,
                                     new DraftApplyState
                                     {
-                                        State =
+                                        BookNum = bookNum,
+                                        ChapterNum = 0,
+                                        Status = DraftApplyStatus.Failed,
+                                        Message =
                                             $"Could not retrieve a valid draft for {Canon.BookNumberToId(bookNum)}.",
                                     }
                                 );
@@ -270,11 +292,14 @@ public class MachineApiService(
                         {
                             // A blank chapter from Serval
                             result.Failures.Add($"{Canon.BookNumberToId(bookNum)} {chapterNum}");
-                            await hubContext.NotifyDraftApplyProgress(
+                            await draftHubContext.NotifyDraftApplyProgress(
                                 sfProjectId,
                                 new DraftApplyState
                                 {
-                                    State =
+                                    BookNum = bookNum,
+                                    ChapterNum = chapterNum,
+                                    Status = DraftApplyStatus.Failed,
+                                    Message =
                                         $"Could not retrieve draft for {Canon.BookNumberToId(bookNum)} {chapterNum}.",
                                 }
                             );
@@ -290,11 +315,14 @@ public class MachineApiService(
                     {
                         // Likely a blank draft in the database
                         result.Failures.Add($"{Canon.BookNumberToId(bookNum)} {chapterNum}");
-                        await hubContext.NotifyDraftApplyProgress(
+                        await draftHubContext.NotifyDraftApplyProgress(
                             sfProjectId,
                             new DraftApplyState
                             {
-                                State = $"Could not retrieve draft for {Canon.BookNumberToId(bookNum)} {chapterNum}.",
+                                BookNum = bookNum,
+                                ChapterNum = chapterNum,
+                                Status = DraftApplyStatus.Failed,
+                                Message = $"Could not retrieve draft for {Canon.BookNumberToId(bookNum)} {chapterNum}.",
                             }
                         );
                         continue;
@@ -313,6 +341,18 @@ public class MachineApiService(
                         chapterDeltas.Add((chapterDelta, bookNum));
                     }
                 }
+
+                await draftHubContext.NotifyDraftApplyProgress(
+                    sfProjectId,
+                    new DraftApplyState
+                    {
+                        BookNum = bookNum,
+                        ChapterNum = 0,
+                        TotalChapters = chapterDeltas.Count(cd => cd.bookNum == bookNum),
+                        Status = DraftApplyStatus.InProgress,
+                        Message = $"Calculated last chapter for {book}.",
+                    }
+                );
             }
         }
         catch (Exception e)
@@ -324,9 +364,15 @@ public class MachineApiService(
             exceptionHandler.ReportException(e);
             result.Log += $"{message}\n";
             result.Log += $"{e}\n";
-            await hubContext.NotifyDraftApplyProgress(
+            await draftHubContext.NotifyDraftApplyProgress(
                 sfProjectId,
-                new DraftApplyState { Failed = true, State = result.Log }
+                new DraftApplyState
+                {
+                    BookNum = 0,
+                    ChapterNum = 0,
+                    Status = DraftApplyStatus.Failed,
+                    Message = result.Log,
+                }
             );
 
             // Do not proceed to save the draft to the project
@@ -401,9 +447,15 @@ public class MachineApiService(
             // Update the permissions
             if (chapterDeltas.Count > 0)
             {
-                await hubContext.NotifyDraftApplyProgress(
+                await draftHubContext.NotifyDraftApplyProgress(
                     sfProjectId,
-                    new DraftApplyState { State = "Loading permissions from Paratext." }
+                    new DraftApplyState
+                    {
+                        BookNum = 0,
+                        ChapterNum = 0,
+                        Status = DraftApplyStatus.InProgress,
+                        Message = "Loading permissions from Paratext.",
+                    }
                 );
                 if (createdBooks.Count == 0)
                 {
@@ -439,9 +491,15 @@ public class MachineApiService(
                     if (result.Failures.Add(bookId))
                     {
                         // Only notify the book failure once per book
-                        await hubContext.NotifyDraftApplyProgress(
+                        await draftHubContext.NotifyDraftApplyProgress(
                             sfProjectId,
-                            new DraftApplyState { State = $"Could not save draft for {Canon.BookNumberToId(bookNum)}." }
+                            new DraftApplyState
+                            {
+                                BookNum = bookNum,
+                                ChapterNum = 0,
+                                Status = DraftApplyStatus.Failed,
+                                Message = $"Could not save draft for {Canon.BookNumberToId(bookNum)}.",
+                            }
                         );
                     }
 
@@ -463,9 +521,15 @@ public class MachineApiService(
                     if (result.Failures.Add(bookId))
                     {
                         // Only notify the book failure once per book
-                        await hubContext.NotifyDraftApplyProgress(
+                        await draftHubContext.NotifyDraftApplyProgress(
                             sfProjectId,
-                            new DraftApplyState { State = $"Could not save draft for {Canon.BookNumberToId(bookNum)}." }
+                            new DraftApplyState
+                            {
+                                BookNum = bookNum,
+                                ChapterNum = 0,
+                                Status = DraftApplyStatus.Failed,
+                                Message = $"Could not save draft for {Canon.BookNumberToId(bookNum)}.",
+                            }
                         );
                     }
 
@@ -479,11 +543,15 @@ public class MachineApiService(
                 if (chapterIndex == -1)
                 {
                     result.Failures.Add($"{Canon.BookNumberToId(bookNum)} {chapterDelta.Number}");
-                    await hubContext.NotifyDraftApplyProgress(
+                    await draftHubContext.NotifyDraftApplyProgress(
                         sfProjectId,
                         new DraftApplyState
                         {
-                            State = $"Could not save draft for {Canon.BookNumberToId(bookNum)} {chapterDelta.Number}.",
+                            BookNum = bookNum,
+                            ChapterNum = chapterDelta.Number,
+                            Status = DraftApplyStatus.Failed,
+                            Message =
+                                $"Could not save draft for {Canon.BookNumberToId(bookNum)} {chapterDelta.Number}.",
                         }
                     );
                     continue;
@@ -509,11 +577,15 @@ public class MachineApiService(
                     }
 
                     result.Failures.Add($"{Canon.BookNumberToId(bookNum)} {chapterDelta.Number}");
-                    await hubContext.NotifyDraftApplyProgress(
+                    await draftHubContext.NotifyDraftApplyProgress(
                         sfProjectId,
                         new DraftApplyState
                         {
-                            State = $"Could not save draft for {Canon.BookNumberToId(bookNum)} {chapterDelta.Number}.",
+                            BookNum = bookNum,
+                            ChapterNum = chapterDelta.Number,
+                            Status = DraftApplyStatus.Failed,
+                            Message =
+                                $"Could not save draft for {Canon.BookNumberToId(bookNum)} {chapterDelta.Number}.",
                         }
                     );
                     continue;
@@ -532,28 +604,35 @@ public class MachineApiService(
                     {
                         await textDataDoc.SubmitOpAsync(diffDelta, OpSource.Draft);
                     }
-                    await hubContext.NotifyDraftApplyProgress(
+                    await draftHubContext.NotifyDraftApplyProgress(
                         sfProjectId,
                         new DraftApplyState
                         {
-                            State = $"Updating {Canon.BookNumberToId(bookNum)} {chapterDelta.Number}.",
+                            BookNum = bookNum,
+                            ChapterNum = chapterDelta.Number,
+                            Status = DraftApplyStatus.Successful,
+                            Message = $"Updated {Canon.BookNumberToId(bookNum)} {chapterDelta.Number}.",
                         }
                     );
                 }
                 else
                 {
                     // Create a new text data document
-                    await textDataDoc.CreateAsync(newTextData);
-                    await hubContext.NotifyDraftApplyProgress(
+                    await textDataDoc.CreateAsync(newTextData, OpSource.Draft);
+                    await draftHubContext.NotifyDraftApplyProgress(
                         sfProjectId,
                         new DraftApplyState
                         {
-                            State = $"Creating {Canon.BookNumberToId(bookNum)} {chapterDelta.Number}.",
+                            BookNum = bookNum,
+                            ChapterNum = chapterDelta.Number,
+                            Status = DraftApplyStatus.Successful,
+                            Message = $"Created {Canon.BookNumberToId(bookNum)} {chapterDelta.Number}.",
                         }
                     );
                 }
 
                 // A draft has been applied
+                chaptersToNotify.Add((bookNum, chapterDelta.Number));
                 successful = true;
             }
         }
@@ -575,18 +654,39 @@ public class MachineApiService(
             if (successful)
             {
                 await connection.CommitTransactionAsync();
-                await hubContext.NotifyDraftApplyProgress(
-                    sfProjectId,
-                    new DraftApplyState { Success = true, State = result.Log }
-                );
             }
             else
             {
                 connection.RollbackTransaction();
-                await hubContext.NotifyDraftApplyProgress(
-                    sfProjectId,
-                    new DraftApplyState { Failed = true, State = result.Log }
-                );
+            }
+
+            await draftHubContext.NotifyDraftApplyProgress(
+                sfProjectId,
+                new DraftApplyState
+                {
+                    BookNum = 0,
+                    ChapterNum = 0,
+                    Status = successful ? DraftApplyStatus.Successful : DraftApplyStatus.Failed,
+                    Message = result.Log,
+                }
+            );
+
+            // Notify any listening users for each chapter that was updated in the target project
+            if (successful)
+            {
+                foreach ((int bookNum, int chapterNum) in chaptersToNotify)
+                {
+                    // Use the non-blocking hub context which does not have stateful reconnect enabled
+                    await hubContext.NotifyDraftApplyProgress(
+                        targetProjectId,
+                        new DraftApplyState
+                        {
+                            BookNum = bookNum,
+                            ChapterNum = chapterNum,
+                            Status = DraftApplyStatus.Successful,
+                        }
+                    );
+                }
             }
 
             result.ChangesSaved = successful;
@@ -2534,7 +2634,7 @@ public class MachineApiService(
         // Create or update the text document
         if (!textDocument.IsLoaded)
         {
-            await textDocument.CreateAsync(chapterTextDocument);
+            await textDocument.CreateAsync(chapterTextDocument, OpSource.Draft);
         }
         else
         {

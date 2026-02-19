@@ -27,6 +27,10 @@ public class NotificationHub : Hub<INotifier>, INotifier
     /// <param name="projectId">The Scripture Forge project identifier.</param>
     /// <param name="draftApplyState">The state of the draft being applied.</param>
     /// <returns>The asynchronous task.</returns>
+    /// <remarks>
+    /// This differs from the implementation in <see cref="DraftNotificationHub"/> in that this version
+    /// does not have stateful reconnection, and so there is no guarantee that the message is received.
+    /// </remarks>
     public async Task NotifyDraftApplyProgress(string projectId, DraftApplyState draftApplyState) =>
         await Clients.Group(projectId).NotifyDraftApplyProgress(projectId, draftApplyState);
 
