@@ -40,18 +40,23 @@ export class ResumeTranslateService extends ResumeBaseService {
       filter(([projectDoc, projectUserConfigDoc]) => projectDoc !== undefined && projectUserConfigDoc !== undefined),
       map(([projectDoc, projectUserConfigDoc]) => {
         const project = projectDoc?.data;
-        const config = projectUserConfigDoc?.data;
-        const doesLastBookExist =
-          projectDoc?.data?.texts.find(t => t.bookNum === config?.selectedBookNum) !== undefined;
+        const selectedBookNum: number | undefined = projectUserConfigDoc?.data?.selectedBookNum;
+        const selectedChapterNum: number | undefined = projectUserConfigDoc?.data?.selectedChapterNum;
+        const doesLastSelectedBookExist =
+          selectedBookNum != null && project?.texts.find(t => t.bookNum === selectedBookNum) !== undefined;
 
         let bookNum: number;
         let chapterNum: number;
-        if (doesLastBookExist) {
-          bookNum = config!.selectedBookNum ?? project?.texts[0]?.bookNum ?? Canon.firstBook;
-          chapterNum = config?.selectedChapterNum ?? project?.texts[bookNum]?.chapters[0].number ?? 1;
+        if (doesLastSelectedBookExist) {
+          bookNum = selectedBookNum;
+          const selectedBookInfo = project?.texts.find(t => t.bookNum === selectedBookNum);
+          const selectedChapterExists =
+            selectedChapterNum != null && selectedBookInfo?.chapters.find(c => c.number === selectedChapterNum) != null;
+          chapterNum = selectedChapterExists ? selectedChapterNum : (selectedBookInfo?.chapters[0]?.number ?? 1);
         } else {
-          bookNum = project?.texts[0]?.bookNum ?? Canon.firstBook;
-          chapterNum = project?.texts[bookNum]?.chapters[0].number ?? 1;
+          const bookInfo = project?.texts.slice().sort((a, b) => a.bookNum - b.bookNum)[0];
+          bookNum = bookInfo?.bookNum ?? Canon.firstBook;
+          chapterNum = bookInfo?.chapters[0]?.number ?? 1;
         }
         const bookId = Canon.bookNumberToId(bookNum);
 

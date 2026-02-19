@@ -245,13 +245,13 @@ class TestEnvironment {
               args.hasTexts == null || args.hasTexts
                 ? [
                     {
-                      bookNum: 40,
+                      bookNum: 41,
                       chapters: [],
                       hasSource: false,
                       permissions: {}
                     },
                     {
-                      bookNum: 41,
+                      bookNum: 40,
                       chapters: [],
                       hasSource: false,
                       permissions: {}
