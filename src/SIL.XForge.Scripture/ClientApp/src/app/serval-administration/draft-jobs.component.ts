@@ -589,9 +589,9 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     if (buildCompletedEvents.length > 1) {
       throw new Error(`Request group ${requestId} may not have more than one BuildCompletedAsync event.`);
     }
-    const retrieveFinishingEvents: EventMetric[] = events.filter(
-      event => event.eventType === 'RetrievePreTranslationStatusAsync' && event.result === buildEvent?.result
-    );
+    const retrieveFinishingEvents: EventMetric[] = events
+      .filter(event => event.eventType === 'RetrievePreTranslationStatusAsync' && event.result === buildEvent?.result)
+      .sort((left, right) => DraftJobsComponent.compareEventTimes(left, right));
     const finishEvent: EventMetric | undefined = buildCompletedEvents[0] ?? retrieveFinishingEvents[0];
 
     const cancelEvents: EventMetric[] = events.filter(event => event.eventType === 'CancelPreTranslationBuildAsync');
