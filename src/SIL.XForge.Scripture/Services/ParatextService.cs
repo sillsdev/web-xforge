@@ -1276,7 +1276,7 @@ public class ParatextService : DisposableBase, IParatextService
             return null;
 
         CommentManager manager = CommentManager.Get(scrText);
-        CommentTags? commentTags = CommentTags.Get(scrText);
+        CommentTags commentTags = CommentTags.Get(scrText);
 
         return _paratextDataHelper.GetNotes(manager, commentTags);
     }
