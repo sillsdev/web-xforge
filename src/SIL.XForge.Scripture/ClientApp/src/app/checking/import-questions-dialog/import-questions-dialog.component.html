@@ -50,7 +50,7 @@
                   <a mat-button [href]="urls.transceleratorImportHelpPage" target="_blank">{{ t("learn_more") }}</a>
                   @if (transceleratorRequest.status === "offline") {
                     <mat-error>
-                      {{ t("no_transcelerator_offline") }}
+                      {{ t("no_import_offline", { method: "Transcelerator" }) }}
                     </mat-error>
                   } @else if (transceleratorRequest.status === "trying" && transceleratorRequest.failedAttempts > 0) {
                     <mat-error>
@@ -112,6 +112,11 @@
                     {{ t("import_from_paratext") }}
                   </button>
                   <a mat-button [href]="urls.paratextImportHelpPage" target="_blank">{{ t("learn_more") }}</a>
+                  @if (!isOnline) {
+                    <mat-error>
+                      {{ t("no_import_offline", { method: "Paratext" }) }}
+                    </mat-error>
+                  }
                 </mat-card-actions>
               </mat-card>
             </div>
