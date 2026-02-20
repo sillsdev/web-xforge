@@ -1409,13 +1409,8 @@ describe('DraftGenerationStepsComponent', () => {
     it('should localize, group, and collapse the books to use in training', () => {
       const trainingGroups = component.selectedTrainingBooksCollapsed();
       expect(trainingGroups.length).toEqual(2);
-
-      expect(trainingGroups[0].ranges.length).toEqual(1);
-      expect(trainingGroups[0].ranges[0]).toEqual('Genesis - Exodus');
-
-      expect(trainingGroups[1].ranges.length).toEqual(2);
-      expect(trainingGroups[1].ranges[0]).toEqual('Genesis - Exodus');
-      expect(trainingGroups[1].ranges[1]).toEqual('Numbers');
+      expect(trainingGroups[0].ranges).toEqual('Genesis - Exodus');
+      expect(trainingGroups[1].ranges).toEqual('Genesis - Exodus and Numbers');
     });
 
     it('sets the custom serval config flag', () => {

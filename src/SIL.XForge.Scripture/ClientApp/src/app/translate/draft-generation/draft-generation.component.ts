@@ -46,7 +46,7 @@ import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { ServalProjectComponent } from '../../serval-administration/serval-project.component';
 import { NoticeComponent } from '../../shared/notice/notice.component';
-import { projectLabel } from '../../shared/utils';
+import { booksFromScriptureRange, projectLabel } from '../../shared/utils';
 import { WorkingAnimatedIndicatorComponent } from '../../shared/working-animated-indicator/working-animated-indicator.component';
 import { NllbLanguageService } from '../nllb-language.service';
 import { DraftDownloadButtonComponent } from './draft-download-button/draft-download-button.component';
@@ -407,8 +407,10 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   getTranslationScriptureRange(job?: BuildDto): string {
     if (job?.additionalInfo?.translationScriptureRanges == null) return '';
-    return this.i18n.formatAndLocalizeScriptureRange(
-      job.additionalInfo.translationScriptureRanges.map(item => item.scriptureRange).join(';')
+    return this.i18n.enumerateList(
+      booksFromScriptureRange(
+        job.additionalInfo.translationScriptureRanges.map(item => item.scriptureRange).join(';')
+      ).map(b => this.i18n.localizeBook(b))
     );
   }
 

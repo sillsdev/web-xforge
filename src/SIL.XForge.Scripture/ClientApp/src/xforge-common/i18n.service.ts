@@ -242,7 +242,10 @@ export class I18nService {
     const bookNumbers: number[] = booksFromScriptureRange(scriptureRange)
       .filter(i => i > 0)
       .sort((a, b) => a - b);
+    return this.formatAndLocalizeBookRange(bookNumbers);
+  }
 
+  formatAndLocalizeBookRange(bookNumbers: number[]): string {
     if (bookNumbers.length === 0) return '';
 
     const ranges: string[] = [];
@@ -269,7 +272,7 @@ export class I18nService {
     const toBook: string = this.localizeBook(end);
     ranges.push(start === end ? fromBook : `${fromBook} - ${toBook}`);
 
-    return ranges.join(', ');
+    return this.enumerateList(ranges);
   }
 
   localizeReference(verse: VerseRef): string {

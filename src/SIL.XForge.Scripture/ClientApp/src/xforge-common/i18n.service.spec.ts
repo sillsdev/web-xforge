@@ -250,7 +250,7 @@ describe('I18nService', () => {
       const service = getI18nService();
 
       // SUT
-      expect(service.formatAndLocalizeScriptureRange('EXO;GEN;MRK')).toBe('Genesis - Exodus, Mark');
+      expect(service.formatAndLocalizeScriptureRange('EXO;GEN;MRK')).toBe('Genesis - Exodus and Mark');
     });
 
     it('should localize multiple sequences of books', () => {
@@ -266,7 +266,7 @@ describe('I18nService', () => {
 
       // SUT
       expect(service.formatAndLocalizeScriptureRange('JHN;PSA;GEN;LUK;JOB;MAT;MRK')).toBe(
-        'Genesis, Job - Psalms, Matthew - John'
+        'Genesis, Job - Psalms, and Matthew - John'
       );
     });
 
