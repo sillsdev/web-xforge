@@ -1100,90 +1100,6 @@ describe('DraftGenerationStepsComponent', () => {
     });
   });
 
-  describe('target contains previously selected books', () => {
-    const availableBooks = [{ bookNum: 2 }, { bookNum: 3 }];
-    const allBooks = [{ bookNum: 1 }, ...availableBooks, { bookNum: 4 }];
-    const draftingSourceBooks = availableBooks.concat({ bookNum: 5 });
-    const draftingSourceId = 'draftingSource';
-    const config = {
-      trainingSources: [
-        {
-          projectRef: 'source1',
-          shortName: 'sP1',
-          writingSystem: { tag: 'eng' },
-          texts: availableBooks.concat({ bookNum: 1 })
-        },
-        {
-          projectRef: 'source2',
-          shortName: 'sP2',
-          writingSystem: { tag: 'eng' },
-          texts: availableBooks
-        }
-      ] as [DraftSource, DraftSource],
-      trainingTargets: [
-        {
-          projectRef: projectId,
-          shortName: 'tT',
-          writingSystem: { tag: 'nllb' },
-          texts: allBooks.filter(b => b.bookNum !== 4)
-        }
-      ] as [DraftSource],
-      draftingSources: [
-        {
-          projectRef: draftingSourceId,
-          shortName: 'dS',
-          writingSystem: { tag: 'eng' },
-          texts: draftingSourceBooks
-        }
-      ] as [DraftSource]
-    };
-
-    const mockTargetProjectDoc = {
-      id: 'project01',
-      data: createTestProjectProfile({
-        texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }],
-        translateConfig: {
-          draftConfig: {
-            lastSelectedTrainingDataFiles: [],
-            lastSelectedTrainingScriptureRanges: [
-              { projectId: 'source1', scriptureRange: 'GEN;1SA' },
-              { projectId: 'source2', scriptureRange: '1SA;2SA' }
-            ],
-            lastSelectedTranslationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'EXO;LEV' }]
-          }
-        }
-      })
-    } as SFProjectProfileDoc;
-
-    beforeEach(fakeAsync(() => {
-      when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
-      when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
-      when(mockActivatedProjectService.projectDoc$).thenReturn(of(mockTargetProjectDoc));
-      setupProjectProfileMock(
-        draftingSourceId,
-        draftingSourceBooks.map(b => b.bookNum)
-      );
-      when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
-
-      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
-      component = fixture.componentInstance;
-      fixture.detectChanges();
-      tick();
-    }));
-
-    it('should restore previously selected ranges', () => {
-      expect(component.selectedTranslateBooksAsString()).toEqual('Exodus and Leviticus');
-      expect(component.booksToTranslate()).toEqual([
-        { number: 2, selected: true },
-        { number: 3, selected: true }
-      ]);
-      expect(component.selectedTrainingBooksByProj('project01')).toEqual([{ number: 1, selected: true }]);
-      //for source1, Genesis was previously selected, but it's no longer present on both source and target
-      expect(component.selectedTrainingBooksByProj('source1')).toEqual([{ number: 1, selected: true }]);
-      expect(component.selectedTrainingBooksByProj('source2')).toEqual([]);
-    });
-  });
-
   describe('can add additional training data', () => {
     const availableBooks = [{ bookNum: 2 }, { bookNum: 3 }];
     const draftingSourceId = 'draftingSource';
@@ -1403,6 +1319,8 @@ describe('DraftGenerationStepsComponent', () => {
     }));
 
     it('should localize and concatenate the books to translate', () => {
+      expect(component.selectedTranslateBooksAsString()).toEqual('');
+      component.onTranslateBookSelect([3], config.draftingSources[0]);
       expect(component.selectedTranslateBooksAsString()).toEqual('Leviticus');
     });
 

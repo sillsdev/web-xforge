@@ -368,7 +368,6 @@ export class DraftGenerationStepsComponent implements OnInit {
           }
 
           this.setInitialTrainingBooks(projectId!);
-          this.setInitialTranslateBooks();
 
           // Store the books that are not in the target
           this.unusableTrainingTargetBooks = [...trainingSourceBooks].filter(
@@ -692,23 +691,6 @@ export class DraftGenerationStepsComponent implements OnInit {
 
   private clearErrorMessage(): void {
     this.showBookSelectionError = false;
-  }
-
-  private setInitialTranslateBooks(): void {
-    // Get the previously selected translation books from the target project
-    const previousTranslation =
-      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRanges ?? [];
-    for (const range of previousTranslation) {
-      const source = this.draftingSources.find(s => s.projectRef === range.projectId);
-      if (source !== undefined) {
-        for (const bookNum of booksFromScriptureRange(range.scriptureRange)) {
-          const sourceBook = this.availableTranslateBooks[source.projectRef].find(b => b.number === bookNum);
-          if (sourceBook !== undefined) {
-            sourceBook.selected = true;
-          }
-        }
-      }
-    }
   }
 
   private setInitialTrainingBooks(targetProjectId: string): void {
