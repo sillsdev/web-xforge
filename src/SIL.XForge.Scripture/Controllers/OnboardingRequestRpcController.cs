@@ -485,6 +485,7 @@ public class OnboardingRequestRpcController(
     /// Gets basic project metadata by Paratext ID. Only accessible to Serval admins.
     /// Note: This is intended for external use by the onboarding script, not internal Scripture Forge use.
     /// </summary>
+    [Obsolete("Use GetProjectMetadata with either paratextId or scriptureForgeId instead for more flexible querying")]
     public async Task<IRpcMethodResult> GetProjectMetadataByParatextId(string paratextId)
     {
         try
@@ -528,6 +529,68 @@ public class OnboardingRequestRpcController(
                 {
                     { "method", "GetProjectMetadataByParatextId" },
                     { "paratextId", paratextId },
+                }
+            );
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets basic project metadata by Paratext ID or Scripture Forge project ID. Only accessible to Serval admins.
+    /// Caller must provide exactly one identifier.
+    /// Note: This is intended for external use by the onboarding script, not internal Scripture Forge use.
+    /// </summary>
+    public async Task<IRpcMethodResult> GetProjectMetadata(string? paratextId = null, string? scriptureForgeId = null)
+    {
+        try
+        {
+            // Check if user is a Serval admin
+            if (!SystemRoles.Contains(SystemRole.ServalAdmin))
+            {
+                return ForbiddenError();
+            }
+
+            bool hasParatextId = !string.IsNullOrEmpty(paratextId);
+            bool hasScriptureForgeId = !string.IsNullOrEmpty(scriptureForgeId);
+            if (hasParatextId == hasScriptureForgeId)
+            {
+                return InvalidParamsError("Provide exactly one of: paratextId or scriptureForgeId");
+            }
+
+            IQueryable<SFProject> projectQuery = _realtimeService.QuerySnapshots<SFProject>();
+            SFProject? project;
+
+            project = hasParatextId
+                ? projectQuery.FirstOrDefault(p => p.ParatextId == paratextId)
+                : projectQuery.FirstOrDefault(p => p.Id == scriptureForgeId);
+
+            if (project is null)
+            {
+                return NotFoundError("Project not found");
+            }
+
+            object result = new
+            {
+                project.Id,
+                project.ParatextId,
+                project.Name,
+                project.ShortName,
+            };
+
+            return Ok(result);
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", "GetProjectMetadata" },
+                    { "paratextId", paratextId },
+                    { "scriptureForgeId", scriptureForgeId },
                 }
             );
             throw;
