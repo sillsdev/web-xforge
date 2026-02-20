@@ -505,15 +505,11 @@ describe('ImportQuestionsDialogComponent', () => {
   describe('Import from Paratext', () => {
     it('disables import button when user is offline', fakeAsync(() => {
       const env = new TestEnvironment({ offline: true });
-      tick();
-      env.fixture.detectChanges();
-
       expect(env.importFromParatextButton.disabled).toBe(true);
       expect(env.errorMessages[1]).toEqual('Importing from Paratext is not available offline.');
-      env.testOnlineStatusService.setIsOnline(true);
-      tick();
-      env.fixture.detectChanges();
 
+      // simulate going back online
+      env.setOnline(true);
       expect(env.importFromParatextButton.disabled).toBe(false);
     }));
 
