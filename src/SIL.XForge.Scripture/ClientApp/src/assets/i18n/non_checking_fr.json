@@ -226,7 +226,8 @@
     "sign_up_for_drafting": "Inscrivez-vous pour la rédaction",
     "temporarily_unavailable": "La génération de l'ébauche est temporairement indisponible.",
     "warning_generation_faulted": "La dernière tentative de génération a échoué. Cliquez sur [em]\"{{ generateButtonText }}\"[/em] ci-dessous pour réessayer.",
-    "click_book_to_preview": "Cliquez sur un livre ci-dessous pour prévisualiser l'ébauche et l'ajouter à votre projet."
+    "click_book_to_preview": "Cliquez sur un livre ci-dessous pour prévisualiser l'ébauche et l'ajouter à votre projet.",
+    "nt_drafting_notice": "Draft generation is now available to help New Testament translation teams prepare their first drafts. Review our { 1 }help resources{ 2 } to find out how to get started, and to understand how incremental drafting and quality estimates might benefit your project. You will need to contact us to use this feature."
   },
   "draft_generation_steps": {
     "back": "Retour",
