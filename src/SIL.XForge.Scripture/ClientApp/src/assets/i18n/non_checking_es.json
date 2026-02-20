@@ -226,7 +226,8 @@
     "sign_up_for_drafting": "Inscríbase para redactar",
     "temporarily_unavailable": "La generación de borradores está temporalmente no disponible.",
     "warning_generation_faulted": "El último intento de generación ha fallado. Haga clic en [em]\"{{ generateButtonText }}\"[/em] a continuación para volver a intentarlo.",
-    "click_book_to_preview": "Haga clic en un libro de los que aparecen a continuación para previsualizar el borrador y añadirlo a su proyecto."
+    "click_book_to_preview": "Haga clic en un libro de los que aparecen a continuación para previsualizar el borrador y añadirlo a su proyecto.",
+    "nt_drafting_notice": "La generación de borradores ya está disponible para ayudar a los equipos de traducción del Nuevo Testamento a preparar sus primeros borradores. Consulte nuestros { 1 }recursos de ayuda{ 2 } para saber cómo empezar y entender cómo la redacción incremental y las estimaciones de calidad pueden beneficiar a su proyecto. Para utilizar esta función, deberá ponerse en contacto con nosotros."
   },
   "draft_generation_steps": {
     "back": "Atrás",

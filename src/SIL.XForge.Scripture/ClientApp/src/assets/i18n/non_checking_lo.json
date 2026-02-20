@@ -226,7 +226,8 @@
     "sign_up_for_drafting": "Sign up for drafting",
     "temporarily_unavailable": "Generating drafts is temporarily unavailable.",
     "warning_generation_faulted": "Last generation attempt failed. Click [em]\"{{ generateButtonText }}\"[/em] below to try again.",
-    "click_book_to_preview": "Click a book below to preview the draft and add it to your project."
+    "click_book_to_preview": "Click a book below to preview the draft and add it to your project.",
+    "nt_drafting_notice": "Draft generation is now available to help New Testament translation teams prepare their first drafts. Review our { 1 }help resources{ 2 } to find out how to get started, and to understand how incremental drafting and quality estimates might benefit your project. You will need to contact us to use this feature."
   },
   "draft_generation_steps": {
     "back": "ຄືນ",
