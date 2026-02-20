@@ -48,6 +48,13 @@
     </div>
   </div>
 
+  @if (shouldShowDurationComparisonCaution) {
+    <app-notice icon="calendar_month" type="warning">
+      Be careful about comparing Serval build outcomes and durations before 2025-12-18 with those after, because of
+      changes to the event grouping system.
+    </app-notice>
+  }
+
   @if (!isLoading) {
     @if (currentProjectFilter) {
       <app-notice icon="filter_alt" mode="fill-dark">

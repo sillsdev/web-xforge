@@ -210,6 +210,19 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     return this.formatDurationInHours(this.maxDuration);
   }
 
+  /** Whether to show a caution notice about comparing older durations. */
+  get shouldShowDurationComparisonCaution(): boolean {
+    if (this.currentDateRange == null) return false;
+
+    // Day after the date when draftGenerationRequestId began to be used, which was in SFv5.46.1 at
+    // 2025-12-18T17:48:57Z.
+    const requestIdIntroductionDate: Date = new Date(2025, 12 - 1, 18 + 1);
+
+    const rangeStartMs: number = this.currentDateRange.start.getTime();
+    const cutoffMs: number = requestIdIntroductionDate.getTime();
+    return rangeStartMs < cutoffMs;
+  }
+
   ngOnInit(): void {
     if (
       !this.columnsToDisplay.includes('buildDetails') &&
