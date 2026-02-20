@@ -75,7 +75,7 @@ This repository contains three interconnected applications:
 
 # Code comments
 
-- DO NOT REMOVE COMMENTS ALREADY IN THE CODE. You can add to or edit existing comments, but do not removing the existing comments.
+- Do not remove comments already in the code if they are still relevant.
 - Do not insert new comments into the code where method calls already make it clear.
 - Do not add method comments unless the method would be unclear to an experienced developer.
 - Do put comments into the code to make it more clear what is going on if it would not be obvious to an experienced developer.
@@ -85,19 +85,20 @@ This repository contains three interconnected applications:
 
 # TypeScript language
 
-- Use explicit true/false/null/undefined rather than truthy/falsy
-- Never rely on JavaScript's truthy or falsy. Instead, work with actual true, false, null, and undefined values, rather than relying on their interpretation as truthy or falsy. For example, if `count` might be null, or undefined, or zero, don't write code like `if (count)` or `const foo:string = someVariable ? 'a' : 'b'`. Instead, inspect for the null, undefined, or zero rather than letting the value be interpreted as truthy for falsy. For example, use `if (count == null)` or `const foo:string = someVariable != null 'a' : 'b'` or `if (count > 0)`.
-- Specify types when declaring variables, arguments, and for function return types. For example, don't write
+- When doing null checks, prefer using `== null` or `!= null` rather than writing `if (value)` or `if (!value)` to better express intent. If guarding for empty strings or other falsy values is necessary, prefer to explicitly check for those as well, such as `if (value == null || value === '')` rather than just `if (!value)`.
+- Specify types when declaring variables, arguments, and for function return types, if it's not completely obvious. For example, don't write
   `const projectId = this.determineProjectId();` or
   `const buildEvents = eventsSorted.filter(...);` or
   `const buildEvent = buildEvents[0];`. Instead, write
   `const projectId: string | undefined = this.determineProjectId();` and
   `const buildEvents: EventMetric[] = eventsSorted.filter(...);` and
   `const buildEvent: EventMetric | undefined = buildEvents[0];`.
+- Prefer to use `null` to express a deliberate absence of a value, and `undefined` to express a value that has not been set yet.
+- Observables (including subclasses such as Subject or BehaviorSubject) should have names that end with a `$`.
+
+# Angular templates
+
 - Use `@if {}` syntax rather than `*ngIf` syntax.
-- Although interacting with existing code and APIs may necessitate the use of `null`, when writing new code, prefer using `undefined` rather than `null`.
-- Fields that are of type Subject or BehaviorSubject should have names that end with a `$`.
-- When refactoring a method to be static, you should not need to start passing in `this` as an argument.
 
 # Code
 
