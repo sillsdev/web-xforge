@@ -16,7 +16,7 @@ jobs:
     name: "Prepare Realtime Server backend"
     strategy:
       matrix:
-        os: ["ubuntu-22.04"]
+        os: ["ubuntu-24.04"]
         dotnet_version: ["8.0.x"]
         node_version: ["22.13.0"]
         npm_version: ["10.9.2"]
@@ -78,7 +78,7 @@ jobs:
     needs: [prepare-realtimeserver-backend]
     strategy:
       matrix:
-        os: ["ubuntu-22.04"]
+        os: ["ubuntu-24.04"]
         dotnet_version: ["8.0.x"]
         node_version: ["22.13.0"]
         npm_version: ["10.9.2"]
@@ -148,7 +148,7 @@ jobs:
     needs: [prepare-realtimeserver-backend]
     strategy:
       matrix:
-        os: ["ubuntu-22.04"]
+        os: ["ubuntu-24.04"]
         dotnet_version: ["8.0.x"]
         node_version: ["22.13.0"]
         npm_version: ["10.9.2"]
@@ -230,7 +230,7 @@ jobs:
     needs: [prepare-realtimeserver-backend]
     strategy:
       matrix:
-        os: ["ubuntu-22.04"]
+        os: ["ubuntu-24.04"]
         dotnet_version: ["8.0.x"]
         node_version: ["22.13.0"]
         npm_version: ["10.9.2"]
@@ -291,7 +291,7 @@ jobs:
     environment: "e2e_tests"
     strategy:
       matrix:
-        os: ["ubuntu-22.04"]
+        os: ["ubuntu-24.04"]
         dotnet_version: ["8.0.x"]
         node_version: ["22.13.0"]
         npm_version: ["10.9.2"]
