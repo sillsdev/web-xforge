@@ -86,7 +86,6 @@ describe('TextService', () => {
     await createDoc<TextData>(conn, TEXTS_COLLECTION, id, new Delta(), 'rich-text', source);
     await new Promise<void>(resolve => {
       env.db.getOps(TEXTS_COLLECTION, id, 0, null, { metadata: true }, (_, ops) => {
-        console.log(JSON.stringify(ops));
         expect(ops[0].m.source).toBe(source);
         resolve();
       });

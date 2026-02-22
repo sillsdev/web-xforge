@@ -187,16 +187,19 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
 
   get error(): string | null {
     const errorStates = this.paratextIdControl.errors;
-    if (errorStates == null) return null;
-    else if (errorStates.invalidSelection === true) {
+    if (errorStates == null) {
+      return null;
+    } else if (errorStates.invalidSelection === true) {
       return translate('project_select.please_select_valid_project_or_resource');
-    } else if (this.externalValidators.length > 0) {
+    } else if (this.externalValidators !== 'disabled' && this.externalValidators.length > 0) {
       const errorMessageMapper = this.errorMessageMapper;
       if (errorMessageMapper == null) {
         throw new Error('ProjectSelectComponent requires `errorMessageMapper` when `validators` are provided.');
       }
       return errorMessageMapper(errorStates);
-    } else return null;
+    } else {
+      return null;
+    }
   }
 
   writeValue(value: any): void {
