@@ -48,15 +48,17 @@
           <app-notice type="error">{{ t("cannot_edit_project") }}</app-notice>
         }
 
-        @if (projectSelectionForm.valid && !isLoadingProject && (targetProjectDoc$ | async); as project) {
-          <app-notice [icon]="'verified'">
-            {{
-              t("ready_to_import", {
-                projectShortName: project?.data?.shortName,
-                projectName: project?.data?.name
-              })
-            }}
-          </app-notice>
+        @if (projectSelectionForm.valid && !isLoadingProject && (targetProjectDoc$ | async); as projectDoc) {
+          @if (projectDoc?.data != null) {
+            <app-notice [icon]="'verified'">
+              {{
+                t("ready_to_import", {
+                  projectShortName: projectDoc?.data?.shortName,
+                  projectName: projectDoc?.data?.name
+                })
+              }}
+            </app-notice>
+          }
         }
 
         @if (cannotAdvanceFromProjectSelection && !projectReadyToImport) {
@@ -161,14 +163,16 @@
         } @else if (!isConnecting) {
           <h1>{{ t("connected_to_project") }}</h1>
           @if (targetProjectDoc$ | async; as projectDoc) {
-            <app-notice [icon]="'verified'">
-              {{
-                t("ready_to_import", {
-                  projectShortName: projectDoc?.data?.shortName,
-                  projectName: projectDoc?.data?.name
-                })
-              }}
-            </app-notice>
+            @if (projectDoc?.data != null) {
+              <app-notice [icon]="'verified'">
+                {{
+                  t("ready_to_import", {
+                    projectShortName: projectDoc?.data?.shortName,
+                    projectName: projectDoc?.data?.name
+                  })
+                }}
+              </app-notice>
+            }
           }
           <div class="button-strip">
             <button matButton="outlined" matStepperPrevious [disabled]="isImporting">
