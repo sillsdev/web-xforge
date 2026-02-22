@@ -2228,11 +2228,17 @@ public class ParatextService : DisposableBase, IParatextService
         int milestoneOps = 0;
         for (int i = ops.Length - 1; i >= 0; i--)
         {
+            // Emit the op as a milestone if it is:
+            //  - Outside the current milestone period
+            //  - From a different source or user
+            //  - A draft applied or history restored, as these are user initiated actions
             Op op = ops[i];
             if (
                 op.Metadata.Timestamp < milestonePeriod.AddMinutes(0 - interval)
                 || op.Metadata.Source != documentRevision.Source
                 || op.Metadata.UserId != documentRevision.UserId
+                || op.Metadata.Source == OpSource.Draft
+                || op.Metadata.Source == OpSource.History
             )
             {
                 // If this is not the first op, emit the revision
