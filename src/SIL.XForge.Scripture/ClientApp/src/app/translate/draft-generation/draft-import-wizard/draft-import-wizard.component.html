@@ -152,7 +152,7 @@
               matButton="filled"
               color="primary"
               (click)="retryProjectConnection()"
-              [disabled]="!isAppOnline && isImporting"
+              [disabled]="!isAppOnline || isImporting"
             >
               <mat-icon>refresh</mat-icon>
               {{ t("retry") }}
