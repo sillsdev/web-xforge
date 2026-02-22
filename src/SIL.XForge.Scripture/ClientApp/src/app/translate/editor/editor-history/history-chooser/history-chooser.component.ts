@@ -150,7 +150,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
     destroyRef.onDestroy(async () => {
       // Stop the SignalR connection when the component is destroyed
       await projectNotificationService.stop();
-      projectNotificationService.setNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
+      projectNotificationService.removeNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
     });
   }
 
