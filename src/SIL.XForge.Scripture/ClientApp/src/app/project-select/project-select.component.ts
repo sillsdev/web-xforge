@@ -49,7 +49,8 @@ const PROJECT_SELECT_VALUE_ACCESSOR: any = {
   ]
 })
 export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
-  @Output() valueChange: EventEmitter<string | undefined> = new EventEmitter<string | undefined>(true);
+  // Firefox will not in a timely way emit this asynchronously, so we must emit the valueChange event synchronously
+  @Output() valueChange: EventEmitter<string | undefined> = new EventEmitter<string | undefined>();
   @Output() projectSelect = new EventEmitter<SelectableProject>();
 
   @Input() placeholder = '';
@@ -176,9 +177,10 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
   @Input()
   set validators(value: ValidatorFn[] | 'disabled') {
     this.externalValidators = value;
-    const validators = value === 'disabled' ? [] : [this.validateProject.bind(this)].concat(value);
-    for (const validator of validators)
+    const validators = value === 'disabled' ? null : [this.validateProject.bind(this)].concat(value);
+    for (const validator of validators ?? []) {
       if (typeof validator !== 'function') throw new Error(`The validator is not a function: ${validator}`);
+    }
     this.paratextIdControl.setValidators(validators);
   }
   get validators(): ValidatorFn[] | 'disabled' {

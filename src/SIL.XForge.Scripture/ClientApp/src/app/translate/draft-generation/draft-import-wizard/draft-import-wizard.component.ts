@@ -435,6 +435,10 @@ export class DraftImportWizardComponent implements OnInit {
         } finally {
           this.isLoadingProject = false;
         }
+      } else {
+        // Need to connect to the project
+        this.canEditProject = paratextProject.isConnectable;
+        this.targetProjectDoc$.next(undefined);
       }
     } else {
       // Need to create SF project - this will happen after connection step
@@ -635,6 +639,8 @@ export class DraftImportWizardComponent implements OnInit {
     } catch (error) {
       if (error instanceof CommandError && error.code === CommandErrorCode.NotFound) {
         this.importError = this.i18n.translateStatic('draft_import_wizard.project_deleted');
+        // Reload the projects
+        void this.loadProjects();
       } else {
         this.importError = error instanceof Error ? error.message : 'Unknown error occurred';
       }
@@ -653,12 +659,19 @@ export class DraftImportWizardComponent implements OnInit {
 
     // Update based on book or chapter
     if (draftApplyState.bookNum === 0 && draftApplyState.chapterNum === 0) {
+      // Get the total number of failures
+      const totalFailures = this.importProgress.reduce(
+        (sum, p) => sum + (p.failedChapters.some(c => c.chapterNum === 0) ? p.totalChapters : p.failedChapters.length),
+        0
+      );
       // Handle the final states
       if (draftApplyState.status === DraftApplyStatus.Successful) {
         // Check if there were any failures
         this.isImporting = false;
-        const totalFailures = this.importProgress.reduce((sum, p) => sum + p.failedChapters.length, 0);
-        if (totalFailures > 0) {
+        const totalCompleted = this.importProgress.reduce((sum, p) => sum + p.completedChapters.length, 0);
+        if (totalFailures > 0 && totalCompleted > 0) {
+          this.importError = `Imported ${totalCompleted} chapter(s) successfully. Failed to import ${totalFailures} chapter(s). See details above.`;
+        } else if (totalFailures > 0) {
           this.importError = `Failed to import ${totalFailures} chapter(s). See details above.`;
         } else {
           this.importComplete = true;
@@ -670,7 +683,6 @@ export class DraftImportWizardComponent implements OnInit {
         });
         this.isImporting = false;
         this.importError = draftApplyState.message;
-        const totalFailures = this.importProgress.reduce((sum, p) => sum + p.failedChapters.length, 0);
         if (totalFailures > 0 && (this.importError == null || this.importError.length === 0)) {
           this.importError = `Failed to import ${totalFailures} chapter(s). See details above.`;
         }
@@ -730,6 +742,8 @@ export class DraftImportWizardComponent implements OnInit {
     } catch (error) {
       if (error instanceof CommandError && error.code === CommandErrorCode.NotFound) {
         this.syncError = this.i18n.translateStatic('draft_import_wizard.project_deleted');
+        // Reload the projects
+        void this.loadProjects();
       } else {
         this.syncError = error instanceof Error ? error.message : 'Sync failed';
       }
