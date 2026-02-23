@@ -369,6 +369,7 @@
     "paragraph_breaks_description": "Scripture Forge translates complete verses, without paragraph breaks, because this gives the best translation. Choose where to place the paragraph breaks from the source.",
     "paragraph_breaks_title": "Paragraph breaks",
     "new": "new",
+    "new_draft_required": "You must generate a new draft to preview the formatting options. Changing these options will not update any existing drafts you may have.",
     "no_quote_convention_detected": "No quote convention could be detected for your project. Straight quotes will be used in the draft regardless of which option you choose.",
     "option_best_guess": "Best guess",
     "option_best_guess_description": "Paragraph breaks in the source will be placed at the best guess of where they should be in the draft. Recommended for most projects.",

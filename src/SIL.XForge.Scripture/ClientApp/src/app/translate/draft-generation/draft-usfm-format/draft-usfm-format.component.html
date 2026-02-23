@@ -70,14 +70,20 @@
       </div>
     </div>
     <div class="text-container">
-      <app-book-chapter-chooser
-        [books]="booksWithDrafts"
-        [book]="bookNum"
-        (bookChange)="bookChanged($event)"
-        [(chapter)]="chapterNum"
-        [chapters]="chaptersWithDrafts"
-        (chapterChange)="chapterChanged($event)"
-      ></app-book-chapter-chooser>
+      @if (!canPreviewDraft) {
+        <app-notice class="preview-draft-warning" type="warning" mode="fill-dark" icon="info">
+          {{ t("new_draft_required") }}
+        </app-notice>
+      } @else {
+        <app-book-chapter-chooser
+          [books]="booksWithDrafts"
+          [book]="bookNum"
+          (bookChange)="bookChanged($event)"
+          [(chapter)]="chapterNum"
+          [chapters]="chaptersWithDrafts"
+          (chapterChange)="chapterChanged($event)"
+        ></app-book-chapter-chooser>
+      }
       <div class="viewer-container">
         <app-text
           [isReadOnly]="true"

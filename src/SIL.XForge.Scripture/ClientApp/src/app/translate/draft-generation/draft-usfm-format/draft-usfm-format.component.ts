@@ -77,6 +77,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   isInitializing: boolean = true;
   paragraphBreakFormat = ParagraphBreakFormat;
   quoteStyle = QuoteFormat;
+  canPreviewDraft: boolean = true;
 
   paragraphFormat = new FormControl<ParagraphBreakFormat>(ParagraphBreakFormat.BestGuess);
   quoteFormat = new FormControl<QuoteFormat>(QuoteFormat.Denormalized);
@@ -158,6 +159,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
         const projectDoc = this.activatedProjectService.projectDoc;
         if (projectDoc?.data == null) return;
         this.setUsfmConfig(projectDoc.data.translateConfig.draftConfig.usfmConfig);
+        this.canPreviewDraft = this.projectService.hasDraft(projectDoc.data, undefined, true);
         const texts: TextInfo[] = projectDoc.data.texts;
         this.booksWithDrafts = texts
           .filter(t => this.projectService.hasDraft(projectDoc.data, t.bookNum, true))
@@ -229,8 +231,11 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
       this.saving = true;
       await this.projectService.onlineSetUsfmConfig(this.projectId, this.currentFormat);
       this.lastSavedState = this.currentFormat;
+      // If the user could not preview the draft, we should not update it, as a blank draft will result
+      if (this.canPreviewDraft) {
+        await this.servalAdministration.onlineRetrievePreTranslationStatus(this.projectId);
+      }
       // The user is redirected to the draft generation page if the format is saved.
-      await this.servalAdministration.onlineRetrievePreTranslationStatus(this.projectId);
       this.close();
     } catch (err) {
       console.error('Error occurred while saving draft format', err);
@@ -267,7 +272,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
         quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe(isOnline => {
-        if (isOnline) this.reloadText();
+        if (isOnline && this.canPreviewDraft) this.reloadText();
       });
   }
 

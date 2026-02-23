@@ -313,6 +313,31 @@ describe('DraftUsfmFormatComponent', () => {
     const env = new TestEnvironment({ canDenormalizeQuotes: false });
     expect(env.quoteFormatWarning).not.toBeNull();
   }));
+
+  it('shows a notice if we are configuring for a build that is not the latest', fakeAsync(async () => {
+    const env = new TestEnvironment({ hasDraft: false });
+    verify(mockedDraftHandlingService.getDraft(anything(), anything())).never();
+    expect(env.harnesses?.length).toEqual(5);
+    await env.harnesses![0].check();
+    tick();
+    expect(env.component.canPreviewDraft).toBe(false);
+    expect(env.cannotPreviewDraftWarning).not.toBeNull();
+    env.fixture.detectChanges();
+    const config: DraftUsfmConfig = {
+      paragraphFormat: ParagraphBreakFormat.BestGuess,
+      quoteFormat: QuoteFormat.Denormalized
+    };
+    verify(mockedProjectService.onlineSetUsfmConfig(env.projectId, anything())).never();
+    verify(mockedDraftHandlingService.getDraft(anything(), anything())).never();
+
+    // redirect to generate draft
+    env.saveButton.click();
+    tick();
+    env.fixture.detectChanges();
+    verify(mockedProjectService.onlineSetUsfmConfig(env.projectId, deepEqual(config))).once();
+    verify(mockedServalAdministration.onlineRetrievePreTranslationStatus(env.projectId)).never();
+    verify(mockedLocation.back()).once();
+  }));
 });
 
 class TestEnvironment {
@@ -322,7 +347,7 @@ class TestEnvironment {
   readonly projectId = 'project01';
   onlineStatusService: TestOnlineStatusService;
 
-  constructor(args: { project?: Partial<SFProjectProfile>; canDenormalizeQuotes?: boolean } = {}) {
+  constructor(args: { project?: Partial<SFProjectProfile>; canDenormalizeQuotes?: boolean; hasDraft?: boolean } = {}) {
     const userDoc = mock(UserDoc);
     this.onlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
     when(mockedDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(
@@ -342,7 +367,7 @@ class TestEnvironment {
     when(mockedNoticeService.show(anything())).thenResolve();
     when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(true);
     when(mockedServalAdministration.onlineRetrievePreTranslationStatus(anything())).thenResolve();
-    when(mockedProjectService.hasDraft(anything(), anything(), anything())).thenReturn(true);
+    when(mockedProjectService.hasDraft(anything(), anything(), anything())).thenReturn(args.hasDraft ?? true);
     this.setupProject(args.project);
     this.fixture = TestBed.createComponent(DraftUsfmFormatComponent);
     this.component = this.fixture.componentInstance;
@@ -366,6 +391,10 @@ class TestEnvironment {
 
   get quoteFormatWarning(): HTMLElement | null {
     return this.fixture.nativeElement.querySelector('.quote-format-warning');
+  }
+
+  get cannotPreviewDraftWarning(): HTMLElement | null {
+    return this.fixture.nativeElement.querySelector('.preview-draft-warning');
   }
 
   setupProject(project?: Partial<SFProjectProfile>): void {
