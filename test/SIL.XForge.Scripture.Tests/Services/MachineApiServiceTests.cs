@@ -4850,7 +4850,7 @@ public class MachineApiServiceTests
                             new TextInfo
                             {
                                 BookNum = 1,
-                                Chapters = [new Chapter { Number = 1 }, new Chapter { Number = 2 }],
+                                Chapters = [new Chapter { Number = 3 }, new Chapter { Number = 4 }],
                             },
                         ],
                         UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator } },
