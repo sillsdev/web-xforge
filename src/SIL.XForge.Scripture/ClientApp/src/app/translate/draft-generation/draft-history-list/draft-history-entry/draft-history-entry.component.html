@@ -21,7 +21,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <div class="draft-entry-body">
-        @if (formattingOptionsSupported && !formattingOptionsSelected && isLatestBuild && draftIsAvailable) {
+        @if (formattingOptionsSupported && !formattingOptionsSelected && draftIsAvailable) {
           <p class="require-formatting-options">
             {{ t("select_formatting_options") }}
           </p>
