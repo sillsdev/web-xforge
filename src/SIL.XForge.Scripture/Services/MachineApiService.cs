@@ -131,6 +131,7 @@ public class MachineApiService(
         var result = new DraftApplyResult();
         IDocument<SFProject> targetProjectDoc;
         List<int> createdBooks = [];
+        List<int> updatedBooks = [];
         Dictionary<int, List<int>> createdChapters = [];
         List<(int bookNum, int chapterNum)> chaptersToNotify = [];
         List<(ChapterDelta chapterDelta, int bookNum)> chapterDeltas = [];
@@ -416,10 +417,36 @@ public class MachineApiService(
                         .Chapters.FindIndex(c => c.Number == chapterDelta.Number);
                     if (chapterIndex == -1)
                     {
-                        // Create a new chapter record
-                        await targetProjectDoc.SubmitJson0OpAsync(op =>
-                            op.Add(pd => pd.Texts[textIndex].Chapters, chapter)
-                        );
+                        // Get the index before and after
+                        int previousChapterIndex = targetProjectDoc
+                            .Data.Texts[textIndex]
+                            .Chapters.FindIndex(c => c.Number < chapterDelta.Number);
+                        int nextChapterIndex = targetProjectDoc
+                            .Data.Texts[textIndex]
+                            .Chapters.FindIndex(c => c.Number > chapterDelta.Number);
+
+                        // Insert the chapter at the correct position
+                        if (nextChapterIndex == -1)
+                        {
+                            // Add a new chapter record to the end of the array
+                            await targetProjectDoc.SubmitJson0OpAsync(op =>
+                                op.Add(pd => pd.Texts[textIndex].Chapters, chapter)
+                            );
+                        }
+                        else if (previousChapterIndex == -1)
+                        {
+                            // Insert before the next chapter
+                            await targetProjectDoc.SubmitJson0OpAsync(op =>
+                                op.Insert(pd => pd.Texts[textIndex].Chapters, 0, chapter)
+                            );
+                        }
+                        else
+                        {
+                            // Insert after the previous chapter
+                            await targetProjectDoc.SubmitJson0OpAsync(op =>
+                                op.Insert(pd => pd.Texts[textIndex].Chapters, nextChapterIndex, chapter)
+                            );
+                        }
 
                         // Record that the chapter was created
                         if (createdChapters.TryGetValue(bookNum, out List<int> chapters))
@@ -441,6 +468,9 @@ public class MachineApiService(
                             op.Set(pd => pd.Texts[textIndex].Chapters[chapterIndex].LastVerse, chapter.LastVerse);
                         });
                     }
+
+                    // Record that the book was updated
+                    updatedBooks.Add(bookNum);
                 }
             }
 
@@ -457,18 +487,23 @@ public class MachineApiService(
                         Message = "Loading permissions from Paratext.",
                     }
                 );
-                if (createdBooks.Count == 0)
+                if (updatedBooks.Count > 0)
                 {
                     // Update books for which chapters were added
                     await projectService.UpdatePermissionsAsync(
                         curUserId,
                         targetProjectDoc,
                         users: null,
-                        books: chapterDeltas.Select(c => c.bookNum).Distinct().ToList(),
+                        books: chapterDeltas
+                            .Where(c => updatedBooks.Contains(c.bookNum))
+                            .Select(c => c.bookNum)
+                            .Distinct()
+                            .ToList(),
                         cancellationToken
                     );
                 }
-                else
+
+                if (createdBooks.Count > 0)
                 {
                     // Update permissions for new books
                     await paratextService.UpdateParatextPermissionsForNewBooksAsync(
