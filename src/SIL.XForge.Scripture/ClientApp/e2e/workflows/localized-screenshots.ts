@@ -432,11 +432,11 @@ export async function localizedScreenshots(
   await user.click(page.getByRole('button', { name: 'Save' }));
 
   await forEachLocale(async locale => {
-    await user.hover(page.getByRole('radio').first(), defaultArrowLocation);
+    await user.hover(page.getByRole('button', { name: 'Ruth', exact: true }), defaultArrowLocation);
     await screenshot(page, { ...context, pageName: 'draft_complete', locale });
   });
 
-  await page.getByRole('radio', { name: 'Ruth' }).first().click();
+  await user.click(page.getByRole('button', { name: 'Ruth', exact: true }));
 
   await expect(page.getByRole('button', { name: 'Add to project' })).toBeVisible({ timeout: 15_000 });
 
@@ -461,19 +461,16 @@ export async function localizedScreenshots(
   await expect(page.getByText('The draft is ready')).toBeVisible();
 
   await forEachLocale(async locale => {
-    await page.getByRole('radio').nth(1).click();
-    await user.hover(page.getByRole('menuitem').last(), defaultArrowLocation);
+    await user.hover(page.getByRole('button', { name: 'Add to project' }), defaultArrowLocation);
     await screenshot(page, { ...context, pageName: 'import_book', locale });
-    await page.keyboard.press('Escape');
   });
 
   await forEachLocale(async locale => {
-    await page.getByRole('radio').nth(1).click();
-    await page.getByRole('menuitem').last().click();
+    await user.click(page.getByRole('button', { name: 'Add to project' }));
+
     await page.getByRole('combobox').fill('seedsp2');
     await page.getByRole('option', { name: 'seedsp2 - ' }).click();
-    await page.getByRole('checkbox').check();
-    await user.hover(page.getByRole('button').last(), defaultArrowLocation);
+    await user.hover(page.getByRole('button', { name: 'next' }), defaultArrowLocation);
     await screenshotElements(
       page,
       [page.locator('mat-dialog-container')],
