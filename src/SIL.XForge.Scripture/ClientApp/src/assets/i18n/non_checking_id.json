@@ -226,7 +226,8 @@
     "sign_up_for_drafting": "Mendaftar untuk pembuatan konsep",
     "temporarily_unavailable": "Membuat konsep untuk sementara tidak tersedia.",
     "warning_generation_faulted": "Upaya membuat terakhir gagal. Klik [em] \"{{ generateButtonText }}\"[/em] di bawah ini untuk mencoba lagi.",
-    "click_book_to_preview": "Klik kitab di bawah ini untuk melihat pratinjau konsep dan menambahkannya ke proyek Anda."
+    "click_book_to_preview": "Klik kitab di bawah ini untuk melihat pratinjau konsep dan menambahkannya ke proyek Anda.",
+    "nt_drafting_notice": "Draft generation is now available to help New Testament translation teams prepare their first drafts. Review our { 1 }help resources{ 2 } to find out how to get started, and to understand how incremental drafting and quality estimates might benefit your project. You will need to contact us to use this feature."
   },
   "draft_generation_steps": {
     "back": "Kembali",
