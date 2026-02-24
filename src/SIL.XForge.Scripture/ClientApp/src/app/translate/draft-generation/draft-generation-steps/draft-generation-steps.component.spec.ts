@@ -1413,6 +1413,12 @@ describe('DraftGenerationStepsComponent', () => {
       expect(trainingGroups[1].ranges).toEqual('Genesis - Exodus and Numbers');
     });
 
+    it('should show that the training books was empty', () => {
+      component.onSourceTrainingBookSelect([], config.trainingSources[0]);
+      component.onSourceTrainingBookSelect([], config.trainingSources[1]);
+      expect(component.selectedTrainingBooksCollapsed().length).toEqual(0);
+    });
+
     it('sets the custom serval config flag', () => {
       expect(component['isCustomConfigSet']).toEqual(true);
     });
