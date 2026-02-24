@@ -376,6 +376,7 @@ class TestEnvironment {
 
   syncTargetProject(): void {
     this.component.isConnecting = false;
+    this.component.showOverwriteConfirmation = true;
     this.wait();
   }
 
