@@ -48,6 +48,7 @@ export class SyncProgressComponent {
   syncProgress: number = 0;
   activeSyncProjectDoc?: SFProjectDoc;
   private progressPercent$ = new BehaviorSubject<number>(0);
+  private shouldCloseProjectNotificationService: boolean = false;
 
   /** The progress as a percent between 0 and 100 for the target project and the source project, if one exists. */
   syncProgressPercent$: Observable<number> = this.progressPercent$.pipe(map(p => p * 100));
@@ -78,7 +79,10 @@ export class SyncProgressComponent {
   ) {
     this.projectNotificationService.setNotifySyncProgressHandler(this.syncProgressHandler);
     this.destroyRef.onDestroy(async () => {
-      await this.projectNotificationService.stop();
+      // Stop the SignalR connection when the component is destroyed, if we started it
+      if (this.shouldCloseProjectNotificationService) {
+        await this.projectNotificationService.stop();
+      }
       this.projectNotificationService.removeNotifySyncProgressHandler(this.syncProgressHandler);
     });
   }
@@ -105,7 +109,7 @@ export class SyncProgressComponent {
     if (this._projectDoc?.data == null || !this.appOnline) {
       return;
     }
-    await this.projectNotificationService.start();
+    this.shouldCloseProjectNotificationService = await this.projectNotificationService.start();
     if (this._projectDoc?.data?.translateConfig.source != null) {
       const sourceProjectId: string | undefined = this._projectDoc.data.translateConfig.source?.projectRef;
       if (sourceProjectId != null) {

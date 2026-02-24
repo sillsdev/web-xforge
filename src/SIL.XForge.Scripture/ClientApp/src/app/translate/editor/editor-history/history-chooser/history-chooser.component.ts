@@ -112,6 +112,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
       void this.loadHistory();
     }
   };
+  private shouldCloseProjectNotificationService: boolean = false;
 
   // 'asyncScheduler' prevents ExpressionChangedAfterItHasBeenCheckedError
   private loading$ = new BehaviorSubject<boolean>(false);
@@ -140,7 +141,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
   ) {
     this.projectId$.pipe(quietTakeUntilDestroyed(destroyRef), filterNullish(), take(1)).subscribe(async projectId => {
       // Start the connection to SignalR
-      await projectNotificationService.start();
+      this.shouldCloseProjectNotificationService = await projectNotificationService.start();
       // Subscribe to notifications for this project
       await projectNotificationService.subscribeToProject(projectId);
       // When build notifications are received, reload the build history
@@ -148,8 +149,10 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
       projectNotificationService.setNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
     });
     destroyRef.onDestroy(async () => {
-      // Stop the SignalR connection when the component is destroyed
-      await projectNotificationService.stop();
+      // Stop the SignalR connection when the component is destroyed, if we started it
+      if (this.shouldCloseProjectNotificationService) {
+        await projectNotificationService.stop();
+      }
       projectNotificationService.removeNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
     });
   }

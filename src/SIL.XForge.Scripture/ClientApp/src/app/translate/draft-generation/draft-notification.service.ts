@@ -41,20 +41,35 @@ export class DraftNotificationService {
     this.connection.on('notifyDraftApplyProgress', handler);
   }
 
-  async start(): Promise<void> {
-    if (this.connection.state !== HubConnectionState.Disconnected) {
-      await this.connection.stop();
+  /**
+   * Starts a SignalR hub connection.
+   *
+   * If true is returned, your component must Stop() the connection when finished.
+   * If false is returned, your component must not Stop() the connection, as other components are using it.
+   *
+   * @returns true if the connection was started by this method, otherwise false.
+   */
+  async start(): Promise<boolean> {
+    // Only start the connection if it is not already started
+    if (
+      this.connection.state !== HubConnectionState.Connected &&
+      this.connection.state !== HubConnectionState.Connecting &&
+      this.connection.state !== HubConnectionState.Reconnecting
+    ) {
+      await this.connection.start().catch(err => {
+        // Suppress AbortErrors, as they are not caused by server error, but the SignalR connection state
+        // These will be thrown if a user navigates away quickly after
+        // starting the sync or the app loses internet connection
+        if (err instanceof AbortError || !this.appOnline) {
+          return;
+        } else {
+          throw err;
+        }
+      });
+      return true;
+    } else {
+      return false;
     }
-    await this.connection.start().catch(err => {
-      // Suppress AbortErrors, as they are not caused by server error, but the SignalR connection state
-      // These will be thrown if a user navigates away quickly after
-      // starting the sync or the app loses internet connection
-      if (err instanceof AbortError || !this.appOnline) {
-        return;
-      } else {
-        throw err;
-      }
-    });
   }
 
   async stop(): Promise<void> {

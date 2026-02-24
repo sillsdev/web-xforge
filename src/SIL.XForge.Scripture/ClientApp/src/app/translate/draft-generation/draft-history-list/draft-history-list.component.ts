@@ -28,6 +28,7 @@ export class DraftHistoryListComponent {
   private readonly notifyBuildProgressHandler = (projectId: string): void => {
     this.loadHistory(projectId);
   };
+  private shouldCloseProjectNotificationService: boolean = false;
 
   constructor(
     activatedProject: ActivatedProjectService,
@@ -46,7 +47,7 @@ export class DraftHistoryListComponent {
         // Initially load the history
         this.loadHistory(projectId);
         // Start the connection to SignalR
-        await projectNotificationService.start();
+        this.shouldCloseProjectNotificationService = await projectNotificationService.start();
         // Subscribe to notifications for this project
         await projectNotificationService.subscribeToProject(projectId);
         // When build notifications are received, reload the build history
@@ -54,8 +55,10 @@ export class DraftHistoryListComponent {
         projectNotificationService.setNotifyBuildProgressHandler(this.notifyBuildProgressHandler);
       });
     destroyRef.onDestroy(async () => {
-      // Stop the SignalR connection when the component is destroyed
-      await projectNotificationService.stop();
+      // Stop the SignalR connection when the component is destroyed, if we started it
+      if (this.shouldCloseProjectNotificationService) {
+        await projectNotificationService.stop();
+      }
       projectNotificationService.removeNotifyBuildProgressHandler(this.notifyBuildProgressHandler);
     });
   }

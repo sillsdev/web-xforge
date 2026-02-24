@@ -289,6 +289,7 @@ export class DraftImportWizardComponent implements OnInit {
   private readonly notifyDraftApplyProgressHandler = (projectId: string, draftApplyState: DraftApplyState): void => {
     this.updateDraftApplyState(projectId, draftApplyState);
   };
+  private shouldCloseDraftNotificationService: boolean = false;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) readonly data: BuildDto,
@@ -305,8 +306,10 @@ export class DraftImportWizardComponent implements OnInit {
   ) {
     this.draftNotificationService.setNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
     destroyRef.onDestroy(async () => {
-      // Stop the SignalR connection when the component is destroyed
-      await draftNotificationService.stop();
+      // Stop the SignalR connection when the component is destroyed, if we started it
+      if (this.shouldCloseDraftNotificationService) {
+        await this.draftNotificationService.stop();
+      }
       this.draftNotificationService.removeNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
     });
   }
@@ -620,7 +623,7 @@ export class DraftImportWizardComponent implements OnInit {
     }
 
     // Subscribe to SignalR updates
-    await this.draftNotificationService.start();
+    this.shouldCloseDraftNotificationService = await this.draftNotificationService.start();
     await this.draftNotificationService.subscribeToProject(this.sourceProjectId);
 
     // Build a scripture range and timestamp to import
