@@ -660,7 +660,7 @@ export class DraftImportWizardComponent implements OnInit {
     // Update based on book or chapter
     if (draftApplyState.bookNum === 0 && draftApplyState.chapterNum === 0) {
       // Get the total number of failures
-      const totalFailures = this.importProgress.reduce(
+      const failed = this.importProgress.reduce(
         (sum, p) => sum + (p.failedChapters.some(c => c.chapterNum === 0) ? p.totalChapters : p.failedChapters.length),
         0
       );
@@ -668,11 +668,16 @@ export class DraftImportWizardComponent implements OnInit {
       if (draftApplyState.status === DraftApplyStatus.Successful) {
         // Check if there were any failures
         this.isImporting = false;
-        const totalCompleted = this.importProgress.reduce((sum, p) => sum + p.completedChapters.length, 0);
-        if (totalFailures > 0 && totalCompleted > 0) {
-          this.importError = `Imported ${totalCompleted} chapter(s) successfully. Failed to import ${totalFailures} chapter(s). See details above.`;
-        } else if (totalFailures > 0) {
-          this.importError = `Failed to import ${totalFailures} chapter(s). See details above.`;
+        const successful = this.importProgress.reduce((sum, p) => sum + p.completedChapters.length, 0);
+        if (failed > 0 && successful > 0) {
+          this.importError = this.i18n.translateStatic('draft_import_wizard.import_some_chapters_failed', {
+            successful,
+            failed
+          });
+        } else if (failed > 0) {
+          this.importError = this.i18n.translateStatic('draft_import_wizard.import_all_chapters_failed', {
+            failed
+          });
         } else {
           this.importComplete = true;
         }
@@ -683,8 +688,10 @@ export class DraftImportWizardComponent implements OnInit {
         });
         this.isImporting = false;
         this.importError = draftApplyState.message;
-        if (totalFailures > 0 && (this.importError == null || this.importError.length === 0)) {
-          this.importError = `Failed to import ${totalFailures} chapter(s). See details above.`;
+        if (failed > 0 && (this.importError == null || this.importError.length === 0)) {
+          this.importError = this.i18n.translateStatic('draft_import_wizard.import_all_chapters_failed', {
+            failed
+          });
         }
       }
     } else if (draftApplyState.bookNum > 0) {

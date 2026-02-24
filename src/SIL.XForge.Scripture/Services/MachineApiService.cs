@@ -418,9 +418,9 @@ public class MachineApiService(
                     if (chapterIndex == -1)
                     {
                         // Get the index before and after
-                        int previousChapterIndex = targetProjectDoc
+                        bool hasPrecedingChapter = targetProjectDoc
                             .Data.Texts[textIndex]
-                            .Chapters.FindIndex(c => c.Number < chapterDelta.Number);
+                            .Chapters.Any(c => c.Number < chapterDelta.Number);
                         int nextChapterIndex = targetProjectDoc
                             .Data.Texts[textIndex]
                             .Chapters.FindIndex(c => c.Number > chapterDelta.Number);
@@ -433,16 +433,16 @@ public class MachineApiService(
                                 op.Add(pd => pd.Texts[textIndex].Chapters, chapter)
                             );
                         }
-                        else if (previousChapterIndex == -1)
+                        else if (!hasPrecedingChapter)
                         {
-                            // Insert before the next chapter
+                            // Insert before other chapters
                             await targetProjectDoc.SubmitJson0OpAsync(op =>
                                 op.Insert(pd => pd.Texts[textIndex].Chapters, 0, chapter)
                             );
                         }
                         else
                         {
-                            // Insert after the previous chapter
+                            // Insert before the next chapter
                             await targetProjectDoc.SubmitJson0OpAsync(op =>
                                 op.Insert(pd => pd.Texts[textIndex].Chapters, nextChapterIndex, chapter)
                             );
