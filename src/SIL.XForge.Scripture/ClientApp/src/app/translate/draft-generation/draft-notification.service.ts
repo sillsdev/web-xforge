@@ -17,6 +17,7 @@ export class DraftNotificationService {
   private options: IHttpConnectionOptions = {
     accessTokenFactory: async () => (await this.authService.getAccessToken()) ?? ''
   };
+  private openConnections: number = 0;
 
   constructor(
     private authService: AuthService,
@@ -42,23 +43,30 @@ export class DraftNotificationService {
   }
 
   async start(): Promise<void> {
-    if (this.connection.state !== HubConnectionState.Disconnected) {
-      await this.connection.stop();
+    this.openConnections++;
+    if (
+      this.connection.state !== HubConnectionState.Connected &&
+      this.connection.state !== HubConnectionState.Connecting &&
+      this.connection.state !== HubConnectionState.Reconnecting
+    ) {
+      await this.connection.start().catch(err => {
+        // Suppress AbortErrors, as they are not caused by server error, but the SignalR connection state
+        // These will be thrown if a user navigates away quickly after
+        // starting the sync or the app loses internet connection
+        if (err instanceof AbortError || !this.appOnline) {
+          return;
+        } else {
+          throw err;
+        }
+      });
     }
-    await this.connection.start().catch(err => {
-      // Suppress AbortErrors, as they are not caused by server error, but the SignalR connection state
-      // These will be thrown if a user navigates away quickly after
-      // starting the sync or the app loses internet connection
-      if (err instanceof AbortError || !this.appOnline) {
-        return;
-      } else {
-        throw err;
-      }
-    });
   }
 
   async stop(): Promise<void> {
-    await this.connection.stop();
+    // Only stop the connection if this is the last open connection
+    if (--this.openConnections === 0) {
+      await this.connection.stop();
+    }
   }
 
   async subscribeToProject(projectId: string): Promise<void> {
