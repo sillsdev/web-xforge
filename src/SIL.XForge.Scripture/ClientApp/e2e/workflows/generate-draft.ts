@@ -1,6 +1,6 @@
 import { expect } from 'npm:@playwright/test';
 import { Locator, Page } from 'npm:playwright';
-import { preset, ScreenshotContext } from '../e2e-globals.ts';
+import { E2E_SYNC_DEFAULT_TIMEOUT, preset, ScreenshotContext } from '../e2e-globals.ts';
 import {
   enableDeveloperMode,
   enableDraftingOnProjectAsServalAdmin,
@@ -203,21 +203,27 @@ export async function generateDraft(
   await user.click(page.getByRole('button', { name: 'Save' }));
 
   // Preview and apply chapter 1
-  await user.click(page.getByRole('radio', { name: bookToDraft }));
+  await user.click(page.getByRole('button', { name: bookToDraft, exact: true }));
   await user.click(page.getByRole('button', { name: 'Add to project' }));
   await user.click(page.getByRole('button', { name: 'Overwrite chapter' }));
   await user.click(page.locator('app-tab-header').filter({ hasText: DRAFT_PROJECT_SHORT_NAME }));
 
   // Go back to generate draft page and apply all chapters
   await user.click(page.getByRole('link', { name: 'Generate draft' }));
-  await user.click(page.locator('app-draft-preview-books mat-button-toggle:last-child button'));
-  await user.click(page.getByRole('menuitem', { name: 'Add to project' }));
-  await user.check(page.getByRole('checkbox', { name: /I understand the draft will overwrite .* in .* project/ }));
   await user.click(page.getByRole('button', { name: 'Add to project' }));
-  await expect(
-    page.getByRole('heading', { name: `Successfully applied all chapters to ${bookToDraft}` })
-  ).toBeVisible();
-  await user.click(page.getByRole('button', { name: 'Close' }));
+  await user.click(page.getByRole('combobox', { name: 'Choose a project' }));
+  await user.type(DRAFT_PROJECT_SHORT_NAME);
+  await user.click(page.getByRole('option', { name: `${DRAFT_PROJECT_SHORT_NAME} -` }));
+  await user.click(page.getByRole('button', { name: 'Next' }));
+  await user.check(page.getByRole('checkbox', { name: /I understand that existing content will be overwritten/ }));
+  await user.click(page.getByRole('button', { name: 'Import' }));
+  await expect(page.getByText('Import complete', { exact: true })).toBeVisible();
+  await user.click(page.getByRole('button', { name: 'Next' }));
+  await user.click(page.locator('[data-test-id="step-7-sync"]'));
+  await expect(page.getByText(`The draft has been imported into ${DRAFT_PROJECT_SHORT_NAME}`)).toBeVisible({
+    timeout: E2E_SYNC_DEFAULT_TIMEOUT
+  });
+  await user.click(page.getByRole('button', { name: 'Done' }));
 
   await screenshot(page, { pageName: 'generate_draft_add_to_project', ...context });
 
