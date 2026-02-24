@@ -322,7 +322,7 @@
     "choose_project": "Choose a project",
     "complete": "Complete",
     "confirm_books_to_import": "Confirm books to import",
-    "confirm_books_to_import_description": "The following books will be imported. Please click on a book to deselect it and not import it.",
+    "confirm_books_to_import_description": "The following books will be imported. You may click a book to deselect and not import it.",
     "confirm_overwrite": "Confirm overwrite",
     "connect_project_description": "The selected project {{ boldStart }}{{ projectShortName }} - {{ projectName }}{{ boldEnd }} has not yet been connected in Scripture Forge. Do you want to connect it so you can import the draft to it?",
     "connect_project": "Connect project",

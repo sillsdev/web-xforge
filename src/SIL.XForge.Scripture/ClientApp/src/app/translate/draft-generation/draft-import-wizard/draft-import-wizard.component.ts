@@ -258,7 +258,7 @@ export class DraftImportWizardComponent implements OnInit {
   showBookSelection = false;
 
   // Step 5: Overwrite confirmation (conditional)
-  showOverwriteConfirmation = true;
+  showOverwriteConfirmation = false;
   overwriteForm = new FormGroup({
     confirmOverwrite: new FormControl(false, Validators.requiredTrue)
   });
