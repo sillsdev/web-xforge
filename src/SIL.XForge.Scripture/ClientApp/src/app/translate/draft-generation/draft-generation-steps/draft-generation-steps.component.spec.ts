@@ -1303,9 +1303,9 @@ describe('DraftGenerationStepsComponent', () => {
     beforeEach(fakeAsync(() => {
       when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
-      when(mockActivatedProjectService.projectDoc$).thenReturn(
-        new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc)
-      );
+      const projectDoc$ = new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc);
+      when(mockActivatedProjectService.projectDoc$).thenReturn(projectDoc$);
+      when(mockActivatedProjectService.changes$).thenReturn(projectDoc$);
       setupProjectProfileMock(
         draftingSourceId,
         allBooks.map(b => b.bookNum)
@@ -1332,9 +1332,22 @@ describe('DraftGenerationStepsComponent', () => {
     });
 
     it('should show that the training books was empty', () => {
-      component.onSourceTrainingBookSelect([], config.trainingSources[0]);
-      component.onSourceTrainingBookSelect([], config.trainingSources[1]);
+      fixture.detectChanges();
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      component.onTranslateBookSelect([2], config.draftingSources[0]);
+      expect(component.booksToTranslate().length).toEqual(1);
+      fixture.detectChanges();
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      // select no training books
+      component.onTranslatedBookSelect([]);
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      // summary page
+      expect(component.stepper.selectedIndex).toEqual(3);
       expect(component.selectedTrainingBooksCollapsed().length).toEqual(0);
+      expect(fixture.nativeElement.querySelector('.no-training-books')).not.toBeNull();
     });
 
     it('sets the custom serval config flag', () => {

@@ -481,11 +481,12 @@ export class DraftGenerationStepsComponent implements OnInit {
       const trainingBooksBySource: number[] = this.availableTrainingBooks[projectRef]
         .filter(b => b.selected)
         .map(b => b.number);
-      if (trainingBooksBySource.length === 0) continue;
-      trainingRanges.push({
-        ranges: this.i18n.formatAndLocalizeBookRange(trainingBooksBySource),
-        sourceName: source.shortName
-      });
+      if (trainingBooksBySource.length > 0) {
+        trainingRanges.push({
+          ranges: this.i18n.formatAndLocalizeBookRange(trainingBooksBySource),
+          sourceName: source.shortName
+        });
+      }
     }
     return trainingRanges;
   }
