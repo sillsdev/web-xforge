@@ -24,6 +24,7 @@ import { TextDocSource } from '../../core/models/text-doc';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { MACHINE_API_BASE_URL } from '../../machine-api/http-client';
+import { DraftGenerationBuildState, ServalBuildReportDto } from '../../serval-administration/serval-build-report';
 import { BuildConfig } from './draft-generation';
 import { DraftGenerationService } from './draft-generation.service';
 
@@ -300,6 +301,57 @@ describe('DraftGenerationService', () => {
 
       // SUT
       service.getBuildHistory(projectId).subscribe(result => {
+        expect(result).toBeUndefined();
+      });
+      tick();
+    }));
+  });
+
+  describe('getBuildsSince', () => {
+    const sampleReport: ServalBuildReportDto = {
+      build: buildDto,
+      project: undefined,
+      timeline: {
+        servalCreated: undefined,
+        servalStarted: undefined,
+        servalCompleted: undefined,
+        servalFinished: undefined,
+        sfUserRequested: undefined,
+        sfBuildProjectSubmitted: undefined,
+        sfUserCancelled: undefined,
+        sfAcknowledgedCompletion: undefined,
+        requestTime: undefined,
+        phases: undefined
+      },
+      config: { trainingScriptureRanges: [], translationScriptureRanges: [], trainingDataFileIds: [] },
+      problems: [],
+      draftGenerationRequestId: undefined,
+      requesterSFUserId: undefined,
+      status: DraftGenerationBuildState.Queued
+    };
+
+    it('should request builds', fakeAsync(() => {
+      const sinceDate = new Date('2025-01-01T00:00:00.000Z');
+
+      // SUT
+      service.getBuildsSince(sinceDate).subscribe(result => {
+        expect(result).toEqual([sampleReport]);
+      });
+      tick();
+
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/builds/since:${sinceDate.toISOString()}`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush([sampleReport]);
+      tick();
+    }));
+
+    it('should return undefined if offline', fakeAsync(() => {
+      const sinceDate = new Date('2025-01-01T00:00:00.000Z');
+      testOnlineStatusService.setIsOnline(false);
+
+      service.getBuildsSince(sinceDate).subscribe(result => {
         expect(result).toBeUndefined();
       });
       tick();
@@ -922,7 +974,7 @@ describe('DraftGenerationService', () => {
         })
       } as SFProjectProfileDoc;
       const lastCompletedBuild: BuildDto = {
-        additionalInfo: { dateFinished: '2024-08-27T00:00:00.000+00:00' }
+        additionalInfo: { dateFinished: '2024-08-27T00:00:00.000Z' }
       } as BuildDto;
 
       service.downloadGeneratedDraftZip(projectDoc, lastCompletedBuild).subscribe({
@@ -963,8 +1015,8 @@ describe('DraftGenerationService', () => {
       } as SFProjectProfileDoc;
       const lastCompletedBuild: BuildDto = {
         additionalInfo: {
-          dateFinished: '2024-08-27T00:00:00.000+00:00',
-          dateGenerated: '2024-08-27T01:02:03.004+00:00'
+          dateFinished: '2024-08-27T00:00:00.000Z',
+          dateGenerated: '2024-08-27T01:02:03.004Z'
         }
       } as BuildDto;
 
@@ -996,8 +1048,8 @@ describe('DraftGenerationService', () => {
       } as SFProjectProfileDoc;
       const lastCompletedBuild: BuildDto = {
         additionalInfo: {
-          dateFinished: '2024-08-27T00:00:00.000+00:00',
-          dateGenerated: '2024-08-27T01:02:03.004+00:00',
+          dateFinished: '2024-08-27T00:00:00.000Z',
+          dateGenerated: '2024-08-27T01:02:03.004Z',
           translationScriptureRanges: [{ projectId, scriptureRange: '1JN' }]
         }
       } as BuildDto;

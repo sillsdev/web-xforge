@@ -1,0 +1,495 @@
+@if (isOnline) {
+  <div class="filter-controls">
+    <app-date-range-picker (dateRangeChange)="onDateRangeChange($event)"></app-date-range-picker>
+    <div class="export-button-group">
+      <button mat-raised-button color="primary" class="export-csv-button" (click)="exportCsv()">
+        <mat-icon>download</mat-icon>
+        <span class="export-item-label">
+          Export CSV <app-info text="Download a .csv spreadsheet of the table data"></app-info>
+        </span>
+      </button>
+      <button mat-raised-button color="primary" class="export-menu-button" [matMenuTriggerFor]="exportMenu">
+        <mat-icon>arrow_drop_down</mat-icon>
+      </button>
+    </div>
+    <mat-menu #exportMenu="matMenu" xPosition="before">
+      <button mat-menu-item (click)="exportRsv()">
+        <mat-icon>download</mat-icon>
+        <span class="export-item-label">
+          Export RSV
+          <app-info
+            text="Download an .rsv Rows of String Values spreadsheet of the table data (https://github.com/Stenway/RSV-Specification)"
+          >
+          </app-info>
+        </span>
+      </button>
+    </mat-menu>
+    <div class="duration-area-toggle">
+      <mat-slide-toggle [checked]="includeDeleted" (change)="onIncludeDeletedChange($event.checked)">
+        Include deleted projects
+      </mat-slide-toggle>
+      <app-info
+        text="Include builds in the list that do not correspond to any projects that are currently in this site database."
+      ></app-info>
+    </div>
+  </div>
+
+  @if (summaryDisplayItems.length > 0) {
+    <div class="summary-area">
+      <div class="summary-grid">
+        @for (item of summaryDisplayItems; track item.label) {
+          @if (item.prominence === "top" || summaryIsExpanded) {
+            <div class="summary-item">
+              <span class="summary-label">
+                {{ item.label }}
+                @if (item.explanation != null) {
+                  <app-info [text]="item.explanation"></app-info>
+                }
+              </span>
+              <span class="summary-value">{{ item.value }}</span>
+            </div>
+          }
+        }
+      </div>
+      <button
+        mat-icon-button
+        class="expand-button"
+        (click)="summaryIsExpanded = !summaryIsExpanded"
+        [attr.aria-label]="summaryIsExpanded ? 'Collapse summary' : 'Expand summary'"
+      >
+        <mat-icon>{{ summaryIsExpanded ? "expand_less" : "expand_more" }}</mat-icon>
+      </button>
+    </div>
+  }
+
+  @if (!isLoadingData) {
+    <div class="table-wrapper">
+      <table mat-table [dataSource]="rows" multiTemplateDataRows>
+        <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
+        <tr
+          class="build-row"
+          mat-row
+          *matRowDef="let row; columns: columnsToDisplay"
+          [class.expanded-row]="isRowExpanded(row)"
+        ></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: ['expandedDetail']"
+          class="detail-row"
+          [class.detail-row-collapsed]="!isRowExpanded(row)"
+        ></tr>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="status-cell">
+              <div class="status-icon-container">
+                <mat-icon
+                  class="status-icon status-is-{{ row.report.status.toLowerCase() }}"
+                  [matTooltip]="ServalBuildsComponent.formatStatusLabel(row.report.status)"
+                >
+                  {{ statusIcon(row.report.status) }}
+                </mat-icon>
+                @if (row.report.problems.length > 0) {
+                  <mat-icon class="problem-badge" [matTooltip]="row.report.problems.join('; ')">warning</mat-icon>
+                }
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="project">
+          <th mat-header-cell *matHeaderCellDef>Project</th>
+          <td mat-cell *matCellDef="let row">
+            @if (!row.projectDeleted) {
+              <div class="project-lines">
+                @if (row.projectServalAdminUrl != null) {
+                  <a [href]="row.projectServalAdminUrl" class="project-link" target="_blank" rel="noopener">
+                    {{ row.projectNameDisplay || "Unknown" }}
+                  </a>
+                } @else {
+                  <span>{{ row.projectNameDisplay || "Unknown" }}</span>
+                }
+                <div class="owner-line">
+                  <app-owner [ownerRef]="row.report.requesterSFUserId" [includeAvatar]="true"></app-owner>
+                </div>
+              </div>
+            } @else {
+              <div class="project-lines deleted-project">
+                <div class="deleted-project-name">
+                  <mat-icon class="deleted-project-icon" matTooltip="Project may have been deleted">delete</mat-icon>
+
+                  <span>Unknown or deleted project</span>
+                </div>
+                <div class="owner-line">
+                  <app-owner [ownerRef]="row.report.requesterSFUserId" [includeAvatar]="true"></app-owner>
+                </div>
+              </div>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="source">
+          <th mat-header-cell *matHeaderCellDef>Source</th>
+          <td mat-cell *matCellDef="let row">
+            @for (projectBook of row.translationBooks; track projectBook.sfProjectId) {
+              <div>
+                @let translationLink = servalAdminProjectLinkFor(projectBook.sfProjectId);
+                @if (translationLink != null) {
+                  <a [href]="translationLink" target="_blank" rel="noopener" class="project-link">
+                    {{ projectBook.projectDisplayName }}
+                  </a>
+                } @else {
+                  <span class="project-link">{{ projectBook.projectDisplayName }}</span>
+                }
+                :
+                @if (projectBook.books.length <= 2) {
+                  {{ projectBook.books.join(", ") }}
+                } @else {
+                  <span [matTooltip]="projectBook.books.join(', ')" class="book-count">
+                    {{ projectBook.books.length }} books
+                  </span>
+                }
+              </div>
+            } @empty {
+              None
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="requested">
+          <th mat-header-cell *matHeaderCellDef>Requested</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.report.timeline.requestTime != null ? localizedDate(row.report.timeline.requestTime) : "-" }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="language">
+          <th mat-header-cell *matHeaderCellDef>Language</th>
+          <td mat-cell *matCellDef="let row">
+            @let sourceLang = row.report.build?.executionData?.sourceLanguageTag;
+            @let targetLang = row.report.build?.executionData?.targetLanguageTag;
+            @if (sourceLang != null && targetLang != null) {
+              {{ sourceLang }} ➔ {{ targetLang }}
+            } @else {
+              -
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="expand">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let row">
+            <button
+              mat-icon-button
+              class="expand-button"
+              (click)="toggleRowExpansion(row)"
+              [attr.aria-label]="isRowExpanded(row) ? 'Collapse row' : 'Expand row'"
+            >
+              <mat-icon>{{ isRowExpanded(row) ? "expand_less" : "expand_more" }}</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="expandedDetail">
+          <td mat-cell *matCellDef="let row" [attr.colspan]="columnsToDisplay.length">
+            <div
+              class="expanded-detail"
+              [class.expanded-detail-collapsed]="!isRowExpanded(row)"
+              [attr.aria-hidden]="!isRowExpanded(row)"
+            >
+              <div class="detail-grid">
+                <mat-card appearance="filled" class="detail-card">
+                  <mat-card-header>
+                    <mat-card-title-group>
+                      <mat-icon>fingerprint</mat-icon>
+                      <mat-card-title>Identifiers</mat-card-title>
+                    </mat-card-title-group>
+                  </mat-card-header>
+                  <mat-card-content class="detail-card-content">
+                    <span class="detail-area-stacked-keyvalues">
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">Serval build ID</span>
+                        @let servalBuildId = row.report.build?.additionalInfo?.buildId;
+                        <span class="detail-value detail-value-with-copy code">
+                          <span>{{ servalBuildId ?? "Unknown" }}</span>
+                          @if (servalBuildId != null) {
+                            <app-copy [value]="servalBuildId"></app-copy>
+                          }
+                        </span>
+                      </div>
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">SF draft generation request ID</span>
+                        @let draftGenerationRequestId = row.report.draftGenerationRequestId;
+                        <span class="detail-value detail-value-with-copy code">
+                          <span>{{ draftGenerationRequestId ?? "-" }}</span>
+                          @if (draftGenerationRequestId != null) {
+                            <app-copy [value]="draftGenerationRequestId"></app-copy>
+                          }
+                        </span>
+                      </div>
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">SF project ID</span>
+                        <span class="detail-value detail-value-with-copy code">
+                          <span>{{ row.report.project?.sfProjectId ?? "-" }}</span>
+                          @if (row.report.project?.sfProjectId != null) {
+                            <app-copy [value]="row.report.project?.sfProjectId"></app-copy>
+                          }
+                        </span>
+                      </div>
+
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">Serval version</span>
+                        <span class="detail-value">{{ row.report.build?.deploymentVersion ?? "Unknown" }}</span>
+                      </div>
+                    </span>
+                  </mat-card-content>
+                </mat-card>
+
+                <mat-card appearance="filled" class="detail-card">
+                  <mat-card-header>
+                    <mat-card-title-group>
+                      <mat-icon>emoji_people</mat-icon>
+                      <mat-card-title>Requesting user</mat-card-title>
+                    </mat-card-title-group>
+                  </mat-card-header>
+                  <mat-card-content class="detail-card-content">
+                    <span class="detail-area-stacked-keyvalues">
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">SF user ID</span>
+                        <span class="detail-value detail-value-with-copy code">
+                          <span>{{ row.report.requesterSFUserId ?? "-" }}</span>
+                          @if (row.report.requesterSFUserId != null) {
+                            <app-copy [value]="row.report.requesterSFUserId"></app-copy>
+                          }
+                        </span>
+                      </div>
+
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">Display name</span>
+                        @let requesterName = requesterDisplayName(row.report.requesterSFUserId) | async;
+                        <span class="detail-value">{{ requesterName ?? "Unknown" }}</span>
+                      </div>
+                    </span>
+                  </mat-card-content>
+                </mat-card>
+
+                <mat-card appearance="filled" class="detail-card">
+                  <mat-card-header>
+                    <mat-card-title-group>
+                      <mat-icon>merge</mat-icon>
+                      <mat-card-title>Training</mat-card-title>
+                    </mat-card-title-group>
+                  </mat-card-header>
+                  <mat-card-content class="detail-card-content">
+                    <span class="detail-area-stacked-keyvalues">
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">Training books</span>
+                        <span class="detail-value">
+                          <div class="detail-books-list">
+                            @for (projectBook of row.trainingBooks; track projectBook.sfProjectId) {
+                              <div>
+                                @let detailTrainingLink = servalAdminProjectLinkFor(projectBook.sfProjectId);
+                                @if (detailTrainingLink != null) {
+                                  <a [href]="detailTrainingLink" target="_blank" rel="noopener" class="project-link">
+                                    {{ projectBook.projectDisplayName }}
+                                  </a>
+                                } @else {
+                                  <span class="project-link">{{ projectBook.projectDisplayName }}</span>
+                                }
+                                : {{ projectBook.books.join(", ") }}
+                              </div>
+                            } @empty {
+                              <span>None</span>
+                            }
+                          </div>
+                        </span>
+                      </div>
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">Translation books</span>
+                        <span class="detail-value">
+                          <div class="detail-books-list">
+                            @for (projectBook of row.translationBooks; track projectBook.sfProjectId) {
+                              <div>
+                                @let detailTranslationLink = servalAdminProjectLinkFor(projectBook.sfProjectId);
+                                @if (detailTranslationLink != null) {
+                                  <a [href]="detailTranslationLink" target="_blank" rel="noopener" class="project-link">
+                                    {{ projectBook.projectDisplayName }}
+                                  </a>
+                                } @else {
+                                  <span class="project-link">{{ projectBook.projectDisplayName }}</span>
+                                }
+                                : {{ projectBook.books.join(", ") }}
+                              </div>
+                            } @empty {
+                              <span>None</span>
+                            }
+                          </div>
+                        </span>
+                      </div>
+                    </span>
+                  </mat-card-content>
+                </mat-card>
+
+                <mat-card appearance="filled" class="detail-card">
+                  <mat-card-header>
+                    <mat-card-title-group>
+                      <mat-icon>translate</mat-icon>
+                      <mat-card-title>Language info</mat-card-title>
+                    </mat-card-title-group>
+                  </mat-card-header>
+                  <mat-card-content class="detail-card-content">
+                    <span class="detail-area-stacked-keyvalues">
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">Source language</span>
+                        <span class="detail-value">{{
+                          formatLanguageWithName(row.report.build?.executionData?.sourceLanguageTag)
+                        }}</span>
+                      </div>
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">Target language</span>
+                        <span class="detail-value">{{
+                          formatLanguageWithName(row.report.build?.executionData?.targetLanguageTag)
+                        }}</span>
+                      </div>
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">Strings trained on</span>
+                        <span class="detail-value">{{ row.report.build?.executionData?.trainCount ?? "-" }}</span>
+                      </div>
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">Strings translated</span>
+                        <span class="detail-value">{{
+                          row.report.build?.executionData?.pretranslateCount ?? "-"
+                        }}</span>
+                      </div>
+                    </span>
+                  </mat-card-content>
+                </mat-card>
+
+                <mat-card appearance="filled" class="detail-card">
+                  <mat-card-header>
+                    <mat-card-title-group>
+                      <mat-icon>timer</mat-icon>
+                      <mat-card-title>Timing</mat-card-title>
+                    </mat-card-title-group>
+                  </mat-card-header>
+                  <mat-card-content class="detail-card-content">
+                    <div class="detail-area-stacked-keyvalues timing-grid">
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">User request</span>
+                        <span class="detail-value"
+                          >{{ formatDateTime(row.report.timeline.sfUserRequested) ?? "-" }} &nbsp;
+                          {{ durationUserRequestToCompletionAcknowledged(row.report) }}</span
+                        >
+                      </div>
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">SF build request</span>
+                        <span class="detail-value">{{
+                          formatDateTime(row.report.timeline.sfBuildProjectSubmitted) ?? "-"
+                        }}</span>
+                      </div>
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">Serval creation</span>
+                        <span class="detail-value"
+                          >{{ formatDateTime(row.report.timeline.servalCreated) ?? "-" }} &nbsp;
+                          {{ durationServalCreatedToFinish(row.report) }}</span
+                        >
+                      </div>
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">Train phase</span>
+                        <span class="detail-value"
+                          >{{ formatDateTime(getPhase(row.report, "Train")?.started) ?? "-" }} &nbsp;
+                          {{ durationPhaseTrain(row.report) }}</span
+                        >
+                      </div>
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">Inference phase</span>
+                        <span class="detail-value"
+                          >{{ formatDateTime(getPhase(row.report, "Inference")?.started) ?? "-" }} &nbsp;
+                          {{ durationPhaseInference(row.report) }}</span
+                        >
+                      </div>
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">Serval finish</span>
+                        <span class="detail-value">{{
+                          formatDateTime(row.report.timeline.servalFinished) ?? "-"
+                        }}</span>
+                      </div>
+                      @if (row.report.timeline.sfUserCancelled != null) {
+                        <div class="detail-keyvalue">
+                          <span class="detail-key">User cancel</span>
+                          <span class="detail-value">{{ formatDateTime(row.report.timeline.sfUserCancelled) }}</span>
+                        </div>
+                      }
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">SF acknowledges Serval completion</span>
+                        <span class="detail-value">{{
+                          formatDateTime(row.report.timeline.sfAcknowledgedCompletion) ?? "-"
+                        }}</span>
+                      </div>
+                      @if (row.report.timeline.servalCreated != null && row.report.timeline.servalFinished != null) {
+                        <div
+                          class="timing-bar timing-bar-serval"
+                          [style.gridRow]="getTimingBarRowRange(row, 'serval')"
+                          aria-hidden="true"
+                        ></div>
+                      }
+                      @if (
+                        row.report.timeline.sfUserRequested != null &&
+                        row.report.timeline.sfAcknowledgedCompletion != null
+                      ) {
+                        <div
+                          class="timing-bar timing-bar-user"
+                          [style.gridRow]="getTimingBarRowRange(row, 'user')"
+                          aria-hidden="true"
+                        ></div>
+                      }
+                    </div>
+                  </mat-card-content>
+                </mat-card>
+              </div>
+
+              <div class="detail-actions">
+                @let id = row.report.build?.additionalInfo?.buildId;
+                @if (id != null) {
+                  <a
+                    mat-button
+                    class="details-dialog-button"
+                    href="{{ clearMLUrl(id) }}"
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    <mat-icon>engineering</mat-icon>
+                    View in ClearML
+                  </a>
+                } @else {
+                  <button
+                    mat-button
+                    class="details-dialog-button"
+                    [disabled]="true"
+                    matTooltip="No Serval build ID available"
+                  >
+                    <mat-icon>engineering</mat-icon>
+                    View in ClearML
+                  </button>
+                }
+                <button mat-button class="details-dialog-button" (click)="openBuildDetails(row)">
+                  <mat-icon>manage_search</mat-icon>
+                  View more details
+                </button>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+      </table>
+    </div>
+
+    @if (rows.length === 0) {
+      <p class="empty-message">No Serval builds found for the selected time period.</p>
+    }
+  } @else {
+    <p>Loading Serval builds ...</p>
+  }
+} @else {
+  <p>You are offline.</p>
+}

@@ -165,7 +165,7 @@ export class JobDetailsDialogComponent implements OnInit {
     return (
       'This language pair comes from the current engine configuration. ' +
       (this.data.buildsStartedSince === 1 ? '1 build has' : `${this.data.buildsStartedSince} builds have`) +
-      ' started since this build, so the language pair may have changed and may not reflect what was used for this build.'
+      ` started since this build, so the language pair may have changed and may not reflect what was used for this build.`
     );
   }
 
@@ -178,16 +178,18 @@ export class JobDetailsDialogComponent implements OnInit {
       'Each project has one translation engine in Serval that persists across multiple builds. ' +
       'The engine information shown here reflects the current state of the engine, not necessarily what it was when this build ran.';
 
-    if (this.data.buildsStartedSince === 0) {
+    const buildsStartedSince: number = this.data.buildsStartedSince;
+
+    if (buildsStartedSince === 0) {
       return `${baseText} This is the most recent build for this project, so the engine has not changed since this build started.`;
-    } else if (this.data.buildsStartedSince === 1) {
+    } else if (buildsStartedSince === 1) {
       return (
         `${baseText} 1 build has started on this project since this build began, ` +
         `so the engine may have been modified and may not reflect the configuration used for this build.`
       );
     } else {
       return (
-        `${baseText} ${this.data.buildsStartedSince} builds have started on this project since this build began, ` +
+        `${baseText} ${buildsStartedSince} builds have started on this project since this build began, ` +
         `so the engine may have been modified and may not reflect the configuration used for this build.`
       );
     }

@@ -36,17 +36,14 @@ import { InfoComponent } from '../shared/info/info.component';
 import { NoticeComponent } from '../shared/notice/notice.component';
 import { projectLabel } from '../shared/utils';
 import { DateRangePickerComponent, NormalizedDateRange } from './date-range-picker.component';
-import { DraftJobsExportService } from './draft-jobs-export.service';
+import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
 import { JobDetailsDialogComponent } from './job-details-dialog.component';
 import { ServalAdministrationService } from './serval-administration.service';
+import { ProjectBooks } from './serval-build-report';
+import { ServalBuildsComponent } from './serval-builds.component';
 
 /** Outcome or in-progress situation of a draft generation request job. */
 export type DraftJobStatus = 'running' | 'success' | 'failed' | 'cancelled' | 'incomplete';
-
-interface ProjectBooks {
-  projectId: string;
-  books: string[];
-}
 
 /** Defines information about a Serval draft generation request. This is exported so it can be used in tests. */
 export interface DraftJob {
@@ -771,12 +768,12 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     for (const job of this.draftJobs) {
       if (job.trainingBooks) {
         for (const projectBook of job.trainingBooks) {
-          projectIds.add(projectBook.projectId);
+          projectIds.add(projectBook.sfProjectId);
         }
       }
       if (job.translationBooks) {
         for (const projectBook of job.translationBooks) {
-          projectIds.add(projectBook.projectId);
+          projectIds.add(projectBook.sfProjectId);
         }
       }
     }
@@ -852,13 +849,15 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
 
     // Convert maps to ProjectBooks arrays
     const trainingBooks: ProjectBooks[] = Array.from(trainingProjects.entries()).map(([projectId, books]) => ({
-      projectId,
-      books
+      sfProjectId: projectId,
+      projectDisplayName: '',
+      books: books
     }));
 
     const translationBooks: ProjectBooks[] = Array.from(translationProjects.entries()).map(([projectId, books]) => ({
-      projectId,
-      books
+      sfProjectId: projectId,
+      projectDisplayName: '',
+      books: books
     }));
 
     return { trainingBooks, translationBooks };
@@ -873,7 +872,14 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
    */
   exportCsv(): void {
     if (this.currentDateRange == null) throw new Error('Date range is not set');
-    this.exportService.exportCsv(this.rows, this.currentDateRange, this.meanDuration ?? 0, this.maxDuration ?? 0);
+    const spreadsheetRows: SpreadsheetRow[] = DraftJobsComponent.createSpreadsheetRows(this.rows);
+    this.exportService.exportCsv(
+      spreadsheetRows,
+      this.currentDateRange,
+      this.meanDuration ?? 0,
+      this.maxDuration ?? 0,
+      'draft_jobs'
+    );
   }
 
   /**
@@ -881,6 +887,40 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
    */
   exportRsv(): void {
     if (this.currentDateRange == null) throw new Error('Date range is not set');
-    this.exportService.exportRsv(this.rows, this.currentDateRange, this.meanDuration ?? 0, this.maxDuration ?? 0);
+    const spreadsheetRows: SpreadsheetRow[] = DraftJobsComponent.createSpreadsheetRows(this.rows);
+    this.exportService.exportRsv(
+      spreadsheetRows,
+      this.currentDateRange,
+      this.meanDuration ?? 0,
+      this.maxDuration ?? 0,
+      'draft_jobs'
+    );
+  }
+
+  private static createSpreadsheetRows(rows: DraftJobsTableRow[]): SpreadsheetRow[] {
+    return rows.map<SpreadsheetRow>((row: DraftJobsTableRow) => {
+      const trainingBooksList = ServalBuildsComponent.formatProjectBooks(row.trainingBooks);
+      const translationBooksList = ServalBuildsComponent.formatProjectBooks(row.translationBooks);
+
+      let durationMinutes: string = '';
+      if (row.job.startTime != null && row.job.finishTime != null) {
+        const durationMs = row.job.finishTime.valueOf() - row.job.startTime.valueOf();
+        const minutes = durationMs / 1000 / 60;
+        durationMinutes = minutes.toFixed(0);
+      }
+
+      return {
+        servalBuildId: row.job.buildId,
+        startTime: row.job.startTime?.toISOString(),
+        endTime: row.job.finishTime?.toISOString(),
+        durationMinutes,
+        status: row.status,
+        sfProjectId: row.projectId,
+        projectName: row.projectName,
+        sfUserId: row.userId,
+        trainingBooks: trainingBooksList,
+        translationBooks: translationBooksList
+      };
+    });
   }
 }

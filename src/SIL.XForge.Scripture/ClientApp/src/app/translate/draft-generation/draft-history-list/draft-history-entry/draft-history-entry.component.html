@@ -10,7 +10,7 @@
           <span class="title">{{ getScriptureRangeAsLocalizedBooks(scriptureRange) }}</span>
           <span class="subtitle">
             {{ translationSource }}
-            {{ t("finished_at", { finishedAtTime: formatDate(entry.additionalInfo?.dateFinished) }) }}
+            {{ t("finished_at", { finishedAtTime: finishedAtDate }) }}
           </span>
         </mat-panel-title>
         <mat-panel-description>

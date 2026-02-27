@@ -1,0 +1,14 @@
+<button
+  mat-icon-button
+  class="copy-button"
+  type="button"
+  (click)="onCopyClick()"
+  [matTooltip]="tooltip"
+  [attr.aria-label]="tooltip"
+>
+  @if (isCopied) {
+    <mat-icon class="copied">{{ copiedIconName }}</mat-icon>
+  } @else {
+    <mat-icon class="copy">{{ iconName }}</mat-icon>
+  }
+</button>

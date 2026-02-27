@@ -271,6 +271,49 @@ public class MachineApiController : ControllerBase
     }
 
     /// <summary>
+    /// Gets all Serval builds created after the specified date, across all projects.
+    /// </summary>
+    /// <param name="dateTime">The beginning date to filter build results.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">The builds are returned.</response>
+    /// <response code="403">You do not have permission to retrieve builds.</response>
+    /// <response code="400">The timestamp could not be parsed.</response>
+    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
+    [HttpGet(MachineApi.GetBuildsSince)]
+    public async Task<ActionResult<IReadOnlyList<ServalBuildReportDto>>> GetBuildsSinceAsync(
+        string dateTime,
+        CancellationToken cancellationToken
+    )
+    {
+        if (!DateTimeOffset.TryParse(dateTime, out DateTimeOffset beginning))
+        {
+            return BadRequest($"Could not parse provided datetime: {dateTime}");
+        }
+
+        try
+        {
+            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
+            return Ok(
+                await _machineApiService.GetBuildsSinceAsync(
+                    _userAccessor.UserId,
+                    beginning,
+                    isServalAdmin,
+                    cancellationToken
+                )
+            );
+        }
+        catch (BrokenCircuitException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+    }
+
+    /// <summary>
     /// Gets a translation engine.
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
