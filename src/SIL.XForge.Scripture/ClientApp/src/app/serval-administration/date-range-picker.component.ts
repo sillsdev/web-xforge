@@ -68,7 +68,7 @@ export class DateRangePickerComponent implements OnInit {
     end: FormControl<Date | null>;
   }>;
 
-  private readonly defaultDaysBack = 14;
+  private readonly defaultDaysBack = 5;
 
   /** Event emitted when the date range changes with a valid normalized range */
   @Output() dateRangeChange = new EventEmitter<NormalizedDateRange>();

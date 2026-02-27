@@ -56,6 +56,7 @@ public class MachineApiService(
     IRealtimeService realtimeService,
     IOptions<ServalOptions> servalOptions,
     ISyncService syncService,
+    ITranslationBuildsClient translationBuildsClient,
     ITranslationEnginesClient translationEnginesClient,
     ITranslationEngineTypesClient translationEngineTypesClient,
     IRepository<UserSecret> userSecrets
@@ -983,6 +984,614 @@ public class MachineApiService(
 
         return builds;
     }
+
+    /// <summary>
+    /// Retrieves build reports for Serval builds created after the specified time, including events-only
+    /// records for SF draft generation events that don't match any known Serval build.
+    /// </summary>
+    public async Task<IReadOnlyList<ServalBuildReportDto>> GetBuildsSinceAsync(
+        string curUserId,
+        DateTimeOffset beginning,
+        bool isServalAdmin,
+        CancellationToken cancellationToken
+    )
+    {
+        if (!isServalAdmin)
+        {
+            throw new ForbiddenException();
+        }
+
+        IList<TranslationBuild> translationBuilds = [];
+        try
+        {
+            translationBuilds = await translationBuildsClient.GetAllBuildsCreatedAfterAsync(
+                beginning,
+                cancellationToken
+            );
+        }
+        catch (ServalApiException e)
+        {
+            ProcessServalApiException(e);
+        }
+
+        // Fetch projects and project secrets.
+        Dictionary<string, (string sfProjectId, SFProject? sfProject)> engineToProject =
+            await BuildEngineToProjectMapAsync(translationBuilds, cancellationToken);
+
+        // Fetch draft generation events for the time range
+        Dictionary<string, List<EventMetric>> eventsByProject = await FetchDraftEventsAsync(beginning);
+
+        // Build a map from SF project IDs to SFProject snapshots, for resolving project display names.
+        // This is seeded from the engine-to-project map and extended as needed by BuildReport.
+        Dictionary<string, SFProject?> projectSnapshots = engineToProject
+            .Values.GroupBy(entry => entry.sfProjectId)
+            .ToDictionary(group => group.Key, group => group.First().sfProject);
+
+        // Build reports from Serval builds
+        HashSet<string> matchedRequestIds = [];
+        List<ServalBuildReportDto> reports = [];
+        foreach (TranslationBuild translationBuild in translationBuilds)
+        {
+            ServalBuildReportDto report = await BuildReportAsync(
+                translationBuild,
+                engineToProject,
+                eventsByProject,
+                projectSnapshots,
+                cancellationToken
+            );
+            if (report.DraftGenerationRequestId != null)
+            {
+                matchedRequestIds.Add(report.DraftGenerationRequestId);
+            }
+            reports.Add(report);
+        }
+
+        // Build events-only reports for unmatched draft generation events. Note that it should be rare to have build
+        // reports where we only have events and no Serval build. Importantly, they will be present in the set of
+        // returned data, but they will not have as many details as build reports derived from Serval build information.
+        Dictionary<string, List<EventMetric>> unmatchedEventsByProject = eventsByProject
+            .ToDictionary(
+                kvp => kvp.Key,
+                kvp =>
+                    kvp.Value.Where(e =>
+                        {
+                            string? requestId = GetRequestIdFromEvent(e);
+                            return requestId == null || !matchedRequestIds.Contains(requestId);
+                        })
+                        .ToList()
+            )
+            .Where(kvp => kvp.Value.Count > 0)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        List<ServalBuildReportDto> eventsOnlyReports = BuildEventsOnlyReports(unmatchedEventsByProject);
+        reports.AddRange(eventsOnlyReports);
+
+        return reports;
+    }
+
+    /// <summary>
+    /// Builds a map from Serval translation engine IDs to SF project info, for all engines referenced in the builds.
+    /// </summary>
+    private async Task<Dictionary<string, (string sfProjectId, SFProject? sfProject)>> BuildEngineToProjectMapAsync(
+        IList<TranslationBuild> builds,
+        CancellationToken cancellationToken
+    )
+    {
+        HashSet<string> engineIds = builds.Select(b => b.Engine.Id).ToHashSet();
+
+        List<SFProjectSecret> secrets = await projectSecrets
+            .Query()
+            .Where(s =>
+                s.ServalData != null
+                && (
+                    engineIds.Contains(s.ServalData.PreTranslationEngineId ?? "")
+                    || engineIds.Contains(s.ServalData.TranslationEngineId ?? "")
+                )
+            )
+            .ToListAsync(cancellationToken);
+
+        // Group by engine ID
+        Dictionary<string, (string sfProjectId, SFProject? sfProject)> result = [];
+        foreach (string engineId in engineIds)
+        {
+            List<SFProjectSecret> matchingSecrets = secrets
+                .Where(s =>
+                    s.ServalData?.PreTranslationEngineId == engineId || s.ServalData?.TranslationEngineId == engineId
+                )
+                .ToList();
+
+            if (matchingSecrets.Count > 1)
+            {
+                string sfProjectIds = string.Join(", ", matchingSecrets.Select(s => s.Id));
+                logger.LogError(
+                    $"{nameof(BuildEngineToProjectMapAsync)}: Multiple SF projects ({sfProjectIds}) unexpectedly share the same Serval translation engine identifier. Picking one of them."
+                );
+            }
+
+            if (matchingSecrets.Count == 0)
+            {
+                continue;
+            }
+
+            string sfProjectId = matchingSecrets[0].Id;
+            Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(
+                sfProjectId,
+                cancellationToken
+            );
+            if (attempt.TryResult(out SFProject project))
+            {
+                result[engineId] = (sfProjectId, project);
+            }
+            else
+            {
+                logger.LogError(
+                    $"{nameof(BuildEngineToProjectMapAsync)}: An SF project secret for SF project id {sfProjectId} did not have a corresponding project snapshot. Ignoring."
+                );
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Fetches draft generation events across all projects in the specified time range.
+    /// Returns a dictionary keyed by SF project ID.
+    /// </summary>
+    private async Task<Dictionary<string, List<EventMetric>>> FetchDraftEventsAsync(DateTimeOffset since)
+    {
+        QueryResults<EventMetric> events = await eventMetricService.GetEventMetricsAsync(
+            projectId: null,
+            scopes: [EventScope.Drafting],
+            eventTypes:
+            [
+                nameof(MachineProjectService.BuildProjectAsync),
+                nameof(StartPreTranslationBuildAsync),
+                nameof(CancelPreTranslationBuildAsync),
+                nameof(BuildCompletedAsync),
+            ],
+            fromDate: since.UtcDateTime
+        );
+
+        // Group by SF project ID
+        Dictionary<string, List<EventMetric>> result = [];
+        if (events?.Results == null)
+        {
+            return result;
+        }
+        foreach (EventMetric eventMetric in events.Results)
+        {
+            string? sfProjectId = eventMetric.ProjectId;
+            if (sfProjectId == null)
+            {
+                // Skip events with no project ID, as they cannot be meaningfully reported on
+                logger.LogWarning(
+                    $"{nameof(FetchDraftEventsAsync)}: Skipping event metric with null ProjectId (EventType: {eventMetric.EventType})."
+                );
+                continue;
+            }
+            if (!result.TryGetValue(sfProjectId, out List<EventMetric>? projectEvents))
+            {
+                projectEvents = [];
+                result[sfProjectId] = projectEvents;
+            }
+            projectEvents.Add(eventMetric);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Builds a single ServalBuildReportDto from a Serval build and correlated SF data.
+    /// </summary>
+    private async Task<ServalBuildReportDto> BuildReportAsync(
+        TranslationBuild translationBuild,
+        Dictionary<string, (string sfProjectId, SFProject? sfProject)> engineToProject,
+        Dictionary<string, List<EventMetric>> eventsByProject,
+        Dictionary<string, SFProject?> projectSnapshots,
+        CancellationToken cancellationToken
+    )
+    {
+        ServalBuildDto buildDto = CreateDto(translationBuild);
+
+        BuildReportProject? projectInfo = null;
+        string? sfProjectId = null;
+        SFProject? sfProject = null;
+        if (engineToProject.TryGetValue(translationBuild.Engine.Id, out var projectEntry))
+        {
+            sfProjectId = projectEntry.sfProjectId;
+            sfProject = projectEntry.sfProject;
+            projectInfo = new BuildReportProject
+            {
+                SFProjectId = sfProjectId,
+                ShortName = sfProject?.ShortName,
+                Name = sfProject?.Name,
+            };
+        }
+
+        // Find correlated events for this build
+        List<EventMetric> projectEvents =
+            sfProjectId != null && eventsByProject.TryGetValue(sfProjectId, out List<EventMetric>? events)
+                ? events
+                : [];
+
+        string? draftGenerationRequestId = FindDraftGenerationRequestIdForBuild(projectEvents, translationBuild.Id);
+        string? requesterUserId = FindRequesterUserId(projectEvents, translationBuild.Id);
+
+        // Build the config from event metrics
+        BuildReportConfig config = await BuildConfigFromEventsAsync(
+            projectEvents,
+            translationBuild.Id,
+            projectSnapshots,
+            cancellationToken
+        );
+
+        // Build the timeline
+        BuildReportTimeline timeline = BuildTimeline(translationBuild, projectEvents, draftGenerationRequestId);
+
+        return new ServalBuildReportDto
+        {
+            Build = buildDto,
+            Project = projectInfo,
+            Timeline = timeline,
+            Config = config,
+            DraftGenerationRequestId = draftGenerationRequestId,
+            RequesterSFUserId = requesterUserId,
+            Status = ToDraftGenerationBuildStatus(translationBuild.State),
+        };
+    }
+
+    /// <summary>
+    /// Finds the BuildProjectAsync event metric that produced a specific Serval build.
+    /// </summary>
+    private static EventMetric? FindBuildProjectEvent(List<EventMetric> projectEvents, string servalBuildId)
+    {
+        return projectEvents.FirstOrDefault(e =>
+            e.EventType == nameof(MachineProjectService.BuildProjectAsync) && e.Result?.ToString() == servalBuildId
+        );
+    }
+
+    /// <summary>
+    /// Finds the draft generation request ID for a specific Serval build by looking at BuildProjectAsync events.
+    /// </summary>
+    private static string? FindDraftGenerationRequestIdForBuild(List<EventMetric> projectEvents, string servalBuildId)
+    {
+        EventMetric? buildEvent = FindBuildProjectEvent(projectEvents, servalBuildId);
+        return buildEvent != null ? GetRequestIdFromEvent(buildEvent) : null;
+    }
+
+    /// <summary>
+    /// Finds the SF user ID that requested a specific Serval build.
+    /// </summary>
+    private static string? FindRequesterUserId(List<EventMetric> projectEvents, string servalBuildId)
+    {
+        EventMetric? buildEvent = FindBuildProjectEvent(projectEvents, servalBuildId);
+        return buildEvent?.UserId;
+    }
+
+    /// <summary>
+    /// Builds the configuration section of a build report from the event metrics for a specific build.
+    /// </summary>
+    private async Task<BuildReportConfig> BuildConfigFromEventsAsync(
+        List<EventMetric> projectEvents,
+        string servalBuildId,
+        Dictionary<string, SFProject?> projectSnapshots,
+        CancellationToken cancellationToken
+    )
+    {
+        EventMetric? buildProjectEvent = FindBuildProjectEvent(projectEvents, servalBuildId);
+
+        if (
+            buildProjectEvent?.Payload?.TryGetValue("buildConfig", out BsonValue? buildConfigBson) == true
+            && buildConfigBson != null
+        )
+        {
+            BuildConfig buildConfig = JsonConvert.DeserializeObject<BuildConfig>(buildConfigBson.ToJson());
+
+            // Look up project snapshots for any referenced project IDs not already cached
+            HashSet<string> referencedProjectIds =
+            [
+                .. buildConfig.TrainingScriptureRanges.Select(r => r.ProjectId),
+                .. buildConfig.TranslationScriptureRanges.Select(r => r.ProjectId),
+            ];
+            foreach (string projectId in referencedProjectIds)
+            {
+                if (string.IsNullOrEmpty(projectId) || projectSnapshots.ContainsKey(projectId))
+                {
+                    continue;
+                }
+                Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(
+                    projectId,
+                    cancellationToken
+                );
+                projectSnapshots[projectId] = attempt.TryResult(out SFProject project) ? project : null;
+            }
+
+            return new BuildReportConfig
+            {
+                TrainingScriptureRanges =
+                [
+                    .. buildConfig.TrainingScriptureRanges.Select(range =>
+                        EnrichScriptureRange(range, projectSnapshots)
+                    ),
+                ],
+                TranslationScriptureRanges =
+                [
+                    .. buildConfig.TranslationScriptureRanges.Select(range =>
+                        EnrichScriptureRange(range, projectSnapshots)
+                    ),
+                ],
+                TrainingDataFileIds = [.. buildConfig.TrainingDataFiles],
+            };
+        }
+
+        // Fall back to empty config when the event metric doesn't contain buildConfig
+        return new BuildReportConfig();
+    }
+
+    /// <summary>
+    /// Converts a <see cref="ProjectScriptureRange"/> to a <see cref="BuildReportProjectScriptureRange"/> by looking
+    /// up the project's short name and display name from the provided snapshots.
+    /// </summary>
+    private static BuildReportProjectScriptureRange EnrichScriptureRange(
+        ProjectScriptureRange range,
+        Dictionary<string, SFProject?> projectSnapshots
+    )
+    {
+        projectSnapshots.TryGetValue(range.ProjectId, out SFProject? project);
+        return new BuildReportProjectScriptureRange
+        {
+            SFProjectId = range.ProjectId,
+            ScriptureRange = range.ScriptureRange,
+            ShortName = project?.ShortName,
+            Name = project?.Name,
+        };
+    }
+
+    /// <summary>
+    /// Builds the timeline section of a build report from Serval timestamps and SF event metric timestamps.
+    /// </summary>
+    private static BuildReportTimeline BuildTimeline(
+        TranslationBuild translationBuild,
+        List<EventMetric> projectEvents,
+        string? draftGenerationRequestId
+    )
+    {
+        // Find SF event timestamps by correlating on draftGenerationRequestId or serval build ID
+        DateTimeOffset? sfUserRequested = FindEventTime(
+            projectEvents,
+            nameof(StartPreTranslationBuildAsync),
+            translationBuild.Id,
+            draftGenerationRequestId
+        );
+        DateTimeOffset? sfBuildProjectSubmitted = FindEventTime(
+            projectEvents,
+            nameof(MachineProjectService.BuildProjectAsync),
+            translationBuild.Id,
+            draftGenerationRequestId
+        );
+        DateTimeOffset? sfUserCancelled = FindEventTime(
+            projectEvents,
+            "CancelPreTranslationBuildAsync",
+            translationBuild.Id,
+            draftGenerationRequestId
+        );
+        DateTimeOffset? sfAcknowledgedCompletion = FindEventTime(
+            projectEvents,
+            "BuildCompletedAsync",
+            translationBuild.Id,
+            draftGenerationRequestId
+        );
+
+        DateTimeOffset? servalCreated = translationBuild.DateCreated?.ToUniversalTime();
+        DateTimeOffset? requestTime = sfUserRequested ?? servalCreated;
+
+        return new BuildReportTimeline
+        {
+            ServalCreated = servalCreated,
+            ServalStarted = translationBuild.DateStarted?.ToUniversalTime(),
+            ServalCompleted = translationBuild.DateCompleted?.ToUniversalTime(),
+            ServalFinished = translationBuild.DateFinished?.ToUniversalTime(),
+            SFUserRequested = sfUserRequested,
+            SFBuildProjectSubmitted = sfBuildProjectSubmitted,
+            SFUserCancelled = sfUserCancelled,
+            SFAcknowledgedCompletion = sfAcknowledgedCompletion,
+            RequestTime = requestTime,
+            Phases = NormalizePhaseTimestamps(translationBuild.Phases),
+        };
+    }
+
+    /// <summary>
+    /// Finds the earliest timestamp of a particular event type that correlates with a given build.
+    /// </summary>
+    private static DateTimeOffset? FindEventTime(
+        List<EventMetric> events,
+        string eventType,
+        string servalBuildId,
+        string? draftGenerationRequestId
+    )
+    {
+        List<EventMetric> matching = events
+            .Where(e =>
+            {
+                if (e.EventType != eventType)
+                    return false;
+
+                bool matchesBuildId = e.Result?.ToString() == servalBuildId;
+                if (matchesBuildId)
+                {
+                    return true;
+                }
+                bool matchesRequestId =
+                    draftGenerationRequestId != null && GetRequestIdFromEvent(e) == draftGenerationRequestId;
+                if (matchesRequestId)
+                {
+                    return true;
+                }
+                return false;
+            })
+            .ToList();
+
+        if (matching.Count == 0)
+        {
+            return null;
+        }
+
+        DateTime earliest = matching.Min(e => e.TimeStamp);
+        return new DateTimeOffset(earliest, TimeSpan.Zero).ToUniversalTime();
+    }
+
+    /// <summary>
+    /// Ensure phase timestamps are in UTC.
+    /// </summary>
+    private static IList<Phase>? NormalizePhaseTimestamps(IList<Phase>? phases)
+    {
+        if (phases == null)
+        {
+            return null;
+        }
+
+        foreach (Phase phase in phases)
+        {
+            DateTimeOffset? started = phase.Started;
+            if (started.HasValue)
+            {
+                phase.Started = started.Value.ToUniversalTime();
+            }
+        }
+
+        return phases;
+    }
+
+    /// <summary>
+    /// Builds events-only report entries for draft generation events that did not match any known Serval build.
+    /// </summary>
+    private static List<ServalBuildReportDto> BuildEventsOnlyReports(
+        Dictionary<string, List<EventMetric>> eventsByProject
+    )
+    {
+        // Suppose that when gathering information about Serval builds, we have event metrics that refer to a draft
+        // generation request, but that do not correspond to Serval build information reported by Serval. Use the
+        // information in the SF events to create a draft generation build report.
+
+        List<ServalBuildReportDto> reports = [];
+        foreach ((string sfProjectId, List<EventMetric> events) in eventsByProject)
+        {
+            // Group events by their draft generation request ID
+            var groupedByRequestId = events.GroupBy(e => GetRequestIdFromEvent(e)).ToList();
+
+            foreach (var group in groupedByRequestId)
+            {
+                string? requestId = group.Key;
+                List<EventMetric> groupEvents = group.ToList();
+
+                if (requestId != null)
+                {
+                    // The group of event metrics we are processing has a draft generation request ID.
+
+                    bool hasBuildProject = groupEvents.Any(e =>
+                        e.EventType == nameof(MachineProjectService.BuildProjectAsync)
+                    );
+                    DraftGenerationBuildStatus status = hasBuildProject
+                        ? DraftGenerationBuildStatus.SubmittedToServal
+                        : DraftGenerationBuildStatus.UserRequested;
+
+                    EventMetric? startEvent = groupEvents.FirstOrDefault(e =>
+                        e.EventType == nameof(StartPreTranslationBuildAsync)
+                    );
+
+                    DateTimeOffset? sfUserRequested =
+                        startEvent != null
+                            ? new DateTimeOffset(startEvent.TimeStamp, TimeSpan.Zero).ToUniversalTime()
+                            : null;
+
+                    // We could add more details to the report if we are finding that it is often occurring to have build requests that
+                    // Serval is not reporting on and it's useful to have those details.
+                    reports.Add(
+                        new ServalBuildReportDto
+                        {
+                            Build = null,
+                            Project = new BuildReportProject { SFProjectId = sfProjectId },
+                            Timeline = new BuildReportTimeline
+                            {
+                                SFUserRequested = sfUserRequested,
+                                RequestTime = sfUserRequested,
+                            },
+                            Config = new BuildReportConfig(),
+                            Problems = ["No Serval build was reported for this draft generation request."],
+                            DraftGenerationRequestId = requestId,
+                            RequesterSFUserId = startEvent?.UserId,
+                            Status = status,
+                        }
+                    );
+                }
+                else
+                {
+                    // The group of event metrics we are processing has no draft generation request ID, which was the
+                    // norm before 2026. For such older events that have no request ID at all, we will just create
+                    // individual reports for StartPreTranslationBuildAsync events. We can look into adding more details
+                    // here in the future if that would be helpful.
+
+                    foreach (
+                        EventMetric startEvent in groupEvents.Where(e =>
+                            e.EventType == nameof(StartPreTranslationBuildAsync)
+                        )
+                    )
+                    {
+                        DateTimeOffset sfUserRequested = new DateTimeOffset(
+                            startEvent.TimeStamp,
+                            TimeSpan.Zero
+                        ).ToUniversalTime();
+                        reports.Add(
+                            new ServalBuildReportDto
+                            {
+                                Build = null,
+                                Project = new BuildReportProject { SFProjectId = sfProjectId },
+                                Timeline = new BuildReportTimeline
+                                {
+                                    SFUserRequested = sfUserRequested,
+                                    RequestTime = sfUserRequested,
+                                },
+                                Config = new BuildReportConfig(),
+                                Problems = ["No Serval build was reported for this draft generation request."],
+                                RequesterSFUserId = startEvent.UserId,
+                                Status = DraftGenerationBuildStatus.UserRequested,
+                            }
+                        );
+                    }
+                }
+            }
+        }
+
+        return reports;
+    }
+
+    /// <summary>
+    /// Gets the draft generation request ID from an event's tags, if present.
+    /// </summary>
+    private static string? GetRequestIdFromEvent(EventMetric eventMetric)
+    {
+        if (
+            eventMetric.Tags?.TryGetValue(MachineProjectService.DraftGenerationRequestIdKey, out BsonValue? requestId)
+            == true
+        )
+        {
+            return requestId?.AsString;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Converts a Serval <see cref="JobState"/> to the corresponding <see cref="DraftGenerationBuildStatus"/>.
+    /// </summary>
+    private static DraftGenerationBuildStatus ToDraftGenerationBuildStatus(JobState jobState) =>
+        jobState switch
+        {
+            JobState.Pending => DraftGenerationBuildStatus.Pending,
+            JobState.Active => DraftGenerationBuildStatus.Active,
+            JobState.Completed => DraftGenerationBuildStatus.Completed,
+            JobState.Faulted => DraftGenerationBuildStatus.Faulted,
+            JobState.Canceled => DraftGenerationBuildStatus.Canceled,
+            _ => throw new ArgumentOutOfRangeException(nameof(jobState), jobState, "Unknown Serval job state."),
+        };
 
     public async Task<ServalBuildDto?> GetLastCompletedPreTranslationBuildAsync(
         string curUserId,
@@ -2242,6 +2851,14 @@ public class MachineApiService(
                 Step = translationBuild.Step,
                 TranslationEngineId = translationBuild.Engine.Id,
             },
+            DeploymentVersion = translationBuild.DeploymentVersion,
+            ExecutionData = new ServalBuildExecutionData
+            {
+                TrainCount = translationBuild.ExecutionData.TrainCount,
+                PretranslateCount = translationBuild.ExecutionData.PretranslateCount,
+                SourceLanguageTag = translationBuild.ExecutionData.EngineSourceLanguageTag,
+                TargetLanguageTag = translationBuild.ExecutionData.EngineTargetLanguageTag,
+            },
         };
 
         // Create an initial value for the date requested, based on the object id from Mongo
@@ -2427,7 +3044,10 @@ public class MachineApiService(
         );
         if (eventMetric is not null)
         {
-            buildDto.AdditionalInfo!.DateGenerated = new DateTimeOffset(eventMetric.TimeStamp, TimeSpan.Zero);
+            buildDto.AdditionalInfo!.DateGenerated = new DateTimeOffset(
+                eventMetric.TimeStamp,
+                TimeSpan.Zero
+            ).ToUniversalTime();
         }
 
         // If we have event metrics for sending the build to Serval, add the scripture ranges to the DTO
@@ -2599,7 +3219,10 @@ public class MachineApiService(
         buildDto.AdditionalInfo ??= new ServalBuildAdditionalInfo();
 
         // Set the user who requested the build and when they did so
-        buildDto.AdditionalInfo.DateRequested = new DateTimeOffset(eventMetric.TimeStamp, TimeSpan.Zero);
+        buildDto.AdditionalInfo.DateRequested = new DateTimeOffset(
+            eventMetric.TimeStamp,
+            TimeSpan.Zero
+        ).ToUniversalTime();
         buildDto.AdditionalInfo.RequestedByUserId = eventMetric.UserId;
 
         // Retrieve the training and translation books from the build config, as the build from Serval
@@ -2698,12 +3321,7 @@ public class MachineApiService(
             fromDate: startDate
         );
         EventMetric? buildEvent = buildProjectEvents.Results.FirstOrDefault(e => e.Result?.ToString() == servalBuildId);
-        return (
-            buildEvent?.Tags?.TryGetValue(MachineProjectService.DraftGenerationRequestIdKey, out BsonValue? requestId)
-            == true
-        )
-            ? requestId?.AsString
-            : null;
+        return buildEvent != null ? GetRequestIdFromEvent(buildEvent) : null;
     }
 
     private async Task<string> GetTranslationIdAsync(

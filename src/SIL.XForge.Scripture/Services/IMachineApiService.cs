@@ -53,6 +53,12 @@ public interface IMachineApiService
         bool isServalAdmin,
         CancellationToken cancellationToken
     );
+    Task<IReadOnlyList<ServalBuildReportDto>> GetBuildsSinceAsync(
+        string curUserId,
+        DateTimeOffset beginning,
+        bool isServalAdmin,
+        CancellationToken cancellationToken
+    );
     Task<IReadOnlyList<ServalBuildDto>> GetBuildsAsync(
         string curUserId,
         string sfProjectId,

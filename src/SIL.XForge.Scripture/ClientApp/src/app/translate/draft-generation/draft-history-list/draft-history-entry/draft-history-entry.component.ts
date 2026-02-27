@@ -250,7 +250,7 @@ export class DraftHistoryEntryComponent {
 
   get buildRequestedAtDate(): string {
     if (this._entry?.additionalInfo?.dateRequested == null) return '';
-    return this.formatDate(this._entry?.additionalInfo?.dateRequested);
+    return this.formatDate(new Date(this._entry?.additionalInfo?.dateRequested));
   }
 
   get hasDetails(): boolean {
@@ -339,8 +339,8 @@ export class DraftHistoryEntryComponent {
     private readonly destroyRef: DestroyRef
   ) {}
 
-  formatDate(date?: string): string {
-    const formattedDate = date == null ? '' : this.i18n.formatDate(new Date(date));
+  formatDate(date?: Date): string {
+    const formattedDate = date == null ? '' : this.i18n.formatDate(date);
     return formattedDate.indexOf(RIGHT_TO_LEFT_MARK) !== -1 ? RIGHT_TO_LEFT_MARK + formattedDate : formattedDate;
   }
 

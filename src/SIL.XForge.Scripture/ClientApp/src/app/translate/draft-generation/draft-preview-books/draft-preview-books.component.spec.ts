@@ -19,6 +19,7 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { BuildDto } from '../../../machine-api/build-dto';
+import { BuildStates } from '../../../machine-api/build-states';
 import { DraftApplyDialogComponent } from '../draft-apply-dialog/draft-apply-dialog.component';
 import { DraftApplyProgress } from '../draft-apply-progress-dialog/draft-apply-progress-dialog.component';
 import { DraftHandlingService } from '../draft-handling.service';
@@ -144,11 +145,25 @@ describe('DraftPreviewBooks', () => {
 
   it('can apply a historic draft', fakeAsync(() => {
     env = new TestEnvironment({
+      id: 'build-id',
+      href: 'href',
+      revision: 1,
+      engine: { id: 'engine01', href: 'href' },
+      percentCompleted: 100,
+      message: '',
+      state: BuildStates.Completed,
+      queueDepth: 0,
       additionalInfo: {
         translationScriptureRanges: [{ projectId: 'project01', scriptureRange: 'GEN;EXO;LEV' }],
-        dateGenerated: '2024-08-27T01:02:03.004+00:00'
+        dateGenerated: '2024-08-27T01:02:03.004Z',
+        trainingScriptureRanges: [],
+        trainingDataFileIds: [],
+        buildId: 'build-id',
+        step: 0,
+        translationEngineId: 'engine01',
+        canDenormalizeQuotes: true
       }
-    } as BuildDto);
+    });
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[1];
     setupDialog('project01');
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).thenResolve(

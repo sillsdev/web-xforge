@@ -36,8 +36,8 @@ const mockedDraftOptionsService = mock(DraftOptionsService);
 const mockedPermissionsService = mock(PermissionsService);
 
 const oneDay = 1000 * 60 * 60 * 24;
-const dateBeforeFormattingSupported = new Date(FORMATTING_OPTIONS_SUPPORTED_DATE.getTime() - oneDay).toISOString();
-const dateAfterFormattingSupported = new Date(FORMATTING_OPTIONS_SUPPORTED_DATE.getTime() + oneDay).toISOString();
+const dateBeforeFormattingSupported = new Date(FORMATTING_OPTIONS_SUPPORTED_DATE.getTime() - oneDay);
+const dateAfterFormattingSupported = new Date(FORMATTING_OPTIONS_SUPPORTED_DATE.getTime() + oneDay);
 
 describe('DraftHistoryEntryComponent', () => {
   let component: DraftHistoryEntryComponent;
@@ -217,7 +217,8 @@ describe('DraftHistoryEntryComponent', () => {
       when(mockedSFProjectService.getProfile('project02')).thenResolve(sourceProjectDoc);
       const entry = {
         engine: {
-          id: 'project01'
+          id: 'project01',
+          href: 'href'
         },
         additionalInfo: {
           trainingScriptureRanges: [{ projectId: 'project02', scriptureRange: 'EXO' }],
@@ -267,9 +268,9 @@ describe('DraftHistoryEntryComponent', () => {
       when(mockedActivatedProjectService.changes$).thenReturn(of(targetProjectDoc));
       const entry = {
         additionalInfo: {
-          dateGenerated: dateAfterFormattingSupported,
-          dateRequested: dateAfterFormattingSupported,
-          dateFinished: dateAfterFormattingSupported,
+          dateGenerated: dateAfterFormattingSupported.toISOString(),
+          dateRequested: dateAfterFormattingSupported.toISOString(),
+          dateFinished: dateAfterFormattingSupported.toISOString(),
           requestedByUserId: 'sf-user-id',
           translationScriptureRanges: [{ projectId: 'project01', scriptureRange: 'GEN' }]
         }
@@ -317,7 +318,7 @@ describe('DraftHistoryEntryComponent', () => {
       const entry = {
         state: BuildStates.Faulted,
         message: 'An error occurred',
-        engine: { id: 'project01' },
+        engine: { id: 'project01', href: 'href' },
         additionalInfo: {
           translationEngineId: 'translationEngine01',
           buildId: 'build01',
@@ -340,7 +341,7 @@ describe('DraftHistoryEntryComponent', () => {
       const entry = {
         state: BuildStates.Faulted,
         message: 'An error occurred',
-        engine: { id: 'project01' }
+        engine: { id: 'project01', href: 'href' }
       } as BuildDto;
       component.entry = entry;
       expect(component.scriptureRange).toEqual('');
@@ -383,7 +384,7 @@ describe('DraftHistoryEntryComponent', () => {
         id: 'build01',
         state: BuildStates.Completed,
         message: 'Completed',
-        additionalInfo: { dateGenerated: date, dateFinished: date }
+        additionalInfo: { dateGenerated: date.toISOString(), dateFinished: date.toISOString() }
       } as BuildDto;
       component.isLatestBuild = true;
       component.draftIsAvailable = true;
@@ -399,8 +400,8 @@ describe('DraftHistoryEntryComponent', () => {
         state: BuildStates.Completed,
         message: 'Completed',
         additionalInfo: {
-          dateGenerated: dateAfterFormattingSupported,
-          dateFinished: dateAfterFormattingSupported,
+          dateGenerated: dateAfterFormattingSupported.toISOString(),
+          dateFinished: dateAfterFormattingSupported.toISOString(),
           translationScriptureRanges: [{ projectId: 'source01', scriptureRange: 'EXO' }]
         }
       } as BuildDto;
@@ -417,8 +418,8 @@ describe('DraftHistoryEntryComponent', () => {
         state: BuildStates.Completed,
         message: 'Completed',
         additionalInfo: {
-          dateGenerated: dateAfterFormattingSupported,
-          dateFinished: dateAfterFormattingSupported,
+          dateGenerated: dateAfterFormattingSupported.toISOString(),
+          dateFinished: dateAfterFormattingSupported.toISOString(),
           translationScriptureRanges: [{ projectId: 'source01', scriptureRange: 'EXO' }]
         }
       } as BuildDto;
@@ -434,7 +435,10 @@ describe('DraftHistoryEntryComponent', () => {
         id: 'build01',
         state: BuildStates.Canceled,
         message: 'Cancelled',
-        additionalInfo: { dateGenerated: dateAfterFormattingSupported, dateFinished: dateAfterFormattingSupported }
+        additionalInfo: {
+          dateGenerated: dateAfterFormattingSupported.toISOString(),
+          dateFinished: dateAfterFormattingSupported.toISOString()
+        }
       } as BuildDto;
       component.isLatestBuild = true;
       component.draftIsAvailable = false;
@@ -489,7 +493,7 @@ describe('DraftHistoryEntryComponent', () => {
     trainingDataFiles
   }: {
     user: string;
-    date: string;
+    date: Date;
     trainingBooks: string[];
     translateBooks: string[];
     trainingDataFiles: string[];
@@ -510,21 +514,34 @@ describe('DraftHistoryEntryComponent', () => {
       data: createTestProjectProfile({ shortName: 'src', writingSystem: { tag: 'fr' } })
     } as SFProjectProfileDoc;
     when(mockedSFProjectService.getProfile('project02')).thenResolve(sourceProjectDoc);
-    const entry = {
+
+    const entry: BuildDto = {
+      id: 'build-id',
+      href: 'href',
+      revision: 1,
+      percentCompleted: 1,
+      message: '',
+      state: BuildStates.Completed,
+      queueDepth: 0,
       engine: {
-        id: 'project01'
+        id: 'project01',
+        href: 'href'
       },
       additionalInfo: {
-        dateGenerated: new Date(date).toISOString(),
-        dateFinished: new Date(date).toISOString(),
-        dateRequested: new Date(date).toISOString(),
+        dateGenerated: date.toISOString(),
+        dateFinished: date.toISOString(),
+        dateRequested: date.toISOString(),
+        buildId: 'build-id',
         requestedByUserId: 'sf-user-id',
         trainingScriptureRanges:
           trainingBooks.length > 0 ? [{ projectId: 'project02', scriptureRange: trainingBooks.join(';') }] : [],
         translationScriptureRanges: [{ projectId: 'project02', scriptureRange: translateBooks.join(';') }],
-        trainingDataFileIds: trainingDataFiles
+        trainingDataFileIds: trainingDataFiles,
+        canDenormalizeQuotes: true,
+        step: 0,
+        translationEngineId: 'engine01'
       }
-    } as BuildDto;
+    };
 
     return entry;
   }
