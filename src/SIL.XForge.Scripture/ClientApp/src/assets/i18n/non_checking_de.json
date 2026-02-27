@@ -534,7 +534,7 @@
     "network_error_transcelerator": "Netzwerkfehler beim Abrufen von Transcelerator-Fragen. Erneuter Versuch ({{ count }}).",
     "next": "Weiter",
     "no_questions_available": "Zu den Büchern in diesem Projekt gibt es keine Fragen.",
-    "no_transcelerator_offline": "Der Import aus Transcelerator ist offline nicht verfügbar.",
+    "no_import_offline": "Der Import aus {{ method }} ist offline nicht verfügbar.",
     "question_for_verse": "Frage für Vers {{ number }}",
     "question": "Frage",
     "reference_from": "Verweis von",

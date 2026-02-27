@@ -534,7 +534,7 @@
     "network_error_transcelerator": "Erro de rede ao receber perguntas do Transcelerator. Tentando novamente ({{ count }}).",
     "next": "Próximo",
     "no_questions_available": "Não há perguntas para os livros neste projeto.",
-    "no_transcelerator_offline": "A importação do Transcelerator não está disponível offline.",
+    "no_import_offline": "Importing from {{ method }} is not available offline.",
     "question_for_verse": "Pergunta para o versículo {{ number }}",
     "question": "Pergunta",
     "reference_from": "Referência de",

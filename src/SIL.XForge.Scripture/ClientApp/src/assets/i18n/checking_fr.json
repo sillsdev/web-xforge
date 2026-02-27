@@ -26,7 +26,7 @@
     "open_source_licenses": "Licences Open Source",
     "overview": "Aperçu",
     "page_not_found": "Page introuvable",
-    "password_reset_email_sent": "Nous venons de vous envoyer un e-mail pour réinitialiser votre mot de passe.",
+    "password_reset_email_sent": "Nous venons de vous envoyer un courriel pour réinitialiser votre mot de passe.",
     "product_version": "Version du produit : v{{ version }}",
     "project_has_been_deleted": "Le projet a été supprimé ou n'est plus accessible.",
     "questions_answers": "Questions & Réponses",

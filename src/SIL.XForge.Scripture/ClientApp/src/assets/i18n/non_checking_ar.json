@@ -534,7 +534,7 @@
     "network_error_transcelerator": "خطأ في الشبكة في جلب أسئلة الترجمة السريعية. إعادة المحاولة ({{ count }}).",
     "next": "التالي",
     "no_questions_available": "لا توجد أسئلة للكتب/ الأسفار في هذا المشروع.",
-    "no_transcelerator_offline": "الاستيراد من الترجمة السريعة غير متوفر بدون اتصال بالإنترنت.",
+    "no_import_offline": "Importing from {{ method }} is not available offline.",
     "question_for_verse": "سؤال بشأن الآية {{ number }}",
     "question": "سؤال",
     "reference_from": "توجيه من",
