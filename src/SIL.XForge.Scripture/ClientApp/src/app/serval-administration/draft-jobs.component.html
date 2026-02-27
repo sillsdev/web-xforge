@@ -110,10 +110,10 @@
         <ng-container matColumnDef="trainingBooks">
           <th mat-header-cell *matHeaderCellDef>Training Books</th>
           <td mat-cell *matCellDef="let row">
-            @for (projectBook of row.trainingBooks; track projectBook.projectId) {
+            @for (projectBook of row.trainingBooks; track projectBook.sfProjectId) {
               <div>
-                <a [routerLink]="['/serval-administration', projectBook.projectId]" class="project-link">{{
-                  getProjectShortName(projectBook.projectId)
+                <a [routerLink]="['/serval-administration', projectBook.sfProjectId]" class="project-link">{{
+                  getProjectShortName(projectBook.sfProjectId)
                 }}</a
                 >:
                 @if (projectBook.books.length <= 2) {
@@ -132,10 +132,10 @@
         <ng-container matColumnDef="translationBooks">
           <th mat-header-cell *matHeaderCellDef>Translation Books</th>
           <td mat-cell *matCellDef="let row">
-            @for (projectBook of row.translationBooks; track projectBook.projectId) {
+            @for (projectBook of row.translationBooks; track projectBook.sfProjectId) {
               <div>
-                <a [routerLink]="['/serval-administration', projectBook.projectId]" class="project-link">{{
-                  getProjectShortName(projectBook.projectId)
+                <a [routerLink]="['/serval-administration', projectBook.sfProjectId]" class="project-link">{{
+                  getProjectShortName(projectBook.sfProjectId)
                 }}</a
                 >:
                 @if (projectBook.books.length <= 2) {

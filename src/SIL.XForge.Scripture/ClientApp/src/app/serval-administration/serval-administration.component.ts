@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MobileNotSupportedComponent } from '../shared/mobile-not-supported/mobile-not-supported.component';
 import { DraftJobsComponent } from './draft-jobs.component';
 import { OnboardingRequestsComponent } from './onboarding-requests/onboarding-requests.component';
+import { ServalBuildsComponent } from './serval-builds.component';
 import { ServalProjectsComponent } from './serval-projects.component';
 
 /**
@@ -19,6 +20,7 @@ import { ServalProjectsComponent } from './serval-projects.component';
     MobileNotSupportedComponent,
     DraftJobsComponent,
     OnboardingRequestsComponent,
+    ServalBuildsComponent,
     MatTabGroup,
     MatTab,
     MatTabContent
@@ -32,7 +34,7 @@ export class ServalAdministrationComponent implements OnInit {
     private readonly router: Router
   ) {}
 
-  private readonly availableTabs = ['projects', 'draft-jobs', 'draft-requests'];
+  private readonly availableTabs = ['projects', 'draft-jobs', 'serval-builds', 'draft-requests'];
 
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {

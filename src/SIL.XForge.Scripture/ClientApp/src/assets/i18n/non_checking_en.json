@@ -131,6 +131,9 @@
     "source_text_placeholder": "Source text (optional)",
     "you_can_change_later": "You can change these later."
   },
+  "copy_component": {
+    "copy_to_clipboard": "Copy to clipboard"
+  },
   "delete_project_dialog": {
     "are_you_sure_you_want_to_delete": "Are you sure you want to delete this project?",
     "cancel": "Cancel",
@@ -225,6 +228,7 @@
     "signup_already_submitted": "{{ name }} submitted a request to sign up for drafting on {{ date }}. A team member will contact you within {{ min }} to {{ max }} business days to discuss your project and next steps.",
     "sign_up_for_drafting": "Sign up for drafting",
     "temporarily_unavailable": "Generating drafts is temporarily unavailable.",
+    "problem_fetching_build_history": "There was a problem fetching build history.",
     "warning_generation_faulted": "Last generation attempt failed. Click [em]\"{{ generateButtonText }}\"[/em] below to try again.",
     "click_book_to_preview": "Click a book below to preview the draft and add it to your project.",
     "nt_drafting_notice": "Draft generation is now available to help New Testament translation teams prepare their first drafts. Review our { 1 }help resources{ 2 } to find out how to get started, and to understand how incremental drafting and quality estimates might benefit your project. You will need to contact us to use this feature."
