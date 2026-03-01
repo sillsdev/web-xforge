@@ -78,6 +78,17 @@
         [chapters]="chaptersWithDrafts"
         (chapterChange)="chapterChanged($event)"
       ></app-book-chapter-chooser>
+      @if (this.showDraftSourceWarning) {
+        <app-notice class="draft-source-warning" type="warning" icon="warning" mode="fill-dark">
+          <transloco
+            key="draft_usfm_format.no_source_access"
+            [params]="{
+              connectProjectUrl: { route: '/connect-project' },
+              name: this.sourceProjectName
+            }"
+          ></transloco>
+        </app-notice>
+      }
       <div class="viewer-container">
         <app-text
           [isReadOnly]="true"
