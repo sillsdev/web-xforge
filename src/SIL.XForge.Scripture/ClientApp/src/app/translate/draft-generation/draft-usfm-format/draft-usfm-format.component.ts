@@ -9,6 +9,7 @@ import { MatRadioButton, MatRadioGroup } from '@angular/material/radio';
 import { ActivatedRoute } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
+import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
@@ -34,7 +35,9 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { UserService } from 'xforge-common/user.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { environment } from '../../../../environments/environment';
 import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { ServalAdministrationService } from '../../../serval-administration/serval-administration.service';
@@ -42,6 +45,7 @@ import { BookChapterChooserComponent } from '../../../shared/book-chapter-choose
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { ConfirmOnLeave } from '../../../shared/project-router.guard';
 import { TextComponent } from '../../../shared/text/text.component';
+import { projectLabel } from '../../../shared/utils';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftHandlingService } from '../draft-handling.service';
 import { DraftSourcesAsArrays } from '../draft-source';
@@ -63,6 +67,7 @@ import { DraftSourcesService } from '../draft-sources.service';
     NoticeComponent,
     TextComponent,
     TranslocoModule,
+    TranslocoMarkupModule,
     MatRadioGroup,
     MatRadioButton
   ],
@@ -77,6 +82,8 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   isInitializing: boolean = true;
   paragraphBreakFormat = ParagraphBreakFormat;
   quoteStyle = QuoteFormat;
+  showDraftSourceWarning: boolean = false;
+  sourceProjectName?: string;
 
   paragraphFormat = new FormControl<ParagraphBreakFormat>(ParagraphBreakFormat.BestGuess);
   quoteFormat = new FormControl<QuoteFormat>(QuoteFormat.Denormalized);
@@ -103,6 +110,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     private readonly projectService: SFProjectService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly servalAdministration: ServalAdministrationService,
+    private readonly userService: UserService,
     private readonly dialogService: DialogService,
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
@@ -154,7 +162,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   ngAfterViewInit(): void {
     combineLatest([this.activatedRoute.params, this.draftText.editorCreated as EventEmitter<void>])
       .pipe(first(), quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(([params]) => {
+      .subscribe(async ([params]) => {
         const projectDoc = this.activatedProjectService.projectDoc;
         if (projectDoc?.data == null) return;
         this.setUsfmConfig(projectDoc.data.translateConfig.draftConfig.usfmConfig);
@@ -174,7 +182,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
         if (params['chapter'] !== undefined) {
           initialChapterNum = Number(params['chapter']);
         }
-        this.subscribeBookAndChapters(initialBookNum, initialChapterNum);
+        await this.subscribeBookAndChapters(initialBookNum, initialChapterNum);
       });
 
     this.updateDraftConfig$
@@ -271,15 +279,23 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
       });
   }
 
-  private subscribeBookAndChapters(initialBookNum: number, initialChapterNum?: number): void {
+  private async subscribeBookAndChapters(initialBookNum: number, initialChapterNum?: number): Promise<void> {
+    const currentUser = await this.userService.getCurrentUser();
     combineLatest([this.draftSources$, this.bookNum$.pipe(filterNullish())])
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(async ([source, bookNum]) => {
-        this.translateSource ??= (await this.projectService.getProfile(source.draftingSources[0].projectRef)).data;
+        if (currentUser.data?.sites[environment.siteId].projects.includes(source.draftingSources[0].projectRef)) {
+          this.translateSource ??= (await this.projectService.getProfile(source.draftingSources[0].projectRef)).data;
+        }
 
-        // determine the chapter to navigate to, using the initial chapter if it exists and no chapter is defined yet
-        this.chaptersWithDrafts =
-          this.translateSource?.texts.find(t => t.bookNum === bookNum)?.chapters.map(c => c.number) ?? [];
+        this.showDraftSourceWarning = this.translateSource == null;
+        this.sourceProjectName = projectLabel(source.draftingSources[0]);
+
+        // Determine the chapter to navigate to, using the initial chapter if it exists and no chapter is defined yet
+        // If the user does not have access to the source project, just show the initial chapter, and if null, chapter 1
+        this.chaptersWithDrafts = this.translateSource?.texts
+          .find(t => t.bookNum === bookNum)
+          ?.chapters.map(c => c.number) ?? [initialChapterNum ?? 1];
         const chapter: number =
           this.chapterNum == null ? (initialChapterNum ?? this.chaptersWithDrafts[0]) : this.chaptersWithDrafts[0];
         this.chapterChanged(chapter);
