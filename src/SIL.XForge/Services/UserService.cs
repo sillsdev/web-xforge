@@ -144,7 +144,7 @@ public class UserService : IUserService
                     System.Globalization.CultureInfo.InvariantCulture
                 );
                 _logger.LogWarning(
-                    $"When updating user with SF id {curUserId} from auth0 profile, ignoring incoming tokens which were issued at {incomingIAt}, which is earlier than the current tokens {currentIAt}."
+                    $"When updating user with SF id {curUserId.Sanitize()} from auth0 profile, ignoring incoming tokens which were issued at {incomingIAt}, which is earlier than the current tokens {currentIAt}."
                 );
             }
         }
