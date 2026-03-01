@@ -534,7 +534,7 @@
     "network_error_transcelerator": "Kesalahan jaringan saat mengambil pertanyaan Transcelerator. Mencoba kembali ({{ count }}).",
     "next": "Berikutnya",
     "no_questions_available": "Tidak ada pertanyaan untuk kitab-kitab dalam proyek ini.",
-    "no_transcelerator_offline": "Mengimpor dari Transcelerator tidak tersedia secara luring.",
+    "no_import_offline": "Importing from {{ method }} is not available offline.",
     "question_for_verse": "Pertanyaan untuk ayat {{ number }}",
     "question": "Pertanyaan",
     "reference_from": "Ayat dari",

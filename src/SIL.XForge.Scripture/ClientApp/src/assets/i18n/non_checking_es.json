@@ -534,7 +534,7 @@
     "network_error_transcelerator": "Error de red al obtener las preguntas de Transcelerator. Reintentando ({{ count }}).",
     "next": "Siguiente",
     "no_questions_available": "No hay preguntas para los libros de este proyecto.",
-    "no_transcelerator_offline": "La importación desde Transcelerator no está disponible fuera de línea.",
+    "no_import_offline": "La importación desde {{ method }} no está disponible sin conexión.",
     "question_for_verse": "Pregunta para el versículo {{ number }}",
     "question": "Pregunta",
     "reference_from": "Referencia de",

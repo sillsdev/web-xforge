@@ -26,7 +26,7 @@
     "open_source_licenses": "Open source licenses",
     "overview": "Overview",
     "page_not_found": "صفحه یافت نشد",
-    "password_reset_email_sent": "We've just sent you an email to reset your password.",
+    "password_reset_email_sent": "ایمیلی برای تغییر رمز عبور برایتان ارسال کردیم.",
     "product_version": "Product version: v{{ version }}",
     "project_has_been_deleted": "The project has been deleted or is no longer accessible.",
     "questions_answers": "Questions & answers",

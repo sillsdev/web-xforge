@@ -173,7 +173,7 @@
     <comment>Link to the learn more page seen in the page footer and as button at the bottom of the home page</comment>
   </data>
   <data name="LogIn" xml:space="preserve">
-    <value>ចូល</value>
+    <value>Log In</value>
     <comment>Log In button label</comment>
   </data>
   <data name="MessageMissing" xml:space="preserve">
