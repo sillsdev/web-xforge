@@ -21,20 +21,18 @@ public static class SFDataAccessServiceCollectionExtensions
             "sf_project_secrets",
             null,
             idx =>
-                idx.CreateMany(
-                    [
-                        new CreateIndexModel<SFProjectSecret>(
-                            Builders<SFProjectSecret>.IndexKeys.Ascending(ps => ps.ServalData.PreTranslationEngineId)
-                        ),
-                        // The C# Driver still does not support fluent syntax for multi-key indexes.
-                        // See https://jira.mongodb.org/browse/CSHARP-1309
-                        new CreateIndexModel<SFProjectSecret>(
-                            Builders<SFProjectSecret>.IndexKeys.Ascending(
-                                $"{nameof(SFProjectSecret.ShareKeys)}.{nameof(ShareKey.Key)}"
-                            )
-                        ),
-                    ]
-                )
+                idx.CreateMany([
+                    new CreateIndexModel<SFProjectSecret>(
+                        Builders<SFProjectSecret>.IndexKeys.Ascending(ps => ps.ServalData.PreTranslationEngineId)
+                    ),
+                    // The C# Driver still does not support fluent syntax for multi-key indexes.
+                    // See https://jira.mongodb.org/browse/CSHARP-1309
+                    new CreateIndexModel<SFProjectSecret>(
+                        Builders<SFProjectSecret>.IndexKeys.Ascending(
+                            $"{nameof(SFProjectSecret.ShareKeys)}.{nameof(ShareKey.Key)}"
+                        )
+                    ),
+                ])
         );
         services.AddMongoRepository<SyncMetrics>(
             "sync_metrics",

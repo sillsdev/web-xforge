@@ -709,45 +709,40 @@ public class TrainingDataServiceTests
             FileSystemService.FileExists(Arg.Is<string>(f => f.Contains('?'))).Returns(false);
             FileSystemService.FileExists(Arg.Is<string>(f => !f.Contains('?'))).Returns(true);
 
-            var projects = new MemoryRepository<SFProject>(
-                [
-                    new SFProject
+            var projects = new MemoryRepository<SFProject>([
+                new SFProject
+                {
+                    Id = Project01,
+                    UserRoles = new Dictionary<string, string>
                     {
-                        Id = Project01,
-                        UserRoles = new Dictionary<string, string>
-                        {
-                            { User01, SFProjectRole.Administrator },
-                            { User02, SFProjectRole.Translator },
-                            { User03, SFProjectRole.Consultant },
-                        },
+                        { User01, SFProjectRole.Administrator },
+                        { User02, SFProjectRole.Translator },
+                        { User03, SFProjectRole.Consultant },
                     },
-                ]
-            );
-            var trainingData = new MemoryRepository<TrainingData>(
-                [
-                    new TrainingData
-                    {
-                        Id = TrainingData.GetDocId(Project01, Data01),
-                        DataId = Data01,
-                        ProjectRef = Project01,
-                        OwnerRef = User01,
-                        FileUrl = $"/{Project01}/{User01}_{Data01}.csv?t={DateTime.UtcNow.ToFileTime()}",
-                        MimeType = "text/csv",
-                        SkipRows = 0,
-                    },
-                    new TrainingData
-                    {
-                        Id = TrainingData.GetDocId(Project01, Data02),
-                        DataId = Data02,
-                        ProjectRef = Project01,
-                        OwnerRef = User02,
-                        FileUrl =
-                            $"http://example.com/{Project01}/{User01}_{Data02}.csv?t={DateTime.UtcNow.ToFileTime()}",
-                        MimeType = "text/csv",
-                        SkipRows = 1,
-                    },
-                ]
-            );
+                },
+            ]);
+            var trainingData = new MemoryRepository<TrainingData>([
+                new TrainingData
+                {
+                    Id = TrainingData.GetDocId(Project01, Data01),
+                    DataId = Data01,
+                    ProjectRef = Project01,
+                    OwnerRef = User01,
+                    FileUrl = $"/{Project01}/{User01}_{Data01}.csv?t={DateTime.UtcNow.ToFileTime()}",
+                    MimeType = "text/csv",
+                    SkipRows = 0,
+                },
+                new TrainingData
+                {
+                    Id = TrainingData.GetDocId(Project01, Data02),
+                    DataId = Data02,
+                    ProjectRef = Project01,
+                    OwnerRef = User02,
+                    FileUrl = $"http://example.com/{Project01}/{User01}_{Data02}.csv?t={DateTime.UtcNow.ToFileTime()}",
+                    MimeType = "text/csv",
+                    SkipRows = 1,
+                },
+            ]);
             var realtimeService = new SFMemoryRealtimeService();
             realtimeService.AddRepository("sf_projects", OTType.Json0, projects);
             realtimeService.AddRepository("training_data", OTType.Json0, trainingData);

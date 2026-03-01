@@ -28,18 +28,16 @@ public static class SFRealtimeServiceCollectionExtensions
                 o.MigrationsDisabled = realtimeOptions.MigrationsDisabled;
                 o.UseExistingRealtimeServer = realtimeOptions.UseExistingRealtimeServer;
                 o.ProjectDoc = new DocConfig("sf_projects", typeof(SFProject));
-                o.ProjectDataDocs.AddRange(
-                    [
-                        new DocConfig("sf_project_user_configs", typeof(SFProjectUserConfig)),
-                        new DocConfig("texts", typeof(TextData), OTType.RichText),
-                        new DocConfig("questions", typeof(Question)),
-                        new DocConfig("note_threads", typeof(NoteThread)),
-                        new DocConfig("text_audio", typeof(TextAudio)),
-                        new DocConfig("biblical_terms", typeof(BiblicalTerm)),
-                        new DocConfig("training_data", typeof(TrainingData)),
-                        new DocConfig("text_documents", typeof(TextDocument)),
-                    ]
-                );
+                o.ProjectDataDocs.AddRange([
+                    new DocConfig("sf_project_user_configs", typeof(SFProjectUserConfig)),
+                    new DocConfig("texts", typeof(TextData), OTType.RichText),
+                    new DocConfig("questions", typeof(Question)),
+                    new DocConfig("note_threads", typeof(NoteThread)),
+                    new DocConfig("text_audio", typeof(TextAudio)),
+                    new DocConfig("biblical_terms", typeof(BiblicalTerm)),
+                    new DocConfig("training_data", typeof(TrainingData)),
+                    new DocConfig("text_documents", typeof(TextDocument)),
+                ]);
                 o.UserDataDocs.AddRange([new DocConfig("sf_project_user_configs", typeof(SFProjectUserConfig))]);
             },
             nodeOptions,

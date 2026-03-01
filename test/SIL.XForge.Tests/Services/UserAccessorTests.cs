@@ -118,9 +118,10 @@ public class UserAccessorTests
     {
         var env = new TestEnvironment();
         env.HttpContextAccessor.HttpContext!.User = new ClaimsPrincipal(
-            new ClaimsIdentity(
-                [new Claim(XFClaimTypes.Role, SystemRole.SystemAdmin), new Claim(XFClaimTypes.Role, SystemRole.User)]
-            )
+            new ClaimsIdentity([
+                new Claim(XFClaimTypes.Role, SystemRole.SystemAdmin),
+                new Claim(XFClaimTypes.Role, SystemRole.User),
+            ])
         );
 
         // SUT

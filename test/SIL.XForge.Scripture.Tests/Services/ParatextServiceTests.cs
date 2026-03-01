@@ -957,23 +957,21 @@ public class ParatextServiceTests
         env.AddTextDocs(40, 1, 6, "Context before ", "Text selected");
 
         env.AddNoteThreadData([new ThreadComponents { threadNum = 1, noteCount = 1 }]);
-        env.AddParatextComments(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 1,
-                    username = env.Username01,
-                },
-                new ThreadComponents
-                {
-                    threadNum = 2,
-                    noteCount = 1,
-                    username = env.Username01,
-                    appliesToVerse = true,
-                },
-            ]
-        );
+        env.AddParatextComments([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 1,
+                username = env.Username01,
+            },
+            new ThreadComponents
+            {
+                threadNum = 2,
+                noteCount = 1,
+                username = env.Username01,
+                appliesToVerse = true,
+            },
+        ]);
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
@@ -1029,16 +1027,14 @@ public class ParatextServiceTests
         env.AddTextDocs(40, 1, 6, "Context before ", "Text selection", false);
 
         env.AddNoteThreadData([new ThreadComponents { threadNum = 1, noteCount = 1 }]);
-        env.AddParatextComments(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 1,
-                    username = env.Username01,
-                },
-            ]
-        );
+        env.AddParatextComments([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 1,
+                username = env.Username01,
+            },
+        ]);
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
@@ -1092,116 +1088,112 @@ public class ParatextServiceTests
             content = "Admin comment no xml tags.",
             assignedPTUser = CommentThread.unassignedUser,
         };
-        env.AddNoteThreadData(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 1,
-                    notes = [user1Note],
-                },
-                new ThreadComponents
-                {
-                    threadNum = 2,
-                    noteCount = 1,
-                    notes = [user1Note],
-                },
-                new ThreadComponents
-                {
-                    threadNum = 4,
-                    noteCount = 3,
-                    notes = [user1Note, user1NoteNoTag, user1NoteNoTag],
-                    deletedNotes = [false, true, false],
-                },
-                new ThreadComponents
-                {
-                    threadNum = 5,
-                    noteCount = 2,
-                    notes = [user1Note, user1NoteNoTag],
-                    deletedNotes = [true, false],
-                },
-                new ThreadComponents
-                {
-                    threadNum = 7,
-                    noteCount = 1,
-                    notes = [user1Note],
-                },
-                new ThreadComponents
-                {
-                    threadNum = 8,
-                    noteCount = 1,
-                    notes = [thread8Note],
-                },
-                new ThreadComponents
-                {
-                    threadNum = 9,
-                    noteCount = 3,
-                    notes = [user1Note, user1Note, user1Note],
-                },
-            ]
-        );
-        env.AddParatextComments(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 1,
-                    username = env.Username01,
-                    notes = [user1Note],
-                    isEdited = true,
-                },
-                new ThreadComponents
-                {
-                    threadNum = 2,
-                    noteCount = 1,
-                    username = env.Username01,
-                    notes = [user1Note],
-                    deletedNotes = [true],
-                },
-                new ThreadComponents
-                {
-                    threadNum = 3,
-                    noteCount = 1,
-                    username = env.Username02,
-                    notes = [user1Note],
-                },
-                new ThreadComponents
-                {
-                    threadNum = 4,
-                    noteCount = 1,
-                    username = env.Username01,
-                    notes = [user1Note],
-                },
-                new ThreadComponents
-                {
-                    threadNum = 6,
-                    noteCount = 1,
-                    isConflict = true,
-                    notes = [user1Note],
-                },
-                new ThreadComponents
-                {
-                    threadNum = 7,
-                    noteCount = 2,
-                    username = env.Username01,
-                    notes = [user1Note, user1NoteNoTag],
-                },
-                new ThreadComponents
-                {
-                    threadNum = 8,
-                    noteCount = 1,
-                    username = env.Username01,
-                    notes = [thread8Note],
-                },
-                new ThreadComponents
-                {
-                    threadNum = 9,
-                    noteCount = 3,
-                    username = env.Username01,
-                    notes = [user1Note, user1NoteNoTag, user1NoteNoTag],
-                },
-            ]
-        );
+        env.AddNoteThreadData([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 1,
+                notes = [user1Note],
+            },
+            new ThreadComponents
+            {
+                threadNum = 2,
+                noteCount = 1,
+                notes = [user1Note],
+            },
+            new ThreadComponents
+            {
+                threadNum = 4,
+                noteCount = 3,
+                notes = [user1Note, user1NoteNoTag, user1NoteNoTag],
+                deletedNotes = [false, true, false],
+            },
+            new ThreadComponents
+            {
+                threadNum = 5,
+                noteCount = 2,
+                notes = [user1Note, user1NoteNoTag],
+                deletedNotes = [true, false],
+            },
+            new ThreadComponents
+            {
+                threadNum = 7,
+                noteCount = 1,
+                notes = [user1Note],
+            },
+            new ThreadComponents
+            {
+                threadNum = 8,
+                noteCount = 1,
+                notes = [thread8Note],
+            },
+            new ThreadComponents
+            {
+                threadNum = 9,
+                noteCount = 3,
+                notes = [user1Note, user1Note, user1Note],
+            },
+        ]);
+        env.AddParatextComments([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 1,
+                username = env.Username01,
+                notes = [user1Note],
+                isEdited = true,
+            },
+            new ThreadComponents
+            {
+                threadNum = 2,
+                noteCount = 1,
+                username = env.Username01,
+                notes = [user1Note],
+                deletedNotes = [true],
+            },
+            new ThreadComponents
+            {
+                threadNum = 3,
+                noteCount = 1,
+                username = env.Username02,
+                notes = [user1Note],
+            },
+            new ThreadComponents
+            {
+                threadNum = 4,
+                noteCount = 1,
+                username = env.Username01,
+                notes = [user1Note],
+            },
+            new ThreadComponents
+            {
+                threadNum = 6,
+                noteCount = 1,
+                isConflict = true,
+                notes = [user1Note],
+            },
+            new ThreadComponents
+            {
+                threadNum = 7,
+                noteCount = 2,
+                username = env.Username01,
+                notes = [user1Note, user1NoteNoTag],
+            },
+            new ThreadComponents
+            {
+                threadNum = 8,
+                noteCount = 1,
+                username = env.Username01,
+                notes = [thread8Note],
+            },
+            new ThreadComponents
+            {
+                threadNum = 9,
+                noteCount = 3,
+                username = env.Username01,
+                notes = [user1Note, user1NoteNoTag, user1NoteNoTag],
+            },
+        ]);
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
             conn,
@@ -1315,16 +1307,14 @@ public class ParatextServiceTests
         var note1a = new ThreadNoteComponents { content = content1a, tagsAdded = ["1"] };
         var note2a = new ThreadNoteComponents { content = content2a };
         var note3a = new ThreadNoteComponents { content = content3 };
-        env.AddNoteThreadData(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 3,
-                    notes = [note1a, note2a, note3a],
-                },
-            ]
-        );
+        env.AddNoteThreadData([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 3,
+                notes = [note1a, note2a, note3a],
+            },
+        ]);
 
         var note1b = new ThreadNoteComponents
         {
@@ -1334,17 +1324,15 @@ public class ParatextServiceTests
         };
         var note2b = new ThreadNoteComponents { content = content2b, ownerRef = env.User01 };
         var note3b = new ThreadNoteComponents { content = content3, ownerRef = env.User01 };
-        env.AddParatextComments(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 3,
-                    username = env.Username01,
-                    notes = [note1b, note2b, note3b],
-                },
-            ]
-        );
+        env.AddParatextComments([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 3,
+                username = env.Username01,
+                notes = [note1b, note2b, note3b],
+            },
+        ]);
 
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
         {
@@ -1410,17 +1398,15 @@ public class ParatextServiceTests
         var note4 = new ThreadNoteComponents { content = nonFormattedContentInParagraph };
         var note5 = new ThreadNoteComponents { content = whitespaceInContent };
         var note6 = new ThreadNoteComponents { content = reviewerContent };
-        env.AddParatextComments(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 6,
-                    username = env.Username01,
-                    notes = [note1, note2, note3, note4, note5, note6],
-                },
-            ]
-        );
+        env.AddParatextComments([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 6,
+                username = env.Username01,
+                notes = [note1, note2, note3, note4, note5, note6],
+            },
+        ]);
 
         IDocument<NoteThread>[] noteThreadDocs = [];
         Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, env.ContextBefore, "Text selected");
@@ -1742,28 +1728,24 @@ public class ParatextServiceTests
                 duplicate = true,
             },
         ];
-        env.AddNoteThreadData(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 1,
-                    notes = noteComponents,
-                },
-            ]
-        );
+        env.AddNoteThreadData([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 1,
+                notes = noteComponents,
+            },
+        ]);
 
-        env.AddParatextComments(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 1,
-                    notes = noteComponents,
-                    username = env.Username01,
-                },
-            ]
-        );
+        env.AddParatextComments([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 1,
+                notes = noteComponents,
+                username = env.Username01,
+            },
+        ]);
 
         var commentThread = env.ProjectCommentManager.FindThread("thread1");
         string commentId = commentThread.Comments[0].Id;
@@ -1820,27 +1802,23 @@ public class ParatextServiceTests
                 duplicate = true,
             },
         ];
-        env.AddNoteThreadData(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 1,
-                    notes = sfNoteComponents,
-                },
-            ]
-        );
-        env.AddParatextComments(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 2,
-                    notes = ptNoteComponents,
-                    username = env.Username01,
-                },
-            ]
-        );
+        env.AddNoteThreadData([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 1,
+                notes = sfNoteComponents,
+            },
+        ]);
+        env.AddParatextComments([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 2,
+                notes = ptNoteComponents,
+                username = env.Username01,
+            },
+        ]);
 
         var commentThread = env.ProjectCommentManager.FindThread("thread1");
         string commentId1 = commentThread.Comments[0].Id;
@@ -1983,17 +1961,15 @@ public class ParatextServiceTests
                 tagsAdded = ["4"],
             },
         ];
-        env.AddParatextComments(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = threadNotes.Length,
-                    notes = threadNotes,
-                    username = env.Username01,
-                },
-            ]
-        );
+        env.AddParatextComments([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = threadNotes.Length,
+                notes = threadNotes,
+                username = env.Username01,
+            },
+        ]);
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
@@ -2071,27 +2047,25 @@ public class ParatextServiceTests
         }
         ThreadNoteComponents[] threadDocNotes7 = getThreadNoteComponents(1, [env.Username02]);
         ThreadNoteComponents[] threadDocNotes8 = getThreadNoteComponents(1, [env.Username02]);
-        env.AddNoteThreadData(
-            [
-                new ThreadComponents { threadNum = 1, noteCount = 1 },
-                new ThreadComponents { threadNum = 3, noteCount = 1 },
-                new ThreadComponents { threadNum = 4, noteCount = 1 },
-                new ThreadComponents { threadNum = 5, noteCount = 1 },
-                new ThreadComponents { threadNum = 6, noteCount = 1 },
-                new ThreadComponents
-                {
-                    threadNum = 7,
-                    noteCount = 1,
-                    notes = threadDocNotes7,
-                },
-                new ThreadComponents
-                {
-                    threadNum = 8,
-                    noteCount = 1,
-                    notes = threadDocNotes8,
-                },
-            ]
-        );
+        env.AddNoteThreadData([
+            new ThreadComponents { threadNum = 1, noteCount = 1 },
+            new ThreadComponents { threadNum = 3, noteCount = 1 },
+            new ThreadComponents { threadNum = 4, noteCount = 1 },
+            new ThreadComponents { threadNum = 5, noteCount = 1 },
+            new ThreadComponents { threadNum = 6, noteCount = 1 },
+            new ThreadComponents
+            {
+                threadNum = 7,
+                noteCount = 1,
+                notes = threadDocNotes7,
+            },
+            new ThreadComponents
+            {
+                threadNum = 8,
+                noteCount = 1,
+                notes = threadDocNotes8,
+            },
+        ]);
 
         string unassignedUserString = CommentThread.unassignedUser;
         string teamUserString = CommentThread.teamUser;
@@ -2102,66 +2076,64 @@ public class ParatextServiceTests
         ThreadNoteComponents[] threadNotes5 = getThreadNoteComponents(1, [unassignedUserString], true);
         ThreadNoteComponents[] threadNotes7 = getThreadNoteComponents(1, null);
         ThreadNoteComponents[] threadNotes8 = getThreadNoteComponents(1, [unassignedUserString]);
-        env.AddParatextComments(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 2,
-                    username = env.Username01,
-                    notes = threadNotes1,
-                },
-                new ThreadComponents
-                {
-                    threadNum = 2,
-                    noteCount = 1,
-                    username = env.Username01,
-                    notes = threadNotes2,
-                },
-                new ThreadComponents
-                {
-                    threadNum = 3,
-                    noteCount = 1,
-                    username = env.Username01,
-                    notes = threadNotes3,
-                },
-                new ThreadComponents
-                {
-                    threadNum = 4,
-                    noteCount = 1,
-                    username = env.Username01,
-                    notes = threadNotes4,
-                },
-                new ThreadComponents
-                {
-                    threadNum = 5,
-                    noteCount = 1,
-                    username = env.Username01,
-                    notes = threadNotes5,
-                },
-                new ThreadComponents
-                {
-                    threadNum = 6,
-                    noteCount = 1,
-                    username = env.Username01,
-                },
-                new ThreadComponents
-                {
-                    threadNum = 7,
-                    noteCount = 1,
-                    username = env.Username01,
-                    notes = threadNotes7,
-                },
-                new ThreadComponents
-                {
-                    threadNum = 8,
-                    noteCount = 1,
-                    username = env.Username01,
-                    notes = threadNotes8,
-                },
-                new ThreadComponents { threadNum = 9, noteCount = 1 },
-            ]
-        );
+        env.AddParatextComments([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 2,
+                username = env.Username01,
+                notes = threadNotes1,
+            },
+            new ThreadComponents
+            {
+                threadNum = 2,
+                noteCount = 1,
+                username = env.Username01,
+                notes = threadNotes2,
+            },
+            new ThreadComponents
+            {
+                threadNum = 3,
+                noteCount = 1,
+                username = env.Username01,
+                notes = threadNotes3,
+            },
+            new ThreadComponents
+            {
+                threadNum = 4,
+                noteCount = 1,
+                username = env.Username01,
+                notes = threadNotes4,
+            },
+            new ThreadComponents
+            {
+                threadNum = 5,
+                noteCount = 1,
+                username = env.Username01,
+                notes = threadNotes5,
+            },
+            new ThreadComponents
+            {
+                threadNum = 6,
+                noteCount = 1,
+                username = env.Username01,
+            },
+            new ThreadComponents
+            {
+                threadNum = 7,
+                noteCount = 1,
+                username = env.Username01,
+                notes = threadNotes7,
+            },
+            new ThreadComponents
+            {
+                threadNum = 8,
+                noteCount = 1,
+                username = env.Username01,
+                notes = threadNotes8,
+            },
+            new ThreadComponents { threadNum = 9, noteCount = 1 },
+        ]);
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         // SUT
@@ -2243,38 +2215,36 @@ public class ParatextServiceTests
         string ptProjectId = env.SetupProject(env.Project01, associatedPTUser);
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
-        env.AddParatextComments(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 1,
-                    username = env.Username01,
-                    alternateText = SelectionType.RelatedVerse,
-                },
-                new ThreadComponents
-                {
-                    threadNum = 8,
-                    noteCount = 1,
-                    username = env.Username01,
-                    alternateText = SelectionType.Section,
-                },
-                new ThreadComponents
-                {
-                    threadNum = 9,
-                    noteCount = 1,
-                    username = env.Username01,
-                    alternateText = SelectionType.SectionEnd,
-                },
-                new ThreadComponents
-                {
-                    threadNum = 10,
-                    noteCount = 1,
-                    username = env.Username01,
-                    alternateText = SelectionType.RelatedVerse,
-                },
-            ]
-        );
+        env.AddParatextComments([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 1,
+                username = env.Username01,
+                alternateText = SelectionType.RelatedVerse,
+            },
+            new ThreadComponents
+            {
+                threadNum = 8,
+                noteCount = 1,
+                username = env.Username01,
+                alternateText = SelectionType.Section,
+            },
+            new ThreadComponents
+            {
+                threadNum = 9,
+                noteCount = 1,
+                username = env.Username01,
+                alternateText = SelectionType.SectionEnd,
+            },
+            new ThreadComponents
+            {
+                threadNum = 10,
+                noteCount = 1,
+                username = env.Username01,
+                alternateText = SelectionType.RelatedVerse,
+            },
+        ]);
 
         await using (await env.RealtimeService.ConnectAsync())
         {
@@ -2339,62 +2309,58 @@ public class ParatextServiceTests
         string verseStr = "MAT 1:7";
         ReattachedThreadInfo rti = env.GetReattachedThreadInfo(verseStr);
 
-        env.AddNoteThreadData(
-            [
-                new ThreadComponents { threadNum = 1, noteCount = 1 },
-                new ThreadComponents
-                {
-                    threadNum = 3,
-                    noteCount = 1,
-                    reattachedVerseStr = verseStr,
-                },
-                new ThreadComponents { threadNum = 4, noteCount = 1 },
-                new ThreadComponents
-                {
-                    threadNum = 5,
-                    noteCount = 1,
-                    reattachedVerseStr = verseStr,
-                },
-            ]
-        );
-        env.AddParatextComments(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 1,
-                    username = env.Username01,
-                    reattachedVerseStr = verseStr,
-                },
-                new ThreadComponents
-                {
-                    threadNum = 2,
-                    noteCount = 1,
-                    username = env.Username01,
-                    reattachedVerseStr = verseStr,
-                },
-                new ThreadComponents
-                {
-                    threadNum = 3,
-                    noteCount = 1,
-                    username = env.Username01,
-                    reattachedVerseStr = verseStr,
-                },
-                new ThreadComponents
-                {
-                    threadNum = 4,
-                    noteCount = 2,
-                    username = env.Username01,
-                    reattachedVerseStr = verseStr,
-                },
-                new ThreadComponents
-                {
-                    threadNum = 5,
-                    noteCount = 1,
-                    username = env.Username01,
-                },
-            ]
-        );
+        env.AddNoteThreadData([
+            new ThreadComponents { threadNum = 1, noteCount = 1 },
+            new ThreadComponents
+            {
+                threadNum = 3,
+                noteCount = 1,
+                reattachedVerseStr = verseStr,
+            },
+            new ThreadComponents { threadNum = 4, noteCount = 1 },
+            new ThreadComponents
+            {
+                threadNum = 5,
+                noteCount = 1,
+                reattachedVerseStr = verseStr,
+            },
+        ]);
+        env.AddParatextComments([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 1,
+                username = env.Username01,
+                reattachedVerseStr = verseStr,
+            },
+            new ThreadComponents
+            {
+                threadNum = 2,
+                noteCount = 1,
+                username = env.Username01,
+                reattachedVerseStr = verseStr,
+            },
+            new ThreadComponents
+            {
+                threadNum = 3,
+                noteCount = 1,
+                username = env.Username01,
+                reattachedVerseStr = verseStr,
+            },
+            new ThreadComponents
+            {
+                threadNum = 4,
+                noteCount = 2,
+                username = env.Username01,
+                reattachedVerseStr = verseStr,
+            },
+            new ThreadComponents
+            {
+                threadNum = 5,
+                noteCount = 1,
+                username = env.Username01,
+            },
+        ]);
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
@@ -2470,68 +2436,64 @@ public class ParatextServiceTests
         // The text doc is set up so that verse 7 has unique text that we reattach to
         string verseStr = "MAT 1:7 This is not a valid verse   It was badly reattached";
 
-        env.AddNoteThreadData(
-            [
-                new ThreadComponents { threadNum = 1, noteCount = 1 },
-                new ThreadComponents
-                {
-                    threadNum = 3,
-                    noteCount = 1,
-                    reattachedVerseStr = verseStr,
-                    doNotParseReattachedVerseStr = true,
-                },
-                new ThreadComponents { threadNum = 4, noteCount = 1 },
-                new ThreadComponents
-                {
-                    threadNum = 5,
-                    noteCount = 1,
-                    reattachedVerseStr = verseStr,
-                    doNotParseReattachedVerseStr = true,
-                },
-            ]
-        );
-        env.AddParatextComments(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 1,
-                    username = env.Username01,
-                    reattachedVerseStr = verseStr,
-                    doNotParseReattachedVerseStr = true,
-                },
-                new ThreadComponents
-                {
-                    threadNum = 2,
-                    noteCount = 1,
-                    username = env.Username01,
-                    reattachedVerseStr = verseStr,
-                    doNotParseReattachedVerseStr = true,
-                },
-                new ThreadComponents
-                {
-                    threadNum = 3,
-                    noteCount = 1,
-                    username = env.Username01,
-                    reattachedVerseStr = verseStr,
-                    doNotParseReattachedVerseStr = true,
-                },
-                new ThreadComponents
-                {
-                    threadNum = 4,
-                    noteCount = 2,
-                    username = env.Username01,
-                    reattachedVerseStr = verseStr,
-                    doNotParseReattachedVerseStr = true,
-                },
-                new ThreadComponents
-                {
-                    threadNum = 5,
-                    noteCount = 1,
-                    username = env.Username01,
-                },
-            ]
-        );
+        env.AddNoteThreadData([
+            new ThreadComponents { threadNum = 1, noteCount = 1 },
+            new ThreadComponents
+            {
+                threadNum = 3,
+                noteCount = 1,
+                reattachedVerseStr = verseStr,
+                doNotParseReattachedVerseStr = true,
+            },
+            new ThreadComponents { threadNum = 4, noteCount = 1 },
+            new ThreadComponents
+            {
+                threadNum = 5,
+                noteCount = 1,
+                reattachedVerseStr = verseStr,
+                doNotParseReattachedVerseStr = true,
+            },
+        ]);
+        env.AddParatextComments([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 1,
+                username = env.Username01,
+                reattachedVerseStr = verseStr,
+                doNotParseReattachedVerseStr = true,
+            },
+            new ThreadComponents
+            {
+                threadNum = 2,
+                noteCount = 1,
+                username = env.Username01,
+                reattachedVerseStr = verseStr,
+                doNotParseReattachedVerseStr = true,
+            },
+            new ThreadComponents
+            {
+                threadNum = 3,
+                noteCount = 1,
+                username = env.Username01,
+                reattachedVerseStr = verseStr,
+                doNotParseReattachedVerseStr = true,
+            },
+            new ThreadComponents
+            {
+                threadNum = 4,
+                noteCount = 2,
+                username = env.Username01,
+                reattachedVerseStr = verseStr,
+                doNotParseReattachedVerseStr = true,
+            },
+            new ThreadComponents
+            {
+                threadNum = 5,
+                noteCount = 1,
+                username = env.Username01,
+            },
+        ]);
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
@@ -2589,17 +2551,15 @@ public class ParatextServiceTests
         string paratextId = env.SetupProject(env.Project01, associatedPtUser);
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
-        env.AddParatextComments(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 1,
-                    username = env.Username01,
-                    deletedNotes = [true],
-                },
-            ]
-        );
+        env.AddParatextComments([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 1,
+                username = env.Username01,
+                deletedNotes = [true],
+            },
+        ]);
 
         Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, env.ContextBefore, "Text selected");
         Dictionary<string, ParatextUserProfile> syncUsers = new Dictionary<string, ParatextUserProfile>
@@ -2631,27 +2591,23 @@ public class ParatextServiceTests
 
         string threadId = "thread1";
         string originalDataId = "dataId1";
-        env.AddNoteThreadData(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 1,
-                    deletedNotes = [true],
-                },
-            ]
-        );
+        env.AddNoteThreadData([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 1,
+                deletedNotes = [true],
+            },
+        ]);
 
-        env.AddParatextComments(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 1,
-                    username = env.Username01,
-                },
-            ]
-        );
+        env.AddParatextComments([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 1,
+                username = env.Username01,
+            },
+        ]);
         string newDataId = "newdataid1";
         env.MockGuidService.NewObjectId().Returns(newDataId);
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
@@ -2890,43 +2846,39 @@ public class ParatextServiceTests
                 content = "See 1&amp;2 John",
             },
         ];
-        env.AddNoteThreadData(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 1,
-                    isNew = true,
-                    notes = thread1Notes,
-                },
-                new ThreadComponents
-                {
-                    threadNum = 2,
-                    noteCount = 1,
-                    isNew = true,
-                    notes = thread2Notes,
-                },
-                new ThreadComponents
-                {
-                    threadNum = 3,
-                    noteCount = 2,
-                    deletedNotes = [false, true],
-                    versionNumber = 1,
-                },
-            ]
-        );
-        env.AddParatextComments(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 3,
-                    noteCount = 1,
-                    username = env.Username01,
-                    deletedNotes = [false],
-                    versionNumber = 1,
-                },
-            ]
-        );
+        env.AddNoteThreadData([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 1,
+                isNew = true,
+                notes = thread1Notes,
+            },
+            new ThreadComponents
+            {
+                threadNum = 2,
+                noteCount = 1,
+                isNew = true,
+                notes = thread2Notes,
+            },
+            new ThreadComponents
+            {
+                threadNum = 3,
+                noteCount = 2,
+                deletedNotes = [false, true],
+                versionNumber = 1,
+            },
+        ]);
+        env.AddParatextComments([
+            new ThreadComponents
+            {
+                threadNum = 3,
+                noteCount = 1,
+                username = env.Username01,
+                deletedNotes = [false],
+                versionNumber = 1,
+            },
+        ]);
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         CommentThread thread = env.ProjectCommentManager.FindThread(thread1);
         Assert.That(thread, Is.Null);
@@ -3006,18 +2958,16 @@ public class ParatextServiceTests
 
         string threadId = "thread1";
         string dataId = "dataId1";
-        env.AddNoteThreadData(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 1,
-                    isNew = true,
-                    notes = [new ThreadNoteComponents { }],
-                    editable = true,
-                },
-            ]
-        );
+        env.AddNoteThreadData([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 1,
+                isNew = true,
+                notes = [new ThreadNoteComponents { }],
+                editable = true,
+            },
+        ]);
         await using IConnection conn = await env.RealtimeService.ConnectAsync(env.User01);
         CommentThread commentThread = env.ProjectCommentManager.FindThread(threadId);
         Assert.That(commentThread, Is.Null);
@@ -3058,30 +3008,26 @@ public class ParatextServiceTests
             },
             new ThreadNoteComponents { ownerRef = env.User05, versionNumber = 1 },
         };
-        env.AddNoteThreadData(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 2,
-                    username = env.Username01,
-                    notes = threadNoteComponents,
-                    isEdited = true,
-                    editable = true,
-                },
-            ]
-        );
-        env.AddParatextComments(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 2,
-                    username = env.Username01,
-                    notes = threadNoteComponents,
-                },
-            ]
-        );
+        env.AddNoteThreadData([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 2,
+                username = env.Username01,
+                notes = threadNoteComponents,
+                isEdited = true,
+                editable = true,
+            },
+        ]);
+        env.AddParatextComments([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 2,
+                username = env.Username01,
+                notes = threadNoteComponents,
+            },
+        ]);
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, dataId);
@@ -3250,30 +3196,26 @@ public class ParatextServiceTests
             },
             new ThreadNoteComponents { ownerRef = env.User05, versionNumber = 1 },
         };
-        env.AddNoteThreadData(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 2,
-                    username = env.Username01,
-                    notes = threadNoteComponents,
-                    isEdited = true,
-                    editable = false,
-                },
-            ]
-        );
-        env.AddParatextComments(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 2,
-                    username = env.Username01,
-                    notes = threadNoteComponents,
-                },
-            ]
-        );
+        env.AddNoteThreadData([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 2,
+                username = env.Username01,
+                notes = threadNoteComponents,
+                isEdited = true,
+                editable = false,
+            },
+        ]);
+        env.AddParatextComments([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 2,
+                username = env.Username01,
+                notes = threadNoteComponents,
+            },
+        ]);
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, dataId);
@@ -3347,32 +3289,28 @@ public class ParatextServiceTests
         {
             new ThreadNoteComponents { ownerRef = env.User01, tagsAdded = ["2"] },
         };
-        env.AddNoteThreadData(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 1,
-                    username = env.Username01,
-                    notes = threadNoteComponents,
-                    isEdited = true,
-                    editable = true,
-                    versionNumber = 1,
-                },
-            ]
-        );
-        env.AddParatextComments(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 1,
-                    username = env.Username01,
-                    notes = threadNoteComponents,
-                    versionNumber = 2,
-                },
-            ]
-        );
+        env.AddNoteThreadData([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 1,
+                username = env.Username01,
+                notes = threadNoteComponents,
+                isEdited = true,
+                editable = true,
+                versionNumber = 1,
+            },
+        ]);
+        env.AddParatextComments([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 1,
+                username = env.Username01,
+                notes = threadNoteComponents,
+                versionNumber = 2,
+            },
+        ]);
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, dataId);
@@ -3678,30 +3616,26 @@ public class ParatextServiceTests
 
         string threadId = "thread1";
         string dataId = "dataId1";
-        env.AddNoteThreadData(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 1,
-                    username = env.Username01,
-                    deletedNotes = [true],
-                    versionNumber = 1,
-                },
-            ]
-        );
-        env.AddParatextComments(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 2,
-                    username = env.Username01,
-                    deletedNotes = [true, false],
-                    versionNumber = 1,
-                },
-            ]
-        );
+        env.AddNoteThreadData([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 1,
+                username = env.Username01,
+                deletedNotes = [true],
+                versionNumber = 1,
+            },
+        ]);
+        env.AddParatextComments([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 2,
+                username = env.Username01,
+                deletedNotes = [true, false],
+                versionNumber = 1,
+            },
+        ]);
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, dataId);
@@ -3858,16 +3792,14 @@ public class ParatextServiceTests
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
         string threadId = "thread1";
-        env.AddParatextComments(
-            [
-                new ThreadComponents
-                {
-                    threadNum = 1,
-                    noteCount = 1,
-                    username = env.Username01,
-                },
-            ]
-        );
+        env.AddParatextComments([
+            new ThreadComponents
+            {
+                threadNum = 1,
+                noteCount = 1,
+                username = env.Username01,
+            },
+        ]);
         CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
         Assert.That(thread, Is.Not.Null);
 
