@@ -27,7 +27,7 @@ public class SharedResourceTests
         var sharedKeys = sharedResourceClass?.GetNestedType("Keys");
         Assert.NotNull(sharedKeys, "Um, what did you refactor?");
         // grab all the localization keys from SharedResource.Keys static class
-        var publicProps = sharedKeys.GetFields(BindingFlags.Public | BindingFlags.Static);
+        var publicProps = sharedKeys!.GetFields(BindingFlags.Public | BindingFlags.Static);
         foreach (var propInfo in publicProps.Where(x => x.FieldType == typeof(string)))
         {
             var keyValue = (string)propInfo.GetValue(null);

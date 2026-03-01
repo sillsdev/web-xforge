@@ -317,12 +317,13 @@ public class SyncService(
             if (!string.IsNullOrWhiteSpace(sourceProjectId))
             {
                 IDocument<SFProject> sourceProjectDoc = await conn.FetchAsync<SFProject>(sourceProjectId);
-                if (sourceProjectDoc.IsLoaded && !sourceProjectDoc.Data.SyncDisabled)
+                if (
+                    sourceProjectDoc.IsLoaded
+                    && !sourceProjectDoc.Data.SyncDisabled
+                    && sourceProjectDoc.Data.Sync.QueuedCount > 0
+                )
                 {
-                    if (sourceProjectDoc.Data.Sync.QueuedCount > 0)
-                    {
-                        await CancelProjectDocumentSyncAsync(sourceProjectDoc);
-                    }
+                    await CancelProjectDocumentSyncAsync(sourceProjectDoc);
                 }
             }
         }
