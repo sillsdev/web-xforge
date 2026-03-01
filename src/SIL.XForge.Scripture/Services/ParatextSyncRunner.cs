@@ -17,6 +17,7 @@ using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
+using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -469,7 +470,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 }
 
                 string message =
-                    $"Error occurred while executing Paratext sync for project with SF id '{projectSFId}'. {(additionalInformation.Length == 0 ? string.Empty : $"Additional information: {additionalInformation}")}";
+                    $"Error occurred while executing Paratext sync for project with SF id '{projectSFId.Sanitize()}'. {(additionalInformation.Length == 0 ? string.Empty : $"Additional information: {additionalInformation}")}";
                 _syncMetrics.ErrorDetails = $"{e}{Environment.NewLine}{message}";
                 _logger.LogError(e, message);
                 LogMetric(message);
@@ -982,7 +983,9 @@ public class ParatextSyncRunner : IParatextSyncRunner
     )
     {
         await _hubContext.NotifySyncProgress(projectSFId, ProgressState.NotStarted);
-        _logger.LogInformation($"Initializing sync for project {projectSFId} with sync metrics id {syncMetricsId}");
+        _logger.LogInformation(
+            $"Initializing sync for project {projectSFId.Sanitize()} with sync metrics id {syncMetricsId}"
+        );
         if (!(await _syncMetricsRepository.TryGetAsync(syncMetricsId, token)).TryResult(out _syncMetrics))
         {
             Log($"Could not find sync metrics.", syncMetricsId, userId);
@@ -1053,7 +1056,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         }
         catch (ForbiddenException)
         {
-            Log($"User does not have permission to sync project {projectSFId}.", projectSFId, userId);
+            Log($"User does not have permission to sync project {projectSFId.Sanitize()}.", projectSFId, userId);
             await _projectDoc.SubmitJson0OpAsync(op =>
                 op.Set(pd => pd.Sync.LastSyncErrorCode, (int)SyncErrorCodes.UserPermissionError)
             );

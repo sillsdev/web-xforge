@@ -854,7 +854,6 @@ public class SFProjectServiceTests
             SFProjectRole.CommunityChecker,
             permissions: []
         );
-        project = env.GetProject(Project03);
         await env.Service.JoinWithShareKeyAsync(User03, "key1234");
 
         project = env.GetProject(Project03);
