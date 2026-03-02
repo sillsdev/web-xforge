@@ -556,47 +556,45 @@ public class EventMetricServiceTests
 
         public TestEnvironment()
         {
-            EventMetrics = new MemoryRepository<EventMetric>(
-                [
-                    new EventMetric
-                    {
-                        Id = "id01",
-                        EventType = EventType01,
-                        Payload = [],
-                        ProjectId = Project01,
-                        Scope = EventScope01,
-                        TimeStamp = DateTime.UtcNow.AddHours(-4),
-                        UserId = User01,
-                    },
-                    new EventMetric
-                    {
-                        Id = "id02",
-                        EventType = "secondEvent",
-                        Payload = [],
-                        ProjectId = Project01,
-                        Scope = EventScope01,
-                        TimeStamp = DateTime.UtcNow.AddHours(-3),
-                        UserId = User01,
-                    },
-                    new EventMetric
-                    {
-                        Id = "id03",
-                        EventType = "thirdEvent",
-                        Payload = [],
-                        Scope = EventScope01,
-                        TimeStamp = DateTime.UtcNow.AddHours(-2),
-                    },
-                    new EventMetric
-                    {
-                        Id = "id04",
-                        EventType = EventType01,
-                        Payload = [],
-                        ProjectId = Project01,
-                        Scope = EventScope02,
-                        TimeStamp = DateTime.UtcNow.AddHours(-1),
-                    },
-                ]
-            );
+            EventMetrics = new MemoryRepository<EventMetric>([
+                new EventMetric
+                {
+                    Id = "id01",
+                    EventType = EventType01,
+                    Payload = [],
+                    ProjectId = Project01,
+                    Scope = EventScope01,
+                    TimeStamp = DateTime.UtcNow.AddHours(-4),
+                    UserId = User01,
+                },
+                new EventMetric
+                {
+                    Id = "id02",
+                    EventType = "secondEvent",
+                    Payload = [],
+                    ProjectId = Project01,
+                    Scope = EventScope01,
+                    TimeStamp = DateTime.UtcNow.AddHours(-3),
+                    UserId = User01,
+                },
+                new EventMetric
+                {
+                    Id = "id03",
+                    EventType = "thirdEvent",
+                    Payload = [],
+                    Scope = EventScope01,
+                    TimeStamp = DateTime.UtcNow.AddHours(-2),
+                },
+                new EventMetric
+                {
+                    Id = "id04",
+                    EventType = EventType01,
+                    Payload = [],
+                    ProjectId = Project01,
+                    Scope = EventScope02,
+                    TimeStamp = DateTime.UtcNow.AddHours(-1),
+                },
+            ]);
             Service = new EventMetricService(EventMetrics);
         }
 

@@ -2350,28 +2350,25 @@ public class MachineApiService(
             {
                 BuildId = translationBuild.Id,
                 CorporaIds = new HashSet<string>(
-                    // Use a HashSet to ensure there are no duplicate corpus ids
-                    [
-                        .. translationBuild
-                            .Pretranslate?.SelectMany(t => t.SourceFilters ?? [])
-                            .Select(f => f.Corpus.Id) ?? [],
-                        .. translationBuild.TrainOn?.SelectMany(t => t.SourceFilters ?? []).Select(f => f.Corpus.Id)
-                            ?? [],
-                        .. translationBuild.TrainOn?.SelectMany(t => t.TargetFilters ?? []).Select(f => f.Corpus.Id)
-                            ?? [],
-                    ]
-                ),
+                // Use a HashSet to ensure there are no duplicate corpus ids
+                [
+                    .. translationBuild.Pretranslate?.SelectMany(t => t.SourceFilters ?? []).Select(f => f.Corpus.Id)
+                        ?? [],
+                    .. translationBuild.TrainOn?.SelectMany(t => t.SourceFilters ?? []).Select(f => f.Corpus.Id) ?? [],
+                    .. translationBuild.TrainOn?.SelectMany(t => t.TargetFilters ?? []).Select(f => f.Corpus.Id) ?? [],
+                ]),
                 ParallelCorporaIds = new HashSet<string>(
-                    // Use a HashSet to ensure there are no duplicate parallel corpus ids
-                    [
-                        .. translationBuild
-                            .Pretranslate?.Select(t => t.ParallelCorpus?.Id)
-                            .Where(id => !string.IsNullOrEmpty(id)) ?? [],
-                        .. translationBuild
-                            .TrainOn?.Select(t => t.ParallelCorpus?.Id)
-                            .Where(id => !string.IsNullOrEmpty(id)) ?? [],
-                    ]
-                ),
+                // Use a HashSet to ensure there are no duplicate parallel corpus ids
+                [
+                    .. translationBuild
+                        .Pretranslate?.Select(t => t.ParallelCorpus?.Id)
+                        .Where(id => !string.IsNullOrEmpty(id))
+                        ?? [],
+                    .. translationBuild
+                        .TrainOn?.Select(t => t.ParallelCorpus?.Id)
+                        .Where(id => !string.IsNullOrEmpty(id))
+                        ?? [],
+                ]),
                 CanDenormalizeQuotes = matchingCorpus?.CanDenormalizeQuotes == true,
                 DateFinished = translationBuild.DateFinished,
                 Step = translationBuild.Step,
@@ -2532,7 +2529,8 @@ public class MachineApiService(
                 && (
                     b.AdditionalInfo?.TranslationScriptureRanges.Any(r =>
                         scriptureRangeParser.GetChapters(r.ScriptureRange).ContainsKey(Canon.BookNumberToId(bookNum))
-                    ) ?? false
+                    )
+                    ?? false
                 )
             ),
         ];

@@ -373,22 +373,20 @@ public class ConnectionTests
         string collection = env.RealtimeService.GetDocConfig<Project>().CollectionName;
         string[] ids = ["id1", "id2"];
         env.RealtimeService.Server.FetchDocsAsync<Project>(Arg.Any<int>(), collection, ids)
-            .Returns(
-                [
-                    new Snapshot<Project>
-                    {
-                        Data = null,
-                        Id = "id1",
-                        Version = 1,
-                    },
-                    new Snapshot<Project>
-                    {
-                        Data = new TestProject(),
-                        Id = "id2",
-                        Version = 2,
-                    },
-                ]
-            );
+            .Returns([
+                new Snapshot<Project>
+                {
+                    Data = null,
+                    Id = "id1",
+                    Version = 1,
+                },
+                new Snapshot<Project>
+                {
+                    Data = new TestProject(),
+                    Id = "id2",
+                    Version = 2,
+                },
+            ]);
 
         // SUT
         var result = await env.Service.GetAndFetchDocsAsync<Project>(ids);
@@ -408,16 +406,14 @@ public class ConnectionTests
         string collection = env.RealtimeService.GetDocConfig<Project>().CollectionName;
         string[] ids = ["id1"];
         env.RealtimeService.Server.FetchDocsAsync<Project>(Arg.Any<int>(), collection, ids)
-            .Returns(
-                [
-                    new Snapshot<Project>
-                    {
-                        Data = new TestProject(),
-                        Id = "id1",
-                        Version = 1,
-                    },
-                ]
-            );
+            .Returns([
+                new Snapshot<Project>
+                {
+                    Data = new TestProject(),
+                    Id = "id1",
+                    Version = 1,
+                },
+            ]);
 
         // SUT
         var result = await env.Service.GetAndFetchDocsAsync<Project>(ids);

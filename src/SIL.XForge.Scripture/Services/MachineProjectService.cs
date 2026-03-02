@@ -1521,7 +1521,8 @@ public class MachineProjectService(
             projectSecret
                 .ServalData?.Corpora?.Where(c => c.Value.PreTranslate == preTranslate)
                 .Select(c => c.Key)
-                .ToArray() ?? [];
+                .ToArray()
+            ?? [];
         foreach (string corpusId in corpusIds)
         {
             // Delete the legacy corpus

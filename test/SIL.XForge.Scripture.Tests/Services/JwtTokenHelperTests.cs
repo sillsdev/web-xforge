@@ -21,9 +21,9 @@ public class JwtTokenHelperTests
         var env = new TestEnvironment();
 
         // Mock the Registry Server response
-        var handler = new MockHttpMessageHandler(
-            [(url: "api8/token", message: string.Empty, statusCode: HttpStatusCode.BadRequest)]
-        );
+        var handler = new MockHttpMessageHandler([
+            (url: "api8/token", message: string.Empty, statusCode: HttpStatusCode.BadRequest),
+        ]);
         HttpClient httpClient = handler.CreateHttpClient();
 
         // SUT
@@ -63,15 +63,13 @@ public class JwtTokenHelperTests
         // Mock the Registry Server response
         string accessToken = MockHttpMessageHandler.GenerateToken(DateTime.UtcNow.AddSeconds(35));
         const string refreshToken = "123456";
-        var handler = new MockHttpMessageHandler(
-            [
-                (
-                    url: "api8/token",
-                    message: $$"""{"access_token": "{{accessToken}}", "refresh_token": "{{refreshToken}}"}""",
-                    statusCode: HttpStatusCode.OK
-                ),
-            ]
-        );
+        var handler = new MockHttpMessageHandler([
+            (
+                url: "api8/token",
+                message: $$"""{"access_token": "{{accessToken}}", "refresh_token": "{{refreshToken}}"}""",
+                statusCode: HttpStatusCode.OK
+            ),
+        ]);
         HttpClient httpClient = handler.CreateHttpClient();
 
         // SUT
@@ -96,15 +94,13 @@ public class JwtTokenHelperTests
         // Mock the Registry Server response
         string accessToken = MockHttpMessageHandler.GenerateToken(DateTime.UtcNow.AddSeconds(-35));
         const string refreshToken = "123456";
-        var handler = new MockHttpMessageHandler(
-            [
-                (
-                    url: "api8/token",
-                    message: $$"""{"access_token": "{{accessToken}}", "refresh_token": "{{refreshToken}}"}""",
-                    statusCode: HttpStatusCode.OK
-                ),
-            ]
-        );
+        var handler = new MockHttpMessageHandler([
+            (
+                url: "api8/token",
+                message: $$"""{"access_token": "{{accessToken}}", "refresh_token": "{{refreshToken}}"}""",
+                statusCode: HttpStatusCode.OK
+            ),
+        ]);
         HttpClient httpClient = handler.CreateHttpClient();
 
         // SUT
@@ -127,9 +123,9 @@ public class JwtTokenHelperTests
         var env = new TestEnvironment();
 
         // Mock the Registry Server response
-        var handler = new MockHttpMessageHandler(
-            [(url: "api8/token", message: string.Empty, statusCode: HttpStatusCode.InternalServerError)]
-        );
+        var handler = new MockHttpMessageHandler([
+            (url: "api8/token", message: string.Empty, statusCode: HttpStatusCode.InternalServerError),
+        ]);
         HttpClient httpClient = handler.CreateHttpClient();
 
         // SUT
@@ -146,15 +142,13 @@ public class JwtTokenHelperTests
         // Mock the Registry Server response
         string accessToken = MockHttpMessageHandler.GenerateToken();
         const string refreshToken = "123456";
-        var handler = new MockHttpMessageHandler(
-            [
-                (
-                    url: "api8/token",
-                    message: $$"""{"access_token": "{{accessToken}}", "refresh_token": "{{refreshToken}}"}""",
-                    statusCode: HttpStatusCode.OK
-                ),
-            ]
-        );
+        var handler = new MockHttpMessageHandler([
+            (
+                url: "api8/token",
+                message: $$"""{"access_token": "{{accessToken}}", "refresh_token": "{{refreshToken}}"}""",
+                statusCode: HttpStatusCode.OK
+            ),
+        ]);
         HttpClient httpClient = handler.CreateHttpClient();
 
         // SUT

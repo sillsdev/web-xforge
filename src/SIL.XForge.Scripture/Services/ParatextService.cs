@@ -657,7 +657,8 @@ public class ParatextService : DisposableBase, IParatextService
                     + $"Revisions sent: {string.Join(",", r.RevisionsSent ?? Enumerable.Empty<string>())}, "
                     + $"Revisions received: {string.Join(",", r.RevisionsReceived ?? Enumerable.Empty<string>())}, "
                     + $"Failure message: {r.FailureMessage}."
-            ) ?? []
+            )
+                ?? []
         );
     }
 
@@ -822,7 +823,8 @@ public class ParatextService : DisposableBase, IParatextService
             foreach (
                 ProjectUser projectUser in remotePtProject.SourceUsers?.Users.Where(pu =>
                     users.All(u => u.Username != pu.UserName)
-                ) ?? []
+                )
+                    ?? []
             )
             {
                 users.Add(

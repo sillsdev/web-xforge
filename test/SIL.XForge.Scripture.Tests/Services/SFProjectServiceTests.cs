@@ -4671,558 +4671,548 @@ public class SFProjectServiceTests
             RealtimeService.AddRepository(
                 "users",
                 OTType.Json0,
-                new MemoryRepository<User>(
-                    [
-                        new User
+                new MemoryRepository<User>([
+                    new User
+                    {
+                        Id = User01,
+                        Email = "user01@example.com",
+                        ParatextId = "pt-user01",
+                        Name = "User 01",
+                        Roles = [SystemRole.User],
+                        Sites = new Dictionary<string, Site>
                         {
-                            Id = User01,
-                            Email = "user01@example.com",
-                            ParatextId = "pt-user01",
-                            Name = "User 01",
-                            Roles = [SystemRole.User],
-                            Sites = new Dictionary<string, Site>
                             {
-                                {
-                                    SiteId,
-                                    new Site { Projects = { Project01, Project03, SourceOnly } }
-                                },
+                                SiteId,
+                                new Site { Projects = { Project01, Project03, SourceOnly } }
                             },
                         },
-                        new User
+                    },
+                    new User
+                    {
+                        Id = User02,
+                        Email = "user02@example.com",
+                        ParatextId = "pt-user02",
+                        Name = "User 02",
+                        Roles = [SystemRole.User],
+                        Sites = new Dictionary<string, Site>
                         {
-                            Id = User02,
-                            Email = "user02@example.com",
-                            ParatextId = "pt-user02",
-                            Name = "User 02",
-                            Roles = [SystemRole.User],
-                            Sites = new Dictionary<string, Site>
                             {
-                                {
-                                    SiteId,
-                                    new Site { Projects = { Project01, Project02, Project03, Project04, Project06 } }
-                                },
+                                SiteId,
+                                new Site { Projects = { Project01, Project02, Project03, Project04, Project06 } }
                             },
                         },
-                        new User
+                    },
+                    new User
+                    {
+                        Id = User03,
+                        Email = "user03@example.com",
+                        ParatextId = "pt-user03",
+                        Name = "User 03",
+                        Roles = [SystemRole.User],
+                        Sites = new Dictionary<string, Site>
                         {
-                            Id = User03,
-                            Email = "user03@example.com",
-                            ParatextId = "pt-user03",
-                            Name = "User 03",
-                            Roles = [SystemRole.User],
-                            Sites = new Dictionary<string, Site>
                             {
-                                {
-                                    SiteId,
-                                    new Site { Projects = [Project01] }
-                                },
+                                SiteId,
+                                new Site { Projects = [Project01] }
                             },
                         },
-                        new User
+                    },
+                    new User
+                    {
+                        Id = User04,
+                        Email = "user04@example.com",
+                        Roles = [SystemRole.SystemAdmin],
+                        Name = "User 04",
+                        Sites = new Dictionary<string, Site> { { SiteId, new Site() } },
+                    },
+                    new User
+                    {
+                        Id = LinkExpiredUser,
+                        Email = "expired@example.com",
+                        Roles = [SystemRole.User],
+                        Sites = new Dictionary<string, Site> { { SiteId, new Site() } },
+                    },
+                    new User
+                    {
+                        Id = User05,
+                        Email = "user05@example.com",
+                        ParatextId = "pt-user05",
+                        Name = "user05@example.com",
+                        Roles = [SystemRole.User],
+                        Sites = new Dictionary<string, Site>
                         {
-                            Id = User04,
-                            Email = "user04@example.com",
-                            Roles = [SystemRole.SystemAdmin],
-                            Name = "User 04",
-                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } },
-                        },
-                        new User
-                        {
-                            Id = LinkExpiredUser,
-                            Email = "expired@example.com",
-                            Roles = [SystemRole.User],
-                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } },
-                        },
-                        new User
-                        {
-                            Id = User05,
-                            Email = "user05@example.com",
-                            ParatextId = "pt-user05",
-                            Name = "user05@example.com",
-                            Roles = [SystemRole.User],
-                            Sites = new Dictionary<string, Site>
                             {
-                                {
-                                    SiteId,
-                                    new Site { Projects = { Project01, Project02 } }
-                                },
+                                SiteId,
+                                new Site { Projects = { Project01, Project02 } }
                             },
                         },
-                        new User
+                    },
+                    new User
+                    {
+                        Id = User06,
+                        Email = "user06@example.com",
+                        Roles = [SystemRole.User],
+                        Name = "User 06",
+                        Sites = new Dictionary<string, Site>
                         {
-                            Id = User06,
-                            Email = "user06@example.com",
-                            Roles = [SystemRole.User],
-                            Name = "User 06",
-                            Sites = new Dictionary<string, Site>
                             {
-                                {
-                                    SiteId,
-                                    new Site { Projects = { Project01 } }
-                                },
+                                SiteId,
+                                new Site { Projects = { Project01 } }
                             },
                         },
-                        new User
+                    },
+                    new User
+                    {
+                        Id = User07,
+                        Email = "user07@example.com",
+                        Roles = [SystemRole.SystemAdmin],
+                        Name = "User 07",
+                        Sites = new Dictionary<string, Site>
                         {
-                            Id = User07,
-                            Email = "user07@example.com",
-                            Roles = [SystemRole.SystemAdmin],
-                            Name = "User 07",
-                            Sites = new Dictionary<string, Site>
                             {
-                                {
-                                    SiteId,
-                                    new Site { Projects = { Project06 } }
-                                },
+                                SiteId,
+                                new Site { Projects = { Project06 } }
                             },
                         },
-                    ]
-                )
+                    },
+                ])
             );
             RealtimeService.AddRepository(
                 "sf_projects",
                 OTType.Json0,
-                new MemoryRepository<SFProject>(
-                    [
-                        new SFProject
+                new MemoryRepository<SFProject>([
+                    new SFProject
+                    {
+                        Id = Project01,
+                        ParatextId = "paratext_" + Project01,
+                        Name = "project01",
+                        ShortName = "P01",
+                        TranslateConfig = new TranslateConfig
                         {
-                            Id = Project01,
-                            ParatextId = "paratext_" + Project01,
-                            Name = "project01",
-                            ShortName = "P01",
-                            TranslateConfig = new TranslateConfig
+                            PreTranslate = true,
+                            TranslationSuggestionsEnabled = true,
+                            Source = new TranslateSource
                             {
-                                PreTranslate = true,
-                                TranslationSuggestionsEnabled = true,
-                                Source = new TranslateSource
-                                {
-                                    ProjectRef = Resource01,
-                                    ParatextId = Resource01PTId,
-                                    Name = "resource project",
-                                    ShortName = "RES",
-                                    WritingSystem = new WritingSystem { Tag = "qaa" },
-                                },
-                                DraftConfig = new DraftConfig
-                                {
-                                    UsfmConfig = new DraftUsfmConfig(),
-                                    ServalConfig = "{ existingConfig: true }",
-                                },
+                                ProjectRef = Resource01,
+                                ParatextId = Resource01PTId,
+                                Name = "resource project",
+                                ShortName = "RES",
+                                WritingSystem = new WritingSystem { Tag = "qaa" },
                             },
-                            CheckingConfig = new CheckingConfig { CheckingEnabled = true },
-                            UserRoles = new Dictionary<string, string>
+                            DraftConfig = new DraftConfig
                             {
-                                { User01, SFProjectRole.Administrator },
-                                { User02, SFProjectRole.CommunityChecker },
-                                { User03, SFProjectRole.Consultant },
-                                { User05, SFProjectRole.Translator },
-                                { User06, SFProjectRole.Viewer },
-                            },
-                            RolePermissions =
-                            {
-                                {
-                                    SFProjectRole.Viewer,
-                                    [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
-                                },
-                            },
-                            UserPermissions = new Dictionary<string, string[]>
-                            {
-                                {
-                                    User03,
-                                    [
-                                        SFProjectRights.JoinRight(SFProjectDomain.TextAudio, Operation.Create),
-                                        SFProjectRights.JoinRight(SFProjectDomain.TextAudio, Operation.Delete),
-                                    ]
-                                },
-                                { User05, [] },
-                            },
-                            Texts =
-                            {
-                                new TextInfo
-                                {
-                                    BookNum = 40,
-                                    Chapters =
-                                    {
-                                        new Chapter
-                                        {
-                                            Number = 1,
-                                            LastVerse = 3,
-                                            IsValid = true,
-                                            Permissions = [],
-                                        },
-                                    },
-                                },
-                                new TextInfo
-                                {
-                                    BookNum = 41,
-                                    Chapters =
-                                    {
-                                        new Chapter
-                                        {
-                                            Number = 1,
-                                            LastVerse = 3,
-                                            IsValid = true,
-                                            Permissions = [],
-                                            HasAudio = true,
-                                        },
-                                        new Chapter
-                                        {
-                                            Number = 2,
-                                            LastVerse = 3,
-                                            IsValid = true,
-                                            Permissions = [],
-                                        },
-                                    },
-                                    Permissions = { { User01, TextInfoPermission.Write } },
-                                },
-                            },
-                            WritingSystem = new WritingSystem { Tag = "qaa" },
-                            ParatextUsers =
-                            {
-                                new ParatextUserProfile
-                                {
-                                    SFUserId = User01,
-                                    Username = "User 01",
-                                    Role = SFProjectRole.Administrator,
-                                    OpaqueUserId = "syncuser01",
-                                },
-                                new ParatextUserProfile
-                                {
-                                    SFUserId = User03,
-                                    Username = "User 03",
-                                    OpaqueUserId = "syncuser03",
-                                    Role = SFProjectRole.Consultant,
-                                },
-                                new ParatextUserProfile
-                                {
-                                    SFUserId = User05,
-                                    Username = "User 05",
-                                    OpaqueUserId = "syncuser05",
-                                    Role = SFProjectRole.Translator,
-                                },
+                                UsfmConfig = new DraftUsfmConfig(),
+                                ServalConfig = "{ existingConfig: true }",
                             },
                         },
-                        new SFProject
+                        CheckingConfig = new CheckingConfig { CheckingEnabled = true },
+                        UserRoles = new Dictionary<string, string>
                         {
-                            Id = Project02,
-                            Name = "project02",
-                            ShortName = "P02",
-                            ParatextId = "paratext_" + Project02,
-                            CheckingConfig = new CheckingConfig { CheckingEnabled = true },
-                            RolePermissions =
+                            { User01, SFProjectRole.Administrator },
+                            { User02, SFProjectRole.CommunityChecker },
+                            { User03, SFProjectRole.Consultant },
+                            { User05, SFProjectRole.Translator },
+                            { User06, SFProjectRole.Viewer },
+                        },
+                        RolePermissions =
+                        {
                             {
-                                {
-                                    SFProjectRole.CommunityChecker,
-                                    [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
-                                },
-                            },
-                            UserRoles =
-                            {
-                                { User02, SFProjectRole.Administrator },
-                                { User04, SFProjectRole.CommunityChecker },
-                            },
-                            ParatextUsers =
-                            {
-                                new ParatextUserProfile
-                                {
-                                    SFUserId = User02,
-                                    Username = "User 02",
-                                    Role = SFProjectRole.Administrator,
-                                    OpaqueUserId = "syncuser02",
-                                },
-                                new ParatextUserProfile
-                                {
-                                    SFUserId = string.Empty,
-                                    Username = "User 01",
-                                    OpaqueUserId = "syncuser01",
-                                },
-                                new ParatextUserProfile
-                                {
-                                    Username = "User 05",
-                                    Role = SFProjectRole.Translator,
-                                    OpaqueUserId = "syncuser05",
-                                },
+                                SFProjectRole.Viewer,
+                                [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
                             },
                         },
-                        new SFProject
+                        UserPermissions = new Dictionary<string, string[]>
                         {
-                            Id = Project03,
-                            Name = "project03",
-                            ShortName = "P03",
-                            ParatextId = "paratext_" + Project03,
-                            CheckingConfig = new CheckingConfig { CheckingEnabled = true },
-                            TranslateConfig =
                             {
-                                TranslationSuggestionsEnabled = false,
-                                Source = new TranslateSource
-                                {
-                                    ProjectRef = SourceOnly,
-                                    ParatextId = "pt_source_no_suggestions",
-                                    Name = "Source Only Project",
-                                },
+                                User03,
+                                [
+                                    SFProjectRights.JoinRight(SFProjectDomain.TextAudio, Operation.Create),
+                                    SFProjectRights.JoinRight(SFProjectDomain.TextAudio, Operation.Delete),
+                                ]
                             },
-                            RolePermissions =
-                            {
-                                {
-                                    SFProjectRole.CommunityChecker,
-                                    [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
-                                },
-                            },
-                            UserRoles =
-                            {
-                                { User01, SFProjectRole.Administrator },
-                                { User02, SFProjectRole.CommunityChecker },
-                            },
+                            { User05, [] },
                         },
-                        new SFProject
+                        Texts =
                         {
-                            Id = Project04,
-                            Name = "project04",
-                            ParatextId = "paratext_" + Project04,
-                            TranslateConfig = new TranslateConfig
+                            new TextInfo
                             {
-                                TranslationSuggestionsEnabled = true,
-                                Source = new TranslateSource { ProjectRef = "Invalid_Source", ParatextId = "P04" },
-                            },
-                            RolePermissions =
-                            {
+                                BookNum = 40,
+                                Chapters =
                                 {
-                                    SFProjectRole.Viewer,
-                                    [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
-                                },
-                            },
-                            UserRoles =
-                            {
-                                { User01, SFProjectRole.CommunityChecker },
-                                { User02, SFProjectRole.Administrator },
-                            },
-                        },
-                        new SFProject
-                        {
-                            Id = Project05,
-                            ParatextId = "paratext_" + Project05,
-                            Name = "Project05",
-                            ShortName = "P05",
-                            TranslateConfig = new TranslateConfig
-                            {
-                                TranslationSuggestionsEnabled = true,
-                                Source = new TranslateSource
-                                {
-                                    ProjectRef = Resource01,
-                                    ParatextId = Resource01PTId,
-                                    Name = "resource project",
-                                    ShortName = "RES",
-                                    WritingSystem = new WritingSystem { Tag = "qaa" },
-                                },
-                            },
-                            CheckingConfig = new CheckingConfig { CheckingEnabled = true },
-                            UserRoles = new Dictionary<string, string>
-                            {
-                                { User01, SFProjectRole.Administrator },
-                                { User02, SFProjectRole.CommunityChecker },
-                            },
-                            Texts =
-                            {
-                                new TextInfo
-                                {
-                                    BookNum = 40,
-                                    Chapters =
+                                    new Chapter
                                     {
-                                        new Chapter
-                                        {
-                                            Number = 1,
-                                            LastVerse = 3,
-                                            IsValid = true,
-                                            Permissions = [],
-                                        },
-                                    },
-                                },
-                                new TextInfo
-                                {
-                                    BookNum = 41,
-                                    Chapters =
-                                    {
-                                        new Chapter
-                                        {
-                                            Number = 1,
-                                            LastVerse = 3,
-                                            IsValid = true,
-                                            Permissions = [],
-                                        },
-                                        new Chapter
-                                        {
-                                            Number = 2,
-                                            LastVerse = 3,
-                                            IsValid = true,
-                                            Permissions = [],
-                                        },
+                                        Number = 1,
+                                        LastVerse = 3,
+                                        IsValid = true,
+                                        Permissions = [],
                                     },
                                 },
                             },
-                        },
-                        new SFProject
-                        {
-                            Id = Project06,
-                            Name = "project06",
-                            ParatextId = "paratext_" + Project06,
-                            CheckingConfig = new CheckingConfig { CheckingEnabled = false },
-                            RolePermissions =
+                            new TextInfo
                             {
+                                BookNum = 41,
+                                Chapters =
                                 {
-                                    SFProjectRole.CommunityChecker,
-                                    [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
-                                },
-                            },
-                            UserRoles =
-                            {
-                                { User01, SFProjectRole.CommunityChecker },
-                                { User02, SFProjectRole.CommunityChecker },
-                                { User07, SFProjectRole.Administrator },
-                            },
-                        },
-                        new SFProject
-                        {
-                            Id = Resource01,
-                            ParatextId = Resource01PTId,
-                            Name = "resource project",
-                            ShortName = "RES",
-                            Texts =
-                            {
-                                new TextInfo
-                                {
-                                    BookNum = 40,
-                                    Chapters =
+                                    new Chapter
                                     {
-                                        new Chapter
-                                        {
-                                            Number = 1,
-                                            LastVerse = 3,
-                                            IsValid = true,
-                                            Permissions = [],
-                                        },
+                                        Number = 1,
+                                        LastVerse = 3,
+                                        IsValid = true,
+                                        Permissions = [],
+                                        HasAudio = true,
+                                    },
+                                    new Chapter
+                                    {
+                                        Number = 2,
+                                        LastVerse = 3,
+                                        IsValid = true,
+                                        Permissions = [],
                                     },
                                 },
-                                new TextInfo
+                                Permissions = { { User01, TextInfoPermission.Write } },
+                            },
+                        },
+                        WritingSystem = new WritingSystem { Tag = "qaa" },
+                        ParatextUsers =
+                        {
+                            new ParatextUserProfile
+                            {
+                                SFUserId = User01,
+                                Username = "User 01",
+                                Role = SFProjectRole.Administrator,
+                                OpaqueUserId = "syncuser01",
+                            },
+                            new ParatextUserProfile
+                            {
+                                SFUserId = User03,
+                                Username = "User 03",
+                                OpaqueUserId = "syncuser03",
+                                Role = SFProjectRole.Consultant,
+                            },
+                            new ParatextUserProfile
+                            {
+                                SFUserId = User05,
+                                Username = "User 05",
+                                OpaqueUserId = "syncuser05",
+                                Role = SFProjectRole.Translator,
+                            },
+                        },
+                    },
+                    new SFProject
+                    {
+                        Id = Project02,
+                        Name = "project02",
+                        ShortName = "P02",
+                        ParatextId = "paratext_" + Project02,
+                        CheckingConfig = new CheckingConfig { CheckingEnabled = true },
+                        RolePermissions =
+                        {
+                            {
+                                SFProjectRole.CommunityChecker,
+                                [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
+                            },
+                        },
+                        UserRoles =
+                        {
+                            { User02, SFProjectRole.Administrator },
+                            { User04, SFProjectRole.CommunityChecker },
+                        },
+                        ParatextUsers =
+                        {
+                            new ParatextUserProfile
+                            {
+                                SFUserId = User02,
+                                Username = "User 02",
+                                Role = SFProjectRole.Administrator,
+                                OpaqueUserId = "syncuser02",
+                            },
+                            new ParatextUserProfile
+                            {
+                                SFUserId = string.Empty,
+                                Username = "User 01",
+                                OpaqueUserId = "syncuser01",
+                            },
+                            new ParatextUserProfile
+                            {
+                                Username = "User 05",
+                                Role = SFProjectRole.Translator,
+                                OpaqueUserId = "syncuser05",
+                            },
+                        },
+                    },
+                    new SFProject
+                    {
+                        Id = Project03,
+                        Name = "project03",
+                        ShortName = "P03",
+                        ParatextId = "paratext_" + Project03,
+                        CheckingConfig = new CheckingConfig { CheckingEnabled = true },
+                        TranslateConfig =
+                        {
+                            TranslationSuggestionsEnabled = false,
+                            Source = new TranslateSource
+                            {
+                                ProjectRef = SourceOnly,
+                                ParatextId = "pt_source_no_suggestions",
+                                Name = "Source Only Project",
+                            },
+                        },
+                        RolePermissions =
+                        {
+                            {
+                                SFProjectRole.CommunityChecker,
+                                [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
+                            },
+                        },
+                        UserRoles =
+                        {
+                            { User01, SFProjectRole.Administrator },
+                            { User02, SFProjectRole.CommunityChecker },
+                        },
+                    },
+                    new SFProject
+                    {
+                        Id = Project04,
+                        Name = "project04",
+                        ParatextId = "paratext_" + Project04,
+                        TranslateConfig = new TranslateConfig
+                        {
+                            TranslationSuggestionsEnabled = true,
+                            Source = new TranslateSource { ProjectRef = "Invalid_Source", ParatextId = "P04" },
+                        },
+                        RolePermissions =
+                        {
+                            {
+                                SFProjectRole.Viewer,
+                                [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
+                            },
+                        },
+                        UserRoles =
+                        {
+                            { User01, SFProjectRole.CommunityChecker },
+                            { User02, SFProjectRole.Administrator },
+                        },
+                    },
+                    new SFProject
+                    {
+                        Id = Project05,
+                        ParatextId = "paratext_" + Project05,
+                        Name = "Project05",
+                        ShortName = "P05",
+                        TranslateConfig = new TranslateConfig
+                        {
+                            TranslationSuggestionsEnabled = true,
+                            Source = new TranslateSource
+                            {
+                                ProjectRef = Resource01,
+                                ParatextId = Resource01PTId,
+                                Name = "resource project",
+                                ShortName = "RES",
+                                WritingSystem = new WritingSystem { Tag = "qaa" },
+                            },
+                        },
+                        CheckingConfig = new CheckingConfig { CheckingEnabled = true },
+                        UserRoles = new Dictionary<string, string>
+                        {
+                            { User01, SFProjectRole.Administrator },
+                            { User02, SFProjectRole.CommunityChecker },
+                        },
+                        Texts =
+                        {
+                            new TextInfo
+                            {
+                                BookNum = 40,
+                                Chapters =
                                 {
-                                    BookNum = 41,
-                                    Chapters =
+                                    new Chapter
                                     {
-                                        new Chapter
-                                        {
-                                            Number = 1,
-                                            LastVerse = 3,
-                                            IsValid = true,
-                                            Permissions = [],
-                                        },
-                                        new Chapter
-                                        {
-                                            Number = 2,
-                                            LastVerse = 3,
-                                            IsValid = true,
-                                            Permissions = [],
-                                        },
+                                        Number = 1,
+                                        LastVerse = 3,
+                                        IsValid = true,
+                                        Permissions = [],
                                     },
                                 },
                             },
-                            UserRoles = { { User01, SFProjectRole.PTObserver } },
+                            new TextInfo
+                            {
+                                BookNum = 41,
+                                Chapters =
+                                {
+                                    new Chapter
+                                    {
+                                        Number = 1,
+                                        LastVerse = 3,
+                                        IsValid = true,
+                                        Permissions = [],
+                                    },
+                                    new Chapter
+                                    {
+                                        Number = 2,
+                                        LastVerse = 3,
+                                        IsValid = true,
+                                        Permissions = [],
+                                    },
+                                },
+                            },
                         },
-                        new SFProject
+                    },
+                    new SFProject
+                    {
+                        Id = Project06,
+                        Name = "project06",
+                        ParatextId = "paratext_" + Project06,
+                        CheckingConfig = new CheckingConfig { CheckingEnabled = false },
+                        RolePermissions =
                         {
-                            Id = SourceOnly,
-                            ParatextId = "pt_source_no_suggestions",
-                            Name = "Source Only Project",
-                            ShortName = "DSP",
-                            UserRoles = { { User01, SFProjectRole.Administrator } },
+                            {
+                                SFProjectRole.CommunityChecker,
+                                [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
+                            },
                         },
-                        new SFProject
+                        UserRoles =
                         {
-                            Id = ResourceNeedsSync,
-                            ParatextId = ResourceNeedsSyncPTId,
-                            Name = "Resource Needs Sync",
-                            ShortName = "RNSP",
-                            UserRoles = { { User01, SFProjectRole.Administrator } },
-                            Sync = new Sync { LastSyncSuccessful = false },
+                            { User01, SFProjectRole.CommunityChecker },
+                            { User02, SFProjectRole.CommunityChecker },
+                            { User07, SFProjectRole.Administrator },
                         },
-                    ]
-                )
+                    },
+                    new SFProject
+                    {
+                        Id = Resource01,
+                        ParatextId = Resource01PTId,
+                        Name = "resource project",
+                        ShortName = "RES",
+                        Texts =
+                        {
+                            new TextInfo
+                            {
+                                BookNum = 40,
+                                Chapters =
+                                {
+                                    new Chapter
+                                    {
+                                        Number = 1,
+                                        LastVerse = 3,
+                                        IsValid = true,
+                                        Permissions = [],
+                                    },
+                                },
+                            },
+                            new TextInfo
+                            {
+                                BookNum = 41,
+                                Chapters =
+                                {
+                                    new Chapter
+                                    {
+                                        Number = 1,
+                                        LastVerse = 3,
+                                        IsValid = true,
+                                        Permissions = [],
+                                    },
+                                    new Chapter
+                                    {
+                                        Number = 2,
+                                        LastVerse = 3,
+                                        IsValid = true,
+                                        Permissions = [],
+                                    },
+                                },
+                            },
+                        },
+                        UserRoles = { { User01, SFProjectRole.PTObserver } },
+                    },
+                    new SFProject
+                    {
+                        Id = SourceOnly,
+                        ParatextId = "pt_source_no_suggestions",
+                        Name = "Source Only Project",
+                        ShortName = "DSP",
+                        UserRoles = { { User01, SFProjectRole.Administrator } },
+                    },
+                    new SFProject
+                    {
+                        Id = ResourceNeedsSync,
+                        ParatextId = ResourceNeedsSyncPTId,
+                        Name = "Resource Needs Sync",
+                        ShortName = "RNSP",
+                        UserRoles = { { User01, SFProjectRole.Administrator } },
+                        Sync = new Sync { LastSyncSuccessful = false },
+                    },
+                ])
             );
             RealtimeService.AddRepository(
                 "sf_project_user_configs",
                 OTType.Json0,
-                new MemoryRepository<SFProjectUserConfig>(
-                    [
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User01) },
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User02) },
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User03) },
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User05) },
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User06) },
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project02, User02) },
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User01) },
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User02) },
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project04, User01) },
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project04, User02) },
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project05, User01) },
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project05, User02) },
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project06, User01) },
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project06, User02) },
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(SourceOnly, User01) },
-                    ]
-                )
+                new MemoryRepository<SFProjectUserConfig>([
+                    new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User01) },
+                    new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User02) },
+                    new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User03) },
+                    new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User05) },
+                    new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User06) },
+                    new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project02, User02) },
+                    new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User01) },
+                    new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User02) },
+                    new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project04, User01) },
+                    new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project04, User02) },
+                    new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project05, User01) },
+                    new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project05, User02) },
+                    new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project06, User01) },
+                    new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project06, User02) },
+                    new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(SourceOnly, User01) },
+                ])
             );
             RealtimeService.AddRepository(
                 "text_audio",
                 OTType.Json0,
-                new MemoryRepository<TextAudio>(
-                    [
-                        new TextAudio
-                        {
-                            Id = TextAudio.GetDocId(Project01, 41, 1),
-                            OwnerRef = User01,
-                            ProjectRef = Project01,
-                            DataId = TextAudio.GetDocId(Project01, 41, 1),
-                            AudioUrl = "http://example.com/41_1.mp3",
-                            MimeType = "audio/mp3",
-                            Timings =
-                            [
-                                new AudioTiming
-                                {
-                                    From = 0.0,
-                                    TextRef = "MARK 1:1",
-                                    To = 1.1,
-                                },
-                            ],
-                        },
-                    ]
-                )
+                new MemoryRepository<TextAudio>([
+                    new TextAudio
+                    {
+                        Id = TextAudio.GetDocId(Project01, 41, 1),
+                        OwnerRef = User01,
+                        ProjectRef = Project01,
+                        DataId = TextAudio.GetDocId(Project01, 41, 1),
+                        AudioUrl = "http://example.com/41_1.mp3",
+                        MimeType = "audio/mp3",
+                        Timings =
+                        [
+                            new AudioTiming
+                            {
+                                From = 0.0,
+                                TextRef = "MARK 1:1",
+                                To = 1.1,
+                            },
+                        ],
+                    },
+                ])
             );
             RealtimeService.AddRepository(
                 "note_threads",
                 OTType.Json0,
-                new MemoryRepository<NoteThread>(
-                    [
-                        new NoteThread
-                        {
-                            Id = "project01:dataId01",
-                            DataId = "dataId01",
-                            ThreadId = "thread01",
-                            Notes =
-                            [
-                                new Note { DataId = "thread01:PT01", SyncUserRef = "PT01" },
-                                new Note { DataId = "thread01:PT01", SyncUserRef = "PT02" },
-                            ],
-                        },
-                        new NoteThread
-                        {
-                            Id = "project01:dataId02",
-                            DataId = "dataId02",
-                            ThreadId = "thread02",
-                            Notes =
-                            [
-                                new Note { DataId = "thread02:PT01", SyncUserRef = "PT01" },
-                                new Note { DataId = "thread02:PT02", SyncUserRef = "PT02" },
-                            ],
-                        },
-                    ]
-                )
+                new MemoryRepository<NoteThread>([
+                    new NoteThread
+                    {
+                        Id = "project01:dataId01",
+                        DataId = "dataId01",
+                        ThreadId = "thread01",
+                        Notes =
+                        [
+                            new Note { DataId = "thread01:PT01", SyncUserRef = "PT01" },
+                            new Note { DataId = "thread01:PT01", SyncUserRef = "PT02" },
+                        ],
+                    },
+                    new NoteThread
+                    {
+                        Id = "project01:dataId02",
+                        DataId = "dataId02",
+                        ThreadId = "thread02",
+                        Notes =
+                        [
+                            new Note { DataId = "thread02:PT01", SyncUserRef = "PT01" },
+                            new Note { DataId = "thread02:PT02", SyncUserRef = "PT02" },
+                        ],
+                    },
+                ])
             );
             var siteOptions = Substitute.For<IOptions<SiteOptions>>();
             siteOptions.Value.Returns(
@@ -5243,206 +5233,204 @@ public class SFProjectServiceTests
             EmailService = Substitute.For<IEmailService>();
             EmailService.ValidateEmail(Arg.Any<string>()).Returns(true);
             var currentTime = DateTime.Now;
-            ProjectSecrets = new MemoryRepository<SFProjectSecret>(
-                [
-                    new SFProjectSecret
-                    {
-                        Id = Project01,
-                        ShareKeys =
-                        [
-                            new ShareKey
-                            {
-                                Key = "abcd",
-                                ProjectRole = SFProjectRole.CommunityChecker,
-                                ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByRole = SFProjectRole.Administrator,
-                            },
-                            new ShareKey
-                            {
-                                Key = "onetimekeyalreadyused",
-                                ProjectRole = SFProjectRole.Viewer,
-                                ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByRole = SFProjectRole.Administrator,
-                                RecipientUserId = User03,
-                            },
-                        ],
-                    },
-                    new SFProjectSecret
-                    {
-                        Id = Project02,
-                        ShareKeys =
-                        [
-                            new ShareKey
-                            {
-                                Key = "linksharing02",
-                                ProjectRole = SFProjectRole.CommunityChecker,
-                                ShareLinkType = ShareLinkType.Anyone,
-                                CreatedByRole = SFProjectRole.CommunityChecker,
-                            },
-                            new ShareKey
-                            {
-                                Key = "reusableLinkFromAdmin",
-                                ProjectRole = SFProjectRole.CommunityChecker,
-                                ShareLinkType = ShareLinkType.Anyone,
-                                CreatedByRole = SFProjectRole.Administrator,
-                            },
-                            new ShareKey
-                            {
-                                Email = "user03@example.com",
-                                Key = "existingkeyuser03",
-                                ExpirationTime = currentTime.AddDays(1),
-                                ProjectRole = SFProjectRole.CommunityChecker,
-                                ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByRole = SFProjectRole.Administrator,
-                            },
-                        ],
-                    },
-                    new SFProjectSecret
-                    {
-                        Id = Project03,
-                        ShareKeys =
-                        [
-                            new ShareKey
-                            {
-                                Email = "bob@example.com",
-                                Key = "key1111",
-                                ExpirationTime = currentTime.AddDays(1),
-                                ProjectRole = SFProjectRole.CommunityChecker,
-                                ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByRole = SFProjectRole.Administrator,
-                            },
-                            new ShareKey
-                            {
-                                Email = "expired@example.com",
-                                Key = "keyexp",
-                                ExpirationTime = currentTime.AddDays(-1),
-                                ProjectRole = SFProjectRole.CommunityChecker,
-                                ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByRole = SFProjectRole.Administrator,
-                            },
-                            new ShareKey
-                            {
-                                Email = "user03@example.com",
-                                Key = "key1234",
-                                ExpirationTime = currentTime.AddDays(1),
-                                ProjectRole = SFProjectRole.CommunityChecker,
-                                ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByRole = SFProjectRole.Administrator,
-                            },
-                            new ShareKey
-                            {
-                                Email = "bill@example.com",
-                                Key = "key2222",
-                                ExpirationTime = currentTime.AddDays(1),
-                                ProjectRole = SFProjectRole.CommunityChecker,
-                                ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByRole = SFProjectRole.Administrator,
-                            },
-                        ],
-                    },
-                    new SFProjectSecret
-                    {
-                        Id = Project04,
-                        ShareKeys =
-                        [
-                            new ShareKey
-                            {
-                                Key = "linksharing04",
-                                ProjectRole = SFProjectRole.Viewer,
-                                ShareLinkType = ShareLinkType.Anyone,
-                                CreatedByRole = SFProjectRole.Viewer,
-                            },
-                        ],
-                    },
-                    new SFProjectSecret
-                    {
-                        Id = Project05,
-                        ShareKeys =
-                        [
-                            new ShareKey
-                            {
-                                Email = "user03@example.com",
-                                Key = "key12345",
-                                ExpirationTime = currentTime.AddDays(1),
-                                ProjectRole = SFProjectRole.CommunityChecker,
-                                ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByRole = SFProjectRole.Administrator,
-                            },
-                        ],
-                    },
-                    new SFProjectSecret
-                    {
-                        Id = Project06,
-                        ShareKeys =
-                        [
-                            new ShareKey
-                            {
-                                Key = "expiredKey",
-                                ExpirationTime = currentTime.AddDays(-1),
-                                ProjectRole = SFProjectRole.Viewer,
-                                ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByRole = SFProjectRole.Administrator,
-                            },
-                            new ShareKey
-                            {
-                                Key = "expiredKeyReusable",
-                                ExpirationTime = currentTime.AddDays(-2),
-                                ProjectRole = SFProjectRole.Viewer,
-                                ShareLinkType = ShareLinkType.Anyone,
-                                CreatedByRole = SFProjectRole.Administrator,
-                            },
-                            new ShareKey
-                            {
-                                Key = "usedKey",
-                                ProjectRole = SFProjectRole.Viewer,
-                                ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByRole = SFProjectRole.Administrator,
-                                RecipientUserId = User02,
-                            },
-                            new ShareKey
-                            {
-                                Key = "reservedKey",
-                                ExpirationTime = currentTime.AddDays(1),
-                                ProjectRole = SFProjectRole.Viewer,
-                                ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByRole = SFProjectRole.Administrator,
-                                Reserved = true,
-                            },
-                            new ShareKey
-                            {
-                                Key = "toBeReservedKey",
-                                ProjectRole = SFProjectRole.Commenter,
-                                ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByRole = SFProjectRole.Administrator,
-                            },
-                            new ShareKey
-                            {
-                                Key = "CheckerMultiUseFromNonAdmin",
-                                ExpirationTime = currentTime.AddDays(1),
-                                ProjectRole = SFProjectRole.CommunityChecker,
-                                ShareLinkType = ShareLinkType.Anyone,
-                                CreatedByRole = SFProjectRole.CommunityChecker,
-                            },
-                            new ShareKey
-                            {
-                                Key = "CheckerSingleUse",
-                                ExpirationTime = currentTime.AddDays(1),
-                                ProjectRole = SFProjectRole.CommunityChecker,
-                                ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByRole = SFProjectRole.Administrator,
-                            },
-                            new ShareKey
-                            {
-                                Key = "maxUsersReached",
-                                ProjectRole = SFProjectRole.Viewer,
-                                ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByRole = SFProjectRole.Administrator,
-                                UsersGenerated = 250,
-                            },
-                        ],
-                    },
-                ]
-            );
+            ProjectSecrets = new MemoryRepository<SFProjectSecret>([
+                new SFProjectSecret
+                {
+                    Id = Project01,
+                    ShareKeys =
+                    [
+                        new ShareKey
+                        {
+                            Key = "abcd",
+                            ProjectRole = SFProjectRole.CommunityChecker,
+                            ShareLinkType = ShareLinkType.Recipient,
+                            CreatedByRole = SFProjectRole.Administrator,
+                        },
+                        new ShareKey
+                        {
+                            Key = "onetimekeyalreadyused",
+                            ProjectRole = SFProjectRole.Viewer,
+                            ShareLinkType = ShareLinkType.Recipient,
+                            CreatedByRole = SFProjectRole.Administrator,
+                            RecipientUserId = User03,
+                        },
+                    ],
+                },
+                new SFProjectSecret
+                {
+                    Id = Project02,
+                    ShareKeys =
+                    [
+                        new ShareKey
+                        {
+                            Key = "linksharing02",
+                            ProjectRole = SFProjectRole.CommunityChecker,
+                            ShareLinkType = ShareLinkType.Anyone,
+                            CreatedByRole = SFProjectRole.CommunityChecker,
+                        },
+                        new ShareKey
+                        {
+                            Key = "reusableLinkFromAdmin",
+                            ProjectRole = SFProjectRole.CommunityChecker,
+                            ShareLinkType = ShareLinkType.Anyone,
+                            CreatedByRole = SFProjectRole.Administrator,
+                        },
+                        new ShareKey
+                        {
+                            Email = "user03@example.com",
+                            Key = "existingkeyuser03",
+                            ExpirationTime = currentTime.AddDays(1),
+                            ProjectRole = SFProjectRole.CommunityChecker,
+                            ShareLinkType = ShareLinkType.Recipient,
+                            CreatedByRole = SFProjectRole.Administrator,
+                        },
+                    ],
+                },
+                new SFProjectSecret
+                {
+                    Id = Project03,
+                    ShareKeys =
+                    [
+                        new ShareKey
+                        {
+                            Email = "bob@example.com",
+                            Key = "key1111",
+                            ExpirationTime = currentTime.AddDays(1),
+                            ProjectRole = SFProjectRole.CommunityChecker,
+                            ShareLinkType = ShareLinkType.Recipient,
+                            CreatedByRole = SFProjectRole.Administrator,
+                        },
+                        new ShareKey
+                        {
+                            Email = "expired@example.com",
+                            Key = "keyexp",
+                            ExpirationTime = currentTime.AddDays(-1),
+                            ProjectRole = SFProjectRole.CommunityChecker,
+                            ShareLinkType = ShareLinkType.Recipient,
+                            CreatedByRole = SFProjectRole.Administrator,
+                        },
+                        new ShareKey
+                        {
+                            Email = "user03@example.com",
+                            Key = "key1234",
+                            ExpirationTime = currentTime.AddDays(1),
+                            ProjectRole = SFProjectRole.CommunityChecker,
+                            ShareLinkType = ShareLinkType.Recipient,
+                            CreatedByRole = SFProjectRole.Administrator,
+                        },
+                        new ShareKey
+                        {
+                            Email = "bill@example.com",
+                            Key = "key2222",
+                            ExpirationTime = currentTime.AddDays(1),
+                            ProjectRole = SFProjectRole.CommunityChecker,
+                            ShareLinkType = ShareLinkType.Recipient,
+                            CreatedByRole = SFProjectRole.Administrator,
+                        },
+                    ],
+                },
+                new SFProjectSecret
+                {
+                    Id = Project04,
+                    ShareKeys =
+                    [
+                        new ShareKey
+                        {
+                            Key = "linksharing04",
+                            ProjectRole = SFProjectRole.Viewer,
+                            ShareLinkType = ShareLinkType.Anyone,
+                            CreatedByRole = SFProjectRole.Viewer,
+                        },
+                    ],
+                },
+                new SFProjectSecret
+                {
+                    Id = Project05,
+                    ShareKeys =
+                    [
+                        new ShareKey
+                        {
+                            Email = "user03@example.com",
+                            Key = "key12345",
+                            ExpirationTime = currentTime.AddDays(1),
+                            ProjectRole = SFProjectRole.CommunityChecker,
+                            ShareLinkType = ShareLinkType.Recipient,
+                            CreatedByRole = SFProjectRole.Administrator,
+                        },
+                    ],
+                },
+                new SFProjectSecret
+                {
+                    Id = Project06,
+                    ShareKeys =
+                    [
+                        new ShareKey
+                        {
+                            Key = "expiredKey",
+                            ExpirationTime = currentTime.AddDays(-1),
+                            ProjectRole = SFProjectRole.Viewer,
+                            ShareLinkType = ShareLinkType.Recipient,
+                            CreatedByRole = SFProjectRole.Administrator,
+                        },
+                        new ShareKey
+                        {
+                            Key = "expiredKeyReusable",
+                            ExpirationTime = currentTime.AddDays(-2),
+                            ProjectRole = SFProjectRole.Viewer,
+                            ShareLinkType = ShareLinkType.Anyone,
+                            CreatedByRole = SFProjectRole.Administrator,
+                        },
+                        new ShareKey
+                        {
+                            Key = "usedKey",
+                            ProjectRole = SFProjectRole.Viewer,
+                            ShareLinkType = ShareLinkType.Recipient,
+                            CreatedByRole = SFProjectRole.Administrator,
+                            RecipientUserId = User02,
+                        },
+                        new ShareKey
+                        {
+                            Key = "reservedKey",
+                            ExpirationTime = currentTime.AddDays(1),
+                            ProjectRole = SFProjectRole.Viewer,
+                            ShareLinkType = ShareLinkType.Recipient,
+                            CreatedByRole = SFProjectRole.Administrator,
+                            Reserved = true,
+                        },
+                        new ShareKey
+                        {
+                            Key = "toBeReservedKey",
+                            ProjectRole = SFProjectRole.Commenter,
+                            ShareLinkType = ShareLinkType.Recipient,
+                            CreatedByRole = SFProjectRole.Administrator,
+                        },
+                        new ShareKey
+                        {
+                            Key = "CheckerMultiUseFromNonAdmin",
+                            ExpirationTime = currentTime.AddDays(1),
+                            ProjectRole = SFProjectRole.CommunityChecker,
+                            ShareLinkType = ShareLinkType.Anyone,
+                            CreatedByRole = SFProjectRole.CommunityChecker,
+                        },
+                        new ShareKey
+                        {
+                            Key = "CheckerSingleUse",
+                            ExpirationTime = currentTime.AddDays(1),
+                            ProjectRole = SFProjectRole.CommunityChecker,
+                            ShareLinkType = ShareLinkType.Recipient,
+                            CreatedByRole = SFProjectRole.Administrator,
+                        },
+                        new ShareKey
+                        {
+                            Key = "maxUsersReached",
+                            ProjectRole = SFProjectRole.Viewer,
+                            ShareLinkType = ShareLinkType.Recipient,
+                            CreatedByRole = SFProjectRole.Administrator,
+                            UsersGenerated = 250,
+                        },
+                    ],
+                },
+            ]);
             Logger = new MockLogger<SFProjectService>();
             MachineProjectService = Substitute.For<IMachineProjectService>();
             SyncService = Substitute.For<ISyncService>();
