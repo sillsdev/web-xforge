@@ -732,11 +732,11 @@ describe('CheckingComponent', () => {
       expect(env.recordQuestionButton).toBeNull();
     }));
 
-    it('unread answers badge is only visible when the setting is ON to see other answers', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER });
-      expect(env.getUnread(env.questions[5])).toEqual(1);
-      env.setSeeOtherUserResponses(false);
+    it('unread answers badge is only visible to community checkers', fakeAsync(() => {
+      let env = new TestEnvironment({ user: CHECKER_USER });
       expect(env.getUnread(env.questions[5])).toEqual(0);
+      env = new TestEnvironment({ user: ADMIN_USER });
+      expect(env.getUnread(env.questions[5])).toEqual(1);
       flush();
       discardPeriodicTasks();
     }));
