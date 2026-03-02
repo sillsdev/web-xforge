@@ -15,7 +15,7 @@ jobs:
       matrix:
         os: ["ubuntu-22.04"]
         node_version: ["22.13.0"]
-        npm_version: ["10.9.2"]
+        npm_version: ["11.11.0"]
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
