@@ -1908,8 +1908,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         List<BsonDocument> results = await _database
             .GetCollection<BsonDocument>("texts")
             .Aggregate()
-            // Filter for text documents that belong to the specified project
-            .Match(Builders<BsonDocument>.Filter.Regex("_id", new BsonRegularExpression($"^{projectId}:")))
+            // Filter for text documents that belong to the specified project, which contains an ops array
+            .Match(
+                Builders<BsonDocument>.Filter.And(
+                    Builders<BsonDocument>.Filter.Regex("_id", new BsonRegularExpression($"^{projectId}:")),
+                    Builders<BsonDocument>.Filter.Exists("ops", true),
+                    Builders<BsonDocument>.Filter.Ne("ops", BsonNull.Value)
+                )
+            )
             // Project:
             // - Extract the book ID from the document ID
             // - Count the number of verse segments
