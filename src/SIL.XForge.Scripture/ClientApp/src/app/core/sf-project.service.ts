@@ -236,10 +236,6 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     });
   }
 
-  onlineAddChapters(projectId: string, book: number, chapters: number[]): Promise<void> {
-    return this.onlineInvoke<void>('addChapters', { projectId, book, chapters });
-  }
-
   onlineUpdateSettings(id: string, settings: SFProjectSettings): Promise<void> {
     return this.onlineInvoke('updateSettings', { projectId: id, settings });
   }

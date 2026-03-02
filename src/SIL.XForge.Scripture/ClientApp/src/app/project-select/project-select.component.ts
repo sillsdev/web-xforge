@@ -49,7 +49,8 @@ const PROJECT_SELECT_VALUE_ACCESSOR: any = {
   ]
 })
 export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
-  @Output() valueChange: EventEmitter<string | undefined> = new EventEmitter<string | undefined>(true);
+  // Firefox will not in a timely way emit this asynchronously, so we must emit the valueChange event synchronously
+  @Output() valueChange: EventEmitter<string | undefined> = new EventEmitter<string | undefined>();
   @Output() projectSelect = new EventEmitter<SelectableProject>();
 
   @Input() placeholder = '';
@@ -172,31 +173,35 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
   @Input()
   errorMessageMapper?: null | ((errors: ValidationErrors) => string | null) = null;
 
-  private externalValidators: ValidatorFn[] = [];
+  private externalValidators: ValidatorFn[] | 'disabled' = [];
   @Input()
-  set validators(value: ValidatorFn[]) {
+  set validators(value: ValidatorFn[] | 'disabled') {
     this.externalValidators = value;
-    const validators = [this.validateProject.bind(this)].concat(value);
-    for (const validator of validators)
+    const validators = value === 'disabled' ? null : [this.validateProject.bind(this)].concat(value);
+    for (const validator of validators ?? []) {
       if (typeof validator !== 'function') throw new Error(`The validator is not a function: ${validator}`);
+    }
     this.paratextIdControl.setValidators(validators);
   }
-  get validators(): ValidatorFn[] {
+  get validators(): ValidatorFn[] | 'disabled' {
     return this.externalValidators;
   }
 
   get error(): string | null {
     const errorStates = this.paratextIdControl.errors;
-    if (errorStates == null) return null;
-    else if (errorStates.invalidSelection === true) {
+    if (errorStates == null) {
+      return null;
+    } else if (errorStates.invalidSelection === true) {
       return translate('project_select.please_select_valid_project_or_resource');
-    } else if (this.externalValidators.length > 0) {
+    } else if (this.externalValidators !== 'disabled' && this.externalValidators.length > 0) {
       const errorMessageMapper = this.errorMessageMapper;
       if (errorMessageMapper == null) {
         throw new Error('ProjectSelectComponent requires `errorMessageMapper` when `validators` are provided.');
       }
       return errorMessageMapper(errorStates);
-    } else return null;
+    } else {
+      return null;
+    }
   }
 
   writeValue(value: any): void {

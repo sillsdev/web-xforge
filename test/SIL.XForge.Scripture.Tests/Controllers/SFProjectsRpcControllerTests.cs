@@ -40,14 +40,38 @@ public class SFProjectsRpcControllerTests
     private static readonly Uri WebsiteUrl = new Uri("https://scriptureforge.org", UriKind.Absolute);
 
     [Test]
-    public void ApplyPreTranslationToProject_Success()
+    public async Task ApplyPreTranslationToProject_Success()
     {
         var env = new TestEnvironment();
 
         // SUT
-        var result = env.Controller.ApplyPreTranslationToProject(Project01, "GEN-EXO", Project01, DateTime.UtcNow);
+        var result = await env.Controller.ApplyPreTranslationToProject(
+            Project01,
+            "GEN-EXO",
+            Project01,
+            DateTime.UtcNow
+        );
         Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
         env.BackgroundJobClient.Received().Create(Arg.Any<Job>(), Arg.Any<IState>());
+    }
+
+    [Test]
+    public async Task ApplyPreTranslationToProject_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Project Not Found";
+        env.SFProjectService.GetProjectAsync(Project01).Throws(new DataNotFoundException(errorMessage));
+
+        var result = await env.Controller.ApplyPreTranslationToProject(
+            Project01,
+            "GEN-EXO",
+            Project01,
+            DateTime.UtcNow
+        );
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
     }
 
     [Test]
@@ -57,7 +81,7 @@ public class SFProjectsRpcControllerTests
         env.BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Throws(new ArgumentNullException());
 
         // SUT
-        Assert.Throws<ArgumentNullException>(() =>
+        Assert.ThrowsAsync<ArgumentNullException>(() =>
             env.Controller.ApplyPreTranslationToProject(Project01, "GEN-EXO", Project01, DateTime.UtcNow)
         );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
@@ -630,6 +654,7 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    [Obsolete]
     public async Task AddChapters_Success()
     {
         var env = new TestEnvironment();
@@ -643,6 +668,7 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    [Obsolete]
     public async Task AddChapters_Forbidden()
     {
         var env = new TestEnvironment();
@@ -657,6 +683,7 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    [Obsolete]
     public async Task AddChapters_NotFound()
     {
         var env = new TestEnvironment();

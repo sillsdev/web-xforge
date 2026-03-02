@@ -78,7 +78,7 @@ public class ConnectionTests
 
         // Setup Queue
         env.Service.BeginTransaction();
-        await env.Service.CreateDocAsync(collection, id, snapshot.Data, otTypeName);
+        await env.Service.CreateDocAsync(collection, id, snapshot.Data, otTypeName, source: null);
         await env.Service.SubmitOpAsync(collection, id, op, snapshot.Data, snapshot.Version, source: null);
         await env.Service.ReplaceDocAsync(collection, id, data, snapshot.Version, source: null);
         await env.Service.DeleteDocAsync(collection, id);
@@ -95,7 +95,14 @@ public class ConnectionTests
         // Verify Submit Operations
         await env
             .RealtimeService.Server.Received(1)
-            .CreateDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<object>(), Arg.Any<string>());
+            .CreateDocAsync(
+                Arg.Any<int>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<object>(),
+                Arg.Any<string>(),
+                Arg.Any<OpSource?>()
+            );
         await env
             .RealtimeService.Server.Received(1)
             .DeleteDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
@@ -128,10 +135,11 @@ public class ConnectionTests
         string id = "id1";
         var data = new TestProject { Id = id, Name = "Test Project 1" };
         string otTypeName = OTType.Json0;
+        OpSource? source = OpSource.Draft;
 
         // SUT
         env.Service.BeginTransaction();
-        var result = await env.Service.CreateDocAsync(collection, id, data, otTypeName);
+        var result = await env.Service.CreateDocAsync(collection, id, data, otTypeName, source);
 
         // Verify result
         Assert.AreEqual(result.Version, 1);
@@ -145,11 +153,19 @@ public class ConnectionTests
         Assert.AreEqual(queuedOperation.Data, data);
         Assert.AreEqual(queuedOperation.Id, id);
         Assert.AreEqual(queuedOperation.OtTypeName, otTypeName);
+        Assert.AreEqual(queuedOperation.Source, source);
 
         // Verify that the call was not passed to the underlying realtime server
         await env
             .RealtimeService.Server.Received(0)
-            .CreateDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<object>(), Arg.Any<string>());
+            .CreateDocAsync(
+                Arg.Any<int>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<object>(),
+                Arg.Any<string>(),
+                Arg.Any<OpSource?>()
+            );
     }
 
     [Test]
@@ -161,9 +177,10 @@ public class ConnectionTests
         string id = "id1";
         var data = new TestProject { Id = id, Name = "Test Project 1" };
         string otTypeName = OTType.Json0;
+        OpSource? source = OpSource.Draft;
 
         // SUT
-        await env.Service.CreateDocAsync(collection, id, data, otTypeName);
+        await env.Service.CreateDocAsync(collection, id, data, otTypeName, source);
 
         // Verify queue is empty
         Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
@@ -176,7 +193,8 @@ public class ConnectionTests
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<TestProject>(),
-                Arg.Any<string>()
+                Arg.Any<string>(),
+                Arg.Any<OpSource?>()
             );
     }
 

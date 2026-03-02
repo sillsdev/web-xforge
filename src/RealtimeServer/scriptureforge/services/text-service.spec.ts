@@ -75,6 +75,22 @@ describe('TextService', () => {
       });
     });
   });
+
+  it('writes the op source to the database on create', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const conn = clientConnect(env.server, 'administrator');
+    const id: string = getTextDocId('project01', 40, 2);
+    const source: string = 'history';
+    await createDoc<TextData>(conn, TEXTS_COLLECTION, id, new Delta(), 'rich-text', source);
+    await new Promise<void>(resolve => {
+      env.db.getOps(TEXTS_COLLECTION, id, 0, null, { metadata: true }, (_, ops) => {
+        expect(ops[0].m.source).toBe(source);
+        resolve();
+      });
+    });
+  });
 });
 
 class TestEnvironment {

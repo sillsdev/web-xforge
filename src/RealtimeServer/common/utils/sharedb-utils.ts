@@ -13,9 +13,15 @@ export function docFetch(doc: Doc): Promise<void> {
   });
 }
 
-export function docCreate(doc: Doc, data: any, type?: OTType): Promise<void> {
+export function docCreate(
+  doc: Doc,
+  data: any,
+  type?: OTType,
+  source: boolean | any | undefined = undefined
+): Promise<void> {
+  const options: ShareDBSourceOptions = source != null ? { source } : {};
   return new Promise<void>((resolve, reject) => {
-    doc.create(data, type, err => {
+    doc.create(data, type, options, err => {
       if (err != null) {
         reject(err);
       } else {

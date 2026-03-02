@@ -754,7 +754,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 biblicalTerm.ProjectRef = _projectDoc.Id;
                 IDocument<BiblicalTerm> newBiblicalTermDoc = GetBiblicalTermDoc(biblicalTerm.DataId);
                 async Task CreateBiblicalTermAsync(BiblicalTerm newBiblicalTerm) =>
-                    await newBiblicalTermDoc.CreateAsync(newBiblicalTerm);
+                    await newBiblicalTermDoc.CreateAsync(newBiblicalTerm, OpSource.Paratext);
                 tasks.Add(CreateBiblicalTermAsync(biblicalTerm));
                 _syncMetrics.BiblicalTerms.Added++;
             }
@@ -1307,7 +1307,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     await textDataDoc.FetchAsync();
                     if (textDataDoc.IsLoaded)
                         await textDataDoc.DeleteAsync();
-                    await textDataDoc.CreateAsync(new TextData(delta));
+                    await textDataDoc.CreateAsync(new TextData(delta), OpSource.Paratext);
                 }
                 tasks.Add(CreateText(kvp.Value.Delta));
                 _syncMetrics.TextDocs.Added++;
@@ -1401,7 +1401,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
                             Assignment = change.Assignment,
                             BiblicalTermId = change.BiblicalTermId,
                             ExtraHeadingInfo = change.ExtraHeadingInfo,
-                        }
+                        },
+                        OpSource.Paratext
                     );
                     await SubmitChangesOnNoteThreadDocAsync(doc, change);
                 }
