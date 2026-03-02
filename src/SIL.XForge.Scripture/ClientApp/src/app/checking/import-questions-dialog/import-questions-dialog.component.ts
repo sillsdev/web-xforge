@@ -605,49 +605,62 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
     const questions: SourceQuestion[] = [];
 
     for (const note of notes) {
-      const comments = note.comments ?? [];
-      for (let index = 0; index < comments.length; index++) {
-        const comment = comments[index];
-        if (comment.tag == null || comment.tag.id !== tagId) {
-          continue;
-        }
+      // Ensure that the note has a valid verse reference.
+      const verseRef: VerseRef | undefined = this.parseVerseReference(note.verseRef);
+      if (verseRef == null) {
+        continue;
+      }
 
-        const verseRef = this.parseVerseReference(note.verseRef);
-        if (verseRef == null) {
-          continue;
-        }
+      // These values will populate the question, if they are all specified in the note's comments.
+      let questionText: string = '';
+      let commentTagId: number | undefined;
 
-        const questionText = stripHtml(comment.content ?? '').trim();
+      // Iterate over the comments, so we can get the first valid comment text for the question text,
+      // and last valid comment tag id so we can see if we are to import this note as a question.
+      for (const comment of note.comments ?? []) {
+        // Comments that change the tag will have null content, so we need to have the first non-empty comment content
+        // to provide the text of the question.
+        const commentContent = stripHtml(comment.content ?? '').trim();
         if (questionText.length === 0) {
-          continue;
+          if (commentContent.length > 0) {
+            questionText = commentContent;
+          } else {
+            continue;
+          }
         }
 
+        // Get the comment's tag id, if it is specified.
+        if (comment.tag?.id != null) {
+          commentTagId = comment.tag?.id;
+        }
+      }
+
+      // Create the question if the last comment tag matches the tag we want, and there is text for the question.
+      if (commentTagId === tagId && questionText !== '') {
         questions.push({
           id: note.id,
           verseRef,
           text: questionText
         });
-
-        break;
       }
     }
 
     return questions;
   }
 
-  private parseVerseReference(reference: string | undefined): VerseRef | null {
+  private parseVerseReference(reference: string | undefined): VerseRef | undefined {
     if (reference == null) {
-      return null;
+      return undefined;
     }
 
     const trimmedReference = reference.trim();
     if (trimmedReference.length === 0) {
-      return null;
+      return undefined;
     }
 
     const parseResult = VerseRef.tryParse(trimmedReference);
     if (parseResult.success !== true || parseResult.verseRef == null) {
-      return null;
+      return undefined;
     }
 
     return parseResult.verseRef;

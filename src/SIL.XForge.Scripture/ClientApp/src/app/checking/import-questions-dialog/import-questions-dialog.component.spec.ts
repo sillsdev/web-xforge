@@ -574,8 +574,8 @@ describe('ImportQuestionsDialogComponent', () => {
           id: 'note-1',
           verseRef: 'MAT 1:1',
           comments: [
-            { verseRef: 'MAT 1:1', content: '<p>Ignore</p>', tag: { id: 6, name: 'Other' } },
-            { verseRef: 'MAT 1:1', content: ' <p>Question <strong>text</strong></p> ', tag: tagQuestions }
+            { verseRef: 'MAT 1:1', content: '<p>Question <strong>text</strong></p>', tag: { id: 6, name: 'Other' } },
+            { verseRef: 'MAT 1:1', content: " <p>This comment's text will not be used</p> ", tag: tagQuestions }
           ]
         },
         {
@@ -585,8 +585,24 @@ describe('ImportQuestionsDialogComponent', () => {
         },
         {
           id: 'note-3',
+          verseRef: 'MAT 1:3',
+          comments: [
+            { verseRef: 'MAT 1:3', content: '<p>Question 3</p>', tag: { id: 6, name: 'Other' } },
+            { verseRef: 'MAT 1:3', content: '', tag: tagQuestions }
+          ]
+        },
+        {
+          id: 'note-4',
           verseRef: 'GEN 1:1',
-          comments: [{ verseRef: 'GEN 1:1', content: '<p>Different book</p>', tag: tagQuestions }]
+          comments: [{ verseRef: 'GEN 1:1', content: '<p>Different book (note not converted)</p>', tag: tagQuestions }]
+        },
+        {
+          id: 'note-5',
+          verseRef: 'MAT 1:4',
+          comments: [
+            { verseRef: 'MAT 1:4', content: '<p>Changed tag (note not converted)</p>', tag: tagQuestions },
+            { verseRef: 'MAT 1:4', content: '', tag: { id: 6, name: 'Other' } }
+          ]
         }
       ];
       const preexistingQuestion = TestEnvironment.createQuestionDocWithSource(
@@ -606,15 +622,29 @@ describe('ImportQuestionsDialogComponent', () => {
       env.fixture.detectChanges();
 
       expect(env.component.status).toBe('filter_notes');
-      expect(env.component.filteredList.length).toBe(2);
-      const questionAlreadyImported = env.component.filteredList[0];
-      expect(questionAlreadyImported.question.id).toBe('note-1');
-      expect(questionAlreadyImported.question.text).toBe('Question text');
-      expect(questionAlreadyImported.sfVersionOfQuestion).not.toBeUndefined();
+      expect(env.component.filteredList.length).toBe(3);
+
+      // Verify a note that has already been imported
+      const note1 = env.component.filteredList[0];
+      expect(note1.question.id).toBe('note-1');
+      expect(note1.question.text).toBe('Question text');
+      expect(note1.sfVersionOfQuestion).not.toBeUndefined();
 
       expect(env.component.showDuplicateImportNote).toBeFalse();
-      questionAlreadyImported.checked = true;
+      note1.checked = true;
       expect(env.component.showDuplicateImportNote).toBeTrue();
+
+      // Verify a simple note
+      const note2 = env.component.filteredList[1];
+      expect(note2.question.id).toBe('note-2');
+      expect(note2.question.text).toBe('Question 2');
+      expect(note2.sfVersionOfQuestion).toBeUndefined();
+
+      // Verify a note that has a changed tag
+      const note3 = env.component.filteredList[2];
+      expect(note3.question.id).toBe('note-3');
+      expect(note3.question.text).toBe('Question 3');
+      expect(note3.sfVersionOfQuestion).toBeUndefined();
     }));
 
     it('shows an error when no Paratext project can be found', fakeAsync(() => {
