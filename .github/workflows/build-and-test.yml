@@ -20,7 +20,7 @@ jobs:
         os: ["ubuntu-22.04"]
         dotnet_version: ["8.0.x"]
         node_version: ["22.13.0"]
-        npm_version: ["10.9.2"]
+        npm_version: ["11.11.0"]
       # Continue building in other environments to see which are working.
       fail-fast: false
     runs-on: ${{matrix.os}}
@@ -136,7 +136,7 @@ jobs:
         os: ["ubuntu-22.04"]
         dotnet_version: ["8.0.x"]
         node_version: ["22.13.0"]
-        npm_version: ["10.9.2"]
+        npm_version: ["11.11.0"]
       fail-fast: false
     runs-on: ${{matrix.os}}
     steps:
