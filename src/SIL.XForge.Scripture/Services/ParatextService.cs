@@ -1216,7 +1216,7 @@ public class ParatextService : DisposableBase, IParatextService
                     // Put the individual chapters
                     foreach ((int chapterNum, string authorSFUserId) in chapNumToAuthorSFUserIdMap)
                     {
-                        if ((chapterNum - 1) < chapters.Count)
+                        if (chapters != null && chapterNum - 1 < chapters.Count)
                         {
                             try
                             {

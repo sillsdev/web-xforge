@@ -881,6 +881,7 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    [Obsolete("Tests legacy method")]
     public async Task GetProjectIdByParatextId_Success()
     {
         var env = new TestEnvironment();
@@ -896,6 +897,7 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    [Obsolete("Tests legacy method")]
     public async Task GetProjectIdByParatextId_Forbidden()
     {
         var env = new TestEnvironment();
@@ -909,6 +911,7 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    [Obsolete("Tests legacy method")]
     public async Task GetProjectIdByParatextId_NotFound()
     {
         var env = new TestEnvironment();
@@ -925,6 +928,7 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    [Obsolete("Tests legacy method")]
     public async Task GetProjectIdByParatextId_InvalidParams()
     {
         var env = new TestEnvironment();
@@ -941,6 +945,7 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    [Obsolete("Tests legacy method")]
     public void GetProjectIdByParatextId_UnknownError()
     {
         var env = new TestEnvironment();
