@@ -606,19 +606,27 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
 
     for (const note of notes) {
       const comments = note.comments ?? [];
+      let questionText = '';
       for (let index = 0; index < comments.length; index++) {
         const comment = comments[index];
+
+        // Comments that change the tag will have null content, so we need to have the last non-empty comment content
+        // to provide the text of the question.
+        const commentContent = stripHtml(comment.content ?? '').trim();
+        if (questionText.length === 0) {
+          if (commentContent.length > 0) {
+            questionText = commentContent;
+          } else {
+            continue;
+          }
+        }
+
         if (comment.tag == null || comment.tag.id !== tagId) {
           continue;
         }
 
         const verseRef = this.parseVerseReference(note.verseRef);
         if (verseRef == null) {
-          continue;
-        }
-
-        const questionText = stripHtml(comment.content ?? '').trim();
-        if (questionText.length === 0) {
           continue;
         }
 
