@@ -18,14 +18,17 @@ import {
 } from '@angular/material/stepper';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, filter } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { UserService } from 'xforge-common/user.service';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
+import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -126,6 +129,7 @@ export class DraftImportWizardComponent implements OnInit {
     targetParatextId: new FormControl<string | undefined>(undefined, Validators.required)
   });
   projects: ParatextProject[] = [];
+  projectUserConfigDoc?: SFProjectUserConfigDoc;
   isLoadingProject = false;
   isLoadingProjects = true;
   targetProjectId?: string;
@@ -301,7 +305,8 @@ export class DraftImportWizardComponent implements OnInit {
     readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly activatedProjectService: ActivatedProjectService,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
+    private readonly userService: UserService
   ) {
     this.draftNotificationService.setNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
     destroyRef.onDestroy(async () => {
@@ -343,9 +348,17 @@ export class DraftImportWizardComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    void this.loadProjects();
-    this.initializeAvailableBooks();
-    this.sourceProjectId = this.activatedProjectService.projectId;
+    this.activatedProjectService.projectId$
+      .pipe(
+        filter(projectId => projectId != null && projectId !== ''),
+        quietTakeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(async projectId => {
+        await this.loadProjects();
+        this.initializeAvailableBooks();
+        this.sourceProjectId = projectId;
+        this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId!, this.userService.currentUserId);
+      });
   }
 
   private async loadProjects(): Promise<void> {
@@ -414,6 +427,9 @@ export class DraftImportWizardComponent implements OnInit {
       this.resetImportState();
       return;
     }
+
+    // Store the selected project
+    await this.projectUserConfigDoc?.submitJson0Op(op => op.set(puc => puc.selectedDraftTargetParatextId, paratextId));
 
     this.selectedParatextProject = paratextProject;
     this.resetProjectValidation();
