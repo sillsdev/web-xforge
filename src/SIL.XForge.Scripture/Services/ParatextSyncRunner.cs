@@ -2190,7 +2190,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     {
         projectSFId ??= _projectDoc?.Id ?? "unknown";
         userId ??= _userSecret?.Id ?? "unknown";
-        _logger.LogInformation($"SyncLog ({projectSFId} {userId}): {message}");
+        _logger.LogInformation($"SyncLog ({projectSFId.Sanitize()} {userId.Sanitize()}): {message}");
         _syncMetrics.Log.Add($"{DateTime.UtcNow:u} {message}");
     }
 
