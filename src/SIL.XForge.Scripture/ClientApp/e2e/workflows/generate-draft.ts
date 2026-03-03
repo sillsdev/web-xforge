@@ -210,7 +210,7 @@ export async function generateDraft(
 
   // Go back to generate draft page and apply all chapters
   await user.click(page.getByRole('link', { name: 'Generate draft' }));
-  await user.click(page.getByRole('button', { name: 'Add to project' }));
+  await user.click(page.getByRole('button', { name: 'Add to a project' }));
   await user.click(page.getByRole('combobox', { name: 'Choose a project' }));
   await user.type(DRAFT_PROJECT_SHORT_NAME);
   await user.click(page.getByRole('option', { name: `${DRAFT_PROJECT_SHORT_NAME} -` }));
