@@ -8,6 +8,7 @@ import { anything, instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { ParatextService } from '../../../core/paratext.service';
@@ -32,6 +33,7 @@ const mockDraftNotificationService = mock(DraftNotificationService);
 const mockProjectNotificationService = mock(ProjectNotificationService);
 const mockProjectService = mock(SFProjectService);
 const mockTextDocService = mock(TextDocService);
+const mockUserService = mock(UserService);
 const mockActivatedProjectService = mock(ActivatedProjectService);
 const mockAuthService = mock(AuthService);
 const mockOnlineStatusService = mock(OnlineStatusService);
@@ -196,6 +198,7 @@ export default {
         { provide: ActivatedProjectService, useValue: instance(mockActivatedProjectService) },
         { provide: ProgressService, useValue: instance(mockProgressService) },
         { provide: AuthService, useValue: instance(mockAuthService) },
+        { provide: UserService, useValue: instance(mockUserService) },
         defaultTranslocoMarkupTranspilers()
       ]
     })
@@ -395,7 +398,7 @@ function getImportProgress(
 }
 
 function setUpMocks(args: DraftImportWizardComponentState): void {
-  when(mockActivatedProjectService.projectId).thenReturn('P02');
+  when(mockActivatedProjectService.projectId$).thenReturn(of('P02'));
   when(mockOnlineStatusService.onlineStatus$).thenReturn(of(args.online));
   when(mockOnlineStatusService.isOnline).thenReturn(args.online);
   when(mockOnlineStatusService.online).thenReturn(

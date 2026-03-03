@@ -30,4 +30,5 @@ export interface SFProjectUserConfig extends ProjectData {
   commentRefsRead: string[];
   editorTabsOpen: EditorTabPersistData[];
   lynxInsightState: LynxInsightUserData;
+  selectedDraftTargetParatextId?: string;
 }
