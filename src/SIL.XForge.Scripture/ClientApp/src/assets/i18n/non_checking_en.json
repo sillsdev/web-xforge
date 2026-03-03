@@ -280,8 +280,8 @@
     "use_echo": "Use Echo Translation Engine"
   },
   "draft_history_entry": {
-    "add_to_project": "Add to project",
-    "click_add_to_project": "Click [b]Add to project[/b] to save the draft to a project of your choosing.",
+    "add_to_a_project": "Add to a project",
+    "click_add_to_a_project": "Click [b]Add to a project[/b] to save the draft to a project of your choosing.",
     "click_book_to_preview_draft": "Click a book below to preview the draft.",
     "download_zip": "Download draft as ZIP file",
     "draft_active": "Running",
