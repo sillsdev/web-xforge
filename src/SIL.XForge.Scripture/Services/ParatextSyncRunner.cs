@@ -2007,7 +2007,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             else
             {
                 Log(
-                    $"CompleteSync: Warning: SF project id {_projectDoc.Id} QueuedCount is unexpectedly "
+                    $"CompleteSync: Warning: SF project id {_projectDoc.Id.Sanitize()} QueuedCount is unexpectedly "
                         + $"{_projectDoc.Data.Sync.QueuedCount}. Setting to 0 instead of decrementing."
                 );
                 op.Set(pd => pd.Sync.QueuedCount, 0);
@@ -2190,7 +2190,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     {
         projectSFId ??= _projectDoc?.Id ?? "unknown";
         userId ??= _userSecret?.Id ?? "unknown";
-        _logger.LogInformation($"SyncLog ({projectSFId} {userId}): {message}");
+        _logger.LogInformation($"SyncLog ({projectSFId.Sanitize()} {userId.Sanitize()}): {message}");
         _syncMetrics.Log.Add($"{DateTime.UtcNow:u} {message}");
     }
 
