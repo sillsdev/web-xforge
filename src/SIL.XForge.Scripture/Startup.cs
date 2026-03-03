@@ -12,6 +12,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
+using Microsoft.AspNetCore.SpaServices.StaticFiles;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
@@ -270,7 +272,61 @@ public class Startup
         );
 
         if (SpaDevServerStartup == SpaDevServerStartup.None)
-            app.UseSpaStaticFiles();
+        {
+            // Remap requests for files to the matching .br file, if present
+            app.Use(
+                async (context, next) =>
+                {
+                    if (SupportsBrotli(context))
+                    {
+                        // Check if the file exists in the SPA dist folder
+                        ISpaStaticFileProvider spaFileProvider =
+                            app.ApplicationServices.GetRequiredService<ISpaStaticFileProvider>();
+                        string originalPath = context.Request.Path.Value ?? string.Empty;
+                        string brotliPath = originalPath + ".br";
+                        if (
+                            spaFileProvider.FileProvider is not null
+                            && spaFileProvider.FileProvider.GetFileInfo(brotliPath).Exists
+                        )
+                        {
+                            context.Request.Path = brotliPath;
+                            context.Items["OriginalPath"] = originalPath;
+                        }
+                    }
+
+                    await next();
+                }
+            );
+
+            // Set the correct content type and encoding for .br files
+            var contentTypeProvider = new FileExtensionContentTypeProvider
+            {
+                Mappings = { [".br"] = "application/brotli" },
+            };
+            app.UseSpaStaticFiles(
+                new StaticFileOptions
+                {
+                    ContentTypeProvider = contentTypeProvider,
+                    OnPrepareResponse = context =>
+                    {
+                        context.Context.Response.Headers.Append("Cache-Control", "must-revalidate");
+                        if (context.File.Name.EndsWith(".br", StringComparison.OrdinalIgnoreCase))
+                        {
+                            context.Context.Response.Headers.Append("Content-Encoding", "br");
+                            context.Context.Response.Headers.Append("Vary", "Accept-Encoding");
+                            if (
+                                context.Context.Items.TryGetValue("OriginalPath", out object? originalPathObj)
+                                && originalPathObj is string originalPath
+                                && contentTypeProvider.TryGetContentType(originalPath, out string contentType)
+                            )
+                            {
+                                context.Context.Response.ContentType = contentType;
+                            }
+                        }
+                    },
+                }
+            );
+        }
 
         app.UseRouting();
 
@@ -390,4 +446,29 @@ public class Startup
 
         return false;
     }
+
+    private static bool SupportsBrotli(HttpContext? context) =>
+        (context?.Request?.Headers?.AcceptEncoding ?? [])
+            .Select(headerValue =>
+                headerValue.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            )
+            .Any(encodings =>
+                encodings.Any(encoding =>
+                {
+                    string[] parts = encoding.Split(
+                        ';',
+                        StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries
+                    );
+                    if (!parts[0].Trim().Equals("br", StringComparison.OrdinalIgnoreCase))
+                        return false;
+
+                    // Check for q=0 which means the encoding is explicitly not acceptable
+                    string? qValue = parts
+                        .Skip(1)
+                        .FirstOrDefault(p => p.StartsWith("q=", StringComparison.OrdinalIgnoreCase));
+                    if (qValue is not null && double.TryParse(qValue[2..].Trim(), out double q) && q == 0)
+                        return false;
+                    return true;
+                })
+            );
 }
