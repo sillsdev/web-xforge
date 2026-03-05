@@ -403,7 +403,7 @@ export async function localizedScreenshots(
   const sharingLocator = page.locator('app-share-control');
   await forEachLocale(async locale => {
     await sharingLocator.evaluate(element => element.scrollIntoView({ block: 'center' }));
-    await user.hover(sharingLocator.getByRole('button').last(), defaultArrowLocation);
+    await user.hover(sharingLocator.getByRole('button').first(), defaultArrowLocation);
     await screenshotElements(page, [sharingLocator], { ...context, pageName: 'invite_users', locale }, { margin: 8 });
   });
 
@@ -417,22 +417,49 @@ export async function localizedScreenshots(
   await navLocator(page, 'settings').click();
   await navLocator(page, 'generate_draft').click();
   await expect(page.getByText('The draft is ready')).toBeVisible();
-  // Wait for draft to finalize. In some cases it may already have finalized, so if it doesn't show up, skip it
-  let finishing: boolean;
-  try {
-    await expect(page.getByText('Draft is Finishing')).toBeVisible({ timeout: 15_000 });
-    finishing = true;
-  } catch {
-    finishing = false;
-  }
-  if (finishing) await expect(page.getByText('Draft is Finishing')).not.toBeVisible({ timeout: 15_000 });
+  await waitForDraftFinished(page);
 
   // Select formatting options
-  await user.click(page.getByRole('button', { name: 'Formatting options' }));
-  await user.click(page.getByRole('button', { name: 'Save' }));
+  // Increase the height of the viewport to ensure all elements are visible
+  await page.setViewportSize({ width: originalViewportSize.width, height: 1200 });
 
   await forEachLocale(async locale => {
-    await user.hover(page.getByRole('button', { name: 'Ruth', exact: true }), defaultArrowLocation);
+    await user.hover(page.locator('.formatting-options-container').getByRole('button'), defaultArrowLocation);
+    await screenshotElements(
+      page,
+      [page.locator('app-draft-history-entry').first()],
+      { ...context, pageName: 'draft_ready', locale },
+      { margin: 8 }
+    );
+  });
+
+  await user.click(page.getByRole('button', { name: 'Formatting options' }));
+
+  await forEachLocale(async locale => {
+    // Move mouse out of screenshot area
+    await user.hover(page.locator('button').first());
+    await screenshotElements(
+      page,
+      [page.locator('mat-card').nth(0)],
+      { ...context, pageName: 'paragraph_breaks_options', locale },
+      { margin: 8 }
+    );
+    await screenshotElements(
+      page,
+      [page.locator('mat-card').nth(1)],
+      { ...context, pageName: 'quote_style_options', locale },
+      { margin: 8 }
+    );
+  });
+
+  await user.click(page.getByRole('button', { name: 'Save' }));
+
+  await page.setViewportSize(originalViewportSize);
+
+  await waitForDraftFinished(page);
+
+  await forEachLocale(async locale => {
+    await user.hover(page.locator('app-draft-preview-books').getByRole('button'), defaultArrowLocation);
     await screenshot(page, { ...context, pageName: 'draft_complete', locale });
   });
 
@@ -491,4 +518,16 @@ export async function localizedScreenshots(
   });
 
   await logOut(page);
+}
+
+async function waitForDraftFinished(page: Page): Promise<void> {
+  // Wait for draft to finalize. In some cases it may already have finalized, so if it doesn't show up, skip it
+  let finishing: boolean;
+  try {
+    await expect(page.getByText('Draft is Finishing')).toBeVisible({ timeout: 15_000 });
+    finishing = true;
+  } catch {
+    finishing = false;
+  }
+  if (finishing) await expect(page.getByText('Draft is Finishing')).not.toBeVisible({ timeout: 15_000 });
 }
