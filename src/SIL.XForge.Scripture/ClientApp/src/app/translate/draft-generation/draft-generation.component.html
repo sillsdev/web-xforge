@@ -391,14 +391,16 @@
         hasAnyCompletedBuild &&
         isSourcesConfigurationComplete
       ) {
-        <button
-          mat-flat-button
-          color="primary"
-          type="button"
-          (click)="generateDraft({ withConfirm: !featureFlags.newDraftHistory.enabled })"
-        >
-          <mat-icon>add</mat-icon> {{ t("generate_new_draft") }}
-        </button>
+        @if (!formattingOptionsSupported || formattingOptionsSelected) {
+          <button
+            mat-flat-button
+            color="primary"
+            type="button"
+            (click)="generateDraft({ withConfirm: !featureFlags.newDraftHistory.enabled })"
+          >
+            <mat-icon>add</mat-icon> {{ t("generate_new_draft") }}
+          </button>
+        }
         @if (hasConfigureSourcePermission) {
           <button mat-button data-test-id="configure-button" [routerLink]="['sources']">
             <mat-icon>settings</mat-icon> {{ t("configure_sources") }}
