@@ -273,25 +273,15 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
   }
 
   getUnreadAnswers(questionDoc: QuestionDoc): number {
-    if (
-      (this.canAddAnswer && !this.canManageQuestions) ||
-      this.project == null ||
-      !this.project.checkingConfig.usersSeeEachOthersResponses
-    ) {
-      // Non-admin users will not see unread answers badge because it may be distracting
-      return 0;
-    }
+    // Non-admin users will not see unread answers badge because it's more distracting than helpful
+    if (!this.canManageQuestions) return 0;
+
     let unread = 0;
     for (const answer of this.getAnswers(questionDoc)) {
-      if (!this.hasUserReadAnswer(answer)) {
-        unread++;
-      }
-    }
-    for (const answer of this.getAnswers(questionDoc)) {
+      if (!this.hasUserReadAnswer(answer)) unread++;
+
       for (const comment of answer.comments.filter(c => !c.deleted)) {
-        if (!this.hasUserReadComment(comment)) {
-          unread++;
-        }
+        if (!this.hasUserReadComment(comment)) unread++;
       }
     }
     return unread;
