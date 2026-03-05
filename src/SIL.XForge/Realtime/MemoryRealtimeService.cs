@@ -14,7 +14,10 @@ namespace SIL.XForge.Realtime;
 
 public class MemoryRealtimeService : IRealtimeService
 {
-    internal static readonly RealtimeServer Server = new RealtimeServer(CreateNodeJSService());
+    internal static readonly RealtimeServer Server = new RealtimeServer(
+        CreateNodeJSService(),
+        Microsoft.Extensions.Options.Options.Create(new RealtimeOptions())
+    );
 
     private static INodeJSService CreateNodeJSService()
     {

@@ -4,22 +4,28 @@ using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using Jering.Javascript.NodeJS;
+using Microsoft.Extensions.Options;
+using SIL.XForge.Configuration;
 
 namespace SIL.XForge.Realtime;
 
+/// <summary>
+/// Wraps the Jering Node.js service to invoke exported functions on the RealtimeServer module.
+/// </summary>
 public class RealtimeServer : IRealtimeServer
 {
     private readonly INodeJSService _nodeJSService;
     private readonly string _modulePath;
     private bool _started;
 
-    public RealtimeServer(INodeJSService nodeJSService)
+    public RealtimeServer(INodeJSService nodeJSService, IOptions<RealtimeOptions> realtimeOptions)
     {
         _nodeJSService = nodeJSService;
-        if (Product.RunningInContainer)
+
+        string? configuredPath = realtimeOptions.Value.RealtimeServerModulePath;
+        if (!string.IsNullOrWhiteSpace(configuredPath))
         {
-            // Path to realtime server index file in the realtimeserver docker container.
-            _modulePath = Path.Join("/app", "lib", "cjs", "common", "index.js");
+            _modulePath = configuredPath;
         }
         else
         {

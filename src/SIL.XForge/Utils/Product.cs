@@ -1,9 +1,11 @@
-using System;
 using System.Diagnostics;
 using System.Reflection;
 
 namespace SIL.XForge;
 
+/// <summary>
+/// Provides product-level information such as the application version.
+/// </summary>
 public static class Product
 {
     static Product()
@@ -18,9 +20,6 @@ public static class Product
 
         Version = version ?? "1.0";
     }
-
-    public static bool RunningInContainer =>
-        Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER")?.ToUpperInvariant() == "TRUE";
 
     /// <summary>
     /// Gets the program version.

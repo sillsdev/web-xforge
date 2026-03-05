@@ -35,6 +35,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - DataAccess__ConnectionString=mongodb://db-xforge:27017
       - Realtime__UseExistingRealtimeServer=true
+      - Realtime__RealtimeServerModulePath=/app/lib/cjs/common/index.js
       - urls=http://*:5000 # Docker apps cannot bind to localhost, so we bind to all IP addresses
     ports:
       - "5000:5000" # HTTP Server

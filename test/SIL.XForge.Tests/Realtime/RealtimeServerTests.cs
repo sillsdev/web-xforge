@@ -1,8 +1,11 @@
 using System;
+using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 using Jering.Javascript.NodeJS;
 using NSubstitute;
 using NUnit.Framework;
+using SIL.XForge.Configuration;
 
 namespace SIL.XForge.Realtime;
 
@@ -266,9 +269,36 @@ public class RealtimeServerTests
             .InvokeFromFileAsync<Snapshot<object>>(Arg.Any<string>(), "submitOp", Arg.Any<object[]>());
     }
 
+    [Test]
+    public void Constructor_UsesConfiguredModulePath()
+    {
+        const string customPath = "/app/lib/cjs/common/index.js";
+        var env = new TestEnvironment(realtimeServerModulePath: customPath);
+        env.Service.Start(options: new { });
+
+        string expectedPath = customPath;
+        env.NodeJsProcess.Received(1).InvokeFromFileAsync(expectedPath, "start", Arg.Any<object[]>());
+    }
+
+    [Test]
+    public void Constructor_UsesAssemblyRelativePath_WhenModulePathNotConfigured()
+    {
+        var env = new TestEnvironment();
+        env.Service.Start(options: new { });
+
+        string assemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? string.Empty;
+        string expectedPath = Path.Join(assemblyDir, "RealtimeServer", "lib", "cjs", "common", "index.js");
+        env.NodeJsProcess.Received(1).InvokeFromFileAsync(expectedPath, "start", Arg.Any<object[]>());
+    }
+
     private class TestEnvironment
     {
-        public TestEnvironment() => Service = new RealtimeServer(NodeJsProcess);
+        public TestEnvironment(string? realtimeServerModulePath = null)
+        {
+            var realtimeOptions = new RealtimeOptions { RealtimeServerModulePath = realtimeServerModulePath };
+            var options = Microsoft.Extensions.Options.Options.Create(realtimeOptions);
+            Service = new RealtimeServer(NodeJsProcess, options);
+        }
 
         public INodeJSService NodeJsProcess { get; } = Substitute.For<INodeJSService>();
         public RealtimeServer Service { get; }

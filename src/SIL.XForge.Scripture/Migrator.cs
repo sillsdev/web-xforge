@@ -5,13 +5,13 @@ using System.Reflection;
 
 namespace SIL.XForge.Scripture;
 
+/// <summary>
+/// Runs RealtimeServer database migrations as a child Node.js process.
+/// </summary>
 public static class Migrator
 {
     public static void RunMigrations(string environment)
     {
-        // In a container, the migration process will be run by start.sh
-        if (Product.RunningInContainer)
-            return;
         string version = Product.Version;
         string projectPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 

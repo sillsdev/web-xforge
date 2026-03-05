@@ -23,7 +23,13 @@ public static class Program
             .AddEnvironmentVariables()
             .Build();
 
-        Migrator.RunMigrations(environment);
+        // When an external RealtimeServer process is in use (e.g. in a separate docker container),
+        // expect realtimeserver migrations to have already been run (eg by container start.sh).
+        bool useExistingRealtimeServer = configuration.GetValue<bool>("Realtime:UseExistingRealtimeServer");
+        if (!useExistingRealtimeServer)
+        {
+            Migrator.RunMigrations(environment);
+        }
 
         return builder
             .ConfigureAppConfiguration(
