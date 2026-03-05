@@ -1,6 +1,7 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write --allow-run
 
 import { walk } from 'jsr:@std/fs/walk';
+import fs from 'node:fs';
 import path from 'node:path';
 import { pngImagesDiffer } from './compare-images.mts';
 import { ScreenshotEvent } from './e2e-test-run-logger.ts';
@@ -37,7 +38,7 @@ function localeCodesInRunLog(): string[] {
   return [...new Set(screenshotEvents.map(event => event.context.locale))] as string[];
 }
 
-const markdownImageRegex = /!\[.*?\]\(.\/([\w]+\.png)\)/gm;
+const markdownImageRegex = /!\[.*?\]\(.\/([-\w]+\.png)\)/gm;
 
 async function imagesInMarkdownFile(filePath: string): Promise<string[]> {
   const content = await Deno.readTextFile(filePath);
@@ -113,17 +114,28 @@ Deno.removeSync('diff', { recursive: true });
  */
 async function copyScreenshotIfDiffers(source: string, destination: string): Promise<void> {
   Deno.mkdirSync('diff', { recursive: true });
-  const imageDiffers = pngImagesDiffer(source, destination, 'diff/diff.png');
+  const destinationExists = fs.existsSync(destination);
+  const imageDiffers = !destinationExists || pngImagesDiffer(source, destination, 'diff/diff.png');
 
   const confirmWithUser = imageDiffers && !copyFilesEvenIfIdentical;
 
   if (confirmWithUser) {
     // copy original to a.png, and new version to b.png
-    Deno.copyFile(destination, 'diff/a.png');
-    Deno.copyFile(source, 'diff/b.png');
+    if (destinationExists) Deno.copyFileSync(destination, 'diff/a.png');
+    else {
+      fs.rmSync('diff/a.png', { force: true });
+      fs.rmSync('diff/diff.png', { force: true });
+    }
 
-    console.log('💡 Tip: source, target, and diff are in the diff directory.');
-    const update = confirm(`Image ${source} differs from ${destination}. See diff.png. Do you want to update it?`);
+    Deno.copyFileSync(source, 'diff/b.png');
+
+    let update: boolean;
+    if (destinationExists) {
+      console.log('💡 Tip: source, target, and diff are in the diff directory.');
+      update = confirm(`Image ${source} differs from ${destination}. See diff.png. Do you want to update it?`);
+    } else {
+      update = confirm(`Image ${destination} does not yet exist. See b.png for the new image. Do you want to copy it?`);
+    }
     if (!update) return;
   }
 
