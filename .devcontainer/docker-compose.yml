@@ -1,0 +1,42 @@
+# Docker Compose for Scripture Forge devcontainer.
+# Provides the development environment and MongoDB as a companion service.
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - ..:/workspaces/web-xforge:cached
+      - scriptureforge-data:/var/lib/scriptureforge
+      - xforge-data:/var/lib/xforge
+      - ${HOME}/.microsoft/usersecrets:/home/vscode/.microsoft/usersecrets:ro
+    command: sleep infinity
+    ports:
+      - "5000:5000" # HTTP server (dotnet)
+      - "5003:5003" # ShareDB (RealtimeServer)
+      - "9230:9230" # Node.js debugging
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DataAccess__ConnectionString=mongodb://db:27017
+      - CHROMIUM_BIN=/usr/bin/brave-browser
+      - urls=http://0.0.0.0:5000;https://0.0.0.0:5001
+      - ASPNETCORE_URLS=http://0.0.0.0:5000
+      - ASPNETCORE_HTTP_PORTS=5000
+
+    depends_on:
+      - db
+
+  db:
+    image: mongo:8.0
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+      - mongo-config:/data/configdb
+
+volumes:
+  mongo-data:
+  mongo-config:
+  scriptureforge-data:
+  xforge-data:

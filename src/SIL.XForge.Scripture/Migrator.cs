@@ -9,8 +9,8 @@ public static class Migrator
 {
     public static void RunMigrations(string environment)
     {
-        // In a container, the migration process will be run by start.sh
-        if (Product.RunningInContainer)
+        // In prod container, the migration process will be run by start.sh
+        if (Product.RunningInProdContainer)
             return;
         string version = Product.Version;
         string projectPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
