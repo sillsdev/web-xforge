@@ -6,6 +6,7 @@ import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -18,6 +19,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
+import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc } from '../../../core/models/text-doc';
 import { ParatextService } from '../../../core/paratext.service';
@@ -210,6 +212,28 @@ describe('DraftImportWizardComponent', () => {
     env.clickNextButton(7, 'done');
     verify(mockMatDialogRef.close(true)).once();
   }));
+
+  it('can populate project select with previously selected project', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.wait();
+
+    expect(env.component.projectSelectionForm.value.targetParatextId).toBe('paratext02');
+    expect(env.component.selectedParatextProject!.paratextId).toBe('paratext02');
+    env.clickNextButton(1);
+    env.isStepVisible(2);
+    env.component.close();
+  }));
+
+  it('sets selected project to undefined if selected project is cleared', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.wait();
+
+    env.component.projectSelected('');
+    env.wait();
+    expect(env.component.selectedParatextProject).toBeUndefined();
+    expect(env.component.projectSelectionForm.valid).toBe(false);
+    env.component.close();
+  }));
 });
 
 class TestEnvironment {
@@ -297,7 +321,13 @@ class TestEnvironment {
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
     );
     when(mockTextDocService.userHasGeneralEditRight(anything())).thenReturn(true);
-
+    this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
+      id: 'project01:user01',
+      data: { selectedDraftTargetParatextId: 'paratext02' } as SFProjectUserConfig
+    });
+    when(mockProjectService.getUserConfig(anything(), anything())).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, 'project01:user01')
+    );
     this.fixture.detectChanges();
   }
 
@@ -382,6 +412,8 @@ class TestEnvironment {
   }
 
   wait(): void {
+    tick();
+    this.fixture.detectChanges();
     tick();
     this.fixture.detectChanges();
   }

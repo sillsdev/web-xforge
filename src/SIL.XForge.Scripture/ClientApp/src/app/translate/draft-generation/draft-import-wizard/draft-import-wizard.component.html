@@ -25,10 +25,6 @@
             formControlName="targetParatextId"
             validators="disabled"
           ></app-project-select>
-
-          @if (isLoadingProject) {
-            <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
-          }
         }
 
         @if (projectLoadingFailed && isAppOnline) {

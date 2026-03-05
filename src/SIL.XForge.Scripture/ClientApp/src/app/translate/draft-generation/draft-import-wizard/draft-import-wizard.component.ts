@@ -336,8 +336,8 @@ export class DraftImportWizardComponent implements OnInit {
     return this._selectedBooks;
   }
 
-  private getBooksToImport(): BookForImport[] {
-    return this.showBookSelection ? this.selectedBooks : this.availableBooksForImport;
+  get projectReadyToImport(): boolean {
+    return this.projectSelectionForm.valid && !this.isConnecting && !this.isImporting && !this.isLoadingProject;
   }
 
   get singleBookName(): string {
@@ -345,6 +345,10 @@ export class DraftImportWizardComponent implements OnInit {
       return this.booksWithExistingText[0].bookName;
     }
     return '';
+  }
+
+  private get getBooksToImport(): BookForImport[] {
+    return this.showBookSelection ? this.selectedBooks : this.availableBooksForImport;
   }
 
   ngOnInit(): void {
@@ -413,6 +417,7 @@ export class DraftImportWizardComponent implements OnInit {
   async projectSelected(paratextId: string): Promise<void> {
     if (paratextId == null) {
       this.targetProjectDoc$.next(undefined);
+      this.projectSelectionForm.patchValue({ targetParatextId: undefined });
       this.selectedParatextProject = undefined;
       this.resetProjectValidation();
       this.resetImportState();
@@ -423,6 +428,7 @@ export class DraftImportWizardComponent implements OnInit {
     if (paratextProject == null) {
       this.canEditProject = false;
       this.targetProjectDoc$.next(undefined);
+      this.projectSelectionForm.patchValue({ targetParatextId: undefined });
       this.selectedParatextProject = undefined;
       this.resetImportState();
       return;
@@ -431,6 +437,7 @@ export class DraftImportWizardComponent implements OnInit {
     // Store the selected project
     await this.projectUserConfigDoc?.submitJson0Op(op => op.set(puc => puc.selectedDraftTargetParatextId, paratextId));
 
+    this.projectSelectionForm.patchValue({ targetParatextId: paratextId });
     this.selectedParatextProject = paratextProject;
     this.resetProjectValidation();
     this.resetImportState();
@@ -510,10 +517,6 @@ export class DraftImportWizardComponent implements OnInit {
     void this.analyzeBooksForOverwriteConfirmation();
   }
 
-  get projectReadyToImport(): boolean {
-    return this.projectSelectionForm.valid && !this.isConnecting && !this.isImporting && !this.isLoadingProject;
-  }
-
   async advanceFromProjectSelection(): Promise<void> {
     if (!this.projectReadyToImport) {
       this.cannotAdvanceFromProjectSelection = true;
@@ -551,7 +554,7 @@ export class DraftImportWizardComponent implements OnInit {
     if (this.targetProjectId == null) return;
 
     this.booksWithExistingText = [];
-    const booksToCheck = this.getBooksToImport();
+    const booksToCheck = this.getBooksToImport;
 
     for (const book of booksToCheck) {
       const chaptersWithText = await this.getChaptersWithText(book.bookNum);
@@ -604,7 +607,7 @@ export class DraftImportWizardComponent implements OnInit {
     this.importError = undefined;
     this.importComplete = false;
 
-    const booksToImport = this.getBooksToImport().filter(book => book.selected);
+    const booksToImport = this.getBooksToImport.filter(book => book.selected);
 
     if (booksToImport.length === 0) {
       this.isImporting = false;
