@@ -312,19 +312,21 @@ public class MongoRepositoryTests
             var connectionId = new ConnectionId(new ServerId(new ClusterId(1), new DnsEndPoint("localhost", 27017)), 2);
             var ctor = typeof(WriteConcernError).GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic)[0];
             var writeConcernError = (WriteConcernError)
-                ctor.Invoke(
-                    [1, "codeName", "message", new BsonDocument("details", "writeConcernError"), Array.Empty<string>()]
-                );
+                ctor.Invoke([
+                    1,
+                    "codeName",
+                    "message",
+                    new BsonDocument("details", "writeConcernError"),
+                    Array.Empty<string>(),
+                ]);
             ctor = typeof(WriteError).GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic)[0];
             var writeError = (WriteError)
-                ctor.Invoke(
-                    [
-                        duplicateKey ? ServerErrorCategory.DuplicateKey : ServerErrorCategory.Uncategorized,
-                        1,
-                        "writeError",
-                        new BsonDocument("details", "writeError"),
-                    ]
-                );
+                ctor.Invoke([
+                    duplicateKey ? ServerErrorCategory.DuplicateKey : ServerErrorCategory.Uncategorized,
+                    1,
+                    "writeError",
+                    new BsonDocument("details", "writeError"),
+                ]);
             return new MongoWriteException(connectionId, writeError, writeConcernError, new Exception());
         }
     }

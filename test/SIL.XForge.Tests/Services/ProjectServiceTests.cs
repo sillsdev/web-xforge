@@ -339,69 +339,57 @@ public class ProjectServiceTests
             RealtimeService.AddRepository(
                 "users",
                 OTType.Json0,
-                new MemoryRepository<User>(
-                    [
-                        new User
+                new MemoryRepository<User>([
+                    new User
+                    {
+                        Id = User01,
+                        Email = "user01@example.com",
+                        Sites = new Dictionary<string, Site>
                         {
-                            Id = User01,
-                            Email = "user01@example.com",
-                            Sites = new Dictionary<string, Site>
                             {
-                                {
-                                    SiteId,
-                                    new Site { CurrentProjectId = Project01, Projects = [Project01, Project02] }
-                                },
+                                SiteId,
+                                new Site { CurrentProjectId = Project01, Projects = [Project01, Project02] }
                             },
                         },
-                        new User
+                    },
+                    new User
+                    {
+                        Id = User02,
+                        Email = "user02@example.com",
+                        Sites = new Dictionary<string, Site>
                         {
-                            Id = User02,
-                            Email = "user02@example.com",
-                            Sites = new Dictionary<string, Site>
                             {
-                                {
-                                    SiteId,
-                                    new Site { CurrentProjectId = Project01, Projects = [Project01, Project02] }
-                                },
+                                SiteId,
+                                new Site { CurrentProjectId = Project01, Projects = [Project01, Project02] }
                             },
                         },
-                        new User
-                        {
-                            Id = User03,
-                            Email = "user03@example.com",
-                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } },
-                        },
-                    ]
-                )
+                    },
+                    new User
+                    {
+                        Id = User03,
+                        Email = "user03@example.com",
+                        Sites = new Dictionary<string, Site> { { SiteId, new Site() } },
+                    },
+                ])
             );
             RealtimeService.AddRepository(
                 "projects",
                 OTType.Json0,
-                new MemoryRepository<TestProject>(
-                    [
-                        new TestProject
-                        {
-                            Id = Project01,
-                            Name = "Project 1",
-                            UserRoles =
-                            {
-                                { User01, TestProjectRole.Administrator },
-                                { User02, TestProjectRole.Reviewer },
-                            },
-                        },
-                        new TestProject
-                        {
-                            Id = Project02,
-                            Name = "Project 2",
-                            UserRoles =
-                            {
-                                { User01, TestProjectRole.Administrator },
-                                { User02, TestProjectRole.Reviewer },
-                            },
-                            SyncDisabled = true,
-                        },
-                    ]
-                )
+                new MemoryRepository<TestProject>([
+                    new TestProject
+                    {
+                        Id = Project01,
+                        Name = "Project 1",
+                        UserRoles = { { User01, TestProjectRole.Administrator }, { User02, TestProjectRole.Reviewer } },
+                    },
+                    new TestProject
+                    {
+                        Id = Project02,
+                        Name = "Project 2",
+                        UserRoles = { { User01, TestProjectRole.Administrator }, { User02, TestProjectRole.Reviewer } },
+                        SyncDisabled = true,
+                    },
+                ])
             );
 
             var siteOptions = Substitute.For<IOptions<SiteOptions>>();

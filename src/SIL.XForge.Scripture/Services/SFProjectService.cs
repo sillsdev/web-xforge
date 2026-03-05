@@ -637,11 +637,11 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             throw new ForbiddenException();
 
         // Project syncs require admin or translator role.  Resources can sync with any paratext role.
-        if (!_paratextService.IsResource(project.ParatextId))
-        {
-            if (!(IsProjectAdmin(project, curUserId) || IsProjectTranslator(project, curUserId)))
-                throw new ForbiddenException();
-        }
+        if (
+            !_paratextService.IsResource(project.ParatextId)
+            && !(IsProjectAdmin(project, curUserId) || IsProjectTranslator(project, curUserId))
+        )
+            throw new ForbiddenException();
 
         await _syncService.CancelSyncAsync(curUserId, projectId);
     }
@@ -1886,14 +1886,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         // Filters for ops that are verse segments (i.e., attributes.segment starts with "verse_")
         BsonDocument verseSegmentOpsFilterExpression = new BsonDocument
         {
-            { "input", new BsonDocument("$ifNull", new BsonArray { "$ops", new BsonArray() }) },
+            { "input", "$ops" },
             { "as", "segment" },
             { "cond", isVerseSegmentIdExpression },
         };
         // Same as above filter, except that insert.blank must also be true in order to match a segment
         BsonDocument blankVerseSegmentOpsFilterExpression = new BsonDocument
         {
-            { "input", new BsonDocument("$ifNull", new BsonArray { "$ops", new BsonArray() }) },
+            { "input", "$ops" },
             { "as", "segment" },
             {
                 "cond",
@@ -1911,8 +1911,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         List<BsonDocument> results = await _database
             .GetCollection<BsonDocument>("texts")
             .Aggregate()
-            // Filter for text documents that belong to the specified project
-            .Match(Builders<BsonDocument>.Filter.Regex("_id", new BsonRegularExpression($"^{projectId}:")))
+            // Filter for text documents that belong to the specified project, which contains an ops array
+            .Match(
+                Builders<BsonDocument>.Filter.And(
+                    Builders<BsonDocument>.Filter.Regex("_id", new BsonRegularExpression($"^{projectId}:")),
+                    Builders<BsonDocument>.Filter.Exists("ops", true),
+                    Builders<BsonDocument>.Filter.Ne("ops", BsonNull.Value)
+                )
+            )
             // Project:
             // - Extract the book ID from the document ID
             // - Count the number of verse segments

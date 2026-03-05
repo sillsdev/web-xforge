@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         node_version: ["22.13.0"]
-        npm_version: ["10.9.2"]
+        npm_version: ["11.11.0"]
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

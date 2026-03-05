@@ -36,4 +36,5 @@ public class SFProjectUserConfig : ProjectData
     public bool TransliterateBiblicalTerms { get; set; }
     public string? SelectedBiblicalTermsCategory { get; set; }
     public string? SelectedBiblicalTermsFilter { get; set; }
+    public string? SelectedDraftTargetParatextId { get; set; }
 }

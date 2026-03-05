@@ -1989,42 +1989,40 @@ public class MachineApiServiceTests
         env.SetEmptyDraftGenerationMetricAssociations();
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(
-                Task.FromResult<IList<TranslationBuild>>(
-                    [
-                        new TranslationBuild
-                        {
-                            Url = "https://example.com",
-                            Id = ServalBuildId01,
-                            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
-                            Message = MachineApiService.BuildStateCompleted,
-                            Progress = percentCompleted,
-                            Revision = revision,
-                            State = state,
-                            DateFinished = DateTimeOffset.UtcNow,
-                            Pretranslate =
-                            [
-                                new PretranslateCorpus
-                                {
-                                    SourceFilters =
-                                    [
-                                        new ParallelCorpusFilter
-                                        {
-                                            Corpus = new ResourceLink { Id = "corpusId", Url = "https://example.com" },
-                                            ScriptureRange = "GEN",
-                                        },
-                                    ],
-                                },
-                            ],
-                        },
-                        new TranslationBuild
-                        {
-                            Url = "https://example.com",
-                            Id = ServalBuildId02,
-                            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
-                            State = JobState.Active,
-                        },
-                    ]
-                )
+                Task.FromResult<IList<TranslationBuild>>([
+                    new TranslationBuild
+                    {
+                        Url = "https://example.com",
+                        Id = ServalBuildId01,
+                        Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                        Message = MachineApiService.BuildStateCompleted,
+                        Progress = percentCompleted,
+                        Revision = revision,
+                        State = state,
+                        DateFinished = DateTimeOffset.UtcNow,
+                        Pretranslate =
+                        [
+                            new PretranslateCorpus
+                            {
+                                SourceFilters =
+                                [
+                                    new ParallelCorpusFilter
+                                    {
+                                        Corpus = new ResourceLink { Id = "corpusId", Url = "https://example.com" },
+                                        ScriptureRange = "GEN",
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                    new TranslationBuild
+                    {
+                        Url = "https://example.com",
+                        Id = ServalBuildId02,
+                        Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                        State = JobState.Active,
+                    },
+                ])
             );
 
         // SUT
@@ -2054,35 +2052,33 @@ public class MachineApiServiceTests
         const JobState state = JobState.Completed;
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(
-                Task.FromResult<IList<TranslationBuild>>(
-                    [
-                        new TranslationBuild
-                        {
-                            Url = "https://example.com",
-                            Id = ServalBuildId01,
-                            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
-                            Message = MachineApiService.BuildStateCompleted,
-                            Progress = percentCompleted,
-                            Revision = revision,
-                            State = state,
-                            DateFinished = DateTimeOffset.UtcNow,
-                            Pretranslate =
-                            [
-                                new PretranslateCorpus
-                                {
-                                    SourceFilters =
-                                    [
-                                        new ParallelCorpusFilter
-                                        {
-                                            Corpus = new ResourceLink { Id = "corpusId", Url = "https://example.com" },
-                                            ScriptureRange = scriptureRange,
-                                        },
-                                    ],
-                                },
-                            ],
-                        },
-                    ]
-                )
+                Task.FromResult<IList<TranslationBuild>>([
+                    new TranslationBuild
+                    {
+                        Url = "https://example.com",
+                        Id = ServalBuildId01,
+                        Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                        Message = MachineApiService.BuildStateCompleted,
+                        Progress = percentCompleted,
+                        Revision = revision,
+                        State = state,
+                        DateFinished = DateTimeOffset.UtcNow,
+                        Pretranslate =
+                        [
+                            new PretranslateCorpus
+                            {
+                                SourceFilters =
+                                [
+                                    new ParallelCorpusFilter
+                                    {
+                                        Corpus = new ResourceLink { Id = "corpusId", Url = "https://example.com" },
+                                        ScriptureRange = scriptureRange,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ])
             );
 
         // SUT
@@ -2110,35 +2106,33 @@ public class MachineApiServiceTests
         env.SetEmptyDraftGenerationMetricAssociations();
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(
-                Task.FromResult<IList<TranslationBuild>>(
-                    [
-                        new TranslationBuild
-                        {
-                            Url = "https://example.com",
-                            Id = ServalBuildId01,
-                            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
-                            Message = MachineApiService.BuildStateCompleted,
-                            Progress = percentCompleted,
-                            Revision = revision,
-                            State = state,
-                            DateFinished = DateTimeOffset.UtcNow,
-                            Pretranslate =
-                            [
-                                new PretranslateCorpus
-                                {
-                                    SourceFilters =
-                                    [
-                                        new ParallelCorpusFilter
-                                        {
-                                            Corpus = new ResourceLink { Id = "corpusId", Url = "https://example.com" },
-                                            ScriptureRange = null,
-                                        },
-                                    ],
-                                },
-                            ],
-                        },
-                    ]
-                )
+                Task.FromResult<IList<TranslationBuild>>([
+                    new TranslationBuild
+                    {
+                        Url = "https://example.com",
+                        Id = ServalBuildId01,
+                        Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                        Message = MachineApiService.BuildStateCompleted,
+                        Progress = percentCompleted,
+                        Revision = revision,
+                        State = state,
+                        DateFinished = DateTimeOffset.UtcNow,
+                        Pretranslate =
+                        [
+                            new PretranslateCorpus
+                            {
+                                SourceFilters =
+                                [
+                                    new ParallelCorpusFilter
+                                    {
+                                        Corpus = new ResourceLink { Id = "corpusId", Url = "https://example.com" },
+                                        ScriptureRange = null,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ])
             );
 
         // SUT
@@ -2490,35 +2484,33 @@ public class MachineApiServiceTests
         env.SetupEventMetrics("EXO", "GEN", dateFinished);
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(
-                Task.FromResult<IList<TranslationBuild>>(
-                    [
-                        new TranslationBuild
-                        {
-                            Url = "https://example.com",
-                            Id = ServalBuildId01,
-                            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
-                            Message = MachineApiService.BuildStateCompleted,
-                            Progress = 0,
-                            Revision = 43,
-                            State = JobState.Completed,
-                            DateFinished = dateFinished,
-                            Pretranslate =
-                            [
-                                new PretranslateCorpus
-                                {
-                                    SourceFilters =
-                                    [
-                                        new ParallelCorpusFilter
-                                        {
-                                            Corpus = new ResourceLink { Id = "corpusId", Url = "https://example.com" },
-                                            ScriptureRange = "GEN",
-                                        },
-                                    ],
-                                },
-                            ],
-                        },
-                    ]
-                )
+                Task.FromResult<IList<TranslationBuild>>([
+                    new TranslationBuild
+                    {
+                        Url = "https://example.com",
+                        Id = ServalBuildId01,
+                        Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                        Message = MachineApiService.BuildStateCompleted,
+                        Progress = 0,
+                        Revision = 43,
+                        State = JobState.Completed,
+                        DateFinished = dateFinished,
+                        Pretranslate =
+                        [
+                            new PretranslateCorpus
+                            {
+                                SourceFilters =
+                                [
+                                    new ParallelCorpusFilter
+                                    {
+                                        Corpus = new ResourceLink { Id = "corpusId", Url = "https://example.com" },
+                                        ScriptureRange = "GEN",
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ])
             );
 
         // SUT
@@ -2565,35 +2557,33 @@ public class MachineApiServiceTests
         string[] buildIds = [ServalBuildId01, ServalBuildId02];
         env.TranslationEnginesClient.GetAllBuildsAsync(Arg.Any<string>(), CancellationToken.None)
             .Returns(
-                Task.FromResult<IList<TranslationBuild>>(
-                    [
-                        .. buildIds.Select(buildId => new TranslationBuild
-                        {
-                            Url = "https://example.com",
-                            Id = buildId,
-                            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
-                            Message = MachineApiService.BuildStateCompleted,
-                            Progress = 0,
-                            Revision = 43,
-                            State = JobState.Completed,
-                            DateFinished = DateTime.UtcNow.AddMinutes(-20),
-                            Pretranslate =
-                            [
-                                new PretranslateCorpus
-                                {
-                                    SourceFilters =
-                                    [
-                                        new ParallelCorpusFilter
-                                        {
-                                            Corpus = new ResourceLink { Id = "corpusId", Url = "https://example.com" },
-                                            ScriptureRange = "GEN",
-                                        },
-                                    ],
-                                },
-                            ],
-                        }),
-                    ]
-                )
+                Task.FromResult<IList<TranslationBuild>>([
+                    .. buildIds.Select(buildId => new TranslationBuild
+                    {
+                        Url = "https://example.com",
+                        Id = buildId,
+                        Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                        Message = MachineApiService.BuildStateCompleted,
+                        Progress = 0,
+                        Revision = 43,
+                        State = JobState.Completed,
+                        DateFinished = DateTime.UtcNow.AddMinutes(-20),
+                        Pretranslate =
+                        [
+                            new PretranslateCorpus
+                            {
+                                SourceFilters =
+                                [
+                                    new ParallelCorpusFilter
+                                    {
+                                        Corpus = new ResourceLink { Id = "corpusId", Url = "https://example.com" },
+                                        ScriptureRange = "GEN",
+                                    },
+                                ],
+                            },
+                        ],
+                    }),
+                ])
             );
 
         // SUT
@@ -2618,35 +2608,33 @@ public class MachineApiServiceTests
         string[] buildIds = [ServalBuildId01, ServalBuildId02];
         env.TranslationEnginesClient.GetAllBuildsAsync(Arg.Any<string>(), CancellationToken.None)
             .Returns(
-                Task.FromResult<IList<TranslationBuild>>(
-                    [
-                        .. buildIds.Select(buildId => new TranslationBuild
-                        {
-                            Url = "https://example.com",
-                            Id = buildId,
-                            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
-                            Message = MachineApiService.BuildStateCompleted,
-                            Progress = 0,
-                            Revision = 43,
-                            State = JobState.Completed,
-                            DateFinished = DateTime.UtcNow.AddMinutes(-20),
-                            Pretranslate =
-                            [
-                                new PretranslateCorpus
-                                {
-                                    SourceFilters =
-                                    [
-                                        new ParallelCorpusFilter
-                                        {
-                                            Corpus = new ResourceLink { Id = "corpusId", Url = "https://example.com" },
-                                            ScriptureRange = "GEN",
-                                        },
-                                    ],
-                                },
-                            ],
-                        }),
-                    ]
-                )
+                Task.FromResult<IList<TranslationBuild>>([
+                    .. buildIds.Select(buildId => new TranslationBuild
+                    {
+                        Url = "https://example.com",
+                        Id = buildId,
+                        Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                        Message = MachineApiService.BuildStateCompleted,
+                        Progress = 0,
+                        Revision = 43,
+                        State = JobState.Completed,
+                        DateFinished = DateTime.UtcNow.AddMinutes(-20),
+                        Pretranslate =
+                        [
+                            new PretranslateCorpus
+                            {
+                                SourceFilters =
+                                [
+                                    new ParallelCorpusFilter
+                                    {
+                                        Corpus = new ResourceLink { Id = "corpusId", Url = "https://example.com" },
+                                        ScriptureRange = "GEN",
+                                    },
+                                ],
+                            },
+                        ],
+                    }),
+                ])
             );
 
         // SUT
@@ -4621,23 +4609,21 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
         env.TranslationEnginesClient.TranslateNAsync(TranslationEngine01, n, Segment, CancellationToken.None)
             .Returns(
-                Task.FromResult<IList<TranslationResult>>(
-                    [
-                        new TranslationResult
-                        {
-                            Alignment = [new AlignedWordPair()],
-                            Confidences = [0.0],
-                            Phrases = [new Phrase()],
-                            Sources =
-                            [
-                                [TranslationSource.Primary],
-                            ],
-                            TargetTokens = [TargetSegment],
-                            SourceTokens = [Segment],
-                            Translation = TargetSegment,
-                        },
-                    ]
-                )
+                Task.FromResult<IList<TranslationResult>>([
+                    new TranslationResult
+                    {
+                        Alignment = [new AlignedWordPair()],
+                        Confidences = [0.0],
+                        Phrases = [new Phrase()],
+                        Sources =
+                        [
+                            [TranslationSource.Primary],
+                        ],
+                        TargetTokens = [TargetSegment],
+                        SourceTokens = [Segment],
+                        Translation = TargetSegment,
+                    },
+                ])
             );
 
         // SUT
@@ -4799,91 +4785,87 @@ public class MachineApiServiceTests
                 .GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
                 .Returns(new ParatextSettings { Versification = ScrVers.English });
             PreTranslationService = Substitute.For<IPreTranslationService>();
-            ProjectSecrets = new MemoryRepository<SFProjectSecret>(
-                [
-                    new SFProjectSecret
+            ProjectSecrets = new MemoryRepository<SFProjectSecret>([
+                new SFProjectSecret
+                {
+                    Id = Project01,
+                    ServalData = new ServalData
                     {
-                        Id = Project01,
-                        ServalData = new ServalData
+                        ParallelCorpusIdForPreTranslate = ParallelCorpusId01,
+                        PreTranslationEngineId = TranslationEngine01,
+                        TranslationEngineId = TranslationEngine01,
+                    },
+                },
+                new SFProjectSecret
+                {
+                    Id = Project02,
+                    ServalData = new ServalData { PreTranslationEngineId = TranslationEngine01 },
+                },
+                new SFProjectSecret { Id = Project03, ServalData = new ServalData() },
+            ]);
+            Projects = new MemoryRepository<SFProject>([
+                new SFProject
+                {
+                    Id = Project01,
+                    ShortName = "PR1",
+                    TranslateConfig = new TranslateConfig
+                    {
+                        DraftConfig = new DraftConfig
                         {
-                            ParallelCorpusIdForPreTranslate = ParallelCorpusId01,
-                            PreTranslationEngineId = TranslationEngine01,
-                            TranslationEngineId = TranslationEngine01,
+                            LastSelectedTranslationScriptureRanges =
+                            [
+                                new ProjectScriptureRange { ScriptureRange = "GEN" },
+                            ],
+                            LastSelectedTrainingScriptureRanges =
+                            [
+                                new ProjectScriptureRange { ScriptureRange = "EXO" },
+                            ],
+                            UsfmConfig = new DraftUsfmConfig
+                            {
+                                ParagraphFormat = ParagraphBreakFormatOptions.MoveToEnd,
+                            },
+                            LastSelectedTrainingDataFiles = [TrainingDataId01],
                         },
                     },
-                    new SFProjectSecret
-                    {
-                        Id = Project02,
-                        ServalData = new ServalData { PreTranslationEngineId = TranslationEngine01 },
-                    },
-                    new SFProjectSecret { Id = Project03, ServalData = new ServalData() },
-                ]
-            );
-            Projects = new MemoryRepository<SFProject>(
-                [
-                    new SFProject
-                    {
-                        Id = Project01,
-                        ShortName = "PR1",
-                        TranslateConfig = new TranslateConfig
+                    ParatextId = Paratext01,
+                    Texts =
+                    [
+                        new TextInfo
                         {
-                            DraftConfig = new DraftConfig
-                            {
-                                LastSelectedTranslationScriptureRanges =
-                                [
-                                    new ProjectScriptureRange { ScriptureRange = "GEN" },
-                                ],
-                                LastSelectedTrainingScriptureRanges =
-                                [
-                                    new ProjectScriptureRange { ScriptureRange = "EXO" },
-                                ],
-                                UsfmConfig = new DraftUsfmConfig
-                                {
-                                    ParagraphFormat = ParagraphBreakFormatOptions.MoveToEnd,
-                                },
-                                LastSelectedTrainingDataFiles = [TrainingDataId01],
-                            },
+                            BookNum = 1,
+                            Chapters = [new Chapter { Number = 3 }, new Chapter { Number = 4 }],
                         },
-                        ParatextId = Paratext01,
-                        Texts =
-                        [
-                            new TextInfo
-                            {
-                                BookNum = 1,
-                                Chapters = [new Chapter { Number = 3 }, new Chapter { Number = 4 }],
-                            },
-                        ],
-                        UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator } },
-                    },
-                    new SFProject
+                    ],
+                    UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator } },
+                },
+                new SFProject
+                {
+                    Id = Project02,
+                    ParatextId = Paratext02,
+                    TranslateConfig = new TranslateConfig
                     {
-                        Id = Project02,
-                        ParatextId = Paratext02,
-                        TranslateConfig = new TranslateConfig
+                        DraftConfig = new DraftConfig
                         {
-                            DraftConfig = new DraftConfig
-                            {
-                                DraftingSources = [new TranslateSource { ProjectRef = Project03 }],
-                                TrainingSources = [new TranslateSource { ProjectRef = Project03 }],
-                                LastSelectedTranslationScriptureRanges =
-                                [
-                                    new ProjectScriptureRange { ProjectId = Project03, ScriptureRange = "GEN" },
-                                ],
-                                LastSelectedTrainingScriptureRanges =
-                                [
-                                    new ProjectScriptureRange { ProjectId = Project03, ScriptureRange = "EXO" },
-                                ],
-                            },
+                            DraftingSources = [new TranslateSource { ProjectRef = Project03 }],
+                            TrainingSources = [new TranslateSource { ProjectRef = Project03 }],
+                            LastSelectedTranslationScriptureRanges =
+                            [
+                                new ProjectScriptureRange { ProjectId = Project03, ScriptureRange = "GEN" },
+                            ],
+                            LastSelectedTrainingScriptureRanges =
+                            [
+                                new ProjectScriptureRange { ProjectId = Project03, ScriptureRange = "EXO" },
+                            ],
                         },
-                        UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator } },
                     },
-                    new SFProject
-                    {
-                        Id = Project03,
-                        UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Translator } },
-                    },
-                ]
-            );
+                    UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator } },
+                },
+                new SFProject
+                {
+                    Id = Project03,
+                    UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Translator } },
+                },
+            ]);
             TextDocuments = new MemoryRepository<TextDocument>();
             Texts = new MemoryRepository<TextData>();
             ProjectRights = Substitute.For<ISFProjectRights>();
@@ -4912,15 +4894,13 @@ public class MachineApiServiceTests
                 expiration: aSecondAgo,
                 ParatextUserId01
             );
-            UserSecrets = new MemoryRepository<UserSecret>(
-                [
-                    new UserSecret
-                    {
-                        Id = User01,
-                        ParatextTokens = new Tokens { AccessToken = accessToken1, RefreshToken = "refresh_token_1234" },
-                    },
-                ]
-            );
+            UserSecrets = new MemoryRepository<UserSecret>([
+                new UserSecret
+                {
+                    Id = User01,
+                    ParatextTokens = new Tokens { AccessToken = accessToken1, RefreshToken = "refresh_token_1234" },
+                },
+            ]);
 
             Service = Substitute.ForPartsOf<MachineApiService>(
                 BackgroundJobClient,

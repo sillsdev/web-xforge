@@ -461,12 +461,12 @@ export async function localizedScreenshots(
   await expect(page.getByText('The draft is ready')).toBeVisible();
 
   await forEachLocale(async locale => {
-    await user.hover(page.getByRole('button', { name: 'Add to project' }), defaultArrowLocation);
+    await user.hover(page.getByRole('button', { name: 'Add to a project' }), defaultArrowLocation);
     await screenshot(page, { ...context, pageName: 'import_book', locale });
   });
 
   await forEachLocale(async locale => {
-    await user.click(page.getByRole('button', { name: 'Add to project' }));
+    await user.click(page.getByRole('button', { name: 'Add to a project' }));
 
     await page.getByRole('combobox').fill('seedsp2');
     await page.getByRole('option', { name: 'seedsp2 - ' }).click();

@@ -6,6 +6,7 @@ import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -221,7 +222,7 @@ class TestEnvironment {
     this.fixture = TestBed.createComponent(DraftImportWizardComponent);
     this.component = this.fixture.componentInstance;
 
-    when(mockActivatedProjectService.projectId).thenReturn('project01');
+    when(mockActivatedProjectService.projectId$).thenReturn(of('project01'));
     when(mockParatextService.getProjects()).thenResolve([
       // Source project
       {

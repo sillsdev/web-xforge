@@ -33,16 +33,14 @@ public class AuthServiceTests
                 ]
             }
             """;
-        var handler = new MockHttpMessageHandler(
-            [
-                (
-                    url: "oauth/token",
-                    message: $$"""{"access_token": "{{MockHttpMessageHandler.GenerateToken()}}"}""",
-                    statusCode: HttpStatusCode.OK
-                ),
-                (url: "users/auth01", message: userResponse, statusCode: HttpStatusCode.OK),
-            ]
-        );
+        var handler = new MockHttpMessageHandler([
+            (
+                url: "oauth/token",
+                message: $$"""{"access_token": "{{MockHttpMessageHandler.GenerateToken()}}"}""",
+                statusCode: HttpStatusCode.OK
+            ),
+            (url: "users/auth01", message: userResponse, statusCode: HttpStatusCode.OK),
+        ]);
         var httpClient = handler.CreateHttpClient();
 
         var env = new TestEnvironment(httpClient);
@@ -58,20 +56,18 @@ public class AuthServiceTests
     public async Task GetParatextTokensAsync_NotFound()
     {
         // Set up a mock Auth0 API
-        var handler = new MockHttpMessageHandler(
-            [
-                (
-                    url: "oauth/token",
-                    message: $$"""{"access_token": "{{MockHttpMessageHandler.GenerateToken()}}"}""",
-                    statusCode: HttpStatusCode.OK
-                ),
-                (
-                    url: "users/auth01",
-                    message: """{"statusCode":404,"error":"Not Found","message":"The user does not exist.","errorCode":"inexistent_user"}""",
-                    statusCode: HttpStatusCode.NotFound
-                ),
-            ]
-        );
+        var handler = new MockHttpMessageHandler([
+            (
+                url: "oauth/token",
+                message: $$"""{"access_token": "{{MockHttpMessageHandler.GenerateToken()}}"}""",
+                statusCode: HttpStatusCode.OK
+            ),
+            (
+                url: "users/auth01",
+                message: """{"statusCode":404,"error":"Not Found","message":"The user does not exist.","errorCode":"inexistent_user"}""",
+                statusCode: HttpStatusCode.NotFound
+            ),
+        ]);
         var httpClient = handler.CreateHttpClient();
 
         var env = new TestEnvironment(httpClient);
@@ -112,16 +108,14 @@ public class AuthServiceTests
                 ]
             }
             """;
-        var handler = new MockHttpMessageHandler(
-            [
-                (
-                    url: "oauth/token",
-                    message: $$"""{"access_token": "{{MockHttpMessageHandler.GenerateToken()}}"}""",
-                    statusCode: HttpStatusCode.OK
-                ),
-                (url: "users/auth01", message: userResponse, statusCode: HttpStatusCode.OK),
-            ]
-        );
+        var handler = new MockHttpMessageHandler([
+            (
+                url: "oauth/token",
+                message: $$"""{"access_token": "{{MockHttpMessageHandler.GenerateToken()}}"}""",
+                statusCode: HttpStatusCode.OK
+            ),
+            (url: "users/auth01", message: userResponse, statusCode: HttpStatusCode.OK),
+        ]);
         var httpClient = handler.CreateHttpClient();
 
         var env = new TestEnvironment(httpClient);

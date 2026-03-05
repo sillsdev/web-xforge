@@ -151,6 +151,9 @@ export class SFProjectUserConfigService extends SFProjectDataService<SFProjectUs
           }
         },
         additionalProperties: false
+      },
+      selectedDraftTargetParatextId: {
+        bsonType: 'string'
       }
     },
     additionalProperties: false

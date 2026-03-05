@@ -581,53 +581,49 @@ public class SyncServiceTests
         {
             BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
             var hubContext = Substitute.For<IHubContext<NotificationHub, INotifier>>();
-            ProjectSecrets = new MemoryRepository<SFProjectSecret>(
-                [
-                    new SFProjectSecret { Id = Project01 },
-                    new SFProjectSecret { Id = Project02 },
-                    new SFProjectSecret { Id = Project03, ServalData = new ServalData() },
-                ]
-            );
+            ProjectSecrets = new MemoryRepository<SFProjectSecret>([
+                new SFProjectSecret { Id = Project01 },
+                new SFProjectSecret { Id = Project02 },
+                new SFProjectSecret { Id = Project03, ServalData = new ServalData() },
+            ]);
             SyncMetrics = new MemoryRepository<SyncMetrics>();
             RealtimeService = new SFMemoryRealtimeService();
 
             RealtimeService.AddRepository(
                 "sf_projects",
                 OTType.Json0,
-                new MemoryRepository<SFProject>(
-                    [
-                        new SFProject
+                new MemoryRepository<SFProject>([
+                    new SFProject
+                    {
+                        Id = Project01,
+                        Name = "project01",
+                        ShortName = "P01",
+                    },
+                    new SFProject
+                    {
+                        Id = Project02,
+                        Name = "project02",
+                        ShortName = "P02",
+                        SyncDisabled = true,
+                    },
+                    new SFProject
+                    {
+                        Id = Project03,
+                        Name = "project03",
+                        ShortName = "P03",
+                        TranslateConfig = new TranslateConfig
                         {
-                            Id = Project01,
-                            Name = "project01",
-                            ShortName = "P01",
+                            TranslationSuggestionsEnabled = true,
+                            Source = new TranslateSource { ProjectRef = Project01 },
                         },
-                        new SFProject
-                        {
-                            Id = Project02,
-                            Name = "project02",
-                            ShortName = "P02",
-                            SyncDisabled = true,
-                        },
-                        new SFProject
-                        {
-                            Id = Project03,
-                            Name = "project03",
-                            ShortName = "P03",
-                            TranslateConfig = new TranslateConfig
-                            {
-                                TranslationSuggestionsEnabled = true,
-                                Source = new TranslateSource { ProjectRef = Project01 },
-                            },
-                        },
-                        new SFProject
-                        {
-                            Id = Project04,
-                            Name = "project04",
-                            ShortName = "P04",
-                        },
-                    ]
-                )
+                    },
+                    new SFProject
+                    {
+                        Id = Project04,
+                        Name = "project04",
+                        ShortName = "P04",
+                    },
+                ])
             );
 
             MockLogger = new MockLogger<SyncService>();

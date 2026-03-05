@@ -3435,9 +3435,10 @@ public class ParatextSyncRunnerTests
         env.RealtimeService.AddRepository(
             "users",
             OTType.Json0,
-            new MemoryRepository<User>(
-                [new User { Id = "user01", ParatextId = "pt01" }, new User { Id = "user02", ParatextId = "pt02" }]
-            )
+            new MemoryRepository<User>([
+                new User { Id = "user01", ParatextId = "pt01" },
+                new User { Id = "user02", ParatextId = "pt02" },
+            ])
         );
 
         Assert.That(
@@ -3587,14 +3588,12 @@ public class ParatextSyncRunnerTests
                     Arg.Is((SFProject project) => project.ParatextId == "target"),
                     Arg.Any<CancellationToken>()
                 )
-                .Returns(
-                    [
-                        ParatextProjectUser01,
-                        ParatextProjectUser02,
-                        ParatextProjectUnknownUser01,
-                        ParatextProjectUnknownUser02,
-                    ]
-                );
+                .Returns([
+                    ParatextProjectUser01,
+                    ParatextProjectUser02,
+                    ParatextProjectUnknownUser01,
+                    ParatextProjectUnknownUser02,
+                ]);
             ParatextService
                 .When(x =>
                     x.SendReceiveAsync(

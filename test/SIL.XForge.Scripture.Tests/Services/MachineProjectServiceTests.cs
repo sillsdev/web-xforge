@@ -4314,59 +4314,45 @@ public class MachineProjectServiceTests
                     Encoding.UTF8.GetBytes(Path.Join(callInfo.ArgAt<string>(0) + "_file_contents"))
                 ));
 
-            ProjectSecrets = new MemoryRepository<SFProjectSecret>(
-                [
-                    new SFProjectSecret { Id = Project01 },
-                    new SFProjectSecret
+            ProjectSecrets = new MemoryRepository<SFProjectSecret>([
+                new SFProjectSecret { Id = Project01 },
+                new SFProjectSecret
+                {
+                    Id = Project02,
+                    ServalData = new ServalData
                     {
-                        Id = Project02,
-                        ServalData = new ServalData
-                        {
-                            PreTranslationEngineId = options.HasTranslationEngineForNmt ? TranslationEngine01 : null,
-                            TranslationEngineId = options.HasTranslationEngineForSmt ? TranslationEngine02 : null,
-                            Corpora = options.LegacyCorpora
-                                ? new Dictionary<string, ServalCorpus>
+                        PreTranslationEngineId = options.HasTranslationEngineForNmt ? TranslationEngine01 : null,
+                        TranslationEngineId = options.HasTranslationEngineForSmt ? TranslationEngine02 : null,
+                        Corpora = options.LegacyCorpora
+                            ? new Dictionary<string, ServalCorpus>
+                            {
                                 {
+                                    Corpus01,
+                                    new ServalCorpus
                                     {
-                                        Corpus01,
-                                        new ServalCorpus
-                                        {
-                                            PreTranslate = false,
-                                            AlternateTrainingSource = false,
-                                            SourceFiles =
-                                            [
-                                                new ServalCorpusFile { FileId = File01, ProjectId = Project03 },
-                                            ],
-                                            TargetFiles =
-                                            [
-                                                new ServalCorpusFile { FileId = File02, ProjectId = Project01 },
-                                            ],
-                                        }
-                                    },
+                                        PreTranslate = false,
+                                        AlternateTrainingSource = false,
+                                        SourceFiles = [new ServalCorpusFile { FileId = File01, ProjectId = Project03 }],
+                                        TargetFiles = [new ServalCorpusFile { FileId = File02, ProjectId = Project01 }],
+                                    }
+                                },
+                                {
+                                    Corpus02,
+                                    new ServalCorpus
                                     {
-                                        Corpus02,
-                                        new ServalCorpus
-                                        {
-                                            PreTranslate = true,
-                                            AlternateTrainingSource = false,
-                                            SourceFiles =
-                                            [
-                                                new ServalCorpusFile { FileId = File01, ProjectId = Project03 },
-                                            ],
-                                            TargetFiles =
-                                            [
-                                                new ServalCorpusFile { FileId = File02, ProjectId = Project01 },
-                                            ],
-                                        }
-                                    },
-                                }
-                                : null,
-                        },
+                                        PreTranslate = true,
+                                        AlternateTrainingSource = false,
+                                        SourceFiles = [new ServalCorpusFile { FileId = File01, ProjectId = Project03 }],
+                                        TargetFiles = [new ServalCorpusFile { FileId = File02, ProjectId = Project01 }],
+                                    }
+                                },
+                            }
+                            : null,
                     },
-                    new SFProjectSecret { Id = Project03 },
-                    new SFProjectSecret { Id = Project04 },
-                ]
-            );
+                },
+                new SFProjectSecret { Id = Project03 },
+                new SFProjectSecret { Id = Project04 },
+            ]);
 
             SiteOptions = Options.Create(
                 new SiteOptions
@@ -4378,142 +4364,138 @@ public class MachineProjectServiceTests
             );
             var userSecrets = new MemoryRepository<UserSecret>([new UserSecret { Id = User01 }]);
 
-            Projects = new MemoryRepository<SFProject>(
-                [
-                    new SFProject
+            Projects = new MemoryRepository<SFProject>([
+                new SFProject
+                {
+                    Id = Project01,
+                    Name = "project01",
+                    ShortName = "P01",
+                    ParatextId = Paratext01,
+                    CheckingConfig = new CheckingConfig(),
+                    UserRoles = [],
+                    TranslateConfig = new TranslateConfig
                     {
-                        Id = Project01,
-                        Name = "project01",
-                        ShortName = "P01",
-                        ParatextId = Paratext01,
-                        CheckingConfig = new CheckingConfig(),
-                        UserRoles = [],
-                        TranslateConfig = new TranslateConfig
+                        TranslationSuggestionsEnabled = true,
+                        Source = new TranslateSource
                         {
-                            TranslationSuggestionsEnabled = true,
-                            Source = new TranslateSource
-                            {
-                                ProjectRef = Project02,
-                                ParatextId = Paratext02,
-                                WritingSystem = new WritingSystem { Tag = "en_US" },
-                            },
-                            DraftConfig = new DraftConfig(),
+                            ProjectRef = Project02,
+                            ParatextId = Paratext02,
+                            WritingSystem = new WritingSystem { Tag = "en_US" },
                         },
-                        WritingSystem = new WritingSystem { Tag = "en_GB" },
+                        DraftConfig = new DraftConfig(),
                     },
-                    new SFProject
+                    WritingSystem = new WritingSystem { Tag = "en_GB" },
+                },
+                new SFProject
+                {
+                    Id = Project02,
+                    Name = "project02",
+                    ShortName = "P02",
+                    ParatextId = Paratext02,
+                    CheckingConfig = new CheckingConfig(),
+                    UserRoles = [],
+                    TranslateConfig = new TranslateConfig
                     {
-                        Id = Project02,
-                        Name = "project02",
-                        ShortName = "P02",
-                        ParatextId = Paratext02,
-                        CheckingConfig = new CheckingConfig(),
-                        UserRoles = [],
-                        TranslateConfig = new TranslateConfig
-                        {
-                            TranslationSuggestionsEnabled = true,
-                            Source = options.Source
-                                ? new TranslateSource
-                                {
-                                    ProjectRef = Project01,
-                                    ParatextId = Paratext01,
-                                    WritingSystem = new WritingSystem { Tag = "en" },
-                                }
-                                : null,
-                            DraftConfig = new DraftConfig
+                        TranslationSuggestionsEnabled = true,
+                        Source = options.Source
+                            ? new TranslateSource
                             {
-                                DraftingSources =
-                                    options.DraftingSources == 1
+                                ProjectRef = Project01,
+                                ParatextId = Paratext01,
+                                WritingSystem = new WritingSystem { Tag = "en" },
+                            }
+                            : null,
+                        DraftConfig = new DraftConfig
+                        {
+                            DraftingSources =
+                                options.DraftingSources == 1
+                                    ?
+                                    [
+                                        new TranslateSource
+                                        {
+                                            ProjectRef = Project03,
+                                            ParatextId = Paratext03,
+                                            WritingSystem = new WritingSystem { Tag = "en_GB" },
+                                        },
+                                    ]
+                                    : [],
+                            TrainingSources =
+                                options.TrainingSources > 0
+                                    ? options.TrainingSources > 1
                                         ?
                                         [
                                             new TranslateSource
                                             {
-                                                ProjectRef = Project03,
-                                                ParatextId = Paratext03,
+                                                ProjectRef = options.DraftingSourceAndTrainingSourceAreTheSame
+                                                    ? Project03
+                                                    : Project04,
+                                                ParatextId = options.DraftingSourceAndTrainingSourceAreTheSame
+                                                    ? Paratext03
+                                                    : Paratext04,
+                                                WritingSystem = new WritingSystem { Tag = "en_GB" },
+                                            },
+                                            new TranslateSource
+                                            {
+                                                ProjectRef = Project05,
+                                                ParatextId = Paratext05,
                                                 WritingSystem = new WritingSystem { Tag = "en_GB" },
                                             },
                                         ]
-                                        : [],
-                                TrainingSources =
-                                    options.TrainingSources > 0
-                                        ? options.TrainingSources > 1
-                                            ?
-                                            [
-                                                new TranslateSource
-                                                {
-                                                    ProjectRef = options.DraftingSourceAndTrainingSourceAreTheSame
-                                                        ? Project03
-                                                        : Project04,
-                                                    ParatextId = options.DraftingSourceAndTrainingSourceAreTheSame
-                                                        ? Paratext03
-                                                        : Paratext04,
-                                                    WritingSystem = new WritingSystem { Tag = "en_GB" },
-                                                },
-                                                new TranslateSource
-                                                {
-                                                    ProjectRef = Project05,
-                                                    ParatextId = Paratext05,
-                                                    WritingSystem = new WritingSystem { Tag = "en_GB" },
-                                                },
-                                            ]
-                                            :
-                                            [
-                                                new TranslateSource
-                                                {
-                                                    ProjectRef = options.DraftingSourceAndTrainingSourceAreTheSame
-                                                        ? Project03
-                                                        : Project04,
-                                                    ParatextId = options.DraftingSourceAndTrainingSourceAreTheSame
-                                                        ? Paratext03
-                                                        : Paratext04,
-                                                    WritingSystem = new WritingSystem { Tag = "en_GB" },
-                                                },
-                                            ]
-                                        : [],
-                            },
-                            PreTranslate = options.DraftingSources > 0 || options.TrainingSources > 0,
+                                        :
+                                        [
+                                            new TranslateSource
+                                            {
+                                                ProjectRef = options.DraftingSourceAndTrainingSourceAreTheSame
+                                                    ? Project03
+                                                    : Project04,
+                                                ParatextId = options.DraftingSourceAndTrainingSourceAreTheSame
+                                                    ? Paratext03
+                                                    : Paratext04,
+                                                WritingSystem = new WritingSystem { Tag = "en_GB" },
+                                            },
+                                        ]
+                                    : [],
                         },
-                        WritingSystem = new WritingSystem { Tag = "en_US" },
+                        PreTranslate = options.DraftingSources > 0 || options.TrainingSources > 0,
                     },
-                    new SFProject
+                    WritingSystem = new WritingSystem { Tag = "en_US" },
+                },
+                new SFProject
+                {
+                    Id = Project03,
+                    Name = "project03",
+                    ShortName = "P03",
+                    ParatextId = Paratext03,
+                    CheckingConfig = new CheckingConfig(),
+                    UserRoles = [],
+                    TranslateConfig = new TranslateConfig
                     {
-                        Id = Project03,
-                        Name = "project03",
-                        ShortName = "P03",
-                        ParatextId = Paratext03,
-                        CheckingConfig = new CheckingConfig(),
-                        UserRoles = [],
-                        TranslateConfig = new TranslateConfig
-                        {
-                            TranslationSuggestionsEnabled = true,
-                            Source = new TranslateSource { ProjectRef = Project01, ParatextId = Paratext01 },
-                        },
+                        TranslationSuggestionsEnabled = true,
+                        Source = new TranslateSource { ProjectRef = Project01, ParatextId = Paratext01 },
                     },
-                    new SFProject
-                    {
-                        Id = Project04,
-                        Name = "project04",
-                        ShortName = "P04",
-                        ParatextId = Paratext04,
-                        CheckingConfig = new CheckingConfig(),
-                        UserRoles = [],
-                        TranslateConfig = new TranslateConfig { PreTranslate = true },
-                    },
-                ]
-            );
+                },
+                new SFProject
+                {
+                    Id = Project04,
+                    Name = "project04",
+                    ShortName = "P04",
+                    ParatextId = Paratext04,
+                    CheckingConfig = new CheckingConfig(),
+                    UserRoles = [],
+                    TranslateConfig = new TranslateConfig { PreTranslate = true },
+                },
+            ]);
 
             TrainingDataService = Substitute.For<ITrainingDataService>();
             TrainingData = new MemoryRepository<TrainingData>();
-            Users = new MemoryRepository<User>(
-                [
-                    new User
-                    {
-                        Id = User01,
-                        Email = "test@example.com",
-                        InterfaceLanguage = "en",
-                    },
-                ]
-            );
+            Users = new MemoryRepository<User>([
+                new User
+                {
+                    Id = User01,
+                    Email = "test@example.com",
+                    InterfaceLanguage = "en",
+                },
+            ]);
 
             RealtimeService = new SFMemoryRealtimeService();
             RealtimeService.AddRepository("sf_projects", OTType.Json0, Projects);

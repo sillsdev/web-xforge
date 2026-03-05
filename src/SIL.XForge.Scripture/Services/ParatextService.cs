@@ -657,7 +657,8 @@ public class ParatextService : DisposableBase, IParatextService
                     + $"Revisions sent: {string.Join(",", r.RevisionsSent ?? Enumerable.Empty<string>())}, "
                     + $"Revisions received: {string.Join(",", r.RevisionsReceived ?? Enumerable.Empty<string>())}, "
                     + $"Failure message: {r.FailureMessage}."
-            ) ?? []
+            )
+                ?? []
         );
     }
 
@@ -822,7 +823,8 @@ public class ParatextService : DisposableBase, IParatextService
             foreach (
                 ProjectUser projectUser in remotePtProject.SourceUsers?.Users.Where(pu =>
                     users.All(u => u.Username != pu.UserName)
-                ) ?? []
+                )
+                    ?? []
             )
             {
                 users.Add(
@@ -1214,7 +1216,7 @@ public class ParatextService : DisposableBase, IParatextService
                     // Put the individual chapters
                     foreach ((int chapterNum, string authorSFUserId) in chapNumToAuthorSFUserIdMap)
                     {
-                        if ((chapterNum - 1) < chapters.Count)
+                        if (chapters != null && chapterNum - 1 < chapters.Count)
                         {
                             try
                             {

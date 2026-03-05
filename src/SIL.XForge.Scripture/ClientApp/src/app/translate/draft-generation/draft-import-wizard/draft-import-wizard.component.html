@@ -21,6 +21,7 @@
             [placeholder]="t('choose_project')"
             [isDisabled]="!isAppOnline || projects.length === 0 || isImporting || projectLoadingFailed"
             (projectSelect)="projectSelected($event.paratextId)"
+            [value]="projectUserConfigDoc?.data?.selectedDraftTargetParatextId"
             formControlName="targetParatextId"
             validators="disabled"
           ></app-project-select>

@@ -80,24 +80,22 @@ public static class DataAccessServiceCollectionExtensions
     /// </remarks>
     internal static void CreateEventMetricsIndexes(IMongoIndexManager<EventMetric> indexManager)
     {
-        indexManager.CreateMany(
-            [
-                new CreateIndexModel<EventMetric>(Builders<EventMetric>.IndexKeys.Ascending(em => em.ProjectId)),
-                new CreateIndexModel<EventMetric>(
-                    Builders<EventMetric>.IndexKeys.Combine(
-                        Builders<EventMetric>.IndexKeys.Ascending(em => em.ProjectId),
-                        Builders<EventMetric>.IndexKeys.Ascending(em => em.Scope),
-                        Builders<EventMetric>.IndexKeys.Ascending(em => em.EventType)
-                    )
-                ),
-                new CreateIndexModel<EventMetric>(
-                    Builders<EventMetric>.IndexKeys.Combine(
-                        Builders<EventMetric>.IndexKeys.Ascending(em => em.Scope),
-                        Builders<EventMetric>.IndexKeys.Ascending(em => em.TimeStamp)
-                    )
-                ),
-            ]
-        );
+        indexManager.CreateMany([
+            new CreateIndexModel<EventMetric>(Builders<EventMetric>.IndexKeys.Ascending(em => em.ProjectId)),
+            new CreateIndexModel<EventMetric>(
+                Builders<EventMetric>.IndexKeys.Combine(
+                    Builders<EventMetric>.IndexKeys.Ascending(em => em.ProjectId),
+                    Builders<EventMetric>.IndexKeys.Ascending(em => em.Scope),
+                    Builders<EventMetric>.IndexKeys.Ascending(em => em.EventType)
+                )
+            ),
+            new CreateIndexModel<EventMetric>(
+                Builders<EventMetric>.IndexKeys.Combine(
+                    Builders<EventMetric>.IndexKeys.Ascending(em => em.Scope),
+                    Builders<EventMetric>.IndexKeys.Ascending(em => em.TimeStamp)
+                )
+            ),
+        ]);
     }
 
     private static MongoRepository<T> CreateMongoRepository<T>(
