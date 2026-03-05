@@ -58,6 +58,7 @@ import {
 import { DraftGenerationService } from './draft-generation.service';
 import { DraftHistoryListComponent } from './draft-history-list/draft-history-list.component';
 import { DraftInformationComponent } from './draft-information/draft-information.component';
+import { DraftOptionsService } from './draft-options.service';
 import { DraftPreviewBooksComponent } from './draft-preview-books/draft-preview-books.component';
 import { DRAFT_SIGNUP_RESPONSE_DAYS } from './draft-signup-form/draft-onboarding-form.component';
 import { DraftSource } from './draft-source';
@@ -167,6 +168,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     private readonly activatedProject: ActivatedProjectService,
     private readonly authService: AuthService,
     private readonly draftGenerationService: DraftGenerationService,
+    private readonly draftOptionsService: DraftOptionsService,
     private readonly draftSourcesService: DraftSourcesService,
     private readonly nllbService: NllbLanguageService,
     protected readonly i18n: I18nService,
@@ -180,6 +182,14 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     private destroyRef: DestroyRef
   ) {
     super(noticeService);
+  }
+
+  get formattingOptionsSelected(): boolean {
+    return this.draftOptionsService.areFormattingOptionsSelected();
+  }
+
+  get formattingOptionsSupported(): boolean {
+    return this.draftOptionsService.areFormattingOptionsSupportedForBuild(this.lastCompletedBuild);
   }
 
   get hasAnyCompletedBuild(): boolean {

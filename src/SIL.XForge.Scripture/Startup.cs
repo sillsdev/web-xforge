@@ -7,11 +7,14 @@ using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Hangfire;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.HeaderParsing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
+using Microsoft.AspNetCore.SpaServices.StaticFiles;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
@@ -19,6 +22,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
+using Microsoft.Net.Http.Headers;
 using SIL.XForge.Configuration;
 using SIL.XForge.EventMetrics;
 using SIL.XForge.Scripture.Services;
@@ -204,6 +208,9 @@ public class Startup
         // Add the event metrics service
         services.AddEventMetrics();
 
+        // Set up header parsing
+        services.AddHeaderParsing();
+
         // Populate the services in the Autofac container builder
         containerBuilder.Populate(services);
 
@@ -270,7 +277,74 @@ public class Startup
         );
 
         if (SpaDevServerStartup == SpaDevServerStartup.None)
-            app.UseSpaStaticFiles();
+        {
+            // Register header parsing for accept encoding
+            var headerRegistry = app.ApplicationServices.GetRequiredService<IHeaderRegistry>();
+            var encodingKey = headerRegistry.Register(CommonHeaders.AcceptEncoding);
+
+            // Remap requests for files to the matching .br file, if present
+            app.Use(
+                async (context, next) =>
+                {
+                    if (
+                        context.Request.TryGetHeaderValue(
+                            encodingKey,
+                            out IReadOnlyList<StringWithQualityHeaderValue>? encodings
+                        )
+                        && encodings.Any(encoding =>
+                            encoding.Value.Value?.ToLowerInvariant() == "br"
+                            && (encoding.Quality == null || encoding.Quality > 0)
+                        )
+                    )
+                    {
+                        // Check if the file exists in the SPA dist folder
+                        ISpaStaticFileProvider spaFileProvider =
+                            app.ApplicationServices.GetRequiredService<ISpaStaticFileProvider>();
+                        string originalPath = context.Request.Path.Value ?? string.Empty;
+                        string brotliPath = originalPath + ".br";
+                        if (
+                            spaFileProvider.FileProvider is not null
+                            && spaFileProvider.FileProvider.GetFileInfo(brotliPath).Exists
+                        )
+                        {
+                            context.Request.Path = brotliPath;
+                            context.Items["OriginalPath"] = originalPath;
+                        }
+                    }
+
+                    await next();
+                }
+            );
+
+            // Set the correct content type and encoding for .br files
+            var contentTypeProvider = new FileExtensionContentTypeProvider
+            {
+                Mappings = { [".br"] = "application/brotli" },
+            };
+            app.UseSpaStaticFiles(
+                new StaticFileOptions
+                {
+                    ContentTypeProvider = contentTypeProvider,
+                    OnPrepareResponse = context =>
+                    {
+                        context.Context.Response.Headers.Append("Cache-Control", "must-revalidate");
+                        context.Context.Response.Headers.Append("Vary", "Accept-Encoding");
+                        if (context.File.Name.EndsWith(".br", StringComparison.OrdinalIgnoreCase))
+                        {
+                            context.Context.Response.Headers.Append("Content-Encoding", "br");
+                            if (
+                                context.Context.Items.TryGetValue("OriginalPath", out object? originalPathObj)
+                                && originalPathObj is string originalPath
+                                && contentTypeProvider.TryGetContentType(originalPath, out string contentType)
+                            )
+                            {
+                                context.Context.Response.ContentType = contentType;
+                            }
+                        }
+                    },
+                }
+            );
+        }
 
         app.UseRouting();
 
