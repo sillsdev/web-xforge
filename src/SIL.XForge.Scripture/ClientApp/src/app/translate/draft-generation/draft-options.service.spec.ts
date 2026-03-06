@@ -9,6 +9,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { BuildDto } from '../../machine-api/build-dto';
+import { BuildStates } from '../../machine-api/build-states';
 import { DraftOptionsService, FORMATTING_OPTIONS_SUPPORTED_DATE } from './draft-options.service';
 
 const mockedActivatedProject = mock(ActivatedProjectService);
@@ -47,10 +48,25 @@ describe('DraftOptionsService', () => {
 
   function buildDtoWithDate(date: Date): BuildDto {
     return {
+      id: 'build-id',
+      href: 'href',
+      revision: 1,
+      engine: { id: 'engine01', href: 'href' },
+      percentCompleted: 100,
+      message: '',
+      state: BuildStates.Completed,
+      queueDepth: 0,
       additionalInfo: {
-        dateFinished: date.toJSON()
+        dateFinished: date.toISOString(),
+        trainingScriptureRanges: [],
+        translationScriptureRanges: [],
+        trainingDataFileIds: [],
+        buildId: 'build-id',
+        step: 0,
+        translationEngineId: 'engine01',
+        canDenormalizeQuotes: true
       }
-    } as BuildDto;
+    };
   }
 
   const SUPPORTED_BUILD_ENTRY: BuildDto = buildDtoWithDate(new Date(FORMATTING_OPTIONS_SUPPORTED_DATE.getTime() + 1));
@@ -122,7 +138,16 @@ describe('DraftOptionsService', () => {
     function buildWith(date: Date | undefined, flagEnabled: boolean = true): BuildDto | undefined {
       when(mockedFeatureFlagService.usfmFormat).thenReturn(createTestFeatureFlag(flagEnabled));
       if (date == null) {
-        return { additionalInfo: {} } as BuildDto;
+        return {
+          id: 'build-id',
+          href: 'href',
+          revision: 1,
+          engine: { id: 'engine01', href: 'href' },
+          percentCompleted: 0,
+          message: '',
+          state: BuildStates.Completed,
+          queueDepth: 0
+        };
       }
       return buildDtoWithDate(date);
     }
