@@ -2,7 +2,7 @@ import { fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, NavigationEnd, Params, Router } from '@angular/router';
 import { OtJson0Op } from 'ot-json0';
 import { Json0OpBuilder } from 'realtime-server/lib/esm/common/utils/json0-op-builder';
-import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { BehaviorSubject, Observable, of } from 'rxjs';
@@ -17,7 +17,6 @@ import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ResumeTranslateService } from './resume-translate.service';
-
 describe('ResumeTranslateService', () => {
   const mockRouter = mock(Router);
   const mockUserService = mock(UserService);
@@ -64,19 +63,19 @@ describe('ResumeTranslateService', () => {
 
     service = TestBed.inject(ResumeTranslateService);
 
-    when(mockedProjectDoc.data).thenReturn({
-      texts: [{ bookNum: 40, chapters: [{ number: 1 } as Chapter, { number: 2 } as Chapter] } as TextInfo]
-    } as SFProject);
+    const testSFProject = {
+      texts: [
+        { bookNum: 41, chapters: [{ number: 1 } as Chapter, { number: 2 } as Chapter] } as TextInfo,
+        { bookNum: 40, chapters: [{ number: 1 } as Chapter, { number: 2 } as Chapter] } as TextInfo
+      ]
+    } as SFProject;
+
+    when(mockedProjectDoc.data).thenReturn(testSFProject);
     when(mockProjectService.getUserConfig(anything(), anything())).thenResolve({
       changes$: of([]) as Observable<OtJson0Op[]>,
       data: { selectedTask: 'checking', selectedBookNum: 40, selectedChapterNum: 2 } as SFProjectUserConfig
     } as SFProjectUserConfigDoc);
-    activatedProjectChange$.next({
-      data: {
-        texts: [{ bookNum: 40, chapters: [{ number: 1 } as Chapter, { number: 2 } as Chapter] } as TextInfo]
-      } as SFProjectProfile
-    } as SFProjectProfileDoc);
-
+    activatedProjectChange$.next({ data: testSFProject } as unknown as SFProjectProfileDoc);
     await service['updateProjectUserConfig']('project01');
   });
 

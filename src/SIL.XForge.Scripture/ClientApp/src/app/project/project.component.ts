@@ -115,16 +115,17 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     const routePath = ['projects', projectId, task];
     let bookNum: number | undefined = projectUserConfig.selectedBookNum;
     if (bookNum == null || !project.texts.some(t => t.bookNum === bookNum)) {
-      bookNum = project.texts[0]?.bookNum;
+      bookNum = project.texts.slice().sort((a, b) => a.bookNum - b.bookNum)[0]?.bookNum;
     }
 
     if (bookNum != null) {
       routePath.push(Canon.bookNumberToId(bookNum));
 
-      const chapterNum: number | undefined =
-        projectUserConfig.selectedChapterNum ?? project.texts[bookNum]?.chapters[0]?.number;
+      const bookInfo = project.texts.find(t => t.bookNum === bookNum);
+      const chapterNum: number | undefined = projectUserConfig.selectedChapterNum ?? bookInfo?.chapters[0]?.number;
+      const chapterExists = chapterNum != null && bookInfo?.chapters.some(c => c.number === chapterNum);
 
-      if (chapterNum != null) {
+      if (chapterNum != null && chapterExists) {
         routePath.push(chapterNum.toString());
       }
     }
