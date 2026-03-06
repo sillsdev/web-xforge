@@ -988,7 +988,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         );
         if (!(await _syncMetricsRepository.TryGetAsync(syncMetricsId, token)).TryResult(out _syncMetrics))
         {
-            Log($"Could not find sync metrics.", syncMetricsId, userId);
+            Log($"Could not find sync metrics with id {syncMetricsId}.", projectSFId, userId);
             return false;
         }
 
