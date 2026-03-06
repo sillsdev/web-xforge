@@ -1,0 +1,47 @@
+// Scripture Forge devcontainer configuration.
+// Runs the development environment in a container with MongoDB as a companion service.
+// See https://containers.dev/implementors/json_reference/ for format details.
+{
+  "name": "Scripture Forge",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "runServices": ["app", "db"],
+  "workspaceFolder": "/workspaces/web-xforge",
+
+  // Run commands after the container is created
+  "postCreateCommand": ".devcontainer/post-create.sh",
+
+  // Configure VS Code for container development
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "angular.ng-template",
+        "csharpier.csharpier-vscode",
+        "dbaeumer.vscode-eslint",
+        "editorconfig.editorconfig",
+        "esbenp.prettier-vscode",
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.csdevkit",
+        "mongodb.mongodb-vscode",
+        "streetsidesoftware.code-spell-checker",
+        "lucono.karma-test-explorer"
+      ],
+      "settings": {
+        "dotnet.defaultSolution": "xForge.sln"
+      }
+    }
+  },
+
+  // Ports to forward from the container to the host
+  "forwardPorts": [5000, 5003, 9230, 9988, 27017],
+  "portsAttributes": {
+    "5000": { "label": "SF HTTP Server" },
+    "5003": { "label": "ShareDB" },
+    "9230": { "label": "Node.js Debugger" },
+    "9988": { "label": "Frontend test debugger" },
+    "27017": { "label": "MongoDB" }
+  },
+
+  // Run as the non-root vscode user
+  "remoteUser": "vscode"
+}
