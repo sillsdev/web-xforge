@@ -11,29 +11,29 @@ using it.
   The actual RAM available in the product will depend on a Vagrantfile setting
   later on.
 - In Settings for the guest, give 2-4 processors.
-- Boot installation .iso. Install OS. Don't install unneeded
-  "third-party software" in Ubuntu.
+- Boot Kubuntu installation .iso. Install OS. Minimal install. Don't install
+  unneeded "third-party software" in Ubuntu. No swap.
 - Use computer name `sfdev`, username `vagrant` and password `vagrant`.
-  Choose Log in automatically.
+  Select to log in automatically.
+- Choosing a North American location can make the locale situation less
+  complicated when later getting to Ansible.
 
 ## Setup machine
 
 - Set resolution to a big enough but conservative initial value of 1440x900,
   that will fit inside someone's 1080p desktop.
 
-- Launch Software Updater, apply updates, and reboot into any new kernel. If
-  that gives any trouble, fall back to: boot to recovery mode, enable
-  networking, and run `apt update && apt upgrade --assume-yes`.
+- Update with `sudo apt update && sudo apt upgrade` and reboot into any new
+  kernel.
 
 - Install guest additions.
-
   - On your host machine, you may need to run the following if you have
     VirtualBox installed from Ubuntu rather than from Oracle.
 
     sudo apt install virtualbox-guest-additions-iso
 
   - In the guest machine window, choose Devices > Insert Guest Additions CD
-    image. In the guest machine, run
+    image. In the guest machine, mount it if needed, and run
 
     ```
     sudo apt update &&
@@ -41,8 +41,7 @@ using it.
       sudo /media/vagrant/VBox*/VBoxLinuxAdditions.run
     ```
 
-  - Right-click the CD icon on the panel or desktop and Eject the
-    VirtualBox Additions disc.
+  - Eject the VirtualBox Additions disc.
 
   - In the guest machine window, choose Devices > Shared clipboard >
     Bidirectional.
@@ -58,19 +57,17 @@ using it.
 
   nano ~/provision.sh && bash ~/provision.sh
 
+- Insert development provision script. (And later test it, not part of final product.)
+
+  nano ~/provision-dev.sh
+
 - Reboot.
 
-- Launch Extension Manager. Open settings for Dash to Panel. On the Position
-  tab move the "Date menu" down to after the "System menu". Turn off visibility
-  for "Show Applications button".
+- Turn off screen blanking more.
 
-- Arrange desktop icons. Consider making rows:
+- Launch KWalletManager and make a kdewallet called 'kdewallet'.
 
-  - Home, GitKraken, machine-instructions
-  - Terminator, Paratext, Geany, Chromium
-  - Byobu, Code, Gitk, Git Cola.
-
-- Clean up byobu status bar (F1), turning off everything.
+- Arrange desktop icons if helpful.
 
 - Optionally edit basebox version file at `~/machine-info.txt`.
   "Installed from" can state the installation media used to create the machine.
@@ -86,26 +83,34 @@ using it.
   sudo apt-get update &&
     sudo apt-get --assume-yes autoremove &&
     sudo apt-get --assume-yes clean &&
+    sudo apt-get distclean &&
+    sudo du -sh /var/lib/apt/lists &&
     sudo rm -v /etc/ssh/ssh_host_* &&
+    sudo truncate --size 0 /etc/machine-id &&
+    ls -l /etc/machine-id &&
+    df -h / &&
     cat /dev/zero > ~/zeros; sync; ls -lh ~/zeros; rm -v ~/zeros
   ```
 
-- Power off.
+- Clear clipboard history.
+
+- Shutdown.
 
 ## Generate and publish product
 
 - Export VM .box file and prepare to test the result. This may take 30 minutes.
-  The `--base` argument is the name of the base machine in virtualbox manager.
-  Edit the value VERSION in the first line below before running.
+  First edit SOURCE_NAME to match the name of the base machine in VirtualBox Manager,
+  and VERSION.
 
 ```
-export BOX="sfdev" && export VERSION="1.2.0" &&
-  date && vagrant package --base ${BOX}-base --output ${BOX}-${VERSION}.box &&
-  date && ls -lh ${BOX}-${VERSION}.box &&
-  sha256sum ${BOX}-${VERSION}.box | tee --append "${BOX}".json &&
-  date && mkdir test && tee test/Vagrantfile <<END &&
+VERSION="1.3.0" && SOURCE_NAME="sfdev-base-kub2404" &&
+  BOX="sfdev" && OUTPUT_NAME="${BOX}-${VERSION}.box" &&
+  date -Is && vagrant package --base "${SOURCE_NAME}" --output "${OUTPUT_NAME}" &&
+  date -Is && ls -lh "${OUTPUT_NAME}" &&
+  sha512sum "${OUTPUT_NAME}" | tee --append "${OUTPUT_NAME}".sha512 &&
+  date -Is && mkdir test && tee test/Vagrantfile <<END &&
   Vagrant.configure("2") do |config|
-    config.vm.box = "../${BOX}-${VERSION}.box"
+    config.vm.box = "../${OUTPUT_NAME}"
     config.vm.provider "virtualbox" do |vb|
       vb.gui = true
       vb.cpus = 2
@@ -114,15 +119,11 @@ export BOX="sfdev" && export VERSION="1.2.0" &&
   end
 END
   cd test &&
-  vagrant up; date
+  vagrant up; date -Is
 ```
 
-- Test the result. Such as by adding secrets,
-  [launching](https://github.com/sillsdev/web-xforge/wiki/Debugging) backend,
-  frontend, and browser, and in VSCode attaching via
-  "Attach to frontend",
-  "Attach to backend dotnet application", and
-  "Attach to backend realtime server".
+- Test the result. Such as by adding secrets and running
+  `cd ~/code/web-xforge/src/SIL.XForge.Scripture && dotnet run`.
 
 - Clean up box test machine. In the `test` directory, run the following.
   The `vagrant box remove` command removes the internally stored copy of the
@@ -132,7 +133,7 @@ END
   ```
   vagrant halt &&
     vagrant destroy &&
-    vagrant box remove "../${BOX}-${VERSION}.box" &&
+    vagrant box remove "../${OUTPUT_NAME}" &&
     cd .. &&
     rm test -rf
   ```
