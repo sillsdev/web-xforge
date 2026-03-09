@@ -533,7 +533,7 @@ public class MachineApiService(
                                 BookNum = bookNum,
                                 ChapterNum = 0,
                                 Status = DraftApplyStatus.Failed,
-                                Message = $"Could not save draft for {Canon.BookNumberToId(bookNum)}.",
+                                Message = $"You do not have permission to write to this book.",
                             }
                         );
                     }
@@ -563,7 +563,7 @@ public class MachineApiService(
                                 BookNum = bookNum,
                                 ChapterNum = 0,
                                 Status = DraftApplyStatus.Failed,
-                                Message = $"Could not save draft for {Canon.BookNumberToId(bookNum)}.",
+                                Message = $"You do not have permission to write to this book.",
                             }
                         );
                     }
@@ -585,8 +585,7 @@ public class MachineApiService(
                             BookNum = bookNum,
                             ChapterNum = chapterDelta.Number,
                             Status = DraftApplyStatus.Failed,
-                            Message =
-                                $"Could not save draft for {Canon.BookNumberToId(bookNum)} {chapterDelta.Number}.",
+                            Message = $"You do not have permission to write to this chapter.",
                         }
                     );
                     continue;
@@ -619,8 +618,7 @@ public class MachineApiService(
                             BookNum = bookNum,
                             ChapterNum = chapterDelta.Number,
                             Status = DraftApplyStatus.Failed,
-                            Message =
-                                $"Could not save draft for {Canon.BookNumberToId(bookNum)} {chapterDelta.Number}.",
+                            Message = $"You do not have permission to write to this chapter.",
                         }
                     );
                     continue;
