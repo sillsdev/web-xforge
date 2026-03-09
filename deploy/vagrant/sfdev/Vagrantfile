@@ -13,7 +13,7 @@ Vagrant.configure("2") do |config|
     # Chromium, running tests, etc. at the same time. Though more, such as 24000, is sometimes needed.
     # To set how much RAM the vagrant guest should use, you can set the RAM value in a SFDEV_RAM
     # environment variable by running a command such as
-    #   tee --append ~/.pam_environment <<< 'SFDEV_RAM="14000"'
+    #   tee --append ~/.config/environment.d/vagrant.conf <<< "SFDEV_RAM=14000"
     # and then logging back into your computer. Or temporarily set the value here.
     vb.memory = ENV['SFDEV_RAM'] || "6000"
     # Enable 3D acceleration and more video RAM for larger displays.
@@ -24,34 +24,17 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", privileged: false, inline: <<~SHELL
     set -xueo pipefail
 
-    function tryharderto() { i=0; until "$@"; do ((++i <= 3)); echo >&2 "Retrying ${i}"; sleep 2m; done }
-
-    # Prepare canary
-    tee ~/Desktop/warning-not-provisioned.txt >/dev/null <<END
-    The presence of this file means that the vagrant virtual machine did not
-    finish provisioning correctly.
-    The best way to get to a working machine state is to backup any data that
-    you want to keep from this virtual machine, and then destroy and re-create
-    this vagrant virtual machine by running these commands from your host:
-        vagrant destroy
-        vagrant up
-    END
-
     # Set git user and email from host.
     GIT_USER="#{`git config --get user.name`.strip}"
     GIT_EMAIL="#{`git config --get user.email`.strip}"
     [[ -z $GIT_USER ]] || git config --global user.name "${GIT_USER}"
     [[ -z $GIT_EMAIL ]] || git config --global user.email "${GIT_EMAIL}"
 
-    # Update code repo
-    cd ~/code/web-xforge
-    git fetch
-
     cd ~/code/web-xforge/
     sudo npm install --global npm@11.11.0
 
     # Remove canary
-    rm ~/Desktop/warning-not-provisioned.txt
+    rm -f ~/Desktop/WARNING-NOT-PROVISIONED.txt
     echo "Provisioning finished successfully."
   SHELL
 end
