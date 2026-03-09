@@ -240,6 +240,8 @@ public class MachineApiServiceTests
                 Arg.Any<UserSecret>(),
                 Arg.Any<string>(),
                 Arg.Any<IDocument<SFProject>>(),
+                booksToUpdate: [],
+                currentUserOnly: false,
                 writeToParatext: false
             )
             .ThrowsAsync(new NotSupportedException());
@@ -5118,13 +5120,15 @@ public class MachineApiServiceTests
                     }
                 });
 
-            // Update the permissions for the user applying the draft
+            // Update the permissions for the user adding new books
             ParatextService
                 .When(x =>
                     x.UpdateParatextPermissionsForNewBooksAsync(
                         Arg.Any<UserSecret>(),
                         Arg.Any<string>(),
                         Arg.Any<IDocument<SFProject>>(),
+                        booksToUpdate: [],
+                        currentUserOnly: false,
                         writeToParatext: false
                     )
                 )
@@ -5133,6 +5137,39 @@ public class MachineApiServiceTests
                     UserSecret userSecret = callInfo.ArgAt<UserSecret>(0);
                     var projectDoc = callInfo.ArgAt<IDocument<SFProject>>(2);
                     foreach (var text in projectDoc.Data.Texts)
+                    {
+                        text.Permissions.TryAdd(
+                            userSecret.Id,
+                            canWriteBook ? TextInfoPermission.Write : TextInfoPermission.Read
+                        );
+                        foreach (var chapter in text.Chapters)
+                        {
+                            chapter.Permissions.TryAdd(
+                                userSecret.Id,
+                                chapter.Number <= writeChapters ? TextInfoPermission.Write : TextInfoPermission.Read
+                            );
+                        }
+                    }
+                });
+
+            // Update the permissions for  the user applying the draft to existing books
+            ParatextService
+                .When(x =>
+                    x.UpdateParatextPermissionsForNewBooksAsync(
+                        Arg.Any<UserSecret>(),
+                        Arg.Any<string>(),
+                        Arg.Any<IDocument<SFProject>>(),
+                        booksToUpdate: Arg.Any<int[]>(),
+                        currentUserOnly: true,
+                        writeToParatext: false
+                    )
+                )
+                .Do(callInfo =>
+                {
+                    UserSecret userSecret = callInfo.ArgAt<UserSecret>(0);
+                    var projectDoc = callInfo.ArgAt<IDocument<SFProject>>(2);
+                    int[] booksToUpdate = callInfo.ArgAt<int[]>(3);
+                    foreach (var text in projectDoc.Data.Texts.Where(t => booksToUpdate.Contains(t.BookNum)))
                     {
                         text.Permissions.TryAdd(
                             userSecret.Id,
@@ -5166,6 +5203,8 @@ public class MachineApiServiceTests
                         Arg.Any<UserSecret>(),
                         Arg.Any<string>(),
                         Arg.Any<IDocument<SFProject>>(),
+                        booksToUpdate: [],
+                        currentUserOnly: false,
                         writeToParatext: false
                     );
             }
