@@ -501,15 +501,28 @@ public class MachineApiService(
                             .ToList(),
                         cancellationToken
                     );
-                }
 
-                if (createdBooks.Count > 0)
-                {
-                    // Update permissions for new books
+                    // Ensure the current user has permission to update the specified books,
+                    // adding them if they are missing and are an administrator.
                     await paratextService.UpdateParatextPermissionsForNewBooksAsync(
                         userSecret,
                         targetProjectDoc.Data.ParatextId,
                         targetProjectDoc,
+                        booksToUpdate: [.. updatedBooks],
+                        currentUserOnly: true,
+                        writeToParatext: false
+                    );
+                }
+
+                if (createdBooks.Count > 0)
+                {
+                    // Update permissions for new books, adding all users that should have access to them
+                    await paratextService.UpdateParatextPermissionsForNewBooksAsync(
+                        userSecret,
+                        targetProjectDoc.Data.ParatextId,
+                        targetProjectDoc,
+                        booksToUpdate: [],
+                        currentUserOnly: false,
                         writeToParatext: false
                     );
                 }

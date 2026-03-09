@@ -758,6 +758,8 @@ public class ParatextSyncRunnerTests
                 Arg.Any<UserSecret>(),
                 Arg.Any<string>(),
                 Arg.Any<IDocument<SFProject>>(),
+                booksToUpdate: [],
+                currentUserOnly: false,
                 writeToParatext: true
             );
     }
