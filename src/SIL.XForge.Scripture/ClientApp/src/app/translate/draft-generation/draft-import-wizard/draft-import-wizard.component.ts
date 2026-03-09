@@ -792,16 +792,30 @@ export class DraftImportWizardComponent implements OnInit {
   }
 
   getFailedChapters(progress: ImportProgress): string {
-    const failedChapters: number[] = progress.failedChapters.filter(f => f.chapterNum !== 0).map(f => f.chapterNum);
     if (!progress.failedChapters.some(f => f.chapterNum === 0)) {
-      // A subset of chapters failed
-      return failedChapters.join(', ');
+      // A subset of chapters failed. Display the failure message next to each chapter, if present.
+      return progress.failedChapters
+        .filter(f => f.chapterNum !== 0)
+        .map(f => (f.message ? `${f.chapterNum} (${f.message})` : f.chapterNum))
+        .join(', ');
     } else if (progress.totalChapters > 1) {
-      // All chapters failed, so display as a range
-      return `1-${progress.totalChapters}`;
+      // All chapters failed, so display as a range, with any failure messages
+      return (
+        `1-${progress.totalChapters}. ` +
+        progress.failedChapters
+          .filter(f => f.chapterNum === 0 && f.message != null)
+          .map(f => f.message)
+          .join(', ')
+      ).trim();
     } else {
-      // The only chapter in the book failed
-      return `${progress.totalChapters}`;
+      // The only chapter in the book failed, so display that chapter number with any failure messages
+      return (
+        `${progress.totalChapters}. ` +
+        progress.failedChapters
+          .filter(f => f.chapterNum === 0 && f.message != null)
+          .map(f => f.message)
+          .join(', ')
+      ).trim();
     }
   }
 

@@ -309,7 +309,7 @@
             @if (progress.failedChapters.length > 0) {
               <div class="failed-chapters">
                 <mat-icon class="error-icon">error</mat-icon>
-                <span>{{ t("failed") }} {{ getFailedChapters(progress) }}</span>
+                <span class="error-message">{{ t("failed") }} {{ getFailedChapters(progress) }}</span>
               </div>
             }
           </div>
