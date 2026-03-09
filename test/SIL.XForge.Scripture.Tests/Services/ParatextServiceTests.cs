@@ -6442,6 +6442,8 @@ public class ParatextServiceTests
             userSecret,
             paratextId,
             projectDoc,
+            booksToUpdate: [],
+            currentUserOnly: false,
             writeToParatext: false
         );
         SyncMetricInfo expected = new SyncMetricInfo();
@@ -6471,6 +6473,8 @@ public class ParatextServiceTests
             userSecret,
             paratextId,
             projectDoc,
+            booksToUpdate: [],
+            currentUserOnly: false,
             writeToParatext: false
         );
         SyncMetricInfo expected = new SyncMetricInfo();
@@ -6500,6 +6504,8 @@ public class ParatextServiceTests
             userSecret,
             paratextId,
             projectDoc,
+            booksToUpdate: [],
+            currentUserOnly: false,
             writeToParatext: false
         );
         SyncMetricInfo expected = new SyncMetricInfo();
@@ -6529,6 +6535,8 @@ public class ParatextServiceTests
             userSecret,
             paratextId,
             projectDoc,
+            booksToUpdate: [],
+            currentUserOnly: false,
             writeToParatext: false
         );
         SyncMetricInfo expected = new SyncMetricInfo();
@@ -6563,6 +6571,8 @@ public class ParatextServiceTests
             userSecret,
             paratextId,
             projectDoc,
+            booksToUpdate: [],
+            currentUserOnly: false,
             writeToParatext: false
         );
         SyncMetricInfo expected = new SyncMetricInfo { Updated = 1 };
@@ -6607,6 +6617,8 @@ public class ParatextServiceTests
             userSecret,
             paratextId,
             projectDoc,
+            booksToUpdate: [],
+            currentUserOnly: false,
             writeToParatext: true
         );
         SyncMetricInfo expected = new SyncMetricInfo { Updated = 1 };

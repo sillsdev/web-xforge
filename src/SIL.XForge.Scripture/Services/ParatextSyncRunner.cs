@@ -216,6 +216,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     _userSecret,
                     targetParatextId,
                     _projectDoc,
+                    booksToUpdate: [],
+                    currentUserOnly: false,
                     writeToParatext: true
                 );
                 await GetAndUpdateParatextBooksAndNotes(

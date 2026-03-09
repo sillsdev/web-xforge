@@ -82,6 +82,8 @@ public interface IParatextService
         UserSecret userSecret,
         string paratextId,
         IDocument<SFProject> projectDoc,
+        int[] booksToUpdate,
+        bool currentUserOnly,
         bool writeToParatext
     );
     string? GetLatestSharedVersion(UserSecret userSecret, string paratextId);
