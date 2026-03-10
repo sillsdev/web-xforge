@@ -26,7 +26,7 @@
             {{ t("select_formatting_options") }}
           </p>
           <div class="formatting-options-container">
-            <button matButton="filled" class="format-usfm" [routerLink]="['format']">
+            <button matButton="filled" class="format-usfm" [routerLink]="draftOptionsService.formattingOptionsPath">
               <mat-icon>build</mat-icon>
               <span class="hide-lt-lg">{{ t("formatting_options") }}</span>
               <span class="hide-gt-lg">{{ t("formatting") }}</span>
@@ -56,7 +56,7 @@
               </button>
               <app-draft-download-button matButton="outlined" [build]="entry" />
               @if (formattingOptionsSupported && isLatestBuild) {
-                <button matButton class="format-usfm" [routerLink]="['format']">
+                <button matButton class="format-usfm" [routerLink]="draftOptionsService.formattingOptionsPath">
                   <mat-icon>build</mat-icon> {{ t("formatting_options") }}
                 </button>
               }

@@ -36,4 +36,8 @@ export class DraftOptionsService {
       ? new Date(entry.additionalInfo.dateFinished) > FORMATTING_OPTIONS_SUPPORTED_DATE
       : false;
   }
+
+  get formattingOptionsPath(): string[] {
+    return ['/projects', this.activatedProjectService.projectId!, 'draft-generation', 'format'];
+  }
 }
