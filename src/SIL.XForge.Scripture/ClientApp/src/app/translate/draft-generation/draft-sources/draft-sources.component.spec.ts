@@ -2,7 +2,6 @@ import { OverlayContainer } from '@angular/cdk/overlay';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
@@ -90,8 +89,7 @@ describe('DraftSourcesComponent', () => {
       { provide: DialogService, useMock: mockedDialogService },
       { provide: TrainingDataService, useMock: mockTrainingDataService },
       { provide: ErrorReportingService, useMock: mock(ErrorReportingService) },
-      { provide: FileService, useMock: mockedFileService },
-      provideNoopAnimations()
+      { provide: FileService, useMock: mockedFileService }
     ]
   }));
 

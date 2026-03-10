@@ -3,7 +3,6 @@ import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatExpansionPanel } from '@angular/material/expansion';
 import { By } from '@angular/platform-browser';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { ngfModule } from 'angular-file';
 import { saveAs } from 'file-saver';
@@ -73,8 +72,7 @@ describe('CheckingOverviewComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: ChapterAudioDialogService, useMock: mockedChapterAudioDialogService },
-      provideNoopAnimations()
+      { provide: ChapterAudioDialogService, useMock: mockedChapterAudioDialogService }
     ]
   }));
 

@@ -1,5 +1,4 @@
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { User } from 'realtime-server/lib/esm/common/models/user';
@@ -185,7 +184,6 @@ const meta: Meta = {
     moduleMetadata({
       imports: [getTestTranslocoModule(), MyProjectsComponent],
       providers: [
-        provideAnimations(),
         provideHttpClientTesting(),
         {
           provide: SFProjectService,

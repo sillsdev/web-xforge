@@ -4,7 +4,6 @@ import { DebugElement, getDebugNode } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { escapeRegExp, merge } from 'lodash-es';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
@@ -45,8 +44,7 @@ describe('SaUsersComponent', () => {
       { provide: ProjectService, useMock: mockedProjectService },
       emptyHammerLoader,
       provideHttpClient(withInterceptorsFromDi()),
-      provideHttpClientTesting(),
-      provideNoopAnimations()
+      provideHttpClientTesting()
     ]
   }));
 

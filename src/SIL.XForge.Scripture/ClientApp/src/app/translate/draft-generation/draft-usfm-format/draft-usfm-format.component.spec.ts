@@ -2,7 +2,6 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Location } from '@angular/common';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatRadioButtonHarness } from '@angular/material/radio/testing';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { QuillService } from 'ngx-quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -74,8 +73,7 @@ describe('DraftUsfmFormatComponent', () => {
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: I18nService, useMock: mockI18nService },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: DialogService, useMock: mockedDialogService },
-      provideNoopAnimations()
+      { provide: DialogService, useMock: mockedDialogService }
     ]
   }));
 

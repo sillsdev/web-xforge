@@ -1,5 +1,4 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { VerseRef } from '@sillsdev/scripture';
 import { QuillService } from 'ngx-quill';
 import { User } from 'realtime-server/lib/esm/common/models/user';
@@ -41,8 +40,7 @@ describe('CheckingTextComponent', () => {
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: DialogService, useMock: mockedDialogService },
-      provideNoopAnimations()
+      { provide: DialogService, useMock: mockedDialogService }
     ]
   }));
 
