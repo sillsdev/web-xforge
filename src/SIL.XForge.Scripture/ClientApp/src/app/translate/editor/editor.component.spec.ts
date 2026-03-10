@@ -341,6 +341,47 @@ describe('EditorComponent', () => {
     discardPeriodicTasks();
   }));
 
+  it('allows navigating to all books and chapters relevant to the project', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProject({
+      texts: [
+        { bookNum: 40, chapters: [{ number: 1 }] },
+        { bookNum: 41, chapters: [{ number: 1 }] }
+      ],
+      translateConfig: {
+        draftConfig: {
+          trainingSources: [
+            {
+              paratextId: 'source01',
+              projectRef: 's01',
+              name: 'Source Project',
+              shortName: 'SRC',
+              writingSystem: { tag: 'en' }
+            }
+          ],
+          draftingSources: [
+            {
+              paratextId: 'source01',
+              projectRef: 's01',
+              name: 'Source Project',
+              shortName: 'SRC',
+              writingSystem: { tag: 'en' }
+            }
+          ],
+          draftedScriptureRange: 'GEN;MAT;MRK'
+        }
+      }
+    });
+    env.wait();
+    // Genesis is included since it is a book with a draft
+    expect(env.component.books).toEqual([1, ...env.testProjectProfile.texts.map(t => t.bookNum)]);
+
+    env.routeWithParams({ projectId: 'project01', bookId: 'GEN' });
+    env.wait();
+    expect(env.bookName).toEqual('Genesis');
+    expect(env.component.chapters.length).toEqual(50);
+  }));
+
   describe('Translation Suggestions enabled', () => {
     it('start with no previous selection', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -1129,7 +1170,7 @@ describe('EditorComponent', () => {
       expect(selection).toBeNull();
       expect(env.component.canEdit).toBe(true);
       let sourceText = env.sourceTextEditorPlaceholder.getAttribute('data-placeholder');
-      expect(sourceText).toEqual('This book does not exist.');
+      expect(sourceText).toEqual('Matthew does not exist in Test project 1');
 
       env.routeWithParams({ projectId: 'project01', bookId: 'ACT' });
       env.wait();
@@ -3928,30 +3969,6 @@ describe('EditorComponent', () => {
     env.dispose();
   }));
 
-  it('navigates to alternate chapter if specified chapter does not exist', fakeAsync(() => {
-    const env = new TestEnvironment();
-    const nonExistentChapter = 3;
-    const routerSpy = spyOn(env.router, 'navigateByUrl').and.callThrough();
-    env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: nonExistentChapter });
-    env.wait();
-
-    expect(routerSpy).toHaveBeenCalledWith('/projects/project01/translate/MAT/1');
-    env.dispose();
-  }));
-
-  it('should navigate to "projects" route if url book is not in project', fakeAsync(() => {
-    const navigationParams: Params = { projectId: 'project01', bookId: 'GEN', chapter: '2' };
-    const env = new TestEnvironment();
-    flush();
-    const spyRouterNavigate = spyOn(env.router, 'navigateByUrl');
-
-    env.routeWithParams(navigationParams);
-    env.wait();
-
-    expect(spyRouterNavigate).toHaveBeenCalledWith('projects', jasmine.any(Object));
-    discardPeriodicTasks();
-  }));
-
   describe('tabs', () => {
     describe('tab group consolidation', () => {
       it('should call consolidateTabGroups for small screen widths once editor is loaded and tab state is initialized', fakeAsync(() => {
@@ -5219,6 +5236,10 @@ class TestEnvironment {
         projectProfileData.translateConfig.source,
         data.translateConfig?.source
       );
+    }
+    if (data.translateConfig?.draftConfig?.draftedScriptureRange != null) {
+      projectProfileData.translateConfig.draftConfig.draftedScriptureRange =
+        data.translateConfig.draftConfig.draftedScriptureRange;
     }
     if (data.biblicalTermsConfig !== undefined) {
       projectProfileData.biblicalTermsConfig = merge(projectProfileData.biblicalTermsConfig, data.biblicalTermsConfig);

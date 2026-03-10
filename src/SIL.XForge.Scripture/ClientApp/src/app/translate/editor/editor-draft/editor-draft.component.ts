@@ -426,14 +426,16 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
   private getTargetOps(): Observable<DeltaOperation[]> {
     return from(this.projectService.getText(this.textDocId!)).pipe(
-      switchMap(textDoc =>
-        textDoc.changes$.pipe(
-          startWith(undefined),
-          throttleTime(2000, asyncScheduler, { leading: true, trailing: true }),
-          map(() => textDoc.data?.ops),
-          filterNullish()
-        )
-      )
+      switchMap(textDoc => {
+        if (textDoc.isLoaded)
+          return textDoc.changes$.pipe(
+            startWith(undefined),
+            throttleTime(2000, asyncScheduler, { leading: true, trailing: true }),
+            map(() => textDoc.data?.ops),
+            filterNullish()
+          );
+        else return of([] as DeltaOperation[]);
+      })
     );
   }
 }
