@@ -8,10 +8,18 @@
   @for (option of options; track option.label) {
     @if (option.highlight) {
       <button mat-flat-button color="primary" [mat-dialog-close]="option.value">
+        @if (option.icon != null) {
+          <mat-icon>{{ option.icon }}</mat-icon>
+        }
         {{ option.label | async }}
       </button>
     } @else {
-      <button mat-button [mat-dialog-close]="option.value">{{ option.label | async }}</button>
+      <button mat-button [mat-dialog-close]="option.value">
+        @if (option.icon != null) {
+          <mat-icon>{{ option.icon }}</mat-icon>
+        }
+        {{ option.label | async }}
+      </button>
     }
   }
 </div>

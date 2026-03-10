@@ -338,7 +338,7 @@ export class DraftHistoryEntryComponent {
     private readonly trainingDataService: TrainingDataService,
     private readonly activatedProjectService: ActivatedProjectService,
     readonly featureFlags: FeatureFlagService,
-    private readonly draftOptionsService: DraftOptionsService,
+    protected readonly draftOptionsService: DraftOptionsService,
     private readonly permissionsService: PermissionsService,
     private readonly destroyRef: DestroyRef,
     private readonly dialog: MatDialog

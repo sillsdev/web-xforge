@@ -1,16 +1,17 @@
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { AsyncPipe } from '@angular/common';
 import { Component, Inject } from '@angular/core';
+import { MatButton } from '@angular/material/button';
 import {
   MAT_DIALOG_DATA,
-  MatDialogRef,
-  MatDialogTitle,
-  MatDialogContent,
   MatDialogActions,
-  MatDialogClose
+  MatDialogClose,
+  MatDialogContent,
+  MatDialogRef,
+  MatDialogTitle
 } from '@angular/material/dialog';
+import { MatIcon } from '@angular/material/icon';
 import { Observable } from 'rxjs';
-import { CdkScrollable } from '@angular/cdk/scrolling';
-import { MatButton } from '@angular/material/button';
-import { AsyncPipe } from '@angular/common';
 
 export interface GenericDialogOptions<T> {
   title?: Observable<string>;
@@ -19,6 +20,7 @@ export interface GenericDialogOptions<T> {
     label: Observable<string>;
     value: T;
     highlight?: boolean;
+    icon?: string;
   }[];
 }
 
@@ -33,7 +35,16 @@ export interface GenericDialogRef<T> {
 @Component({
   selector: 'app-generic-dialog',
   templateUrl: './generic-dialog.component.html',
-  imports: [MatDialogTitle, CdkScrollable, MatDialogContent, MatDialogActions, MatButton, MatDialogClose, AsyncPipe]
+  imports: [
+    MatDialogTitle,
+    CdkScrollable,
+    MatDialogContent,
+    MatDialogActions,
+    MatButton,
+    MatDialogClose,
+    AsyncPipe,
+    MatIcon
+  ]
 })
 export class GenericDialogComponent<T> {
   constructor(@Inject(MAT_DIALOG_DATA) private readonly data: GenericDialogOptions<T>) {}
@@ -46,11 +57,7 @@ export class GenericDialogComponent<T> {
     return this.data.message;
   }
 
-  get options(): {
-    label: Observable<string>;
-    value: T;
-    highlight?: boolean | undefined;
-  }[] {
+  get options(): GenericDialogOptions<T>['options'] {
     return this.data.options;
   }
 }
