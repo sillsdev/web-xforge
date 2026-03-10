@@ -2,6 +2,7 @@ import { DestroyRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { defaultTranslocoMarkupTranspilers } from 'ngx-transloco-markup';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
@@ -118,7 +119,8 @@ function setUpMocks(args: DraftSourcesComponentStoryState): void {
     isConnectable: true,
     isConnected: true,
     hasUserRoleChanged: false,
-    hasUpdate: false
+    hasUpdate: false,
+    role: SFProjectRole.ParatextObserver
   }));
 
   // Add a project that has an unknown language code
@@ -131,7 +133,8 @@ function setUpMocks(args: DraftSourcesComponentStoryState): void {
     isConnectable: true,
     isConnected: false,
     hasUserRoleChanged: false,
-    hasUpdate: false
+    hasUpdate: false,
+    role: SFProjectRole.ParatextObserver
   });
 
   when(mockedParatextService.getResources()).thenResolve(resources);

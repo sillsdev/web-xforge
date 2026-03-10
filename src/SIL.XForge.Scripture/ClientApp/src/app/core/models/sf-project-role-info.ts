@@ -1,5 +1,5 @@
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { isTranslateRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { ProjectRoleInfo } from 'xforge-common/models/project-role-info';
 
@@ -18,11 +18,15 @@ export function roleCanAccessTranslate(role?: SFProjectRole): boolean {
 }
 
 export function roleCanAccessCommunityChecking(role: SFProjectRole): boolean {
-  return SF_PROJECT_RIGHTS.roleHasRight(role, 'questions', Operation.View);
+  return SF_PROJECT_RIGHTS.roleHasRight(role, SFProjectDomain.Questions, Operation.View);
 }
 
 export function roleCanAccessDrafts(role: SFProjectRole): boolean {
-  return SF_PROJECT_RIGHTS.roleHasRight(role, 'drafts', Operation.View);
+  return SF_PROJECT_RIGHTS.roleHasRight(role, SFProjectDomain.Drafts, Operation.View);
+}
+
+export function roleCanEditTexts(role: SFProjectRole): boolean {
+  return SF_PROJECT_RIGHTS.roleHasRight(role, SFProjectDomain.Texts, Operation.Edit);
 }
 
 export const SF_DEFAULT_SHARE_ROLE: SFProjectRole = SFProjectRole.CommunityChecker;

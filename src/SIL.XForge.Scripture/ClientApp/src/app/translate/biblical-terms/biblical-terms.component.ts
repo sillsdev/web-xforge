@@ -148,23 +148,25 @@ class Row {
   }
 
   get canEdit(): boolean {
-    const userRole: string | undefined =
-      this.projectUserConfigDoc?.data?.ownerRef != null
-        ? this.projectDoc?.data?.userRoles[this.projectUserConfigDoc.data.ownerRef]
-        : undefined;
-    return userRole == null
-      ? false
-      : SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.BiblicalTerms, Operation.Edit);
+    return this.projectDoc?.data != null && this.projectUserConfigDoc?.data?.ownerRef != null
+      ? SF_PROJECT_RIGHTS.hasRight(
+          this.projectDoc?.data,
+          this.projectUserConfigDoc.data?.ownerRef,
+          SFProjectDomain.BiblicalTerms,
+          Operation.Edit
+        )
+      : false;
   }
 
   private get canAddNotes(): boolean {
-    const userRole: string | undefined =
-      this.projectUserConfigDoc?.data?.ownerRef != null
-        ? this.projectDoc?.data?.userRoles[this.projectUserConfigDoc.data.ownerRef]
-        : undefined;
-    const hasNotePermission: boolean =
-      userRole == null ? false : SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.Notes, Operation.Create);
-    return hasNotePermission;
+    return this.projectDoc?.data != null && this.projectUserConfigDoc?.data?.ownerRef != null
+      ? SF_PROJECT_RIGHTS.hasRight(
+          this.projectDoc?.data,
+          this.projectUserConfigDoc.data?.ownerRef,
+          SFProjectDomain.Notes,
+          Operation.Create
+        )
+      : false;
   }
 
   private get hasUnreadNotes(): boolean {

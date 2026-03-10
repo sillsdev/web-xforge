@@ -1,6 +1,7 @@
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { Meta, moduleMetadata } from '@storybook/angular';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -38,6 +39,7 @@ function createTestParatextProject(index: number, overrides?: Partial<ParatextPr
     isConnected: false,
     hasUserRoleChanged: false,
     hasUpdate: false,
+    role: SFProjectRole.ParatextObserver,
     ...overrides
   };
 }

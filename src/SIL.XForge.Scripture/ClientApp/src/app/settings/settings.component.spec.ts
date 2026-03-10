@@ -309,7 +309,8 @@ describe('SettingsComponent', () => {
             isConnectable: true,
             isConnected: false,
             hasUserRoleChanged: false,
-            hasUpdate: false
+            hasUpdate: false,
+            role: SFProjectRole.ParatextObserver
           }
         ]);
         when(mockedParatextService.getResources()).thenResolve([]);
@@ -785,7 +786,8 @@ class TestEnvironment {
         isConnectable: true,
         isConnected: false,
         hasUserRoleChanged: false,
-        hasUpdate: false
+        hasUpdate: false,
+        role: SFProjectRole.ParatextObserver
       },
       {
         paratextId: 'paratextId02',
@@ -795,7 +797,8 @@ class TestEnvironment {
         isConnectable: true,
         isConnected: false,
         hasUserRoleChanged: false,
-        hasUpdate: false
+        hasUpdate: false,
+        role: SFProjectRole.ParatextObserver
       }
     ]);
     when(mockedParatextService.getResources()).thenResolve([
