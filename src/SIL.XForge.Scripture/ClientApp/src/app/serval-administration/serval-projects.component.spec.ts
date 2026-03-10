@@ -6,7 +6,6 @@ import { DebugElement, getDebugNode } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatCheckboxHarness } from '@angular/material/checkbox/testing';
 import { By } from '@angular/platform-browser';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { escapeRegExp, merge } from 'lodash-es';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
@@ -36,8 +35,7 @@ describe('ServalProjectsComponent', () => {
       { provide: ServalAdministrationService, useMock: mockedServalAdministrationService },
       provideTestRealtime(new TypeRegistry([TestProjectDoc], [FileType.Audio], [])),
       provideHttpClient(withInterceptorsFromDi()),
-      provideHttpClientTesting(),
-      provideNoopAnimations()
+      provideHttpClientTesting()
     ]
   }));
 

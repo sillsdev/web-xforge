@@ -1,6 +1,5 @@
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { VerseRef } from '@sillsdev/scripture';
 import { CookieService } from 'ngx-cookie-service';
 import { QuillService } from 'ngx-quill';
@@ -39,8 +38,7 @@ describe('TextChooserDialogComponent', () => {
       provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: DOCUMENT, useMock: mockedDocument },
       { provide: CookieService, useMock: mock(CookieService) },
-      { provide: UserService, useMock: mockedUserService },
-      provideNoopAnimations()
+      { provide: UserService, useMock: mockedUserService }
     ]
   }));
 

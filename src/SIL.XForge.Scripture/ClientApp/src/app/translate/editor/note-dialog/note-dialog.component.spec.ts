@@ -3,7 +3,6 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
@@ -69,8 +68,7 @@ describe('NoteDialogComponent', () => {
       { provide: DialogService, useMock: mockedDialogService },
       { provide: HttpClient, useMock: mockedHttpClient },
       { provide: UserService, useMock: mockedUserService },
-      provideTestRealtime(SF_TYPE_REGISTRY),
-      provideNoopAnimations()
+      provideTestRealtime(SF_TYPE_REGISTRY)
     ]
   }));
 

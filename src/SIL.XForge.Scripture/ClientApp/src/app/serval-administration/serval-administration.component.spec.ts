@@ -1,7 +1,6 @@
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { mock, when } from 'ts-mockito';
@@ -20,8 +19,7 @@ describe('ServalAdministrationComponent', () => {
       provideTestRealtime(SF_TYPE_REGISTRY),
       provideHttpClient(withInterceptorsFromDi()),
       provideHttpClientTesting(),
-      { provide: ActivatedRoute, useMock: mockedActivatedRoute },
-      provideNoopAnimations()
+      { provide: ActivatedRoute, useMock: mockedActivatedRoute }
     ]
   }));
 

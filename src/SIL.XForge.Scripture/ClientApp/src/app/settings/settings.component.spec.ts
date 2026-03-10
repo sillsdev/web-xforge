@@ -4,7 +4,6 @@ import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, provideRouter, Route } from '@angular/router';
 import { cloneDeep, merge } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
@@ -81,8 +80,7 @@ describe('SettingsComponent', () => {
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: MatDialog, useMock: mockedDialog },
-      provideNoopAnimations()
+      { provide: MatDialog, useMock: mockedDialog }
     ]
   }));
 

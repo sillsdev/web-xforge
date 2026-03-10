@@ -3,7 +3,6 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatStepper } from '@angular/material/stepper';
 import { By } from '@angular/platform-browser';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
@@ -65,8 +64,7 @@ describe('DraftImportWizardComponent', () => {
       { provide: TextDocService, useMock: mockTextDocService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
-      { provide: AuthService, useMock: mockAuthService },
-      provideNoopAnimations()
+      { provide: AuthService, useMock: mockAuthService }
     ]
   }));
 

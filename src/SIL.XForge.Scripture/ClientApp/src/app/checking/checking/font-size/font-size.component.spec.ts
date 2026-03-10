@@ -3,7 +3,6 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MatButtonHarness } from '@angular/material/button/testing';
 import { MatMenuHarness, MatMenuItemHarness } from '@angular/material/menu/testing';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { getTestTranslocoModule } from 'xforge-common/test-utils';
 import { FontSizeComponent } from './font-size.component';
 
@@ -30,8 +29,7 @@ describe('FontSizeComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      imports: [getTestTranslocoModule(), FontSizeComponent],
-      providers: [provideNoopAnimations()]
+      imports: [getTestTranslocoModule(), FontSizeComponent]
     }).compileComponents();
 
     fixture = TestBed.createComponent(FontSizeComponent);

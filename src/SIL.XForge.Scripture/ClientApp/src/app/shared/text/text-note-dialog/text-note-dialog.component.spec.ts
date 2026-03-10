@@ -2,7 +2,6 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import {
   ChildViewContainerComponent,
   configureTestingModule,
@@ -13,8 +12,7 @@ import { NoteDialogData, TextNoteDialogComponent, TextNoteType } from './text-no
 
 describe('TextNoteDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [getTestTranslocoModule(false), TextNoteDialogComponent],
-    providers: [provideNoopAnimations()]
+    imports: [getTestTranslocoModule(false), TextNoteDialogComponent]
   }));
   let env: TestEnvironment;
 

@@ -4,7 +4,6 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { By } from '@angular/platform-browser';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { anything, capture, mock, resetCalls, verify, when } from 'ts-mockito';
@@ -42,7 +41,6 @@ describe('DraftJobsComponent', () => {
       provideHttpClient(withInterceptorsFromDi()),
       provideHttpClientTesting(),
       provideRouter([]),
-      provideNoopAnimations(),
       provideNativeDateAdapter(),
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: AuthService, useMock: mockedAuthService },

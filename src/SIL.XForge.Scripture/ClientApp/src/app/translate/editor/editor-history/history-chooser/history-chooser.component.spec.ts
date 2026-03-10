@@ -1,6 +1,5 @@
 import { SimpleChange } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
@@ -45,8 +44,7 @@ describe('HistoryChooserComponent', () => {
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: TextDocService, useMock: mockedTextDocService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
-      { provide: ProjectNotificationService, useMock: mockedProjectNotificationService },
-      provideNoopAnimations()
+      { provide: ProjectNotificationService, useMock: mockedProjectNotificationService }
     ]
   }));
 

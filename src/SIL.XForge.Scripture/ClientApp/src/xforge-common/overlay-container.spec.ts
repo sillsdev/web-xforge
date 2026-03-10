@@ -3,7 +3,6 @@ import { Component, DebugElement, TemplateRef, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { By } from '@angular/platform-browser';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { InAppRootOverlayContainer } from './overlay-container';
 
 describe('OverlayContainer', () => {
@@ -56,7 +55,7 @@ class TestEnvironment {
   constructor() {
     TestBed.configureTestingModule({
       imports: [HostComponent, AppRootComponent],
-      providers: [{ provide: OverlayContainer, useClass: InAppRootOverlayContainer }, provideNoopAnimations()]
+      providers: [{ provide: OverlayContainer, useClass: InAppRootOverlayContainer }]
     });
 
     this.fixture = TestBed.createComponent(HostComponent);

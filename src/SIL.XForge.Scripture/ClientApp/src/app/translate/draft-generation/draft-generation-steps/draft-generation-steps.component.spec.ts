@@ -5,7 +5,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatCheckboxHarness } from '@angular/material/checkbox/testing';
 import { By } from '@angular/platform-browser';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Canon } from '@sillsdev/scripture';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { getTrainingDataId, TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
@@ -70,8 +69,7 @@ describe('DraftGenerationStepsComponent', () => {
       { provide: UserService, useMock: mockUserService },
       { provide: DialogService, useMock: mockDialogService },
       provideHttpClient(withInterceptorsFromDi()),
-      provideHttpClientTesting(),
-      provideNoopAnimations()
+      provideHttpClientTesting()
     ]
   }));
 
