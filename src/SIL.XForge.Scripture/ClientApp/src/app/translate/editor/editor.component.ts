@@ -126,6 +126,7 @@ import { RemoteTranslationEngine } from '../../machine-api/remote-translation-en
 import { BookChapterChooserComponent } from '../../shared/book-chapter-chooser/book-chapter-chooser.component';
 import { CopyrightBannerComponent } from '../../shared/copyright-banner/copyright-banner.component';
 import { NoticeComponent } from '../../shared/notice/notice.component';
+import { expectedBookChapters } from '../../shared/progress-service/progress.service';
 import {
   TabAddRequestService,
   TabFactoryService,
@@ -148,6 +149,7 @@ import {
   TextComponent
 } from '../../shared/text/text.component';
 import {
+  booksFromScriptureRange,
   canInsertNote,
   formatFontSizeToRems,
   getUnsupportedTags,
@@ -283,6 +285,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   showSuggestions: boolean = false;
   books: number[] = [];
   chapters: number[] = [];
+  text?: TextInfo;
   isProjectAdmin: boolean = false;
   metricsSession?: TranslateMetricsSession;
   mobileNoteControl: UntypedFormControl = new UntypedFormControl('');
@@ -316,8 +319,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private paratextUsers: ParatextUserProfile[] = [];
   private isParatextUserRole: boolean = false;
   private projectUserConfigChangesSub?: Subscription;
-  private text?: TextInfo;
   private sourceText?: TextInfo;
+  private _bookNum?: number;
   sourceProjectDoc?: SFProjectProfileDoc;
   private _unsupportedTags = new Set<string>();
   private sourceLoaded: boolean = false;
@@ -475,7 +478,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get bookNum(): number | undefined {
-    return this.text == null ? undefined : this.text.bookNum;
+    return this._bookNum;
   }
 
   get bookName(): string {
@@ -785,6 +788,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         const bookId = params['bookId'] as string;
         const chapterNum = params['chapter'] as string | null;
         const bookNum = bookId != null ? Canon.bookIdToNumber(bookId) : 0;
+        this._bookNum = bookNum;
 
         if (this.currentUserDoc === undefined) {
           this.currentUserDoc = await this.userService.getCurrentUser();
@@ -816,7 +820,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             if (this.projectUserConfigDoc?.data != null) {
               // Reload config if the checksum has been reset on the server
               if (this.projectUserConfigDoc.data.selectedSegmentChecksum == null) {
-                await this.loadProjectUserConfig();
+                await this.loadProjectUserConfig(bookNum);
               } else {
                 this.loadTranslateSuggesterConfidence();
               }
@@ -828,26 +832,27 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           return;
         }
 
-        this.books = this.projectDoc.data.texts.map(t => t.bookNum);
+        const textBooks: number[] = this.projectDoc.data.texts.map(t => t.bookNum);
+        const draftedBooks: number[] = booksFromScriptureRange(
+          this.projectDoc.data.translateConfig.draftConfig?.draftedScriptureRange
+        );
+        this.books = Array.from(new Set([...textBooks, ...draftedBooks])).sort((a, b) => a - b);
         this.text = this.projectDoc.data.texts.find(t => t.bookNum === bookNum);
-
-        // If book is not in project, navigate to 'projects' route, which should send the user
-        // to the book stored in SFProjectUserConfig.
-        if (this.text == null) {
-          void this.router.navigateByUrl('projects', { replaceUrl: true });
-          return;
-        }
 
         if (this.sourceProjectDoc?.data != null) {
           this.sourceText = this.sourceProjectDoc.data.texts.find(t => t.bookNum === bookNum);
         }
 
-        this.chapters = this.text.chapters.map(c => c.number);
+        const allChapters: number = Math.max(
+          this.text?.chapters[this.text.chapters.length - 1].number ?? 1,
+          expectedBookChapters(Canon.bookNumberToId(bookNum))
+        );
+        this.chapters = Array.from({ length: allChapters }, (_, i) => i + 1);
 
         this.updateVerseNumber();
 
         // Set chapter from route if provided
-        await this.loadProjectUserConfig(chapterNum != null ? Number.parseInt(chapterNum) : undefined);
+        await this.loadProjectUserConfig(bookNum, chapterNum != null ? Number.parseInt(chapterNum) : undefined);
 
         // Lynx must be initialized after the adding of notes and other text-change related events
         this.initLynxFeatureStates(this.projectUserConfigDoc);
@@ -859,10 +864,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           }
           this.projectDataChangesSub = this.projectDoc.remoteChanges$.subscribe(() => {
             let sourceId: TextDocId | undefined;
-            if (this.hasSource && this.text != null && this.chapter != null) {
+            if (this.hasSource && this.chapter != null) {
               sourceId = new TextDocId(
                 this.projectDoc!.data!.translateConfig.source!.projectRef,
-                this.text.bookNum,
+                bookNum,
                 this.chapter
               );
               if (this.source != null && !isEqual(this.source.id, sourceId)) {
@@ -2094,8 +2099,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       });
   }
 
-  private async loadProjectUserConfig(chapterFromUrl?: number): Promise<void> {
-    let chapter: number = chapterFromUrl ?? this.chapters[0] ?? 1;
+  private async loadProjectUserConfig(bookNum: number, chapterFromUrl?: number): Promise<void> {
+    let chapter: number =
+      chapterFromUrl ?? this.projectDoc?.data?.texts.find(t => t.bookNum === bookNum)?.chapters[0].number ?? 1;
     this.loadTranslateSuggesterConfidence();
 
     if (chapterFromUrl == null && this.projectUserConfigDoc?.data != null) {

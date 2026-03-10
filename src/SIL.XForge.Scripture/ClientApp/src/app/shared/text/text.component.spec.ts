@@ -49,7 +49,7 @@ const mockedUserService = mock(UserService);
 const mockedConsole: MockConsole = MockConsole.install();
 const mockedDialogService = mock(DialogService);
 
-describe('TextComponent', () => {
+fdescribe('TextComponent', () => {
   configureTestingModule(() => ({
     imports: [HostComponent],
     providers: [

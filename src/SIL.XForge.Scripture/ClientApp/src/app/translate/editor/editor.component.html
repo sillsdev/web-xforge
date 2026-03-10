@@ -166,6 +166,7 @@
                           <app-text
                             #target
                             [id]="projectId | textDocId: bookNum : chapter"
+                            [textInfo]="text"
                             [isReadOnly]="!canEdit"
                             (updated)="
                               onTargetUpdated(
@@ -266,6 +267,7 @@
                   [isRightToLeft]="isTargetRightToLeft"
                   [fontSize]="fontSize"
                   [diffText]="target"
+                  [textInfo]="text"
                   (revisionSelect)="onHistoryTabRevisionSelect(tab, $event)"
                 >
                 </app-editor-history>

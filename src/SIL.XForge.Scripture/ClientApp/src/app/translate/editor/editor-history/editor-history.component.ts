@@ -13,6 +13,7 @@ import {
 import { MatProgressBar } from '@angular/material/progress-bar';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Delta } from 'quill';
+import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { combineLatest, startWith, tap } from 'rxjs';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -54,6 +55,7 @@ export class EditorHistoryComponent implements OnChanges, OnInit, AfterViewInit 
   @Input() isRightToLeft!: boolean;
   @Input() fontSize?: string;
   @Input() diffText?: TextComponent;
+  @Input() textInfo?: TextInfo;
   @Output() revisionSelect = new EventEmitter<Revision | undefined>();
 
   @ViewChild(HistoryChooserComponent) historyChooser?: HistoryChooserComponent;

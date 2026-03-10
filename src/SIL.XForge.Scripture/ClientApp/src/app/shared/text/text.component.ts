@@ -21,6 +21,7 @@ import QuillCursors from 'quill-cursors';
 import { AuthType, getAuthType } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
+import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { StringMap } from 'rich-text';
 import { fromEvent, Subject, Subscription, timer } from 'rxjs';
 import { takeUntil, tap } from 'rxjs/operators';
@@ -106,6 +107,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   @Input() selectableVerses: boolean = false;
   @Input() lynxAutoCorrectionsEnabled: boolean = false;
   @Input() lynxInsightsEnabled: boolean = false;
+  @Input() textInfo?: TextInfo;
   @Output() updated = new EventEmitter<TextUpdatedEvent>(true);
   @Output() segmentRefChange = new EventEmitter<string>();
   @Output() loaded = new EventEmitter<boolean>(true);
@@ -342,7 +344,12 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       case 'no-content':
         // There isn't any content to show, even if we were online. Setting the placeholder Input customizes this
         // no-content message.
-        return this._placeholder ?? this.transloco.translate('text.book_does_not_exist');
+        return (
+          this._placeholder ??
+          (this.textInfo == null
+            ? this.transloco.translate('text.book_does_not_exist')
+            : this.transloco.translate('text.chapter_does_not_exist'))
+        );
       case 'offline-or-loading':
         if (this.onlineStatusService.isOnline) {
           return this.transloco.translate('text.loading');
@@ -1153,6 +1160,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     }
 
     if (!(await this.projectHasText())) {
+      this.loaded.emit();
       return;
     }
 

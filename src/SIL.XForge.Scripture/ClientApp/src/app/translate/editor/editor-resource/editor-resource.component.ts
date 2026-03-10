@@ -1,13 +1,14 @@
 import { AfterViewInit, Component, DestroyRef, Input, OnChanges, ViewChild } from '@angular/core';
+import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { combineLatest, EMPTY, startWith, Subject, switchMap } from 'rxjs';
 import { FontService } from 'xforge-common/font.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { TextComponent } from '../../../shared/text/text.component';
-import { formatFontSizeToRems } from '../../../shared/utils';
 import { CopyrightBannerComponent } from '../../../shared/copyright-banner/copyright-banner.component';
 import { TextDocIdPipe } from '../../../shared/text/text-doc-id.pipe';
+import { TextComponent } from '../../../shared/text/text.component';
+import { formatFontSizeToRems } from '../../../shared/utils';
 @Component({
   selector: 'app-editor-resource',
   templateUrl: './editor-resource.component.html',
@@ -20,6 +21,7 @@ export class EditorResourceComponent implements AfterViewInit, OnChanges {
   @Input() chapter?: number;
   @Input() segmentRef?: string;
   @Input() highlightSegment?: boolean;
+  @Input() textInfo?: TextInfo;
 
   @ViewChild(TextComponent) resourceText!: TextComponent;
 
