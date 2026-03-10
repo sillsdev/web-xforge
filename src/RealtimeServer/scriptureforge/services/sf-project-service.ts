@@ -591,7 +591,6 @@ export class SFProjectService extends ProjectService<SFProject> {
   }
 
   private hasRight(userId: string, doc: SFProject, operation: Operation): boolean {
-    const projectRole = doc.userRoles[userId];
-    return SF_PROJECT_RIGHTS.roleHasRight(projectRole, SFProjectDomain.Project, operation);
+    return SF_PROJECT_RIGHTS.hasRight(doc, userId, SFProjectDomain.Project, operation);
   }
 }

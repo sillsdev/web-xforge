@@ -81,6 +81,11 @@ public class ParatextProject
     public bool HasUpdate { get; init; }
 
     /// <summary>
+    /// The role the user has on the project, according to the send/receive server.
+    /// </summary>
+    public string Role { get; init; } = string.Empty;
+
+    /// <summary>
     /// A descriptive string of object's properties, for debugging.
     /// </summary>
     /// <returns>
@@ -90,7 +95,7 @@ public class ParatextProject
     {
         StringBuilder message = new StringBuilder();
         foreach (
-            string? item in new string?[]
+            string? item in new[]
             {
                 ParatextId,
                 Name,
@@ -106,6 +111,7 @@ public class ParatextProject
                 IsRightToLeft?.ToString(),
                 HasUserRoleChanged.ToString(),
                 HasUpdate.ToString(),
+                Role,
             }
         )
         {

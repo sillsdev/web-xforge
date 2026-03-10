@@ -28,6 +28,7 @@ import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
+import { roleCanEditTexts } from '../../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { ParatextService } from '../../../core/paratext.service';
@@ -459,8 +460,8 @@ export class DraftImportWizardComponent implements OnInit {
           this.isLoadingProject = false;
         }
       } else {
-        // Need to connect to the project
-        this.canEditProject = paratextProject.isConnectable;
+        // We require the user to be able to connect to the project and edit texts
+        this.canEditProject = paratextProject.isConnectable && roleCanEditTexts(paratextProject.role);
         this.targetProjectDoc$.next(undefined);
       }
     } else {

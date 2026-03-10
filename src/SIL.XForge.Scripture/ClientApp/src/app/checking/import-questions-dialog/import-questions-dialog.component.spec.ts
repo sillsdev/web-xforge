@@ -7,6 +7,7 @@ import { Canon, VerseRef } from '@sillsdev/scripture';
 import { ngfModule } from 'angular-file';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { BehaviorSubject, of, throwError } from 'rxjs';
@@ -1022,7 +1023,8 @@ class TestEnvironment {
         isConnectable: false,
         isConnected: true,
         hasUserRoleChanged: false,
-        hasUpdate: false
+        hasUpdate: false,
+        role: SFProjectRole.ParatextObserver
       }
     ];
     when(mockedParatextService.getProjects()).thenResolve(projects ?? defaultProjects);

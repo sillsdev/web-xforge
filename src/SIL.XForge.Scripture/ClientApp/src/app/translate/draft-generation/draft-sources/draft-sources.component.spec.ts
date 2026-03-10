@@ -3,6 +3,7 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
@@ -735,7 +736,8 @@ class TestEnvironment {
           isConnectable: false,
           isConnected: true,
           hasUserRoleChanged: false,
-          hasUpdate: false
+          hasUpdate: false,
+          role: SFProjectRole.ParatextObserver
         },
         selectableProjectWithLanguageCode: translateSourceToSelectableProjectWithLanguageTag(o.data),
         translateSource: {
@@ -761,7 +763,8 @@ class TestEnvironment {
         isConnectable: true,
         isConnected: false,
         hasUserRoleChanged: false,
-        hasUpdate: false
+        hasUpdate: false,
+        role: SFProjectRole.ParatextObserver
       })).map((o: ParatextProject) => ({
         paratextProject: o,
         selectableProjectWithLanguageCode: o,
@@ -782,7 +785,8 @@ class TestEnvironment {
         isConnectable: true,
         isConnected: false,
         hasUserRoleChanged: false,
-        hasUpdate: false
+        hasUpdate: false,
+        role: SFProjectRole.ParatextObserver
       })).map((o: ParatextProject) => ({
         paratextProject: o,
         selectableProjectWithLanguageCode: o,
