@@ -502,6 +502,29 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.overlayContainerElement.hasChildNodes()).withContext('close button closes dialog').toBeFalse();
   }));
 
+  it('resets all fields when going back to the initial view', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.click(env.importFromTransceleratorButton);
+    env.setControlValue(env.component.fromControl, 'MAT 1:1');
+    env.setControlValue(env.component.toControl, 'MAT 28:100');
+    env.setControlValue(env.component.filterControl, 'filter text');
+
+    // SUT
+    env.click(env.backButton);
+    expect(env.component.questionList.length).toBe(0);
+    env.click(env.importFromTransceleratorButton);
+    expect(env.component.fromControl.value).toBe('');
+    expect(env.component.toControl.value).toBe('');
+    expect(env.component.filterControl.value).toBe('');
+  }));
+
+  it('informs the user when no questions match the filter', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.click(env.importFromTransceleratorButton);
+    env.setControlValue(env.component.filterControl, 'blah blah');
+    expect(env.bodyText).toContain('No questions match the filter.');
+  }));
+
   describe('Import from Paratext', () => {
     it('disables import button when user is offline', fakeAsync(() => {
       const env = new TestEnvironment({ offline: true });

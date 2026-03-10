@@ -413,8 +413,10 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
 
   updateSelectAllCheckbox(): void {
     const checkedCount = this.filteredList.filter(item => item.checked).length;
-    this.selectAllCheckbox.checked = checkedCount === this.filteredList.length;
-    this.selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < this.filteredList.length;
+    if (this.selectAllCheckbox != null) {
+      this.selectAllCheckbox.checked = checkedCount === this.filteredList.length;
+      this.selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < this.filteredList.length;
+    }
   }
 
   async importQuestions(): Promise<void> {
@@ -548,8 +550,12 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
     this.showParatextTagSelector = false;
     this.questionSource = null;
     this.errorState = undefined;
+    this.questionList = [];
+    this.filteredList = [];
+    this.invalidRows = [];
     this.paratextNotes = [];
     this.paratextTagOptions = [];
+    this.clearFilters();
     this.selectedParatextTagId = null;
     this.importClicked = false;
   }
