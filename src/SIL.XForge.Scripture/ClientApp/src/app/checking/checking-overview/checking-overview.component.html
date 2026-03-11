@@ -1,162 +1,349 @@
 <ng-container *transloco="let t; read: 'checking_overview'">
-  <div [ngClass]="{ 'reviewer-panels': !canCreateQuestion }" class="header">
-    <h1>{{ t(canCreateQuestion ? "manage_questions" : "my_progress") }}</h1>
-    @if (canCreateQuestion) {
-      <ng-container class="primary-actions">
-        @if (showImportButton) {
-          <button mat-button type="button" (click)="importDialog()" id="import-btn">
-            <mat-icon>file_upload</mat-icon>
-            {{ t("import") }}
-          </button>
-          @if (allQuestionsCount > 0) {
-            <button mat-button type="button" (click)="downloadQuestionsCsv()" id="export-btn">
-              <mat-icon>download</mat-icon>
-              {{ t("export") }}
+  @if (vm$ | async; as vm) {
+    <div [ngClass]="{ 'reviewer-panels': !vm.canCreateQuestion }" class="header">
+      <h1>{{ t(vm.canCreateQuestion ? "manage_questions" : "my_progress") }}</h1>
+      @if (vm.canCreateQuestion) {
+        <ng-container class="primary-actions">
+          @if (vm.showImportButton) {
+            <button mat-button type="button" (click)="importDialog()" id="import-btn">
+              <mat-icon>file_upload</mat-icon>
+              {{ t("import") }}
+            </button>
+            @if (vm.allQuestionsCount > 0) {
+              <button mat-button type="button" (click)="downloadQuestionsCsv()" id="export-btn">
+                <mat-icon>download</mat-icon>
+                {{ t("export") }}
+              </button>
+            }
+          }
+          @if (!isLoadingData) {
+            <button
+              class="add-question-button hide-lt-sm"
+              mat-flat-button
+              type="button"
+              color="secondary"
+              (click)="questionDialog()"
+            >
+              <mat-icon class="mirror-rtl">post_add</mat-icon> <span>{{ t("add_question") }}</span>
+            </button>
+            <button
+              class="add-question-button hide-gt-sm"
+              mat-mini-fab
+              type="button"
+              color="primary"
+              (click)="questionDialog()"
+            >
+              <mat-icon class="mirror-rtl">post_add</mat-icon>
             </button>
           }
+        </ng-container>
+      } @else {
+        <div id="overall-progress-chart">
+          <app-donut-chart
+            [colors]="[
+              'var(--sf-community-checking-donut-unread)',
+              'var(--sf-community-checking-overview-donut-read)',
+              'var(--sf-community-checking-donut-answered)'
+            ]"
+            backgroundColor="var(--sf-community-checking-donut-container-edge)"
+            [data]="vm.overallProgress"
+          ></app-donut-chart>
+        </div>
+      }
+    </div>
+
+    @if (vm.canEditQuestion) {
+      <div id="text-with-questions-list">
+        @for (textVm of vm.texts; track textVm.text.bookNum) {
+          @if (textVm.publishedQuestionCount > 0 || textVm.hasChapterAudio) {
+            <mat-expansion-panel [togglePosition]="'before'" class="book-expander">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <span class="flex">{{ textVm.bookName }}</span>
+                  <span class="questions-count hide-lt-sm flex-info-end">
+                    {{ questionCountLabel(textVm.publishedQuestionCount) }}
+                  </span>
+                  <span class="hide-lt-sm flex-info-end">
+                    {{ answerCountLabel(textVm.answerCount) }}
+                  </span>
+                  <span class="flex-icon">
+                    <!-- $event.stopPropagation() is needed because the button is within a row that is listening for clicks -->
+                    @if (textVm.publishedQuestionCount > 0) {
+                      <button
+                        mat-icon-button
+                        (click)="$event.stopPropagation(); setArchiveStatusForQuestionsInBook(textVm.text, true)"
+                        [matTooltip]="t('archive_multiple', { location: textVm.bookName })"
+                        class="archive-btn"
+                      >
+                        <mat-icon>archive</mat-icon>
+                      </button>
+                    }
+                  </span>
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              <ng-template matExpansionPanelContent>
+                <mat-selection-list>
+                  @for (chapterVm of textVm.chapters; track chapterVm.chapter.number) {
+                    @if (chapterVm.publishedQuestionCount > 0 || chapterVm.chapter.hasAudio) {
+                      <mat-expansion-panel
+                        [disabled]="chapterVm.publishedQuestionCount === 0"
+                        dense
+                        [togglePosition]="'before'"
+                        class="mat-elevation-z0"
+                      >
+                        <mat-expansion-panel-header>
+                          <mat-panel-title>
+                            <span class="book-chapter-heading flex"
+                              >{{ textVm.bookName + " " + chapterVm.chapter.number }}
+                              @if (chapterVm.chapter.hasAudio) {
+                                <mat-icon [matTooltip]="t('chapter_audio_attached')" class="material-icons-outlined">
+                                  audio_file
+                                </mat-icon>
+                              }
+                            </span>
+                            <span class="questions-count hide-lt-sm flex-info-end">
+                              {{ questionCountLabel(chapterVm.publishedQuestionCount) }}
+                            </span>
+                            <span class="hide-lt-sm flex-info-end">
+                              {{ answerCountLabel(chapterVm.answerCount) }}
+                            </span>
+                            <span class="flex-icon">
+                              @if (chapterVm.publishedQuestionCount > 0) {
+                                <button
+                                  mat-icon-button
+                                  (click)="
+                                    $event.stopPropagation();
+                                    setArchiveStatusForQuestionsInChapter(textVm.text, chapterVm.chapter, true)
+                                  "
+                                  [matTooltip]="
+                                    t('archive_multiple', {
+                                      location: textVm.bookName + ' ' + chapterVm.chapter.number
+                                    })
+                                  "
+                                  class="archive-btn"
+                                >
+                                  <mat-icon>archive</mat-icon>
+                                </button>
+                              }
+                            </span>
+                          </mat-panel-title>
+                        </mat-expansion-panel-header>
+                        <ng-template matExpansionPanelContent>
+                          <mat-selection-list [multiple]="false">
+                            @for (questionDoc of chapterVm.questionDocs; track questionDoc.data!.dataId) {
+                              <mat-list-item disableRipple>
+                                <div class="flex">
+                                  <button
+                                    mat-icon-button
+                                    (click)="questionDialog(questionDoc)"
+                                    class="edit-btn"
+                                    [matTooltip]="t('tooltip_edit')"
+                                    matTooltipPosition="left"
+                                  >
+                                    <mat-icon>edit</mat-icon>
+                                  </button>
+                                  v{{ questionReference(questionDoc.data?.verseRef) }} -&nbsp;
+                                  @if (questionDoc.data?.audioUrl) {
+                                    <mat-icon class="audio-icon material-icons-outlined">audio_file</mat-icon>
+                                  }
+                                  <span class="overflow-ellipsis">{{ questionDoc.data?.text ?? "" }}</span>
+                                  <span class="hide-lt-sm flex-info-end">
+                                    {{ answerCountLabel(questionDoc.getAnswers().length) }}
+                                  </span>
+                                  <span class="flex-icon">
+                                    <button
+                                      mat-icon-button
+                                      (click)="setQuestionArchiveStatus(questionDoc, true)"
+                                      [matTooltip]="t('archive')"
+                                      class="archive-btn"
+                                    >
+                                      <mat-icon>archive</mat-icon>
+                                    </button>
+                                  </span>
+                                </div>
+                              </mat-list-item>
+                            }
+                          </mat-selection-list>
+                        </ng-template>
+                      </mat-expansion-panel>
+                    }
+                  }
+                </mat-selection-list>
+              </ng-template>
+            </mat-expansion-panel>
+          }
         }
-        @if (!isLoadingData) {
-          <button
-            class="add-question-button hide-lt-sm"
-            mat-flat-button
-            type="button"
-            color="secondary"
-            (click)="questionDialog()"
-          >
-            <mat-icon class="mirror-rtl">post_add</mat-icon> <span>{{ t("add_question") }}</span>
-          </button>
-          <button
-            class="add-question-button hide-gt-sm"
-            mat-mini-fab
-            type="button"
-            color="primary"
-            (click)="questionDialog()"
-          >
-            <mat-icon class="mirror-rtl">post_add</mat-icon>
-          </button>
-        }
-      </ng-container>
+      </div>
     } @else {
-      <div id="overall-progress-chart">
-        <app-donut-chart
-          [colors]="[
-            'var(--sf-community-checking-donut-unread)',
-            'var(--sf-community-checking-overview-donut-read)',
-            'var(--sf-community-checking-donut-answered)'
-          ]"
-          backgroundColor="var(--sf-community-checking-donut-container-edge)"
-          [data]="overallProgress()"
-        ></app-donut-chart>
+      <div class="reviewer-panels" id="reviewer-question-panel">
+        <mat-list dense id="reviewer-questions-list">
+          @for (textVm of vm.texts; track textVm.text.bookNum) {
+            @if (textVm.publishedQuestionCount > 0) {
+              <mat-list-item [appRouterLink]="getRouterLink(textVm.bookId)">
+                <div class="flex">
+                  <span class="flex">{{ textVm.bookName }}</span>
+                  <span>
+                    <app-donut-chart
+                      [colors]="[
+                        'var(--sf-community-checking-donut-unread)',
+                        'var(--sf-community-checking-overview-donut-read)',
+                        'var(--sf-community-checking-donut-answered)'
+                      ]"
+                      backgroundColor="var(--sf-community-checking-donut-container-edge)"
+                      [data]="textVm.progress"
+                    ></app-donut-chart>
+                  </span>
+                </div>
+              </mat-list-item>
+            }
+          }
+        </mat-list>
       </div>
     }
-  </div>
 
-  @if (canEditQuestion) {
-    <div id="text-with-questions-list">
-      @for (text of texts; track text.bookNum) {
-        @if (bookQuestionCount(text) > 0 || bookHasChapterAudio(text)) {
-          <mat-expansion-panel [togglePosition]="'before'" class="book-expander">
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                <span class="flex">{{ getBookName(text) }}</span>
-                <span class="questions-count hide-lt-sm flex-info-end">
-                  {{ questionCountLabel(bookQuestionCount(text)) }}
-                </span>
-                <span class="hide-lt-sm flex-info-end">
-                  {{ answerCountLabel(bookAnswerCount(text)) }}
-                </span>
-                <span class="flex-icon">
-                  <!-- $event.stopPropagation() is needed because the button is within a row that is listening for clicks -->
-                  @if (bookQuestionCount(text) > 0) {
-                    <button
-                      mat-icon-button
-                      (click)="$event.stopPropagation(); setArchiveStatusForQuestionsInBook(text, true)"
-                      [matTooltip]="t('archive_multiple', { location: getBookName(text) })"
-                      class="archive-btn"
-                    >
-                      <mat-icon>archive</mat-icon>
-                    </button>
-                  }
-                </span>
-              </mat-panel-title>
-            </mat-expansion-panel-header>
-            <ng-template matExpansionPanelContent>
-              <mat-selection-list>
-                @for (chapter of text.chapters; track chapter.number) {
-                  @if (questionCount(text.bookNum, chapter.number) > 0 || chapter.hasAudio) {
-                    <mat-expansion-panel
-                      [disabled]="!questionCount(text.bookNum, chapter.number)"
-                      dense
-                      [togglePosition]="'before'"
-                      class="mat-elevation-z0"
-                    >
+    @if (vm.showNoQuestionsMessage) {
+      <div class="reviewer-panels flex" id="no-questions-label">
+        <p>
+          {{ t("no_questions") }}
+          @if (vm.canCreateQuestion) {
+            <span [innerHtml]="i18n.translateAndInsertTags('checking_overview.click_add_question')"></span>
+          }
+        </p>
+      </div>
+    }
+
+    @if (vm.showQuestionsLoadingMessage) {
+      <p id="loading-questions-message">{{ t("loading_questions") }}</p>
+    }
+
+    <h2>{{ t(vm.canCreateQuestion ? "project_stats" : "my_contributions") }}</h2>
+
+    <div class="reviewer-panels stat-panels">
+      @if (vm.canCreateQuestion) {
+        <mat-card class="card card-content-question">
+          <mat-card-content>
+            <span class="flex">
+              <div class="stat-total">{{ vm.allQuestionsCount | l10nNumber }}</div>
+              <div class="stat-label">{{ t("questions") }}</div>
+            </span>
+            <span class="vertical-center"> <mat-icon class="mirror-rtl">help</mat-icon> </span>
+          </mat-card-content>
+        </mat-card>
+      }
+      <mat-card class="card card-content-answer">
+        <mat-card-content>
+          <span class="flex">
+            <div class="stat-total">{{ vm.myAnswerCount | l10nNumber }}</div>
+            <div class="stat-label">{{ t("answers") }}</div>
+          </span>
+          <span class="vertical-center"> <mat-icon class="mirror-rtl">question_answer</mat-icon> </span>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="card card-content-comment">
+        <mat-card-content>
+          <span class="flex">
+            <div class="stat-total">{{ vm.myCommentCount | l10nNumber }}</div>
+            <div class="stat-label">{{ t("comments") }}</div>
+          </span>
+          <span class="vertical-center"> <mat-icon class="mirror-rtl">comment</mat-icon> </span>
+        </mat-card-content>
+      </mat-card>
+      @if (vm.canSeeOtherUserResponses) {
+        <mat-card class="card card-content-like">
+          <mat-card-content>
+            <span class="flex">
+              <div class="stat-total">{{ vm.myLikeCount | l10nNumber }}</div>
+              <div class="stat-label">{{ t("likes") }}</div>
+            </span>
+            <span class="vertical-center"> <mat-icon>thumb_up</mat-icon> </span>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+
+    @if (vm.canEditQuestion) {
+      <h2>{{ t("archived_questions") }}</h2>
+    }
+
+    @if (vm.canEditQuestion) {
+      <div id="text-with-archived-questions">
+        @for (textVm of vm.texts; track textVm.text.bookNum) {
+          @if (textVm.archivedQuestionCount > 0) {
+            <mat-expansion-panel [togglePosition]="'before'" class="book-expander">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <div class="flex">
+                    <span class="flex">{{ textVm.bookName }}</span>
+                    <span class="archived-questions-count hide-lt-sm flex-info-end">
+                      {{ questionCountLabel(textVm.archivedQuestionCount) }}
+                    </span>
+                    <span class="flex-icon">
+                      <!-- $event.stopPropagation() is needed because the button is within a row that is listening for clicks -->
+                      <button
+                        mat-icon-button
+                        (click)="$event.stopPropagation(); setArchiveStatusForQuestionsInBook(textVm.text, false)"
+                        [matTooltip]="t('republish_multiple', { location: textVm.bookName })"
+                        class="publish-btn"
+                      >
+                        <mat-icon>public</mat-icon>
+                      </button>
+                    </span>
+                  </div>
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              <ng-template matExpansionPanelContent>
+                @for (chapterVm of textVm.chapters; track chapterVm.chapter.number) {
+                  @if (chapterVm.archivedQuestionCount > 0) {
+                    <mat-expansion-panel [togglePosition]="'before'" class="mat-elevation-z0">
                       <mat-expansion-panel-header>
                         <mat-panel-title>
-                          <span class="book-chapter-heading flex"
-                            >{{ getBookName(text) + " " + chapter?.number }}
-                            @if (chapter.hasAudio) {
-                              <mat-icon [matTooltip]="t('chapter_audio_attached')" class="material-icons-outlined">
-                                audio_file
-                              </mat-icon>
-                            }
-                          </span>
-                          <span class="questions-count hide-lt-sm flex-info-end">
-                            {{ questionCountLabel(questionCount(text.bookNum, chapter.number)) }}
-                          </span>
-                          <span class="hide-lt-sm flex-info-end">
-                            {{ answerCountLabel(chapterAnswerCount(text.bookNum, chapter.number)) }}
-                          </span>
-                          <span class="flex-icon">
-                            @if (questionCount(text.bookNum, chapter.number) > 0) {
+                          <div class="flex">
+                            <span class="flex">{{ textVm.bookName + " " + chapterVm.chapter.number }}</span>
+                            <span class="archived-questions-count hide-lt-sm flex-info-end">
+                              {{ questionCountLabel(chapterVm.archivedQuestionCount) }}
+                            </span>
+                            <span class="flex-icon">
+                              <!-- $event.stopPropagation() is needed because the button is within a row that is listening for clicks -->
                               <button
                                 mat-icon-button
                                 (click)="
-                                  $event.stopPropagation(); setArchiveStatusForQuestionsInChapter(text, chapter, true)
+                                  $event.stopPropagation();
+                                  setArchiveStatusForQuestionsInChapter(textVm.text, chapterVm.chapter, false)
                                 "
                                 [matTooltip]="
-                                  t('archive_multiple', { location: getBookName(text) + ' ' + chapter.number })
+                                  t('republish_multiple', {
+                                    location: textVm.bookName + ' ' + chapterVm.chapter.number
+                                  })
                                 "
-                                class="archive-btn"
+                                class="publish-btn"
                               >
-                                <mat-icon>archive</mat-icon>
+                                <mat-icon>public</mat-icon>
                               </button>
-                            }
-                          </span>
+                            </span>
+                          </div>
                         </mat-panel-title>
                       </mat-expansion-panel-header>
                       <ng-template matExpansionPanelContent>
                         <mat-selection-list [multiple]="false">
-                          @for (
-                            questionDoc of getQuestionDocs(getTextDocIdType(text.bookNum, chapter.number));
-                            track questionDoc.data!.dataId
-                          ) {
+                          @for (questionDoc of chapterVm.archivedQuestionDocs; track questionDoc.data!.dataId) {
                             <mat-list-item disableRipple>
                               <div class="flex">
-                                <button
-                                  mat-icon-button
-                                  (click)="questionDialog(questionDoc)"
-                                  class="edit-btn"
-                                  [matTooltip]="t('tooltip_edit')"
-                                  matTooltipPosition="left"
-                                >
-                                  <mat-icon>edit</mat-icon>
-                                </button>
-                                v{{ questionReference(questionDoc.data?.verseRef) }} -&nbsp;
+                                v{{ questionDoc.data?.verseRef?.verseNum }} -&nbsp;
                                 @if (questionDoc.data?.audioUrl) {
                                   <mat-icon class="audio-icon material-icons-outlined">audio_file</mat-icon>
                                 }
                                 <span class="overflow-ellipsis">{{ questionDoc.data?.text ?? "" }}</span>
-                                <span class="hide-lt-sm flex-info-end">
-                                  {{ answerCountLabel(questionDoc.getAnswers().length) }}
+                                <span class="date-archived hide-lt-sm flex-timestamp">
+                                  {{ timeArchivedStamp(questionDoc.data?.dateArchived) }}
                                 </span>
                                 <span class="flex-icon">
                                   <button
                                     mat-icon-button
-                                    (click)="setQuestionArchiveStatus(questionDoc, true)"
-                                    [matTooltip]="t('archive')"
-                                    class="archive-btn"
+                                    (click)="setQuestionArchiveStatus(questionDoc, false)"
+                                    [matTooltip]="t('republish')"
+                                    class="publish-btn"
                                   >
-                                    <mat-icon>archive</mat-icon>
+                                    <mat-icon>public</mat-icon>
                                   </button>
                                 </span>
                               </div>
@@ -167,206 +354,21 @@
                     </mat-expansion-panel>
                   }
                 }
-              </mat-selection-list>
-            </ng-template>
-          </mat-expansion-panel>
-        }
-      }
-    </div>
-  } @else {
-    <div class="reviewer-panels" id="reviewer-question-panel">
-      <mat-list dense id="reviewer-questions-list">
-        @for (text of texts; track text.bookNum) {
-          @if (bookQuestionCount(text) > 0) {
-            <mat-list-item [appRouterLink]="getRouterLink(getBookId(text))">
-              <div class="flex">
-                <span class="flex">{{ getBookName(text) }}</span>
-                <span>
-                  <app-donut-chart
-                    [colors]="[
-                      'var(--sf-community-checking-donut-unread)',
-                      'var(--sf-community-checking-overview-donut-read)',
-                      'var(--sf-community-checking-donut-answered)'
-                    ]"
-                    backgroundColor="var(--sf-community-checking-donut-container-edge)"
-                    [data]="bookProgress(text)"
-                  ></app-donut-chart>
-                </span>
-              </div>
-            </mat-list-item>
+              </ng-template>
+            </mat-expansion-panel>
           }
         }
-      </mat-list>
-    </div>
-  }
-
-  @if (showNoQuestionsMessage) {
-    <div class="reviewer-panels flex" id="no-questions-label">
-      <p>
-        {{ t("no_questions") }}
-        @if (canCreateQuestion) {
-          <span [innerHtml]="i18n.translateAndInsertTags('checking_overview.click_add_question')"></span>
+        @if (vm.showNoArchivedQuestionsMessage) {
+          <div class="reviewer-panels" id="no-archived-questions-label">
+            <p>{{ t("no_archived_questions") }}</p>
+          </div>
         }
+      </div>
+    }
+    @if (vm.showArchivedQuestionsLoadingMessage) {
+      <p id="loading-archived-questions-message">
+        {{ t("loading_questions") }}
       </p>
-    </div>
-  }
-
-  @if (showQuestionsLoadingMessage) {
-    <p id="loading-questions-message">{{ t("loading_questions") }}</p>
-  }
-
-  <h2>{{ t(canCreateQuestion ? "project_stats" : "my_contributions") }}</h2>
-
-  <div class="reviewer-panels stat-panels">
-    @if (canCreateQuestion) {
-      <mat-card class="card card-content-question">
-        <mat-card-content>
-          <span class="flex">
-            <div class="stat-total">{{ allQuestionsCount | l10nNumber }}</div>
-            <div class="stat-label">{{ t("questions") }}</div>
-          </span>
-          <span class="vertical-center"> <mat-icon class="mirror-rtl">help</mat-icon> </span>
-        </mat-card-content>
-      </mat-card>
     }
-    <mat-card class="card card-content-answer">
-      <mat-card-content>
-        <span class="flex">
-          <div class="stat-total">{{ myAnswerCount | l10nNumber }}</div>
-          <div class="stat-label">{{ t("answers") }}</div>
-        </span>
-        <span class="vertical-center"> <mat-icon class="mirror-rtl">question_answer</mat-icon> </span>
-      </mat-card-content>
-    </mat-card>
-    <mat-card class="card card-content-comment">
-      <mat-card-content>
-        <span class="flex">
-          <div class="stat-total">{{ myCommentCount | l10nNumber }}</div>
-          <div class="stat-label">{{ t("comments") }}</div>
-        </span>
-        <span class="vertical-center"> <mat-icon class="mirror-rtl">comment</mat-icon> </span>
-      </mat-card-content>
-    </mat-card>
-    @if (canSeeOtherUserResponses) {
-      <mat-card class="card card-content-like">
-        <mat-card-content>
-          <span class="flex">
-            <div class="stat-total">{{ myLikeCount | l10nNumber }}</div>
-            <div class="stat-label">{{ t("likes") }}</div>
-          </span>
-          <span class="vertical-center"> <mat-icon>thumb_up</mat-icon> </span>
-        </mat-card-content>
-      </mat-card>
-    }
-  </div>
-
-  @if (canEditQuestion) {
-    <h2>{{ t("archived_questions") }}</h2>
-  }
-
-  @if (canEditQuestion) {
-    <div id="text-with-archived-questions">
-      @for (text of texts; track text.bookNum) {
-        @if (bookQuestionCount(text, true) > 0) {
-          <mat-expansion-panel [togglePosition]="'before'" class="book-expander">
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                <div class="flex">
-                  <span class="flex">{{ getBookName(text) }}</span>
-                  <span class="archived-questions-count hide-lt-sm flex-info-end">
-                    {{ questionCountLabel(bookQuestionCount(text, true)) }}
-                  </span>
-                  <span class="flex-icon">
-                    <!-- $event.stopPropagation() is needed because the button is within a row that is listening for clicks -->
-                    <button
-                      mat-icon-button
-                      (click)="$event.stopPropagation(); setArchiveStatusForQuestionsInBook(text, false)"
-                      [matTooltip]="t('republish_multiple', { location: getBookName(text) })"
-                      class="publish-btn"
-                    >
-                      <mat-icon>public</mat-icon>
-                    </button>
-                  </span>
-                </div>
-              </mat-panel-title>
-            </mat-expansion-panel-header>
-            <ng-template matExpansionPanelContent>
-              @for (chapter of text.chapters; track chapter.number) {
-                @if (questionCount(text.bookNum, chapter.number, true) > 0) {
-                  <mat-expansion-panel [togglePosition]="'before'" class="mat-elevation-z0">
-                    <mat-expansion-panel-header>
-                      <mat-panel-title>
-                        <div class="flex">
-                          <span class="flex">{{ getBookName(text) + " " + chapter?.number }}</span>
-                          <span class="archived-questions-count hide-lt-sm flex-info-end">
-                            {{ questionCountLabel(questionCount(text.bookNum, chapter.number, true)) }}
-                          </span>
-                          <span class="flex-icon">
-                            <!-- $event.stopPropagation() is needed because the button is within a row that is listening for clicks -->
-                            <button
-                              mat-icon-button
-                              (click)="
-                                $event.stopPropagation(); setArchiveStatusForQuestionsInChapter(text, chapter, false)
-                              "
-                              [matTooltip]="
-                                t('republish_multiple', { location: getBookName(text) + ' ' + chapter.number })
-                              "
-                              class="publish-btn"
-                            >
-                              <mat-icon>public</mat-icon>
-                            </button>
-                          </span>
-                        </div>
-                      </mat-panel-title>
-                    </mat-expansion-panel-header>
-                    <ng-template matExpansionPanelContent>
-                      <mat-selection-list [multiple]="false">
-                        @for (
-                          questionDoc of getQuestionDocs(getTextDocIdType(text.bookNum, chapter.number), true);
-                          track questionDoc.data!.dataId
-                        ) {
-                          <mat-list-item disableRipple>
-                            <div class="flex">
-                              v{{ questionDoc.data?.verseRef?.verseNum }} -&nbsp;
-                              @if (questionDoc.data?.audioUrl) {
-                                <mat-icon class="audio-icon material-icons-outlined">audio_file</mat-icon>
-                              }
-                              <span class="overflow-ellipsis">{{ questionDoc.data?.text ?? "" }}</span>
-                              <span class="date-archived hide-lt-sm flex-timestamp">
-                                {{ timeArchivedStamp(questionDoc.data?.dateArchived) }}
-                              </span>
-                              <span class="flex-icon">
-                                <button
-                                  mat-icon-button
-                                  (click)="setQuestionArchiveStatus(questionDoc, false)"
-                                  [matTooltip]="t('republish')"
-                                  class="publish-btn"
-                                >
-                                  <mat-icon>public</mat-icon>
-                                </button>
-                              </span>
-                            </div>
-                          </mat-list-item>
-                        }
-                      </mat-selection-list>
-                    </ng-template>
-                  </mat-expansion-panel>
-                }
-              }
-            </ng-template>
-          </mat-expansion-panel>
-        }
-      }
-      @if (showNoArchivedQuestionsMessage) {
-        <div class="reviewer-panels" id="no-archived-questions-label">
-          <p>{{ t("no_archived_questions") }}</p>
-        </div>
-      }
-    </div>
-  }
-  @if (showArchivedQuestionsLoadingMessage) {
-    <p id="loading-archived-questions-message">
-      {{ t("loading_questions") }}
-    </p>
   }
 </ng-container>

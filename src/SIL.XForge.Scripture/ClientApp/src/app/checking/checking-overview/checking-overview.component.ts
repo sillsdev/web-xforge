@@ -1,5 +1,5 @@
-import { NgClass } from '@angular/common';
-import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { AsyncPipe, NgClass } from '@angular/common';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { MatButton, MatIconButton, MatMiniFabButton } from '@angular/material/button';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import {
@@ -20,7 +20,7 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { asyncScheduler, merge, Subscription } from 'rxjs';
+import { asyncScheduler, BehaviorSubject, merge, Subscription } from 'rxjs';
 import { map, tap, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -49,11 +49,78 @@ import {
 } from '../import-questions-dialog/import-questions-dialog.component';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
+
+/**
+ * Caches per-chapter values so the template does not repeatedly recompute expensive counts.
+ */
+interface CheckingChapterViewModel {
+  readonly chapter: Chapter;
+  readonly publishedQuestionCount: number;
+  readonly archivedQuestionCount: number;
+  readonly answerCount: number;
+  readonly questionDocs: readonly QuestionDoc[];
+  readonly archivedQuestionDocs: readonly QuestionDoc[];
+}
+
+/**
+ * Caches per-book values and includes chapter-level aggregates used by the overview template.
+ */
+interface CheckingTextViewModel {
+  readonly text: TextInfo;
+  readonly bookName: string;
+  readonly bookId: string;
+  readonly hasChapterAudio: boolean;
+  readonly publishedQuestionCount: number;
+  readonly archivedQuestionCount: number;
+  readonly answerCount: number;
+  readonly progress: number[];
+  readonly chapters: readonly CheckingChapterViewModel[];
+}
+
+/**
+ * Aggregated state consumed by the template through vm$ under OnPush change detection.
+ */
+interface CheckingOverviewViewModel {
+  readonly texts: readonly CheckingTextViewModel[];
+  readonly canCreateQuestion: boolean;
+  readonly canEditQuestion: boolean;
+  readonly canSeeOtherUserResponses: boolean;
+  readonly showImportButton: boolean;
+  readonly allQuestionsCount: number;
+  readonly myAnswerCount: number;
+  readonly myLikeCount: number;
+  readonly myCommentCount: number;
+  readonly overallProgress: number[];
+  readonly showQuestionsLoadingMessage: boolean;
+  readonly showArchivedQuestionsLoadingMessage: boolean;
+  readonly showNoQuestionsMessage: boolean;
+  readonly showNoArchivedQuestionsMessage: boolean;
+}
+
+const EMPTY_VIEW_MODEL: CheckingOverviewViewModel = {
+  texts: [],
+  canCreateQuestion: false,
+  canEditQuestion: false,
+  canSeeOtherUserResponses: false,
+  showImportButton: false,
+  allQuestionsCount: 0,
+  myAnswerCount: 0,
+  myLikeCount: 0,
+  myCommentCount: 0,
+  overallProgress: [0, 0, 0],
+  showQuestionsLoadingMessage: false,
+  showArchivedQuestionsLoadingMessage: false,
+  showNoQuestionsMessage: false,
+  showNoArchivedQuestionsMessage: false
+};
+
 @Component({
   selector: 'app-checking-overview',
   templateUrl: './checking-overview.component.html',
   styleUrls: ['./checking-overview.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    AsyncPipe,
     TranslocoModule,
     NgClass,
     MatButton,
@@ -78,6 +145,7 @@ import { QuestionDialogService } from '../question-dialog/question-dialog.servic
 export class CheckingOverviewComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   texts: TextInfo[] = [];
   projectId?: string;
+  readonly vm$ = new BehaviorSubject<CheckingOverviewViewModel>(EMPTY_VIEW_MODEL);
 
   private questionDocs = new Map<string, QuestionDoc[]>();
   private textsByBookId?: TextsByBookId;
@@ -87,6 +155,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   private questionsQuery?: RealtimeQuery<QuestionDoc>;
 
   constructor(
+    private readonly changeDetectorRef: ChangeDetectorRef,
     private readonly destroyRef: DestroyRef,
     private readonly activatedRoute: ActivatedRoute,
     private readonly dialogService: DialogService,
@@ -101,91 +170,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     private readonly l10nNumberPipe: L10nNumberPipe
   ) {
     super(noticeService);
-  }
-
-  get showQuestionsLoadingMessage(): boolean {
-    return !this.questionsLoaded && this.allQuestionsCount === 0;
-  }
-
-  get showArchivedQuestionsLoadingMessage(): boolean {
-    return !this.questionsLoaded && (this.questionsQuery?.docs ?? []).filter(qd => qd.data?.isArchived).length === 0;
-  }
-
-  get showNoQuestionsMessage(): boolean {
-    return this.questionsLoaded && this.allQuestionsCount === 0;
-  }
-
-  get showNoArchivedQuestionsMessage(): boolean {
-    return (
-      this.questionsLoaded && this.questionsQuery?.docs.filter(qd => qd.data != null && qd.data.isArchived).length === 0
-    );
-  }
-
-  get allQuestionsCount(): number {
-    return this.allPublishedQuestions.length;
-  }
-
-  get myAnswerCount(): number {
-    let count: number = 0;
-    const canCreateQuestion = this.canCreateQuestion;
-    const currentUserId = this.userService.currentUserId;
-    for (const questionDoc of this.allPublishedQuestions) {
-      if (questionDoc.data != null) {
-        if (canCreateQuestion) {
-          count += questionDoc.getAnswers().length;
-        } else {
-          count += questionDoc.getAnswers(currentUserId).length;
-        }
-      }
-    }
-
-    return count;
-  }
-
-  get myLikeCount(): number {
-    let count: number = 0;
-    const canCreateQuestion = this.canCreateQuestion;
-    const currentUserId = this.userService.currentUserId;
-    for (const questionDoc of this.allPublishedQuestions) {
-      if (questionDoc.data != null) {
-        for (const answer of questionDoc.getAnswers()) {
-          if (canCreateQuestion) {
-            count += answer.likes.length;
-          } else {
-            count += answer.likes.filter(l => l.ownerRef === currentUserId).length;
-          }
-        }
-      }
-    }
-
-    return count;
-  }
-
-  get myCommentCount(): number {
-    let count: number = 0;
-    const canCreateQuestion = this.canCreateQuestion;
-    const currentUserId = this.userService.currentUserId;
-    for (const questionDoc of this.allPublishedQuestions) {
-      if (questionDoc.data != null) {
-        for (const answer of questionDoc.getAnswers()) {
-          if (canCreateQuestion) {
-            count += answer.comments.filter(c => !c.deleted).length;
-          } else {
-            count += answer.comments.filter(c => c.ownerRef === currentUserId && !c.deleted).length;
-          }
-        }
-      }
-    }
-
-    return count;
-  }
-
-  get canSeeOtherUserResponses(): boolean {
-    return this.projectDoc?.data?.checkingConfig.usersSeeEachOthersResponses === true;
-  }
-
-  get showImportButton(): boolean {
-    return this.projectDoc != null && this.textsByBookId != null && Object.keys(this.textsByBookId).length > 0;
   }
 
   get canCreateQuestion(): boolean {
@@ -205,11 +189,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       return [];
     }
     return this.questionsQuery.docs.filter(qd => qd.data != null && !qd.data.isArchived);
-  }
-
-  private get questionsLoaded(): boolean {
-    // if the user is offline, 'ready' will never be true, but the query will still return the offline docs
-    return !this.onlineStatusService.isOnline || this.questionsQuery?.ready === true;
   }
 
   ngOnInit(): void {
@@ -234,8 +213,10 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
           this.destroyRef
         );
         this.initTexts();
+        this.updateViewModel();
       } finally {
         this.loadingFinished();
+        this.changeDetectorRef.markForCheck();
       }
 
       if (this.dataChangesSub != null) {
@@ -252,6 +233,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
           if (this.projectDoc != null && this.projectDoc.data != null) {
             if (this.permissions.canAccessCommunityChecking(this.projectDoc)) {
               this.initTextsWithLoadingIndicator();
+              this.updateViewModel();
+              this.changeDetectorRef.markForCheck();
             }
           }
         });
@@ -443,6 +426,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     };
     await this.questionDialogService.questionDialog(data);
     this.initTextsWithLoadingIndicator();
+    this.updateViewModel();
+    this.changeDetectorRef.markForCheck();
   }
 
   importDialog(): void {
@@ -482,8 +467,10 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     this.loadingStarted();
     try {
       this.initTexts();
+      this.updateViewModel();
     } finally {
       this.loadingFinished();
+      this.changeDetectorRef.markForCheck();
     }
   }
 
@@ -526,6 +513,116 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     if (textQuestionDocs != null) {
       textQuestionDocs.push(questionDoc);
     }
+  }
+
+  private updateViewModel(): void {
+    const allPublishedQuestions: QuestionDoc[] = this.allPublishedQuestions;
+    const canCreateQuestion: boolean = this.canCreateQuestion;
+    const canEditQuestion: boolean = this.canEditQuestion;
+    const canSeeOtherUserResponses: boolean =
+      this.projectDoc?.data?.checkingConfig.usersSeeEachOthersResponses === true;
+    const showImportButton: boolean =
+      this.projectDoc != null && this.textsByBookId != null && Object.keys(this.textsByBookId).length > 0;
+    const allQuestionsCount: number = allPublishedQuestions.length;
+
+    let myAnswerCount: number = 0;
+    let myLikeCount: number = 0;
+    let myCommentCount: number = 0;
+    const currentUserId: string = this.userService.currentUserId;
+    for (const questionDoc of allPublishedQuestions) {
+      if (questionDoc.data == null) {
+        continue;
+      }
+
+      if (canCreateQuestion) {
+        myAnswerCount += questionDoc.getAnswers().length;
+      } else {
+        myAnswerCount += questionDoc.getAnswers(currentUserId).length;
+      }
+
+      for (const answer of questionDoc.getAnswers()) {
+        if (canCreateQuestion) {
+          myLikeCount += answer.likes.length;
+          myCommentCount += answer.comments.filter(c => !c.deleted).length;
+        } else {
+          myLikeCount += answer.likes.filter(l => l.ownerRef === currentUserId).length;
+          myCommentCount += answer.comments.filter(c => c.ownerRef === currentUserId && !c.deleted).length;
+        }
+      }
+    }
+
+    let totalUnread: number = 0;
+    let totalRead: number = 0;
+    let totalAnswered: number = 0;
+    const texts: CheckingTextViewModel[] = this.texts.map((text: TextInfo) => {
+      const chapters: CheckingChapterViewModel[] = text.chapters.map((chapter: Chapter) => {
+        const textDocId: TextDocId | undefined = this.getTextDocIdType(text.bookNum, chapter.number);
+        const questionDocs: QuestionDoc[] = this.getQuestionDocs(textDocId);
+        const archivedQuestionDocs: QuestionDoc[] = this.getQuestionDocs(textDocId, true);
+        const answerCount: number = questionDocs.reduce((count: number, q: QuestionDoc) => {
+          if (q.data == null) {
+            return count;
+          }
+          return count + q.getAnswers().length;
+        }, 0);
+
+        return {
+          chapter,
+          publishedQuestionCount: questionDocs.length,
+          archivedQuestionCount: archivedQuestionDocs.length,
+          answerCount,
+          questionDocs,
+          archivedQuestionDocs
+        };
+      });
+
+      const publishedQuestionCount: number = chapters.reduce((count: number, c: CheckingChapterViewModel) => {
+        return count + c.publishedQuestionCount;
+      }, 0);
+      const archivedQuestionCount: number = chapters.reduce((count: number, c: CheckingChapterViewModel) => {
+        return count + c.archivedQuestionCount;
+      }, 0);
+      const answerCount: number = chapters.reduce((count: number, c: CheckingChapterViewModel) => {
+        return count + c.answerCount;
+      }, 0);
+
+      const progressTuple: [number, number, number] = this.bookProgress(text) as [number, number, number];
+      totalUnread += progressTuple[0];
+      totalRead += progressTuple[1];
+      totalAnswered += progressTuple[2];
+
+      return {
+        text,
+        bookName: this.getBookName(text),
+        bookId: this.getBookId(text),
+        hasChapterAudio: this.bookHasChapterAudio(text),
+        publishedQuestionCount,
+        archivedQuestionCount,
+        answerCount,
+        progress: progressTuple,
+        chapters
+      };
+    });
+
+    const questionsLoaded: boolean = !this.onlineStatusService.isOnline || this.questionsQuery?.ready === true;
+    const archivedQuestionsCount: number = (this.questionsQuery?.docs ?? []).filter(qd => qd.data?.isArchived).length;
+
+    this.vm$.next({
+      texts,
+      canCreateQuestion,
+      canEditQuestion,
+      canSeeOtherUserResponses,
+      showImportButton,
+      allQuestionsCount,
+      myAnswerCount,
+      myLikeCount,
+      myCommentCount,
+      overallProgress: [totalUnread, totalRead, totalAnswered],
+      showQuestionsLoadingMessage: !questionsLoaded && allQuestionsCount === 0,
+      showArchivedQuestionsLoadingMessage: !questionsLoaded && archivedQuestionsCount === 0,
+      showNoQuestionsMessage: questionsLoaded && allQuestionsCount === 0,
+      showNoArchivedQuestionsMessage: questionsLoaded && archivedQuestionsCount === 0
+    });
   }
 
   /**
