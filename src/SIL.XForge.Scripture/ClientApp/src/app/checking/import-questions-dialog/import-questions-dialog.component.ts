@@ -44,6 +44,7 @@ import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { RealtimeService } from 'xforge-common/realtime.service';
 import { RetryingRequest } from 'xforge-common/retrying-request.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { stripHtml } from 'xforge-common/util/string-util';
@@ -149,6 +150,9 @@ type DialogStatus =
   ]
 })
 export class ImportQuestionsDialogComponent implements OnDestroy {
+  private static readonly IMPORT_CONCURRENCY = 8;
+  private static readonly IMPORT_PROGRESS_UPDATE_INTERVAL_MS = 16;
+
   questionSource: null | 'transcelerator' | 'csv_file' | 'paratext' = null;
 
   questionList: DialogListItem[] = [];
@@ -197,6 +201,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
     private readonly paratextService: ParatextService,
     private readonly checkingQuestionsService: CheckingQuestionsService,
     private readonly onlineStatusService: OnlineStatusService,
+    private readonly realtimeService: RealtimeService,
     private readonly dialogRef: MatDialogRef<ImportQuestionsDialogComponent>,
     private readonly transloco: TranslocoService,
     private readonly dialogService: DialogService,
@@ -337,21 +342,56 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
 
   async setUpQuestionList(questions: SourceQuestion[], useQuestionIds: boolean): Promise<void> {
     const questionQuery = await this.promiseForQuestionDocQuery;
+    const textToQuestionDocs = new Map<string, QuestionDoc[]>();
+    const paratextNoteIdToQuestionDoc = new Map<string, QuestionDoc>();
+    const transceleratorKeyToQuestionDoc = new Map<string, QuestionDoc>();
+
+    for (const doc of questionQuery.docs) {
+      if (doc.data == null) {
+        continue;
+      }
+
+      const textKey: string = doc.data.text ?? '';
+      const existingTextDocs: QuestionDoc[] | undefined = textToQuestionDocs.get(textKey);
+      if (existingTextDocs == null) {
+        textToQuestionDocs.set(textKey, [doc]);
+      } else {
+        existingTextDocs.push(doc);
+      }
+
+      if (doc.data.paratextNoteId != null) {
+        paratextNoteIdToQuestionDoc.set(doc.data.paratextNoteId, doc);
+      }
+
+      if (doc.data.transceleratorQuestionId != null) {
+        const transceleratorKey: string = `${doc.data.transceleratorQuestionId}|${toVerseRef(doc.data.verseRef).BBBCCCVVV}`;
+        transceleratorKeyToQuestionDoc.set(transceleratorKey, doc);
+      }
+    }
 
     questions.sort((a, b) => a.verseRef.BBBCCCVVV - b.verseRef.BBBCCCVVV);
 
-    for (const question of questions.filter(q => this.data.textsByBookId[q.verseRef.book] != null)) {
+    for (const question of questions) {
+      if (this.data.textsByBookId[question.verseRef.book] == null) {
+        continue;
+      }
+
       // Questions imported from Transcelerator are considered duplicates if the ID and verse ref is the same. The
       // version in SF should be updated if the text is different from the version being imported. Transcelerator does
       // not allow changing the reference for a question, as of 2021-03-09
       // Questions imported from a file should be skipped only if they are exactly the same as what is currently in SF.
-      const sfVersionOfQuestion: QuestionDoc | undefined = questionQuery.docs.find(
-        doc =>
-          (doc.data != null &&
-            (useQuestionIds ? doc.data.transceleratorQuestionId === question.id : doc.data.text === question.text) &&
-            toVerseRef(doc.data.verseRef).equals(question.verseRef)) ||
-          (useQuestionIds ? doc.data?.paratextNoteId === question.id : doc.data?.text === question.text)
-      );
+      let sfVersionOfQuestion: QuestionDoc | undefined;
+      if (useQuestionIds) {
+        if (question.id != null) {
+          sfVersionOfQuestion = paratextNoteIdToQuestionDoc.get(question.id);
+          if (sfVersionOfQuestion == null) {
+            const transceleratorKey: string = `${question.id}|${question.verseRef.BBBCCCVVV}`;
+            sfVersionOfQuestion = transceleratorKeyToQuestionDoc.get(transceleratorKey);
+          }
+        }
+      } else {
+        sfVersionOfQuestion = textToQuestionDocs.get(question.text)?.[0];
+      }
 
       this.questionList.push({
         question,
@@ -427,14 +467,15 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
 
     this.dialogRef.disableClose = true;
     this.importing = true;
+    this.importedCount = 0;
+    this.importCanceled = false;
 
     const listItems = this.filteredList.filter(listItem => listItem.checked);
     this.toImportCount = listItems.length;
 
-    // Using Promise.all seems like a better choice than awaiting promises in a loop, but experimentally it appears to
-    // take the same amount of time or significantly longer, especially with large numbers of questions, possibly due to
-    // queuing too many tasks simultaneously. Additionally, running in series makes it much easier to track progress.
-    for (const listItem of listItems) {
+    const startTime = Date.now();
+
+    const importListItem = async (listItem: DialogListItem, statusSnapshot: DialogStatus): Promise<void> => {
       const currentDate = new Date().toJSON();
       const verseRefData = fromVerseRef(listItem.question.verseRef);
       if (listItem.sfVersionOfQuestion == null) {
@@ -451,15 +492,13 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
           dateModified: currentDate
         };
 
-        if (status === 'filter_questions') {
+        if (statusSnapshot === 'filter_questions') {
           newQuestion.transceleratorQuestionId = listItem.question.id;
-        } else if (status === 'filter_notes') {
+        } else if (statusSnapshot === 'filter_notes') {
           newQuestion.paratextNoteId = listItem.question.id;
         }
 
-        await this.zone.runOutsideAngular(() =>
-          this.checkingQuestionsService.createQuestion(this.data.projectId, newQuestion, undefined, undefined)
-        );
+        await this.checkingQuestionsService.createQuestion(this.data.projectId, newQuestion, undefined, undefined);
       } else if (this.questionsDiffer(listItem)) {
         await listItem.sfVersionOfQuestion.submitJson0Op(op =>
           op
@@ -468,11 +507,66 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
             .set(q => q.dateModified, currentDate)
         );
       }
-      this.importedCount++;
-      if (this.importCanceled) {
-        break;
+    };
+
+    let nextIndex: number = 0;
+    let completedCount: number = 0;
+    let latestProgressCount: number = 0;
+    let progressUpdateScheduled = false;
+
+    const scheduleProgressUpdate = (): void => {
+      if (progressUpdateScheduled) {
+        return;
       }
+
+      progressUpdateScheduled = true;
+      setTimeout(() => {
+        progressUpdateScheduled = false;
+        const progressCount: number = latestProgressCount;
+        this.zone.run(() => {
+          this.importedCount = progressCount;
+        });
+      }, ImportQuestionsDialogComponent.IMPORT_PROGRESS_UPDATE_INTERVAL_MS);
+    };
+
+    this.realtimeService.beginBulkLocalUpdates(QuestionDoc.COLLECTION);
+    try {
+      await this.zone.runOutsideAngular(async () => {
+        const workerCount = Math.min(ImportQuestionsDialogComponent.IMPORT_CONCURRENCY, listItems.length);
+        const workers: Promise<void>[] = [];
+
+        for (let worker = 0; worker < workerCount; worker++) {
+          workers.push(
+            (async () => {
+              while (!this.importCanceled) {
+                const currentIndex: number = nextIndex;
+                if (currentIndex >= listItems.length) {
+                  break;
+                }
+
+                nextIndex++;
+                await importListItem(listItems[currentIndex], status);
+
+                completedCount++;
+                latestProgressCount = completedCount;
+                scheduleProgressUpdate();
+
+                if (completedCount % 1000 === 0) {
+                  const elapsedTime = (Date.now() - startTime) / 1000;
+                  console.log(`Imported ${completedCount} questions in ${elapsedTime.toFixed(2)} seconds`);
+                }
+              }
+            })()
+          );
+        }
+
+        await Promise.all(workers);
+      });
+    } finally {
+      this.realtimeService.endBulkLocalUpdates(QuestionDoc.COLLECTION);
     }
+
+    this.importedCount = completedCount;
 
     this.dialogRef.close();
   }

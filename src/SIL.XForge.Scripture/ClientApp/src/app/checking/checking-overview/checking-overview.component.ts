@@ -2,6 +2,7 @@ import { AsyncPipe, NgClass } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { MatButton, MatIconButton, MatMiniFabButton } from '@angular/material/button';
 import { MatCard, MatCardContent } from '@angular/material/card';
+import { MatDialogRef } from '@angular/material/dialog';
 import {
   MatExpansionPanel,
   MatExpansionPanelContent,
@@ -153,6 +154,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   private dataChangesSub?: Subscription;
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
   private questionsQuery?: RealtimeQuery<QuestionDoc>;
+  private importDialogOpen = false;
 
   constructor(
     private readonly changeDetectorRef: ChangeDetectorRef,
@@ -230,6 +232,9 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         // TODO Find a better solution than merely throttling remote changes
         .pipe(throttleTime(1000, asyncScheduler, { leading: true, trailing: true }))
         .subscribe(() => {
+          if (this.importDialogOpen) {
+            return;
+          }
           if (this.projectDoc != null && this.projectDoc.data != null) {
             if (this.permissions.canAccessCommunityChecking(this.projectDoc)) {
               this.initTextsWithLoadingIndicator();
@@ -439,7 +444,18 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       userId: this.userService.currentUserId,
       textsByBookId: this.textsByBookId
     };
-    this.dialogService.openMatDialog(ImportQuestionsDialogComponent, { data });
+    this.importDialogOpen = true;
+    const dialogRef = this.dialogService.openMatDialog(ImportQuestionsDialogComponent, { data }) as MatDialogRef<
+      ImportQuestionsDialogComponent,
+      unknown
+    >;
+    dialogRef
+      .afterClosed()
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.importDialogOpen = false;
+        this.initTextsWithLoadingIndicator();
+      });
   }
 
   getBookName(text: TextInfo): string {

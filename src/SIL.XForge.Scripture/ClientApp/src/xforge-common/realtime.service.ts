@@ -31,10 +31,14 @@ export const noopDestroyRef: DestroyRef = {
   providedIn: 'root'
 })
 export class RealtimeService {
+  private static readonly LOCAL_QUERY_REFRESH_THROTTLE_MS = 10;
+
   protected readonly docs = new Map<string, RealtimeDoc>();
   protected readonly subscribeQueries = new Map<string, Set<RealtimeQuery>>();
   private readonly localUpdateRequestedCollections = new Set<string>();
   private readonly localUpdateRunningCollections = new Set<string>();
+  private readonly localUpdateScheduledCollections = new Set<string>();
+  private readonly bulkLocalUpdateCollections = new Map<string, number>();
 
   constructor(
     private readonly typeRegistry: TypeRegistry,
@@ -188,8 +192,31 @@ export class RealtimeService {
 
   async onLocalDocUpdate(doc: RealtimeDoc): Promise<void> {
     this.localUpdateRequestedCollections.add(doc.collection);
+
+    if (this.isBulkLocalUpdateActive(doc.collection)) {
+      return Promise.resolve();
+    }
+
     this.scheduleLocalQueryRefresh(doc.collection);
     return Promise.resolve();
+  }
+
+  beginBulkLocalUpdates(collection: string): void {
+    const count: number = this.bulkLocalUpdateCollections.get(collection) ?? 0;
+    this.bulkLocalUpdateCollections.set(collection, count + 1);
+  }
+
+  endBulkLocalUpdates(collection: string): void {
+    const count: number = this.bulkLocalUpdateCollections.get(collection) ?? 0;
+    if (count <= 1) {
+      this.bulkLocalUpdateCollections.delete(collection);
+    } else {
+      this.bulkLocalUpdateCollections.set(collection, count - 1);
+    }
+
+    if (this.localUpdateRequestedCollections.has(collection)) {
+      this.scheduleLocalQueryRefresh(collection);
+    }
   }
 
   async onLocalDocDispose(doc: RealtimeDoc): Promise<void> {
@@ -234,22 +261,37 @@ export class RealtimeService {
   }
 
   private scheduleLocalQueryRefresh(collection: string): void {
-    if (this.localUpdateRunningCollections.has(collection)) {
+    if (this.isBulkLocalUpdateActive(collection)) {
       return;
     }
 
-    this.localUpdateRunningCollections.add(collection);
-    void Promise.resolve().then(async () => {
-      try {
-        // Coalesce bursts of document updates into the fewest possible local query refresh cycles.
-        while (this.localUpdateRequestedCollections.has(collection)) {
-          this.localUpdateRequestedCollections.delete(collection);
-          await this.refreshLocalQueriesForCollection(collection);
-        }
-      } finally {
-        this.localUpdateRunningCollections.delete(collection);
+    if (this.localUpdateRunningCollections.has(collection) || this.localUpdateScheduledCollections.has(collection)) {
+      return;
+    }
+
+    this.localUpdateScheduledCollections.add(collection);
+    setTimeout(() => {
+      this.localUpdateScheduledCollections.delete(collection);
+      this.localUpdateRunningCollections.add(collection);
+      void this.runLocalQueryRefreshLoop(collection);
+    }, RealtimeService.LOCAL_QUERY_REFRESH_THROTTLE_MS);
+  }
+
+  private async runLocalQueryRefreshLoop(collection: string): Promise<void> {
+    try {
+      // Coalesce bursts of document updates into the fewest possible local query refresh cycles.
+      while (this.localUpdateRequestedCollections.has(collection)) {
+        this.localUpdateRequestedCollections.delete(collection);
+        await this.refreshLocalQueriesForCollection(collection);
       }
-    });
+    } finally {
+      this.localUpdateRunningCollections.delete(collection);
+
+      // If updates arrived while we were tearing down the running state, make sure a new cycle is queued.
+      if (this.localUpdateRequestedCollections.has(collection)) {
+        this.scheduleLocalQueryRefresh(collection);
+      }
+    }
   }
 
   private async refreshLocalQueriesForCollection(collection: string): Promise<void> {
@@ -263,5 +305,9 @@ export class RealtimeService {
       promises.push(query.localUpdate());
     }
     await Promise.all(promises);
+  }
+
+  private isBulkLocalUpdateActive(collection: string): boolean {
+    return (this.bulkLocalUpdateCollections.get(collection) ?? 0) > 0;
   }
 }
