@@ -33,6 +33,8 @@ export const noopDestroyRef: DestroyRef = {
 export class RealtimeService {
   protected readonly docs = new Map<string, RealtimeDoc>();
   protected readonly subscribeQueries = new Map<string, Set<RealtimeQuery>>();
+  private readonly localUpdateRequestedCollections = new Set<string>();
+  private readonly localUpdateRunningCollections = new Set<string>();
 
   constructor(
     private readonly typeRegistry: TypeRegistry,
@@ -185,14 +187,9 @@ export class RealtimeService {
   }
 
   async onLocalDocUpdate(doc: RealtimeDoc): Promise<void> {
-    const collectionQueries = this.subscribeQueries.get(doc.collection);
-    if (collectionQueries != null) {
-      const promises: Promise<void>[] = [];
-      for (const query of collectionQueries) {
-        promises.push(query.localUpdate());
-      }
-      await Promise.all(promises);
-    }
+    this.localUpdateRequestedCollections.add(doc.collection);
+    this.scheduleLocalQueryRefresh(doc.collection);
+    return Promise.resolve();
   }
 
   async onLocalDocDispose(doc: RealtimeDoc): Promise<void> {
@@ -234,5 +231,37 @@ export class RealtimeService {
     }
 
     return queryPromise;
+  }
+
+  private scheduleLocalQueryRefresh(collection: string): void {
+    if (this.localUpdateRunningCollections.has(collection)) {
+      return;
+    }
+
+    this.localUpdateRunningCollections.add(collection);
+    void Promise.resolve().then(async () => {
+      try {
+        // Coalesce bursts of document updates into the fewest possible local query refresh cycles.
+        while (this.localUpdateRequestedCollections.has(collection)) {
+          this.localUpdateRequestedCollections.delete(collection);
+          await this.refreshLocalQueriesForCollection(collection);
+        }
+      } finally {
+        this.localUpdateRunningCollections.delete(collection);
+      }
+    });
+  }
+
+  private async refreshLocalQueriesForCollection(collection: string): Promise<void> {
+    const collectionQueries = this.subscribeQueries.get(collection);
+    if (collectionQueries == null) {
+      return;
+    }
+
+    const promises: Promise<void>[] = [];
+    for (const query of collectionQueries) {
+      promises.push(query.localUpdate());
+    }
+    await Promise.all(promises);
   }
 }
