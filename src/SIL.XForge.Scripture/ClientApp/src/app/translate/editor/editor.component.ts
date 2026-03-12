@@ -481,10 +481,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this._bookNum;
   }
 
-  get bookName(): string {
-    return this.text == null ? '' : Canon.bookNumberToEnglishName(this.text.bookNum);
-  }
-
   get currentUser(): User | undefined {
     return this.currentUserDoc == null ? undefined : this.currentUserDoc.data;
   }

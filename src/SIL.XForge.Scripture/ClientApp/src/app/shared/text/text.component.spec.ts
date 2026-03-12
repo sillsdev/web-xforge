@@ -118,7 +118,7 @@ describe('TextComponent', () => {
     env.runWithDelayedGetText(env.notPresentTextDocId, () => {
       env.id = env.notPresentTextDocId;
       env.waitForEditor();
-      expect(env.component.placeholder).toEqual('text.book_does_not_exist');
+      expect(env.component.placeholder).toEqual('text.this_book_does_not_exist');
     });
 
     // The user is offline and goes to a location that the project does not have. The placeholder should indicate
@@ -128,7 +128,7 @@ describe('TextComponent', () => {
     env.runWithDelayedGetText(env.notPresentTextDocId, () => {
       env.id = env.notPresentTextDocId;
       env.waitForEditor();
-      expect(env.component.placeholder).toEqual('text.book_does_not_exist');
+      expect(env.component.placeholder).toEqual('text.this_book_does_not_exist');
     });
     env.onlineStatus = true;
     env.waitForEditor();
@@ -146,7 +146,7 @@ describe('TextComponent', () => {
     env.waitForEditor();
     env.id = env.notPresentTextDocId;
     env.waitForEditor();
-    expect(env.component.placeholder).toEqual('text.book_does_not_exist');
+    expect(env.component.placeholder).toEqual('text.this_book_does_not_exist');
 
     const callback: (env: TestEnvironment) => void = (env: TestEnvironment) => {
       env.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
