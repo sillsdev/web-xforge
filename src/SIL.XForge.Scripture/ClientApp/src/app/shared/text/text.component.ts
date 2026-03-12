@@ -351,7 +351,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
         const bookName = this.transloco.translate(`canon.book_names.${bookId}`);
         return this.project.texts.some(t => t.bookNum === this.id!.bookNum)
           ? this.transloco.translate('text.chapter_does_not_exist', { projectName: this.project.name })
-          : this.transloco.translate('text.book_does_not_exist', { bookName, projectName: this.project.name });
+          : this.transloco.translate('text.this_book_does_not_exist', { bookName, projectName: this.project.name });
       case 'offline-or-loading':
         if (this.onlineStatusService.isOnline) {
           return this.transloco.translate('text.loading');
