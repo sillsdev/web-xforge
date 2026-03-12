@@ -5,6 +5,8 @@ import { MatRadioButtonHarness } from '@angular/material/radio/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { QuillService } from 'ngx-quill';
+import { User } from 'realtime-server/lib/esm/common/models/user';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
@@ -26,6 +28,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -176,6 +179,7 @@ describe('DraftUsfmFormatComponent', () => {
     expect(env.component.chapterNum).toBe(1);
     // source has 3 chapters on book 1
     expect(env.component.chaptersWithDrafts).toEqual([1, 2, 3]);
+    expect(env.component.showDraftSourceWarning).toBe(false);
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
   }));
 
@@ -313,6 +317,12 @@ describe('DraftUsfmFormatComponent', () => {
     const env = new TestEnvironment({ canDenormalizeQuotes: false });
     expect(env.quoteFormatWarning).not.toBeNull();
   }));
+
+  it('shows a notice if unable to access the draft source', fakeAsync(() => {
+    const env = new TestEnvironment({ userCanAccessDraftingSource: false });
+    expect(env.draftSourceWarning).not.toBeNull();
+    expect(env.component.showDraftSourceWarning).toBe(true);
+  }));
 });
 
 class TestEnvironment {
@@ -320,15 +330,34 @@ class TestEnvironment {
   fixture: ComponentFixture<DraftUsfmFormatComponent>;
   harnesses?: MatRadioButtonHarness[];
   readonly projectId = 'project01';
+  readonly userId = 'user01';
   onlineStatusService: TestOnlineStatusService;
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-  constructor(args: { project?: Partial<SFProjectProfile>; canDenormalizeQuotes?: boolean } = {}) {
-    const userDoc = mock(UserDoc);
+  constructor(
+    args: {
+      project?: Partial<SFProjectProfile>;
+      canDenormalizeQuotes?: boolean;
+      userCanAccessDraftingSource?: boolean;
+    } = {}
+  ) {
+    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
+      id: this.userId,
+      data: createTestUser({
+        sites: {
+          sf: {
+            projects: [this.projectId, (args.userCanAccessDraftingSource ?? true) ? 'source01' : 'source02']
+          }
+        }
+      })
+    });
     this.onlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
     when(mockedDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(
       of(this.getTestBuildDto(args.canDenormalizeQuotes ?? true))
     );
-    when(mockedUserService.getCurrentUser()).thenResolve(userDoc);
+    when(mockedUserService.getCurrentUser()).thenCall(() =>
+      this.realtimeService.subscribe(UserDoc.COLLECTION, this.userId)
+    );
     when(mockedDraftHandlingService.getDraft(anything(), anything())).thenReturn(
       of([
         { insert: { chapter: { number: 1 } }, attributes: { style: 'c' } },
@@ -362,6 +391,10 @@ class TestEnvironment {
 
   get offlineMessage(): HTMLElement | null {
     return this.fixture.nativeElement.querySelector('.offline-text');
+  }
+
+  get draftSourceWarning(): HTMLElement | null {
+    return this.fixture.nativeElement.querySelector('.draft-source-warning');
   }
 
   get quoteFormatWarning(): HTMLElement | null {
