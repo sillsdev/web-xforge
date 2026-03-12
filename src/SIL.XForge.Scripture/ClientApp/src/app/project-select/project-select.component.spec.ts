@@ -1,7 +1,6 @@
 import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ReactiveFormsModule, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { getTestTranslocoModule } from 'xforge-common/test-utils';
 import { isSafari } from 'xforge-common/utils';
 import { SelectableProject } from '../core/models/selectable-project';
@@ -201,8 +200,7 @@ class TestEnvironment {
     nonSelectableProjects?: SelectableProject[]
   ) {
     TestBed.configureTestingModule({
-      imports: [ReactiveFormsModule, getTestTranslocoModule(), HostComponent],
-      providers: [provideNoopAnimations()]
+      imports: [ReactiveFormsModule, getTestTranslocoModule(), HostComponent]
     });
 
     this.fixture = TestBed.createComponent(HostComponent);

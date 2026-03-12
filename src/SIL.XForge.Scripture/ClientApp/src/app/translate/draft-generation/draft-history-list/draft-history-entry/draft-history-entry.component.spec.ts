@@ -1,5 +1,4 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -55,8 +54,7 @@ describe('DraftHistoryEntryComponent', () => {
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: FeatureFlagService, useMock: mockedFeatureFlagsService },
       { provide: DraftOptionsService, useMock: mockedDraftOptionsService },
-      { provide: PermissionsService, useMock: mockedPermissionsService },
-      provideNoopAnimations()
+      { provide: PermissionsService, useMock: mockedPermissionsService }
     ]
   }));
 

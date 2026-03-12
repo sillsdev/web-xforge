@@ -2,7 +2,6 @@ import { OverlayContainer } from '@angular/cdk/overlay';
 import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Canon } from '@sillsdev/scripture';
 import { ngfModule } from 'angular-file';
 import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
@@ -47,8 +46,7 @@ describe('ChapterAudioDialogComponent', () => {
       provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: CsvService, useMock: mockedCsvService },
       { provide: FileService, useMock: mockedFileService },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      provideNoopAnimations()
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
 

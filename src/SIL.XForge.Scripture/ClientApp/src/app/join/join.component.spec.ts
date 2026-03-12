@@ -1,7 +1,6 @@
 import { DebugElement, ErrorHandler } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { of } from 'rxjs';
@@ -51,8 +50,7 @@ describe('JoinComponent', () => {
       { provide: Router, useMock: mockedRouter },
       { provide: ErrorReportingService, useMock: mockErrorReportingService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
-      { provide: ErrorHandler, useMock: mockedErrorHandler },
-      provideNoopAnimations()
+      { provide: ErrorHandler, useMock: mockedErrorHandler }
     ]
   }));
 

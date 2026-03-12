@@ -2,7 +2,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { saveAs } from 'file-saver';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
@@ -63,8 +62,7 @@ describe('ServalProjectComponent', () => {
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: ServalAdministrationService, useMock: mockServalAdministrationService },
       { provide: TrainingDataService, useMock: mockTrainingDataService },
-      { provide: SFProjectService, useMock: mockSFProjectService },
-      provideNoopAnimations()
+      { provide: SFProjectService, useMock: mockSFProjectService }
     ]
   }));
 

@@ -4,7 +4,6 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
@@ -14,7 +13,7 @@ import { ScriptureChooserDialogComponent, ScriptureChooserDialogData } from './s
 describe('ScriptureChooserDialog', () => {
   configureTestingModule(() => ({
     imports: [getTestTranslocoModule(), ScriptureChooserDialogComponent],
-    providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting(), provideNoopAnimations()]
+    providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
   }));
 
   let env: TestEnvironment;

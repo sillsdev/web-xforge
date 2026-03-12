@@ -3,7 +3,6 @@ import { MatIcon } from '@angular/material/icon';
 import { MatProgressBar } from '@angular/material/progress-bar';
 import { MatSelect, MatSelectChange } from '@angular/material/select';
 import { MatTooltip } from '@angular/material/tooltip';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { cloneDeep } from 'lodash-es';
 import { QuillService } from 'ngx-quill';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
@@ -79,8 +78,7 @@ describe('EditorDraftComponent', () => {
       { provide: NoticeService, useMock: mockNoticeService },
       { provide: ErrorReportingService, useMock: mockErrorReportingService },
       { provide: FeatureFlagService, useMock: mockFeatureFlagService },
-      { provide: SFProjectService, useMock: mockSFProjectService },
-      provideNoopAnimations()
+      { provide: SFProjectService, useMock: mockSFProjectService }
     ]
   }));
 

@@ -15,7 +15,6 @@ import { MatMenu } from '@angular/material/menu';
 import { MatTab, MatTabGroup } from '@angular/material/tabs';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatTree } from '@angular/material/tree';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import { Range } from 'quill';
 import Delta from 'quill-delta';
@@ -124,7 +123,6 @@ describe('LynxInsightsPanelComponent', () => {
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
     providers: [
-      provideNoopAnimations(),
       { provide: LynxInsightStateService, useMock: mockLynxInsightStateService },
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: ActivatedBookChapterService, useMock: mockActivatedBookChapterService },

@@ -1,5 +1,4 @@
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { provideAnimations } from '@angular/platform-browser/animations';
 import { Meta, moduleMetadata } from '@storybook/angular';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
@@ -121,7 +120,6 @@ export default meta;
 const dialogStoryConfig: MatDialogStoryConfig = {
   imports: [EditorTabAddResourceDialogComponent],
   providers: [
-    provideAnimations(),
     { provide: EditorTabAddResourceDialogService, useValue: instance(mockEditorTabAddResourceDialogService) },
     { provide: SFProjectService, useValue: instance(mockSFProjectService) },
     { provide: ParatextService, useValue: instance(mockParatextService) },

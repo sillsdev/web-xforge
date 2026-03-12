@@ -4,7 +4,6 @@ import { DateAdapter, provideNativeDateAdapter } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { BehaviorSubject } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
@@ -82,14 +81,7 @@ class TestEnvironment {
     };
 
     TestBed.configureTestingModule({
-      imports: [
-        DateRangePickerComponent,
-        ReactiveFormsModule,
-        MatFormFieldModule,
-        MatInputModule,
-        MatDatepickerModule,
-        NoopAnimationsModule
-      ],
+      imports: [DateRangePickerComponent, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatDatepickerModule],
       providers: [provideNativeDateAdapter(), FormBuilder, { provide: I18nService, useValue: this.i18nStub }]
     }).compileComponents();
 

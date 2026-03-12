@@ -1,6 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { provideAnimations } from '@angular/platform-browser/animations';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { BehaviorSubject } from 'rxjs';
@@ -30,7 +29,6 @@ describe('EditorTabAddResourceDialogComponent', () => {
     imports: [getTestTranslocoModule()],
     providers: [
       provideTestOnlineStatus(),
-      provideAnimations(),
       { provide: SFProjectService, useMock: mockSFProjectService },
       { provide: ParatextService, useMock: mockParatextService },
       { provide: PermissionsService, useMock: mockPermissionsService },

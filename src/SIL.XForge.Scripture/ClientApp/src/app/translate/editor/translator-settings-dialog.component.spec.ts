@@ -7,7 +7,6 @@ import { MatSelect } from '@angular/material/select';
 import { MatSlideToggleHarness } from '@angular/material/slide-toggle/testing';
 import { MatSlider } from '@angular/material/slider';
 import { By } from '@angular/platform-browser';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
@@ -44,8 +43,7 @@ describe('TranslatorSettingsDialogComponent', () => {
     providers: [
       provideTestOnlineStatus(),
       provideTestRealtime(SF_TYPE_REGISTRY),
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      provideNoopAnimations()
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
 
