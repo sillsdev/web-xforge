@@ -589,6 +589,7 @@
     "network_error_transcelerator": "Network error fetching Transcelerator questions. Retrying ({{ count }}).",
     "next": "Next",
     "no_questions_available": "There are no questions for the books in this project.",
+    "no_questions_match_filter": "No questions match the filter.",
     "no_import_offline": "Importing from {{ method }} is not available offline.",
     "question_for_verse": "Question for verse {{ number }}",
     "question": "Question",
