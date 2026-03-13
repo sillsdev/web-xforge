@@ -1,3 +1,5 @@
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+
 /** See documentation in ParatextProject.cs. */
 export interface ParatextProject {
   paratextId: string;
@@ -10,4 +12,5 @@ export interface ParatextProject {
   isConnected: boolean;
   hasUserRoleChanged: boolean;
   hasUpdate: boolean;
+  role: SFProjectRole;
 }

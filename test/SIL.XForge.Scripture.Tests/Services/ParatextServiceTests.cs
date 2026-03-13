@@ -97,6 +97,7 @@ public class ParatextServiceTests
             IsConnectable = false,
             // Is connected since is in SF database and user is on project
             IsConnected = true,
+            Role = SFProjectRole.Administrator,
         };
         Assert.That(
             repos.Single(project => project.ParatextId == env.PTProjectIds[env.Project01].Id).ToString(),
