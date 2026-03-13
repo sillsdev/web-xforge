@@ -1220,6 +1220,495 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public void GetBuildsSinceAsync_NoPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.GetBuildsSinceAsync(User02, DateTimeOffset.UtcNow, isServalAdmin: false, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public async Task GetBuildsSinceAsync_ReturnsBuildReport()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        SFProjectSecret project02Secret = env.ProjectSecrets.Get(Project02);
+        project02Secret.ServalData.PreTranslationEngineId = "differentEngine";
+        env.ProjectSecrets.Replace(project02Secret);
+        SFProject project01 = env.Projects.Get(Project01);
+        project01.Name = "Project 1";
+        env.Projects.Replace(project01);
+        DateTimeOffset dateCreated = DateTimeOffset.UtcNow.AddDays(-2);
+        DateTimeOffset dateStarted = dateCreated.AddHours(6);
+        DateTimeOffset dateFinished = dateCreated.AddDays(1);
+        DateTimeOffset dateCompleted = dateFinished;
+        TranslationBuild translationBuild = new TranslationBuild
+        {
+            Id = ServalBuildId01,
+            Engine = { Id = TranslationEngine01 },
+            State = JobState.Completed,
+            DateCreated = dateCreated,
+            DateStarted = dateStarted,
+            DateCompleted = dateCompleted,
+            DateFinished = dateFinished,
+        };
+        env.TranslationBuildsClient.GetAllBuildsCreatedAfterAsync(
+                Arg.Any<DateTimeOffset>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(Task.FromResult<IList<TranslationBuild>>([translationBuild]));
+        const string draftGenerationRequestId = "draft-req";
+        env.SetDraftGenerationMetricAssociation(draftGenerationRequestId);
+
+        // SUT
+        IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
+            User01,
+            dateCreated.AddDays(-3),
+            isServalAdmin: true,
+            CancellationToken.None
+        );
+
+        Assert.AreEqual(1, reports.Count);
+        ServalBuildReportDto report = reports[0];
+        Assert.IsNotNull(report.Build);
+        Assert.IsNotNull(report.Project);
+        Assert.AreEqual(Project01, report.Project!.SFProjectId);
+        Assert.AreEqual(project01.ShortName, report.Project.ShortName);
+        Assert.AreEqual(project01.Name, report.Project.Name);
+        Assert.AreEqual(dateCreated, report.Timeline.ServalCreated);
+        Assert.AreEqual(dateStarted, report.Timeline.ServalStarted);
+        Assert.AreEqual(dateCompleted, report.Timeline.ServalCompleted);
+        Assert.AreEqual(dateFinished, report.Timeline.ServalFinished);
+        Assert.AreEqual(draftGenerationRequestId, report.DraftGenerationRequestId);
+    }
+
+    [Test]
+    public async Task GetBuildsSinceAsync_IncludesDeploymentVersion()
+    {
+        var env = new TestEnvironment();
+        const string deploymentVersion = "v2.3.4";
+        DateTimeOffset beginning = DateTimeOffset.UtcNow.AddDays(-1);
+        env.TranslationBuildsClient.GetAllBuildsCreatedAfterAsync(beginning, CancellationToken.None)
+            .Returns(
+                Task.FromResult<IList<TranslationBuild>>([
+                    new TranslationBuild
+                    {
+                        Id = ServalBuildId01,
+                        Engine = { Id = TranslationEngine01 },
+                        State = JobState.Completed,
+                        DeploymentVersion = deploymentVersion,
+                    },
+                ])
+            );
+        env.SetEmptyDraftGenerationMetricAssociations();
+
+        // SUT
+        IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
+            User01,
+            beginning,
+            isServalAdmin: true,
+            CancellationToken.None
+        );
+
+        Assert.AreEqual(1, reports.Count);
+        Assert.AreEqual(deploymentVersion, reports[0].Build?.DeploymentVersion);
+    }
+
+    [Test]
+    public async Task GetBuildsSinceAsync_IncludesExecutionData()
+    {
+        var env = new TestEnvironment();
+        const int trainCount = 1234;
+        const int pretranslateCount = 567;
+        const string sourceLanguageTag = "es";
+        const string targetLanguageTag = "en";
+        DateTimeOffset beginning = DateTimeOffset.UtcNow.AddDays(-1);
+        env.TranslationBuildsClient.GetAllBuildsCreatedAfterAsync(beginning, CancellationToken.None)
+            .Returns(
+                Task.FromResult<IList<TranslationBuild>>([
+                    new TranslationBuild
+                    {
+                        Id = ServalBuildId01,
+                        Engine = { Id = TranslationEngine01 },
+                        State = JobState.Completed,
+                        ExecutionData = new ExecutionData
+                        {
+                            TrainCount = trainCount,
+                            PretranslateCount = pretranslateCount,
+                            EngineSourceLanguageTag = sourceLanguageTag,
+                            EngineTargetLanguageTag = targetLanguageTag,
+                        },
+                    },
+                ])
+            );
+        env.SetEmptyDraftGenerationMetricAssociations();
+
+        IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
+            User01,
+            beginning,
+            isServalAdmin: true,
+            CancellationToken.None
+        );
+
+        Assert.AreEqual(1, reports.Count);
+        ServalBuildDto? build = reports[0].Build;
+        Assert.IsNotNull(build);
+        Assert.IsNotNull(build!.ExecutionData);
+        Assert.AreEqual(trainCount, build.ExecutionData!.TrainCount);
+        Assert.AreEqual(pretranslateCount, build.ExecutionData.PretranslateCount);
+        Assert.AreEqual(sourceLanguageTag, build.ExecutionData.SourceLanguageTag);
+        Assert.AreEqual(targetLanguageTag, build.ExecutionData.TargetLanguageTag);
+    }
+
+    [Test]
+    public async Task GetBuildsSinceAsync_NullExecutionData_MapsExecutionDataAsNull()
+    {
+        var env = new TestEnvironment();
+        DateTimeOffset beginning = DateTimeOffset.UtcNow.AddDays(-1);
+        env.TranslationBuildsClient.GetAllBuildsCreatedAfterAsync(beginning, CancellationToken.None)
+            .Returns(
+                Task.FromResult<IList<TranslationBuild>>([
+                    new TranslationBuild
+                    {
+                        Id = ServalBuildId01,
+                        Engine = { Id = TranslationEngine01 },
+                        State = JobState.Completed,
+                        ExecutionData = null!,
+                    },
+                ])
+            );
+        env.SetEmptyDraftGenerationMetricAssociations();
+
+        IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
+            User01,
+            beginning,
+            isServalAdmin: true,
+            CancellationToken.None
+        );
+
+        Assert.AreEqual(1, reports.Count);
+        ServalBuildDto? build = reports[0].Build;
+        Assert.IsNotNull(build);
+        Assert.IsNull(build!.ExecutionData);
+    }
+
+    [Test]
+    public async Task GetBuildsSinceAsync_DuplicateEngineIdsAsync()
+    {
+        // Suppose multiple records in project secrets indicate that multiple SF projects are using the same Serval
+        // translation engine id. This is unexpected and may indicate a problem in the SF DB. But don't crash about it. We'll log an error and pick one of the projects to use.
+
+        // Set up test environment
+        var env = new TestEnvironment();
+        DateTimeOffset beginning = DateTimeOffset.UtcNow.AddDays(-1);
+        env.TranslationBuildsClient.GetAllBuildsCreatedAfterAsync(beginning, CancellationToken.None)
+            .Returns(
+                Task.FromResult<IList<TranslationBuild>>([
+                    new TranslationBuild
+                    {
+                        Id = ServalBuildId01,
+                        Engine = { Id = TranslationEngine01 },
+                        State = JobState.Completed,
+                    },
+                ])
+            );
+        env.SetEmptyDraftGenerationMetricAssociations();
+
+        Assert.GreaterOrEqual(
+            (await env.ProjectSecrets.GetAllAsync()).Count(
+                (SFProjectSecret ps) => ps.ServalData?.PreTranslationEngineId == TranslationEngine01
+            ),
+            2,
+            "Invalid test setup."
+        );
+
+        // SUT
+        IReadOnlyList<ServalBuildReportDto> result = await env.Service.GetBuildsSinceAsync(
+            User01,
+            beginning,
+            isServalAdmin: true,
+            CancellationToken.None
+        );
+
+        Assert.AreEqual(1, result.Count);
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.LogLevel == LogLevel.Error);
+    }
+
+    [Test]
+    public async Task GetBuildsSinceAsync_UnknownProject()
+    {
+        // Suppose when we look in the SF DB for project information, we don't find any SF projects that we understand
+        // to be using a given Serval translation engine id. The project may have existed at SF but was deleted, or
+        // something else may be happening. We should have a report of this draft generation request, though without project information.
+
+        // Set up test environment
+        var env = new TestEnvironment();
+        DateTimeOffset beginning = DateTimeOffset.UtcNow.AddDays(-1);
+        env.TranslationBuildsClient.GetAllBuildsCreatedAfterAsync(beginning, CancellationToken.None)
+            .Returns(
+                Task.FromResult<IList<TranslationBuild>>([
+                    new TranslationBuild
+                    {
+                        Id = ServalBuildId01,
+                        Engine = { Id = "some-unrecognized-engine-id" },
+                        State = JobState.Completed,
+                    },
+                ])
+            );
+
+        // SUT
+        IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
+            User01,
+            beginning,
+            isServalAdmin: true,
+            CancellationToken.None
+        );
+
+        Assert.AreEqual(1, reports.Count);
+        Assert.IsNull(reports[0].Project);
+    }
+
+    [Test]
+    public async Task GetBuildsSinceAsync_ScriptureRangesIncludeProjectNames()
+    {
+        // When scripture ranges reference different source projects (not the target), the returned report should
+        // include the short name and name of each referenced project in the scripture range entries.
+
+        // Set up test environment
+        var env = new TestEnvironment();
+        SFProjectSecret project02Secret = env.ProjectSecrets.Get(Project02);
+        project02Secret.ServalData.PreTranslationEngineId = "differentEngine";
+        env.ProjectSecrets.Replace(project02Secret);
+
+        // Configure project names for source projects
+        SFProject project02 = env.Projects.Get(Project02);
+        project02.ShortName = "SRC";
+        project02.Name = "Source Project";
+        env.Projects.Replace(project02);
+
+        SFProject project03 = env.Projects.Get(Project03);
+        project03.ShortName = "TRN";
+        project03.Name = "Training Source";
+        env.Projects.Replace(project03);
+
+        DateTimeOffset dateCreated = DateTimeOffset.UtcNow.AddDays(-2);
+        TranslationBuild translationBuild = new TranslationBuild
+        {
+            Id = ServalBuildId01,
+            Engine = { Id = TranslationEngine01 },
+            State = JobState.Completed,
+            DateCreated = dateCreated,
+        };
+        env.TranslationBuildsClient.GetAllBuildsCreatedAfterAsync(
+                Arg.Any<DateTimeOffset>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(Task.FromResult<IList<TranslationBuild>>([translationBuild]));
+
+        const string trainingRange = "GEN;EXO";
+        const string translationRange = "LEV;NUM";
+        env.EventMetricService.GetEventMetricsAsync(
+                Arg.Any<string?>(),
+                Arg.Any<EventScope[]?>(),
+                Arg.Any<string[]>(),
+                Arg.Any<DateTime?>(),
+                Arg.Any<DateTime?>(),
+                Arg.Any<int>(),
+                Arg.Any<int>()
+            )
+            .Returns(
+                Task.FromResult(
+                    new QueryResults<EventMetric>
+                    {
+                        Results =
+                        [
+                            new EventMetric
+                            {
+                                EventType = nameof(MachineProjectService.BuildProjectAsync),
+                                Payload =
+                                {
+                                    {
+                                        "buildConfig",
+                                        BsonDocument.Parse(
+                                            JsonConvert.SerializeObject(
+                                                new BuildConfig
+                                                {
+                                                    TrainingScriptureRanges =
+                                                    [
+                                                        new ProjectScriptureRange
+                                                        {
+                                                            ProjectId = Project03,
+                                                            ScriptureRange = trainingRange,
+                                                        },
+                                                    ],
+                                                    TranslationScriptureRanges =
+                                                    [
+                                                        new ProjectScriptureRange
+                                                        {
+                                                            ProjectId = Project02,
+                                                            ScriptureRange = translationRange,
+                                                        },
+                                                    ],
+                                                    ProjectId = Project01,
+                                                }
+                                            )
+                                        )
+                                    },
+                                },
+                                ProjectId = Project01,
+                                Result = new BsonString(ServalBuildId01),
+                                Scope = EventScope.Drafting,
+                            },
+                        ],
+                        UnpagedCount = 1,
+                    }
+                )
+            );
+
+        // SUT
+        IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
+            User01,
+            dateCreated.AddDays(-3),
+            isServalAdmin: true,
+            CancellationToken.None
+        );
+
+        Assert.AreEqual(1, reports.Count);
+        ServalBuildReportDto report = reports[0];
+
+        // Training scripture ranges should have Project03's short name and name
+        BuildReportProjectScriptureRange trainingEntry = report.Config.TrainingScriptureRanges.Single();
+        Assert.AreEqual(Project03, trainingEntry.SFProjectId);
+        Assert.AreEqual(trainingRange, trainingEntry.ScriptureRange);
+        Assert.AreEqual("TRN", trainingEntry.ShortName);
+        Assert.AreEqual("Training Source", trainingEntry.Name);
+
+        // Translation scripture ranges should have Project02's short name and name
+        BuildReportProjectScriptureRange translationEntry = report.Config.TranslationScriptureRanges.Single();
+        Assert.AreEqual(Project02, translationEntry.SFProjectId);
+        Assert.AreEqual(translationRange, translationEntry.ScriptureRange);
+        Assert.AreEqual("SRC", translationEntry.ShortName);
+        Assert.AreEqual("Source Project", translationEntry.Name);
+    }
+
+    [Test]
+    public async Task GetBuildsSinceAsync_IncludesEventsOnlyReports()
+    {
+        // When there are SF draft generation events without a corresponding Serval build, they should appear as
+        // events-only reports with a null Build and appropriate status.
+
+        // Set up test environment
+        var env = new TestEnvironment();
+        DateTimeOffset beginning = DateTimeOffset.UtcNow.AddDays(-7);
+        env.TranslationBuildsClient.GetAllBuildsCreatedAfterAsync(beginning, CancellationToken.None)
+            .Returns(Task.FromResult<IList<TranslationBuild>>([]));
+
+        // Set up events that don't match any Serval build
+        env.EventMetricService.GetEventMetricsAsync(
+                Arg.Any<string?>(),
+                Arg.Any<EventScope[]?>(),
+                Arg.Any<string[]>(),
+                Arg.Any<DateTime?>(),
+                Arg.Any<DateTime?>(),
+                Arg.Any<int>(),
+                Arg.Any<int>()
+            )
+            .Returns(
+                Task.FromResult(
+                    new QueryResults<EventMetric>
+                    {
+                        Results =
+                        [
+                            new EventMetric
+                            {
+                                EventType = nameof(MachineApiService.StartPreTranslationBuildAsync),
+                                ProjectId = Project01,
+                                UserId = User01,
+                                Tags = new Dictionary<string, BsonValue?>
+                                {
+                                    { MachineProjectService.DraftGenerationRequestIdKey, "orphan-request-1" },
+                                },
+                            },
+                        ],
+                        UnpagedCount = 1,
+                    }
+                )
+            );
+
+        // SUT
+        IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
+            User01,
+            beginning,
+            isServalAdmin: true,
+            CancellationToken.None
+        );
+
+        Assert.AreEqual(1, reports.Count);
+        Assert.IsNull(reports[0].Build);
+        Assert.AreEqual(DraftGenerationBuildStatus.UserRequested, reports[0].Status);
+        Assert.AreEqual("orphan-request-1", reports[0].DraftGenerationRequestId);
+        Assert.AreEqual(User01, reports[0].RequesterSFUserId);
+    }
+
+    [Test]
+    public async Task GetBuildsSinceAsync_SkipsEventsWithNullProjectId()
+    {
+        // Events with no ProjectId should be skipped and not included in the results.
+
+        var env = new TestEnvironment();
+        DateTimeOffset beginning = DateTimeOffset.UtcNow.AddDays(-7);
+        env.TranslationBuildsClient.GetAllBuildsCreatedAfterAsync(beginning, CancellationToken.None)
+            .Returns(Task.FromResult<IList<TranslationBuild>>([]));
+
+        // Set up an event with null ProjectId
+        env.EventMetricService.GetEventMetricsAsync(
+                Arg.Any<string?>(),
+                Arg.Any<EventScope[]?>(),
+                Arg.Any<string[]>(),
+                Arg.Any<DateTime?>(),
+                Arg.Any<DateTime?>(),
+                Arg.Any<int>(),
+                Arg.Any<int>()
+            )
+            .Returns(
+                Task.FromResult(
+                    new QueryResults<EventMetric>
+                    {
+                        Results =
+                        [
+                            new EventMetric
+                            {
+                                EventType = nameof(MachineApiService.StartPreTranslationBuildAsync),
+                                ProjectId = null,
+                                UserId = User01,
+                                Tags = new Dictionary<string, BsonValue?>
+                                {
+                                    { MachineProjectService.DraftGenerationRequestIdKey, "null-project-request" },
+                                },
+                            },
+                        ],
+                        UnpagedCount = 1,
+                    }
+                )
+            );
+
+        // SUT
+        IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
+            User01,
+            beginning,
+            isServalAdmin: true,
+            CancellationToken.None
+        );
+
+        // Events with null ProjectId should be skipped entirely
+        Assert.AreEqual(0, reports.Count);
+    }
+
+    [Test]
     public async Task GetBuildsAsync_QueuedStateWithEventMetric()
     {
         // Set up test environment
@@ -4881,6 +5370,7 @@ public class MachineApiServiceTests
             ServalOptions = Options.Create(new ServalOptions { WebhookSecret = "this_is_a_secret" });
             SyncService = Substitute.For<ISyncService>();
             SyncService.SyncAsync(Arg.Any<SyncConfig>()).Returns(Task.FromResult(HangfireJobId));
+            TranslationBuildsClient = Substitute.For<ITranslationBuildsClient>();
             TranslationEnginesClient = Substitute.For<ITranslationEnginesClient>();
             TranslationEnginesClient
                 .GetAsync(TranslationEngine01, CancellationToken.None)
@@ -4920,6 +5410,7 @@ public class MachineApiServiceTests
                 RealtimeService,
                 ServalOptions,
                 SyncService,
+                TranslationBuildsClient,
                 TranslationEnginesClient,
                 TranslationEngineTypesClient,
                 UserSecrets
@@ -4945,6 +5436,7 @@ public class MachineApiServiceTests
         public MachineApiService Service { get; }
         public IOptions<ServalOptions> ServalOptions { get; }
         public ISyncService SyncService { get; }
+        public ITranslationBuildsClient TranslationBuildsClient { get; }
         public ITranslationEnginesClient TranslationEnginesClient { get; }
         public ITranslationEngineTypesClient TranslationEngineTypesClient { get; }
         public MemoryRepository<UserSecret> UserSecrets { get; }
@@ -5435,6 +5927,7 @@ public class MachineApiServiceTests
             Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
         }
 
+        /// <remarks>Either to test the empty situation, or because it is not important for the test.</remarks>
         public void SetEmptyDraftGenerationMetricAssociations()
         {
             // Mock for GetEventMetricsAsync in GetDraftGenerationRequestIdForBuildAsync
@@ -5454,7 +5947,6 @@ public class MachineApiServiceTests
         public void SetDraftGenerationMetricAssociation(string draftGenerationRequestId)
         {
             // Mock the event metrics service to return a build event with draftGenerationRequestId tag
-            // This is for GetDraftGenerationRequestIdForBuildAsync
             EventMetricService
                 .GetEventMetricsAsync(
                     Arg.Any<string?>(),
@@ -5474,6 +5966,7 @@ public class MachineApiServiceTests
                                 new EventMetric
                                 {
                                     EventType = nameof(Services.MachineProjectService.BuildProjectAsync),
+                                    ProjectId = Project01,
                                     Result = ServalBuildId01,
                                     Tags = new Dictionary<string, BsonValue?>
                                     {

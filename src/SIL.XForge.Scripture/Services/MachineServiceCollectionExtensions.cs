@@ -69,6 +69,13 @@ public static class MachineServiceCollectionExtensions
             var httpClient = factory.CreateClient(MachineApi.HttpClientName);
             return new TranslationEnginesClient(httpClient);
         });
+        services.AddSingleton<ITranslationBuildsClient, TranslationBuildsClient>(sp =>
+        {
+            // Instantiate the translation builds client with our named HTTP client
+            var factory = sp.GetService<IHttpClientFactory>();
+            var httpClient = factory.CreateClient(MachineApi.HttpClientName);
+            return new TranslationBuildsClient(httpClient);
+        });
         services.AddSingleton<ITranslationEngineTypesClient, TranslationEngineTypesClient>(sp =>
         {
             // Instantiate the translation engines client with our named HTTP client
