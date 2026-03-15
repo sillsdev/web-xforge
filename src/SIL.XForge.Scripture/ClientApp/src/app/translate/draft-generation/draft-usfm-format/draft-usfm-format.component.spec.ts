@@ -145,7 +145,7 @@ describe('DraftUsfmFormatComponent', () => {
         ]
       }
     });
-    when(mockedProjectService.hasDraft(anything(), anything(), anything())).thenReturn(false);
+    when(mockedProjectService.hasDraft(anything(), anything(), anything(), anything())).thenReturn(false);
     tick(EDITOR_READY_TIMEOUT);
     env.fixture.detectChanges();
     tick(EDITOR_READY_TIMEOUT);
@@ -169,7 +169,7 @@ describe('DraftUsfmFormatComponent', () => {
         ]
       }
     });
-    when(mockedProjectService.hasDraft(anything(), anything(), anything())).thenReturn(true);
+    when(mockedProjectService.hasDraft(anything(), anything(), anything(), anything())).thenReturn(true);
     tick(EDITOR_READY_TIMEOUT);
     env.fixture.detectChanges();
     tick(EDITOR_READY_TIMEOUT);
@@ -369,7 +369,7 @@ class TestEnvironment {
     when(mockedNoticeService.show(anything())).thenResolve();
     when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(true);
     when(mockedServalAdministration.onlineRetrievePreTranslationStatus(anything())).thenResolve();
-    when(mockedProjectService.hasDraft(anything(), anything(), anything())).thenReturn(true);
+    when(mockedProjectService.hasDraft(anything(), anything(), anything(), anything())).thenReturn(true);
     this.setupProject(args.project);
     this.fixture = TestBed.createComponent(DraftUsfmFormatComponent);
     this.component = this.fixture.componentInstance;
