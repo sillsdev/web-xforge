@@ -227,7 +227,7 @@
             @if (!isDraftInProgress(draftJob) && !hasAnyCompletedBuild) {
               <section class="action-button-strip">
                 @if (isSourcesConfigurationComplete) {
-                  <button mat-flat-button color="primary" (click)="generateDraft()">
+                  <button mat-flat-button color="primary" (click)="generateDraftClicked()">
                     <mat-icon>auto_awesome</mat-icon>
                     {{ t("generate_draft_button") }}
                   </button>
@@ -358,7 +358,7 @@
                         @if (hasDraftBooksAvailable) {
                           <app-draft-download-button [build]="lastCompletedBuild" />
                           @if (featureFlags.usfmFormat.enabled) {
-                            <button mat-button [routerLink]="['format']">
+                            <button mat-button [routerLink]="draftOptionsService.formattingOptionsPath">
                               <mat-icon>settings</mat-icon>
                               {{ t("format_draft") }}
                             </button>
@@ -391,16 +391,14 @@
         hasAnyCompletedBuild &&
         isSourcesConfigurationComplete
       ) {
-        @if (!formattingOptionsSupported || formattingOptionsSelected) {
-          <button
-            mat-flat-button
-            color="primary"
-            type="button"
-            (click)="generateDraft({ withConfirm: !featureFlags.newDraftHistory.enabled })"
-          >
-            <mat-icon>add</mat-icon> {{ t("generate_new_draft") }}
-          </button>
-        }
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="generateDraftClicked({ withConfirm: !featureFlags.newDraftHistory.enabled })"
+        >
+          <mat-icon>add</mat-icon> {{ t("generate_new_draft") }}
+        </button>
         @if (hasConfigureSourcePermission) {
           <button mat-button data-test-id="configure-button" [routerLink]="['sources']">
             <mat-icon>settings</mat-icon> {{ t("configure_sources") }}

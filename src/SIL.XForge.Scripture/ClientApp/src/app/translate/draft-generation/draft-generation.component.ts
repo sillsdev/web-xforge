@@ -168,7 +168,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     private readonly activatedProject: ActivatedProjectService,
     private readonly authService: AuthService,
     private readonly draftGenerationService: DraftGenerationService,
-    private readonly draftOptionsService: DraftOptionsService,
     private readonly draftSourcesService: DraftSourcesService,
     private readonly nllbService: NllbLanguageService,
     protected readonly i18n: I18nService,
@@ -178,18 +177,11 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     protected readonly noticeService: NoticeService,
     protected readonly urlService: ExternalUrlService,
     protected readonly featureFlags: FeatureFlagService,
+    protected readonly draftOptionsService: DraftOptionsService,
     private readonly projectService: SFProjectService,
     private destroyRef: DestroyRef
   ) {
     super(noticeService);
-  }
-
-  get formattingOptionsSelected(): boolean {
-    return this.draftOptionsService.areFormattingOptionsSelected();
-  }
-
-  get formattingOptionsSupported(): boolean {
-    return this.draftOptionsService.areFormattingOptionsSupportedForBuild(this.lastCompletedBuild);
   }
 
   get hasAnyCompletedBuild(): boolean {
@@ -342,7 +334,30 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     });
   }
 
-  async generateDraft({ withConfirm = false } = {}): Promise<void> {
+  get formattingOptionsRequired(): boolean {
+    return (
+      this.draftOptionsService.areFormattingOptionsSupportedForBuild(this.lastCompletedBuild) &&
+      !this.draftOptionsService.areFormattingOptionsSelected()
+    );
+  }
+
+  async generateDraftClicked({ withConfirm = false } = {}): Promise<void> {
+    if (this.formattingOptionsRequired) {
+      const dialogRef = this.dialogService.openGenericDialog({
+        title: this.i18n.translate('draft_generation.choose_formatting_options'),
+        message: this.i18n.translate('draft_generation.choose_formatting_options_before_new_draft'),
+        options: [
+          {
+            value: true,
+            label: this.i18n.translate('draft_generation.formatting_options'),
+            highlight: true,
+            icon: 'build'
+          }
+        ]
+      });
+      if (await dialogRef.result) await this.router.navigate(this.draftOptionsService.formattingOptionsPath);
+      return;
+    }
     if (withConfirm) {
       const isConfirmed: boolean | undefined = await this.dialogService.openGenericDialog({
         title: this.i18n.translate('draft_generation.dialog_confirm_draft_regeneration_title'),
