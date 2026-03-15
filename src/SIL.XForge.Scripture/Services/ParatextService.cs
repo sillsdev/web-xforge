@@ -1732,10 +1732,27 @@ public class ParatextService : DisposableBase, IParatextService
         return syncMetricInfo;
     }
 
+    /// <summary>
+    /// Updates Paratext permissions for any new books, or the books specified in <paramref name="booksToUpdate"/>.
+    /// </summary>
+    /// <param name="userSecret">The user secret.</param>
+    /// <param name="paratextId">The Paratext project identifier</param>
+    /// <param name="projectDoc">The project document.</param>
+    /// <param name="booksToUpdate">
+    /// The book numbers to update.
+    /// If specified these books will be updated, otherwise only new books not on disk will be updated.
+    /// </param>
+    /// <param name="currentUserOnly">If <c>true</c>, only update permissions for the current user.</param>
+    /// <param name="writeToParatext">
+    /// If <c>true</c>, update the Paratext project on disk; otherwise if <c>false</c>, update the project document.
+    /// </param>
+    /// <returns></returns>
     public async Task<SyncMetricInfo> UpdateParatextPermissionsForNewBooksAsync(
         UserSecret userSecret,
         string paratextId,
         IDocument<SFProject> projectDoc,
+        int[] booksToUpdate,
+        bool currentUserOnly,
         bool writeToParatext
     )
     {
@@ -1751,19 +1768,26 @@ public class ParatextService : DisposableBase, IParatextService
             return syncMetricInfo;
         }
 
-        // Get all projects that are not on disk
+        // Get all books that are not on disk
         for (int i = 0; i < projectDoc.Data.Texts.Count; i++)
         {
             TextInfo text = projectDoc.Data.Texts[i];
             int bookNum = text.BookNum;
-            if (scrText.BookPresent(bookNum))
+            if (booksToUpdate.Length == 0 && scrText.BookPresent(bookNum))
             {
-                // Book is on disk, skip to the next book
+                // This book is already on disk, so skip to the next book
+                continue;
+            }
+            else if (booksToUpdate.Length > 0 && !booksToUpdate.Contains(bookNum))
+            {
+                // This book is not one of the ones we are to update, so skip to the next book
                 continue;
             }
 
             // Add any users to the book who would have the ability to access it
-            foreach (var user in projectDoc.Data.ParatextUsers)
+            foreach (
+                var user in projectDoc.Data.ParatextUsers.Where(u => !currentUserOnly || u.SFUserId == userSecret.Id)
+            )
             {
                 // If there is no SF user id or PT username, ignore this user
                 if (string.IsNullOrEmpty(user.SFUserId) || string.IsNullOrEmpty(user.Username))

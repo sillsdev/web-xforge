@@ -501,15 +501,28 @@ public class MachineApiService(
                             .ToList(),
                         cancellationToken
                     );
-                }
 
-                if (createdBooks.Count > 0)
-                {
-                    // Update permissions for new books
+                    // When the user is a project administrator, and have do not have permission
+                    // to update the specified books, add the permissions for them to update them.
                     await paratextService.UpdateParatextPermissionsForNewBooksAsync(
                         userSecret,
                         targetProjectDoc.Data.ParatextId,
                         targetProjectDoc,
+                        booksToUpdate: [.. updatedBooks],
+                        currentUserOnly: true,
+                        writeToParatext: false
+                    );
+                }
+
+                if (createdBooks.Count > 0)
+                {
+                    // Update permissions for new books, adding all users that should have access to them
+                    await paratextService.UpdateParatextPermissionsForNewBooksAsync(
+                        userSecret,
+                        targetProjectDoc.Data.ParatextId,
+                        targetProjectDoc,
+                        booksToUpdate: [],
+                        currentUserOnly: false,
                         writeToParatext: false
                     );
                 }
@@ -533,7 +546,7 @@ public class MachineApiService(
                                 BookNum = bookNum,
                                 ChapterNum = 0,
                                 Status = DraftApplyStatus.Failed,
-                                Message = $"Could not save draft for {Canon.BookNumberToId(bookNum)}.",
+                                Message = $"You do not have permission to write to this book.",
                             }
                         );
                     }
@@ -563,7 +576,7 @@ public class MachineApiService(
                                 BookNum = bookNum,
                                 ChapterNum = 0,
                                 Status = DraftApplyStatus.Failed,
-                                Message = $"Could not save draft for {Canon.BookNumberToId(bookNum)}.",
+                                Message = $"You do not have permission to write to this book.",
                             }
                         );
                     }
@@ -585,8 +598,7 @@ public class MachineApiService(
                             BookNum = bookNum,
                             ChapterNum = chapterDelta.Number,
                             Status = DraftApplyStatus.Failed,
-                            Message =
-                                $"Could not save draft for {Canon.BookNumberToId(bookNum)} {chapterDelta.Number}.",
+                            Message = $"You do not have permission to write to this chapter.",
                         }
                     );
                     continue;
@@ -619,8 +631,7 @@ public class MachineApiService(
                             BookNum = bookNum,
                             ChapterNum = chapterDelta.Number,
                             Status = DraftApplyStatus.Failed,
-                            Message =
-                                $"Could not save draft for {Canon.BookNumberToId(bookNum)} {chapterDelta.Number}.",
+                            Message = $"You do not have permission to write to this chapter.",
                         }
                     );
                     continue;
