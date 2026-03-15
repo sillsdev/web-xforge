@@ -648,6 +648,35 @@ describe('DraftJobsComponent', () => {
       }));
     });
 
+    describe('shouldShowDurationComparisonCaution', () => {
+      it('should return false if no date range is set', fakeAsync(() => {
+        const env = new TestEnvironment({ hasEvents: false });
+        env.wait();
+        env.component['currentDateRange'] = undefined;
+
+        // SUT
+        expect(env.component.shouldShowDurationComparisonCaution).toBeFalse();
+      }));
+
+      it('should return true when the date range starts before the cutoff', fakeAsync(() => {
+        const env = new TestEnvironment({ hasEvents: false });
+        env.wait();
+        env.setDateRange(new Date('2025-12-01'), new Date('2026-01-20'));
+
+        // SUT
+        expect(env.component.shouldShowDurationComparisonCaution).toBeTrue();
+      }));
+
+      it('should return false when the date range starts after the cutoff', fakeAsync(() => {
+        const env = new TestEnvironment({ hasEvents: false });
+        env.wait();
+        env.setDateRange(new Date('2026-01-20'), new Date('2026-02-20'));
+
+        // SUT
+        expect(env.component.shouldShowDurationComparisonCaution).toBeFalse();
+      }));
+    });
+
     describe('formatDurationInHours', () => {
       it('should format duration in decimal hours', fakeAsync(() => {
         const env = new TestEnvironment({ hasEvents: false });
