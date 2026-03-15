@@ -168,7 +168,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
         this.setUsfmConfig(projectDoc.data.translateConfig.draftConfig.usfmConfig);
         const texts: TextInfo[] = projectDoc.data.texts;
         this.booksWithDrafts = texts
-          .filter(t => this.projectService.hasDraft(projectDoc.data, t.bookNum, true))
+          .filter(t => this.projectService.hasDraft(projectDoc.data, t.bookNum, undefined, true))
           .map(t => t.bookNum);
 
         if (this.booksWithDrafts.length === 0) return;

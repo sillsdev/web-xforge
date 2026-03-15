@@ -100,7 +100,7 @@ describe('EditorDraftComponent', () => {
       of({ state: BuildStates.Completed } as BuildDto)
     );
     when(mockDraftHandlingService.opsHaveContent(anything())).thenReturn(true);
-    when(mockSFProjectService.hasDraft(anything(), anything(), anything())).thenReturn(true);
+    when(mockSFProjectService.hasDraft(anything(), anything(), anything(), anything())).thenReturn(true);
 
     fixture = TestBed.createComponent(EditorDraftComponent);
     component = fixture.componentInstance;
@@ -642,7 +642,7 @@ describe('EditorDraftComponent', () => {
       when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(false));
       when(mockActivatedProjectService.projectDoc$).thenReturn(of(testProjectDoc));
       when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
-      when(mockSFProjectService.hasDraft(anything(), anything(), anything())).thenReturn(false);
+      when(mockSFProjectService.hasDraft(anything(), anything(), anything(), anything())).thenReturn(false);
 
       when(mockDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(
         of({ state: BuildStates.Completed } as BuildDto)
@@ -652,7 +652,7 @@ describe('EditorDraftComponent', () => {
       tick();
       expect(component.isSelectedDraftLatest).toBe(true);
       expect(component.canConfigureFormatting).toBe(false);
-      verify(mockSFProjectService.hasDraft(anything(), anything(), anything())).atLeast(1);
+      verify(mockSFProjectService.hasDraft(anything(), anything(), anything(), anything())).atLeast(1);
       flush();
     }));
 
