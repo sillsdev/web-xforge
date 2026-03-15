@@ -502,8 +502,8 @@ public class MachineApiService(
                         cancellationToken
                     );
 
-                    // Ensure the current user has permission to update the specified books,
-                    // adding them if they are missing and are an administrator.
+                    // When the user is a project administrator, and have do not have permission
+                    // to update the specified books, add the permissions for them to update them.
                     await paratextService.UpdateParatextPermissionsForNewBooksAsync(
                         userSecret,
                         targetProjectDoc.Data.ParatextId,
