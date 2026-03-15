@@ -1740,7 +1740,7 @@ public class ParatextService : DisposableBase, IParatextService
     /// <param name="projectDoc">The project document.</param>
     /// <param name="booksToUpdate">
     /// The book numbers to update.
-    /// If specified these books will be updated, otherwise only new books not disk will be updated.
+    /// If specified these books will be updated, otherwise only new books not on disk will be updated.
     /// </param>
     /// <param name="currentUserOnly">If <c>true</c>, only update permissions for the current user.</param>
     /// <param name="writeToParatext">
@@ -1773,9 +1773,14 @@ public class ParatextService : DisposableBase, IParatextService
         {
             TextInfo text = projectDoc.Data.Texts[i];
             int bookNum = text.BookNum;
-            if (booksToUpdate.Length == 0 ? scrText.BookPresent(bookNum) : !booksToUpdate.Contains(bookNum))
+            if (booksToUpdate.Length == 0 && scrText.BookPresent(bookNum))
             {
-                // Book is on disk (or a list to update was specified and this book is not present), so skip to the next book
+                // This book is already on disk, so skip to the next book
+                continue;
+            }
+            else if (booksToUpdate.Length > 0 && !booksToUpdate.Contains(bookNum))
+            {
+                // This book is not one of the ones we are to update, so skip to the next book
                 continue;
             }
 
