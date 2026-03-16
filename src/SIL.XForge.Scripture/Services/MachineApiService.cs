@@ -204,7 +204,7 @@ public class MachineApiService(
                     }
                 );
 
-                // Store the USJ for each chapter, so if we download form Serval we only do it once per book
+                // Store the USJ for each chapter, so if we download from Serval we only do it once per book
                 List<Usj> chapterUsj = [];
                 foreach (int chapterNum in chapters.Where(c => c > 0))
                 {
@@ -1574,7 +1574,7 @@ public class MachineApiService(
             isServalAdmin,
             cancellationToken
         );
-        builds = FilterBuildsByBook(builds, bookNum);
+        builds = FilterBuildsByBookAndChapter(builds, bookNum, chapterNum);
 
         // Set up the list of revisions to be returned
         List<DocumentRevision> revisions =
@@ -1678,6 +1678,7 @@ public class MachineApiService(
             curUserId,
             sfProjectId,
             bookNum,
+            chapterNum,
             isServalAdmin,
             timestamp,
             cancellationToken
@@ -1920,10 +1921,10 @@ public class MachineApiService(
                 string draftedScriptureRange =
                     projectDoc.Data.TranslateConfig.DraftConfig.DraftedScriptureRange ?? string.Empty;
                 ScriptureRangeParser scriptureRangeParser = new ScriptureRangeParser();
-                List<string> currentBooks = [.. scriptureRangeParser.GetChapters(currentScriptureRange).Keys];
-                List<string> draftedBooks = [.. scriptureRangeParser.GetChapters(draftedScriptureRange).Keys];
-                List<string> allBooks = [.. currentBooks, .. draftedBooks];
-                draftedScriptureRange = string.Join(';', allBooks.Distinct());
+                Dictionary<string, SortedSet<int>> booksWithDrafts = [];
+                ParseScriptureRange(currentScriptureRange, scriptureRangeParser, ref booksWithDrafts);
+                ParseScriptureRange(draftedScriptureRange, scriptureRangeParser, ref booksWithDrafts);
+                draftedScriptureRange = GetScriptureRange(booksWithDrafts);
                 await projectDoc.SubmitJson0OpAsync(u =>
                     u.Set(p => p.TranslateConfig.DraftConfig.DraftedScriptureRange, draftedScriptureRange)
                 );
@@ -2309,33 +2310,49 @@ public class MachineApiService(
 
         // For every text we have a draft applied to, get the pre-translation
         foreach (
-            string bookId in ScriptureRangeParser
-                .GetChapters(projectDoc.Data.TranslateConfig.DraftConfig.CurrentScriptureRange)
-                .Keys
+            (string bookId, List<int> chapters) in ScriptureRangeParser.GetChapters(
+                projectDoc.Data.TranslateConfig.DraftConfig.CurrentScriptureRange
+            )
         )
         {
             // Set up variables
             string paratextId = projectDoc.Data.ParatextId;
             int bookNum = Canon.BookIdToNumber(bookId);
-            int chapterNum = 0;
-
-            // Get the USFM
-            string usfm = await preTranslationService.GetPreTranslationUsfmAsync(
-                sfProjectId,
-                bookNum,
-                chapterNum,
-                projectDoc.Data.TranslateConfig.DraftConfig.UsfmConfig ?? new DraftUsfmConfig(),
-                cancellationToken
-            );
-
-            // Iterate over the chapters from the USFM, not the chapters that have drafts, as the target text may
-            // not yet have all the corresponding chapters and books, but might have them added in the future.
-            foreach (Usj usj in paratextService.GetChaptersAsUsj(userSecret, paratextId, bookNum, usfm))
+            if (chapters.Count == 0)
             {
-                // Save the USJ to the realtime service
-                string id = TextDocument.GetDocId(sfProjectId, bookNum, ++chapterNum, TextDocument.Draft);
-                IDocument<TextDocument> textDocument = await conn.FetchAsync<TextDocument>(id);
-                await SaveTextDocumentAsync(textDocument, usj);
+                chapters.Add(0);
+            }
+
+            foreach (int chapter in chapters)
+            {
+                // Get the USFM
+                string usfm = await preTranslationService.GetPreTranslationUsfmAsync(
+                    sfProjectId,
+                    bookNum,
+                    chapter,
+                    projectDoc.Data.TranslateConfig.DraftConfig.UsfmConfig ?? new DraftUsfmConfig(),
+                    cancellationToken
+                );
+
+                // Iterate over the chapters from the USFM, as the target may not yet have all the chapters and books.
+                // We only skip empty chapters if we are retrieving a specific chapter.
+                int chapterNum = chapter;
+                foreach (
+                    Usj usj in paratextService
+                        .GetChaptersAsUsj(userSecret, paratextId, bookNum, usfm)
+                        .Where(usj => usj.Content.Count > 0 || chapter == 0)
+                )
+                {
+                    // Save the USJ to the realtime service
+                    string id = TextDocument.GetDocId(
+                        sfProjectId,
+                        bookNum,
+                        chapter == 0 ? ++chapterNum : chapter,
+                        TextDocument.Draft
+                    );
+                    IDocument<TextDocument> textDocument = await conn.FetchAsync<TextDocument>(id);
+                    await SaveTextDocumentAsync(textDocument, usj);
+                }
             }
         }
     }
@@ -2411,11 +2428,13 @@ public class MachineApiService(
     /// <summary>
     /// Gets the drafted scripture range for a translation build.
     /// </summary>
-    /// <param name="translationBuild">The  translation build.</param>
-    /// <returns>The scripture range that was drafted.</returns>
+    /// <param name="translationBuild">The translation build.</param>
+    /// <returns>
+    /// The scripture range that was drafted. This will include the book name and any chapters (where specified).
+    /// </returns>
     private static string GetDraftedScriptureRange(TranslationBuild translationBuild)
     {
-        List<string> booksWithDrafts = [];
+        Dictionary<string, SortedSet<int>> booksWithDrafts = [];
         ScriptureRangeParser scriptureRangeParser = new ScriptureRangeParser();
         foreach (PretranslateCorpus ptc in translationBuild.Pretranslate ?? [])
         {
@@ -2424,18 +2443,57 @@ public class MachineApiService(
             // TranslationBuild.Pretranslate.ScriptureRange and will not get checked for webhook failures.
             foreach (ParallelCorpusFilter source in ptc.SourceFilters?.Where(s => s.ScriptureRange is not null) ?? [])
             {
-                foreach ((string book, List<int> _) in scriptureRangeParser.GetChapters(source.ScriptureRange))
-                {
-                    if (!booksWithDrafts.Contains(book))
-                    {
-                        booksWithDrafts.Add(book);
-                    }
-                }
+                ParseScriptureRange(source.ScriptureRange, scriptureRangeParser, ref booksWithDrafts);
             }
         }
 
-        return string.Join(';', booksWithDrafts);
+        return GetScriptureRange(booksWithDrafts);
     }
+
+    /// <summary>
+    /// Gets a range in the format 1,3-5,7 from a sequential collection of chapters
+    /// </summary>
+    /// <param name="chapters">The collection of chapters.</param>
+    /// <returns>A chapter range string.</returns>
+    private static string GetChaptersAsRange(IEnumerable<int> chapters)
+    {
+        List<string> result = [];
+        int? start = null;
+        int? prev = null;
+
+        foreach (int chapter in chapters)
+        {
+            if (start is null)
+            {
+                start = prev = chapter;
+                continue;
+            }
+
+            if (chapter == prev + 1)
+            {
+                prev = chapter;
+                continue;
+            }
+
+            result.Add(start == prev ? $"{start}" : $"{start}-{prev}");
+            start = prev = chapter;
+        }
+
+        if (start is not null)
+        {
+            result.Add(start == prev ? $"{start}" : $"{start}-{prev}");
+        }
+
+        return string.Join(',', result);
+    }
+
+    /// <summary>
+    /// Gets the scripture range from a dictionary of books and chapters.
+    /// </summary>
+    /// <param name="booksAndChapters">The dictionary of books and chapters to update.</param>
+    /// <returns>The scripture range.</returns>
+    private static string GetScriptureRange(Dictionary<string, SortedSet<int>> booksAndChapters) =>
+        string.Join(';', booksAndChapters.Select(b => b.Key + GetChaptersAsRange(b.Value)));
 
     /// <summary>
     /// Gets the highest ranked user id on a project.
@@ -2487,6 +2545,7 @@ public class MachineApiService(
     /// <param name="curUserId">The current user identifier.</param>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="bookNum">The book number.</param>
+    /// <param name="chapterNum">The chapter number.</param>
     /// <param name="isServalAdmin">If <c>true</c>, the current user is a Serval Administrator.</param>
     /// <param name="timestamp">The timestamp to retrieve the timestamp of the closest revision for.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
@@ -2496,6 +2555,7 @@ public class MachineApiService(
         string curUserId,
         string sfProjectId,
         int bookNum,
+        int chapterNum,
         bool isServalAdmin,
         DateTime timestamp,
         CancellationToken cancellationToken
@@ -2508,7 +2568,7 @@ public class MachineApiService(
             isServalAdmin,
             cancellationToken
         );
-        builds = FilterBuildsByBook(builds, bookNum);
+        builds = FilterBuildsByBookAndChapter(builds, bookNum, chapterNum);
 
         // See if there is a build that was requested after the timestamp
         DateTimeOffset? time = builds
@@ -2525,12 +2585,17 @@ public class MachineApiService(
     }
 
     /// <summary>
-    /// Filters a list of builds to only those that contain the specified book number in their translation scripture ranges.
+    /// Filters a list of builds to only those that contain the specified book number and chapter in their translation scripture ranges.
     /// </summary>
     /// <param name="builds">The builds.</param>
     /// <param name="bookNum">The book number.</param>
+    /// <param name="chapterNum">The chapter number.</param>
     /// <returns>The builds containing the specified book.</returns>
-    private static IReadOnlyList<ServalBuildDto> FilterBuildsByBook(IReadOnlyList<ServalBuildDto> builds, int bookNum)
+    private static IReadOnlyList<ServalBuildDto> FilterBuildsByBookAndChapter(
+        IReadOnlyList<ServalBuildDto> builds,
+        int bookNum,
+        int chapterNum
+    )
     {
         // As we are only parsing books, we do not need to set the versification
         ScriptureRangeParser scriptureRangeParser = new ScriptureRangeParser();
@@ -2540,7 +2605,10 @@ public class MachineApiService(
                 b.State == BuildStateCompleted
                 && (
                     b.AdditionalInfo?.TranslationScriptureRanges.Any(r =>
-                        scriptureRangeParser.GetChapters(r.ScriptureRange).ContainsKey(Canon.BookNumberToId(bookNum))
+                        scriptureRangeParser
+                            .GetChapters(r.ScriptureRange)
+                            .TryGetValue(Canon.BookNumberToId(bookNum), out List<int> chapters)
+                        && (chapters.Count == 0 || chapters.Contains(chapterNum) || chapterNum == 0)
                     )
                     ?? false
                 )
@@ -2625,6 +2693,43 @@ public class MachineApiService(
         }
 
         return UpdateDto(buildDto, sfProjectId);
+    }
+
+    /// <summary>
+    /// Parses a scripture range, and updates the books with drafts with the books and chapters in the scripture range.
+    /// </summary>
+    /// <param name="scriptureRange">The scripture range.</param>
+    /// <param name="scriptureRangeParser">The scripture range parsers.</param>
+    /// <param name="booksAndChapters">The dictionary of books and chapters to update.</param>
+    private static void ParseScriptureRange(
+        string? scriptureRange,
+        ScriptureRangeParser scriptureRangeParser,
+        ref Dictionary<string, SortedSet<int>> booksAndChapters
+    )
+    {
+        foreach ((string bookId, List<int> chapters) in scriptureRangeParser.GetChapters(scriptureRange))
+        {
+            if (booksAndChapters.TryGetValue(bookId, out SortedSet<int> bookChapters))
+            {
+                if (bookChapters.Count == 0)
+                {
+                    // If the chapter list is empty, all chapters are selected, so do not alter the list
+                }
+                else if (chapters.Count == 0)
+                {
+                    // No chapters = all chapters, so ensure any existing chapters are cleared
+                    bookChapters.Clear();
+                }
+                else
+                {
+                    chapters.ForEach(chapter => bookChapters.Add(chapter));
+                }
+            }
+            else
+            {
+                booksAndChapters.Add(bookId, [.. chapters]);
+            }
+        }
     }
 
     /// <summary>
