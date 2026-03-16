@@ -30,8 +30,11 @@ Vagrant.configure("2") do |config|
     [[ -z $GIT_USER ]] || git config --global user.name "${GIT_USER}"
     [[ -z $GIT_EMAIL ]] || git config --global user.email "${GIT_EMAIL}"
 
-    cd ~/code/web-xforge/
+    cd ~/code/web-xforge
     sudo npm install --global npm@11.11.0
+
+    sudo apt-get update
+    sudo apt-get install --assume-yes dotnet-sdk-10.0
 
     # Remove canary
     rm -f ~/Desktop/WARNING-NOT-PROVISIONED.txt
