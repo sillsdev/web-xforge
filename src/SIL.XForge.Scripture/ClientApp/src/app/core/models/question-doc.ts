@@ -15,7 +15,16 @@ import { Snapshot } from 'xforge-common/models/snapshot';
  */
 export class QuestionDoc extends ProjectDataDoc<Question> {
   static readonly COLLECTION = QUESTIONS_COLLECTION;
-  static readonly INDEX_PATHS = QUESTION_INDEX_PATHS;
+  static readonly INDEX_PATHS = [
+    ...QUESTION_INDEX_PATHS,
+    // Index for CheckingQuestionsService.queryQuestions() and CheckingQuestionsService.queryAdjacentQuestions()
+    // As IndexedDB does not support boolean fields in indexes (see https://github.com/w3c/IndexedDB/issues/76)
+    {
+      [obj<Question>().pathStr(n => n.projectRef)]: 1,
+      [obj<Question>().pathStr(n => n.verseRef.bookNum)]: 1,
+      [obj<Question>().pathStr(n => n.verseRef.chapterNum)]: 1
+    }
+  ];
 
   alwaysKeepFileOffline(fileType: FileType, dataId: string): boolean {
     return this.data != null && fileType === FileType.Audio && !this.data.isArchived && this.data.dataId === dataId;
