@@ -247,6 +247,11 @@ export class TextComponent implements AfterViewInit, OnDestroy {
               this.editor.history.redo();
             }
           }
+        },
+        cut: {
+          key: 'x',
+          shortKey: true,
+          handler: (range: Range) => this.isDeleteAllowed(range)
         }
       }
     },
