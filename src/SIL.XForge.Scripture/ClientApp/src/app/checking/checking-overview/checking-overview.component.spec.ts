@@ -1,6 +1,7 @@
 import { Location } from '@angular/common';
 import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { MatDialogRef } from '@angular/material/dialog';
 import { MatExpansionPanel } from '@angular/material/expansion';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
@@ -26,7 +27,7 @@ import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scripturefo
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { of } from 'rxjs';
-import { anything, mock, resetCalls, verify, when } from 'ts-mockito';
+import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -51,6 +52,7 @@ import { CheckingOverviewComponent } from './checking-overview.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedDialogService = mock(DialogService);
+const mockedImportQuestionsDialogRef = mock(MatDialogRef);
 const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
 const mockedQuestionsService = mock(CheckingQuestionsService);
@@ -88,13 +90,13 @@ describe('CheckingOverviewComponent', () => {
     }));
 
     it('should not display loading if user is offline', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.testOnlineStatusService.setIsOnline(false);
-      tick();
-      env.fixture.detectChanges();
+      const env = new TestEnvironment(false);
+      env.onlineStatus = false;
+      expect(env.component.showQuestionsLoadingMessage).toBe(false);
+      expect(env.component.showNoQuestionsMessage).toBe(true);
+      env.waitForQuestions();
       expect(env.loadingQuestionsLabel).toBeNull();
       expect(env.noQuestionsLabel).not.toBeNull();
-      env.waitForQuestions();
     }));
 
     it('should not display "Add question" button for community checker', fakeAsync(() => {
@@ -425,10 +427,7 @@ describe('CheckingOverviewComponent', () => {
       await questionDoc.submitJson0Op(op => {
         op.set(d => d.isArchived, false);
       });
-      env.testOnlineStatusService.setIsOnline(false);
-      env.fixture.detectChanges();
-      tick();
-      env.fixture.detectChanges();
+      env.onlineStatus = false;
       expect(env.loadingArchivedQuestionsLabel).toBeNull();
       expect(env.noArchivedQuestionsLabel).not.toBeNull();
 
@@ -985,6 +984,10 @@ class TestEnvironment {
         projectDoc.submitJson0Op(op => op.set(p => p.texts[textIndex].chapters[chapterIndex].hasAudio, false), false);
       }
     );
+    when(mockedImportQuestionsDialogRef.afterClosed()).thenReturn(of(undefined));
+    when(mockedDialogService.openMatDialog(ImportQuestionsDialogComponent, anything())).thenReturn(
+      instance(mockedImportQuestionsDialogRef)
+    );
     this.setCurrentUser(this.adminUser);
     this.testOnlineStatusService.setIsOnline(true);
 
@@ -1110,6 +1113,8 @@ class TestEnvironment {
 
   set onlineStatus(isOnline: boolean) {
     this.testOnlineStatusService.setIsOnline(isOnline);
+    tick();
+    this.fixture.detectChanges();
     tick();
     this.fixture.detectChanges();
   }
