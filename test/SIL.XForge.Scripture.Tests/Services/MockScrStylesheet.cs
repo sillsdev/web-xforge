@@ -1,3 +1,4 @@
+#nullable disable warnings
 namespace Paratext.Data;
 
 /// <summary>Mock for tests.</summary>

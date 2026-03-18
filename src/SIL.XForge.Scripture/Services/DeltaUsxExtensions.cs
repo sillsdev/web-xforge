@@ -1,3 +1,4 @@
+#nullable disable warnings
 using Newtonsoft.Json.Linq;
 using SIL.XForge.Realtime.RichText;
 

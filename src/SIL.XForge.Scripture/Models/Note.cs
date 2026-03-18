@@ -1,3 +1,4 @@
+#nullable disable warnings
 namespace SIL.XForge.Scripture.Models;
 
 /// <summary>Represents a project note.</summary>

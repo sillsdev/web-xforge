@@ -1,3 +1,4 @@
+#nullable disable warnings
 namespace SIL.XForge.Models;
 
 public abstract class ProjectData : Json0Snapshot, IOwnedData

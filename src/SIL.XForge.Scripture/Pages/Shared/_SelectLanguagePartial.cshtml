@@ -28,9 +28,12 @@
         @* Include the query string so users return to the exact page (including errors/404) after changing language. *@
         <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
         <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-            <select name="culture" class="mdl-textfield__input" onchange="this.form.submit();"
-                    asp-for="@requestCulture.RequestCulture.UICulture.Name" asp-items="cultureItems">
-            </select>
+            @if (requestCulture != null)
+            {
+                <select name="culture" class="mdl-textfield__input" onchange="this.form.submit();"
+                        asp-for="@requestCulture.RequestCulture.UICulture.Name" asp-items="cultureItems">
+                </select>
+            }
         </div>
     </form>
 </div>

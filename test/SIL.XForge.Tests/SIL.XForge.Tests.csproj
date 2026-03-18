@@ -1,11 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <IsPackable>false</IsPackable>
     <RootNamespace>SIL.XForge</RootNamespace>
     <LangVersion>latest</LangVersion>
     <RealtimeServerRoot>..\..\src\RealtimeServer\</RealtimeServerRoot>
-    <Nullable>annotations</Nullable>
+    <Nullable>enable</Nullable>
     <!--
     This is for compatibility between ICU4C (a dependency of ParatextData) and .NET 8.0 see:
     https://learn.microsoft.com/en-us/dotnet/core/compatibility/sdk/8.0/rid-graph
