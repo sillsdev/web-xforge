@@ -1,3 +1,4 @@
+#nullable disable warnings
 using System.Collections.Generic;
 using NUnit.Framework;
 using SIL.XForge.Models;

@@ -1,3 +1,4 @@
+#nullable disable warnings
 namespace SIL.XForge.Configuration;
 
 public class ParatextOptions

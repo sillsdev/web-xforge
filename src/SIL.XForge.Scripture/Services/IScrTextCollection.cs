@@ -1,3 +1,4 @@
+#nullable disable warnings
 using Paratext.Data;
 using Paratext.Data.ProjectFileAccess;
 

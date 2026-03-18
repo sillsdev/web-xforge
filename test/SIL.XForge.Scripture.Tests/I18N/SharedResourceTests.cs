@@ -1,3 +1,4 @@
+#nullable disable warnings
 using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.Localization;

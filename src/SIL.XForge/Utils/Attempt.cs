@@ -1,3 +1,4 @@
+#nullable disable warnings
 namespace SIL.XForge.Utils;
 
 public static class Attempt
