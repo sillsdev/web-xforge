@@ -1,3 +1,4 @@
+#nullable enable
 using SIL.XForge;
 using SIL.XForge.Scripture.Controllers;
 

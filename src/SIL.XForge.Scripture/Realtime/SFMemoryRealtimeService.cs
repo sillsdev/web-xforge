@@ -1,3 +1,4 @@
+#nullable enable
 using System.Threading.Tasks;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Realtime;

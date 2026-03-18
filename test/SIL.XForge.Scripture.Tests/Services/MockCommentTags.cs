@@ -1,3 +1,4 @@
+#nullable enable
 using System.IO;
 using Paratext.Data;
 using Paratext.Data.ProjectComments;

@@ -1,3 +1,4 @@
+#nullable enable
 using System.Threading.Tasks;
 
 namespace SIL.XForge.Services;

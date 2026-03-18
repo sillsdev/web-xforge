@@ -1,3 +1,4 @@
+#nullable enable
 using SIL.XForge.Services;
 
 namespace Microsoft.Extensions.DependencyInjection;

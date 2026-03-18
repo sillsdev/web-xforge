@@ -1,3 +1,4 @@
+#nullable enable
 namespace SIL.XForge.Scripture.Models;
 
 /// <summary>Determine what community checking answers should be synced to Paratext.</summary>

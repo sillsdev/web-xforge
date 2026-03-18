@@ -1,3 +1,4 @@
+#nullable enable
 using System.Text.RegularExpressions;
 using Paratext.Data;
 

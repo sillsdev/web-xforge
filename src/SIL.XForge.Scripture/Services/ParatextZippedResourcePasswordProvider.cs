@@ -1,3 +1,4 @@
+#nullable enable
 using Paratext.Data.ProjectFileAccess;
 using PtxUtils;
 using SIL.XForge.Configuration;

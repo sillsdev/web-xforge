@@ -1,3 +1,4 @@
+#nullable enable
 using ICSharpCode.SharpZipLib.Zip;
 
 namespace SIL.XForge.Scripture.Services;

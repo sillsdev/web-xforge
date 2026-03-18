@@ -1,3 +1,4 @@
+#nullable enable
 using Paratext.Data;
 using Paratext.Data.Languages;
 using PtxUtils;

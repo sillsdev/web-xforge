@@ -1,3 +1,4 @@
+#nullable enable
 using Bugsnag.AspNet.Core;
 using Microsoft.Extensions.Configuration;
 using SIL.XForge;

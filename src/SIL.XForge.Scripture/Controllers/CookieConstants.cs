@@ -1,3 +1,4 @@
+#nullable enable
 namespace SIL.XForge.Scripture;
 
 public static class CookieConstants

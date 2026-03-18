@@ -1,3 +1,4 @@
+#nullable enable
 namespace Paratext.Data.ProjectSettingsAccess;
 
 /// <summary>Mock for tests.</summary>

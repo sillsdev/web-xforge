@@ -1,3 +1,4 @@
+#nullable enable
 using Paratext.Data;
 using static Paratext.Data.RESTClient;
 

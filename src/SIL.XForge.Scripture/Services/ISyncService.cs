@@ -1,3 +1,4 @@
+#nullable enable
 using System.Threading.Tasks;
 using Autofac.Extras.DynamicProxy;
 using SIL.XForge.EventMetrics;

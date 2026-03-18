@@ -1,3 +1,4 @@
+#nullable enable
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Headers;
 using Microsoft.Net.Http.Headers;

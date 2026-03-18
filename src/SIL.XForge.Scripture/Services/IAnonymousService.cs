@@ -1,3 +1,4 @@
+#nullable enable
 using System.Threading.Tasks;
 using SIL.XForge.Models;
 using SIL.XForge.Scripture.Models;

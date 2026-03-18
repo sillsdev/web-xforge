@@ -1,3 +1,4 @@
+#nullable enable
 using SIL.XForge.Configuration;
 
 namespace SIL.XForge.Scripture.Services;

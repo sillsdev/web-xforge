@@ -1,3 +1,4 @@
+#nullable enable
 using Jering.Javascript.NodeJS;
 
 namespace SIL.XForge.Realtime;

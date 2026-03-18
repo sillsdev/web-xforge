@@ -1,3 +1,4 @@
+#nullable enable
 using SIL.XForge.Realtime;
 
 namespace SIL.XForge.Scripture.Models;

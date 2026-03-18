@@ -1,3 +1,4 @@
+#nullable enable
 using System.IO;
 using ICSharpCode.SharpZipLib.Zip;
 using Paratext.Data;

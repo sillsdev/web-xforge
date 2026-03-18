@@ -1,3 +1,4 @@
+#nullable enable
 namespace SIL.XForge.Models;
 
 /// <summary>Direction of a language.</summary>

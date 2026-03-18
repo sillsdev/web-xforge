@@ -1,3 +1,4 @@
+#nullable enable
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using SIL.XForge.Scripture.Models;

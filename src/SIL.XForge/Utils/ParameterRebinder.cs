@@ -1,3 +1,4 @@
+#nullable enable
 using System.Linq.Expressions;
 
 namespace SIL.XForge.Utils;

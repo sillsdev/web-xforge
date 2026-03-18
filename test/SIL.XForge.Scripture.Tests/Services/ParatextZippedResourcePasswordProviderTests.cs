@@ -1,3 +1,4 @@
+#nullable enable
 using NUnit.Framework;
 using Paratext.Data.ProjectFileAccess;
 using PtxUtils;

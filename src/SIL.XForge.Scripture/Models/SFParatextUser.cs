@@ -1,3 +1,4 @@
+#nullable enable
 using Paratext.Data.Users;
 
 namespace SIL.XForge.Scripture.Models;

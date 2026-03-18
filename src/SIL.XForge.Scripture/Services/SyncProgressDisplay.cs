@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using PtxUtils.Progress;
 using SIL.XForge.Scripture.Models;

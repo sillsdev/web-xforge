@@ -1,3 +1,4 @@
+#nullable enable
 using System.Threading.Tasks;
 using NSubstitute;
 using NUnit.Framework;

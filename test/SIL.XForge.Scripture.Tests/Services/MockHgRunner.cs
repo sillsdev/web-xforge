@@ -1,3 +1,4 @@
+#nullable enable
 using Paratext.Data;
 
 namespace SIL.XForge.Scripture.Services;

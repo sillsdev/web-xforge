@@ -1,3 +1,4 @@
+#nullable enable
 using SIL.XForge.Scripture.Models;
 
 namespace Microsoft.AspNetCore.Builder;

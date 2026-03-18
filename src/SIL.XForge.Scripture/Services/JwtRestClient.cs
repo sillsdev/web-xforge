@@ -1,3 +1,4 @@
+#nullable enable
 using Paratext;
 using Paratext.Data;
 

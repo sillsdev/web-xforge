@@ -1,3 +1,4 @@
+#nullable enable
 using System.Collections.Generic;
 using System.Xml.Linq;
 using SIL.XForge.Realtime.RichText;

@@ -1,3 +1,4 @@
+#nullable enable
 namespace SIL.XForge.Services;
 
 public interface ISecurityService

@@ -1,3 +1,4 @@
+#nullable enable
 namespace SIL.XForge.Scripture.Models;
 
 /// <summary>The status of an community checking answer.</summary>

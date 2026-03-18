@@ -1,3 +1,4 @@
+#nullable enable
 using EdjCase.JsonRpc.Common;
 using EdjCase.JsonRpc.Router;
 using EdjCase.JsonRpc.Router.Abstractions;

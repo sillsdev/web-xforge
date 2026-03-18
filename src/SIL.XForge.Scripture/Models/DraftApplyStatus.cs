@@ -1,3 +1,4 @@
+#nullable enable
 namespace SIL.XForge.Scripture.Models;
 
 public enum DraftApplyStatus

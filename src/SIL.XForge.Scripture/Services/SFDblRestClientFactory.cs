@@ -1,3 +1,4 @@
+#nullable enable
 using Microsoft.Extensions.Options;
 using SIL.XForge.Configuration;
 using SIL.XForge.Models;

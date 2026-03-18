@@ -1,3 +1,4 @@
+#nullable enable
 namespace SIL.XForge;
 
 public static class UrlConstants

@@ -1,3 +1,4 @@
+#nullable enable
 using Paratext.Data;
 using Paratext.Data.ProjectFileAccess;
 using SIL.XForge.Scripture.Models;

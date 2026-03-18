@@ -1,3 +1,4 @@
+#nullable enable
 using Newtonsoft.Json;
 
 namespace SIL.XForge.Realtime;

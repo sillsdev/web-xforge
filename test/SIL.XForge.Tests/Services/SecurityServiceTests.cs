@@ -1,3 +1,4 @@
+#nullable enable
 using NUnit.Framework;
 
 namespace SIL.XForge.Services;

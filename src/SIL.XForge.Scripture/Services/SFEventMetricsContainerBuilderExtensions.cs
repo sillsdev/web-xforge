@@ -1,3 +1,4 @@
+#nullable enable
 using Autofac;
 using SIL.XForge.EventMetrics;
 
