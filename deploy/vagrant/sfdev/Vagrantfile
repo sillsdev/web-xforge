@@ -22,19 +22,68 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.provision "shell", privileged: false, inline: <<~SHELL
-    set -xueo pipefail
+    set -ueo pipefail
 
-    # Set git user and email from host.
+    function on_exit() {
+      if (($1 == 0)); then
+        # Success
+        subject="Now restart virtual machine"
+        body="You must restart the virtual machine to apply changes from provisioning. $(date -Is)"
+      else
+        # Error
+        subject="Provisioning failed (code $1)"
+        body="Destroy and recreate this vagrant machine. See WARNING-NOT-PROVISIONED.txt on the desktop for details. $(date -Is)"
+      fi
+      echo >&2 "${subject}: ${body}"
+      systemd-run --quiet --machine vagrant@.host --user notify-send --expire-time=0 "${subject}" "${body}"
+    }
+
+    trap 'on_exit $?' EXIT
+
+    subject="Please wait"
+    body="Please wait for provisioning to finish. $(date -Is)"
+    systemd-run --quiet --machine vagrant@.host --user notify-send --expire-time=0 "${subject}" "${body}"
+
+    function retry() {
+      i=0
+      until "$@"; do
+        ((++i <= 3))
+        echo >&2 "Retrying ${i}"
+        sleep 2m
+      done
+    }
+
+    echo "== Importing git user and email from host =="
     GIT_USER="#{`git config --get user.name`.strip}"
     GIT_EMAIL="#{`git config --get user.email`.strip}"
     [[ -z $GIT_USER ]] || git config --global user.name "${GIT_USER}"
     [[ -z $GIT_EMAIL ]] || git config --global user.email "${GIT_EMAIL}"
 
+    echo "== Installing npm =="
     cd ~/code/web-xforge
-    sudo npm install --global npm@11.11.0
+    retry sudo npm install --global npm@11.11.0
 
-    sudo apt-get update
-    sudo apt-get install --assume-yes dotnet-sdk-10.0
+    # Change apt repo to https to avoid problems from stale proxies
+    sudo sed -i 's|http://archive.ubuntu.com|https://archive.ubuntu.com|g' \
+      /etc/apt/sources.list.d/ubuntu.sources
+    sudo sed -i 's|http://security.ubuntu.com|https://security.ubuntu.com|g' \
+      /etc/apt/sources.list.d/ubuntu.sources
+
+    echo "== Installing dotnet =="
+    retry sudo apt-get update
+    retry sudo apt-get install --assume-yes dotnet-sdk-10.0
+
+    # With Linux 6.17.0, Plasma 5.27.12, and X11 in VirtualBox 7.0, the mouse cursor is offset a few pixels down and to
+    # the right. Possibly the same bug as https://bugs.kde.org/show_bug.cgi?id=427060 (though the workarounds
+    # environment variables did not seem to solve it). Changing the session to use Wayland fixes the problem. Moving the
+    # kernel back from HWE to GA fixes the problem. Upgrading to Ubuntu 25.10 fixes the problem.
+
+    # Move the kernel back from HWE to GA to fix mouse cursor offset problem.
+    # (https://wiki.ubuntu.com/Kernel/LTSEnablementStack)
+    echo "== Downgrading kernel to GA =="
+    retry sudo apt-get --assume-yes install --install-recommends linux-generic
+    # Must reboot after removing modules.
+    sudo DEBIAN_FRONTEND=noninteractive apt-get --assume-yes purge linux-generic-hwe-\* linux-hwe-\* linux-modules\*-6.17.\*
 
     # Remove canary
     rm -f ~/Desktop/WARNING-NOT-PROVISIONED.txt

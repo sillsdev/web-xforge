@@ -343,7 +343,7 @@ curl --silent --location --fail --show-error \
 sudo install --owner root --group root --mode 644 \
   google-chrome.gpg /etc/apt/trusted.gpg.d/
 sudo tee /etc/apt/sources.list.d/google-chrome.list >/dev/null <<< \
-  "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main"
+  "deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main"
 tryharderto sudo apt-get update
 tryharderto sudo apt-get --assume-yes install google-chrome-stable
 
