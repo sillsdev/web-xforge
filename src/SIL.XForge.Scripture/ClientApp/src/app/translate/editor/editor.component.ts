@@ -815,8 +815,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.projectUserConfigChangesSub = this.projectUserConfigDoc.remoteChanges$.subscribe(async () => {
             if (this.projectUserConfigDoc?.data != null) {
               // Reload config if the checksum has been reset on the server
-              if (this.projectUserConfigDoc.data.selectedSegmentChecksum == null) {
-                await this.loadProjectUserConfig(bookNum);
+              if (this.projectUserConfigDoc.data.selectedSegmentChecksum == null && this._bookNum != null) {
+                await this.loadProjectUserConfig(this._bookNum);
               } else {
                 this.loadTranslateSuggesterConfidence();
               }
@@ -840,7 +840,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }
 
         const allChapters: number = Math.max(
-          this.text?.chapters[this.text.chapters.length - 1].number ?? 1,
+          this.text?.chapters[this.text.chapters.length - 1]?.number ?? 1,
           expectedBookChapters(Canon.bookNumberToId(bookNum))
         );
         this.chapters = Array.from({ length: allChapters }, (_, i) => i + 1);
