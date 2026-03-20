@@ -169,6 +169,9 @@
     "successfully_applied_all_chapters": "Application réussie de tous les chapitres sur {{ bookName }}"
   },
   "draft_generation": {
+    "choose_formatting_options": "Choose formatting options to continue",
+    "choose_formatting_options_before_new_draft": "Before you can create a new draft, you need to choose formatting options.",
+    "formatting_options": "Options de formatage",
     "back_translation_requirement": "Les ébauches de rétro-traducteur ne peuvent être générés que dans les quelque 200 [link:supportedLanguagesUrl]langues prises en charge[/link].",
     "cancel_generation_button": "Annuler",
     "configure_sources": "Configurer les sources",
@@ -299,7 +302,7 @@
     "options_for_paragraph_breaks_and_quotation_marks": "Options pour les sauts de paragraphe et les guillemets pour faciliter l'édition",
     "requested_at": "Demandé {{ requestedAtTime }}.",
     "requested_by": "Demandé par {{ requestedByUserName }} à {{ requestedAtTime }}.",
-    "select_formatting_options": "L'ébauche a été créée et il y a de nouvelles options de mise en forme à sélectionner. Vous n'aurez besoin de le faire qu'une seule fois, mais vous pouvez apporter des modifications à chaque nouvelle ébauche si vous le souhaitez.",
+    "select_formatting_options": "The draft has been created. Choose formatting options to continue.",
     "show_model_training_configuration": "Afficher la configuration de l'entraînement au modèle",
     "training_books": "Livres de formation",
     "training_data_files_used": "Les fichiers de données suivants ont été utilisés pour former le modèle.",
@@ -572,7 +575,7 @@
     "import_from_spreadsheet": "Importer depuis un tableur",
     "import_from_paratext": "Import from Paratext",
     "import_from_paratext_description": "Import Scripture Forge questions directly from Paratext notes.",
-    "import_from_paratext_duplicate": "Note: Some selected questions have already been imported. Questions that have been edited in Paratext will be updated in Scripture Forge, and exact duplicates will be skipped.",
+    "import_from_paratext_duplicate": "Remarque : Certaines questions sélectionnées ont déjà été importées. Les questions qui ont été modifiées dans Paratext seront mises à jour dans la Forge des Écritures et les doublons exacts seront ignorés.",
     "import_from_paratext_select_tag": "Choose a Paratext note type",
     "import_from_paratext_select_tag_instructions": "Choose the type of notes you want to select from.",
     "import_from_paratext_no_tags_available": "There are no tagged notes available to import.",

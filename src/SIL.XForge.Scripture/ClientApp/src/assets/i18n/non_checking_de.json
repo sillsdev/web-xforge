@@ -169,6 +169,9 @@
     "successfully_applied_all_chapters": "Aller Kapitel in {{ bookName }} erfolgreich verarbeitet"
   },
   "draft_generation": {
+    "choose_formatting_options": "Um fortzufahren, Formatierungsoptionen wählen",
+    "choose_formatting_options_before_new_draft": "Bevor Du einen neuen Entwurf erstellen kannst, musst Du Formatierungsoptionen auswählen.",
+    "formatting_options": "Optionen für die Formatierung",
     "back_translation_requirement": "Rückübersetzungsentwürfe können nur in den etwa 200 [link:supportedLanguagesUrl] unterstützten Sprachen[/link] erstellt werden.",
     "cancel_generation_button": "Abbrechen",
     "configure_sources": "Ausgangstexte bearbeiten",
@@ -299,7 +302,7 @@
     "options_for_paragraph_breaks_and_quotation_marks": "Optionen für Absatzumbrüche und Anführungszeichen für erleichtertes Bearbeiten",
     "requested_at": "Angefordert {{ requestedAtTime }}.",
     "requested_by": "Angefordert von {{ requestedByUserName }} um {{ requestedAtTime }}.",
-    "select_formatting_options": "Der Entwurf wurde erstellt, und es gibt neue Formatierungsoptionen, die Du auswählen kannst. Du musst dies nur einmal tun, kannst dies aber ändern, wann immer Du möchtest.",
+    "select_formatting_options": "Der Entwurf wurde erstellt. Um fortzufahren, wähle Optionen für die Formatierung.",
     "show_model_training_configuration": "Modellschulungskonfiguration anzeigen",
     "training_books": "Bücher für die Schulung",
     "training_data_files_used": "Die folgenden Datendateien wurden zur Schulung des Sprachmodells verwendet.",
