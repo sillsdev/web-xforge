@@ -516,6 +516,36 @@ describe('TextComponent', () => {
     TestEnvironment.waitForPresenceTimer();
   }));
 
+  it('allows cut when valid selection', fakeAsync(() => {
+    const { env, segmentRange }: { env: TestEnvironment; segmentRange: QuillRange } = basicSimpleText();
+
+    // When asked, the current selection will be called valid.
+    const isValidSpy: jasmine.Spy<any> = spyOn<any>(env.component, 'isValidSelectionForCurrentSegment').and.returnValue(
+      true
+    );
+
+    // SUT
+    const allowed: boolean = env.quillHandleCut(segmentRange);
+
+    expect(allowed).withContext('should have been allowed when valid selection').toBeTrue();
+    expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
+  }));
+
+  it('disallows cut when invalid selection', fakeAsync(() => {
+    const { env, segmentRange }: { env: TestEnvironment; segmentRange: QuillRange } = basicSimpleText();
+
+    // When asked, the current selection will be called invalid.
+    const isValidSpy: jasmine.Spy<any> = spyOn<any>(env.component, 'isValidSelectionForCurrentSegment').and.returnValue(
+      false
+    );
+
+    // SUT
+    const allowed: boolean = env.quillHandleCut(segmentRange);
+
+    expect(allowed).withContext('should have been disallowed when invalid selection').toBeFalse();
+    expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
+  }));
+
   it('"select all" adjusts selection to current segment', fakeAsync(() => {
     const env = new TestEnvironment();
     const testSegmentRefs = ['verse_1_1', 'verse_1_3'];
@@ -2040,6 +2070,21 @@ class TestEnvironment {
     }
     const matchingBindings = (this.component.editor!.keyboard as any).bindings[keyCode].filter((bindingItem: any) =>
       bindingItem.handler.toString().includes(handler)
+    );
+    expect(matchingBindings.length)
+      .withContext('setup: should be grabbing a single, specific binding in quill with the desired handler')
+      .toEqual(1);
+    return matchingBindings[0].handler.call({ quill: this.component.editor }, range, {});
+  }
+
+  /**
+   * Find the desired handler method in quill keyboard's list of handlers for cut and call it.
+   */
+  quillHandleCut(range: QuillRange): boolean {
+    const cutKeyCode = 'x';
+    const matchingBindings = (this.component.editor!.keyboard as any).bindings[cutKeyCode].filter(
+      (bindingItem: any) =>
+        (bindingItem.ctrlKey || bindingItem.metaKey) && bindingItem.handler.toString().includes('isDeleteAllowed')
     );
     expect(matchingBindings.length)
       .withContext('setup: should be grabbing a single, specific binding in quill with the desired handler')
