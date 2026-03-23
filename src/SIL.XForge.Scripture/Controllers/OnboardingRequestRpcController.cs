@@ -486,7 +486,7 @@ public class OnboardingRequestRpcController(
     /// Note: This is intended for external use by the onboarding script, not internal Scripture Forge use.
     /// </summary>
     [Obsolete("Use GetProjectMetadata with either paratextId or scriptureForgeId instead for more flexible querying")]
-    public async Task<IRpcMethodResult> GetProjectMetadataByParatextId(string paratextId)
+    public IRpcMethodResult GetProjectMetadataByParatextId(string paratextId)
     {
         try
         {
@@ -540,7 +540,7 @@ public class OnboardingRequestRpcController(
     /// Caller must provide exactly one identifier.
     /// Note: This is intended for external use by the onboarding script, not internal Scripture Forge use.
     /// </summary>
-    public async Task<IRpcMethodResult> GetProjectMetadata(string? paratextId = null, string? scriptureForgeId = null)
+    public IRpcMethodResult GetProjectMetadata(string? paratextId = null, string? scriptureForgeId = null)
     {
         try
         {
