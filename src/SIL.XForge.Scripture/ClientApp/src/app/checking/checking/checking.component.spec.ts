@@ -455,15 +455,14 @@ describe('CheckingComponent', () => {
       // Question 5 has been stored as the question to start at
       expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toBe('q5Id');
       expect(env.questions.length).toEqual(16);
-
-      let question = env.selectQuestion(1);
       // Trigger route change that should happen when activating question from a different book/chapter
       env.setBookChapter('MAT', 1);
+      let question = env.selectQuestion(1);
       expect(env.getQuestionText(question)).toBe('Matthew question relating to chapter 1');
       expect(await env.getCurrentBookAndChapter()).toBe('Matthew 1');
 
-      question = env.selectQuestion(16);
       env.setBookChapter('JHN', 2);
+      question = env.selectQuestion(16);
       expect(env.getQuestionText(question)).toBe('John 2');
       expect(await env.getCurrentBookAndChapter()).toBe('John 2');
       env.waitForQuestionTimersToComplete();
@@ -495,6 +494,7 @@ describe('CheckingComponent', () => {
       env.setBookChapter('JHN', 2);
       env.fixture.detectChanges();
       expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toBe('q15Id');
+      tick();
       flush();
       discardPeriodicTasks();
     }));
@@ -654,6 +654,7 @@ describe('CheckingComponent', () => {
       expect(env.component.answersPanel?.getFileSource(questionDoc.data?.audioUrl)).toBeDefined();
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, 'questions', questionId, 'anAudioFile.mp3')).once();
       env.waitForAudioPlayer();
+      tick(100);
       flush();
       discardPeriodicTasks();
     }));
@@ -1731,6 +1732,7 @@ describe('CheckingComponent', () => {
       expect(env.scriptureText).toBe('John 2:2-5');
       env.clickButton(env.saveAnswerButton);
       expect(env.getAnswerScriptureText(0)).toBe('…The selected text(John 2:2-5)');
+      tick(100);
       flush();
       discardPeriodicTasks();
     }));
@@ -2237,6 +2239,7 @@ describe('CheckingComponent', () => {
     it('update answer audio cache after save', fakeAsync(() => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       const questionDoc = spy(env.getQuestionDoc('q6Id'));
+      verify(questionDoc!.updateAnswerFileCache()).never();
       env.selectQuestion(6);
       env.clickButton(env.getAnswerEditButton(0));
       env.waitForSliderUpdate();
@@ -2298,6 +2301,7 @@ describe('CheckingComponent', () => {
       expect(env.getExportAnswerButton(buttonIndex).classes['status-exportable']).toBe(true);
       const questionDoc = env.component.questionsList!.activeQuestionDoc!;
       expect(questionDoc.data!.answers[0].status).toEqual(AnswerStatus.Exportable);
+      tick(100);
       flush();
       discardPeriodicTasks();
     }));
@@ -2312,6 +2316,7 @@ describe('CheckingComponent', () => {
       expect(env.getResolveAnswerButton(buttonIndex).classes['status-resolved']).toBe(true);
       const questionDoc = env.component.questionsList!.activeQuestionDoc!;
       expect(questionDoc.data!.answers[0].status).toEqual(AnswerStatus.Resolved);
+      tick(100);
       flush();
       discardPeriodicTasks();
     }));
@@ -2341,6 +2346,7 @@ describe('CheckingComponent', () => {
       expect(env.getExportAnswerButton(buttonIndex).classes['status-exportable']).toBeUndefined();
       questionDoc = env.component.questionsList!.activeQuestionDoc!;
       expect(questionDoc.data!.answers[0].status).toEqual(AnswerStatus.None);
+      tick(100);
       flush();
       discardPeriodicTasks();
     }));
@@ -2400,6 +2406,7 @@ describe('CheckingComponent', () => {
       env.waitForSliderUpdate();
       tick();
       env.fixture.detectChanges();
+      tick();
       segment = env.getVerse(1, 3);
       expect(segment.classList.contains('question-segment')).toBe(false);
       expect(segment.classList.contains('highlight-segment')).toBe(false);
@@ -2608,7 +2615,7 @@ describe('CheckingComponent', () => {
       discardPeriodicTasks();
     }));
 
-    it('notifies admin if chapter audio is absent and hide scripture text is enabled', fakeAsync(() => {
+    it('notifies admin if chapter audio is absent and hide scripture text is enabled', fakeAsync(async () => {
       const env = new TestEnvironment({
         user: ADMIN_USER,
         projectBookRoute: 'MAT',
@@ -2628,8 +2635,9 @@ describe('CheckingComponent', () => {
           op.set(p => p.texts[matTextIndex].chapters[0].hasAudio, true);
         });
       });
+      env.waitForQuestionTimersToComplete();
 
-      env.component.addAudioTimingData();
+      await env.component.addAudioTimingData();
       env.waitForQuestionTimersToComplete();
       env.fixture.detectChanges();
 
@@ -3454,6 +3462,9 @@ class TestEnvironment {
     questionDoc.submitJson0Op(op => op.set(q => q.answers[answerIndex].deleted, true));
 
     this.fixture.detectChanges();
+    tick();
+    this.fixture.detectChanges();
+    tick();
   }
 
   setQuestionFilter(filter: QuestionFilter): void {
