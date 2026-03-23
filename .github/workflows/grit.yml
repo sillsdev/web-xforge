@@ -16,5 +16,19 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: grit-check
-        uses: getgrit/github-action-check@c1ba5f99fd0e46f4cdc35d8dbc4622610ccc1784 # v0
+      # Install Node so npm can be used to install Grit
+      - name: Set up Node
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: "22.13.0"
+
+      # The following steps were copied from github.com/honeycombio/github-action-check/blob/main/action.yaml with
+      # slight simplifications.
+      # The install method was changed from running https://docs.grit.io/install to using npm because the install URL
+      # redirects to https://github.com/biomejs/gritql/releases/download/v0.0.2/grit-installer.sh, which returns 404.
+      - name: Install Grit
+        run: npm install --location=global @getgrit/cli@0.1.0-alpha.1743007075
+      - name: Init Grit
+        run: grit init
+      - name: Run Grit check
+        run: grit check --github-actions
