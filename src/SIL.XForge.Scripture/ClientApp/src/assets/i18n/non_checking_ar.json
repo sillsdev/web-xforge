@@ -169,6 +169,9 @@
     "successfully_applied_all_chapters": "Successfully applied all chapters to {{ bookName }}"
   },
   "draft_generation": {
+    "choose_formatting_options": "Choose formatting options to continue",
+    "choose_formatting_options_before_new_draft": "Before you can create a new draft, you need to choose formatting options.",
+    "formatting_options": "Formatting options",
     "back_translation_requirement": "Back translation drafts can only be generated into the roughly 200 [link:supportedLanguagesUrl]supported languages[/link].",
     "cancel_generation_button": "إلغاء",
     "configure_sources": "Configure sources",
@@ -299,7 +302,7 @@
     "options_for_paragraph_breaks_and_quotation_marks": "Options for paragraph breaks and quotation marks to make editing easier",
     "requested_at": "Requested {{ requestedAtTime }}.",
     "requested_by": "Requested by {{ requestedByUserName }} at {{ requestedAtTime }}.",
-    "select_formatting_options": "The draft has been created, and there are new formatting options to select. You will only need to do this once, but you can change them whenever you wish.",
+    "select_formatting_options": "The draft has been created. Choose formatting options to continue.",
     "show_model_training_configuration": "Show model training configuration",
     "training_books": "Training books",
     "training_data_files_used": "The following data files were used to train the model.",

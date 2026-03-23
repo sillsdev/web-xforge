@@ -110,6 +110,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   // This component url, but with a hash for opening a dialog
   supportedLanguagesUrl: RouterLink = { route: [], fragment: 'supported-languages' };
   draftHelp = this.i18n.interpolate('draft_generation.instructions_help');
+  showNtDraftingNotice = new Date() < new Date('2026-05-25');
   ntDraftingNotice = this.i18n.interpolate('draft_generation.nt_drafting_notice');
 
   sourceLanguage?: string;

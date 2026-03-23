@@ -18,6 +18,8 @@ jobs:
   push_files_to_crowdin:
     name: "Push files to Crowdin"
     runs-on: ubuntu-24.04
+    environment: Crowdin
+
     steps:
       - name: "Fail if not on master"
         if: github.ref != 'refs/heads/master'
@@ -42,5 +44,5 @@ jobs:
       - name: "Push files to Crowdin"
         run: scripts/push_changes_to_crowdin.mts
         env:
-          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+          CROWDIN_PROJECT_ID: ${{ vars.CROWDIN_PROJECT_ID }}
           CROWDIN_API_KEY: ${{ secrets.CROWDIN_API_KEY }}
