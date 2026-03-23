@@ -1,7 +1,17 @@
 import { Dir } from '@angular/cdk/bidi';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { AsyncPipe, KeyValuePipe, NgClass } from '@angular/common';
-import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  ViewChild
+} from '@angular/core';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { MatListSubheaderCssMatStyler, MatSelectionList } from '@angular/material/list';
@@ -97,7 +107,8 @@ interface Summary {
     DonutChartComponent,
     AsyncPipe,
     KeyValuePipe
-  ]
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CheckingComponent extends DataLoadingComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('answerPanelContainer') set answersPanelElement(answersPanelContainerElement: ElementRef) {
@@ -192,6 +203,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   private _showScriptureAudioPlayer: boolean = false;
 
   constructor(
+    private readonly changeDetector: ChangeDetectorRef,
     private readonly destroyRef: DestroyRef,
     private readonly activatedRoute: ActivatedRoute,
     private readonly projectService: SFProjectService,
@@ -800,6 +812,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         if (prevInScope != null) {
           this.prevQuestionOutOfScope = undefined;
           this.prevQuestion$ = of(prevInScope);
+          this.changeDetector.detectChanges();
         } else {
           const prevQuestionQuery = await this.checkingQuestionsService.queryAdjacentQuestions(
             this.projectDoc!.id,
@@ -816,6 +829,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             )
             .subscribe(async query => {
               this.prevQuestion$ = of(this.filterQuestions(query.docs)[0]);
+              this.changeDetector.detectChanges();
             });
         }
 
@@ -824,6 +838,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         if (nextInScope != null) {
           this.nextQuestionOutOfScope = undefined;
           this.nextQuestion$ = of(nextInScope);
+          this.changeDetector.detectChanges();
         } else {
           const nextQuestionQuery = await this.checkingQuestionsService.queryAdjacentQuestions(
             this.projectDoc!.id,
@@ -840,6 +855,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             )
             .subscribe(async query => {
               this.nextQuestion$ = of(this.filterQuestions(query.docs)[0]);
+              this.changeDetector.detectChanges();
             });
         }
       });
@@ -1257,6 +1273,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       this.totalVisibleQuestionsString = '0';
       this.updateQuestionRefs();
       this.refreshSummary();
+      this.changeDetector.detectChanges();
       return;
     }
 
@@ -1279,6 +1296,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
     this.updateQuestionRefs();
     this.refreshSummary();
+    this.changeDetector.detectChanges();
   }
 
   private filterQuestions(unfilteredQuestions: readonly QuestionDoc[]): QuestionDoc[] {
