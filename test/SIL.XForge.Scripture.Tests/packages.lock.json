@@ -1044,8 +1044,8 @@
       },
       "ParatextData": {
         "type": "Transitive",
-        "resolved": "9.5.0.24",
-        "contentHash": "2Xz90cso5RAiwQPkIW+766lY6XMQUhzhKOw8sUDBizQgXOZRwDK9zpBAGrDzPfSdhuH/Mjky0TIbHw142UoFQg==",
+        "resolved": "9.6.0.1-beta",
+        "contentHash": "1MRDNTuL0RHk0L5og5ZzgCX1gsi7pzfeywReOLsLxmjmsKY+06NWPTPyiEA/Zgj1xsLFas0dSKhxl9NQN9AN0w==",
         "dependencies": {
           "Icu4c.Win.Min": "59.1.7",
           "JetBrains.Annotations": "2025.2.2",
@@ -1686,7 +1686,7 @@
           "Microsoft.FeatureManagement.AspNetCore": "[4.5.0, )",
           "Microsoft.VisualStudio.Azure.Containers.Tools.Targets": "[1.23.0, )",
           "NPOI": "[2.7.6, 2.7.6]",
-          "ParatextData": "[9.5.0.24, )",
+          "ParatextData": "[9.6.0.1-beta, )",
           "Polly": "[8.6.6, )",
           "SIL.Converters.Usj": "[1.0.0, )",
           "SIL.Machine": "[3.8.4, )",
