@@ -2590,7 +2590,7 @@ public class MachineApiService(
     /// <param name="builds">The builds.</param>
     /// <param name="bookNum">The book number.</param>
     /// <param name="chapterNum">The chapter number.</param>
-    /// <returns>The builds containing the specified book.</returns>
+    /// <returns>The builds containing the specified book and chapter.</returns>
     private static IReadOnlyList<ServalBuildDto> FilterBuildsByBookAndChapter(
         IReadOnlyList<ServalBuildDto> builds,
         int bookNum,
