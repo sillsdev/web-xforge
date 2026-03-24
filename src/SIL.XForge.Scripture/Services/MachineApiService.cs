@@ -2493,7 +2493,12 @@ public class MachineApiService(
     /// <param name="booksAndChapters">The dictionary of books and chapters to update.</param>
     /// <returns>The scripture range.</returns>
     private static string GetScriptureRange(Dictionary<string, SortedSet<int>> booksAndChapters) =>
-        string.Join(';', booksAndChapters.Select(b => b.Key + GetChaptersAsRange(b.Value)));
+        string.Join(
+            ';',
+            booksAndChapters
+                .OrderBy(kvp => Array.IndexOf(Canon.AllBookIds, kvp.Key))
+                .Select(b => b.Key + GetChaptersAsRange(b.Value))
+        );
 
     /// <summary>
     /// Gets the highest ranked user id on a project.
@@ -2590,7 +2595,7 @@ public class MachineApiService(
     /// <param name="builds">The builds.</param>
     /// <param name="bookNum">The book number.</param>
     /// <param name="chapterNum">The chapter number.</param>
-    /// <returns>The builds containing the specified book.</returns>
+    /// <returns>The builds containing the specified book and chapter.</returns>
     private static IReadOnlyList<ServalBuildDto> FilterBuildsByBookAndChapter(
         IReadOnlyList<ServalBuildDto> builds,
         int bookNum,

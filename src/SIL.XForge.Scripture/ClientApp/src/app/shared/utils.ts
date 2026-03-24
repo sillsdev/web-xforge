@@ -186,6 +186,7 @@ export function booksFromScriptureRange(scriptureRange: string | undefined): num
 export function expandNumbers(numberRange: string): number[] {
   return numberRange
     .split(',')
+    .filter(Boolean) // Remove empty strings
     .flatMap(part => {
       if (part.includes('-')) {
         const [start, end] = part.split('-').map(Number);

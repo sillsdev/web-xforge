@@ -3823,6 +3823,42 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task RetrievePreTranslationStatusAsync_UpdatesScriptureRanges()
+    {
+        // Set up test environment with a completed build
+        var env = new TestEnvironment();
+        env.ConfigureTranslationBuild(
+            new TranslationBuild
+            {
+                State = JobState.Completed,
+                Pretranslate =
+                [
+                    new PretranslateCorpus
+                    {
+                        SourceFilters = [new ParallelCorpusFilter { ScriptureRange = "GEN2,4,5;LEV" }],
+                    },
+                ],
+            }
+        );
+        await env.Projects.UpdateAsync(
+            Project01,
+            u => u.Set(p => p.TranslateConfig.DraftConfig.DraftedScriptureRange, "GEN1,3-4,7;EXO;LEV")
+        );
+
+        // SUT
+        await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
+
+        Assert.That(
+            env.Projects.Get(Project01).TranslateConfig.DraftConfig.CurrentScriptureRange,
+            Is.EqualTo("GEN2,4-5;LEV")
+        );
+        Assert.That(
+            env.Projects.Get(Project01).TranslateConfig.DraftConfig.DraftedScriptureRange,
+            Is.EqualTo("GEN1-5,7;EXO;LEV")
+        );
+    }
+
+    [Test]
     public async Task RetrievePreTranslationStatusAsync_SetsDraftGenerationRequestId()
     {
         // Set up test environment with a completed build
