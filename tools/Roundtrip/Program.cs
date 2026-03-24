@@ -176,7 +176,8 @@ void Roundtrip(string usfm, string fileName, string path, RoundtripMethod roundt
         usx.CreateNavigator(),
         XPathExpression.Compile("*[false()]"),
         out string cleanedUsfm,
-        allowInvisibleChars: false
+        allowInvisibleChars: false, // Paratext 9.5 may have this as true
+        usePlusOnNestedStyles: false // Paratext 9.6 and USFM 3.1 may have this as true
     );
 
     // Normalize the cleaned USFM, to get the expected USFM
@@ -278,7 +279,8 @@ void Roundtrip(string usfm, string fileName, string path, RoundtripMethod roundt
         actualUsx.CreateNavigator(),
         XPathExpression.Compile("*[false()]"),
         out string convertedUsfm,
-        allowInvisibleChars: false
+        allowInvisibleChars: false, // Paratext 9.5 may have this as true
+        usePlusOnNestedStyles: false // Paratext 9.6 and USFM 3.1 may have this as true
     );
 
     // Normalize the USFM
