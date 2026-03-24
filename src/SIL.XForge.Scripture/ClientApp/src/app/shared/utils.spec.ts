@@ -117,7 +117,14 @@ describe('shared utils', () => {
       expect(expandNumbers('1')).toEqual([1]);
       expect(expandNumbers('1,2,3')).toEqual([1, 2, 3]);
       expect(expandNumbers('1-3')).toEqual([1, 2, 3]);
-      expect(expandNumbers('4,1-3,5,6,invalid,0,7-9')).toEqual([4, 1, 2, 3, 5, 6, 0, 7, 8, 9]);
+      expect(expandNumbers('4,1-3,5,invalid,6,0,7-9')).toEqual([4, 1, 2, 3, 5, 6, 0, 7, 8, 9]);
+    });
+    it('should return an empty array for invalid number ranges', () => {
+      expect(expandNumbers('')).toEqual([]);
+      expect(expandNumbers('3-1')).toEqual([]);
+      expect(expandNumbers('invalid-1')).toEqual([]);
+      expect(expandNumbers('1-invalid')).toEqual([]);
+      expect(expandNumbers('invalid-invalid')).toEqual([]);
     });
   });
 

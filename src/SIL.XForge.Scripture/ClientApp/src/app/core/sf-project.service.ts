@@ -84,7 +84,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     const bookId: string = Canon.bookNumberToId(bookNum);
     const scriptureRanges: string[] = scriptureRange.split(';').filter(book => book.startsWith(bookId));
 
-    // If the book is not present, the
+    // If the book is not present, there is no draft
     if (scriptureRanges.length === 0) return false;
 
     // If no chapter number is specified, we are checking for the draft for the specified book number
