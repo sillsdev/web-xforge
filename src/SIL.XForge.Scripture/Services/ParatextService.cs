@@ -2544,7 +2544,8 @@ public class ParatextService : DisposableBase, IParatextService
             usx.CreateNavigator(),
             XPathExpression.Compile("*[false()]"),
             out string usfm,
-            scrText.Settings.AllowInvisibleChars
+            scrText.Settings.AllowInvisibleChars,
+            scrText.Settings.UsfmRequiresPlusOnNestedStyles
         );
         log?.AppendLine($"Created usfm of {usfm}");
 
