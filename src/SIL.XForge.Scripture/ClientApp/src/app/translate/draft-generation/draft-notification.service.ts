@@ -70,7 +70,7 @@ export class DraftNotificationService {
   }
 
   async subscribeToProject(projectId: string): Promise<void> {
-    await this.connection.send('subscribeToProject', projectId).catch(err => {
+    await this.connection.invoke('subscribeToProject', projectId).catch(err => {
       // This error is thrown when a user navigates away quickly after starting the sync
       if (err.message === "Cannot send data if the connection is not in the 'Connected' State.") {
         return;
