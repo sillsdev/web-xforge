@@ -48,14 +48,14 @@ public abstract class NotificationHubBase<T>(IRealtimeService realtimeService) :
         }
 
         // Retrieve the user identifier
-        string userId = Context.GetHttpContext()?.User.FindFirst(XFClaimTypes.UserId)?.Value;
+        string? userId = Context.GetHttpContext()?.User.FindFirst(XFClaimTypes.UserId)?.Value;
         if (string.IsNullOrWhiteSpace(userId))
         {
             throw new UnauthorizedAccessException();
         }
 
         // Ensure the user is on the project, and has a Paratext role
-        if (!project.UserRoles.TryGetValue(userId, out string role) || !SFProjectRole.IsParatextRole(role))
+        if (!project.UserRoles.TryGetValue(userId, out string? role) || !SFProjectRole.IsParatextRole(role))
         {
             throw new ForbiddenException();
         }

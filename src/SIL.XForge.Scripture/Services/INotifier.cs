@@ -8,5 +8,4 @@ public interface INotifier
     Task NotifyBuildProgress(string sfProjectId, ServalBuildState buildState);
     Task NotifyDraftApplyProgress(string sfProjectId, DraftApplyState draftApplyState);
     Task NotifySyncProgress(string sfProjectId, ProgressState progressState);
-    Task SubscribeToProject(string projectId);
 }
