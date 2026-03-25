@@ -1,5 +1,5 @@
 import { Dir } from '@angular/cdk/bidi';
-import { AfterViewInit, Component, DestroyRef, Input, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, DestroyRef, Input, ViewChild } from '@angular/core';
 import { MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { TranslocoModule } from '@ngneat/transloco';
@@ -27,12 +27,16 @@ export class CheckingAudioPlayerComponent implements AfterViewInit {
 
   constructor(
     readonly i18n: I18nService,
+    private readonly changeDetector: ChangeDetectorRef,
     private destroyRef: DestroyRef
   ) {}
 
   ngAfterViewInit(): void {
     this.audioPlayer!.isAudioAvailable$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(newValue => {
-      setTimeout(() => (this._isAudioAvailable = newValue));
+      setTimeout(() => {
+        this._isAudioAvailable = newValue;
+        this.changeDetector.markForCheck();
+      });
     });
     this._isAudioAvailable = this.audioPlayer!.isAudioAvailable$.value;
   }

@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { Component, Input, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
 import { MatIconButton } from '@angular/material/button';
 import { MatDialogRef } from '@angular/material/dialog';
 import { MatIcon } from '@angular/material/icon';
@@ -36,7 +36,10 @@ export class AttachAudioComponent {
 
   protected uploadAudioFile: File = {} as File;
 
-  constructor(private readonly dialogService: DialogService) {}
+  constructor(
+    private readonly changeDetector: ChangeDetectorRef,
+    private readonly dialogService: DialogService
+  ) {}
 
   get audioUrl(): string | undefined {
     return this.textAndAudio?.input?.audioUrl;
@@ -52,6 +55,7 @@ export class AttachAudioComponent {
       >(AudioRecorderDialogComponent, { data: config });
     const result: AudioRecorderDialogResult | undefined = await firstValueFrom(recorderDialogRef.afterClosed());
     if (result?.audio != null && this.textAndAudio != null) {
+      this.changeDetector.markForCheck();
       this.textAndAudio.setAudioAttachment(result.audio);
     }
   }

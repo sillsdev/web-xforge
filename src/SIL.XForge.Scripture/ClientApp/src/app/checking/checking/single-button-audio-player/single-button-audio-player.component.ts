@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { Component, Input, OnChanges, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnChanges, OnDestroy } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatTooltip } from '@angular/material/tooltip';
@@ -31,7 +31,10 @@ export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent i
     this._source = source;
   }
 
-  constructor(onlineStatusService: OnlineStatusService) {
+  constructor(
+    onlineStatusService: OnlineStatusService,
+    private readonly changeDetector: ChangeDetectorRef
+  ) {
     super(onlineStatusService);
   }
 
@@ -45,14 +48,17 @@ export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent i
 
   calculateProgress(): void {
     this._progressInDegrees = this.audio?.seek !== undefined ? `${(this.audio?.seek / 100) * 360}deg` : '';
+    this.changeDetector.markForCheck();
   }
 
   play(): void {
     this.audio?.play();
+    this.changeDetector.markForCheck();
   }
 
   stop(): void {
     this.audio?.stop();
+    this.changeDetector.markForCheck();
   }
 
   togglePlay(): void {
