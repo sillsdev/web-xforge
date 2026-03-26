@@ -485,11 +485,13 @@
     "upgrade_safari": "{{ newLine }}Kami merekomendasikan untuk meningkatkan ke versi terbaru {{ safariLink }}."
   },
   "text": {
-    "book_does_not_exist": "Kitab tidak ada.",
     "book_is_empty": "Kitab masih kosong. Tambahkan pasal di Paratext.",
+    "chapter_does_not_exist": "This chapter does not exist in {{ projectName }}",
+    "error": "An error occurred while loading the text",
     "loading": "Memuat...",
     "not_available_offline": "Teks ini tidak tersedia secara luring. Sambungkan ke Internet untuk melihat teks.",
-    "permission_denied": "Anda tidak memiliki izin untuk melihat teks ini. Silakan hubungi administrator proyek untuk mendapatkan izin."
+    "permission_denied": "Anda tidak memiliki izin untuk melihat teks ini. Silakan hubungi administrator proyek untuk mendapatkan izin.",
+    "this_book_does_not_exist": "{{ bookName }} does not exist in {{ projectName }}"
   },
   "text_chooser_dialog": {
     "cancel": "Batal",

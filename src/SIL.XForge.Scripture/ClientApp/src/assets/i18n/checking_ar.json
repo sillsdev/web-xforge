@@ -485,11 +485,13 @@
     "upgrade_safari": "{{ newLine }} نوصي بتحديث متصفّح الإنترنت بالضغط على {{ safariLink }}."
   },
   "text": {
-    "book_does_not_exist": "هذا السفر/ الكتاب غير موجود.",
     "book_is_empty": "هذا السفر/ الكتاب فارغ. أضِف فصولاً في Paratext.",
+    "chapter_does_not_exist": "This chapter does not exist in {{ projectName }}",
+    "error": "An error occurred while loading the text",
     "loading": "التحميل جارٍ...",
     "not_available_offline": "هذا النص غير متوفر دون اتّصال بالإنترنت. اتصل بالإنترنت للوصول إلى النص.",
-    "permission_denied": "You do not have permission to view this text. Please contact the project's administrator to get permission."
+    "permission_denied": "You do not have permission to view this text. Please contact the project's administrator to get permission.",
+    "this_book_does_not_exist": "{{ bookName }} does not exist in {{ projectName }}"
   },
   "text_chooser_dialog": {
     "cancel": "إلغاء",

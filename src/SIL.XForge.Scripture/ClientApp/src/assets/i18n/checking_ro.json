@@ -485,11 +485,13 @@
     "upgrade_safari": "{{ newLine }}Vă recomandăm să faceți upgrade la cea mai recentă versiune {{ safariLink }}."
   },
   "text": {
-    "book_does_not_exist": "Această carte nu există.",
     "book_is_empty": "Această carte este goală. Adăugați capitole în Paratext.",
+    "chapter_does_not_exist": "This chapter does not exist in {{ projectName }}",
+    "error": "An error occurred while loading the text",
     "loading": "Se încarcă...",
     "not_available_offline": "Acest text nu este disponibil offline. Conectați-vă la internet pentru a vedea textul.",
-    "permission_denied": "You do not have permission to view this text. Please contact the project's administrator to get permission."
+    "permission_denied": "You do not have permission to view this text. Please contact the project's administrator to get permission.",
+    "this_book_does_not_exist": "{{ bookName }} does not exist in {{ projectName }}"
   },
   "text_chooser_dialog": {
     "cancel": "Renunță",

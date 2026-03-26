@@ -485,11 +485,13 @@
     "upgrade_safari": "{{ newLine }}Recomendamos actualizar a la última versión de {{ safariLink }}."
   },
   "text": {
-    "book_does_not_exist": "Este libro no existe.",
     "book_is_empty": "Este libro está vacío. Añadir capítulos en Paratext.",
+    "chapter_does_not_exist": "This chapter does not exist in {{ projectName }}",
+    "error": "An error occurred while loading the text",
     "loading": "Cargando...",
     "not_available_offline": "Este texto no está disponible fuera de línea. Conéctese a Internet para ver el texto.",
-    "permission_denied": "No tiene permiso para ver este texto. Póngase en contacto con el administrador del proyecto para obtener permiso."
+    "permission_denied": "No tiene permiso para ver este texto. Póngase en contacto con el administrador del proyecto para obtener permiso.",
+    "this_book_does_not_exist": "{{ bookName }} does not exist in {{ projectName }}"
   },
   "text_chooser_dialog": {
     "cancel": "Cancelar",

@@ -485,11 +485,13 @@
     "upgrade_safari": "{{ newLine }}हामी नयाँ अपग्रेड गर्नका लागि सुझाव गर्छौं {{ safariLink }}"
   },
   "text": {
-    "book_does_not_exist": "यो पुस्तक छैन।",
     "book_is_empty": "यो किताब खाली छ। पाराटेक्‍स्‍टमा अध्‍यायहरू थप्‍नुहोस्।",
+    "chapter_does_not_exist": "This chapter does not exist in {{ projectName }}",
+    "error": "An error occurred while loading the text",
     "loading": "लोड हुँदैछ...",
     "not_available_offline": "यो टेक्‍स्‍ट अफलाइनमा उपलब्‍ध छैन। टेक्‍स्‍टलाई हेर्न इन्‍टरनेटमा जोडिनुहोस्।",
-    "permission_denied": "You do not have permission to view this text. Please contact the project's administrator to get permission."
+    "permission_denied": "You do not have permission to view this text. Please contact the project's administrator to get permission.",
+    "this_book_does_not_exist": "{{ bookName }} does not exist in {{ projectName }}"
   },
   "text_chooser_dialog": {
     "cancel": "रद्द गर्नुहोस्",
