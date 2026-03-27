@@ -234,13 +234,18 @@
                     {{ t("generate_draft_button") }}
                   </button>
                   @if (hasConfigureSourcePermission) {
-                    <button mat-button data-test-id="configure-button" [routerLink]="['sources']">
+                    <button mat-button data-test-id="configure-button" [routerLink]="configureSourcesPath">
                       <mat-icon>settings</mat-icon>
                       {{ t("configure_sources") }}
                     </button>
                   }
                 } @else if (hasConfigureSourcePermission) {
-                  <button mat-flat-button data-test-id="configure-button" color="primary" [routerLink]="['sources']">
+                  <button
+                    mat-flat-button
+                    data-test-id="configure-button"
+                    color="primary"
+                    [routerLink]="configureSourcesPath"
+                  >
                     <mat-icon>settings</mat-icon>
                     {{ t("configure_sources") }}
                   </button>
@@ -402,7 +407,7 @@
           <mat-icon>add</mat-icon> {{ t("generate_new_draft") }}
         </button>
         @if (hasConfigureSourcePermission) {
-          <button mat-button data-test-id="configure-button" [routerLink]="['sources']">
+          <button mat-button data-test-id="configure-button" [routerLink]="configureSourcesPath">
             <mat-icon>settings</mat-icon> {{ t("configure_sources") }}
           </button>
         }
@@ -414,7 +419,7 @@
         This first check regards what leads up to the first configure button. -->
         @if (!isGenerationSupported || isDraftInProgress(draftJob) || hasAnyCompletedBuild) {
           @if (draftEnabled && isOnline) {
-            <button mat-button data-test-id="configure-button" color="primary" [routerLink]="['sources']">
+            <button mat-button data-test-id="configure-button" color="primary" [routerLink]="configureSourcesPath">
               <mat-icon>settings</mat-icon> {{ t("configure_sources") }}
             </button>
           }

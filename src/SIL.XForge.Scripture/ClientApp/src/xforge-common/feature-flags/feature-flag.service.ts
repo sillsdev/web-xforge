@@ -370,6 +370,13 @@ export class FeatureFlagService {
     new StaticFeatureFlagStore(true)
   );
 
+  readonly newConfigureSourcesPage: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'NewConfigureSourcesPage',
+    'Show new configure sources page',
+    20,
+    this.featureFlagStore
+  );
+
   get featureFlags(): FeatureFlag[] {
     return Object.values(this).filter(value => value instanceof FeatureFlagFromStorage);
   }

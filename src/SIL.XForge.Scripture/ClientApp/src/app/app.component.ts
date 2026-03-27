@@ -28,6 +28,8 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DiagnosticOverlayService } from 'xforge-common/diagnostic-overlay.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { ExperimentalFeaturesDialogComponent } from 'xforge-common/experimental-features/experimental-features-dialog.component';
+import { ExperimentalFeaturesService } from 'xforge-common/experimental-features/experimental-features.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FeatureFlagsDialogComponent } from 'xforge-common/feature-flags/feature-flags-dialog.component';
@@ -138,6 +140,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly themeService: ThemeService,
     private readonly fontService: FontService,
     onlineStatusService: OnlineStatusService,
+    readonly experimentalFeatures: ExperimentalFeaturesService,
     private destroyRef: DestroyRef
   ) {
     super(noticeService);
@@ -476,6 +479,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   openFeatureFlagDialog(): void {
     this.dialogService.openMatDialog(FeatureFlagsDialogComponent);
+  }
+
+  openExperimentalFeaturesDialog(): void {
+    this.dialogService.openMatDialog(ExperimentalFeaturesDialogComponent);
   }
 
   openDiagnosticOverlay(): void {
