@@ -328,6 +328,12 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     );
   }
 
+  get configureSourcesPath(): string[] {
+    const projectId = this.activatedProject.projectId;
+    if (projectId == null) return [];
+    return ['/projects', projectId, 'draft-generation', 'configure-sources'];
+  }
+
   async generateDraftClicked(): Promise<void> {
     if (this.formattingOptionsRequired) {
       const dialogRef = this.dialogService.openGenericDialog({
