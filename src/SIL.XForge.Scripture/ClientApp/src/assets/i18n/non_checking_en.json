@@ -413,6 +413,10 @@
     "training_language_model": "Training the language model",
     "unknown_language_code": "unknown"
   },
+  "new_configure_sources": {
+    "train_language_model": "Train the language model",
+    "generate_a_draft_from_the_language_model": "Generate a draft from the language model"
+  },
   "draft_usfm_format": {
     "cancel": "Cancel",
     "chapter_draft_does_not_exist": "The draft for this chapter does not exist",

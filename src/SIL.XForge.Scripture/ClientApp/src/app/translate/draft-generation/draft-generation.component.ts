@@ -342,6 +342,13 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     );
   }
 
+  get configureSourcesPath(): string[] {
+    const projectId = this.activatedProject.projectId;
+    if (projectId == null) return [];
+    const minorPath = this.featureFlags.newConfigureSourcesPage.enabled ? 'new-configure-sources' : 'sources';
+    return ['/projects', projectId, 'draft-generation', minorPath];
+  }
+
   async generateDraftClicked(): Promise<void> {
     if (this.formattingOptionsRequired) {
       const dialogRef = this.dialogService.openGenericDialog({

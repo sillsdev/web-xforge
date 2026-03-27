@@ -33,16 +33,17 @@ class ParseVersion {
     'Stillness (non-distracting progress indicators)',
     'Use In-Process Machine for Suggestions',
     'Use Serval for Suggestions',
-    'Use Echo for Pre-Translation Drafting',
+    'Allow Echo for Pre-Translation Drafting',
     'Allow Fast Pre-Translation Training',
     'Upload Paratext Zip Files for Pre-Translation Drafting',
     'Allow mixing in an additional training source',
     'Updated Learning Rate For Serval',
-    'Dark Mode',
+    'Dark mode',
     'Enable Lynx insights',
     'Preview new draft history interface',
     'USFM Format',
-    'Show in-app draft signup form instead of external link'
+    'Show in-app draft signup form instead of external link',
+    'Show new configure sources page'
   ];
 
   constructor() {

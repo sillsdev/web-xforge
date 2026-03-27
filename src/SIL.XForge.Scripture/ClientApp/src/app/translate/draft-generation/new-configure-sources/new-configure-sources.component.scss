@@ -1,0 +1,135 @@
+:host {
+  display: grid;
+  grid-column-gap: 2em;
+  grid-row-gap: 1em;
+  align-items: start;
+  grid-template-areas: 'title' 'experimental-notice' 'introduction' 'overview' 'confirmation' 'footer';
+  max-width: 130em;
+}
+
+.experimental-notice {
+  grid-area: experimental-notice;
+}
+
+h1 {
+  grid-area: title;
+  margin: 0;
+}
+
+h2,
+h3,
+strong {
+  font-weight: 500;
+}
+
+.introduction {
+  grid-area: introduction;
+
+  * {
+    letter-spacing: initial;
+  }
+
+  h3 {
+    margin-bottom: 0em;
+  }
+  h3 + p {
+    margin-top: 0.25em;
+  }
+}
+
+.overview {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  grid-area: overview;
+}
+
+.overview mat-card-content {
+  display: flex;
+  gap: 1em;
+  padding-top: 1em;
+}
+
+.arrow mat-icon {
+  scale: 2;
+}
+
+.arrow {
+  display: flex;
+  align-items: center;
+}
+
+.sources,
+.targets,
+.translation-data {
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  flex-basis: 45%;
+
+  > p:first-child {
+    margin-top: 0;
+  }
+}
+
+.overview h3 {
+  margin: 0;
+}
+
+#offline-message {
+  display: flex;
+  justify-self: flex-end;
+  gap: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.page-actions {
+  display: flex;
+  gap: 0.5em;
+  justify-content: flex-end;
+}
+
+.add-another-project {
+  margin-bottom: 1em;
+}
+
+.component-footer {
+  grid-area: footer;
+}
+
+.confirm-language-codes {
+  grid-area: confirmation;
+}
+
+:host:has(.saving) > :not(.saving):not(h1) {
+  display: none;
+}
+
+.saving {
+  grid-column-start: 1;
+  grid-column-end: 3;
+  width: auto;
+  margin-inline: auto;
+}
+
+.saving .mat-mdc-card-content {
+  display: flex;
+  gap: 1em;
+  flex-direction: column;
+  padding-block: 1em;
+
+  & > * {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+  }
+}
+
+.success {
+  color: green;
+}
+.failure {
+  color: var(--sf-error-color);
+}
