@@ -1,8 +1,8 @@
-import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
+import { KeyValuePipe } from '@angular/common';
 import { Component, DestroyRef, EventEmitter, OnInit } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MatCard, MatCardActions, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
-import { MatRipple } from '@angular/material/core';
+import { MatDivider } from '@angular/material/divider';
 import { MatError } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
@@ -16,6 +16,7 @@ import { isNetworkError } from 'xforge-common/command.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
@@ -54,13 +55,11 @@ export interface ProjectStatus {
 
 /** Enables user to configure settings for drafting. */
 @Component({
-  selector: 'app-draft-sources',
+  selector: 'app-configure-sources',
   imports: [
-    NgTemplateOutlet,
     KeyValuePipe,
     MatButton,
     MatIcon,
-    MatRipple,
     MatCard,
     MatCardActions,
     MatCardHeader,
@@ -71,19 +70,15 @@ export interface ProjectStatus {
     MatProgressSpinner,
     LanguageCodesConfirmationComponent,
     TrainingDataMultiSelectComponent,
-    ProjectSelectComponent
+    ProjectSelectComponent,
+    MatDivider
   ],
-  templateUrl: './draft-sources.component.html',
-  styleUrl: './draft-sources.component.scss'
+  templateUrl: './configure-sources.component.html',
+  styleUrl: './configure-sources.component.scss'
 })
-export class DraftSourcesComponent extends DataLoadingComponent implements OnInit, ConfirmOnLeave {
-  /** Indicator that a project setting change is for clearing a value. */
-  static readonly projectSettingValueUnset = 'unset';
-
+export class ConfigureSourcesComponent extends DataLoadingComponent implements OnInit, ConfirmOnLeave {
   // Expose ElementState enum to template.
   ElementState = ElementState;
-
-  step = 1;
 
   trainingSources: (SelectableProjectWithLanguageCode | undefined)[] = [];
   trainingTargets: SFProjectProfile[] = [];
@@ -121,6 +116,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
     private readonly trainingDataService: TrainingDataService,
     private readonly router: Router,
     private readonly onlineStatus: OnlineStatusService,
+    readonly urls: ExternalUrlService,
     readonly i18n: I18nService,
     noticeService: NoticeService,
     private readonly errorReportingService: ErrorReportingService,
@@ -224,18 +220,6 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
     return this.activatedProjectService.projectDoc?.data?.shortName ?? '';
   }
 
-  get sourceSubtitle(): string {
-    return this.i18n.enumerateList(this.draftingSources.filter(notNull).map(s => s.shortName) ?? []);
-  }
-
-  get referencesSubtitle(): string {
-    return this.i18n.enumerateList(this.trainingSources.filter(notNull).map(r => r.shortName) ?? []);
-  }
-
-  get targetSubtitle(): string {
-    return this.i18n.enumerateList(this.trainingTargets.filter(notNull).map(t => t.shortName) ?? []);
-  }
-
   parentheses(value?: string): string {
     return value ? `(${value})` : '';
   }
@@ -316,18 +300,6 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
     }
   }
 
-  goToStep(step: number): void {
-    this.step = step;
-    // Remove any undefined values from the arrays, while keeping the length at least 1
-    const arrays = [this.trainingSources, this.trainingTargets, this.draftingSources];
-    for (const array of arrays) {
-      while (array.length > 1 && array.some(s => s == null)) {
-        const nullIndex = array.findIndex(s => s == null);
-        array.splice(nullIndex, 1);
-      }
-    }
-  }
-
   get allowAddingATrainingSource(): boolean {
     return this.trainingSources.length < 2 && this.trainingSources.every(notNull);
   }
@@ -396,8 +368,9 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
     const removedFiles = this.savedTrainingFiles?.filter(saved => !this.availableTrainingFiles.includes(saved)) ?? [];
     const addedFiles = this.availableTrainingFiles.filter(selected => !this.savedTrainingFiles?.includes(selected));
 
-    removedFiles.forEach(f => this.trainingDataService.deleteTrainingDataAsync(f));
-    addedFiles.forEach(f => this.trainingDataService.createTrainingDataAsync(f));
+    const removals: Promise<void>[] = removedFiles.map(f => this.trainingDataService.deleteTrainingDataAsync(f));
+    const additions: Promise<void>[] = addedFiles.map(f => this.trainingDataService.createTrainingDataAsync(f));
+    await Promise.all([...removals, ...additions]);
 
     const sourcesSettingsChange: DraftSourcesSettingsChange = sourceArraysToSettingsChange(
       definedReferences,
