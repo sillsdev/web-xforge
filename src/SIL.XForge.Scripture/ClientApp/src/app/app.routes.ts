@@ -27,9 +27,9 @@ import {
   UsersAuthGuard
 } from './shared/project-router.guard';
 import { SyncComponent } from './sync/sync.component';
+import { ConfigureSourcesComponent } from './translate/draft-generation/configure-sources/configure-sources.component';
 import { DraftGenerationComponent } from './translate/draft-generation/draft-generation.component';
 import { DraftOnboardingFormComponent } from './translate/draft-generation/draft-signup-form/draft-onboarding-form.component';
-import { DraftSourcesComponent } from './translate/draft-generation/draft-sources/draft-sources.component';
 import { DraftUsfmFormatComponent } from './translate/draft-generation/draft-usfm-format/draft-usfm-format.component';
 import { EditorComponent } from './translate/editor/editor.component';
 import { TranslateOverviewComponent } from './translate/translate-overview/translate-overview.component';
@@ -67,8 +67,8 @@ export const APP_ROUTES: Routes = [
     canDeactivate: [DraftNavigationAuthGuard]
   },
   {
-    path: 'projects/:projectId/draft-generation/sources',
-    component: DraftSourcesComponent,
+    path: 'projects/:projectId/draft-generation/configure-sources',
+    component: ConfigureSourcesComponent,
     canActivate: [NmtDraftAuthGuard],
     canDeactivate: [DraftNavigationAuthGuard]
   },
