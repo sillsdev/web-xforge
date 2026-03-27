@@ -41,7 +41,10 @@
   "
 */
 
+import * as fs from 'fs/promises';
 import { Db, MongoClient } from 'mongodb';
+import * as os from 'os';
+import * as path from 'path';
 import * as RichText from 'rich-text';
 import ShareDB from 'sharedb';
 import { Connection } from 'sharedb/lib/client';
@@ -49,6 +52,11 @@ import WebSocket from 'ws';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import utilsLib from './utils';
+
+// Keep 'unused' imports available for use in eval code.
+const _a = fs;
+const _b = os;
+const _c = path;
 
 type ProgArgs = {
   server: string;
