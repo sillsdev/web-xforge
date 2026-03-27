@@ -161,7 +161,8 @@ describe('DraftGenerationComponent', () => {
       mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>({
         newDraftHistory: createTestFeatureFlag(false),
         usfmFormat: createTestFeatureFlag(false),
-        inAppDraftSignupForm: createTestFeatureFlag(true)
+        inAppDraftSignupForm: createTestFeatureFlag(true),
+        newConfigureSourcesPage: createTestFeatureFlag(false)
       });
     }
 
