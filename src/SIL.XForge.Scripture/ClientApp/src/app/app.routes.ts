@@ -31,6 +31,7 @@ import { DraftGenerationComponent } from './translate/draft-generation/draft-gen
 import { DraftOnboardingFormComponent } from './translate/draft-generation/draft-signup-form/draft-onboarding-form.component';
 import { DraftSourcesComponent } from './translate/draft-generation/draft-sources/draft-sources.component';
 import { DraftUsfmFormatComponent } from './translate/draft-generation/draft-usfm-format/draft-usfm-format.component';
+import { NewConfigureSourcesComponent } from './translate/draft-generation/new-configure-sources/new-configure-sources.component';
 import { EditorComponent } from './translate/editor/editor.component';
 import { TranslateOverviewComponent } from './translate/translate-overview/translate-overview.component';
 import { UsersComponent } from './users/users.component';
@@ -69,6 +70,12 @@ export const APP_ROUTES: Routes = [
   {
     path: 'projects/:projectId/draft-generation/sources',
     component: DraftSourcesComponent,
+    canActivate: [NmtDraftAuthGuard],
+    canDeactivate: [DraftNavigationAuthGuard]
+  },
+  {
+    path: 'projects/:projectId/draft-generation/new-configure-sources',
+    component: NewConfigureSourcesComponent,
     canActivate: [NmtDraftAuthGuard],
     canDeactivate: [DraftNavigationAuthGuard]
   },
