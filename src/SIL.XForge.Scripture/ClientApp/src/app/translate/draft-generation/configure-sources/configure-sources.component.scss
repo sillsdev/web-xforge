@@ -1,0 +1,118 @@
+:host {
+  display: flex;
+  gap: 2em;
+  flex-direction: column;
+  max-width: 130em;
+}
+
+h1 {
+  margin: 0;
+}
+
+h2,
+h3,
+strong {
+  font-weight: 500;
+}
+
+.training-data-card-content,
+.translation-data-card-content {
+  display: grid;
+  grid-row-gap: 12px;
+  grid-column-gap: 24px;
+  grid-template-columns: 1fr 24px 1fr;
+  overflow-y: auto;
+
+  .heading-left,
+  .description-left,
+  .inputs-left {
+    grid-column-start: 1;
+    grid-column-end: 2;
+  }
+  .arrow {
+    align-self: start;
+    margin-top: 16px;
+    grid-column-start: 2;
+    grid-column-end: 3;
+  }
+  .heading-right,
+  .description-right,
+  .inputs-right {
+    grid-column-start: 3;
+    grid-column-end: 4;
+  }
+  .heading-right {
+    grid-row-start: 1;
+  }
+  .description-right {
+    grid-row-start: 2;
+  }
+  .inputs-right {
+    grid-row-start: 3;
+  }
+}
+
+.training-files {
+  grid-column-start: 1;
+  grid-column-end: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.arrow mat-icon {
+  scale: 2;
+}
+
+.arrow {
+  display: flex;
+  align-items: center;
+}
+
+#offline-message {
+  display: flex;
+  justify-self: flex-end;
+  gap: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.page-actions {
+  display: flex;
+  gap: 0.5em;
+  justify-content: flex-end;
+}
+
+.add-another-project {
+  margin-bottom: 1em;
+}
+
+:host:has(.saving) > :not(.saving):not(h1) {
+  display: none;
+}
+
+.saving {
+  grid-column-start: 1;
+  grid-column-end: 3;
+  width: auto;
+  margin-inline: auto;
+}
+
+.saving .mat-mdc-card-content {
+  display: flex;
+  gap: 1em;
+  flex-direction: column;
+  padding-block: 1em;
+
+  & > * {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+  }
+}
+
+.success {
+  color: green;
+}
+.failure {
+  color: var(--sf-error-color);
+}
