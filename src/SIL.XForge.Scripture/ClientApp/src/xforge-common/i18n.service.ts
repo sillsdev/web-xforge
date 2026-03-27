@@ -441,7 +441,8 @@ export class I18nService {
    * @param languageCode The language code for the language name to be displayed.
    * @param @optional displaylanguage The language code for the language in which the name should be displayed. Defaults
    * to the current locale.
-   * @returns The display name or undefined if language code is not set.
+   * @returns The display name or undefined if language code is not set. If the name is not available, returns the
+   * language code.
    */
   getLanguageDisplayName(languageCode: string | undefined, displaylanguage?: string): string | undefined {
     if (!languageCode) {

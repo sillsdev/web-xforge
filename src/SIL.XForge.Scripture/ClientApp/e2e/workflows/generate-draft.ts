@@ -49,21 +49,22 @@ export async function generateDraft(
   await user.click(page.getByRole('button', { name: 'Configure sources' }));
   await screenshot(page, { pageName: 'configure_sources_initial', ...context });
 
+  const trainingDataSection = page.locator('mat-card').nth(0);
+  const translationDataSection = page.locator('mat-card').nth(1);
+
   // Step 1: Reference projects
-  await user.click(page.getByRole('combobox').first());
+  await user.click(trainingDataSection.getByRole('combobox').first());
   await user.type('ntv');
   await user.click(page.getByRole('option', { name: 'NTV - Nueva Traducción' }));
   await user.click(page.getByRole('button', { name: 'Add another reference project' }));
-  await user.click(page.getByRole('combobox').last());
+  await user.click(trainingDataSection.getByRole('combobox').nth(1));
   await user.type('dhh94');
   await user.click(page.getByRole('option', { name: 'DHH94 - Spanish: Dios Habla' }));
-  await user.click(page.getByRole('button', { name: 'Next' }));
 
   // Step 2: Source project
-  await user.click(page.getByRole('combobox'));
+  await user.click(translationDataSection.getByRole('combobox'));
   await user.type('ntv');
   await user.click(page.getByRole('option', { name: 'NTV - Nueva Traducción' }));
-  await user.click(page.getByRole('button', { name: 'Next' }));
 
   // Step 3: Main project and other training data
   await user.check(page.getByRole('checkbox', { name: 'All the language codes are correct' }));

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
+import { MatIconButton } from '@angular/material/button';
 import { MatDialogClose, MatDialogContent, MatDialogTitle } from '@angular/material/dialog';
 import { MatIcon } from '@angular/material/icon';
 import { TranslocoModule } from '@ngneat/transloco';
@@ -7,7 +8,7 @@ import { NLLB_LANGUAGES, NllbLanguage, NllbLanguageDict } from '../../nllb-langu
 
 @Component({
   selector: 'app-supported-back-translation-languages-dialog',
-  imports: [MatIcon, MatDialogTitle, MatDialogContent, MatDialogClose, TranslocoModule],
+  imports: [MatIcon, MatIconButton, MatDialogTitle, MatDialogContent, MatDialogClose, TranslocoModule],
   templateUrl: './supported-back-translation-languages-dialog.component.html',
   styleUrls: ['./supported-back-translation-languages-dialog.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
