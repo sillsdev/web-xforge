@@ -25,6 +25,7 @@ import { getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TrainingDataDoc } from '../../core/models/training-data-doc';
+import { ProjectNotificationService } from '../../core/project-notification.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
 import { BuildDto } from '../../machine-api/build-dto';
@@ -50,6 +51,7 @@ describe('DraftGenerationComponent', () => {
   let mockTrainingDataService: jasmine.SpyObj<TrainingDataService>;
   let mockFeatureFlagService: jasmine.SpyObj<FeatureFlagService>;
   let mockSFProjectService: jasmine.SpyObj<SFProjectService>;
+  let mockProjectNotificationService: jasmine.SpyObj<ProjectNotificationService>;
 
   const buildDto: BuildDto = {
     id: 'testId',
@@ -99,7 +101,8 @@ describe('DraftGenerationComponent', () => {
           { provide: OnlineStatusService, useClass: TestOnlineStatusService },
           { provide: TrainingDataService, useValue: mockTrainingDataService },
           { provide: ProgressService, useValue: undefined },
-          { provide: FeatureFlagService, useValue: mockFeatureFlagService }
+          { provide: FeatureFlagService, useValue: mockFeatureFlagService },
+          { provide: ProjectNotificationService, useValue: mockProjectNotificationService }
         ]
       });
 
@@ -218,6 +221,13 @@ describe('DraftGenerationComponent', () => {
       mockSFProjectService = jasmine.createSpyObj<SFProjectService>(['hasDraft']);
       mockSFProjectService.hasDraft.withArgs(matchThisProject).and.returnValue(preTranslate);
       mockSFProjectService.hasDraft.withArgs(matchThisProject, jasmine.anything()).and.returnValue(preTranslate);
+      mockProjectNotificationService = jasmine.createSpyObj<ProjectNotificationService>([
+        'setNotifyBuildProgressHandler',
+        'start',
+        'stop',
+        'removeNotifyBuildProgressHandler',
+        'subscribeToProject'
+      ]);
     }
 
     get configureDraftButton(): HTMLElement | null {

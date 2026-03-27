@@ -92,6 +92,7 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { ParatextService } from '../../core/paratext.service';
 import { PermissionsService } from '../../core/permissions.service';
+import { ProjectNotificationService } from '../../core/project-notification.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
@@ -149,6 +150,7 @@ const mockedParatextService = mock(ParatextService);
 const mockedPermissionsService = mock(PermissionsService);
 const mockedLynxWorkspaceService = mock(LynxWorkspaceService);
 const mockedFeatureFlagService = mock(FeatureFlagService);
+const mockedProjectNotificationService = mock(ProjectNotificationService);
 
 class MockComponent {}
 
@@ -215,6 +217,7 @@ describe('EditorComponent', () => {
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
       { provide: DraftOptionsService, useMock: mockedDraftOptionsService },
       { provide: ParatextService, useMock: mockedParatextService },
+      { provide: ProjectNotificationService, useMock: mockedProjectNotificationService },
       { provide: TabFactoryService, useValue: EditorTabFactoryService },
       { provide: TabMenuService, useValue: EditorTabMenuService },
       { provide: PermissionsService, useMock: mockedPermissionsService },
