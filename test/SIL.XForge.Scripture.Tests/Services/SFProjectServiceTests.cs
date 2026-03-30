@@ -3829,7 +3829,7 @@ public class SFProjectServiceTests
 
         // Verify project document
         SFProject project = env.GetProject(Project01);
-        Assert.IsNull(project.TranslateConfig.DraftConfig!.ServalConfig);
+        Assert.IsNull(project.TranslateConfig.DraftConfig.ServalConfig);
     }
 
     [Test]
@@ -3855,7 +3855,7 @@ public class SFProjectServiceTests
 
         // Verify project document
         SFProject project = env.GetProject(Project01);
-        Assert.IsNull(project.TranslateConfig.DraftConfig!.ServalConfig);
+        Assert.IsNull(project.TranslateConfig.DraftConfig.ServalConfig);
     }
 
     [Test]
@@ -3878,14 +3878,14 @@ public class SFProjectServiceTests
 
         // Verify project document
         SFProject project = env.GetProject(Project01);
-        Assert.IsNotNull(project.TranslateConfig.DraftConfig);
+        Assert.IsNotNull(project.TranslateConfig.DraftConfig.ServalConfig);
 
         // SUT
         await env.Service.SetServalConfigAsync(User01, [SystemRole.ServalAdmin], Project01, servalConfig);
 
         // Verify project document
         project = env.GetProject(Project01);
-        Assert.AreEqual(project.TranslateConfig.DraftConfig!.ServalConfig, servalConfig);
+        Assert.AreEqual(project.TranslateConfig.DraftConfig.ServalConfig, servalConfig);
     }
 
     [Test]
