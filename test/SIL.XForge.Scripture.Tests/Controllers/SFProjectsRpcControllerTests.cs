@@ -2040,6 +2040,53 @@ public class SFProjectsRpcControllerTests
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
+    [Test]
+    public async Task GetProjectProgress_Success()
+    {
+        var env = new TestEnvironment();
+
+        var result = await env.Controller.GetProjectProgress(Project01);
+
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().GetProjectProgressAsync(User01, Project01);
+    }
+
+    [Test]
+    public async Task GetProjectProgress_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.GetProjectProgressAsync(User01, Project01).Throws(new ForbiddenException());
+
+        var result = await env.Controller.GetProjectProgress(Project01);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task GetProjectProgress_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.GetProjectProgressAsync(User01, Project01).Throws(new DataNotFoundException(errorMessage));
+
+        var result = await env.Controller.GetProjectProgress(Project01);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void GetProjectProgress_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.GetProjectProgressAsync(User01, Project01).Throws(new ArgumentNullException());
+
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.GetProjectProgress(Project01));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
     private class TestEnvironment
     {
         public TestEnvironment()
