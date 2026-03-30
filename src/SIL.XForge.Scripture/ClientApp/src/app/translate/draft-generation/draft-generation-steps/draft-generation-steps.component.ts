@@ -670,12 +670,13 @@ export class DraftGenerationStepsComponent implements OnInit {
         for (const bookNum of booksFromScriptureRange(range.scriptureRange)) {
           //select in the source
           const sourceBook = this.availableTrainingBooks[source.projectRef].find(b => b.number === bookNum);
-          if (sourceBook !== undefined) {
+          // We should only select the book for training if the target book has verse content
+          if (sourceBook !== undefined && this.bookHasVerseContent(targetProjectId, bookNum)) {
             sourceBook.selected = true;
           }
           //select in the target
           const targetBook = this.availableTrainingBooks[targetProjectId].find(b => b.number === bookNum);
-          if (targetBook !== undefined) {
+          if (targetBook !== undefined && this.bookHasVerseContent(targetProjectId, bookNum)) {
             targetBook.selected = true;
           }
         }
