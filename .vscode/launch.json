@@ -25,6 +25,19 @@
       "name": "Attach to backend dotnet application",
       "type": "coreclr",
       "request": "attach",
+      // Uncomment the following lines and adjust local path to allow breaking on ParatextData source code. Also do
+      // `cp ~/.nuget/packages/paratextdata/9.5.0.19/lib/netstandard2.0/ParatextData.pdb "${SF_REPO}"/src/SIL.XForge.Scripture/bin/Debug/net8.0/`
+      // "justMyCode": false,
+      // "suppressJITOptimizations": true,
+      // "sourceFileMap": {
+      //   "F:\\BuildAgent\\work\\86ab85dfab82ae21\\ParatextData": "${workspaceFolder}/../Paratext/ParatextData"
+      // },
+      // "symbolOptions": {
+      //   "moduleFilter": {
+      //     "mode": "loadAllButExcluded"
+      //   }
+      // },
+      // "requireExactSource": false,
       "processName": "SIL.XForge.Scripture"
     },
     {
