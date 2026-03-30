@@ -180,6 +180,19 @@ describe('SFProjectService', () => {
     }));
   });
 
+  describe('onlineSetQualityEstimationConfig', () => {
+    it('should invoke the command service', fakeAsync(async () => {
+      const env = new TestEnvironment();
+      await env.service.onlineSetQualityEstimationConfig('project01', {
+        version: '0.1',
+        slope: 109.6145,
+        intercept: -14.0633
+      });
+      verify(mockedCommandService.onlineInvoke(anything(), 'setQualityEstimationConfig', anything())).once();
+      expect().nothing();
+    }));
+  });
+
   class TestEnvironment {
     readonly httpTestingController: HttpTestingController;
     readonly service: SFProjectService;
