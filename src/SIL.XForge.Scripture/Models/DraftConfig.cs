@@ -27,4 +27,9 @@ public class DraftConfig
     /// This is a combination of the scripture ranges of previous drafts.
     /// </remarks>
     public string? DraftedScriptureRange { get; set; }
+
+    /// <summary>
+    /// Configuration for the Quality Estimation feature.
+    /// </summary>
+    public QualityEstimationConfig? QualityEstimationConfig { get; set; }
 }
