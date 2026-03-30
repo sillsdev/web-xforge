@@ -3924,7 +3924,7 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
         var qualityEstimationConfig = new QualityEstimationConfig
         {
-            Version = 0.1M,
+            Version = "0.1",
             Slope = 109.6145,
             Intercept = -14.0633,
         };
@@ -3946,7 +3946,7 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
         var qualityEstimationConfig = new QualityEstimationConfig
         {
-            Version = 0.1M,
+            Version = "0.1",
             Slope = 109.6145,
             Intercept = -14.0633,
         };
@@ -3977,7 +3977,7 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
         var qualityEstimationConfig = new QualityEstimationConfig
         {
-            Version = 0.1M,
+            Version = "0.1",
             Slope = 109.6145,
             Intercept = -14.0633,
         };
@@ -4893,7 +4893,7 @@ public class SFProjectServiceTests
                                 ServalConfig = "{ existingConfig: true }",
                                 QualityEstimationConfig = new QualityEstimationConfig
                                 {
-                                    Version = 0M,
+                                    Version = string.Empty,
                                     Slope = 0.0,
                                     Intercept = 0.0,
                                 },
