@@ -946,6 +946,45 @@ public class SFProjectsRpcController(
         }
     }
 
+    public async Task<IRpcMethodResult> SetQualityEstimationConfig(
+        string projectId,
+        QualityEstimationConfig? qualityEstimationConfig
+    )
+    {
+        try
+        {
+            await projectService.SetQualityEstimationConfigAsync(
+                UserId,
+                SystemRoles,
+                projectId,
+                qualityEstimationConfig
+            );
+            return Ok();
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", "SetQualityEstimationConfig" },
+                    { "projectId", projectId },
+                    { "version", qualityEstimationConfig?.Version.ToString(CultureInfo.InvariantCulture) },
+                    { "slope", qualityEstimationConfig?.Slope.ToString(CultureInfo.InvariantCulture) },
+                    { "intercept", qualityEstimationConfig?.Intercept.ToString(CultureInfo.InvariantCulture) },
+                }
+            );
+            throw;
+        }
+    }
+
     public async Task<IRpcMethodResult> SetUsfmConfig(string projectId, DraftUsfmConfig config)
     {
         try

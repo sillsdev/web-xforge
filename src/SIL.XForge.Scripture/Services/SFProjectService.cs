@@ -1233,6 +1233,32 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         );
     }
 
+    public async Task SetQualityEstimationConfigAsync(
+        string curUserId,
+        string[] systemRoles,
+        string projectId,
+        QualityEstimationConfig? qualityEstimationConfig
+    )
+    {
+        if (!systemRoles.Contains(SystemRole.ServalAdmin))
+            throw new ForbiddenException();
+
+        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+        if (qualityEstimationConfig is null)
+        {
+            await projectDoc.SubmitJson0OpAsync(op =>
+                op.Unset(p => p.TranslateConfig.DraftConfig.QualityEstimationConfig)
+            );
+        }
+        else
+        {
+            await projectDoc.SubmitJson0OpAsync(op =>
+                op.Set(p => p.TranslateConfig.DraftConfig.QualityEstimationConfig, qualityEstimationConfig)
+            );
+        }
+    }
+
     public Task<string> GetProjectIdFromParatextIdAsync(string[] systemRoles, string paratextId)
     {
         if (!(systemRoles.Contains(SystemRole.ServalAdmin) || systemRoles.Contains(SystemRole.SystemAdmin)))

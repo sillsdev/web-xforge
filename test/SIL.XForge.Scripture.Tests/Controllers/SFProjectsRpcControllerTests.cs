@@ -1013,6 +1013,88 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    public async Task SetQualityEstimationConfig_Success()
+    {
+        var env = new TestEnvironment();
+        var qualityEstimationConfig = new QualityEstimationConfig
+        {
+            Version = 0.1M,
+            Slope = 109.6145,
+            Intercept = -14.0633,
+        };
+
+        // SUT
+        var result = await env.Controller.SetQualityEstimationConfig(Project01, qualityEstimationConfig);
+        Assert.That(result, Is.InstanceOf<RpcMethodSuccessResult>());
+        await env
+            .SFProjectService.Received()
+            .SetQualityEstimationConfigAsync(User01, Roles, Project01, qualityEstimationConfig);
+    }
+
+    [Test]
+    public async Task SetQualityEstimationConfig_Forbidden()
+    {
+        var env = new TestEnvironment();
+        var qualityEstimationConfig = new QualityEstimationConfig
+        {
+            Version = 0.1M,
+            Slope = 109.6145,
+            Intercept = -14.0633,
+        };
+        env.SFProjectService.SetQualityEstimationConfigAsync(User01, Roles, Project01, qualityEstimationConfig)
+            .Throws(new ForbiddenException());
+
+        // SUT
+        var result = await env.Controller.SetQualityEstimationConfig(Project01, qualityEstimationConfig);
+        Assert.That(result, Is.InstanceOf<RpcMethodErrorResult>());
+        Assert.That((result as RpcMethodErrorResult)?.ErrorCode, Is.EqualTo(RpcControllerBase.ForbiddenErrorCode));
+        await env
+            .SFProjectService.Received()
+            .SetQualityEstimationConfigAsync(User01, Roles, Project01, qualityEstimationConfig);
+    }
+
+    [Test]
+    public async Task SetQualityEstimationConfig_NotFound()
+    {
+        var env = new TestEnvironment();
+        var qualityEstimationConfig = new QualityEstimationConfig
+        {
+            Version = 0.1M,
+            Slope = 109.6145,
+            Intercept = -14.0633,
+        };
+        const string errorMessage = "Not Found";
+        env.SFProjectService.SetQualityEstimationConfigAsync(User01, Roles, Project01, qualityEstimationConfig)
+            .Throws(new DataNotFoundException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.SetQualityEstimationConfig(Project01, qualityEstimationConfig);
+        Assert.That(result, Is.InstanceOf<RpcMethodErrorResult>());
+        Assert.That((result as RpcMethodErrorResult)?.Message, Is.EqualTo(errorMessage));
+        Assert.That((result as RpcMethodErrorResult)?.ErrorCode, Is.EqualTo(RpcControllerBase.NotFoundErrorCode));
+    }
+
+    [Test]
+    public void SetQualityEstimationConfig_UnknownError()
+    {
+        var env = new TestEnvironment();
+        var qualityEstimationConfig = new QualityEstimationConfig
+        {
+            Version = 0.1M,
+            Slope = 109.6145,
+            Intercept = -14.0633,
+        };
+        env.SFProjectService.SetQualityEstimationConfigAsync(User01, Roles, Project01, qualityEstimationConfig)
+            .Throws(new ArgumentNullException());
+
+        // SUT
+        Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Controller.SetQualityEstimationConfig(Project01, qualityEstimationConfig)
+        );
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
     public async Task SetUsfmConfig_Success()
     {
         var env = new TestEnvironment();
