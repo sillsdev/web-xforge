@@ -950,6 +950,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         break;
     }
     this.calculateScriptureSliderPosition(true);
+    this.changeDetector.markForCheck();
   }
 
   setQuestionsOverlayVisibility(visible: boolean): void {
@@ -1007,6 +1008,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         break;
     }
     this.calculateScriptureSliderPosition(true);
+    this.changeDetector.markForCheck();
   }
 
   checkSliderPosition(event: any): void {
