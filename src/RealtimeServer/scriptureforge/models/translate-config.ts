@@ -58,6 +58,12 @@ export interface DraftUsfmConfig {
   quoteFormat: QuoteFormat;
 }
 
+export interface QualityEstimationConfig {
+  version: number;
+  slope: number;
+  intercept: number;
+}
+
 export interface DraftConfig {
   draftingSources: TranslateSource[];
   trainingSources: TranslateSource[];
@@ -71,6 +77,7 @@ export interface DraftConfig {
   sendEmailOnBuildFinished?: boolean;
   currentScriptureRange?: string;
   draftedScriptureRange?: string;
+  qualityEstimationConfig?: QualityEstimationConfig;
 }
 
 export interface TranslateConfig {
