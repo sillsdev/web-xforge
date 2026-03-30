@@ -59,7 +59,7 @@ export interface DraftUsfmConfig {
 }
 
 export interface QualityEstimationConfig {
-  version: number;
+  version: string;
   slope: number;
   intercept: number;
 }

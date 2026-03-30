@@ -976,7 +976,7 @@ public class SFProjectsRpcController(
                 {
                     { "method", "SetQualityEstimationConfig" },
                     { "projectId", projectId },
-                    { "version", qualityEstimationConfig?.Version.ToString(CultureInfo.InvariantCulture) },
+                    { "version", qualityEstimationConfig?.Version },
                     { "slope", qualityEstimationConfig?.Slope.ToString(CultureInfo.InvariantCulture) },
                     { "intercept", qualityEstimationConfig?.Intercept.ToString(CultureInfo.InvariantCulture) },
                 }

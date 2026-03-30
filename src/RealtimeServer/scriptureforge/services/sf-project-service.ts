@@ -280,7 +280,7 @@ export class SFProjectService extends ProjectService<SFProject> {
                 bsonType: 'object',
                 properties: {
                   version: {
-                    bsonType: 'decimal'
+                    bsonType: 'string'
                   },
                   slope: {
                     bsonType: 'double'

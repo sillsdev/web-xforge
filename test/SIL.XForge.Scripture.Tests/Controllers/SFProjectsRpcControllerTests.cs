@@ -1018,7 +1018,7 @@ public class SFProjectsRpcControllerTests
         var env = new TestEnvironment();
         var qualityEstimationConfig = new QualityEstimationConfig
         {
-            Version = 0.1M,
+            Version = "0.1",
             Slope = 109.6145,
             Intercept = -14.0633,
         };
@@ -1037,7 +1037,7 @@ public class SFProjectsRpcControllerTests
         var env = new TestEnvironment();
         var qualityEstimationConfig = new QualityEstimationConfig
         {
-            Version = 0.1M,
+            Version = "0.1",
             Slope = 109.6145,
             Intercept = -14.0633,
         };
@@ -1059,7 +1059,7 @@ public class SFProjectsRpcControllerTests
         var env = new TestEnvironment();
         var qualityEstimationConfig = new QualityEstimationConfig
         {
-            Version = 0.1M,
+            Version = "0.1",
             Slope = 109.6145,
             Intercept = -14.0633,
         };
@@ -1080,7 +1080,7 @@ public class SFProjectsRpcControllerTests
         var env = new TestEnvironment();
         var qualityEstimationConfig = new QualityEstimationConfig
         {
-            Version = 0.1M,
+            Version = "0.1",
             Slope = 109.6145,
             Intercept = -14.0633,
         };
