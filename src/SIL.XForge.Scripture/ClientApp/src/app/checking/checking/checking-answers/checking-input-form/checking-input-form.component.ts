@@ -1,6 +1,6 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { NgClass } from '@angular/common';
-import { Component, DestroyRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
@@ -84,6 +84,7 @@ export class CheckingInputFormComponent {
     private readonly i18n: I18nService,
     private readonly breakpointObserver: BreakpointObserver,
     private readonly mediaBreakpointService: MediaBreakpointService,
+    private readonly changeDetector: ChangeDetectorRef,
     private destroyRef: DestroyRef
   ) {
     this.breakpointObserver
@@ -131,6 +132,7 @@ export class CheckingInputFormComponent {
         this.selectedText = selection.text;
         this.selectionStartClipped = selection.startClipped;
         this.selectionEndClipped = selection.endClipped;
+        this.changeDetector.markForCheck();
       }
     });
   }
