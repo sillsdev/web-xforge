@@ -137,6 +137,15 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
     public override string GetHgUri(SharedRepository sharedRepository) => string.Empty;
 
     /// <summary>
+    /// Returns the ids of unpushed commits. Overriding here since InternetSharedRepositorySource.GetOutgoingRevisions
+    /// is going to SharedRepositorySource.GetOutgoingRevisions which doesn't work for us because it needs to look at
+    /// the remote repository. One difference with this implementation is that it looks at commit phase to determine
+    /// what is pushed. Distinguishing between public and draft commit phase is not something ParatextData uses.
+    /// </summary>
+    public override string[] GetOutgoingRevisions(string repository, SharedProject sharedProject) =>
+        _hgWrapper.GetDraftRevisions(repository);
+
+    /// <summary>
     /// Retrieve a list of <see cref="SharedRepository" />.
     /// </summary>
     public override IEnumerable<SharedRepository> GetRepositories() => GetRepositories(GetLicensesForUserProjects());
