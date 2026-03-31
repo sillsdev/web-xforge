@@ -62,9 +62,9 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
     /// Uses the a REST client to pull from the Paratext send/receive server. This overrides the base implementation
     /// to avoid needing the current user's Paratext registration code to get the base revision.
     /// </summary>
-    public override string[] Pull(string repository, SharedRepository pullRepo)
+    public override string[] Pull(string repositoryPath, SharedRepository pullRepo)
     {
-        string baseRev = _hgWrapper.GetLastPublicRevision(repository);
+        string baseRev = _hgWrapper.GetLastPublicRevision(repositoryPath);
 
         // Get bundle
         string guid = Guid.NewGuid().ToString();
@@ -92,9 +92,9 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
             return [];
 
         // Use bundle
-        string[] changeSets = HgWrapper.Pull(repository, bundle);
+        string[] changeSets = _hgWrapper.Pull(repositoryPath, bundle);
 
-        _hgWrapper.MarkSharedChangeSetsPublic(repository);
+        _hgWrapper.MarkSharedChangeSetsPublic(repositoryPath);
         return changeSets;
     }
 
@@ -102,14 +102,23 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
     /// Uses the a REST client to push to the Paratext send/receive server. This overrides the base implementation
     /// to avoid needing the current user's Paratext registration code to get the base revision.
     /// </summary>
-    public override void Push(string repository, SharedRepository pushRepo)
+    public override void Push(string repositoryPath, SharedRepository pushRepo)
     {
-        string baseRev = _hgWrapper.GetLastPublicRevision(repository);
+        string baseRev = _hgWrapper.GetLastPublicRevision(repositoryPath);
 
         // Create bundle
-        byte[] bundle = HgWrapper.Bundle(repository, baseRev);
+        byte[] bundle = _hgWrapper.Bundle(repositoryPath, baseRev);
         if (bundle.Length == 0)
+        {
+            _logger.LogInformation($"Not pushing a 0 Byte bundle for project PT ID {pushRepo.SendReceiveId.Id}.");
             return;
+        }
+
+        string localTip = _hgWrapper.GetRepoRevision(repositoryPath);
+        _logger.LogInformation(
+            $"Pushing bundle of {bundle.Length} Bytes to S/R server for project PT ID "
+                + $"{pushRepo.SendReceiveId.Id}. Base revision {baseRev ?? "(null)"}. Local tip {localTip}."
+        );
 
         // Send bundle
         string guid = Guid.NewGuid().ToString();
@@ -128,7 +137,50 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
             "no"
         );
 
-        _hgWrapper.MarkSharedChangeSetsPublic(repository);
+        (bool isRevOnServer, int serverRevCount, string? serverLastRev) = CheckIfRevisionIsOnServer(pushRepo, localTip);
+        if (!isRevOnServer)
+        {
+            throw new InvalidOperationException(
+                $"Push verification failed for project PT ID {pushRepo.SendReceiveId.Id}. "
+                    + $"Expected revision {localTip} was not found in the server's revision history. "
+                    + $"Server has {serverRevCount} revisions. Last server revision: {serverLastRev ?? "(null)"}."
+            );
+        }
+
+        _hgWrapper.MarkSharedChangeSetsPublic(repositoryPath);
+    }
+
+    /// <summary>
+    /// Returns whether the expected revision is present on the Paratext Send/Receive server.
+    /// </summary>
+    internal (bool isRevOnServer, int serverRevCount, string? serverLastRev) CheckIfRevisionIsOnServer(
+        SharedRepository serverRepo,
+        string expectedRevision
+    )
+    {
+        string projRevHistResponse = GetClient()
+            .Get("projrevhist", "proj", serverRepo.ScrTextName, "projid", serverRepo.SendReceiveId.Id, "all", "1");
+
+        JObject jsonResult = JObject.Parse(projRevHistResponse);
+        JArray? revisions = jsonResult["project"]?["revision_history"]?["revisions"] as JArray;
+
+        bool isRevOnServer =
+            revisions?.Any(r => string.Equals(r["id"]?.ToString(), expectedRevision, StringComparison.Ordinal))
+            ?? false;
+        int serverRevCount = revisions?.Count ?? 0;
+        string? serverLastRev = GetFirstElementId(revisions);
+
+        return (isRevOnServer, serverRevCount, serverLastRev);
+    }
+
+    /// <summary>
+    /// Returns the first element's "id" value, if possible.
+    /// </summary>
+    private static string? GetFirstElementId(JArray? revisions)
+    {
+        if (revisions?.Count > 0)
+            return revisions[0]["id"]?.ToString();
+        return null;
     }
 
     /// <summary>
