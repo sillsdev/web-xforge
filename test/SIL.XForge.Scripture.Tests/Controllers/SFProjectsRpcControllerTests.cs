@@ -1054,6 +1054,26 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    public async Task SetQualityEstimationConfig_InvalidParams()
+    {
+        var env = new TestEnvironment();
+        var qualityEstimationConfig = new QualityEstimationConfig
+        {
+            Version = "11.0",
+            Slope = 109.6145,
+            Intercept = -14.0633,
+        };
+        const string errorMessage = "Unsupported version number";
+        env.SFProjectService.SetQualityEstimationConfigAsync(User01, Roles, Project01, qualityEstimationConfig)
+            .Throws(new InvalidOperationException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.SetQualityEstimationConfig(Project01, qualityEstimationConfig);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+    }
+
+    [Test]
     public async Task SetQualityEstimationConfig_NotFound()
     {
         var env = new TestEnvironment();

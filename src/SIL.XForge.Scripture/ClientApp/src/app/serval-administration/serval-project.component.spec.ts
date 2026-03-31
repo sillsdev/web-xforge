@@ -357,6 +357,23 @@ describe('ServalProjectComponent', () => {
       }));
 
       it('should not update an unchanged quality estimation config value', fakeAsync(() => {
+        const env = new TestEnvironment({
+          preTranslate: true,
+          draftConfig: { qualityEstimationConfig: { version: '0.1', slope: 109.6145, intercept: -14.0633 } }
+        });
+        expect(env.qualityEstimationConfigTextArea.value).toBe(
+          '{"version":"0.1","slope":109.6145,"intercept":-14.0633}'
+        );
+        expect(env.statusDone(env.qualityEstimationConfigStatus)).toBeNull();
+
+        env.setQualityEstimationConfigValue('{ "version": "0.1", "slope": 109.6145, "intercept": -14.0633 }');
+        env.clickElement(env.saveQualityEstimationConfigButton);
+
+        verify(mockSFProjectService.onlineSetQualityEstimationConfig(env.mockProjectId, anything())).never();
+        expect(env.statusDone(env.qualityEstimationConfigStatus)).toBeNull();
+      }));
+
+      it('should not update an unchanged empty quality estimation config value', fakeAsync(() => {
         const env = new TestEnvironment();
         expect(env.qualityEstimationConfigTextArea.value).toBe('');
         expect(env.statusDone(env.qualityEstimationConfigStatus)).toBeNull();

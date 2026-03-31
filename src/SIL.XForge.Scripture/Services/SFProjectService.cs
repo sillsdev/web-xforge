@@ -1243,6 +1243,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (!systemRoles.Contains(SystemRole.ServalAdmin))
             throw new ForbiddenException();
 
+        if ((qualityEstimationConfig?.Version ?? "0.1") != "0.1")
+            throw new InvalidOperationException("Unsupported version number");
+
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
         IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
         if (qualityEstimationConfig is null)

@@ -58,6 +58,9 @@ export interface DraftUsfmConfig {
   quoteFormat: QuoteFormat;
 }
 
+/**
+ * The configuration used for Quality Estimation.
+ */
 export interface QualityEstimationConfig {
   version: string;
   slope: number;
