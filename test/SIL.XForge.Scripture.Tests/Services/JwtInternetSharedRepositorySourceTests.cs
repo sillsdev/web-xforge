@@ -4,6 +4,7 @@ using NSubstitute;
 using NSubstitute.Extensions;
 using NUnit.Framework;
 using Paratext.Data;
+using Paratext.Data.Repository;
 using Paratext.Data.Users;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
@@ -13,6 +14,11 @@ namespace SIL.XForge.Scripture.Services;
 [TestFixture]
 public class JwtInternetSharedRepositorySourceTests
 {
+    private const string RepoPath = "/sync/abc123/target";
+    private const string ProjectName = "TestProject";
+    private const string ProjectId = "4011111111111111111111111111111111111111";
+    private const string NewTipRevision = "bbb2222222222222222222222222222222222222";
+
     [Test]
     public void CanUserAuthenticateToPTArchives_Works()
     {
@@ -50,10 +56,48 @@ public class JwtInternetSharedRepositorySourceTests
         );
     }
 
+    [Test]
+    public void GetOutgoingRevisions_ReturnsDraftRevisions()
+    {
+        var env = new TestEnvironment();
+        SharedProject sharedProject = new SharedProject
+        {
+            SendReceiveId = HexId.FromStr(ProjectId),
+            ScrTextName = ProjectName,
+            Repository = TestEnvironment.CreatePushRepo(HexId.FromStr(ProjectId), ProjectName),
+        };
+        string[] expectedRevisions = [NewTipRevision];
+        env.MockHgWrapper.GetDraftRevisions(RepoPath).Returns(expectedRevisions);
+
+        // SUT
+        string[] result = env.RepoSource.GetOutgoingRevisions(RepoPath, sharedProject);
+
+        Assert.That(result, Is.EqualTo(expectedRevisions));
+    }
+
+    [Test]
+    public void GetOutgoingRevisions_NoDraftRevisions_ReturnsEmpty()
+    {
+        var env = new TestEnvironment();
+        SharedProject sharedProject = new SharedProject
+        {
+            SendReceiveId = HexId.FromStr(ProjectId),
+            ScrTextName = ProjectName,
+            Repository = TestEnvironment.CreatePushRepo(HexId.FromStr(ProjectId), ProjectName),
+        };
+        env.MockHgWrapper.GetDraftRevisions(RepoPath).Returns([]);
+
+        // SUT
+        string[] result = env.RepoSource.GetOutgoingRevisions(RepoPath, sharedProject);
+
+        Assert.That(result, Is.Empty);
+    }
+
     private class TestEnvironment
     {
         public readonly JwtInternetSharedRepositorySource RepoSource;
         public readonly IRESTClient MockPTArchivesClient;
+        public readonly IHgWrapper MockHgWrapper;
 
         public TestEnvironment()
         {
@@ -63,10 +107,11 @@ public class JwtInternetSharedRepositorySourceTests
                 "applicationName",
                 "jwtToken"
             );
+            MockHgWrapper = Substitute.For<IHgWrapper>();
             RepoSource = Substitute.ForPartsOf<JwtInternetSharedRepositorySource>(
                 "access-token",
                 mockPTRegistryClient,
-                Substitute.For<IHgWrapper>(),
+                MockHgWrapper,
                 ptUser,
                 "sr-server-uri",
                 new MockLogger<InternetSharedRepositorySourceProvider>()
@@ -74,5 +119,8 @@ public class JwtInternetSharedRepositorySourceTests
             MockPTArchivesClient = Substitute.For<RESTClient>("pt-archives-server.example.com", "product-version-123");
             RepoSource.Configure().GetClient().Returns(MockPTArchivesClient);
         }
+
+        public static SharedRepository CreatePushRepo(HexId ptProjectId, string projectName) =>
+            new SharedRepository { SendReceiveId = ptProjectId, ScrTextName = projectName };
     }
 }
