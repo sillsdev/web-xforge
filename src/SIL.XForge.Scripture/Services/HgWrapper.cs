@@ -39,6 +39,21 @@ public class HgWrapper : IHgWrapper
         RunCommand(repository, $"bundle -a --type v2 \"{backupFile}\"");
 
     /// <summary>
+    /// Returns a graph of recent commits in the repository. Ideally far enough back to see the commit from the last
+    /// time we synced.
+    /// </summary>
+    public string RecentLogGraph(string repositoryPath)
+    {
+        string output = RunCommand(
+            repositoryPath,
+            """log --template "{node} {date|isodate} {phase}\n" --graph --rev "tip~3:tip" """
+        );
+        // Use a backslash that does not need escaped.
+        string graph = output.Replace("\\", "\u29F5");
+        return graph;
+    }
+
+    /// <summary>
     /// Get the most recent revision id of the commit from the last push or pull with the PT send/receive server.
     /// </summary>
     /// <param name="repository">The full path to the repository directory.</param>

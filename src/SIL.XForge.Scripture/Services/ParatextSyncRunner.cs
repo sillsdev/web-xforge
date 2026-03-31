@@ -171,11 +171,13 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 _syncMetrics.RepositoryBackupCreated = canRollbackParatext;
                 if (canRollbackParatext)
                 {
-                    Log($"RunAsync: There wasn't already a local PT repo backup, so we made one.");
+                    LogMetric($"RunAsync: There wasn't already a local PT repo backup, so we made one.");
                 }
                 else
                 {
-                    Log($"RunAsync: There wasn't already a local PT repo backup, so we tried to make one but failed.");
+                    LogMetric(
+                        $"RunAsync: There wasn't already a local PT repo backup, so we tried to make one but failed."
+                    );
                 }
             }
 
@@ -184,17 +186,17 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
             if (_paratextService.IsResource(targetParatextId))
             {
-                Log($"This is a resource, so not considering hg repo revisions.");
+                LogMetric($"This is a resource, so not considering hg repo revisions.");
             }
             else if (_projectDoc.Data.Sync.SyncedToRepositoryVersion == null)
             {
-                Log(
+                LogMetric(
                     $"The SF DB SyncedToRepositoryVersion is null. Maybe this project is being Connected, or has not synced successfully since we started tracking this information."
                 );
             }
             else
             {
-                Log(
+                LogMetric(
                     $"Setting hg repo to last imported hg repo rev of {_projectDoc.Data.Sync.SyncedToRepositoryVersion}."
                 );
                 _paratextService.SetRepoToRevision(
@@ -295,7 +297,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             // delete all data for removed books
             if (targetBooksToDelete.Count > 0)
             {
-                Log(
+                LogMetric(
                     $"RunAsync: Going to delete texts and questions,comments,answers for {targetBooksToDelete.Count} books."
                 );
                 // delete target books
@@ -889,7 +891,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     {
         bool canAuthToRegistry = await _paratextService.CanUserAuthenticateToPTRegistryAsync(_userSecret);
         bool canAuthToArchives = await _paratextService.CanUserAuthenticateToPTArchivesAsync(_userSecret.Id);
-        Log($"User can authenticate to PT Registry: {canAuthToRegistry}, to PT Archives: {canAuthToArchives}.");
+        LogMetric($"User can authenticate to PT Registry: {canAuthToRegistry}, to PT Archives: {canAuthToArchives}.");
     }
 
     private async Task UpdateDocsAsync(
@@ -1688,11 +1690,11 @@ public class ParatextSyncRunner : IParatextSyncRunner
         await NotifySyncProgress(SyncPhase.Phase9, 60.0);
         if (token.IsCancellationRequested)
         {
-            Log($"CompleteSync: There was a cancellation request.");
+            LogMetric($"CompleteSync: There was a cancellation request.");
         }
         if (_projectDoc == null || _projectSecret == null)
         {
-            Log("CompleteSync: _projectDoc or _projectSecret are null. Rolling back SF DB transaction.");
+            LogMetric("CompleteSync: _projectDoc or _projectSecret are null. Rolling back SF DB transaction.");
             _conn.RollbackTransaction();
             return;
         }
@@ -1738,7 +1740,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     _syncMetrics.RepositoryRestoredFromBackup = restoreSucceeded;
                 }
             }
-            Log(
+            LogMetric(
                 $"CompleteSync: Sync was not successful. {(restoreSucceeded ? "Rolled back" : "Failed to roll back")} local PT repo."
             );
             if (!restoreSucceeded)
@@ -1757,7 +1759,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
             if (successful)
             {
-                Log($"CompleteSync: Successfully synchronized to PT repo commit id '{repoVersion}'.");
+                LogMetric($"CompleteSync: Successfully synchronized to PT repo commit id '{repoVersion}'.");
                 op.Set(pd => pd.Sync.DateLastSuccessfulSync, DateTime.UtcNow);
                 op.Set(pd => pd.Sync.SyncedToRepositoryVersion, repoVersion);
                 // If the sync was successful, then the last sync error code should be cleared
@@ -1765,7 +1767,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             }
             else
             {
-                Log(
+                LogMetric(
                     $"CompleteSync: Failed to synchronize. PT repo latest shared version is '{repoVersion}'. SF DB project SyncedToRepositoryVersion is '{_projectDoc.Data.Sync.SyncedToRepositoryVersion}'."
                 );
             }
@@ -2061,7 +2063,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             $"DB Sync.SyncedToRepositoryVersion: {_projectDoc.Data.Sync.SyncedToRepositoryVersion}, DB Sync.DataInSync: {_projectDoc.Data.Sync.DataInSync}.";
         if (_paratextService.IsResource(projectPTId))
         {
-            Log($"{prefix}In-sync info: Is resource. {dbInfo}");
+            LogMetric($"{prefix}In-sync info: Is resource. {dbInfo}");
         }
         else if (!_paratextService.LocalProjectDirExists(projectPTId))
         {
@@ -2071,7 +2073,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         {
             string repoRev = _paratextService.GetRepoRevision(_userSecret, projectPTId);
             string sharedRev = _paratextService.GetLatestSharedVersion(_userSecret, projectPTId);
-            Log(
+            LogMetric(
                 $"{prefix}In-sync info: Local hg repo current rev: {repoRev}, Latest shared rev: {sharedRev}, {dbInfo}"
             );
         }
@@ -2197,5 +2199,5 @@ public class ParatextSyncRunner : IParatextSyncRunner
         _syncMetrics?.Log.Add($"{DateTime.UtcNow:u} {message}");
     }
 
-    private void LogMetric(string message) => Log(message);
+    private void LogMetric(string message) => _syncMetrics?.Log.Add($"{DateTime.UtcNow:u} {message}");
 }
