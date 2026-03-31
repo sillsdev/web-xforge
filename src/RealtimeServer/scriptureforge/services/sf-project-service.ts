@@ -283,10 +283,10 @@ export class SFProjectService extends ProjectService<SFProject> {
                     bsonType: 'string'
                   },
                   slope: {
-                    bsonType: 'double'
+                    bsonType: 'number'
                   },
                   intercept: {
-                    bsonType: 'double'
+                    bsonType: 'number'
                   }
                 },
                 additionalProperties: false

@@ -367,12 +367,16 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   }
 
   updateQualityEstimationConfig(): void {
+    // Do not save if we do not have the project doc or if the configuration was and is empty
+    const projectId: string | undefined = this.activatedProjectService.projectId;
+    const project: SFProjectProfile | undefined = this.activatedProjectService.projectDoc?.data;
     if (
-      this.activatedProjectService.projectDoc?.data == null ||
+      project == null ||
+      projectId == null ||
       (this.form.value.qualityEstimationConfig ?? '') ===
-        (this.activatedProjectService.projectDoc.data.translateConfig.draftConfig.qualityEstimationConfig ?? '')
+        (project.translateConfig.draftConfig.qualityEstimationConfig ?? '')
     ) {
-      // Do not save if we do not have the project doc or if the configuration has not changed
+      this.qualityEstimationConfigUpdateState = ElementState.InSync;
       return;
     }
 
@@ -391,19 +395,31 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     // Ensure the JSON is valid
     if (
       qualityEstimationConfig != null &&
-      typeof qualityEstimationConfig.version !== 'string' &&
-      typeof qualityEstimationConfig.slope !== 'number' &&
-      typeof qualityEstimationConfig.intercept !== 'number' &&
-      qualityEstimationConfig.version !== '0.1'
+      (typeof qualityEstimationConfig.version !== 'string' ||
+        typeof qualityEstimationConfig.slope !== 'number' ||
+        typeof qualityEstimationConfig.intercept !== 'number' ||
+        qualityEstimationConfig.version !== '0.1')
     ) {
       this.qualityEstimationConfigUpdateState = ElementState.Error;
+      return;
+    }
+
+    // Do not update if the values did not change
+    const existingQualityEstimationConfig: QualityEstimationConfig | undefined =
+      project.translateConfig.draftConfig.qualityEstimationConfig;
+    if (
+      qualityEstimationConfig?.version === existingQualityEstimationConfig?.version &&
+      qualityEstimationConfig?.slope === existingQualityEstimationConfig?.slope &&
+      qualityEstimationConfig?.intercept === existingQualityEstimationConfig?.intercept
+    ) {
+      this.qualityEstimationConfigUpdateState = ElementState.InSync;
       return;
     }
 
     // Update the Quality Estimation Configuration
     this.qualityEstimationConfigUpdateState = ElementState.Submitting;
     void this.projectService
-      .onlineSetQualityEstimationConfig(this.activatedProjectService.projectDoc.id, qualityEstimationConfig)
+      .onlineSetQualityEstimationConfig(projectId, qualityEstimationConfig)
       .then(() => (this.qualityEstimationConfigUpdateState = ElementState.Submitted))
       .catch(() => (this.qualityEstimationConfigUpdateState = ElementState.Error));
   }

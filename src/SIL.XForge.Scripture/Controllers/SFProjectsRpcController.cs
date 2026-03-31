@@ -965,6 +965,10 @@ public class SFProjectsRpcController(
         {
             return ForbiddenError();
         }
+        catch (InvalidOperationException e)
+        {
+            return InvalidParamsError(e.Message);
+        }
         catch (DataNotFoundException dnfe)
         {
             return NotFoundError(dnfe.Message);
