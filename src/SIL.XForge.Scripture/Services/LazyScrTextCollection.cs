@@ -32,7 +32,8 @@ public class LazyScrTextCollection : IScrTextCollection
     }
 
     /// <summary>
-    /// Get a ScrText for a given user from the data for a paratext project with the target project ID and type.
+    /// Get a ScrText for a given user from the data for a paratext project with the target project ID and type. Not to
+    /// be confused with ParatextData ScrTextCollection.FindById, which this is not an override of.
     /// </summary>
     /// <param name="ptUsername"> The username of the user retrieving the ScrText. </param>
     /// <param name="projectId"> The ID of the target project. </param>
