@@ -3972,6 +3972,28 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public void SetQualityEstimationConfigAsync_UnsupportedVersion()
+    {
+        var env = new TestEnvironment();
+        var qualityEstimationConfig = new QualityEstimationConfig
+        {
+            Version = "11.0",
+            Slope = 109.6145,
+            Intercept = -14.0633,
+        };
+
+        // SUT
+        Assert.ThrowsAsync<InvalidOperationException>(() =>
+            env.Service.SetQualityEstimationConfigAsync(
+                User01,
+                [SystemRole.ServalAdmin],
+                Project01,
+                qualityEstimationConfig
+            )
+        );
+    }
+
+    [Test]
     public void SetQualityEstimationConfigAsync_UserMustBeServalAdmin()
     {
         var env = new TestEnvironment();
