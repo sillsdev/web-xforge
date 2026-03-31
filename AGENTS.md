@@ -82,6 +82,7 @@ This repository contains three interconnected applications:
 - Do put comments into the code if the intent is not clear from the code.
 - All classes and interfaces should have a comment to briefly explain why it is there and what its purpose is in the overall system, even if it seems obvious.
 - Please do not fail to add a comment to any classes or interfaces that are created. All classes and interfaces should have a comment.
+- Use good argument and variable names that explain themselves without needing a comment. Well named arguments or variables are better than unclearly named arguments or variables with a comment.
 
 # TypeScript language
 
