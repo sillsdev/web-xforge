@@ -394,6 +394,25 @@ describe('ImportQuestionsDialogComponent', () => {
     env.click(env.backButton);
   }));
 
+  it('does not import from a CSV file with unknown columns', fakeAsync(() => {
+    const env = new TestEnvironment();
+
+    const genQuestions = [['Genesis 1:1', 'Question for Genesis 1:1']];
+    const matQuestions = Array.from(Array(100), (_, i) => [`MAT 1:${i + 1}`, `Question for Matthew 1:${i + 1}`]);
+
+    env.selectFileWithContents([['Col1', 'Col2'], ...genQuestions, ...matQuestions]);
+
+    expect(env.component.errorState).toBe('missing_header_row');
+  }));
+
+  it('does not import from an empty CSV file', fakeAsync(() => {
+    const env = new TestEnvironment();
+
+    env.selectFileWithContents([]);
+
+    expect(env.component.errorState).toBe('missing_header_row');
+  }));
+
   it('it informs the user about invalid rows in the CSV file and skips them', fakeAsync(() => {
     const env = new TestEnvironment();
 
