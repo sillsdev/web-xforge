@@ -6647,6 +6647,7 @@ public class ParatextServiceTests
         // User04 and User05 are SF users and is not a PT users.
         public readonly string User04 = "user04";
         public readonly string User05 = "user05";
+        public readonly string User06 = "user06";
         public readonly string Username01 = "User 01";
         public readonly string Username02 = "User 02";
         public readonly string Username03 = "User 03";
@@ -7275,18 +7276,31 @@ public class ParatextServiceTests
                             new User
                             {
                                 Id = User01,
+                                AuthId = $"oauth2|paratext|{ParatextUserId01}",
                                 ParatextId = ParatextUserId01,
                                 Sites = sites,
                             },
                             new User
                             {
                                 Id = User02,
+                                AuthId = $"oauth2|paratext|{ParatextUserId02}",
                                 ParatextId = ParatextUserId02,
                                 Sites = sites,
                             },
-                            new User { Id = User03, ParatextId = ParatextUserId03 },
+                            new User
+                            {
+                                Id = User03,
+                                ParatextId = ParatextUserId03,
+                                AuthId = $"oauth2|paratext|{ParatextUserId03}",
+                            },
                             new User { Id = User04 },
                             new User { Id = User05, Sites = sites },
+                            new User
+                            {
+                                Id = User06,
+                                AuthId = "google-oauth2|123456",
+                                ParatextId = ParatextUserId02,
+                            },
                         ]
                 )
             );
