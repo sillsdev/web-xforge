@@ -57,6 +57,7 @@ public class MachineApiService(
     ISFProjectService projectService,
     IRealtimeService realtimeService,
     IOptions<ServalOptions> servalOptions,
+    IOptions<SiteOptions> siteOptions,
     ISyncService syncService,
     ITranslationEnginesClient translationEnginesClient,
     ITranslationEngineTypesClient translationEngineTypesClient,
@@ -373,7 +374,8 @@ public class MachineApiService(
                     BookNum = 0,
                     ChapterNum = 0,
                     Status = DraftApplyStatus.Failed,
-                    Message = result.Log,
+                    Message =
+                        $"An error occurred applying your draft. Please email {siteOptions.Value.IssuesEmail} for help.",
                 }
             );
 
@@ -599,7 +601,7 @@ public class MachineApiService(
                             BookNum = bookNum,
                             ChapterNum = chapterDelta.Number,
                             Status = DraftApplyStatus.Failed,
-                            Message = $"You do not have permission to write to this chapter.",
+                            Message = "You do not have permission to write to this chapter.",
                         }
                     );
                     continue;
@@ -632,7 +634,7 @@ public class MachineApiService(
                             BookNum = bookNum,
                             ChapterNum = chapterDelta.Number,
                             Status = DraftApplyStatus.Failed,
-                            Message = $"You do not have permission to write to this chapter.",
+                            Message = "You do not have permission to write to this chapter.",
                         }
                     );
                     continue;
@@ -714,7 +716,9 @@ public class MachineApiService(
                     BookNum = 0,
                     ChapterNum = 0,
                     Status = successful ? DraftApplyStatus.Successful : DraftApplyStatus.Failed,
-                    Message = result.Log,
+                    Message = successful
+                        ? result.Log
+                        : $"An error occurred applying your draft. Please email {siteOptions.Value.IssuesEmail} for help.",
                 }
             );
 
