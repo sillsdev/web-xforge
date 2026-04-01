@@ -24,6 +24,7 @@ using Polly.CircuitBreaker;
 using Serval.Client;
 using SIL.Converters.Usj;
 using SIL.Scripture;
+using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.EventMetrics;
 using SIL.XForge.Models;
@@ -4979,6 +4980,7 @@ public class MachineApiServiceTests
             RealtimeService.AddRepository("text_documents", OTType.Json0, TextDocuments);
             RealtimeService.AddRepository("texts", OTType.RichText, Texts);
             ServalOptions = Options.Create(new ServalOptions { WebhookSecret = "this_is_a_secret" });
+            var siteOptions = Options.Create(new SiteOptions { IssuesEmail = "help@scriptureforge.org" });
             SyncService = Substitute.For<ISyncService>();
             SyncService.SyncAsync(Arg.Any<SyncConfig>()).Returns(Task.FromResult(HangfireJobId));
             TranslationEnginesClient = Substitute.For<ITranslationEnginesClient>();
@@ -5019,6 +5021,7 @@ public class MachineApiServiceTests
                 ProjectService,
                 RealtimeService,
                 ServalOptions,
+                siteOptions,
                 SyncService,
                 TranslationEnginesClient,
                 TranslationEngineTypesClient,
