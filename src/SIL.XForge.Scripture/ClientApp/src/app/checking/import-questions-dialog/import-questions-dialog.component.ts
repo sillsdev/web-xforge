@@ -693,8 +693,10 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
       result = await this.csvService.parse(file);
     }
 
-    const referenceColumn = result[0].findIndex(value => /^\s*References?\s*$/i.test(value));
-    const questionColumn = result[0].findIndex(value => /^\s*Questions?\s*$/i.test(value));
+    const referenceColumn: number =
+      result.length === 0 ? -1 : result[0].findIndex(value => /^\s*References?\s*$/i.test(value));
+    const questionColumn: number =
+      result.length === 0 ? -1 : result[0].findIndex(value => /^\s*Questions?\s*$/i.test(value));
 
     if (referenceColumn === -1 || questionColumn === -1) {
       this.questionSource = 'csv_file';
