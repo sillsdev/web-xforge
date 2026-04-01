@@ -58,7 +58,7 @@ export abstract class NotificationServiceBase {
   }
 
   async stop(): Promise<void> {
-    if (this.openConnections > 0 && --this.openConnections === 0) {
+    if (this.openConnections > 0 && this.openConnections-- === 1) {
       // If start() has not completed, wait for it to complete before stopping
       if (this.startPromise != null) {
         try {
