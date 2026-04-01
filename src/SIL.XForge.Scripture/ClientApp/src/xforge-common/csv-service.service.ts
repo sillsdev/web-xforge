@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import Papa from 'papaparse';
 import { lastValueFrom } from 'rxjs';
@@ -10,22 +10,30 @@ import { COMMAND_API_NAMESPACE, PROJECTS_URL } from './url-constants';
 export class CsvService {
   constructor(private readonly http: HttpClient) {}
 
-  async convert(file: File): Promise<string[][]> {
-    const formData = new FormData();
-    formData.append('file', file);
-    const response = await lastValueFrom(
-      this.http.post(`${COMMAND_API_NAMESPACE}/${PROJECTS_URL}/convert-to-csv`, formData, {
-        headers: { Accept: 'text/csv' },
-        observe: 'response',
-        responseType: 'text'
-      })
-    );
+  async convert(file: File): Promise<string[][] | undefined> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await lastValueFrom(
+        this.http.post(`${COMMAND_API_NAMESPACE}/${PROJECTS_URL}/convert-to-csv`, formData, {
+          headers: { Accept: 'text/csv' },
+          observe: 'response',
+          responseType: 'text'
+        })
+      );
 
-    if (!response.ok || response.body == null) {
-      throw new Error('Your spreadsheet could not be converted');
+      if (!response.ok || response.body == null) {
+        throw new Error('Your spreadsheet could not be converted');
+      }
+
+      return this.parse(new File([response.body], 'converted.csv', { type: 'text/csv' }));
+    } catch (e) {
+      if (e instanceof HttpErrorResponse && e.status === 400) {
+        return undefined;
+      }
+
+      throw e;
     }
-
-    return this.parse(new File([response.body], 'converted.csv', { type: 'text/csv' }));
   }
 
   parse(file: File): Promise<string[][]> {

@@ -413,6 +413,14 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.component.errorState).toBe('missing_header_row');
   }));
 
+  it('does not import from an Excel 97-2003 file', fakeAsync(() => {
+    const env = new TestEnvironment();
+
+    env.selectFileWithContents(undefined, 'test.xls');
+
+    expect(env.component.errorState).toBe('invalid_spreadsheet');
+  }));
+
   it('it informs the user about invalid rows in the CSV file and skips them', fakeAsync(() => {
     const env = new TestEnvironment();
 
@@ -961,8 +969,8 @@ class TestEnvironment {
     tick();
   }
 
-  selectFileWithContents(contents: string[][], filename = 'filename.csv'): void {
-    when(mockedCsvService.parse(anything())).thenResolve(contents);
+  selectFileWithContents(contents: string[][] | undefined, filename = 'filename.csv'): void {
+    when(mockedCsvService.parse(anything())).thenResolve(contents ?? []);
     when(mockedCsvService.convert(anything())).thenResolve(contents);
     this.component.fileSelected({ name: filename } as File);
     tick();
