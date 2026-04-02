@@ -24,6 +24,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Microsoft.Net.Http.Headers;
+using Microsoft.OpenApi;
 using SIL.XForge.Configuration;
 using SIL.XForge.EventMetrics;
 using SIL.XForge.Scripture.Services;
@@ -232,7 +233,7 @@ public class Startup
     {
         if (IsDevelopmentEnvironment || IsTestingEnvironment || IsStagingEnvironment)
         {
-            app.UseSwagger();
+            app.UseSwagger(options => options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_1);
             app.UseSwaggerUI();
         }
 

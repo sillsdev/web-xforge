@@ -141,25 +141,25 @@ public class PreTranslationServiceTests
                     new Pretranslation
                     {
                         TextId = "64_1",
-                        Refs = { "64_1:mt1_001" },
+                        TargetRefs = ["64_1:mt1_001"],
                         Translation = "3 John",
                     },
                     new Pretranslation
                     {
                         TextId = "64_1",
-                        Refs = { "64_1:verse_001_001" },
+                        TargetRefs = ["64_1:verse_001_001"],
                         Translation = "By the old man,",
                     },
                     new Pretranslation
                     {
                         TextId = "64_1",
-                        Refs = { "64_1:verse_001_001_001" },
+                        TargetRefs = ["64_1:verse_001_001_001"],
                         Translation = "To my dear friend Gaius,",
                     },
                     new Pretranslation
                     {
                         TextId = "64_1",
-                        Refs = { "64_1:verse_001_001_002" },
+                        TargetRefs = ["64_1:verse_001_001_002"],
                         Translation = "whom I love in the truth:",
                     },
                 ])
@@ -200,25 +200,25 @@ public class PreTranslationServiceTests
                     new Pretranslation
                     {
                         TextId = "64_1",
-                        Refs = { "64_1:mt1_001" },
+                        TargetRefs = ["64_1:mt1_001"],
                         Translation = "3 John",
                     },
                     new Pretranslation
                     {
                         TextId = "64_1",
-                        Refs = { "64_1:verse_001_001" },
+                        TargetRefs = ["64_1:verse_001_001"],
                         Translation = "By the old man,",
                     },
                     new Pretranslation
                     {
                         TextId = "64_1",
-                        Refs = { "64_1:verse_001_001_001" },
+                        TargetRefs = ["64_1:verse_001_001_001"],
                         Translation = "To my dear friend Gaius,",
                     },
                     new Pretranslation
                     {
                         TextId = "64_1",
-                        Refs = { "64_1:verse_001_001_002" },
+                        TargetRefs = ["64_1:verse_001_001_002"],
                         Translation = "whom I love in the truth:",
                     },
                 ])
@@ -321,37 +321,37 @@ public class PreTranslationServiceTests
                     new Pretranslation
                     {
                         TextId = "MAT",
-                        Refs = { "MAT 1:1" },
+                        TargetRefs = ["MAT 1:1"],
                         Translation = "The book of the birth of Jesus Christ , the son of David , the son of Abraham .",
                     },
                     new Pretranslation
                     {
                         TextId = "MAT",
-                        Refs = { "MAT 1:2/0:q1" },
+                        TargetRefs = ["MAT 1:2/0:q1"],
                         Translation = "Abraham was the father of Isaac ,",
                     },
                     new Pretranslation
                     {
                         TextId = "MAT",
-                        Refs = { "MAT 1:2/1:q2" },
+                        TargetRefs = ["MAT 1:2/1:q2"],
                         Translation = "Isaac was the father of James ,",
                     },
                     new Pretranslation
                     {
                         TextId = "MAT",
-                        Refs = { "MAT 1:2/2:q3" },
+                        TargetRefs = ["MAT 1:2/2:q3"],
                         Translation = "and James was the father of Jude and his brethren .",
                     },
                     new Pretranslation
                     {
                         TextId = "MAT",
-                        Refs = { "MAT 2:1" },
+                        TargetRefs = ["MAT 2:1"],
                         Translation = "This will not be returned - Serval returns all of the book's pre-translations",
                     },
                     new Pretranslation
                     {
                         TextId = "MAT",
-                        Refs = { "invalid_ref" },
+                        TargetRefs = ["invalid_ref"],
                         Translation = "This will not be returned as it has an invalid ref",
                     },
                 ])
@@ -397,38 +397,38 @@ public class PreTranslationServiceTests
                     new Pretranslation
                     {
                         TextId = "40_1",
-                        Refs = { "40_1:verse_001_001" },
+                        TargetRefs = ["40_1:verse_001_001"],
                         Translation = "The book of the birth of Jesus Christ , the son of David , the son of Abraham .",
                     },
                     new Pretranslation
                     {
                         TextId = "40_1",
-                        Refs = { "40_1:verse_001_002" },
+                        TargetRefs = ["40_1:verse_001_002"],
                         Translation =
                             "Abraham was the father of Isaac , Isaac was the father of James , and James was the father of Jude and his brethren .",
                     },
                     new Pretranslation
                     {
                         TextId = "40_1",
-                        Refs = { "invalid_ref" },
+                        TargetRefs = ["invalid_ref"],
                         Translation = "This ref does not have a colon, so is invalid and will not be returned",
                     },
                     new Pretranslation
                     {
                         TextId = "40_1",
-                        Refs = { "41_1:verse_001_002" },
+                        TargetRefs = ["41_1:verse_001_002"],
                         Translation = "This ref is for the wrong book, so will not be returned",
                     },
                     new Pretranslation
                     {
                         TextId = "40_1",
-                        Refs = { "40_1:verse_001" },
+                        TargetRefs = ["40_1:verse_001"],
                         Translation = "This ref has only a chapter number, so will not be returned",
                     },
                     new Pretranslation
                     {
                         TextId = "40_1",
-                        Refs = { "40_1:verse_001:001" },
+                        TargetRefs = ["40_1:verse_001:001"],
                         Translation = "This ref has too many colons, so will not be returned",
                     },
                 ])
