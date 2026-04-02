@@ -1096,15 +1096,8 @@ public class MachineApiServiceTests
                 // Invalid corpus format
                 new TrainingCorpus(),
             ],
-            Analysis =
-            [
-                new ParallelCorpusAnalysis
-                {
-                    ParallelCorpusRef = ParallelCorpusId01,
-                    TargetQuoteConvention = "standard_english",
-                    CanDenormalizeQuotes = true,
-                },
-            ],
+            TargetQuoteConvention = "standard_english",
+            CanDenormalizeQuotes = true,
         };
         env.ConfigureTranslationBuild(translationBuild);
 
@@ -1380,15 +1373,8 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         TranslationBuild translationBuild = env.ConfigureTranslationBuild();
-        translationBuild.Analysis =
-        [
-            new ParallelCorpusAnalysis
-            {
-                ParallelCorpusRef = ParallelCorpusId01,
-                TargetQuoteConvention = "standard_english",
-                CanDenormalizeQuotes = true,
-            },
-        ];
+        translationBuild.TargetQuoteConvention = "standard_english";
+        translationBuild.CanDenormalizeQuotes = true;
         translationBuild.Pretranslate =
         [
             new PretranslateCorpus { ParallelCorpus = new ResourceLink { Id = ParallelCorpusId01 } },
