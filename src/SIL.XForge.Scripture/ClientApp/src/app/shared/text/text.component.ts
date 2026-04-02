@@ -19,6 +19,7 @@ import { QuillEditorComponent } from 'ngx-quill';
 import Quill, { Delta, EmitterSource, Range } from 'quill';
 import QuillCursors from 'quill-cursors';
 import { AuthType, getAuthType } from 'realtime-server/lib/esm/common/models/user';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { StringMap } from 'rich-text';
@@ -285,6 +286,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   private _selectionBoundsTop: number = 0;
   private highlightMarkerHeight: number = 0;
   private _placeholder?: string;
+  private project?: SFProjectProfile;
   private currentUserDoc?: UserDoc;
   private readonly cursorColorStorageKey = 'cursor_color';
   private isDestroyed: boolean = false;
@@ -347,7 +349,14 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       case 'no-content':
         // There isn't any content to show, even if we were online. Setting the placeholder Input customizes this
         // no-content message.
-        return this._placeholder ?? this.transloco.translate('text.book_does_not_exist');
+        if (this._placeholder != null) return this._placeholder;
+        if (this.id == null || this.project == null) return this.transloco.translate('text.error');
+
+        const bookId = Canon.bookNumberToId(this.id.bookNum);
+        const bookName = this.transloco.translate(`canon.book_names.${bookId}`);
+        return this.project.texts.some(t => t.bookNum === this.id!.bookNum)
+          ? this.transloco.translate('text.chapter_does_not_exist', { projectName: this.project.name })
+          : this.transloco.translate('text.this_book_does_not_exist', { bookName, projectName: this.project.name });
       case 'offline-or-loading':
         if (this.onlineStatusService.isOnline) {
           return this.transloco.translate('text.loading');
@@ -1075,18 +1084,18 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   async projectHasText(): Promise<boolean> {
     if (this.id == null) throw new Error('Invalid state. id is null.');
     const id: TextDocId = this.id;
-
+    this.project = undefined;
     if (!this.userProjects?.includes(this.projectId)) {
       this.loadingState = 'permission-denied';
       return false;
     }
-    const profile: SFProjectProfileDoc = await this.projectService.getProfile(this.projectId);
-    if (profile.data == null) throw new Error('Failed to fetch project profile.');
-    if (
-      profile.data.texts.some(
-        text => text.bookNum === id.bookNum && text.chapters.some(chapter => chapter.number === id.chapterNum)
-      )
-    ) {
+    const profileDoc: SFProjectProfileDoc = await this.projectService.getProfile(this.projectId);
+    if (profileDoc.data == null) throw new Error('Failed to fetch project profile.');
+    this.project = profileDoc.data;
+    const chapterExists = this.project.texts.some(
+      t => t.bookNum === id.bookNum && t.chapters.some(c => c.number === id.chapterNum)
+    );
+    if (chapterExists) {
       return true;
     }
     this.loadingState = 'no-content';
@@ -1158,6 +1167,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     }
 
     if (!(await this.projectHasText())) {
+      this.loaded.emit();
       return;
     }
 

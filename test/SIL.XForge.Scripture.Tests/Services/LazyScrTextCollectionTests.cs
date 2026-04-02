@@ -1,3 +1,4 @@
+#nullable disable warnings
 using System.IO;
 using NSubstitute;
 using NUnit.Framework;

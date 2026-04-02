@@ -1,3 +1,4 @@
+#nullable disable warnings
 using SIL.XForge.Realtime;
 
 namespace SIL.XForge.Models;

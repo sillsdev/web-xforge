@@ -196,6 +196,10 @@
           <div>{{ t("cannot_convert_offline") }}</div>
         }
 
+        @case ("invalid_spreadsheet") {
+          <div [innerHTML]="i18n.translateAndInsertTags('import_questions_dialog.invalid_spreadsheet')"></div>
+        }
+
         @case ("missing_header_row") {
           <div [innerHTML]="i18n.translateAndInsertTags('import_questions_dialog.missing_header_row')"></div>
         }
@@ -327,7 +331,13 @@
           {{ t("back") }}
         </button>
       }
-      @if (status === "no_questions" || status === "update_transcelerator" || status === "missing_header_row") {
+      @if (
+        status === "no_questions" ||
+        status === "update_transcelerator" ||
+        status === "invalid_spreadsheet" ||
+        status === "missing_header_row" ||
+        status === "offline_conversion"
+      ) {
         <button mat-flat-button mat-dialog-close color="primary">
           {{ t("close") }}
         </button>

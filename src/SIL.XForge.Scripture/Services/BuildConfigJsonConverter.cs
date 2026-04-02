@@ -1,3 +1,4 @@
+#nullable disable warnings
 using System;
 using Newtonsoft.Json;
 using SIL.XForge.Scripture.Models;

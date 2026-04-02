@@ -1,3 +1,4 @@
+#nullable disable warnings
 using System.IO;
 using System.Reflection;
 using Microsoft.AspNetCore;

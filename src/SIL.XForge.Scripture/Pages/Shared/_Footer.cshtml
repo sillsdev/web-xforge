@@ -8,6 +8,7 @@
 @inject IOptions<RequestLocalizationOptions> LocOptions
 
 @{
+    #nullable disable warnings
     var requestCulture = Context.Features.Get<IRequestCultureFeature>();
     InterfaceLanguage? locale = LocOptions.Value.SupportedUICultures?.Where(c =>
     SharedResource.Cultures[c.IetfLanguageTag].Tags.Contains(requestCulture.RequestCulture.UICulture.Name)

@@ -1,3 +1,4 @@
+#nullable disable warnings
 using System.Diagnostics.CodeAnalysis;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;

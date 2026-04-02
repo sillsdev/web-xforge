@@ -1,3 +1,4 @@
+#nullable disable warnings
 using Microsoft.Extensions.DependencyInjection;
 using SIL.XForge.Scripture.Services;
 

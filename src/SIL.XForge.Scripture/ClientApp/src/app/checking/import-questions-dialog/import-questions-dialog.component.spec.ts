@@ -394,6 +394,33 @@ describe('ImportQuestionsDialogComponent', () => {
     env.click(env.backButton);
   }));
 
+  it('does not import from a CSV file with unknown columns', fakeAsync(() => {
+    const env = new TestEnvironment();
+
+    const genQuestions = [['Genesis 1:1', 'Question for Genesis 1:1']];
+    const matQuestions = Array.from(Array(100), (_, i) => [`MAT 1:${i + 1}`, `Question for Matthew 1:${i + 1}`]);
+
+    env.selectFileWithContents([['Col1', 'Col2'], ...genQuestions, ...matQuestions]);
+
+    expect(env.component.errorState).toBe('missing_header_row');
+  }));
+
+  it('does not import from an empty CSV file', fakeAsync(() => {
+    const env = new TestEnvironment();
+
+    env.selectFileWithContents([]);
+
+    expect(env.component.errorState).toBe('missing_header_row');
+  }));
+
+  it('does not import from an Excel 97-2003 file', fakeAsync(() => {
+    const env = new TestEnvironment();
+
+    env.selectFileWithContents(undefined, 'test.xls');
+
+    expect(env.component.errorState).toBe('invalid_spreadsheet');
+  }));
+
   it('it informs the user about invalid rows in the CSV file and skips them', fakeAsync(() => {
     const env = new TestEnvironment();
 
@@ -942,8 +969,8 @@ class TestEnvironment {
     tick();
   }
 
-  selectFileWithContents(contents: string[][], filename = 'filename.csv'): void {
-    when(mockedCsvService.parse(anything())).thenResolve(contents);
+  selectFileWithContents(contents: string[][] | undefined, filename = 'filename.csv'): void {
+    when(mockedCsvService.parse(anything())).thenResolve(contents ?? []);
     when(mockedCsvService.convert(anything())).thenResolve(contents);
     this.component.fileSelected({ name: filename } as File);
     tick();

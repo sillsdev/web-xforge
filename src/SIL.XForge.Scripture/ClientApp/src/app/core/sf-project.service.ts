@@ -1,5 +1,5 @@
 import { DestroyRef, Injectable } from '@angular/core';
-import { VerseRef } from '@sillsdev/scripture';
+import { Canon, VerseRef } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
@@ -25,7 +25,7 @@ import { RealtimeService } from 'xforge-common/realtime.service';
 import { RetryingRequest, RetryingRequestService } from 'xforge-common/retrying-request.service';
 import { EventMetric } from '../event-metrics/event-metric';
 import { BookProgress } from '../shared/progress-service/progress.service';
-import { booksFromScriptureRange } from '../shared/utils';
+import { expandNumbers } from '../shared/utils';
 import { BiblicalTermDoc } from './models/biblical-term-doc';
 import { InviteeStatus } from './models/invitee-status';
 import { NoteThreadDoc } from './models/note-thread-doc';
@@ -57,27 +57,50 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   /**
-   * Determines if there is a draft in the project for the specified scripture range or book number.
+   * Determines if there is a draft in the project, optionally for the specified book and chapter number.
+   *
    * @param project The project.
-   * @param scriptureRange The scripture range or book number.
+   * @param bookNum The book number.
+   * @param chapterNum The chapter number.
    * @param currentBuild If true, only return true if the current build on serval contains the scripture range.
    * @returns true if the project contains a draft for the specified scripture range or book number.
    */
   hasDraft(
     project: SFProjectProfile | undefined,
     bookNum: number | undefined = undefined,
+    chapterNum: number | undefined = undefined,
     currentBuild: boolean = false
   ): boolean {
-    const books: number[] = booksFromScriptureRange(
-      currentBuild
+    const scriptureRange: string | undefined = (
+      (currentBuild
         ? project?.translateConfig.draftConfig.currentScriptureRange
-        : project?.translateConfig.draftConfig.draftedScriptureRange
-    );
-    if (bookNum == null) {
-      return books.length > 0;
-    } else {
-      return books.includes(bookNum);
+        : project?.translateConfig.draftConfig.draftedScriptureRange) ?? ''
+    ).trim();
+    if (scriptureRange === '') return false;
+
+    // If no book number is specified, we are checking for the presence of any draft.
+    if (bookNum == null) return true;
+
+    const bookId: string = Canon.bookNumberToId(bookNum);
+    const scriptureRanges: string[] = scriptureRange.split(';').filter(book => book.startsWith(bookId));
+
+    // If the book is not present, there is no draft
+    if (scriptureRanges.length === 0) return false;
+
+    // If no chapter number is specified, we are checking for the draft for the specified book number
+    if (chapterNum == null) return true;
+
+    // Parse each of the occurrences of the book for the chapter number
+    for (const range of scriptureRanges) {
+      // If the book is present without chapters, then the chapter is present
+      if (range.length === bookId.length) return true;
+
+      // Expand the chapter range, and see if the specified chapter number is present
+      if (expandNumbers(range.slice(bookId.length)).includes(chapterNum)) return true;
     }
+
+    // The chapter was not present in the book
+    return false;
   }
 
   async onlineCreate(settings: SFProjectCreateSettings): Promise<string> {

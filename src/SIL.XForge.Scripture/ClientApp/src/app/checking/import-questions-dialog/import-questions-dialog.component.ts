@@ -90,6 +90,7 @@ interface DialogListItem {
 type DialogErrorState =
   | 'update_transcelerator'
   | 'file_import_errors'
+  | 'invalid_spreadsheet'
   | 'missing_header_row'
   | 'offline_conversion'
   | 'paratext_tag_load_error';
@@ -688,13 +689,22 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
         return;
       }
 
-      result = await this.csvService.convert(file);
+      const convertedData: string[][] | undefined = await this.csvService.convert(file);
+      if (convertedData == null) {
+        this.questionSource = 'csv_file';
+        this.errorState = 'invalid_spreadsheet';
+        return;
+      }
+
+      result = convertedData;
     } else {
       result = await this.csvService.parse(file);
     }
 
-    const referenceColumn = result[0].findIndex(value => /^\s*References?\s*$/i.test(value));
-    const questionColumn = result[0].findIndex(value => /^\s*Questions?\s*$/i.test(value));
+    const referenceColumn: number =
+      result.length === 0 ? -1 : result[0].findIndex(value => /^\s*References?\s*$/i.test(value));
+    const questionColumn: number =
+      result.length === 0 ? -1 : result[0].findIndex(value => /^\s*Questions?\s*$/i.test(value));
 
     if (referenceColumn === -1 || questionColumn === -1) {
       this.questionSource = 'csv_file';

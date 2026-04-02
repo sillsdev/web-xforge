@@ -173,8 +173,28 @@ export function booksFromScriptureRange(scriptureRange: string | undefined): num
   if (scriptureRange == null) return [];
   return scriptureRange
     .split(';')
-    .map(book => Canon.bookIdToNumber(book))
+    .map(book => Canon.bookIdToNumber(book.slice(0, 3)))
     .filter(bookId => bookId > 0);
+}
+
+/**
+ * Expands a number range separated by hyphens and commas into a list of numbers.
+ *
+ * @param numberRange The number range, e.g. 1,2,5-8,10
+ * @returns The number range as a list of numbers, e.g. [1,2,5,6,7,8,10]
+ */
+export function expandNumbers(numberRange: string): number[] {
+  return numberRange
+    .split(',')
+    .filter(Boolean) // Remove empty strings
+    .flatMap(part => {
+      if (part.includes('-')) {
+        const [start, end] = part.split('-').map(Number);
+        return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+      }
+      return [Number(part)];
+    })
+    .filter(n => !Number.isNaN(n));
 }
 
 export class XmlUtils {

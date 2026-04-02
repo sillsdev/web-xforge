@@ -342,7 +342,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     );
   }
 
-  async generateDraftClicked({ withConfirm = false } = {}): Promise<void> {
+  async generateDraftClicked(): Promise<void> {
     if (this.formattingOptionsRequired) {
       const dialogRef = this.dialogService.openGenericDialog({
         title: this.i18n.translate('draft_generation.choose_formatting_options'),
@@ -358,24 +358,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       });
       if (await dialogRef.result) await this.router.navigate(this.draftOptionsService.formattingOptionsPath);
       return;
-    }
-    if (withConfirm) {
-      const isConfirmed: boolean | undefined = await this.dialogService.openGenericDialog({
-        title: this.i18n.translate('draft_generation.dialog_confirm_draft_regeneration_title'),
-        message: this.i18n.translate('draft_generation.dialog_confirm_draft_regeneration_message'),
-        options: [
-          { value: false, label: this.i18n.translate('draft_generation.dialog_confirm_draft_regeneration_no') },
-          {
-            value: true,
-            label: this.i18n.translate('draft_generation.dialog_confirm_draft_regeneration_yes'),
-            highlight: true
-          }
-        ]
-      }).result;
-
-      if (!isConfirmed) {
-        return;
-      }
     }
 
     // Display pre-generation steps

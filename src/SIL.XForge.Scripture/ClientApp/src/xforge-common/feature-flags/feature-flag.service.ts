@@ -367,7 +367,7 @@ export class FeatureFlagService {
     'InAppDraftSignupForm',
     'Show in-app draft signup form instead of external link',
     19,
-    this.featureFlagStore
+    new StaticFeatureFlagStore(true)
   );
 
   get featureFlags(): FeatureFlag[] {

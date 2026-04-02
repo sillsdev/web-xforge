@@ -1,3 +1,4 @@
+#nullable disable warnings
 using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture.Models;

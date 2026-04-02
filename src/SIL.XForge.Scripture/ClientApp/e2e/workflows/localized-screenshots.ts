@@ -193,7 +193,7 @@ export async function localizedScreenshots(
   await navLocator(page, 'generate_draft').click();
 
   await forEachLocale(async locale => {
-    await user.hover(page.locator('[data-test-id="approval-needed"]').getByRole('link'), defaultArrowLocation);
+    await user.hover(page.locator('[data-test-id="approval-needed"]').getByRole('button'), defaultArrowLocation);
     await screenshot(page, { ...context, pageName: 'sign_up_for_drafting', locale });
   });
 

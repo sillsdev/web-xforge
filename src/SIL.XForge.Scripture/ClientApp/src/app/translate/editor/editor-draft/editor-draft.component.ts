@@ -47,6 +47,7 @@ import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-
 import { isString } from '../../../../type-utils';
 import { TextDocId } from '../../../core/models/text-doc';
 import { Revision } from '../../../core/paratext.service';
+import { ProjectNotificationService } from '../../../core/project-notification.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { BuildStates } from '../../../machine-api/build-states';
@@ -124,6 +125,8 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   private draftDelta?: Delta;
   private targetDelta?: Delta;
   private _latestPreTranslationBuild: BuildDto | undefined;
+  private readonly notifyBuildProgressHandler = (projectId: string): void =>
+    this.refreshLastPreTranslationBuild(projectId);
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
@@ -139,8 +142,26 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     private readonly noticeService: NoticeService,
     private errorReportingService: ErrorReportingService,
     private readonly router: Router,
-    private readonly draftOptionsService: DraftOptionsService
-  ) {}
+    private readonly draftOptionsService: DraftOptionsService,
+    projectNotificationService: ProjectNotificationService
+  ) {
+    this.activatedProjectService.projectId$
+      .pipe(quietTakeUntilDestroyed(this.destroyRef), filterNullish(), take(1))
+      .subscribe(async projectId => {
+        await projectNotificationService.start();
+        // Subscribe to notifications for this project
+        await projectNotificationService.subscribeToProject(projectId);
+        // When build notifications are received, reload the build history
+        // NOTE: We do not need the build state, so just ignore it.
+        projectNotificationService.setNotifyBuildProgressHandler(this.notifyBuildProgressHandler);
+      });
+
+    destroyRef.onDestroy(async () => {
+      // Stop the SignalR connection when the component is destroyed
+      await projectNotificationService.stop();
+      projectNotificationService.removeNotifyBuildProgressHandler(this.notifyBuildProgressHandler);
+    });
+  }
 
   get bookId(): string {
     return this.bookNum !== undefined ? Canon.bookNumberToId(this.bookNum) : '';
@@ -163,7 +184,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   }
 
   get doesLatestCompletedHaveDraft(): boolean {
-    return this.projectService.hasDraft(this.targetProject, this.bookNum, true);
+    return this.projectService.hasDraft(this.targetProject, this.bookNum, this.chapter, true);
   }
 
   get hasDraftToApply(): boolean {
@@ -314,7 +335,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     combineLatest([
       this.onlineStatusService.onlineStatus$,
       this.activatedProjectService.projectDoc$,
-      this.draftGenerationService.pollBuildProgress(this.textDocId!.projectId),
       this.draftText.editorCreated as EventEmitter<any>,
       this.inputChanged$.pipe(startWith(undefined))
     ])
@@ -326,19 +346,9 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         }),
         filter(([isOnline, _]) => {
           return isOnline && this.doesLatestCompletedHaveDraft;
-        }),
-        switchMap(() => this.refreshLastPreTranslationBuild())
+        })
       )
-      .subscribe((build: BuildDto | undefined) => {
-        this._latestPreTranslationBuild = build;
-      });
-  }
-
-  private refreshLastPreTranslationBuild(): Observable<BuildDto | undefined> {
-    if (this.projectId == null) {
-      return of<BuildDto | undefined>(undefined);
-    }
-    return this.draftGenerationService.getLastPreTranslationBuild(this.projectId).pipe(take(1));
+      .subscribe(([_, projectDoc]) => this.refreshLastPreTranslationBuild(projectDoc!.id));
   }
 
   navigateToFormatting(): void {
@@ -373,6 +383,13 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         );
       }
     }
+  }
+
+  private refreshLastPreTranslationBuild(projectId: string): void {
+    this.draftGenerationService
+      .getLastPreTranslationBuild(projectId)
+      .pipe(quietTakeUntilDestroyed(this.destroyRef), take(1))
+      .subscribe((build: BuildDto | undefined) => (this._latestPreTranslationBuild = build));
   }
 
   private setInitialState(): void {
@@ -426,14 +443,16 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
   private getTargetOps(): Observable<DeltaOperation[]> {
     return from(this.projectService.getText(this.textDocId!)).pipe(
-      switchMap(textDoc =>
-        textDoc.changes$.pipe(
-          startWith(undefined),
-          throttleTime(2000, asyncScheduler, { leading: true, trailing: true }),
-          map(() => textDoc.data?.ops),
-          filterNullish()
-        )
-      )
+      switchMap(textDoc => {
+        if (textDoc.isLoaded)
+          return textDoc.changes$.pipe(
+            startWith(undefined),
+            throttleTime(2000, asyncScheduler, { leading: true, trailing: true }),
+            map(() => textDoc.data?.ops),
+            filterNullish()
+          );
+        else return of([] as DeltaOperation[]);
+      })
     );
   }
 }

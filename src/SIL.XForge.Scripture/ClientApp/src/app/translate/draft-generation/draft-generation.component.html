@@ -202,29 +202,6 @@
                   </a>
                 </div>
               </app-notice>
-              @if (!featureFlags.newDraftHistory.enabled) {
-                <section data-test-id="technical-details">
-                  <div>
-                    <p class="error-text">Technical details:</p>
-                    <div>
-                      <div><strong>Message:</strong> {{ draftJob?.message ?? "unknown" }}</div>
-                      <div>
-                        <strong>Translation Engine Id:</strong>
-                        {{ draftJob?.additionalInfo?.translationEngineId ?? "unknown" }}
-                      </div>
-                      <div><strong>Build Id:</strong> {{ draftJob?.additionalInfo?.buildId ?? "unknown" }}</div>
-                      <div>
-                        <strong>Corpora Ids:</strong>
-                        {{ draftJob?.additionalInfo?.corporaIds?.join(", ") ?? "unknown" }}
-                      </div>
-                      <div>
-                        <strong>Parallel Corpora Ids:</strong>
-                        {{ draftJob?.additionalInfo?.parallelCorporaIds?.join(", ") ?? "unknown" }}
-                      </div>
-                    </div>
-                  </div>
-                </section>
-              }
             }
             @if (!isDraftInProgress(draftJob) && !hasAnyCompletedBuild) {
               <section class="action-button-strip">
@@ -250,7 +227,7 @@
           }
           @if (isPreviewSupported) {
             @if (draftJob != null) {
-              @if (isDraftInProgress(draftJob) && featureFlags.newDraftHistory.enabled) {
+              @if (isDraftInProgress(draftJob)) {
                 <mat-card class="draft-progress-card">
                   <mat-card-header>
                     <mat-card-title>
@@ -290,86 +267,6 @@
                     }
                   </mat-card-content>
                 </mat-card>
-              } @else if (!featureFlags.newDraftHistory.enabled) {
-                @if (isDraftQueued(draftJob)) {
-                  <section>
-                    @if (isSyncing()) {
-                      <h3>{{ t("draft_syncing") }}</h3>
-                      <p>{{ t("draft_syncing_detail") }}</p>
-                    } @else {
-                      <h3>{{ t("draft_queued_header") }}</h3>
-                      @if (!hasDraftQueueDepth(draftJob)) {
-                        <p>{{ t("draft_queued_detail") }}</p>
-                      } @else {
-                        <p>
-                          {{ t("draft_queued_detail_multiple", { count: draftJob.queueDepth }) }}
-                        </p>
-                      }
-                    }
-                    <app-working-animated-indicator></app-working-animated-indicator>
-                    <div class="button-strip">
-                      @if (canCancel(draftJob)) {
-                        <button mat-flat-button color="primary" (click)="cancel()">
-                          <mat-icon>close</mat-icon>
-                          {{ t("cancel_generation_button") }}
-                        </button>
-                      }
-                    </div>
-                  </section>
-                } @else if (isDraftActive(draftJob)) {
-                  <section class="progress-active">
-                    <h3>{{ t("draft_active_header") }}</h3>
-                    <div class="progress-text">
-                      <p>{{ t("draft_active_detail", { count: draftDurationHours | l10nNumber }) }}</p>
-                    </div>
-                    <circle-progress [percent]="draftJob.percentCompleted * 100"></circle-progress>
-                    <div class="button-strip">
-                      @if (canCancel(draftJob)) {
-                        <button mat-flat-button color="primary" (click)="cancel()">
-                          <mat-icon>close</mat-icon>
-                          {{ t("cancel_generation_button") }}
-                        </button>
-                      }
-                    </div>
-                  </section>
-                } @else if (isDraftFinishing(draftJob)) {
-                  <section>
-                    <h3>{{ t("draft_finishing_header") }}</h3>
-                    <div class="progress-text">
-                      <p>{{ t("draft_finishing_detail") }}</p>
-                    </div>
-                    <app-working-animated-indicator></app-working-animated-indicator>
-                  </section>
-                }
-                @if (isDraftComplete(draftJob) || hasAnyCompletedBuild) {
-                  <section class="draft-complete">
-                    <mat-card class="preview-card">
-                      <mat-card-header>
-                        <mat-card-title>
-                          {{ isDraftComplete(draftJob) ? t("draft_is_ready") : t("preview_last_draft_header") }}
-                        </mat-card-title>
-                      </mat-card-header>
-                      <mat-card-content>
-                        @if (isDraftFaulted(draftJob)) {
-                          <p>{{ t("preview_last_draft_detail") }}</p>
-                        }
-                        <p>{{ t("click_book_to_preview") }}</p>
-                        <app-draft-preview-books></app-draft-preview-books>
-                      </mat-card-content>
-                      <mat-card-actions>
-                        @if (hasDraftBooksAvailable) {
-                          <app-draft-download-button [build]="lastCompletedBuild" />
-                          @if (featureFlags.usfmFormat.enabled) {
-                            <button mat-button [routerLink]="draftOptionsService.formattingOptionsPath">
-                              <mat-icon>settings</mat-icon>
-                              {{ t("format_draft") }}
-                            </button>
-                          }
-                        }
-                      </mat-card-actions>
-                    </mat-card>
-                  </section>
-                }
               }
             }
           }
@@ -393,12 +290,7 @@
         hasAnyCompletedBuild &&
         isSourcesConfigurationComplete
       ) {
-        <button
-          mat-flat-button
-          color="primary"
-          type="button"
-          (click)="generateDraftClicked({ withConfirm: !featureFlags.newDraftHistory.enabled })"
-        >
+        <button mat-flat-button color="primary" type="button" (click)="generateDraftClicked()">
           <mat-icon>add</mat-icon> {{ t("generate_new_draft") }}
         </button>
         @if (hasConfigureSourcePermission) {
@@ -422,11 +314,9 @@
       }
     </section>
 
-    @if (featureFlags.newDraftHistory.enabled) {
-      <app-draft-history-list [style.display]="isOnline ? 'flex' : 'none'"></app-draft-history-list>
-      @if (isOnline && isServalAdmin()) {
-        <h2>Further information</h2>
-      }
+    <app-draft-history-list [style.display]="isOnline ? 'flex' : 'none'"></app-draft-history-list>
+    @if (isOnline && isServalAdmin()) {
+      <h2>Further information</h2>
     }
 
     @if (canShowAdditionalInfo(draftJob)) {

@@ -485,11 +485,13 @@
     "upgrade_safari": "{{ newLine }} Ən son {{ safariLink }} səviyyəsinə keçməyi məsləhət görürük."
   },
   "text": {
-    "book_does_not_exist": "Bu kitab mövcud deyil.",
     "book_is_empty": "Bu kitab boşdur. Paratext proqramın köməyi ilə fəsillər əlavə edin.",
+    "chapter_does_not_exist": "This chapter does not exist in {{ projectName }}",
+    "error": "An error occurred while loading the text",
     "loading": "Yüklənir...",
     "not_available_offline": "Bu mətn oflayn olaraq mövcud deyil. Mətni görmək üçün İnternetə qoşulun.",
-    "permission_denied": "You do not have permission to view this text. Please contact the project's administrator to get permission."
+    "permission_denied": "You do not have permission to view this text. Please contact the project's administrator to get permission.",
+    "this_book_does_not_exist": "{{ bookName }} does not exist in {{ projectName }}"
   },
   "text_chooser_dialog": {
     "cancel": "Ləğv etmək",

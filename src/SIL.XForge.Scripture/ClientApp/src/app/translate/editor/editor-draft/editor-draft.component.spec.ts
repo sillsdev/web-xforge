@@ -27,6 +27,7 @@ import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/te
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { Revision } from '../../../core/paratext.service';
+import { ProjectNotificationService } from '../../../core/project-notification.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { BuildStates } from '../../../machine-api/build-states';
@@ -47,6 +48,7 @@ const mockNoticeService = mock(NoticeService);
 const mockErrorReportingService = mock(ErrorReportingService);
 const mockFeatureFlagService = mock(FeatureFlagService);
 const mockSFProjectService = mock(SFProjectService);
+const mockProjectNotificationService = mock(ProjectNotificationService);
 
 describe('EditorDraftComponent', () => {
   let fixture: ComponentFixture<EditorDraftComponent>;
@@ -78,7 +80,8 @@ describe('EditorDraftComponent', () => {
       { provide: NoticeService, useMock: mockNoticeService },
       { provide: ErrorReportingService, useMock: mockErrorReportingService },
       { provide: FeatureFlagService, useMock: mockFeatureFlagService },
-      { provide: SFProjectService, useMock: mockSFProjectService }
+      { provide: SFProjectService, useMock: mockSFProjectService },
+      { provide: ProjectNotificationService, useMock: mockProjectNotificationService }
     ]
   }));
 
@@ -100,7 +103,7 @@ describe('EditorDraftComponent', () => {
       of({ state: BuildStates.Completed } as BuildDto)
     );
     when(mockDraftHandlingService.opsHaveContent(anything())).thenReturn(true);
-    when(mockSFProjectService.hasDraft(anything(), anything(), anything())).thenReturn(true);
+    when(mockSFProjectService.hasDraft(anything(), anything(), anything(), anything())).thenReturn(true);
 
     fixture = TestBed.createComponent(EditorDraftComponent);
     component = fixture.componentInstance;
@@ -642,7 +645,7 @@ describe('EditorDraftComponent', () => {
       when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(false));
       when(mockActivatedProjectService.projectDoc$).thenReturn(of(testProjectDoc));
       when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
-      when(mockSFProjectService.hasDraft(anything(), anything(), anything())).thenReturn(false);
+      when(mockSFProjectService.hasDraft(anything(), anything(), anything(), anything())).thenReturn(false);
 
       when(mockDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(
         of({ state: BuildStates.Completed } as BuildDto)
@@ -652,7 +655,7 @@ describe('EditorDraftComponent', () => {
       tick();
       expect(component.isSelectedDraftLatest).toBe(true);
       expect(component.canConfigureFormatting).toBe(false);
-      verify(mockSFProjectService.hasDraft(anything(), anything(), anything())).atLeast(1);
+      verify(mockSFProjectService.hasDraft(anything(), anything(), anything(), anything())).atLeast(1);
       flush();
     }));
 

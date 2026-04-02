@@ -242,7 +242,7 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
   }
 
   formatBookList(value: number[] | undefined): string {
-    return value?.map(b => Canon.bookNumberToId(b)).join(', ') ?? '';
+    return value?.map(b => Canon.bookNumberToId(b)).join(';') ?? '';
   }
 
   getZipFileNames(): string[] {
@@ -304,7 +304,7 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
     if (zipFileNames.length === 0) {
       return '';
     }
-    return `python -m silnlp.common.onboard_project --copy-from $DOWNLOAD_FOLDER --extract-corpora --collect-verse-counts --wildebeest --datestamp ${zipFileNames.join(' ')}`;
+    return `poetry run python -m silnlp.common.onboard_project --copy-from $DOWNLOAD_FOLDER --extract-corpora --collect-verse-counts --wildebeest --datestamp ${zipFileNames.join(' ')}`;
   }
 
   /** Adds a comment to the current draft request. */

@@ -83,11 +83,11 @@ describe('TextComponent', () => {
     env.component.onEditorCreated(mockedQuill);
     env.waitForEditor();
     // Placeholder should be no-content, as there is nothing to show.
-    expect(env.component.placeholder).toEqual('text.book_does_not_exist');
+    expect(env.component.placeholder).toEqual('text.error');
     // The user goes offline, but 'no-content' is still the placeholder.
     env.onlineStatus = false;
     env.waitForEditor();
-    expect(env.component.placeholder).toEqual('text.book_does_not_exist');
+    expect(env.component.placeholder).toEqual('text.error');
     env.onlineStatus = true;
     env.waitForEditor();
 
@@ -118,19 +118,17 @@ describe('TextComponent', () => {
     env.runWithDelayedGetText(env.notPresentTextDocId, () => {
       env.id = env.notPresentTextDocId;
       env.waitForEditor();
-      expect(env.component.placeholder).toEqual('text.book_does_not_exist');
+      expect(env.component.placeholder).toEqual('text.this_book_does_not_exist');
     });
 
     // The user is offline and goes to a location that the project does not have. The placeholder should indicate
     // 'no-content'.
-    env.id = env.matTextDocId;
-    env.waitForEditor();
     env.onlineStatus = false;
     env.waitForEditor();
     env.runWithDelayedGetText(env.notPresentTextDocId, () => {
       env.id = env.notPresentTextDocId;
       env.waitForEditor();
-      expect(env.component.placeholder).toEqual('text.book_does_not_exist');
+      expect(env.component.placeholder).toEqual('text.this_book_does_not_exist');
     });
     env.onlineStatus = true;
     env.waitForEditor();
@@ -139,18 +137,16 @@ describe('TextComponent', () => {
     // is not present in the source text. Suppose this is so. Then the placeholder should indicate 'no-content'.
     env.id = undefined;
     env.waitForEditor();
-    expect(env.component.placeholder).toEqual('text.book_does_not_exist');
+    expect(env.component.placeholder).toEqual('text.error');
 
     // Suppose we are offline and id was set to undefined by editor.component because the current book is not present in
     // the source text. The problem is that the book is not present, not that we are offline. So the placeholder should
     // indicate 'no-content', not 'offline'.
     env.onlineStatus = true;
     env.waitForEditor();
-    env.id = env.matTextDocId;
+    env.id = env.notPresentTextDocId;
     env.waitForEditor();
-    env.id = undefined;
-    env.waitForEditor();
-    expect(env.component.placeholder).toEqual('text.book_does_not_exist');
+    expect(env.component.placeholder).toEqual('text.this_book_does_not_exist');
 
     const callback: (env: TestEnvironment) => void = (env: TestEnvironment) => {
       env.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
@@ -260,7 +256,7 @@ describe('TextComponent', () => {
     const env = new TestEnvironment();
     env.hostComponent.isTextRightToLeft = true;
     env.waitForEditor();
-    expect(env.component.placeholder).toEqual('text.book_does_not_exist');
+    expect(env.component.placeholder).toEqual('text.error');
     expect(env.component.isRtl).toBe(false);
     expect(env.fixture.nativeElement.querySelector('quill-editor[dir="auto"]')).not.toBeNull();
   }));
@@ -1774,6 +1770,9 @@ class TestEnvironment {
   } = {}) {
     when(mockedTranslocoService.translate<string>(anything())).thenCall(
       (translationStringKey: string) => translationStringKey
+    );
+    when(mockedTranslocoService.translate<string>(anything(), anything())).thenCall(
+      (translationStringKey: string, _: any) => translationStringKey
     );
 
     this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {

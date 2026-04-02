@@ -9,7 +9,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { BehaviorSubject, EMPTY, of, Subject, throwError } from 'rxjs';
+import { EMPTY, of, Subject, throwError } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -25,6 +25,7 @@ import { getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TrainingDataDoc } from '../../core/models/training-data-doc';
+import { ProjectNotificationService } from '../../core/project-notification.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
 import { BuildDto } from '../../machine-api/build-dto';
@@ -50,6 +51,7 @@ describe('DraftGenerationComponent', () => {
   let mockTrainingDataService: jasmine.SpyObj<TrainingDataService>;
   let mockFeatureFlagService: jasmine.SpyObj<FeatureFlagService>;
   let mockSFProjectService: jasmine.SpyObj<SFProjectService>;
+  let mockProjectNotificationService: jasmine.SpyObj<ProjectNotificationService>;
 
   const buildDto: BuildDto = {
     id: 'testId',
@@ -99,7 +101,8 @@ describe('DraftGenerationComponent', () => {
           { provide: OnlineStatusService, useClass: TestOnlineStatusService },
           { provide: TrainingDataService, useValue: mockTrainingDataService },
           { provide: ProgressService, useValue: undefined },
-          { provide: FeatureFlagService, useValue: mockFeatureFlagService }
+          { provide: FeatureFlagService, useValue: mockFeatureFlagService },
+          { provide: ProjectNotificationService, useValue: mockProjectNotificationService }
         ]
       });
 
@@ -200,7 +203,7 @@ describe('DraftGenerationComponent', () => {
           }
         })
       } as SFProjectProfileDoc;
-      mockAuthService = jasmine.createSpyObj<AuthService>(['requestParatextCredentialUpdate'], {
+      mockAuthService = jasmine.createSpyObj<AuthService>(['requestParatextCredentialUpdate', 'getAccessToken'], {
         currentUserId,
         currentUserRoles: [SystemRole.User]
       });
@@ -218,6 +221,13 @@ describe('DraftGenerationComponent', () => {
       mockSFProjectService = jasmine.createSpyObj<SFProjectService>(['hasDraft']);
       mockSFProjectService.hasDraft.withArgs(matchThisProject).and.returnValue(preTranslate);
       mockSFProjectService.hasDraft.withArgs(matchThisProject, jasmine.anything()).and.returnValue(preTranslate);
+      mockProjectNotificationService = jasmine.createSpyObj<ProjectNotificationService>([
+        'setNotifyBuildProgressHandler',
+        'start',
+        'stop',
+        'removeNotifyBuildProgressHandler',
+        'subscribeToProject'
+      ]);
     }
 
     get configureDraftButton(): HTMLElement | null {
@@ -1331,15 +1341,6 @@ describe('DraftGenerationComponent', () => {
   });
 
   describe('isDraftFaulted', () => {
-    it('should return true if the draft build is faulted', () => {
-      const env = new TestEnvironment();
-      env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
-      env.fixture.detectChanges();
-      expect(env.component.isDraftFaulted({ state: BuildStates.Faulted } as BuildDto)).toBe(true);
-      expect(env.getElementByTestId('warning-generation-failed')).not.toBeNull();
-      expect(env.getElementByTestId('technical-details')).not.toBeNull();
-    });
-
     it('should return false if the draft build is not faulted', () => {
       const env = new TestEnvironment();
       expect(env.component.isDraftFaulted({ state: BuildStates.Active } as BuildDto)).toBe(false);
@@ -1367,108 +1368,5 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isDraftInProgress({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
       expect(env.component.isDraftInProgress({ state: BuildStates.Faulted } as BuildDto)).toBe(false);
     });
-  });
-
-  describe('download draft button', () => {
-    it('button should display if there are draft books available', () => {
-      const env = new TestEnvironment();
-      env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
-      env.component.hasDraftBooksAvailable = true;
-      env.fixture.detectChanges();
-      expect(env.downloadButton).not.toBeNull();
-    });
-
-    it('button should display if there is a completed build while a build is faulted', () => {
-      const env = new TestEnvironment();
-      env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
-      env.component.lastCompletedBuild = { ...buildDto, state: BuildStates.Completed };
-      env.component.hasDraftBooksAvailable = true;
-      env.fixture.detectChanges();
-
-      expect(env.downloadButton).not.toBeNull();
-    });
-
-    it('button should display if there is a completed build while a build is queued', () => {
-      const env = new TestEnvironment();
-      env.setup();
-      env.component.draftJob = { ...buildDto, state: BuildStates.Queued };
-      env.component.lastCompletedBuild = { ...buildDto, state: BuildStates.Completed };
-      env.component.hasDraftBooksAvailable = true;
-      env.fixture.detectChanges();
-
-      expect(env.downloadButton).not.toBeNull();
-    });
-
-    it('button should not display if there is no completed build while a build is faulted', () => {
-      const env = new TestEnvironment();
-      env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
-      env.component.lastCompletedBuild = undefined;
-      env.component.hasDraftBooksAvailable = true;
-      env.fixture.detectChanges();
-
-      expect(env.downloadButton).toBeNull();
-    });
-
-    it('button should display if the project has a draft complete', fakeAsync(() => {
-      // Setup the project and subject
-      const projectDoc: SFProjectProfileDoc = {
-        data: createTestProjectProfile({
-          translateConfig: {
-            preTranslate: true,
-            projectType: ProjectType.Standard,
-            source: {
-              projectRef: 'testSourceProjectId',
-              writingSystem: {
-                tag: 'es'
-              }
-            }
-          },
-          texts: [
-            {
-              bookNum: 1,
-              chapters: [{ number: 1 }],
-              permissions: { user01: TextInfoPermission.Write }
-            }
-          ]
-        })
-      } as SFProjectProfileDoc;
-      const projectSubject = new BehaviorSubject<SFProjectProfileDoc>(projectDoc);
-      const projectObservable = projectSubject.asObservable();
-      const buildSubject = new BehaviorSubject<BuildDto>(buildDto);
-      const buildObservable = buildSubject.asObservable();
-
-      // Setup the initial environment
-      const env = new TestEnvironment(() => {
-        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [], {
-          projectDoc: projectDoc,
-          projectId: projectId,
-          projectId$: of(projectId),
-          projectDoc$: projectObservable,
-          changes$: projectObservable
-        });
-        mockDraftGenerationService.getBuildProgress.and.returnValue(buildObservable);
-        mockDraftGenerationService.pollBuildProgress.and.returnValue(buildObservable);
-        mockDraftGenerationService.getLastCompletedBuild.and.returnValue(buildObservable);
-        mockSFProjectService.hasDraft.and.returnValue(false);
-      });
-      tick(500);
-      env.fixture.detectChanges();
-
-      // Verify the button is not visible
-      expect(env.downloadButton).toBeNull();
-
-      // Update the has draft flag for the project
-      mockSFProjectService.hasDraft.and.returnValue(true);
-      projectDoc.data!.translateConfig.draftConfig.lastSelectedTranslationScriptureRanges = [
-        { projectId: 'testSourceProjectId', scriptureRange: 'GEN' }
-      ];
-      projectSubject.next(projectDoc);
-      buildSubject.next({ ...buildDto, state: BuildStates.Completed });
-      tick(500);
-      env.fixture.detectChanges();
-
-      // Verify the button is visible
-      expect(env.downloadButton).not.toBeNull();
-    }));
   });
 });

@@ -1,3 +1,4 @@
+#nullable disable warnings
 using PtxUtils;
 
 namespace SIL.XForge.Scripture;

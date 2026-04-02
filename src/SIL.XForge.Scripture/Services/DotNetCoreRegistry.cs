@@ -1,3 +1,4 @@
+#nullable disable warnings
 using Microsoft.Win32;
 using PtxUtils;
 

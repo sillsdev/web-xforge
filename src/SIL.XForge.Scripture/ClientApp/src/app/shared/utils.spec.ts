@@ -5,6 +5,7 @@ import { SelectableProject } from '../core/models/selectable-project';
 import {
   booksFromScriptureRange,
   compareProjectsForSorting,
+  expandNumbers,
   getBookFileNameDigits,
   getUnsupportedTags,
   isBadDelta,
@@ -106,8 +107,24 @@ describe('shared utils', () => {
 
     it('should return numbers for valid scripture book values', () => {
       expect(booksFromScriptureRange('GEN')).toEqual([1]);
-      expect(booksFromScriptureRange('GEN;EXO')).toEqual([1, 2]);
+      expect(booksFromScriptureRange('GEN10,11,16-19;EXO')).toEqual([1, 2]);
       expect(booksFromScriptureRange('GEN;NOT_A_BOOK;EXO')).toEqual([1, 2]);
+    });
+  });
+
+  describe('expandNumbers', () => {
+    it('should handle valid number ranges', () => {
+      expect(expandNumbers('1')).toEqual([1]);
+      expect(expandNumbers('1,2,3')).toEqual([1, 2, 3]);
+      expect(expandNumbers('1-3')).toEqual([1, 2, 3]);
+      expect(expandNumbers('4,1-3,5,invalid,6,0,7-9')).toEqual([4, 1, 2, 3, 5, 6, 0, 7, 8, 9]);
+    });
+    it('should return an empty array for invalid number ranges', () => {
+      expect(expandNumbers('')).toEqual([]);
+      expect(expandNumbers('3-1')).toEqual([]);
+      expect(expandNumbers('invalid-1')).toEqual([]);
+      expect(expandNumbers('1-invalid')).toEqual([]);
+      expect(expandNumbers('invalid-invalid')).toEqual([]);
     });
   });
 

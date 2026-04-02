@@ -92,6 +92,7 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { ParatextService } from '../../core/paratext.service';
 import { PermissionsService } from '../../core/permissions.service';
+import { ProjectNotificationService } from '../../core/project-notification.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
@@ -149,6 +150,7 @@ const mockedParatextService = mock(ParatextService);
 const mockedPermissionsService = mock(PermissionsService);
 const mockedLynxWorkspaceService = mock(LynxWorkspaceService);
 const mockedFeatureFlagService = mock(FeatureFlagService);
+const mockedProjectNotificationService = mock(ProjectNotificationService);
 
 class MockComponent {}
 
@@ -215,6 +217,7 @@ describe('EditorComponent', () => {
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
       { provide: DraftOptionsService, useMock: mockedDraftOptionsService },
       { provide: ParatextService, useMock: mockedParatextService },
+      { provide: ProjectNotificationService, useMock: mockedProjectNotificationService },
       { provide: TabFactoryService, useValue: EditorTabFactoryService },
       { provide: TabMenuService, useValue: EditorTabMenuService },
       { provide: PermissionsService, useMock: mockedPermissionsService },
@@ -339,6 +342,47 @@ describe('EditorComponent', () => {
     expect(env.noChapterEditPermissionMessage).not.toBeNull();
 
     discardPeriodicTasks();
+  }));
+
+  it('allows navigating to all books and chapters relevant to the project', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProject({
+      texts: [
+        { bookNum: 40, chapters: [{ number: 1 }] },
+        { bookNum: 41, chapters: [{ number: 1 }] }
+      ],
+      translateConfig: {
+        draftConfig: {
+          trainingSources: [
+            {
+              paratextId: 'source01',
+              projectRef: 's01',
+              name: 'Source Project',
+              shortName: 'SRC',
+              writingSystem: { tag: 'en' }
+            }
+          ],
+          draftingSources: [
+            {
+              paratextId: 'source01',
+              projectRef: 's01',
+              name: 'Source Project',
+              shortName: 'SRC',
+              writingSystem: { tag: 'en' }
+            }
+          ],
+          draftedScriptureRange: 'GEN;MAT;MRK'
+        }
+      }
+    });
+    env.wait();
+    // Genesis is included since it is a book with a draft
+    expect(env.component.books).toEqual([1, ...env.testProjectProfile.texts.map(t => t.bookNum)]);
+
+    env.routeWithParams({ projectId: 'project01', bookId: 'GEN' });
+    env.wait();
+    expect(env.bookName).toEqual('Genesis');
+    expect(env.component.chapters.length).toEqual(50);
   }));
 
   describe('Translation Suggestions enabled', () => {
@@ -1129,7 +1173,7 @@ describe('EditorComponent', () => {
       expect(selection).toBeNull();
       expect(env.component.canEdit).toBe(true);
       let sourceText = env.sourceTextEditorPlaceholder.getAttribute('data-placeholder');
-      expect(sourceText).toEqual('This book does not exist.');
+      expect(sourceText).toEqual('Matthew does not exist in Test project 1');
 
       env.routeWithParams({ projectId: 'project01', bookId: 'ACT' });
       env.wait();
@@ -3928,30 +3972,6 @@ describe('EditorComponent', () => {
     env.dispose();
   }));
 
-  it('navigates to alternate chapter if specified chapter does not exist', fakeAsync(() => {
-    const env = new TestEnvironment();
-    const nonExistentChapter = 3;
-    const routerSpy = spyOn(env.router, 'navigateByUrl').and.callThrough();
-    env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: nonExistentChapter });
-    env.wait();
-
-    expect(routerSpy).toHaveBeenCalledWith('/projects/project01/translate/MAT/1');
-    env.dispose();
-  }));
-
-  it('should navigate to "projects" route if url book is not in project', fakeAsync(() => {
-    const navigationParams: Params = { projectId: 'project01', bookId: 'GEN', chapter: '2' };
-    const env = new TestEnvironment();
-    flush();
-    const spyRouterNavigate = spyOn(env.router, 'navigateByUrl');
-
-    env.routeWithParams(navigationParams);
-    env.wait();
-
-    expect(spyRouterNavigate).toHaveBeenCalledWith('projects', jasmine.any(Object));
-    discardPeriodicTasks();
-  }));
-
   describe('tabs', () => {
     describe('tab group consolidation', () => {
       it('should call consolidateTabGroups for small screen widths once editor is loaded and tab state is initialized', fakeAsync(() => {
@@ -4142,7 +4162,7 @@ describe('EditorComponent', () => {
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
-        when(mockedSFProjectService.hasDraft(anything(), anything())).thenReturn(true);
+        when(mockedSFProjectService.hasDraft(anything(), anything(), anything())).thenReturn(true);
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
@@ -4161,7 +4181,7 @@ describe('EditorComponent', () => {
           Object.defineProperty(env.component, 'showSource', { get: () => false });
         });
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
-        when(mockedSFProjectService.hasDraft(anything(), anything())).thenReturn(true);
+        when(mockedSFProjectService.hasDraft(anything(), anything(), anything())).thenReturn(true);
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
@@ -4200,7 +4220,7 @@ describe('EditorComponent', () => {
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
-        when(mockedSFProjectService.hasDraft(anything(), anything())).thenReturn(true);
+        when(mockedSFProjectService.hasDraft(anything(), anything(), anything())).thenReturn(true);
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
 
@@ -4208,7 +4228,7 @@ describe('EditorComponent', () => {
         expect(sourceTabGroup?.tabs[1].type).toEqual('draft');
         expect(env.component.chapter).toBe(1);
 
-        when(mockedSFProjectService.hasDraft(anything(), anything())).thenReturn(false);
+        when(mockedSFProjectService.hasDraft(anything(), anything(), anything())).thenReturn(false);
         env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
         env.wait();
 
@@ -4238,7 +4258,7 @@ describe('EditorComponent', () => {
           Object.defineProperty(env.component, 'showSource', { get: () => false });
         });
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
-        when(mockedSFProjectService.hasDraft(anything(), anything())).thenReturn(true);
+        when(mockedSFProjectService.hasDraft(anything(), anything(), anything())).thenReturn(true);
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
 
@@ -4246,7 +4266,7 @@ describe('EditorComponent', () => {
         expect(targetTabGroup?.tabs[1].type).toEqual('draft');
         expect(env.component.chapter).toBe(1);
 
-        when(mockedSFProjectService.hasDraft(anything(), anything())).thenReturn(false);
+        when(mockedSFProjectService.hasDraft(anything(), anything(), anything())).thenReturn(false);
         env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
         env.wait();
 
@@ -4289,7 +4309,7 @@ describe('EditorComponent', () => {
       it('should not select the draft tab if url query param is not set', fakeAsync(() => {
         const env = new TestEnvironment();
         when(mockedActivatedRoute.snapshot).thenReturn({ queryParams: {} } as any);
-        when(mockedSFProjectService.hasDraft(anything(), anything())).thenReturn(true);
+        when(mockedSFProjectService.hasDraft(anything(), anything(), anything())).thenReturn(true);
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
@@ -5219,6 +5239,10 @@ class TestEnvironment {
         projectProfileData.translateConfig.source,
         data.translateConfig?.source
       );
+    }
+    if (data.translateConfig?.draftConfig?.draftedScriptureRange != null) {
+      projectProfileData.translateConfig.draftConfig.draftedScriptureRange =
+        data.translateConfig.draftConfig.draftedScriptureRange;
     }
     if (data.biblicalTermsConfig !== undefined) {
       projectProfileData.biblicalTermsConfig = merge(projectProfileData.biblicalTermsConfig, data.biblicalTermsConfig);

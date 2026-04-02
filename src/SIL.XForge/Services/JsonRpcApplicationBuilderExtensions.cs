@@ -1,3 +1,4 @@
+#nullable disable warnings
 using System;
 using System.Security.Claims;
 using EdjCase.JsonRpc.Router;

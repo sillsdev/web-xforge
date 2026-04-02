@@ -1,3 +1,4 @@
+#nullable disable warnings
 using Microsoft.Extensions.Configuration;
 using MongoDB.Driver;
 using SIL.XForge.DataAccess;
