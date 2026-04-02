@@ -486,12 +486,12 @@
   },
   "text": {
     "book_is_empty": "Este libro está vacío. Añadir capítulos en Paratext.",
-    "chapter_does_not_exist": "This chapter does not exist in {{ projectName }}",
-    "error": "An error occurred while loading the text",
+    "chapter_does_not_exist": "Este capítulo no existe en {{ projectName }}",
+    "error": "Se ha producido un error al cargar el texto",
     "loading": "Cargando...",
     "not_available_offline": "Este texto no está disponible fuera de línea. Conéctese a Internet para ver el texto.",
     "permission_denied": "No tiene permiso para ver este texto. Póngase en contacto con el administrador del proyecto para obtener permiso.",
-    "this_book_does_not_exist": "{{ bookName }} does not exist in {{ projectName }}"
+    "this_book_does_not_exist": "{{ bookName }} no existe en {{ projectName }}"
   },
   "text_chooser_dialog": {
     "cancel": "Cancelar",
