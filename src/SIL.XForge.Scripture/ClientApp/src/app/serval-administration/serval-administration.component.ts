@@ -47,7 +47,7 @@ export class ServalAdministrationComponent implements OnInit {
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { tab: this.availableTabs[index] },
-      queryParamsHandling: 'preserve'
+      queryParamsHandling: 'merge'
     });
   }
 }
