@@ -130,7 +130,6 @@ public class Document<T> : IDocument<T>
     {
         Version = snapshot.Version;
         Data = snapshot.Data;
-        if (Data != null)
-            Data.Id = Id;
+        Data?.Id = Id;
     }
 }

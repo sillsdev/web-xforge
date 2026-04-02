@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Reflection;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using SIL.IO;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -58,18 +58,10 @@ public static class ApiDocumentationExtensions
             );
 
             // Add the security requirement to implement bearer token support
-            options.AddSecurityRequirement(
-                new OpenApiSecurityRequirement
-                {
-                    {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" },
-                        },
-                        Array.Empty<string>()
-                    },
-                }
-            );
+            options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+            {
+                [new OpenApiSecuritySchemeReference("Bearer", document)] = [],
+            });
         });
         return services;
     }

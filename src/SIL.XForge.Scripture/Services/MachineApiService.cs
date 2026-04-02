@@ -2364,9 +2364,6 @@ public class MachineApiService(
     /// <returns>The build DTO.</returns>
     private static ServalBuildDto CreateDto(TranslationBuild translationBuild)
     {
-        string? parallelCorpusId = translationBuild.Pretranslate?.FirstOrDefault()?.ParallelCorpus?.Id;
-        var matchingCorpus = translationBuild.Analysis?.FirstOrDefault(a => a.ParallelCorpusRef == parallelCorpusId);
-
         var buildDto = new ServalBuildDto
         {
             Id = translationBuild.Id,
@@ -2398,7 +2395,7 @@ public class MachineApiService(
                         .Where(id => !string.IsNullOrEmpty(id))
                         ?? [],
                 ]),
-                CanDenormalizeQuotes = matchingCorpus?.CanDenormalizeQuotes == true,
+                CanDenormalizeQuotes = translationBuild.CanDenormalizeQuotes,
                 DateFinished = translationBuild.DateFinished,
                 Step = translationBuild.Step,
                 TranslationEngineId = translationBuild.Engine.Id,
