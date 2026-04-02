@@ -44,6 +44,7 @@ public class EmailService(IOptions<SiteOptions> options, ILogger<EmailService> l
         try
         {
             // The Address property setter called by the constructor performs the validation logic.
+            ArgumentException.ThrowIfNullOrWhiteSpace(email);
             _ = new MailboxAddress(string.Empty, email);
             return true;
         }
