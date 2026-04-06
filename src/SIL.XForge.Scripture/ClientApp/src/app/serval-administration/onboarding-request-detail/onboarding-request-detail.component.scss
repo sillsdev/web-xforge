@@ -123,3 +123,8 @@
 .book-list {
   word-wrap: anywhere;
 }
+
+.resolution-field {
+  --mat-form-field-container-vertical-padding: 8px;
+  --mat-form-field-container-height: 40px;
+}
