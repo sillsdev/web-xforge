@@ -363,9 +363,9 @@ export class FeatureFlagService {
     new StaticFeatureFlagStore(true)
   );
 
-  readonly inAppDraftSignupForm: ObservableFeatureFlag = new FeatureFlagFromStorage(
-    'InAppDraftSignupForm',
-    'Show in-app draft signup form instead of external link',
+  readonly inAppOnboardingForm: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'InAppOnboardingForm',
+    'Show in-app onboarding form instead of external link',
     19,
     new StaticFeatureFlagStore(true)
   );

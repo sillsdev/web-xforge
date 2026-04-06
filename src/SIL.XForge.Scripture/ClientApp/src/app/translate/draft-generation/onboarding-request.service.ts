@@ -61,18 +61,18 @@ export interface OnboardingRequestComment {
 
 /** Status options for onboarding requests. Some are user-selectable, others are system-managed. */
 export const ONBOARDING_REQUEST_STATUS_OPTIONS = [
-  { value: 'new', label: 'New', icon: 'fiber_new', color: 'grey' },
-  { value: 'in_progress', label: 'In Progress', icon: 'autorenew', color: 'blue' },
-  { value: 'completed', label: 'Completed', icon: 'check_circle', color: 'green' }
+  { value: 'new', label: 'New' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'completed', label: 'Completed' }
 ] as const;
 export type OnboardingRequestStatusOption = (typeof ONBOARDING_REQUEST_STATUS_OPTIONS)[number]['value'];
 export type OnboardingRequestStatusMetadata = (typeof ONBOARDING_REQUEST_STATUS_OPTIONS)[number];
 
 export const ONBOARDING_REQUEST_RESOLUTION_OPTIONS = [
-  { key: 'unresolved', label: 'Unresolved', icon: 'help_outline', color: 'gray' },
-  { key: 'approved', label: 'Approved', icon: 'check_circle', color: 'green' },
-  { key: 'declined', label: 'Declined', icon: 'cancel', color: 'red' },
-  { key: 'outsourced', label: 'Outsourced', icon: 'launch', color: 'blue' }
+  { key: 'unresolved', label: 'Unresolved' },
+  { key: 'approved', label: 'Approved' },
+  { key: 'declined', label: 'Declined' },
+  { key: 'outsourced', label: 'Outsourced' }
 ] as const;
 
 export type OnboardingRequestResolutionKey = (typeof ONBOARDING_REQUEST_RESOLUTION_OPTIONS)[number]['key'];
@@ -93,6 +93,14 @@ export class OnboardingRequestService {
     return ONBOARDING_REQUEST_RESOLUTION_OPTIONS.find(opt => opt.key === resolution)!;
   }
 
+  /**
+   * Comparison function for resolution values in select dropdowns.
+   * Needed to properly handle null values when the resolution has not yet been set on a request.
+   */
+  compareResolutions(r1: string | null, r2: string | null): boolean {
+    return r1 === r2 || (r1 == null && r2 == null);
+  }
+
   /** Approves an onboarding request and enables pre-translation for the project. */
   async approveRequest(options: { requestId: string; sfProjectId: string }): Promise<OnboardingRequest> {
     const requestUpdateResult = await this.onlineInvoke<OnboardingRequest | undefined>('setResolution', {
@@ -103,12 +111,12 @@ export class OnboardingRequestService {
     return requestUpdateResult!;
   }
 
-  /** Submits a new signup request. */
+  /** Submits a new onboarding request. */
   async submitOnboardingRequest(projectId: string, formData: DraftingSignupFormData): Promise<string> {
     return (await this.onlineInvoke<string>('submitOnboardingRequest', { projectId, formData }))!;
   }
 
-  /** Gets the existing signup request for the specified project, if any. */
+  /** Gets the existing onboarding request for the specified project, if any. */
   async getOpenOnboardingRequest(projectId: string): Promise<OnboardingRequest | null> {
     return (await this.onlineInvoke<OnboardingRequest | null>('getOpenOnboardingRequest', { projectId }))!;
   }
@@ -125,6 +133,11 @@ export class OnboardingRequestService {
   /** Sets the assignee for an onboarding request (Serval admin only). */
   async setAssignee(requestId: string, assigneeId: string): Promise<OnboardingRequest> {
     return (await this.onlineInvoke<OnboardingRequest | undefined>('setAssignee', { requestId, assigneeId }))!;
+  }
+
+  /** Gets the userIds of Serval admins that are currently assigned to requests. */
+  async getCurrentlyAssignedUserIds(): Promise<string[]> {
+    return (await this.onlineInvoke<string[]>('getCurrentlyAssignedUserIds')) ?? [];
   }
 
   /** Sets the resolution of an onboarding request (Serval admin only). */

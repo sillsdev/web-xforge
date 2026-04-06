@@ -19,7 +19,7 @@ public class OnboardingRequest : IIdentifiable
     public OnboardingSubmission Submission { get; set; } = new OnboardingSubmission();
 
     /// <summary>
-    /// Admin comments on this drafting signup request.
+    /// Admin comments on this onboarding request.
     /// </summary>
     public List<OnboardingRequestComment> Comments { get; set; } = [];
 
@@ -62,23 +62,23 @@ public class OnboardingRequest : IIdentifiable
 }
 
 /// <summary>
-/// The submission data for a drafting signup request.
+/// The submission data for a onboarding request.
 /// Contains the project ID, user ID, timestamp, and all form data.
 /// </summary>
 public class OnboardingSubmission
 {
     /// <summary>
-    /// The ID of the project this signup request is for.
+    /// The ID of the project this onboarding request is for.
     /// </summary>
     public string ProjectId { get; set; } = string.Empty;
 
     /// <summary>
-    /// The ID of the user who submitted this signup request.
+    /// The ID of the user who submitted this onboarding request.
     /// </summary>
     public string UserId { get; set; } = string.Empty;
 
     /// <summary>
-    /// The timestamp when this signup request was submitted.
+    /// The timestamp when this onboarding request was submitted.
     /// </summary>
     public DateTime Timestamp { get; set; }
 
@@ -89,7 +89,7 @@ public class OnboardingSubmission
 }
 
 /// <summary>
-/// Parameters for submitting a drafting signup request.
+/// Parameters for submitting a onboarding request.
 /// </summary>
 public class OnboardingRequestParameters
 {
@@ -98,7 +98,7 @@ public class OnboardingRequestParameters
 }
 
 /// <summary>
-/// The form data from the drafting signup form.
+/// The form data from the onboarding form.
 /// </summary>
 public class OnboardingRequestFormData
 {
@@ -122,7 +122,7 @@ public class OnboardingRequestFormData
 }
 
 /// <summary>
-/// A comment on a drafting signup request, created by Serval admins.
+/// A comment on a onboarding request, created by Serval admins.
 /// </summary>
 public class OnboardingRequestComment
 {
