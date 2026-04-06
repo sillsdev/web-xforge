@@ -22,6 +22,7 @@ import {
   OnboardingRequest,
   OnboardingRequestService
 } from '../../translate/draft-generation/onboarding-request.service';
+import { OnboardingRequestAssigneeSelectComponent } from '../onboarding-request-assignee-select.component';
 import { ServalAdministrationService } from '../serval-administration.service';
 
 type RequestFilterFunction = (request: OnboardingRequest, currentUserId: string | undefined) => boolean;
@@ -75,6 +76,7 @@ type FilterName = keyof typeof filterOptions;
   templateUrl: './onboarding-requests.component.html',
   styleUrls: ['./onboarding-requests.component.scss'],
   imports: [
+    OnboardingRequestAssigneeSelectComponent,
     CommonModule,
     FormsModule,
     TranslocoModule,
@@ -94,28 +96,22 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
   requests: OnboardingRequest[] = [];
   filteredRequests: OnboardingRequest[] = [];
   displayedColumns: string[] = ['project', 'languageCode', 'user', 'status', 'assignee', 'resolution'];
-  currentUserId?: string;
-  assignedUserIds: Set<string> = new Set();
-  userDisplayNames: Map<string, string> = new Map();
   projectNames: Map<string, string> = new Map();
   filterOptions = filterOptions;
-
-  // Resolution options
-  readonly resolutionOptions = DRAFT_REQUEST_RESOLUTION_OPTIONS;
+  resolutionOptions = DRAFT_REQUEST_RESOLUTION_OPTIONS;
 
   value: number | null = null;
 
   constructor(
-    private readonly userService: UserService,
-    protected readonly noticeService: NoticeService,
+    readonly userService: UserService,
+    noticeService: NoticeService,
     private readonly servalAdministrationService: ServalAdministrationService,
-    private readonly onboardingRequestService: OnboardingRequestService
+    readonly onboardingRequestService: OnboardingRequestService
   ) {
     super(noticeService);
   }
 
   ngOnInit(): void {
-    this.currentUserId = this.userService.currentUserId;
     void this.loadRequests();
   }
 
@@ -125,33 +121,19 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
       const requests = await this.onboardingRequestService.getAllRequests();
       if (requests != null) {
         this.requests = requests;
-        this.initializeRequestData();
+        this.filterRequests();
+        void this.loadProjectNames();
       }
-      this.loadingFinished();
-    } catch (error) {
-      console.error('Error loading draft requests:', error);
-      this.noticeService.showError('Failed to load draft requests');
+    } finally {
       this.loadingFinished();
     }
   }
 
-  /**
-   * Initializes derived data from the requests array.
-   * Called after loading all requests or after updating individual requests.
-   */
-  private initializeRequestData(): void {
-    // Collect all assigned user IDs for the dropdown options (excluding empty string)
-    this.assignedUserIds = new Set(
-      this.requests.map(r => r.assigneeId).filter((id): id is string => id != null && id !== '')
-    );
+  getStatus = this.onboardingRequestService.getStatus;
 
-    // Pre-cache display names for all assigned users
-    this.assignedUserIds.forEach(userId => void this.cacheUserDisplayName(userId));
-
-    this.filterRequests();
-
-    // Load project names for all requests
-    void this.loadProjectNames();
+  /** The unique, non-empty assignee IDs across all loaded requests, for the assignee dropdown. */
+  get availableAssigneeIds(): string[] {
+    return this.onboardingRequestService.getCurrentlyAssignedUserIdsFromRequestList(this.requests);
   }
 
   /** Loads project names for all requests and caches them in the projectNames map. */
@@ -175,64 +157,7 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
     return this.projectNames.get(projectId) ?? projectId;
   }
 
-  /**
-   * Gets the list of user IDs to show in the assignee dropdown (excluding "Unassigned").
-   * Includes current user first, then all users assigned to other requests.
-   */
-  getAssignedUserOptions(): string[] {
-    const options: string[] = [];
-
-    // Add current user first if available
-    if (this.currentUserId != null) {
-      options.push(this.currentUserId);
-      void this.cacheUserDisplayName(this.currentUserId);
-    }
-
-    // Add all other assigned users
-    this.assignedUserIds.forEach(userId => {
-      if (userId !== this.currentUserId && !options.includes(userId)) {
-        options.push(userId);
-        void this.cacheUserDisplayName(userId);
-      }
-    });
-
-    return options;
-  }
-
-  /**
-   * Caches the display name for a user ID.
-   */
-  private async cacheUserDisplayName(userId: string): Promise<void> {
-    if (!this.userDisplayNames.has(userId)) {
-      try {
-        const userDoc = await this.userService.getProfile(userId);
-        if (userDoc?.data != null) {
-          const displayName = this.currentUserId === userId ? 'Me' : userDoc.data.displayName || 'Unknown User';
-          this.userDisplayNames.set(userId, displayName);
-        }
-      } catch (error) {
-        console.error('Error loading user display name:', error);
-        this.userDisplayNames.set(userId, 'Unknown User');
-      }
-    }
-  }
-
-  /** Gets the display name for a user ID. */
-  getUserDisplayName(userId: string): string {
-    return this.userDisplayNames.get(userId) || 'Loading...';
-  }
-
-  getStatus = this.onboardingRequestService.getStatus;
-
-  getResolution = this.onboardingRequestService.getResolution;
-
-  /**
-   * Comparison function for resolution values.
-   * Needed to properly handle null values in the select dropdown and the resolution not yet being set on a request.
-   */
-  compareResolutions(r1: string | null, r2: string | null): boolean {
-    return r1 === r2 || (r1 == null && r2 == null);
-  }
+  readonly getResolution = this.onboardingRequestService.getResolution;
 
   private _activeFilter: FilterName = 'newAndMine';
   get activeFilter(): string {
@@ -251,7 +176,7 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
     const filterOption = this.filterOptions[this._activeFilter];
     const filterFunction = filterOption?.filter;
     if (filterFunction) {
-      this.filteredRequests = this.requests.filter(request => filterFunction(request, this.currentUserId));
+      this.filteredRequests = this.requests.filter(request => filterFunction(request, this.userService.currentUserId));
     }
   }
 
@@ -270,14 +195,13 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
         // Create a new array to trigger Angular change detection
         this.requests = [...this.requests.slice(0, index), updatedRequest, ...this.requests.slice(index + 1)];
       }
-
-      // Re-initialize derived data (assigned users, cached names, etc.)
-      this.initializeRequestData();
     } catch (error) {
       console.error('Error updating assignee:', error);
       this.noticeService.showError('Failed to update assignee');
       // Reload to restore correct state
       await this.loadRequests();
+    } finally {
+      this.filterRequests();
     }
   }
 
@@ -296,14 +220,13 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
         // Create a new array to trigger Angular change detection
         this.requests = [...this.requests.slice(0, index), updatedRequest, ...this.requests.slice(index + 1)];
       }
-
-      // Re-initialize derived data
-      this.initializeRequestData();
     } catch (error) {
       console.error('Error updating resolution:', error);
       this.noticeService.showError('Failed to update resolution');
       // Reload to restore correct state
       await this.loadRequests();
+    } finally {
+      this.filterRequests();
     }
   }
 }

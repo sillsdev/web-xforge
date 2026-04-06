@@ -62,18 +62,18 @@ export interface DraftRequestComment {
 
 /** Status options for draft requests. Some are user-selectable, others are system-managed. */
 export const DRAFT_REQUEST_STATUS_OPTIONS = [
-  { value: 'new', label: 'New', icon: 'fiber_new', color: 'grey' },
-  { value: 'in_progress', label: 'In Progress', icon: 'autorenew', color: 'blue' },
-  { value: 'completed', label: 'Completed', icon: 'check_circle', color: 'green' }
+  { value: 'new', label: 'New' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'completed', label: 'Completed' }
 ] as const;
 export type DraftRequestStatusOption = (typeof DRAFT_REQUEST_STATUS_OPTIONS)[number]['value'];
 export type DraftRequestStatusMetadata = (typeof DRAFT_REQUEST_STATUS_OPTIONS)[number];
 
 export const DRAFT_REQUEST_RESOLUTION_OPTIONS = [
-  { key: 'unresolved', label: 'Unresolved', icon: 'help_outline', color: 'gray' },
-  { key: 'approved', label: 'Approved', icon: 'check_circle', color: 'green' },
-  { key: 'declined', label: 'Declined', icon: 'cancel', color: 'red' },
-  { key: 'outsourced', label: 'Outsourced', icon: 'launch', color: 'blue' }
+  { key: 'unresolved', label: 'Unresolved' },
+  { key: 'approved', label: 'Approved' },
+  { key: 'declined', label: 'Declined' },
+  { key: 'outsourced', label: 'Outsourced' }
 ] as const;
 
 export type DraftRequestResolutionKey = (typeof DRAFT_REQUEST_RESOLUTION_OPTIONS)[number]['key'];
@@ -92,6 +92,14 @@ export class OnboardingRequestService {
 
   getResolution(resolution: DraftRequestResolutionKey): DraftRequestResolutionMetadata {
     return DRAFT_REQUEST_RESOLUTION_OPTIONS.find(opt => opt.key === resolution)!;
+  }
+
+  /**
+   * Comparison function for resolution values in select dropdowns.
+   * Needed to properly handle null values when the resolution has not yet been set on a request.
+   */
+  compareResolutions(r1: string | null, r2: string | null): boolean {
+    return r1 === r2 || (r1 == null && r2 == null);
   }
 
   /** Approves an onboarding request and enables pre-translation for the project. */
@@ -126,6 +134,22 @@ export class OnboardingRequestService {
   /** Sets the assignee for an onboarding request (Serval admin only). */
   async setAssignee(requestId: string, assigneeId: string): Promise<OnboardingRequest> {
     return (await this.onlineInvoke<OnboardingRequest | undefined>('setAssignee', { requestId, assigneeId }))!;
+  }
+
+  /** Gets the list of currently assigned user IDs from a list of requests. */
+  getCurrentlyAssignedUserIdsFromRequestList(requests: OnboardingRequest[]): string[] {
+    return [...new Set(requests.map(r => r.assigneeId).filter((id): id is string => id != null && id !== ''))];
+  }
+
+  /**
+   * Gets the list of currently assigned user IDs across all requests. Used to populate the assignee dropdown options.
+   * If you already have the list of requests loaded, it's more efficient to call
+   * getCurrentlyAssignedUserIdsFromRequestList() with the loaded requests instead of this method, to avoid an extra
+   * backend call.
+   */
+  async inefficientlyGetCurrentlyAssignedUserIds(): Promise<string[]> {
+    const requests = await this.getAllRequests();
+    return this.getCurrentlyAssignedUserIdsFromRequestList(requests);
   }
 
   /** Sets the resolution of an onboarding request (Serval admin only). */
