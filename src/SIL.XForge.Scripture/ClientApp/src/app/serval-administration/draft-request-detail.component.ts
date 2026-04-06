@@ -13,6 +13,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
@@ -23,18 +24,20 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { RouterLinkDirective } from 'xforge-common/router-link.directive';
+import { UserService } from 'xforge-common/user.service';
 import { ParatextService } from '../core/paratext.service';
 import { DevOnlyComponent } from '../shared/dev-only/dev-only.component';
 import { JsonViewerComponent } from '../shared/json-viewer/json-viewer.component';
 import { MobileNotSupportedComponent } from '../shared/mobile-not-supported/mobile-not-supported.component';
 import { projectLabel } from '../shared/utils';
 import {
+  DRAFT_REQUEST_RESOLUTION_OPTIONS,
   DraftingSignupFormData,
   DraftRequestResolutionKey,
-  DraftRequestResolutionMetadata,
   OnboardingRequest,
   OnboardingRequestService
 } from '../translate/draft-generation/onboarding-request.service';
+import { OnboardingRequestAssigneeSelectComponent } from './onboarding-request-assignee-select.component';
 import { ServalAdministrationService } from './serval-administration.service';
 
 /**
@@ -46,6 +49,7 @@ import { ServalAdministrationService } from './serval-administration.service';
   templateUrl: './draft-request-detail.component.html',
   styleUrls: ['./draft-request-detail.component.scss'],
   imports: [
+    OnboardingRequestAssigneeSelectComponent,
     CommonModule,
     FormsModule,
     OwnerComponent,
@@ -65,6 +69,7 @@ import { ServalAdministrationService } from './serval-administration.service';
     DevOnlyComponent,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     MobileNotSupportedComponent
   ]
 })
@@ -76,14 +81,17 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
   projectShortNames: Map<string, string> = new Map(); // Maps Paratext ID to project short name
   newCommentText: string = '';
   isAddingComment: boolean = false;
+  resolutionOptions = DRAFT_REQUEST_RESOLUTION_OPTIONS;
+  availableAssigneeIds: string[] = [];
 
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly servalAdministrationService: ServalAdministrationService,
-    private readonly onboardingRequestService: OnboardingRequestService,
+    readonly onboardingRequestService: OnboardingRequestService,
     private readonly dialogService: DialogService,
-    protected readonly noticeService: NoticeService
+    protected readonly userService: UserService,
+    noticeService: NoticeService
   ) {
     super(noticeService);
   }
@@ -101,12 +109,28 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
   private async loadRequest(requestId: string): Promise<void> {
     this.loadingStarted();
     try {
+      void this.loadAvailableAssignees();
       this.request = await this.onboardingRequestService.getRequestById(requestId);
       await this.loadProjectNames();
-      this.loadingFinished();
     } finally {
       this.loadingFinished();
     }
+  }
+
+  async loadAvailableAssignees(): Promise<void> {
+    this.availableAssigneeIds = await this.onboardingRequestService.inefficientlyGetCurrentlyAssignedUserIds();
+  }
+
+  getStatus = this.onboardingRequestService.getStatus;
+
+  async onAssigneeChange(newAssigneeId: string): Promise<void> {
+    if (this.request == null) return;
+    this.request = await this.onboardingRequestService.setAssignee(this.request.id, newAssigneeId);
+  }
+
+  async onResolutionChange(newResolution: DraftRequestResolutionKey | null): Promise<void> {
+    if (this.request == null) return;
+    this.request = await this.onboardingRequestService.setResolution(this.request.id, newResolution);
   }
 
   private async loadProjectNames(): Promise<void> {
@@ -215,15 +239,9 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
     return ParatextService.isResource(paratextId) ? 'Download DBL resource' : 'Download Paratext project';
   }
 
-  getResolution(resolution: DraftRequestResolutionKey): DraftRequestResolutionMetadata {
-    return this.onboardingRequestService.getResolution(resolution);
-  }
-
   get isResolved(): boolean {
     return this.request?.resolution != null && this.request.resolution !== 'unresolved';
   }
-
-  getStatus = this.onboardingRequestService.getStatus;
 
   get formData(): DraftingSignupFormData {
     return this.request!.submission.formData;
