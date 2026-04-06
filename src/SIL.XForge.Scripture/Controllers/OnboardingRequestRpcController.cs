@@ -111,15 +111,11 @@ public class OnboardingRequestRpcController(
         var scopedUserService = scope.ServiceProvider.GetRequiredService<IUserService>();
         var scopedEmailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
         var scopedExceptionHandler = scope.ServiceProvider.GetRequiredService<IExceptionHandler>();
+        var scopedOnboardingRequestRpcController = scope.ServiceProvider.GetRequiredService<OnboardingRequestRpcController>();
 
         try
         {
-            var adminUserIds = scopedOnboardingRequestRepository
-                .Query()
-                .Where(r => !string.IsNullOrEmpty(r.AssigneeId))
-                .Select(r => r.AssigneeId)
-                .Distinct()
-                .ToList();
+            string[] adminUserIds = await scopedOnboardingRequestRpcController.InternalGetCurrentlyAssignedUserIds();
 
             await using IConnection conn = await scopedRealtimeService.ConnectAsync();
             var adminEmails = (await conn.GetAndFetchDocsAsync<User>(adminUserIds)).Select(u => u.Data.Email);
@@ -646,5 +642,44 @@ public class OnboardingRequestRpcController(
             );
             throw;
         }
+    }
+
+    public async Task<IRpcMethodResult> GetCurrentlyAssignedUserIds()
+    {
+        try
+        {
+            // Check if user is a Serval admin
+            if (!SystemRoles.Contains(SystemRole.ServalAdmin))
+            {
+                return ForbiddenError();
+            }
+
+            var adminIds = await InternalGetCurrentlyAssignedUserIds();
+            return Ok(adminIds);
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string> { { "method", "GetCurrentlyAssignedUserIds" } }
+            );
+            throw;
+        }
+    }
+
+    private async Task<string[]> InternalGetCurrentlyAssignedUserIds()
+    {
+        return
+        [
+            .. await onboardingRequestRepository
+                       .Query()
+                .Where(r => !string.IsNullOrEmpty(r.AssigneeId))
+                .Select(r => r.AssigneeId)
+                .Distinct()
+                   .ToListAsync(),
+        ];
     }
 }

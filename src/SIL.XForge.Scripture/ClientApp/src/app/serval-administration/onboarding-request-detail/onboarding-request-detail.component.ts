@@ -13,6 +13,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
 import { saveAs } from 'file-saver';
@@ -24,6 +25,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { RouterLinkDirective } from 'xforge-common/router-link.directive';
+import { UserService } from 'xforge-common/user.service';
 import { isPopulatedString } from '../../../type-utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { ParatextService } from '../../core/paratext.service';
@@ -35,11 +37,13 @@ import { projectLabel } from '../../shared/utils';
 import { normalizeLanguageCodeToISO639_3 } from '../../translate/draft-generation/draft-utils';
 import {
   DraftingSignupFormData,
+  ONBOARDING_REQUEST_RESOLUTION_OPTIONS,
   OnboardingRequest,
   OnboardingRequestResolutionKey,
   OnboardingRequestResolutionMetadata,
   OnboardingRequestService
 } from '../../translate/draft-generation/onboarding-request.service';
+import { OnboardingRequestAssigneeSelectComponent } from '../onboarding-request-assignee-select/onboarding-request-assignee-select.component';
 import { ServalAdministrationService } from '../serval-administration.service';
 import { formatBookListForSILNLP } from './draft-request-detail-utils';
 
@@ -52,6 +56,7 @@ import { formatBookListForSILNLP } from './draft-request-detail-utils';
   templateUrl: './onboarding-request-detail.component.html',
   styleUrls: ['./onboarding-request-detail.component.scss'],
   imports: [
+    OnboardingRequestAssigneeSelectComponent,
     CommonModule,
     FormsModule,
     OwnerComponent,
@@ -73,7 +78,8 @@ import { formatBookListForSILNLP } from './draft-request-detail-utils';
     MatInputModule,
     MobileNotSupportedComponent,
     NoticeComponent,
-    MatTooltipModule
+    MatTooltipModule,
+    MatSelectModule
   ]
 })
 export class OnboardingRequestDetailComponent extends DataLoadingComponent implements OnInit {
@@ -86,14 +92,17 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
   projectShortNames: Map<string, string> = new Map(); // Maps Paratext ID to project short name
   newCommentText: string = '';
   isAddingComment: boolean = false;
+  resolutionOptions = ONBOARDING_REQUEST_RESOLUTION_OPTIONS;
+  existingAssigneeIds: string[] = [];
 
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly servalAdministrationService: ServalAdministrationService,
-    private readonly onboardingRequestService: OnboardingRequestService,
+    readonly onboardingRequestService: OnboardingRequestService,
     private readonly dialogService: DialogService,
-    protected readonly noticeService: NoticeService
+    protected readonly userService: UserService,
+    noticeService: NoticeService
   ) {
     super(noticeService, 'OnboardingRequestDetailComponent');
   }
@@ -111,11 +120,28 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
   private async loadRequest(requestId: string): Promise<void> {
     this.loadingStarted();
     try {
+      void this.loadExistingAssignees();
       this.request = await this.onboardingRequestService.getRequestById(requestId);
       await this.loadProjectNames();
     } finally {
       this.loadingFinished();
     }
+  }
+
+  async loadExistingAssignees(): Promise<void> {
+    this.existingAssigneeIds = await this.onboardingRequestService.getCurrentlyAssignedUserIds();
+  }
+
+  getStatus = this.onboardingRequestService.getStatus;
+
+  async onAssigneeChange(newAssigneeId: string): Promise<void> {
+    if (this.request == null) return;
+    this.request = await this.onboardingRequestService.setAssignee(this.request.id, newAssigneeId);
+  }
+
+  async onResolutionChange(newResolution: OnboardingRequestResolutionKey | null): Promise<void> {
+    if (this.request == null) return;
+    this.request = await this.onboardingRequestService.setResolution(this.request.id, newResolution);
   }
 
   private async loadProjectNames(): Promise<void> {
@@ -233,8 +259,6 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
   get isResolved(): boolean {
     return this.request?.resolution != null && this.request.resolution !== 'unresolved';
   }
-
-  getStatus = this.onboardingRequestService.getStatus;
 
   get formData(): DraftingSignupFormData {
     return this.request!.submission.formData;
