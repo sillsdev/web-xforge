@@ -74,13 +74,7 @@ public class OnboardingRequestRpcController(
             // Email notification to Serval admins
             try
             {
-                // Query for assignees in drafting signup requests, filter out duplicates, and then look up their email
-                var adminUserIds = onboardingRequestRepository
-                    .Query()
-                    .Where(r => !string.IsNullOrEmpty(r.AssigneeId))
-                    .Select(r => r.AssigneeId)
-                    .Distinct()
-                    .ToList();
+                string[] adminUserIds = await InternalGetCurrentlyAssignedServalAdminIds();
 
                 await using IConnection conn = await _realtimeService.ConnectAsync(UserId);
                 var adminEmails = (await conn.GetAndFetchDocsAsync<User>(adminUserIds)).Select(u => u.Data.Email);
@@ -596,5 +590,47 @@ public class OnboardingRequestRpcController(
             );
             throw;
         }
+    }
+
+    public async Task<IRpcMethodResult> GetCurrentlyAssignedServalAdminIds()
+    {
+        try
+        {
+            // Check if user is a Serval admin
+            if (!SystemRoles.Contains(SystemRole.ServalAdmin))
+            {
+                return ForbiddenError();
+            }
+
+            var adminIds = await InternalGetCurrentlyAssignedServalAdminIds();
+            return Ok(adminIds);
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string> { { "method", "GetCurrentlyAssignedServalAdminIds" } }
+            );
+            throw;
+        }
+    }
+
+    private async Task<string[]> InternalGetCurrentlyAssignedServalAdminIds()
+    {
+        List<string> assignedIds = await onboardingRequestRepository
+            .Query()
+            .Where(r => !string.IsNullOrEmpty(r.AssigneeId))
+            .Select(r => r.AssigneeId)
+            .Distinct()
+            .ToListAsync();
+        var userDocs = await _realtimeService
+            .QuerySnapshots<User>()
+            .Where(u => assignedIds.Contains(u.Id) && u.Roles.Contains(SystemRole.ServalAdmin))
+            .Select(u => u.Id)
+            .ToListAsync();
+        return [.. userDocs];
     }
 }
