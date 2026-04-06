@@ -74,13 +74,7 @@ public class OnboardingRequestRpcController(
             // Email notification to Serval admins
             try
             {
-                // Query for assignees in drafting signup requests, filter out duplicates, and then look up their email
-                var adminUserIds = onboardingRequestRepository
-                    .Query()
-                    .Where(r => !string.IsNullOrEmpty(r.AssigneeId))
-                    .Select(r => r.AssigneeId)
-                    .Distinct()
-                    .ToList();
+                string[] adminUserIds = await InternalGetCurrentlyAssignedUserIds();
 
                 await using IConnection conn = await _realtimeService.ConnectAsync(UserId);
                 var adminEmails = (await conn.GetAndFetchDocsAsync<User>(adminUserIds)).Select(u => u.Data.Email);
@@ -596,5 +590,44 @@ public class OnboardingRequestRpcController(
             );
             throw;
         }
+    }
+
+    public async Task<IRpcMethodResult> GetCurrentlyAssignedUserIds()
+    {
+        try
+        {
+            // Check if user is a Serval admin
+            if (!SystemRoles.Contains(SystemRole.ServalAdmin))
+            {
+                return ForbiddenError();
+            }
+
+            var adminIds = await InternalGetCurrentlyAssignedUserIds();
+            return Ok(adminIds);
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string> { { "method", "GetCurrentlyAssignedUserIds" } }
+            );
+            throw;
+        }
+    }
+
+    private async Task<string[]> InternalGetCurrentlyAssignedUserIds()
+    {
+        return
+        [
+            .. await onboardingRequestRepository
+                .Query()
+                .Where(r => !string.IsNullOrEmpty(r.AssigneeId))
+                .Select(r => r.AssigneeId)
+                .Distinct()
+                .ToListAsync(),
+        ];
     }
 }
