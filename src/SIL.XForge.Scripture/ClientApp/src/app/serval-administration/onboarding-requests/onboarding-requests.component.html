@@ -62,18 +62,12 @@
         <ng-container matColumnDef="assignee">
           <th mat-header-cell *matHeaderCellDef>Assignee</th>
           <td mat-cell *matCellDef="let request">
-            <mat-form-field class="assignee-field" subscriptSizing="dynamic">
-              <mat-select [(ngModel)]="request.assigneeId" (selectionChange)="onAssigneeChange(request, $event.value)">
-                <mat-option value="">
-                  <span style="font-style: italic" class="unassigned-option">Unassigned</span>
-                </mat-option>
-                @for (userId of getAssignedUserOptions(); track userId) {
-                  <mat-option [value]="userId">
-                    <app-owner [ownerRef]="userId" [includeAvatar]="true"></app-owner>
-                  </mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
+            <app-onboarding-request-assignee-select
+              [value]="request.assigneeId"
+              [knownAssigneeIds]="existingAssigneeIds"
+              [currentUserId]="userService.currentUserId"
+              (selectionChange)="onAssigneeChange(request, $event)"
+            ></app-onboarding-request-assignee-select>
           </td>
         </ng-container>
 
@@ -85,7 +79,7 @@
               <mat-select
                 [ngModel]="request.resolution"
                 (selectionChange)="onResolutionChange(request, $event.value)"
-                [compareWith]="compareResolutions"
+                [compareWith]="onboardingRequestService.compareResolutions"
                 canSelectNullableOptions
               >
                 @for (option of resolutionOptions; track option) {
