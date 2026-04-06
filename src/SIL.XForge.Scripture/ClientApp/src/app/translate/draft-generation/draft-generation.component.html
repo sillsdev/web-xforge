@@ -144,7 +144,7 @@
     } @else {
       @if (!draftEnabled) {
         <section data-test-id="approval-needed">
-          @if (featureFlags.inAppDraftSignupForm.enabled && !onboardingRequest) {
+          @if (featureFlags.inAppOnboardingForm.enabled && !onboardingRequest) {
             <button mat-flat-button color="primary" [routerLink]="['signup']">
               {{ t("sign_up_for_drafting") }}
             </button>
