@@ -18,7 +18,7 @@ jobs:
         # Environments in which to run, such as those used in development and production, or which are candidates to
         # move to.
         os: ["ubuntu-24.04"]
-        dotnet_version: ["8.0.x"]
+        dotnet_version: ["10.0.x"]
         node_version: ["22.13.0"]
         npm_version: ["11.11.0"]
       # Continue building in other environments to see which are working.
@@ -31,7 +31,7 @@ jobs:
           persist-credentials: false
 
       - name: "Deps: .NET"
-        uses: actions/setup-dotnet@baa11fbfe1d6520db94683bd5c7a3818018e4309 # v5.1.0
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
         with:
           dotnet-version: ${{matrix.dotnet_version}}
           cache: true
@@ -134,7 +134,7 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-24.04"]
-        dotnet_version: ["8.0.x"]
+        dotnet_version: ["10.0.x"]
         node_version: ["22.13.0"]
         npm_version: ["11.11.0"]
       fail-fast: false
@@ -146,7 +146,7 @@ jobs:
           persist-credentials: false
 
       - name: "Deps: .NET"
-        uses: actions/setup-dotnet@baa11fbfe1d6520db94683bd5c7a3818018e4309 # v5.1.0
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
         with:
           dotnet-version: ${{matrix.dotnet_version}}
           cache: true
