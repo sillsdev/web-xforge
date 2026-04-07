@@ -2,8 +2,6 @@ using System;
 using System.IO;
 using System.Reflection;
 using Jering.Javascript.NodeJS;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using SIL.XForge.Configuration;
 using SIL.XForge.Realtime;
 
@@ -13,8 +11,6 @@ public static class RealtimeServiceCollectionExtensions
 {
     public static IServiceCollection AddRealtimeServer(
         this IServiceCollection services,
-        ILoggerFactory loggerFactory,
-        IConfiguration configuration,
         Action<RealtimeOptions> configureOptions,
         string? nodeOptions = null,
         bool useExistingRealtimeServer = false
