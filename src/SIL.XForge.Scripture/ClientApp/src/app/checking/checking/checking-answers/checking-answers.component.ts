@@ -219,7 +219,10 @@ export class CheckingAnswersComponent implements OnInit {
             const answer = this.allAnswers[op.p[1]];
             if (this.answersHighlightStatus.has(answer.dataId)) {
               this.answersHighlightStatus.set(answer.dataId, false);
-              setTimeout(() => this.answersHighlightStatus.set(answer.dataId, true));
+              setTimeout(() => {
+                this.answersHighlightStatus.set(answer.dataId, true);
+                this.changeDetector.markForCheck();
+              });
             }
           }
         }
