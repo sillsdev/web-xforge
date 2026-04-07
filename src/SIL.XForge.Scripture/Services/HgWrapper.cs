@@ -47,8 +47,8 @@ public class HgWrapper : IHgWrapper
     /// </returns>
     public string GetLastPublicRevision(string repository)
     {
-        string ids = RunCommand(repository, "log --rev \"public()\" --template \"{node}\n\"");
-        string revision = ids.Split(["\n"], StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?.Trim();
+        string ids = RunCommand(repository, """log --rev "public()" --template "{node}\n" """);
+        string revision = ids.Split('\n', StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?.Trim();
         return revision;
     }
 
@@ -91,10 +91,10 @@ public class HgWrapper : IHgWrapper
     /// </summary>
     public string[] GetDraftRevisions(string repositoryPath)
     {
-        string ids = RunCommand(repositoryPath, "log --rev \"draft()\" --template \"{node}\n\"");
+        string ids = RunCommand(repositoryPath, """log --rev "draft()" --template "{node}\n" """);
         return
         [
-            .. ids.Split(["\n"], StringSplitOptions.RemoveEmptyEntries)
+            .. ids.Split('\n', StringSplitOptions.RemoveEmptyEntries)
                 .Select(id => id.Trim())
                 .Where(id => id.Length > 0),
         ];
