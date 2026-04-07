@@ -112,6 +112,37 @@ public class JwtInternetSharedRepositorySourceTests
         Assert.That(serverLastRev, Is.Null);
     }
 
+    [Test]
+    public void CheckPushRevisionOnServer_NullRevisions_LogsTruncatedJsonResult()
+    {
+        var env = new TestEnvironment();
+        SharedRepository pushRepo = TestEnvironment.CreatePushRepo(HexId.FromStr(ProjectId), ProjectName);
+        string largeJsonValue = new string('x', 12000);
+        env.SetProjRevHistRawResponse($"{{\"project\":{{\"revision_history\":{{\"details\":\"{largeJsonValue}\"}}}}}}");
+
+        // SUT
+        (bool isRevOnServer, int serverRevCount, string? serverLastRev) = env.RepoSource.CheckIfRevisionIsOnServer(
+            pushRepo,
+            NewTipRevision
+        );
+
+        Assert.That(isRevOnServer, Is.False);
+        Assert.That(serverRevCount, Is.EqualTo(0));
+        Assert.That(serverLastRev, Is.Null);
+
+        env.Logger.AssertHasEvent(
+            e =>
+                e.LogLevel == Microsoft.Extensions.Logging.LogLevel.Warning
+                && e.Message is not null
+                && e.Message.Length < 1000
+                && e.Message.Contains("Getting projrevhist unexpectedly received null revisions")
+                && e.Message.Contains("xx")
+                && e.Message.Contains("truncated")
+                && e.Message.Contains("more characters"),
+            "Expected warning log with truncated JSON payload details."
+        );
+    }
+
     /// <summary>
     /// Test environment for JwtInternetSharedRepositorySource tests.
     /// </summary>
@@ -119,6 +150,7 @@ public class JwtInternetSharedRepositorySourceTests
     {
         public readonly JwtInternetSharedRepositorySource RepoSource;
         public readonly IRESTClient MockPTArchivesClient;
+        public readonly MockLogger<InternetSharedRepositorySourceProvider> Logger;
 
         public TestEnvironment()
         {
@@ -128,13 +160,14 @@ public class JwtInternetSharedRepositorySourceTests
                 "applicationName",
                 "jwtToken"
             );
+            Logger = new MockLogger<InternetSharedRepositorySourceProvider>();
             RepoSource = Substitute.ForPartsOf<JwtInternetSharedRepositorySource>(
                 "access-token",
                 mockPTRegistryClient,
                 Substitute.For<IHgWrapper>(),
                 ptUser,
                 "sr-server-uri",
-                new MockLogger<InternetSharedRepositorySourceProvider>()
+                Logger
             );
             MockPTArchivesClient = Substitute.For<RESTClient>("pt-archives-server.example.com", "product-version-123");
             RepoSource.Configure().GetClient().Returns(MockPTArchivesClient);
@@ -153,7 +186,10 @@ public class JwtInternetSharedRepositorySourceTests
                 Array.ConvertAll(revisionIds, id => $"{{\"id\":\"{id}\",\"parents\":[]}}")
             );
             string json = $"{{\"project\":{{\"revision_history\":{{\"revisions\":[{revisionsJson}]}}}}}}";
-            MockPTArchivesClient.Configure().Get(Arg.Any<string>(), Arg.Any<string[]>()).Returns(json);
+            SetProjRevHistRawResponse(json);
         }
+
+        public void SetProjRevHistRawResponse(string json) =>
+            MockPTArchivesClient.Configure().Get(Arg.Any<string>(), Arg.Any<string[]>()).Returns(json);
     }
 }
