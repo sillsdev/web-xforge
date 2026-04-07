@@ -1,11 +1,8 @@
-using System;
-using Autofac.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -20,8 +17,8 @@ public class StartupTests
         var env = new TestEnvironment();
 
         // SUT
-        IServiceProvider actual = env.Startup.ConfigureServices(env.Services);
-        Assert.IsInstanceOf<AutofacServiceProvider>(actual);
+        env.Startup.ConfigureServices(env.Services);
+        Assert.That(env.Services, Is.Not.Empty);
     }
 
     [Test]
@@ -262,14 +259,13 @@ public class StartupTests
         {
             Context.Request.Method = HttpMethods.Get;
             var configuration = Substitute.For<IConfiguration>();
-            var loggerFactory = Substitute.For<ILoggerFactory>();
             var environment = Substitute.For<IWebHostEnvironment>();
             if (!string.IsNullOrWhiteSpace(environmentName))
             {
                 environment.EnvironmentName = environmentName;
             }
 
-            Startup = new Startup(configuration, environment, loggerFactory);
+            Startup = new Startup(configuration, environment);
         }
 
         public HttpContext Context { get; } = Substitute.For<HttpContext>();

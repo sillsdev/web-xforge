@@ -3,10 +3,13 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using SIL.XForge.Scripture.Services;
 
 namespace SIL.XForge.Scripture;
 
@@ -15,7 +18,7 @@ public static class Program
     public static async Task Main(string[] args)
     {
         // Build the host
-        var host = new HostBuilder()
+        var host = Host.CreateDefaultBuilder(args)
             // Host configuration (command-line args + environment variables)
             .ConfigureHostConfiguration(config =>
             {
@@ -39,7 +42,7 @@ public static class Program
                     config.AddInMemoryCollection(new[] { kvp });
                 }
             })
-            .ConfigureWebHost(webHostBuilder => webHostBuilder.UseStartup<Startup>())
+            .ConfigureWebHostDefaults(webHostBuilder => webHostBuilder.UseStartup<Startup>())
             .ConfigureAppConfiguration(
                 (context, config) =>
                 {
@@ -58,6 +61,8 @@ public static class Program
                     }
                 }
             )
+            .UseServiceProviderFactory(new AutofacServiceProviderFactory())
+            .ConfigureContainer<ContainerBuilder>(builder => builder.RegisterSFEventMetrics())
             .Build();
 
         // When an external RealtimeServer process is in use (e.g. in a separate docker container),
