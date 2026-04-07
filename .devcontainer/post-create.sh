@@ -4,6 +4,7 @@
 set -euo pipefail
 
 echo "=== Restoring .NET tools ==="
+sudo dotnet workload update
 dotnet tool restore
 
 echo "=== Restoring .NET packages ==="

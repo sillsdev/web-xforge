@@ -5,7 +5,7 @@ This directory contains the configuration to use
 
 ## What's Included
 
-- **Ubuntu 24.04** base image with .NET 8.0 SDK and Node.js 22
+- **Ubuntu 24.04** base image with .NET 10.0 SDK and Node.js 22
 - **MongoDB 8.0** running as a companion container
 - System dependencies (ffmpeg, mercurial) pre-installed
 - Paratext directories and configuration pre-created

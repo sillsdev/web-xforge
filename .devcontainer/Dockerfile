@@ -1,6 +1,6 @@
 # Development container for Scripture Forge.
-# Based on Ubuntu 24.04 with .NET 8.0 SDK and Node.js 22.
-ARG DOTNET_VERSION=8.0
+# Based on Ubuntu 24.04 with .NET 10.0 SDK and Node.js 22.
+ARG DOTNET_VERSION=10.0
 ARG UBUNTU_NAME=noble
 
 FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}-${UBUNTU_NAME}-amd64
