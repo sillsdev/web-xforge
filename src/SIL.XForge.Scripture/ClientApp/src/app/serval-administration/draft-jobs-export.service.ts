@@ -152,8 +152,8 @@ export class DraftJobsExportService {
    */
   protected createSpreadsheetRows(rows: DraftJobsTableRow[]): SpreadsheetRow[] {
     return rows.map<SpreadsheetRow>((row: DraftJobsTableRow) => {
-      const trainingBooksList = row.trainingBooks.map(pb => `${pb.projectId}: ${pb.books.join(', ')}`).join('; ');
-      const translationBooksList = row.translationBooks.map(pb => `${pb.projectId}: ${pb.books.join(', ')}`).join('; ');
+      const trainingBooksList = row.trainingBooks.map(pb => `${pb.projectId}: ${pb.books.join('; ')}`).join('. ');
+      const translationBooksList = row.translationBooks.map(pb => `${pb.projectId}: ${pb.books.join('; ')}`).join('. ');
 
       let durationMinutes: string = '';
       if (row.job.startTime != null && row.job.finishTime != null) {

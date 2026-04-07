@@ -124,9 +124,9 @@
                 }}</a
                 >:
                 @if (projectBook.books.length <= 2) {
-                  {{ projectBook.books.join(", ") }}
+                  {{ projectBook.books.join("; ") }}
                 } @else {
-                  <span [matTooltip]="projectBook.books.join(', ')" class="book-count">
+                  <span [matTooltip]="projectBook.books.join('; ')" class="book-count">
                     {{ projectBook.books.length }} books
                   </span>
                 }
@@ -146,9 +146,9 @@
                 }}</a
                 >:
                 @if (projectBook.books.length <= 2) {
-                  {{ projectBook.books.join(", ") }}
+                  {{ projectBook.books.join("; ") }}
                 } @else {
-                  <span [matTooltip]="projectBook.books.join(', ')" class="book-count">
+                  <span [matTooltip]="projectBook.books.join('; ')" class="book-count">
                     {{ projectBook.books.length }} books
                   </span>
                 }
