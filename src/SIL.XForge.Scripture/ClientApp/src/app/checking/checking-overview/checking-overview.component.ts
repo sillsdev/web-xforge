@@ -264,6 +264,13 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         .pipe(quietTakeUntilDestroyed(this.destroyRef))
         .pipe(map(([isOnline, ready]) => !isOnline || ready === true))
         .subscribe(loaded => {
+          // Show the loading indicator if the questions are not yet ready
+          if (!loaded) {
+            this.loadingStarted();
+          } else {
+            this.loadingFinished();
+          }
+
           // if the user is offline, 'ready' will never be true, but the query will still return the offline docs
           this.questionsLoaded = loaded;
           this.changeDetector.markForCheck();
