@@ -25,17 +25,17 @@ jobs:
           persist-credentials: false
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@6bc82e05fd0ea64601dd4b465378bbcf57de0314 # v4.32.1
+        uses: github/codeql-action/init@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
         with:
           languages: javascript
           config-file: ./.github/codeql/codeql-javascript-config.yml
           dependency-caching: true
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@6bc82e05fd0ea64601dd4b465378bbcf57de0314 # v4.32.1
+        uses: github/codeql-action/autobuild@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@6bc82e05fd0ea64601dd4b465378bbcf57de0314 # v4.32.1
+        uses: github/codeql-action/analyze@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
 
   analyze-csharp:
     name: Analyze C#
@@ -85,17 +85,17 @@ jobs:
         run: cd src/RealtimeServer && (npm ci || (sleep 3m && npm ci))
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@6bc82e05fd0ea64601dd4b465378bbcf57de0314 # v4.32.1
+        uses: github/codeql-action/init@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
         with:
           languages: csharp
           queries: security-and-quality
           dependency-caching: true
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@6bc82e05fd0ea64601dd4b465378bbcf57de0314 # v4.32.1
+        uses: github/codeql-action/autobuild@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@6bc82e05fd0ea64601dd4b465378bbcf57de0314 # v4.32.1
+        uses: github/codeql-action/analyze@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
         with:
           upload: False
           output: sarif-results
@@ -109,7 +109,7 @@ jobs:
           output: sarif-results/csharp.sarif
 
       - name: Upload SARIF
-        uses: github/codeql-action/upload-sarif@b20883b0cd1f46c72ae0ba6d1090936928f9fa30 # v4.32.0
+        uses: github/codeql-action/upload-sarif@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
         with:
           sarif_file: sarif-results/csharp.sarif
 
@@ -128,14 +128,14 @@ jobs:
           persist-credentials: false
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@6bc82e05fd0ea64601dd4b465378bbcf57de0314 # v4.32.1
+        uses: github/codeql-action/init@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
         with:
           languages: python
           queries: security-and-quality
           dependency-caching: true
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@6bc82e05fd0ea64601dd4b465378bbcf57de0314 # v4.32.1
+        uses: github/codeql-action/autobuild@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@6bc82e05fd0ea64601dd4b465378bbcf57de0314 # v4.32.1
+        uses: github/codeql-action/analyze@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
