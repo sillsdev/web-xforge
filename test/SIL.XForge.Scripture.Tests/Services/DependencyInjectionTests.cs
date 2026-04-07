@@ -45,7 +45,7 @@ public class DependencyInjectionTests
         var services = new ServiceCollection();
 
         // SUT
-        services.AddSFRealtimeServer(env.LoggerFactory, env.Configuration);
+        services.AddSFRealtimeServer(env.Configuration);
         Assert.IsNotEmpty(services);
     }
 
@@ -124,7 +124,6 @@ public class DependencyInjectionTests
         public IApplicationBuilder ApplicationBuilder { get; } = Substitute.For<IApplicationBuilder>();
         public IConfiguration Configuration { get; } = Substitute.For<IConfiguration>();
         public ContainerBuilder ContainerBuilder { get; } = new ContainerBuilder();
-        public ILoggerFactory LoggerFactory { get; } = Substitute.For<ILoggerFactory>();
         public IServiceCollection Services { get; } = Substitute.For<IServiceCollection>();
     }
 }
