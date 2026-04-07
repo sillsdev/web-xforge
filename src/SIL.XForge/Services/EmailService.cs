@@ -48,7 +48,7 @@ public class EmailService(IOptions<SiteOptions> options, ILogger<EmailService> l
             _ = new MailboxAddress(string.Empty, email);
             return true;
         }
-        catch (Exception e) when (e is ArgumentNullException or ParseException)
+        catch (Exception e) when (e is ArgumentException or ArgumentNullException or ParseException)
         {
             return false;
         }

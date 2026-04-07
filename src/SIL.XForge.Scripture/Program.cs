@@ -24,14 +24,14 @@ public static class Program
                 config.AddEnvironmentVariables();
 
                 // Load hosting.json first, then environment-specific
+                string environment =
+                    Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
+                    ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
+                    ?? "Production";
                 var tempConfig = new ConfigurationBuilder()
                     .SetBasePath(Directory.GetCurrentDirectory())
                     .AddJsonFile("hosting.json", optional: true, reloadOnChange: true)
-                    .AddJsonFile(
-                        $"hosting.{Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production"}.json",
-                        optional: true,
-                        reloadOnChange: true
-                    )
+                    .AddJsonFile($"hosting.{environment}.json", optional: true, reloadOnChange: true)
                     .Build();
 
                 foreach (var kvp in tempConfig.AsEnumerable())
