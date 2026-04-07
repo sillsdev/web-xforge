@@ -39,14 +39,16 @@ public class HgWrapper : IHgWrapper
         RunCommand(repository, $"bundle -a --type v2 \"{backupFile}\"");
 
     /// <summary>
-    /// Returns a graph of recent commits in the repository. Ideally far enough back to see the commit from the last
-    /// time we synced.
+    /// Returns a graph of recent commits in the repository.
     /// </summary>
     public string RecentLogGraph(string repositoryPath)
     {
+        // Include commits that will help when investigating sync problems. Ideally this would include the commit before
+        // this S/R, any local commits made at the beginning of S/R, and the current tip commit. And without flooding
+        // the logs. "date(-1)" means within 1 day from today (`hg help dates`). "merge()" means merge commits.
         string output = RunCommand(
             repositoryPath,
-            """log --template "{node} {date|isodate} {phase}\n" --graph --rev "tip~3:tip" """
+            """log --template "{node} {date|isodate} {phase}\n" --graph --rev "date(-1) or merge() or tip" --limit 5 """
         );
         // Use a backslash that does not need escaped.
         string graph = output.Replace("\\", "\u29F5");

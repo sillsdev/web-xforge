@@ -348,10 +348,7 @@ public class ParatextService : DisposableBase, IParatextService
                 {
                     string graph = _hgHelper.RecentLogGraph(scrText.Directory);
                     SyncMetricsLog($"Commit graph:");
-                    SIL.Linq.Enumerable.ForEach(
-                        SIL.Extensions.StringExtensions.SplitLines(graph),
-                        line => SyncMetricsLog(line)
-                    );
+                    Linq.Enumerable.ForEach(Extensions.StringExtensions.SplitLines(graph), SyncMetricsLog);
                 }
 
                 List<SharedProject> sharedPtProjectsToSr = [sharedProj];
