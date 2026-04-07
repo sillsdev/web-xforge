@@ -19,18 +19,18 @@ public class HgWrapper : IHgWrapper
     /// <summary>
     /// Returns a Mercurial bundle containing changesets above the given base revisions.
     /// </summary>
-    public byte[] Bundle(string repositoryPath, params string[] baseRevisions)
+    public byte[] Bundle(string repository, params string[] baseRevisions)
     {
         if (Hg.Default == null)
             throw new InvalidOperationException("Hg default has not been set.");
-        return Hg.Default.Bundle(repositoryPath, baseRevisions);
+        return Hg.Default.Bundle(repository, baseRevisions);
     }
 
-    public string[] Pull(string repositoryPath, byte[] bundle)
+    public string[] Pull(string repository, byte[] bundle)
     {
         if (Hg.Default == null)
             throw new InvalidOperationException("Hg default has not been set.");
-        return Hg.Default.Pull(repositoryPath, bundle, true);
+        return Hg.Default.Pull(repository, bundle, true);
     }
 
     /// <summary>
@@ -75,12 +75,12 @@ public class HgWrapper : IHgWrapper
     /// <summary>
     /// Returns the currently checked out revision of an hg repository.
     /// </summary>
-    public string GetRepoRevision(string repositoryPath)
+    public string GetRepoRevision(string repository)
     {
-        string rev = RunCommand(repositoryPath, "log --limit 1 --rev . --template {node}");
+        string rev = RunCommand(repository, "log --limit 1 --rev . --template {node}");
         if (string.IsNullOrWhiteSpace(rev))
         {
-            throw new InvalidDataException($"Unable to determine repo revision for hg repo at {repositoryPath}");
+            throw new InvalidDataException($"Unable to determine repo revision for hg repo at {repository}");
         }
         return rev;
     }
@@ -103,7 +103,8 @@ public class HgWrapper : IHgWrapper
     /// <summary>
     /// Mark all changesets as public.
     /// </summary>
-    public void MarkSharedChangeSetsPublic(string repositoryPath) => RunCommand(repositoryPath, "phase -p -r 'tip'");
+    /// <param name="repository">The repository path.</param>
+    public void MarkSharedChangeSetsPublic(string repository) => RunCommand(repository, "phase -p -r 'tip'");
 
     /// <summary>
     /// Returns the ids of commits with draft phase.
@@ -138,5 +139,5 @@ public class HgWrapper : IHgWrapper
     /// `git checkout --force --detach COMMITTISH`
     /// Changes to tracked files will be discarded. Untracked files are left in place without being cleaned up.
     /// </summary>
-    public void Update(string repositoryPath, string rev) => Hg.Default.Update(repositoryPath, rev);
+    public void Update(string repository, string rev) => Hg.Default.Update(repository, rev);
 }

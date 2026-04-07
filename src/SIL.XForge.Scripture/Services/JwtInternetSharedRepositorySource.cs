@@ -13,12 +13,15 @@ using Paratext.Data.Users;
 
 namespace SIL.XForge.Scripture.Services;
 
-/// <summary> An internet shared repository source that networks using JWT authenticated REST clients. </summary>
+/// <summary>
+/// An internet shared repository source that networks using JWT authenticated REST clients.
+/// </summary>
 public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource, IInternetSharedRepositorySource
 {
     private readonly JwtRestClient _registryClient;
     private readonly IHgWrapper _hgWrapper;
     private readonly ILogger _logger;
+    private readonly int _maxJsonLogChars = 200;
 
     public JwtInternetSharedRepositorySource(
         string accessToken,
@@ -162,12 +165,19 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
             .Get("projrevhist", "proj", serverRepo.ScrTextName, "projid", serverRepo.SendReceiveId.Id, "all", "1");
 
         JObject jsonResult = JObject.Parse(projRevHistResponse);
-        JArray? revisions = jsonResult["project"]?["revision_history"]?["revisions"] as JArray;
+        if (jsonResult["project"]?["revision_history"]?["revisions"] is not JArray revisions)
+        {
+            string truncatedResult = FormatAndTruncate(jsonResult, _maxJsonLogChars);
+            _logger.LogWarning(
+                $"Getting projrevhist unexpectedly received null revisions for PT project ID {serverRepo.SendReceiveId.Id}. The JSON result is: {truncatedResult}"
+            );
+            return (false, 0, null);
+        }
 
-        bool isRevOnServer =
-            revisions?.Any(r => string.Equals(r["id"]?.ToString(), expectedRevision, StringComparison.Ordinal))
-            ?? false;
-        int serverRevCount = revisions?.Count ?? 0;
+        bool isRevOnServer = revisions.Any(r =>
+            string.Equals(r["id"]?.ToString(), expectedRevision, StringComparison.Ordinal)
+        );
+        int serverRevCount = revisions.Count;
         string? serverLastRev = GetFirstElementId(revisions);
 
         return (isRevOnServer, serverRevCount, serverLastRev);
@@ -176,11 +186,32 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
     /// <summary>
     /// Returns the first element's "id" value, if possible.
     /// </summary>
-    private static string? GetFirstElementId(JArray? revisions)
+    private static string? GetFirstElementId(JArray revisions)
     {
-        if (revisions?.Count > 0)
+        if (revisions.Count > 0)
             return revisions[0]["id"]?.ToString();
         return null;
+    }
+
+    /// <summary>
+    /// Formats JSON and truncates if too long.
+    /// </summary>
+    private static string FormatAndTruncate(JObject jsonResult, int maxChars)
+    {
+        string prettyJson = jsonResult.ToString(Newtonsoft.Json.Formatting.Indented);
+        return TruncateLogString(prettyJson, maxChars);
+    }
+
+    /// <summary>
+    /// Truncates a string to the configured character count if needed and appends truncation details.
+    /// </summary>
+    private static string TruncateLogString(string value, int maxChars)
+    {
+        if (value.Length <= maxChars)
+            return value;
+
+        int truncatedChars = value.Length - maxChars;
+        return value[..maxChars] + Environment.NewLine + $"... (truncated {truncatedChars} more characters)";
     }
 
     /// <summary>
