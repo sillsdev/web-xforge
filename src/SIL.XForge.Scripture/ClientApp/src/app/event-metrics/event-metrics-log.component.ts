@@ -191,6 +191,7 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
       BuildProjectAsync: 'Start draft generation on Serval',
       CancelPreTranslationBuildAsync: 'Cancel draft generation',
       CancelSyncAsync: 'Cancel synchronization with Paratext',
+      GetPreTranslationUsfmAsync: 'Download draft as USFM',
       RetrievePreTranslationStatusAsync: 'Save drafts to Scripture Forge',
       SetDraftAppliedAsync: "Updated the chapter's draft applied status",
       SetIsValidAsync: 'Marked chapter as valid/invalid',
