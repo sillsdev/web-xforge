@@ -1,4 +1,6 @@
+import { Canon } from '@sillsdev/scripture';
 import { BuildDto } from '../machine-api/build-dto';
+import { booksFromScriptureRange } from '../shared/utils';
 
 /**
  * A report of a Serval build, combining Serval-native data with SF project information and event metrics information.
@@ -141,7 +143,7 @@ export interface ProjectBooks {
 }
 
 /**
- * Parses BuildReportProjectScriptureRange entries into ProjectBooks records by splitting semicolon-delimited scripture
+ * Parses BuildReportProjectScriptureRange entries into ProjectBooks records by parsing semicolon-delimited scripture
  * ranges into individual book identifiers.
  */
 export function toProjectBooks(ranges: BuildReportProjectScriptureRange[] | undefined): ProjectBooks[] {
@@ -160,10 +162,8 @@ export function toProjectBooks(ranges: BuildReportProjectScriptureRange[] | unde
     }
 
     const displayName: string = buildProjectDisplayName(range.shortName, range.name, sfProjectId);
-    const books: string[] = scriptureRange
-      .split(';')
-      .map(token => token.trim())
-      .filter(token => token.length > 0);
+    const bookNumbers: number[] = booksFromScriptureRange(scriptureRange);
+    const books: string[] = bookNumbers.map(bookNum => Canon.bookNumberToId(bookNum));
     projectBooks.push({ sfProjectId: sfProjectId, projectDisplayName: displayName, books: books });
   }
   return projectBooks;
