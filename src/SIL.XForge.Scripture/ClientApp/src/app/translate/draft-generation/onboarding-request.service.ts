@@ -15,7 +15,7 @@ export const PARTNER_ORGANIZATION_OPTIONS = ['Bolshoi Group', 'Seed Company', 'n
 /** A valid partner organization selection from the onboarding form. */
 export type PartnerOrganization = (typeof PARTNER_ORGANIZATION_OPTIONS)[number];
 
-export interface DraftingSignupFormData {
+export interface OnboardingRequestFormData {
   name: string;
   email: string;
   organization: string;
@@ -50,7 +50,7 @@ export interface OnboardingRequest {
     projectId: string;
     userId: string;
     timestamp: string;
-    formData: DraftingSignupFormData;
+    formData: OnboardingRequestFormData;
   };
   assigneeId: string;
   status: OnboardingRequestStatusOption;
@@ -111,7 +111,7 @@ export class OnboardingRequestService {
   }
 
   /** Submits a new signup request. */
-  async submitOnboardingRequest(projectId: string, formData: DraftingSignupFormData): Promise<string> {
+  async submitOnboardingRequest(projectId: string, formData: OnboardingRequestFormData): Promise<string> {
     return (await this.onlineInvoke<string>('submitOnboardingRequest', { projectId, formData }))!;
   }
 
