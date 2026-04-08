@@ -3,14 +3,7 @@ import { CommandService } from 'xforge-common/command.service';
 import { ONBOARDING_REQUESTS_URL } from 'xforge-common/url-constants';
 import { SFProjectService } from '../../core/sf-project.service';
 
-export interface OnboardingRequestComment {
-  id: string;
-  userId: string;
-  text: string;
-  dateCreated: string;
-}
-
-export interface DraftingSignupFormData {
+export interface OnboardingRequestFormData {
   name: string;
   email: string;
   organization: string;
@@ -43,7 +36,7 @@ export interface OnboardingRequest {
     projectId: string;
     userId: string;
     timestamp: string;
-    formData: DraftingSignupFormData;
+    formData: OnboardingRequestFormData;
   };
   assigneeId: string;
   status: OnboardingRequestStatusOption;
@@ -104,7 +97,7 @@ export class OnboardingRequestService {
   }
 
   /** Submits a new signup request. */
-  async submitOnboardingRequest(projectId: string, formData: DraftingSignupFormData): Promise<string> {
+  async submitOnboardingRequest(projectId: string, formData: OnboardingRequestFormData): Promise<string> {
     return (await this.onlineInvoke<string>('submitOnboardingRequest', { projectId, formData }))!;
   }
 
