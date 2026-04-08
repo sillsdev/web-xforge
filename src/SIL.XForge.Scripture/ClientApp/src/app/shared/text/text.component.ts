@@ -275,6 +275,12 @@ export class TextComponent implements AfterViewInit, OnDestroy {
           key: 'x',
           shortKey: true,
           handler: (range: Range) => this.isDeleteAllowed(range)
+        },
+        'cut from menu while holding down shift': {
+          key: 'x',
+          shortKey: true,
+          shiftKey: true,
+          handler: (range: Range) => this.isDeleteAllowed(range)
         }
       }
     },
