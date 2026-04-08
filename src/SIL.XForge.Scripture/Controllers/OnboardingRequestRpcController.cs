@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router.Abstractions;
+using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Bson;
 using SIL.XForge.Controllers;
 using SIL.XForge.DataAccess;
@@ -17,25 +18,23 @@ using SIL.XForge.Utils;
 namespace SIL.XForge.Scripture.Controllers;
 
 /// <summary>
-/// This controller handles drafting signup form submissions.
+/// This controller handles onboarding request form submissions.
 /// </summary>
 public class OnboardingRequestRpcController(
     IExceptionHandler exceptionHandler,
     IUserAccessor userAccessor,
     IRepository<OnboardingRequest> onboardingRequestRepository,
-    IUserService userService,
     IRealtimeService realtimeService,
-    ISFProjectService projectService,
-    IEmailService emailService,
-    IHttpRequestAccessor httpRequestAccessor
+    IHttpRequestAccessor httpRequestAccessor,
+    IServiceScopeFactory serviceScopeFactory
 ) : RpcControllerBase(userAccessor, exceptionHandler)
 {
     private readonly IExceptionHandler _exceptionHandler = exceptionHandler;
     private readonly IRealtimeService _realtimeService = realtimeService;
-    private readonly ISFProjectService _projectService = projectService;
+    private readonly IServiceScopeFactory _serviceScopeFactory = serviceScopeFactory;
 
     /// <summary>
-    /// Submits a drafting signup request for the specified project.
+    /// Submits an onboarding request for the specified project.
     /// The user must be on the project and have a Paratext role.
     /// This stores the request, attempts to notify Serval admins by email, and connects any Paratext projects or DBL
     /// resources that were listed in the form that aren't already connected.
@@ -56,13 +55,16 @@ public class OnboardingRequestRpcController(
                 return ForbiddenError();
             }
 
+            string submittingUserId = UserId;
+            Uri siteRoot = httpRequestAccessor.SiteRoot;
+
             var request = new OnboardingRequest
             {
                 Id = ObjectId.GenerateNewId().ToString(),
                 Submission = new OnboardingSubmission
                 {
                     ProjectId = projectId,
-                    UserId = UserId,
+                    UserId = submittingUserId,
                     Timestamp = DateTime.UtcNow,
                     FormData = formData,
                 },
@@ -71,94 +73,12 @@ public class OnboardingRequestRpcController(
 
             await onboardingRequestRepository.InsertAsync(request);
 
-            // Email notification to Serval admins
-            try
+            _ = Task.Run(async () =>
             {
-                // Query for assignees in drafting signup requests, filter out duplicates, and then look up their email
-                var adminUserIds = onboardingRequestRepository
-                    .Query()
-                    .Where(r => !string.IsNullOrEmpty(r.AssigneeId))
-                    .Select(r => r.AssigneeId)
-                    .Distinct()
-                    .ToList();
-
-                await using IConnection conn = await _realtimeService.ConnectAsync(UserId);
-                var adminEmails = (await conn.GetAndFetchDocsAsync<User>(adminUserIds)).Select(u => u.Data.Email);
-
-                // Send email to each admin using EmailService
-                string userName = await userService.GetUsernameFromUserId(UserId, UserId);
-                string subject = $"Onboarding request for {projectDoc.ShortName}";
-                string link = $"{httpRequestAccessor.SiteRoot}/serval-administration/onboarding-requests/{request.Id}";
-                string body =
-                    $@"
-                    <p>A new drafting signup request has been submitted for the project <strong>{projectDoc.ShortName} - {projectDoc.Name}</strong>.</p>
-                    <p><strong>Submitted by:</strong> {userName}</p>
-                    <p><strong>Submission Time:</strong> {request.Submission.Timestamp:u}</p>
-                    <p>The request can be viewed at <a href=""{link}"">{link}</a></p>
-                ";
-                foreach (var email in adminEmails)
-                {
-                    await emailService.SendEmailAsync(email, subject, body);
-                }
-            }
-            catch (Exception exception)
-            {
-                _exceptionHandler.RecordEndpointInfoForException(
-                    new Dictionary<string, string>
-                    {
-                        { "method", "SubmitOnboardingRequest" },
-                        { "projectId", projectId },
-                        { "userId", UserId },
-                    }
-                );
-                // report the exception without failing the whole request
-                _exceptionHandler.ReportException(exception);
-            }
-
-            // Find all the paratext project ids in the sign up request
-            // Start by collecting them into a set
-            var paratextProjectIds = new List<string>
-            {
-                formData.sourceProjectA,
-                formData.sourceProjectB,
-                formData.sourceProjectC,
-                formData.DraftingSourceProject,
-                formData.BackTranslationProject,
-            }
-                .Where(id => !string.IsNullOrEmpty(id))
-                .Distinct();
-
-            // Connect each Paratext project that isn't already connected by creating resource projects
-            foreach (string paratextId in paratextProjectIds)
-            {
-                // Check if project already exists
-                SFProject existingProject = _realtimeService
-                    .QuerySnapshots<SFProject>()
-                    .FirstOrDefault(p => p.ParatextId == paratextId);
-
-                if (existingProject is null)
-                {
-                    // Create the resource/source project and add the user to it
-                    string sourceProjectId = await _projectService.CreateResourceProjectAsync(
-                        UserId,
-                        paratextId,
-                        addUser: true
-                    );
-
-                    // Sync the newly created project to get its data
-                    await _projectService.SyncAsync(UserId, sourceProjectId);
-                }
-                else if (existingProject.Id == projectId)
-                {
-                    // Verify that the source project is not the same as the target project
-                    return InvalidParamsError("Source project cannot be the same as the target project");
-                }
-                else if (existingProject.Sync.LastSyncSuccessful == false)
-                {
-                    // If the project exists but last sync failed, retry the sync
-                    await _projectService.SyncAsync(UserId, existingProject.Id);
-                }
-            }
+                using IServiceScope scope = _serviceScopeFactory.CreateScope();
+                await SendOnboardingRequestEmailsAsync(request, submittingUserId, projectDoc, siteRoot, scope);
+                await SyncReferencedProjectsAsync(projectId, submittingUserId, formData, scope);
+            });
 
             return Ok(request.Id);
         }
@@ -173,6 +93,136 @@ public class OnboardingRequestRpcController(
                 }
             );
             throw;
+        }
+    }
+
+    private static async Task SendOnboardingRequestEmailsAsync(
+        OnboardingRequest request,
+        string userId,
+        SFProject projectDoc,
+        Uri siteRoot,
+        IServiceScope scope
+    )
+    {
+        var scopedOnboardingRequestRepository = scope.ServiceProvider.GetRequiredService<
+            IRepository<OnboardingRequest>
+        >();
+        var scopedRealtimeService = scope.ServiceProvider.GetRequiredService<IRealtimeService>();
+        var scopedUserService = scope.ServiceProvider.GetRequiredService<IUserService>();
+        var scopedEmailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
+        var scopedExceptionHandler = scope.ServiceProvider.GetRequiredService<IExceptionHandler>();
+
+        try
+        {
+            var adminUserIds = scopedOnboardingRequestRepository
+                .Query()
+                .Where(r => !string.IsNullOrEmpty(r.AssigneeId))
+                .Select(r => r.AssigneeId)
+                .Distinct()
+                .ToList();
+
+            await using IConnection conn = await scopedRealtimeService.ConnectAsync();
+            var adminEmails = (await conn.GetAndFetchDocsAsync<User>(adminUserIds)).Select(u => u.Data.Email);
+
+            string userName = await scopedUserService.GetUsernameFromUserId(userId, userId);
+            string subject = $"Onboarding request for {projectDoc.ShortName}";
+            string link = $"{siteRoot}/serval-administration/onboarding-requests/{request.Id}";
+            string body =
+                $@"
+                    <p>A new onboarding request has been submitted for the project <strong>{projectDoc.ShortName} - {projectDoc.Name}</strong>.</p>
+                    <p><strong>Submitted by:</strong> {userName}</p>
+                    <p><strong>Submission Time:</strong> {request.Submission.Timestamp:u}</p>
+                    <p>The request can be viewed at <a href=""{link}"">{link}</a></p>
+                ";
+            foreach (string email in adminEmails)
+            {
+                await scopedEmailService.SendEmailAsync(email, subject, body);
+            }
+        }
+        catch (Exception exception)
+        {
+            scopedExceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", "SendOnboardingRequestEmailsAsync" },
+                    { "userId", userId },
+                    { "requestId", request.Id },
+                }
+            );
+            scopedExceptionHandler.ReportException(exception);
+        }
+    }
+
+    private static async Task SyncReferencedProjectsAsync(
+        string projectId,
+        string userId,
+        OnboardingRequestFormData formData,
+        IServiceScope scope
+    )
+    {
+        var scopedRealtimeService = scope.ServiceProvider.GetRequiredService<IRealtimeService>();
+        var scopedProjectService = scope.ServiceProvider.GetRequiredService<ISFProjectService>();
+        var scopedExceptionHandler = scope.ServiceProvider.GetRequiredService<IExceptionHandler>();
+
+        try
+        {
+            // Find all the paratext project ids in the sign up request.
+            List<string> paratextProjectIds =
+            [
+                .. new List<string>
+                {
+                    formData.sourceProjectA,
+                    formData.sourceProjectB,
+                    formData.sourceProjectC,
+                    formData.DraftingSourceProject,
+                    formData.BackTranslationProject,
+                }
+                    .Where(id => !string.IsNullOrEmpty(id))
+                    .Distinct(),
+            ];
+
+            foreach (string paratextId in paratextProjectIds)
+            {
+                // Check if project already exists
+                SFProject existingProject = scopedRealtimeService
+                    .QuerySnapshots<SFProject>()
+                    .FirstOrDefault(p => p.ParatextId == paratextId);
+
+                if (existingProject is null)
+                {
+                    // Create the resource/source project and add the user to it
+                    string sourceProjectId = await scopedProjectService.CreateResourceProjectAsync(
+                        userId,
+                        paratextId,
+                        addUser: true
+                    );
+
+                    // Sync the newly created project to get its data
+                    await scopedProjectService.SyncAsync(userId, sourceProjectId);
+                }
+                else if (existingProject.Id == projectId)
+                {
+                    // Skip syncing if the source project is the same as the target project.
+                    continue;
+                }
+                else if (existingProject.Sync.LastSyncSuccessful == false)
+                {
+                    // If the project exists but last sync failed, retry the sync
+                    await scopedProjectService.SyncAsync(userId, existingProject.Id);
+                }
+            }
+        }
+        catch (Exception exception)
+        {
+            scopedExceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", "SyncReferencedProjectsAsync" },
+                    { "projectId", projectId },
+                    { "userId", userId },
+                }
+            );
+            scopedExceptionHandler.ReportException(exception);
         }
     }
 
@@ -396,7 +446,7 @@ public class OnboardingRequestRpcController(
     }
 
     /// <summary>
-    /// Adds a comment to a drafting signup request.
+    /// Adds a comment to an onboarding request.
     /// Only accessible to Serval admins.
     /// </summary>
     public async Task<IRpcMethodResult> AddComment(string requestId, string commentText)
@@ -413,7 +463,7 @@ public class OnboardingRequestRpcController(
 
             if (request == null)
             {
-                return NotFoundError("Drafting signup request not found");
+                return NotFoundError("Onboarding request not found");
             }
 
             // Create new comment
@@ -447,7 +497,7 @@ public class OnboardingRequestRpcController(
     }
 
     /// <summary>
-    /// Deletes a drafting signup request from the database.
+    /// Deletes an onboarding request from the database.
     /// Only accessible to Serval admins.
     /// </summary>
     public async Task<IRpcMethodResult> DeleteRequest(string requestId)
@@ -464,7 +514,7 @@ public class OnboardingRequestRpcController(
 
             if (deletedRequest == null)
             {
-                return NotFoundError("Drafting signup request not found");
+                return NotFoundError("Onboarding request not found");
             }
 
             return Ok(true);
