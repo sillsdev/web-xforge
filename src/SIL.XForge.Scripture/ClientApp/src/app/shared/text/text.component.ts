@@ -176,7 +176,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
         },
         'disable backspace word': {
           key: 'Backspace',
-          ctrlKey: true,
+          shortKey: true,
           handler: (range: Range) => this.handleBackspaceWord(range)
         },
         'disable delete': {
@@ -185,7 +185,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
         },
         'disable delete word': {
           key: 'Delete',
-          ctrlKey: true,
+          shortKey: true,
           handler: (range: Range) => this.handleDeleteWord(range)
         },
         'disable enter': {
