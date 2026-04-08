@@ -16,6 +16,7 @@ import { User } from 'realtime-server/lib/esm/common/models/user';
 import { DevOnlyComponent } from 'src/app/shared/dev-only/dev-only.component';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
@@ -27,7 +28,7 @@ import { ProjectSelectComponent } from '../../../project-select/project-select.c
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { JsonViewerComponent } from '../../../shared/json-viewer/json-viewer.component';
 import { compareProjectsForSorting, projectLabel } from '../../../shared/utils';
-import { DraftingSignupFormData, OnboardingRequestService } from '../onboarding-request.service';
+import { OnboardingRequestFormData, OnboardingRequestService } from '../onboarding-request.service';
 
 export const DRAFT_SIGNUP_RESPONSE_DAYS = { min: 1, max: 3 } as const;
 
@@ -133,8 +134,9 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
     private readonly activatedProject: ActivatedProjectService,
     private readonly userService: UserService,
     private readonly paratextService: ParatextService,
-    private readonly draftingSignupService: OnboardingRequestService,
+    private readonly onboardingRequestService: OnboardingRequestService,
     protected readonly noticeService: NoticeService,
+    protected readonly dialogService: DialogService,
     private readonly destroyRef: DestroyRef,
     private readonly cd: ChangeDetectorRef,
     private readonly i18n: I18nService
@@ -207,18 +209,18 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
 
   async onSubmit(): Promise<void> {
     const projectId = this.activatedProject.projectId;
-    if (projectId == null || this.uiState === 'submitting') {
-      return;
-    }
+    if (projectId == null || this.uiState === 'submitting') return;
+
+    if (await this.checkAndWarnIfAlreadySubmitted()) return;
 
     if (this.signupForm.valid === true) {
       this.uiState = 'submitting';
       this.cd.markForCheck();
 
-      const formData: DraftingSignupFormData = this.signupForm.getRawValue() as DraftingSignupFormData;
+      const formData = this.signupForm.getRawValue() as OnboardingRequestFormData;
 
       try {
-        const requestId = await this.draftingSignupService.submitOnboardingRequest(projectId, formData);
+        const requestId = await this.onboardingRequestService.submitOnboardingRequest(projectId, formData);
 
         // For testing purposes, store and display the submitted data
         this.submittedData = { requestId, projectId, formData };
@@ -310,6 +312,26 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
         // Clear the language name if we couldn't determine a reasonable value
         this.signupForm.controls.backTranslationLanguageName.setValue('');
       }
+    }
+  }
+
+  /**
+   * If a request has already been submitted:
+   * - Informs user with a message dialog
+   * - Redirects to drafting page when user closes dialog
+   * - Resolves to true
+   *
+   * Otherwise, resolves to false
+   */
+  private async checkAndWarnIfAlreadySubmitted(): Promise<boolean> {
+    if (this.activatedProject.projectId == null) return false;
+
+    if ((await this.onboardingRequestService.getOpenOnboardingRequest(this.activatedProject.projectId)) == null) {
+      return false;
+    } else {
+      await this.dialogService.message('draft_sources.request_already_submitted', undefined, true);
+      this.cancel();
+      return true;
     }
   }
 
