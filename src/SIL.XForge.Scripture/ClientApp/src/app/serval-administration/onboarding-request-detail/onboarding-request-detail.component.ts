@@ -34,8 +34,8 @@ import { NoticeComponent } from '../../shared/notice/notice.component';
 import { projectLabel } from '../../shared/utils';
 import { normalizeLanguageCodeToISO639_3 } from '../../translate/draft-generation/draft-utils';
 import {
-  DraftingSignupFormData,
   OnboardingRequest,
+  OnboardingRequestFormData,
   OnboardingRequestResolutionKey,
   OnboardingRequestResolutionMetadata,
   OnboardingRequestService
@@ -236,7 +236,7 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
 
   getStatus = this.onboardingRequestService.getStatus;
 
-  get formData(): DraftingSignupFormData {
+  get formData(): OnboardingRequestFormData {
     return this.request!.submission.formData;
   }
 
