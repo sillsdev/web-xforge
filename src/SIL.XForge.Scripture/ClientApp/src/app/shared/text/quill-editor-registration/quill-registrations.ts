@@ -4,6 +4,7 @@ import QuillCursors from 'quill-cursors';
 import QuillInlineBlot from 'quill/blots/inline';
 import QuillScrollBlot from 'quill/blots/scroll';
 import { DragAndDrop } from '../drag-and-drop';
+import { SelectAll } from '../select-all';
 import { DisableHtmlClipboard } from './quill-clipboard';
 import { FormattableBlotClass, QuillFormatRegistryService } from './quill-format-registry.service';
 import {
@@ -104,4 +105,5 @@ export function registerScriptureFormats(formatRegistry: QuillFormatRegistryServ
   Quill.register('modules/cursors', QuillCursors, true);
   Quill.register('modules/history', FixSelectionHistory, true);
   Quill.register('modules/dragAndDrop', DragAndDrop, true);
+  Quill.register('modules/selectAll', SelectAll, true);
 }
