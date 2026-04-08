@@ -95,9 +95,9 @@ describe('toProjectBooks', () => {
     expect(result[0].projectDisplayName).toBe('p1');
   });
 
-  it('trims whitespace from book identifiers', () => {
+  it('filters out empty tokens from trailing semicolons', () => {
     const ranges: BuildReportProjectScriptureRange[] = [
-      { sfProjectId: 'p1', scriptureRange: ' GEN ; EXO ', shortName: 'PRJ', name: undefined }
+      { sfProjectId: 'p1', scriptureRange: 'GEN;EXO;', shortName: 'PRJ', name: undefined }
     ];
 
     const result: ProjectBooks[] = toProjectBooks(ranges);
@@ -105,9 +105,9 @@ describe('toProjectBooks', () => {
     expect(result[0].books).toEqual(['GEN', 'EXO']);
   });
 
-  it('filters out empty tokens from trailing semicolons', () => {
+  it('filters out invalid book identifiers after parsing', () => {
     const ranges: BuildReportProjectScriptureRange[] = [
-      { sfProjectId: 'p1', scriptureRange: 'GEN;EXO;', shortName: 'PRJ', name: undefined }
+      { sfProjectId: 'p1', scriptureRange: 'GEN;NOT_A_BOOK;EXO', shortName: 'PRJ', name: undefined }
     ];
 
     const result: ProjectBooks[] = toProjectBooks(ranges);
