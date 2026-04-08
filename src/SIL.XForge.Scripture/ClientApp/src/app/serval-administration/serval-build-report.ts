@@ -1,29 +1,21 @@
 import { BuildDto } from '../machine-api/build-dto';
 
 /**
- * A report of a Serval build, combining Serval data with SF project information and event metrics.
- * This mirrors the C# ServalBuildReportDto.
+ * A report of a Serval build, combining Serval-native data with SF project information and event metrics information.
+ * See C# comments.
  */
 export interface ServalBuildReportDto {
-  /** The Serval build data (unless we only had a record of the build request from event metrics). */
   build: BuildDto | undefined;
-  /** SF project context for the build. Undefined if the project could not be found. */
   project: BuildReportProject | undefined;
-  /** Timeline of events from both Serval and SF event metrics. */
   timeline: BuildReportTimeline;
-  /** Build configuration: Scripture ranges and training data files. */
   config: BuildReportConfig;
-  /** Problems or warnings identified for this build. */
   problems: string[];
-  /** The SF draft generation request identifier. */
   draftGenerationRequestId: string | undefined;
-  /** The SF user who requested this build, if known. */
   requesterSFUserId: string | undefined;
-  /** Status of the build. */
   status: DraftGenerationBuildStatus;
 }
 
-/** SF project info for a build report entry. */
+/** SF project information for a build report entry.*/
 export interface BuildReportProject {
   sfProjectId: string;
   shortName: string | undefined;
@@ -40,21 +32,19 @@ export interface Phase {
   started: Date | undefined;
 }
 
-/** Timeline of events for a build, combining Serval timestamps and SF event metric timestamps. */
+/** Timeline of events for a build, combining Serval timestamps and SF event metric timestamps. See C# comments. */
 export interface BuildReportTimeline {
-  // Serval timestamps
   servalCreated: Date | undefined;
   servalStarted: Date | undefined;
   servalCompleted: Date | undefined;
   servalFinished: Date | undefined;
-  // SF event metric timestamps
+
   sfUserRequested: Date | undefined;
   sfBuildProjectSubmitted: Date | undefined;
   sfUserCancelled: Date | undefined;
   sfAcknowledgedCompletion: Date | undefined;
-  /** When the build was requested, with SF user request event time prioritized over Serval creation time. */
+
   requestTime: Date | undefined;
-  /** Information on different activities during the build. */
   phases: Phase[] | undefined;
 }
 
@@ -67,7 +57,6 @@ export interface BuildReportConfig {
 
 /**
  * A scripture range entry enriched with the referenced project's display information.
- * Mirrors the C# BuildReportProjectScriptureRange.
  */
 export interface BuildReportProjectScriptureRange {
   sfProjectId: string;
@@ -120,8 +109,7 @@ export function interpretTypes(report: ServalBuildReportDto): ServalBuildReportD
 }
 
 /**
- * Status values for a draft generation build request, including SF-specific pre-submission states.
- * Values match the C# DraftGenerationBuildStatus enum.
+ * Status of a draft generation build request. See C# DraftGenerationBuildStatus enum comments.
  */
 export const DraftGenerationBuildStatus = {
   UserRequested: 'UserRequested',
@@ -133,7 +121,7 @@ export const DraftGenerationBuildStatus = {
   Canceled: 'Canceled'
 } as const;
 
-/** Status of a draft generation request, including states before reported on by Serval. */
+/** Status of a draft generation request. */
 export type DraftGenerationBuildStatus = (typeof DraftGenerationBuildStatus)[keyof typeof DraftGenerationBuildStatus];
 
 /** Set of all valid DraftGenerationBuildStatus values. */
