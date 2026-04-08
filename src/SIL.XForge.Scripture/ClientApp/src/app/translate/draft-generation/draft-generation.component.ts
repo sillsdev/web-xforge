@@ -174,7 +174,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     protected readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly preTranslationSignupUrlService: PreTranslationSignupUrlService,
-    private readonly draftingSignupService: OnboardingRequestService,
+    private readonly onboardingRequestService: OnboardingRequestService,
     protected readonly noticeService: NoticeService,
     protected readonly urlService: ExternalUrlService,
     protected readonly featureFlags: FeatureFlagService,
@@ -290,7 +290,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
         // Check if user has already submitted a signup for this project
         if (this.activatedProject.projectId != null) {
           try {
-            this.onboardingRequest = await this.draftingSignupService.getOpenOnboardingRequest(
+            this.onboardingRequest = await this.onboardingRequestService.getOpenOnboardingRequest(
               this.activatedProject.projectId
             );
           } catch {
