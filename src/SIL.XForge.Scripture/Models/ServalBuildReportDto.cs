@@ -7,7 +7,7 @@ using Serval.Client;
 namespace SIL.XForge.Scripture.Models;
 
 /// <summary>
-/// A report of a Serval build, combining Serval-native data with SF project context and event metrics information.
+/// A report of a Serval build, combining Serval-native data with SF project information and event metrics information.
 /// Returned by the builds-since endpoint for the Serval admin page.
 /// </summary>
 public class ServalBuildReportDto
@@ -19,7 +19,7 @@ public class ServalBuildReportDto
     public ServalBuildDto? Build { get; init; }
 
     /// <summary>
-    /// SF project context for the build. Null if the project could not be identified.
+    /// SF project information for the build. Null if the project could not be identified.
     /// </summary>
     public BuildReportProject? Project { get; init; }
 
@@ -56,7 +56,7 @@ public class ServalBuildReportDto
 }
 
 /// <summary>
-/// SF project context for a build report entry.
+/// SF project information for a build report entry.
 /// </summary>
 public class BuildReportProject
 {
