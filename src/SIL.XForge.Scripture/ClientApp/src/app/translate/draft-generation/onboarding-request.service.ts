@@ -10,7 +10,7 @@ export interface DraftRequestComment {
   dateCreated: string;
 }
 
-export interface DraftingSignupFormData {
+export interface OnboardingRequestFormData {
   name: string;
   email: string;
   organization: string;
@@ -44,7 +44,7 @@ export interface OnboardingRequest {
     projectId: string;
     userId: string;
     timestamp: string;
-    formData: DraftingSignupFormData;
+    formData: OnboardingRequestFormData;
   };
   assigneeId: string;
   status: DraftRequestStatusOption;
@@ -105,7 +105,7 @@ export class OnboardingRequestService {
   }
 
   /** Submits a new signup request. */
-  async submitOnboardingRequest(projectId: string, formData: DraftingSignupFormData): Promise<string> {
+  async submitOnboardingRequest(projectId: string, formData: OnboardingRequestFormData): Promise<string> {
     return (await this.onlineInvoke<string>('submitOnboardingRequest', { projectId, formData }))!;
   }
 

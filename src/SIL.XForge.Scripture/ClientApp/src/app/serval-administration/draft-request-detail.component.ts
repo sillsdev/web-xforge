@@ -29,10 +29,10 @@ import { JsonViewerComponent } from '../shared/json-viewer/json-viewer.component
 import { MobileNotSupportedComponent } from '../shared/mobile-not-supported/mobile-not-supported.component';
 import { projectLabel } from '../shared/utils';
 import {
-  DraftingSignupFormData,
   DraftRequestResolutionKey,
   DraftRequestResolutionMetadata,
   OnboardingRequest,
+  OnboardingRequestFormData,
   OnboardingRequestService
 } from '../translate/draft-generation/onboarding-request.service';
 import { ServalAdministrationService } from './serval-administration.service';
@@ -225,7 +225,7 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
 
   getStatus = this.onboardingRequestService.getStatus;
 
-  get formData(): DraftingSignupFormData {
+  get formData(): OnboardingRequestFormData {
     return this.request!.submission.formData;
   }
 
