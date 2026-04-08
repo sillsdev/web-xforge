@@ -289,7 +289,8 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       userOnly: true
     },
     clipboard: { textComponent: this },
-    dragAndDrop: {}
+    dragAndDrop: {},
+    selectAll: {}
   };
   private _id?: TextDocId;
   private _isRightToLeft: boolean = false;
