@@ -14,4 +14,5 @@ public interface IHgWrapper
     string GetRepoRevision(string repositoryPath);
     void MarkSharedChangeSetsPublic(string repository);
     string RecentLogGraph(string repositoryPath);
+    string[] GetDraftRevisions(string repositoryPath);
 }
