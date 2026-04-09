@@ -3,6 +3,7 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { BehaviorSubject } from 'rxjs';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { MockConsole } from 'xforge-common/mock-console';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -33,6 +34,7 @@ const mockDraftGenerationService = mock(DraftGenerationService);
 const mockDialogService = mock(DialogService);
 const mockExportService = mock(DraftJobsExportService);
 const mockUserService = mock(UserService);
+const mockI18nService = mock(I18nService);
 const mockedConsole: MockConsole = MockConsole.install();
 
 describe('ServalBuildsComponent', () => {
@@ -47,6 +49,7 @@ describe('ServalBuildsComponent', () => {
       { provide: DialogService, useMock: mockDialogService },
       { provide: DraftJobsExportService, useMock: mockExportService },
       { provide: UserService, useMock: mockUserService },
+      { provide: I18nService, useMock: mockI18nService },
       provideNoopAnimations()
     ]
   }));
@@ -1123,6 +1126,18 @@ describe('ServalBuildsComponent', () => {
       expect(rows[1].report.timeline.requestTime?.toISOString()).toBe(servalCreatedFallback.toISOString());
     });
   });
+
+  describe('formatLanguageWithName', () => {
+    it('formats code with name', () => {
+      const env = new TestEnvironment();
+      when(mockI18nService.getLanguageDisplayName('es')).thenReturn('Spanish');
+
+      // SUT
+      const formatted: string = env.component['formatLanguageWithName']('es');
+
+      expect(formatted).toBe('es (Spanish)');
+    });
+  });
 });
 
 /** Provides helpers for constructing test data for ServalBuildsComponent tests. */
@@ -1149,6 +1164,8 @@ class TestEnvironment {
     when(mockExportService.exportCsv(anything(), anything(), anything(), anything(), anything())).thenReturn(undefined);
     when(mockExportService.exportRsv(anything(), anything(), anything(), anything(), anything())).thenReturn(undefined);
     when(mockUserService.getProfile(anything())).thenReturn(Promise.resolve(userProfileDoc));
+    when(mockI18nService.localeCode).thenReturn('en');
+    when(mockI18nService.getLanguageDisplayName(anything())).thenReturn(undefined);
 
     this.fixture = TestBed.createComponent(ServalBuildsComponent);
     this.component = this.fixture.componentInstance;
