@@ -195,7 +195,7 @@ describe('ServalBuildsComponent', () => {
 
       expect(summary.totalBuilds).toBe(6);
       expect(summary.totalProjects).toBe(3);
-      expect(summary.buildsPerProjectRatio).toBeCloseTo(2);
+      expect(summary.buildsPerProject).toBeCloseTo(2);
       expect(summary.averageInterBuildTimeMs).toBeCloseTo(9000000);
       expect(summary.totalRequesters).toBe(4);
       expect(summary.averageRequestersPerProject).toBeCloseTo(1.667);
