@@ -161,7 +161,7 @@ export function buildSummary(rows: ServalBuildRow[]): ServalBuildSummary {
     return {
       totalBuilds: totalBuilds,
       totalProjects: 0,
-      buildsPerProjectRatio: undefined,
+      buildsPerProject: undefined,
       averageInterBuildTimeMs: undefined,
       totalRequesters: 0,
       averageRequestersPerProject: undefined,
@@ -187,7 +187,7 @@ export function buildSummary(rows: ServalBuildRow[]): ServalBuildSummary {
   );
   const sfProjectIdsUsed: Set<string> = new Set(rowsBySFProjectId.keys());
   const totalProjects: number = sfProjectIdsUsed.size;
-  const buildsPerProjectRatio: number = totalBuilds / totalProjects;
+  const buildsPerProject: number = totalBuilds / totalProjects;
 
   // Determine the average amount of time between Serval builds of the same project.
   const allGapsMs: number[] = [];
@@ -262,7 +262,7 @@ export function buildSummary(rows: ServalBuildRow[]): ServalBuildSummary {
   return {
     totalBuilds: totalBuilds,
     totalProjects: totalProjects,
-    buildsPerProjectRatio: buildsPerProjectRatio,
+    buildsPerProject: buildsPerProject,
     averageInterBuildTimeMs: averageInterBuildTimeMs,
     totalRequesters: totalRequesters,
     averageRequestersPerProject: averageRequestersPerProject,

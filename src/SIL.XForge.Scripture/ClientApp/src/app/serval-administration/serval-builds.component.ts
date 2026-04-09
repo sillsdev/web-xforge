@@ -62,7 +62,7 @@ export interface ServalBuildRow {
 export interface ServalBuildSummary {
   totalBuilds: number;
   totalProjects: number;
-  buildsPerProjectRatio?: number;
+  buildsPerProject?: number;
   averageInterBuildTimeMs?: number;
   totalRequesters: number;
   averageRequestersPerProject?: number;
@@ -496,7 +496,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
 
     const buildsPerProjectItem: SummaryDisplayItem = {
       label: 'Builds per project',
-      value: this.formatAverage(summary.buildsPerProjectRatio),
+      value: this.formatAverage(summary.buildsPerProject),
       prominence: 'top'
     };
     items.push(buildsPerProjectItem);
