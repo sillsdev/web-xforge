@@ -21,7 +21,7 @@ export class CopyComponent {
   @Input() tooltip: string = '';
   @Input() iconName: string = 'content_copy';
   @Input() copiedIconName: string = 'done';
-  @Input() copiedDurationMs: number = 1000;
+  @Input() copiedDurationMs: number = 5000;
 
   isCopied: boolean = false;
   private copyTimeoutId: number | undefined;
