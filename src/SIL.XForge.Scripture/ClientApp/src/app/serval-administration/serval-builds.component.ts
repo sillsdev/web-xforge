@@ -736,14 +736,9 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   /** Formats a language code with its display name, e.g. "es (Spanish)". Falls back to just the code. */
   protected formatLanguageWithName(langCode: string | undefined): string {
     if (langCode == null) return 'Unknown';
-    try {
-      const displayNames: Intl.DisplayNames = new Intl.DisplayNames(['en'], { type: 'language' });
-      const languageName: string | undefined = displayNames.of(langCode);
-      if (languageName != null && languageName !== langCode) {
-        return `${langCode} (${languageName})`;
-      }
-    } catch {
-      // If Intl.DisplayNames fails or doesn't recognize the code, just return the code
+    const languageName: string | undefined = this.i18n.getLanguageDisplayName(langCode);
+    if (languageName != null && languageName !== langCode) {
+      return `${langCode} (${languageName})`;
     }
     return langCode;
   }
