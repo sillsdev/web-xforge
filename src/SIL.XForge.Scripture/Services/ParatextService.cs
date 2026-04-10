@@ -747,7 +747,8 @@ public class ParatextService : DisposableBase, IParatextService
             Dictionary<string, string> userMapping = _realtimeService
                 .QuerySnapshots<User>()
                 .Where(u => paratextIds.Contains(u.ParatextId))
-                .ToDictionary(u => u.ParatextId, u => u.Id);
+                .GroupBy(u => u.ParatextId)
+                .ToDictionary(p => p.Key, p => p.OrderByDescending(u => u.AuthId.Contains("paratext")).First().Id);
             foreach (ParatextProjectUser user in users)
             {
                 if (userMapping.TryGetValue(user.ParatextId, out string id))

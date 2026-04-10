@@ -1,7 +1,17 @@
 import { Dir } from '@angular/cdk/bidi';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { AsyncPipe, KeyValuePipe, NgClass } from '@angular/common';
-import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  ViewChild
+} from '@angular/core';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { MatListSubheaderCssMatStyler, MatSelectionList } from '@angular/material/list';
@@ -97,7 +107,8 @@ interface Summary {
     DonutChartComponent,
     AsyncPipe,
     KeyValuePipe
-  ]
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CheckingComponent extends DataLoadingComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('answerPanelContainer') set answersPanelElement(answersPanelContainerElement: ElementRef) {
@@ -192,6 +203,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   private _showScriptureAudioPlayer: boolean = false;
 
   constructor(
+    private readonly changeDetector: ChangeDetectorRef,
     private readonly destroyRef: DestroyRef,
     private readonly activatedRoute: ActivatedRoute,
     private readonly projectService: SFProjectService,
@@ -252,6 +264,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       if (!this._isDrawerPermanent) {
         this.setQuestionsOverlayVisibility(false);
       }
+      this.changeDetector.markForCheck();
     }
   }
 
@@ -778,7 +791,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe((state: BreakpointState) => {
         // setting isScreenSmall causes `ExpressionChangedAfterItHasBeenCheckedError`, so wrap in setTimeout
-        setTimeout(() => (this.isScreenSmall = state.matches));
+        setTimeout(() => {
+          this.isScreenSmall = state.matches;
+          this.changeDetector.markForCheck();
+        });
       });
 
     this.activeQuestionDoc$
@@ -800,6 +816,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         if (prevInScope != null) {
           this.prevQuestionOutOfScope = undefined;
           this.prevQuestion$ = of(prevInScope);
+          this.changeDetector.markForCheck();
         } else {
           const prevQuestionQuery = await this.checkingQuestionsService.queryAdjacentQuestions(
             this.projectDoc!.id,
@@ -816,6 +833,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             )
             .subscribe(async query => {
               this.prevQuestion$ = of(this.filterQuestions(query.docs)[0]);
+              this.changeDetector.markForCheck();
             });
         }
 
@@ -824,6 +842,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         if (nextInScope != null) {
           this.nextQuestionOutOfScope = undefined;
           this.nextQuestion$ = of(nextInScope);
+          this.changeDetector.markForCheck();
         } else {
           const nextQuestionQuery = await this.checkingQuestionsService.queryAdjacentQuestions(
             this.projectDoc!.id,
@@ -840,6 +859,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             )
             .subscribe(async query => {
               this.nextQuestion$ = of(this.filterQuestions(query.docs)[0]);
+              this.changeDetector.markForCheck();
             });
         }
       });
@@ -930,6 +950,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         break;
     }
     this.calculateScriptureSliderPosition(true);
+    this.changeDetector.markForCheck();
   }
 
   setQuestionsOverlayVisibility(visible: boolean): void {
@@ -987,6 +1008,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         break;
     }
     this.calculateScriptureSliderPosition(true);
+    this.changeDetector.markForCheck();
   }
 
   checkSliderPosition(event: any): void {
@@ -1190,6 +1212,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     } else {
       this.scripturePanel.activeVerse = this.activeQuestionVerseRef;
     }
+    this.changeDetector.markForCheck();
   }
 
   /**
@@ -1257,6 +1280,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       this.totalVisibleQuestionsString = '0';
       this.updateQuestionRefs();
       this.refreshSummary();
+      this.changeDetector.markForCheck();
       return;
     }
 
@@ -1279,6 +1303,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
     this.updateQuestionRefs();
     this.refreshSummary();
+    this.changeDetector.markForCheck();
   }
 
   private filterQuestions(unfilteredQuestions: readonly QuestionDoc[]): QuestionDoc[] {
@@ -1313,6 +1338,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             t.chapters.find(c => c.number === q.data!.verseRef.chapterNum && c.hasAudio !== true) != null
         ) != null
     );
+    this.changeDetector.markForCheck();
   }
 
   private getAnswerIndex(answer: Answer): number {
@@ -1512,6 +1538,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         this.showScriptureAudioPlayer ? this.scriptureAudioPlayerAreaHeight : answerPanelHeight
       ]);
     }, changeUpdateDelayMs);
+    this.changeDetector.markForCheck();
   }
 
   // Unbind this component from the data when a user is removed from the project, otherwise console
@@ -1526,6 +1553,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     }
     this.questionsQuery = undefined;
     this.projectDoc = undefined;
+    this.changeDetector.markForCheck();
   }
 
   private refreshSummary(): void {

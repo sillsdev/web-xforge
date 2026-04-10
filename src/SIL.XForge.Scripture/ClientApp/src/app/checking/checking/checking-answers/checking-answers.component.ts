@@ -1,6 +1,7 @@
 import { Dir } from '@angular/cdk/bidi';
 import { NgClass } from '@angular/common';
 import {
+  ChangeDetectorRef,
   Component,
   DestroyRef,
   EventEmitter,
@@ -155,6 +156,7 @@ export class CheckingAnswersComponent implements OnInit {
     private readonly fileService: FileService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
+    private readonly changeDetector: ChangeDetectorRef,
     private destroyRef: DestroyRef
   ) {}
 
@@ -192,14 +194,16 @@ export class CheckingAnswersComponent implements OnInit {
     if (questionDoc == null) {
       return;
     }
-    void this.updateQuestionDocAudioUrls();
+    this.changeDetector.markForCheck();
+    this.updateQuestionDocAudioUrls();
     if (this.questionChangeSubscription != null) {
       this.questionChangeSubscription!.unsubscribe();
     }
     this.questionChangeSubscription = questionDoc.remoteChanges$
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(ops => {
-        void this.updateQuestionDocAudioUrls();
+        this.changeDetector.markForCheck();
+        this.updateQuestionDocAudioUrls();
         // If the user hasn't added an answer yet and is able to, then
         // don't hold back any incoming answers from appearing right away
         // as soon as the user adds their answer.
@@ -215,7 +219,10 @@ export class CheckingAnswersComponent implements OnInit {
             const answer = this.allAnswers[op.p[1]];
             if (this.answersHighlightStatus.has(answer.dataId)) {
               this.answersHighlightStatus.set(answer.dataId, false);
-              setTimeout(() => this.answersHighlightStatus.set(answer.dataId, true));
+              setTimeout(() => {
+                this.answersHighlightStatus.set(answer.dataId, true);
+                this.changeDetector.markForCheck();
+              });
             }
           }
         }
@@ -401,7 +408,8 @@ export class CheckingAnswersComponent implements OnInit {
     };
     const dialogResponseDoc: QuestionDoc | undefined = await this.questionDialogService.questionDialog(data);
     if (dialogResponseDoc?.data != null) {
-      void this.updateQuestionDocAudioUrls();
+      this.changeDetector.markForCheck();
+      this.updateQuestionDocAudioUrls();
       this.action.emit({ action: 'edit', questionDoc: dialogResponseDoc });
     }
   }
@@ -526,6 +534,7 @@ export class CheckingAnswersComponent implements OnInit {
     const userDoc = await this.userService.getCurrentUser();
     if (this.onlineStatusService.isOnline && userDoc.data?.isDisplayNameConfirmed !== true) {
       await this.userService.editDisplayName(true);
+      this.changeDetector.markForCheck();
     }
     this.emitAnswerToSave(response);
   }
@@ -577,14 +586,18 @@ export class CheckingAnswersComponent implements OnInit {
     return result;
   }
 
-  private async updateQuestionDocAudioUrls(): Promise<void> {
+  private updateQuestionDocAudioUrls(): void {
     this.fileSources.clear();
     if (this.questionDoc?.data == null) {
       return;
     }
-    void this.cacheFileSource(this.questionDoc, this.questionDoc.data.dataId, this.questionDoc.data.audioUrl);
+    void this.cacheFileSource(this.questionDoc, this.questionDoc.data.dataId, this.questionDoc.data.audioUrl).then(() =>
+      this.changeDetector.markForCheck()
+    );
     for (const answer of this.questionDoc.getAnswers()) {
-      void this.cacheFileSource(this.questionDoc, answer.dataId, answer.audioUrl);
+      void this.cacheFileSource(this.questionDoc, answer.dataId, answer.audioUrl).then(() =>
+        this.changeDetector.markForCheck()
+      );
     }
   }
 
@@ -606,6 +619,7 @@ export class CheckingAnswersComponent implements OnInit {
       for (const answer of this.answers) {
         this.answersHighlightStatus.set(answer.dataId, this.shouldDrawAttentionToAnswer(answer));
       }
+      this.changeDetector.markForCheck();
     });
   }
 
@@ -624,7 +638,8 @@ export class CheckingAnswersComponent implements OnInit {
         this.hideAnswerForm();
         this.submittingAnswer = false;
         this.justEditedAnswer = true;
-        void this.updateQuestionDocAudioUrls();
+        this.changeDetector.markForCheck();
+        this.updateQuestionDocAudioUrls();
       }
     });
   }
@@ -635,6 +650,7 @@ export class CheckingAnswersComponent implements OnInit {
     }
     void this.projectService.isProjectAdmin(this.projectId, this.userService.currentUserId).then(isProjectAdmin => {
       this.isProjectAdmin = isProjectAdmin;
+      this.changeDetector.markForCheck();
     });
   }
 

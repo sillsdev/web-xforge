@@ -120,6 +120,8 @@ public interface IMachineApiService
         bool isServalAdmin,
         CancellationToken cancellationToken
     );
+
+    [LogEventMetric(EventScope.Drafting, nameof(curUserId), nameof(sfProjectId), captureReturnValue: false)]
     Task<string> GetPreTranslationUsfmAsync(
         string curUserId,
         string sfProjectId,

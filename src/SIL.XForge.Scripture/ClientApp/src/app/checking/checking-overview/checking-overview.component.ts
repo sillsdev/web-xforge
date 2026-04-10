@@ -1,5 +1,6 @@
 import { NgClass } from '@angular/common';
-import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButton, MatIconButton, MatMiniFabButton } from '@angular/material/button';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import {
@@ -20,8 +21,8 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { asyncScheduler, merge, Subscription } from 'rxjs';
-import { map, tap, throttleTime } from 'rxjs/operators';
+import { asyncScheduler, combineLatest, merge, Subscription } from 'rxjs';
+import { map, startWith, tap, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { DonutChartComponent } from 'xforge-common/donut-chart/donut-chart.component';
@@ -73,22 +74,26 @@ import { QuestionDialogService } from '../question-dialog/question-dialog.servic
     MatCard,
     MatCardContent,
     L10nNumberPipe
-  ]
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CheckingOverviewComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   texts: TextInfo[] = [];
   projectId?: string;
+  questionsLoaded: boolean = false;
 
   private questionDocs = new Map<string, QuestionDoc[]>();
   private textsByBookId?: TextsByBookId;
   private projectDoc?: SFProjectProfileDoc;
   private dataChangesSub?: Subscription;
+  private questionsLoadedSub?: Subscription;
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
   private questionsQuery?: RealtimeQuery<QuestionDoc>;
 
   constructor(
     private readonly destroyRef: DestroyRef,
     private readonly activatedRoute: ActivatedRoute,
+    private readonly changeDetector: ChangeDetectorRef,
     private readonly dialogService: DialogService,
     noticeService: NoticeService,
     readonly i18n: I18nService,
@@ -207,11 +212,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return this.questionsQuery.docs.filter(qd => qd.data != null && !qd.data.isArchived);
   }
 
-  private get questionsLoaded(): boolean {
-    // if the user is offline, 'ready' will never be true, but the query will still return the offline docs
-    return !this.onlineStatusService.isOnline || this.questionsQuery?.ready === true;
-  }
-
   ngOnInit(): void {
     let projectDocPromise: Promise<SFProjectProfileDoc>;
     const projectId$ = this.activatedRoute.params.pipe(
@@ -223,6 +223,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     );
     projectId$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async projectId => {
       this.loadingStarted();
+      this.changeDetector.markForCheck();
       this.projectId = projectId;
       try {
         this.projectDoc = await projectDocPromise;
@@ -238,14 +239,13 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         this.loadingFinished();
       }
 
-      if (this.dataChangesSub != null) {
-        this.dataChangesSub.unsubscribe();
-      }
+      this.dataChangesSub?.unsubscribe();
       this.dataChangesSub = merge(
         this.projectDoc.remoteChanges$,
         this.questionsQuery.remoteChanges$,
         this.questionsQuery.localChanges$
       )
+        .pipe(quietTakeUntilDestroyed(this.destroyRef))
         // TODO Find a better solution than merely throttling remote changes
         .pipe(throttleTime(1000, asyncScheduler, { leading: true, trailing: true }))
         .subscribe(() => {
@@ -255,11 +255,30 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
             }
           }
         });
+
+      this.questionsLoadedSub?.unsubscribe();
+      this.questionsLoadedSub = combineLatest([
+        this.onlineStatusService.onlineStatus$.pipe(startWith(this.onlineStatusService.isOnline)),
+        this.questionsQuery.ready$.pipe(startWith(this.questionsQuery?.ready))
+      ])
+        .pipe(quietTakeUntilDestroyed(this.destroyRef))
+        .pipe(map(([isOnline, ready]) => !isOnline || ready === true))
+        .subscribe(loaded => {
+          // Show the loading indicator if the questions are not yet ready
+          if (!loaded) {
+            this.loadingStarted();
+          } else {
+            this.loadingFinished();
+          }
+
+          // if the user is offline, 'ready' will never be true, but the query will still return the offline docs
+          this.questionsLoaded = loaded;
+          this.changeDetector.markForCheck();
+        });
     });
   }
 
   ngOnDestroy(): void {
-    this.dataChangesSub?.unsubscribe();
     this.questionsQuery?.dispose();
   }
 
@@ -356,6 +375,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
           if (questionDoc.data!.isArchived !== archive) this.setQuestionArchiveStatus(questionDoc, archive);
         }
       }
+
+      this.changeDetector.markForCheck();
     }
   }
 
@@ -364,6 +385,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       for (const questionDoc of this.getQuestionDocs(this.getTextDocIdType(text.bookNum, chapter.number), !archive)) {
         if (questionDoc.data!.isArchived !== archive) this.setQuestionArchiveStatus(questionDoc, archive);
       }
+
+      this.changeDetector.markForCheck();
     }
   }
 
@@ -454,7 +477,15 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       userId: this.userService.currentUserId,
       textsByBookId: this.textsByBookId
     };
-    this.dialogService.openMatDialog(ImportQuestionsDialogComponent, { data });
+    this.changeDetector.detach();
+    const dialogRef = this.dialogService.openMatDialog(ImportQuestionsDialogComponent, { data });
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.changeDetector.reattach();
+        this.changeDetector.markForCheck();
+      });
   }
 
   getBookName(text: TextInfo): string {
@@ -511,6 +542,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     for (const questionDoc of this.questionsQuery.docs) {
       this.addQuestionDoc(questionDoc);
     }
+
+    this.changeDetector.markForCheck();
   }
 
   private addQuestionDoc(questionDoc: QuestionDoc): void {

@@ -1,5 +1,5 @@
 import { Dir } from '@angular/cdk/bidi';
-import { Component, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { MatSlider, MatSliderDragEvent, MatSliderThumb } from '@angular/material/slider';
 import { TranslocoModule } from '@ngneat/transloco';
@@ -23,6 +23,7 @@ export class AudioPlayerComponent extends AudioPlayerBaseComponent implements On
 
   constructor(
     onlineStatusService: OnlineStatusService,
+    private readonly changeDetector: ChangeDetectorRef,
     readonly i18n: I18nService
   ) {
     super(onlineStatusService);
@@ -52,6 +53,7 @@ export class AudioPlayerComponent extends AudioPlayerBaseComponent implements On
     this._timeUpdatedSubscription = this.audio?.timeUpdated$.subscribe(() => {
       this._currentTime = this.audio?.currentTime ?? 0;
       this._seek = this.audio?.seek ?? 0;
+      this.changeDetector.markForCheck();
     });
   }
 
@@ -63,5 +65,6 @@ export class AudioPlayerComponent extends AudioPlayerBaseComponent implements On
   onSeek(event: MatSliderDragEvent): void {
     this._seek = event.value;
     this.audio?.setSeek(this._seek);
+    this.changeDetector.markForCheck();
   }
 }
