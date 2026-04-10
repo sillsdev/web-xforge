@@ -552,7 +552,7 @@
     "number_answers": "Número de respuestas",
     "scripture_forge": "Scripture Forge",
     "some_questions_edited": "Algunas preguntas han sido editadas",
-    "transcelerator": "Transcelerator"
+    "update_to": "Update to"
   },
   "import_questions_dialog": {
     "back": "Atrás",
@@ -582,7 +582,7 @@
     "import_questions": "Importar preguntas",
     "import": "Importar",
     "invalid_csv_rows_will_be_skipped": "Estas filas del archivo CSV no eran válidas y se omitirán.",
-    "invalid_spreadsheet": "The file is missing text in the {{ boldStart }}Reference{{ boldEnd }} or {{ boldStart }}Question{{ boldEnd }} columns. Please check and update the file.",
+    "invalid_spreadsheet": "Falta texto en las columnas {{ boldStart }}Referencia{{ boldEnd }} o {{ boldStart }}Pregunta{{ boldEnd }} . Por favor, compruebe y actualice el archivo.",
     "learn_more": "Más información",
     "loading": "Cargando...",
     "missing_header_row": "El archivo que ha importado debe tener una fila de cabecera con columnas tituladas {{ boldStart }}Referencia{{ boldEnd }} y {{ boldStart }}Pregunta{{ boldEnd }}.",
