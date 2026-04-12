@@ -1,5 +1,6 @@
 #nullable disable warnings
 using System;
+using Autofac;
 using Hangfire;
 using Hangfire.Mongo;
 using Hangfire.Mongo.Migration.Strategies;
@@ -22,19 +23,25 @@ public static class DataAccessServiceCollectionExtensions
         var options = configuration.GetOptions<DataAccessOptions>();
         string jobDatabaseName = options.JobDatabaseName ?? options.Prefix + "_jobs";
         services.AddHangfireServer();
-        services.AddHangfire(x =>
-            x.UseMongoStorage(
-                $"{options.ConnectionString}/{jobDatabaseName}",
-                new MongoStorageOptions
-                {
-                    CheckQueuedJobsStrategy = CheckQueuedJobsStrategy.TailNotificationsCollection,
-                    SlidingInvisibilityTimeout = TimeSpan.FromMinutes(10),
-                    MigrationOptions = new MongoMigrationOptions
+        services.AddHangfire(
+            (provider, config) =>
+            {
+                config.UseMongoStorage(
+                    $"{options.ConnectionString}/{jobDatabaseName}",
+                    new MongoStorageOptions
                     {
-                        MigrationStrategy = new MigrateMongoMigrationStrategy(),
-                    },
-                }
-            )
+                        CheckQueuedJobsStrategy = CheckQueuedJobsStrategy.TailNotificationsCollection,
+                        SlidingInvisibilityTimeout = TimeSpan.FromMinutes(10),
+                        MigrationOptions = new MongoMigrationOptions
+                        {
+                            MigrationStrategy = new MigrateMongoMigrationStrategy(),
+                        },
+                    }
+                );
+                // Configure Hangfire to use Autofac
+                var scope = provider.GetRequiredService<ILifetimeScope>();
+                config.UseAutofacActivator(scope);
+            }
         );
 
         DataAccessClassMap.RegisterConventions(
