@@ -23,13 +23,12 @@ public static class Program
             .ConfigureHostConfiguration(config =>
             {
                 config.SetBasePath(Directory.GetCurrentDirectory());
-                config.AddCommandLine(args);
 
                 // Load hosting.json first, then environment-specific
                 string environment =
                     Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
                     ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
-                    ?? "Production";
+                    ?? "Development";
                 var tempConfig = new ConfigurationBuilder()
                     .SetBasePath(Directory.GetCurrentDirectory())
                     .AddJsonFile("hosting.json", optional: true, reloadOnChange: true)
@@ -42,6 +41,7 @@ public static class Program
                 }
 
                 config.AddEnvironmentVariables();
+                config.AddCommandLine(args);
             })
             .ConfigureWebHostDefaults(webHostBuilder => webHostBuilder.UseStartup<Startup>())
             .ConfigureAppConfiguration(
