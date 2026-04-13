@@ -1,0 +1,89 @@
+// Writes a JSON file with a list of documents larger than 10MB across databases and collections, starting with largest.
+
+const databases = ["xforge_machine", "sf_jobs", "xforge"];
+let allResults = [];
+
+const now = new Date();
+const year = now.getFullYear();
+const month = String(now.getMonth() + 1).padStart(2, "0");
+const day = String(now.getDate()).padStart(2, "0");
+const hour = String(now.getHours()).padStart(2, "0");
+const minute = String(now.getMinutes()).padStart(2, "0");
+const second = String(now.getSeconds()).padStart(2, "0");
+const outputFileName = `large-documents-${year}-${month}-${day}-${hour}${minute}${second}.json`;
+
+function getTimestamp() {
+  const timestamp = new Date();
+  const timestampYear = timestamp.getFullYear();
+  const timestampMonth = String(timestamp.getMonth() + 1).padStart(2, "0");
+  const timestampDay = String(timestamp.getDate()).padStart(2, "0");
+  const timestampHour = String(timestamp.getHours()).padStart(2, "0");
+  const timestampMinute = String(timestamp.getMinutes()).padStart(2, "0");
+  const timestampSecond = String(timestamp.getSeconds()).padStart(2, "0");
+
+  return `${timestampYear}-${timestampMonth}-${timestampDay} ${timestampHour}:${timestampMinute}:${timestampSecond}`;
+}
+
+databases.forEach(dbName => {
+  const currentDb = db.getSiblingDB(dbName);
+  const collections = currentDb.getCollectionNames();
+
+  console.log(`${getTimestamp()} Checking ${collections.length} collections in database "${dbName}"...`);
+
+  collections.forEach(collectionName => {
+    const results = currentDb[collectionName]
+      .aggregate([
+        {
+          $project: {
+            _id: 1,
+            size: { $bsonSize: "$$ROOT" }
+          }
+        },
+        {
+          $match: { size: { $gt: 10000000 } }
+        },
+        {
+          $project: {
+            _id: 1,
+            size: 1,
+            collection: collectionName,
+            database: dbName
+          }
+        }
+      ])
+      .toArray();
+
+    allResults = allResults.concat(results);
+  });
+});
+
+console.log(
+  `${getTimestamp()} Found ${allResults.length} documents larger than 10MB across all databases and collections.`
+);
+
+// Sort by size descending
+allResults.sort((a, b) => b.size - a.size);
+
+// Normalize _id values to id (handle both $oid and plain formats)
+allResults = allResults.map(doc => {
+  let id;
+  if (doc._id && typeof doc._id === "object" && doc._id.$oid) {
+    // "_id": { "$oid": "1234" } -> "id": "1234"
+    id = doc._id.$oid;
+  } else {
+    // "_id": "1234" -> "id": "1234"
+    id = doc._id;
+  }
+
+  return {
+    id: id,
+    size: doc.size,
+    collection: doc.collection,
+    database: doc.database
+  };
+});
+
+// Write results to file
+const fs = require("fs");
+fs.writeFileSync(outputFileName, EJSON.stringify(allResults, null, 2));
+console.log(`${getTimestamp()} Wrote results to ${outputFileName}`);
