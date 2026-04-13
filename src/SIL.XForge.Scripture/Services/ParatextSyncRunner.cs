@@ -79,6 +79,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     private readonly IDeltaUsxMapper _deltaUsxMapper;
     private readonly IParatextNotesMapper _notesMapper;
     private readonly ILogger<ParatextSyncRunner> _logger;
+    private readonly IExceptionHandler _exceptionHandler;
     private readonly IGuidService _guidService;
     private readonly IHubContext<NotificationHub, INotifier> _hubContext;
 
@@ -103,6 +104,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         IParatextNotesMapper notesMapper,
         IHubContext<NotificationHub, INotifier> hubContext,
         ILogger<ParatextSyncRunner> logger,
+        IExceptionHandler exceptionHandler,
         IGuidService guidService
     )
     {
@@ -118,6 +120,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         _notesMapper = notesMapper;
         _guidService = guidService;
         _hubContext = hubContext;
+        _exceptionHandler = exceptionHandler;
         _guidService = guidService;
     }
 
@@ -466,7 +469,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
         }
         catch (Exception e)
         {
-            if (e is not TaskCanceledException)
+            // OperationCanceledException is thrown by the MongoDB Driver when a sync is canceled
+            if (e is not TaskCanceledException and not OperationCanceledException)
             {
                 StringBuilder additionalInformation = new StringBuilder();
                 foreach (var key in e.Data.Keys)
@@ -479,6 +483,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 _syncMetrics.ErrorDetails = $"{e}{Environment.NewLine}{message}";
                 _logger.LogError(e, message);
                 LogMetric(message);
+                _exceptionHandler.ReportException(e);
             }
 
             await CompleteSync(false, canRollbackParatext, token);

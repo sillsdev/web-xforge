@@ -73,9 +73,10 @@ public class ParatextSyncRunnerTests
         SFProject project = env.VerifyProjectSync(false);
         Assert.That(project.Sync.DataInSync, Is.False);
 
-        // Check that the failure was logged in the sync metrics
+        // Check that the failure was logged in the sync metrics and reported to bugsnag
         SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
         Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Failed));
+        env.ExceptionHandler.Received().ReportException(Arg.Any<Exception>());
     }
 
     [Test]
@@ -3633,6 +3634,7 @@ public class ParatextSyncRunnerTests
             NotesMapper = Substitute.For<IParatextNotesMapper>();
             var hubContext = Substitute.For<IHubContext<NotificationHub, INotifier>>();
             MockLogger = new MockLogger<ParatextSyncRunner>();
+            ExceptionHandler = Substitute.For<IExceptionHandler>();
             GuidService = Substitute.For<IGuidService>();
             GuidService.NewObjectId().Returns($"syncuser0{_guidStartNum++}");
 
@@ -3648,6 +3650,7 @@ public class ParatextSyncRunnerTests
                 NotesMapper,
                 hubContext,
                 MockLogger,
+                ExceptionHandler,
                 GuidService
             );
         }
@@ -3661,6 +3664,7 @@ public class ParatextSyncRunnerTests
         public IRealtimeService SubstituteRealtimeService { get; }
         public IDeltaUsxMapper DeltaUsxMapper { get; }
         public MockLogger<ParatextSyncRunner> MockLogger { get; }
+        public IExceptionHandler ExceptionHandler { get; }
         public IGuidService GuidService { get; }
 
         /// <summary>
