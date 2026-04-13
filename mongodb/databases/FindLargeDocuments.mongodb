@@ -31,7 +31,8 @@ databases.forEach(dbName => {
   console.log(`${getTimestamp()} Checking ${collections.length} collections in database "${dbName}"...`);
 
   collections.forEach(collectionName => {
-    const results = currentDb[collectionName]
+    const results = currentDb
+      .getCollection(collectionName)
       .aggregate([
         {
           $project: {
@@ -40,7 +41,7 @@ databases.forEach(dbName => {
           }
         },
         {
-          $match: { size: { $gt: 10000000 } }
+          $match: { size: { $gt: 10_000_000 } }
         },
         {
           $project: {
@@ -64,19 +65,12 @@ console.log(
 // Sort by size descending
 allResults.sort((a, b) => b.size - a.size);
 
-// Normalize _id values to id (handle both $oid and plain formats)
 allResults = allResults.map(doc => {
-  let id;
-  if (doc._id && typeof doc._id === "object" && doc._id.$oid) {
-    // "_id": { "$oid": "1234" } -> "id": "1234"
-    id = doc._id.$oid;
-  } else {
-    // "_id": "1234" -> "id": "1234"
-    id = doc._id;
-  }
-
   return {
-    id: id,
+    // _id values will be normalized from both string and ObjectId types.
+    // "_id": { "$oid": "1234" } -> "id": "1234"
+    // "_id": "1234" -> "id": "1234"
+    id: doc._id.toString(),
     size: doc.size,
     collection: doc.collection,
     database: doc.database
