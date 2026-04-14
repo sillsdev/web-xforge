@@ -59,7 +59,7 @@
       </mat-card-header>
       <mat-card-content>
         <p>
-          This value must be a valid JSON string. See the
+          This value must be valid JSON. See the
           <a href="https://github.com/sillsdev/serval/wiki/NMT-Build-Options" target="_blank">Serval Wiki</a> for
           configuration values.
         </p>
@@ -82,10 +82,7 @@
         <mat-card-title>Quality Estimation Configuration</mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <p>
-          This value must be a valid JSON string, and will be in the file linregress.json created by
-          quality_estimation.py.
-        </p>
+        <p>This value must be valid JSON, and will be in the file linregress.json created by quality_estimation.py.</p>
         <mat-form-field [formGroup]="form" appearance="outline" class="quality-estimation-config-field">
           <mat-label>Quality Estimation Configuration (JSON)</mat-label>
           <textarea
