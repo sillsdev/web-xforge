@@ -2083,7 +2083,9 @@ class TestEnvironment {
     const cutKeyCode = 'x';
     const matchingBindings = (this.component.editor!.keyboard as any).bindings[cutKeyCode].filter(
       (bindingItem: any) =>
-        (bindingItem.ctrlKey || bindingItem.metaKey) && bindingItem.handler.toString().includes('isDeleteAllowed')
+        (bindingItem.ctrlKey || bindingItem.metaKey) &&
+        !bindingItem.shiftKey &&
+        bindingItem.handler.toString().includes('isDeleteAllowed')
     );
     expect(matchingBindings.length)
       .withContext('setup: should be grabbing a single, specific binding in quill with the desired handler')
@@ -2097,7 +2099,7 @@ class TestEnvironment {
   quillHandleDelete(range: QuillRange): boolean {
     const deleteKeyCode = 'Delete';
     const matchingBindings = (this.component.editor!.keyboard as any).bindings[deleteKeyCode].filter(
-      (bindingItem: any) => bindingItem.handler.toString().includes('isDeleteAllowed')
+      (bindingItem: any) => !bindingItem.shiftKey && bindingItem.handler.toString().includes('isDeleteAllowed')
     );
     expect(matchingBindings.length)
       .withContext('setup: should be grabbing a single, specific binding in quill with the desired handler')
