@@ -376,7 +376,9 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
       project == null ||
       projectId == null ||
       (this.form.value.qualityEstimationConfig ?? '') ===
-        (project.translateConfig.draftConfig.qualityEstimationConfig ?? '')
+        (project.translateConfig.draftConfig.qualityEstimationConfig == null
+          ? ''
+          : JSON.stringify(project.translateConfig.draftConfig.qualityEstimationConfig))
     ) {
       this.qualityEstimationConfigUpdateState = ElementState.InSync;
       return;
