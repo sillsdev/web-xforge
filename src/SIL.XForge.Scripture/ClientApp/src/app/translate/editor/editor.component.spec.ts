@@ -1945,6 +1945,7 @@ describe('EditorComponent', () => {
       const length = 3;
       const noteEmbedLength = 1;
       let notePosition = env.getNoteThreadEditorPosition('dataid01');
+      env.targetEditor.setSelection(notePosition); // Emulate mouse click into segment
       env.targetEditor.setSelection(notePosition - length, length, 'user');
       env.deleteCharacters();
       expect(noteThreadDoc.data!.position).toEqual({ start: 8 - length, length: 9 });
@@ -2049,6 +2050,7 @@ describe('EditorComponent', () => {
       const position: number = env.getNoteThreadEditorPosition('dataid03');
       const length = 9;
       // $target: chapter 1, |->$$verse 3<-|.
+      env.targetEditor.setSelection(position); // Emulate mouse click into segment
       env.targetEditor.setSelection(position, length, 'api');
       env.deleteCharacters();
       const range: Range = env.component.target!.getSegmentRange('verse_1_3')!;
@@ -2073,6 +2075,7 @@ describe('EditorComponent', () => {
       env.wait();
 
       // 1 target: $chapter|-> 1, $ve<-|rse 1.
+      env.targetEditor.setSelection(19); // Emulate mouse click into segment
       env.targetEditor.setSelection(19, 7, 'user');
       env.deleteCharacters();
       const note1 = env.getNoteThreadDoc('project01', 'dataid01');
@@ -2109,6 +2112,7 @@ describe('EditorComponent', () => {
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
       // delete text that spans across the end boundary
       const notePosition = env.getNoteThreadEditorPosition('dataid01');
+      env.targetEditor.setSelection(notePosition); // Emulate mouse click into segment
       const deletionLength = 10;
       const noteEmbedLength: number = 1;
       // Arbitrary text position within thread anchoring, at which to start deleting.
@@ -2171,6 +2175,7 @@ describe('EditorComponent', () => {
 
       // delete the entire text anchor
       let notePosition = env.getNoteThreadEditorPosition('dataid01');
+      env.targetEditor.setSelection(notePosition); // Emulate mouse click into segment
       let length = 9;
       env.targetEditor.setSelection(notePosition + 1, length, 'user');
       env.deleteCharacters();
@@ -2181,6 +2186,7 @@ describe('EditorComponent', () => {
       expect(noteThreadDoc.data!.position).toEqual({ start: 20, length: 7 });
       notePosition = env.getNoteThreadEditorPosition('dataid03');
       length = 8;
+      env.targetEditor.setSelection(notePosition); // Emulate mouse click into segment
       env.targetEditor.setSelection(notePosition + 1, length, 'user');
       env.deleteCharacters();
       expect(noteThreadDoc.data!.position).toEqual({ start: 0, length: 0 });
@@ -2275,6 +2281,7 @@ describe('EditorComponent', () => {
       expect(noteThreadDoc.data!.position).toEqual(origNoteAnchor);
 
       const notePosition: number = env.getNoteThreadEditorPosition('dataid01');
+      env.targetEditor.setSelection(notePosition); // Emulate mouse click into segment
       const deleteStart: number = notePosition + 1;
       const text = 'chap';
 
@@ -2354,6 +2361,7 @@ describe('EditorComponent', () => {
       expect(env.getNoteThreadEditorPosition('dataid05')).toEqual(verse4p1Index);
       // user deletes all of the text in segment before
       const range = env.component.target!.getSegmentRange('verse_1_4')!;
+      env.targetEditor.setSelection(range.index); // Emulate mouse click into segment
       env.targetEditor.setSelection(range.index, range.length, 'user');
       env.deleteCharacters();
       expect(noteThreadDoc.data!.position).toEqual({ start: 2, length: 9 });
@@ -2637,6 +2645,7 @@ describe('EditorComponent', () => {
       expect(textDoc.data!.ops![3].insert).toEqual('target: chapter 1, verse 1.');
       const note1Position: number = env.getNoteThreadEditorPosition('dataid01');
       // target: |->$<-|chapter 1, $verse 1.
+      env.targetEditor.setSelection(note1Position); // Emulate mouse click into segment
       env.targetEditor.setSelection(note1Position, 1, 'user');
       env.deleteCharacters();
       const positionAfterDelete: number = env.getNoteThreadEditorPosition('dataid01');
@@ -2706,6 +2715,7 @@ describe('EditorComponent', () => {
       const note4Position: number = env.getNoteThreadEditorPosition('dataid04');
       deleteLength = 6;
       // $target: chapter 1|->, $$ve<-|rse 3.
+      env.targetEditor.setSelection(note3Position); // Emulate mouse click into segment
       env.targetEditor.setSelection(note3Position - beforeNoteLength, deleteLength, 'api');
       env.deleteCharacters();
       newNotePosition = env.getNoteThreadEditorPosition('dataid03');
