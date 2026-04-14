@@ -148,20 +148,21 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
     this.loadingStarted();
 
     // Get the current user and pre-fill the form
-    this.userService
-      .getCurrentUser()
-      .then(userDoc => {
-        const user: Readonly<User | undefined> = userDoc.data;
-        if (user != null) {
-          // Omit email if it's a noreply email
-          const userEmail = user.email?.includes('@users.noreply.scriptureforge.org') ? '' : (user.email ?? '');
-          this.signupForm.patchValue({
-            name: user.displayName || user.name || '',
-            email: userEmail
-          });
-        }
-      })
-      .catch(err => console.error('Error loading user:', err));
+    void this.userService.getCurrentUser().then(userDoc => {
+      const user: Readonly<User | undefined> = userDoc.data;
+      if (user != null) {
+        // Omit email if it's a noreply email
+        const userEmail = user.email?.includes('@users.noreply.scriptureforge.org') ? '' : (user.email ?? '');
+        this.signupForm.patchValue({
+          name: user.displayName || user.name || '',
+          email: userEmail
+        });
+      }
+    });
+
+    this.signupForm.controls.translationLanguageIsoCode.setValue(
+      this.activatedProject.projectDoc?.data?.writingSystem.tag ?? ''
+    );
 
     // Load available projects and resources
     void this.loadProjectsAndResources();
