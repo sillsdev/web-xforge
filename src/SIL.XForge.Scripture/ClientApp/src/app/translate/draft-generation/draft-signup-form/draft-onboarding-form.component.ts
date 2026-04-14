@@ -163,6 +163,10 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
       })
       .catch(err => console.error('Error loading user:', err));
 
+    this.signupForm.controls.translationLanguageIsoCode.setValue(
+      this.activatedProject.projectDoc?.data?.writingSystem.tag ?? ''
+    );
+
     // Load available projects and resources
     void this.loadProjectsAndResources();
 
