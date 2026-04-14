@@ -24,32 +24,32 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { RouterLinkDirective } from 'xforge-common/router-link.directive';
-import { isPopulatedString } from '../../type-utils';
-import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
-import { ParatextService } from '../core/paratext.service';
-import { DevOnlyComponent } from '../shared/dev-only/dev-only.component';
-import { JsonViewerComponent } from '../shared/json-viewer/json-viewer.component';
-import { MobileNotSupportedComponent } from '../shared/mobile-not-supported/mobile-not-supported.component';
-import { NoticeComponent } from '../shared/notice/notice.component';
-import { projectLabel } from '../shared/utils';
-import { normalizeLanguageCodeToISO639_3 } from '../translate/draft-generation/draft-utils';
+import { isPopulatedString } from '../../../type-utils';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
+import { ParatextService } from '../../core/paratext.service';
+import { DevOnlyComponent } from '../../shared/dev-only/dev-only.component';
+import { JsonViewerComponent } from '../../shared/json-viewer/json-viewer.component';
+import { MobileNotSupportedComponent } from '../../shared/mobile-not-supported/mobile-not-supported.component';
+import { NoticeComponent } from '../../shared/notice/notice.component';
+import { projectLabel } from '../../shared/utils';
+import { normalizeLanguageCodeToISO639_3 } from '../../translate/draft-generation/draft-utils';
 import {
   DraftingSignupFormData,
-  DraftRequestResolutionKey,
-  DraftRequestResolutionMetadata,
   OnboardingRequest,
+  OnboardingRequestResolutionKey,
+  OnboardingRequestResolutionMetadata,
   OnboardingRequestService
-} from '../translate/draft-generation/onboarding-request.service';
-import { ServalAdministrationService } from './serval-administration.service';
+} from '../../translate/draft-generation/onboarding-request.service';
+import { ServalAdministrationService } from '../serval-administration.service';
 
 /**
- * Component for displaying a single draft request's full details.
+ * Component for displaying a single onboarding request's full details.
  * Accessible from the Serval Administration interface.
  */
 @Component({
-  selector: 'app-draft-request-detail',
-  templateUrl: './draft-request-detail.component.html',
-  styleUrls: ['./draft-request-detail.component.scss'],
+  selector: 'app-onboarding-request-detail',
+  templateUrl: './onboarding-request-detail.component.html',
+  styleUrls: ['./onboarding-request-detail.component.scss'],
   imports: [
     CommonModule,
     FormsModule,
@@ -74,7 +74,7 @@ import { ServalAdministrationService } from './serval-administration.service';
     NoticeComponent
   ]
 })
-export class DraftRequestDetailComponent extends DataLoadingComponent implements OnInit {
+export class OnboardingRequestDetailComponent extends DataLoadingComponent implements OnInit {
   request?: OnboardingRequest;
   mainProjectDoc?: SFProjectProfileDoc;
   projectName?: string;
@@ -102,7 +102,7 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
       void this.loadRequest(requestId);
     } else {
       this.noticeService.showError('No request ID provided');
-      void this.router.navigate(['/serval-administration'], { queryParams: { tab: 'draft-requests' } });
+      void this.router.navigate(['/serval-administration'], { queryParams: { tab: 'onboarding-requests' } });
     }
   }
 
@@ -175,7 +175,7 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
   }
 
   goBack(): void {
-    void this.router.navigate(['/serval-administration'], { queryParams: { tab: 'draft-requests' } });
+    void this.router.navigate(['/serval-administration'], { queryParams: { tab: 'onboarding-requests' } });
   }
 
   async downloadProject(id: string): Promise<void> {
@@ -224,7 +224,7 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
     return ParatextService.isResource(paratextId) ? 'Download DBL resource' : 'Download Paratext project';
   }
 
-  getResolution(resolution: DraftRequestResolutionKey): DraftRequestResolutionMetadata {
+  getResolution(resolution: OnboardingRequestResolutionKey): OnboardingRequestResolutionMetadata {
     return this.onboardingRequestService.getResolution(resolution);
   }
 
@@ -316,7 +316,7 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
     return `poetry run python -m silnlp.common.onboard_project --copy-from $DOWNLOAD_FOLDER --extract-corpora --collect-verse-counts --wildebeest --datestamp ${zipFileNames.join(' ')}`;
   }
 
-  /** Adds a comment to the current draft request. */
+  /** Adds a comment to the current onboarding request. */
   async addComment(): Promise<void> {
     if (this.request == null || this.newCommentText == null || this.newCommentText.trim() === '') {
       return;
@@ -344,14 +344,14 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
     }
   }
 
-  /** Deletes the current draft request after confirmation, then returns to the list. */
+  /** Deletes the current onboarding request after confirmation, then returns to the list. */
   async deleteRequest(): Promise<void> {
     if (this.request == null) {
       return;
     }
 
     const result = await this.dialogService.confirm(
-      of('Are you sure you want to delete this draft request? This action cannot be undone.'),
+      of('Are you sure you want to delete this onboarding request? This action cannot be undone.'),
       of('Delete')
     );
 
@@ -362,11 +362,11 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
     this.loadingStarted();
     try {
       await this.onboardingRequestService.deleteRequest(this.request.id);
-      this.noticeService.show('Draft request deleted');
-      void this.router.navigate(['/serval-administration'], { queryParams: { tab: 'draft-requests' } });
+      this.noticeService.show('Onboarding request deleted');
+      void this.router.navigate(['/serval-administration'], { queryParams: { tab: 'onboarding-requests' } });
     } catch (error) {
-      console.error('Error deleting draft request:', error);
-      this.noticeService.showError('Failed to delete draft request');
+      console.error('Error deleting onboarding request:', error);
+      this.noticeService.showError('Failed to delete onboarding request');
     } finally {
       this.loadingFinished();
     }
@@ -468,9 +468,9 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
    * exported data and displayed data. It may have been the wrong call but it kept things simpler.
    */
   private getDataForExport(): string {
-    const pairs = [...document.querySelectorAll('app-draft-request-detail .info-row:not(.skip-in-data-export)')].map(
-      e => [e.querySelector('.label')?.textContent, e.querySelector('.value')?.textContent]
-    );
+    const pairs = [
+      ...document.querySelectorAll('app-onboarding-request-detail .info-row:not(.skip-in-data-export)')
+    ].map(e => [e.querySelector('.label')?.textContent, e.querySelector('.value')?.textContent]);
     pairs.push(['Additional Comments:', this.request?.submission.formData.additionalComments ?? '']);
 
     return Papa.unparse(pairs, { delimiter: '\t' });

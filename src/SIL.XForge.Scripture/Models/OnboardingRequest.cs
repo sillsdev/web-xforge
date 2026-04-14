@@ -21,7 +21,7 @@ public class OnboardingRequest : IIdentifiable
     /// <summary>
     /// Admin comments on this drafting signup request.
     /// </summary>
-    public List<DraftRequestComment> Comments { get; set; } = [];
+    public List<OnboardingRequestComment> Comments { get; set; } = [];
 
     /// <summary>
     /// The ID of the user assigned to handle this request. Empty string means unassigned.
@@ -124,7 +124,7 @@ public class OnboardingRequestFormData
 /// <summary>
 /// A comment on a drafting signup request, created by Serval admins.
 /// </summary>
-public class DraftRequestComment
+public class OnboardingRequestComment
 {
     /// <summary>
     /// The unique ID of this comment.
