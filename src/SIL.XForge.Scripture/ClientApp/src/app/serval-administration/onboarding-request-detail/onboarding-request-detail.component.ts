@@ -93,7 +93,7 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
     private readonly dialogService: DialogService,
     protected readonly noticeService: NoticeService
   ) {
-    super(noticeService, 'DraftRequestDetailComponent');
+    super(noticeService, 'OnboardingRequestDetailComponent');
   }
 
   ngOnInit(): void {
