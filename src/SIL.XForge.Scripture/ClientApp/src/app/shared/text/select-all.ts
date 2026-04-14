@@ -55,12 +55,15 @@ export class SelectAll {
 
       updatingSelection = true;
 
-      // Do not allow selecting further than the current segment
-      const length: number =
-        textComponent.segment == null
-          ? 0
-          : textComponent.segment.range.index + textComponent.segment?.range.length - range.index;
-      quill.setSelection(range.index, length, 'silent');
+      // Do not allow selecting before or further than the current segment
+      let index: number = 0;
+      let length: number = 0;
+      if (textComponent.segment != null) {
+        index = range.index < textComponent.segment.range.index ? textComponent.segment.range.index : range.index;
+        length = textComponent.segment.range.index + textComponent.segment?.range.length - range.index;
+      }
+
+      quill.setSelection(index, length, 'silent');
 
       updatingSelection = false;
     });
