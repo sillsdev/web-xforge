@@ -66,7 +66,7 @@ const filterOptions = {
 type FilterName = keyof typeof filterOptions;
 
 /**
- * Component for displaying draft requests in the Serval Administration interface.
+ * Component for displaying onboarding requests in the Serval Administration interface.
  * Only accessible to Serval admins.
  */
 @Component({
@@ -129,8 +129,8 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
       }
       this.loadingFinished();
     } catch (error) {
-      console.error('Error loading draft requests:', error);
-      this.noticeService.showError('Failed to load draft requests');
+      console.error('Error loading onboarding requests:', error);
+      this.noticeService.showError('Failed to load onboarding requests');
       this.loadingFinished();
     }
   }

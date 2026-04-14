@@ -60,7 +60,7 @@ export interface DraftRequestComment {
   dateCreated: string;
 }
 
-/** Status options for draft requests. Some are user-selectable, others are system-managed. */
+/** Status options for onboarding requests. Some are user-selectable, others are system-managed. */
 export const DRAFT_REQUEST_STATUS_OPTIONS = [
   { value: 'new', label: 'New', icon: 'fiber_new', color: 'grey' },
   { value: 'in_progress', label: 'In Progress', icon: 'autorenew', color: 'blue' },

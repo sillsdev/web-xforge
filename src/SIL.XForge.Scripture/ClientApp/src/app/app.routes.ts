@@ -96,9 +96,15 @@ export const APP_ROUTES: Routes = [
   { path: 'projects/:projectId', component: ProjectComponent, canActivate: [AuthGuard] },
   { path: 'projects', component: MyProjectsComponent, canActivate: [AuthGuard] },
   {
-    path: 'serval-administration/draft-requests/:id',
+    path: 'serval-administration/onboarding-requests/:id',
     component: DraftRequestDetailComponent,
     canActivate: [ServalAdminAuthGuard]
+  },
+  // Emails to EITL team about draft requests used to link to the old path with "draft-requests". To avoid breaking those links, redirect to the new path.
+  {
+    path: 'serval-administration/draft-requests/:id',
+    redirectTo: 'serval-administration/onboarding-requests/:id',
+    pathMatch: 'full'
   },
   { path: 'system-administration/permissions-viewer', component: PermissionsViewerComponent },
   { path: 'serval-administration/:projectId', component: ServalProjectComponent, canActivate: [ServalAdminAuthGuard] },

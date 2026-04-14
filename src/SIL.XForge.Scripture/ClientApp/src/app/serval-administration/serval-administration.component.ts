@@ -32,7 +32,7 @@ export class ServalAdministrationComponent implements OnInit {
     private readonly router: Router
   ) {}
 
-  private readonly availableTabs = ['projects', 'draft-jobs', 'draft-requests'];
+  private readonly availableTabs = ['projects', 'draft-jobs', 'onboarding-requests'];
 
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {

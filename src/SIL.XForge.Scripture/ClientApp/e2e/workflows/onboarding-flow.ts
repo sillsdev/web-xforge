@@ -17,7 +17,7 @@ import { UserEmulator } from '../user-emulator.mts';
 /**
  * E2E test for the complete onboarding flow:
  * 1. Regular user fills out and submits the draft signup form
- * 2. Serval admin reviews the submission on the draft requests page
+ * 2. Serval admin reviews the submission on the onboarding requests page
  * 3. Serval admin interacts with the submission on the draft request detail page
  */
 
@@ -162,10 +162,10 @@ export async function onboardingFlow(
   await expect(adminBrowser.page.getByRole('heading', { name: 'Serval Administration' })).toBeVisible();
   await screenshot(adminBrowser.page, { pageName: 'admin_serval_home', ...context });
 
-  // Navigate to Draft Requests tab
-  const draftRequestsTab = adminBrowser.page.getByRole('tab', { name: 'Draft Requests' });
+  // Navigate to Onboarding Requests tab
+  const draftRequestsTab = adminBrowser.page.getByRole('tab', { name: 'Onboarding Requests' });
   await adminUser.click(draftRequestsTab);
-  await expect(adminBrowser.page.getByText('New draft requests start with "New" status')).toBeVisible();
+  await expect(adminBrowser.page.getByText('New onboarding requests start with "New" status')).toBeVisible();
   await screenshot(adminBrowser.page, { pageName: 'admin_draft_requests_list', ...context });
 
   // Find the newly submitted request

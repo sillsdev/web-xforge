@@ -102,7 +102,7 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
       void this.loadRequest(requestId);
     } else {
       this.noticeService.showError('No request ID provided');
-      void this.router.navigate(['/serval-administration'], { queryParams: { tab: 'draft-requests' } });
+      void this.router.navigate(['/serval-administration'], { queryParams: { tab: 'onboarding-requests' } });
     }
   }
 
@@ -175,7 +175,7 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
   }
 
   goBack(): void {
-    void this.router.navigate(['/serval-administration'], { queryParams: { tab: 'draft-requests' } });
+    void this.router.navigate(['/serval-administration'], { queryParams: { tab: 'onboarding-requests' } });
   }
 
   async downloadProject(id: string): Promise<void> {
@@ -363,7 +363,7 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
     try {
       await this.onboardingRequestService.deleteRequest(this.request.id);
       this.noticeService.show('Draft request deleted');
-      void this.router.navigate(['/serval-administration'], { queryParams: { tab: 'draft-requests' } });
+      void this.router.navigate(['/serval-administration'], { queryParams: { tab: 'onboarding-requests' } });
     } catch (error) {
       console.error('Error deleting draft request:', error);
       this.noticeService.showError('Failed to delete draft request');
