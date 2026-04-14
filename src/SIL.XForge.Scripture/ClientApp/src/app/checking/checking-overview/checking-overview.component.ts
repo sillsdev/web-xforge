@@ -105,7 +105,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     private readonly onlineStatusService: OnlineStatusService,
     private readonly l10nNumberPipe: L10nNumberPipe
   ) {
-    super(noticeService);
+    super(noticeService, 'CheckingOverviewComponent');
   }
 
   get showQuestionsLoadingMessage(): boolean {

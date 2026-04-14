@@ -44,7 +44,7 @@ export class TrainingProgressComponent extends DataLoadingComponent implements O
     private destroyRef: DestroyRef,
     private readonly i18n: I18nService
   ) {
-    super(noticeService);
+    super(noticeService, 'TrainingProgressComponent');
   }
 
   @Input() set projectId(id: string | undefined) {

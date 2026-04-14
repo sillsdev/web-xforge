@@ -82,7 +82,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     private readonly translocoService: TranslocoService,
     private destroyRef: DestroyRef
   ) {
-    super(noticeService);
+    super(noticeService, 'ConnectProjectComponent');
     this.connectProjectForm.disable();
     this.projectMetadata = {
       paratextId: this.router.currentNavigation()?.extras.state?.paratextId ?? '',

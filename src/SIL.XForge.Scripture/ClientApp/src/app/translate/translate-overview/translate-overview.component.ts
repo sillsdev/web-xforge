@@ -104,7 +104,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     readonly i18n: I18nService,
     private destroyRef: DestroyRef
   ) {
-    super(noticeService);
+    super(noticeService, 'TranslateOverviewComponent');
     this.engineQualityStars = [];
     for (let i = 0; i < ENGINE_QUALITY_STAR_COUNT; i++) {
       this.engineQualityStars.push(i);

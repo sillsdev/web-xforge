@@ -104,7 +104,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     readonly urls: ExternalUrlService,
     private destroyRef: DestroyRef
   ) {
-    super(noticeService);
+    super(noticeService, 'CollaboratorsComponent');
   }
 
   get isLoading(): boolean {

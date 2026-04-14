@@ -77,7 +77,7 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
     private readonly projectService: ProjectService,
     private destroyRef: DestroyRef
   ) {
-    super(noticeService);
+    super(noticeService, 'SaUsersComponent');
   }
 
   get currentUserId(): string {

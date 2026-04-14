@@ -142,7 +142,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     private readonly activatedProjectService: ActivatedProjectService,
     private destroyRef: DestroyRef
   ) {
-    super(noticeService);
+    super(noticeService, 'SettingsComponent');
     this.loading = true;
   }
 

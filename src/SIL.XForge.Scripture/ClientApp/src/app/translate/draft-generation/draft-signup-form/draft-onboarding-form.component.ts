@@ -141,7 +141,7 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
     private readonly cd: ChangeDetectorRef,
     private readonly i18n: I18nService
   ) {
-    super(noticeService);
+    super(noticeService, 'DraftOnboardingFormComponent');
   }
 
   ngOnInit(): void {

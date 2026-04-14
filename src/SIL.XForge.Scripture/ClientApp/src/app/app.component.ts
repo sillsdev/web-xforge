@@ -140,7 +140,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     onlineStatusService: OnlineStatusService,
     private destroyRef: DestroyRef
   ) {
-    super(noticeService);
+    super(noticeService, 'AppComponent');
     this.breakpointObserver
       .observe(this.breakpointService.width('>', Breakpoint.LG))
       .pipe(quietTakeUntilDestroyed(this.destroyRef))

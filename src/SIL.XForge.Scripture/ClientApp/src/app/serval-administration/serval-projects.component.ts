@@ -127,7 +127,7 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
     private readonly servalAdministrationService: ServalAdministrationService,
     private destroyRef: DestroyRef
   ) {
-    super(noticeService);
+    super(noticeService, 'ServalProjectsComponent');
     this.searchTerm$ = new BehaviorSubject<string>('');
     this.queryParameters$ = new BehaviorSubject<QueryParameters>(this.getQueryParameters());
   }

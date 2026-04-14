@@ -117,7 +117,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     private readonly location: Location,
     private destroyRef: DestroyRef
   ) {
-    super(noticeService);
+    super(noticeService, 'DraftUsfmFormatComponent');
     this.activatedProjectService.projectId$
       .pipe(filterNullish(), first(), quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(async projectId => {

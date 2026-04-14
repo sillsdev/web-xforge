@@ -60,7 +60,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     private readonly authService: AuthService,
     private destroyRef: DestroyRef
   ) {
-    super(noticeService);
+    super(noticeService, 'SyncComponent');
   }
 
   get isLoggedIntoParatext(): boolean {

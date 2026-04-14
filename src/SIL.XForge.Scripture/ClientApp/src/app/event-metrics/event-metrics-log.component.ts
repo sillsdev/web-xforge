@@ -101,7 +101,7 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
     private readonly projectService: SFProjectService,
     private destroyRef: DestroyRef
   ) {
-    super(noticeService);
+    super(noticeService, 'EventMetricsLogComponent');
   }
 
   get isLoading(): boolean {

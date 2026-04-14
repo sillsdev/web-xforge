@@ -111,7 +111,7 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
     private readonly servalAdministrationService: ServalAdministrationService,
     private readonly onboardingRequestService: OnboardingRequestService
   ) {
-    super(noticeService);
+    super(noticeService, 'OnboardingRequestsComponent');
   }
 
   ngOnInit(): void {

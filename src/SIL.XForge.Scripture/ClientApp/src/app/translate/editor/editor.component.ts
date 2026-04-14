@@ -382,7 +382,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly permissionsService: PermissionsService,
     readonly editorInsightState: LynxInsightStateService
   ) {
-    super(noticeService);
+    super(noticeService, 'EditorComponent');
     const wordTokenizer = new LatinWordTokenizer();
     this.sourceWordTokenizer = wordTokenizer;
     this.targetWordTokenizer = wordTokenizer;

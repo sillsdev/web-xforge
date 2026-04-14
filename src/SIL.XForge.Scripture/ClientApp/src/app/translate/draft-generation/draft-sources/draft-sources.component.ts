@@ -126,7 +126,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
     private readonly errorReportingService: ErrorReportingService,
     private readonly fileService: FileService
   ) {
-    super(noticeService);
+    super(noticeService, 'DraftSourcesComponent');
   }
 
   ngOnInit(): void {

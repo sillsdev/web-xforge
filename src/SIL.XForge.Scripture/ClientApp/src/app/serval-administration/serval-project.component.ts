@@ -175,7 +175,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     private readonly servalAdministrationService: ServalAdministrationService,
     private destroyRef: DestroyRef
   ) {
-    super(noticeService);
+    super(noticeService, 'ServalProjectComponent');
   }
 
   get eventLogLink(): string[] {

@@ -31,7 +31,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     noticeService: NoticeService,
     private destroyRef: DestroyRef
   ) {
-    super(noticeService);
+    super(noticeService, 'ProjectComponent');
   }
 
   async ngOnInit(): Promise<void> {

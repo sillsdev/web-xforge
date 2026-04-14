@@ -6,6 +6,10 @@ import { NoticeService } from './notice.service';
  * This is the abstract base class for components that need to indicate when they are loading data in order to display
  * the loading indicator. Subclasses call `loadingStarted()` and `loadingFinished()` to indicate when they are loading
  * data. When the component is destroyed, it automatically calls `loadingFinished()`.
+ *
+ * Subclasses must pass their class name as a string literal to the `callerName` parameter, e.g.
+ * `super(noticeService, 'MyComponent')`. This is required because `this.constructor.name` is unreliable at runtime due
+ * to minification.
  */
 // Decorator required by Angular compiler
 @Directive()
@@ -13,7 +17,10 @@ export abstract class DataLoadingComponent implements OnDestroy {
   private _isLoading$ = new BehaviorSubject<boolean>(false);
   private _isLoaded$ = new BehaviorSubject<boolean>(false);
 
-  constructor(protected readonly noticeService: NoticeService) {}
+  constructor(
+    protected readonly noticeService: NoticeService,
+    private readonly callerName: string
+  ) {}
 
   get isLoadingData$(): Observable<boolean> {
     return this._isLoading$.asObservable();
@@ -37,7 +44,7 @@ export abstract class DataLoadingComponent implements OnDestroy {
 
   protected loadingStarted(): void {
     if (!this.isLoadingData) {
-      this.noticeService.loadingStarted(this.constructor.name);
+      this.noticeService.loadingStarted(this.callerName);
       this._isLoading$.next(true);
       this._isLoaded$.next(false);
     }
@@ -45,7 +52,7 @@ export abstract class DataLoadingComponent implements OnDestroy {
 
   protected loadingFinished(): void {
     if (this.isLoadingData) {
-      this.noticeService.loadingFinished(this.constructor.name);
+      this.noticeService.loadingFinished(this.callerName);
       this._isLoading$.next(false);
       this._isLoaded$.next(true);
     }

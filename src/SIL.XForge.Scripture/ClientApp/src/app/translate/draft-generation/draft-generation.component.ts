@@ -182,7 +182,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     private readonly projectService: SFProjectService,
     private destroyRef: DestroyRef
   ) {
-    super(noticeService);
+    super(noticeService, 'DraftGenerationComponent');
   }
 
   get hasAnyCompletedBuild(): boolean {

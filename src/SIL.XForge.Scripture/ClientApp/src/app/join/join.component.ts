@@ -77,7 +77,7 @@ export class JoinComponent extends DataLoadingComponent {
     noticeService: NoticeService,
     private destroyRef: DestroyRef
   ) {
-    super(noticeService);
+    super(noticeService, 'JoinComponent');
     const joining$ = this.route.params.pipe(
       map(params => ({
         shareKey: params['shareKey'] as string,

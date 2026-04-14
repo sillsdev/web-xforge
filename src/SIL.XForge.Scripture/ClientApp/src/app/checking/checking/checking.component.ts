@@ -219,7 +219,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     private readonly onlineStatusService: OnlineStatusService,
     private readonly chapterAudioDialogService: ChapterAudioDialogService
   ) {
-    super(noticeService);
+    super(noticeService, 'CheckingComponent');
   }
 
   get activeQuestionVerseRef(): VerseRef | undefined {

@@ -108,7 +108,7 @@ export class SaProjectsComponent extends DataLoadingComponent implements OnInit 
     private readonly userService: UserService,
     private destroyRef: DestroyRef
   ) {
-    super(noticeService);
+    super(noticeService, 'SaProjectsComponent');
     this.searchTerm$ = new BehaviorSubject<string>('');
     this.queryParameters$ = new BehaviorSubject<QueryParameters>(this.getQueryParameters());
   }

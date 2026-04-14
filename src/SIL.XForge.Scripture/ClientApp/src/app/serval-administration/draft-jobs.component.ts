@@ -181,7 +181,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     private readonly destroyRef: DestroyRef,
     private readonly exportService: DraftJobsExportService
   ) {
-    super(noticeService);
+    super(noticeService, 'DraftJobsComponent');
   }
 
   get isLoading(): boolean {

@@ -259,7 +259,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     private readonly projectService: SFProjectService,
     private readonly userService: UserService
   ) {
-    super(noticeService);
+    super(noticeService, 'BiblicalTermsComponent');
   }
 
   @Input() set bookNum(bookNum: number | undefined) {
