@@ -2067,8 +2067,8 @@ class TestEnvironment {
       keyCode = 'Delete';
       handler = 'handleDeleteWord';
     }
-    const matchingBindings = (this.component.editor!.keyboard as any).bindings[keyCode].filter((bindingItem: any) =>
-      bindingItem.handler.toString().includes(handler)
+    const matchingBindings = (this.component.editor!.keyboard as any).bindings[keyCode].filter(
+      (bindingItem: any) => !bindingItem.altKey && bindingItem.handler.toString().includes(handler)
     );
     expect(matchingBindings.length)
       .withContext('setup: should be grabbing a single, specific binding in quill with the desired handler')

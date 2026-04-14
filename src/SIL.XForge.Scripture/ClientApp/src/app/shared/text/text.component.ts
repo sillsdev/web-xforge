@@ -179,6 +179,11 @@ export class TextComponent implements AfterViewInit, OnDestroy {
           shortKey: true,
           handler: (range: Range) => this.handleBackspaceWord(range)
         },
+        'disable backspace word on mac': {
+          key: 'Backspace',
+          altKey: true,
+          handler: (range: Range) => this.handleBackspaceWord(range)
+        },
         'disable delete': {
           key: 'Delete',
           handler: (range: Range) => this.isDeleteAllowed(range)
@@ -191,6 +196,11 @@ export class TextComponent implements AfterViewInit, OnDestroy {
         'disable delete word': {
           key: 'Delete',
           shortKey: true,
+          handler: (range: Range) => this.handleDeleteWord(range)
+        },
+        'disable delete word on mac': {
+          key: 'Delete',
+          altKey: true,
           handler: (range: Range) => this.handleDeleteWord(range)
         },
         'disable enter': {
