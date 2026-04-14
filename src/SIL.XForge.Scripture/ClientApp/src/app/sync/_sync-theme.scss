@@ -3,7 +3,7 @@
 @mixin color($theme) {
   $is-dark: mat.get-theme-type($theme) == dark;
 
-  --sf-sync-last-attempt-unsuccessful-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 70, 40))};
+  --sf-sync-warning-message-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 70, 40))};
 }
 
 @mixin theme($theme) {
