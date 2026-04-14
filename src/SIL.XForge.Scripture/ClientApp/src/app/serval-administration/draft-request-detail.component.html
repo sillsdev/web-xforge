@@ -112,6 +112,14 @@
       </mat-card-content>
     </mat-card>
 
+    <h2>Warnings</h2>
+
+    @for (warning of warnings; track $index) {
+      <app-notice type="warning" icon="warning" mode="fill-dark">{{ warning }}</app-notice>
+    } @empty {
+      <em>No warnings</em>
+    }
+
     <h2>Form submission</h2>
 
     <mat-card>

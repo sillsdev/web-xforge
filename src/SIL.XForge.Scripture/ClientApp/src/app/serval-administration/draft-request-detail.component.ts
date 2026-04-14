@@ -17,17 +17,22 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import Papa from 'papaparse';
+import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { catchError, lastValueFrom, of, throwError } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { RouterLinkDirective } from 'xforge-common/router-link.directive';
+import { isPopulatedString } from '../../type-utils';
+import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ParatextService } from '../core/paratext.service';
 import { DevOnlyComponent } from '../shared/dev-only/dev-only.component';
 import { JsonViewerComponent } from '../shared/json-viewer/json-viewer.component';
 import { MobileNotSupportedComponent } from '../shared/mobile-not-supported/mobile-not-supported.component';
+import { NoticeComponent } from '../shared/notice/notice.component';
 import { projectLabel } from '../shared/utils';
+import { normalizeLanguageCodeToISO639_3 } from '../translate/draft-generation/draft-utils';
 import {
   DraftingSignupFormData,
   DraftRequestResolutionKey,
@@ -65,12 +70,15 @@ import { ServalAdministrationService } from './serval-administration.service';
     DevOnlyComponent,
     MatFormFieldModule,
     MatInputModule,
-    MobileNotSupportedComponent
+    MobileNotSupportedComponent,
+    NoticeComponent
   ]
 })
 export class DraftRequestDetailComponent extends DataLoadingComponent implements OnInit {
   request?: OnboardingRequest;
+  mainProjectDoc?: SFProjectProfileDoc;
   projectName?: string;
+  projectDocs: Map<string, SFProjectProfileDoc> = new Map();
   projectNames: Map<string, string> = new Map();
   projectIds: Map<string, string> = new Map(); // Maps Paratext ID to SF project ID
   projectShortNames: Map<string, string> = new Map(); // Maps Paratext ID to project short name
@@ -103,7 +111,6 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
     try {
       this.request = await this.onboardingRequestService.getRequestById(requestId);
       await this.loadProjectNames();
-      this.loadingFinished();
     } finally {
       this.loadingFinished();
     }
@@ -115,12 +122,13 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
     }
 
     // Load the main project (submission.projectId is an SF project ID)
-    const mainProjectDoc = await this.servalAdministrationService.get(this.request.submission.projectId);
-    if (mainProjectDoc?.data != null) {
-      this.projectNames.set(this.request.submission.projectId, projectLabel(mainProjectDoc.data));
-      this.projectIds.set(this.request.submission.projectId, mainProjectDoc.id);
-      this.projectShortNames.set(this.request.submission.projectId, mainProjectDoc.data.shortName);
-      this.projectName = projectLabel(mainProjectDoc.data);
+    this.mainProjectDoc = await this.servalAdministrationService.get(this.request.submission.projectId);
+    if (this.mainProjectDoc?.data != null) {
+      this.projectDocs.set(this.request.submission.projectId, this.mainProjectDoc);
+      this.projectNames.set(this.request.submission.projectId, projectLabel(this.mainProjectDoc.data));
+      this.projectIds.set(this.request.submission.projectId, this.mainProjectDoc.id);
+      this.projectShortNames.set(this.request.submission.projectId, this.mainProjectDoc.data.shortName);
+      this.projectName = projectLabel(this.mainProjectDoc.data);
     } else {
       this.projectNames.set(this.request.submission.projectId, this.request.submission.projectId);
       this.projectName = this.request.submission.projectId;
@@ -139,6 +147,7 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
     for (const paratextId of paratextIds) {
       const projectDoc = await this.servalAdministrationService.getByParatextId(paratextId);
       if (projectDoc?.data != null) {
+        this.projectDocs.set(paratextId, projectDoc);
         this.projectNames.set(paratextId, projectLabel(projectDoc.data));
         this.projectIds.set(paratextId, projectDoc.id);
         this.projectShortNames.set(paratextId, projectDoc.data.shortName);
@@ -404,6 +413,54 @@ export class DraftRequestDetailComponent extends DataLoadingComponent implements
     const shortName = this.projectShortNames.get(this.request?.submission.projectId ?? '') ?? 'onboarding_request';
     const fileName = `onboarding-request-${shortName ?? this.request?.id ?? 'unknown'}.tsv`;
     saveAs(blob, fileName);
+  }
+
+  get warnings(): string[] {
+    const warnings: string[] = [];
+
+    if (this.request?.resolution === 'approved' && this.mainProjectDoc?.data?.translateConfig.preTranslate !== true) {
+      warnings.push('This request is marked as approved but drafting is not enabled on the project.');
+    }
+
+    const partnerOrg = this.request?.submission.formData.partnerOrganization;
+    if (isPopulatedString(partnerOrg) && partnerOrg !== 'none' && this.request?.resolution !== 'outsourced') {
+      warnings.push('This request has a partner organization specified but is not marked as outsourced.');
+    }
+
+    const projectISOCode: string | undefined = this.mainProjectDoc?.data?.writingSystem.tag;
+    const formISOCode: string | undefined = this.request?.submission.formData.translationLanguageIsoCode?.trim();
+    if (
+      isPopulatedString(projectISOCode) &&
+      isPopulatedString(formISOCode) &&
+      normalizeLanguageCodeToISO639_3(projectISOCode) !== normalizeLanguageCodeToISO639_3(formISOCode)
+    ) {
+      warnings.push(
+        `The project language code (${projectISOCode}) is not identical to the code specified in the form (${formISOCode}).`
+      );
+    }
+
+    // Check if back translation is specified, but isn't marked as a back translation, and isn't enabled for drafting
+    const backTranslationProjectId = this.request?.submission.formData.backTranslationProject;
+    const backTranslationTranslateConfig = this.projectDocs.get(backTranslationProjectId ?? '')?.data?.translateConfig;
+    if (
+      backTranslationTranslateConfig != null &&
+      backTranslationTranslateConfig.projectType !== ProjectType.BackTranslation &&
+      backTranslationTranslateConfig.preTranslate !== true
+    ) {
+      warnings.push(
+        'The back translation project specified is not marked as a back translation project in Paratext, and does not have draft generation enabled. You will need to enable it if you want the user to be able to generate back translation drafts.'
+      );
+    }
+
+    // Find projects that failed their last sync
+    for (const [id, projectDoc] of this.projectDocs.entries()) {
+      if (projectDoc.data?.sync.lastSyncSuccessful === false) {
+        const projectName = this.projectNames.get(id) ?? id;
+        warnings.push(`The project "${projectName}" failed to sync successfully the last time it was synced.`);
+      }
+    }
+
+    return warnings;
   }
 
   /**
