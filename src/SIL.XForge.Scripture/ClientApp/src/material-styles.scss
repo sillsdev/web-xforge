@@ -17,6 +17,7 @@
 @use 'src/app/shared/book-multi-select/book-multi-select-theme' as sf-book-multi-select;
 @use 'src/app/shared/json-viewer/json-viewer-theme' as sf-json-viewer;
 @use 'src/app/shared/audio-recorder-dialog/audio-recorder-dialog-theme' as sf-audio-recorder-dialog;
+@use 'src/app/sync/sync-theme' as sf-sync;
 @use 'src/app/translate/draft-generation/draft-generation-steps/draft-generation-steps-theme' as
   sf-draft-generation-steps;
 @use 'src/app/translate/draft-generation/confirm-sources/confirm-sources-theme' as sf-confirm-sources;
@@ -87,6 +88,7 @@
   @include sf-draft-jobs.theme($theme);
   @include sf-job-details-dialog.theme($theme);
   @include sf-onboarding-requests.theme($theme);
+  @include sf-sync.theme($theme);
 
   // Custom variables
   --sf-disabled-foreground: #{mat.get-theme-color($theme, neutral, 70)};
