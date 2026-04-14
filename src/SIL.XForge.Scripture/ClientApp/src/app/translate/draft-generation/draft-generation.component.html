@@ -164,7 +164,7 @@
                   })
                 }}
               </p>
-              @if (draftRequestAged(onboardingRequest)) {
+              @if (onboardingRequestAged(onboardingRequest)) {
                 <p>
                   @for (
                     portion of i18n.interpolateVariables("draft_generation.have_not_heard_back", { issueEmail });

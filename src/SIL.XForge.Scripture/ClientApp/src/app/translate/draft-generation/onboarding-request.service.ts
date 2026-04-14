@@ -3,7 +3,7 @@ import { CommandService } from 'xforge-common/command.service';
 import { ONBOARDING_REQUESTS_URL } from 'xforge-common/url-constants';
 import { SFProjectService } from '../../core/sf-project.service';
 
-export interface DraftRequestComment {
+export interface OnboardingRequestComment {
   id: string;
   userId: string;
   text: string;
@@ -35,7 +35,6 @@ export interface DraftingSignupFormData {
   additionalComments?: string;
 }
 
-/** Represents a draft request detail. */
 export interface OnboardingRequest {
   id: string;
   submittedAt: string;
@@ -47,37 +46,37 @@ export interface OnboardingRequest {
     formData: DraftingSignupFormData;
   };
   assigneeId: string;
-  status: DraftRequestStatusOption;
-  resolution: DraftRequestResolutionKey;
-  comments: DraftRequestComment[];
+  status: OnboardingRequestStatusOption;
+  resolution: OnboardingRequestResolutionKey;
+  comments: OnboardingRequestComment[];
 }
 
-/** Represents a comment on a draft request. */
-export interface DraftRequestComment {
+/** Represents a comment on an onboarding request. */
+export interface OnboardingRequestComment {
   id: string;
   userId: string;
   text: string;
   dateCreated: string;
 }
 
-/** Status options for draft requests. Some are user-selectable, others are system-managed. */
-export const DRAFT_REQUEST_STATUS_OPTIONS = [
+/** Status options for onboarding requests. Some are user-selectable, others are system-managed. */
+export const ONBOARDING_REQUEST_STATUS_OPTIONS = [
   { value: 'new', label: 'New', icon: 'fiber_new', color: 'grey' },
   { value: 'in_progress', label: 'In Progress', icon: 'autorenew', color: 'blue' },
   { value: 'completed', label: 'Completed', icon: 'check_circle', color: 'green' }
 ] as const;
-export type DraftRequestStatusOption = (typeof DRAFT_REQUEST_STATUS_OPTIONS)[number]['value'];
-export type DraftRequestStatusMetadata = (typeof DRAFT_REQUEST_STATUS_OPTIONS)[number];
+export type OnboardingRequestStatusOption = (typeof ONBOARDING_REQUEST_STATUS_OPTIONS)[number]['value'];
+export type OnboardingRequestStatusMetadata = (typeof ONBOARDING_REQUEST_STATUS_OPTIONS)[number];
 
-export const DRAFT_REQUEST_RESOLUTION_OPTIONS = [
+export const ONBOARDING_REQUEST_RESOLUTION_OPTIONS = [
   { key: 'unresolved', label: 'Unresolved', icon: 'help_outline', color: 'gray' },
   { key: 'approved', label: 'Approved', icon: 'check_circle', color: 'green' },
   { key: 'declined', label: 'Declined', icon: 'cancel', color: 'red' },
   { key: 'outsourced', label: 'Outsourced', icon: 'launch', color: 'blue' }
 ] as const;
 
-export type DraftRequestResolutionKey = (typeof DRAFT_REQUEST_RESOLUTION_OPTIONS)[number]['key'];
-export type DraftRequestResolutionMetadata = (typeof DRAFT_REQUEST_RESOLUTION_OPTIONS)[number];
+export type OnboardingRequestResolutionKey = (typeof ONBOARDING_REQUEST_RESOLUTION_OPTIONS)[number]['key'];
+export type OnboardingRequestResolutionMetadata = (typeof ONBOARDING_REQUEST_RESOLUTION_OPTIONS)[number];
 
 @Injectable({ providedIn: 'root' })
 export class OnboardingRequestService {
@@ -86,19 +85,19 @@ export class OnboardingRequestService {
     private readonly projectService: SFProjectService
   ) {}
 
-  getStatus(status: DraftRequestStatusOption): DraftRequestStatusMetadata {
-    return DRAFT_REQUEST_STATUS_OPTIONS.find(opt => opt.value === status)!;
+  getStatus(status: OnboardingRequestStatusOption): OnboardingRequestStatusMetadata {
+    return ONBOARDING_REQUEST_STATUS_OPTIONS.find(opt => opt.value === status)!;
   }
 
-  getResolution(resolution: DraftRequestResolutionKey): DraftRequestResolutionMetadata {
-    return DRAFT_REQUEST_RESOLUTION_OPTIONS.find(opt => opt.key === resolution)!;
+  getResolution(resolution: OnboardingRequestResolutionKey): OnboardingRequestResolutionMetadata {
+    return ONBOARDING_REQUEST_RESOLUTION_OPTIONS.find(opt => opt.key === resolution)!;
   }
 
   /** Approves an onboarding request and enables pre-translation for the project. */
   async approveRequest(options: { requestId: string; sfProjectId: string }): Promise<OnboardingRequest> {
     const requestUpdateResult = await this.onlineInvoke<OnboardingRequest | undefined>('setResolution', {
       requestId: options.requestId,
-      resolution: 'approved' satisfies DraftRequestResolutionKey
+      resolution: 'approved' satisfies OnboardingRequestResolutionKey
     });
     await this.projectService.onlineSetPreTranslate(options.sfProjectId, true);
     return requestUpdateResult!;
@@ -129,7 +128,10 @@ export class OnboardingRequestService {
   }
 
   /** Sets the resolution of an onboarding request (Serval admin only). */
-  async setResolution(requestId: string, resolution: DraftRequestResolutionKey | null): Promise<OnboardingRequest> {
+  async setResolution(
+    requestId: string,
+    resolution: OnboardingRequestResolutionKey | null
+  ): Promise<OnboardingRequest> {
     return (await this.onlineInvoke<OnboardingRequest | undefined>('setResolution', { requestId, resolution }))!;
   }
 

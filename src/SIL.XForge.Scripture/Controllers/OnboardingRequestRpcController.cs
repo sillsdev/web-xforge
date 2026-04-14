@@ -88,7 +88,7 @@ public class OnboardingRequestRpcController(
                 // Send email to each admin using EmailService
                 string userName = await userService.GetUsernameFromUserId(UserId, UserId);
                 string subject = $"Onboarding request for {projectDoc.ShortName}";
-                string link = $"{httpRequestAccessor.SiteRoot}/serval-administration/draft-requests/{request.Id}";
+                string link = $"{httpRequestAccessor.SiteRoot}/serval-administration/onboarding-requests/{request.Id}";
                 string body =
                     $@"
                     <p>A new drafting signup request has been submitted for the project <strong>{projectDoc.ShortName} - {projectDoc.Name}</strong>.</p>
@@ -417,7 +417,7 @@ public class OnboardingRequestRpcController(
             }
 
             // Create new comment
-            var comment = new DraftRequestComment
+            var comment = new OnboardingRequestComment
             {
                 Id = ObjectId.GenerateNewId().ToString(),
                 UserId = UserId,

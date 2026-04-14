@@ -210,7 +210,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     return issuesEmailTemplate();
   }
 
-  draftRequestAged(onboardingRequest: OnboardingRequest): boolean {
+  onboardingRequestAged(onboardingRequest: OnboardingRequest): boolean {
     const elapsedTime = new Date().getTime() - new Date(onboardingRequest.submittedAt).getTime();
     const elapsedDays = elapsedTime / (1000 * 60 * 60 * 24);
     return elapsedDays > this.responseDays.max;

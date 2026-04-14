@@ -5,9 +5,9 @@
 } @else {
   <div class="requests-container">
     <app-notice type="primary" mode="outline">
-      New draft requests start with "New" status and no assignee. Setting an assignee marks a request as "In Progress".
-      When a request is marked with one of the resolutions, the assignee will be cleared. Marking a request as resolved
-      does not automatically enable drafting on the project.
+      New onboarding requests start with "New" status and no assignee. Setting an assignee marks a request as "In
+      Progress". When a request is marked with one of the resolutions, the assignee will be cleared. Marking a request
+      as resolved does not automatically enable drafting on the project.
     </app-notice>
 
     <p>
@@ -26,7 +26,7 @@
         <ng-container matColumnDef="project">
           <th mat-header-cell *matHeaderCellDef>Project</th>
           <td mat-cell *matCellDef="let request">
-            <a [appRouterLink]="['/serval-administration/draft-requests', request.id]">
+            <a [appRouterLink]="['/serval-administration/onboarding-requests', request.id]">
               {{ getProjectName(request.submission.projectId) }}
             </a>
           </td>

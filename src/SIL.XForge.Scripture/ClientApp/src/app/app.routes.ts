@@ -11,7 +11,7 @@ import { JoinComponent } from './join/join.component';
 import { MyProjectsComponent } from './my-projects/my-projects.component';
 import { PermissionsViewerComponent } from './permissions-viewer/permissions-viewer.component';
 import { ProjectComponent } from './project/project.component';
-import { DraftRequestDetailComponent } from './serval-administration/draft-request-detail.component';
+import { OnboardingRequestDetailComponent } from './serval-administration/onboarding-request-detail/onboarding-request-detail.component';
 import { ServalAdminAuthGuard } from './serval-administration/serval-admin-auth.guard';
 import { ServalAdministrationComponent } from './serval-administration/serval-administration.component';
 import { ServalProjectComponent } from './serval-administration/serval-project.component';
@@ -96,9 +96,15 @@ export const APP_ROUTES: Routes = [
   { path: 'projects/:projectId', component: ProjectComponent, canActivate: [AuthGuard] },
   { path: 'projects', component: MyProjectsComponent, canActivate: [AuthGuard] },
   {
-    path: 'serval-administration/draft-requests/:id',
-    component: DraftRequestDetailComponent,
+    path: 'serval-administration/onboarding-requests/:id',
+    component: OnboardingRequestDetailComponent,
     canActivate: [ServalAdminAuthGuard]
+  },
+  // Emails to EITL team about onboarding requests used to link to the old path with "draft-requests". To avoid breaking those links, redirect to the new path.
+  {
+    path: 'serval-administration/draft-requests/:id',
+    redirectTo: 'serval-administration/onboarding-requests/:id',
+    pathMatch: 'full'
   },
   { path: 'system-administration/permissions-viewer', component: PermissionsViewerComponent },
   { path: 'serval-administration/:projectId', component: ServalProjectComponent, canActivate: [ServalAdminAuthGuard] },

@@ -17,9 +17,9 @@ import { UserService } from 'xforge-common/user.service';
 import { NoticeComponent } from '../../shared/notice/notice.component';
 import { projectLabel } from '../../shared/utils';
 import {
-  DRAFT_REQUEST_RESOLUTION_OPTIONS,
-  DraftRequestResolutionKey,
+  ONBOARDING_REQUEST_RESOLUTION_OPTIONS,
   OnboardingRequest,
+  OnboardingRequestResolutionKey,
   OnboardingRequestService
 } from '../../translate/draft-generation/onboarding-request.service';
 import { ServalAdministrationService } from '../serval-administration.service';
@@ -66,7 +66,7 @@ const filterOptions = {
 type FilterName = keyof typeof filterOptions;
 
 /**
- * Component for displaying draft requests in the Serval Administration interface.
+ * Component for displaying onboarding requests in the Serval Administration interface.
  * Only accessible to Serval admins.
  */
 @Component({
@@ -101,7 +101,7 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
   filterOptions = filterOptions;
 
   // Resolution options
-  readonly resolutionOptions = DRAFT_REQUEST_RESOLUTION_OPTIONS;
+  readonly resolutionOptions = ONBOARDING_REQUEST_RESOLUTION_OPTIONS;
 
   value: number | null = null;
 
@@ -129,8 +129,8 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
       }
       this.loadingFinished();
     } catch (error) {
-      console.error('Error loading draft requests:', error);
-      this.noticeService.showError('Failed to load draft requests');
+      console.error('Error loading onboarding requests:', error);
+      this.noticeService.showError('Failed to load onboarding requests');
       this.loadingFinished();
     }
   }
@@ -285,7 +285,10 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
    * Handles resolution change for a request.
    * Calls the backend to persist the change and updates local state with the response.
    */
-  async onResolutionChange(request: OnboardingRequest, newResolution: DraftRequestResolutionKey | null): Promise<void> {
+  async onResolutionChange(
+    request: OnboardingRequest,
+    newResolution: OnboardingRequestResolutionKey | null
+  ): Promise<void> {
     try {
       // Call backend to update resolution
       const updatedRequest = await this.onboardingRequestService.setResolution(request.id, newResolution);
