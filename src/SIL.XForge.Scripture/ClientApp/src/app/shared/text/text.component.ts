@@ -193,6 +193,11 @@ export class TextComponent implements AfterViewInit, OnDestroy {
           shortKey: true,
           handler: (range: Range) => this.handleDeleteWord(range)
         },
+        'disable delete word on mac': {
+          key: 'Delete',
+          altKey: true,
+          handler: (range: Range) => this.handleDeleteWord(range)
+        },
         'disable enter': {
           key: 'Enter',
           shiftKey: null,
