@@ -183,6 +183,11 @@ export class TextComponent implements AfterViewInit, OnDestroy {
           key: 'Delete',
           handler: (range: Range) => this.isDeleteAllowed(range)
         },
+        'disable delete holding down shift': {
+          key: 'Delete',
+          shiftKey: true,
+          handler: (range: Range) => this.isDeleteAllowed(range)
+        },
         'disable delete word': {
           key: 'Delete',
           shortKey: true,
@@ -290,7 +295,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     },
     clipboard: { textComponent: this },
     dragAndDrop: {},
-    selectAll: {}
+    selectAll: { textComponent: this }
   };
   private _id?: TextDocId;
   private _isRightToLeft: boolean = false;
