@@ -3,7 +3,6 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnIn
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatOption } from '@angular/material/core';
 import { MatError, MatFormFieldModule, MatLabel } from '@angular/material/form-field';
 import { MatIcon, MatIconModule } from '@angular/material/icon';
@@ -11,7 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
-import { translate, TranslocoModule } from '@ngneat/transloco';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { DevOnlyComponent } from 'src/app/shared/dev-only/dev-only.component';
@@ -73,7 +72,6 @@ type DraftOnboardingFormUiState = 'editing' | 'submitting' | 'submitted';
     MatIconModule,
     MatProgressSpinnerModule,
     MatSelectModule,
-    MatCheckboxModule,
     MatButtonModule,
     DevOnlyComponent
   ]
@@ -208,58 +206,45 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
   }
 
   async onSubmit(): Promise<void> {
-    if (this.uiState === 'submitting') {
+    const projectId = this.activatedProject.projectId;
+    if (projectId == null || this.uiState === 'submitting') {
       return;
     }
 
     if (this.signupForm.valid === true) {
-      if (this.activatedProject.projectId == null) {
-        this.noticeService.showError('No project selected');
-        return;
-      }
-
       this.uiState = 'submitting';
       this.cd.markForCheck();
 
       const formData: DraftingSignupFormData = this.signupForm.getRawValue() as DraftingSignupFormData;
 
       try {
-        const requestId = await this.draftingSignupService.submitOnboardingRequest(
-          this.activatedProject.projectId,
-          formData
-        );
+        const requestId = await this.draftingSignupService.submitOnboardingRequest(projectId, formData);
 
         // For testing purposes, store and display the submitted data
-        this.submittedData = {
-          requestId,
-          projectId: this.activatedProject.projectId,
-          formData
-        };
+        this.submittedData = { requestId, projectId, formData };
 
         this.uiState = 'submitted';
 
-        this.noticeService.show('Draft signup request submitted successfully');
         this.cd.detectChanges();
       } catch (error) {
-        console.error('Error submitting draft signup request:', error);
-        this.noticeService.showError('Failed to submit draft signup request');
+        console.error('Error submitting onboarding request:', error);
+        this.noticeService.showError(this.i18n.translateStatic('draft_signup.submit_failure_notice'));
         this.uiState = 'editing';
       } finally {
         this.cd.markForCheck();
       }
     } else {
-      console.log('Form is invalid at top-level:', this.signupForm.errors);
-      this.logValidationErrors();
       // Mark all fields as touched to show validation errors
       this.signupForm.markAllAsTouched();
-      this.noticeService.showError('Please fill in all required fields');
+      this.noticeService.showError(this.i18n.translateStatic('draft_signup.fill_required_fields_notice'));
     }
   }
 
   cancel(): void {
     // Navigate back to draft generation page
-    if (this.activatedProject.projectId != null) {
-      void this.router.navigate(['/projects', this.activatedProject.projectId, 'draft-generation']);
+    const projectId = this.activatedProject.projectId;
+    if (projectId != null) {
+      void this.router.navigate(['/projects', projectId, 'draft-generation']);
     }
   }
 
@@ -303,30 +288,6 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
   get hiddenParatextIds(): string[] {
     const currentProjectParatextId = this.activatedProject.projectDoc?.data?.paratextId;
     return currentProjectParatextId ? [currentProjectParatextId] : [];
-  }
-
-  get sourceProjectAErrorMessage(): string | undefined {
-    const ctrl = this.signupForm.controls.sourceProjectA;
-    if (ctrl.hasError('required') && ctrl.touched) {
-      return translate('draft_signup.primary_source_project_required');
-    }
-    return undefined;
-  }
-
-  get draftingSourceProjectErrorMessage(): string | undefined {
-    const ctrl = this.signupForm.controls.draftingSourceProject;
-    if (ctrl.hasError('required') && ctrl.touched) {
-      return translate('draft_signup.drafting_source_project_required');
-    }
-    return undefined;
-  }
-
-  get backTranslationProjectErrorMessage(): string | undefined {
-    const ctrl = this.signupForm.controls.backTranslationProject;
-    if (ctrl.hasError('required') && ctrl.touched) {
-      return translate('draft_signup.bt_project_required');
-    }
-    return undefined;
   }
 
   backTranslationProjectSelected(selectedProject: SelectableProject): void {
@@ -443,22 +404,5 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
         this.signupForm.controls.backTranslationLanguageName.updateValueAndValidity();
         this.signupForm.controls.backTranslationLanguageIsoCode.updateValueAndValidity();
       });
-  }
-
-  private logValidationErrors(): void {
-    const errorsByControl: { name: string; value: unknown; errors: unknown }[] = [];
-
-    Object.keys(this.signupForm.controls).forEach(controlName => {
-      const ctrl = this.signupForm.controls[controlName as keyof typeof this.signupForm.controls];
-      if (ctrl != null && ctrl.invalid) {
-        errorsByControl.push({
-          name: controlName,
-          value: ctrl.value,
-          errors: ctrl.errors
-        });
-      }
-    });
-
-    console.warn('Draft signup form validation errors:', errorsByControl);
   }
 }
