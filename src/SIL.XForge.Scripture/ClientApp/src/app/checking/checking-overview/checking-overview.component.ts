@@ -243,7 +243,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       this.dataChangesSub = merge(
         this.projectDoc.remoteChanges$,
         this.questionsQuery.remoteChanges$,
-        this.questionsQuery.localChanges$
+        this.questionsQuery.localChanges$,
+        this.questionsQuery.remoteDocChanges$
       )
         .pipe(quietTakeUntilDestroyed(this.destroyRef))
         // TODO Find a better solution than merely throttling remote changes

@@ -10,6 +10,7 @@ import { saveAs } from 'file-saver';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
+import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import {
   getQuestionDocId,
   Question,
@@ -193,6 +194,38 @@ describe('CheckingOverviewComponent', () => {
       env.waitForProjectDocChanges();
 
       expect(env.component.getQuestionDocs(new TextDocId('project01', 42, 1)).length).toEqual(numQuestions + 1);
+    }));
+
+    it('should show new answer count after remote change', fakeAsync(async () => {
+      const env = new TestEnvironment();
+      env.waitForQuestions();
+
+      const dateNow = new Date();
+      const newAnswer: Answer = {
+        dataId: 'newAId1',
+        ownerRef: env.checkerUser.id,
+        text: 'Checker answer',
+        dateCreated: dateNow.toJSON(),
+        dateModified: dateNow.toJSON(),
+        deleted: false,
+        likes: [],
+        comments: []
+      };
+
+      expect(env.answerTotal).toContain('3');
+
+      const questionDoc: QuestionDoc = env.realtimeService.get(
+        QUESTIONS_COLLECTION,
+        getQuestionDocId('project01', 'q4Id')
+      );
+      await questionDoc.submitJson0Op(op => {
+        op.insert(d => d.answers, 0, newAnswer);
+      }, false);
+
+      tick();
+      env.fixture.detectChanges();
+
+      expect(env.answerTotal).toContain('4');
     }));
 
     it('should show question in canonical order', fakeAsync(() => {
@@ -1036,6 +1069,10 @@ class TestEnvironment {
 
   get noQuestionsLabel(): DebugElement {
     return this.fixture.debugElement.query(By.css('#no-questions-label'));
+  }
+
+  get answerTotal(): string {
+    return this.fixture.debugElement.query(By.css('.card-content-answer .stat-total')).nativeElement.textContent;
   }
 
   get textRows(): DebugElement[] {
