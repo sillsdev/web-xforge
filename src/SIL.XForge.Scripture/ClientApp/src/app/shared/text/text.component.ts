@@ -1903,7 +1903,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
 
   /** Given a selection, return a possibly modified selection that is a valid for editing the current segment.
    * For example, a selection over a segment boundary is sometimes not valid. */
-  private conformToValidSelectionForCurrentSegment(sel: Range): Range | null {
+  conformToValidSelectionForCurrentSegment(sel: Range): Range | null {
     if (this._editor == null || this._segment == null) {
       return null;
     }

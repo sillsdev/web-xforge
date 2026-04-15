@@ -22,16 +22,23 @@ export class SelectAll {
     fromEvent<Event>(document, 'selectionchange')
       .pipe(quietTakeUntilDestroyed(destroyRef))
       .subscribe(() => {
-        // Ignore if the request is from another text box such as Add/Edit Answer, Biblical Terms, or Update Your Name
+        // Ignore if the request is from another text box such as Add/Edit Answer, Biblical Terms, or Update Your Name;
+        // Or if it is from a readonly editor
         const sel: Selection | null = document.getSelection();
-        if (!sel || sel.rangeCount === 0 || !quill.root.contains(sel.getRangeAt(0).startContainer)) {
+        if (
+          !sel ||
+          sel.rangeCount === 0 ||
+          !quill.root.contains(sel.getRangeAt(0).startContainer) ||
+          !quill.isEnabled()
+        ) {
           lastRange = null;
           return;
         }
 
         // Only emit to Quill (and the onSelectionChanged handler in TextComponent) if the selection has actually changed
         const quillRange: Range = quill.getSelection(true);
-        if (!lastRange || quillRange.index !== lastRange.index || quillRange.length !== lastRange.length) {
+        if (quillRange == null) return;
+        if (lastRange == null || quillRange.index !== lastRange.index || quillRange.length !== lastRange.length) {
           quill.emitter.emit('selection-change', quillRange, lastRange, 'user');
           lastRange = quillRange;
         }
@@ -43,8 +50,9 @@ export class SelectAll {
       // Prevent infinite loops
       if (updatingSelection) return;
 
-      // No range = lost focus
+      // No range or segment = lost focus
       if (!range) return; // lost focus
+      if (textComponent.segment == null) return;
 
       // If there is no text selected, we do not need to modify the selection
       const text: string = quill.getText(range.index, range.length);
@@ -53,18 +61,12 @@ export class SelectAll {
       // If the selection is valid with in the segment, we do not need to modify it
       if (textComponent.isValidSelectionForCurrentSegment(range)) return;
 
-      updatingSelection = true;
-
       // Do not allow selecting before or further than the current segment
-      let index: number = 0;
-      let length: number = 0;
-      if (textComponent.segment != null) {
-        index = range.index < textComponent.segment.range.index ? textComponent.segment.range.index : range.index;
-        length = textComponent.segment.range.index + textComponent.segment?.range.length - range.index;
-      }
+      const newRange: Range | null = textComponent.conformToValidSelectionForCurrentSegment(range);
+      if (newRange == null) return;
 
-      quill.setSelection(index, length, 'silent');
-
+      updatingSelection = true;
+      quill.setSelection(newRange.index, newRange.length, 'silent');
       updatingSelection = false;
     });
   }
