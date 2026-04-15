@@ -255,28 +255,6 @@ export class TextComponent implements AfterViewInit, OnDestroy {
             return true;
           }
         },
-        'selection move next, segment end, right arrow': {
-          key: 'ArrowRight',
-          shiftKey: true,
-          handler: () => {
-            // Do not allow the user to move out of the current segment if holding down the shift key
-            if ((this.isLtr && this.isSelectionAtSegmentEnd) || (this.isRtl && this.isSelectionAtSegmentStart)) {
-              return false;
-            }
-            return true;
-          }
-        },
-        'selection move next, segment end, left arrow': {
-          key: 'ArrowLeft',
-          shiftKey: true,
-          handler: () => {
-            // Do not allow the user to move out of the current segment if holding down the shift key
-            if ((this.isRtl && this.isSelectionAtSegmentEnd) || (this.isLtr && this.isSelectionAtSegmentStart)) {
-              return false;
-            }
-            return true;
-          }
-        },
         redo: {
           key: 'y',
           shortKey: true,
@@ -1903,7 +1881,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
 
   /** Given a selection, return a possibly modified selection that is a valid for editing the current segment.
    * For example, a selection over a segment boundary is sometimes not valid. */
-  private conformToValidSelectionForCurrentSegment(sel: Range): Range | null {
+  conformToValidSelectionForCurrentSegment(sel: Range): Range | null {
     if (this._editor == null || this._segment == null) {
       return null;
     }
