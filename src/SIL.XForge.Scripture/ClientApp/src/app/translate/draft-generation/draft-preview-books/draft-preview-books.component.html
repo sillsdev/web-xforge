@@ -1,11 +1,6 @@
 <ng-container *transloco="let t; read: 'draft_preview_books'">
   @for (book of booksWithDrafts$ | async; track book.bookId) {
-    <button
-      mat-stroked-button
-      class="draft-book-button"
-      [disabled]="book.chaptersWithDrafts.length === 0"
-      (click)="navigate(book)"
-    >
+    <button mat-stroked-button class="draft-book-button" (click)="navigate(book)">
       {{ "canon.book_names." + book.bookId | transloco }}
     </button>
   } @empty {
