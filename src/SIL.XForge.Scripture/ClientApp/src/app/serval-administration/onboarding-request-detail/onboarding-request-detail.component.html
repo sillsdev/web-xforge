@@ -175,10 +175,16 @@
         <div class="info-row">
           <span class="label">Completed books:</span>
           <span class="value book-list">{{ formatBookList(formData.completedBooks) }}</span>
+          <button mat-icon-button (click)="copyBookList(formData.completedBooks)" matTooltip="Copy book list">
+            <mat-icon>content_copy</mat-icon>
+          </button>
         </div>
         <div class="info-row">
           <span class="label">Planned books to draft:</span>
           <span class="value book-list">{{ formatBookList(formData.nextBooksToDraft) }}</span>
+          <button mat-icon-button (click)="copyBookList(formData.nextBooksToDraft)" matTooltip="Copy book list">
+            <mat-icon>content_copy</mat-icon>
+          </button>
         </div>
       </mat-card-content>
     </mat-card>

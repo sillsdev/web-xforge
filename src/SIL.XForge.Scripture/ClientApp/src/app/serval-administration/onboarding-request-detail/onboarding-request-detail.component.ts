@@ -13,8 +13,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import Papa from 'papaparse';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
@@ -41,6 +41,7 @@ import {
   OnboardingRequestService
 } from '../../translate/draft-generation/onboarding-request.service';
 import { ServalAdministrationService } from '../serval-administration.service';
+import { formatBookListForSILNLP } from './draft-request-detail-utils';
 
 /**
  * Component for displaying a single onboarding request's full details.
@@ -71,7 +72,8 @@ import { ServalAdministrationService } from '../serval-administration.service';
     MatFormFieldModule,
     MatInputModule,
     MobileNotSupportedComponent,
-    NoticeComponent
+    NoticeComponent,
+    MatTooltipModule
   ]
 })
 export class OnboardingRequestDetailComponent extends DataLoadingComponent implements OnInit {
@@ -251,7 +253,14 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
   }
 
   formatBookList(value: number[] | undefined): string {
-    return value?.map(b => Canon.bookNumberToId(b)).join(';') ?? '';
+    return value == null ? '' : formatBookListForSILNLP(value);
+  }
+
+  /** Copies the formatted book list to the clipboard. */
+  async copyBookList(books: number[] | undefined): Promise<void> {
+    const text: string = this.formatBookList(books);
+    await navigator.clipboard.writeText(text);
+    this.noticeService.show('Book list copied to clipboard');
   }
 
   getZipFileNames(): string[] {
