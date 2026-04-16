@@ -869,6 +869,7 @@
   "training_data_multi_select": {
     "confirm_delete": "Are you sure you want to permanently delete this training data?",
     "delete": "Delete",
+    "download": "Download",
     "upload_spreadsheet": "Upload spreadsheet"
   },
   "training_data_upload_dialog": {

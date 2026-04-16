@@ -5,6 +5,9 @@
         <!-- Tooltip shows full name of file since longer titles will be truncated. This can probably be removed if/when
              we add the ability to click a file and open a dialog to see the data, along with the full title -->
         <span [matTooltip]="trainingData.title">{{ trainingData.title }}</span>
+        <button matListItemMeta mat-icon-button (click)="downloadTrainingData(trainingData)">
+          <mat-icon [matTooltip]="t('download')">file_download</mat-icon>
+        </button>
         @if (canDeleteTrainingData(trainingData)) {
           <button matListItemMeta mat-icon-button (click)="deleteTrainingData(trainingData)">
             <mat-icon [matTooltip]="t('delete')">cancel</mat-icon>

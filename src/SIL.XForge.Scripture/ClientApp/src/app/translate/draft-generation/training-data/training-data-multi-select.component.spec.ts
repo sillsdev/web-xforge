@@ -7,6 +7,8 @@ import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { FileService } from 'xforge-common/file.service';
+import { FileType } from 'xforge-common/models/file-offline-data';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
@@ -18,6 +20,7 @@ import { TrainingDataService } from './training-data.service';
 
 const mockActivatedProjectService = mock(ActivatedProjectService);
 const mockDialogService = mock(DialogService);
+const mockFileService = mock(FileService);
 const mockI18nService = mock(I18nService);
 const mockTrainingDataService = mock(TrainingDataService);
 const mockTrainingDataUploadDialogComponent = mock<MatDialogRef<TrainingDataUploadDialogComponent>>(MatDialogRef);
@@ -51,6 +54,7 @@ describe('TrainingDataMultiSelectComponent', () => {
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: DialogService, useMock: mockDialogService },
+      { provide: FileService, useMock: mockFileService },
       { provide: I18nService, useMock: mockI18nService },
       { provide: TrainingDataService, useMock: mockTrainingDataService },
       { provide: UserService, useMock: mockUserService }
@@ -61,10 +65,10 @@ describe('TrainingDataMultiSelectComponent', () => {
     mockTrainingData = [
       {
         dataId: 'data01',
-        fileUrl: '',
-        mimeType: '',
+        fileUrl: '/project01/user01_data01.csv',
+        mimeType: 'text/csv',
         skipRows: 0,
-        title: '',
+        title: 'training-file-01.xlsx',
         projectRef: '',
         ownerRef: 'user01',
         deleted: false
@@ -144,5 +148,14 @@ describe('TrainingDataMultiSelectComponent', () => {
 
     verify(mockDialogService.openMatDialog(TrainingDataUploadDialogComponent, anything())).once();
     expect(result.length).toEqual(4);
+  }));
+
+  it('should download training data', fakeAsync(() => {
+    component.downloadTrainingData(mockTrainingData[0]);
+    tick();
+
+    verify(
+      mockFileService.onlineDownloadFile(FileType.TrainingData, mockTrainingData[0].fileUrl, mockTrainingData[0].title)
+    ).once();
   }));
 });

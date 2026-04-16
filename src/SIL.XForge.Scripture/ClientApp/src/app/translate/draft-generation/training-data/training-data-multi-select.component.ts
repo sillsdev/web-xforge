@@ -11,6 +11,8 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { FileService } from 'xforge-common/file.service';
+import { FileType } from 'xforge-common/models/file-offline-data';
 import { UserService } from 'xforge-common/user.service';
 import {
   TrainingDataUploadDialogComponent,
@@ -30,6 +32,7 @@ export class TrainingDataMultiSelectComponent {
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly dialogService: DialogService,
+    private readonly fileService: FileService,
     private readonly userService: UserService
   ) {}
 
@@ -50,6 +53,10 @@ export class TrainingDataMultiSelectComponent {
     if (!confirmation) return;
 
     this.trainingDataSelect.emit([...this.availableTrainingData.filter(td => td !== trainingData)]);
+  }
+
+  downloadTrainingData(trainingData: TrainingData): void {
+    this.fileService.onlineDownloadFile(FileType.TrainingData, trainingData.fileUrl, trainingData.title);
   }
 
   openUploadDialog(): void {
