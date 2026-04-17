@@ -65,14 +65,19 @@ export abstract class ProjectService<
     );
   }
 
-  async onlineGetMany(projectIds: string[]): Promise<TDoc[]> {
+  async onlineGetMany(projectIds: string[], subscriber: DocSubscription): Promise<TDoc[]> {
     if (projectIds.length === 0) {
       return [];
     }
     const results = await this.realtimeService.onlineQuery<TDoc>(this.collection, 'query_projects_b', {
       _id: { $in: projectIds }
     });
-    return results.docs as TDoc[];
+    const docs: TDoc[] = results.docs as TDoc[];
+    for (const doc of docs) {
+      doc.addSubscriber(subscriber);
+    }
+    results.dispose();
+    return docs;
   }
 
   onlineAddCurrentUser(id: string, projectRole?: string): Promise<void> {
