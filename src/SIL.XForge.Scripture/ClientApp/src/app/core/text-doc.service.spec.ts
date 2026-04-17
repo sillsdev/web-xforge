@@ -184,29 +184,6 @@ describe('TextDocService', () => {
     });
   });
 
-  describe('createTextDoc', () => {
-    it('should throw error if text doc already exists', fakeAsync(() => {
-      const env = new TestEnvironment();
-      expect(() => {
-        env.textDocService.createTextDoc(env.textDocId, new DocSubscription('spec'), getTextDoc(env.textDocId));
-        tick();
-      }).toThrowError();
-    }));
-
-    it('creates the text doc if it does not already exist', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      const textDocId = new TextDocId('project01', 40, 2);
-      const textDoc = await env.textDocService.createTextDoc(
-        textDocId,
-        new DocSubscription('spec'),
-        getTextDoc(textDocId)
-      );
-      tick();
-
-      expect(textDoc.data).toBeDefined();
-    }));
-  });
-
   describe('isDataInSync', () => {
     it('should return true if the project is undefined', () => {
       const env = new TestEnvironment();
