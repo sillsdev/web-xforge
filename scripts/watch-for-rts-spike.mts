@@ -129,12 +129,33 @@ class RtsMon {
       return undefined;
     }
   }
-  private async runCommand(
-    cmd: string,
-    args: string[]
-  ): Promise<{ code: number; stdout: Uint8Array; stderr: Uint8Array }> {
-    const command = new Deno.Command(cmd, { args });
-    return await command.output();
+
+  /** Reads all data from a ReadableStream into a single Uint8Array. */
+  private async readStream(stream: ReadableStream<Uint8Array>): Promise<Uint8Array> {
+    const reader = stream.getReader();
+    const chunks: Uint8Array[] = [];
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+    }
+    reader.releaseLock();
+    const totalLength: number = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+    const result = new Uint8Array(totalLength);
+    let offset: number = 0;
+    for (const chunk of chunks) {
+      result.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return result;
+  }
+
+  private async runCommand(cmd: string, args: string[]): Promise<{ code: number; stdout: Uint8Array }> {
+    const command = new Deno.Command(cmd, { args, stdout: 'piped', stderr: 'null' });
+    const child = command.spawn();
+    const stdout: Uint8Array = await this.readStream(child.stdout);
+    const status = await child.status;
+    return { code: status.code, stdout: stdout };
   }
 }
 
