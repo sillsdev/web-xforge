@@ -6,10 +6,8 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
-import { type } from 'rich-text';
 import { Observable, Subject } from 'rxjs';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
-import { RealtimeService } from 'xforge-common/realtime.service';
 import { UserService } from 'xforge-common/user.service';
 import { TextDoc, TextDocId, TextDocSource } from './models/text-doc';
 import { SFProjectService } from './sf-project.service';
@@ -22,8 +20,7 @@ export class TextDocService {
 
   constructor(
     private readonly projectService: SFProjectService,
-    private readonly userService: UserService,
-    private readonly realtimeService: RealtimeService
+    private readonly userService: UserService
   ) {}
 
   /**
@@ -84,25 +81,6 @@ export class TextDocService {
       this.hasChapterEditPermission(project, bookNum, chapterNum) &&
       this.isDataInSync(project) &&
       !this.isEditingDisabled(project)
-    );
-  }
-
-  async createTextDoc(textDocId: TextDocId, subscriber: DocSubscription, data?: TextData): Promise<TextDoc> {
-    const docSubscription = new DocSubscription('TextDocService.createTextDoc');
-    try {
-      const textDoc: TextDoc = await this.projectService.getText(textDocId, docSubscription);
-      if (textDoc?.data != null) throw new Error(`Text Doc already exists for ${textDocId}`);
-    } finally {
-      docSubscription.unsubscribe();
-    }
-
-    data ??= { ops: [] };
-    return await this.realtimeService.create<TextDoc>(
-      TextDoc.COLLECTION,
-      textDocId.toString(),
-      data,
-      subscriber,
-      type.uri
     );
   }
 
