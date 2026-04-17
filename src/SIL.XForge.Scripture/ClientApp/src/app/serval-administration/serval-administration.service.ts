@@ -3,6 +3,7 @@ import { DestroyRef, Injectable } from '@angular/core';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { Observable } from 'rxjs';
 import { CommandService } from 'xforge-common/command.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { ProjectService } from 'xforge-common/project.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { RetryingRequestService } from 'xforge-common/retrying-request.service';
@@ -50,9 +51,10 @@ export class ServalAdministrationService extends ProjectService<SFProjectProfile
   /**
    * Gets a project document by its Paratext ID.
    * @param paratextId The Paratext project identifier.
+   * @param subscriber The doc subscription to associate with the returned doc.
    * @returns A promise containing the project document, or undefined if not found.
    */
-  async getByParatextId(paratextId: string): Promise<SFProjectProfileDoc | undefined> {
+  async getByParatextId(paratextId: string, subscriber: DocSubscription): Promise<SFProjectProfileDoc | undefined> {
     const query = await this.realtimeService.onlineQuery<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       'ServalAdministrationService.getByParatextId',
@@ -60,6 +62,11 @@ export class ServalAdministrationService extends ProjectService<SFProjectProfile
         paratextId
       }
     );
-    return query.docs.length > 0 ? query.docs[0] : undefined;
+    const doc: SFProjectProfileDoc | undefined = query.docs.length > 0 ? query.docs[0] : undefined;
+    if (doc != null) {
+      doc.addSubscriber(subscriber);
+    }
+    query.dispose();
+    return doc;
   }
 }
