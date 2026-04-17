@@ -552,7 +552,7 @@
     "number_answers": "Anzahl Antworten",
     "scripture_forge": "Scripture Forge",
     "some_questions_edited": "Einige Fragen wurden bearbeitet",
-    "update_to": "Update to"
+    "update_to": "Aktualisieren auf"
   },
   "import_questions_dialog": {
     "back": "Zurück",
@@ -869,6 +869,7 @@
   "training_data_multi_select": {
     "confirm_delete": "Bist Du sicher, dass Du diese Schulungsdaten dauerhaft löschen möchtest?",
     "delete": "Löschen",
+    "download": "Download",
     "upload_spreadsheet": "Tabelle hochladen"
   },
   "training_data_upload_dialog": {
@@ -962,9 +963,11 @@
     "second_reference_project_placeholder": "Zweiter Referenzprojekt (optional)",
     "submission_success_message": "Wir haben Deine Anfrage erhalten. Ein Teammitglied wird Dich innerhalb von {{ min }} bis {{ max }} Werktagen kontaktieren, um Dein Projekt und die nächsten Schritte zu besprechen.",
     "submission_success_title": "Danke für die Registrierung!",
+    "submit_failure_notice": "Das Formular konnte nicht gesendet werden. Bitte versuche es erneut.",
     "submit": "Absenden",
     "submitting_message": "Bitte warte, während wir Deine Anfrage übermitteln. Dies kann eine Weile dauern.",
     "submitting_title": "Deine Anfrage wird gesendet",
+    "fill_required_fields_notice": "Bitte fülle alle erforderlichen Felder aus",
     "third_reference_project_placeholder": "Drittes Referenzprojekt (optional)",
     "title": "Für Generierung von Entwürfen registrieren",
     "translation_language_iso_label": "Sprache der Übersetzung (ISO-Code)",

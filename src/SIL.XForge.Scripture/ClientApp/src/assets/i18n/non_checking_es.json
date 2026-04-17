@@ -552,7 +552,7 @@
     "number_answers": "Número de respuestas",
     "scripture_forge": "Scripture Forge",
     "some_questions_edited": "Algunas preguntas han sido editadas",
-    "update_to": "Update to"
+    "update_to": "Actualizar a"
   },
   "import_questions_dialog": {
     "back": "Atrás",
@@ -869,6 +869,7 @@
   "training_data_multi_select": {
     "confirm_delete": "¿Está seguro de que desea eliminar permanentemente estos datos de entrenamiento?",
     "delete": "Eliminar",
+    "download": "Descargar",
     "upload_spreadsheet": "Cargar hoja de cálculo"
   },
   "training_data_upload_dialog": {
@@ -962,9 +963,11 @@
     "second_reference_project_placeholder": "Segundo proyecto de referencia (opcional)",
     "submission_success_message": "Hemos recibido su solicitud. Un miembro del equipo se pondrá en contacto con usted en un plazo de {{ min }} a {{ max }} días laborables para hablar de su proyecto y de los siguientes pasos.",
     "submission_success_title": "¡Gracias por registrarse!",
+    "submit_failure_notice": "No se pudo enviar el formulario. Por favor, inténtelo de nuevo.",
     "submit": "Enviar",
     "submitting_message": "Por favor espere mientras enviamos su solicitud. Esto puede tardar unos momentos.",
     "submitting_title": "Enviando su solicitud",
+    "fill_required_fields_notice": "Por favor, rellene todos los campos obligatorios",
     "third_reference_project_placeholder": "Tercer proyecto de referencia (opcional)",
     "title": "Regístrase para generar borradores",
     "translation_language_iso_label": "Código ISO del idioma de la traducción",
