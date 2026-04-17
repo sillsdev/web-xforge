@@ -248,15 +248,36 @@
 
     <h2>Tools</h2>
 
-    @if (getSuggestedCommand()) {
-      <mat-card>
-        <mat-card-header> <mat-card-title>Suggested Onboarding Command</mat-card-title> </mat-card-header>
-        <mat-card-content>
-          <p>After downloading all project files, run this command to onboard them:</p>
-          <code class="command-text">{{ getSuggestedCommand() }}</code>
-        </mat-card-content>
-      </mat-card>
-    }
+    <mat-card>
+      <mat-card-header> <mat-card-title>Suggested Onboarding Commands</mat-card-title> </mat-card-header>
+      <mat-card-content>
+        <h3>After downloading projects, run these commands</h3>
+        <p>For projects:</p>
+        <div class="command-wrapper">
+          <code class="command-text">{{ getSuggestedProjectOnboardingCommand() }}</code>
+          <button
+            mat-icon-button
+            color="primary"
+            (click)="copyToClipboard(getSuggestedProjectOnboardingCommand())"
+            matTooltip="Copy command to clipboard"
+          >
+            <mat-icon>content_copy</mat-icon>
+          </button>
+        </div>
+        <p>For resources:</p>
+        <div class="command-wrapper">
+          <code class="command-text">{{ getSuggestedResourceOnboardingCommand() }}</code>
+          <button
+            mat-icon-button
+            color="primary"
+            (click)="copyToClipboard(getSuggestedResourceOnboardingCommand())"
+            matTooltip="Copy command to clipboard"
+          >
+            <mat-icon>content_copy</mat-icon>
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
 
     <app-dev-only>
       <mat-accordion class="json-accordion" multi>
