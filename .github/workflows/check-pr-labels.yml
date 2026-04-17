@@ -1,0 +1,35 @@
+# Checks that a PR has the required labels before merging is allowed.
+# Posts a commit status (pending or success) rather than failing the workflow run,
+# so that the merge button stays blocked without showing a red failure.
+name: Check PR labels
+permissions: {}
+
+on:
+  pull_request:
+    types: [opened, synchronize, labeled, unlabeled]
+
+jobs:
+  check-labels:
+    name: "Check PR labels"
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2.0.4
+        with:
+          deno-version: v2.x
+
+      - name: Check labels and set commit status
+        run: scripts/check_pr_labels.mts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          REPO: ${{ github.repository }}
+          # toJSON produces a JSON array of label name strings, e.g. ["testing complete","do not merge"]
+          LABELS_JSON: ${{ toJSON(github.event.pull_request.labels.*.name) }}
