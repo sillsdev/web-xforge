@@ -256,19 +256,11 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
     return value == null ? '' : formatBookListForSILNLP(value);
   }
 
-  /** Copies the formatted book list to the clipboard. */
-  async copyBookList(books: number[] | undefined): Promise<void> {
-    const text: string = this.formatBookList(books);
-    await navigator.clipboard.writeText(text);
-    this.noticeService.show('Book list copied to clipboard');
-  }
+  getZipFileNames(): { projects: string[]; resources: string[] } {
+    if (this.request == null) return { projects: [], resources: [] };
 
-  getZipFileNames(): string[] {
-    if (this.request == null) {
-      return [];
-    }
-
-    const zipFileNamesSet = new Set<string>();
+    const projectFilesNameSet = new Set<string>();
+    const resourceFilesNamesSet = new Set<string>();
     const formData = this.request.submission.formData;
 
     // Helper function to add a zip file name if the project exists (for Paratext IDs)
@@ -280,7 +272,11 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
       if (sfProjectId != null) {
         const shortName = this.projectShortNames.get(paratextId);
         if (shortName != null) {
-          zipFileNamesSet.add(`${shortName}.zip`);
+          if (ParatextService.isResource(paratextId)) {
+            resourceFilesNamesSet.add(`${shortName}.zip`);
+          } else {
+            projectFilesNameSet.add(`${shortName}.zip`);
+          }
         }
       }
     };
@@ -288,7 +284,7 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
     // Add the main project (submission.projectId is already an SF project ID)
     const mainProjectShortName = this.projectShortNames.get(this.request.submission.projectId);
     if (mainProjectShortName != null) {
-      zipFileNamesSet.add(`${mainProjectShortName}.zip`);
+      projectFilesNameSet.add(`${mainProjectShortName}.zip`);
     }
 
     // Add all source project zip file names
@@ -298,7 +294,7 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
     addZipFileName(formData.draftingSourceProject);
     addZipFileName(formData.backTranslationProject);
 
-    return Array.from(zipFileNamesSet);
+    return { projects: Array.from(projectFilesNameSet), resources: Array.from(resourceFilesNamesSet) };
   }
 
   getAllProjectSFIds(options = { includeResources: true }): string[] {
@@ -316,13 +312,16 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
     return [...new Set([mainProject, ...sourceIds].filter(id => id != null))];
   }
 
-  /** Gets the suggested onboarding command based on all downloadable projects. */
-  getSuggestedCommand(): string {
-    const zipFileNames = this.getZipFileNames();
-    if (zipFileNames.length === 0) {
-      return '';
-    }
-    return `poetry run python -m silnlp.common.onboard_project --copy-from $DOWNLOAD_FOLDER --extract-corpora --collect-verse-counts --wildebeest --datestamp ${zipFileNames.join(' ')}`;
+  getSuggestedProjectOnboardingCommand(): string {
+    const projects = this.getZipFileNames().projects;
+    if (projects.length === 0) return '';
+    return `poetry run python -m silnlp.common.onboard_project --copy-from $DOWNLOAD_FOLDER --extract-corpora --collect-verse-counts --wildebeest --datestamp ${projects.join(' ')}`;
+  }
+
+  getSuggestedResourceOnboardingCommand(): string {
+    const resources = this.getZipFileNames().resources;
+    if (resources.length === 0) return '';
+    return `poetry run python -m silnlp.common.onboard_project --copy-from $DOWNLOAD_FOLDER --extract-corpora --collect-verse-counts --wildebeest ${resources.join(' ')}`;
   }
 
   /** Adds a comment to the current onboarding request. */
@@ -481,6 +480,16 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
     }
 
     return warnings;
+  }
+
+  async copyBookList(books: number[] | undefined): Promise<void> {
+    const text: string = this.formatBookList(books);
+    await this.copyToClipboard(text);
+  }
+
+  async copyToClipboard(text: string): Promise<void> {
+    await navigator.clipboard.writeText(text);
+    this.noticeService.show('Copied to clipboard');
   }
 
   /**
