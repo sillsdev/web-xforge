@@ -198,9 +198,9 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
       this.loading$.next(true);
       try {
         this.projectDoc = await this.projectService.getProfile(
-        this.projectId,
-        new DocSubscription('HistoryChooserComponent', this.destroyRef)
-      );
+          this.projectId,
+          new DocSubscription('HistoryChooserComponent', this.destroyRef)
+        );
         if (this.historyRevisions.length === 0) {
           this.historyRevisions =
             (await this.paratextService.getRevisions(this.projectId, this.bookId, this.chapter)) ?? [];
