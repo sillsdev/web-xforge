@@ -177,9 +177,11 @@ class TestEnvironment {
           })
         )
     );
-    when(mockedProjectService.onlineGetMany(anything())).thenCall(async () => {
+    when(mockedProjectService.onlineGetMany(anything(), anything())).thenCall(async () => {
       const query = await this.realtimeService.onlineQuery<TestProjectDoc>(TestProjectDoc.COLLECTION, 'spec', {});
-      return query.docs;
+      const docs: TestProjectDoc[] = query.docs as TestProjectDoc[];
+      query.dispose();
+      return docs;
     });
     when(mockedUserService.currentUserId).thenReturn('user01');
     this.fixture = TestBed.createComponent(SaUsersComponent);
