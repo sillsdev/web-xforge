@@ -461,6 +461,17 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
       );
     }
 
+    const backTranslationIsoCode = this.request?.submission.formData.backTranslationLanguageIsoCode;
+    if (
+      isPopulatedString(backTranslationIsoCode) &&
+      isPopulatedString(projectISOCode) &&
+      normalizeLanguageCodeToISO639_3(backTranslationIsoCode) === normalizeLanguageCodeToISO639_3(projectISOCode)
+    ) {
+      warnings.push(
+        `The language code for the back translation (${backTranslationIsoCode}) is equivalent to the project language code (${projectISOCode}).`
+      );
+    }
+
     // Find projects that failed their last sync
     for (const [id, projectDoc] of this.projectDocs.entries()) {
       if (projectDoc.data?.sync.lastSyncSuccessful === false) {
