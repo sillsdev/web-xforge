@@ -1,7 +1,5 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -199,7 +197,7 @@ public class MachineApiController : ControllerBase
         try
         {
             bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
-            TranslationBuild build = await _machineApiService.GetRawBuildAsync(
+            TranslationBuild? build = await _machineApiService.GetRawBuildAsync(
                 _userAccessor.UserId,
                 sfProjectId,
                 buildId,
@@ -315,6 +313,54 @@ public class MachineApiController : ControllerBase
     }
 
     /// <summary>
+    /// Gets the confidence scores for a build at book and chapter level.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="buildId">The build identifier.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">The build is returned.</response>
+    /// <response code="403">You do not have permission to retrieve build confidence data for this project.</response>
+    /// <response code="404">
+    /// Confidence data is not available for this build. Either quality estimation is not configured for the project,
+    /// or the build was created before quality estimation was configured for the project.
+    /// </response>
+    [HttpGet(MachineApi.GetBuildConfidences)]
+    public async Task<ActionResult<BuildConfidences>> GetBuildConfidencesAsync(
+        string sfProjectId,
+        string buildId,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
+            BuildConfidences? buildConfidences = await _machineApiService.GetBuildConfidencesAsync(
+                _userAccessor.UserId,
+                sfProjectId,
+                buildId,
+                isServalAdmin,
+                cancellationToken
+            );
+
+            // No confidence data exists for the build
+            if (buildConfidences is null)
+            {
+                return NoContent();
+            }
+
+            return Ok(buildConfidences);
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+    }
+
+    /// <summary>
     /// Gets a translation engine.
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
@@ -373,7 +419,7 @@ public class MachineApiController : ControllerBase
         try
         {
             bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
-            TranslationEngine engine = await _machineApiService.GetRawEngineAsync(
+            TranslationEngine? engine = await _machineApiService.GetRawEngineAsync(
                 _userAccessor.UserId,
                 sfProjectId,
                 preTranslate,
@@ -512,7 +558,7 @@ public class MachineApiController : ControllerBase
     /// <response code="409">The engine has not been built on the ML server.</response>
     /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
     [HttpGet(MachineApi.GetPreTranslationDelta)]
-    public async Task<ActionResult<Snapshot<TextData>>> GetPreTranslationDeltaAsync(
+    public async Task<ActionResult<Snapshot<TextData>?>> GetPreTranslationDeltaAsync(
         string sfProjectId,
         int bookNum,
         int chapterNum,
@@ -536,7 +582,7 @@ public class MachineApiController : ControllerBase
                 config,
                 cancellationToken
             );
-            deltas.TryGetValue(chapterNum.ToString(), out Snapshot<TextData> chapterDelta);
+            deltas.TryGetValue(chapterNum.ToString(), out Snapshot<TextData>? chapterDelta);
             return Ok(chapterDelta);
         }
         catch (BrokenCircuitException e)

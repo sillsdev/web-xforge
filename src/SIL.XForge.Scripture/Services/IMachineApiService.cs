@@ -49,7 +49,7 @@ public interface IMachineApiService
         bool isServalAdmin,
         CancellationToken cancellationToken
     );
-    Task<TranslationBuild> GetRawBuildAsync(
+    Task<TranslationBuild?> GetRawBuildAsync(
         string curUserId,
         string sfProjectId,
         string buildId,
@@ -76,6 +76,13 @@ public interface IMachineApiService
         string sfProjectId,
         long? minRevision,
         bool preTranslate,
+        bool isServalAdmin,
+        CancellationToken cancellationToken
+    );
+    Task<BuildConfidences?> GetBuildConfidencesAsync(
+        string curUserId,
+        string sfProjectId,
+        string buildId,
         bool isServalAdmin,
         CancellationToken cancellationToken
     );
