@@ -18,7 +18,9 @@ import { notNull } from '../../type-utils';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { BuildDto } from '../machine-api/build-dto';
 import { BuildStates } from '../machine-api/build-states';
+import { BuildConfidences } from '../translate/draft-generation/build-confidences/build-confidences';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
+import { BuildConfidencesExportService } from './build-confidences-export.service';
 import { NormalizedDateRange } from './date-range-picker.component';
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
 import { ServalBuildProblemsDialog } from './serval-build-problems-dialog.component';
@@ -40,6 +42,7 @@ import {
 } from './serval-builds.component';
 
 const mockNoticeService = mock(NoticeService);
+const mockBuildConfidencesExportService = mock(BuildConfidencesExportService);
 const mockDraftGenerationService = mock(DraftGenerationService);
 const mockDialogService = mock(DialogService);
 const mockExportService = mock(DraftJobsExportService);
@@ -57,6 +60,7 @@ describe('ServalBuildsComponent', () => {
       provideRouter([]),
       { provide: NoticeService, useMock: mockNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      { provide: BuildConfidencesExportService, useMock: mockBuildConfidencesExportService },
       { provide: DraftGenerationService, useMock: mockDraftGenerationService },
       { provide: DialogService, useMock: mockDialogService },
       { provide: DraftJobsExportService, useMock: mockExportService },
@@ -1908,6 +1912,7 @@ describe('ServalBuildsComponent', () => {
       env.component['exportTsv']();
 
       verify(mockExportService.exportTsv(anything(), anything(), anything(), anything(), anything())).once();
+      expect().nothing();
     });
   });
 
@@ -2154,7 +2159,8 @@ class TestEnvironment {
       problems: [],
       draftGenerationRequestId: undefined,
       requesterSFUserId: undefined,
-      status: DraftGenerationBuildStatus.Completed
+      status: DraftGenerationBuildStatus.Completed,
+      buildConfidences: undefined
     };
     return result;
   }
@@ -2181,7 +2187,8 @@ class TestEnvironment {
     problems = [],
     projectDeleted = false,
     hasServalBuild = true,
-    hasEvents = true
+    hasEvents = true,
+    buildConfidences = undefined
   }: {
     projectId?: string | null;
     ptProjectId?: string;
@@ -2205,6 +2212,7 @@ class TestEnvironment {
     /** Whether or not there are any events from which this row is based on. Records that correspond to no events
      * aren't able to have certain kinds of data. */
     hasEvents?: boolean;
+    buildConfidences?: BuildConfidences;
   }): ServalBuildRow {
     if (!hasEvents) {
       // Check data consistency here rather than expect each caller to not make a mistake.
@@ -2281,7 +2289,8 @@ class TestEnvironment {
       problems: problems,
       draftGenerationRequestId: draftGenerationRequestId ?? undefined,
       requesterSFUserId: requesterId ?? undefined,
-      status: status
+      status: status,
+      buildConfidences: buildConfidences
     };
 
     const result: ServalBuildRow = {
@@ -2354,7 +2363,8 @@ class TestEnvironment {
       problems: [],
       draftGenerationRequestId: undefined,
       requesterSFUserId: undefined,
-      status: DraftGenerationBuildStatus.Completed
+      status: DraftGenerationBuildStatus.Completed,
+      buildConfidences: undefined
     };
   }
 

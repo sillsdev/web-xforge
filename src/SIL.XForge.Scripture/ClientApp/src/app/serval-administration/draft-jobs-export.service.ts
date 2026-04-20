@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { saveAs } from 'file-saver';
 import Papa from 'papaparse';
+import { BaseExportService } from './base-export-service';
 import { NormalizedDateRange } from './date-range-picker.component';
 import { encodeRsv } from './rsv';
 
@@ -35,7 +36,7 @@ export interface SpreadsheetRow {
 @Injectable({
   providedIn: 'root'
 })
-export class DraftJobsExportService {
+export class DraftJobsExportService extends BaseExportService {
   /**
    * Export the draft jobs data to a CSV file.
    */
@@ -172,25 +173,6 @@ export class DraftJobsExportService {
     result.push(maxRow);
 
     return result;
-  }
-
-  /**
-   * Returns export filename using current date range, formatted as {prefix}_YYYY-MM-DD_YYYY-MM-DD.{ext}
-   */
-  private getExportFilename(dateRange: NormalizedDateRange, ext: string, filenamePrefix: string): string {
-    const startStr = this.formatDateForExport(dateRange.start);
-    const endStr = this.formatDateForExport(dateRange.end);
-    return `${filenamePrefix}_${startStr}_${endStr}.${ext}`;
-  }
-
-  /**
-   * Formats a Date as YYYY-MM-DD (no time)
-   */
-  private formatDateForExport(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
   }
 
   /**
