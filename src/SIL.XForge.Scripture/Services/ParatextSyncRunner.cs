@@ -401,10 +401,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 resourceNeedsUpdating = _paratextService.ResourceDocsNeedUpdating(_projectDoc.Data, paratextResource);
                 LogMetric($"Resource needs updating: {resourceNeedsUpdating}");
 
-                // A resource's permissions need updating if they are the old per-book and per-chapter permissions
-                resourcePermissionsNeedUpdating = _projectDoc.Data.Texts.Any(t =>
-                    t.Permissions.Any(p => p.Value == TextInfoPermission.Read)
-                );
+                // A resource's permissions need updating if they are empty
+                resourcePermissionsNeedUpdating = _projectDoc.Data.Texts.Any(t => t.Permissions.Count == 0);
                 LogMetric($"Resource permissions need updating: {resourcePermissionsNeedUpdating}");
             }
 
@@ -458,7 +456,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
             // Update permissions if not a resource, or if it is a resource and needs updating.
             // A resource will need updating if its text or permissions have changed on the DBL,
-            // or if it contains the old per-book and per-chapter permissions.
+            // or if its permissions are empty.
             // Source resources have their permissions updated above in the section "Updating user resource access".
             if (
                 !_paratextService.IsResource(targetParatextId)
