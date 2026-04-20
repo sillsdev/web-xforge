@@ -200,25 +200,25 @@ public class PreTranslationServiceTests
                     new Pretranslation
                     {
                         TextId = "64_1",
-                        TargetRefs = ["64_1:mt1_001"],
+                        Refs = ["64_1:mt1_001"],
                         Translation = "3 John",
                     },
                     new Pretranslation
                     {
                         TextId = "64_1",
-                        TargetRefs = ["64_1:verse_001_001"],
+                        Refs = ["64_1:verse_001_001"],
                         Translation = "By the old man,",
                     },
                     new Pretranslation
                     {
                         TextId = "64_1",
-                        TargetRefs = ["64_1:verse_001_001_001"],
+                        Refs = ["64_1:verse_001_001_001"],
                         Translation = "To my dear friend Gaius,",
                     },
                     new Pretranslation
                     {
                         TextId = "64_1",
-                        TargetRefs = ["64_1:verse_001_001_002"],
+                        Refs = ["64_1:verse_001_001_002"],
                         Translation = "whom I love in the truth:",
                     },
                 ])
@@ -375,6 +375,71 @@ public class PreTranslationServiceTests
             "Abraham was the father of Isaac, Isaac was the father of James, and James was the father of Jude and his brethren. ",
             actual.Last().Translation
         );
+    }
+
+    [Test]
+    public async Task GetPreTranslationsAsync_ReturnsConfidenceIntervals()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { MockPreTranslationParameters = true, UseParatextZipFile = true }
+        );
+        const int bookNum = 40;
+        const int chapterNum = 1;
+        string textId = PreTranslationService.GetTextId(bookNum);
+        env.TranslationEnginesClient.GetAllPretranslationsAsync(
+                TranslationEngine01,
+                ParallelCorpus01,
+                textId,
+                CancellationToken.None
+            )
+            .Returns(
+                Task.FromResult<IList<Pretranslation>>([
+                    new Pretranslation
+                    {
+                        TextId = "MAT",
+                        TargetRefs = ["MAT 1:1/1:s1"],
+                        Translation = "The genealogy of Jesus Christ",
+                        Confidence = 0.1,
+                    },
+                    new Pretranslation
+                    {
+                        TextId = "MAT",
+                        TargetRefs = ["MAT 1:1"],
+                        Translation = "The book of the birth of Jesus Christ , the son of David , the son of Abraham .",
+                        Confidence = 0.2,
+                    },
+                    new Pretranslation
+                    {
+                        TextId = "MAT",
+                        TargetRefs = ["MAT 1:2"],
+                        Translation =
+                            "Abraham was the father of Isaac , Isaac was the father of James , and James was the father of Jude and his brethren .",
+                        Confidence = 0.3,
+                    },
+                ])
+            );
+
+        // SUT
+        PreTranslation[] actual = await env.Service.GetPreTranslationsAsync(
+            Project01,
+            bookNum,
+            chapterNum,
+            CancellationToken.None
+        );
+        Assert.AreEqual(2, actual.Length);
+        Assert.AreEqual("verse_1_1", actual.First().Reference);
+        Assert.AreEqual(
+            "The genealogy of Jesus Christ The book of the birth of Jesus Christ, the son of David, the son of Abraham. ",
+            actual.First().Translation
+        );
+        Assert.AreEqual(0.2, actual.First().Confidence);
+        Assert.AreEqual("verse_1_2", actual.Last().Reference);
+        Assert.AreEqual(
+            "Abraham was the father of Isaac, Isaac was the father of James, and James was the father of Jude and his brethren. ",
+            actual.Last().Translation
+        );
+        Assert.AreEqual(0.3, actual.Last().Confidence);
     }
 
     [Test]
