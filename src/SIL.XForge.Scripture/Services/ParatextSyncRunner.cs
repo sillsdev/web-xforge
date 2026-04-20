@@ -393,11 +393,20 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
             await NotifySyncProgress(SyncPhase.Phase5, 90.0);
 
-            bool resourceNeedsUpdating =
-                paratextProject is ParatextResource paratextResource
-                && _paratextService.ResourceDocsNeedUpdating(_projectDoc.Data, paratextResource);
-            if (paratextProject is ParatextResource)
+            // A resource needs updating if it has changed in the DBL
+            bool resourceNeedsUpdating = false;
+            bool resourcePermissionsNeedUpdating = false;
+            if (paratextProject is ParatextResource paratextResource)
+            {
+                resourceNeedsUpdating = _paratextService.ResourceDocsNeedUpdating(_projectDoc.Data, paratextResource);
                 LogMetric($"Resource needs updating: {resourceNeedsUpdating}");
+
+                // A resource's permissions need updating if they are the old per-book and per-chapter permissions
+                resourcePermissionsNeedUpdating = _projectDoc.Data.Texts.Any(t =>
+                    t.Permissions.Any(p => p.Value == TextInfoPermission.Read)
+                );
+                LogMetric($"Resource permissions need updating: {resourcePermissionsNeedUpdating}");
+            }
 
             // If a resource needs updating, retrieve the books, as they were not retrieved previously
             if (resourceNeedsUpdating)
@@ -448,9 +457,14 @@ public class ParatextSyncRunner : IParatextSyncRunner
             }
 
             // Update permissions if not a resource, or if it is a resource and needs updating.
-            // A resource will need updating if its text or permissions have changed on the DBL.
+            // A resource will need updating if its text or permissions have changed on the DBL,
+            // or if it contains the old per-book and per-chapter permissions.
             // Source resources have their permissions updated above in the section "Updating user resource access".
-            if (!_paratextService.IsResource(targetParatextId) || resourceNeedsUpdating)
+            if (
+                !_paratextService.IsResource(targetParatextId)
+                || resourceNeedsUpdating
+                || resourcePermissionsNeedUpdating
+            )
             {
                 LogMetric("Updating permissions");
                 await _projectService.UpdatePermissionsAsync(userId, _projectDoc, users: _paratextUsers, token: token);
