@@ -1542,8 +1542,13 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         )
         {
             // Update the permission at a book level
-            Dictionary<string, string> newBookPermissions =
-                projectBookPermissions.SingleOrDefault(p => p.bookIndex == bookIndex).bookPermissions ?? [];
+            Dictionary<string, string> newBookPermissions = projectBookPermissions
+                .SingleOrDefault(p => p.bookIndex == bookIndex)
+                .bookPermissions;
+
+            // If we are only updating a subset of books, skip updating permissions for other books
+            if (newBookPermissions is null)
+                continue;
 
             foreach ((string userId, string oldPermission) in oldBookPermissions)
             {
@@ -1632,14 +1637,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                     else
                     {
                         // Update chapter permissions
-                        if (permission == TextInfoPermission.None)
+                        if ((permission ?? TextInfoPermission.None) == TextInfoPermission.None)
                         {
-                            op.Unset(pd => pd.Texts[bookIndex].Chapters[chapterIndex.Value].Permissions[userId]);
+                            op.Unset(pd => pd.Texts[bookIndex].Chapters[chapterIndex!.Value].Permissions[userId]);
                         }
                         else
                         {
                             op.Set(
-                                pd => pd.Texts[bookIndex].Chapters[chapterIndex.Value].Permissions[userId],
+                                pd => pd.Texts[bookIndex].Chapters[chapterIndex!.Value].Permissions[userId],
                                 permission
                             );
                         }
