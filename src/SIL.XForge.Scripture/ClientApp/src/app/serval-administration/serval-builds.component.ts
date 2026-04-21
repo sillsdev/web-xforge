@@ -166,7 +166,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     private readonly userService: UserService,
     private readonly destroyRef: DestroyRef
   ) {
-    super(noticeService);
+    super(noticeService, 'ServalBuildsComponent');
   }
 
   protected get isOnline(): boolean {
