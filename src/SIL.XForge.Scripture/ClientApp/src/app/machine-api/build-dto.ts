@@ -10,8 +10,21 @@ export interface BuildDto extends ResourceDto {
   state: BuildStates;
   queueDepth: number;
   additionalInfo?: ServalBuildAdditionalInfo;
+  /** The Serval deployment version that executed this build. */
+  deploymentVersion?: string;
+  /** Execution data from the Serval build, including training/pretranslation counts and language tags. */
+  executionData?: BuildExecutionData;
 }
 
+/** Execution data from a Serval translation build. */
+export interface BuildExecutionData {
+  trainCount: number;
+  pretranslateCount: number;
+  sourceLanguageTag?: string;
+  targetLanguageTag?: string;
+}
+
+/** Additional information about a Serval build. */
 export interface ServalBuildAdditionalInfo {
   buildId: string;
   corporaIds?: string[];

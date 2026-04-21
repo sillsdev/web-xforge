@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 namespace SIL.XForge.Scripture.Models;
 
+/// <summary>
+/// Additional information about a Serval build.
+/// </summary>
 public class ServalBuildAdditionalInfo
 {
     public string BuildId { get; init; } = string.Empty;
