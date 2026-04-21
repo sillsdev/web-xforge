@@ -197,9 +197,8 @@ describe('CheckingOverviewComponent', () => {
       expect(env.component.getQuestionDocs(new TextDocId('project01', 42, 1)).length).toEqual(numQuestions + 1);
     }));
 
-
     it('should show new answer count after remote change', fakeAsync(async () => {
-      const env = await new TestEnvironment.create();
+      const env = await TestEnvironment.create();
       env.waitForQuestions();
 
       const dateNow = new Date();
@@ -216,9 +215,10 @@ describe('CheckingOverviewComponent', () => {
 
       expect(env.answerTotal).toContain('3');
 
-      const questionDoc: QuestionDoc = env.realtimeService.get(
+      const questionDoc: QuestionDoc = await env.realtimeService.get(
         QUESTIONS_COLLECTION,
-        getQuestionDocId('project01', 'q4Id')
+        getQuestionDocId('project01', 'q4Id'),
+        new DocSubscription('spec')
       );
       await questionDoc.submitJson0Op(op => {
         op.insert(d => d.answers, 0, newAnswer);
