@@ -46,6 +46,7 @@ import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { Book } from '../../../shared/book-multi-select/book-multi-select';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
+import { CopyrightBannerComponent } from '../../../shared/copyright-banner/copyright-banner.component';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { BookProgress, ProgressService, ProjectProgress } from '../../../shared/progress-service/progress.service';
 import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
@@ -83,6 +84,11 @@ interface ProjectPendingUpdate {
   syncUrl: string;
 }
 
+interface CopyrightMessage {
+  banner: string;
+  notice: string;
+}
+
 @Component({
   selector: 'app-draft-generation-steps',
   templateUrl: './draft-generation-steps.component.html',
@@ -113,7 +119,8 @@ interface ProjectPendingUpdate {
     TranslocoModule,
     TranslocoMarkupModule,
     BookMultiSelectComponent,
-    ConfirmSourcesComponent
+    ConfirmSourcesComponent,
+    CopyrightBannerComponent
   ]
 })
 export class DraftGenerationStepsComponent implements OnInit {
@@ -122,6 +129,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   @ViewChild(MatStepper) stepper!: MatStepper;
 
   projectsPendingUpdate: ProjectPendingUpdate[] = [];
+  copyrightMessages: CopyrightMessage[] = [];
 
   allAvailableTranslateBooks: Book[] = []; // A flattened instance of the values from availableTranslateBooks
   availableTranslateBooks: { [projectRef: string]: Book[] } = {};
@@ -386,6 +394,15 @@ export class DraftGenerationStepsComponent implements OnInit {
 
           this.sendEmailOnBuildFinished =
             this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.sendEmailOnBuildFinished ?? false;
+
+          // Load any copyright messages that are available
+          this.copyrightMessages = [...trainingSources, ...draftingSources]
+            .map(s => ({
+              banner: s.copyrightBanner,
+              notice: s.copyrightNotice
+            }))
+            .filter(s => s.banner != null)
+            .filter((value, index, self) => index === self.findIndex(v => v.banner === value.banner));
 
           // See if the target and any of the sources need updating
           const projectIds: string[] = [

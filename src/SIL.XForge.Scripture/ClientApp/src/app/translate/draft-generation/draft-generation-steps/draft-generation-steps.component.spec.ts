@@ -1368,7 +1368,7 @@ describe('DraftGenerationStepsComponent', () => {
     });
   });
 
-  describe('pending updates', () => {
+  describe('project notices', () => {
     const availableBooks = [
       { bookNum: 1 },
       { bookNum: 2 },
@@ -1385,13 +1385,17 @@ describe('DraftGenerationStepsComponent', () => {
           projectRef: 'source1',
           shortName: 'sP1',
           writingSystem: { tag: 'eng' },
-          texts: availableBooks
+          texts: availableBooks,
+          copyrightBanner: 'Copyright Banner 1',
+          copyrightNotice: 'Copyright Notice 1'
         },
         {
           projectRef: 'source2',
           shortName: 'sP2',
           writingSystem: { tag: 'eng' },
-          texts: availableBooks
+          texts: availableBooks,
+          copyrightBanner: 'Copyright Banner 2',
+          copyrightNotice: 'Copyright Notice 2'
         }
       ] as [DraftSource, DraftSource],
       trainingTargets: [
@@ -1407,7 +1411,9 @@ describe('DraftGenerationStepsComponent', () => {
           projectRef: draftingSourceId,
           shortName: 'dS',
           writingSystem: { tag: 'eng' },
-          texts: availableBooks.concat({ bookNum: 7 })
+          texts: availableBooks.concat({ bookNum: 7 }),
+          copyrightBanner: 'Copyright Banner 1',
+          copyrightNotice: 'Copyright Notice 1'
         }
       ] as [DraftSource]
     };
@@ -1453,6 +1459,13 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
       tick();
     }));
+
+    it('should show copyright notices', () => {
+      expect(component.copyrightMessages).toEqual([
+        { banner: 'Copyright Banner 1', notice: 'Copyright Notice 1' },
+        { banner: 'Copyright Banner 2', notice: 'Copyright Notice 2' }
+      ]);
+    });
 
     it('should show projects pending updates', () => {
       expect(component.projectsPendingUpdate).toEqual([
