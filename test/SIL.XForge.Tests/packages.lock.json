@@ -125,16 +125,6 @@
           "Microsoft.Extensions.DependencyModel": "8.0.1"
         }
       },
-      "Hangfire": {
-        "type": "Transitive",
-        "resolved": "1.8.23",
-        "contentHash": "WmVI9+aQDj0cUmCqNkkIz0WQaWcvviNTMtyUTTuIF6ci1eVHsmo+DEWRXqGApYRbmoiCzWNE40JuTjPaXbRePA==",
-        "dependencies": {
-          "Hangfire.AspNetCore": "[1.8.23]",
-          "Hangfire.Core": "[1.8.23]",
-          "Hangfire.SqlServer": "[1.8.23]"
-        }
-      },
       "Hangfire.AspNetCore": {
         "type": "Transitive",
         "resolved": "1.8.23",
@@ -178,14 +168,6 @@
           "Microsoft.Extensions.DependencyInjection.Abstractions": "3.0.0",
           "Microsoft.Extensions.Hosting.Abstractions": "3.0.0",
           "Microsoft.Extensions.Logging.Abstractions": "3.0.0"
-        }
-      },
-      "Hangfire.SqlServer": {
-        "type": "Transitive",
-        "resolved": "1.8.23",
-        "contentHash": "HiRUbwveK0+wop8iY98Z5DrtfjP+1QCly6IO+21Bnolb5kTO5eCrtKbGErHfhSN0BzKk9ehmTLk9uDHQdAtfcQ==",
-        "dependencies": {
-          "Hangfire.Core": "[1.8.23]"
         }
       },
       "idunno.Authentication.Basic": {
@@ -627,8 +609,9 @@
           "Bugsnag.AspNet.Core": "[4.1.0, )",
           "Duende.IdentityModel": "[8.1.0, )",
           "EdjCase.JsonRpc.Router": "[6.1.0, )",
-          "Hangfire": "[1.8.23, )",
+          "Hangfire.AspNetCore": "[1.8.23, )",
           "Hangfire.Autofac": "[2.7.0, )",
+          "Hangfire.Core": "[1.8.23, )",
           "Hangfire.Mongo": "[1.14.1, )",
           "Jering.Javascript.NodeJS": "[6.3.1, )",
           "MailKit": "[4.16.0, )",
