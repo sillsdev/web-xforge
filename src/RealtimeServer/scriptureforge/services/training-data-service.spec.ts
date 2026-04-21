@@ -1,6 +1,7 @@
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock } from 'ts-mockito';
+import { SystemRole } from '../../common/models/system-role';
 import { User, USERS_COLLECTION } from '../../common/models/user';
 import { createTestUser } from '../../common/models/user-test-data';
 import { RealtimeServer } from '../../common/realtime-server';
@@ -43,6 +44,17 @@ describe('TrainingDataService', () => {
     await expect(
       fetchDoc(conn, TRAINING_DATA_COLLECTION, getTrainingDataId('project01', 'dataid01'))
     ).rejects.toThrow();
+  });
+
+  it('allows serval admin to view training data even if not a project member', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    // SUT
+    const conn = clientConnect(env.server, 'servalAdmin', SystemRole.ServalAdmin);
+    await expect(
+      fetchDoc(conn, TRAINING_DATA_COLLECTION, getTrainingDataId('project01', 'dataid01'))
+    ).resolves.not.toThrow();
   });
 });
 

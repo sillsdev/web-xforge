@@ -1,3 +1,5 @@
+import { ConnectSession } from '../../common/connect-session';
+import { SystemRole } from '../../common/models/system-role';
 import { ValidationSchema } from '../../common/models/validation-schema';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
 import { SFProjectDomain } from '../models/sf-project-rights';
@@ -49,6 +51,13 @@ export class TrainingDataService extends SFProjectDataService<TrainingData> {
 
     const immutableProps = [this.pathTemplate(t => t.dataId)];
     this.immutableProps.push(...immutableProps);
+  }
+
+  protected async allowRead(docId: string, doc: TrainingData, session: ConnectSession): Promise<boolean> {
+    if (session.roles.includes(SystemRole.ServalAdmin)) {
+      return true;
+    }
+    return super.allowRead(docId, doc, session);
   }
 
   protected setupDomains(): ProjectDomainConfig[] {
