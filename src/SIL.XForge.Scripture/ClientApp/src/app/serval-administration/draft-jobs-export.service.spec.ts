@@ -82,6 +82,60 @@ describe('DraftJobsExportService', () => {
       expect(filename).toBe('my-prefix_2025-01-15_2025-02-28.csv');
     });
   });
+
+  describe('exportRsv', () => {
+    it('includes draftGenerationRequestId in RSV headers and rows', () => {
+      const env = new TestEnvironment();
+      const testRows: SpreadsheetRow[] = [
+        {
+          servalBuildId: 'build-1',
+          draftGenerationRequestId: 'req-123',
+          startTime: '2025-01-15T10:00:00.000Z',
+          endTime: '2025-01-15T10:30:00.000Z',
+          durationMinutes: '30',
+          status: 'Success',
+          sfProjectId: 'project1',
+          projectName: 'Project 1',
+          sfUserId: 'user1',
+          trainingBooks: '',
+          translationBooks: ''
+        }
+      ];
+
+      const spreadsheetRows: SpreadsheetRow[] = (env.service as any).addStatistics(testRows, 1800000, 1800000);
+
+      // SUT
+      const rsvRows: (string | null)[][] = (env.service as any).createRsvRows(spreadsheetRows);
+
+      expect(rsvRows[0]).toContain('draftGenerationRequestId');
+      expect(rsvRows[1]).toContain('req-123');
+    });
+
+    it('includes blank value for draftGenerationRequestId when missing', () => {
+      const env = new TestEnvironment();
+      const testRows: SpreadsheetRow[] = [
+        {
+          servalBuildId: 'build-1',
+          startTime: '2025-01-15T10:00:00.000Z',
+          endTime: '2025-01-15T10:30:00.000Z',
+          durationMinutes: '30',
+          status: 'Success',
+          sfProjectId: 'project1',
+          projectName: 'Project 1',
+          sfUserId: 'user1',
+          trainingBooks: '',
+          translationBooks: ''
+        }
+      ];
+
+      const spreadsheetRows: SpreadsheetRow[] = (env.service as any).addStatistics(testRows, 1800000, 1800000);
+
+      // SUT
+      const rsvRows: (string | null)[][] = (env.service as any).createRsvRows(spreadsheetRows);
+
+      expect(rsvRows[1][0]).toBeNull();
+    });
+  });
 });
 
 class TestEnvironment {
