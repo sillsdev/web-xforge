@@ -32,10 +32,10 @@ interface FilterOption {
 }
 
 const filterOptions = {
-  newAndMine: {
-    name: 'New + Mine',
+  newAndMyActiveRequests: {
+    name: 'New + My Active Requests',
     filter: (request: OnboardingRequest, currentUserId: string | undefined) =>
-      request.status === 'new' || request.assigneeId === currentUserId
+      request.status === 'new' || (request.assigneeId === currentUserId && request.status === 'in_progress')
   },
   new: {
     name: 'New',
@@ -234,7 +234,7 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
     return r1 === r2 || (r1 == null && r2 == null);
   }
 
-  private _activeFilter: FilterName = 'newAndMine';
+  private _activeFilter: FilterName = 'newAndMyActiveRequests';
   get activeFilter(): string {
     return this._activeFilter;
   }
