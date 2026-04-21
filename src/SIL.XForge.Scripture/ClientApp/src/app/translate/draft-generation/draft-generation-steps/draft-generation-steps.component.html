@@ -7,6 +7,12 @@
       <mat-step [completed]="true">
         <ng-template matStepLabel>{{ t("overview") }}</ng-template>
         <app-confirm-sources></app-confirm-sources>
+        @for (copyrightMessage of copyrightMessages; track copyrightMessage.banner) {
+          <app-copyright-banner
+            [notice]="copyrightMessage.notice"
+            [banner]="copyrightMessage.banner"
+          ></app-copyright-banner>
+        }
         @if (projectsPendingUpdate.length > 0) {
           @for (project of projectsPendingUpdate; track project.projectId) {
             <app-notice icon="info" type="info" class="pending-updates">
