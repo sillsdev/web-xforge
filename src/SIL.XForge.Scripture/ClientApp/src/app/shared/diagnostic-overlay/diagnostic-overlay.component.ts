@@ -10,6 +10,7 @@ import { LocalSettingsService } from 'xforge-common/local-settings.service';
 import { RealtimeDocLifecycleMonitorService } from 'xforge-common/models/realtime-doc-lifecycle-monitor';
 import { NoticeService } from 'xforge-common/notice.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
+import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 
 export interface DiagnosticOverlayData {
   bookNum: number;
@@ -25,7 +26,7 @@ const diagnosticOverlayCollapsedKey = 'DIAGNOSTIC_OVERLAY_COLLAPSED';
   selector: 'app-diagnostic-overlay',
   templateUrl: './diagnostic-overlay.component.html',
   styleUrl: './diagnostic-overlay.component.scss',
-  imports: [OverlayModule, KeyValuePipe, MatIconButton, MatIcon, L10nNumberPipe, FormsModule]
+  imports: [OverlayModule, KeyValuePipe, MatIconButton, MatIcon, L10nNumberPipe, FormsModule, RouterLinkDirective]
 })
 export class DiagnosticOverlayComponent {
   isExpanded: boolean = true;
