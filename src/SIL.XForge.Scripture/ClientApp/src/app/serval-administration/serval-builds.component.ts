@@ -725,8 +725,8 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
         ServalBuildsComponent.durationMinutes(effectiveStart, effectiveEnd)?.toFixed(0) ?? '';
 
       return {
-        servalBuildId: row.report.build?.additionalInfo?.buildId,
         draftGenerationRequestId: row.report.draftGenerationRequestId,
+        servalBuildId: row.report.build?.additionalInfo?.buildId,
         startTime: effectiveStart?.toISOString(),
         endTime: effectiveEnd?.toISOString(),
         durationMinutes: durationMinutes,
