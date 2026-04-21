@@ -20,7 +20,20 @@ import {
   MatTable
 } from '@angular/material/table';
 import { MatTooltip } from '@angular/material/tooltip';
-import { BehaviorSubject, catchError, combineLatest, filter, firstValueFrom, from, map, Observable, of } from 'rxjs';
+import {
+  BehaviorSubject,
+  catchError,
+  combineLatest,
+  filter,
+  firstValueFrom,
+  from,
+  map,
+  Observable,
+  of,
+  shareReplay,
+  startWith,
+  switchMap
+} from 'rxjs';
 import { CopyComponent } from 'xforge-common/copy/copy.component';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -30,7 +43,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { UserService } from 'xforge-common/user.service';
-import { notNull } from '../../type-utils';
+import { isPopulatedString, notNull } from '../../type-utils';
 import { InfoComponent } from '../shared/info/info.component';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { DateRangePickerComponent, NormalizedDateRange } from './date-range-picker.component';
@@ -373,13 +386,16 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
 
     // Cache the lookups so multiple rows don't need to request the same thing.
     const displayName$: Observable<string> = from(this.userService.getProfile(requesterSFUserId)).pipe(
-      catchError(() => of(undefined)),
-      map((userProfileDoc: UserProfileDoc | undefined) => {
-        const displayName: string | undefined = userProfileDoc?.data?.displayName;
-        if (displayName == null) return 'Unknown';
-        if (displayName.trim().length === 0) return 'Unknown';
-        return displayName;
-      }),
+      switchMap((userProfileDoc: UserProfileDoc) =>
+        userProfileDoc.changes$.pipe(
+          startWith(undefined),
+          map(() => {
+            const displayName: string | undefined = userProfileDoc.data?.displayName?.trim();
+            return isPopulatedString(displayName) ? displayName : 'Unknown';
+          })
+        )
+      ),
+      shareReplay(1),
       catchError(() => of('Unknown'))
     );
     this.requesterDisplayNameCache.set(requesterKey, displayName$);

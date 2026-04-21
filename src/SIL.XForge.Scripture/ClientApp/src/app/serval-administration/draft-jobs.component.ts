@@ -923,7 +923,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
         servalBuildId: row.job.buildId,
         startTime: row.job.startTime?.toISOString(),
         endTime: row.job.finishTime?.toISOString(),
-        durationMinutes,
+        durationMinutes: durationMinutes,
         status: row.status,
         sfProjectId: row.projectId,
         projectName: row.projectName,
