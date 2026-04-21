@@ -82,6 +82,7 @@ export function interpretTypes(report: ServalBuildReportDto): ServalBuildReportD
 
   const status: string = report.status;
   if (!isDraftGenerationBuildStatus(status)) {
+    // Noisily handle invalid data.
     throw new Error(`Unknown DraftGenerationBuildStatus status: ${status}`);
   }
 
