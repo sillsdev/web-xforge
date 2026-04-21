@@ -1,0 +1,63 @@
+@use 'sass:color';
+@use '@angular/material' as mat;
+@use '../../_variables' as vars;
+
+/**
+ * Theme for the Serval Builds component.
+ */
+@mixin color($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
+
+  // Status icon colors
+  --sf-serval-builds-status-userrequested: #{mat.get-theme-color($theme, neutral, if($is-dark, 40, 60))};
+  --sf-serval-builds-status-submittedtoserval: #{mat.get-theme-color($theme, neutral, if($is-dark, 40, 60))};
+  --sf-serval-builds-status-queued: #{mat.get-theme-color($theme, neutral, if($is-dark, 40, 60))};
+  --sf-serval-builds-status-pending: #{mat.get-theme-color($theme, neutral, if($is-dark, 40, 60))};
+  --sf-serval-builds-status-active: #{if($is-dark, #4fa3ff, #007fff)};
+  --sf-serval-builds-status-finishing: #{if($is-dark, #4fa3ff, #007fff)};
+  --sf-serval-builds-status-completed: #{if($is-dark, lightGreen, darkGreen)};
+  --sf-serval-builds-status-faulted: #{mat.get-theme-color($theme, error, if($is-dark, 70, 40))};
+  --sf-serval-builds-status-canceled: #{mat.get-theme-color($theme, neutral, if($is-dark, 60, 50))};
+
+  // Problem/warning indicator
+  --sf-serval-builds-problem-color: #{if($is-dark, #dbdb00, #ffcc00)};
+  --sf-serval-builds-problem-border-color: var(--mat-table-background-color);
+
+  // Table
+  --sf-serval-builds-table-odd-row-background: #{if(
+      $is-dark,
+      var(--mat-sys-surface-container),
+      var(--mat-sys-surface-container-high)
+    )};
+  --sf-serval-builds-table-odd-row-expanded-background: #{if(
+      $is-dark,
+      var(--mat-sys-surface-container),
+      var(--mat-sys-surface-container-high)
+    )};
+  --sf-serval-builds-table-odd-row-detail-card-background: #{if(
+      $is-dark,
+      var(--mat-sys-surface-container-highest),
+      var(--mat-sys-surface-dim)
+    )};
+  --sf-serval-builds-table-even-row-detail-card-background: #{if(
+      $is-dark,
+      var(--mat-sys-surface-container-low),
+      var(--mat-sys-surface-container)
+    )};
+
+  // Links and text
+  --sf-serval-builds-project-link-color: #{mat.get-theme-color($theme, primary, if($is-dark, 70, 40))};
+  --sf-serval-builds-subdued-text: #{mat.get-theme-color($theme, neutral, if($is-dark, 70, 50))};
+  --sf-serval-builds-label-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 80, 50))};
+  --sf-serval-builds-duration-bar-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 40, 80))};
+
+  // Deleted project indicator
+  --sf-serval-builds-deleted-project-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 60, 50))};
+  --sf-serval-builds-deleted-icon-color: #{mat.get-theme-color($theme, error, if($is-dark, 70, 40))};
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}
