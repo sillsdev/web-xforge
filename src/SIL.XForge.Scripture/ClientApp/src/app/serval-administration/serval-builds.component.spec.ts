@@ -1086,6 +1086,41 @@ describe('ServalBuildsComponent', () => {
     });
   });
 
+  describe('formatProjectBooks', () => {
+    it('includes the SF project ID and short name before the colon when short name is available', () => {
+      const projectBooks: ProjectBooks[] = [
+        {
+          sfProjectId: '112233',
+          projectDisplayName: 'BSB - Berean Standard Bible',
+          shortName: 'BSB',
+          books: ['GEN', 'EXO']
+        },
+        {
+          sfProjectId: '222333',
+          projectDisplayName: 'ASV - American Standard Version',
+          shortName: 'ASV',
+          books: ['EXO', 'LEV']
+        }
+      ];
+
+      // SUT
+      const result: string = ServalBuildsComponent.formatProjectBooks(projectBooks);
+
+      expect(result).toBe('112233 BSB: GEN; EXO. 222333 ASV: EXO; LEV');
+    });
+
+    it('falls back to just the project ID when short name is unavailable', () => {
+      const projectBooks: ProjectBooks[] = [
+        { sfProjectId: '112233', projectDisplayName: '112233', shortName: undefined, books: ['GEN'] }
+      ];
+
+      // SUT
+      const result: string = ServalBuildsComponent.formatProjectBooks(projectBooks);
+
+      expect(result).toBe('112233: GEN');
+    });
+  });
+
   describe('requested sorting', () => {
     it('sorts by user request time with serval created fallback', () => {
       const env = new TestEnvironment();

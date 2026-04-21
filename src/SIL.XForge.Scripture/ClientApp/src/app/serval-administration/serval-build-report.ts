@@ -139,6 +139,8 @@ export interface ProjectBooks {
   sfProjectId: string;
   /** Display string for the project, e.g. "ABC - My Project" or just "ABC". */
   projectDisplayName: string;
+  /** Short name of the project if available. */
+  shortName?: string;
   books: string[];
 }
 
@@ -164,7 +166,12 @@ export function toProjectBooks(ranges: BuildReportProjectScriptureRange[] | unde
     const displayName: string = buildProjectDisplayName(range.shortName, range.name, sfProjectId);
     const bookNumbers: number[] = booksFromScriptureRange(scriptureRange);
     const books: string[] = bookNumbers.map(bookNum => Canon.bookNumberToId(bookNum));
-    projectBooks.push({ sfProjectId: sfProjectId, projectDisplayName: displayName, books: books });
+    projectBooks.push({
+      sfProjectId: sfProjectId,
+      projectDisplayName: displayName,
+      shortName: range.shortName,
+      books: books
+    });
   }
   return projectBooks;
 }

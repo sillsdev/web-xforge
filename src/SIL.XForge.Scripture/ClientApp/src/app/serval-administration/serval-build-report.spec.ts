@@ -114,6 +114,28 @@ describe('toProjectBooks', () => {
 
     expect(result[0].books).toEqual(['GEN', 'EXO']);
   });
+
+  it('populates shortName from the range shortName', () => {
+    const ranges: BuildReportProjectScriptureRange[] = [
+      { sfProjectId: 'p1', scriptureRange: 'GEN', shortName: 'BSB', name: 'Berean Standard Bible' }
+    ];
+
+    // SUT
+    const result: ProjectBooks[] = toProjectBooks(ranges);
+
+    expect(result[0].shortName).toBe('BSB');
+  });
+
+  it('leaves shortName undefined when the range has no shortName', () => {
+    const ranges: BuildReportProjectScriptureRange[] = [
+      { sfProjectId: 'p1', scriptureRange: 'GEN', shortName: undefined, name: 'Some Project' }
+    ];
+
+    // SUT
+    const result: ProjectBooks[] = toProjectBooks(ranges);
+
+    expect(result[0].shortName).toBeUndefined();
+  });
 });
 
 describe('buildProjectDisplayName', () => {
