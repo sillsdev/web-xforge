@@ -13,6 +13,8 @@
   --sf-serval-builds-status-submittedtoserval: #{mat.get-theme-color($theme, neutral, if($is-dark, 40, 60))};
   --sf-serval-builds-status-queued: #{mat.get-theme-color($theme, neutral, if($is-dark, 40, 60))};
   --sf-serval-builds-status-pending: #{mat.get-theme-color($theme, neutral, if($is-dark, 40, 60))};
+  // Note that some colors are hard-coded rather than from the palette because they the palette is not broad enough to
+  // encompass the diversity of and desired colors to correspond to statuses and problems.
   --sf-serval-builds-status-active: #{if($is-dark, #4fa3ff, #007fff)};
   --sf-serval-builds-status-finishing: #{if($is-dark, #4fa3ff, #007fff)};
   --sf-serval-builds-status-completed: #{if($is-dark, lightGreen, darkGreen)};
