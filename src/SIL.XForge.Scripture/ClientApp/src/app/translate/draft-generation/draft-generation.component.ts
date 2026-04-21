@@ -2,14 +2,7 @@ import { AsyncPipe, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, ViewChild } from '@angular/core';
 import { MatAnchor, MatButton } from '@angular/material/button';
-import {
-  MatCard,
-  MatCardActions,
-  MatCardContent,
-  MatCardHeader,
-  MatCardSubtitle,
-  MatCardTitle
-} from '@angular/material/card';
+import { MatCard, MatCardContent, MatCardHeader, MatCardSubtitle, MatCardTitle } from '@angular/material/card';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { MatExpansionPanel, MatExpansionPanelContent, MatExpansionPanelHeader } from '@angular/material/expansion';
 import { MatIcon } from '@angular/material/icon';
@@ -47,9 +40,7 @@ import { BuildStates } from '../../machine-api/build-states';
 import { ServalProjectComponent } from '../../serval-administration/serval-project.component';
 import { NoticeComponent } from '../../shared/notice/notice.component';
 import { booksFromScriptureRange, projectLabel } from '../../shared/utils';
-import { WorkingAnimatedIndicatorComponent } from '../../shared/working-animated-indicator/working-animated-indicator.component';
 import { NllbLanguageService } from '../nllb-language.service';
-import { DraftDownloadButtonComponent } from './draft-download-button/draft-download-button.component';
 import { activeBuildStates, BuildConfig } from './draft-generation';
 import {
   DraftGenerationStepsComponent,
@@ -59,7 +50,6 @@ import { DraftGenerationService } from './draft-generation.service';
 import { DraftHistoryListComponent } from './draft-history-list/draft-history-list.component';
 import { DraftInformationComponent } from './draft-information/draft-information.component';
 import { DraftOptionsService } from './draft-options.service';
-import { DraftPreviewBooksComponent } from './draft-preview-books/draft-preview-books.component';
 import { DRAFT_SIGNUP_RESPONSE_DAYS } from './draft-signup-form/draft-onboarding-form.component';
 import { DraftSource } from './draft-source';
 import { DraftSourcesService } from './draft-sources.service';
@@ -82,7 +72,6 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
     MatCardTitle,
     MatCardSubtitle,
     MatCardContent,
-    MatCardActions,
     MatProgressBar,
     MatExpansionPanel,
     MatExpansionPanelHeader,
@@ -94,12 +83,9 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
     NgCircleProgressModule,
     L10nNumberPipe,
     L10nPercentPipe,
-    WorkingAnimatedIndicatorComponent,
     DraftGenerationStepsComponent,
     DraftInformationComponent,
     ServalProjectComponent,
-    DraftDownloadButtonComponent,
-    DraftPreviewBooksComponent,
     DraftHistoryListComponent
   ]
 })
