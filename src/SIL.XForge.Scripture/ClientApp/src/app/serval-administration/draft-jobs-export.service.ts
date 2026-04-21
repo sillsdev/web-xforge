@@ -11,6 +11,7 @@ import { encodeRsv } from './rsv';
  * Some fields are of type string that one might normally expect to be another type, but that is because this is
  * preparing the data to export as strings. */
 export interface SpreadsheetRow {
+  draftGenerationRequestId?: string;
   servalBuildId?: string;
   /** To be populated with locale-less UTC timestamp. */
   startTime?: string;
@@ -63,10 +64,21 @@ export class DraftJobsExportService {
     filenamePrefix: string
   ): void {
     const spreadsheetRows = this.addStatistics(rows, meanDuration, maxDuration);
+    const allRows: (string | null)[][] = this.createRsvRows(spreadsheetRows);
 
-    // Convert SpreadsheetRow objects to (string | null)[][] format for RSV
-    // First row is headers
+    // Encode to RSV format
+    const rsvData: Uint8Array = encodeRsv(allRows);
+
+    // Create filename and download
+    const filename: string = this.getExportFilename(dateRangeForFilename, 'rsv', filenamePrefix);
+    const blob: Blob = new Blob([rsvData as BlobPart], { type: 'application/octet-stream' });
+    saveAs(blob, filename);
+  }
+
+  protected createRsvRows(spreadsheetRows: SpreadsheetRow[]): (string | null)[][] {
+    // First row is headers.
     const headers: string[] = [
+      'draftGenerationRequestId',
       'servalBuildId',
       'startTime',
       'endTime',
@@ -80,6 +92,7 @@ export class DraftJobsExportService {
     ];
 
     const dataRows: (string | null)[][] = spreadsheetRows.map(row => [
+      row.draftGenerationRequestId ?? null,
       row.servalBuildId ?? null,
       row.startTime ?? null,
       row.endTime ?? null,
@@ -92,16 +105,7 @@ export class DraftJobsExportService {
       row.translationBooks
     ]);
 
-    // Combine headers and data
-    const allRows: (string | null)[][] = [headers, ...dataRows];
-
-    // Encode to RSV format
-    const rsvData: Uint8Array = encodeRsv(allRows);
-
-    // Create filename and download
-    const filename: string = this.getExportFilename(dateRangeForFilename, 'rsv', filenamePrefix);
-    const blob: Blob = new Blob([rsvData as BlobPart], { type: 'application/octet-stream' });
-    saveAs(blob, filename);
+    return [headers, ...dataRows];
   }
 
   /**
