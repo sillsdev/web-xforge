@@ -725,7 +725,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   }
 
   static formatProjectBooks(projectBooks: ProjectBooks[]): string {
-    return projectBooks.map(pb => `${pb.sfProjectId}: ${pb.books.join(', ')}`).join('; ');
+    return projectBooks.map(pb => `${pb.sfProjectId}: ${pb.books.join('; ')}`).join('. ');
   }
 
   protected servalAdminProjectLinkFor(sfProjectId: string | undefined): string | undefined {
