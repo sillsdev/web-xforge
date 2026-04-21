@@ -16,6 +16,7 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { Revision } from '../../core/paratext.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { HttpClient } from '../../machine-api/http-client';
+import { interpretTypes, ServalBuildReportDto } from '../../serval-administration/serval-build-report';
 import { booksFromScriptureRange, formatDateForFilename, getBookFileNameDigits } from '../../shared/utils';
 import {
   activeBuildStates,
@@ -106,6 +107,29 @@ export class DraftGenerationService {
   }
 
   /**
+   * Gets Serval builds created since the specified timestamp.
+   */
+  getBuildsSince(since: Date): Observable<ServalBuildReportDto[] | undefined> {
+    if (!this.onlineStatusService.isOnline) {
+      return of(undefined);
+    }
+
+    const sinceIso: string = since.toISOString();
+    return this.httpClient.get<ServalBuildReportDto[]>(`translation/builds/since:${sinceIso}`).pipe(
+      map(res => this.interpretTypesMany(res.data)),
+      catchError(err => {
+        if (err.status === 403 || err.status === 404) {
+          return of(undefined);
+        }
+
+        console.error(err);
+        this.noticeService.showError(this.i18n.translateStatic('draft_generation.problem_fetching_build_history'));
+        return of(undefined);
+      })
+    );
+  }
+
+  /**
    * Gets the last completed pre-translation build.
    * @param projectId The SF project id for the target translation.
    * @returns An observable BuildDto for the last build with state 'Completed',
@@ -129,6 +153,14 @@ export class DraftGenerationService {
           return of(undefined);
         })
       );
+  }
+
+  /** Apply type conformity (dates, status enum) to a set of ServalBuildReportDto objects from JSON. */
+  private interpretTypesMany(reports: ServalBuildReportDto[] | undefined): ServalBuildReportDto[] | undefined {
+    if (reports == null) {
+      return undefined;
+    }
+    return reports.map(report => interpretTypes(report));
   }
 
   /**

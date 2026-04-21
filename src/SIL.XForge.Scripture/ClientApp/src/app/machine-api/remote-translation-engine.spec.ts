@@ -86,7 +86,19 @@ describe('RemoteTranslationEngine', () => {
     env.addCreateBuild();
 
     when(env.mockedHttpClient.post<BuildDto>('translation/builds', JSON.stringify('project01'))).thenReturn(
-      of({ status: 200 })
+      of({
+        status: 200,
+        data: {
+          id: 'build01',
+          href: 'translation/builds/id:build01',
+          revision: 0,
+          engine: { id: 'engine01', href: 'translation/engines/id:engine01' },
+          percentCompleted: 0,
+          message: '',
+          state: BuildStates.Pending,
+          queueDepth: 0
+        }
+      })
     );
 
     await env.client.startTraining();

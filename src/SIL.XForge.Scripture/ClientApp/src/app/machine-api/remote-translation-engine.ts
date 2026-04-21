@@ -164,15 +164,21 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
   }
 
   private getEngine(projectId: string): Observable<EngineDto> {
-    return this.httpClient
-      .get<EngineDto>(`translation/engines/project:${projectId}`)
-      .pipe(map(res => res.data as EngineDto));
+    return this.httpClient.get<EngineDto>(`translation/engines/project:${projectId}`).pipe(
+      map(res => {
+        if (res.data == null) throw new Error('Unexpectedly received no engine data.');
+        return res.data;
+      })
+    );
   }
 
   private createBuild(engineId: string): Observable<BuildDto> {
-    return this.httpClient
-      .post<BuildDto>('translation/builds', JSON.stringify(engineId))
-      .pipe(map(res => res.data as BuildDto));
+    return this.httpClient.post<BuildDto>('translation/builds', JSON.stringify(engineId)).pipe(
+      map(res => {
+        if (res.data == null) throw new Error('Unexpectedly received no build data.');
+        return res.data;
+      })
+    );
   }
 
   private pollBuildProgress(locator: string, minRevision: number): Observable<ProgressStatus> {
