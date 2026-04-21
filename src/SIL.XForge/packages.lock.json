@@ -61,15 +61,13 @@
           "Microsoft.Extensions.DependencyModel": "8.0.1"
         }
       },
-      "Hangfire": {
+      "Hangfire.AspNetCore": {
         "type": "Direct",
         "requested": "[1.8.23, )",
         "resolved": "1.8.23",
-        "contentHash": "WmVI9+aQDj0cUmCqNkkIz0WQaWcvviNTMtyUTTuIF6ci1eVHsmo+DEWRXqGApYRbmoiCzWNE40JuTjPaXbRePA==",
+        "contentHash": "TXpOl7kX4xXq5bLEqqWCpt9zh3TaouDwtb3GDtzGHX5uSC2RaAqZzn2swevivx3Uki16slXIigiPtgr4TPKpsg==",
         "dependencies": {
-          "Hangfire.AspNetCore": "[1.8.23]",
-          "Hangfire.Core": "[1.8.23]",
-          "Hangfire.SqlServer": "[1.8.23]"
+          "Hangfire.NetCore": "[1.8.23]"
         }
       },
       "Hangfire.Autofac": {
@@ -80,6 +78,15 @@
         "dependencies": {
           "Autofac": "5.0.0",
           "Hangfire.Core": "1.6.0"
+        }
+      },
+      "Hangfire.Core": {
+        "type": "Direct",
+        "requested": "[1.8.23, )",
+        "resolved": "1.8.23",
+        "contentHash": "YCOTtF3NNOQI83PlfjeNDDBkofJDfdET2CwhfQsiVBwmsU6lP19QW9NVTIH9epl+MnOsyFC2G1RnlPSGV8F1FQ==",
+        "dependencies": {
+          "Newtonsoft.Json": "11.0.1"
         }
       },
       "Hangfire.Mongo": {
@@ -188,22 +195,6 @@
         "resolved": "1.6.1",
         "contentHash": "4H/f2uYJOZ+YObZjpY9ABrKZI+JNw3uizp6oMzTXwDw6F+2qIPhpRl/1t68O/6e98+vqNiYGu+lswmwdYUy3gg=="
       },
-      "Hangfire.AspNetCore": {
-        "type": "Transitive",
-        "resolved": "1.8.23",
-        "contentHash": "TXpOl7kX4xXq5bLEqqWCpt9zh3TaouDwtb3GDtzGHX5uSC2RaAqZzn2swevivx3Uki16slXIigiPtgr4TPKpsg==",
-        "dependencies": {
-          "Hangfire.NetCore": "[1.8.23]"
-        }
-      },
-      "Hangfire.Core": {
-        "type": "Transitive",
-        "resolved": "1.8.23",
-        "contentHash": "YCOTtF3NNOQI83PlfjeNDDBkofJDfdET2CwhfQsiVBwmsU6lP19QW9NVTIH9epl+MnOsyFC2G1RnlPSGV8F1FQ==",
-        "dependencies": {
-          "Newtonsoft.Json": "11.0.1"
-        }
-      },
       "Hangfire.NetCore": {
         "type": "Transitive",
         "resolved": "1.8.23",
@@ -213,14 +204,6 @@
           "Microsoft.Extensions.DependencyInjection.Abstractions": "3.0.0",
           "Microsoft.Extensions.Hosting.Abstractions": "3.0.0",
           "Microsoft.Extensions.Logging.Abstractions": "3.0.0"
-        }
-      },
-      "Hangfire.SqlServer": {
-        "type": "Transitive",
-        "resolved": "1.8.23",
-        "contentHash": "HiRUbwveK0+wop8iY98Z5DrtfjP+1QCly6IO+21Bnolb5kTO5eCrtKbGErHfhSN0BzKk9ehmTLk9uDHQdAtfcQ==",
-        "dependencies": {
-          "Hangfire.Core": "[1.8.23]"
         }
       },
       "Markdig.Signed": {
