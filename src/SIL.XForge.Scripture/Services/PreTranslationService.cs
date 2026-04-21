@@ -66,7 +66,7 @@ public class PreTranslationService(
             // A reference will be in one of the formats:
             // FileFormat.Text: "40_1:verse_001_002"
             // FileFormat.Paratext: "MAT 1:2" or "MAT 1:2/1:p"
-            string reference = preTranslation.Refs.FirstOrDefault();
+            string reference = preTranslation.TargetRefs.FirstOrDefault();
             if (string.IsNullOrWhiteSpace(reference))
             {
                 continue;

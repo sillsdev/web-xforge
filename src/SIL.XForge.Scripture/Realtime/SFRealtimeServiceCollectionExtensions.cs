@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using SIL.XForge.Configuration;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
@@ -13,15 +12,12 @@ public static class SFRealtimeServiceCollectionExtensions
 {
     public static IServiceCollection AddSFRealtimeServer(
         this IServiceCollection services,
-        ILoggerFactory loggerFactory,
         IConfiguration configuration,
         string? nodeOptions = null
     )
     {
         var realtimeOptions = configuration.GetOptions<RealtimeOptions>();
         services.AddRealtimeServer(
-            loggerFactory,
-            configuration,
             o =>
             {
                 o.AppModuleName = "scriptureforge";

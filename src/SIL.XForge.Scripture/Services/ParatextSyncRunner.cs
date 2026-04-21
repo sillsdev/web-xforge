@@ -1740,10 +1740,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 // If the restore is successful, then dataInSync will always be set to true because
                 // the restored repo can be assumed to be at the revision recorded in the project doc.
                 restoreSucceeded = _paratextService.RestoreRepository(_userSecret, _projectDoc.Data.ParatextId);
-                if (_syncMetrics != null)
-                {
-                    _syncMetrics.RepositoryRestoredFromBackup = restoreSucceeded;
-                }
+                _syncMetrics?.RepositoryRestoredFromBackup = restoreSucceeded;
             }
             LogMetric(
                 $"CompleteSync: Sync was not successful. {(restoreSucceeded ? "Rolled back" : "Failed to roll back")} local PT repo."
@@ -1886,10 +1883,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         });
         await NotifySyncProgress(SyncPhase.Phase9, 80.0);
 
-        if (_syncMetrics != null)
-        {
-            _syncMetrics.Users.Deleted = userIdsToRemove.Count;
-        }
+        _syncMetrics?.Users.Deleted = userIdsToRemove.Count;
 
         foreach (var userId in userIdsToRemove)
             await _projectService.RemoveUserWithoutPermissionsCheckAsync(_userSecret.Id, _projectDoc.Id, userId);
@@ -1979,10 +1973,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             if (!_paratextService.IsResource(_projectDoc.Data.ParatextId))
             {
                 bool backupOutcome = _paratextService.BackupRepository(_userSecret, _projectDoc.Data.ParatextId);
-                if (_syncMetrics != null)
-                {
-                    _syncMetrics.RepositoryBackupCreated = backupOutcome;
-                }
+                _syncMetrics?.RepositoryBackupCreated = backupOutcome;
 
                 if (!backupOutcome)
                 {

@@ -33,7 +33,7 @@
         # Using 'latest' so we upgrade mongo.
         state: latest
         name:
-          - "dotnet-sdk-8.0"
+          - "dotnet-sdk-10.0"
           - ffmpeg
           - "mongodb-org"
           - nodejs

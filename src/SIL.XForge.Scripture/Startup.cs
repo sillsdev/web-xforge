@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using Autofac;
-using Autofac.Extensions.DependencyInjection;
 using Hangfire;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HeaderParsing;
@@ -24,6 +22,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Microsoft.Net.Http.Headers;
+using Microsoft.OpenApi;
 using SIL.XForge.Configuration;
 using SIL.XForge.EventMetrics;
 using SIL.XForge.Scripture.Services;
@@ -98,11 +97,10 @@ public class Startup
     private static readonly HashSet<string> ProductionSpaPostRoutes = [];
     private readonly HashSet<string> SpaPostRoutes = [];
 
-    public Startup(IConfiguration configuration, IWebHostEnvironment env, ILoggerFactory loggerFactory)
+    public Startup(IConfiguration configuration, IWebHostEnvironment env)
     {
         Configuration = configuration;
         Environment = env;
-        LoggerFactory = loggerFactory;
         if (IsDevelopmentEnvironment)
         {
             SpaGetRoutes.UnionWith(DevelopmentSpaGetRoutes);
@@ -117,8 +115,6 @@ public class Startup
 
     public IConfiguration Configuration { get; }
     public IWebHostEnvironment Environment { get; }
-    public ILoggerFactory LoggerFactory { get; }
-    public IContainer ApplicationContainer { get; private set; }
 
     private SpaDevServerStartup SpaDevServerStartup
     {
@@ -148,10 +144,8 @@ public class Startup
     private bool IsStagingEnvironment => Environment.IsEnvironment("Staging");
 
     // This method gets called by the runtime. Use this method to add services to the container.
-    public IServiceProvider ConfigureServices(IServiceCollection services)
+    public void ConfigureServices(IServiceCollection services)
     {
-        var containerBuilder = new ContainerBuilder();
-
         services.AddExceptionReporting(Configuration);
 
         services.AddConfiguration(Configuration);
@@ -161,7 +155,7 @@ public class Startup
         services.AddSignalR();
 
         string? nodeOptions = Configuration.GetValue<string>("Realtime:NodeOptions");
-        services.AddSFRealtimeServer(LoggerFactory, Configuration, nodeOptions);
+        services.AddSFRealtimeServer(Configuration, nodeOptions);
 
         services.AddSFServices();
 
@@ -211,16 +205,6 @@ public class Startup
 
         // Set up header parsing
         services.AddHeaderParsing();
-
-        // Populate the services in the Autofac container builder
-        containerBuilder.Populate(services);
-
-        // Register the event metrics interceptor
-        containerBuilder.RegisterSFEventMetrics();
-
-        ApplicationContainer = containerBuilder.Build();
-        GlobalConfiguration.Configuration.UseAutofacActivator(ApplicationContainer);
-        return new AutofacServiceProvider(ApplicationContainer);
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -232,7 +216,7 @@ public class Startup
     {
         if (IsDevelopmentEnvironment || IsTestingEnvironment || IsStagingEnvironment)
         {
-            app.UseSwagger();
+            app.UseSwagger(options => options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_1);
             app.UseSwaggerUI();
         }
 
@@ -419,8 +403,6 @@ public class Startup
                 });
             }
         );
-
-        appLifetime.ApplicationStopped.Register(() => ApplicationContainer.Dispose());
     }
 
     /// <summary>Is the request something that should be handled by the Angular SPA, instead of by ASP.NET?</summary>

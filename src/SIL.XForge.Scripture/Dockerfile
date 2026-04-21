@@ -1,7 +1,7 @@
 #See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
 ARG ARCHITECTURE=amd64
-ARG DOTNET_VERSION=8.0
+ARG DOTNET_VERSION=10.0
 ARG UBUNTU_NAME=noble # 24.04
 
 FROM mcr.microsoft.com/dotnet/aspnet:$DOTNET_VERSION-$UBUNTU_NAME-$ARCHITECTURE AS base

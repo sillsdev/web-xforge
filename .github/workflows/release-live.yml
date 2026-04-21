@@ -114,7 +114,7 @@ jobs:
       build_commit: "${{ needs.determine_build_commit.outputs.build_commit }}"
       release_branch: "sf-live"
 
-      dotnet_version: "8.0.x"
+      dotnet_version: "10.0.x"
       node_version: "22.13.0"
       npm_version: "11.11.0"
       # When bumping OS version, the server will need to authorize the new default rsync args.

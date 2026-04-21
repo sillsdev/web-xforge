@@ -5,21 +5,16 @@ import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { map, Observable, tap } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { SFProjectService } from '../../../core/sf-project.service';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { booksFromScriptureRange } from '../../../shared/utils';
 
 export interface BookWithDraft {
   bookNumber: number;
   bookId: string;
-  canEdit: boolean;
-  chaptersWithDrafts: number[];
-  draftApplied: boolean;
+  chaptersInBook: number[];
 }
 
 @Component({
@@ -40,18 +35,14 @@ export class DraftPreviewBooksComponent {
       }
       let draftBooks: BookWithDraft[];
       if (this.build == null) {
-        draftBooks = projectDoc.data.texts
-          .map(text => ({
-            bookNumber: text.bookNum,
-            bookId: Canon.bookNumberToId(text.bookNum),
-            canEdit: text.permissions[this.userService.currentUserId] === TextInfoPermission.Write,
-            chaptersWithDrafts: this.projectService.hasDraft(projectDoc.data, text.bookNum)
-              ? text.chapters.map(chapter => chapter.number)
-              : [],
-            draftApplied: text.chapters.every(chapter => chapter.draftApplied)
+        // show every book with generated drafts
+        draftBooks = booksFromScriptureRange(projectDoc.data.translateConfig.draftConfig.draftedScriptureRange)
+          .map(bookNum => ({
+            bookNumber: bookNum,
+            bookId: Canon.bookNumberToId(bookNum),
+            chaptersInBook: projectDoc.data?.texts.find(t => t.bookNum === bookNum)?.chapters.map(ch => ch.number) ?? []
           }))
-          .sort((a, b) => a.bookNumber - b.bookNumber)
-          .filter(book => book.chaptersWithDrafts.length > 0) as BookWithDraft[];
+          .sort((a, b) => a.bookNumber - b.bookNumber);
       } else {
         // TODO: Support books from multiple translation projects
         draftBooks = this.build.additionalInfo?.translationScriptureRanges
@@ -61,13 +52,9 @@ export class DraftPreviewBooksComponent {
             return {
               bookNumber: bookNum,
               bookId: Canon.bookNumberToId(bookNum),
-              canEdit: text?.permissions?.[this.userService.currentUserId] === TextInfoPermission.Write,
-              chaptersWithDrafts: text?.chapters?.map(ch => ch.number) ?? [],
-              draftApplied: text?.chapters?.every(ch => ch.draftApplied) ?? false
+              chaptersInBook: text?.chapters?.map(ch => ch.number) ?? []
             };
           })
-          // Do not filter chapters with drafts, as the book or chapters may have been removed.
-          // We still want to display these books to the user, but disabled so they cannot interact with them.
           .sort((a, b) => a.bookNumber - b.bookNumber) as BookWithDraft[];
       }
       return draftBooks;
@@ -78,9 +65,7 @@ export class DraftPreviewBooksComponent {
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
-    private readonly userService: UserService,
-    private readonly router: Router,
-    private readonly projectService: SFProjectService
+    private readonly router: Router
   ) {}
 
   linkForBookAndChapter(bookId: string, chapterNumber: number): string[] {
@@ -88,7 +73,7 @@ export class DraftPreviewBooksComponent {
   }
 
   navigate(book: BookWithDraft): void {
-    void this.router.navigate(this.linkForBookAndChapter(book.bookId, book.chaptersWithDrafts[0]), {
+    void this.router.navigate(this.linkForBookAndChapter(book.bookId, book.chaptersInBook[0] ?? 1), {
       queryParams: { 'draft-active': true, 'draft-timestamp': this.build?.additionalInfo?.dateGenerated }
     });
   }

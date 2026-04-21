@@ -26,11 +26,11 @@
       "type": "coreclr",
       "request": "attach",
       // Uncomment the following lines and adjust local path to allow breaking on ParatextData source code. Also do
-      // `cp ~/.nuget/packages/paratextdata/9.5.0.19/lib/netstandard2.0/ParatextData.pdb "${SF_REPO}"/src/SIL.XForge.Scripture/bin/Debug/net8.0/`
+      // `cp ~/.nuget/packages/paratextdata/9.5.0.24/lib/netstandard2.0/ParatextData.pdb "${SF_REPO}"/src/SIL.XForge.Scripture/bin/Debug/net10.0/`
       // "justMyCode": false,
       // "suppressJITOptimizations": true,
       // "sourceFileMap": {
-      //   "F:\\BuildAgent\\work\\86ab85dfab82ae21\\ParatextData": "${workspaceFolder}/../Paratext/ParatextData"
+      //   "C:\\BuildAgent\\work\\86ab85dfab82ae21\\ParatextData": "${workspaceFolder}/../Paratext/ParatextData"
       // },
       // "symbolOptions": {
       //   "moduleFilter": {
@@ -107,7 +107,7 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "dotnet build",
-      "program": "${workspaceRoot}/src/SIL.XForge.Scripture/bin/Debug/net8.0/SIL.XForge.Scripture.dll",
+      "program": "${workspaceRoot}/src/SIL.XForge.Scripture/bin/Debug/net10.0/SIL.XForge.Scripture.dll",
       "args": ["--start-ng-serve=listen", "--node-options=--inspect=9230"],
       "cwd": "${workspaceRoot}/src/SIL.XForge.Scripture/",
       "stopAtEntry": false,
@@ -121,7 +121,7 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "dotnet build",
-      "program": "${workspaceRoot}/src/SIL.XForge.Scripture/bin/Debug/net8.0/SIL.XForge.Scripture.dll",
+      "program": "${workspaceRoot}/src/SIL.XForge.Scripture/bin/Debug/net10.0/SIL.XForge.Scripture.dll",
       "args": ["--start-ng-serve=yes"],
       "cwd": "${workspaceRoot}/src/SIL.XForge.Scripture/",
       "stopAtEntry": false,
@@ -178,7 +178,7 @@
       "request": "launch",
       "preLaunchTask": "build-migrator",
       // This build target can be adjusted to a newer migration being worked on by changing the path in 'program', and in the tasks.json build-migrator 'cwd'.
-      "program": "${workspaceRoot}/src/Migrations/WhitespaceRestoreMigration/bin/Debug/net8.0/WhitespaceRestoreMigration.dll",
+      "program": "${workspaceRoot}/src/Migrations/WhitespaceRestoreMigration/bin/Debug/net10.0/WhitespaceRestoreMigration.dll",
       "stopAtEntry": false,
       "console": "integratedTerminal",
       "args": ["read", "${workspaceRoot}/src/SIL.XForge.Scripture"],
