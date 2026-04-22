@@ -102,6 +102,7 @@ try {
   }
 } catch (error) {
   console.error(error);
+  failed = true;
 } finally {
   await logger.saveToFile();
 }
