@@ -1,4 +1,14 @@
-# Code review guidelines (mostly intended for AI agents, but also relevant for human reviewers)
+# Code review guidelines
+
+This document describes what to look for when performing a code review. It is mostly intended for AI agents, but is also relevant for human reviewers.
+
+## Architecture
+
+Code should be reviewed in context of the software [architecture](doc/architecture.md) and the new code's place in it.
+
+## Code rules
+
+Code should follow the rules outlined in [Code rules](doc/code-rules.md).
 
 ## Naming things
 
