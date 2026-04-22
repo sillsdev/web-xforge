@@ -4,14 +4,14 @@ This document describes code rules that AI should follow.
 
 Follow all rules in [code-rules.md](code-rules.md) in addition to the below.
 
-# Frontend
+## Frontend
 
 - Follow MVVM design, where domain objects and business logic are in Models, templates represent information to the user in Views, and ViewModels transform and bridge data between Models and Views.
 - Component templates should be in separate .html files, rather than specified inline in the component decorator.
 - Component template stylesheets should be in separate .scss files, rather than specified inline in the component decorator.
-- Avoid hard-coding colors in SCSS files when styling components. Instead, use existing CSS variables or create an Angular Material theme file and import it into ../src/SIL.XForge.Scripture/ClientApp/src/material-styles.scss
+- Avoid hard-coding colors in SCSS files when styling components. Instead, use existing CSS variables or create an Angular Material theme file and import it into src/SIL.XForge.Scripture/ClientApp/src/material-styles.scss
 
-# Frontend testing
+## Frontend testing
 
 - Write unit tests for new components and services
 - Do not put helper functions outside of TestEnvironment classes; helper functions or setup functions should be in the TestEnvironment class.
@@ -44,7 +44,7 @@ Follow all rules in [code-rules.md](code-rules.md) in addition to the below.
   }
   ```
 
-# Code comments
+## Code comments
 
 - Do not remove comments already in the code if they are still relevant.
 - Do not insert new comments into the code where method calls already make it clear.
@@ -53,7 +53,7 @@ Follow all rules in [code-rules.md](code-rules.md) in addition to the below.
 - Do put comments into the code if the intent is not clear from the code.
 - Use good argument and variable names that explain themselves without needing a comment. Well named arguments or variables are better than unclearly named arguments or variables with a comment.
 
-# TypeScript language
+## TypeScript language
 
 - When doing null checks, prefer using `== null` or `!= null` rather than writing `if (value)` or `if (!value)` to better express intent. If guarding for empty strings or other falsy values is necessary, prefer to explicitly check for those as well, such as `if (value == null || value === '')` rather than just `if (!value)`.
 - Specify types when declaring variables, arguments, and for function return types, if it's not completely obvious. For example, don't write
@@ -65,11 +65,11 @@ Follow all rules in [code-rules.md](code-rules.md) in addition to the below.
   `const buildEvent: EventMetric | undefined = buildEvents[0];`.
 - Prefer to use `null` to express a deliberate absence of a value, and `undefined` to express a value that has not been set yet.
 
-# Angular templates
+## Angular templates
 
 - Use `@if {}` syntax rather than `*ngIf` syntax.
 
-# Code
+## Code
 
 - All code that you write should be able to pass eslint linting tests for TypeScript, or csharpier for C#.
 - It is better to write code that is verbose and understandable than terse and concise.
@@ -77,6 +77,6 @@ Follow all rules in [code-rules.md](code-rules.md) in addition to the below.
 - Corner-cases happen. They should be handled in code.
 - Please don't change existing code without good justification. Existing code largely works and changing it will cause work for code review. Leave existing code as is when possible.
 
-# Tests
+## Tests
 
 - If a unit test is more than 20 lines long, then place a line with "// SUT" before the line that causes the code being tested to be exercised.
