@@ -541,7 +541,7 @@ export class TextDocReader implements DocumentReader<Delta> {
 
   constructor(
     private readonly projectService: SFProjectService,
-    private readonly destroyRef: DestroyRef
+    private readonly activatedProjectService: ActivatedProjectService
   ) {}
 
   keys(): Promise<string[]> {
@@ -549,7 +549,10 @@ export class TextDocReader implements DocumentReader<Delta> {
   }
 
   async read(uri: string): Promise<DocumentData<Delta> | undefined> {
-    const textDoc = await this.projectService.getText(uri, new DocSubscription('TextDocReader', this.destroyRef));
+    const textDoc = await this.projectService.getText(
+      uri,
+      new DocSubscription('TextDocReader', this.activatedProjectService.switched$)
+    );
     if (textDoc.data == null) return undefined;
     return {
       format: 'scripture-delta',

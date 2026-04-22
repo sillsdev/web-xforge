@@ -3,9 +3,9 @@ import { TestBed } from '@angular/core/testing';
 import { ActivationEnd, Router } from '@angular/router';
 import ObjectID from 'bson-objectid';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { filter, map, startWith, switchMap } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, skip, startWith, switchMap } from 'rxjs/operators';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
-import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../app/core/models/sf-project-profile-doc';
 import { SFProjectService } from '../app/core/sf-project.service';
 import { noopDestroyRef } from './realtime.service';
@@ -97,6 +97,18 @@ export class ActivatedProjectService {
     return this.projectDoc$.pipe(
       switchMap(projectDoc => projectDoc?.changes$.pipe(startWith(projectDoc)) ?? of(undefined)),
       map(() => this.projectDoc)
+    );
+  }
+
+  /** Emits when a different project is activated than the last project that was activated. */
+  get switched$(): Observable<void> {
+    return this.projectDoc$.pipe(
+      filterNullish(),
+      // Avoid comparing references and compare project IDs.
+      map(projectDoc => projectDoc.id),
+      distinctUntilChanged(),
+      skip(1),
+      map((): void => undefined)
     );
   }
 

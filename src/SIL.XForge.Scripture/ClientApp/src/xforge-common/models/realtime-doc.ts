@@ -1,5 +1,5 @@
 import { DestroyRef } from '@angular/core';
-import { BehaviorSubject, filter, merge, Observable, Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, filter, merge, Observable, Subject, Subscription, take } from 'rxjs';
 import { Presence } from 'sharedb/lib/sharedb';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { PresenceData } from '../../app/shared/text/text.component';
@@ -41,7 +41,7 @@ export class DocSubscription {
     if (destroyRef == null) return;
     try {
       if ('onDestroy' in destroyRef) destroyRef.onDestroy(() => this.complete());
-      else destroyRef.subscribe(() => this.complete());
+      else destroyRef.pipe(take(1)).subscribe(() => this.complete());
     } catch (error) {
       if (isNG0911Error(error)) {
         // destroyRef has already been destroyed
