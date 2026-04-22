@@ -435,21 +435,21 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
       warnings.push('This request has a partner organization specified but is not marked as outsourced.');
     }
 
-    const projectISOCode: string | undefined = this.mainProjectDoc?.data?.writingSystem.tag;
-    const formISOCode: string | undefined = this.request?.submission.formData.translationLanguageIsoCode?.trim();
-    if (
-      isPopulatedString(projectISOCode) &&
-      isPopulatedString(formISOCode) &&
-      normalizeLanguageCodeToISO639_3(projectISOCode) !== normalizeLanguageCodeToISO639_3(formISOCode)
-    ) {
+    const projectIsoCode: string | undefined = this.mainProjectDoc?.data?.writingSystem.tag;
+    const userSpecifiedIsoCode: string | undefined = this.normalizeUserInputIsoCode(
+      this.request?.submission.formData.translationLanguageIsoCode ?? ''
+    );
+    if (this.doLanguageCodesExistAndDiffer(projectIsoCode, userSpecifiedIsoCode)) {
       warnings.push(
-        `The project language code (${projectISOCode}) is not identical to the code specified in the form (${formISOCode}).`
+        `The project language code (${projectIsoCode}) is not identical to the code specified in the form (${userSpecifiedIsoCode}).`
       );
     }
 
     // Check if back translation is specified, but isn't marked as a back translation, and isn't enabled for drafting
     const backTranslationProjectId = this.request?.submission.formData.backTranslationProject;
-    const backTranslationTranslateConfig = this.projectDocs.get(backTranslationProjectId ?? '')?.data?.translateConfig;
+    const backTranslationProject =
+      backTranslationProjectId == null ? null : this.projectDocs.get(backTranslationProjectId);
+    const backTranslationTranslateConfig = backTranslationProject?.data?.translateConfig;
     if (
       backTranslationTranslateConfig != null &&
       backTranslationTranslateConfig.projectType !== ProjectType.BackTranslation &&
@@ -460,14 +460,20 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
       );
     }
 
-    const backTranslationIsoCode = this.request?.submission.formData.backTranslationLanguageIsoCode;
-    if (
-      isPopulatedString(backTranslationIsoCode) &&
-      isPopulatedString(projectISOCode) &&
-      normalizeLanguageCodeToISO639_3(backTranslationIsoCode) === normalizeLanguageCodeToISO639_3(projectISOCode)
-    ) {
+    // Verify language code the user specified for the back translation is the same as the back translation's language code
+    const userSpecifiedBackTranslationIsoCode = this.normalizeUserInputIsoCode(
+      this.request?.submission.formData.backTranslationLanguageIsoCode ?? ''
+    );
+    const backTranslationProjectIsoCode = backTranslationProject?.data?.writingSystem.tag;
+    if (this.doLanguageCodesExistAndDiffer(userSpecifiedBackTranslationIsoCode, backTranslationProjectIsoCode)) {
       warnings.push(
-        `The language code for the back translation (${backTranslationIsoCode}) is equivalent to the project language code (${projectISOCode}).`
+        `The language code specified in the form for the back translation (${userSpecifiedBackTranslationIsoCode}) is not identical to the back translation project's language code (${backTranslationProjectIsoCode}).`
+      );
+    }
+
+    if (this.doLanguageCodesExistAndAreEquivalent(backTranslationProjectIsoCode, projectIsoCode)) {
+      warnings.push(
+        `The language code specified in the back translation project (${backTranslationProjectIsoCode}) is equivalent to the project language code (${projectIsoCode}).`
       );
     }
 
@@ -480,6 +486,26 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
     }
 
     return warnings;
+  }
+
+  /** Returns true if both arguments are non-empty strings that normalize to different ISO 639-3 codes */
+  private doLanguageCodesExistAndDiffer(code1: string | undefined, code2: string | undefined): boolean {
+    if (!isPopulatedString(code1) || !isPopulatedString(code2)) return false;
+    return normalizeLanguageCodeToISO639_3(code1) !== normalizeLanguageCodeToISO639_3(code2);
+  }
+
+  /** Returns true if both arguments are non-empty strings that normalize to the same ISO 639-3 code */
+  private doLanguageCodesExistAndAreEquivalent(code1: string | undefined, code2: string | undefined): boolean {
+    if (!isPopulatedString(code1) || !isPopulatedString(code2)) return false;
+    return normalizeLanguageCodeToISO639_3(code1) === normalizeLanguageCodeToISO639_3(code2);
+  }
+
+  /**
+   * Normalizes user input by trimming and converting to lowercase. It has been observed in production that users often
+   * input the code in all caps.
+   */
+  private normalizeUserInputIsoCode(code: string): string {
+    return code.trim().toLowerCase();
   }
 
   async copyBookList(books: number[] | undefined): Promise<void> {
