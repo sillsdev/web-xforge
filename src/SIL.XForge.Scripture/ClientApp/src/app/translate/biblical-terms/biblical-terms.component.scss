@@ -1,4 +1,4 @@
-@use 'src/styles';
+@use 'src/breakpoints';
 @use 'src/dense-mat-select';
 
 /* We have two mat-icon actions buttons */
@@ -42,13 +42,17 @@
 
 /* Hide the category when the view is constrained */
 .mat-column-category {
-  @extend .hide-lt-xl;
+  @include breakpoints.media-breakpoint-down(lg) {
+    display: none !important;
+  }
 }
 
 /* Hide the gloss when the view is constrained */
 .mat-column-gloss {
-  @extend .hide-lt-md;
   overflow: hidden;
+  @include breakpoints.media-breakpoint-down(sm) {
+    display: none !important;
+  }
 }
 
 /* Show the term renderings in the project font */
