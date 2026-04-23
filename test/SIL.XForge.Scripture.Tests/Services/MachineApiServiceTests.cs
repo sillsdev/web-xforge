@@ -2325,27 +2325,6 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetPreTranslationDeltaAsync_ChapterNotSpecified()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.GetPreTranslationDeltaAsync(
-                User01,
-                Project01,
-                40,
-                0,
-                false,
-                DateTime.UtcNow,
-                null,
-                CancellationToken.None
-            )
-        );
-    }
-
-    [Test]
     public async Task GetPreTranslationDeltaAsync_ServalAdminDoesNotNeedPermission()
     {
         // Set up test environment
@@ -2355,7 +2334,7 @@ public class MachineApiServiceTests
         env.DeltaUsxMapper.ToChapterDeltas(Arg.Any<XDocument>()).Returns([new ChapterDelta(1, 1, true, expected)]);
 
         // SUT
-        Snapshot<TextData> actual = await env.Service.GetPreTranslationDeltaAsync(
+        Dictionary<string, Snapshot<TextData>> actual = await env.Service.GetPreTranslationDeltaAsync(
             User02,
             Project01,
             40,
@@ -2365,8 +2344,8 @@ public class MachineApiServiceTests
             null,
             CancellationToken.None
         );
-        Assert.AreEqual(expected.Ops[0], actual.Data.Ops[0]);
-        Assert.AreEqual(TextData.GetTextDocId(Project01, "MAT", 1), actual.Id);
+        Assert.AreEqual(expected.Ops[0], actual["1"].Data.Ops[0]);
+        Assert.AreEqual(TextData.GetTextDocId(Project01, "MAT", 1), actual["1"].Id);
     }
 
     [Test]
@@ -2379,7 +2358,7 @@ public class MachineApiServiceTests
         env.DeltaUsxMapper.ToChapterDeltas(Arg.Any<XDocument>()).Returns([new ChapterDelta(1, 1, true, expected)]);
 
         // SUT
-        Snapshot<TextData> actual = await env.Service.GetPreTranslationDeltaAsync(
+        Dictionary<string, Snapshot<TextData>> actual = await env.Service.GetPreTranslationDeltaAsync(
             User01,
             Project01,
             40,
@@ -2389,8 +2368,8 @@ public class MachineApiServiceTests
             null,
             CancellationToken.None
         );
-        Assert.AreEqual(expected.Ops[0], actual.Data.Ops[0]);
-        Assert.AreEqual(TextData.GetTextDocId(Project01, "MAT", 1), actual.Id);
+        Assert.AreEqual(expected.Ops[0], actual["1"].Data.Ops[0]);
+        Assert.AreEqual(TextData.GetTextDocId(Project01, "MAT", 1), actual["1"].Id);
     }
 
     [Test]
@@ -2404,7 +2383,7 @@ public class MachineApiServiceTests
         DraftUsfmConfig config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormatOptions.Remove };
 
         // SUT
-        Snapshot<TextData> actual = await env.Service.GetPreTranslationDeltaAsync(
+        Dictionary<string, Snapshot<TextData>> actual = await env.Service.GetPreTranslationDeltaAsync(
             User01,
             Project01,
             40,
@@ -2414,9 +2393,11 @@ public class MachineApiServiceTests
             config,
             CancellationToken.None
         );
-        Assert.AreEqual(expected.Ops[0], actual.Data.Ops[0]);
-        Assert.AreEqual(TextData.GetTextDocId(Project01, "MAT", 1), actual.Id);
-        Attempt<TextDocument> attempt = await env.RealtimeService.GetRepository<TextDocument>().TryGetAsync(actual.Id);
+        Assert.AreEqual(expected.Ops[0], actual["1"].Data.Ops[0]);
+        Assert.AreEqual(TextData.GetTextDocId(Project01, "MAT", 1), actual["1"].Id);
+        Attempt<TextDocument> attempt = await env
+            .RealtimeService.GetRepository<TextDocument>()
+            .TryGetAsync(actual["1"].Id);
         Assert.False(attempt.Success);
         await env
             .PreTranslationService.Received(1)
@@ -2440,7 +2421,7 @@ public class MachineApiServiceTests
         DraftUsfmConfig config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormatOptions.Remove };
 
         // SUT
-        Snapshot<TextData> actual = await env.Service.GetPreTranslationDeltaAsync(
+        Dictionary<string, Snapshot<TextData>> actual = await env.Service.GetPreTranslationDeltaAsync(
             User01,
             Project01,
             40,
@@ -2450,9 +2431,11 @@ public class MachineApiServiceTests
             config,
             CancellationToken.None
         );
-        Assert.AreEqual(expected.Ops[0], actual.Data.Ops[0]);
-        Assert.AreEqual(TextData.GetTextDocId(Project01, "MAT", 1), actual.Id);
-        Attempt<TextDocument> attempt = await env.RealtimeService.GetRepository<TextDocument>().TryGetAsync(actual.Id);
+        Assert.AreEqual(expected.Ops[0], actual["1"].Data.Ops[0]);
+        Assert.AreEqual(TextData.GetTextDocId(Project01, "MAT", 1), actual["1"].Id);
+        Attempt<TextDocument> attempt = await env
+            .RealtimeService.GetRepository<TextDocument>()
+            .TryGetAsync(actual["1"].Id);
         Assert.False(attempt.Success);
         await env
             .PreTranslationService.Received(1)

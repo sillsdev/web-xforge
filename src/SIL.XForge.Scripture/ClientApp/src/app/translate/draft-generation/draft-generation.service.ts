@@ -33,7 +33,7 @@ import {
 })
 export class DraftGenerationService {
   // This is just after SFv5.33.0 was released
-  readonly draftHistoryCutOffDate: Date = new Date('2026-03-25T21:00:00Z');
+  readonly draftHistoryCutOffDate: Date = new Date('2026-06-03T21:00:00Z');
 
   constructor(
     private readonly httpClient: HttpClient,
@@ -99,8 +99,8 @@ export class DraftGenerationService {
       map(res =>
         res?.filter(
           build =>
-            build.additionalInfo?.dateFinished != null &&
-            new Date(build.additionalInfo.dateFinished) >= this.draftHistoryCutOffDate
+            build.additionalInfo?.dateRequested != null &&
+            new Date(build.additionalInfo.dateRequested) >= this.draftHistoryCutOffDate
         )
       ),
       catchError(err => {
@@ -342,7 +342,6 @@ export class DraftGenerationService {
             chapterDeltas.set(chapter, snapshot.data.ops ?? []);
           }
         }
-        console.log(chapterDeltas);
         return chapterDeltas;
       }),
       catchError(err => {
