@@ -1,4 +1,4 @@
-@use 'src/styles';
+@use 'src/dense-mat-select';
 
 :host {
   display: flex;
@@ -48,7 +48,7 @@ app-notice {
 }
 
 .draft-select {
-  @include styles.dense_mat_select();
+  @include dense-mat-select.dense-mat-select();
 }
 
 app-notice {

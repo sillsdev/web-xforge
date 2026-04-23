@@ -1,4 +1,5 @@
 @use 'src/styles';
+@use 'src/dense-mat-select';
 
 /* We have two mat-icon actions buttons */
 .actions {
@@ -94,6 +95,6 @@ td.mat-column-renderings {
 }
 
 .biblical-terms-select {
-  @include styles.dense_mat_select();
+  @include dense-mat-select.dense-mat-select();
   width: 200px;
 }

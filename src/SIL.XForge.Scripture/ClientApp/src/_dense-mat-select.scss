@@ -1,0 +1,16 @@
+// Mixin for compact mat-select form fields used throughout toolbar areas.
+@mixin dense-mat-select() {
+  ::ng-deep {
+    height: 36px;
+    .mat-mdc-form-field-infix {
+      min-height: initial;
+      padding-top: 7px;
+      padding-bottom: 5px;
+      width: initial;
+      min-width: 25px; // prevent weird transparent gap between content and scrollbar in Chromium
+    }
+    .mat-mdc-select-arrow-wrapper {
+      margin-inline-start: 5px;
+    }
+  }
+}
