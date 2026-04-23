@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DeltaOperation } from 'rich-text';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { TextDocId } from '../../core/models/text-doc';
@@ -72,39 +72,11 @@ describe('DraftHandlingService', () => {
           anything()
         )
       ).thenReturn(of(draftOps));
-      service
-        .getDraft(textDocId, { isDraftLegacy: false, timestamp: undefined })
-        .subscribe(draftData => expect(draftData).toEqual(draftOps));
+      service.getDraft(textDocId, { timestamp: undefined }).subscribe(draftData => expect(draftData).toEqual(draftOps));
       verify(
         mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1, undefined, undefined)
       ).once();
       verify(mockedDraftGenerationService.getGeneratedDraft('project01', 1, 1)).never();
-    });
-
-    it('should get a draft with the legacy USFM segment map if getting ops fails', () => {
-      const textDocId = new TextDocId('project01', 1, 1);
-      const draft: DraftSegmentMap = {
-        verse_150_1: 'Praise ye the Lord. ',
-        verse_150_2: 'Praise him for his mighty acts: ',
-        verse_150_3: 'Praise him with the sound of the trumpet: '
-      };
-      when(
-        mockedDraftGenerationService.getGeneratedDraftDeltaOperations(
-          anything(),
-          anything(),
-          anything(),
-          anything(),
-          anything()
-        )
-      ).thenReturn(throwError(() => ({ status: 405 })));
-      when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(of(draft));
-      service
-        .getDraft(textDocId, { isDraftLegacy: false, timestamp: undefined })
-        .subscribe(draftData => expect(draftData).toEqual(draft));
-      verify(
-        mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1, undefined, undefined)
-      ).once();
-      verify(mockedDraftGenerationService.getGeneratedDraft('project01', 1, 1)).once();
     });
   });
 
@@ -222,49 +194,6 @@ describe('DraftHandlingService', () => {
         }
       ];
       expect(service.toDraftOps(draft, targetOps)).toEqual(expectedResult);
-    });
-  });
-
-  describe('draftDataToOps', () => {
-    it('should return empty ops if draft is legacy and target ops is empty', () => {
-      const draft: DraftSegmentMap = {
-        verse_1_1: 'In the beginning',
-        verse_1_2: 'God created the heavens and the earth'
-      };
-      const targetOps: DeltaOperation[] = [];
-      const expected: DeltaOperation[] = [];
-      const result: DeltaOperation[] = service.draftDataToOps(draft, targetOps);
-      expect(result).toEqual(expected);
-    });
-
-    it('should convert legacy draft to draft ops', () => {
-      const draft: DraftSegmentMap = {
-        verse_1_1: 'In the beginning',
-        verse_1_2: 'God created the heavens and the earth'
-      };
-      const targetOps: DeltaOperation[] = [
-        { insert: '', attributes: { segment: 'verse_1_1' } },
-        { insert: '', attributes: { segment: 'verse_1_2' } }
-      ];
-      const expected: DeltaOperation[] = [
-        { insert: 'In the beginning', attributes: { segment: 'verse_1_1', draft: true } },
-        { insert: 'God created the heavens and the earth', attributes: { segment: 'verse_1_2', draft: true } }
-      ];
-      const result: DeltaOperation[] = service.draftDataToOps(draft, targetOps);
-      expect(result).toEqual(expected);
-    });
-
-    it('should not change draft ops if draft data was already in op form', () => {
-      const draftOps: DeltaOperation[] = [
-        { insert: 'In the beginning', attributes: { segment: 'verse_1_1', draft: true } },
-        { insert: 'God created the heavens and the earth', attributes: { segment: 'verse_1_2', draft: true } }
-      ];
-      const targetOps: DeltaOperation[] = [
-        { insert: '', attributes: { segment: 'verse_1_1' } },
-        { insert: '', attributes: { segment: 'verse_1_2' } }
-      ];
-      const result: DeltaOperation[] = service.draftDataToOps(draftOps, targetOps);
-      expect(result).toEqual(draftOps);
     });
   });
 
