@@ -1,0 +1,304 @@
+name: "Storybook Screenshots"
+permissions: {}
+
+# Runs on every PR and merge-group event to produce a visual diff between the target branch and
+# the PR branch.  Two screenshot jobs run in parallel, one for each commit, and a third job then
+# compares the results and deploys any changed screenshots to Netlify for visual review.
+#
+# For manual runs the 'base_ref' input lets you choose which ref to treat as the baseline.
+
+on:
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+    inputs:
+      base_ref:
+        description: "Base ref to compare against (branch name, tag, or commit SHA)"
+        required: false
+        default: "master"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1 – screenshot the base/target-branch commit
+  # ---------------------------------------------------------------------------
+  screenshots-base:
+    name: "Screenshots: Base"
+    strategy:
+      matrix:
+        os: ["ubuntu-24.04"]
+        node_version: ["22.13.0"]
+        npm_version: ["11.11.0"]
+    runs-on: ${{matrix.os}}
+    steps:
+      - name: Checkout base
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          # Resolve the base ref in priority order: PR base SHA → merge-group base SHA → manual
+          # input → default branch.
+          ref: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || inputs.base_ref || 'master' }}
+
+      - name: "Deps: Node"
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: ${{matrix.node_version}}
+          cache: "npm"
+          cache-dependency-path: |
+            src/SIL.XForge.Scripture/ClientApp/package-lock.json
+            src/RealtimeServer/package-lock.json
+      - name: "Deps: npm"
+        env:
+          NPM_VERSION: ${{matrix.npm_version}}
+        run: |
+          set -xueo pipefail
+          npm install --global npm@${NPM_VERSION}
+      - name: "Ensure desired tool versions"
+        env:
+          NODE_VERSION: ${{matrix.node_version}}
+          NPM_VERSION: ${{matrix.npm_version}}
+        run: |
+          set -xueo pipefail
+          [[ $(node --version) == v${NODE_VERSION} ]]
+          [[ $(npm --version) == ${NPM_VERSION} ]]
+
+      - name: "Deps: RealtimeServer npm"
+        run: cd src/RealtimeServer && (npm ci || (sleep 3m && npm ci))
+      - name: "Deps: Frontend npm"
+        run: cd src/SIL.XForge.Scripture/ClientApp && (npm ci || (sleep 3m && npm ci))
+
+      - name: "Build: RealtimeServer"
+        run: cd src/RealtimeServer && npm run build
+      - name: "Build: Frontend"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run build
+      - name: "Build: Storybook"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run build-storybook
+
+      - name: "Install Playwright browsers"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npx playwright install --with-deps chromium
+
+      - name: "Set up Deno"
+        uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2.0.4
+        with:
+          deno-version: v2.x
+
+      # The screenshot script may not exist on the base branch (or may be outdated). Always use the
+      # version from the PR branch so that any script improvements in the PR also apply to the base
+      # branch screenshots, and so the base branch screenshots can be taken even if the script
+      # didn't exist on the base branch at all.
+      - name: "Checkout screenshot script from PR branch"
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: pr-branch-scripts
+          sparse-checkout: src/SIL.XForge.Scripture/ClientApp/scripts/take-storybook-screenshots.mts
+          sparse-checkout-cone-mode: false
+      - name: "Use screenshot script from PR branch"
+        run: |
+          set -euo pipefail
+          mkdir -p src/SIL.XForge.Scripture/ClientApp/scripts
+          cp pr-branch-scripts/src/SIL.XForge.Scripture/ClientApp/scripts/take-storybook-screenshots.mts src/SIL.XForge.Scripture/ClientApp/scripts/take-storybook-screenshots.mts
+
+      - name: "Take screenshots"
+        run: cd src/SIL.XForge.Scripture/ClientApp && deno run --allow-read --allow-write --allow-net --allow-run --allow-env --allow-sys scripts/take-storybook-screenshots.mts storybook-static screenshots
+
+      - name: "Upload screenshots"
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: screenshots-base
+          path: src/SIL.XForge.Scripture/ClientApp/screenshots
+
+  # ---------------------------------------------------------------------------
+  # Job 2 – screenshot the PR / head commit (runs in parallel with job 1)
+  # ---------------------------------------------------------------------------
+  screenshots-branch:
+    name: "Screenshots: Branch"
+    strategy:
+      matrix:
+        os: ["ubuntu-24.04"]
+        node_version: ["22.13.0"]
+        npm_version: ["11.11.0"]
+    runs-on: ${{matrix.os}}
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          # For PR events use the PR head SHA; for all other events use the triggering commit.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: "Deps: Node"
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: ${{matrix.node_version}}
+          cache: "npm"
+          cache-dependency-path: |
+            src/SIL.XForge.Scripture/ClientApp/package-lock.json
+            src/RealtimeServer/package-lock.json
+      - name: "Deps: npm"
+        env:
+          NPM_VERSION: ${{matrix.npm_version}}
+        run: |
+          set -xueo pipefail
+          npm install --global npm@${NPM_VERSION}
+      - name: "Ensure desired tool versions"
+        env:
+          NODE_VERSION: ${{matrix.node_version}}
+          NPM_VERSION: ${{matrix.npm_version}}
+        run: |
+          set -xueo pipefail
+          [[ $(node --version) == v${NODE_VERSION} ]]
+          [[ $(npm --version) == ${NPM_VERSION} ]]
+
+      - name: "Deps: RealtimeServer npm"
+        run: cd src/RealtimeServer && (npm ci || (sleep 3m && npm ci))
+      - name: "Deps: Frontend npm"
+        run: cd src/SIL.XForge.Scripture/ClientApp && (npm ci || (sleep 3m && npm ci))
+
+      - name: "Build: RealtimeServer"
+        run: cd src/RealtimeServer && npm run build
+      - name: "Build: Frontend"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run build
+      - name: "Build: Storybook"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run build-storybook
+
+      - name: "Install Playwright browsers"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npx playwright install --with-deps chromium
+
+      - name: "Set up Deno"
+        uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2.0.4
+        with:
+          deno-version: v2.x
+
+      - name: "Take screenshots"
+        run: cd src/SIL.XForge.Scripture/ClientApp && deno run --allow-read --allow-write --allow-net --allow-run --allow-env --allow-sys scripts/take-storybook-screenshots.mts storybook-static screenshots
+
+      - name: "Upload screenshots"
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: screenshots-branch
+          path: src/SIL.XForge.Scripture/ClientApp/screenshots
+
+  # ---------------------------------------------------------------------------
+  # Job 3 – compare the two screenshot sets and deploy a visual diff to Netlify
+  # ---------------------------------------------------------------------------
+  compare:
+    name: "Compare Screenshots"
+    needs: [screenshots-base, screenshots-branch]
+    runs-on: ubuntu-24.04
+    environment: screenshot_diff
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: "Set up Deno"
+        uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2.0.4
+        with:
+          deno-version: v2.x
+
+      - name: "Download base screenshots"
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: screenshots-base
+          path: screenshots-base
+
+      - name: "Download branch screenshots"
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: screenshots-branch
+          path: screenshots-branch
+
+      - name: "Compare screenshots"
+        id: compare
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+          ARGS=(screenshots-base screenshots-branch screenshots-deploy)
+          # Pass PR metadata so the diff page can link back to the PR with its title and number.
+          # These variables are empty for non-PR events (merge groups, manual dispatches).
+          if [ -n "${PR_URL-}" ]; then
+            ARGS+=(--pr-url "$PR_URL")
+          fi
+          if [ -n "${PR_NUMBER-}" ]; then
+            ARGS+=(--pr-number "$PR_NUMBER")
+          fi
+          if [ -n "${PR_TITLE-}" ]; then
+            ARGS+=(--pr-title "$PR_TITLE")
+          fi
+          scripts/compare-storybook-screenshots.mts "${ARGS[@]}"
+          # Export the total number of visual changes for use in the PR comment step.
+          CHANGED_COUNT=$(jq '.summary.changed + .summary.removed + .summary.added' screenshots-deploy/screenshots.json)
+          echo "changed_count=${CHANGED_COUNT}" >> "$GITHUB_OUTPUT"
+
+      - name: "Deploy diff to Netlify"
+        id: deploy
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ vars.NETLIFY_SITE_ID }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          # Use a stable alias for PRs so each push overwrites the previous preview.
+          # Fall back to the run ID for non-PR events (merge groups, manual dispatches).
+          ALIAS="${PR_NUMBER:+pr-${PR_NUMBER}}"
+          ALIAS="${ALIAS:-run-${RUN_ID}}"
+          DEPLOY_OUTPUT=$(npx --yes netlify-cli deploy --dir screenshots-deploy --alias "$ALIAS" --json)
+          DEPLOY_URL=$(echo "$DEPLOY_OUTPUT" | jq -r '.deploy_url')
+          echo "url=${DEPLOY_URL}" >> "$GITHUB_OUTPUT"
+
+      - name: "Comment on PR with preview URL"
+        if: github.event_name == 'pull_request' && steps.deploy.outputs.url != ''
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        env:
+          DEPLOY_URL: ${{ steps.deploy.outputs.url }}
+          CHANGED_COUNT: ${{ steps.compare.outputs.changed_count }}
+        with:
+          script: |
+            const marker = '<!-- screenshot-diff-preview -->';
+            const url = process.env.DEPLOY_URL;
+            const changedCount = parseInt(process.env.CHANGED_COUNT, 10);
+
+            const { data: comments } = await github.rest.issues.listComments({
+              issue_number: context.payload.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100,
+            });
+            const existing = comments.find(c => c.body?.includes(marker));
+
+            let body;
+            if (changedCount > 0) {
+              const noun = changedCount === 1 ? 'change' : 'changes';
+              body = marker + '\n📸 **Screenshot diff deployed!** (' + changedCount + ' ' + noun + ')\n\nView the visual diff at: ' + url;
+            } else {
+              if (!existing) {
+                // No changes and no existing comment — avoid adding noise to the PR.
+                return;
+              }
+              body = marker + '\n✅ **No screenshot differences** — all stories are identical.\n\nView the diff page at: ' + url;
+            }
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                comment_id: existing.id,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.payload.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body,
+              });
+            }

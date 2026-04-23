@@ -274,6 +274,10 @@ export const StepThree: Story = {
 
 export const StepFour: Story = {
   ...Template,
+  parameters: {
+    // Story occasionally renders with a 1px difference due to anti-aliasing in the book list
+    screenshot: { maxDiffPixels: 1 }
+  },
   args: {
     ...defaultArgs,
     needsConnection: true,
@@ -312,6 +316,10 @@ export const StepFive: Story = {
 
 export const StepSix: Story = {
   ...Template,
+  parameters: {
+    // Story occasionally renders with a 1px difference due to anti-aliasing in the book list
+    screenshot: { maxDiffPixels: 1 }
+  },
   args: {
     ...defaultArgs,
     importStepTriggered: true,
