@@ -16,6 +16,7 @@ import {
   QuoteFormat,
   TranslateConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { DeltaOperation } from 'rich-text';
 import { firstValueFrom, of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -118,7 +119,7 @@ describe('DraftUsfmFormatComponent', () => {
     tick(EDITOR_READY_TIMEOUT);
     expect(env.component.bookNum).toBe(2);
     expect(env.component.chapterNum).toBe(2);
-    verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
+    verify(mockedDraftHandlingService.getBookDraft(anything(), anything())).once();
   }));
 
   it('can navigate to first book and chapter if book does not exist', fakeAsync(() => {
@@ -129,7 +130,7 @@ describe('DraftUsfmFormatComponent', () => {
     tick(EDITOR_READY_TIMEOUT);
     expect(env.component.bookNum).toBe(1);
     expect(env.component.chapterNum).toBe(1);
-    verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
+    verify(mockedDraftHandlingService.getBookDraft(anything(), anything())).once();
   }));
 
   it('can navigate to book and chapter if first chapter has no draft', fakeAsync(() => {
@@ -153,7 +154,7 @@ describe('DraftUsfmFormatComponent', () => {
     // book 3 on the source starts at chapter 2
     expect(env.component.chapterNum).toBe(2);
     expect(env.component.chaptersWithDrafts).toEqual([2, 3]);
-    verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
+    verify(mockedDraftHandlingService.getBookDraft(anything(), anything())).once();
   }));
 
   it('determines chapters with drafts based on translation source chapters', fakeAsync(() => {
@@ -178,7 +179,7 @@ describe('DraftUsfmFormatComponent', () => {
     // source has 3 chapters on book 1
     expect(env.component.chaptersWithDrafts).toEqual([1, 2, 3]);
     expect(env.component.showDraftSourceWarning).toBe(false);
-    verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
+    verify(mockedDraftHandlingService.getBookDraft(anything(), anything())).once();
   }));
 
   // Book and chapter changed
@@ -193,7 +194,7 @@ describe('DraftUsfmFormatComponent', () => {
       }
     });
 
-    verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
+    verify(mockedDraftHandlingService.getBookDraft(anything(), anything())).once();
     expect(env.component.chaptersWithDrafts.length).toEqual(3);
     expect(env.component.booksWithDrafts.length).toEqual(3);
 
@@ -201,12 +202,13 @@ describe('DraftUsfmFormatComponent', () => {
     tick();
     env.fixture.detectChanges();
     expect(env.component.chaptersWithDrafts.length).toEqual(2);
-    verify(mockedDraftHandlingService.getDraft(anything(), anything())).twice();
+    verify(mockedDraftHandlingService.getBookDraft(anything(), anything())).twice();
 
+    // changing chapters does not trigger a new call to get the book draft
     env.component.chapterChanged(2);
     tick();
     env.fixture.detectChanges();
-    verify(mockedDraftHandlingService.getDraft(anything(), anything())).thrice();
+    verify(mockedDraftHandlingService.getBookDraft(anything(), anything())).twice();
   }));
 
   it('should initialize and default to best guess and automatic quotes', fakeAsync(async () => {
@@ -249,13 +251,13 @@ describe('DraftUsfmFormatComponent', () => {
         ]
       }
     });
-    verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
+    verify(mockedDraftHandlingService.getBookDraft(anything(), anything())).once();
     expect(env.harnesses?.length).toEqual(5);
     await env.harnesses![0].check();
     tick();
     env.fixture.detectChanges();
     verify(mockedProjectService.onlineSetUsfmConfig(env.projectId, anything())).never();
-    verify(mockedDraftHandlingService.getDraft(anything(), anything())).twice();
+    verify(mockedDraftHandlingService.getBookDraft(anything(), anything())).twice();
 
     env.backButton.click();
     tick();
@@ -276,7 +278,7 @@ describe('DraftUsfmFormatComponent', () => {
         } as TranslateConfig
       }
     });
-    verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
+    verify(mockedDraftHandlingService.getBookDraft(anything(), anything())).once();
     expect(env.harnesses?.length).toEqual(5);
     await env.harnesses![0].check();
     tick();
@@ -286,7 +288,7 @@ describe('DraftUsfmFormatComponent', () => {
       quoteFormat: QuoteFormat.Denormalized
     };
     verify(mockedProjectService.onlineSetUsfmConfig(env.projectId, anything())).never();
-    verify(mockedDraftHandlingService.getDraft(anything(), anything())).twice();
+    verify(mockedDraftHandlingService.getBookDraft(anything(), anything())).twice();
 
     // redirect to generate draft
     env.saveButton.click();
@@ -356,15 +358,14 @@ class TestEnvironment {
     when(mockedUserService.getCurrentUser()).thenCall(() =>
       this.realtimeService.subscribe(UserDoc.COLLECTION, this.userId)
     );
-    when(mockedDraftHandlingService.getDraft(anything(), anything())).thenReturn(
-      of([
-        { insert: { chapter: { number: 1 } }, attributes: { style: 'c' } },
-        { insert: { verse: { number: 1 } }, attributes: { style: 'v' } },
-        { insert: 'Verse 1 text.' }
-      ])
-    );
+    const bookDraft: Map<string, DeltaOperation[]> = new Map<string, DeltaOperation[]>();
+    bookDraft.set('1', [
+      { insert: { chapter: { number: 1 } }, attributes: { style: 'c' } },
+      { insert: { verse: { number: 1 } }, attributes: { style: 'v' } },
+      { insert: 'Verse 1 text.' }
+    ]);
+    when(mockedDraftHandlingService.getBookDraft(anything(), anything())).thenReturn(of(bookDraft));
     when(mockedActivatedProjectService.projectId$).thenReturn(of(this.projectId));
-    when(mockedDraftHandlingService.draftDataToOps(anything(), anything())).thenCall(ops => ops);
     this.onlineStatusService.setIsOnline(true);
     when(mockedNoticeService.show(anything())).thenResolve();
     when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(true);

@@ -18,6 +18,7 @@ import {
   ParagraphBreakFormat,
   QuoteFormat
 } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { DeltaOperation } from 'rich-text';
 import {
   BehaviorSubject,
   combineLatest,
@@ -100,6 +101,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   private draftSources$: Observable<DraftSourcesAsArrays> = this.draftSourcesService.getDraftProjectSources();
   private bookNum$ = new BehaviorSubject<number | undefined>(undefined);
   private translateSource?: SFProjectProfile;
+  private chapterDeltas: Map<number, DeltaOperation[]> = new Map<number, DeltaOperation[]>();
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -192,12 +194,16 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
         switchMap(({ config, textDocId }) => {
           // the textDocId would only be empty if a user unexpectedly navigates to formatting options by URL
           if (textDocId == null) return EMPTY;
-          return this.draftHandlingService.getDraft(textDocId, { isDraftLegacy: false, config });
+          return this.draftHandlingService.getBookDraft(textDocId, { config });
         })
       )
-      .subscribe(ops => {
-        const draftDelta: Delta = new Delta(this.draftHandlingService.draftDataToOps(ops, []));
-        this.draftText.setContents(draftDelta, 'api');
+      .subscribe(chapterDeltas => {
+        this.chapterDeltas.clear();
+        for (const chapter of chapterDeltas.keys()) {
+          const draftDelta: Delta = new Delta(chapterDeltas.get(chapter));
+          this.chapterDeltas.set(+chapter, draftDelta.ops);
+        }
+        this.setChapterContents(this.chapterNum);
         this.draftText.applyEditorStyles();
         this.isInitializing = false;
         this.loadingFinished();
@@ -218,7 +224,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
 
   chapterChanged(chapterNum: number): void {
     this.chapterNum = chapterNum;
-    this.reloadText();
+    this.setChapterContents(chapterNum);
   }
 
   close(): void {
@@ -279,6 +285,18 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
       });
   }
 
+  private setChapterContents(chapterNum?: number): void {
+    if (this.chapterDeltas == null) return;
+    if (chapterNum == null) {
+      this.draftText.setContents(new Delta(this.chapterDeltas.values()[0]), 'api');
+    } else {
+      const chapterDelta = this.chapterDeltas.get(chapterNum);
+      if (chapterDelta != null) {
+        this.draftText.setContents(new Delta(chapterDelta), 'api');
+      }
+    }
+  }
+
   private async subscribeBookAndChapters(initialBookNum: number, initialChapterNum?: number): Promise<void> {
     const currentUser = await this.userService.getCurrentUser();
     combineLatest([this.draftSources$, this.bookNum$.pipe(filterNullish())])
@@ -304,6 +322,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
         const chapter: number =
           this.chapterNum == null ? (initialChapterNum ?? this.chaptersWithDrafts[0]) : this.chaptersWithDrafts[0];
         this.chapterChanged(chapter);
+        this.reloadText();
       });
 
     this.bookChanged(initialBookNum);

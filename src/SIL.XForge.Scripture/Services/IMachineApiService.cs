@@ -112,6 +112,15 @@ public interface IMachineApiService
         DraftUsfmConfig? draftUsfmConfig,
         CancellationToken cancellationToken
     );
+    Task<Dictionary<string, Snapshot<TextData>>> GetPreTranslationBookDeltaAsync(
+        string curUserId,
+        string sfProjectId,
+        int bookNum,
+        bool isServalAdmin,
+        DateTime timestamp,
+        DraftUsfmConfig? draftUsfmConfig,
+        CancellationToken cancellationToken
+    );
     Task<IReadOnlyList<DocumentRevision>> GetPreTranslationRevisionsAsync(
         string curUserId,
         string sfProjectId,

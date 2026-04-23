@@ -1429,6 +1429,49 @@ public class MachineApiService(
         };
     }
 
+    public async Task<Dictionary<string, Snapshot<TextData>>> GetPreTranslationBookDeltaAsync(
+        string curUserId,
+        string sfProjectId,
+        int bookNum,
+        bool isServalAdmin,
+        DateTime timestamp,
+        DraftUsfmConfig? draftUsfmConfig,
+        CancellationToken cancellationToken
+    )
+    {
+        // Get the USJ document
+        IUsj usj = await GetPreTranslationUsjAsync(
+            curUserId,
+            sfProjectId,
+            bookNum,
+            0,
+            isServalAdmin,
+            timestamp,
+            draftUsfmConfig,
+            cancellationToken
+        );
+
+        // Then convert it to USX
+        XDocument usxDoc = UsjToUsx.UsjToUsxXDocument(usj);
+        var chapterDeltas = deltaUsxMapper.ToChapterDeltas(usxDoc).ToArray();
+        Dictionary<string, Snapshot<TextData>> snapshots = [];
+        for (int i = 0; i < chapterDeltas.Length; i++)
+        {
+            ChapterDelta chapterDelta = chapterDeltas[i];
+            // Then convert it to a Delta
+            snapshots.Add(
+                (i + 1).ToString(),
+                new Snapshot<TextData>
+                {
+                    Id = TextData.GetTextDocId(sfProjectId, bookNum, i + 1),
+                    Version = 0,
+                    Data = new TextData(chapterDelta.Delta),
+                }
+            );
+        }
+        return snapshots;
+    }
+
     /// <summary>
     /// Retrieves the state of an NMT or SMT build before the build is started on Serval.
     /// </summary>
