@@ -844,6 +844,7 @@ public class MachineApiControllerTests
     }
 
     [Test]
+#pragma warning disable CS0618
     public async Task GetPreTranslationAsync_MachineApiDown()
     {
         // Set up test environment
@@ -858,6 +859,7 @@ public class MachineApiControllerTests
             1,
             CancellationToken.None
         );
+#pragma warning restore CS0618
 
         env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
         Assert.IsInstanceOf<ObjectResult>(actual.Result);
@@ -865,6 +867,7 @@ public class MachineApiControllerTests
     }
 
     [Test]
+#pragma warning disable CS0618
     public async Task GetPreTranslationAsync_NoPermission()
     {
         // Set up test environment
@@ -879,11 +882,13 @@ public class MachineApiControllerTests
             1,
             CancellationToken.None
         );
+#pragma warning restore CS0618
 
         Assert.IsInstanceOf<ForbidResult>(actual.Result);
     }
 
     [Test]
+#pragma warning disable CS0618
     public async Task GetPreTranslationAsync_NoProject()
     {
         // Set up test environment
@@ -898,11 +903,13 @@ public class MachineApiControllerTests
             1,
             CancellationToken.None
         );
+#pragma warning restore CS0618
 
         Assert.IsInstanceOf<NotFoundResult>(actual.Result);
     }
 
     [Test]
+#pragma warning disable CS0618
     public async Task GetPreTranslationAsync_NotBuilt()
     {
         // Set up test environment
@@ -917,11 +924,13 @@ public class MachineApiControllerTests
             1,
             CancellationToken.None
         );
+#pragma warning restore CS0618
 
         Assert.IsInstanceOf<ConflictResult>(actual.Result);
     }
 
     [Test]
+#pragma warning disable CS0618
     public async Task GetPreTranslationAsync_Success()
     {
         // Set up test environment
@@ -936,6 +945,7 @@ public class MachineApiControllerTests
             1,
             CancellationToken.None
         );
+#pragma warning restore CS0618
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
     }
@@ -1118,7 +1128,7 @@ public class MachineApiControllerTests
                 Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
-            .Returns(Task.FromResult(new Snapshot<TextData>()));
+            .Returns(Task.FromResult(new Dictionary<string, Snapshot<TextData>>()));
 
         // SUT
         ActionResult<Snapshot<TextData>> actual = await env.Controller.GetPreTranslationDeltaAsync(
@@ -1148,7 +1158,7 @@ public class MachineApiControllerTests
                 Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
-            .Returns(Task.FromResult(new Snapshot<TextData>()));
+            .Returns(Task.FromResult(new Dictionary<string, Snapshot<TextData>>()));
 
         // SUT
         var result = await env.Controller.GetPreTranslationDeltaAsync(
@@ -1177,7 +1187,7 @@ public class MachineApiControllerTests
                 Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
-            .Returns(Task.FromResult(new Snapshot<TextData>()));
+            .Returns(Task.FromResult(new Dictionary<string, Snapshot<TextData>>()));
 
         // SUT
         var result = await env.Controller.GetPreTranslationDeltaAsync(
@@ -1190,6 +1200,194 @@ public class MachineApiControllerTests
             CancellationToken.None
         );
         Assert.IsInstanceOf<OkObjectResult>(result.Result);
+    }
+
+    [Test]
+    public async Task GetPreTranslationBookDeltaAsync_MachineApiDown()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetPreTranslationDeltaAsync(
+                User01,
+                Project01,
+                40,
+                0,
+                false,
+                Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
+                CancellationToken.None
+            )
+            .Throws(new BrokenCircuitException());
+
+        // SUT
+        ActionResult<Dictionary<int, Snapshot<TextData>>> actual = await env.Controller.GetPreTranslationBookDeltaAsync(
+            Project01,
+            40,
+            null,
+            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+            quoteFormat: QuoteStyleOptions.Denormalized,
+            CancellationToken.None
+        );
+
+        env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
+        Assert.IsInstanceOf<ObjectResult>(actual.Result);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
+    }
+
+    [Test]
+    public async Task GetPreTranslationBookDeltaAsync_NoPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetPreTranslationDeltaAsync(
+                User01,
+                Project01,
+                40,
+                0,
+                false,
+                Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
+                CancellationToken.None
+            )
+            .Throws(new ForbiddenException());
+
+        // SUT
+        ActionResult<Dictionary<int, Snapshot<TextData>>> actual = await env.Controller.GetPreTranslationBookDeltaAsync(
+            Project01,
+            40,
+            null,
+            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+            quoteFormat: QuoteStyleOptions.Denormalized,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<ForbidResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetPreTranslationBookDeltaAsync_NoProject()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetPreTranslationDeltaAsync(
+                User01,
+                Project01,
+                40,
+                0,
+                false,
+                Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
+                CancellationToken.None
+            )
+            .Throws(new DataNotFoundException(string.Empty));
+
+        // SUT
+        ActionResult<Dictionary<int, Snapshot<TextData>>> actual = await env.Controller.GetPreTranslationBookDeltaAsync(
+            Project01,
+            40,
+            null,
+            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+            quoteFormat: QuoteStyleOptions.Denormalized,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<NotFoundResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetPreTranslationBookDeltaAsync_NotBuilt()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetPreTranslationDeltaAsync(
+                User01,
+                Project01,
+                40,
+                0,
+                false,
+                Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
+                CancellationToken.None
+            )
+            .Throws(new InvalidOperationException());
+
+        // SUT
+        ActionResult<Dictionary<int, Snapshot<TextData>>> actual = await env.Controller.GetPreTranslationBookDeltaAsync(
+            Project01,
+            40,
+            null,
+            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+            quoteFormat: QuoteStyleOptions.Denormalized,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<ConflictResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetPreTranslationBookDeltaAsync_NotSupported()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetPreTranslationDeltaAsync(
+                User01,
+                Project01,
+                40,
+                0,
+                false,
+                Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
+                CancellationToken.None
+            )
+            .Throws(new NotSupportedException());
+
+        // SUT
+        ActionResult<Dictionary<int, Snapshot<TextData>>> actual = await env.Controller.GetPreTranslationBookDeltaAsync(
+            Project01,
+            40,
+            null,
+            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+            quoteFormat: QuoteStyleOptions.Denormalized,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<IStatusCodeActionResult>(actual.Result);
+        Assert.AreEqual(StatusCodes.Status405MethodNotAllowed, (actual.Result as IStatusCodeActionResult)?.StatusCode);
+    }
+
+    [Test]
+    [TestCase("", "")]
+    [TestCase(null, null)]
+    [TestCase(ParagraphBreakFormatOptions.BestGuess, QuoteStyleOptions.Denormalized)]
+    [TestCase(ParagraphBreakFormatOptions.MoveToEnd, QuoteStyleOptions.Denormalized)]
+    [TestCase(ParagraphBreakFormatOptions.Remove, QuoteStyleOptions.Normalized)]
+    public async Task GetPreTranslationBookDeltaAsync_Success(string paragraphFormat, string quoteFormat)
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetPreTranslationDeltaAsync(
+                User01,
+                Project01,
+                40,
+                0,
+                false,
+                Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
+                CancellationToken.None
+            )
+            .Returns(Task.FromResult(new Dictionary<string, Snapshot<TextData>>()));
+
+        // SUT
+        ActionResult<Dictionary<int, Snapshot<TextData>>> actual = await env.Controller.GetPreTranslationBookDeltaAsync(
+            Project01,
+            40,
+            null,
+            paragraphFormat,
+            quoteFormat,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
     }
 
     [Test]

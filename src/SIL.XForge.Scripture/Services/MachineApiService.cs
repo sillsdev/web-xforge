@@ -1388,7 +1388,7 @@ public class MachineApiService(
         return preTranslation;
     }
 
-    public async Task<Snapshot<TextData>> GetPreTranslationDeltaAsync(
+    public async Task<Dictionary<string, Snapshot<TextData>>> GetPreTranslationDeltaAsync(
         string curUserId,
         string sfProjectId,
         int bookNum,
@@ -1399,12 +1399,6 @@ public class MachineApiService(
         CancellationToken cancellationToken
     )
     {
-        // Do not allow retrieving the entire book as a delta
-        if (chapterNum == 0)
-        {
-            throw new DataNotFoundException("Chapter not specified");
-        }
-
         // Get the USJ document
         IUsj usj = await GetPreTranslationUsjAsync(
             curUserId,
@@ -1419,56 +1413,17 @@ public class MachineApiService(
 
         // Then convert it to USX
         XDocument usxDoc = UsjToUsx.UsjToUsxXDocument(usj);
-
-        // Then convert it to a Delta
-        return new Snapshot<TextData>
-        {
-            Id = TextData.GetTextDocId(sfProjectId, bookNum, chapterNum),
-            Version = 0,
-            Data = new TextData(deltaUsxMapper.ToChapterDeltas(usxDoc).First().Delta),
-        };
-    }
-
-    public async Task<Dictionary<string, Snapshot<TextData>>> GetPreTranslationBookDeltaAsync(
-        string curUserId,
-        string sfProjectId,
-        int bookNum,
-        bool isServalAdmin,
-        DateTime timestamp,
-        DraftUsfmConfig? draftUsfmConfig,
-        CancellationToken cancellationToken
-    )
-    {
-        // Get the USJ document
-        IUsj usj = await GetPreTranslationUsjAsync(
-            curUserId,
-            sfProjectId,
-            bookNum,
-            0,
-            isServalAdmin,
-            timestamp,
-            draftUsfmConfig,
-            cancellationToken
+        var chapterDeltas = deltaUsxMapper.ToChapterDeltas(usxDoc).ToArray();
+        Dictionary<string, Snapshot<TextData>> snapshots = chapterDeltas.ToDictionary(
+            chapter => chapter.Number.ToString(),
+            chapter => new Snapshot<TextData>
+            {
+                Id = TextData.GetTextDocId(sfProjectId, bookNum, chapter.Number),
+                Version = 0,
+                Data = new TextData(chapter.Delta),
+            }
         );
 
-        // Then convert it to USX
-        XDocument usxDoc = UsjToUsx.UsjToUsxXDocument(usj);
-        var chapterDeltas = deltaUsxMapper.ToChapterDeltas(usxDoc).ToArray();
-        Dictionary<string, Snapshot<TextData>> snapshots = [];
-        for (int i = 0; i < chapterDeltas.Length; i++)
-        {
-            ChapterDelta chapterDelta = chapterDeltas[i];
-            // Then convert it to a Delta
-            snapshots.Add(
-                (i + 1).ToString(),
-                new Snapshot<TextData>
-                {
-                    Id = TextData.GetTextDocId(sfProjectId, bookNum, i + 1),
-                    Version = 0,
-                    Data = new TextData(chapterDelta.Delta),
-                }
-            );
-        }
         return snapshots;
     }
 

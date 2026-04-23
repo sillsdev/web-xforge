@@ -203,7 +203,9 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
           const draftDelta: Delta = new Delta(chapterDeltas.get(chapter));
           this.chapterDeltas.set(+chapter, draftDelta.ops);
         }
-        this.setChapterContents(this.chapterNum);
+        if (this.chapterNum != null) {
+          this.setChapterContents(this.chapterNum);
+        }
         this.draftText.applyEditorStyles();
         this.isInitializing = false;
         this.loadingFinished();
@@ -286,15 +288,11 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
       });
   }
 
-  private setChapterContents(chapterNum?: number): void {
+  private setChapterContents(chapterNum: number): void {
     if (this.chapterDeltas == null) return;
-    if (chapterNum == null) {
-      this.draftText.setContents(new Delta(this.chapterDeltas.values()[0]), 'api');
-    } else {
-      const chapterDelta = this.chapterDeltas.get(chapterNum);
-      if (chapterDelta != null) {
-        this.draftText.setContents(new Delta(chapterDelta), 'api');
-      }
+    const chapterDelta: DeltaOperation[] | undefined = this.chapterDeltas.get(chapterNum);
+    if (chapterDelta != null) {
+      this.draftText.setContents(new Delta(chapterDelta), 'api');
     }
   }
 

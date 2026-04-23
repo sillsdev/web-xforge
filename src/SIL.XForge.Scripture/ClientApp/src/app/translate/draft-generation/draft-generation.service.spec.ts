@@ -60,7 +60,7 @@ describe('DraftGenerationService', () => {
       id: 'testEngineId',
       href: 'testEngineHref'
     },
-    additionalInfo: { dateFinished: new Date().toISOString() } as ServalBuildAdditionalInfo,
+    additionalInfo: { dateRequested: new Date().toISOString() } as ServalBuildAdditionalInfo,
     percentCompleted: 0,
     message: '',
     state: BuildStates.Queued,
@@ -267,7 +267,7 @@ describe('DraftGenerationService', () => {
       const legacyBuildDto: BuildDto = {
         id: 'legacyTestId',
         additionalInfo: {
-          dateFinished: new Date(service.draftHistoryCutOffDate.getTime() - dayInMilliseconds).toISOString()
+          dateRequested: new Date(service.draftHistoryCutOffDate.getTime() - dayInMilliseconds).toISOString()
         },
         state: BuildStates.Completed
       } as BuildDto;
