@@ -63,6 +63,10 @@ class SFTabGroupStoriesComponent implements OnChanges {
 export default {
   title: 'Shared/Tab Group',
   component: SFTabGroupStoriesComponent,
+  parameters: {
+    // The tab-group renders a Material ink bar which often creates minor differences in screenshots
+    screenshot: { maxDiffPixels: 10 }
+  },
   decorators: [
     moduleMetadata({
       imports: [TabGroupComponent, TabComponent, TabHeaderDirective, SFTabGroupStoriesComponent],
