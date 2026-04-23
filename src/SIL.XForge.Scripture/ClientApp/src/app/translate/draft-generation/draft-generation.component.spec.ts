@@ -121,16 +121,19 @@ describe('DraftGenerationComponent', () => {
         'showError',
         'show'
       ]);
-      mockDraftGenerationService = jasmine.createSpyObj<DraftGenerationService>([
-        'startBuildOrGetActiveBuild',
-        'cancelBuild',
-        'getBuildHistory',
-        'getBuildProgress',
-        'pollBuildProgress',
-        'getGeneratedDraftUsfm',
-        'getLastCompletedBuild',
-        'downloadGeneratedDraftZip'
-      ]);
+      mockDraftGenerationService = jasmine.createSpyObj<DraftGenerationService>(
+        [
+          'startBuildOrGetActiveBuild',
+          'cancelBuild',
+          'getBuildHistory',
+          'getBuildProgress',
+          'pollBuildProgress',
+          'getGeneratedDraftUsfm',
+          'getLastCompletedBuild',
+          'downloadGeneratedDraftZip'
+        ],
+        { draftHistoryCutOffDate: new Date('2025-04-03') }
+      );
       TestEnvironment.initProject('user01');
       mockUserService = jasmine.createSpyObj<UserService>(['getCurrentUser']);
 
