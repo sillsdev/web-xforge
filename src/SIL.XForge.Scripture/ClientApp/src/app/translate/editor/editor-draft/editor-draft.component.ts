@@ -93,7 +93,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   @ViewChild(TextComponent) draftText!: TextComponent;
 
   inputChanged$ = new Subject<void>();
-  draftCheckState: 'draft-unknown' | 'draft-present' | 'draft-legacy' | 'draft-empty' = 'draft-unknown';
+  draftCheckState: 'draft-unknown' | 'draft-present' | 'draft-empty' = 'draft-unknown';
   selectedRevision: Revision | undefined;
   generateDraftUrl?: string;
   targetProject?: SFProjectProfile;
@@ -278,26 +278,12 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
           );
         }),
         switchMap((timestamp: Date | undefined) =>
-          combineLatest([
-            this.getTargetOps(),
-            this.draftHandlingService.getDraft(this.textDocId!, { isDraftLegacy: false, timestamp })
-          ])
+          combineLatest([this.getTargetOps(), this.draftHandlingService.getDraft(this.textDocId!, { timestamp })])
         ),
-        tap(([_, draft]) => {
-          if (this.draftHandlingService.isDraftSegmentMap(draft)) {
-            this.draftCheckState = 'draft-legacy';
-          }
-        }),
-        map(([targetOps, draft]) => {
-          return {
-            targetOps,
-            // Convert legacy draft to draft ops if necessary
-            draftOps: this.draftHandlingService.draftDataToOps(draft, targetOps)
-          };
-        }),
-        switchMap(({ targetOps, draftOps }) => {
+        switchMap(([targetOps, draftOps]) => {
           // Look for verses that contain text. If these are present, this is a non-empty draft
           if (this.draftHandlingService.opsHaveContent(draftOps)) {
+            this.draftCheckState = 'draft-present';
             return of({ targetOps, draftOps });
           }
 
@@ -325,11 +311,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
           this.targetProject?.texts.find(t => t.bookNum === this.bookNum)?.chapters.find(c => c.number === this.chapter)
             ?.draftApplied ?? false;
 
-        if (this.draftCheckState !== 'draft-legacy') {
-          this.draftCheckState = 'draft-present';
-        }
-
-        this.canSelectDraft = this.draftCheckState === 'draft-present' || this.draftCheckState === 'draft-legacy';
+        this.canSelectDraft = this.draftCheckState === 'draft-present';
       });
 
     combineLatest([

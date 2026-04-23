@@ -22,9 +22,9 @@ import { DraftHistoryEntryComponent } from './draft-history-entry/draft-history-
 export class DraftHistoryListComponent {
   showOlderDraftsNotSupportedWarning: boolean = false;
   history: BuildDto[] = [];
-  // This is just after SFv5.33.0 was released
-  readonly draftHistoryCutOffDate: Date = new Date('2025-06-03T21:00:00Z');
-  readonly draftHistoryCutOffDateFormatted: string = this.i18n.formatDate(this.draftHistoryCutOffDate);
+  readonly draftHistoryCutOffDateFormatted: string = this.i18n.formatDate(
+    this.draftGenerationService.draftHistoryCutOffDate
+  );
   private readonly notifyBuildProgressHandler = (projectId: string): void => {
     this.loadHistory(projectId);
   };
@@ -42,7 +42,8 @@ export class DraftHistoryListComponent {
       .subscribe(async projectId => {
         // Determine whether to show or hide the older drafts warning
         this.showOlderDraftsNotSupportedWarning =
-          ObjectID.isValid(projectId) && new ObjectID(projectId).getTimestamp() < this.draftHistoryCutOffDate;
+          ObjectID.isValid(projectId) &&
+          new ObjectID(projectId).getTimestamp() < this.draftGenerationService.draftHistoryCutOffDate;
         // Initially load the history
         this.loadHistory(projectId);
         // Start the connection to SignalR
@@ -65,7 +66,11 @@ export class DraftHistoryListComponent {
   }
 
   get latestBuild(): BuildDto | undefined {
-    return this.isBuildActive ? undefined : this.nonActiveBuilds[0];
+    if (this.isBuildActive) return undefined;
+    const latestBuild: BuildDto | undefined = this.nonActiveBuilds[0];
+    // This returns builds generated after Jan 2025 when event metrics was introduced (SF-2392)
+    // Accessing builds (including legacy builds) requested before this date are no longer supported
+    return latestBuild?.additionalInfo?.dateRequested != null ? latestBuild : undefined;
   }
 
   get latestBuildHasCompleted(): boolean {
@@ -91,15 +96,6 @@ export class DraftHistoryListComponent {
   }
 
   get savedHistoricalBuilds(): BuildDto[] {
-    // The requested date, if not set for the build in MongoDB, will be set based on the build id in the Machine API
-    return this.historicalBuilds.filter(
-      entry =>
-        entry.additionalInfo?.dateRequested != null &&
-        new Date(entry.additionalInfo.dateRequested) > this.draftHistoryCutOffDate
-    );
-  }
-
-  private get historicalBuilds(): BuildDto[] {
     return this.latestBuild == null ? this.nonActiveBuilds : this.nonActiveBuilds.slice(1);
   }
 

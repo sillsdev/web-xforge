@@ -21,7 +21,7 @@ import { TestOnlineStatusService } from 'xforge-common/test-online-status.servic
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDocSource } from '../../core/models/text-doc';
-import { BuildDto } from '../../machine-api/build-dto';
+import { BuildDto, ServalBuildAdditionalInfo } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { MACHINE_API_BASE_URL } from '../../machine-api/http-client';
 import { BuildConfig } from './draft-generation';
@@ -60,6 +60,7 @@ describe('DraftGenerationService', () => {
       id: 'testEngineId',
       href: 'testEngineHref'
     },
+    additionalInfo: { dateFinished: new Date().toISOString() } as ServalBuildAdditionalInfo,
     percentCompleted: 0,
     message: '',
     state: BuildStates.Queued,
@@ -258,6 +259,30 @@ describe('DraftGenerationService', () => {
       );
       expect(req.request.method).toEqual('GET');
       req.flush([buildDto]);
+      tick();
+    }));
+
+    it('should filter builds dated after the history cutoff date', fakeAsync(() => {
+      const dayInMilliseconds = 24 * 60 * 60 * 1000;
+      const legacyBuildDto: BuildDto = {
+        id: 'legacyTestId',
+        additionalInfo: {
+          dateFinished: new Date(service.draftHistoryCutOffDate.getTime() - dayInMilliseconds).toISOString()
+        },
+        state: BuildStates.Completed
+      } as BuildDto;
+      // SUT
+      service.getBuildHistory(projectId).subscribe(result => {
+        expect(result).toEqual([buildDto]);
+      });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/builds/project:${projectId}?preTranslate=true`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush([legacyBuildDto, buildDto]);
       tick();
     }));
 
@@ -667,6 +692,31 @@ describe('DraftGenerationService', () => {
       // SUT
       service.getGeneratedDraftHistory(projectId, book, chapter).subscribe(result => {
         expect(result).toEqual(revisions);
+      });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/history`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(revisions);
+      tick();
+    }));
+
+    it('should should filter out drafts older than the cutoff date', fakeAsync(() => {
+      const book = 43;
+      const chapter = 3;
+      const dayInMilliseconds = 24 * 60 * 60 * 1000;
+      const revisions = [
+        {
+          source: 'Draft' as TextDocSource,
+          timestamp: new Date(service.draftHistoryCutOffDate.getTime() - dayInMilliseconds).toISOString()
+        }
+      ];
+      // SUT
+      service.getGeneratedDraftHistory(projectId, book, chapter).subscribe(result => {
+        expect(result).toEqual([]);
       });
       tick();
 
