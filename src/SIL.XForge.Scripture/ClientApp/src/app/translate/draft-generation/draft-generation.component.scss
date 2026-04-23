@@ -12,11 +12,6 @@
   padding-block-end: 10px;
 }
 
-// Manually center over cancel button
-app-working-animated-indicator {
-  margin-inline-start: 24px;
-}
-
 h3 {
   font-size: 20px;
   font-weight: 500;
@@ -97,11 +92,6 @@ mat-divider.mat-divider-inset {
   // Hide the button icons on side-by-side buttons to save space on mobile
   .button-strip mat-icon {
     display: none;
-  }
-
-  // Manually center over cancel button
-  app-working-animated-indicator {
-    margin-inline-start: 10px;
   }
 }
 

@@ -1,4 +1,4 @@
-import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
+import { HttpStatusCode } from '@angular/common/http';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Canon } from '@sillsdev/scripture';
@@ -649,16 +649,14 @@ describe('DraftGenerationService', () => {
       tick();
     }));
 
-    it('should throw a 405 error', fakeAsync(() => {
+    it('should return an empty array for a 405 error', fakeAsync(() => {
       const book = 43;
       const chapter = 3;
 
       // SUT
-      service.getGeneratedDraftDeltaOperations(projectId, book, chapter, undefined).subscribe({
-        error: (err: HttpErrorResponse) => {
-          expect(err.status).toEqual(405);
-          expect(err.statusText).toEqual('Not Allowed');
-        }
+      service.getGeneratedDraftDeltaOperations(projectId, book, chapter, undefined).subscribe(result => {
+        expect(result).toEqual([]);
+        verify(mockNoticeService.showError(anything())).never();
       });
       tick();
 

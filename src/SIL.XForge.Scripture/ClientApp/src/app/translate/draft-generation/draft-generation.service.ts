@@ -33,7 +33,7 @@ import {
 })
 export class DraftGenerationService {
   // This is just after SFv5.33.0 was released
-  readonly draftHistoryCutOffDate: Date = new Date('2026-06-03T21:00:00Z');
+  readonly draftHistoryCutOffDate: Date = new Date('2025-06-03T21:00:00Z');
 
   constructor(
     private readonly httpClient: HttpClient,
