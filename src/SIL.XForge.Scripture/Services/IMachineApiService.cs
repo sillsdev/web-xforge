@@ -102,20 +102,12 @@ public interface IMachineApiService
         bool isServalAdmin,
         CancellationToken cancellationToken
     );
-    Task<Snapshot<TextData>> GetPreTranslationDeltaAsync(
+
+    Task<Dictionary<string, Snapshot<TextData>>> GetPreTranslationDeltaAsync(
         string curUserId,
         string sfProjectId,
         int bookNum,
         int chapterNum,
-        bool isServalAdmin,
-        DateTime timestamp,
-        DraftUsfmConfig? draftUsfmConfig,
-        CancellationToken cancellationToken
-    );
-    Task<Dictionary<string, Snapshot<TextData>>> GetPreTranslationBookDeltaAsync(
-        string curUserId,
-        string sfProjectId,
-        int bookNum,
         bool isServalAdmin,
         DateTime timestamp,
         DraftUsfmConfig? draftUsfmConfig,

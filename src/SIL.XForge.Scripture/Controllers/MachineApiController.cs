@@ -555,7 +555,7 @@ public class MachineApiController : ControllerBase
                 };
                 config = new DraftUsfmConfig { ParagraphFormat = paragraphConfig, QuoteFormat = quoteConfig };
             }
-            Snapshot<TextData> deltas = await _machineApiService.GetPreTranslationDeltaAsync(
+            Dictionary<string, Snapshot<TextData>> deltas = await _machineApiService.GetPreTranslationDeltaAsync(
                 _userAccessor.UserId,
                 sfProjectId,
                 bookNum,
@@ -565,7 +565,8 @@ public class MachineApiController : ControllerBase
                 config,
                 cancellationToken
             );
-            return Ok(deltas);
+            deltas.TryGetValue(chapterNum.ToString(), out Snapshot<TextData> chapterDelta);
+            return Ok(chapterDelta);
         }
         catch (BrokenCircuitException e)
         {
@@ -636,10 +637,11 @@ public class MachineApiController : ControllerBase
                 };
                 config = new DraftUsfmConfig { ParagraphFormat = paragraphConfig, QuoteFormat = quoteConfig };
             }
-            Dictionary<string, Snapshot<TextData>> deltas = await _machineApiService.GetPreTranslationBookDeltaAsync(
+            Dictionary<string, Snapshot<TextData>> deltas = await _machineApiService.GetPreTranslationDeltaAsync(
                 _userAccessor.UserId,
                 sfProjectId,
                 bookNum,
+                0,
                 isServalAdmin,
                 timestamp ?? DateTime.UtcNow,
                 config,
