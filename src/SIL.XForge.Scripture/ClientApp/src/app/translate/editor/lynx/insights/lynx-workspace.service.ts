@@ -86,7 +86,7 @@ export class LynxWorkspaceService {
     private readonly workspaceFactory: LynxWorkspaceFactory,
     @Inject(DocumentManager) private readonly documentManager: DocumentManager<ScriptureDeltaDocument, Op, Delta>
   ) {
-    this.activatedProjectService.projectDoc$
+    this.activatedProjectService.differentDefinedDoc$
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(projectDoc => this.onProjectActivated(projectDoc));
     this.activatedBookChapterService.activatedBookChapter$
