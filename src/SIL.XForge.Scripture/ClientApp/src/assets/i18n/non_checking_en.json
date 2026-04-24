@@ -972,8 +972,10 @@
     "title": "Sign up for draft generation",
     "translation_language_iso_label": "Translation language ISO code",
     "translation_language_iso_placeholder": "e.g. swa, tpi",
+    "translation_language_iso_required": "Translation language ISO code is required",
     "translation_language_name_label": "Translation language name",
-    "translation_language_name_placeholder": "e.g. Swahili, Tok Pisin"
+    "translation_language_name_placeholder": "e.g. Swahili, Tok Pisin",
+    "translation_language_name_required": "Translation language name is required"
   },
   "users": {
     "collaborators": "Collaborators",
