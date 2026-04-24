@@ -28,9 +28,14 @@ export abstract class RouterGuard {
     return this.authGuard.allowTransition().pipe(
       switchMap(isLoggedIn => {
         if (isLoggedIn) {
-          return from(
-            this.projectService.getProfile(projectId, new DocSubscription('ProjectRouterGuard', this.destroyRef))
-          ).pipe(map(projectDoc => this.check(projectDoc)));
+          const docSubscription = new DocSubscription('ProjectRouterGuard');
+          return from(this.projectService.getProfile(projectId, docSubscription)).pipe(
+            map(projectDoc => {
+              const may: boolean = this.check(projectDoc);
+              docSubscription.unsubscribe();
+              return may;
+            })
+          );
         }
         return of(false);
       })
