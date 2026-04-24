@@ -79,6 +79,7 @@ export class ActivatedProjectService {
     return this._projectId$;
   }
 
+  /** Note that ActivatedProjectService is managing when to unsubscribe from the returned project document. */
   get projectDoc(): SFProjectProfileDoc | undefined {
     return this._projectDoc$.getValue();
   }
@@ -122,7 +123,7 @@ export class ActivatedProjectService {
     );
   }
 
-  /** Emits the active project, and each activated project that is different than the prior. */
+  /** Emits the active project, and each newly activated project that is different than the prior. */
   get differentDefinedDoc$(): Observable<SFProjectProfileDoc> {
     return this.projectDoc$.pipe(
       filterNullish(),
@@ -134,6 +135,8 @@ export class ActivatedProjectService {
     if (projectId == null) {
       this.projectId = undefined;
       this.projectDoc = undefined;
+      // We do not call this.doneWithSelectedProject$.next() here because consumers of differentDefinedDoc$ or
+      // switchedDoc$ could be using it.
       return;
     }
     this.projectId = projectId;
