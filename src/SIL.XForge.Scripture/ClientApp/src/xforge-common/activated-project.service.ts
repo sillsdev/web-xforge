@@ -2,7 +2,7 @@ import { DestroyRef, Inject, Injectable } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivationEnd, Router } from '@angular/router';
 import ObjectID from 'bson-objectid';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
 import { distinctUntilChanged, filter, map, skip, startWith, switchMap } from 'rxjs/operators';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -52,6 +52,7 @@ export class ActiveProjectIdService implements IActiveProjectIdService {
 export class ActivatedProjectService {
   private _projectId$ = new BehaviorSubject<string | undefined>(undefined);
   private _projectDoc$ = new BehaviorSubject<SFProjectProfileDoc | undefined>(undefined);
+  private doneWithSelectedProject$ = new Subject<void>();
 
   constructor(
     private readonly projectService: SFProjectService,
@@ -136,9 +137,10 @@ export class ActivatedProjectService {
       return;
     }
     this.projectId = projectId;
+    this.doneWithSelectedProject$.next();
     const projectDoc: SFProjectProfileDoc = await this.projectService.getProfile(
       projectId,
-      new DocSubscription('ActivatedProjectService', this.destroyRef)
+      new DocSubscription('ActivatedProjectService', this.doneWithSelectedProject$)
     );
     // Make sure the project ID is still the same before updating the project document
     if (this.projectId === projectId) {
