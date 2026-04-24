@@ -162,7 +162,9 @@ describe('DraftHistoryEntryComponent', () => {
 
       verify(mockedPermissionsService.isUserOnProject('project02')).twice();
       verify(mockedSFProjectService.getProfile('project02')).never();
-      expect(component.translationSource).toEqual('');
+      expect(component.translationSource).toEqual('src \u2022');
+      expect(component.sourceLanguage).toBe('fr');
+      expect(component.trainingConfiguration).toEqual([{ target: 'tar', source: 'src', scriptureRange: 'GEN' }]);
     }));
 
     it('should state that the model did not have training configuration', fakeAsync(() => {
@@ -499,7 +501,16 @@ describe('DraftHistoryEntryComponent', () => {
     when(mockedUserService.getProfile('sf-user-id')).thenResolve(userDoc);
     const targetProjectDoc = {
       id: 'project01',
-      data: createTestProjectProfile({ shortName: 'tar', writingSystem: { tag: 'en' } })
+      data: createTestProjectProfile({
+        shortName: 'tar',
+        writingSystem: { tag: 'en' },
+        translateConfig: {
+          draftConfig: {
+            draftingSources: [{ projectRef: 'project02', shortName: 'src', writingSystem: { tag: 'fr' } }],
+            trainingSources: [{ projectRef: 'project02', shortName: 'src', writingSystem: { tag: 'fr' } }]
+          }
+        }
+      })
     } as SFProjectProfileDoc;
     when(mockedSFProjectService.getProfile('project01')).thenResolve(targetProjectDoc);
     when(mockedActivatedProjectService.changes$).thenReturn(of(targetProjectDoc));
