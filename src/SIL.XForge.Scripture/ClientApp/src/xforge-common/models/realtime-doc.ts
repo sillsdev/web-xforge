@@ -248,7 +248,7 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
       this.docSubscriptions.delete(docSubscription);
 
       if (this.activeDocSubscriptionsCount === 0) {
-        this.dispose();
+        void this.dispose();
       }
     });
   }
