@@ -266,6 +266,7 @@ describe('DraftHistoryEntryComponent', () => {
       when(mockedSFProjectService.getProfile('project01')).thenResolve(targetProjectDoc);
       when(mockedActivatedProjectService.changes$).thenReturn(of(targetProjectDoc));
       const entry = {
+        engine: { id: 'project01' },
         additionalInfo: {
           dateGenerated: dateAfterFormattingSupported,
           dateRequested: dateAfterFormattingSupported,
@@ -396,6 +397,7 @@ describe('DraftHistoryEntryComponent', () => {
       when(mockedFeatureFlagsService.usfmFormat).thenReturn(createTestFeatureFlag(false));
       component.entry = {
         id: 'build01',
+        engine: { id: 'project01' },
         state: BuildStates.Completed,
         message: 'Completed',
         additionalInfo: {
@@ -414,6 +416,7 @@ describe('DraftHistoryEntryComponent', () => {
     it('should hide draft format UI if not the latest build', fakeAsync(() => {
       component.entry = {
         id: 'build01',
+        engine: { id: 'project01' },
         state: BuildStates.Completed,
         message: 'Completed',
         additionalInfo: {
