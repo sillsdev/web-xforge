@@ -869,7 +869,7 @@
   "training_data_multi_select": {
     "confirm_delete": "Bist Du sicher, dass Du diese Schulungsdaten dauerhaft löschen möchtest?",
     "delete": "Löschen",
-    "download": "Download",
+    "download": "Herunterladen",
     "upload_spreadsheet": "Tabelle hochladen"
   },
   "training_data_upload_dialog": {
