@@ -7,7 +7,7 @@ import { Canon } from '@sillsdev/scripture';
 import Delta, { Op } from 'quill-delta';
 import { LynxConfig } from 'realtime-server/lib/esm/scriptureforge/models/lynx-config';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { BehaviorSubject, Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, filter, Subject, Subscription } from 'rxjs';
 import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -75,6 +75,9 @@ describe('LynxWorkspaceService', () => {
       when(mockI18nService.localeCode).thenReturn(defaultLocale.canonicalTag);
       when(mockI18nService.locale$).thenReturn(this.localeTestSubject$);
       when(mockActivatedProjectService.projectDoc$).thenReturn(this.projectDocTestSubject$);
+      when(mockActivatedProjectService.differentDefinedDoc$).thenReturn(
+        this.projectDocTestSubject$.pipe(filter((doc): doc is SFProjectProfileDoc => doc != null))
+      );
       when(mockActivatedBookChapterService.activatedBookChapter$).thenReturn(this.bookChapterTestSubject$);
       when(mockDestroyRef.onDestroy(anything())).thenCall((callback: () => void) => callback());
 

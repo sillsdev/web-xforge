@@ -112,6 +112,23 @@ export class ActivatedProjectService {
     );
   }
 
+  /** Emits a different project that is activated than the last project that was activated. */
+  get switchedDoc$(): Observable<SFProjectProfileDoc> {
+    return this.projectDoc$.pipe(
+      filterNullish(),
+      distinctUntilChanged((prev: SFProjectProfileDoc, curr: SFProjectProfileDoc) => prev.id === curr.id),
+      skip(1)
+    );
+  }
+
+  /** Emits the active project, and each activated project that is different than the prior. */
+  get differentDefinedDoc$(): Observable<SFProjectProfileDoc> {
+    return this.projectDoc$.pipe(
+      filterNullish(),
+      distinctUntilChanged((prev: SFProjectProfileDoc, curr: SFProjectProfileDoc) => prev.id === curr.id)
+    );
+  }
+
   protected async selectProject(projectId: string | undefined): Promise<void> {
     if (projectId == null) {
       this.projectId = undefined;
