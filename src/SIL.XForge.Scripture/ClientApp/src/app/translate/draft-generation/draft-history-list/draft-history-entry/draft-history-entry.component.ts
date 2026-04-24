@@ -130,7 +130,7 @@ export class DraftHistoryEntryComponent {
     void Promise.all(
       trainingScriptureRanges.map(async r => {
         // The engine ID is the target project ID
-        const { target, source } = await this.getProjectSourceInfo(value?.engine.id, r.projectId);
+        const { target, source } = await this.getProjectSourceInfo(value?.engine.id, r.projectId, 'training');
 
         // Get the target language, if it is not already set
         this._targetLanguage ??= target?.data?.writingSystem?.tag;
@@ -162,7 +162,7 @@ export class DraftHistoryEntryComponent {
     void Promise.all(
       translationScriptureRanges.map(async r => {
         // The engine ID is the target project ID
-        const { source } = await this.getProjectSourceInfo(value?.engine.id, r.projectId);
+        const { source } = await this.getProjectSourceInfo(value?.engine.id, r.projectId, 'drafting');
         const sourceShortName = source?.shortName;
         if (sourceShortName != null) this._translationSources.push(sourceShortName);
       })
@@ -368,7 +368,8 @@ export class DraftHistoryEntryComponent {
 
   private async getProjectSourceInfo(
     targetId: string | undefined,
-    sourceId: string
+    sourceId: string,
+    type: 'training' | 'drafting'
   ): Promise<{ target: SFProjectProfileDoc | undefined; source: SourceInfo | undefined }> {
     let target: SFProjectProfileDoc | undefined = undefined;
     let draftSources: DraftSourcesAsTranslateSourceArrays | undefined;
@@ -387,7 +388,11 @@ export class DraftHistoryEntryComponent {
         writingSystem: translationSource?.data?.writingSystem
       };
     } else {
-      source = draftSources?.draftingSources.find(s => s.projectRef === sourceId);
+      if (type === 'drafting') {
+        source = draftSources?.draftingSources.find(s => s.projectRef === sourceId);
+      } else {
+        source = draftSources?.trainingSources.find(s => s.projectRef === sourceId);
+      }
     }
     return { target, source };
   }
