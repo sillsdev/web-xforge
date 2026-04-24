@@ -41,6 +41,7 @@ import { DraftDownloadButtonComponent } from '../../draft-download-button/draft-
 import { DraftImportWizardComponent } from '../../draft-import-wizard/draft-import-wizard.component';
 import { DraftOptionsService } from '../../draft-options.service';
 import { DraftPreviewBooksComponent } from '../../draft-preview-books/draft-preview-books.component';
+import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../../draft-utils';
 import { TrainingDataService } from '../../training-data/training-data.service';
 
 const STATUS_INFO: Record<BuildStates, { icons: string; text: string; color: string }> = {
@@ -62,6 +63,12 @@ interface TrainingConfigurationRow {
   scriptureRange: string;
   source: string;
   target: string;
+}
+
+interface SourceInfo {
+  projectRef: string;
+  shortName?: string;
+  writingSystem?: { tag: string };
 }
 
 @Component({
@@ -117,6 +124,7 @@ export class DraftHistoryEntryComponent {
     this._sourceLanguage = undefined;
     this._targetLanguage = undefined;
     this._trainingConfiguration = [];
+    let draftSources: DraftSourcesAsTranslateSourceArrays | undefined;
 
     // Get the books used in the training configuration
     const trainingScriptureRanges = this._entry?.additionalInfo?.trainingScriptureRanges ?? [];
@@ -126,24 +134,34 @@ export class DraftHistoryEntryComponent {
         let target: SFProjectProfileDoc | undefined = undefined;
         if (this._entry?.engine.id != null) {
           target = await this.projectService.getProfile(this._entry.engine.id);
+          if (target?.data != null) {
+            draftSources = projectToDraftSources(target.data);
+          }
         }
 
         // Get the target language, if it is not already set
-        this._targetLanguage ??= target?.data?.writingSystem.tag;
+        this._targetLanguage ??= target?.data?.writingSystem?.tag;
 
-        let source: SFProjectProfileDoc | undefined;
+        let source: SourceInfo | undefined;
         // Get the source project, if it is configured and the user has access
         if (await this.permissionsService.isUserOnProject(r.projectId)) {
-          source = r.projectId === '' ? undefined : await this.projectService.getProfile(r.projectId);
+          const trainingSource: SFProjectProfileDoc | undefined = await this.projectService.getProfile(r.projectId);
+          source = {
+            projectRef: r.projectId,
+            shortName: trainingSource?.data?.shortName,
+            writingSystem: trainingSource?.data?.writingSystem
+          };
+        } else {
+          source = draftSources?.trainingSources.find(s => s.projectRef === r.projectId);
         }
 
         // Get the source language, if it is not already set
-        this._sourceLanguage ??= source?.data?.writingSystem.tag;
+        this._sourceLanguage ??= source?.writingSystem?.tag;
 
         // Return the data for this training range
         return {
           scriptureRange: r.scriptureRange,
-          source: source?.data?.shortName ?? this.i18n.translateStatic('draft_history_entry.draft_unknown'),
+          source: source?.shortName ?? this.i18n.translateStatic('draft_history_entry.draft_unknown'),
           target: target?.data?.shortName ?? this.i18n.translateStatic('draft_history_entry.draft_unknown')
         } as TrainingConfigurationRow;
       })
@@ -163,14 +181,21 @@ export class DraftHistoryEntryComponent {
     this._translationSources = [];
     void Promise.all(
       translationScriptureRanges.map(async r => {
-        let source: SFProjectProfileDoc | undefined;
+        let source: SourceInfo | undefined;
         if (await this.permissionsService.isUserOnProject(r.projectId)) {
+          const translationSource: SFProjectProfileDoc | undefined = await this.projectService.getProfile(r.projectId);
           source =
-            r.projectId === '' || r.projectId === value?.engine?.id
+            r.projectId === value?.engine?.id
               ? undefined
-              : await this.projectService.getProfile(r.projectId);
+              : {
+                  projectRef: r.projectId,
+                  shortName: translationSource?.data?.shortName,
+                  writingSystem: translationSource?.data?.writingSystem
+                };
+        } else {
+          source = draftSources?.draftingSources.find(s => s.projectRef === r.projectId);
         }
-        const sourceShortName = source?.data?.shortName;
+        const sourceShortName = source?.shortName;
         if (sourceShortName != null) this._translationSources.push(sourceShortName);
       })
     );
