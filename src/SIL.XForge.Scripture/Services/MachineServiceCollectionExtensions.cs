@@ -2,7 +2,6 @@
 using System;
 using System.Net;
 using System.Net.Http;
-using Duende.AccessTokenManagement;
 using Duende.IdentityModel.Client;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -35,16 +34,16 @@ public static class MachineServiceCollectionExtensions
                 MachineApi.TokenClientName,
                 client =>
                 {
-                    client.TokenEndpoint = new Uri(servalOptions.TokenUrl, UriKind.Absolute);
-                    client.ClientId = ClientId.Parse(servalOptions.ClientId);
-                    client.ClientSecret = ClientSecret.Parse(servalOptions.ClientSecret);
+                    client.TokenEndpoint = servalOptions.TokenUrl;
+                    client.ClientId = servalOptions.ClientId;
+                    client.ClientSecret = servalOptions.ClientSecret;
                     client.Parameters = new Parameters { { "audience", servalOptions.Audience } };
                 }
             );
         services
             .AddClientCredentialsHttpClient(
                 MachineApi.HttpClientName,
-                ClientCredentialsClientName.Parse(MachineApi.TokenClientName),
+                MachineApi.TokenClientName,
                 configureClient: client => client.BaseAddress = new Uri(servalOptions.ApiServer)
             )
             .ConfigurePrimaryHttpMessageHandler(() =>
