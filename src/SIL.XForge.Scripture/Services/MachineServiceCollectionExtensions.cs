@@ -30,7 +30,12 @@ public static class MachineServiceCollectionExtensions
         var servalOptions = configuration.GetOptions<ServalOptions>();
         services.AddDistributedMemoryCache();
         services
-            .AddClientCredentialsTokenManagement()
+            .AddClientCredentialsTokenManagement(options =>
+            {
+                // 10 hours is the token duration specified in Auth0
+                options.DefaultCacheLifetime = TimeSpan.FromSeconds(36000);
+                options.LocalCacheExpiration = null;
+            })
             .AddClient(
                 MachineApi.TokenClientName,
                 client =>
@@ -45,7 +50,7 @@ public static class MachineServiceCollectionExtensions
             .AddClientCredentialsHttpClient(
                 MachineApi.HttpClientName,
                 ClientCredentialsClientName.Parse(MachineApi.TokenClientName),
-                configureClient: client => client.BaseAddress = new Uri(servalOptions.ApiServer)
+                configureClient: client => client.BaseAddress = new Uri(servalOptions.ApiServer, UriKind.Absolute)
             )
             .ConfigurePrimaryHttpMessageHandler(() =>
             {
