@@ -79,34 +79,29 @@ public static class MachineServiceCollectionExtensions
 
                 return handler;
             });
-        services.AddSingleton<ITranslationEnginesClient, TranslationEnginesClient>(sp =>
-        {
-            // Instantiate the translation engines client with our named HTTP client
-            var factory = sp.GetService<IHttpClientFactory>();
-            var httpClient = factory.CreateClient(MachineApi.HttpClientName);
-            return new TranslationEnginesClient(httpClient);
-        });
-        services.AddSingleton<ITranslationEngineTypesClient, TranslationEngineTypesClient>(sp =>
-        {
-            // Instantiate the translation engines client with our named HTTP client
-            var factory = sp.GetService<IHttpClientFactory>();
-            var httpClient = factory.CreateClient(MachineApi.HttpClientName);
-            return new TranslationEngineTypesClient(httpClient);
-        });
-        services.AddSingleton<IDataFilesClient, DataFilesClient>(sp =>
-        {
-            // Instantiate the data files client with our named HTTP client
-            var factory = sp.GetService<IHttpClientFactory>();
-            var httpClient = factory.CreateClient(MachineApi.HttpClientName);
-            return new DataFilesClient(httpClient);
-        });
-        services.AddSingleton<ICorporaClient, CorporaClient>(sp =>
-        {
-            // Instantiate the corpora client with our named HTTP client
-            var factory = sp.GetService<IHttpClientFactory>();
-            var httpClient = factory.CreateClient(MachineApi.HttpClientName);
-            return new CorporaClient(httpClient);
-        });
+        // Create a single shared HttpClient for all Serval API clients. Each CreateClient() call creates a new
+        // HttpClient with its own AccessTokenRequestHandler, which fetches a fresh M2M token on first use. Sharing
+        // one HttpClient ensures only a single token fetch instead of one per Serval client type.
+        services.AddKeyedSingleton(
+            MachineApi.HttpClientName,
+            (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<IHttpClientFactory>();
+                return factory.CreateClient(MachineApi.HttpClientName);
+            }
+        );
+        services.AddSingleton<ITranslationEnginesClient>(sp => new TranslationEnginesClient(
+            sp.GetRequiredKeyedService<HttpClient>(MachineApi.HttpClientName)
+        ));
+        services.AddSingleton<ITranslationEngineTypesClient>(sp => new TranslationEngineTypesClient(
+            sp.GetRequiredKeyedService<HttpClient>(MachineApi.HttpClientName)
+        ));
+        services.AddSingleton<IDataFilesClient>(sp => new DataFilesClient(
+            sp.GetRequiredKeyedService<HttpClient>(MachineApi.HttpClientName)
+        ));
+        services.AddSingleton<ICorporaClient>(sp => new CorporaClient(
+            sp.GetRequiredKeyedService<HttpClient>(MachineApi.HttpClientName)
+        ));
         services.AddSingleton<IMachineApiService, MachineApiService>();
         services.AddSingleton<IMachineProjectService, MachineProjectService>();
         services.AddSingleton<IPreTranslationService, PreTranslationService>();

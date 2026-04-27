@@ -11,26 +11,15 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NSubstitute;
 using NUnit.Framework;
+using Serval.Client;
 using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services;
 
 /// <summary>
 /// Integration tests that verify the Serval HTTP client pipeline does not make unnecessary extra requests to Serval
-/// when it returns 401. The underlying cause is that Duende.AccessTokenManagement v4's
-/// <c>AddClientCredentialsHttpClient</c> automatically adds <c>AddDefaultAccessTokenResiliency()</c>, which retries on
-/// 401 with <c>ForceTokenRenewal=true</c>. Every such retry is an unnecessary extra request to Serval and can cause
-/// an extra M2M token request to Auth0 (especially when many concurrent requests encounter 401 or when the cached
-/// token has already expired).
-///
-/// The fix: use <c>AddHttpClient + AddClientCredentialsTokenHandler</c> instead of
-/// <c>AddClientCredentialsHttpClient</c>, so that the automatic resilience handler is NOT added. 401 responses from
-/// Serval are then propagated directly to callers without extra requests or force-renewals.
-///
-/// These tests are GREEN with the fix and would be RED without it:
-/// <list type="bullet">
-///   <item><see cref="AddSFMachine_WhenServalReturns401_ServalRequestedOnce" /></item>
-/// </list>
+/// when it returns 401, and that all Serval client singletons share a single HttpClient so only one M2M token is
+/// requested from Auth0 even when all four singletons are resolved.
 /// </summary>
 [TestFixture]
 public class MachineServiceCollectionExtensionsTests
@@ -102,6 +91,36 @@ public class MachineServiceCollectionExtensionsTests
         Assert.AreEqual(1, env.M2MTokenRequestCounter.Count);
     }
 
+    [Test]
+    public async Task AddSFMachine_AllServalClientsSingletons_ShareSingleHttpClient()
+    {
+        // Four Serval client singletons (ITranslationEnginesClient, ITranslationEngineTypesClient,
+        // IDataFilesClient, ICorporaClient) used to each call factory.CreateClient(), creating 4 separate
+        // HttpClients, each fetching their own M2M token from Auth0. After the fix, they all share a single
+        // HttpClient so only 1 M2M token request is made even when all 4 are resolved and used.
+        var env = new TestEnvironment(servalStatusCode: HttpStatusCode.OK);
+
+        // SUT: resolve all 4 singletons — this triggers the keyed HttpClient singleton resolution.
+        ITranslationEnginesClient translationEnginesClient =
+            env.ServiceProvider.GetRequiredService<ITranslationEnginesClient>();
+        ITranslationEngineTypesClient translationEngineTypesClient =
+            env.ServiceProvider.GetRequiredService<ITranslationEngineTypesClient>();
+        IDataFilesClient dataFilesClient = env.ServiceProvider.GetRequiredService<IDataFilesClient>();
+        ICorporaClient corporaClient = env.ServiceProvider.GetRequiredService<ICorporaClient>();
+
+        // Verify they're non-null (resolved correctly).
+        Assert.IsNotNull(translationEnginesClient);
+        Assert.IsNotNull(translationEngineTypesClient);
+        Assert.IsNotNull(dataFilesClient);
+        Assert.IsNotNull(corporaClient);
+
+        // Make a request through the shared HttpClient to trigger the M2M token fetch.
+        await env.ServalClient.GetAsync(FakeApiServer + "api/test");
+
+        // Only 1 Auth0 token request should have been made, not 4.
+        Assert.AreEqual(1, env.M2MTokenRequestCounter.Count);
+    }
+
     /// <summary>
     /// Builds the service collection using the production <see cref="MachineServiceCollectionExtensions.AddSFMachine"/>
     /// registration with fake HTTP handlers, so tests run without real network access.
@@ -152,11 +171,14 @@ public class MachineServiceCollectionExtensionsTests
                     new CountingFakeServalApiHandler(servalStatusCode, servalRequestCount)
                 );
 
-            var sp = services.BuildServiceProvider();
-            M2MTokenRequestCounter = sp.GetRequiredService<IM2MTokenRequestCounter>();
-            ServalClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient(MachineApi.HttpClientName);
+            ServiceProvider = services.BuildServiceProvider();
+            M2MTokenRequestCounter = ServiceProvider.GetRequiredService<IM2MTokenRequestCounter>();
+            ServalClient = ServiceProvider
+                .GetRequiredService<IHttpClientFactory>()
+                .CreateClient(MachineApi.HttpClientName);
         }
 
+        public ServiceProvider ServiceProvider { get; }
         public IM2MTokenRequestCounter M2MTokenRequestCounter { get; }
         public HttpClient ServalClient { get; }
 
