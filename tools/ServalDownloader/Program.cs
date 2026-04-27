@@ -165,16 +165,16 @@ static ServiceProvider SetupServices()
             tokenClientName,
             client =>
             {
-                client.TokenEndpoint = new Uri(servalOptions.TokenUrl, UriKind.Absolute);
-                client.ClientId = ClientId.Parse(servalOptions.ClientId);
-                client.ClientSecret = ClientSecret.Parse(servalOptions.ClientSecret);
+                client.TokenEndpoint = servalOptions.TokenUrl;
+                client.ClientId = servalOptions.ClientId;
+                client.ClientSecret = servalOptions.ClientSecret;
                 client.Parameters = new Parameters { { "audience", servalOptions.Audience } };
             }
         );
     services.AddClientCredentialsHttpClient(
         httpClientName,
-        ClientCredentialsClientName.Parse(tokenClientName),
-        configureClient: client => client.BaseAddress = new Uri(servalOptions.ApiServer)
+        tokenClientName,
+        configureClient: client => client.BaseAddress = new Uri(servalOptions.ApiServer, UriKind.Absolute)
     );
     services.AddHttpClient(httpClientName).SetHandlerLifetime(TimeSpan.FromMinutes(5));
     services.AddSingleton<ITranslationEnginesClient, TranslationEnginesClient>(sp =>

@@ -2,7 +2,6 @@
 using System;
 using System.Net;
 using System.Net.Http;
-using Duende.AccessTokenManagement;
 using Duende.IdentityModel.Client;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -30,29 +29,22 @@ public static class MachineServiceCollectionExtensions
         var servalOptions = configuration.GetOptions<ServalOptions>();
         services.AddDistributedMemoryCache();
         services
-            .AddClientCredentialsTokenManagement(options =>
-            {
-                // 10 hours is the token duration specified in Auth0
-                const int cacheLifetimeBuffer = 60;
-                options.CacheLifetimeBuffer = cacheLifetimeBuffer;
-                options.DefaultCacheLifetime = TimeSpan.FromSeconds(36000 - cacheLifetimeBuffer);
-                options.LocalCacheExpiration = null;
-            })
+            .AddClientCredentialsTokenManagement()
             .AddClient(
                 MachineApi.TokenClientName,
                 client =>
                 {
-                    client.TokenEndpoint = new Uri(servalOptions.TokenUrl, UriKind.Absolute);
-                    client.ClientId = ClientId.Parse(servalOptions.ClientId);
-                    client.ClientSecret = ClientSecret.Parse(servalOptions.ClientSecret);
+                    client.TokenEndpoint = servalOptions.TokenUrl;
+                    client.ClientId = servalOptions.ClientId;
+                    client.ClientSecret = servalOptions.ClientSecret;
                     client.Parameters = new Parameters { { "audience", servalOptions.Audience } };
                 }
             );
         services
             .AddClientCredentialsHttpClient(
                 MachineApi.HttpClientName,
-                ClientCredentialsClientName.Parse(MachineApi.TokenClientName),
-                configureClient: client => client.BaseAddress = new Uri(servalOptions.ApiServer, UriKind.Absolute)
+                MachineApi.TokenClientName,
+                configureClient: client => client.BaseAddress = new Uri(servalOptions.ApiServer)
             )
             .ConfigurePrimaryHttpMessageHandler(() =>
             {
