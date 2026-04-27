@@ -38,7 +38,7 @@ export const noopDestroyRef: DestroyRef = {
 })
 export class RealtimeService {
   protected readonly docs = new Map<string, RealtimeDoc>();
-  /** Doc ids of documents that are being disposed and notice of their disposal completion. */
+  /** Collection-qualified doc keys of documents being disposed and notice of their disposal completion. */
   protected readonly docsBeingDisposed = new Map<string, Subject<void>>();
   protected readonly subscribeQueries = new Map<string, Set<RealtimeQuery>>();
 
@@ -110,7 +110,7 @@ export class RealtimeService {
     let doc = this.docs.get(key);
     if (doc != null) {
       // Handle documents that currently exist but are in the process of being disposed.
-      const docDisposal$: Subject<void> | undefined = this.docsBeingDisposed.get(doc.id);
+      const docDisposal$: Subject<void> | undefined = this.docsBeingDisposed.get(key);
       if (docDisposal$ != null) {
         // Wait for document to be disposed before recreating it.
         await lastValueFrom(docDisposal$);
@@ -258,17 +258,19 @@ export class RealtimeService {
   }
 
   onDocDisposeStarted(doc: RealtimeDoc): void {
-    this.docsBeingDisposed.set(doc.id, new Subject<void>());
-    this.docLifecycleMonitor.docDestroyed(getDocKey(doc.collection, doc.id));
-    this.docs.delete(getDocKey(doc.collection, doc.id));
+    const key = getDocKey(doc.collection, doc.id);
+    this.docsBeingDisposed.set(key, new Subject<void>());
+    this.docLifecycleMonitor.docDestroyed(key);
+    this.docs.delete(key);
   }
 
   onDocDisposeFinished(doc: RealtimeDoc): void {
-    const docDisposal$: Subject<void> | undefined = this.docsBeingDisposed.get(doc.id);
+    const key = getDocKey(doc.collection, doc.id);
+    const docDisposal$: Subject<void> | undefined = this.docsBeingDisposed.get(key);
     if (docDisposal$ != null) {
       docDisposal$.next();
       docDisposal$.complete();
-      this.docsBeingDisposed.delete(doc.id);
+      this.docsBeingDisposed.delete(key);
     }
   }
 
