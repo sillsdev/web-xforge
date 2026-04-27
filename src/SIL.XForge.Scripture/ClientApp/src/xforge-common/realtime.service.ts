@@ -263,12 +263,6 @@ export class RealtimeService {
     this.docs.delete(getDocKey(doc.collection, doc.id));
   }
 
-  async onLocalDocDispose(doc: RealtimeDoc): Promise<void> {
-    if (this.isSet(doc.collection, doc.id)) {
-      await this.offlineStore.delete(doc.collection, doc.id);
-    }
-  }
-
   onDocDisposeFinished(doc: RealtimeDoc): void {
     const docDisposal$: Subject<void> | undefined = this.docsBeingDisposed.get(doc.id);
     if (docDisposal$ != null) {
