@@ -10,6 +10,7 @@ import {
   ActiveProjectIdService,
   TestActiveProjectIdService
 } from './activated-project.service';
+import { DocSubscription } from './models/realtime-doc';
 import { configureTestingModule } from './test-utils';
 
 const mockedSFProjectService = mock(SFProjectService);
@@ -112,6 +113,105 @@ describe('ActivatedProjectService', () => {
     tick();
     // Now we switched, from B to A.
     expect(emittedCount).toBe(2);
+  }));
+
+  it('keeps the previous project subscription until the next project doc is emitted', fakeAsync(() => {
+    let firstDocSubscription: DocSubscription | undefined;
+    let secondDocSubscription: DocSubscription | undefined;
+    let resolveSecondProject!: (value: SFProjectProfileDoc) => void;
+    let getProfileCallCount = 0;
+
+    // Configure the first profile request to resolve immediately and the second to stay pending.
+    when(mockedSFProjectService.getProfile(anything(), anything())).thenCall(
+      (projectId: string, docSubscription: DocSubscription) => {
+        getProfileCallCount++;
+        if (getProfileCallCount === 1) {
+          firstDocSubscription = docSubscription;
+          return Promise.resolve({ id: projectId } as SFProjectProfileDoc);
+        }
+
+        secondDocSubscription = docSubscription;
+        return new Promise<SFProjectProfileDoc>(resolve => {
+          resolveSecondProject = resolve;
+        });
+      }
+    );
+
+    // Step 1: Activate projectA and let its profile load complete.
+    env.activateProject('projectA');
+    tick();
+
+    // Step 2: Activate projectB; its profile request starts but is still pending.
+    env.activateProject('projectB');
+    tick();
+
+    // Step 3: While projectB is pending, both subscriptions should remain active.
+    expect(firstDocSubscription?.isUnsubscribed$.getValue()).toBeFalse();
+    expect(secondDocSubscription?.isUnsubscribed$.getValue()).toBeFalse();
+
+    // Step 4: Resolve projectB so it can become the active project document.
+    resolveSecondProject({ id: 'projectB' } as SFProjectProfileDoc);
+    tick();
+
+    // Step 5: After projectB emits, projectA is safely unsubscribed.
+    expect(firstDocSubscription?.isUnsubscribed$.getValue()).toBeTrue();
+    expect(env.service.projectDoc?.id).toBe('projectB');
+  }));
+
+  it('unsubscribes a pending project fetch when a newer project selection starts', fakeAsync(() => {
+    let secondDocSubscription: DocSubscription | undefined;
+    let thirdDocSubscription: DocSubscription | undefined;
+    let resolveSecondProject!: (value: SFProjectProfileDoc) => void;
+    let resolveThirdProject!: (value: SFProjectProfileDoc) => void;
+    let getProfileCallCount = 0;
+
+    // Configure projectA to resolve immediately, then keep projectB and projectC pending.
+    when(mockedSFProjectService.getProfile(anything(), anything())).thenCall(
+      (projectId: string, docSubscription: DocSubscription) => {
+        getProfileCallCount++;
+        if (getProfileCallCount === 1) {
+          return Promise.resolve({ id: projectId } as SFProjectProfileDoc);
+        }
+        if (getProfileCallCount === 2) {
+          secondDocSubscription = docSubscription;
+          return new Promise<SFProjectProfileDoc>(resolve => {
+            resolveSecondProject = resolve;
+          });
+        }
+
+        thirdDocSubscription = docSubscription;
+        return new Promise<SFProjectProfileDoc>(resolve => {
+          resolveThirdProject = resolve;
+        });
+      }
+    );
+
+    // Step 1: Activate projectA so there is a current project doc.
+    env.activateProject('projectA');
+    tick();
+
+    // Step 2: Activate projectB, leaving its profile request pending.
+    env.activateProject('projectB');
+    tick();
+
+    // Step 3: Activate projectC before projectB resolves.
+    // projectB becomes stale and should be unsubscribed.
+    env.activateProject('projectC');
+    tick();
+
+    // Step 4: Confirm stale projectB was unsubscribed, while projectC is still active.
+    expect(secondDocSubscription?.isUnsubscribed$.getValue()).toBeTrue();
+    expect(thirdDocSubscription?.isUnsubscribed$.getValue()).toBeFalse();
+
+    // Step 5: Resolve stale projectB and verify it is ignored.
+    resolveSecondProject({ id: 'projectB' } as SFProjectProfileDoc);
+    tick();
+    expect(env.service.projectDoc?.id).toBe('projectA');
+
+    // Step 6: Resolve projectC and verify it becomes the current project doc.
+    resolveThirdProject({ id: 'projectC' } as SFProjectProfileDoc);
+    tick();
+    expect(env.service.projectDoc?.id).toBe('projectC');
   }));
 });
 
