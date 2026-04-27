@@ -7,6 +7,7 @@ using Duende.IdentityModel.Client;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.CircuitBreaker;
 using Polly.Retry;
@@ -41,12 +42,32 @@ public static class MachineServiceCollectionExtensions
                     client.Parameters = new Parameters { { "audience", servalOptions.Audience } };
                 }
             );
+
+        // Register the M2M token request counter and add it to the back-channel (Auth0) HTTP client so that every
+        // token request to Auth0 is logged and counted. This lets developers verify locally that changes which prevent
+        // unnecessary token refreshes (e.g., avoiding force-renewal on 401) are working.
+        services.AddSingleton<IM2MTokenRequestCounter, M2MTokenRequestCounter>();
         services
-            .AddClientCredentialsHttpClient(
-                MachineApi.HttpClientName,
-                ClientCredentialsClientName.Parse(MachineApi.TokenClientName),
-                configureClient: client => client.BaseAddress = new Uri(servalOptions.ApiServer)
-            )
+            .AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
+            .AddHttpMessageHandler(sp => new M2MTokenRequestBackChannelHandler(
+                sp.GetRequiredService<IM2MTokenRequestCounter>(),
+                sp.GetRequiredService<ILogger<M2MTokenRequestBackChannelHandler>>()
+            ));
+
+        // Register the Serval HTTP client.
+        //
+        // IMPORTANT: We use AddHttpClient + AddClientCredentialsTokenHandler (instead of the convenience method
+        // AddClientCredentialsHttpClient) so that the Duende AccessTokenManagement v4 library does NOT automatically
+        // call AddDefaultAccessTokenResiliency(). That automatic resilience layer retries every 401 from Serval with
+        // ForceTokenRenewal=true, which causes an extra Auth0 token request on each 401. Removing it means 401s from
+        // Serval propagate to callers without triggering unnecessary token refreshes.
+        services
+            .AddHttpClient(MachineApi.HttpClientName, client => client.BaseAddress = new Uri(servalOptions.ApiServer))
+            .AddClientCredentialsTokenHandler(ClientCredentialsClientName.Parse(MachineApi.TokenClientName))
+            .SetHandlerLifetime(TimeSpan.FromMinutes(5))
+            .AddPolicyHandler(GetRetryPolicy())
+            .AddPolicyHandler(GetCircuitBreakerPolicy())
+            .AddPolicyHandler(GetTimeoutPolicy())
             .ConfigurePrimaryHttpMessageHandler(() =>
             {
                 var handler = new HttpClientHandler();
@@ -58,12 +79,6 @@ public static class MachineServiceCollectionExtensions
 
                 return handler;
             });
-        services
-            .AddHttpClient(MachineApi.HttpClientName)
-            .SetHandlerLifetime(TimeSpan.FromMinutes(5))
-            .AddPolicyHandler(GetRetryPolicy())
-            .AddPolicyHandler(GetCircuitBreakerPolicy())
-            .AddPolicyHandler(GetTimeoutPolicy());
         services.AddSingleton<ITranslationEnginesClient, TranslationEnginesClient>(sp =>
         {
             // Instantiate the translation engines client with our named HTTP client
