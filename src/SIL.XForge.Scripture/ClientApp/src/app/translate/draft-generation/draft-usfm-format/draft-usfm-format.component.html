@@ -63,7 +63,7 @@
           <div class="progress" [class.saving]="saving">
             <mat-spinner diameter="24"></mat-spinner>
           </div>
-          <button mat-flat-button class="save" color="primary" (click)="saveChanges()">
+          <button mat-flat-button class="save" color="primary" [disabled]="saving" (click)="saveChanges()">
             <mat-icon>check</mat-icon> {{ t("save_changes") }}
           </button>
         </div>
