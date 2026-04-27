@@ -291,7 +291,7 @@ describe('DraftUsfmFormatComponent', () => {
     env.saveButton.click();
     // detect immediate changes before the save operation is completed
     env.fixture.detectChanges();
-    expect(env.fixture.nativeElement.querySelector('.progress')).not.toBeNull();
+    expect(env.fixture.nativeElement.querySelector('.progress.saving')).not.toBeNull();
     expect(env.saveButton.disabled).toBe(true);
     tick();
     env.fixture.detectChanges();
