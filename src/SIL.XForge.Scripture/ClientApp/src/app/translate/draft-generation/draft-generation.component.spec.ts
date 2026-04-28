@@ -15,7 +15,6 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -24,7 +23,6 @@ import { TestOnlineStatusService } from 'xforge-common/test-online-status.servic
 import { getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
-import { TrainingDataDoc } from '../../core/models/training-data-doc';
 import { ProjectNotificationService } from '../../core/project-notification.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
@@ -151,13 +149,8 @@ describe('DraftGenerationComponent', () => {
       mockNllbLanguageService = jasmine.createSpyObj<NllbLanguageService>(['isNllbLanguageAsync']);
       mockNllbLanguageService.isNllbLanguageAsync.and.returnValue(Promise.resolve(false));
 
-      const mockTrainingDataQuery: RealtimeQuery<TrainingDataDoc> = mock(RealtimeQuery);
-      when(mockTrainingDataQuery.localChanges$).thenReturn(of());
-      when(mockTrainingDataQuery.ready$).thenReturn(of(true));
-      when(mockTrainingDataQuery.remoteChanges$).thenReturn(of());
-      when(mockTrainingDataQuery.remoteDocChanges$).thenReturn(of());
-      mockTrainingDataService = jasmine.createSpyObj<TrainingDataService>(['queryTrainingDataAsync']);
-      mockTrainingDataService.queryTrainingDataAsync.and.returnValue(Promise.resolve(instance(mockTrainingDataQuery)));
+      mockTrainingDataService = jasmine.createSpyObj<TrainingDataService>(['getTrainingData']);
+      mockTrainingDataService.getTrainingData.and.returnValue(of([]));
       mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>({
         newDraftHistory: createTestFeatureFlag(false),
         usfmFormat: createTestFeatureFlag(false),
