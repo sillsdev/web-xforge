@@ -2,7 +2,6 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { getTrainingDataId, TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { CommandService } from 'xforge-common/command.service';
-import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { noopDestroyRef } from 'xforge-common/realtime.service';
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
@@ -39,6 +38,19 @@ describe('TrainingDataService', () => {
         title: 'test2.csv',
         ownerRef: 'user01',
         deleted: false
+      }
+    },
+    {
+      id: getTrainingDataId('project01', 'deletedData'),
+      data: {
+        projectRef: 'project01',
+        dataId: 'deletedData',
+        fileUrl: 'project01/deleted.csv',
+        mimeType: 'text/csv',
+        skipRows: 0,
+        title: 'deleted.csv',
+        ownerRef: 'user01',
+        deleted: true
       }
     }
   ];
@@ -107,14 +119,48 @@ describe('TrainingDataService', () => {
     expect().nothing();
   }));
 
-  it('should query training data docs', fakeAsync(async () => {
-    const query: RealtimeQuery<TrainingDataDoc> = await trainingDataService.queryTrainingDataAsync(
-      'project01',
-      noopDestroyRef
-    );
-    tick();
+  describe('getTrainingData$', () => {
+    it('should emit only non-deleted files for the specified project', fakeAsync(() => {
+      let emittedFiles: TrainingData[] | undefined;
+      const subscription = trainingDataService.getTrainingData('project01', noopDestroyRef).subscribe(files => {
+        emittedFiles = files;
+      });
+      tick();
 
-    expect(trainingData.length).toEqual(2);
-    expect(query.docs.length).toEqual(1);
-  }));
+      // Should include data01 (project01, not deleted) but exclude data02 (wrong project) and deletedData (deleted)
+      expect(emittedFiles).toBeDefined();
+      expect(emittedFiles!.map(f => f.dataId)).toEqual(['data01']);
+
+      subscription.unsubscribe();
+    }));
+
+    it('should not include files from other projects', fakeAsync(() => {
+      let emittedFiles: TrainingData[] | undefined;
+      const subscription = trainingDataService.getTrainingData('project02', noopDestroyRef).subscribe(files => {
+        emittedFiles = files;
+      });
+      tick();
+
+      expect(emittedFiles).toBeDefined();
+      expect(emittedFiles!.map(f => f.dataId)).toEqual(['data02']);
+
+      subscription.unsubscribe();
+    }));
+
+    it('should include deleted files when includeDeleted is true', fakeAsync(() => {
+      let emittedFiles: TrainingData[] | undefined;
+      const subscription = trainingDataService
+        .getTrainingData('project01', noopDestroyRef, { includeDeleted: true })
+        .subscribe(files => {
+          emittedFiles = files;
+        });
+      tick();
+
+      expect(emittedFiles).toBeDefined();
+      expect(emittedFiles!.map(f => f.dataId)).toEqual(['data01', 'deletedData']);
+      expect(emittedFiles!.length).toEqual(2);
+
+      subscription.unsubscribe();
+    }));
+  });
 });
