@@ -106,14 +106,16 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
       return;
     }
 
-    this.beingDisposed.next();
-    this.beingDisposed.complete();
     if (this.subscribed) {
       if (this.adapter.ready) {
         for (const doc of this._docs) {
           doc.onRemovedFromSubscribeQuery();
         }
       }
+    }
+    this.beingDisposed.next();
+    this.beingDisposed.complete();
+    if (this.subscribed) {
       this.realtimeService.onQueryUnsubscribe(this);
     }
     for (const sub of this.docSubscriptions.values()) {
