@@ -844,7 +844,7 @@ public class MachineApiControllerTests
     }
 
     [Test]
-#pragma warning disable CS0618
+    [Obsolete("Deprecated endpoint, will be removed in favor of GetPreTranslationDeltaAsync")]
     public async Task GetPreTranslationAsync_MachineApiDown()
     {
         // Set up test environment
@@ -859,7 +859,6 @@ public class MachineApiControllerTests
             1,
             CancellationToken.None
         );
-#pragma warning restore CS0618
 
         env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
         Assert.IsInstanceOf<ObjectResult>(actual.Result);
@@ -867,7 +866,7 @@ public class MachineApiControllerTests
     }
 
     [Test]
-#pragma warning disable CS0618
+    [Obsolete("Deprecated endpoint, will be removed in favor of GetPreTranslationDeltaAsync")]
     public async Task GetPreTranslationAsync_NoPermission()
     {
         // Set up test environment
@@ -882,13 +881,12 @@ public class MachineApiControllerTests
             1,
             CancellationToken.None
         );
-#pragma warning restore CS0618
 
         Assert.IsInstanceOf<ForbidResult>(actual.Result);
     }
 
     [Test]
-#pragma warning disable CS0618
+    [Obsolete("Deprecated endpoint, will be removed in favor of GetPreTranslationDeltaAsync")]
     public async Task GetPreTranslationAsync_NoProject()
     {
         // Set up test environment
@@ -903,13 +901,12 @@ public class MachineApiControllerTests
             1,
             CancellationToken.None
         );
-#pragma warning restore CS0618
 
         Assert.IsInstanceOf<NotFoundResult>(actual.Result);
     }
 
     [Test]
-#pragma warning disable CS0618
+    [Obsolete("Deprecated endpoint, will be removed in favor of GetPreTranslationDeltaAsync")]
     public async Task GetPreTranslationAsync_NotBuilt()
     {
         // Set up test environment
@@ -924,13 +921,12 @@ public class MachineApiControllerTests
             1,
             CancellationToken.None
         );
-#pragma warning restore CS0618
 
         Assert.IsInstanceOf<ConflictResult>(actual.Result);
     }
 
     [Test]
-#pragma warning disable CS0618
+    [Obsolete("Deprecated endpoint, will be removed in favor of GetPreTranslationDeltaAsync")]
     public async Task GetPreTranslationAsync_Success()
     {
         // Set up test environment
@@ -945,7 +941,6 @@ public class MachineApiControllerTests
             1,
             CancellationToken.None
         );
-#pragma warning restore CS0618
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
     }
