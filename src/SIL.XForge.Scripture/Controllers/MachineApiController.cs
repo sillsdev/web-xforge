@@ -537,24 +537,7 @@ public class MachineApiController : ControllerBase
         try
         {
             bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
-            DraftUsfmConfig? config = null;
-            if (paragraphFormat is not null || quoteFormat is not null)
-            {
-                string paragraphConfig = paragraphFormat switch
-                {
-                    ParagraphBreakFormatOptions.Remove => ParagraphBreakFormatOptions.Remove,
-                    ParagraphBreakFormatOptions.BestGuess => ParagraphBreakFormatOptions.BestGuess,
-                    ParagraphBreakFormatOptions.MoveToEnd => ParagraphBreakFormatOptions.MoveToEnd,
-                    _ => ParagraphBreakFormatOptions.BestGuess,
-                };
-                string quoteConfig = quoteFormat switch
-                {
-                    QuoteStyleOptions.Denormalized => QuoteStyleOptions.Denormalized,
-                    QuoteStyleOptions.Normalized => QuoteStyleOptions.Normalized,
-                    _ => QuoteStyleOptions.Denormalized,
-                };
-                config = new DraftUsfmConfig { ParagraphFormat = paragraphConfig, QuoteFormat = quoteConfig };
-            }
+            DraftUsfmConfig? config = GetDraftUsfmConfig(paragraphFormat, quoteFormat);
             Dictionary<string, Snapshot<TextData>> deltas = await _machineApiService.GetPreTranslationDeltaAsync(
                 _userAccessor.UserId,
                 sfProjectId,
@@ -619,24 +602,7 @@ public class MachineApiController : ControllerBase
         try
         {
             bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
-            DraftUsfmConfig? config = null;
-            if (paragraphFormat is not null || quoteFormat is not null)
-            {
-                string paragraphConfig = paragraphFormat switch
-                {
-                    ParagraphBreakFormatOptions.Remove => ParagraphBreakFormatOptions.Remove,
-                    ParagraphBreakFormatOptions.BestGuess => ParagraphBreakFormatOptions.BestGuess,
-                    ParagraphBreakFormatOptions.MoveToEnd => ParagraphBreakFormatOptions.MoveToEnd,
-                    _ => ParagraphBreakFormatOptions.BestGuess,
-                };
-                string quoteConfig = quoteFormat switch
-                {
-                    QuoteStyleOptions.Denormalized => QuoteStyleOptions.Denormalized,
-                    QuoteStyleOptions.Normalized => QuoteStyleOptions.Normalized,
-                    _ => QuoteStyleOptions.Denormalized,
-                };
-                config = new DraftUsfmConfig { ParagraphFormat = paragraphConfig, QuoteFormat = quoteConfig };
-            }
+            DraftUsfmConfig? config = GetDraftUsfmConfig(paragraphFormat, quoteFormat);
             Dictionary<string, Snapshot<TextData>> deltas = await _machineApiService.GetPreTranslationDeltaAsync(
                 _userAccessor.UserId,
                 sfProjectId,
@@ -1203,5 +1169,32 @@ public class MachineApiController : ControllerBase
         {
             return Forbid();
         }
+    }
+
+    /// <summary>
+    /// Constructs a <see cref="DraftUsfmConfig"/> from the supplied format query parameters, or returns
+    /// null if neither is specified.
+    /// </summary>
+    private static DraftUsfmConfig? GetDraftUsfmConfig(string? paragraphFormat, string? quoteFormat)
+    {
+        if (paragraphFormat is null && quoteFormat is null)
+        {
+            return null;
+        }
+
+        string paragraphConfig = paragraphFormat switch
+        {
+            ParagraphBreakFormatOptions.Remove => ParagraphBreakFormatOptions.Remove,
+            ParagraphBreakFormatOptions.BestGuess => ParagraphBreakFormatOptions.BestGuess,
+            ParagraphBreakFormatOptions.MoveToEnd => ParagraphBreakFormatOptions.MoveToEnd,
+            _ => ParagraphBreakFormatOptions.BestGuess,
+        };
+        string quoteConfig = quoteFormat switch
+        {
+            QuoteStyleOptions.Denormalized => QuoteStyleOptions.Denormalized,
+            QuoteStyleOptions.Normalized => QuoteStyleOptions.Normalized,
+            _ => QuoteStyleOptions.Denormalized,
+        };
+        return new DraftUsfmConfig { ParagraphFormat = paragraphConfig, QuoteFormat = quoteConfig };
     }
 }
