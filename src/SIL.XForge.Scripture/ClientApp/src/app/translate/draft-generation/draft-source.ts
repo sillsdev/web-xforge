@@ -7,6 +7,8 @@ interface DraftTextInfo {
 export interface DraftSource extends TranslateSource {
   texts: DraftTextInfo[];
   noAccess?: boolean;
+  copyrightBanner?: string;
+  copyrightNotice?: string;
 }
 
 export interface DraftSourcesAsArrays {
