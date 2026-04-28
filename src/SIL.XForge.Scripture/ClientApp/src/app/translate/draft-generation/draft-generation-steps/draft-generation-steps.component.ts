@@ -28,20 +28,18 @@ import {
   ProjectScriptureRange,
   TranslateSource
 } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { combineLatest, merge, Subscription } from 'rxjs';
+import { combineLatest, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { ParatextProject } from '../../../core/models/paratext-project';
-import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { Book } from '../../../shared/book-multi-select/book-multi-select';
@@ -168,8 +166,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   protected trainingDataFiles: Readonly<TrainingData>[] = [];
   protected isCustomConfigSet = false;
 
-  private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
-  private trainingDataQuerySubscription?: Subscription;
+  private trainingDataSubscription?: Subscription;
   private currentUserDoc?: UserDoc;
   private projectProgress: Map<string, ProjectProgress> = new Map<string, ProjectProgress>();
 
@@ -264,22 +261,12 @@ export class DraftGenerationStepsComponent implements OnInit {
             this.projectProgress.set(source.projectRef, trainingSourceProgress);
           }
 
-          this.trainingDataQuery?.dispose();
-          this.trainingDataQuery = await this.trainingFileService.queryTrainingDataAsync(projectId!, this.destroyRef);
-          this.trainingDataQuerySubscription?.unsubscribe();
-
-          this.trainingDataQuerySubscription = merge(
-            this.trainingDataQuery.localChanges$,
-            this.trainingDataQuery.ready$,
-            this.trainingDataQuery.remoteChanges$,
-            this.trainingDataQuery.remoteDocChanges$
-          )
+          this.trainingDataSubscription?.unsubscribe();
+          this.trainingDataSubscription = this.trainingFileService
+            .getTrainingData$(projectId!, this.destroyRef)
             .pipe(quietTakeUntilDestroyed(this.destroyRef, { logWarnings: false }))
-            .subscribe(() => {
-              this.trainingDataFiles =
-                (this.trainingDataQuery?.docs
-                  .map(doc => doc.data)
-                  .filter(d => d != null && !d.deleted) as Readonly<TrainingData>[]) ?? [];
+            .subscribe(activeFiles => {
+              this.trainingDataFiles = activeFiles;
             });
 
           // Reset the field that toggles a notice that books were automatically selected

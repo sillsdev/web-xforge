@@ -10,7 +10,7 @@ import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
-import { filter, merge, Subscription } from 'rxjs';
+import { filter, Subscription } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { isNetworkError } from 'xforge-common/command.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -20,7 +20,6 @@ import { FileService } from 'xforge-common/file.service';
 import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
 import { FileType } from 'xforge-common/models/file-offline-data';
-import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
@@ -107,8 +106,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
   protected changesMade = false;
 
   private controlStates = new Map<string, ElementState>();
-  private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
-  private trainingDataQuerySubscription?: Subscription;
+  private trainingDataSubscription?: Subscription;
   private savedTrainingFiles?: Readonly<TrainingData>[];
 
   constructor(
@@ -130,7 +128,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
   }
 
   ngOnInit(): void {
-    this.activatedProjectService.changes$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async projectDoc => {
+    this.activatedProjectService.changes$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(projectDoc => {
       if (projectDoc?.data != null) {
         const { trainingSources, trainingTargets, draftingSources } = projectToDraftSources(projectDoc.data);
         if (trainingSources.length > 2) throw new Error('More than 2 training sources is not supported');
@@ -146,7 +144,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
         if (this.draftingSources.length < 1) this.draftingSources.push(undefined);
         if (this.trainingSources.length < 1) this.trainingSources.push(undefined);
 
-        await this.initializeTrainingFiles(projectDoc);
+        this.initializeTrainingFiles(projectDoc);
       }
     });
 
@@ -165,27 +163,18 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
       .subscribe(() => this.loadProjects());
   }
 
-  private async initializeTrainingFiles(projectDoc: SFProjectProfileDoc): Promise<void> {
-    // Query for all training data files in the project
-    this.trainingDataQuery?.dispose();
-    this.trainingDataQuery = await this.trainingDataService.queryTrainingDataAsync(projectDoc.id, this.destroyRef);
-    this.trainingDataQuerySubscription?.unsubscribe();
-
-    // Subscribe to the training data query results changes
-    this.trainingDataQuerySubscription = merge(
-      this.trainingDataQuery.localChanges$,
-      this.trainingDataQuery.ready$,
-      this.trainingDataQuery.remoteChanges$,
-      this.trainingDataQuery.remoteDocChanges$
-    )
+  private initializeTrainingFiles(projectDoc: SFProjectProfileDoc): void {
+    // Subscribe to non-deleted training data files for the project
+    this.trainingDataSubscription?.unsubscribe();
+    this.trainingDataSubscription = this.trainingDataService
+      .getTrainingData$(projectDoc.id, this.destroyRef)
       .pipe(quietTakeUntilDestroyed(this.destroyRef, { logWarnings: false }))
-      .subscribe(() => {
+      .subscribe(activeFiles => {
         const removedFiles =
           this.savedTrainingFiles?.filter(saved => !this.availableTrainingFiles.includes(saved)) ?? [];
         const addedFiles = this.availableTrainingFiles.filter(selected => !this.savedTrainingFiles?.includes(selected));
 
-        this.savedTrainingFiles =
-          this.trainingDataQuery?.docs.filter(d => d.data != null && d.data.deleted !== true).map(d => d.data!) ?? [];
+        this.savedTrainingFiles = activeFiles;
         this.availableTrainingFiles = this.savedTrainingFiles
           .filter(d => removedFiles.findIndex(f => f.dataId === d.dataId) === -1)
           .concat(addedFiles);

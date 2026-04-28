@@ -9,21 +9,19 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { DraftConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, of, throwError } from 'rxjs';
-import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
-import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
-import { TrainingDataDoc } from '../core/models/training-data-doc';
 import { SFProjectService } from '../core/sf-project.service';
 import { BuildDto } from '../machine-api/build-dto';
 import { DraftZipProgress } from '../translate/draft-generation/draft-generation';
@@ -512,19 +510,14 @@ describe('ServalProjectComponent', () => {
       when(mockSFProjectService.hasDraft(anything())).thenReturn(args.preTranslate);
       when(mockSFProjectService.onlineSetServalConfig(this.mockProjectId, anything())).thenResolve();
       when(mockSFProjectService.onlineSetQualityEstimationConfig(this.mockProjectId, anything())).thenResolve();
-      const trainingData: TrainingDataDoc[] = [
+      const trainingData: TrainingData[] = [
         {
-          id: 'training01',
-          data: {
-            fileUrl: 'file-url',
-            dataId: 'dataId01',
-            title: 'training-data-01.csv'
-          } as TrainingData
-        } as TrainingDataDoc
+          fileUrl: 'file-url',
+          dataId: 'dataId01',
+          title: 'training-data-01.csv'
+        } as TrainingData
       ];
-      const mockQuery: RealtimeQuery<TrainingDataDoc> = mock(RealtimeQuery<TrainingDataDoc>);
-      when(mockQuery.docs).thenReturn(trainingData);
-      when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(instance(mockQuery));
+      when(mockTrainingDataService.getTrainingData$(anything(), anything())).thenReturn(of(trainingData));
 
       spyOn(saveAs, 'saveAs').and.stub();
 

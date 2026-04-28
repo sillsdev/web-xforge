@@ -8,8 +8,8 @@ import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
-import { FileType } from 'xforge-common/models/file-offline-data';
 import { I18nService } from 'xforge-common/i18n.service';
+import { FileType } from 'xforge-common/models/file-offline-data';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
@@ -157,5 +157,6 @@ describe('TrainingDataMultiSelectComponent', () => {
     verify(
       mockFileService.onlineDownloadFile(FileType.TrainingData, mockTrainingData[0].fileUrl, mockTrainingData[0].title)
     ).once();
+    expect().nothing();
   }));
 });

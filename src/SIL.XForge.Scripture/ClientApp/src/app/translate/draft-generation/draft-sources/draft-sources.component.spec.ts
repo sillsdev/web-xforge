@@ -8,7 +8,7 @@ import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of, Subject } from 'rxjs';
-import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
+import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
@@ -17,7 +17,6 @@ import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
-import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
@@ -64,13 +63,6 @@ const mockedAuthService = mock(AuthService);
 const mockedDialogService = mock(DialogService);
 const mockTrainingDataService = mock(TrainingDataService);
 const mockedFileService = mock(FileService);
-
-const mockTrainingDataQuery: RealtimeQuery<TrainingDataDoc> = mock(RealtimeQuery);
-const trainingDataQueryLocalChanges$: Subject<void> = new Subject<void>();
-when(mockTrainingDataQuery.localChanges$).thenReturn(trainingDataQueryLocalChanges$);
-when(mockTrainingDataQuery.ready$).thenReturn(of(true));
-when(mockTrainingDataQuery.remoteChanges$).thenReturn(of());
-when(mockTrainingDataQuery.remoteDocChanges$).thenReturn(of());
 
 describe('DraftSourcesComponent', () => {
   configureTestingModule(() => ({
@@ -328,12 +320,7 @@ describe('DraftSourcesComponent', () => {
       env.clickLanguageCodesConfirmationCheckbox();
 
       const savedFile = {} as TrainingData;
-      const deletedFile: TrainingData = { dataId: 'deleted', deleted: true } as TrainingData;
-      when(mockTrainingDataQuery.docs).thenReturn([
-        { data: savedFile } as TrainingDataDoc,
-        { data: deletedFile } as TrainingDataDoc
-      ]);
-      trainingDataQueryLocalChanges$.next();
+      env.activeTrainingData$.next([savedFile]);
 
       expect(env.component.availableTrainingFiles.length).toEqual(1);
 
@@ -352,13 +339,7 @@ describe('DraftSourcesComponent', () => {
 
       const savedFile1 = { dataId: 'file1' } as TrainingData;
       const savedFile2 = { dataId: 'file2' } as TrainingData;
-      const deletedFile: TrainingData = { dataId: 'deleted', deleted: true } as TrainingData;
-      when(mockTrainingDataQuery.docs).thenReturn([
-        { data: savedFile1 } as TrainingDataDoc,
-        { data: savedFile2 } as TrainingDataDoc,
-        { data: deletedFile } as TrainingDataDoc
-      ]);
-      trainingDataQueryLocalChanges$.next();
+      env.activeTrainingData$.next([savedFile1, savedFile2]);
       tick();
 
       expect(env.component.availableTrainingFiles.length).toEqual(2);
@@ -380,12 +361,7 @@ describe('DraftSourcesComponent', () => {
       when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(true);
 
       const savedFile = { dataId: 'saved_file', ownerRef: 'user01' } as TrainingData;
-      const deletedFile: TrainingData = { dataId: 'deleted', ownerRef: 'user01', deleted: true } as TrainingData;
-      when(mockTrainingDataQuery.docs).thenReturn([
-        { data: savedFile } as TrainingDataDoc,
-        { data: deletedFile } as TrainingDataDoc
-      ]);
-      trainingDataQueryLocalChanges$.next();
+      env.activeTrainingData$.next([savedFile]);
       tick();
 
       expect(env.component.availableTrainingFiles.length).toEqual(1);
@@ -428,13 +404,7 @@ describe('DraftSourcesComponent', () => {
 
       const initialFile1 = { dataId: 'file1' } as TrainingData;
       const initialFile2 = { dataId: 'file2' } as TrainingData;
-      const deletedFile: TrainingData = { dataId: 'deleted', deleted: true } as TrainingData;
-      when(mockTrainingDataQuery.docs).thenReturn([
-        { data: initialFile1 } as TrainingDataDoc,
-        { data: initialFile2 } as TrainingDataDoc,
-        { data: deletedFile } as TrainingDataDoc
-      ]);
-      trainingDataQueryLocalChanges$.next();
+      env.activeTrainingData$.next([initialFile1, initialFile2]);
       tick();
 
       expect(env.component.availableTrainingFiles).toEqual([initialFile1, initialFile2]);
@@ -449,14 +419,7 @@ describe('DraftSourcesComponent', () => {
 
       // Another client updates the query
       const remoteFile = { dataId: 'remote_file' } as TrainingData;
-      const remoteDeletedFile: TrainingData = { dataId: 'remote_deleted', deleted: true } as TrainingData;
-      when(mockTrainingDataQuery.docs).thenReturn([
-        { data: initialFile1 } as TrainingDataDoc,
-        { data: initialFile2 } as TrainingDataDoc,
-        { data: remoteFile } as TrainingDataDoc,
-        { data: remoteDeletedFile } as TrainingDataDoc
-      ]);
-      trainingDataQueryLocalChanges$.next();
+      env.activeTrainingData$.next([initialFile1, initialFile2, remoteFile]);
       tick();
 
       // The user's unsaved changes should be preserved
@@ -685,6 +648,7 @@ class TestEnvironment {
   readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
     OnlineStatusService
   ) as TestOnlineStatusService;
+  readonly activeTrainingData$: Subject<TrainingData[]> = new Subject<TrainingData[]>();
 
   private projectsLoaded$: Subject<void> = new Subject<void>();
 
@@ -839,10 +803,8 @@ class TestEnvironment {
     when(mockedActivatedProjectService.projectDoc).thenReturn(this.activatedProjectDoc);
     this.testOnlineStatusService.setIsOnline(!!args.isOnline);
 
-    when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
-      instance(mockTrainingDataQuery)
-    );
-    when(mockTrainingDataQuery.docs).thenReturn([]);
+    when(mockTrainingDataService.getTrainingData$(anything(), anything())).thenReturn(this.activeTrainingData$);
+    this.activeTrainingData$.next([]);
 
     this.fixture = TestBed.createComponent(DraftSourcesComponent);
     this.component = this.fixture.componentInstance;

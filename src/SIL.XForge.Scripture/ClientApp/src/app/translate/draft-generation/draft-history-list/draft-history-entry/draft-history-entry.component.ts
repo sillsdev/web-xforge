@@ -24,13 +24,13 @@ import {
 import { RouterLink } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
+
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserService } from 'xforge-common/user.service';
+import { quietTakeUntilDestroyed } from '../../../../../xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
-import { TrainingDataDoc } from '../../../../core/models/training-data-doc';
 import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { BuildDto } from '../../../../machine-api/build-dto';
@@ -170,17 +170,15 @@ export class DraftHistoryEntryComponent {
 
     const trainingDataFiles: string[] = this._entry?.additionalInfo?.trainingDataFileIds ?? [];
     if (this.activatedProjectService.projectId != null && trainingDataFiles.length > 0) {
-      this.dataFileQuery?.dispose();
-      void this.trainingDataService
-        .queryTrainingDataAsync(this.activatedProjectService.projectId, this.destroyRef)
-        .then(query => {
-          this.dataFileQuery = query;
-          this._trainingDataFiles = [
-            ...trainingDataFiles
-              .map(fileId => query.docs.find(f => f.data?.dataId === fileId))
-              .filter(file => file?.data != null)
-              .map(file => file!.data!.title)
-          ];
+      // Deleted training data is needed to show historical builds
+      this.trainingDataService
+        .getTrainingData$(this.activatedProjectService.projectId, this.destroyRef, { includeDeleted: true })
+        .pipe(quietTakeUntilDestroyed(this.destroyRef))
+        .subscribe(allFiles => {
+          this._trainingDataFiles = trainingDataFiles
+            .map(fileId => allFiles.find(f => f.dataId === fileId))
+            .filter(file => file != null)
+            .map(file => file!.title);
         });
     }
 
@@ -320,7 +318,6 @@ export class DraftHistoryEntryComponent {
   readonly columnsToDisplay: string[] = ['scriptureRange', 'source', 'target'];
 
   private readonly showSelectFormatNoticeExpireDate = new Date('2025-12-01T12:00:00.000Z');
-  private dataFileQuery?: RealtimeQuery<TrainingDataDoc>;
 
   readonly timeframeForSelectFormatNotice: boolean = Date.now() < this.showSelectFormatNoticeExpireDate.getTime();
 
