@@ -1,0 +1,87 @@
+use("xforge");
+
+// find projects that may be using translation suggestions
+
+const unixTime6MonthsAgo = Date.now() - 6 * 30 * 24 * 60 * 60 * 1000;
+const numAcceptedSuggestionsThreshold = 10;
+
+const projects = db.sf_projects
+  .aggregate([
+    {
+      $match: { "translateConfig.translationSuggestionsEnabled": true }
+    },
+    {
+      $project: {
+        _id: 1,
+        shortName: 1
+      }
+    }
+  ])
+  .toArray();
+
+console.log(`Found ${projects.length} projects with translation suggestions enabled.`);
+
+const projectsNoSuggestionsAccepted = [];
+const projectsLikelyNotUsingSuggestions = [];
+const projectsSuggestionsAccepted = [];
+let totalProjectsProcessed = 0;
+
+for (const project of projects) {
+  if (++totalProjectsProcessed % 10 === 0) console.log("Processed " + totalProjectsProcessed + " projects...");
+  const id = project._id.toString();
+
+  const textOps = db.o_texts
+    .aggregate([
+      {
+        $match: {
+          d: { $regex: new RegExp(`^${id}`) },
+          "m.source": "Editor",
+          "op.ops": { $elemMatch: { insert: { $regex: /\w{3,}/ } } }
+        }
+      }
+    ])
+    .toArray();
+
+  const suggestionsWithin6Months = textOps.filter(o => o.m.ts > new Date(unixTime6MonthsAgo)).length;
+  if (suggestionsWithin6Months > 0 || textOps.length >= numAcceptedSuggestionsThreshold) {
+    projectsSuggestionsAccepted.push({
+      id,
+      shortName: project.shortName,
+      suggestionsAccepted: textOps.length,
+      suggestionsWithin6Months
+    });
+  } else if (textOps.length > 0) {
+    projectsLikelyNotUsingSuggestions.push({
+      id,
+      shortName: project.shortName,
+      suggestionsAccepted: textOps.length,
+      suggestionsWithin6Months
+    });
+  } else {
+    projectsNoSuggestionsAccepted.push({ id, shortName: project.shortName });
+  }
+}
+
+console.log("***** Can disable suggestions *****");
+console.log("These projects have no suggestions accepted.");
+for (const project of projectsNoSuggestionsAccepted) {
+  console.log(`${project.shortName} - ${project.id}`);
+}
+console.log(projectsNoSuggestionsAccepted.map(p => p.id).join("', '"));
+
+console.log("\n***** Can disable suggestions *****");
+console.log("These projects are likely not using suggestions.");
+for (const project of projectsLikelyNotUsingSuggestions) {
+  console.log(
+    `${project.shortName} - ${project.id} has ${project.suggestionsAccepted} suggestions accepted, ${project.suggestionsWithin6Months} within the last 6 months.`
+  );
+}
+console.log(projectsLikelyNotUsingSuggestions.map(p => p.id).join("', '"));
+
+console.log("\n***** Further processing before disabling suggestions *****");
+for (const project of projectsSuggestionsAccepted) {
+  console.log(
+    `${project.shortName} - ${project.id} has ${project.suggestionsAccepted} suggestions accepted, ${project.suggestionsWithin6Months} within the last 6 months.`
+  );
+}
+console.log(projectsSuggestionsAccepted.map(p => p.id).join("', '"));
