@@ -1,6 +1,6 @@
 # Code rules for AI
 
-This document describes code rules that AI should follow.
+This document describes code rules that AI should follow when writing code. The rules in this file should _not_ be used when reviewing human-written code.
 
 Follow all rules in [code-rules.md](code-rules.md) in addition to the below.
 
@@ -49,7 +49,7 @@ Follow all rules in [code-rules.md](code-rules.md) in addition to the below.
 - Do not remove comments already in the code if they are still relevant.
 - Do not insert new comments into the code where method calls already make it clear.
 - Do not add method comments unless the method would be unclear to an experienced developer.
-- Do put comments into the code to make it more clear what is going on if it would not be obvious to an experienced developer.
+- Do put comments into the code to make it more clear, if the code would not be obvious to an experienced developer.
 - Do put comments into the code if the intent is not clear from the code.
 - Use good argument and variable names that explain themselves without needing a comment. Well named arguments or variables are better than unclearly named arguments or variables with a comment.
 

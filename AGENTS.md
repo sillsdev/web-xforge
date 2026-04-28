@@ -6,9 +6,9 @@ This document contains information and instructions for AI.
 
 See the software [architecture](doc/architecture.md) overview.
 
-## Code rules
+## Rules for writing code
 
-Follow all rules in [Code rules](doc/code-rules.md) and [Code rules for AI](doc/code-rules-ai.md).
+When writing code, follow all rules in [Code rules](doc/code-rules.md) and [Code rules for AI](doc/code-rules-ai.md).
 
 ## Code review
 

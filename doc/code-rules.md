@@ -14,7 +14,7 @@ For more information, see the [architecture](architecture.md) overview.
 ## Frontend
 
 - Most Frontend tasks should work on a mobile phone. In other words, on a device with a narrow and short screen.
-- Most editing and reviewing tasks should work while offline. Changing some settings may require being online.
+- Most editing and reviewing tasks should work while offline. Although changing some settings may require being online; for example, making changes to a SFProjectDoc uses RPC calls.
 - Keep related files together in feature folders
 - Follow existing naming conventions
 
