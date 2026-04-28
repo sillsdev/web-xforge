@@ -6,7 +6,7 @@ import { isResource } from 'realtime-server/lib/esm/scriptureforge/models/sf-pro
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { from, Observable, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 import { AuthGuard } from 'xforge-common/auth.guard';
 import { AuthService } from 'xforge-common/auth.service';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
@@ -30,19 +30,23 @@ export abstract class RouterGuard {
   allowTransition(projectId: string): Observable<boolean> {
     return this.authGuard.allowTransition().pipe(
       switchMap(isLoggedIn => {
-        if (isLoggedIn) {
-          const docSubscription = new DocSubscription('ProjectRouterGuard');
-          return from(this.projectService.getProfile(projectId, docSubscription)).pipe(
-            map(projectDoc => {
-              const may: boolean = this.check(projectDoc);
-              docSubscription.unsubscribe();
-              return may;
-            })
-          );
+        if (!isLoggedIn) {
+          return of(false);
         }
-        return of(false);
+
+        return from(this.canAccessProject(projectId));
       })
     );
+  }
+
+  private async canAccessProject(projectId: string): Promise<boolean> {
+    const docSubscription = new DocSubscription('ProjectRouterGuard');
+    try {
+      const projectDoc: SFProjectProfileDoc = await this.projectService.getProfile(projectId, docSubscription);
+      return this.check(projectDoc);
+    } finally {
+      docSubscription.unsubscribe();
+    }
   }
 
   abstract check(project: SFProjectProfileDoc): boolean;

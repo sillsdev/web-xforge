@@ -1,15 +1,18 @@
+import { DestroyRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { mock, when } from 'ts-mockito';
+import { catchError, lastValueFrom, of } from 'rxjs';
+import { anything, mock, when } from 'ts-mockito';
 import { AuthGuard } from 'xforge-common/auth.guard';
 import { AuthService } from 'xforge-common/auth.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../core/sf-project.service';
-import { DraftNavigationAuthGuard, SyncAuthGuard } from './project-router.guard';
+import { DraftNavigationAuthGuard, RouterGuard, SyncAuthGuard } from './project-router.guard';
 
 const mockedAuthGuard = mock(AuthGuard);
 const mockedAuthService = mock(AuthService);
@@ -103,6 +106,46 @@ describe('SyncAuthGuard', () => {
   });
 });
 
+describe('RouterGuard', () => {
+  configureTestingModule(() => ({
+    providers: [
+      { provide: AuthGuard, useMock: mockedAuthGuard },
+      { provide: SFProjectService, useMock: mockedProjectService },
+      {
+        provide: TestRouterGuard,
+        useFactory: (authGuard: AuthGuard, projectService: SFProjectService) =>
+          new TestRouterGuard(authGuard, projectService, {} as unknown as DestroyRef),
+        deps: [AuthGuard, SFProjectService]
+      }
+    ]
+  }));
+
+  it('unsubscribes project subscription when profile lookup throws', async () => {
+    const env = new RouterGuardTestEnvironment();
+    when(mockedAuthGuard.allowTransition()).thenReturn(of(true));
+    when(mockedProjectService.getProfile('project01', anything())).thenReject(new Error('profile failure'));
+
+    const canActivate: boolean = await env.allowTransition('project01');
+
+    expect(canActivate).toBeFalse();
+    expect(env.unsubscribeSpy).toHaveBeenCalledTimes(1);
+  });
+});
+
+class RouterGuardTestEnvironment {
+  readonly service: TestRouterGuard;
+  readonly unsubscribeSpy: jasmine.Spy;
+
+  constructor() {
+    this.service = TestBed.inject(TestRouterGuard);
+    this.unsubscribeSpy = spyOn(DocSubscription.prototype, 'unsubscribe').and.callThrough();
+  }
+
+  async allowTransition(projectId: string): Promise<boolean> {
+    return await lastValueFrom(this.service.allowTransition(projectId).pipe(catchError(() => of(false))));
+  }
+}
+
 class DraftNavigationTestEnvironment {
   service: DraftNavigationAuthGuard;
   constructor() {
@@ -120,5 +163,15 @@ class SyncAuthGuardTestEnvironment {
     } else {
       when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.User]);
     }
+  }
+}
+
+class TestRouterGuard extends RouterGuard {
+  constructor(authGuard: AuthGuard, projectService: SFProjectService, destroyRef: DestroyRef) {
+    super(authGuard, projectService, destroyRef);
+  }
+
+  check(_: SFProjectProfileDoc): boolean {
+    return true;
   }
 }

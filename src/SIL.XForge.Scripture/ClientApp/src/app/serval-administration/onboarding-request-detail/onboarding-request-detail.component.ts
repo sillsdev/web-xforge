@@ -227,9 +227,13 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
 
     // Get the project to retrieve its shortName
     const projectDocSubscription = new DocSubscription('OnboardingRequestDetailComponent.downloadProject');
-    const projectDoc = await this.servalAdministrationService.subscribe(id, projectDocSubscription);
-    const shortName: string | undefined = projectDoc?.data?.shortName;
-    projectDocSubscription.unsubscribe();
+    let shortName: string | undefined;
+    try {
+      const projectDoc = await this.servalAdministrationService.subscribe(id, projectDocSubscription);
+      shortName = projectDoc?.data?.shortName;
+    } finally {
+      projectDocSubscription.unsubscribe();
+    }
     if (shortName == null) {
       this.noticeService.showError('Unable to retrieve project information.');
       this.loadingFinished();
