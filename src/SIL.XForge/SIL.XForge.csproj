@@ -11,7 +11,8 @@
     <PackageReference Include="Autofac.Extras.DynamicProxy" Version="7.1.0" />
     <PackageReference Include="Bugsnag.AspNet.Core" Version="4.1.0" />
     <PackageReference Include="EdjCase.JsonRpc.Router" Version="6.1.0" />
-    <PackageReference Include="Hangfire" Version="1.8.23" />
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.8.23" />
+    <PackageReference Include="Hangfire.Core" Version="1.8.23" />
     <PackageReference Include="Hangfire.Autofac" Version="2.7.0" />
     <PackageReference Include="Hangfire.Mongo" Version="1.14.1" />
     <PackageReference Include="Duende.IdentityModel" Version="8.1.0" />

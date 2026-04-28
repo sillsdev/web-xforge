@@ -1,6 +1,8 @@
 #nullable disable warnings
 using System;
 using System.Globalization;
+using System.Linq;
+using Hangfire;
 using Hangfire.Common;
 using Hangfire.States;
 using Hangfire.Storage;
@@ -8,19 +10,28 @@ using Hangfire.Storage;
 namespace SIL.XForge.Scripture.Services;
 
 /// <summary>
-/// Represents a background job filter that helps to disable concurrent execution
-/// without causing worker to wait as in <see cref="Hangfire.DisableConcurrentExecutionAttribute"/>.
+/// Represents a background job filter that helps to disable concurrent execution without causing the initial worker
+/// to wait as in <see cref="DisableConcurrentExecutionAttribute"/>.
+///
+/// When a job starts executing, it will acquire a distributed lock and add its job id to a resource set.
+/// If another job with the same resource starts executing (i.e. because the jobs were all restarted),
+/// it will be blocked and rescheduled until the first job finishes and releases the lock.
 ///
 /// Source: https://gist.github.com/odinserj/4a3bf40606c4da9183588a5a325dfb99
 /// </summary>
 /// <remarks>
-/// When <paramref name="resource"/> is not configured, the method name is used as the mutex key.
+/// When <paramref name="resource"/> is not configured, the method name is used as the mutex key,
+/// while the job type and method name are used as the distributed lock key.
 /// </remarks>
-public class MutexAttribute(string? resource = null) : JobFilterAttribute, IElectStateFilter, IApplyStateFilter
+public class MutexAttribute(string? resource = null, int timeoutSec = MutexAttribute.DefaultTimeOutSec)
+    : DisableConcurrentExecutionAttribute(resource, timeoutSec),
+        IElectStateFilter,
+        IApplyStateFilter
 {
+    private const int DefaultTimeOutSec = 60 * 60 * 24;
     private static readonly TimeSpan DistributedLockTimeout = TimeSpan.FromMinutes(1);
 
-    public int RetryInSeconds { get; set; } = 15;
+    public int RetryInSeconds { get; } = 15;
     public int MaxAttempts { get; set; }
 
     public void OnStateElection(ElectStateContext context)
@@ -142,12 +153,12 @@ public class MutexAttribute(string? resource = null) : JobFilterAttribute, IElec
     private IDisposable AcquireDistributedSetLock(IStorageConnection connection, Job job) =>
         connection.AcquireDistributedLock(GetDistributedLockKey(job), DistributedLockTimeout);
 
-    private string GetDistributedLockKey(Job job) => $"extension:job-mutex:lock:{GetKeyFormat(job, resource)}";
+    private string GetDistributedLockKey(Job job) => $"extension:job-mutex:lock:{GetKeyFormat(job, this.Resource)}";
 
-    private string GetResourceKey(Job job) => $"extension:job-mutex:set:{GetKeyFormat(job, resource)}";
+    private string GetResourceKey(Job job) => $"extension:job-mutex:set:{GetKeyFormat(job, this.Resource)}";
 
     private static string GetKeyFormat(Job job, string? keyFormat) =>
         string.IsNullOrWhiteSpace(keyFormat)
             ? job.Method.Name
-            : string.Format(CultureInfo.InvariantCulture, keyFormat, job.Args);
+            : string.Format(CultureInfo.InvariantCulture, keyFormat, job.Args.ToArray());
 }
