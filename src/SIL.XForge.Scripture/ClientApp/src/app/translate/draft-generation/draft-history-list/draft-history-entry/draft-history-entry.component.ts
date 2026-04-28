@@ -41,6 +41,7 @@ import { DraftDownloadButtonComponent } from '../../draft-download-button/draft-
 import { DraftImportWizardComponent } from '../../draft-import-wizard/draft-import-wizard.component';
 import { DraftOptionsService } from '../../draft-options.service';
 import { DraftPreviewBooksComponent } from '../../draft-preview-books/draft-preview-books.component';
+import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../../draft-utils';
 import { TrainingDataService } from '../../training-data/training-data.service';
 
 const STATUS_INFO: Record<BuildStates, { icons: string; text: string; color: string }> = {
@@ -62,6 +63,12 @@ interface TrainingConfigurationRow {
   scriptureRange: string;
   source: string;
   target: string;
+}
+
+interface SourceInfo {
+  projectRef: string;
+  shortName?: string;
+  writingSystem?: { tag: string };
 }
 
 @Component({
@@ -123,27 +130,18 @@ export class DraftHistoryEntryComponent {
     void Promise.all(
       trainingScriptureRanges.map(async r => {
         // The engine ID is the target project ID
-        let target: SFProjectProfileDoc | undefined = undefined;
-        if (this._entry?.engine.id != null) {
-          target = await this.projectService.getProfile(this._entry.engine.id);
-        }
+        const { target, source } = await this.getProjectSourceInfo(value?.engine.id, r.projectId, 'training');
 
         // Get the target language, if it is not already set
-        this._targetLanguage ??= target?.data?.writingSystem.tag;
-
-        let source: SFProjectProfileDoc | undefined;
-        // Get the source project, if it is configured and the user has access
-        if (await this.permissionsService.isUserOnProject(r.projectId)) {
-          source = r.projectId === '' ? undefined : await this.projectService.getProfile(r.projectId);
-        }
+        this._targetLanguage ??= target?.data?.writingSystem?.tag;
 
         // Get the source language, if it is not already set
-        this._sourceLanguage ??= source?.data?.writingSystem.tag;
+        this._sourceLanguage ??= source?.writingSystem?.tag;
 
         // Return the data for this training range
         return {
           scriptureRange: r.scriptureRange,
-          source: source?.data?.shortName ?? this.i18n.translateStatic('draft_history_entry.draft_unknown'),
+          source: source?.shortName ?? this.i18n.translateStatic('draft_history_entry.draft_unknown'),
           target: target?.data?.shortName ?? this.i18n.translateStatic('draft_history_entry.draft_unknown')
         } as TrainingConfigurationRow;
       })
@@ -163,14 +161,9 @@ export class DraftHistoryEntryComponent {
     this._translationSources = [];
     void Promise.all(
       translationScriptureRanges.map(async r => {
-        let source: SFProjectProfileDoc | undefined;
-        if (await this.permissionsService.isUserOnProject(r.projectId)) {
-          source =
-            r.projectId === '' || r.projectId === value?.engine?.id
-              ? undefined
-              : await this.projectService.getProfile(r.projectId);
-        }
-        const sourceShortName = source?.data?.shortName;
+        // The engine ID is the target project ID
+        const { source } = await this.getProjectSourceInfo(value?.engine.id, r.projectId, 'drafting');
+        const sourceShortName = source?.shortName;
         if (sourceShortName != null) this._translationSources.push(sourceShortName);
       })
     );
@@ -371,5 +364,36 @@ export class DraftHistoryEntryComponent {
       disableClose: false,
       panelClass: 'use-application-text-color'
     });
+  }
+
+  private async getProjectSourceInfo(
+    targetId: string | undefined,
+    sourceId: string,
+    type: 'training' | 'drafting'
+  ): Promise<{ target: SFProjectProfileDoc | undefined; source: SourceInfo | undefined }> {
+    let target: SFProjectProfileDoc | undefined = undefined;
+    let draftSources: DraftSourcesAsTranslateSourceArrays | undefined;
+    if (targetId != null) {
+      target = await this.projectService.getProfile(targetId);
+      if (target?.data != null) {
+        draftSources = projectToDraftSources(target.data);
+      }
+    }
+    let source: SourceInfo | undefined;
+    if (await this.permissionsService.isUserOnProject(sourceId)) {
+      const translationSource: SFProjectProfileDoc | undefined = await this.projectService.getProfile(sourceId);
+      source = {
+        projectRef: sourceId,
+        shortName: translationSource?.data?.shortName,
+        writingSystem: translationSource?.data?.writingSystem
+      };
+    } else {
+      if (type === 'drafting') {
+        source = draftSources?.draftingSources.find(s => s.projectRef === sourceId);
+      } else {
+        source = draftSources?.trainingSources.find(s => s.projectRef === sourceId);
+      }
+    }
+    return { target, source };
   }
 }
