@@ -10,6 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { TranslocoModule } from '@ngneat/transloco';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { RouterLinkDirective } from 'xforge-common/router-link.directive';
@@ -161,11 +162,16 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
 
     // Fetch project data for each unique project ID
     for (const projectId of projectIds) {
-      const projectDoc = await this.servalAdministrationService.get(projectId);
-      if (projectDoc?.data != null) {
-        this.projectNames.set(projectId, projectLabel(projectDoc.data));
-      } else {
-        this.projectNames.set(projectId, projectId);
+      const docSubscription = new DocSubscription('OnboardingRequests.loadProjectNames');
+      try {
+        const projectDoc = await this.servalAdministrationService.subscribe(projectId, docSubscription);
+        if (projectDoc?.data != null) {
+          this.projectNames.set(projectId, projectLabel(projectDoc.data));
+        } else {
+          this.projectNames.set(projectId, projectId);
+        }
+      } finally {
+        docSubscription.unsubscribe();
       }
     }
   }
@@ -205,10 +211,15 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
   private async cacheUserDisplayName(userId: string): Promise<void> {
     if (!this.userDisplayNames.has(userId)) {
       try {
-        const userDoc = await this.userService.getProfile(userId);
-        if (userDoc?.data != null) {
-          const displayName = this.currentUserId === userId ? 'Me' : userDoc.data.displayName || 'Unknown User';
-          this.userDisplayNames.set(userId, displayName);
+        const docSubscription = new DocSubscription('OnboardingRequests.cacheUserDisplayName');
+        try {
+          const userDoc = await this.userService.getProfile(userId, docSubscription);
+          if (userDoc?.data != null) {
+            const displayName = this.currentUserId === userId ? 'Me' : userDoc.data.displayName || 'Unknown User';
+            this.userDisplayNames.set(userId, displayName);
+          }
+        } finally {
+          docSubscription.unsubscribe();
         }
       } catch (error) {
         console.error('Error loading user display name:', error);

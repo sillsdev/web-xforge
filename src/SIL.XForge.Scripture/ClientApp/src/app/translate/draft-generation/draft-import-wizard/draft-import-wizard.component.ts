@@ -23,6 +23,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -195,7 +196,10 @@ export class DraftImportWizardComponent implements OnInit {
         }
 
         // Reload project data after connection
-        const projectDoc = await this.projectService.get(this.targetProjectId);
+        const projectDoc = await this.projectService.subscribe(
+          this.targetProjectId,
+          new DocSubscription('DraftImportWizard', this.destroyRef)
+        );
         await this.loadTargetProjectAndValidate(projectDoc);
 
         this.isConnecting = false;
@@ -223,7 +227,10 @@ export class DraftImportWizardComponent implements OnInit {
     // updateConnectStatus() will handle the sync finishing and move to the next step after "connecting"
     this.stepper?.next();
 
-    const projectDoc = await this.projectService.get(this.targetProjectId);
+    const projectDoc = await this.projectService.subscribe(
+      this.targetProjectId,
+      new DocSubscription('DraftImportWizard', this.destroyRef)
+    );
     this.targetProjectDoc$.next(projectDoc);
   }
 
@@ -359,7 +366,11 @@ export class DraftImportWizardComponent implements OnInit {
         quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe(async projectId => {
-        this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId!, this.userService.currentUserId);
+        this.projectUserConfigDoc = await this.projectService.getUserConfig(
+          projectId!,
+          this.userService.currentUserId,
+          new DocSubscription('DraftImportWizard', this.destroyRef)
+        );
         await this.loadProjects();
         this.initializeAvailableBooks();
         this.sourceProjectId = projectId;
@@ -454,7 +465,10 @@ export class DraftImportWizardComponent implements OnInit {
         // Get the project profile to analyze
         this.isLoadingProject = true;
         try {
-          const projectDoc = await this.projectService.get(this.targetProjectId);
+          const projectDoc = await this.projectService.subscribe(
+            this.targetProjectId,
+            new DocSubscription('DraftImportWizard', this.destroyRef)
+          );
           await this.loadTargetProjectAndValidate(projectDoc);
         } finally {
           this.isLoadingProject = false;
@@ -496,7 +510,10 @@ export class DraftImportWizardComponent implements OnInit {
     }
 
     if (this.targetProjectDoc$.value?.data == null) {
-      const profileDoc = await this.projectService.get(this.targetProjectId);
+      const profileDoc = await this.projectService.subscribe(
+        this.targetProjectId,
+        new DocSubscription('DraftImportWizard', this.destroyRef)
+      );
       if (profileDoc?.data == null) {
         return false;
       }
@@ -593,8 +610,13 @@ export class DraftImportWizardComponent implements OnInit {
   }
 
   private async hasTextInChapter(textDocId: TextDocId): Promise<boolean> {
-    const textDoc: TextDoc = await this.projectService.getText(textDocId);
-    return textDoc.getNonEmptyVerses().length > 0;
+    const docSubscription = new DocSubscription('DraftImportWizard.hasTextInChapter');
+    try {
+      const textDoc: TextDoc = await this.projectService.getText(textDocId, docSubscription);
+      return textDoc.getNonEmptyVerses().length > 0;
+    } finally {
+      docSubscription.unsubscribe();
+    }
   }
 
   async startImport(): Promise<void> {

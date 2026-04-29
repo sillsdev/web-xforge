@@ -10,6 +10,7 @@ import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { BehaviorSubject } from 'rxjs';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -165,7 +166,10 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
       }
     }
 
-    const projectDocs = await this.projectService.onlineGetMany(projectDocsLookup);
+    const projectDocs = await this.projectService.onlineGetMany(
+      projectDocsLookup,
+      new DocSubscription('SaUsersComponent', this.destroyRef)
+    );
     const projectIdMap = new Map<string, ProjectDoc>();
     for (const projectDoc of projectDocs) {
       projectIdMap.set(projectDoc.id, projectDoc);

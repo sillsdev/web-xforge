@@ -39,6 +39,7 @@ import { DonutChartComponent } from 'xforge-common/donut-chart/donut-chart.compo
 import { I18nService } from 'xforge-common/i18n.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -552,7 +553,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
           // Do once unless project changes
           if (routeProjectId !== prevProjectId) {
-            this.projectDoc = await this.projectService.getProfile(routeProjectId);
+            this.projectDoc = await this.projectService.getProfile(
+              routeProjectId,
+              new DocSubscription('CheckingComponent', this.destroyRef)
+            );
 
             if (!this.projectDoc?.isLoaded) {
               return;
@@ -571,7 +575,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
             this.projectUserConfigDoc = await this.projectService.getUserConfig(
               routeProjectId,
-              this.userService.currentUserId
+              this.userService.currentUserId,
+              new DocSubscription('CheckingComponent', this.destroyRef)
             );
 
             // Subscribe to the projectDoc now that it is defined

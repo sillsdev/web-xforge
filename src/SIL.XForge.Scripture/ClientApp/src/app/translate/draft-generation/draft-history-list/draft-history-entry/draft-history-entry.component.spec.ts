@@ -82,7 +82,7 @@ describe('DraftHistoryEntryComponent', () => {
     when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected(anything())).thenReturn(true);
     when(mockedPermissionsService.isUserOnProject(anything())).thenResolve(true);
     const userDoc = { id: 'sf-user-id', data: { displayName: 'User 01' } } as UserProfileDoc;
-    when(mockedUserService.getProfile(anything())).thenResolve(userDoc);
+    when(mockedUserService.getProfile(anything(), anything())).thenResolve(userDoc);
     fixture = TestBed.createComponent(DraftHistoryEntryComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -161,7 +161,7 @@ describe('DraftHistoryEntryComponent', () => {
       fixture.detectChanges();
 
       verify(mockedPermissionsService.isUserOnProject('project02')).twice();
-      verify(mockedSFProjectService.getProfile('project02')).never();
+      verify(mockedSFProjectService.getProfile('project02', anything())).never();
       expect(component.translationSource).toEqual('src \u2022');
       expect(component.sourceLanguage).toBe('fr');
       expect(component.trainingConfiguration).toEqual([{ target: 'tar', source: 'src', scriptureRange: 'GEN' }]);
@@ -210,11 +210,11 @@ describe('DraftHistoryEntryComponent', () => {
       const targetProjectDoc = {
         id: 'project01'
       } as SFProjectProfileDoc;
-      when(mockedSFProjectService.getProfile('project01')).thenResolve(targetProjectDoc);
+      when(mockedSFProjectService.getProfile('project01', anything())).thenResolve(targetProjectDoc);
       const sourceProjectDoc = {
         id: 'project02'
       } as SFProjectProfileDoc;
-      when(mockedSFProjectService.getProfile('project02')).thenResolve(sourceProjectDoc);
+      when(mockedSFProjectService.getProfile('project02', anything())).thenResolve(sourceProjectDoc);
       const entry = {
         engine: {
           id: 'project01'
@@ -258,12 +258,12 @@ describe('DraftHistoryEntryComponent', () => {
       when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected(anything())).thenReturn(false);
       when(mockedDraftOptionsService.areFormattingOptionsSupportedForBuild(anything())).thenReturn(true);
       const userDoc = { id: 'sf-user-id', data: undefined } as UserProfileDoc;
-      when(mockedUserService.getProfile(anything())).thenResolve(userDoc);
+      when(mockedUserService.getProfile(anything(), anything())).thenResolve(userDoc);
       const targetProjectDoc = {
         id: 'project01',
         data: createTestProjectProfile({ shortName: 'tar', writingSystem: { tag: 'en' } })
       } as SFProjectProfileDoc;
-      when(mockedSFProjectService.getProfile('project01')).thenResolve(targetProjectDoc);
+      when(mockedSFProjectService.getProfile('project01', anything())).thenResolve(targetProjectDoc);
       when(mockedActivatedProjectService.changes$).thenReturn(of(targetProjectDoc));
       const entry = {
         engine: { id: 'project01' },
@@ -501,7 +501,7 @@ describe('DraftHistoryEntryComponent', () => {
       id: 'sf-user-id',
       data: createTestUserProfile({ displayName: user })
     } as UserProfileDoc;
-    when(mockedUserService.getProfile('sf-user-id')).thenResolve(userDoc);
+    when(mockedUserService.getProfile('sf-user-id', anything())).thenResolve(userDoc);
     const targetProjectDoc = {
       id: 'project01',
       data: createTestProjectProfile({
@@ -515,13 +515,13 @@ describe('DraftHistoryEntryComponent', () => {
         }
       })
     } as SFProjectProfileDoc;
-    when(mockedSFProjectService.getProfile('project01')).thenResolve(targetProjectDoc);
+    when(mockedSFProjectService.getProfile('project01', anything())).thenResolve(targetProjectDoc);
     when(mockedActivatedProjectService.changes$).thenReturn(of(targetProjectDoc));
     const sourceProjectDoc = {
       id: 'project02',
       data: createTestProjectProfile({ shortName: 'src', writingSystem: { tag: 'fr' } })
     } as SFProjectProfileDoc;
-    when(mockedSFProjectService.getProfile('project02')).thenResolve(sourceProjectDoc);
+    when(mockedSFProjectService.getProfile('project02', anything())).thenResolve(sourceProjectDoc);
     const entry = {
       engine: {
         id: 'project01'

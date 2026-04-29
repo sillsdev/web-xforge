@@ -10,6 +10,7 @@ import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -311,20 +312,21 @@ class TestEnvironment {
         { bookId: 'DEU', verseSegments: 0, blankVerseSegments: 0 }
       ])
     );
-    when(mockProjectService.getText(anything())).thenResolve({
+    when(mockProjectService.getText(anything(), anything())).thenResolve({
       getNonEmptyVerses: (): string[] => ['verse_1_1']
     } as TextDoc);
     when(mockProjectService.onlineCreate(anything())).thenResolve('project02');
-    when(mockProjectService.get(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
+    when(mockProjectService.subscribe(anything(), anything())).thenCall((id: string, subscriber: DocSubscription) =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, subscriber)
     );
     when(mockTextDocService.userHasGeneralEditRight(anything())).thenReturn(true);
     this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
       id: 'project01:user01',
       data: { selectedDraftTargetParatextId: 'paratext02' } as SFProjectUserConfig
     });
-    when(mockProjectService.getUserConfig(anything(), anything())).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, 'project01:user01')
+    when(mockProjectService.getUserConfig(anything(), anything(), anything())).thenCall(
+      (_id: string, _userId: string, subscriber: DocSubscription) =>
+        this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, 'project01:user01', subscriber)
     );
     this.fixture.detectChanges();
   }

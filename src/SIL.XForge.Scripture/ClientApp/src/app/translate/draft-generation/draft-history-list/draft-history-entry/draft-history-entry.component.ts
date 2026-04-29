@@ -27,6 +27,7 @@ import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
@@ -113,7 +114,9 @@ export class DraftHistoryEntryComponent {
     // Get the user who requested the build
     this._buildRequestedByUserName = undefined;
     if (this._entry?.additionalInfo?.requestedByUserId != null) {
-      void this.userService.getProfile(this._entry.additionalInfo.requestedByUserId).then(user => {
+      void this.userService
+        .getProfile(this._entry.additionalInfo.requestedByUserId, new DocSubscription('DraftHistoryEntry', this.destroyRef))
+        .then(user => {
         if (user.data != null) {
           this._buildRequestedByUserName = user.data.displayName;
         }
@@ -374,14 +377,17 @@ export class DraftHistoryEntryComponent {
     let target: SFProjectProfileDoc | undefined = undefined;
     let draftSources: DraftSourcesAsTranslateSourceArrays | undefined;
     if (targetId != null) {
-      target = await this.projectService.getProfile(targetId);
+      target = await this.projectService.getProfile(targetId, new DocSubscription('DraftHistoryEntry', this.destroyRef));
       if (target?.data != null) {
         draftSources = projectToDraftSources(target.data);
       }
     }
     let source: SourceInfo | undefined;
     if (await this.permissionsService.isUserOnProject(sourceId)) {
-      const translationSource: SFProjectProfileDoc | undefined = await this.projectService.getProfile(sourceId);
+      const translationSource: SFProjectProfileDoc | undefined = await this.projectService.getProfile(
+        sourceId,
+        new DocSubscription('DraftHistoryEntry', this.destroyRef)
+      );
       source = {
         projectRef: sourceId,
         shortName: translationSource?.data?.shortName,

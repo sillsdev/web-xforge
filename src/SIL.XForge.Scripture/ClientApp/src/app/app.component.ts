@@ -36,6 +36,7 @@ import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -334,7 +335,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         void this.userService.setCurrentProjectId(this.currentUserDoc!, this._selectedProjectDoc.id);
         this.projectUserConfigDoc = await this.projectService.getUserConfig(
           this._selectedProjectDoc.id,
-          this.currentUserDoc!.id
+          this.currentUserDoc!.id,
+          new DocSubscription('AppComponent', this.destroyRef)
         );
         if (this.selectedProjectDeleteSub != null) {
           this.selectedProjectDeleteSub.unsubscribe();

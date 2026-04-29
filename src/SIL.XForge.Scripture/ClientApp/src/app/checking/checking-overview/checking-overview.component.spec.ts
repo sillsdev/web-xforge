@@ -30,6 +30,7 @@ import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/vers
 import { of } from 'rxjs';
 import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { noopDestroyRef } from 'xforge-common/realtime.service';
@@ -80,8 +81,8 @@ describe('CheckingOverviewComponent', () => {
   }));
 
   describe('Add Question', () => {
-    it('should display "No question" message', fakeAsync(() => {
-      const env = new TestEnvironment(false);
+    it('should display "No question" message', fakeAsync(async () => {
+      const env = await TestEnvironment.create({ withQuestionData: false });
       env.fixture.detectChanges();
       expect(env.loadingQuestionsLabel).not.toBeNull();
       expect(env.noQuestionsLabel).toBeNull();
@@ -90,8 +91,8 @@ describe('CheckingOverviewComponent', () => {
       expect(env.noQuestionsLabel).not.toBeNull();
     }));
 
-    it('should not display loading if user is offline', fakeAsync(() => {
-      const env = new TestEnvironment(false);
+    it('should not display loading if user is offline', fakeAsync(async () => {
+      const env = await TestEnvironment.create({ withQuestionData: false });
       env.onlineStatus = false;
       expect(env.component.showQuestionsLoadingMessage).toBe(false);
       expect(env.component.showNoQuestionsMessage).toBe(true);
@@ -100,45 +101,45 @@ describe('CheckingOverviewComponent', () => {
       expect(env.noQuestionsLabel).not.toBeNull();
     }));
 
-    it('should not display "Add question" button for community checker', fakeAsync(() => {
-      const env = new TestEnvironment();
+    it('should not display "Add question" button for community checker', fakeAsync(async () => {
+      const env = await TestEnvironment.create();
       env.setCurrentUser(env.checkerUser);
       env.waitForQuestions();
       expect(env.addQuestionButton).toBeNull();
     }));
 
-    it('should display "Add question" button for project admin', fakeAsync(() => {
-      const env = new TestEnvironment();
+    it('should display "Add question" button for project admin', fakeAsync(async () => {
+      const env = await TestEnvironment.create();
       env.setCurrentUser(env.adminUser);
       env.waitForQuestions();
       expect(env.addQuestionButton).not.toBeNull();
     }));
 
-    it('should display "Add question" button for translator with questions permission', fakeAsync(() => {
-      const env = new TestEnvironment();
+    it('should display "Add question" button for translator with questions permission', fakeAsync(async () => {
+      const env = await TestEnvironment.create();
       env.setCurrentUser(env.translatorUser);
       env.waitForQuestions();
       expect(env.addQuestionButton).not.toBeNull();
     }));
 
-    it('should not display "Add question" button when loading', fakeAsync(() => {
-      const env = new TestEnvironment();
+    it('should not display "Add question" button when loading', fakeAsync(async () => {
+      const env = await TestEnvironment.create();
       env.fixture.detectChanges();
       expect(env.addQuestionButton).toBeNull();
       env.waitForQuestions();
       expect(env.addQuestionButton).not.toBeNull();
     }));
 
-    it('should open dialog when "Add question" button is clicked', fakeAsync(() => {
-      const env = new TestEnvironment();
+    it('should open dialog when "Add question" button is clicked', fakeAsync(async () => {
+      const env = await TestEnvironment.create();
       env.waitForQuestions();
       env.clickElement(env.addQuestionButton);
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
       expect().nothing();
     }));
 
-    it('should show new question after adding', fakeAsync(() => {
-      const env = new TestEnvironment();
+    it('should show new question after adding', fakeAsync(async () => {
+      const env = await TestEnvironment.create();
       const dateNow = new Date();
       const newQuestion: Question = {
         dataId: 'newQId1',
@@ -170,7 +171,7 @@ describe('CheckingOverviewComponent', () => {
     }));
 
     it('should show new question after local change', fakeAsync(async () => {
-      const env = new TestEnvironment();
+      const env = await TestEnvironment.create();
       env.waitForQuestions();
 
       const dateNow = new Date();
@@ -197,7 +198,7 @@ describe('CheckingOverviewComponent', () => {
     }));
 
     it('should show new answer count after remote change', fakeAsync(async () => {
-      const env = new TestEnvironment();
+      const env = await TestEnvironment.create();
       env.waitForQuestions();
 
       const dateNow = new Date();
@@ -214,9 +215,10 @@ describe('CheckingOverviewComponent', () => {
 
       expect(env.answerTotal).toContain('3');
 
-      const questionDoc: QuestionDoc = env.realtimeService.get(
+      const questionDoc: QuestionDoc = await env.realtimeService.get(
         QUESTIONS_COLLECTION,
-        getQuestionDocId('project01', 'q4Id')
+        getQuestionDocId('project01', 'q4Id'),
+        new DocSubscription('spec')
       );
       await questionDoc.submitJson0Op(op => {
         op.insert(d => d.answers, 0, newAnswer);
@@ -228,8 +230,8 @@ describe('CheckingOverviewComponent', () => {
       expect(env.answerTotal).toContain('4');
     }));
 
-    it('should show question in canonical order', fakeAsync(() => {
-      const env = new TestEnvironment();
+    it('should show question in canonical order', fakeAsync(async () => {
+      const env = await TestEnvironment.create();
       env.waitForQuestions();
       expect(env.textRows.length).toEqual(2);
       // Click on Matthew and then Matthew 1
@@ -239,8 +241,8 @@ describe('CheckingOverviewComponent', () => {
       expect(env.textRows[3].nativeElement.textContent).toContain('v4');
     }));
 
-    it('should show new question after adding to a project with no questions', fakeAsync(() => {
-      const env = new TestEnvironment(false);
+    it('should show new question after adding to a project with no questions', fakeAsync(async () => {
+      const env = await TestEnvironment.create({ withQuestionData: false });
       const dateNow = new Date();
       const newQuestion: Question = {
         dataId: 'newQId1',
@@ -268,8 +270,8 @@ describe('CheckingOverviewComponent', () => {
   });
 
   describe('Edit Question', () => {
-    it('should expand/collapse questions in book text', fakeAsync(() => {
-      const env = new TestEnvironment();
+    it('should expand/collapse questions in book text', fakeAsync(async () => {
+      const env = await TestEnvironment.create();
       const id = new TextDocId('project01', 40, 1);
       env.waitForQuestions();
       expect(env.textRows.length).toEqual(2);
@@ -289,8 +291,8 @@ describe('CheckingOverviewComponent', () => {
       expect(env.textRows.length).toEqual(2);
     }));
 
-    it('should open a dialog to edit a question', fakeAsync(() => {
-      const env = new TestEnvironment();
+    it('should open a dialog to edit a question', fakeAsync(async () => {
+      const env = await TestEnvironment.create();
       env.waitForQuestions();
       env.clickExpanderAtRow(0);
       env.clickExpanderAtRow(1);
@@ -302,8 +304,8 @@ describe('CheckingOverviewComponent', () => {
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
     }));
 
-    it('should bring up question dialog only if user confirms question answered dialog', fakeAsync(() => {
-      const env = new TestEnvironment();
+    it('should bring up question dialog only if user confirms question answered dialog', fakeAsync(async () => {
+      const env = await TestEnvironment.create();
       env.waitForQuestions();
       env.clickExpanderAtRow(0);
       env.clickExpanderAtRow(1);
@@ -328,19 +330,21 @@ describe('CheckingOverviewComponent', () => {
   });
 
   describe('Import Questions', () => {
-    it('should open a dialog to import questions', fakeAsync(() => {
-      const env = new TestEnvironment();
+    it('should open a dialog to import questions', fakeAsync(async () => {
+      const env = await TestEnvironment.create();
       env.waitForQuestions();
       env.clickElement(env.importButton);
       verify(mockedDialogService.openMatDialog(ImportQuestionsDialogComponent, anything())).once();
       expect().nothing();
     }));
 
-    it('should not show import questions button until list of texts have loaded', fakeAsync(() => {
-      const env = new TestEnvironment();
+    it('should not show import questions button until list of texts have loaded', fakeAsync(async () => {
+      const env = await TestEnvironment.create();
       const delayPromise = new Promise<void>(resolve => setTimeout(resolve, 10 * 1000));
       when(mockedQuestionsService.queryQuestions(anything(), anything(), anything())).thenReturn(
-        delayPromise.then(() => env.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {}, noopDestroyRef))
+        delayPromise.then(
+          async () => await env.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, 'spec', {}, noopDestroyRef)
+        )
       );
 
       env.waitForQuestions();
@@ -353,9 +357,9 @@ describe('CheckingOverviewComponent', () => {
   });
 
   describe('Export Questions', () => {
-    it('should export questions to CSV', fakeAsync(() => {
+    it('should export questions to CSV', fakeAsync(async () => {
       spyOn(saveAs, 'saveAs').and.stub();
-      const env = new TestEnvironment();
+      const env = await TestEnvironment.create();
       env.waitForQuestions();
       env.clickElement(env.exportButton);
       expect(saveAs).toHaveBeenCalled();
@@ -363,8 +367,8 @@ describe('CheckingOverviewComponent', () => {
   });
 
   describe('for Reviewer', () => {
-    it('should display "No question" message', fakeAsync(() => {
-      const env = new TestEnvironment(false);
+    it('should display "No question" message', fakeAsync(async () => {
+      const env = await TestEnvironment.create({ withQuestionData: false });
       env.setCurrentUser(env.checkerUser);
       env.fixture.detectChanges();
       expect(env.loadingQuestionsLabel).not.toBeNull();
@@ -374,24 +378,24 @@ describe('CheckingOverviewComponent', () => {
       expect(env.noQuestionsLabel).not.toBeNull();
     }));
 
-    it('should not display progress for project admin', fakeAsync(() => {
-      const env = new TestEnvironment();
+    it('should not display progress for project admin', fakeAsync(async () => {
+      const env = await TestEnvironment.create();
       env.setCurrentUser(env.adminUser);
       env.waitForQuestions();
       expect(env.overallProgressChart).toBeNull();
       expect(env.reviewerQuestionPanel).toBeNull();
     }));
 
-    it('should display progress', fakeAsync(() => {
-      const env = new TestEnvironment();
+    it('should display progress', fakeAsync(async () => {
+      const env = await TestEnvironment.create();
       env.setCurrentUser(env.checkerUser);
       env.waitForQuestions();
       expect(env.overallProgressChart).not.toBeNull();
       expect(env.reviewerQuestionPanel).not.toBeNull();
     }));
 
-    it('should calculate the right progress proportions and stats', fakeAsync(() => {
-      const env = new TestEnvironment();
+    it('should calculate the right progress proportions and stats', fakeAsync(async () => {
+      const env = await TestEnvironment.create();
       env.setCurrentUser(env.checkerUser);
       env.waitForQuestions();
       const [unread, read, answered] = env.component.bookProgress({
@@ -410,8 +414,8 @@ describe('CheckingOverviewComponent', () => {
       expect(env.component.myLikeCount).toBe(3);
     }));
 
-    it('should calculate the right stats for project admin', fakeAsync(() => {
-      const env = new TestEnvironment();
+    it('should calculate the right stats for project admin', fakeAsync(async () => {
+      const env = await TestEnvironment.create();
       env.setCurrentUser(env.adminUser);
       env.waitForQuestions();
       // 1 of 7 questions of MAT is archived + 1 in LUK
@@ -421,21 +425,21 @@ describe('CheckingOverviewComponent', () => {
       expect(env.component.myLikeCount).toBe(4);
     }));
 
-    it('should hide like card if see other user responses is disabled', fakeAsync(() => {
-      const env = new TestEnvironment();
+    it('should hide like card if see other user responses is disabled', fakeAsync(async () => {
+      const env = await TestEnvironment.create();
       env.setCurrentUser(env.checkerUser);
       env.waitForQuestions();
       expect(env.likePanel).not.toBeNull();
-      env.setSeeOtherUserResponses(false);
+      await env.setSeeOtherUserResponses(false);
       expect(env.likePanel).toBeNull();
-      env.setSeeOtherUserResponses(true);
+      await env.setSeeOtherUserResponses(true);
       expect(env.likePanel).not.toBeNull();
     }));
   });
 
   describe('Archive Question', () => {
-    it('should display "No archived question" message', fakeAsync(() => {
-      const env = new TestEnvironment();
+    it('should display "No archived question" message', fakeAsync(async () => {
+      const env = await TestEnvironment.create();
       env.fixture.detectChanges();
       expect(env.loadingArchivedQuestionsLabel).not.toBeNull();
       env.waitForQuestions();
@@ -452,10 +456,11 @@ describe('CheckingOverviewComponent', () => {
     }));
 
     it('should not display loading if user is offline', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      const questionDoc: QuestionDoc = env.realtimeService.get(
+      const env = await TestEnvironment.create();
+      const questionDoc: QuestionDoc = await env.realtimeService.get(
         QuestionDoc.COLLECTION,
-        getQuestionDocId('project01', 'q7Id')
+        getQuestionDocId('project01', 'q7Id'),
+        new DocSubscription('spec')
       );
       await questionDoc.submitJson0Op(op => {
         op.set(d => d.isArchived, false);
@@ -467,8 +472,8 @@ describe('CheckingOverviewComponent', () => {
       env.waitForQuestions();
     }));
 
-    it('archives and republishes a question', fakeAsync(() => {
-      const env = new TestEnvironment();
+    it('archives and republishes a question', fakeAsync(async () => {
+      const env = await TestEnvironment.create();
       env.waitForQuestions();
       expect(env.textRows.length).toEqual(2);
       expect(env.textArchivedRows.length).toEqual(1);
@@ -495,8 +500,8 @@ describe('CheckingOverviewComponent', () => {
       discardPeriodicTasks();
     }));
 
-    it('archives and republishes questions for an entire chapter or book', fakeAsync(() => {
-      const env = new TestEnvironment();
+    it('archives and republishes questions for an entire chapter or book', fakeAsync(async () => {
+      const env = await TestEnvironment.create();
       env.waitForQuestions();
 
       // VERIFY CORRECT SETUP
@@ -572,16 +577,16 @@ describe('CheckingOverviewComponent', () => {
   });
 
   describe('Chapter Audio', () => {
-    it('show audio icon on chapter heading', fakeAsync(() => {
-      const env = new TestEnvironment(true, true);
+    it('show audio icon on chapter heading', fakeAsync(async () => {
+      const env = await TestEnvironment.create({ withQuestionData: true, withChapterAudioData: true });
       env.waitForQuestions();
 
       env.clickExpanderAtRow(2);
       expect(env.checkChapterHasAudio(3)).toBeTrue();
     }));
 
-    it('chapter with audio has heading visible when no questions ', fakeAsync(() => {
-      const env = new TestEnvironment(true, true);
+    it('chapter with audio has heading visible when no questions ', fakeAsync(async () => {
+      const env = await TestEnvironment.create({ withQuestionData: true, withChapterAudioData: true });
       env.waitForQuestions();
       const johnIndex = 2;
       const johnChapter1Index = 3;
@@ -600,8 +605,8 @@ describe('CheckingOverviewComponent', () => {
       discardPeriodicTasks();
     }));
 
-    it('click chapter with audio and no questions should not open panel ', fakeAsync(() => {
-      const env = new TestEnvironment(true, true);
+    it('click chapter with audio and no questions should not open panel ', fakeAsync(async () => {
+      const env = await TestEnvironment.create({ withQuestionData: true, withChapterAudioData: true });
       env.waitForQuestions();
       const johnIndex = 2;
       const johnChapter2Index = 4;
@@ -613,8 +618,8 @@ describe('CheckingOverviewComponent', () => {
       expect(env.checkRowIsExpanded(johnChapter2Index)).toBeFalse();
     }));
 
-    it('hide archive questions on book when only audio is available ', fakeAsync(() => {
-      const env = new TestEnvironment(true, true);
+    it('hide archive questions on book when only audio is available ', fakeAsync(async () => {
+      const env = await TestEnvironment.create({ withQuestionData: true, withChapterAudioData: true });
       env.waitForQuestions();
       const johnIndex = 2;
 
@@ -630,8 +635,9 @@ describe('CheckingOverviewComponent', () => {
     }));
   });
 
-  it('should handle question in a book that does not exist', fakeAsync(() => {
-    const env = new TestEnvironment();
+  it('should handle question in a book that does not exist', fakeAsync(async () => {
+    const env = await TestEnvironment.create();
+    flush();
     env.addQuestion({
       dataId: 'qMissingBook',
       projectRef: 'project01',
@@ -651,8 +657,9 @@ describe('CheckingOverviewComponent', () => {
     expect(env.component.questionCount(41, 1)).toEqual(0);
   }));
 
-  it('should display question reference range if present', fakeAsync(() => {
-    const env = new TestEnvironment();
+  it('should display question reference range if present', fakeAsync(async () => {
+    const env = await TestEnvironment.create();
+    flush();
     env.setCurrentUser(env.adminUser);
 
     const verseRefWithRange: VerseRefData = {
@@ -704,10 +711,9 @@ interface UserInfo {
 }
 
 class TestEnvironment {
-  component: CheckingOverviewComponent;
-  fixture: ComponentFixture<CheckingOverviewComponent>;
-  location: Location;
-
+  private _component: CheckingOverviewComponent | undefined;
+  private _fixture: ComponentFixture<CheckingOverviewComponent> | undefined;
+  readonly location: Location = TestBed.inject(Location);
   readonly ngZone: NgZone = TestBed.inject(NgZone);
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
@@ -768,7 +774,21 @@ class TestEnvironment {
 
   private readonly anotherUserId = 'anotherUserId';
 
-  constructor(withQuestionData: boolean = true, withChapterAudioData: boolean = false) {
+  private constructor() {}
+
+  static async create({
+    withQuestionData = true,
+    withChapterAudioData = false
+  }: { withQuestionData?: boolean; withChapterAudioData?: boolean } = {}): Promise<TestEnvironment> {
+    const env = new TestEnvironment();
+    await env.init({ withQuestionData, withChapterAudioData });
+    return env;
+  }
+
+  private async init({
+    withQuestionData = true,
+    withChapterAudioData = false
+  }: { withQuestionData?: boolean; withChapterAudioData?: boolean } = {}): Promise<void> {
     if (withQuestionData) {
       // Question 2 deliberately before question 1 to test sorting
       this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, [
@@ -994,27 +1014,38 @@ class TestEnvironment {
       }
     ]);
     if (withChapterAudioData) {
-      this.addChapterAudio();
+      await this.addChapterAudio();
     }
 
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(mockedQuestionDialogService.questionDialog(anything())).thenResolve();
     when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
-    when(mockedProjectService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
+    when(mockedProjectService.getProfile(anything(), anything())).thenCall((id, subscription) =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, subscription)
     );
-    when(mockedProjectService.getUserConfig(anything(), anything())).thenCall((id, userId) =>
-      this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, getSFProjectUserConfigDocId(id, userId))
+    when(mockedProjectService.getUserConfig(anything(), anything(), anything())).thenCall((id, userId, subscriber) =>
+      this.realtimeService.subscribe(
+        SFProjectUserConfigDoc.COLLECTION,
+        getSFProjectUserConfigDocId(id, userId),
+        subscriber
+      )
     );
-    when(mockedQuestionsService.queryQuestions('project01', anything(), anything())).thenCall(() =>
-      this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {}, noopDestroyRef)
+    when(mockedQuestionsService.queryQuestions('project01', anything(), anything())).thenCall(
+      async () => await this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, 'spec', {}, noopDestroyRef)
     );
     when(mockedProjectService.onlineDeleteAudioTimingData(anything(), anything(), anything())).thenCall(
-      (projectId, book, chapter) => {
-        const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
+      async (projectId, book, chapter) => {
+        const projectDoc = await this.realtimeService.get<SFProjectProfileDoc>(
+          SFProjectProfileDoc.COLLECTION,
+          projectId,
+          new DocSubscription('spec')
+        );
         const textIndex: number = projectDoc.data!.texts.findIndex(t => t.bookNum === book);
         const chapterIndex: number = projectDoc.data!.texts[textIndex].chapters.findIndex(c => c.number === chapter);
-        projectDoc.submitJson0Op(op => op.set(p => p.texts[textIndex].chapters[chapterIndex].hasAudio, false), false);
+        await projectDoc.submitJson0Op(
+          op => op.set(p => p.texts[textIndex].chapters[chapterIndex].hasAudio, false),
+          false
+        );
       }
     );
     when(mockedImportQuestionsDialogRef.afterClosed()).thenReturn(of(undefined));
@@ -1024,9 +1055,18 @@ class TestEnvironment {
     this.setCurrentUser(this.adminUser);
     this.testOnlineStatusService.setIsOnline(true);
 
-    this.fixture = TestBed.createComponent(CheckingOverviewComponent);
-    this.component = this.fixture.componentInstance;
-    this.location = TestBed.inject(Location);
+    this._fixture = TestBed.createComponent(CheckingOverviewComponent);
+    this._component = this.fixture.componentInstance;
+  }
+
+  get component(): CheckingOverviewComponent {
+    if (this._component == null) throw new Error('Uninitialized');
+    return this._component;
+  }
+
+  get fixture(): ComponentFixture<CheckingOverviewComponent> {
+    if (this._fixture == null) throw new Error('Uninitialized');
+    return this._fixture;
   }
 
   get addQuestionButton(): DebugElement {
@@ -1190,20 +1230,16 @@ class TestEnvironment {
     this.waitForProjectDocChanges();
   }
 
-  setSeeOtherUserResponses(isEnabled: boolean): void {
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01');
-    projectDoc.submitJson0Op(
+  async setSeeOtherUserResponses(isEnabled: boolean): Promise<void> {
+    const projectDoc = await this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      'project01',
+      new DocSubscription('spec')
+    );
+    await projectDoc.submitJson0Op(
       op => op.set<boolean>(p => p.checkingConfig.usersSeeEachOthersResponses, isEnabled),
       false
     );
-    this.waitForProjectDocChanges();
-  }
-
-  setCheckingEnabled(isEnabled: boolean): void {
-    this.ngZone.run(() => {
-      const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01');
-      projectDoc.submitJson0Op(op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, isEnabled), false);
-    });
     this.waitForProjectDocChanges();
   }
 
@@ -1251,7 +1287,7 @@ class TestEnvironment {
     });
   }
 
-  private addChapterAudio(): void {
+  private async addChapterAudio(): Promise<void> {
     const text: TextInfo = {
       bookNum: 43,
       hasSource: false,
@@ -1261,9 +1297,13 @@ class TestEnvironment {
       ],
       permissions: {}
     };
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01');
+    const projectDoc = await this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      'project01',
+      new DocSubscription('spec')
+    );
     const index: number = projectDoc.data!.texts.length - 1;
-    projectDoc.submitJson0Op(op => op.insert(p => p.texts, index, text), false);
+    await projectDoc.submitJson0Op(op => op.insert(p => p.texts, index, text), false);
     this.addQuestion({
       dataId: 'q9Id',
       projectRef: 'project01',

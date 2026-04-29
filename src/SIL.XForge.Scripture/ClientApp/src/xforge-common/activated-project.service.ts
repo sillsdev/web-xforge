@@ -3,12 +3,11 @@ import { TestBed } from '@angular/core/testing';
 import { ActivationEnd, Router } from '@angular/router';
 import ObjectID from 'bson-objectid';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { filter, map, startWith, switchMap } from 'rxjs/operators';
-import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { distinctUntilChanged, filter, map, skip, startWith, switchMap } from 'rxjs/operators';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
+import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../app/core/models/sf-project-profile-doc';
-import { PermissionsService } from '../app/core/permissions.service';
 import { SFProjectService } from '../app/core/sf-project.service';
-import { CacheService } from '../app/shared/cache-service/cache.service';
 import { noopDestroyRef } from './realtime.service';
 interface IActiveProjectIdService {
   /** SF project id */
@@ -53,16 +52,22 @@ export class ActiveProjectIdService implements IActiveProjectIdService {
 export class ActivatedProjectService {
   private _projectId$ = new BehaviorSubject<string | undefined>(undefined);
   private _projectDoc$ = new BehaviorSubject<SFProjectProfileDoc | undefined>(undefined);
+  private currentProjectDocSubscription?: DocSubscription;
+  private pendingProjectDocSubscription?: DocSubscription;
 
   constructor(
     private readonly projectService: SFProjectService,
-    private readonly cacheService: CacheService,
     @Inject(ActiveProjectIdService) activeProjectIdService: IActiveProjectIdService,
     private destroyRef: DestroyRef
   ) {
     activeProjectIdService.projectId$
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(projectId => this.selectProject(projectId));
+
+    this.destroyRef.onDestroy(() => {
+      this.pendingProjectDocSubscription?.unsubscribe();
+      this.currentProjectDocSubscription?.unsubscribe();
+    });
   }
 
   /** SF project id */
@@ -80,6 +85,7 @@ export class ActivatedProjectService {
     return this._projectId$;
   }
 
+  /** Note that ActivatedProjectService is managing when to unsubscribe from the returned project document. */
   get projectDoc(): SFProjectProfileDoc | undefined {
     return this._projectDoc$.getValue();
   }
@@ -87,9 +93,6 @@ export class ActivatedProjectService {
   private set projectDoc(projectDoc: SFProjectProfileDoc | undefined) {
     if (this.projectDoc !== projectDoc) {
       this._projectDoc$.next(projectDoc);
-      if (this.projectDoc !== undefined) {
-        void this.cacheService.cache(this.projectDoc);
-      }
     }
   }
 
@@ -105,17 +108,69 @@ export class ActivatedProjectService {
     );
   }
 
-  private async selectProject(projectId: string | undefined): Promise<void> {
+  /** Emits when a different project is activated than the last project that was activated. */
+  get switched$(): Observable<void> {
+    return this.projectDoc$.pipe(
+      filterNullish(),
+      // Avoid comparing references and compare project IDs.
+      map(projectDoc => projectDoc.id),
+      distinctUntilChanged(),
+      skip(1),
+      map((): void => undefined)
+    );
+  }
+
+  /** Emits a different project that is activated than the last project that was activated. */
+  get switchedDoc$(): Observable<SFProjectProfileDoc> {
+    return this.projectDoc$.pipe(
+      filterNullish(),
+      distinctUntilChanged((prev: SFProjectProfileDoc, curr: SFProjectProfileDoc) => prev.id === curr.id),
+      skip(1)
+    );
+  }
+
+  /** Emits the active project, and each newly activated project that is different than the prior. */
+  get differentDefinedDoc$(): Observable<SFProjectProfileDoc> {
+    return this.projectDoc$.pipe(
+      filterNullish(),
+      distinctUntilChanged((prev: SFProjectProfileDoc, curr: SFProjectProfileDoc) => prev.id === curr.id)
+    );
+  }
+
+  protected async selectProject(projectId: string | undefined): Promise<void> {
     if (projectId == null) {
+      this.pendingProjectDocSubscription?.unsubscribe();
+      this.pendingProjectDocSubscription = undefined;
       this.projectId = undefined;
       this.projectDoc = undefined;
       return;
     }
+
     this.projectId = projectId;
-    const projectDoc: SFProjectProfileDoc = await this.projectService.getProfile(projectId);
-    // Make sure the project ID is still the same before updating the project document
-    if (this.projectId === projectId) {
-      this.projectDoc = projectDoc;
+
+    this.pendingProjectDocSubscription?.unsubscribe();
+
+    const previousDocSubscription: DocSubscription | undefined = this.currentProjectDocSubscription;
+    const newDocSubscription = new DocSubscription('ActivatedProjectService');
+    this.pendingProjectDocSubscription = newDocSubscription;
+
+    try {
+      const projectDoc: SFProjectProfileDoc = await this.projectService.getProfile(projectId, newDocSubscription);
+
+      // Before updating the project document, make sure our method run is not getting stepped on by concurrent calls to selectProject.
+      if (this.projectId === projectId && this.pendingProjectDocSubscription === newDocSubscription) {
+        this.pendingProjectDocSubscription = undefined;
+        this.currentProjectDocSubscription = newDocSubscription;
+        this.projectDoc = projectDoc;
+        previousDocSubscription?.unsubscribe();
+      }
+    } finally {
+      if (this.currentProjectDocSubscription !== newDocSubscription) {
+        if (this.pendingProjectDocSubscription === newDocSubscription) {
+          this.pendingProjectDocSubscription = undefined;
+        }
+        newDocSubscription.unsubscribe();
+      }
     }
   }
 }
@@ -129,19 +184,18 @@ export class TestActiveProjectIdService implements IActiveProjectIdService {
 export class TestActivatedProjectService extends ActivatedProjectService {
   constructor(
     projectService: SFProjectService,
-    cacheService: CacheService,
     @Inject(ActiveProjectIdService) activeProjectIdService: IActiveProjectIdService
   ) {
-    super(projectService, cacheService, activeProjectIdService, noopDestroyRef);
+    super(projectService, activeProjectIdService, noopDestroyRef);
   }
 
-  static withProjectId(projectId: string): TestActivatedProjectService {
+  static withProjectId(projectId?: string): TestActivatedProjectService {
     const projectService = TestBed.inject(SFProjectService);
-    const permissionsService = TestBed.inject(PermissionsService);
-    return new TestActivatedProjectService(
-      projectService,
-      new CacheService(projectService, permissionsService),
-      new TestActiveProjectIdService(projectId)
-    );
+    return new TestActivatedProjectService(projectService, new TestActiveProjectIdService(projectId));
+  }
+
+  /** Simulate active project changing. */
+  async setProject(projectId: string | undefined): Promise<void> {
+    await this.selectProject(projectId);
   }
 }

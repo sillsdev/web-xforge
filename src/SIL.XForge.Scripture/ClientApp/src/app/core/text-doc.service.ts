@@ -7,6 +7,7 @@ import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-dat
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { Observable, Subject } from 'rxjs';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserService } from 'xforge-common/user.service';
 import { TextDoc, TextDocId, TextDocSource } from './models/text-doc';
 import { SFProjectService } from './sf-project.service';
@@ -29,20 +30,25 @@ export class TextDocService {
    * @param {TextDocSource} source The source of the op. This is sent to the server.
    */
   async overwrite(textDocId: TextDocId, newDelta: Delta, source: TextDocSource): Promise<void> {
-    const textDoc: TextDoc = await this.projectService.getText(textDocId);
+    const docSubscription = new DocSubscription('TextDocService');
+    try {
+      const textDoc: TextDoc = await this.projectService.getText(textDocId, docSubscription);
 
-    if (textDoc.data?.ops == null) {
-      throw new Error(`No TextDoc data for ${textDocId}`);
+      if (textDoc.data?.ops == null) {
+        throw new Error(`No TextDoc data for ${textDocId}`);
+      }
+
+      const origDelta: Delta = new Delta(textDoc.data.ops);
+      const diff: Delta = origDelta.diff(newDelta);
+
+      // Update text doc directly
+      await textDoc.submit(diff, source);
+
+      // Notify so that TextViewModels can update
+      this.getLocalSystemChangesInternal$(textDocId).next(diff);
+    } finally {
+      docSubscription.unsubscribe();
     }
-
-    const origDelta: Delta = new Delta(textDoc.data.ops);
-    const diff: Delta = origDelta.diff(newDelta);
-
-    // Update text doc directly
-    await textDoc.submit(diff, source);
-
-    // Notify so that TextViewModels can update
-    this.getLocalSystemChangesInternal$(textDocId).next(diff);
   }
 
   /**

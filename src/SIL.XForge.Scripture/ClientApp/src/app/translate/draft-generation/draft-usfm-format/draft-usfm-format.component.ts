@@ -34,6 +34,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
@@ -302,7 +303,12 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(async ([source, bookNum]) => {
         if (currentUser.data?.sites[environment.siteId].projects.includes(source.draftingSources[0].projectRef)) {
-          this.translateSource ??= (await this.projectService.getProfile(source.draftingSources[0].projectRef)).data;
+          this.translateSource ??= (
+            await this.projectService.getProfile(
+              source.draftingSources[0].projectRef,
+              new DocSubscription('DraftUsfmFormatComponent', this.destroyRef)
+            )
+          ).data;
         }
 
         this.showDraftSourceWarning = this.translateSource == null;
