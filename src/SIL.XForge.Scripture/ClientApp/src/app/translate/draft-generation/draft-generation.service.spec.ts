@@ -485,70 +485,6 @@ describe('DraftGenerationService', () => {
     }));
   });
 
-  describe('getGeneratedDraft', () => {
-    it('should get the pre-translations for the specified book/chapter and return an observable of DraftSegmentMap', fakeAsync(() => {
-      const book = 43;
-      const chapter = 3;
-      const preTranslationData = {
-        preTranslations: [
-          { reference: 'verse_3_16', translation: 'For God so loved the world' },
-          { reference: 'verse_1_1', translation: 'In the beginning was the Word' }
-        ]
-      };
-
-      // SUT
-      service.getGeneratedDraft(projectId, book, chapter).subscribe(result => {
-        expect(result).toEqual({
-          verse_3_16: 'For God so loved the world ',
-          verse_1_1: 'In the beginning was the Word '
-        });
-      });
-      tick();
-
-      // Setup the HTTP request
-      const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}`
-      );
-      expect(req.request.method).toEqual('GET');
-      req.flush(preTranslationData);
-      tick();
-    }));
-
-    it('should handle empty preTranslations array', fakeAsync(() => {
-      const book = 43;
-      const chapter = 3;
-      const preTranslationData = {
-        preTranslations: []
-      };
-
-      // SUT
-      service.getGeneratedDraft(projectId, book, chapter).subscribe(result => {
-        expect(result).toEqual({});
-      });
-      tick();
-
-      // Setup the HTTP request
-      const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}`
-      );
-      expect(req.request.method).toEqual('GET');
-      req.flush(preTranslationData);
-      tick();
-    }));
-
-    it('should return an empty value if offline', fakeAsync(() => {
-      const book = 43;
-      const chapter = 3;
-      testOnlineStatusService.setIsOnline(false);
-
-      // SUT
-      service.getGeneratedDraft(projectId, book, chapter).subscribe(result => {
-        expect(result).toEqual({});
-      });
-      tick();
-    }));
-  });
-
   describe('getGeneratedDraftDeltaOperations', () => {
     it('should get the pre-translation ops for the specified book/chapter and return an observable', fakeAsync(() => {
       const book = 43;
@@ -923,55 +859,6 @@ describe('DraftGenerationService', () => {
       service.getGeneratedDraftUsfm(projectId, book, chapter, undefined).subscribe(result => {
         expect(result).toBeUndefined();
       });
-      tick();
-    }));
-  });
-
-  describe('draftExists', () => {
-    it('should return true if draft exists', fakeAsync(() => {
-      const book = 43;
-      const chapter = 3;
-      const preTranslationData = {
-        preTranslations: [
-          { reference: 'verse_3_16', translation: 'For God so loved the world' },
-          { reference: 'verse_1_1', translation: 'In the beginning was the Word' }
-        ]
-      };
-
-      // SUT
-      service.draftExists(projectId, book, chapter).subscribe(result => {
-        expect(result).toBe(true);
-      });
-      tick();
-
-      // Setup the HTTP request
-      const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}`
-      );
-      expect(req.request.method).toEqual('GET');
-      req.flush(preTranslationData);
-      tick();
-    }));
-
-    it('should return false if draft does not exist', fakeAsync(() => {
-      const book = 43;
-      const chapter = 3;
-      const preTranslationData = {
-        preTranslations: []
-      };
-
-      // SUT
-      service.draftExists(projectId, book, chapter).subscribe(result => {
-        expect(result).toBe(false);
-      });
-      tick();
-
-      // Setup the HTTP request
-      const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}`
-      );
-      expect(req.request.method).toEqual('GET');
-      req.flush(preTranslationData);
       tick();
     }));
   });

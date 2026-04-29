@@ -547,7 +547,6 @@ describe('EditorDraftComponent', () => {
           ]
         })
       } as SFProjectProfileDoc;
-      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
       when(mockActivatedProjectService.projectDoc$).thenReturn(of(testProjectDoc));
       when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
 
@@ -573,7 +572,6 @@ describe('EditorDraftComponent', () => {
           ]
         })
       } as SFProjectProfileDoc;
-      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
       when(mockActivatedProjectService.projectDoc$).thenReturn(of(testProjectDoc));
       when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
 
@@ -605,7 +603,6 @@ describe('EditorDraftComponent', () => {
           ]
         })
       } as SFProjectProfileDoc;
-      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(false));
       when(mockActivatedProjectService.projectDoc$).thenReturn(of(testProjectDoc));
       when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
       when(mockSFProjectService.hasDraft(anything(), anything(), anything(), anything())).thenReturn(false);
@@ -636,7 +633,6 @@ describe('EditorDraftComponent', () => {
       when(mockDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(
         of({ state: BuildStates.Canceled } as BuildDto)
       );
-      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
       when(mockActivatedProjectService.projectDoc$).thenReturn(of(testProjectDoc));
       when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
 

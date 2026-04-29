@@ -23,10 +23,7 @@ import {
   BuildConfig,
   DRAFT_GENERATION_SERVICE_OPTIONS,
   DraftGenerationServiceOptions,
-  DraftSegmentMap,
-  DraftZipProgress,
-  PreTranslation,
-  PreTranslationData
+  DraftZipProgress
 } from './draft-generation';
 
 @Injectable({
@@ -264,34 +261,6 @@ export class DraftGenerationService {
   }
 
   /**
-   * Gets the pre-translations for the specified book/chapter using the last completed build.
-   * @param projectId The SF project id for the target translation.
-   * @param book The book number.
-   * @param chapter The chapter number.
-   * @returns An observable dictionary of 'segmentRef -> segment text',
-   * or an empty dictionary if no pre-translations exist.
-   */
-  getGeneratedDraft(projectId: string, book: number, chapter: number): Observable<DraftSegmentMap> {
-    if (!this.onlineStatusService.isOnline) {
-      return of({});
-    }
-    return this.httpClient
-      .get<PreTranslationData>(`translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}`)
-      .pipe(
-        map(res => (res.data && this.toDraftSegmentMap(res.data.preTranslations)) ?? {}),
-        catchError(err => {
-          // If no pre-translations exist, return empty dictionary
-          if (err.status === 403 || err.status === 404 || err.status === 409) {
-            return of({});
-          }
-
-          this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
-          return of({});
-        })
-      );
-  }
-
-  /**
    * Gets the pre-translations as delta operations for the specified book/chapter using the last completed build.
    * @param projectId The SF project id for the target translation.
    * @param book The book number.
@@ -340,9 +309,8 @@ export class DraftGenerationService {
    * Gets the pre-translations as delta operations for the specified book using the last completed build.
    * @param projectId The SF project id for the target translation.
    * @param book The book number.
-   * @param chapter The chapter number.
    * @param timestamp The timestamp to download the draft at. If undefined, the latest draft will be downloaded.
-   * @returns An array of delta operations or an empty array at if no pre-translations exist.
+   * @returns A map of chapter numbers to arrays of delta operations or an empty map if no pre-translations exist.
    * The 405 error that occurs when there is no USFM support is thrown to the caller.
    */
   getGeneratedDraftBookDeltaOperations(
@@ -535,41 +503,11 @@ export class DraftGenerationService {
   }
 
   /**
-   * Determines if a draft exists for the specified book/chapter.
-   * @param projectId The SF project id for the target translation.
-   * @param book The book number.
-   * @param chapter The chapter number.
-   * @returns An observable indicating if a draft exists.
-   */
-  draftExists(projectId: string, book: number, chapter: number): Observable<boolean> {
-    return this.getGeneratedDraft(projectId, book, chapter).pipe(map(draft => Object.keys(draft).length > 0));
-  }
-
-  /**
    * Calls the machine api to start a pre-translation build job.
    * This should only be called if no build is currently active.
    * @param buildConfig The build configuration.
    */
   private startBuild(buildConfig: BuildConfig): Observable<void> {
     return this.httpClient.post<void>(`translation/pretranslations`, buildConfig).pipe(map(res => res.data));
-  }
-
-  /**
-   * Transforms collection into dictionary of 'segmentRef -> segment text' for faster lookups.
-   * @param preTranslations Collection returned from the machine api.
-   * @returns A dictionary of 'segmentRef -> segment text'.
-   */
-  private toDraftSegmentMap(preTranslations: PreTranslation[]): DraftSegmentMap {
-    const draftSegmentMap: DraftSegmentMap = {};
-
-    for (const preTranslation of preTranslations) {
-      // Ensure single space at end to not crowd a following verse number.
-      // TODO: Make this more sophisticated to check next segment for `{ insert: { verse: {} } }` before adding space?
-      // TODO: ... and investigate if there is a better way to display a space before the next verse marker
-      // TODO: ... without counting the space as part of the verse text.
-      draftSegmentMap[preTranslation.reference] = preTranslation.translation.trimEnd() + ' ';
-    }
-
-    return draftSegmentMap;
   }
 }
