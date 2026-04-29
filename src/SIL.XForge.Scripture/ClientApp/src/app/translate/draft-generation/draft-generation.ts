@@ -16,13 +16,6 @@ export interface BuildConfig {
 }
 
 /**
- * Dictionary of 'segmentRef -> segment text'.
- */
-export interface DraftSegmentMap {
-  [segmentRefId: string]: string | undefined;
-}
-
-/**
  * The zipping progress when downloading a draft as a zip file.
  */
 export interface DraftZipProgress {
@@ -63,18 +56,3 @@ export const activeBuildStates: BuildStates[] = [
   BuildStates.Queued,
   BuildStates.Finishing
 ];
-
-/**
- * Data returned from machine api.
- */
-export interface PreTranslationData {
-  preTranslations: PreTranslation[];
-}
-
-/**
- * Collection item from data returned from machine api.
- */
-export interface PreTranslation {
-  reference: string;
-  translation: string;
-}
