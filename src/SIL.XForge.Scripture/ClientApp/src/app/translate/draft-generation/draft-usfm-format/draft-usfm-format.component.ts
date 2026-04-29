@@ -318,9 +318,8 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
           this.chaptersWithDrafts = [1];
           initialChapterNum = 1;
         }
-        const chapter: number =
+        this.chapterNum =
           this.chapterNum == null ? (initialChapterNum ?? this.chaptersWithDrafts[0]) : this.chaptersWithDrafts[0];
-        this.chapterChanged(chapter);
         this.reloadText();
       });
 

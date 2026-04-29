@@ -590,7 +590,7 @@ public class MachineApiController : ControllerBase
     /// <response code="409">The engine has not been built on the ML server.</response>
     /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
     [HttpGet(MachineApi.GetPreTranslationBookDelta)]
-    public async Task<ActionResult<Dictionary<int, Snapshot<TextData>>>> GetPreTranslationBookDeltaAsync(
+    public async Task<ActionResult<Dictionary<string, Snapshot<TextData>>>> GetPreTranslationBookDeltaAsync(
         string sfProjectId,
         int bookNum,
         [FromQuery] DateTime? timestamp,

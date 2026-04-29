@@ -1215,14 +1215,15 @@ public class MachineApiControllerTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        ActionResult<Dictionary<int, Snapshot<TextData>>> actual = await env.Controller.GetPreTranslationBookDeltaAsync(
-            Project01,
-            40,
-            null,
-            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
-            quoteFormat: QuoteStyleOptions.Denormalized,
-            CancellationToken.None
-        );
+        ActionResult<Dictionary<string, Snapshot<TextData>>> actual =
+            await env.Controller.GetPreTranslationBookDeltaAsync(
+                Project01,
+                40,
+                null,
+                paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+                quoteFormat: QuoteStyleOptions.Denormalized,
+                CancellationToken.None
+            );
 
         env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
         Assert.IsInstanceOf<ObjectResult>(actual.Result);
@@ -1247,14 +1248,15 @@ public class MachineApiControllerTests
             .Throws(new ForbiddenException());
 
         // SUT
-        ActionResult<Dictionary<int, Snapshot<TextData>>> actual = await env.Controller.GetPreTranslationBookDeltaAsync(
-            Project01,
-            40,
-            null,
-            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
-            quoteFormat: QuoteStyleOptions.Denormalized,
-            CancellationToken.None
-        );
+        ActionResult<Dictionary<string, Snapshot<TextData>>> actual =
+            await env.Controller.GetPreTranslationBookDeltaAsync(
+                Project01,
+                40,
+                null,
+                paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+                quoteFormat: QuoteStyleOptions.Denormalized,
+                CancellationToken.None
+            );
 
         Assert.IsInstanceOf<ForbidResult>(actual.Result);
     }
@@ -1277,14 +1279,15 @@ public class MachineApiControllerTests
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
-        ActionResult<Dictionary<int, Snapshot<TextData>>> actual = await env.Controller.GetPreTranslationBookDeltaAsync(
-            Project01,
-            40,
-            null,
-            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
-            quoteFormat: QuoteStyleOptions.Denormalized,
-            CancellationToken.None
-        );
+        ActionResult<Dictionary<string, Snapshot<TextData>>> actual =
+            await env.Controller.GetPreTranslationBookDeltaAsync(
+                Project01,
+                40,
+                null,
+                paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+                quoteFormat: QuoteStyleOptions.Denormalized,
+                CancellationToken.None
+            );
 
         Assert.IsInstanceOf<NotFoundResult>(actual.Result);
     }
@@ -1307,14 +1310,15 @@ public class MachineApiControllerTests
             .Throws(new InvalidOperationException());
 
         // SUT
-        ActionResult<Dictionary<int, Snapshot<TextData>>> actual = await env.Controller.GetPreTranslationBookDeltaAsync(
-            Project01,
-            40,
-            null,
-            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
-            quoteFormat: QuoteStyleOptions.Denormalized,
-            CancellationToken.None
-        );
+        ActionResult<Dictionary<string, Snapshot<TextData>>> actual =
+            await env.Controller.GetPreTranslationBookDeltaAsync(
+                Project01,
+                40,
+                null,
+                paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+                quoteFormat: QuoteStyleOptions.Denormalized,
+                CancellationToken.None
+            );
 
         Assert.IsInstanceOf<ConflictResult>(actual.Result);
     }
@@ -1337,14 +1341,15 @@ public class MachineApiControllerTests
             .Throws(new NotSupportedException());
 
         // SUT
-        ActionResult<Dictionary<int, Snapshot<TextData>>> actual = await env.Controller.GetPreTranslationBookDeltaAsync(
-            Project01,
-            40,
-            null,
-            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
-            quoteFormat: QuoteStyleOptions.Denormalized,
-            CancellationToken.None
-        );
+        ActionResult<Dictionary<string, Snapshot<TextData>>> actual =
+            await env.Controller.GetPreTranslationBookDeltaAsync(
+                Project01,
+                40,
+                null,
+                paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
+                quoteFormat: QuoteStyleOptions.Denormalized,
+                CancellationToken.None
+            );
 
         Assert.IsInstanceOf<IStatusCodeActionResult>(actual.Result);
         Assert.AreEqual(StatusCodes.Status405MethodNotAllowed, (actual.Result as IStatusCodeActionResult)?.StatusCode);
@@ -1373,14 +1378,15 @@ public class MachineApiControllerTests
             .Returns(Task.FromResult(new Dictionary<string, Snapshot<TextData>>()));
 
         // SUT
-        ActionResult<Dictionary<int, Snapshot<TextData>>> actual = await env.Controller.GetPreTranslationBookDeltaAsync(
-            Project01,
-            40,
-            null,
-            paragraphFormat,
-            quoteFormat,
-            CancellationToken.None
-        );
+        ActionResult<Dictionary<string, Snapshot<TextData>>> actual =
+            await env.Controller.GetPreTranslationBookDeltaAsync(
+                Project01,
+                40,
+                null,
+                paragraphFormat,
+                quoteFormat,
+                CancellationToken.None
+            );
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
     }
