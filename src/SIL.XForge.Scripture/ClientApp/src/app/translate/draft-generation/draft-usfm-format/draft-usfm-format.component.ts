@@ -222,6 +222,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   }
 
   close(): void {
+    // go back to the draft generation or edit and review page
     this.location.back();
   }
 

@@ -288,12 +288,16 @@ describe('DraftUsfmFormatComponent', () => {
     verify(mockedProjectService.onlineSetUsfmConfig(env.projectId, anything())).never();
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).twice();
 
-    // redirect to generate draft
     env.saveButton.click();
+    // detect immediate changes before the save operation is completed
+    env.fixture.detectChanges();
+    expect(env.fixture.nativeElement.querySelector('.progress.saving')).not.toBeNull();
+    expect(env.saveButton.disabled).toBe(true);
     tick();
     env.fixture.detectChanges();
     verify(mockedProjectService.onlineSetUsfmConfig(env.projectId, deepEqual(config))).once();
     verify(mockedServalAdministration.onlineRetrievePreTranslationStatus(env.projectId)).once();
+    // redirect to generate draft
     verify(mockedLocation.back()).once();
   }));
 
@@ -379,11 +383,11 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  get backButton(): HTMLElement {
+  get backButton(): HTMLButtonElement {
     return this.fixture.nativeElement.querySelector('.back');
   }
 
-  get saveButton(): HTMLElement {
+  get saveButton(): HTMLButtonElement {
     return this.fixture.nativeElement.querySelector('.save');
   }
 
