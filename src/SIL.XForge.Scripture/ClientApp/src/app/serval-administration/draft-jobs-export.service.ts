@@ -75,7 +75,7 @@ export class DraftJobsExportService {
     saveAs(blob, filename);
   }
 
-  protected createRsvRows(spreadsheetRows: SpreadsheetRow[]): (string | null)[][] {
+  private createRsvRows(spreadsheetRows: SpreadsheetRow[]): (string | null)[][] {
     // First row is headers.
     const headers: string[] = [
       'draftGenerationRequestId',
