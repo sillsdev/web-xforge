@@ -45,6 +45,7 @@ import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { UserService } from 'xforge-common/user.service';
 import { isPopulatedString, notNull } from '../../type-utils';
 import { InfoComponent } from '../shared/info/info.component';
+import { NoticeComponent } from '../shared/notice/notice.component';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { DateRangePickerComponent, NormalizedDateRange } from './date-range-picker.component';
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
@@ -139,6 +140,7 @@ interface SummaryDisplayItem {
     DateRangePickerComponent,
     OwnerComponent,
     InfoComponent,
+    NoticeComponent,
     MatCard,
     MatCardTitle,
     MatCardHeader,
