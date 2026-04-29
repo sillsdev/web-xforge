@@ -17,6 +17,9 @@ using MongoDB.Bson;
 using Newtonsoft.Json;
 using Serval.Client;
 using SIL.Converters.Usj;
+using SIL.Machine.Corpora;
+using SIL.Machine.QualityEstimation;
+using SIL.Machine.Statistics;
 using SIL.ObjectModel;
 using SIL.Scripture;
 using SIL.XForge.Configuration;
@@ -43,6 +46,7 @@ namespace SIL.XForge.Scripture.Services;
 public class MachineApiService(
     IBackgroundJobClient backgroundJobClient,
     IDeltaUsxMapper deltaUsxMapper,
+    IRepository<DraftMetrics> draftMetrics,
     IEventMetricService eventMetricService,
     IExceptionHandler exceptionHandler,
     IHttpRequestAccessor httpRequestAccessor,
@@ -2525,7 +2529,8 @@ public class MachineApiService(
                 );
 
                 // Update the pre-translation text documents
-                await UpdatePreTranslationTextDocumentsAsync(sfProjectId, cancellationToken);
+                string? buildId = translationBuild.Id;
+                await UpdatePreTranslationTextDocumentsAsync(sfProjectId, buildId, cancellationToken);
 
                 // Update the drafted scripture range to include the current scripture range
                 string draftedScriptureRange =
@@ -2547,7 +2552,6 @@ public class MachineApiService(
                 );
 
                 // Notify any SignalR clients subscribed to the project
-                string? buildId = translationBuild.Id;
                 await hubContext.NotifyBuildProgress(
                     sfProjectId,
                     new ServalBuildState { BuildId = buildId, State = nameof(ServalData.PreTranslationsRetrieved) }
@@ -2861,12 +2865,14 @@ public class MachineApiService(
     /// Updates the text documents locally with the latest pre-translation drafts.
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="buildId">The Serval build identifier.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>An asynchronous task.</returns>
     /// <exception cref="DataNotFoundException">Required data could not be found.</exception>
     /// <remarks>This can be mocked in unit tests.</remarks>
     protected internal virtual async Task UpdatePreTranslationTextDocumentsAsync(
         string sfProjectId,
+        string buildId,
         CancellationToken cancellationToken
     )
     {
@@ -2918,6 +2924,10 @@ public class MachineApiService(
             throw new ForbiddenException();
         }
 
+        // Only calculate quality estimation if the project is configured for it, and we have not calculated it already
+        List<VerseConfidence> verseConfidences = [];
+        bool calculateQualityEstimation = projectDoc.Data.TranslateConfig.DraftConfig.QualityEstimationConfig != null;
+
         // For every text we have a draft applied to, get the pre-translation
         foreach (
             (string bookId, List<int> chapters) in ScriptureRangeParser.GetChapters(
@@ -2962,8 +2972,86 @@ public class MachineApiService(
                     );
                     IDocument<TextDocument> textDocument = await conn.FetchAsync<TextDocument>(id);
                     await SaveTextDocumentAsync(textDocument, usj);
+
+                    // Get the verse confidences
+                    if (calculateQualityEstimation)
+                    {
+                        PreTranslation[] preTranslations = await preTranslationService.GetPreTranslationsAsync(
+                            sfProjectId,
+                            bookNum,
+                            chapterNum,
+                            cancellationToken
+                        );
+                        foreach (PreTranslation preTranslation in preTranslations)
+                        {
+                            string verse = preTranslation.Reference.Split('_').Last();
+                            var verseConfidence = new VerseConfidence(
+                                bookNum,
+                                chapterNum,
+                                verse,
+                                preTranslation.Confidence
+                            );
+                            verseConfidences.Add(verseConfidence);
+                        }
+                    }
                 }
             }
+        }
+
+        // Generate the draft metrics containing the confidence scores
+        if (calculateQualityEstimation)
+        {
+            ChrF3QualityEstimator estimator = new ChrF3QualityEstimator(
+                projectDoc.Data.TranslateConfig.DraftConfig.QualityEstimationConfig.Slope,
+                projectDoc.Data.TranslateConfig.DraftConfig.QualityEstimationConfig.Intercept
+            );
+            (
+                List<ScriptureSegmentUsability> _, // We do not require segment level confidence values
+                List<ScriptureChapterUsability> usabilityChapters,
+                List<ScriptureBookUsability> usabilityBooks
+            ) = estimator.EstimateQuality(
+                verseConfidences.Select(vc => (new ScriptureRef(vc.ToVerseRef()), vc.Confidence))
+            );
+            var entity = new DraftMetrics
+            {
+                Id = $"{sfProjectId}:{buildId}",
+                BookConfidences =
+                [
+                    .. usabilityBooks.Select(b => new BookConfidence
+                    {
+                        BookNum = Canon.BookIdToNumber(b.Book),
+                        // TODO: Update Machine to pass through this value, i.e. Confidence = b.Confidence,
+                        Confidence = StatisticalMethods.GeometricMean([
+                            .. verseConfidences
+                                .Where(vc => vc.BookNum == Canon.BookIdToNumber(b.Book))
+                                .Select(vc => vc.Confidence),
+                        ]),
+                        Label = b.Label.ToString(),
+                        ProjectedChrF3 = b.ProjectedChrF3,
+                        Usability = b.Usability,
+                    }),
+                ],
+                ChapterConfidences =
+                [
+                    .. usabilityChapters.Select(c => new ChapterConfidence
+                    {
+                        BookNum = Canon.BookIdToNumber(c.Book),
+                        ChapterNum = c.Chapter,
+                        // TODO: Update Machine to pass through this value, i.e. Confidence = b.Confidence,
+                        Confidence = StatisticalMethods.GeometricMean([
+                            .. verseConfidences
+                                .Where(vc => vc.BookNum == Canon.BookIdToNumber(c.Book) && vc.ChapterNum == c.Chapter)
+                                .Select(vc => vc.Confidence),
+                        ]),
+                        Label = c.Label.ToString(),
+                        ProjectedChrF3 = c.ProjectedChrF3,
+                        Usability = c.Usability,
+                    }),
+                ],
+                QualityEstimationConfig = projectDoc.Data.TranslateConfig.DraftConfig.QualityEstimationConfig,
+                VerseConfidences = verseConfidences,
+            };
+            await draftMetrics.ReplaceAsync(entity, upsert: true, cancellationToken);
         }
     }
 
