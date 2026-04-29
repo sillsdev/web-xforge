@@ -22,3 +22,4 @@ The software and a backing database can be run using the [dev container](.devcon
 
 - If you run frontend tests, run them in the `src/SIL.XForge.Scripture/ClientApp` directory with a command such as `npm run test:headless -- --watch=false --include '**/text.component.spec.ts' --include '**/settings.component.spec.ts'`
 - If you need to run all frontend tests, you can run them in the `src/SIL.XForge.Scripture/ClientApp` directory with command `npm run test:headless -- --watch=false`
+- If you run backend dotnet tests, run them in the repository root directory with a command such as `dotnet test`.

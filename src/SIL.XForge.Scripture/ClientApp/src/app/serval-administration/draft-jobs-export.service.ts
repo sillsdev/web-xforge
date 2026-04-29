@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { saveAs } from 'file-saver';
 import Papa from 'papaparse';
 import { NormalizedDateRange } from './date-range-picker.component';
-import { DraftJobsTableRow } from './draft-jobs.component';
 import { encodeRsv } from './rsv';
 
 /** Set of strings representing a Serval build job, to include in an exported spreadsheet. This is somewhat of a
@@ -12,6 +11,7 @@ import { encodeRsv } from './rsv';
  * Some fields are of type string that one might normally expect to be another type, but that is because this is
  * preparing the data to export as strings. */
 export interface SpreadsheetRow {
+  draftGenerationRequestId?: string;
   servalBuildId?: string;
   /** To be populated with locale-less UTC timestamp. */
   startTime?: string;
@@ -40,14 +40,15 @@ export class DraftJobsExportService {
    * Export the draft jobs data to a CSV file.
    */
   exportCsv(
-    rows: DraftJobsTableRow[],
-    dateRange: NormalizedDateRange,
+    rows: SpreadsheetRow[],
+    dateRangeForFilename: NormalizedDateRange,
     meanDuration: number,
-    maxDuration: number
+    maxDuration: number,
+    filenamePrefix: string
   ): void {
-    const spreadsheetRows = this.createSpreadsheetRowsWithStatistics(rows, meanDuration, maxDuration);
+    const spreadsheetRows = this.addStatistics(rows, meanDuration, maxDuration);
     const csv: string = Papa.unparse(spreadsheetRows);
-    const filename: string = this.getExportFilename(dateRange, 'csv');
+    const filename: string = this.getExportFilename(dateRangeForFilename, 'csv', filenamePrefix);
     const blob: Blob = new Blob([csv], { type: 'text/csv' });
     saveAs(blob, filename);
   }
@@ -56,16 +57,28 @@ export class DraftJobsExportService {
    * Export the draft jobs data to an RSV (Rows of String Values) file.
    */
   exportRsv(
-    rows: DraftJobsTableRow[],
-    dateRange: NormalizedDateRange,
+    rows: SpreadsheetRow[],
+    dateRangeForFilename: NormalizedDateRange,
     meanDuration: number,
-    maxDuration: number
+    maxDuration: number,
+    filenamePrefix: string
   ): void {
-    const spreadsheetRows = this.createSpreadsheetRowsWithStatistics(rows, meanDuration, maxDuration);
+    const spreadsheetRows = this.addStatistics(rows, meanDuration, maxDuration);
+    const allRows: (string | null)[][] = this.createRsvRows(spreadsheetRows);
 
-    // Convert SpreadsheetRow objects to (string | null)[][] format for RSV
-    // First row is headers
+    // Encode to RSV format
+    const rsvData: Uint8Array = encodeRsv(allRows);
+
+    // Create filename and download
+    const filename: string = this.getExportFilename(dateRangeForFilename, 'rsv', filenamePrefix);
+    const blob: Blob = new Blob([rsvData as BlobPart], { type: 'application/octet-stream' });
+    saveAs(blob, filename);
+  }
+
+  private createRsvRows(spreadsheetRows: SpreadsheetRow[]): (string | null)[][] {
+    // First row is headers.
     const headers: string[] = [
+      'draftGenerationRequestId',
       'servalBuildId',
       'startTime',
       'endTime',
@@ -79,6 +92,7 @@ export class DraftJobsExportService {
     ];
 
     const dataRows: (string | null)[][] = spreadsheetRows.map(row => [
+      row.draftGenerationRequestId ?? null,
       row.servalBuildId ?? null,
       row.startTime ?? null,
       row.endTime ?? null,
@@ -91,28 +105,14 @@ export class DraftJobsExportService {
       row.translationBooks
     ]);
 
-    // Combine headers and data
-    const allRows: (string | null)[][] = [headers, ...dataRows];
-
-    // Encode to RSV format
-    const rsvData: Uint8Array = encodeRsv(allRows);
-
-    // Create filename and download
-    const filename: string = this.getExportFilename(dateRange, 'rsv');
-    const blob: Blob = new Blob([rsvData as BlobPart], { type: 'application/octet-stream' });
-    saveAs(blob, filename);
+    return [headers, ...dataRows];
   }
 
   /**
-   * Converts table rows to spreadsheet format and appends statistics (mean and max duration).
+   * Returns a copy of the rows with appended statistics (mean and max duration).
    */
-  protected createSpreadsheetRowsWithStatistics(
-    rows: DraftJobsTableRow[],
-    meanDuration: number,
-    maxDuration: number
-  ): SpreadsheetRow[] {
-    const dataRows = this.createSpreadsheetRows(rows);
-
+  protected addStatistics(rows: SpreadsheetRow[], meanDuration: number, maxDuration: number): SpreadsheetRow[] {
+    const result: SpreadsheetRow[] = [...rows];
     // Append blank row
     const blankRow: SpreadsheetRow = {
       status: '',
@@ -120,7 +120,7 @@ export class DraftJobsExportService {
       trainingBooks: '',
       translationBooks: ''
     };
-    dataRows.push(blankRow);
+    result.push(blankRow);
 
     // Append mean duration row. This is not in a 'correct column', but puts some desired data into the output.
     const meanRow: SpreadsheetRow = {
@@ -131,7 +131,7 @@ export class DraftJobsExportService {
       trainingBooks: '',
       translationBooks: ''
     };
-    dataRows.push(meanRow);
+    result.push(meanRow);
 
     // Append max duration row
     const maxRow: SpreadsheetRow = {
@@ -142,48 +142,18 @@ export class DraftJobsExportService {
       trainingBooks: '',
       translationBooks: ''
     };
-    dataRows.push(maxRow);
+    result.push(maxRow);
 
-    return dataRows;
+    return result;
   }
 
   /**
-   * Converts table rows to spreadsheet format.
+   * Returns export filename using current date range, formatted as {prefix}_YYYY-MM-DD_YYYY-MM-DD.{ext}
    */
-  protected createSpreadsheetRows(rows: DraftJobsTableRow[]): SpreadsheetRow[] {
-    return rows.map<SpreadsheetRow>((row: DraftJobsTableRow) => {
-      const trainingBooksList = row.trainingBooks.map(pb => `${pb.projectId}: ${pb.books.join('; ')}`).join('. ');
-      const translationBooksList = row.translationBooks.map(pb => `${pb.projectId}: ${pb.books.join('; ')}`).join('. ');
-
-      let durationMinutes: string = '';
-      if (row.job.startTime != null && row.job.finishTime != null) {
-        const durationMs = row.job.finishTime.valueOf() - row.job.startTime.valueOf();
-        const minutes = this.msToMinutes(durationMs);
-        durationMinutes = minutes.toFixed(0);
-      }
-
-      return {
-        servalBuildId: row.job.buildId,
-        startTime: row.job.startTime?.toISOString(),
-        endTime: row.job.finishTime?.toISOString(),
-        durationMinutes,
-        status: row.status,
-        sfProjectId: row.projectId,
-        projectName: row.projectName,
-        sfUserId: row.userId,
-        trainingBooks: trainingBooksList,
-        translationBooks: translationBooksList
-      };
-    });
-  }
-
-  /**
-   * Returns export filename using current date range, if possible formatted as draft_jobs_YYYY-MM-DD_YYYY-MM-DD.ext
-   */
-  private getExportFilename(dateRange: NormalizedDateRange, ext: string): string {
+  private getExportFilename(dateRange: NormalizedDateRange, ext: string, filenamePrefix: string): string {
     const startStr = this.formatDateForExport(dateRange.start);
     const endStr = this.formatDateForExport(dateRange.end);
-    return `draft_jobs_${startStr}_${endStr}.${ext}`;
+    return `${filenamePrefix}_${startStr}_${endStr}.${ext}`;
   }
 
   /**

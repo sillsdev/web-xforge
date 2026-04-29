@@ -11,6 +11,14 @@ Follow all rules in [code-rules.md](code-rules.md) in addition to the below.
 - Component template stylesheets should be in separate .scss files, rather than specified inline in the component decorator.
 - Avoid hard-coding colors in SCSS files when styling components. Instead, use existing CSS variables or create an Angular Material theme file and import it into src/SIL.XForge.Scripture/ClientApp/src/material-styles.scss
 
+# Frontend styling
+
+- Avoid making up and using hard-coded or new color values. Where feasible, use color values from [Material Design](https://material.angular.dev/guide/theming-your-components). For example, `--mat-sys-surface` and `--mat-sys-on-primary`. If you can't get close to what you want from Material Design colors, you can use a defined color in `_variables.scss` or `material-styles.scss`. Follow patterns in existing `_foo-theme.scss` files.
+
+# Frontend user interface
+
+- Use Sentence case for user interface elements, per Material Design. Do not use Title Case for user interface elements. For example, use "Project settings" rather than "Project Settings".
+
 ## Frontend testing
 
 - Write unit tests for new components and services
@@ -64,10 +72,27 @@ Follow all rules in [code-rules.md](code-rules.md) in addition to the below.
   `const buildEvents: EventMetric[] = eventsSorted.filter(...);` and
   `const buildEvent: EventMetric | undefined = buildEvents[0];`.
 - Prefer to use `null` to express a deliberate absence of a value, and `undefined` to express a value that has not been set yet.
+- Do not use the `!` non-null assertion operator. For example, do not write `foo!.baz()`. If you need to dereference `foo`, first prove to the type system that `foo` is not null either by using a type guard or checking for null. You may use the `!` non-null assertion operator in spec test files.
+- Do not use the `as` type assertion operator. For example, do not write `const foo: SomeType = someValue as SomeType`. If you need to treat `someValue` as `SomeType`, first prove to the type system that `someValue` is of type `SomeType` such as by using a type guard. You may use the `as` type assertion operator in spec test files.
+- Do not use object property shorthand when creating objects. For example, do not write `const obj = { foo, bar };`. Instead, write `const obj = { foo: foo, bar: bar };`.
+- Do not reorder existing fields and methods to comply with this, but when creating new fields and methods in TypeScript classes, use this order:
+  1. public static fields
+  2. @Input, @Output, and @ViewChild fields
+  3. public instance fields
+  4. non-public static and instance fields
+  5. constructor
+  6. getters and setters
+  7. ngOnInit
+  8. public static and instance methods
+  9. non-public static and instance methods
 
 ## Angular templates
 
 - Use `@if {}` syntax rather than `*ngIf` syntax.
+
+# C# language
+
+- Do not use the `!` null-forgiving operator. Instead, check for null and cause a specific outcome if it is null, or make use of the `NotNullWhen` attribute. You may use the `!` null-forgiving operator in test files.
 
 ## Code
 
@@ -76,6 +101,8 @@ Follow all rules in [code-rules.md](code-rules.md) in addition to the below.
 - It is better to explicitly check for and handle problems, or prevent problems from happening, than to assume problems will not happen.
 - Corner-cases happen. They should be handled in code.
 - Please don't change existing code without good justification. Existing code largely works and changing it will cause work for code review. Leave existing code as is when possible.
+- Avoid magic numbers where not obvious. Use a named constant for the value instead, which can be defined right before usage.
+- Don't write useless comments. For example, for field `translationEngineId`, comment "The translation engine ID." adds no additional information than the name of the field already says.
 
 ## Tests
 
