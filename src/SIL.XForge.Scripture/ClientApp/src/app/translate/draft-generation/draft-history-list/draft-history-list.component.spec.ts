@@ -80,7 +80,9 @@ describe('DraftHistoryListComponent', () => {
   }));
 
   it('should handle just one active build', () => {
-    const buildHistory = [{ state: BuildStates.Active } as BuildDto];
+    const buildHistory = [
+      { state: BuildStates.Active, additionalInfo: { dateRequested: '2025-08-01T12:00:00.000Z' } } as BuildDto
+    ];
     const env = new TestEnvironment(buildHistory);
     expect(env.component.history).toEqual(buildHistory);
     expect(env.component.savedHistoricalBuilds).toEqual([]);
@@ -91,7 +93,10 @@ describe('DraftHistoryListComponent', () => {
   });
 
   it('should handle just one canceled build', fakeAsync(() => {
-    const build = { state: BuildStates.Canceled } as BuildDto;
+    const build = {
+      state: BuildStates.Canceled,
+      additionalInfo: { dateRequested: '2025-08-01T12:00:00.000Z' }
+    } as BuildDto;
     const buildHistory = [build];
     const env = new TestEnvironment(buildHistory);
     expect(env.component.history).toEqual(buildHistory);
@@ -105,7 +110,7 @@ describe('DraftHistoryListComponent', () => {
   it('should handle just one completed build', fakeAsync(() => {
     const build = {
       state: BuildStates.Completed,
-      additionalInfo: { dateGenerated: '2025-08-01T12:00:00.000Z' }
+      additionalInfo: { dateRequested: '2025-08-01T12:00:00.000Z' }
     } as BuildDto;
     const buildHistory = [build];
     const env = new TestEnvironment(buildHistory);
@@ -118,7 +123,10 @@ describe('DraftHistoryListComponent', () => {
   }));
 
   it('should handle just one faulted build', fakeAsync(() => {
-    const build = { state: BuildStates.Faulted } as BuildDto;
+    const build = {
+      state: BuildStates.Faulted,
+      additionalInfo: { dateRequested: '2025-08-01T12:00:00.000Z' }
+    } as BuildDto;
     const buildHistory = [build];
     const env = new TestEnvironment(buildHistory);
     expect(env.component.history).toEqual(buildHistory);
@@ -130,43 +138,25 @@ describe('DraftHistoryListComponent', () => {
   }));
 
   it('should handle new build started', fakeAsync(() => {
-    const build = { state: BuildStates.Completed } as BuildDto;
+    const build = {
+      state: BuildStates.Completed,
+      additionalInfo: { dateRequested: '2025-08-01T12:00:00.000Z' }
+    } as BuildDto;
     const buildHistory = [build];
     const env = new TestEnvironment(buildHistory);
     expect(env.component.history).toEqual(buildHistory);
     expect(env.component.isBuildActive).toBe(false);
     expect(env.component.latestBuild).toBe(build);
 
-    const newBuild = { state: BuildStates.Active } as BuildDto;
+    const newBuild = {
+      state: BuildStates.Active,
+      additionalInfo: { dateRequested: '2025-08-02T12:00:00.000Z' }
+    } as BuildDto;
     when(mockedDraftGenerationService.getBuildHistory('project01')).thenReturn(of([build, newBuild]));
     // simulate when project notification is updated
     env.component.loadHistory('project01');
     env.fixture.detectChanges();
     expect(env.component.history).toEqual([newBuild, build]);
-  }));
-
-  it('should filter draft history and hide builds that are not saved to the database', fakeAsync(() => {
-    const build = {
-      state: BuildStates.Completed,
-      additionalInfo: { dateRequested: '2025-08-01T12:00:00.000Z' }
-    } as BuildDto;
-    const olderBuild = {
-      state: BuildStates.Completed
-    } as BuildDto;
-    const buildHistory = [olderBuild, build];
-    const env = new TestEnvironment(buildHistory);
-
-    // Ensure that the warning shows, even though the project ID is invalid.
-    env.component.showOlderDraftsNotSupportedWarning = true;
-    env.fixture.detectChanges();
-
-    expect(env.component.history).toEqual(buildHistory);
-    expect(env.component.savedHistoricalBuilds).toEqual([]);
-    expect(env.component.isBuildActive).toBe(false);
-    expect(env.component.latestBuild).toBe(build);
-    expect(env.component.lastCompletedBuildMessage).not.toBe('');
-    expect(env.component.nonActiveBuilds).toEqual(buildHistory);
-    expect(env.olderDraftsMessage).not.toBeNull();
   }));
 
   it('should show history with faulted and canceled builds', fakeAsync(() => {
@@ -195,7 +185,7 @@ describe('DraftHistoryListComponent', () => {
     expect(env.component.nonActiveBuilds).toEqual(buildHistory);
   }));
 
-  it('should not show the drafts not supported warning for projects created after 4 June 2025', fakeAsync(() => {
+  it('should show the drafts not supported warning for projects created before 4 June 2025', fakeAsync(() => {
     const build = {
       state: BuildStates.Completed,
       additionalInfo: { dateRequested: '2025-08-01T12:00:00.000Z' }
@@ -212,7 +202,7 @@ describe('DraftHistoryListComponent', () => {
     expect(env.olderDraftsMessage).not.toBeNull();
   }));
 
-  it('should show the drafts not supported warning for projects created before 4 June 2025', fakeAsync(() => {
+  it('should not show the drafts not supported warning for projects created after 4 June 2025', fakeAsync(() => {
     const build = {
       state: BuildStates.Completed,
       additionalInfo: { dateRequested: '2025-08-01T12:00:00.000Z' }
@@ -237,6 +227,7 @@ describe('DraftHistoryListComponent', () => {
       when(mockedActivatedProjectService.projectId$).thenReturn(of(projectId));
       when(mockedActivatedProjectService.changes$).thenReturn(of(undefined)); // Required for DraftPreviewBooksComponent
       when(mockedDraftGenerationService.getBuildHistory(projectId)).thenReturn(new BehaviorSubject(buildHistory));
+      when(mockedDraftGenerationService.draftHistoryCutOffDate).thenReturn(new Date('2025-06-04T00:00:00.000Z'));
       when(mockedI18nService.formatDate(anything())).thenCall(date => date.toLocaleString(['en']));
       when(mockedFeatureFlagsService.usfmFormat).thenReturn(createTestFeatureFlag(true));
 

@@ -4,7 +4,7 @@ import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { DeltaOperation } from 'rich-text';
-import { catchError, Observable, throwError } from 'rxjs';
+import { Observable } from 'rxjs';
 import { isString } from '../../../type-utils';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -152,31 +152,27 @@ export class DraftHandlingService {
    */
   getDraft(
     textDocId: TextDocId,
-    { isDraftLegacy, timestamp, config }: { isDraftLegacy: boolean; timestamp?: Date; config?: DraftUsfmConfig }
-  ): Observable<DeltaOperation[] | DraftSegmentMap> {
-    return isDraftLegacy
-      ? // Fetch legacy draft
-        this.draftGenerationService.getGeneratedDraft(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum)
-      : // Fetch draft in Delta format (fallback to legacy)
-        this.draftGenerationService
-          .getGeneratedDraftDeltaOperations(
-            textDocId.projectId,
-            textDocId.bookNum,
-            textDocId.chapterNum,
-            timestamp,
-            config
-          )
-          .pipe(
-            catchError(err => {
-              // If the corpus does not support USFM, use the legacy format.
-              // The legacy format does not support a timestamp
-              if (err.status === 405 && timestamp == null) {
-                return this.getDraft(textDocId, { isDraftLegacy: true, timestamp: undefined, config });
-              }
+    { timestamp, config }: { timestamp?: Date; config?: DraftUsfmConfig }
+  ): Observable<DeltaOperation[]> {
+    return this.draftGenerationService.getGeneratedDraftDeltaOperations(
+      textDocId.projectId,
+      textDocId.bookNum,
+      textDocId.chapterNum,
+      timestamp,
+      config
+    );
+  }
 
-              return throwError(() => err);
-            })
-          );
+  getBookDraft(
+    textDocId: TextDocId,
+    { timestamp, config }: { timestamp?: Date; config?: DraftUsfmConfig }
+  ): Observable<Map<string, DeltaOperation[]>> {
+    return this.draftGenerationService.getGeneratedDraftBookDeltaOperations(
+      textDocId.projectId,
+      textDocId.bookNum,
+      timestamp,
+      config
+    );
   }
 
   canApplyDraft(
@@ -236,17 +232,5 @@ export class DraftHandlingService {
     const onlyTextOpIsTrailingNewline = indexOfFirstText === ops.length - 1 && ops[indexOfFirstText]?.insert === '\n';
     const hasNoExistingText = indexOfFirstText === -1 || onlyTextOpIsTrailingNewline;
     return !hasNoExistingText;
-  }
-
-  draftDataToOps(ops: DeltaOperation[] | DraftSegmentMap, targetOps: DeltaOperation[]): DeltaOperation[] {
-    // Convert the legacy draft format to ops
-    if (this.isDraftSegmentMap(ops)) {
-      return this.toDraftOps(ops, targetOps);
-    }
-    return ops;
-  }
-
-  isDraftSegmentMap(draft: DeltaOperation[] | DraftSegmentMap): draft is DraftSegmentMap {
-    return !Array.isArray(draft);
   }
 }

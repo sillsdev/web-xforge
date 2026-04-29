@@ -469,6 +469,7 @@ public class MachineApiController : ControllerBase
     /// <response code="409">The engine has not been built on the ML server.</response>
     /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
     [HttpGet(MachineApi.GetPreTranslation)]
+    [Obsolete("Use GetPreTranslationDeltaAsync instead to access the draft as ops in TextData.")]
     public async Task<ActionResult<PreTranslationDto>> GetPreTranslationAsync(
         string sfProjectId,
         int bookNum,
@@ -536,25 +537,8 @@ public class MachineApiController : ControllerBase
         try
         {
             bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
-            DraftUsfmConfig? config = null;
-            if (paragraphFormat is not null || quoteFormat is not null)
-            {
-                string paragraphConfig = paragraphFormat switch
-                {
-                    ParagraphBreakFormatOptions.Remove => ParagraphBreakFormatOptions.Remove,
-                    ParagraphBreakFormatOptions.BestGuess => ParagraphBreakFormatOptions.BestGuess,
-                    ParagraphBreakFormatOptions.MoveToEnd => ParagraphBreakFormatOptions.MoveToEnd,
-                    _ => ParagraphBreakFormatOptions.BestGuess,
-                };
-                string quoteConfig = quoteFormat switch
-                {
-                    QuoteStyleOptions.Denormalized => QuoteStyleOptions.Denormalized,
-                    QuoteStyleOptions.Normalized => QuoteStyleOptions.Normalized,
-                    _ => QuoteStyleOptions.Denormalized,
-                };
-                config = new DraftUsfmConfig { ParagraphFormat = paragraphConfig, QuoteFormat = quoteConfig };
-            }
-            Snapshot<TextData> delta = await _machineApiService.GetPreTranslationDeltaAsync(
+            DraftUsfmConfig? config = GetDraftUsfmConfig(paragraphFormat, quoteFormat);
+            Dictionary<string, Snapshot<TextData>> deltas = await _machineApiService.GetPreTranslationDeltaAsync(
                 _userAccessor.UserId,
                 sfProjectId,
                 bookNum,
@@ -564,7 +548,72 @@ public class MachineApiController : ControllerBase
                 config,
                 cancellationToken
             );
-            return Ok(delta);
+            deltas.TryGetValue(chapterNum.ToString(), out Snapshot<TextData> chapterDelta);
+            return Ok(chapterDelta);
+        }
+        catch (BrokenCircuitException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+        catch (InvalidOperationException)
+        {
+            return Conflict();
+        }
+        catch (NotSupportedException)
+        {
+            return new StatusCodeResult(StatusCodes.Status405MethodNotAllowed);
+        }
+    }
+
+    /// <summary>
+    /// Gets the pre-translations as a mapping of chapters to deltas.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="bookNum">The book number.</param>
+    /// <param name="timestamp">The timestamp to return the pre-translations at. If not set, this is the current date and time.</param>
+    /// <param name="paragraphFormat">The format to use for paragraph breaks.</param>
+    /// <param name="quoteFormat">The format to use for quotes.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">The pre-translations were successfully queried for.</response>
+    /// <response code="403">You do not have permission to retrieve the pre-translations for this project.</response>
+    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
+    /// <response code="405">Retrieving the pre-translations in this format is not supported.</response>
+    /// <response code="409">The engine has not been built on the ML server.</response>
+    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
+    [HttpGet(MachineApi.GetPreTranslationBookDelta)]
+    public async Task<ActionResult<Dictionary<string, Snapshot<TextData>>>> GetPreTranslationBookDeltaAsync(
+        string sfProjectId,
+        int bookNum,
+        [FromQuery] DateTime? timestamp,
+        [FromQuery] string? paragraphFormat,
+        [FromQuery] string? quoteFormat,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
+            DraftUsfmConfig? config = GetDraftUsfmConfig(paragraphFormat, quoteFormat);
+            Dictionary<string, Snapshot<TextData>> deltas = await _machineApiService.GetPreTranslationDeltaAsync(
+                _userAccessor.UserId,
+                sfProjectId,
+                bookNum,
+                0,
+                isServalAdmin,
+                timestamp ?? DateTime.UtcNow,
+                config,
+                cancellationToken
+            );
+            return Ok(deltas);
         }
         catch (BrokenCircuitException e)
         {
@@ -1120,5 +1169,32 @@ public class MachineApiController : ControllerBase
         {
             return Forbid();
         }
+    }
+
+    /// <summary>
+    /// Constructs a <see cref="DraftUsfmConfig"/> from the supplied format query parameters, or returns
+    /// null if neither is specified.
+    /// </summary>
+    private static DraftUsfmConfig? GetDraftUsfmConfig(string? paragraphFormat, string? quoteFormat)
+    {
+        if (paragraphFormat is null && quoteFormat is null)
+        {
+            return null;
+        }
+
+        string paragraphConfig = paragraphFormat switch
+        {
+            ParagraphBreakFormatOptions.Remove => ParagraphBreakFormatOptions.Remove,
+            ParagraphBreakFormatOptions.BestGuess => ParagraphBreakFormatOptions.BestGuess,
+            ParagraphBreakFormatOptions.MoveToEnd => ParagraphBreakFormatOptions.MoveToEnd,
+            _ => ParagraphBreakFormatOptions.BestGuess,
+        };
+        string quoteConfig = quoteFormat switch
+        {
+            QuoteStyleOptions.Denormalized => QuoteStyleOptions.Denormalized,
+            QuoteStyleOptions.Normalized => QuoteStyleOptions.Normalized,
+            _ => QuoteStyleOptions.Denormalized,
+        };
+        return new DraftUsfmConfig { ParagraphFormat = paragraphConfig, QuoteFormat = quoteConfig };
     }
 }

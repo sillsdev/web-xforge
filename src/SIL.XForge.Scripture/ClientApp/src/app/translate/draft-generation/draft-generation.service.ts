@@ -32,6 +32,9 @@ import {
   providedIn: 'root'
 })
 export class DraftGenerationService {
+  // This is just after SFv5.33.0 was released
+  readonly draftHistoryCutOffDate: Date = new Date('2025-06-03T21:00:00Z');
+
   constructor(
     private readonly httpClient: HttpClient,
     private readonly noticeService: NoticeService,
@@ -93,6 +96,13 @@ export class DraftGenerationService {
     }
     return this.httpClient.get<BuildDto[]>(`translation/builds/project:${projectId}?preTranslate=true`).pipe(
       map(res => res.data),
+      map(res =>
+        res?.filter(
+          build =>
+            build.additionalInfo?.dateRequested != null &&
+            new Date(build.additionalInfo.dateRequested) >= this.draftHistoryCutOffDate
+        )
+      ),
       catchError(err => {
         // If no build has ever been started, return undefined
         if (err.status === 403 || err.status === 404) {
@@ -284,15 +294,64 @@ export class DraftGenerationService {
       map(res => res.data?.data.ops ?? []),
       catchError(err => {
         // If no pre-translations exist, return empty array
-        if (err.status === 403 || err.status === 404 || err.status === 409) {
+        if (err.status === 403 || err.status === 404 || err.status === 405 || err.status === 409) {
           return of([]);
-        } else if (err.status === 405) {
-          // Rethrow a 405 so the frontend can use getGeneratedDraft()
-          return throwError(() => err);
         }
 
         this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
         return of([]);
+      })
+    );
+  }
+
+  /**
+   * Gets the pre-translations as delta operations for the specified book using the last completed build.
+   * @param projectId The SF project id for the target translation.
+   * @param book The book number.
+   * @param chapter The chapter number.
+   * @param timestamp The timestamp to download the draft at. If undefined, the latest draft will be downloaded.
+   * @returns An array of delta operations or an empty array at if no pre-translations exist.
+   * The 405 error that occurs when there is no USFM support is thrown to the caller.
+   */
+  getGeneratedDraftBookDeltaOperations(
+    projectId: string,
+    book: number,
+    timestamp?: Date,
+    usfmConfig?: DraftUsfmConfig
+  ): Observable<Map<string, DeltaOperation[]>> {
+    if (!this.onlineStatusService.isOnline) {
+      return of(new Map<string, DeltaOperation[]>());
+    }
+    let url = `translation/engines/project:${projectId}/actions/pretranslate/${book}/delta`;
+    const params = new URLSearchParams();
+    if (timestamp != null) {
+      params.append('timestamp', timestamp.toISOString());
+    }
+    if (usfmConfig != null) {
+      params.append('paragraphFormat', usfmConfig.paragraphFormat);
+      params.append('quoteFormat', usfmConfig.quoteFormat);
+    }
+    if (params.size > 0) {
+      url += `?${params.toString()}`;
+    }
+    return this.httpClient.get<Map<string, Snapshot<TextData>> | undefined>(url).pipe(
+      map(res => {
+        const chapterDeltas = new Map<string, DeltaOperation[]>();
+        if (res.data != null) {
+          for (const [chapter, snapshot] of Object.entries(res.data)) {
+            chapterDeltas.set(chapter, snapshot.data.ops ?? []);
+          }
+        }
+        return chapterDeltas;
+      }),
+      catchError(err => {
+        // If no pre-translations exist, return empty map
+        if (err.status === 403 || err.status === 404 || err.status === 405 || err.status === 409) {
+          return of(new Map<string, DeltaOperation[]>());
+        }
+
+        this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
+        return of(new Map<string, DeltaOperation[]>());
       })
     );
   }
@@ -314,6 +373,7 @@ export class DraftGenerationService {
       >(`translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/history`)
       .pipe(
         map(res => res?.data ?? []),
+        map(revisions => revisions.filter(revision => new Date(revision.timestamp) >= this.draftHistoryCutOffDate)),
         catchError(err => {
           // If no pre-translations exist, return undefined
           if (err.status === 403 || err.status === 404 || err.status === 409) {
