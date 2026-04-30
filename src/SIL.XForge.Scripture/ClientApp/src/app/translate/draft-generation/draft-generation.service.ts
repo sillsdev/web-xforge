@@ -125,11 +125,10 @@ export class DraftGenerationService {
     return this.httpClient.get<ServalBuildReportDto[]>(`translation/builds/since:${sinceIso}`).pipe(
       map(res => this.interpretTypesMany(res.data)),
       catchError(err => {
-        if (err.status === 403 || err.status === 404) {
+        if (err.status === 404) {
           return of(undefined);
         }
-
-        console.error(err);
+        console.error(err?.message ?? err);
         this.noticeService.showError(this.i18n.translateStatic('draft_generation.problem_fetching_build_history'));
         return of(undefined);
       })
