@@ -19,7 +19,7 @@
 //   branch/<story-id>.png  — screenshot from the PR branch commit (changed and added stories)
 //
 // Usage:
-//   scripts/compare-storybook-screenshots.mts <base-dir> <branch-dir> <deploy-dir> [options]
+//   compare-storybook-screenshots.mts <base-dir> <branch-dir> <deploy-dir> [options]
 //
 // Arguments:
 //   base-dir     Directory containing screenshots from the base/target branch

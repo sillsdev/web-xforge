@@ -17,8 +17,8 @@
  * Exits with code 1 if any story fails after two attempts.
  */
 
-import { chromium, type Browser, type BrowserContext, type Page } from 'npm:playwright@1.56.1';
 import { join, resolve } from 'node:path';
+import { chromium, type Browser, type BrowserContext, type Page } from 'npm:playwright@1.56.1';
 
 /**
  * The browser window object extended with Storybook's internal preview global and the story
@@ -251,7 +251,7 @@ async function main(): Promise<void> {
 
   if (storybookDir == null || outputDir == null) {
     console.error(
-      'Usage: deno run --allow-read --allow-write --allow-net --allow-run --allow-env --allow-sys scripts/take-storybook-screenshots.mts <storybook-dir> <output-dir>'
+      'Usage: deno run --allow-read --allow-write --allow-net --allow-run --allow-env --allow-sys take-storybook-screenshots.mts <storybook-dir> <output-dir>'
     );
     Deno.exit(1);
   }
