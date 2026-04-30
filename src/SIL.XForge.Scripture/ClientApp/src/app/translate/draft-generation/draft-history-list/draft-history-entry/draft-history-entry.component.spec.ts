@@ -3,19 +3,18 @@ import { provideRouter } from '@angular/router';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { ParagraphBreakFormat, QuoteFormat } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of } from 'rxjs';
-import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../../core/models/sf-type-registry';
-import { TrainingDataDoc } from '../../../../core/models/training-data-doc';
 import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { BuildDto } from '../../../../machine-api/build-dto';
@@ -72,17 +71,14 @@ describe('DraftHistoryEntryComponent', () => {
       })
     } as SFProjectProfileDoc;
     when(mockedActivatedProjectService.projectDoc).thenReturn(targetProjectDoc);
-    const trainingDataQuery: RealtimeQuery<TrainingDataDoc> = mock(RealtimeQuery<TrainingDataDoc>);
-    when(trainingDataQuery.docs).thenReturn([
-      { id: 'doc01', data: { dataId: 'file01', title: 'training-data.txt' } } as TrainingDataDoc
-    ]);
-    when(mockedTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
-      instance(trainingDataQuery)
-    );
     when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected(anything())).thenReturn(true);
     when(mockedPermissionsService.isUserOnProject(anything())).thenResolve(true);
     const userDoc = { id: 'sf-user-id', data: { displayName: 'User 01' } } as UserProfileDoc;
     when(mockedUserService.getProfile(anything())).thenResolve(userDoc);
+    const activeTrainingData: TrainingData[] = [{ dataId: 'file01', title: 'training-data.txt' } as TrainingData];
+    when(mockedTrainingDataService.getTrainingData(anything(), anything(), anything())).thenReturn(
+      of(activeTrainingData)
+    );
     fixture = TestBed.createComponent(DraftHistoryEntryComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -144,6 +140,29 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.trainingConfigurationOpen).toBe(false);
       expect(fixture.nativeElement.querySelector('.scriptureRange')).toBeNull();
       expect(fixture.nativeElement.querySelector('.requested-label')).not.toBeNull();
+    }));
+
+    it('should show the title of deleted training data files used in the build', fakeAsync(() => {
+      const deletedFile: TrainingData = { dataId: 'file01', title: 'deleted-file.txt', deleted: true } as TrainingData;
+      when(mockedTrainingDataService.getTrainingData(anything(), anything(), anything())).thenReturn(of([deletedFile]));
+
+      const user = 'user-display-name';
+      const date = dateAfterFormattingSupported;
+      const entry = getStandardBuildDto({
+        user,
+        date,
+        trainingBooks: ['EXO'],
+        translateBooks: ['GEN'],
+        trainingDataFiles: ['file01']
+      });
+
+      // SUT
+      component.entry = entry;
+      tick();
+      fixture.detectChanges();
+
+      // The deleted file's title should still be shown, since this is historical data
+      expect(component.trainingDataFiles).toEqual(['deleted-file.txt']);
     }));
 
     it('should not get source project if user does not have permission', fakeAsync(() => {

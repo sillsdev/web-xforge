@@ -3,7 +3,7 @@ import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
-import { instance, mock, when } from 'ts-mockito';
+import { anything, instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -61,11 +61,13 @@ when(mockActivatedProject.changes$).thenReturn(
 );
 
 when(mockActivatedProject.projectId).thenReturn('test-proj');
+when(mockActivatedProject.projectId$).thenReturn(of('test-proj'));
 when(mockActivatedProject.projectDoc).thenReturn({
   id: 'test-proj',
   data: createTestProjectProfile({ userRoles: { user1: SFProjectRole.ParatextAdministrator } })
 } as SFProjectProfileDoc);
 when(mockAuthService.currentUserId).thenReturn('user1');
+when(mockTrainingService.getTrainingData(anything(), anything())).thenReturn(of([]));
 
 const meta: Meta = {
   title: 'Translate/ConfirmSources',
