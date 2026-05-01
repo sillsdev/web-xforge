@@ -5,6 +5,8 @@ ARG UBUNTU_NAME=noble
 
 FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}-${UBUNTU_NAME}-amd64
 
+ARG NODE_VERSION=22.12.0
+
 # Avoid prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -18,13 +20,15 @@ RUN apt-get update \
         sudo \
         unzip \
         wget \
+        xz-utils \
     && apt-get install --yes --no-install-recommends \
         build-essential \
         ffmpeg \
         libc-dev \
         mercurial \
-        nodejs \
-        npm \
+    && curl -fsSLo /tmp/node.tar.xz "https://github.com/nodejs/node/releases/download/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
+    && tar -xJf /tmp/node.tar.xz --directory /usr/local --strip-components=1 --no-same-owner \
+    && rm -f /tmp/node.tar.xz \
     && BRAVE_TAG=$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/brave/brave-browser/releases/latest | sed 's#.*/tag/##') \
     && BRAVE_VERSION=${BRAVE_TAG#v} \
     && mkdir -p /opt/brave-browser \
