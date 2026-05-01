@@ -10,15 +10,6 @@ import { TextDocService } from '../../core/text-doc.service';
 import { isBadDelta } from '../../shared/utils';
 import { DraftGenerationService } from './draft-generation.service';
 
-export interface DraftMappingOptions {
-  overwrite?: boolean;
-}
-
-export interface DraftDiff {
-  id: TextDocId;
-  ops: Delta;
-}
-
 const VERSE_NUM_REGEX = /(\d+)\w?$/;
 
 @Injectable({
@@ -32,12 +23,11 @@ export class DraftHandlingService {
   ) {}
 
   /**
-   * Gets the generated draft of a chapter for a book. If unable to get the current draft delta format,
-   * it will automatically fallback to attempt to retrieve the legacy draft format.
+   * Gets the generated draft of a chapter for a book.
    * @param textDocId The text document identifier.
-   * @param param1 Whether to get the draft in the legacy format and whether to use the snapshot
-   * stored in the realtime database.
-   * @returns The draft data in the current delta operation format or the legacy segment map format.
+   * @param timestamp Whether to use the snapshot stored in the database at a timestamp.
+   * @param config The format configuration to access the draft. Providing this will return a draft from serval.
+   * @returns The draft data in the current delta operation format.
    */
   getDraft(
     textDocId: TextDocId,
