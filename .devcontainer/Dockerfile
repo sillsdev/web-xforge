@@ -24,8 +24,8 @@ RUN apt-get update \
         mercurial \
         nodejs \
     && BRAVE_TAG=$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/brave/brave-browser/releases/latest | sed 's#.*/tag/##') \
-    && BRAVE_DEB_PATH=$(curl -fsSL "https://github.com/brave/brave-browser/releases/expanded_assets/${BRAVE_TAG}" | grep -oE '/brave/brave-browser/releases/download/[^"]+_amd64\\.deb' | head -n1) \
-    && curl -fsSLo /tmp/brave-browser.deb "https://github.com${BRAVE_DEB_PATH}" \
+    && BRAVE_VERSION=${BRAVE_TAG#v} \
+    && curl -fsSLo /tmp/brave-browser.deb "https://github.com/brave/brave-browser/releases/download/${BRAVE_TAG}/brave-browser_${BRAVE_VERSION}_amd64.deb" \
     && apt-get update \
     && apt-get install --assume-yes /tmp/brave-browser.deb \
     && rm -f /tmp/brave-browser.deb \
