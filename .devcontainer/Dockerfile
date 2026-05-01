@@ -23,12 +23,12 @@ RUN apt-get update \
         libc-dev \
         mercurial \
         nodejs \
-    && curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg \
-      https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg \
-    && curl -fsSLo /etc/apt/sources.list.d/brave-browser-release.sources \
-      https://brave-browser-apt-release.s3.brave.com/brave-browser.sources \
+    && BRAVE_TAG=$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/brave/brave-browser/releases/latest | sed 's#.*/tag/##') \
+    && BRAVE_DEB_PATH=$(curl -fsSL "https://github.com/brave/brave-browser/releases/expanded_assets/${BRAVE_TAG}" | grep -oE '/brave/brave-browser/releases/download/[^"]+_amd64\\.deb' | head -n1) \
+    && curl -fsSLo /tmp/brave-browser.deb "https://github.com${BRAVE_DEB_PATH}" \
     && apt-get update \
-    && apt-get install --assume-yes brave-browser \
+    && apt-get install --assume-yes /tmp/brave-browser.deb \
+    && rm -f /tmp/brave-browser.deb \
     && apt-get distclean
 
 # Set up Scripture Forge data directories
