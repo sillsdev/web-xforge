@@ -5,8 +5,6 @@ ARG UBUNTU_NAME=noble
 
 FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}-${UBUNTU_NAME}-amd64
 
-ARG NODE_MAJOR=22
-
 # Avoid prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -19,7 +17,6 @@ RUN apt-get update \
         procps \
         sudo \
         wget \
-    && curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash - \
     && apt-get install --yes --no-install-recommends \
         build-essential \
         ffmpeg \
