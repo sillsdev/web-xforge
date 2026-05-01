@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -19,6 +20,7 @@ import { BuildStates } from '../machine-api/build-states';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { NormalizedDateRange } from './date-range-picker.component';
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
+import { ServalAdministrationService } from './serval-administration.service';
 import {
   buildProjectDisplayName,
   BuildReportTimeline,
@@ -35,6 +37,8 @@ const mockDialogService = mock(DialogService);
 const mockExportService = mock(DraftJobsExportService);
 const mockUserService = mock(UserService);
 const mockI18nService = mock(I18nService);
+const mockServalAdministrationService = mock(ServalAdministrationService);
+const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedConsole: MockConsole = MockConsole.install();
 
 describe('ServalBuildsComponent', () => {
@@ -43,6 +47,7 @@ describe('ServalBuildsComponent', () => {
     providers: [
       provideTestRealtime(SF_TYPE_REGISTRY),
       provideTestOnlineStatus(),
+      provideRouter([]),
       { provide: NoticeService, useMock: mockNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: DraftGenerationService, useMock: mockDraftGenerationService },
@@ -50,6 +55,8 @@ describe('ServalBuildsComponent', () => {
       { provide: DraftJobsExportService, useMock: mockExportService },
       { provide: UserService, useMock: mockUserService },
       { provide: I18nService, useMock: mockI18nService },
+      { provide: ServalAdministrationService, useMock: mockServalAdministrationService },
+      { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       provideNoopAnimations()
     ]
   }));
@@ -82,6 +89,45 @@ describe('ServalBuildsComponent', () => {
     });
   });
 
+  describe('sfProjectId filter', () => {
+    it('filters rows to only the matching project when sfProjectId is set', () => {
+      const env = new TestEnvironment();
+      const rowA = env.createRowWithDetails({ projectId: 'project-a' });
+      const rowB = env.createRowWithDetails({ projectId: 'project-b' });
+      const rowC = env.createRowWithDetails({ projectId: 'project-a' });
+      env.component['allRows'] = [rowA, rowB, rowC];
+      env.component['currentProjectFilter'] = 'project-a';
+
+      // SUT
+      env.component['applyFiltersAndStats']();
+
+      expect(env.component['rows'].length).toBe(2);
+      expect(env.component['rows'].every(r => r.report.project?.sfProjectId === 'project-a')).toBeTrue();
+    });
+
+    it('shows all rows when sfProjectId filter is cleared', () => {
+      const env = new TestEnvironment();
+      const rowA = env.createRowWithDetails({ projectId: 'project-a' });
+      const rowB = env.createRowWithDetails({ projectId: 'project-b' });
+      const rowC = env.createRowWithDetails({ projectId: 'project-a' });
+      env.component['allRows'] = [rowA, rowB, rowC];
+      env.component['currentProjectFilter'] = 'project-a';
+
+      // First confirm filtering is active.
+      env.component['applyFiltersAndStats']();
+
+      expect(env.component['rows'].length).toBe(2);
+      expect(env.component['rows'].every(r => r.report.project?.sfProjectId === 'project-a')).toBeTrue();
+
+      // Then clear and confirm all rows are shown.
+      env.component['currentProjectFilter'] = undefined;
+
+      // SUT
+      env.component['applyFiltersAndStats']();
+
+      expect(env.component['rows'].length).toBe(3);
+    });
+  });
   describe('summary stats', () => {
     it('returns undefined average requesters when a requester is missing', () => {
       // Suppose some builds for a project have a record of who requested them, and some builds for that or another
@@ -1152,7 +1198,12 @@ describe('ServalBuildsComponent', () => {
 
     it('falls back to just the project ID when short name is unavailable', () => {
       const projectBooks: ProjectBooks[] = [
-        { sfProjectId: '112233', projectDisplayName: '112233', shortName: undefined, books: ['GEN'] }
+        {
+          sfProjectId: '112233',
+          projectDisplayName: '112233',
+          shortName: undefined,
+          books: ['GEN']
+        }
       ];
 
       // SUT
@@ -1267,6 +1318,7 @@ class TestEnvironment {
     when(mockUserService.getProfile(anything())).thenReturn(Promise.resolve(userProfileDoc));
     when(mockI18nService.localeCode).thenReturn('en');
     when(mockI18nService.getLanguageDisplayName(anything())).thenReturn(undefined);
+    when(mockedActivatedRoute.queryParams).thenReturn(new BehaviorSubject({}));
 
     this.fixture = TestBed.createComponent(ServalBuildsComponent);
     this.component = this.fixture.componentInstance;
