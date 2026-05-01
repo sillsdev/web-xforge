@@ -25,7 +25,7 @@ export class DraftHandlingService {
   /**
    * Gets the generated draft of a chapter for a book.
    * @param textDocId The text document identifier.
-   * @param timestamp Whether to use the snapshot stored in the database at a timestamp.
+   * @param timestamp A timestamp indicating what version of the doc to fetch. Returns latest version if omitted.
    * @param config The format configuration to access the draft. Providing this will return a draft from serval.
    * @returns The draft data in the current delta operation format.
    */
