@@ -38,6 +38,20 @@
     </div>
   </div>
 
+  @if (currentProjectFilter) {
+    <app-notice icon="filter_alt" mode="fill-dark">
+      <div class="filter-notice-content">
+        <span>
+          Showing builds for project <strong>{{ filteredProjectName ?? currentProjectFilter }}</strong>
+        </span>
+        <button mat-button class="clear-filter-btn" (click)="clearProjectFilter()">
+          <mat-icon>filter_alt_off</mat-icon>
+          <span>Show all projects</span>
+        </button>
+      </div>
+    </app-notice>
+  }
+
   @if (summaryDisplayItems.length > 0) {
     <div class="summary-area">
       <div class="summary-grid">
