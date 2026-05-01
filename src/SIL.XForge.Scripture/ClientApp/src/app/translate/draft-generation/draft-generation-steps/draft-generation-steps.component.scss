@@ -19,17 +19,25 @@ h1 {
 }
 
 h2 {
-  font-weight: 400;
-  margin-bottom: 0.5em;
-}
-
-h2 {
   font-weight: 500;
+  margin-bottom: 0.5em;
 }
 
 // Prevent font increase when selecting a step
 .mat-stepper-horizontal {
   --mat-stepper-header-selected-state-label-text-size: var(--mat-stepper-header-label-text-size);
+}
+
+// Make completed/previous steps appear grey, so only the current step is highlighted in primary color.
+:host ::ng-deep .mat-step-icon-state-done:not(.mat-step-icon-selected),
+:host ::ng-deep .mat-step-icon-state-edit:not(.mat-step-icon-selected) {
+  background-color: var(--mat-sys-on-surface-variant);
+  color: var(--mat-sys-surface);
+}
+
+// Suppress focus highlight on programmatic focus (e.g. after clicking Next); keyboard focus is preserved.
+:host ::ng-deep .mat-step-header.cdk-program-focused {
+  background-color: transparent;
 }
 
 // Enable hover effects when step is not complete and not selected
