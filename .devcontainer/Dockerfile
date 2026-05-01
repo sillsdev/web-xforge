@@ -16,6 +16,7 @@ RUN apt-get update \
         git \
         procps \
         sudo \
+        unzip \
         wget \
     && apt-get install --yes --no-install-recommends \
         build-essential \
@@ -25,10 +26,12 @@ RUN apt-get update \
         nodejs \
     && BRAVE_TAG=$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/brave/brave-browser/releases/latest | sed 's#.*/tag/##') \
     && BRAVE_VERSION=${BRAVE_TAG#v} \
-    && curl -fsSLo /tmp/brave-browser.deb "https://github.com/brave/brave-browser/releases/download/${BRAVE_TAG}/brave-browser_${BRAVE_VERSION}_amd64.deb" \
-    && apt-get update \
-    && apt-get install --assume-yes /tmp/brave-browser.deb \
-    && rm -f /tmp/brave-browser.deb \
+    && mkdir -p /opt/brave-browser \
+    && curl -fsSLo /tmp/brave-browser.zip "https://github.com/brave/brave-browser/releases/download/${BRAVE_TAG}/brave-browser-${BRAVE_VERSION}-linux-amd64.zip" \
+    && unzip -q /tmp/brave-browser.zip -d /opt/brave-browser \
+    && ln -sf /opt/brave-browser/brave /usr/bin/brave-browser \
+    && chmod 4755 /opt/brave-browser/chrome-sandbox \
+    && rm -f /tmp/brave-browser.zip \
     && apt-get distclean
 
 # Set up Scripture Forge data directories
