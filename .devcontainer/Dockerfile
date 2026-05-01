@@ -24,6 +24,7 @@ RUN apt-get update \
         libc-dev \
         mercurial \
         nodejs \
+        npm \
     && BRAVE_TAG=$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/brave/brave-browser/releases/latest | sed 's#.*/tag/##') \
     && BRAVE_VERSION=${BRAVE_TAG#v} \
     && mkdir -p /opt/brave-browser \
