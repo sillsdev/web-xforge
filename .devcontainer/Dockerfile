@@ -34,6 +34,23 @@ RUN apt-get update \
     && mkdir -p /opt/brave-browser \
     && curl -fsSLo /tmp/brave-browser.zip "https://github.com/brave/brave-browser/releases/download/${BRAVE_TAG}/brave-browser-${BRAVE_VERSION}-linux-amd64.zip" \
     && unzip -q /tmp/brave-browser.zip -d /opt/brave-browser \
+    && apt-get install --yes --no-install-recommends \
+        libasound2t64 \
+        libatk-bridge2.0-0 \
+        libatk1.0-0 \
+        libatspi2.0-0 \
+        libcups2t64 \
+        libgbm1 \
+        libgtk-3-0t64 \
+        libnspr4 \
+        libnss3 \
+        libx11-xcb1 \
+        libxcomposite1 \
+        libxdamage1 \
+        libxfixes3 \
+        libxrandr2 \
+        libxshmfence1 \
+        xdg-utils \
     && ln -sf /opt/brave-browser/brave /usr/bin/brave-browser \
     && chmod 4755 /opt/brave-browser/chrome-sandbox \
     && rm -f /tmp/brave-browser.zip \
