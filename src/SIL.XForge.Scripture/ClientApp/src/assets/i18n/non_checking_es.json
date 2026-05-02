@@ -131,6 +131,9 @@
     "source_text_placeholder": "Texto original (opcional)",
     "you_can_change_later": "Puede cambiarlo más tarde."
   },
+  "copy_component": {
+    "copy_to_clipboard": "Copiar al portapapeles"
+  },
   "delete_project_dialog": {
     "are_you_sure_you_want_to_delete": "¿Está seguro de que quiere borrar este proyecto?",
     "cancel": "Cancelar",
@@ -224,6 +227,7 @@
     "signup_already_submitted": "{{ name }} envió una solicitud para inscribirse en la redacción en {{ date }}. Un miembro del equipo se pondrá en contacto con usted en un plazo de entre {{ min }} y {{ max }} para hablar de su proyecto y de los pasos a seguir.",
     "sign_up_for_drafting": "Inscríbase para redactar",
     "temporarily_unavailable": "La generación de borradores está temporalmente no disponible.",
+    "problem_fetching_build_history": "Ha surgido un problema al recuperar el historial de compilaciones.",
     "warning_generation_faulted": "El último intento de generación ha fallado. Haga clic en [em]\"{{ generateButtonText }}\"[/em] a continuación para volver a intentarlo.",
     "click_book_to_preview": "Haga clic en un libro de los que aparecen a continuación para previsualizar el borrador y añadirlo a su proyecto.",
     "nt_drafting_notice": "La generación de borradores ya está disponible para ayudar a los equipos de traducción del Nuevo Testamento a preparar sus primeros borradores. Consulte nuestros { 1 }recursos de ayuda{ 2 } para saber cómo empezar y entender cómo la redacción incremental y las estimaciones de calidad pueden beneficiar a su proyecto. Para utilizar esta función, deberá ponerse en contacto con nosotros."
@@ -468,7 +472,6 @@
     "cannot_import": "No puede importar este borrador porque no tiene permiso para editar este capítulo. Los permisos pueden actualizarse en Paratext.",
     "click_book_to_preview": "Haga clic en un libro de los que aparecen a continuación para previsualizar el borrador y añadirlo a su proyecto.",
     "draft_indicator_applied": "Añadido",
-    "draft_legacy_warning": "Hemos actualizado nuestra funcionalidad de borrador. Puede aprovecharla [link:generateDraftUrl]generando un nuevo borrador[/link].",
     "error_applying_draft": "No se ha podido añadir el borrador al proyecto. Vuelva a intentarlo más tarde.",
     "format_draft": "Opciones de formato",
     "format_draft_tooltip": "Personalizar las opciones de formato del borrador",
@@ -516,7 +519,6 @@
     "offline": "Esta función no está disponible sin conexión.",
     "project": "Proyecto",
     "scope": "Ámbito",
-    "site_wide_event_log": "Trabajos de borrador del sitio",
     "start_time": "Hora de inicio",
     "status": "Estado",
     "still_running": "Todavía activo",

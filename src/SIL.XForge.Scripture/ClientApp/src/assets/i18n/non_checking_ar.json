@@ -131,6 +131,9 @@
     "source_text_placeholder": "نص المصدر (اختياري)",
     "you_can_change_later": "يمكنك تغيير الإعدادات لاحقاً."
   },
+  "copy_component": {
+    "copy_to_clipboard": "Copy to clipboard"
+  },
   "delete_project_dialog": {
     "are_you_sure_you_want_to_delete": "هل أنت متأكد من أنّك تريد أن تحذف هذا المشروع؟",
     "cancel": "إلغاء",
@@ -224,6 +227,7 @@
     "signup_already_submitted": "{{ name }} submitted a request to sign up for drafting on {{ date }}. A team member will contact you within {{ min }} to {{ max }} business days to discuss your project and next steps.",
     "sign_up_for_drafting": "Sign up for drafting",
     "temporarily_unavailable": "Generating drafts is temporarily unavailable.",
+    "problem_fetching_build_history": "There was a problem fetching build history.",
     "warning_generation_faulted": "Last generation attempt failed. Click [em]\"{{ generateButtonText }}\"[/em] below to try again.",
     "click_book_to_preview": "Click a book below to preview the draft and add it to your project.",
     "nt_drafting_notice": "Draft generation is now available to help New Testament translation teams prepare their first drafts. Review our { 1 }help resources{ 2 } to find out how to get started, and to understand how incremental drafting and quality estimates might benefit your project. You will need to contact us to use this feature."
@@ -468,7 +472,6 @@
     "cannot_import": "You cannot import this draft because you do not have permission to edit this chapter. Permissions can be updated in Paratext.",
     "click_book_to_preview": "Click a book below to preview the draft and add it to your project.",
     "draft_indicator_applied": "تمت الإضافة",
-    "draft_legacy_warning": "We have updated our drafting functionality. You can take advantage of this by [link:generateDraftUrl]generating a new draft[/link].",
     "error_applying_draft": "Failed to add the draft to the project. Try again later.",
     "format_draft": "Formatting options",
     "format_draft_tooltip": "Customize formatting options for the draft",
@@ -516,7 +519,6 @@
     "offline": "This feature is not available offline.",
     "project": "مشروع",
     "scope": "مدى",
-    "site_wide_event_log": "Site-wide Draft Jobs",
     "start_time": "Start Time",
     "status": "مكانة",
     "still_running": "Still running",
