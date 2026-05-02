@@ -4989,7 +4989,6 @@ class TestEnvironment {
       return this.getNoteThreadDoc(projectId, threadId);
     });
     when(mockedDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of({} as any));
-    when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(of({}));
     when(mockedDraftGenerationService.pollBuildProgress(anything())).thenReturn(
       of({ state: BuildStates.Completed } as BuildDto)
     );
@@ -5004,7 +5003,6 @@ class TestEnvironment {
       )
     ).thenReturn(of([]));
     when(mockedDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(of([]));
-    when(mockedDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
     when(mockedDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of({} as BuildDto));
     when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected(anything())).thenReturn(false);
     when(mockedPermissionsService.isUserOnProject(anything())).thenResolve(true);
