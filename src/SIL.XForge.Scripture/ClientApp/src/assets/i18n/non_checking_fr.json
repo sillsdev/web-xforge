@@ -131,6 +131,9 @@
     "source_text_placeholder": "Texte source (facultatif)",
     "you_can_change_later": "Vous pourrez les modifier plus tard."
   },
+  "copy_component": {
+    "copy_to_clipboard": "Copy to clipboard"
+  },
   "delete_project_dialog": {
     "are_you_sure_you_want_to_delete": "Êtes-vous sûr de vouloir supprimer ce projet ?",
     "cancel": "Annuler",
@@ -224,6 +227,7 @@
     "signup_already_submitted": "{{ name }} submitted a request to sign up for drafting on {{ date }}. A team member will contact you within {{ min }} to {{ max }} business days to discuss your project and next steps.",
     "sign_up_for_drafting": "Inscrivez-vous pour la rédaction",
     "temporarily_unavailable": "La génération de l'ébauche est temporairement indisponible.",
+    "problem_fetching_build_history": "There was a problem fetching build history.",
     "warning_generation_faulted": "La dernière tentative de génération a échoué. Cliquez sur [em]\"{{ generateButtonText }}\"[/em] ci-dessous pour réessayer.",
     "click_book_to_preview": "Cliquez sur un livre ci-dessous pour prévisualiser l'ébauche et l'ajouter à votre projet.",
     "nt_drafting_notice": "Draft generation is now available to help New Testament translation teams prepare their first drafts. Review our { 1 }help resources{ 2 } to find out how to get started, and to understand how incremental drafting and quality estimates might benefit your project. You will need to contact us to use this feature."
@@ -468,7 +472,6 @@
     "cannot_import": "Vous ne pouvez pas importer cette ébauche car vous n'avez pas la permission de modifier ce chapitre. Les permissions peuvent être mises à jour dans Paratext.",
     "click_book_to_preview": "Cliquez sur un livre ci-dessous pour prévisualiser l'ébauche et l'ajouter à votre projet.",
     "draft_indicator_applied": "Ajouté",
-    "draft_legacy_warning": "Nous avons mis à jour notre fonctionnalité de rédaction d'ébauche. Vous pouvez en profiter en [link:generateDraftUrl]générant une nouvelle ébauche[/link].",
     "error_applying_draft": "Échec de l'ajout de l'ébauche au projet. Réessayez plus tard.",
     "format_draft": "Options de formatage",
     "format_draft_tooltip": "Personnaliser les options de mise en forme pour l'ébauche",
@@ -516,7 +519,6 @@
     "offline": "Cette fonction n'est pas disponible hors ligne.",
     "project": "Projet",
     "scope": "Portée",
-    "site_wide_event_log": "Tâches ébauche à l'échelle du site",
     "start_time": "Heure de démarrage",
     "status": "Statut",
     "still_running": "Toujours en cours",

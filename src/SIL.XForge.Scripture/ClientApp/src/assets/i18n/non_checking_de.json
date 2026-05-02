@@ -131,6 +131,9 @@
     "source_text_placeholder": "Ausgangstext (optional)",
     "you_can_change_later": "Du kannst dies später noch ändern."
   },
+  "copy_component": {
+    "copy_to_clipboard": "In die Zwischenablage kopieren"
+  },
   "delete_project_dialog": {
     "are_you_sure_you_want_to_delete": "Bist Du sicher, dass Du dieses Projekt löschen willst?",
     "cancel": "Abbrechen",
@@ -224,6 +227,7 @@
     "signup_already_submitted": "{{ name }} hat am {{ date }} eine Anfrage zur Anmeldung für die Erstellung von Entwürfen eingereicht. Ein Teammitglied wird Dich innerhalb von {{ min }} bis {{ max }} Werktagen kontaktieren, um Dein Projekt und die nächsten Schritte zu besprechen.",
     "sign_up_for_drafting": "Für das Generieren von Entwürfen anmelden",
     "temporarily_unavailable": "Das Generieren von Entwürfen ist vorübergehend nicht verfügbar.",
+    "problem_fetching_build_history": "Es gab ein Problem beim Abrufen des Build-Verlaufs.",
     "warning_generation_faulted": "Letzter Versuch fürs Generieren fehlgeschlagen. Klicke [em]\"{{ generateButtonText }}\"[/em] unten, um es erneut zu versuchen.",
     "click_book_to_preview": "Klicke auf ein Buch unten, um eine Vorschau des Entwurfs zu erstellen und es Deinem Projekt hinzuzufügen.",
     "nt_drafting_notice": "Das Generieren von Entwürfen ist jetzt verfügbar, um Übersetzungsteams des Neue Testament beim Generieren ihrer ersten Entwürfe zu unterstützen. Schau Dir unsere { 1 }Hilfe-Ressourcen{ 2 } an, um herauszufinden, wie Du loslegen kannst und wie Dein Projekt von der schrittweisen Erstellung von Entwürfen und Qualitätsschätzungen profitieren kann. Um diese Funktion zu nutzen, musst Du Dich mit uns in Verbindung setzen."
@@ -468,7 +472,6 @@
     "cannot_import": "Du kannst diesen Entwurf nicht importieren, weil Du nicht die Berechtigung hast, dieses Kapitel zu bearbeiten. Berechtigungen können in Paratext angepasst werden.",
     "click_book_to_preview": "Klicke auf ein Buch unten, um eine Vorschau des Entwurfs zu erstellen und es Deinem Projekt hinzuzufügen.",
     "draft_indicator_applied": "Hinzugefügt",
-    "draft_legacy_warning": "Wir haben unsere Redaktionsfunktion aktualisiert. Du kannst diese nutzen, indem Du [link:generateDraftUrl]einen neuen Entwurf[/link] erstellst.",
     "error_applying_draft": "Hinzufügen des Entwurfs zum Projekt ist fehlgeschlagen. Versuche es später noch einmal.",
     "format_draft": "Optionen für die Formatierung",
     "format_draft_tooltip": "Optionen für die Formatierung des Entwurfs anpassen",
@@ -516,7 +519,6 @@
     "offline": "Diese Funktion ist offline nicht verfügbar.",
     "project": "Projekt",
     "scope": "Umfang",
-    "site_wide_event_log": "Entwurfsaufgaben auf der ganzen Seite",
     "start_time": "Zeit Start",
     "status": "Status",
     "still_running": "Wird noch ausgeführt",
