@@ -183,6 +183,60 @@ describe('CommandService', () => {
   // It would be nice to have a test that gets down to the fall-thru condition of a type of error that didn't match
   // what we expected. But the HttpTestingController isn't letting a request.error() be done that is not an
   // ErrorEvent. And if we request.flush(jsonRpcResponse), the jsonRpcResponse.error must be a JsonRpcError.
+
+  it('handles null response body without crashing when processing it', fakeAsync(() => {
+    // Suppose HttpClient.post returns null rather than a JSON-RPC response. CommandService
+    // should handle and process this rather than crash attempting to process the response.
+    const env = new TestEnvironment();
+
+    // SUT
+    env.service
+      .onlineInvoke<string>('place1', 'foo')
+      .then((_res: string | undefined) => {
+        fail('test setup error. should not have had a successful promise resolution');
+      })
+      .catch((errorInfo: unknown) => {
+        expect(errorInfo).toBeInstanceOf(CommandError);
+        const commandError: CommandError = errorInfo as CommandError;
+
+        expect(commandError.message).toMatch(/Error invoking foo:/);
+        expect(commandError.message).toMatch(/Unexpected null JSON-RPC response from server./i);
+        expect(commandError.code).toEqual(CommandErrorCode.Other);
+      });
+    tick();
+
+    const request = env.httpMock.expectOne({ url: 'command-api/place1', method: 'POST' });
+    request.flush(null);
+    tick();
+    env.httpMock.verify();
+  }));
+
+  it('throws CommandError when server returns non-null response not in JSON-RPC form', fakeAsync(() => {
+    // Suppose HttpClient.post returns a non-null response that is neither a JsonRpcFailure or
+    // a JsonRpcSuccess. onlineInvoke should throw with a message about it.
+    const env = new TestEnvironment();
+
+    // SUT
+    env.service
+      .onlineInvoke<string>('place1', 'foo')
+      .then((_res: string | undefined) => {
+        fail('test setup error. should not have had a successful promise resolution');
+      })
+      .catch((errorInfo: unknown) => {
+        expect(errorInfo).toBeInstanceOf(CommandError);
+        const commandError: CommandError = errorInfo as CommandError;
+
+        expect(commandError.message).toContain('Error invoking foo:');
+        expect(commandError.message).toContain('Unexpected JSON-RPC response from server.');
+        expect(commandError.code).toEqual(CommandErrorCode.Other);
+      });
+    tick();
+
+    const request = env.httpMock.expectOne({ url: 'command-api/place1', method: 'POST' });
+    request.flush({ jsonrpc: '2.0', id: '1' });
+    tick();
+    env.httpMock.verify();
+  }));
 });
 
 class TestEnvironment {
