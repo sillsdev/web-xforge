@@ -200,7 +200,7 @@ describe('CommandService', () => {
         const commandError: CommandError = errorInfo as CommandError;
 
         expect(commandError.message).toMatch(/Error invoking foo:/);
-        expect(commandError.message).toMatch(/Unexpected null JSON-RPC response from server./i);
+        expect(commandError.message).toMatch(/Unexpected null JSON-RPC response from server/i);
         expect(commandError.code).toEqual(CommandErrorCode.Other);
       });
     tick();
