@@ -142,7 +142,7 @@ export interface ProjectBooks {
   projectDisplayName: string;
   /** Short name of the project if available. */
   shortName?: string;
-  /** Project name if available */
+  /** Project name if available. */
   projectName?: string;
   books: string[];
 }
