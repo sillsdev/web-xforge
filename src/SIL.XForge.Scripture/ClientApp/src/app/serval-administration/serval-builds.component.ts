@@ -421,7 +421,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   protected clearProjectFilter(): void {
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { sfProjectId: undefined },
+      queryParams: { sfProjectId: null },
       queryParamsHandling: 'merge'
     });
   }
