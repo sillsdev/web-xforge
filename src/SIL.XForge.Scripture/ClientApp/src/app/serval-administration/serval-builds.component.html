@@ -139,12 +139,20 @@
             @for (projectBook of row.translationBooks; track projectBook.sfProjectId) {
               <div>
                 @let translationLink = servalAdminProjectLinkFor(projectBook.sfProjectId);
+                @let short = projectBook.shortName ?? projectBook.sfProjectId;
+                @let toolTip = projectBook.projectName ?? projectBook.sfProjectId;
                 @if (translationLink != null) {
-                  <a [href]="translationLink" target="_blank" rel="noopener" class="project-link">
-                    {{ projectBook.projectDisplayName }}
+                  <a
+                    [href]="translationLink"
+                    target="_blank"
+                    rel="noopener"
+                    class="project-link"
+                    [matTooltip]="toolTip"
+                  >
+                    {{ short }}
                   </a>
                 } @else {
-                  <span class="project-link">{{ projectBook.projectDisplayName }}</span>
+                  <span class="project-link" [matTooltip]="toolTip">{{ short }}</span>
                 }
                 :
                 @if (projectBook.books.length <= 2) {

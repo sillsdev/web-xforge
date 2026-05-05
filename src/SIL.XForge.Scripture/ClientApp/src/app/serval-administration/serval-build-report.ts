@@ -142,6 +142,8 @@ export interface ProjectBooks {
   projectDisplayName: string;
   /** Short name of the project if available. */
   shortName?: string;
+  /** Project name if available */
+  projectName?: string;
   books: string[];
 }
 
@@ -171,6 +173,7 @@ export function toProjectBooks(ranges: BuildReportProjectScriptureRange[] | unde
       sfProjectId: sfProjectId,
       projectDisplayName: displayName,
       shortName: range.shortName,
+      projectName: range.name,
       books: books
     });
   }
