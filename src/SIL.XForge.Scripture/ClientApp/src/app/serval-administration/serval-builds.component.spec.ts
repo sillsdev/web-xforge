@@ -92,9 +92,9 @@ describe('ServalBuildsComponent', () => {
   describe('sfProjectId filter', () => {
     it('filters rows to only the matching project when sfProjectId is set', () => {
       const env = new TestEnvironment();
-      const rowA = env.createRowWithDetails({ projectId: 'project-a' });
-      const rowB = env.createRowWithDetails({ projectId: 'project-b' });
-      const rowC = env.createRowWithDetails({ projectId: 'project-a' });
+      const rowA = env.createRowWithDetails({ projectId: 'project-a', startDate: new Date('2024-01-03T00:00:00Z') });
+      const rowB = env.createRowWithDetails({ projectId: 'project-b', startDate: new Date('2024-01-02T00:00:00Z') });
+      const rowC = env.createRowWithDetails({ projectId: 'project-a', startDate: new Date('2024-01-01T00:00:00Z') });
       env.component['allRows'] = [rowA, rowB, rowC];
       env.component['currentProjectFilter'] = 'project-a';
 
@@ -107,9 +107,9 @@ describe('ServalBuildsComponent', () => {
 
     it('shows all rows when sfProjectId filter is cleared', () => {
       const env = new TestEnvironment();
-      const rowA = env.createRowWithDetails({ projectId: 'project-a' });
-      const rowB = env.createRowWithDetails({ projectId: 'project-b' });
-      const rowC = env.createRowWithDetails({ projectId: 'project-a' });
+      const rowA = env.createRowWithDetails({ projectId: 'project-a', startDate: new Date('2024-01-03T00:00:00Z') });
+      const rowB = env.createRowWithDetails({ projectId: 'project-b', startDate: new Date('2024-01-02T00:00:00Z') });
+      const rowC = env.createRowWithDetails({ projectId: 'project-a', startDate: new Date('2024-01-01T00:00:00Z') });
       env.component['allRows'] = [rowA, rowB, rowC];
       env.component['currentProjectFilter'] = 'project-a';
 
@@ -894,7 +894,7 @@ describe('ServalBuildsComponent', () => {
         // is also undefined, this build has no known finish time.
         env.createRowWithDetails({
           projectId: 'proj-a',
-          startDate: undefined,
+          startDate: null,
           finishDate: undefined,
           sfUserRequestTime: env.addHours(baseStart, 3),
           sfAcknowledgedTime: undefined,
@@ -1369,7 +1369,8 @@ class TestEnvironment {
     projectShortName?: string;
     projectName?: string;
     requesterId?: string;
-    startDate?: Date;
+    /** null can be given for no start date, but be careful not to generate errors about overlapping builds. */
+    startDate: Date | null;
     finishDate?: Date;
     trainingBooks?: ProjectBooks[];
     translationBooks?: ProjectBooks[];
@@ -1379,7 +1380,7 @@ class TestEnvironment {
     sfAcknowledgedTime?: Date;
     hasServalBuild?: boolean;
     hasEvents?: boolean;
-  } = {}): any {
+  }): any {
     const start: Date = startDate ?? new Date(0);
     const computedFinish: Date = finishDate ?? new Date(start.getTime() + durationMs);
 
