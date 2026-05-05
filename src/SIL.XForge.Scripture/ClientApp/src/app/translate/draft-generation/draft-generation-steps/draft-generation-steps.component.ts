@@ -139,6 +139,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   unusableTranslateTargetBooks: number[] = [];
   emptyTranslateSourceBooks: number[] = [];
   trainingBooksWithoutEnoughData: number[] = [];
+  trainingBooksExcludingTranslatedWithoutEnoughData: number[] = [];
   unusableTrainingSourceBooks: number[] = [];
   unusableTrainingTargetBooks: number[] = [];
 
@@ -357,6 +358,7 @@ export class DraftGenerationStepsComponent implements OnInit {
               if (isBookEmptyInAllSources || !this.bookHasVerseContent(projectId!, bookNum)) {
                 // the books is present but is empty
                 this.trainingBooksWithoutEnoughData.push(bookNum);
+                this.trainingBooksExcludingTranslatedWithoutEnoughData.push(bookNum);
               } else {
                 this.availableTrainingBooks[projectId!].push({ number: bookNum, selected: selected });
               }
@@ -572,6 +574,11 @@ export class DraftGenerationStepsComponent implements OnInit {
     for (const book of this.availableTranslateBooks[source.projectRef]) {
       book.selected = selectedBooks.includes(book.number);
     }
+
+    this.trainingBooksExcludingTranslatedWithoutEnoughData = this.trainingBooksWithoutEnoughData.filter(
+      x => !selectedBooks.includes(x)
+    );
+
     this.clearErrorMessage();
   }
 
