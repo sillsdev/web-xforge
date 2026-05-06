@@ -425,6 +425,34 @@
       <xs:enumeration value="tc5"/>
       <xs:enumeration value="thr5"/>
       <xs:enumeration value="tcr5"/>
+      <xs:enumeration value="th6"/>
+      <xs:enumeration value="tc6"/>
+      <xs:enumeration value="thr6"/>
+      <xs:enumeration value="tcr6"/>
+      <xs:enumeration value="th7"/>
+      <xs:enumeration value="tc7"/>
+      <xs:enumeration value="thr7"/>
+      <xs:enumeration value="tcr7"/>
+      <xs:enumeration value="th8"/>
+      <xs:enumeration value="tc8"/>
+      <xs:enumeration value="thr8"/>
+      <xs:enumeration value="tcr8"/>
+      <xs:enumeration value="th9"/>
+      <xs:enumeration value="tc9"/>
+      <xs:enumeration value="thr9"/>
+      <xs:enumeration value="tcr9"/>
+      <xs:enumeration value="th10"/>
+      <xs:enumeration value="tc10"/>
+      <xs:enumeration value="thr10"/>
+      <xs:enumeration value="tcr10"/>
+      <xs:enumeration value="th11"/>
+      <xs:enumeration value="tc11"/>
+      <xs:enumeration value="thr11"/>
+      <xs:enumeration value="tcr11"/>
+      <xs:enumeration value="th12"/>
+      <xs:enumeration value="tc12"/>
+      <xs:enumeration value="thr12"/>
+      <xs:enumeration value="tcr12"/>
       <xs:enumeration value="rem"/>
     </xs:restriction>
   </xs:simpleType>
@@ -523,6 +551,7 @@
       <xs:enumeration value="png"/>
       <xs:enumeration value="pro"/>
       <xs:enumeration value="qt"/>
+      <xs:enumeration value="ref"/>
       <xs:enumeration value="rq"/>
       <xs:enumeration value="sig"/>
       <xs:enumeration value="sls"/>
@@ -779,6 +808,7 @@
       <xs:enumeration value="fp"/>
       <xs:enumeration value="fv"/>
       <xs:enumeration value="fdc"/>
+      <xs:enumeration value="ref"/>
       <xs:enumeration value="xt"/>
       <xs:enumeration value="it"/>
       <xs:enumeration value="bd"/>
@@ -789,6 +819,7 @@
   </xs:simpleType>
   <xs:simpleType name="CrossReferenceChar.char.style.enum">
     <xs:restriction base="xs:token">
+      <xs:enumeration value="ref"/>
       <xs:enumeration value="xo"/>
       <xs:enumeration value="xop"/>
       <xs:enumeration value="xt"/>
