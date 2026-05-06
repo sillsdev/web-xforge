@@ -138,7 +138,6 @@ export class DraftGenerationStepsComponent implements OnInit {
   unusableTranslateSourceBooks: number[] = [];
   unusableTranslateTargetBooks: number[] = [];
   emptyTranslateSourceBooks: number[] = [];
-  trainingBooksWithoutEnoughData: number[] = [];
   trainingBooksExcludingTranslatedWithoutEnoughData: number[] = [];
   unusableTrainingSourceBooks: number[] = [];
   unusableTrainingTargetBooks: number[] = [];
@@ -170,6 +169,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   private trainingDataSubscription?: Subscription;
   private currentUserDoc?: UserDoc;
   private projectProgress: Map<string, ProjectProgress> = new Map<string, ProjectProgress>();
+  private trainingBooksWithoutEnoughData: number[] = [];
 
   constructor(
     private readonly destroyRef: DestroyRef,
