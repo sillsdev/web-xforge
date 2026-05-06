@@ -137,6 +137,12 @@
     <None Update="usfm_sb.sty">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="usfm_sb3_1.sty">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="usfm3_1.sty">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="changedChapter.py">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
