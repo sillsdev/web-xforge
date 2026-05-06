@@ -25,6 +25,7 @@ import {
   BehaviorSubject,
   catchError,
   combineLatest,
+  distinctUntilChanged,
   filter,
   firstValueFrom,
   from,
@@ -200,7 +201,10 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
 
   ngOnInit(): void {
     combineLatest([
-      this.route.queryParams.pipe(map(params => params['sfProjectId'])),
+      this.route.queryParams.pipe(
+        map(params => params['sfProjectId']),
+        distinctUntilChanged()
+      ),
       this.onlineStatusService.onlineStatus$,
       this.dateRange$.pipe(filter(notNull))
     ])
