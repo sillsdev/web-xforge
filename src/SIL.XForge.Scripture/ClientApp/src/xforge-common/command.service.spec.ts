@@ -199,8 +199,8 @@ describe('CommandService', () => {
         expect(errorInfo).toBeInstanceOf(CommandError);
         const commandError: CommandError = errorInfo as CommandError;
 
-        expect(commandError.message).toMatch(/Error invoking foo:/);
-        expect(commandError.message).toMatch(/Unexpected null JSON-RPC response from server/i);
+        expect(commandError.message).toContain('Error invoking foo:');
+        expect(commandError.message).toContain('Unexpected null JSON-RPC response from server');
         expect(commandError.code).toEqual(CommandErrorCode.Other);
       });
     tick();
@@ -227,7 +227,7 @@ describe('CommandService', () => {
         const commandError: CommandError = errorInfo as CommandError;
 
         expect(commandError.message).toContain('Error invoking foo:');
-        expect(commandError.message).toContain('Unexpected JSON-RPC response from server.');
+        expect(commandError.message).toContain('Unexpected JSON-RPC response from server');
         expect(commandError.code).toEqual(CommandErrorCode.Other);
       });
     tick();

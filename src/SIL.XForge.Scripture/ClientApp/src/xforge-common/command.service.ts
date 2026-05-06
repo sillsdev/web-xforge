@@ -122,7 +122,8 @@ export class CommandService {
       if (isJsonRpcSuccess(response)) {
         return response.result as T; // optimistic type assertion
       }
-      throw new Error('Unexpected JSON-RPC response from server.');
+      const res: string = JSON.stringify(response);
+      throw new Error(`Unexpected JSON-RPC response from server: ${res}`);
     } catch (error) {
       // Transform the various kinds of errors into a CommandError.
 
