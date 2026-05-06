@@ -1,0 +1,1001 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Storybook Screenshot Diff</title>
+        <style>
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                background: #f3f4f6;
+                color: #111827;
+            }
+
+            /* ── Sticky header ──────────────────────────────────────────────── */
+            #header {
+                position: sticky;
+                top: 0;
+                z-index: 100;
+                background: #1e1e2e;
+                color: #e2e8f0;
+                padding: 10px 24px;
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                flex-wrap: wrap;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            }
+
+            #header h1 {
+                font-size: 15px;
+                font-weight: 600;
+                color: #fff;
+                white-space: nowrap;
+            }
+
+            #pr-link {
+                font-size: 12px;
+                color: #818cf8;
+                text-decoration: none;
+                white-space: nowrap;
+            }
+            #pr-link:hover {
+                text-decoration: underline;
+            }
+
+            #summary {
+                display: flex;
+                gap: 16px;
+                flex-wrap: wrap;
+                font-size: 13px;
+                flex: 1;
+            }
+
+            .stat {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+            .stat-num {
+                font-weight: 700;
+                font-size: 16px;
+            }
+            .changed .stat-num {
+                color: #fbbf24;
+            }
+            .added .stat-num {
+                color: #34d399;
+            }
+            .removed .stat-num {
+                color: #f87171;
+            }
+            .identical .stat-num {
+                color: #9ca3af;
+            }
+
+            #controls {
+                display: flex;
+                gap: 6px;
+                align-items: center;
+                flex-wrap: wrap;
+            }
+
+            #controls > .ctrl-label {
+                font-size: 12px;
+                color: #94a3b8;
+                white-space: nowrap;
+            }
+
+            .mode-btn {
+                padding: 5px 12px;
+                border: 1.5px solid #4b5563;
+                background: transparent;
+                color: #d1d5db;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 12px;
+                transition:
+                    background 0.15s,
+                    border-color 0.15s;
+            }
+            .mode-btn.active {
+                background: #4338ca;
+                border-color: #6366f1;
+                color: #fff;
+            }
+            .mode-btn:hover:not(.active) {
+                border-color: #9ca3af;
+            }
+
+            #threshold-group {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                margin-left: 8px;
+                font-size: 12px;
+                color: #94a3b8;
+            }
+            #threshold-slider {
+                width: 80px;
+                accent-color: #6366f1;
+                cursor: pointer;
+            }
+            #threshold-val {
+                color: #e2e8f0;
+                font-weight: 600;
+                min-width: 2ch;
+                display: inline-block;
+            }
+
+            /* ── Content area ───────────────────────────────────────────────── */
+            #content {
+                max-width: 1440px;
+                margin: 0 auto;
+                padding: 24px 20px;
+            }
+
+            .loading {
+                text-align: center;
+                padding: 80px 20px;
+                color: #6b7280;
+                font-size: 15px;
+            }
+
+            /* ── Sections ───────────────────────────────────────────────────── */
+            .section {
+                margin-bottom: 36px;
+            }
+
+            .section-header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 8px 14px;
+                border-radius: 8px;
+                margin-bottom: 14px;
+                font-size: 14px;
+                font-weight: 600;
+            }
+            .section-changed .section-header {
+                background: #fef3c7;
+                color: #78350f;
+            }
+            .section-added .section-header {
+                background: #d1fae5;
+                color: #065f46;
+            }
+            .section-removed .section-header {
+                background: #fee2e2;
+                color: #991b1b;
+            }
+
+            /* ── Story cards ─────────────────────────────────────────────────── */
+            .story-card {
+                background: #fff;
+                border-radius: 10px;
+                padding: 16px;
+                margin-bottom: 14px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            }
+
+            .card-header {
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                gap: 12px;
+                margin-bottom: 8px;
+                flex-wrap: wrap;
+            }
+
+            .story-name {
+                font-family: "Courier New", monospace;
+                font-size: 12px;
+                color: #6b7280;
+                word-break: break-all;
+            }
+
+            .card-actions {
+                display: flex;
+                gap: 6px;
+                flex-shrink: 0;
+            }
+
+            .action-btn {
+                padding: 3px 9px;
+                border: 1.5px solid #d1d5db;
+                background: transparent;
+                color: #6b7280;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 11px;
+                white-space: nowrap;
+                transition:
+                    border-color 0.15s,
+                    color 0.15s;
+            }
+            .action-btn:hover {
+                border-color: #9ca3af;
+                color: #374151;
+            }
+            .action-btn.copied {
+                border-color: #059669;
+                color: #059669;
+            }
+
+            .story-meta {
+                font-size: 11px;
+                color: #9ca3af;
+                margin-bottom: 10px;
+            }
+            .story-meta.size-warn {
+                color: #d97706;
+            }
+
+            /* ── Two-column diff layout ──────────────────────────────────────── */
+            .diff-cols {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
+            }
+            @media (max-width: 640px) {
+                .diff-cols {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            .img-label {
+                font-size: 10px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                margin-bottom: 6px;
+            }
+            .lbl-base {
+                color: #6b7280;
+            }
+            .lbl-branch {
+                color: #4338ca;
+            }
+            .lbl-added {
+                color: #059669;
+            }
+            .lbl-removed {
+                color: #dc2626;
+            }
+            .lbl-diff {
+                color: #7c3aed;
+            }
+            .lbl-strobe {
+                color: #0891b2;
+            }
+
+            .story-img {
+                max-width: 100%;
+                border: 1px solid #e5e7eb;
+                border-radius: 4px;
+                display: block;
+            }
+
+            /* ── Mode-controlled visibility ─────────────────────────────────── */
+            /* "sbs": base | branch.  "diff": base | diff-canvas.  "strobe": strobe column only. */
+            body.mode-sbs .diff-col {
+                display: none;
+            }
+            body.mode-sbs .strobe-col {
+                display: none;
+            }
+            body.mode-diff .branch-col {
+                display: none;
+            }
+            body.mode-diff .strobe-col {
+                display: none;
+            }
+            body.mode-strobe .diff-cols {
+                display: none;
+            }
+
+            /* ── Strobe column ───────────────────────────────────────────────── */
+            /* Two images; only one is shown at a time (toggled by body class). */
+            .strobe-col {
+                margin-top: 4px;
+            }
+
+            /* Constrain the strobe images to match a single SBS grid column so that card height is
+       consistent between strobe mode and side-by-side mode and doesn't reflow on mode switch.
+       Both images occupy the same CSS grid cell so they are overlaid at the same position;
+       toggling visibility between them does not shift the visible image. */
+            .strobe-wrap {
+                display: grid;
+                max-width: calc(50% - 8px);
+            }
+
+            .strobe-img-base,
+            .strobe-img-branch {
+                grid-area: 1 / 1;
+                max-width: 100%;
+                border: 1px solid #e5e7eb;
+                border-radius: 4px;
+                display: block;
+            }
+
+            /* When showing "A" (base), hide branch; when showing "B" (branch), hide base.
+       visibility:hidden (not display:none) keeps the hidden image's space reserved so the
+       container height stays at max(base_height, branch_height) and doesn't reflow each tick. */
+            body.mode-strobe.strobe-a .strobe-img-branch {
+                visibility: hidden;
+            }
+            body.mode-strobe.strobe-b .strobe-img-base {
+                visibility: hidden;
+            }
+
+            /* ── Diff canvas container ───────────────────────────────────────── */
+            .diff-canvas-wrap {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .diff-canvas {
+                max-width: 100%;
+                border: 1px solid #e5e7eb;
+                border-radius: 4px;
+                display: block;
+            }
+
+            .diff-computing {
+                color: #9ca3af;
+                font-size: 12px;
+                padding: 20px 0;
+            }
+
+            .diff-legend {
+                display: flex;
+                gap: 16px;
+                font-size: 11px;
+                color: #6b7280;
+            }
+            .legend-item {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+            .legend-swatch {
+                width: 12px;
+                height: 12px;
+                border-radius: 2px;
+                flex-shrink: 0;
+            }
+
+            .size-diff-note {
+                font-size: 11px;
+                color: #d97706;
+            }
+
+            /* ── Badges ──────────────────────────────────────────────────────── */
+            .badge {
+                display: inline-block;
+                font-size: 10px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                padding: 2px 7px;
+                border-radius: 4px;
+                margin-left: 6px;
+                vertical-align: middle;
+            }
+            .badge-added {
+                background: #d1fae5;
+                color: #065f46;
+            }
+            .badge-removed {
+                background: #fee2e2;
+                color: #991b1b;
+            }
+
+            .error-msg {
+                color: #dc2626;
+                font-size: 12px;
+                padding: 8px 0;
+            }
+        </style>
+    </head>
+    <body class="mode-sbs strobe-a">
+        <div id="header">
+            <h1>Screenshot Diff</h1>
+            <a id="pr-link" href="" target="_blank" rel="noopener noreferrer" hidden>&#8592; View PR</a>
+            <div id="summary"><span style="color: #94a3b8">Loading&#8230;</span></div>
+            <div id="controls">
+                <span class="ctrl-label">Mode:</span>
+                <button class="mode-btn active" id="btn-sbs" onclick="setMode('sbs')">Side by side</button>
+                <button class="mode-btn" id="btn-diff" onclick="setMode('diff')">With diff</button>
+                <button class="mode-btn" id="btn-strobe" onclick="setMode('strobe')">Strobe</button>
+                <div id="threshold-group">
+                    <span>Threshold:</span>
+                    <input
+                        type="range"
+                        id="threshold-slider"
+                        min="0"
+                        max="50"
+                        value="8"
+                        oninput="onThresholdInput(+this.value)"
+                        onchange="onThresholdChange(+this.value)"
+                    />
+                    <span id="threshold-val">8</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="content">
+            <div class="loading">Loading diff data&#8230;</div>
+        </div>
+
+        <script>
+            "use strict";
+
+            let mode = "sbs";
+            let threshold = 8;
+            let data = null;
+
+            // Cache of loaded image elements per changed-story index: idx -> { img1, img2 }
+            const imgCache = {};
+
+            // IntersectionObserver used to prioritise rendering diff canvases for visible cards.
+            let diffObserver = null;
+
+            // Tracks which diff indices have been queued for rendering, to avoid duplicates.
+            const renderQueued = new Set();
+
+            // Strobe mode interval handle.
+            let strobeInterval = null;
+
+            // ── Mode toggle ──────────────────────────────────────────────────────
+            // Switching modes only changes a CSS class on <body>; the DOM is not rebuilt,
+            // so the scroll position is automatically preserved.
+            function setMode(m) {
+                if (mode === "strobe" && m !== "strobe") stopStrobe();
+                mode = m;
+                document.body.classList.toggle("mode-sbs", m === "sbs");
+                document.body.classList.toggle("mode-diff", m === "diff");
+                document.body.classList.toggle("mode-strobe", m === "strobe");
+                document.getElementById("btn-sbs").classList.toggle("active", m === "sbs");
+                document.getElementById("btn-diff").classList.toggle("active", m === "diff");
+                document.getElementById("btn-strobe").classList.toggle("active", m === "strobe");
+                if (m === "strobe") startStrobe();
+            }
+
+            // ── Strobe management ────────────────────────────────────────────────
+            // Alternates the body class between strobe-a (show base) and strobe-b (show branch)
+            // at approximately 4 Hz so differences are easy to spot.
+            function startStrobe() {
+                if (strobeInterval != null) return;
+                document.body.classList.add("strobe-a");
+                document.body.classList.remove("strobe-b");
+                strobeInterval = setInterval(() => {
+                    const showingA = document.body.classList.contains("strobe-a");
+                    document.body.classList.toggle("strobe-a", !showingA);
+                    document.body.classList.toggle("strobe-b", showingA);
+                }, 250);
+            }
+
+            function stopStrobe() {
+                if (strobeInterval != null) {
+                    clearInterval(strobeInterval);
+                    strobeInterval = null;
+                }
+                document.body.classList.remove("strobe-b");
+                document.body.classList.add("strobe-a");
+            }
+
+            // ── Threshold slider ─────────────────────────────────────────────────
+            // oninput: update the numeric display while dragging (cheap, no canvas work).
+            function onThresholdInput(v) {
+                document.getElementById("threshold-val").textContent = String(v);
+            }
+
+            // onchange: fires when the slider is released; re-render all diff canvases.
+            function onThresholdChange(v) {
+                threshold = v;
+                document.getElementById("threshold-val").textContent = String(v);
+                if (data != null) {
+                    data.changed.forEach((item, idx) => renderDiff(idx, item.filename));
+                }
+            }
+
+            // ── Entry point ──────────────────────────────────────────────────────
+            fetch("screenshots.json")
+                .then(r => r.json())
+                .then(d => {
+                    data = d;
+                    // Initialise the threshold from the value the compare script used.
+                    if (d.threshold != null) {
+                        threshold = d.threshold;
+                        const slider = document.getElementById("threshold-slider");
+                        slider.value = String(threshold);
+                        document.getElementById("threshold-val").textContent = String(threshold);
+                    }
+                    // Show PR link if the compare script recorded one.
+                    if (d.prUrl != null) {
+                        const link = document.getElementById("pr-link");
+                        link.href = d.prUrl;
+                        if (d.prTitle != null && d.prNumber != null) {
+                            link.textContent = `${d.prTitle} #${d.prNumber}`;
+                        }
+                        link.hidden = false;
+                    }
+                    renderSummary();
+                    renderAll();
+                    // If the URL has a fragment (e.g. from a "Copy link"), scroll to that card.
+                    // The scroll must happen after renderAll() populates the DOM.
+                    if (location.hash) {
+                        const target = document.getElementById(location.hash.slice(1));
+                        if (target != null) target.scrollIntoView();
+                    }
+                    // Attach copy-button handlers once, using event delegation on the stable #content element.
+                    setupCopyButtons();
+                    // Kick off diff rendering: visible cards are prioritised, the rest are scheduled later.
+                    scheduleDiffRenders();
+                })
+                .catch(e => {
+                    const el = document.getElementById("content");
+                    const div = document.createElement("div");
+                    div.style.cssText = "color:#dc2626;padding:40px;";
+                    div.textContent = "Failed to load screenshots.json: " + e.message;
+                    el.replaceChildren(div);
+                });
+
+            // ── Summary bar ──────────────────────────────────────────────────────
+            function renderSummary() {
+                const s = data.summary;
+                const parts = [];
+                if (s.changed) parts.push(stat("changed", s.changed, "changed"));
+                if (s.added) parts.push(stat("added", s.added, "added"));
+                if (s.removed) parts.push(stat("removed", s.removed, "removed"));
+                if (s.identical) parts.push(stat("identical", s.identical, "identical"));
+                document.getElementById("summary").innerHTML = parts.join("");
+            }
+
+            function stat(cls, count, label) {
+                return (
+                    '<span class="stat ' +
+                    cls +
+                    '"><span class="stat-num">' +
+                    count +
+                    "</span>&nbsp;" +
+                    label +
+                    "</span>"
+                );
+            }
+
+            // ── Main render — builds the full DOM once ───────────────────────────
+            // The DOM is never rebuilt after this; mode switching uses CSS classes only.
+            function renderAll() {
+                let html = "";
+
+                if (data.changed.length) {
+                    html += section(
+                        "changed",
+                        "&#9888; Changed (" + data.changed.length + ")",
+                        data.changed.map(changedCard).join("")
+                    );
+                }
+                if (data.added.length) {
+                    html += section(
+                        "added",
+                        "&#10010; Added (" + data.added.length + ")",
+                        data.added.map(addedCard).join("")
+                    );
+                }
+                if (data.removed.length) {
+                    html += section(
+                        "removed",
+                        "&#10008; Removed (" + data.removed.length + ")",
+                        data.removed.map(removedCard).join("")
+                    );
+                }
+                if (!html) {
+                    html = '<div class="loading">No visual differences found.</div>';
+                }
+
+                document.getElementById("content").innerHTML = html;
+            }
+
+            function section(cls, title, body) {
+                return (
+                    '<div class="section section-' +
+                    cls +
+                    '">' +
+                    '<div class="section-header">' +
+                    title +
+                    "</div>" +
+                    body +
+                    "</div>"
+                );
+            }
+
+            // ── Story cards ──────────────────────────────────────────────────────
+
+            // Returns a stable HTML id attribute value for a story card, used for anchor links.
+            function cardId(filename) {
+                return "card-" + filename.replace(/\.png$/, "");
+            }
+
+            function changedCard(item, idx) {
+                const name = storyName(item.filename);
+                const id = cardId(item.filename);
+
+                // The pixel-count span is populated asynchronously by renderDiff().
+                const metaCls = item.diffPixels === -1 ? "story-meta size-warn" : "story-meta";
+                const metaInitial =
+                    item.diffPixels === -1
+                        ? "&#9888; Image dimensions differ"
+                        : '<span id="pixel-count-' + idx + '">Computing&#8230;</span>';
+
+                // All three right-side columns are always in the DOM; CSS hides the inactive ones.
+                const body =
+                    '<div class="diff-cols">' +
+                    '<div class="img-col">' +
+                    '<div class="img-label lbl-base">Base</div>' +
+                    '<img class="story-img" src="base/' +
+                    item.filename +
+                    '" loading="lazy">' +
+                    "</div>" +
+                    '<div class="img-col branch-col">' +
+                    '<div class="img-label lbl-branch">Branch</div>' +
+                    '<img class="story-img" src="branch/' +
+                    item.filename +
+                    '" loading="lazy">' +
+                    "</div>" +
+                    '<div class="img-col diff-col">' +
+                    '<div class="img-label lbl-diff">Diff</div>' +
+                    '<div class="diff-canvas-wrap" id="diff-' +
+                    idx +
+                    '">' +
+                    '<div class="diff-computing">Computing diff&#8230;</div>' +
+                    "</div>" +
+                    "</div>" +
+                    "</div>" +
+                    // Strobe column: two images overlaid; opacity toggled by body class.
+                    '<div class="strobe-col">' +
+                    '<div class="img-label lbl-strobe">Strobe (base &#8596; branch)</div>' +
+                    '<div class="strobe-wrap">' +
+                    '<img class="strobe-img-base" src="base/' +
+                    item.filename +
+                    '" loading="lazy">' +
+                    '<img class="strobe-img-branch" src="branch/' +
+                    item.filename +
+                    '" loading="lazy">' +
+                    "</div>" +
+                    "</div>";
+
+                return (
+                    '<div class="story-card" id="' +
+                    id +
+                    '">' +
+                    '<div class="card-header">' +
+                    '<span class="story-name">' +
+                    name +
+                    "</span>" +
+                    '<div class="card-actions">' +
+                    '<button class="action-btn" data-copy-link="' +
+                    id +
+                    '">Copy link</button>' +
+                    '<button class="action-btn" data-copy-img="branch/' +
+                    item.filename +
+                    '">Copy image URL</button>' +
+                    "</div>" +
+                    "</div>" +
+                    '<div class="' +
+                    metaCls +
+                    '">' +
+                    metaInitial +
+                    "</div>" +
+                    body +
+                    "</div>"
+                );
+            }
+
+            function addedCard(filename) {
+                const name = storyName(filename);
+                const id = cardId(filename);
+                const body =
+                    "<div>" +
+                    '<div class="img-label lbl-added">Branch (added)</div>' +
+                    '<img class="story-img" src="branch/' +
+                    filename +
+                    '" loading="lazy">' +
+                    "</div>";
+                return (
+                    '<div class="story-card" id="' +
+                    id +
+                    '">' +
+                    '<div class="card-header">' +
+                    '<span class="story-name">' +
+                    name +
+                    '<span class="badge badge-added">Added</span></span>' +
+                    '<div class="card-actions">' +
+                    '<button class="action-btn" data-copy-link="' +
+                    id +
+                    '">Copy link</button>' +
+                    '<button class="action-btn" data-copy-img="branch/' +
+                    filename +
+                    '">Copy image URL</button>' +
+                    "</div>" +
+                    "</div>" +
+                    body +
+                    "</div>"
+                );
+            }
+
+            function removedCard(filename) {
+                const name = storyName(filename);
+                const id = cardId(filename);
+                const body =
+                    "<div>" +
+                    '<div class="img-label lbl-removed">Base (removed)</div>' +
+                    '<img class="story-img" src="base/' +
+                    filename +
+                    '" loading="lazy">' +
+                    "</div>";
+                return (
+                    '<div class="story-card" id="' +
+                    id +
+                    '">' +
+                    '<div class="card-header">' +
+                    '<span class="story-name">' +
+                    name +
+                    '<span class="badge badge-removed">Removed</span></span>' +
+                    '<div class="card-actions">' +
+                    '<button class="action-btn" data-copy-link="' +
+                    id +
+                    '">Copy link</button>' +
+                    '<button class="action-btn" data-copy-img="base/' +
+                    filename +
+                    '">Copy image URL</button>' +
+                    "</div>" +
+                    "</div>" +
+                    body +
+                    "</div>"
+                );
+            }
+
+            function storyName(filename) {
+                return filename.replace(/\.png$/, "");
+            }
+
+            // ── Diff render scheduling — visible items first ─────────────────────
+            // Uses IntersectionObserver to render diff canvases for cards that are currently
+            // visible (or about to become visible) before spending time on off-screen cards.
+            function scheduleDiffRenders() {
+                if (data.changed.length === 0) return;
+
+                // Use a 300 px root margin so cards are pre-rendered just before they scroll in.
+                diffObserver = new IntersectionObserver(
+                    entries => {
+                        for (const entry of entries) {
+                            if (entry.isIntersecting) {
+                                const idx = Number(entry.target.dataset.diffIdx);
+                                diffObserver.unobserve(entry.target);
+                                queueDiffRender(idx);
+                            }
+                        }
+                    },
+                    { rootMargin: "300px" }
+                );
+
+                data.changed.forEach((item, idx) => {
+                    const container = document.getElementById("diff-" + idx);
+                    if (container != null) {
+                        container.dataset.diffIdx = String(idx);
+                        diffObserver.observe(container);
+                    }
+                });
+
+                // After a short idle period, render any remaining items that have not yet entered
+                // the viewport (e.g. for pre-loading images the user will scroll to later).
+                const scheduleIdle =
+                    typeof requestIdleCallback !== "undefined"
+                        ? fn => requestIdleCallback(fn, { timeout: 3000 })
+                        : fn => setTimeout(fn, 500);
+
+                scheduleIdle(() => {
+                    data.changed.forEach((item, idx) => queueDiffRender(idx));
+                });
+            }
+
+            // Renders a diff canvas for the given index unless it has already been queued.
+            function queueDiffRender(idx) {
+                if (renderQueued.has(idx)) return;
+                renderQueued.add(idx);
+                renderDiff(idx, data.changed[idx].filename);
+            }
+
+            // ── Canvas-based pixel diff ──────────────────────────────────────────
+            // Draws a diff canvas for a changed story and updates the per-card pixel-count meta.
+            // Pixels that differ by more than `threshold` on any channel are highlighted red;
+            // unchanged pixels are dimmed.  Images are cached in imgCache so that threshold
+            // changes can re-render without re-fetching.
+            function renderDiff(idx, filename) {
+                const container = document.getElementById("diff-" + idx);
+                if (container == null) return;
+
+                const doRender = (img1, img2) => {
+                    const maxW = Math.max(img1.naturalWidth, img2.naturalWidth);
+                    const maxH = Math.max(img1.naturalHeight, img2.naturalHeight);
+
+                    // Draw both images onto off-screen canvases at max dimensions so pixels outside a
+                    // smaller image default to transparent (all zeros).
+                    const c1 = makeCanvas(maxW, maxH);
+                    c1.getContext("2d").drawImage(img1, 0, 0);
+                    const d1 = c1.getContext("2d").getImageData(0, 0, maxW, maxH).data;
+
+                    const c2 = makeCanvas(maxW, maxH);
+                    c2.getContext("2d").drawImage(img2, 0, 0);
+                    const d2 = c2.getContext("2d").getImageData(0, 0, maxW, maxH).data;
+
+                    const out = makeCanvas(maxW, maxH);
+                    const outCtx = out.getContext("2d");
+                    const outImg = outCtx.createImageData(maxW, maxH);
+                    const od = outImg.data;
+
+                    let diffPixelCount = 0;
+                    for (let i = 0; i < od.length; i += 4) {
+                        // A pixel is "the same" when every channel is within the current threshold.
+                        const same =
+                            Math.abs(d1[i] - d2[i]) <= threshold &&
+                            Math.abs(d1[i + 1] - d2[i + 1]) <= threshold &&
+                            Math.abs(d1[i + 2] - d2[i + 2]) <= threshold &&
+                            Math.abs(d1[i + 3] - d2[i + 3]) <= threshold;
+                        if (same) {
+                            od[i] = Math.round(d2[i] * 0.45);
+                            od[i + 1] = Math.round(d2[i + 1] * 0.45);
+                            od[i + 2] = Math.round(d2[i + 2] * 0.45);
+                            od[i + 3] = d2[i + 3];
+                        } else {
+                            od[i] = 255;
+                            od[i + 1] = 0;
+                            od[i + 2] = 0;
+                            od[i + 3] = 255;
+                            diffPixelCount++;
+                        }
+                    }
+
+                    outCtx.putImageData(outImg, 0, 0);
+                    out.className = "diff-canvas";
+
+                    const children = [out];
+
+                    if (img1.naturalWidth !== img2.naturalWidth || img1.naturalHeight !== img2.naturalHeight) {
+                        const note = document.createElement("div");
+                        note.className = "size-diff-note";
+                        note.textContent =
+                            "Base: " +
+                            img1.naturalWidth +
+                            "\xd7" +
+                            img1.naturalHeight +
+                            " \u2192 Branch: " +
+                            img2.naturalWidth +
+                            "\xd7" +
+                            img2.naturalHeight;
+                        children.push(note);
+                    }
+
+                    const legend = document.createElement("div");
+                    legend.className = "diff-legend";
+                    legend.innerHTML =
+                        '<div class="legend-item"><div class="legend-swatch" style="background:#f00"></div>Changed pixels</div>' +
+                        '<div class="legend-item"><div class="legend-swatch" style="background:#1a1a1a;border:1px solid #ccc"></div>Unchanged (dimmed)</div>';
+                    children.push(legend);
+
+                    container.replaceChildren(...children);
+
+                    // Update the per-card pixel count with the value computed at the current threshold.
+                    const countSpan = document.getElementById("pixel-count-" + idx);
+                    if (countSpan != null) {
+                        if (img1.naturalWidth !== img2.naturalWidth || img1.naturalHeight !== img2.naturalHeight) {
+                            countSpan.textContent = "Image dimensions differ";
+                        } else {
+                            countSpan.textContent =
+                                diffPixelCount +
+                                " pixel" +
+                                (diffPixelCount === 1 ? "" : "s") +
+                                " differ at threshold\u00a0" +
+                                threshold;
+                        }
+                    }
+                };
+
+                if (imgCache[idx] != null) {
+                    // Images already loaded — re-render synchronously (e.g. on threshold change).
+                    // Caching avoids re-fetching the same images every time the threshold changes.
+                    doRender(imgCache[idx].img1, imgCache[idx].img2);
+                } else {
+                    Promise.all([loadImg("base/" + filename), loadImg("branch/" + filename)])
+                        .then(([img1, img2]) => {
+                            imgCache[idx] = { img1, img2 };
+                            doRender(img1, img2);
+                        })
+                        .catch(e => {
+                            const msg = document.createElement("div");
+                            msg.className = "error-msg";
+                            msg.textContent = "Error computing diff: " + e.message;
+                            container.replaceChildren(msg);
+                        });
+                }
+            }
+
+            function makeCanvas(w, h) {
+                const c = document.createElement("canvas");
+                c.width = w;
+                c.height = h;
+                return c;
+            }
+
+            function loadImg(src) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = () => reject(new Error("Failed to load: " + src));
+                    img.src = src;
+                });
+            }
+
+            // ── Copy buttons — event delegation ─────────────────────────────────
+            // A single listener on #content handles all copy buttons.  This works because
+            // the DOM is built once and never rebuilt.
+            function setupCopyButtons() {
+                document.getElementById("content").addEventListener("click", e => {
+                    const btn = e.target.closest("[data-copy-link], [data-copy-img]");
+                    if (btn == null) return;
+
+                    let textToCopy;
+                    if (btn.dataset.copyLink !== undefined) {
+                        // Construct a URL that points directly to this story card.
+                        textToCopy = location.href.split("#")[0] + "#" + btn.dataset.copyLink;
+                    } else {
+                        // Construct the absolute URL to the image file (branch/ or base/).
+                        const pageBase = location.href.split("#")[0].replace(/\/?$/, "/");
+                        textToCopy = pageBase + btn.dataset.copyImg;
+                    }
+
+                    doCopy(btn, textToCopy);
+                });
+            }
+
+            function doCopy(btn, text) {
+                const origText = btn.textContent;
+                const finish = () => {
+                    btn.textContent = "Copied!";
+                    btn.classList.add("copied");
+                    setTimeout(() => {
+                        btn.textContent = origText;
+                        btn.classList.remove("copied");
+                    }, 1500);
+                };
+
+                if (navigator.clipboard != null) {
+                    navigator.clipboard.writeText(text).then(finish).catch(finish);
+                } else {
+                    // Fallback for environments where the Clipboard API is unavailable (e.g. non-HTTPS).
+                    // execCommand is deprecated but remains widely supported as a last resort.
+                    const ta = document.createElement("textarea");
+                    ta.value = text;
+                    ta.style.cssText = "position:fixed;opacity:0";
+                    document.body.appendChild(ta);
+                    ta.focus();
+                    ta.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(ta);
+                    finish();
+                }
+            }
+        </script>
+    </body>
+</html>
