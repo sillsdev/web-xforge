@@ -1,40 +1,129 @@
 # usx.rnc
-# A compact syntax Relax NG Schema for USX 3.0
+# A compact syntax Relax NG Schema for USX 3.0.7
 
 namespace a = "http://relaxng.org/ns/compatibility/annotations/1.0"
 namespace xsi = "http://www.w3.org/2001/XMLSchema-instance"
 datatypes xsd = "http://www.w3.org/2001/XMLSchema-datatypes"
+namespace usfm = "http://usfm.bible/parse/2023"
+
+usfm:terminal [name="hs" value="/[\u0009\u0020]/"
+   a:documentation ["A single simple horizontal (non newline) whitespace character"]]
+
+usfm:terminal [name="HS" value="/${hs}+/"
+    a:documentation ["A sequence of more horizontal whitespace characters"]]
+
+usfm:terminal [name="Hs" value="/${hs}*/"
+    a:documentation ["A sequence of zero or more horizontal whitespace characters"]]
+
+usfm:terminal [name="nl" value="/(?:\u000D?\u000A|\u000D)/"
+    a:documentation ["A single newline (as supported by all operating systems)"]]
+
+usfm:terminal [name="NL" value="/${nl}+/"
+    a:documentation ["A sequence of newline characters"]]
+
+usfm:terminal [name="ws" value="/(?:${hs}|${nl}|$)/"
+    a:documentation ["A reducable whitespace character, including a single newline sequence"]]
+
+usfm:terminal [name="anyws" value="/[\u0009\u000A\u000D\u0020]/"
+    a:documentation ["Matches any single reducible whitespace character, may split newline"]]
+
+usfm:terminal [name="WS" value="/${anyws}+/"
+    a:documentation ["A sequence of reducable whitespace characters"]]
+
+usfm:terminal [name="Ws" value="/${anyws}*/"
+    a:documentation ["A sequence of zero or more reducable whitespace characters"]]
+
+usfm:terminal [name="allws" value="/[\u0009-\u000D\u0020\u00A0\u1680\u2000-\u200B\u2028\u2029\u202F\u205F\u3000]/"
+    a:documentation ["All possible whitespace characters including content whitespace. Matches a single character"]]
+
+usfm:terminal [name="WSNL" value="/${HS}${NL}/"
+    a:documentation ["A sequence of non-newline whitespace up to and including a newline"]]
+
+usfm:terminal [name="TAGEND" value="/(?:${ws}+|(?=[\\|]|$))/"
+    a:documentation ["Delimits a marker"]]
+
+usfm:terminal [name="TEXTEND" value="/(?=${anyws}*\\|//|$)/"
+    a:documentation ["Delimits simple text"]]
+
+usfm:terminal [name="ATTRIBTEXTEND" value="/${Hs}(?=[\\|])/"
+    a:documentation ["Reducable characters following an attribute value"]]
+
+usfm:terminal [name="ATTRIBTEXT" value="/(?:\\[&quot;\\=~/|]|[^\\&quot;])+/"
+    a:documentation ["Matches text inside an attribute value (not including the quotes)"]]
+
+usfm:terminal [name="ATTRIBALL" value="/(?:[^\\=]|\\=)+(?=\\)/"
+    a:documentation ["Matches a default attribute value string"]]
+
+usfm:terminal [name="ATTRIBNAME" value="/[a-zA-Z0-9\-_]+?/"
+    a:documentation ["Matches an attribute name"]]
+
+usfm:terminal [name="TEXT" value="/([^\\/]|/(?!/)|\\[/~\\|])+/"
+    a:documentation ["Matches simple text up to the next marker"]]
+
+usfm:terminal [name="TEXTNWS" value="/.+(?=${Ws}\\[^~/\\])/"
+    a:documentation ["Matches simple text without trailing whitespace"]]
+
+usfm:terminal [name="TEXTNOTATTRIB" value="/(?:[^\\|]|\\[\\~/|])+/"
+    a:documentation ["Matches simple text up to the start of a sequence of attributes delimited by |"]]
+
+usfm:terminal [name="TEXTNOTATTRIBOPT" value="/(?:[^\\|]|\\[\\~/|])*/"
+    a:documentation ["Matches simple text up to the start of a sequence of attributes delimited by | if present"]]
+
+usfm:terminal [name="PIPE" value="/${hs}*(?<!\\)\|${hs}*/"
+    a:documentation ["Matches the attributes list delimiter of |"]]
+
+usfm:terminal [name="TLC" value="/[0-9A-Z]{3}/"
+    a:documentation ["Three letter uppercase code including digits"]]
+
+usfm:terminal [name="VERSE" value="/[1-9][0-9]*[\p{L}\p{Mn}]*(&#x200F;?[\-,][0-9]+[\p{L}\p{Mn}]*)*/"
+    a:documentation ["Verse number, including ranges and sequences"]]
+
+usfm:terminal [name="VID" value="/[A-Z1-4]{3} ?[&#x200F;a-z0-9,\-:\p{L}\p{Mn}]*/"
+    a:documentation ["USX eid, sid, vid references"]]
+
+usfm:terminal [name="MID" value="/[\p{L}\d_\-\.:]+/"
+    a:documentation ["Milestone sid or eid any identifier, in effect"]]
+
+usfm:terminal [name="HREF" value="/(.*\/\/\/?(.*\/?)+)|((prj:[A-Za-z\-0-9]{3,8} )?[A-Z1-4]{3} \d+:\d+(\-\d+)?)|(#[^\s]+)/"
+    a:documentation ["href bible reference"]]
+
+usfm:alias [name="usfm:tag" def="match" usfm:match [before="'\\'" after="TAGEND" afterout="' '"]]
+usfm:alias [name="usfm:ptag" def="match" usfm:match [before="/${Ws}\\/" beforeout="'\n\\'" after="TAGEND" afterout="' '"]]
+usfm:alias [name="usfm:endtag" def="match" usfm:match [before="'\\'" matchref="a" after="'*'" dump="true"]]
+usfm:alias [name="usfm:text" def="match" usfm:match[match="TEXT" after="TEXTEND"]]
 
 start = USX
 
-USX = ( Scripture | Peripheral )
+USX = ( Peripheral | Scripture )
 
-Scripture = (
+Peripheral = (
     element usx {
-        attribute version { xsd:string { minLength = "3" pattern = "\d+\.\d+(\.\d+)?"} },
+        [usfm:match [before="/${Ws}\\usfm${HS}/" beforeout="'\\usfm '" match="TEXTNWS"]]
+        attribute version { xsd:string { minLength = "3" pattern = "\d+\.\d+(\.\d+)?"} }?,
         attribute xsi:noNamespaceSchemaLocation { text }?,
 
+        (PeripheralBook | PeripheralDividedBook)
+    })
+
+Scripture = (
+    [usfm:stacked = "true"]
+    element usx {
         BookIdentification,
-        BookHeaders*,
-        BookTitles+,
+
+        [usfm:match [before="/${Ws}\\usfm${HS}/" beforeout="'\\usfm '"]]
+        attribute version { xsd:string { minLength = "3" pattern = "\d+\.\d+(\.\d+)?"} }?,
+        attribute xsi:noNamespaceSchemaLocation { text }?,
+
+        [usfm:seq = "true"]( BookHeaders*,
+        BookTitles*,
         BookIntroduction*,
         BookIntroductionEndTitles*,
         BookChapterLabel?,
         Chapter,
         # Chapter is used to separate intro from scripture text.
         # All books will have chapter including the single chapter books: OBA, PHM, 2JN, 3JN, JUD
-        ChapterContent+
-    }
-    )
-
-Peripheral = (
-    element usx {
-        attribute version { xsd:string { minLength = "3" pattern = "\d+\.\d+(\.\d+)?"} },
-        attribute xsi:noNamespaceSchemaLocation { text }?,
-
-        (PeripheralBook | PeripheralDividedBook)
-    }
-    )
+        ChapterContent+ )
+    })
 
 PeripheralBook = (
     PeripheralBookIdentification,
@@ -45,19 +134,19 @@ PeripheralBook = (
     PeripheralContent+
     )
 
-PeripheralDividedBook = (
-    PeripheralDividedBookIdentification,
-
-    (PeripheralDivision | PeripheralOther)
-
-    )
+PeripheralDividedBook = ( PeripheralDividedBookIdentification, (PeripheralDivision | PeripheralOther))
 
 BookIdentification =
     element book {
-        attribute code { BookIdentification.book.code.enum }, # e.g. code="GEN"
+        [usfm:tag[before="/&#xFEFF;?${anyws}*\\/" beforeout="'\\'" usfm:seq="true"]]
         attribute style { "id" },
-        text? # Brief description of the project (optional)
+        [usfm:grouping="13" usfm:match[]]
+        attribute code { BookIdentification.book.code.enum }, # e.g. code="GEN"
+        [usfm:seq="true"]([usfm:match[before="/${hs}*/" beforeout="' '" match="/[^\\\n\r]*/"]]
+        (text)? # Brief description of the project (optional)
+        >> usfm:match[match="NL" matchout="'\n'" dump="true"])
     }
+
 BookIdentification.book.code.enum = (
        "GEN" # Genesis
      | "EXO" # Exodus
@@ -160,27 +249,36 @@ BookIdentification.book.code.enum = (
      | "REP" # Reproof
      | "4BA" # 4 Baruch
      | "LAO" # Laodiceans
+     | [usfm:match[]] xsd:string { pattern = "[0-9A-Z]{3}" }
      )
 
 PeripheralBookIdentification =
     element book {
-        attribute code { PeripheralBookIdentification.book.code.enum }, # e.g. code="CNC"
+        [usfm:tag[before="/&#xFEFF;?${anyws}*\\/" beforeout="'\\'" usfm:seq="true"]]
         attribute style { "id" },
-        text? # Brief description of the project (optional)
-    }
+        [usfm:match[]] attribute code { PeripheralBookIdentification.book.code.enum },
+        [usfm:seq="true"]([usfm:match[before="/${hs}*/" beforeout="' '" match="/[^\\\n\r]*/"]]
+        (text)? # Brief description of the project (optional)
+        >> usfm:match[match="NL" matchout="'\n'" dump="true"])
+     }
+
 PeripheralBookIdentification.book.code.enum = (
        "CNC" # Concordance
      | "GLO" # Glossary
      | "TDX" # Topical Index
-     | "NDX" # Names Index
+     | "NDX" # Names Index }
      )
 
 PeripheralDividedBookIdentification =
     element book {
-        attribute code { PeripheralDividedBookIdentification.book.code.enum }, # e.g. code="FRT"
+        [usfm:tag[before="/&#xFEFF;?${anyws}*\\/" beforeout="'\\'" usfm:seq="true"]]
         attribute style { "id" },
-        text? # Brief description of the project (optional)
+        [usfm:match[]] attribute code { PeripheralDividedBookIdentification.book.code.enum }, # e.g. code="FRT"
+        [usfm:seq="true"]([usfm:match[before="/${hs}*/" beforeout="' '" match="/[^\\\n\r]*/"]]
+        (text)? # Brief description of the project (optional)
+        >> usfm:match[match="NL" matchout="'\n'" dump="true"])
     }
+
 PeripheralDividedBookIdentification.book.code.enum = (
        "XXA" # Extra A, e.g. a hymnal
      | "XXB" # Extra B
@@ -192,24 +290,27 @@ PeripheralDividedBookIdentification.book.code.enum = (
      | "FRT" # Front Matter
      | "BAK" # Back Matter
      | "OTH" # Other Matter
-     | "INT" # Introduction
+     | "INT" # Introduction }
      )
 
 PeripheralDivision =
+    [usfm:stacked="true" usfm:match[usfm:order="-3" before="/${Ws}\\periph${HS}/" beforeout="'\\periph '" match="''"]]
     element periph {
+        [usfm:match[match="TEXTNOTATTRIB" usfm:seq="true"]] attribute alt { text }?,
+        [usfm:grouping="15" usfm:match[before="/${PIPE}${Hs}id=?&quot;/" beforeout="'|id=&quot;'" after="'&quot;'" usfm:seq="true"]]
         attribute id {
               Peripheral.FRT.periph.id.enum
             | Peripheral.INT.periph.id.enum
             | Peripheral.BAK.periph.id.enum
             | Peripheral.OTH.periph.id.enum
-            | xsd:string { pattern = "x\-[\w_\-\.:]+" } },
-        attribute alt { text }?,
+            | xsd:string { pattern = "x\-[\p{L}_\-\.:]+" } },
         BookHeaders*,
-        BookTitles+,
+        BookTitles*,
         BookIntroduction*,
         BookIntroductionEndTitles*,
         PeripheralContent*
     }
+
 Peripheral.FRT.periph.id.enum = (
       "title"
     | "halftitle"
@@ -222,6 +323,7 @@ Peripheral.FRT.periph.id.enum = (
     | "alphacontents"
     | "abbreviations"
     )
+
 Peripheral.INT.periph.id.enum = (
       "intbible"
     | "intot"
@@ -235,15 +337,18 @@ Peripheral.INT.periph.id.enum = (
     | "intepistles"
     | "intletters"
     )
+
 Peripheral.BAK.periph.id.enum = (
       "chron"
     | "measures"
     | "maps"
     | "lxxquotes"
     )
+
 Peripheral.OTH.periph.id.enum = (
       "cover"
     | "spine"
+    | [usfm:match[]] xsd:string
     )
 
 PeripheralOther = (
@@ -256,419 +361,632 @@ PeripheralOther = (
 
 BookHeaders =
     element para {
-        attribute style { BookHeaders.para.style.enum }, text?
+        [usfm:grouping="8" usfm:ptag[]] attribute style { Header.para.style.enum },
+        [usfm:text[]] text?
     }
-BookHeaders.para.style.enum = (
-      "ide" # File encoding information
-    | "h" # Running header text for a book
-    | "h1" # Running header text (DEPRECATED)
-    | "h2" # Running header text, left side of page (DEPRECATED)
-    | "h3" # Running header text, right side of page (DEPRECATED)
-    | "toc1" # Long table of contents text
-    | "toc2" # Short table of contents text
-    | "toc3" # Book Abbreviation
-    | "toca1" # Alternative language long table of contents text
-    | "toca2" # Alternative language short table of contents text
-    | "toca3" # Alternative language book Abbreviation
-    | "rem" # Remark
-    | "usfm" # USFM markup version information (may occur if USX was generated from USFM)
+
+Header.para.style.enum = (
+         ## File encoding information (DEPRECATED)
+      "ide"
+    |    ## Running header text
+      "h1"
+    |    ## Running header text, left side of page (DEPRECATED)
+      "h2"
+    |    ## Running header text, right side of page (DEPRECATED)
+      "h3"
+    |    ## Running header text for a book
+      "h"
+    |    ## Long table of contents text
+      "toc1"
+    |    ## Short table of contents text
+      "toc2"
+    |    ## Book Abbreviation
+      "toc3"
+    |    ## Alternative language long table of contents text
+      "toca1"
+    |    ## Alternative language short table of contents text
+      "toca2"
+    |    ## Alternative language book Abbreviation
+      "toca3"
+    |    ## Remark
+      "rem"
+    |    ## Status
+      "sts"
     )
 
 BookTitles =
     element para {
-        attribute style { BookTitles.para.style.enum },
-        (Footnote | CrossReference | Char | Break | text)*
+        [usfm:ptag[]] attribute style { Title.para.style.enum },
+        ([usfm:text[]] text | Footnote | CrossReference | Char | Break)*
     }
-BookTitles.para.style.enum = (
-      "mt" # The main title of the book (if single level)
-    | "mt1" # The main title of the book (if multiple levels)
-    | "mt2" # A secondary title usually occurring before the main title
-    | "mt3" # A tertiary title occurring after the main title
-    | "mt4"
-    | "imt" # Introduction major title, level 1 (if single level)
-    | "imt1" # Introduction major title, level 1 (if multiple levels)
-    | "imt2" # Introduction major title, level 2
-    | "rem" # Remark
+
+Title.para.style.enum = (
+        ## The main title of the book (if multiple levels)
+      "mt1"
+    |   ## A secondary title usually occurring before the main title
+      "mt2"
+    |   ## A tertiary title occurring after the main title
+      "mt3"
+    |
+      "mt4"
+    |   ## The main title of the book (if single level)
+      "mt"
+    |   ## Remark
+      "rem"
     )
 
 BookIntroduction =
     element para {
-        attribute style { BookIntroduction.para.style.enum },
-        (Reference | Footnote | CrossReference | Char | IntroChar | Milestone | Figure | text)*
+        [usfm:grouping="12" usfm:ptag[]] attribute style { Introduction.para.style.enum },
+        ([usfm:text[]] text | CharEmbed | IntroChar | Footnote | CrossReference | Figure | Milestone | Reference | Sidebar)*
     } | Table
-BookIntroduction.para.style.enum = (
-      "imt" # Introduction major title, level 1 - (if single level)
-    | "imt1" # Introduction major title, level 1 (if multiple levels)
-    | "imt2" # Introduction major title, level 2
-    | "imt3" # Introduction major title, level 3
-    | "imt4" # Introduction major title, level 4 (usually within parenthesis)
-    | "ib" # Introduction blank line
-    | "ie" # Introduction ending marker
-    | "ili" # A list entry, level 1 (if single level)
-    | "ili1" # A list entry, level 1 (if multiple levels)
-    | "ili2" # A list entry, level 2
-    | "im" # Introduction prose paragraph, with no first line indent (may occur after poetry)
-    | "imi" # Introduction prose paragraph text, indented, with no first line indent
-    | "imq" # Introduction prose paragraph, quote from the body text, with no first line indent
-    | "io" # Introduction outline text, level 1 (if single level)
-    | "io1" # Introduction outline text, level 1 (if multiple levels)
-    | "io2" # Introduction outline text, level 2
-    | "io3" # Introduction outline text, level 3
-    | "io4" # Introduction outline text, level 4
-    | "iot" # Introduction outline title
-    | "ip" # Introduction prose paragraph
-    | "ipi" # Introduction prose paragraph, indented, with first line indent
-    | "ipq" # Introduction prose paragraph, quote from the body text
-    | "ipr" # Introduction prose paragraph, right aligned
-    | "iq" # Introduction poetry text, level 1 (if single level)
-    | "iq1" # Introduction poetry text, level 1 (if multiple levels)
-    | "iq2" # Introduction poetry text, level 2
-    | "iq3" # Introduction poetry text, level 3
-    | "is" # Introduction section heading, level 1 (if single level)
-    | "is1" # Introduction section heading, level 1 (if multiple levels)
-    | "is2" # Introduction section heading, level 2
-    | "imte" # Introduction major title at introduction end, level 1 (if single level)
-    | "imte1" # Introduction major title at introduction end, level 1 (if multiple levels)
-    | "imte2" # Introduction major title at introduction end, level 2
-    | "iex" # Introduction explanatory or bridge text (e.g. explanation of missing book in Short Old Testament)
-    | "rem" # Remark
+
+Introduction.para.style.enum = (
+        ## Introduction major title, level 1 (if multiple levels)
+      "imt1"
+    |   ## Introduction major title, level 2
+      "imt2"
+    |   ## Introduction major title, level 3
+      "imt3"
+    |   ## Introduction major title, level 4 (usually within parenthesis)
+      "imt4"
+    |   ## Introduction major title at introduction end, level 1 (if multiple levels)
+      "imte1"
+    |   ## Introduction major title at introduction end, level 2
+      "imte2"
+    |   ## Introduction major title at introduction end, level 1 (if single level)
+      "imte"
+    |   ## Introduction major title, level 1 - (if single level)
+      "imt"
+    |   ## Introduction blank line
+      "ib"
+    |   ## Introduction ending marker
+      "ie"
+    |   ## A list entry, level 1 (if multiple levels)
+      "ili1"
+    |   ## A list entry, level 2
+      "ili2"
+    |   ## A list entry, level 1 (if single level)
+      "ili"
+    |   ## Introduction prose paragraph text, indented, with no first line indent
+      "imi"
+    |   ## Introduction prose paragraph, quote from the body text, with no first line indent
+      "imq"
+    |   ## Introduction prose paragraph, with no first line indent (may occur after poetry)
+      "im"
+    |   ## Introduction outline text, level 1 (if multiple levels)
+      "io1"
+    |   ## Introduction outline text, level 2
+      "io2"
+    |   ## Introduction outline text, level 3
+      "io3"
+    |   ## Introduction outline text, level 4
+      "io4"
+    |   ## Introduction outline title
+      "iot"
+    |   ## Introduction outline text, level 1 (if single level)
+      "io"
+    |   ## Introduction prose paragraph, indented, with first line indent
+      "ipi"
+    |   ## Introduction prose paragraph, quote from the body text
+      "ipq"
+    |   ## Introduction prose paragraph, right aligned
+      "ipr"
+    |   ## Introduction prose paragraph
+      "ip"
+    |   ## Introduction poetry text, level 1 (if multiple levels)
+      "iq1"
+    |   ## Introduction poetry text, level 2
+      "iq2"
+    |   ## Introduction poetry text, level 3
+      "iq3"
+    |   ## Introduction poetry text, level 1 (if single level)
+      "iq"
+    |   ## Introduction section heading, level 1 (if multiple levels)
+      "is1"
+    |   ## Introduction section heading, level 2
+      "is2"
+    |   ## Introduction section heading, level 1 (if single level)
+      "is"
+    |   ## Introduction explanatory or bridge text (e.g. explanation of missing book in Short Old Testament)
+      "iex"
+    |   ## Remark
+      "rem"
     )
 
 BookIntroductionEndTitles =
     element para {
-        attribute style { BookIntroductionEndTitles.para.style.enum },
-        (Footnote | CrossReference | Char | Milestone | Break | text)*
+        [usfm:ptag[]] attribute style { Title.para.style.enum },
+        ([usfm:text[ahead="'\'"]] text | Footnote | CrossReference | CharEmbed | Figure | Milestone | Break)*
     }
-BookIntroductionEndTitles.para.style.enum = (
-      "mt" # The main title of the book (if single level)
-    | "mt1" # The main title of the book (if multiple levels)
-    | "mt2" # A secondary title usually occurring before the main title
-    | "mt3" # A tertiary title occurring after the main title
-    | "mt4" # A small secondary title sometimes occuring within parentheses
-    | "imt" # Introduction major title, level 1 (if single level)
-    | "imt1" # Introduction major title, level 1 (if multiple levels)
-    | "imt2" # Introduction major title, level 2
+
+ChapterContent = (Para | Section | Chapter | Milestone | Footnote | CrossReference | List | Table | Sidebar)
+
+PeripheralContent = (Para | Section | Chapter | Figure | Milestone | Footnote | CrossReference | List | Table | Sidebar)
+
+Section =
+    element para {
+        [usfm:grouping="15" usfm:ptag[matchid="a" usfm:stacked="true"]]
+        attribute style { SectionPara.para.style.enum },
+        attribute vid { [usfm:pattern[name="VERSE"]] xsd:string { pattern = "[A-Z1-4]{3} ?[a-z0-9\-:]*(&#x200F;?[\-,][0-9]+)*" } }?,
+        ([usfm:text[]] text | Footnote | CrossReference | CharEmbed | Figure | Milestone | [usfm:ignore="true"] VerseEnd | Reference | Break)*
+    }
+
+SectionPara.para.style.enum = (
+        ## Comment about when text was restored
+      "restore"
+    |   ## Introduction explanatory or bridge text (e.g. explanation of missing book in Short Old Testament)
+      "iex"
+    |   ## Division or Section introductory paragraph (study Bible)
+      "ip"
+    |   ## A major section division heading, level 1 (if multiple levels)
+      "ms1"
+    |   ## A major section division heading, level 2
+      "ms2"
+    |   ## A major section division heading, level 3
+      "ms3"
+    |   ## A major section division heading, level 1 (if single level)
+      "ms"
+    |   ## A major section division references range heading
+      "mr"
+    |   ## The main title of the book repeat /ed at the end of the book, level 1 (if multiple levels)
+      "mte1"
+    |   ## A secondary title occurring before or after the 'ending' main title
+      "mte2"
+    |   ## The main title of the book repeated at the end of the book, level 1 (if single level)
+      "mte"
+    |   ## Parallel reference(s)
+      "r"
+    |   ## A section heading, level 1 (if multiple levels)
+      "s1"
+    |   ## A section heading, level 2 (e.g. Proverbs 22-24)
+      "s2"
+    |   ## A section heading, level 3 (e.g. Genesis "The First Day") (\s3 can take a \v!)
+      "s3"
+    |   ## A section heading, level 4
+      "s4"
+    |   ## A section division references range heading
+      "sr"
+    |   ## A heading, to identify the speaker (e.g. Job)
+      "sp"
+    |   ## Semantic division location (vertical space used to divide the text into sections), level 1 (if multiple levels)
+      "sd1"
+    |   ## Semantic division location (vertical space used to divide the text into sections), level 2
+      "sd2"
+    |   ## Semantic division location (vertical space used to divide the text into sections), level 3
+      "sd3"
+    |   ## Semantic division location (vertical space used to divide the text into sections), level 4
+      "sd4"
+    |   ## Vertical space used to divide the text into sections, level 1 (if single level)
+      "sd"
+    |   ## A section heading, level 1 (if single level)
+      "s"
+    |   ## Chapter label used for translations that add a word such as "Chapter"
+      "cl"
+    |   ## Chapter Description (Publishing option D, e.g. in Russian Bibles)
+      "cd"
     )
-
-ChapterContent = (Chapter | Para | List | Table | Footnote | CrossReference | Sidebar)
-
-PeripheralContent = (Chapter | Para | List | Table | Footnote | CrossReference | Sidebar)
 
 Para =
     element para {
-        attribute style { Para.para.style.enum },
-        attribute vid { xsd:string { pattern = "[A-Z1-4]{3} ?[a-z0-9\-,:]*" } }?,
-        (Reference | Footnote | CrossReference | Char | Milestone | Figure | Verse | Break | text)+
+        ([usfm:grouping="15" usfm:ptag[usfm:stacked="true"]] attribute style { OtherPara.para.style.enum } |
+        [usfm:grouping="15" usfm:ptag[usfm:stacked="true"]] attribute style { VersePara.para.style.enum }),
+        attribute vid { [usfm:pattern[name="VERSE"]] xsd:string { pattern = "[A-Z1-4]{3} ?[a-z0-9\-:]*(&#x200F;?[\-,][0-9]+)*" } }?,
+        ([usfm:text[]] text | CharEmbed | Figure | Milestone | Verse | Reference | Footnote | CrossReference | Break)*
     }
-Para.para.style.enum = (
-      "restore" # Comment about when text was restored
-    | "cls" # Closure of an Epistle
-    | "iex" # Introduction explanatory or bridge text (e.g. explanation of missing book in Short Old Testament)
-    | "ip" # Division or Section introductory paragraph (study Bible)
-    | "lit" # For a comment or note inserted for liturgical use
-    | "m" #  Paragraph text, with no first line indent (may occur after poetry) aka: Paragraph Continuation
-    | "mi" # Paragraph text, indented, with no first line indent; often used for discourse
-    | "nb" # Paragraph text, with no break from previous paragraph text (at chapter boundary)
-    | "p" # Paragraph text, with first line indent
-    | "pb" # Page Break used for new reader portions and children's bibles where content is controlled by the page
-    | "pc" # Inscription (paragraph text centered)
-    | "pi" # Paragraph text, level 1 indent (if single level), with first line indent; often used for discourse
-    | "pi1" # Paragraph text, level 1 indent (if multiple levels), with first line indent; often used for discourse
-    | "pi2" # Paragraph text, level 2 indent, with first line indent; often used for discourse
-    | "pi3" # Paragraph text, level 3 indent, with first line indent; often used for discourse
-    | "po" # Letter opening
-    | "pr" # Text refrain (paragraph right-aligned)
-    | "pmo" # Embedded text opening
-    | "pm" # Embedded text paragraph
-    | "pmc" # Embedded text closing
-    | "pmr" # Embedded text refrain
-    | "q" # Poetry text, level 1 indent (if single level)
-    | "q1" # Poetry text, level 1 indent (if multiple levels)
-    | "q2" # Poetry text, level 2 indent
-    | "q3" # Poetry text, level 3 indent
-    | "q4" # Poetry text, level 4 indent
-    | "qa" # Poetry text, Acrostic marker/heading
-    | "qc" # Poetry text, centered
-    | "qr" # Poetry text, Right Aligned
-    | "qm" # Poetry text, embedded, level 1 indent (if single level)
-    | "qm1" # Poetry text, embedded, level 1 indent (if multiple levels)
-    | "qm2" # Poetry text, embedded, level 2 indent
-    | "qm3" # Poetry text, embedded, level 3 indent
-    | "qd" # A Hebrew musical performance annotation, similar in content to Hebrew descriptive title.
-    | "b" # Poetry text stanza break (e.g. stanza break)
-    | "d" # A Hebrew text heading, to provide description (e.g. Psalms)
-    | "ms" # A major section division heading, level 1 (if single level)
-    | "ms1" # A major section division heading, level 1 (if multiple levels)
-    | "ms2" # A major section division heading, level 2
-    | "ms3" # A major section division heading, level 3
-    | "mr" # A major section division references range heading
-    | "r" # Parallel reference(s)
-    | "s" # A section heading, level 1 (if single level)
-    | "s1" # A section heading, level 1 (if multiple levels)
-    | "s2" # A section heading, level 2 (e.g. Proverbs 22-24)
-    | "s3" # A section heading, level 3 (e.g. Genesis "The First Day")
-    | "s4" # A section heading, level 4
-    | "sr" # A section division references range heading
-    | "sp" # A heading, to identify the speaker (e.g. Job)
-    | "sd" # Vertical space used to divide the text into sections, level 1 (if single level)
-    | "sd1" # Semantic division location (vertical space used to divide the text into sections), level 1 (if multiple levels)
-    | "sd2" # Semantic division location (vertical space used to divide the text into sections), level 2
-    | "sd3" # Semantic division location (vertical space used to divide the text into sections), level 3
-    | "sd4" # Semantic division location (vertical space used to divide the text into sections), level 4
-    | "ts" # Translator�s chunk (to identify chunks of text suitable for translating at one time)
-    | "lh" # List header (introductory remark)
-    | "li" # A list entry, level 1 (if single level)
-    | "li1" # A list entry, level 1 (if multiple levels)
-    | "li2" # A list entry, level 2
-    | "li3" # A list entry, level 3
-    | "li4" # A list entry, level 4
-    | "lf" # List footer (introductory remark)
-    | "lim" # An embedded list entry, level 1 (if single level)
-    | "lim1" # An embedded list entry, level 1 (if multiple levels)
-    | "lim2" # An embedded list entry, level 2
-    | "lim3" # An embedded list entry, level 3
-    | "lim4" # An embedded list entry, level 4
-    | "cp" # Published chapter number
-    | "cl" # Chapter label used for translations that add a word such as "Chapter"
-    | "cd" # Chapter Description (Publishing option D, e.g. in Russian Bibles)
-    | "mte" # The main title of the book repeated at the end of the book, level 1 (if single level)
-    | "mte1" # The main title of the book repeat /ed at the end of the book, level 1 (if multiple levels)
-    | "mte2" # A secondary title occurring before or after the 'ending' main title
-    | "p" # Front or back matter text paragraph, level 1
-    | "p1" # Front or back matter text paragraph, level 1 (if multiple levels)
-    | "p2" # Front or back matter text paragraph, level 2 (if multiple levels)
-    | "k1" # Concordance main entry text or keyword, level 1
-    | "k2" # Concordance main entry text or keyword, level 2
-    | "rem" # Remark
+
+VersePara.para.style.enum = (
+      ## Closure of an Epistle
+      "cls"
+    |   ## Paragraph text, with no break from previous paragraph text (at chapter boundary)
+      "nb"
+    |   ## Inscription (paragraph text centered)
+      "pc"
+    |   ## Paragraph text, level 1 indent (if multiple levels), with first line indent; often used for discourse
+      "pi1"
+    |   ## Paragraph text, level 2 indent, with first line indent; often used for discourse
+      "pi2"
+    |   ## Paragraph text, level 3 indent, with first line indent; often used for discourse
+      "pi3"
+    |   ## Paragraph text, level 1 indent (if single level), with first line indent; often used for discourse
+      "pi"
+    |   ## Letter opening
+      "po"
+    |   ## Text refrain (paragraph right-aligned)
+      "pr"
+    |   ## Embedded text opening
+      "pmo"
+    |   ## Embedded text closing
+      "pmc"
+    |   ## Embedded text refrain
+      "pmr"
+    |   ## Embedded text paragraph
+      "pm"
+    |   ## Paragraph text, with level 1 hanging indent (if multiple levels)
+      "ph1"
+    |   ## Paragraph text, with level 2 hanging indent
+      "ph2"
+    |   ## Paragraph text, with level 3 hanging indent
+      "ph3"
+    |   ## Paragraph text, with level 1 hanging indent (if single level) (DEPRECATED - use para@style li#)
+      "ph"
+    |   ## Paragraph text, with first line indent
+      "p"
+    |   ## Poetry text, level 1 indent (if multiple levels)
+      "q1"
+    |   ## Poetry text, level 2 indent
+      "q2"
+    |   ## Poetry text, level 3 indent
+      "q3"
+    |   ## Poetry text, level 4 indent
+      "q4"
+    |   ## Poetry text, centered
+      "qc"
+    |   ## Poetry text, Right Aligned
+      "qr"
+    |   ## Poetry text, embedded, level 1 indent (if multiple levels)
+      "qm1"
+    |   ## Poetry text, embedded, level 2 indent
+      "qm2"
+    |   ## Poetry text, embedded, level 3 indent
+      "qm3"
+    |   ## Poetry text, embedded, level 1 indent (if single level)
+      "qm"
+    |   ## A Hebrew musical performance annotation, similar in content to Hebrew descriptive title.
+      "qd"
+    |   ## Poetry text, level 1 indent (if single level)
+      "q"
+    |   ## Poetry text stanza break (e.g. stanza break)
+      "b"
+    |   ## A Hebrew text heading, to provide description (e.g. Psalms)
+      "d"
+    |   ## Paragraph text, level 1 indented, with no first line indent; often used for discourse
+      "mi1"
+    |   ## Paragraph text, level 2 indented, with no first line indent; often used for discourse
+      "mi2"
+    |   ## Paragraph text, level 3 indented, with no first line indent; often used for discourse
+      "mi3"
+    |   ## Paragraph text, level 4 indented, with no first line indent; often used for discourse
+      "mi4"
+    |   ## Paragraph text, indented, with no first line indent; often used for discourse
+      "mi"
+    |   ##  Paragraph text, with no first line indent (may occur after poetry) aka: Paragraph Continuation
+      "m"
     )
+
+OtherPara.para.style.enum = (
+      ## For a comment or note inserted for liturgical use
+      "lit"
+    |   ## Chapter published style
+      "cp"
+    |   ## Page Break used for new reader portions and children's bibles where content is controlled by the page
+      "pb"
+    |   ## Front or back matter text paragraph, level 1 (if multiple levels)
+      "p1"
+    |   ## Front or back matter text paragraph, level 2 (if multiple levels)
+      "p2"
+    |   ## Poetry text, Acrostic marker/heading
+      "qa"
+    |   ## Concordance main entry text or keyword, level 1
+      "k1"
+    |   ## Concordance main entry text or keyword, level 2
+      "k2"
+    |   ## Remark
+      "rem"
+    |   ## Remark
+      "sts"
+)
 
 List =
     element para {
-        attribute style { List.para.style.enum },
-        (Reference | Footnote | CrossReference | Char | ListChar | Milestone | Figure | Verse | Break | text)+
+        [usfm:grouping="8" usfm:ptag[]] attribute style { List.para.style.enum },
+        attribute vid { [usfm:pattern[name="VERSE"]] xsd:string { pattern = "[A-Z1-4]{3} ?[a-z0-9\-:]*(&#x200F;?[\-,][0-9]+)*" } }?,
+        ([usfm:text[]] text | ListChar | CharEmbed | Figure | Milestone | Verse | Reference | Footnote | CrossReference | Break)*
     }
+
 List.para.style.enum = (
-      "lh" # List header (introductory remark)
-    | "li" # A list entry, level 1 (if single level)
-    | "li1" # A list entry, level 1 (if multiple levels)
-    | "li2" # A list entry, level 2
-    | "li3" # A list entry, level 3
-    | "li4" # A list entry, level 4
-    | "lf" # List footer (introductory remark)
-    | "lim" # An embedded list entry, level 1 (if single level)
-    | "lim1" # An embedded list entry, level 1 (if multiple levels)
-    | "lim2" # An embedded list entry, level 2
-    | "lim3" # An embedded list entry, level 3
-    | "lim4" # An embedded list entry, level 4
+        ## List header (introductory remark)
+      "lh"
+    |   ## A list entry, level 1 (if multiple levels)
+      "li1"
+    |   ## A list entry, level 2
+      "li2"
+    |   ## A list entry, level 3
+      "li3"
+    |   ## A list entry, level 4
+      "li4"
+    |   ## An embedded list entry, level 1 (if multiple levels)
+      "lim1"
+    |   ## An embedded list entry, level 2
+      "lim2"
+    |   ## An embedded list entry, level 3
+      "lim3"
+    |   ## An embedded list entry, level 4
+      "lim4"
+    |   ## An embedded list entry, level 1 (if single level)
+      "lim"
+    |   ## A list entry, level 1 (if single level)
+      "li"
+    |   ## List footer (introductory remark)
+      "lf"
     )
 
 Table =
     element table {
-        attribute vid { xsd:string { pattern = "[A-Z1-4]{3} ?[a-z0-9\-,:]*" } }?,
+        attribute vid { xsd:string { pattern = "[A-Z1-4]{3} ?[a-z0-9\-:]*(&#x200F;?[\-,][0-9]+)*" } }?,
         element row {
+            [usfm:ptag[]]
             attribute style {
                 ("tr") # Table row
             },
-            (Verse | TableContent)+
+            ([usfm:ignore="true"]Verse | TableContent)+
         }+
     }
+
 TableContent =
     element cell {
-        attribute style { cell.style.enum },
+        [usfm:ptag[]]
+        attribute style { xsd:string { pattern = "t[hc][rc]?\d+(-\d+)?" } },
         attribute align { cell.align.enum },
         attribute colspan { xsd:integer }?,
-        (Footnote | CrossReference | Char | Milestone | Figure | Verse | Break | text)*
+        ([usfm:text[]] text | CharEmbed | Figure | Milestone | Verse | Footnote | CrossReference | Break)*
     }
-cell.style.enum = (
-      "th" # A table heading, any column
-    | "tc" # A table cell item, any column
-	| "thr" # A table heading, any column, right aligned
-    | "tcr" # A table cell item, any column, right aligned
-    | "thc" # A table heading, any column, center aligned
-    | "tcc" # A table cell item, any column, center aligned
-    | "th1" # A table heading, column 1
-    | "tc1" # A table cell item, column 1
-    | "thr1" # A table heading, column 1, right aligned
-    | "tcr1" # A table cell item, column 1, right aligned
-    | "th2" # A table heading, column 2
-    | "tc2" # A table cell item, column 2
-    | "thr2" # A table heading, column 2, right aligned
-    | "tcr2" # A table cell item, column 2, right aligned
-    | "th3" # A table heading, column 3
-    | "tc3" # A table cell item, column 3
-    | "thr3" # A table heading, column 3, right aligned
-    | "tcr3" # A table cell item, column 3, right aligned
-    | "th4" # A table heading, column 4
-    | "tc4" # A table cell item, column 4
-    | "thr4" # A table heading, column 4, right aligned
-    | "tcr4" # A table cell item, column 4, right aligned
-    | "th5" # A table heading, column 5
-    | "tc5" # A table cell item, column 5
-    | "thr5" # A table heading, column 5, right aligned
-    | "tcr5" # A table cell item, column 5, right aligned
-    | "rem" # Remark
-    )
 
 cell.align.enum = (
-      "start" # left in LTR, right in RTL
-    | "center" # center
-    | "end" # right in LTR, left in RTL
+        ## left in LTR, right in RTL
+      "start"
+    |   ## center
+      "center"
+    |   ## right in LTR, left in RTL
+      "end"
     )
 
 IntroChar =
     element char {
-        attribute style { IntroChar.char.style.enum },
+        [usfm:tag[matchid="a" usfm:seq="true"]] attribute style { IntroChar.char.style.enum },
         char.closed?,
-        text,
-        (Reference | Char | IntroChar | Milestone | Footnote | Break | text)* # Nested character <char> markup
+        ([usfm:text[]] text | CharEmbed | Figure | Milestone | Reference | Footnote | CrossReference | Break)+
+        >> usfm:endtag[usfm:order="3" ahead="/[^\\]/" usfm:many="?" usfm:seq="true"]
     }
 IntroChar.char.style.enum = (
       "ior" # Introduction references range for outline entry; for marking references separately
     | "iqt" # For quoted scripture text appearing in the introduction
     )
 
+NoteCharContent = (
+    [usfm:ignore="true"]char.closed?,
+    ([usfm:match[match="TEXTNOTATTRIB" after="ATTRIBTEXTEND"]] text
+        | NoteCharEmbed | Figure | Milestone | Reference | Break)* # Nested character <char> markup
+    )
+
+Attributes = (
+    [usfm:match[match="PIPE" matchout="'|'" dump="true"]]
+       ([usfm:fallback-from="style" usfm:matchpair[first="ATTRIBNAME" between="'=&quot;'"
+                second="ATTRIBTEXT" after="/&quot;${Hs}/" afterout="'&quot;'" fallback="ATTRIBALL"]]
+        attribute * - (style | closed) {xsd:string}+)
+    )
+
 Char = (
+    [usfm:stacked="true"]
     element char {
-        attribute style { Char.char.style.enum },
-        char.link?,
-        char.closed?,
-        text,
-        (Reference | Char | Milestone | Footnote | Break | text)* # Nested character <char> markup
-    }
-    | CharWithAttrib.enum
+        [usfm:grouping="12" usfm:tag[matchid="a" usfm:seq="true"]] attribute style { FullChar.char.style.enum },
+        ( (CharContent, Attributes?) | Attributes)
+        >> usfm:endtag[usfm:seq="true"]  # required
+    })
+
+CharContent = (
+    [usfm:ignore="true"]char.closed?,
+    ( CharEmbed | Figure | Milestone | Footnote | CrossReference | Reference | Break # Nested character <char> markup
+      | [usfm:match[match="TEXTNOTATTRIB" after="ATTRIBTEXTEND"]] text)+
     )
+
+FullCharExtra.char.style.enum = (
+    [usfm:propval="href" usfm:propattribs="link-href? href?"] "xt" # A target reference(s)
+    )
+
+FullChar.char.style.enum = (
+    Char.char.style.enum
+    | FullCharExtra.char.style.enum
+    )
+
 Char.char.style.enum = (
-      "va" # Second (alternate) verse number (for coding dual numeration in Psalms; see also NRSV Exo 22.1-4)
-    | "vp" # Published verse marker - this is a verse marking that would be used in the published text
-    | "ca" # Second (alternate) chapter number
-    | "qac" # Poetry text, Acrostic markup of the first character of a line of acrostic poetry
-    | "qs" # Poetry text, Selah
-    | "add" # For a translational addition to the text
-    | "addpn" # For chinese words to be dot underline & underline (DEPRECATED - used nested char@style pn)
-    | "bk" # For the quoted name of a book
-    | "dc" # Deuterocanonical/LXX additions or insertions in the Protocanonical text
-    | "efm" # Reference to caller of previous footnote in a study Bible
-    | "fm" # Reference to caller of previous footnote
-    | "k" # For a keyword
-    | "nd" # For name of deity
-    | "ndx" # A subject index text item
-    | "ord" # For the text portion of an ordinal number
-    | "pn" # For a proper name
-    | "png" # For a geographic proper name
-    | "pro" # For indicating pronunciation in CJK texts (DEPRECATED - used char@style rb)
-    | "qt" # For Old Testament quoted text appearing in the New Testament
-    | "rq" # A cross-reference indicating the source text for the preceding quotation.
-    | "sig" # For the signature of the author of an Epistle
-    | "sls" # To represent where the original text is in a secondary language or from an alternate text source
-    | "tl" # For transliterated words
-    | "wg" # A Greek Wordlist text item
-    | "wh" # A Hebrew wordlist text item
-    | "wa" # An Aramaic wordlist text item
-    | "wj" # For marking the words of Jesus
-    | "xt" # A target reference(s)
-    | "jmp" # For associating linking attributes to a span of text
-    | "no" # A character style, use normal text
-    | "it" # A character style, use italic text
-    | "bd" # A character style, use bold text
-    | "bdit" # A character style, use bold + italic text
-    | "em" # A character style, use emphasized text style
-    | "sc" # A character style, for small capitalization text
-    | "sup" # A character style, for superscript text. Typically for use in critical edition footnotes.
+        ## Published verse marker - this is a verse marking that would be used in the published text
+      "vp"
+    |   ## Poetry text, Acrostic markup of the first character of a line of acrostic poetry
+      "qac"
+    |   ## Poetry text, Selah
+      "qs"
+    |   ## For a translational addition to the text
+      "add"
+    |   ## For chinese words to be dot underline & underline (DEPRECATED - used nested char@style pn)
+      "addpn"
+    |   ## For the quoted name of a book
+      "bk"
+    |   ## Deuterocanonical/LXX additions or insertions in the Protocanonical text
+      "dc"
+    |   ## Reference to caller of previous footnote in a study Bible
+      "efm"
+    |   ## Reference to caller of previous footnote
+      "fm"
+    |   ## A verse number within the footnote text
+      "fv"
+    |   ## For a keyword
+      [usfm:propval="key"] "k"
+    |   ## For name of deity
+      "nd"
+    |   ## A subject index text item
+      "ndx"
+    |   ## For the text portion of an ordinal number
+      "ord"
+    |   ## For a geographic proper name
+      "png"
+    |   ## For a proper name
+      "pn"
+    |   ## For indicating pronunciation in CJK texts (DEPRECATED - used char@style rb)
+      "pro"
+    |   ## For Old Testament quoted text appearing in the New Testament
+      "qt"
+    |   ## A cross-reference indicating the source text for the preceding quotation.
+      "rq"
+    |   ## For the signature of the author of an Epistle
+      "sig"
+    |   ## To represent where the original text is in a secondary language or from an alternate text source
+      "sls"
+    |   ## For transliterated words
+      "tl"
+    |   ## A Greek Wordlist text item
+      "wg"
+    |   ## A Hebrew wordlist text item
+      "wh"
+    |   ## An Aramaic wordlist text item
+      "wa"
+    |   ## For marking the words of Jesus
+      "wj"
+    |   ## For associating linking attributes to a span of text
+      [usfm:propval="href" usfm:propattribs="href? link-href?"] "jmp"
+    |   ## A character style, use normal text
+      "no"
+    |   ## A character style, use italic text
+      "it"
+    |   ## A character style, use bold + italic text
+      "bdit"
+    |   ## A character style, use bold text
+      "bd"
+    |   ## A character style, use emphasized text style
+      "em"
+    |   ## A character style, for small capitalization text
+      "sc"
+    |   ## A character style, for superscript text. Typically for use in critical edition footnotes.
+      "sup"
+    |   ## Inline scripture reference formatting.
+       [usfm:propval="href"] "xt"
+    | [usfm:propval="lemma" usfm:propattribs="lemma? strong? srcloc?"] "w"
+    | [usfm:propval="gloss" usfm:propattribs="gloss"] "rb"
     )
+
+CharEmbed = (
+    element char {
+        ([usfm:stacked="true" usfm:grouping="9" usfm:tag[matchid="b" before="'\\'" usfm:seq="true" skip="3.0"]] attribute style { FullChar.char.style.enum },
+        ((CharContent, Attributes?) | Attributes)
+        >> usfm:endtag[matchref="b" before="'\\'"])
+      |
+        ([usfm:stacked="true" usfm:grouping="9" usfm:tag[matchid="a" before="'\\+'" usfm:seq="true"]] attribute style { FullChar.char.style.enum },
+        ((CharContent, Attributes?) | Attributes)
+        >> usfm:endtag[matchref="a" before="'\\+'"])
+    })
+
+NoteCharEmbed = (
+    element char {
+        [usfm:stacked="true" usfm:grouping="9" usfm:tag[matchid="c" before="'\\'" usfm:seq="true"]] attribute style { Char.char.style.enum },
+        NoteCharContent,
+        Attributes?
+        >> usfm:endtag[matchref="c" before="'\\'"]
+    } |
+    element char {
+        [usfm:stacked="true" usfm:grouping="9" usfm:tag[matchid="b" before="'\\+'" usfm:seq="true"]] attribute style { Char.char.style.enum },
+        NoteCharContent,
+        Attributes?
+        >> usfm:endtag[matchref="b" before="'\\+'"]
+    })
 
 ListChar = (
     element char {
-        attribute style { ListChar.char.style.enum },
-        char.link?,
+        [usfm:tag[matchid="a"]] attribute style { ListChar.char.style.enum },
         char.closed?,
-        text,
-        (Reference | Char | Milestone | Footnote | Break | text)* # Nested character <char> markup
-    }
-    )
+        ([usfm:text[]] text | CharEmbed | Figure | Milestone | Footnote | CrossReference | Break | Reference)*
+        >> usfm:endtag[usfm:many="?"]
+    })
+
 ListChar.char.style.enum = (
-      "litl" # List entry total text
-    | "lik" # Structured list entry key text
-    | "liv" # Structured list entry value 1 content (if single value)
-    | "liv1" # Structured list entrt value 1 content (if multiple values)
-    | "liv2" # Structured list entry value 2 content
-    | "liv3" # Structured list entry value 3 content
-    | "liv4" # Structured list entry value 4 content
-    | "liv5" # Structured list entry value 5 content
+        ## List entry total text
+      "litl"
+    |   ## Structured list entry key text
+      "lik"
+    |   ## Structured list entrt value 1 content (if multiple values)
+      "liv1"
+    |   ## Structured list entry value 2 content
+      "liv2"
+    |   ## Structured list entry value 3 content
+      "liv3"
+    |   ## Structured list entry value 4 content
+      "liv4"
+    |   ## Structured list entry value 5 content
+      "liv5"
+    |   ## Structured list entry value 1 content (if single value)
+      "liv"
     )
 
-CharWithAttrib.enum = (
-      CharWithAttrib.char.style.w
-    | CharWithAttrib.char.style.rb
-    )
+Figure = ([usfm:alt="FigureTwo"] FigureThree)
 
-CharWithAttrib.char.style.w =
-    element char {
-        attribute style { "w" }, # A wordlist text item
-        char.link?,
-        char.closed?,
-        attribute lemma { xsd:string { minLength = "1" } }?, # Lemma/citation form found in glossary
-        attribute strong { xsd:string { pattern = "[HG]\d{4,5}(:[a-z])?"} }?, # Strong�s ID in the form H##### (Hebrew) or G##### (Greek)
-        attribute srcloc { xsd:string { pattern = "[a-z]{3,5}\d?:\d+\.\d+\.\d+\.\d+" } }?, # Location of the word in the source text
-        text,
-        (Reference | Char | Milestone | Footnote | Break | text)* # Nested character <char> markup
+FigureThree =
+    element figure {
+        [usfm:order="-2" usfm:tag [matchid="a"]] attribute style { [usfm:propattribs="src size ref alt? loc? copy?"] "fig" },
+        [usfm:ignore="true"] char.closed?,
+        [usfm:order="-1"] ([usfm:match[match="TEXTNOTATTRIB"]] text?), # Nested character <char> markup. Can an attributed char have sub char markup? ATM no.
+        Attributes?
+        >> usfm:endtag[usfm:order="4"]
     }
 
-CharWithAttrib.char.style.rb =
-    element char {
-        attribute style { "rb" }, # Base text for ruby glosses
-        char.link?,
+FigureTwo =
+    element figure {
+        [usfm:tag [matchid="a"]] attribute style { "fig" },
         char.closed?,
-        attribute gloss { xsd:string { minLength = "1" } }?, # Ruby glosses
-        text,
-        (Reference | Char | Milestone | Footnote | Break | text)* # Nested character <char> markup
+        [usfm:match[match="TEXTNOTATTRIBOPT"]] attribute alt {xsd:string},
+        [usfm:match[before="PIPE" beforeout="|" match="TEXTNOTATTRIBOPT"]] attribute src {xsd:string},
+        [usfm:match[before="PIPE" beforeout="|" match="TEXTNOTATTRIBOPT"]] attribute size {xsd:string},
+        [usfm:match[before="PIPE" beforeout="|" match="TEXTNOTATTRIBOPT"]] attribute loc {xsd:string},
+        [usfm:match[before="PIPE" beforeout="|" match="TEXTNOTATTRIBOPT"]] attribute copy {xsd:string},
+        [usfm:match[before="PIPE" beforeout="|" match="TEXTNOTATTRIBOPT"]] attribute alt {xsd:string},
+        [usfm:match[before="PIPE" beforeout="|" match="TEXTNOTATTRIBOPT"]] attribute ref {xsd:string}
+        >> usfm:endtag[]
     }
-
-char.link =
-    attribute link-href { xsd:string
-        { pattern = "(.*///?(.*/?)+)|((prj:[A-Za-z\-0-9]{3,8} )?[A-Z1-4]{3} \d+:\d+(\-\d+)?)|(#[^\s]+)" } }?, # The resource being linked to as a URI
-    attribute link-title { xsd:string }?, # Plain text describing the remote resource such as might be shown in a tooltip
-    attribute link-id { xsd:string { pattern = "[\w_\-\.:]+" } }? # Unique identifier for this location in the text
 
 char.closed =
-    attribute closed { xsd:boolean } # Present to allow roundtripping to USFM, not needed for publishing
+    [usfm:ignore="true"] attribute closed { xsd:boolean } # Present to allow roundtripping to USFM, not needed for publishing
 
 Milestone = (
-    element ms {
-        attribute style { Milestone.ms.style.enum },
-        attribute sid { xsd:string { pattern="[\w_\-\.:]+" } }?, # optional milestone start id (digits, letters, underscore)
-        attribute eid { xsd:string { pattern="[\w_\-\.:]+" } }?, # milestone end id (digits, letters, underscore) - required with sid
+    (element ms {
+        # [usfm:tag[after="/\s?(?=[\\|])/"]] attribute style { xsd:string {pattern="[a-z][a-z0-9-]*" }},
+        [usfm:tag[after="Hs" afterout=""]] attribute style { Milestone.style.enum },
+        Attributes?,
         empty
-    }
-    | MilestoneWithAttrib.enum
-    )
-Milestone.ms.style.enum = (
-      xsd:string { pattern="ts?(\-[se])?" }
-    | xsd:string { pattern="[Zz].+" } # Only supporting "qt#-s|e" in USX 3.0. All other styles would be user generated.
-                                      # If user generated styles were created in USFM first, they would start with "z"
+    } >> usfm:endtag[matchref="''"])
     )
 
-MilestoneWithAttrib.enum = (
-      MilestoneWithAttrib.ms.style.qt
-    )
-MilestoneWithAttrib.ms.style.qt =
-    element ms {
-        attribute style { xsd:string { pattern="qt[1-5]?(\-[se])?" } }, # Quotation speaker
-        attribute sid { xsd:string { pattern="[\w_\-\.:]+" } }?, # Milestone start id for locating start and end pairs
-        attribute eid { xsd:string { pattern="[\w_\-\.:]+" } }?, # Milestone end id for locating start and end pairs
-        attribute who { xsd:string { minLength = "2" } }?, # Name / identity of quote speaker
-        empty
-    }
-    # E.g. <ms style="qt1-s" sid="GEN.1.9.1" who="God">
+Milestone.style.enum = (
+      [usfm:propval="sid" usfm:propattribs="sid?" usfm:propended="ts-e"] "ts-s"
+    | [usfm:propval="eid" usfm:propattribs="eid?" usfm:propends="ts-s"] "ts-e"
+    | "ts"
+    | [usfm:propval="sid" usfm:propattribs="sid?" usfm:propended="t-e"] "t-s"
+    | [usfm:propval="eid" usfm:propattribs="eid?" usfm:propends="t-s"] "t-e"
+    | [usfm:propval="who" usfm:propattribs="who? sid?" usfm:propended="qt1-e"] "qt1-s"
+    | [usfm:propval="eid" usfm:propattribs="eid?" usfm:propends="qt1-s"] "qt1-e"
+    | [usfm:propval="who" usfm:propattribs="who? sid?" usfm:propended="qt2-e"] "qt2-s"
+    | [usfm:propval="eid" usfm:propattribs="eid?" usfm:propends="qt2-s"] "qt2-e"
+    | [usfm:propval="who" usfm:propattribs="who? sid?" usfm:propended="qt3-e"] "qt3-s"
+    | [usfm:propval="eid" usfm:propattribs="eid?" usfm:propends="qt3-s"] "qt3-e"
+    | [usfm:propval="who" usfm:propattribs="who? sid?" usfm:propended="qt4-e"] "qt4-s"
+    | [usfm:propval="eid" usfm:propattribs="eid?" usfm:propends="qt4-s"] "qt4-e"
+    | [usfm:propval="who" usfm:propattribs="who? sid?" usfm:propended="qt5-e"] "qt5-s"
+    | [usfm:propval="eid" usfm:propattribs="eid?" usfm:propends="qt5-s"] "qt5-e"
+    | [usfm:propval="who" usfm:propattribs="who? sid?" usfm:propended="qt-e"] "qt-s"
+    | [usfm:propval="eid" usfm:propattribs="eid?" usfm:propends="qt-s"] "qt-e"
+)
 
-Chapter = ( ChapterStart | ChapterEnd )
+Chapter = ( ChapterStart | [usfm:ignore = "true"]ChapterEnd )
 
 ChapterStart =
+    [usfm:stacked="true"]
     element chapter { # Start of new chapter
-        attribute number { xsd:integer }&
-        attribute style { "c" }&
-        attribute sid { xsd:string { minLength = "1" pattern = "[A-Z1-4]{3} ?[0-9]+" } }&
-        attribute altnumber { xsd:string { minLength = "1" pattern = "[0-9]+\w?(\x{200F}?[\-,][0-9]+\w?)*" } }?&
-        attribute pubnumber { xsd:string { minLength = "1" } }?&
+        [usfm:ptag[usfm:seq="true" after="HS"]]
+        attribute style { "c" },
+        [usfm:match[after="TAGEND" afterout="' '" usfm:seq="true"]]
+        attribute number { xsd:string { pattern = "[1-9][0-9]*" } },
+        attribute sid { [usfm:pattern[name="VID"]] xsd:string { minLength = "1" pattern = "[A-Z1-4]{3} ?[0-9]+" } }?,
+        [usfm:match [before="/\\ca${HS}/" beforeout="'\\ca '" after="/\\ca\*${Hs}/" afterout="'\\ca* '"]]
+        attribute altnumber { [usfm:pattern[name="VERSE"]] xsd:string { minLength = "1" pattern = "[1-9][0-9]*\p{L}?(&#x200F;?[\-,][0-9]+\p{L}?)*" } }?,
+        [usfm:match [before="/${Ws}\\cp${HS}/" beforeout="'\n\\cp '" match="TEXTNWS"]]
+        attribute pubnumber { xsd:string { minLength = "1" } }?,
         empty
     }
     # E.g. <chapter number="1" style="c" altnumber="2" pubnumber="A" />
@@ -682,120 +1000,198 @@ ChapterEnd =
 
 BookChapterLabel =
     element para {
+        [usfm:ptag[]]
         attribute style { "cl" }, # Chapter label for book, specified once prior to chapter 1
+        [usfm:match[match="/[^\\]+(?=${NL})/" after="NL" afterout="'\n'"]]
         text
     }
 
-Verse = ( VerseStart | VerseEnd )
+Verse = ( VerseStart | [usfm:ignore="true"]VerseEnd )
 
 VerseStart =
+    [usfm:stacked = "true"]
     element verse {
-        attribute number { xsd:string { minLength = "1" pattern = "[0-9]+\w?(\x{200F}?[\-,][0-9]+\w?)*" } },
+        [usfm:tag[usfm:seq="true" after="WS" beforeout="'\n'"]]
         attribute style { "v" },
-        attribute altnumber { xsd:string { minLength = "1" pattern = "[0-9]+\w?(\x{200F}?[\-,:][0-9]+\w?)*" } }?,
+        [usfm:match[usfm:seq="true" after="WS" afterout="' '"]]
+        attribute number { [usfm:pattern[name="VERSE"]] xsd:string { minLength = "1" pattern = "[1-9][0-9]*[\p{L}\p{Mn}]*(&#x200F;?[\-,][0-9]+[\p{L}\p{Mn}]*)*" } },
+        [usfm:tag[dump="true" before="/\\va${HS}/" beforeout="'\\va '" after="/\\va\*${Hs}/" afterout="'\\va* '"]]
+        attribute altnumber { [usfm:pattern[name="VERSE"]] xsd:string { minLength = "1" pattern = "[1-9][0-9]*[\p{L}\p{Mn}]*(&#x200F;?[\-,:][0-9]+[\p{L}\p{Mn}]*)*" } }?,
+        [usfm:tag[dump="true" before="/\\vp${HS}/" beforeout="'\\vp '" after="/\\vp\*${Hs}/" afterout="'\\vp* '"]]
         attribute pubnumber { xsd:string { minLength = "1" } }?,
-        attribute sid { xsd:string { pattern = "[A-Z1-4]{3} ?[a-z0-9\-,:]*" } },
+        [usfm:ignore="true"]
+        attribute sid { [usfm:pattern[name="VID"]] xsd:string { pattern = "[A-Z1-4]{3} ?[&#x200F;a-z0-9,\-:\p{L}\p{Mn}]*" } }?,
         empty
     }
-    # E.g. <verse number="1" style="v" altnumber="2" pubnumber="B" sid="GEN 1:22" />
+    # E.g. <verse number="1" style="v" altnumber="2" pubnumber="B" smatchid="GEN 1:22" />
+    # This attribute order disagrees with USFM order
 
 VerseEnd =
     element verse {
-        attribute eid { xsd:string { pattern = "[A-Z1-4]{3} ?[a-z0-9\-,:]*" } },
+        attribute eid { [usfm:pattern[name="VID"]] xsd:string { pattern = "[A-Z1-4]{3} ?[&#x200F;a-z0-9,\-:\p{L}\p{Mn}]*" } },
         empty
     }
 
 Footnote =
     element note {
-        attribute style { "f" | "fe" | "ef" },
+        [usfm:tag[matchid="a"]]
+        attribute style { Footnote.style.enum },
+        [usfm:match[match="/[^\\\s]+/" after="HS" afterout="' '"]]
         attribute caller { text },
-        (attribute category { text })?,
-        (FootnoteChar | text )+
+        category?,
+        (FootnoteChar | [usfm:text[]] text)+
+        >> usfm:endtag[before="/${Ws}\\/" beforeout="'\\'"]
     }
+
+Footnote.style.enum = (
+        ## Endnote
+      "fe"
+    |   ## Footnote
+      "f"
+    |   ## Extended study endnote
+      "efe"
+    |   ## Study note
+      "ef"
+)
 
 FootnoteChar =
     element char {
+        [usfm:grouping="8" usfm:tag[matchid="b"]]
         attribute style { FootnoteChar.char.style.enum },
-        char.link?,
+        [usfm:ignore="true"]
         char.closed?,
-        (Char | FootnoteChar | FootnoteVerse | Reference | text)+
+        ([usfm:text[]] text | NoteCharEmbed | Figure | Milestone | Reference | Break)*
+        >> usfm:endtag[matchref="b" noout="true" usfm:many="?" after="'*'"]
     }
-FootnoteChar.char.style.enum = (
-      "fr" # The origin reference for the footnote
-    | "cat" # Note category (study Bible)
-    | "ft" # Footnote text, Protocanon
-    | "fk" # A footnote keyword
-    | "fq" # A footnote scripture quote or alternate rendering
-    | "fqa" # A footnote alternate rendering for a portion of scripture text
-    | "fl" # A footnote label text item, for marking or "labelling" the type or alternate translation being provided in the note.
-    | "fw" # A footnote witness list, for distinguishing a list of sigla representing witnesses in critical editions.
-    | "fp" # A Footnote additional paragraph marker
-    | "fv" # A verse number within the footnote text
-    | "fdc" # Footnote text, applies to Deuterocanon only (DEPRECATED - use char@style dc)
-    | "xt" # A cross reference target reference(s)
-    | "it" # A character style, use italic text
-    | "bd" # A character style, use bold text
-    | "bdit" # A character style, use bold + italic text
-    | "em" # A character style, use emphasized text style
-    | "sc" # A character style, for small capitalization text; abbreviations
-    )
 
-FootnoteVerse =
-    element char {
-        attribute style { "fv" },
-        text
-    }
+FootnoteChar.char.style.enum = (
+        ## The origin reference for the footnote
+      "fr"
+    |   ## Footnote text, Protocanon
+      "ft"
+    |   ## A footnote keyword
+      "fk"
+    |   ## A footnote alternate rendering for a portion of scripture text
+      "fqa"
+    |   ## A footnote scripture quote or alternate rendering
+      "fq"
+    |   ## A footnote label text item, for marking or "labelling" the type or alternate translation being provided in the note.
+      "fl"
+    |   ## A footnote witness list, for distinguishing a list of sigla representing witnesses in critical editions.
+      "fw"
+    |   ## Footnote text, applies to Deuterocanon only (DEPRECATED - use char@style dc)
+      "fdc"
+    |   ## A Footnote additional paragraph marker
+      "fp"
+    )
 
 CrossReference =
     element note {
-        attribute style { "x" | "ex" },
+        [usfm:tag[matchid="a"]]
+        attribute style { CrossReference.style.enum },
+        [usfm:match[match="/[^\\\s]+/" after="Hs" afterout="' '"]]
         attribute caller { text },
-        (CrossReferenceChar | text)+
+        category?,
+        CrossReferenceChar*
+        >> usfm:endtag[]
     }
+
+CrossReference.style.enum = (
+        ## Extended cross reference
+      "ex"
+    |   ## Cross reference
+      "x"
+)
 
 CrossReferenceChar =
     element char {
+        [usfm:tag[matchid="b"]]
         attribute style { CrossReferenceChar.char.style.enum },
-        char.link?,
+        [usfm:ignore="true"]
         char.closed?,
-        (Char | CrossReferenceChar | Reference | text)+
+        ([usfm:text[]] text | NoteCharEmbed | Figure | Milestone | Reference | Break)+
+        >> usfm:endtag[matchref="b" noout="true" usfm:many="?" after="/\*${Hs}/"]
     }
 CrossReferenceChar.char.style.enum = (
-      "xo" # The cross reference origin reference
-    | "xop" # Published cross reference origin text (origin reference that should appear in the published text)
-    | "xt" # The cross reference target reference(s), protocanon only
-    | "xta" # Cross reference target references added text
-    | "xk" # A cross reference keyword
-    | "xq" # A cross-reference quotation from the scripture text
-    | "xot" # Cross-reference target reference(s), Old Testament only
-    | "xnt" # Cross-reference target reference(s), New Testament only
-    | "xdc" # Cross-reference target reference(s), Deuterocanon only (DEPRECATED - use char@style dc)
+        ## Published cross reference origin text (origin reference that should appear in the published text)
+      "xop"
+    |   ## The cross reference origin reference
+      "xo"
+    |   ## Cross reference target references added text
+      "xta"
+    |   ## The cross reference target reference(s), protocanon only
+      "xt"
+    |   ## A cross reference keyword
+      "xk"
+    |   ## A cross-reference quotation from the scripture text
+      "xq"
+    |   ## Cross-reference target reference(s), Old Testament only
+      "xot"
+    |   ## Cross-reference target reference(s), New Testament only
+      "xnt"
+    |   ## Cross-reference target reference(s), Deuterocanon only (DEPRECATED - use char@style dc)
+      "xdc"
     )
 
 Sidebar =
     element sidebar {
+        [usfm:ptag[]]
         attribute style { "esb" },
-        (attribute category { text })?,
-        (Para | List | Table | Footnote | CrossReference)+
+        category?,
+        (Section | Para | List | Table | Footnote | CrossReference)+
+        >> usfm:ptag[dump="true" afterout="'\n'" "esbe"]
     }
 
-Figure =
-    element figure {
-        attribute style { text },
-        attribute alt { text }?,
-        attribute file { text },
-        attribute size { text },
-        attribute loc { text }?,
-        attribute copy { text }?,
-        attribute ref { text },
-        text? # Caption
-    }
+category =
+    [usfm:tag[dump="true" before="/\\cat${Hs}/" beforeout="'\\cat '" after="" afterout="" match="''"] usfm:text[] usfm:endtag[matchref="" dump="true" before="''" matchout="" after="/\\cat\*${Hs}/" afterout="'\\cat*'"]]
+    attribute category { text }
 
 Reference =
+    [usfm:tag[match="'ref'" dump="true"]]
     element ref {
-        attribute loc { xsd:string { pattern = "[A-Z1-4]{3} ?[a-z0-9\-,:]*" } },
-        text?
-    }
+        [usfm:text[match="TEXTNOTATTRIB"  after="ATTRIBTEXTEND"]] text?,
+        [usfm:match[match="PIPE" matchout="'|'" dump="true"] usfm:match[match="TEXTNOTATTRIB"]]
+        attribute loc { [usfm:pattern[name="VERSE"]] xsd:string { pattern = "[A-Z1-4]{3}(-[A-Z1-4]{3})? ?[a-z0-9\-:]*" } }?,
+        [usfm:match[match="TEXTNOTATTRIB" noout="true"]]
+        attribute gen { "true" | "false" }?
+    } >> usfm:endtag[match="'ref'" matchref=""]
 
 Break =
+    [usfm:match[before="'//'" match="//"]]
     element optbreak { empty }
+
+# Unused enums for .ext files
+
+Internal.style.enum = (
+        ## Initial identifying marker
+      "id"
+    |   ## Peripheral division
+      "periph"
+    |   ## USFM version
+      "usfm"
+    |   ## Chapter
+      "c"
+    |   ## Alternate Chapter number
+      "ca"
+    |   ## Chapter publication string
+      "cp"
+    |   ## Verse
+      "v"
+    |   ## Alternative versification
+      "va"
+    |   ## Published verse number
+      "vp"
+    |   ## Figure
+      "fig"
+    |   ## Sidebar
+      "esb"
+    |   ## Category
+      "cat"
+    )
+
+Cell.style.enum = ( "th1" | "th2" | "th3" | "th4" | "th5" | "th6" | "th7" | "th8" | "th9" | "th10" | "th11" | "th12"
+    | "tc1" | "tc2" | "tc3" | "tc4" | "tc5" | "tc6" | "tc7" | "tc8" | "tc9" | "tc10" | "tc11" | "tc12"
+    | "tcr1" | "tcr2" | "tcr3" | "tcr4" | "tcr5" | "tcr6" | "tcr7" | "tcr8" | "tcr9" | "tc10" | "tc11" | "tc12"
+    | "tcc1" | "tcc2" | "tcc3" | "tcc4" | "tcc5" | "tcc6" | "tcc7" | "tcc8" | "tcc9" | "tcc10" | "tcc11" | "tcc12"
+    | "thc1" | "thc2" | "thc3" | "thc4" | "thc5" | "thc6" | "thc7" | "thc8" | "thc9" | "thc10" | "thc11" | "tch12"
+    | "thr1" | "thr2" | "thr3" | "thr4" | "thr5" | "thr6" | "thr7" | "thr8" | "thr9" | "thr10" | "thr11" | "thr12")
