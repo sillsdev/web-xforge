@@ -345,6 +345,34 @@ cell.style.enum = (
     | "tc5" # A table cell item, column 5
     | "thr5" # A table heading, column 5, right aligned
     | "tcr5" # A table cell item, column 5, right aligned
+    | "th6" # A table heading, column 6
+    | "tc6" # A table cell item, column 6
+    | "thr6" # A table heading, column 6, right aligned
+    | "tcr6" # A table cell item, column 6, right aligned
+    | "th7" # A table heading, column 7
+    | "tc7" # A table cell item, column 7
+    | "thr7" # A table heading, column 7, right aligned
+    | "tcr7" # A table cell item, column 7, right aligned
+    | "th8" # A table heading, column 8
+    | "tc8" # A table cell item, column 8
+    | "thr8" # A table heading, column 8, right aligned
+    | "tcr8" # A table cell item, column 8, right aligned
+    | "th9" # A table heading, column 9
+    | "tc9" # A table cell item, column 9
+    | "thr9" # A table heading, column 9, right aligned
+    | "tcr9" # A table cell item, column 9, right aligned
+    | "th10" # A table heading, column 10
+    | "tc10" # A table cell item, column 10
+    | "thr10" # A table heading, column 10, right aligned
+    | "tcr10" # A table cell item, column 10, right aligned
+    | "th11" # A table heading, column 11
+    | "tc11" # A table cell item, column 11
+    | "thr11" # A table heading, column 11, right aligned
+    | "tcr11" # A table cell item, column 11, right aligned
+    | "th12" # A table heading, column 12
+    | "tc12" # A table cell item, column 12
+    | "thr12" # A table heading, column 12, right aligned
+    | "tcr12" # A table cell item, column 12, right aligned
     | "rem" # Remark
     )
 
@@ -393,6 +421,7 @@ Char.char.style.enum = (
     | "png" # For a geographic proper name
     | "pro" # For indicating pronunciation in CJK texts (DEPRECATED - used char@style rb)
     | "qt" # For Old Testament quoted text appearing in the New Testament
+    | "ref" # Inline Reference
     | "rq" # A cross-reference indicating the source text for the preceding quotation.
     | "sig" # For the signature of the author of an Epistle
     | "sls" # To represent where the original text is in a secondary language or from an alternate text source
@@ -505,6 +534,7 @@ FootnoteChar.char.style.enum = (
     | "fp" # A Footnote additional paragraph marker
     | "fv" # A verse number within the footnote text
     | "fdc" # Footnote text, applies to Deuterocanon only (DEPRECATED - use char@style dc)
+    | "ref" # Inline Reference
     | "xt" # A cross reference target reference(s)
     | "it" # A character style, use italic text
     | "bd" # A character style, use bold text
@@ -514,7 +544,8 @@ FootnoteChar.char.style.enum = (
     )
 
 CrossReferenceChar.char.style.enum = (
-      "xo" # The cross reference origin reference
+      "ref" # Inline Reference
+    | "xo" # The cross reference origin reference
     | "xop" # Published cross reference origin text (origin reference that should appear in the published text)
     | "xt" # The cross reference target reference(s), protocanon only
     | "xta" # Cross reference target references added text

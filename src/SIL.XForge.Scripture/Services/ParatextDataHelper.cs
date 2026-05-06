@@ -120,8 +120,11 @@ public class ParatextDataHelper(IFileSystemService fileSystemService) : IParatex
 
         // Migrate the USFM stylesheet
         if (
-            scrText.Settings.DefaultStylesheetFileName != "usfm.sty"
-            && scrText.Settings.DefaultStylesheetFileName != "usfm_sb.sty"
+            scrText.Settings.DefaultStylesheetFileName
+            is not "usfm.sty"
+                and not "usfm_sb.sty"
+                and not "usfm_sb3_1.sty"
+                and not "usfm3_1.sty"
         )
         {
             UpdateStyleSheetToUsfm.ConvertToStandardStyleSheet(scrText);

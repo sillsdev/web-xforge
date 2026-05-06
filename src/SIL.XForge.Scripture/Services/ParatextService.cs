@@ -2730,7 +2730,16 @@ public class ParatextService : DisposableBase, IParatextService
     /// <summary> Copy resource files from the Assembly Directory into the sync directory. </summary>
     private void InstallStyles()
     {
-        string[] resources = ["usfm.sty", "revisionStyle.sty", "revisionTemplate.tem", "usfm_mod.sty", "usfm_sb.sty"];
+        string[] resources =
+        [
+            "usfm.sty",
+            "revisionStyle.sty",
+            "revisionTemplate.tem",
+            "usfm_mod.sty",
+            "usfm_sb.sty",
+            "usfm_sb3_1.sty",
+            "usfm3_1.sty",
+        ];
         foreach (string resource in resources)
         {
             string target = Path.Join(SyncDir, resource);
