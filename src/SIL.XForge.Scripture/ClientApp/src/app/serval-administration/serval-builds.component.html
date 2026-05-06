@@ -153,42 +153,53 @@
           </td>
         </ng-container>
 
+        <ng-template #projectBooksCell let-projectBooks="projectBooks">
+          @for (projectBook of projectBooks; track projectBook.sfProjectId) {
+            <div>
+              @let link = servalAdminProjectLinkFor(projectBook.sfProjectId);
+              @let short = projectBook.shortName ?? projectBook.sfProjectId;
+              @let toolTip = projectBook.projectName ?? projectBook.sfProjectId;
+              @if (link != null) {
+                <a [href]="link" target="_blank" rel="noopener" class="project-link" [matTooltip]="toolTip">
+                  {{ short }}
+                </a>
+              } @else {
+                <span class="project-link" [matTooltip]="toolTip">{{ short }}</span>
+              }
+              :
+              @if (projectBook.booksAndChapters.length <= 2) {
+                {{ ServalBuildsComponent.formatBookEntries(projectBook.booksAndChapters) }}
+              } @else {
+                <span
+                  [matTooltip]="ServalBuildsComponent.formatBookEntries(projectBook.booksAndChapters)"
+                  class="book-count"
+                >
+                  {{ projectBook.booksAndChapters.length }} books
+                </span>
+              }
+            </div>
+          } @empty {
+            None
+          }
+        </ng-template>
+
+        <ng-container matColumnDef="training">
+          <th mat-header-cell *matHeaderCellDef>Training</th>
+          <td mat-cell *matCellDef="let row">
+            <ng-container
+              [ngTemplateOutlet]="projectBooksCell"
+              [ngTemplateOutletContext]="{ projectBooks: row.trainingBooks }"
+            ></ng-container>
+          </td>
+        </ng-container>
+
         <ng-container matColumnDef="source">
           <th mat-header-cell *matHeaderCellDef>Source</th>
           <td mat-cell *matCellDef="let row">
-            @for (projectBook of row.translationBooks; track projectBook.sfProjectId) {
-              <div>
-                @let translationLink = servalAdminProjectLinkFor(projectBook.sfProjectId);
-                @let short = projectBook.shortName ?? projectBook.sfProjectId;
-                @let toolTip = projectBook.projectName ?? projectBook.sfProjectId;
-                @if (translationLink != null) {
-                  <a
-                    [href]="translationLink"
-                    target="_blank"
-                    rel="noopener"
-                    class="project-link"
-                    [matTooltip]="toolTip"
-                  >
-                    {{ short }}
-                  </a>
-                } @else {
-                  <span class="project-link" [matTooltip]="toolTip">{{ short }}</span>
-                }
-                :
-                @if (projectBook.booksAndChapters.length <= 2) {
-                  {{ ServalBuildsComponent.formatBookEntries(projectBook.booksAndChapters) }}
-                } @else {
-                  <span
-                    [matTooltip]="ServalBuildsComponent.formatBookEntries(projectBook.booksAndChapters)"
-                    class="book-count"
-                  >
-                    {{ projectBook.booksAndChapters.length }} books
-                  </span>
-                }
-              </div>
-            } @empty {
-              None
-            }
+            <ng-container
+              [ngTemplateOutlet]="projectBooksCell"
+              [ngTemplateOutletContext]="{ projectBooks: row.translationBooks }"
+            ></ng-container>
           </td>
         </ng-container>
 
