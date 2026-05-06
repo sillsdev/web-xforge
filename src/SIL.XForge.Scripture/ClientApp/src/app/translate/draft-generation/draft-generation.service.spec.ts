@@ -14,6 +14,7 @@ import { DeltaOperation } from 'rich-text';
 import { of } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { anything, mock, verify } from 'ts-mockito';
+import { MockConsole } from 'xforge-common/mock-console';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
@@ -32,6 +33,7 @@ describe('DraftGenerationService', () => {
   let service: DraftGenerationService;
   let httpTestingController: HttpTestingController;
   const mockNoticeService = mock(NoticeService);
+  const mockedConsole: MockConsole = MockConsole.install();
   let testOnlineStatusService: TestOnlineStatusService;
 
   configureTestingModule(() => ({
@@ -379,6 +381,48 @@ describe('DraftGenerationService', () => {
       service.getBuildsSince(sinceDate).subscribe(result => {
         expect(result).toBeUndefined();
       });
+      tick();
+    }));
+
+    it('should show error notice and return undefined for a 403 error', fakeAsync(() => {
+      const sinceDate = new Date('2025-01-01T00:00:00.000Z');
+      mockedConsole.reset();
+      mockedConsole.expectAndHide(/403 Forbidden/);
+
+      // SUT
+      service.getBuildsSince(sinceDate).subscribe(result => {
+        expect(result).toBeUndefined();
+        verify(mockNoticeService.showError(anything())).once();
+      });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/builds/since:${sinceDate.toISOString()}`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(null, { status: HttpStatusCode.Forbidden, statusText: 'Forbidden' });
+      tick();
+      mockedConsole.verify();
+      mockedConsole.reset();
+    }));
+
+    it('should return undefined and not show error notice for a 404 error', fakeAsync(() => {
+      const sinceDate = new Date('2025-01-01T00:00:00.000Z');
+
+      // SUT
+      service.getBuildsSince(sinceDate).subscribe(result => {
+        expect(result).toBeUndefined();
+        verify(mockNoticeService.showError(anything())).never();
+      });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/builds/since:${sinceDate.toISOString()}`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(null, { status: HttpStatusCode.NotFound, statusText: 'Not Found' });
       tick();
     }));
   });

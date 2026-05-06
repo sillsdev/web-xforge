@@ -327,7 +327,7 @@
         </button>
       }
       @if (status === "filter_notes") {
-        <button mat-button (click)="importFromParatext()">
+        <button mat-button (click)="reset(); importFromParatext()">
           {{ t("back") }}
         </button>
       }
