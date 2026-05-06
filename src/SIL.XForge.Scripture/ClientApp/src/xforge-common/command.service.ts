@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 import { v1 as uuidv1 } from 'uuid';
-import { hasNumberProp, hasObjectProp, hasStringProp } from '../type-utils';
+import { hasNumberProp, hasObjectProp, hasProp, hasPropWithValue, hasStringProp } from '../type-utils';
 import { BugsnagService } from './bugsnag.service';
 import { COMMAND_API_NAMESPACE } from './url-constants';
 
@@ -45,8 +45,18 @@ export interface JsonRpcError {
   data?: any;
 }
 
-function isJsonRpcFailure<T>(response: JsonRpcResponse<T>): response is JsonRpcFailure {
-  return 'error' in response && response.error != null;
+function isJsonRpcFailure(value: unknown): value is JsonRpcFailure {
+  return (
+    hasPropWithValue(value, 'jsonrpc', '2.0') &&
+    hasStringProp(value, 'id') &&
+    hasObjectProp(value, 'error') &&
+    hasNumberProp(value.error, 'code') &&
+    hasStringProp(value.error, 'message')
+  );
+}
+
+function isJsonRpcSuccess(value: unknown): value is JsonRpcSuccess<unknown> {
+  return hasPropWithValue(value, 'jsonrpc', '2.0') && hasStringProp(value, 'id') && hasProp(value, 'result');
 }
 
 export function isNetworkError(error: any): boolean {
@@ -100,13 +110,20 @@ export class CommandService {
       'request'
     );
     try {
-      const response = await lastValueFrom(
-        this.http.post<JsonRpcResponse<T>>(url, request, { headers: { 'Content-Type': 'application/json' } })
+      const response: unknown = await lastValueFrom(
+        this.http.post(url, request, { headers: { 'Content-Type': 'application/json' } })
       );
+      if (response == null) {
+        throw new Error('Unexpected null JSON-RPC response from server.');
+      }
       if (isJsonRpcFailure(response)) {
         throw response.error;
       }
-      return response.result;
+      if (isJsonRpcSuccess(response)) {
+        return response.result as T; // optimistic type assertion
+      }
+      const res: string = JSON.stringify(response);
+      throw new Error(`Unexpected JSON-RPC response from server: ${res}`);
     } catch (error) {
       // Transform the various kinds of errors into a CommandError.
 
@@ -121,6 +138,8 @@ export class CommandService {
         if (Object.values(CommandErrorCode).includes(error.status)) {
           code = error.status as CommandErrorCode;
         }
+        moreInformation = error.message;
+      } else if (error instanceof Error) {
         moreInformation = error.message;
       } else if (
         // Does error implement interface JsonRpcError by having these properties?
