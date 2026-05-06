@@ -36,6 +36,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { environment } from '../../../environments/environment';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
@@ -86,6 +87,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   engineConfidence: number = 0;
   trainedSegmentCount: number = 0;
   projectProgress?: ProjectProgress;
+  readonly issueEmail: string = environment.issueEmail;
 
   private trainingSub?: Subscription;
   private translationEngine?: RemoteTranslationEngine;
@@ -137,6 +139,14 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
 
   get projectId(): string | undefined {
     return this.projectDoc?.id;
+  }
+
+  get isPTUser(): boolean {
+    return isParatextRole(this.projectDoc?.data?.userRoles[this.userService.currentUserId]);
+  }
+
+  get hasMinimumSegmentsToTrainStatisticalEngine(): boolean {
+    return (this.projectProgress?.translatedVerseSegments ?? 0) >= 10;
   }
 
   ngOnInit(): void {
@@ -220,10 +230,6 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     return this.i18n.localizeBook(bookNum);
   }
 
-  get hasMinimumSegmentsToTrainStatisticalEngine(): boolean {
-    return (this.projectProgress?.translatedVerseSegments ?? 0) >= 10;
-  }
-
   bookTranslatedSegments(bookProgress: BookProgress): number {
     return bookProgress.verseSegments - bookProgress.blankVerseSegments;
   }
@@ -241,10 +247,6 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
 
   getBookId(text: TextInfo): string {
     return Canon.bookNumberToId(text.bookNum);
-  }
-
-  get isPTUser(): boolean {
-    return isParatextRole(this.projectDoc?.data?.userRoles[this.userService.currentUserId]);
   }
 
   private setupTranslationEngine(): void {
