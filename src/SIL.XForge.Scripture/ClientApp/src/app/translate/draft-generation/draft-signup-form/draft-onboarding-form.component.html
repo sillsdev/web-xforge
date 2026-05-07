@@ -41,14 +41,23 @@
             <mat-form-field>
               <mat-label>{{ t("partner_organization_select_label") }}</mat-label>
               <mat-select formControlName="partnerOrganization">
-                <mat-option value="Bolshoi Group">Bolshoi Group</mat-option>
-                <mat-option value="Seed Company">Seed Company</mat-option>
-                <mat-option value="none">{{ t("partner_none") }}</mat-option>
+                @for (option of partnerOrganizationOptions; track option) {
+                  <mat-option [value]="option">{{ option === "none" ? t("partner_none") : option }}</mat-option>
+                }
               </mat-select>
               @if (signupForm.controls.partnerOrganization.hasError("required")) {
                 <mat-error>{{ t("partner_organization_required") }}</mat-error>
               }
             </mat-form-field>
+            @if (showFieldManagerField) {
+              <mat-form-field>
+                <mat-label>{{ t("field_manager_label") }}</mat-label>
+                <input matInput formControlName="fieldManager" [placeholder]="t('field_manager_placeholder')" />
+                @if (signupForm.controls.fieldManager.hasError("required")) {
+                  <mat-error>{{ t("field_manager_required") }}</mat-error>
+                }
+              </mat-form-field>
+            }
           </mat-card-content>
         </mat-card>
 

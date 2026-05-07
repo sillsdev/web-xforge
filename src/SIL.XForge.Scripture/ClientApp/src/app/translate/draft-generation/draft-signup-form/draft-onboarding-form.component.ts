@@ -27,7 +27,12 @@ import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book
 import { DevOnlyComponent } from '../../../shared/dev-only/dev-only.component';
 import { JsonViewerComponent } from '../../../shared/json-viewer/json-viewer.component';
 import { compareProjectsForSorting, projectLabel } from '../../../shared/utils';
-import { DraftingSignupFormData, OnboardingRequestService } from '../onboarding-request.service';
+import {
+  DraftingSignupFormData,
+  OnboardingRequestService,
+  PARTNER_ORGANIZATION_OPTIONS,
+  PartnerOrganization
+} from '../onboarding-request.service';
 
 export const DRAFT_SIGNUP_RESPONSE_DAYS = { min: 1, max: 3 } as const;
 
@@ -82,7 +87,8 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
     name: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
     email: new FormControl<string>('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
     organization: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
-    partnerOrganization: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+    partnerOrganization: new FormControl<PartnerOrganization | null>(null, { validators: [Validators.required] }),
+    fieldManager: new FormControl<string | null>(null),
 
     // Translation Language Information
     translationLanguageName: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
@@ -112,6 +118,8 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
   availableProjects: SelectableProject[] = [];
   availableResources: SelectableProject[] = [];
   projectBooks: { number: number; selected: boolean }[] = [];
+
+  readonly partnerOrganizationOptions = PARTNER_ORGANIZATION_OPTIONS;
 
   // Stable selected book list for completed books
   selectedCompletedBooks: { number: number; selected: boolean }[] = [];
@@ -265,6 +273,10 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
     return stage === 'Written (Incomplete or Out-of-Date)' || stage === 'Written (Up-to-Date)';
   }
 
+  get showFieldManagerField(): boolean {
+    return this.signupForm.controls.partnerOrganization.value === 'Seed Company';
+  }
+
   // Whether to show the "completed books is required" error message.
   get showCompletedBooksRequiredError(): boolean {
     const ctrl = this.signupForm.controls.completedBooks;
@@ -379,6 +391,20 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
   }
 
   private setupConditionalLogic(): void {
+    // Enable/disable the Field Manager field based on the selected partner organization
+    this.signupForm.controls.partnerOrganization.valueChanges
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(value => {
+        if (value === 'Seed Company') {
+          this.signupForm.controls.fieldManager.setValidators([Validators.required]);
+        } else {
+          this.signupForm.controls.fieldManager.clearValidators();
+          this.signupForm.controls.fieldManager.setValue(null);
+        }
+        this.signupForm.controls.fieldManager.updateValueAndValidity();
+        this.cd.markForCheck();
+      });
+
     // Show/hide Back Translation Project based on Stage selection
     this.signupForm.controls.backTranslationStage.valueChanges
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
