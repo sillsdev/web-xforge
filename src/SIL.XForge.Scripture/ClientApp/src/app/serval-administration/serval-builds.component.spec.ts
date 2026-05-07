@@ -1,12 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { BehaviorSubject, firstValueFrom } from 'rxjs';
 import { ActivatedRoute, provideRouter } from '@angular/router';
-import { BehaviorSubject } from 'rxjs';
+import { anything, mock, when } from 'ts-mockito';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { MockConsole } from 'xforge-common/mock-console';
-import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
@@ -1411,6 +1412,25 @@ describe('ServalBuildsComponent', () => {
     });
   });
 
+   describe('requesting user details', () => {
+    it('loads requester display name from user data', async () => {
+      const env = new TestEnvironment();
+
+      const displayName: string = await firstValueFrom(env.component['requesterDisplayName']('user02'));
+
+      expect(displayName).toBe('Test User');
+    });
+
+    it('loads requester email address from user data', async () => {
+      const env = new TestEnvironment();
+
+      const emailAddress: string | undefined = await firstValueFrom(env.component['requesterEmailAddress']('user02'));
+
+      expect(emailAddress).toBe('user02@example.com');
+    });
+  });
+
+  
   describe('export', () => {
     it('exports tsv rows through DraftJobsExportService', () => {
       const env = new TestEnvironment();
@@ -1446,14 +1466,15 @@ class TestEnvironment {
   >(undefined);
 
   constructor() {
-    const mockedUserProfileDoc = mock(UserProfileDoc);
-    const userProfileDoc: UserProfileDoc = instance(mockedUserProfileDoc);
-    const profileData: { displayName: string; avatarUrl: string } = {
+    const userData = {
       displayName: 'Test User',
-      avatarUrl: ''
+      avatarUrl: '',
+      email: 'user02@example.com'
     };
+    const userDoc = {
+      data: userData
+    } as UserDoc;
 
-    when(mockedUserProfileDoc.data).thenReturn(profileData);
     when(mockNoticeService.loadingStarted(anything())).thenReturn(undefined);
     when(mockNoticeService.loadingFinished(anything())).thenReturn(undefined);
     when(mockDraftGenerationService.getBuildsSince(anything())).thenReturn(this.builds$);
@@ -1461,7 +1482,7 @@ class TestEnvironment {
     when(mockExportService.exportCsv(anything(), anything(), anything(), anything(), anything())).thenReturn(undefined);
     when(mockExportService.exportRsv(anything(), anything(), anything(), anything(), anything())).thenReturn(undefined);
     when(mockExportService.exportTsv(anything(), anything(), anything(), anything(), anything())).thenReturn(undefined);
-    when(mockUserService.getProfile(anything())).thenReturn(Promise.resolve(userProfileDoc));
+    when(mockUserService.get(anything())).thenResolve(userDoc);
     when(mockI18nService.localeCode).thenReturn('en');
     when(mockI18nService.getLanguageDisplayName(anything())).thenReturn(undefined);
     when(mockedActivatedRoute.queryParams).thenReturn(new BehaviorSubject({}));
