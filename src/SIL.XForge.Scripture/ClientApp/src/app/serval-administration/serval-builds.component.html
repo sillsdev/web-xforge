@@ -243,6 +243,17 @@
                       </div>
 
                       <div class="detail-keyvalue">
+                        <span class="detail-key">Paratext project ID</span>
+                        @let ptProjectId = row.report.project?.ptProjectId;
+                        <span class="detail-value detail-value-with-copy code">
+                          <span class="pt-project-id">{{ ptProjectId ?? "-" }}</span>
+                          @if (ptProjectId != null) {
+                            <app-copy [value]="ptProjectId"></app-copy>
+                          }
+                        </span>
+                      </div>
+
+                      <div class="detail-keyvalue">
                         <span class="detail-key">Serval version</span>
                         <span class="detail-value">{{ row.report.build?.deploymentVersion ?? "Unknown" }}</span>
                       </div>
