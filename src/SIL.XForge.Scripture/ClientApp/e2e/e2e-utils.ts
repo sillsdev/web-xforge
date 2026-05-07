@@ -409,7 +409,7 @@ export async function logInAsPTUser(page: Page, user: { email: string; password:
 
   let tries = 0;
   let loginSuccessful = false;
-  while (!loginSuccessful && tries < 3) {
+  while (!loginSuccessful && tries < 5) {
     await page.locator('a').filter({ hasText: 'Log in with Paratext' }).click();
 
     // Paratext Registry login
@@ -431,12 +431,20 @@ export async function logInAsPTUser(page: Page, user: { email: string; password:
     // On localhost only, Auth0 requires accepting access to the account
     // Wait until back in the app, or on the authorization page
     const auth0AuthorizeUrl = 'https://sil-appbuilder.auth0.com/decision';
+    const googleLoginPage = 'https://accounts.google.com';
     await page.waitForURL(url =>
-      [auth0AuthorizeUrl, preset.rootUrl].some(startingUrl => url.href.startsWith(startingUrl))
+      [auth0AuthorizeUrl, googleLoginPage, preset.rootUrl].some(startingUrl => url.href.startsWith(startingUrl))
     );
 
     if (page.url().startsWith(auth0AuthorizeUrl)) {
       await page.locator('#allow').click();
+    }
+
+    if (page.url().startsWith(googleLoginPage)) {
+      // FIXME Sometimes Google account selection appears despite attempted workaround
+      await page.goto(preset.rootUrl + '/projects');
+      tries++;
+      continue;
     }
 
     try {
@@ -444,7 +452,7 @@ export async function logInAsPTUser(page: Page, user: { email: string; password:
       loginSuccessful = true;
     } catch (e) {
       if (e instanceof Error && e.message.includes('Timeout')) {
-        // // FIXME(application-bug) Sometimes a login failure occurs. Retry.
+        // FIXME(application-bug) Sometimes a login failure occurs. Retry.
         expect(await page.getByRole('heading', { name: 'An error occurred during login' })).toBeVisible();
         await page.getByRole('button', { name: 'Try Again' }).click();
         await page.waitForURL(url => /^\/projects/.test(url.pathname));
@@ -455,6 +463,10 @@ export async function logInAsPTUser(page: Page, user: { email: string; password:
       }
     }
   }
+  if (!loginSuccessful) {
+    throw new Error(`Failed to log in after ${tries} attempts`);
+  }
+  console.log(`Logged in as ${user.email} after ${tries} ${tries === 1 ? 'try' : 'tries'}`);
 }
 
 function siteAdminCredentials(): { email: string; password: string } {
