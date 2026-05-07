@@ -171,12 +171,16 @@
   }
 </div>
 
-@if (rawLastCompletedBuild?.executionData?.warnings?.length > 0) {
-  <h2>Serval warnings from last build</h2>
-  @for (warning of rawLastCompletedBuild.executionData.warnings; track $index) {
+<h2>Serval warnings from last build</h2>
+@if (rawLastCompletedBuild == null) {
+  <em>No completed builds</em>
+} @else {
+  @for (warning of rawLastCompletedBuild.executionData?.warnings ?? []; track $index) {
     <p>
       <app-notice icon="warning" mode="fill-dark" type="warning">{{ warning }}</app-notice>
     </p>
+  } @empty {
+    <em>No warnings on latest build</em>
   }
 }
 
