@@ -214,64 +214,6 @@
                 <mat-card appearance="filled" class="detail-card">
                   <mat-card-header>
                     <mat-card-title-group>
-                      <mat-icon>fingerprint</mat-icon>
-                      <mat-card-title>Identifiers</mat-card-title>
-                    </mat-card-title-group>
-                  </mat-card-header>
-                  <mat-card-content class="detail-card-content">
-                    <span class="detail-area-stacked-keyvalues">
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">Serval build ID</span>
-                        @let servalBuildId = row.report.build?.additionalInfo?.buildId;
-                        <span class="detail-value detail-value-with-copy code">
-                          <span>{{ servalBuildId ?? "Unknown" }}</span>
-                          @if (servalBuildId != null) {
-                            <app-copy [value]="servalBuildId"></app-copy>
-                          }
-                        </span>
-                      </div>
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">SF draft generation request ID</span>
-                        @let draftGenerationRequestId = row.report.draftGenerationRequestId;
-                        <span class="detail-value detail-value-with-copy code">
-                          <span>{{ draftGenerationRequestId ?? "-" }}</span>
-                          @if (draftGenerationRequestId != null) {
-                            <app-copy [value]="draftGenerationRequestId"></app-copy>
-                          }
-                        </span>
-                      </div>
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">SF project ID</span>
-                        <span class="detail-value detail-value-with-copy code">
-                          <span>{{ row.report.project?.sfProjectId ?? "-" }}</span>
-                          @if (row.report.project?.sfProjectId != null) {
-                            <app-copy [value]="row.report.project?.sfProjectId"></app-copy>
-                          }
-                        </span>
-                      </div>
-
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">Paratext project ID</span>
-                        @let ptProjectId = row.report.project?.ptProjectId;
-                        <span class="detail-value detail-value-with-copy code">
-                          <span class="pt-project-id">{{ ptProjectId ?? "-" }}</span>
-                          @if (ptProjectId != null) {
-                            <app-copy [value]="ptProjectId"></app-copy>
-                          }
-                        </span>
-                      </div>
-
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">Serval version</span>
-                        <span class="detail-value">{{ row.report.build?.deploymentVersion ?? "Unknown" }}</span>
-                      </div>
-                    </span>
-                  </mat-card-content>
-                </mat-card>
-
-                <mat-card appearance="filled" class="detail-card">
-                  <mat-card-header>
-                    <mat-card-title-group>
                       <mat-icon>emoji_people</mat-icon>
                       <mat-card-title>Requesting user</mat-card-title>
                     </mat-card-title-group>
@@ -468,6 +410,64 @@
                         ></div>
                       }
                     </div>
+                  </mat-card-content>
+                </mat-card>
+
+                <mat-card appearance="filled" class="detail-card">
+                  <mat-card-header>
+                    <mat-card-title-group>
+                      <mat-icon>fingerprint</mat-icon>
+                      <mat-card-title>Identifiers</mat-card-title>
+                    </mat-card-title-group>
+                  </mat-card-header>
+                  <mat-card-content class="detail-card-content">
+                    <span class="detail-area-stacked-keyvalues">
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">Serval build ID</span>
+                        @let servalBuildId = row.report.build?.additionalInfo?.buildId;
+                        <span class="detail-value detail-value-with-copy code">
+                          <span>{{ servalBuildId ?? "Unknown" }}</span>
+                          @if (servalBuildId != null) {
+                            <app-copy [value]="servalBuildId"></app-copy>
+                          }
+                        </span>
+                      </div>
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">SF draft generation request ID</span>
+                        @let draftGenerationRequestId = row.report.draftGenerationRequestId;
+                        <span class="detail-value detail-value-with-copy code">
+                          <span>{{ draftGenerationRequestId ?? "-" }}</span>
+                          @if (draftGenerationRequestId != null) {
+                            <app-copy [value]="draftGenerationRequestId"></app-copy>
+                          }
+                        </span>
+                      </div>
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">SF project ID</span>
+                        <span class="detail-value detail-value-with-copy code">
+                          <span>{{ row.report.project?.sfProjectId ?? "-" }}</span>
+                          @if (row.report.project?.sfProjectId != null) {
+                            <app-copy [value]="row.report.project?.sfProjectId"></app-copy>
+                          }
+                        </span>
+                      </div>
+
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">Paratext project ID</span>
+                        @let ptProjectId = row.report.project?.ptProjectId;
+                        <span class="detail-value detail-value-with-copy code">
+                          <span class="pt-project-id">{{ ptProjectId ?? "-" }}</span>
+                          @if (ptProjectId != null) {
+                            <app-copy [value]="ptProjectId"></app-copy>
+                          }
+                        </span>
+                      </div>
+
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">Serval version</span>
+                        <span class="detail-value">{{ row.report.build?.deploymentVersion ?? "Unknown" }}</span>
+                      </div>
+                    </span>
                   </mat-card-content>
                 </mat-card>
               </div>
