@@ -214,49 +214,48 @@ export async function localizedScreenshots(
   // Increase the height of the viewport to ensure all elements are visible
   await page.setViewportSize({ width: originalViewportSize.width, height: 1200 });
 
-  await page.getByRole('combobox').fill('ntv');
+  const trainingDataSection = page.locator('mat-card').nth(0);
+  const translationDataSection = page.locator('mat-card').nth(1);
+
+  await trainingDataSection.getByRole('combobox').first().fill('ntv');
   await page.getByRole('option', { name: 'NTV - Nueva Traducción' }).click();
 
   const addReference = page.locator('.add-another-project');
-  const nextButton = page.locator('.step-button-wrapper').getByRole('button').last();
 
   await forEachLocale(async locale => {
     await user.hover(addReference, defaultArrowLocation);
     await screenshotElements(
       page,
-      [page.locator('app-draft-sources > .draft-sources-stepper'), page.locator('app-draft-sources > .overview')],
+      [trainingDataSection, translationDataSection],
       { ...context, pageName: 'configure_sources_draft_reference', locale },
       { margin: 8 }
     );
   });
-  await page.getByRole('combobox').fill('ntv');
-  await page.getByRole('option', { name: 'NTV - Nueva Traducción' }).click();
+
   await user.click(addReference);
-  await page.getByRole('combobox').last().fill('dhh94');
+  await trainingDataSection.getByRole('combobox').nth(1).fill('dhh94');
   await page.getByRole('option', { name: 'DHH94 - Spanish: Dios Habla' }).click();
-  await nextButton.click();
 
   await forEachLocale(async locale => {
-    await page.getByRole('combobox').fill('ntv');
+    await translationDataSection.getByRole('combobox').fill('ntv');
     await page.getByRole('option', { name: 'NTV - Nueva Traducción' }).click();
-    await user.hover(nextButton, defaultArrowLocation);
+    await user.hover(translationDataSection.getByRole('combobox'), defaultArrowLocation);
     await screenshotElements(
       page,
-      [page.locator('app-draft-sources > .draft-sources-stepper'), page.locator('app-draft-sources > .overview')],
+      [trainingDataSection, translationDataSection],
       { ...context, pageName: 'configure_sources_draft_source', locale },
       { margin: 8 }
     );
   });
 
-  await page.getByRole('combobox').fill('ntv');
+  await translationDataSection.getByRole('combobox').fill('ntv');
   await page.getByRole('option', { name: 'NTV - Nueva Traducción' }).click();
-  await nextButton.click();
 
   await forEachLocale(async locale => {
     await user.hover(await page.getByRole('checkbox'));
     await screenshotElements(
       page,
-      [page.locator('app-draft-sources')],
+      [page.locator('app-configure-sources')],
       { ...context, pageName: 'configure_sources_confirm_languages', locale },
       { margin: 8 }
     );
