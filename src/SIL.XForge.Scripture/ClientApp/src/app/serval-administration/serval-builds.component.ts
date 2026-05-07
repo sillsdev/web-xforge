@@ -30,6 +30,7 @@ import {
   firstValueFrom,
   from,
   map,
+  merge,
   Observable,
   of,
   shareReplay,
@@ -40,7 +41,7 @@ import { CopyComponent } from 'xforge-common/copy/copy.component';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
@@ -180,7 +181,8 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   /** Data rows, including those that are filtered out by the includeDeleted toggle. */
   private allRows: ServalBuildRow[] = [];
   private readonly dateRange$ = new BehaviorSubject<NormalizedDateRange | undefined>(undefined);
-  private readonly requesterDisplayNameCache: Map<string, Observable<string>> = new Map();
+  private readonly requesterIdentityCache: Map<string, Observable<{ displayName: string; emailAddress?: string }>> =
+    new Map();
 
   constructor(
     noticeService: NoticeService,
@@ -412,28 +414,49 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   }
 
   protected requesterDisplayName(requesterSFUserId: string | undefined): Observable<string> {
-    if (requesterSFUserId == null) return of('Unknown');
+    return this.requesterIdentity(requesterSFUserId).pipe(map(identity => identity.displayName));
+  }
+
+  protected requesterEmailAddress(requesterSFUserId: string | undefined): Observable<string | undefined> {
+    return this.requesterIdentity(requesterSFUserId).pipe(map(identity => identity.emailAddress));
+  }
+
+  private requesterIdentity(
+    requesterSFUserId: string | undefined
+  ): Observable<{ displayName: string; emailAddress?: string }> {
+    if (requesterSFUserId == null) {
+      return of({ displayName: 'Unknown' });
+    }
 
     const requesterKey: string = requesterSFUserId;
-    const cached$: Observable<string> | undefined = this.requesterDisplayNameCache.get(requesterKey);
+    const cached$: Observable<{ displayName: string; emailAddress?: string }> | undefined =
+      this.requesterIdentityCache.get(requesterKey);
     if (cached$ != null) return cached$;
 
     // Cache the lookups so multiple rows don't need to request the same thing.
-    const displayName$: Observable<string> = from(this.userService.getProfile(requesterSFUserId)).pipe(
-      switchMap((userProfileDoc: UserProfileDoc) =>
-        userProfileDoc.changes$.pipe(
+    const identity$: Observable<{ displayName: string; emailAddress?: string }> = from(
+      this.userService.get(requesterSFUserId)
+    ).pipe(
+      // This switchMap to changes$ and remoteChanges$ lets us cache Observables with information that stays up-to-date.
+      switchMap((userDoc: UserDoc) =>
+        merge([userDoc.changes$, userDoc.remoteChanges$]).pipe(
           startWith(undefined),
           map(() => {
-            const displayName: string | undefined = userProfileDoc.data?.displayName?.trim();
-            return isPopulatedString(displayName) ? displayName : 'Unknown';
+            const displayName: string | undefined = userDoc.data?.displayName?.trim();
+            const emailAddress: string | undefined = userDoc.data?.email?.trim();
+            return {
+              displayName: isPopulatedString(displayName) ? displayName : 'Unknown',
+              emailAddress: isPopulatedString(emailAddress) ? emailAddress : undefined
+            };
           })
         )
       ),
       shareReplay(1),
-      catchError(() => of('Unknown'))
+      catchError(() => of({ displayName: 'Unknown' }))
     );
-    this.requesterDisplayNameCache.set(requesterKey, displayName$);
-    return displayName$;
+
+    this.requesterIdentityCache.set(requesterKey, identity$);
+    return identity$;
   }
 
   protected clearProjectFilter(): void {
