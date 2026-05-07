@@ -106,7 +106,11 @@ export class UserService extends JsonDocService<User> {
   }
 
   protected allowRead(docId: string, doc: User, session: ConnectSession): boolean {
-    if (session.isServer || session.roles.includes(SystemRole.SystemAdmin)) {
+    if (
+      session.isServer ||
+      session.roles.includes(SystemRole.SystemAdmin) ||
+      session.roles.includes(SystemRole.ServalAdmin)
+    ) {
       return true;
     }
     if (docId === session.userId) {

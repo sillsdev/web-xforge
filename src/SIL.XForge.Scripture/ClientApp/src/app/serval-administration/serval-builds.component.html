@@ -269,6 +269,21 @@
                         @let requesterName = requesterDisplayName(row.report.requesterSFUserId) | async;
                         <span class="detail-value">{{ requesterName ?? "Unknown" }}</span>
                       </div>
+
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">Email address</span>
+                        @let requesterEmail = requesterEmailAddress(row.report.requesterSFUserId) | async;
+                        <span class="detail-value detail-value-with-copy code">
+                          @if (requesterEmail != null) {
+                            <a [href]="'mailto:' + requesterEmail">
+                              {{ requesterEmail }}
+                            </a>
+                            <app-copy [value]="requesterEmail"></app-copy>
+                          } @else {
+                            <span>-</span>
+                          }
+                        </span>
+                      </div>
                     </span>
                   </mat-card-content>
                 </mat-card>
