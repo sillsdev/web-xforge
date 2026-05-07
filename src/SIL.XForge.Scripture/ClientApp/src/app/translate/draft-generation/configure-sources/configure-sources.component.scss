@@ -27,9 +27,9 @@ mat-card h2 {
   grid-template-columns: 1fr 24px 1fr;
   overflow-y: auto;
 
-  .heading-left,
-  .description-left,
-  .inputs-left {
+  .heading-source-side,
+  .description-source-side,
+  .inputs-source-side {
     grid-column-start: 1;
     grid-column-end: 2;
   }
@@ -39,19 +39,19 @@ mat-card h2 {
     grid-column-start: 2;
     grid-column-end: 3;
   }
-  .heading-right,
-  .description-right,
-  .inputs-right {
+  .heading-target-side,
+  .description-target-side,
+  .inputs-target-side {
     grid-column-start: 3;
     grid-column-end: 4;
   }
-  .heading-right {
+  .heading-target-side {
     grid-row-start: 1;
   }
-  .description-right {
+  .description-target-side {
     grid-row-start: 2;
   }
-  .inputs-right {
+  .inputs-target-side {
     grid-row-start: 3;
   }
 }
