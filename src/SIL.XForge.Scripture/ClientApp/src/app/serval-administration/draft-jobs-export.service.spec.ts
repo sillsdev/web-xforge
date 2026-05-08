@@ -136,6 +136,38 @@ describe('DraftJobsExportService', () => {
       expect(rsvRows[1][0]).toBeNull();
     });
   });
+
+  describe('exportTsv', () => {
+    it('exports as a tab-delimited .tsv file', () => {
+      const env = new TestEnvironment();
+      const exportSeparatedValuesSpy = spyOn<any>(env.service, 'exportSeparatedValues').and.stub();
+      const dateRange = { start: new Date(2025, 0, 15), end: new Date(2025, 1, 28) };
+      const rows: SpreadsheetRow[] = [
+        {
+          draftGenerationRequestId: 'req-1',
+          servalBuildId: 'build-1',
+          status: 'Completed',
+          sfProjectId: 'project-1',
+          trainingBooks: 'GEN; EXO',
+          translationBooks: 'MAT'
+        }
+      ];
+
+      // SUT
+      env.service.exportTsv(rows, dateRange, 60000, 120000, 'serval_builds');
+
+      expect(exportSeparatedValuesSpy).toHaveBeenCalledWith(
+        rows,
+        dateRange,
+        60000,
+        120000,
+        'serval_builds',
+        'tsv',
+        '\t',
+        'text/tab-separated-values'
+      );
+    });
+  });
 });
 
 class TestEnvironment {

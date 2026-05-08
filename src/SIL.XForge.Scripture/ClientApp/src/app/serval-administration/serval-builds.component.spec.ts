@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { BehaviorSubject } from 'rxjs';
-import { anything, instance, mock, when } from 'ts-mockito';
+import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { MockConsole } from 'xforge-common/mock-console';
@@ -1214,6 +1214,30 @@ describe('ServalBuildsComponent', () => {
       expect(formatted).toBe('es (Spanish)');
     });
   });
+
+  describe('export', () => {
+    it('exports tsv rows through DraftJobsExportService', () => {
+      const env = new TestEnvironment();
+      const range: NormalizedDateRange = {
+        start: new Date('2024-01-01T00:00:00Z'),
+        end: new Date('2024-01-31T23:59:59Z')
+      };
+      env.component['dateRange$'].next(range);
+      env.component['rows'] = [
+        env.createRowWithDetails({
+          projectId: 'proj-a',
+          requesterId: 'user-1',
+          trainingBooks: env.createProjectBooks('proj-a', ['GEN']),
+          translationBooks: env.createProjectBooks('proj-a', ['MAT'])
+        })
+      ];
+
+      // SUT
+      env.component['exportTsv']();
+
+      verify(mockExportService.exportTsv(anything(), anything(), anything(), anything(), anything())).once();
+    });
+  });
 });
 
 /** Provides helpers for constructing test data for ServalBuildsComponent tests. */
@@ -1239,6 +1263,7 @@ class TestEnvironment {
     when(mockDialogService.openMatDialog(anything(), anything(), anything())).thenReturn(undefined as never);
     when(mockExportService.exportCsv(anything(), anything(), anything(), anything(), anything())).thenReturn(undefined);
     when(mockExportService.exportRsv(anything(), anything(), anything(), anything(), anything())).thenReturn(undefined);
+    when(mockExportService.exportTsv(anything(), anything(), anything(), anything(), anything())).thenReturn(undefined);
     when(mockUserService.getProfile(anything())).thenReturn(Promise.resolve(userProfileDoc));
     when(mockI18nService.localeCode).thenReturn('en');
     when(mockI18nService.getLanguageDisplayName(anything())).thenReturn(undefined);

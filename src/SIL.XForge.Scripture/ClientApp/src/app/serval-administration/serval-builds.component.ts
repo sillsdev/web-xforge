@@ -239,6 +239,15 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     this.exportService.exportRsv(spreadsheetRows, dateRange, meanDurationMs, maxDurationMs, 'serval_builds');
   }
 
+  protected exportTsv(): void {
+    const dateRange: NormalizedDateRange | undefined = this.dateRange$.value;
+    if (dateRange == null) throw new Error('Date range is not set');
+    const spreadsheetRows: SpreadsheetRow[] = ServalBuildsComponent.createSpreadsheetRows(this.rows);
+    const meanDurationMs: number = this.summaryStats?.meanDurationMs ?? 0;
+    const maxDurationMs: number = this.summaryStats?.maxDurationMs ?? 0;
+    this.exportService.exportTsv(spreadsheetRows, dateRange, meanDurationMs, maxDurationMs, 'serval_builds');
+  }
+
   protected clearMLUrl(servalBuildId: string): string {
     return `https://app.sil.hosted.allegro.ai/projects?gq=${servalBuildId}&tab=tasks`;
   }

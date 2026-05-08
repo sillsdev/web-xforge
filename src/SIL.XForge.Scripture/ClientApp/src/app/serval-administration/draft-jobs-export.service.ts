@@ -46,11 +46,38 @@ export class DraftJobsExportService {
     maxDuration: number,
     filenamePrefix: string
   ): void {
-    const spreadsheetRows = this.addStatistics(rows, meanDuration, maxDuration);
-    const csv: string = Papa.unparse(spreadsheetRows);
-    const filename: string = this.getExportFilename(dateRangeForFilename, 'csv', filenamePrefix);
-    const blob: Blob = new Blob([csv], { type: 'text/csv' });
-    saveAs(blob, filename);
+    this.exportSeparatedValues(
+      rows,
+      dateRangeForFilename,
+      meanDuration,
+      maxDuration,
+      filenamePrefix,
+      'csv',
+      ',',
+      'text/csv'
+    );
+  }
+
+  /**
+   * Export the draft jobs data to a TSV file.
+   */
+  exportTsv(
+    rows: SpreadsheetRow[],
+    dateRangeForFilename: NormalizedDateRange,
+    meanDuration: number,
+    maxDuration: number,
+    filenamePrefix: string
+  ): void {
+    this.exportSeparatedValues(
+      rows,
+      dateRangeForFilename,
+      meanDuration,
+      maxDuration,
+      filenamePrefix,
+      'tsv',
+      '\t',
+      'text/tab-separated-values'
+    );
   }
 
   /**
@@ -171,5 +198,22 @@ export class DraftJobsExportService {
    */
   private msToMinutes(milliseconds: number): number {
     return milliseconds / 1000 / 60;
+  }
+
+  private exportSeparatedValues(
+    rows: SpreadsheetRow[],
+    dateRangeForFilename: NormalizedDateRange,
+    meanDuration: number,
+    maxDuration: number,
+    filenamePrefix: string,
+    extension: string,
+    delimiter: string,
+    mimeType: string
+  ): void {
+    const spreadsheetRows = this.addStatistics(rows, meanDuration, maxDuration);
+    const separatedValues: string = Papa.unparse(spreadsheetRows, { delimiter: delimiter });
+    const filename: string = this.getExportFilename(dateRangeForFilename, extension, filenamePrefix);
+    const blob: Blob = new Blob([separatedValues], { type: mimeType });
+    saveAs(blob, filename);
   }
 }
