@@ -10,7 +10,7 @@ import prettierPlugin from 'eslint-plugin-prettier';
 
 export default [
   {
-    ignores: ['projects/**/*']
+    ignores: ['projects/**/*', 'dist/**/*']
   },
   // TypeScript files
   {
