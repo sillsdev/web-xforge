@@ -32,7 +32,10 @@ export function validDateMsFrom(date: Date | undefined): number | undefined {
 
 /** Counts the total number of books across all project-book entries. */
 export function countBooks(projectBooks: ProjectBooks[]): number {
-  return projectBooks.reduce((total: number, projectBook: ProjectBooks) => total + projectBook.books.length, 0);
+  return projectBooks.reduce(
+    (total: number, projectBook: ProjectBooks) => total + projectBook.booksAndChapters.length,
+    0
+  );
 }
 
 /** Counts unique book codes across all project-book entries. */
