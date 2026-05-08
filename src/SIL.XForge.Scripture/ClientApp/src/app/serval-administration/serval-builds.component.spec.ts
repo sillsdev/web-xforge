@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { BehaviorSubject, firstValueFrom } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, Observable, skip, Subject, take } from 'rxjs';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { anything, mock, when } from 'ts-mockito';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
@@ -1473,6 +1473,48 @@ describe('ServalBuildsComponent', () => {
 
       expect(emailAddress).toBe('user02@example.com');
     });
+
+    it('updates requester details when changes$ emits', async () => {
+      const env = new TestEnvironment();
+      const displayName$: Observable<string> = env.component['requesterDisplayName']('user02');
+      const emailAddress$: Observable<string | undefined> = env.component['requesterEmailAddress']('user02');
+
+      expect(await firstValueFrom(displayName$)).toBe('Test User');
+      expect(await firstValueFrom(emailAddress$)).toBe('user02@example.com');
+
+      const updatedDisplayNamePromise: Promise<string> = firstValueFrom(displayName$.pipe(skip(1), take(1)));
+      const updatedEmailAddressPromise: Promise<string | undefined> = firstValueFrom(
+        emailAddress$.pipe(skip(1), take(1))
+      );
+
+      env.userData.displayName = 'Changed User';
+      env.userData.email = 'changed@example.com';
+      env.userChanges$.next();
+
+      expect(await updatedDisplayNamePromise).toBe('Changed User');
+      expect(await updatedEmailAddressPromise).toBe('changed@example.com');
+    });
+
+    it('updates requester details when remoteChanges$ emits', async () => {
+      const env = new TestEnvironment();
+      const displayName$: Observable<string> = env.component['requesterDisplayName']('user02');
+      const emailAddress$: Observable<string | undefined> = env.component['requesterEmailAddress']('user02');
+
+      expect(await firstValueFrom(displayName$)).toBe('Test User');
+      expect(await firstValueFrom(emailAddress$)).toBe('user02@example.com');
+
+      const updatedDisplayNamePromise: Promise<string> = firstValueFrom(displayName$.pipe(skip(1), take(1)));
+      const updatedEmailAddressPromise: Promise<string | undefined> = firstValueFrom(
+        emailAddress$.pipe(skip(1), take(1))
+      );
+
+      env.userData.displayName = 'Remote Changed User';
+      env.userData.email = 'remote.changed@example.com';
+      env.userRemoteChanges$.next();
+
+      expect(await updatedDisplayNamePromise).toBe('Remote Changed User');
+      expect(await updatedEmailAddressPromise).toBe('remote.changed@example.com');
+    });
   });
 
   
@@ -1509,16 +1551,21 @@ class TestEnvironment {
   readonly builds$: BehaviorSubject<ServalBuildReportDto[] | undefined> = new BehaviorSubject<
     ServalBuildReportDto[] | undefined
   >(undefined);
+  readonly userData: { displayName: string; avatarUrl: string; email: string };
+  readonly userChanges$: Subject<void> = new Subject<void>();
+  readonly userRemoteChanges$: Subject<void> = new Subject<void>();
 
   constructor() {
-    const userData = {
+    this.userData = {
       displayName: 'Test User',
       avatarUrl: '',
       email: 'user02@example.com'
     };
     const userDoc = {
-      data: userData
-    } as UserDoc;
+      data: this.userData,
+      changes$: this.userChanges$,
+      remoteChanges$: this.userRemoteChanges$
+    } as unknown as UserDoc;
 
     when(mockNoticeService.loadingStarted(anything())).thenReturn(undefined);
     when(mockNoticeService.loadingFinished(anything())).thenReturn(undefined);
