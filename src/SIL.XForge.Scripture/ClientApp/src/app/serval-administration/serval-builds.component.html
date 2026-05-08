@@ -155,11 +155,14 @@
                   <span class="project-link" [matTooltip]="toolTip">{{ short }}</span>
                 }
                 :
-                @if (projectBook.books.length <= 2) {
-                  {{ projectBook.books.join(", ") }}
+                @if (projectBook.booksAndChapters.length <= 2) {
+                  {{ ServalBuildsComponent.formatBookEntries(projectBook.booksAndChapters) }}
                 } @else {
-                  <span [matTooltip]="projectBook.books.join(', ')" class="book-count">
-                    {{ projectBook.books.length }} books
+                  <span
+                    [matTooltip]="ServalBuildsComponent.formatBookEntries(projectBook.booksAndChapters)"
+                    class="book-count"
+                  >
+                    {{ projectBook.booksAndChapters.length }} books
                   </span>
                 }
               </div>
@@ -355,7 +358,7 @@
                                 } @else {
                                   <span class="project-link">{{ projectBook.projectDisplayName }}</span>
                                 }
-                                : {{ projectBook.books.join(", ") }}
+                                : {{ ServalBuildsComponent.formatBookEntries(projectBook.booksAndChapters) }}
                               </div>
                             } @empty {
                               <span>None</span>
@@ -377,7 +380,7 @@
                                 } @else {
                                   <span class="project-link">{{ projectBook.projectDisplayName }}</span>
                                 }
-                                : {{ projectBook.books.join(", ") }}
+                                : {{ ServalBuildsComponent.formatBookEntries(projectBook.booksAndChapters) }}
                               </div>
                             } @empty {
                               <span>None</span>
