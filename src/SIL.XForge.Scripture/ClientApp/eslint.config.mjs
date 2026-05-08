@@ -121,7 +121,16 @@ export default [
       ],
       'no-underscore-dangle': 'off',
       'prefer-const': ['warn', { ignoreReadBeforeAssign: true }],
-      'no-var': 'warn'
+      'no-var': 'warn',
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "CallExpression[callee.name=/^(merge|concat)$/][arguments.length=1][arguments.0.type='ArrayExpression']",
+          message:
+            'You should probably pass separate arguments instead of an array to this RxJS operator. If you want to pass an array, disable this rule for the line with // eslint-disable-line no-restricted-syntax'
+        }
+      ]
     }
   },
   // HTML template files
