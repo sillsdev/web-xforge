@@ -439,7 +439,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     ).pipe(
       // This switchMap to changes$ and remoteChanges$ lets us cache Observables with information that stays up-to-date.
       switchMap((userDoc: UserDoc) =>
-        merge([userDoc.changes$, userDoc.remoteChanges$]).pipe(
+        merge(userDoc.changes$, userDoc.remoteChanges$).pipe(
           startWith(undefined),
           map(() => {
             const displayName: string | undefined = userDoc.data?.displayName?.trim();
