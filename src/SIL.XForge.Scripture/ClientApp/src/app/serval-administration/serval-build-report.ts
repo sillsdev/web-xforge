@@ -20,6 +20,7 @@ export interface ServalBuildReportDto {
 /** SF project information for a build report entry.*/
 export interface BuildReportProject {
   sfProjectId: string;
+  ptProjectId?: string;
   shortName: string | undefined;
   name: string | undefined;
 }

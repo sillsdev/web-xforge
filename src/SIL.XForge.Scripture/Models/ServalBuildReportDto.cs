@@ -61,6 +61,7 @@ public class ServalBuildReportDto
 public class BuildReportProject
 {
     public string SFProjectId { get; init; } = string.Empty;
+    public string? PTProjectId { get; init; }
     public string? ShortName { get; init; }
     public string? Name { get; init; }
 }
