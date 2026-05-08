@@ -14,6 +14,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
@@ -35,10 +36,9 @@ import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { DraftSource, DraftSourcesAsArrays } from '../draft-source';
-import { DraftSourcesService } from '../draft-sources.service';
 import { translateSourceToSelectableProjectWithLanguageTag } from '../draft-utils';
 import { TrainingDataService } from '../training-data/training-data.service';
-import { DraftSourcesComponent, sourceArraysToSettingsChange } from './draft-sources.component';
+import { ConfigureSourcesComponent, sourceArraysToSettingsChange } from './configure-sources.component';
 
 /** This interface allows specification of a project using multiple types at once, to help the spec provide the
  * different types required by the component. */
@@ -56,7 +56,6 @@ const mockedParatextService = mock(ParatextService);
 const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedNoticeService = mock(NoticeService);
 const mockedI18nService = mock(I18nService);
-const mockedDraftSourcesService = mock(DraftSourcesService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedSFUserProjectsService = mock(SFUserProjectsService);
 const mockedAuthService = mock(AuthService);
@@ -64,7 +63,7 @@ const mockedDialogService = mock(DialogService);
 const mockTrainingDataService = mock(TrainingDataService);
 const mockedFileService = mock(FileService);
 
-describe('DraftSourcesComponent', () => {
+describe('ConfigureSourcesComponent', () => {
   configureTestingModule(() => ({
     imports: [getTestTranslocoModule()],
     providers: [
@@ -75,14 +74,14 @@ describe('DraftSourcesComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: I18nService, useMock: mockedI18nService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
-      { provide: DraftSourcesService, useMock: mockedDraftSourcesService },
       { provide: SFUserProjectsService, useMock: mockedSFUserProjectsService },
       { provide: AuthService, useMock: mockedAuthService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: DialogService, useMock: mockedDialogService },
       { provide: TrainingDataService, useMock: mockTrainingDataService },
       { provide: ErrorReportingService, useMock: mock(ErrorReportingService) },
-      { provide: FileService, useMock: mockedFileService }
+      { provide: FileService, useMock: mockedFileService },
+      { provide: ExternalUrlService, useClass: ExternalUrlService }
     ]
   }));
 
@@ -641,8 +640,8 @@ describe('DraftSourcesComponent', () => {
 });
 
 class TestEnvironment {
-  readonly component: DraftSourcesComponent;
-  readonly fixture: ComponentFixture<DraftSourcesComponent>;
+  readonly component: ConfigureSourcesComponent;
+  readonly fixture: ComponentFixture<ConfigureSourcesComponent>;
   readonly realtimeService: TestRealtimeService;
   readonly activatedProjectDoc: WithData<SFProjectDoc>;
   readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
@@ -797,6 +796,7 @@ class TestEnvironment {
     when(mockedSFUserProjectsService.projectDocs$).thenReturn(of(usersProjectsAndResourcesOnSF));
     when(mockedI18nService.getLanguageDisplayName(anything())).thenReturn('Test Language');
     when(mockedI18nService.enumerateList(anything())).thenCall(items => items.join(', '));
+    when(mockedI18nService.locale).thenReturn({ helps: '' } as any);
     when(mockedActivatedProjectService.changes$).thenReturn(of(this.activatedProjectDoc));
     when(mockedActivatedProjectService.projectDoc).thenReturn(this.activatedProjectDoc);
     when(mockedActivatedProjectService.projectId).thenReturn(this.activatedProjectDoc.id);
@@ -806,7 +806,7 @@ class TestEnvironment {
     when(mockTrainingDataService.getTrainingData(anything(), anything())).thenReturn(this.activeTrainingData$);
     this.activeTrainingData$.next([]);
 
-    this.fixture = TestBed.createComponent(DraftSourcesComponent);
+    this.fixture = TestBed.createComponent(ConfigureSourcesComponent);
     this.component = this.fixture.componentInstance;
     this.fixture.detectChanges();
     tick();

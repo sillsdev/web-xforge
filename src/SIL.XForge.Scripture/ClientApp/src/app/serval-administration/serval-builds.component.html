@@ -139,12 +139,20 @@
             @for (projectBook of row.translationBooks; track projectBook.sfProjectId) {
               <div>
                 @let translationLink = servalAdminProjectLinkFor(projectBook.sfProjectId);
+                @let short = projectBook.shortName ?? projectBook.sfProjectId;
+                @let toolTip = projectBook.projectName ?? projectBook.sfProjectId;
                 @if (translationLink != null) {
-                  <a [href]="translationLink" target="_blank" rel="noopener" class="project-link">
-                    {{ projectBook.projectDisplayName }}
+                  <a
+                    [href]="translationLink"
+                    target="_blank"
+                    rel="noopener"
+                    class="project-link"
+                    [matTooltip]="toolTip"
+                  >
+                    {{ short }}
                   </a>
                 } @else {
-                  <span class="project-link">{{ projectBook.projectDisplayName }}</span>
+                  <span class="project-link" [matTooltip]="toolTip">{{ short }}</span>
                 }
                 :
                 @if (projectBook.books.length <= 2) {
@@ -243,6 +251,17 @@
                       </div>
 
                       <div class="detail-keyvalue">
+                        <span class="detail-key">Paratext project ID</span>
+                        @let ptProjectId = row.report.project?.ptProjectId;
+                        <span class="detail-value detail-value-with-copy code">
+                          <span class="pt-project-id">{{ ptProjectId ?? "-" }}</span>
+                          @if (ptProjectId != null) {
+                            <app-copy [value]="ptProjectId"></app-copy>
+                          }
+                        </span>
+                      </div>
+
+                      <div class="detail-keyvalue">
                         <span class="detail-key">Serval version</span>
                         <span class="detail-value">{{ row.report.build?.deploymentVersion ?? "Unknown" }}</span>
                       </div>
@@ -273,6 +292,41 @@
                         <span class="detail-key">Display name</span>
                         @let requesterName = requesterDisplayName(row.report.requesterSFUserId) | async;
                         <span class="detail-value">{{ requesterName ?? "Unknown" }}</span>
+                      </div>
+                    </span>
+                  </mat-card-content>
+                </mat-card>
+
+                <mat-card appearance="filled" class="detail-card">
+                  <mat-card-header>
+                    <mat-card-title-group>
+                      <mat-icon>translate</mat-icon>
+                      <mat-card-title>Language info</mat-card-title>
+                    </mat-card-title-group>
+                  </mat-card-header>
+                  <mat-card-content class="detail-card-content">
+                    <span class="detail-area-stacked-keyvalues">
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">Source language</span>
+                        <span class="detail-value">{{
+                          formatLanguageWithName(row.report.build?.executionData?.sourceLanguageTag)
+                        }}</span>
+                      </div>
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">Target language</span>
+                        <span class="detail-value">{{
+                          formatLanguageWithName(row.report.build?.executionData?.targetLanguageTag)
+                        }}</span>
+                      </div>
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">Strings trained on</span>
+                        <span class="detail-value">{{ row.report.build?.executionData?.trainCount ?? "-" }}</span>
+                      </div>
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">Strings translated</span>
+                        <span class="detail-value">{{
+                          row.report.build?.executionData?.pretranslateCount ?? "-"
+                        }}</span>
                       </div>
                     </span>
                   </mat-card-content>
@@ -330,41 +384,6 @@
                             }
                           </div>
                         </span>
-                      </div>
-                    </span>
-                  </mat-card-content>
-                </mat-card>
-
-                <mat-card appearance="filled" class="detail-card">
-                  <mat-card-header>
-                    <mat-card-title-group>
-                      <mat-icon>translate</mat-icon>
-                      <mat-card-title>Language info</mat-card-title>
-                    </mat-card-title-group>
-                  </mat-card-header>
-                  <mat-card-content class="detail-card-content">
-                    <span class="detail-area-stacked-keyvalues">
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">Source language</span>
-                        <span class="detail-value">{{
-                          formatLanguageWithName(row.report.build?.executionData?.sourceLanguageTag)
-                        }}</span>
-                      </div>
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">Target language</span>
-                        <span class="detail-value">{{
-                          formatLanguageWithName(row.report.build?.executionData?.targetLanguageTag)
-                        }}</span>
-                      </div>
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">Strings trained on</span>
-                        <span class="detail-value">{{ row.report.build?.executionData?.trainCount ?? "-" }}</span>
-                      </div>
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">Strings translated</span>
-                        <span class="detail-value">{{
-                          row.report.build?.executionData?.pretranslateCount ?? "-"
-                        }}</span>
                       </div>
                     </span>
                   </mat-card-content>
