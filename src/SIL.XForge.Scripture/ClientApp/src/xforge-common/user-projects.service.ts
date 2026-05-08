@@ -14,7 +14,7 @@ import { UserService } from './user.service';
   providedIn: 'root'
 })
 export class SFUserProjectsService {
-  private projectDocs: Map<string, SFProjectProfileDoc> = new Map();
+  private _projectDocs: Map<string, SFProjectProfileDoc> = new Map();
   private _projectDocs$ = new BehaviorSubject<SFProjectProfileDoc[] | undefined>(undefined);
 
   constructor(
@@ -29,6 +29,10 @@ export class SFUserProjectsService {
   /** List of SF project docs the user is on. Or undefined if the information is not yet available. */
   get projectDocs$(): Observable<SFProjectProfileDoc[] | undefined> {
     return this._projectDocs$;
+  }
+
+  get projectDocs(): SFProjectProfileDoc[] | undefined {
+    return this._projectDocs$.getValue();
   }
 
   private async setup(): Promise<void> {
@@ -52,17 +56,17 @@ export class SFUserProjectsService {
     const currentProjectIds = userDoc.data!.sites[environment.siteId].projects;
 
     let removedProjectsCount = 0;
-    for (const [id, projectDoc] of this.projectDocs) {
+    for (const [id, projectDoc] of this._projectDocs) {
       if (!currentProjectIds.includes(id)) {
         removedProjectsCount++;
         void projectDoc.dispose();
-        this.projectDocs.delete(id);
+        this._projectDocs.delete(id);
       }
     }
 
     const docFetchPromises: Promise<SFProjectProfileDoc>[] = [];
     for (const id of currentProjectIds) {
-      if (!this.projectDocs.has(id)) {
+      if (!this._projectDocs.has(id)) {
         docFetchPromises.push(this.projectService.getProfile(id));
       }
     }
@@ -76,9 +80,9 @@ export class SFUserProjectsService {
     }
 
     for (const newProjectDoc of await Promise.all(docFetchPromises)) {
-      this.projectDocs.set(newProjectDoc.id, newProjectDoc);
+      this._projectDocs.set(newProjectDoc.id, newProjectDoc);
     }
-    const projects = Array.from(this.projectDocs.values()).sort((a, b) =>
+    const projects = Array.from(this._projectDocs.values()).sort((a, b) =>
       a.data == null || b.data == null ? 0 : compareProjectsForSorting(a.data, b.data)
     );
     this._projectDocs$.next(projects);
