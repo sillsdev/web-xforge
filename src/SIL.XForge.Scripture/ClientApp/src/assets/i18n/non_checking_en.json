@@ -907,7 +907,8 @@
     "training": "Training...",
     "training_unavailable": "Training is temporarily unavailable",
     "translate_overview": "Translate Overview",
-    "translated_segments": "{{ translatedSegments }} of {{ total }} segments"
+    "translated_segments": "{{ translatedSegments }} of {{ total }} segments",
+    "translation_suggestions_retirement_notice": "Your project appears to be using the translation suggestions feature. Translation suggestions will be retired soon. Please contact {{ email }} to discuss alternative ways to translate using Scripture Forge."
   },
   "draft_signup": {
     "additional_comments_label": "Additional comments",

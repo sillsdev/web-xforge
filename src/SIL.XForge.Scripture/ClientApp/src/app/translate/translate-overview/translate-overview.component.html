@@ -5,6 +5,12 @@
     <app-font-unsupported-message></app-font-unsupported-message>
   }
 
+  @if (translationSuggestionsEnabled && canEditTexts) {
+    <app-notice icon="warning" type="warning" mode="fill-dark">{{
+      t("translation_suggestions_retirement_notice", { email: issueEmail })
+    }}</app-notice>
+  }
+
   @if (isOnline) {
     <div class="card-wrapper">
       <mat-card class="books-card">
