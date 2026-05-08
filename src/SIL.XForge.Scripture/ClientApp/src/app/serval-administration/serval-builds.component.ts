@@ -51,6 +51,7 @@ import { DateRangePickerComponent, NormalizedDateRange } from './date-range-pick
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
 import { JobDetailsDialogComponent } from './job-details-dialog.component';
 import {
+  BookAndChapters,
   buildProjectDisplayName,
   DraftGenerationBuildStatus,
   Phase,
@@ -776,9 +777,42 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     return projectBooks
       .map((pb: ProjectBooks) => {
         const prefix: string = pb.shortName != null ? `${pb.sfProjectId} ${pb.shortName}` : pb.sfProjectId;
-        return `${prefix}: ${pb.books.join('; ')}`;
+        const bookEntries: string = ServalBuildsComponent.formatBookEntries(pb.booksAndChapters);
+        return `${prefix}: ${bookEntries}`;
       })
       .join('. ');
+  }
+
+  /** Formats a BookAndChapters array into a display string, e.g. "GEN 10-11, 16-19; EXO". */
+  static formatBookEntries(booksAndChapters: BookAndChapters[]): string {
+    return booksAndChapters
+      .map(entry => {
+        if (entry.chapters == null || entry.chapters.length === 0) {
+          return entry.bookId;
+        }
+        return `${entry.bookId} ${ServalBuildsComponent.compactRangeNotation(entry.chapters)}`;
+      })
+      .join('; ');
+  }
+
+  /** Formats a sorted array of numbers into compact range notation, e.g. [1,2,3,5,7,8,9] → "1-3, 5, 7-9". */
+  static compactRangeNotation(nums: number[]): string {
+    if (nums.length === 0) return '';
+    const sortedUnique: number[] = [...new Set(nums)].sort((a, b) => a - b);
+    const ranges: string[] = [];
+    let rangeStart: number = sortedUnique[0];
+    let rangeEnd: number = sortedUnique[0];
+    for (let i = 1; i < sortedUnique.length; i++) {
+      if (sortedUnique[i] === rangeEnd + 1) {
+        rangeEnd = sortedUnique[i];
+      } else {
+        ranges.push(rangeStart === rangeEnd ? `${rangeStart}` : `${rangeStart}-${rangeEnd}`);
+        rangeStart = sortedUnique[i];
+        rangeEnd = sortedUnique[i];
+      }
+    }
+    ranges.push(rangeStart === rangeEnd ? `${rangeStart}` : `${rangeStart}-${rangeEnd}`);
+    return ranges.join(', ');
   }
 
   protected servalAdminProjectLinkFor(sfProjectId: string | undefined): string | undefined {

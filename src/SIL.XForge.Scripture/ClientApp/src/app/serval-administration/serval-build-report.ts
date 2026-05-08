@@ -1,6 +1,7 @@
 import { Canon } from '@sillsdev/scripture';
 import { BuildDto } from '../machine-api/build-dto';
-import { booksFromScriptureRange } from '../shared/utils';
+import { expandNumbers } from '../shared/utils';
+import { notNull } from '../../type-utils';
 
 /**
  * A report of a Serval build, combining Serval-native data with SF project information and event metrics information.
@@ -136,6 +137,12 @@ export function isDraftGenerationBuildStatus(value: string): value is DraftGener
   return draftGenerationBuildStatusValues.has(value);
 }
 
+/** A book identifier with optional chapter numbers. */
+export interface BookAndChapters {
+  bookId: string;
+  chapters?: number[];
+}
+
 /** Maps a project to the list of book identifiers involved in a build. */
 export interface ProjectBooks {
   sfProjectId: string;
@@ -145,12 +152,12 @@ export interface ProjectBooks {
   shortName?: string;
   /** Project name if available. */
   projectName?: string;
-  books: string[];
+  booksAndChapters: BookAndChapters[];
 }
 
 /**
  * Parses BuildReportProjectScriptureRange entries into ProjectBooks records by parsing semicolon-delimited scripture
- * ranges into individual book identifiers.
+ * ranges into individual book identifiers with optional chapter numbers.
  */
 export function toProjectBooks(ranges: BuildReportProjectScriptureRange[] | undefined): ProjectBooks[] {
   if (ranges == null) {
@@ -168,17 +175,36 @@ export function toProjectBooks(ranges: BuildReportProjectScriptureRange[] | unde
     }
 
     const displayName: string = buildProjectDisplayName(range.shortName, range.name, sfProjectId);
-    const bookNumbers: number[] = booksFromScriptureRange(scriptureRange);
-    const books: string[] = bookNumbers.map(bookNum => Canon.bookNumberToId(bookNum));
+    const booksAndChapters: BookAndChapters[] = parseBooksAndChapters(scriptureRange);
     projectBooks.push({
       sfProjectId: sfProjectId,
       projectDisplayName: displayName,
       shortName: range.shortName,
       projectName: range.name,
-      books: books
+      booksAndChapters: booksAndChapters
     });
   }
   return projectBooks;
+}
+
+/**
+ * Parses a semicolon-delimited scripture range string into BookAndChapters entries.
+ * Format: "GEN10,11,16-19;EXO" → [{bookId: 'GEN', chapters: [10,11,16,17,18,19]}, {bookId: 'EXO'}]
+ */
+function parseBooksAndChapters(scriptureRange: string): BookAndChapters[] {
+  return scriptureRange
+    .split(';')
+    .map(segment => {
+      const bookId: string = Canon.bookIdToNumber(segment.slice(0, 3)) > 0 ? segment.slice(0, 3) : '';
+      if (bookId === '') return null;
+      const chapterPart: string = segment.slice(3);
+      if (chapterPart === '') {
+        return { bookId };
+      }
+      const chapters: number[] = expandNumbers(chapterPart);
+      return chapters.length > 0 ? { bookId, chapters } : { bookId };
+    })
+    .filter(notNull);
 }
 
 /** Builds a display name for a project from its short name, name, and ID, falling back gracefully. */

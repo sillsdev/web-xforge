@@ -17,7 +17,7 @@ describe('toProjectBooks', () => {
     expect(result[0].sfProjectId).toBe('p1');
     expect(result[0].projectDisplayName).toBe('ABC - Project ABC');
     expect(result[0].projectName).toBe('Project ABC');
-    expect(result[0].books).toEqual(['GEN', 'EXO']);
+    expect(result[0].booksAndChapters).toEqual([{ bookId: 'GEN' }, { bookId: 'EXO' }]);
   });
 
   it('handles a single-book range', () => {
@@ -28,7 +28,7 @@ describe('toProjectBooks', () => {
     const result: ProjectBooks[] = toProjectBooks(ranges);
 
     expect(result.length).toBe(1);
-    expect(result[0].books).toEqual(['MAT']);
+    expect(result[0].booksAndChapters).toEqual([{ bookId: 'MAT' }]);
   });
 
   it('handles multiple project ranges with different projects', () => {
@@ -43,11 +43,11 @@ describe('toProjectBooks', () => {
     expect(result[0].sfProjectId).toBe('p1');
     expect(result[0].projectDisplayName).toBe('SRC - Source');
     expect(result[0].projectName).toBe('Source');
-    expect(result[0].books).toEqual(['GEN', 'EXO']);
+    expect(result[0].booksAndChapters).toEqual([{ bookId: 'GEN' }, { bookId: 'EXO' }]);
     expect(result[1].sfProjectId).toBe('p2');
     expect(result[1].projectDisplayName).toBe('TRN - Training');
     expect(result[1].projectName).toBe('Training');
-    expect(result[1].books).toEqual(['MAT', 'MRK', 'LUK']);
+    expect(result[1].booksAndChapters).toEqual([{ bookId: 'MAT' }, { bookId: 'MRK' }, { bookId: 'LUK' }]);
   });
 
   it('returns empty array for undefined ranges', () => {
@@ -105,7 +105,7 @@ describe('toProjectBooks', () => {
 
     const result: ProjectBooks[] = toProjectBooks(ranges);
 
-    expect(result[0].books).toEqual(['GEN', 'EXO']);
+    expect(result[0].booksAndChapters).toEqual([{ bookId: 'GEN' }, { bookId: 'EXO' }]);
   });
 
   it('filters out invalid book identifiers after parsing', () => {
@@ -115,7 +115,7 @@ describe('toProjectBooks', () => {
 
     const result: ProjectBooks[] = toProjectBooks(ranges);
 
-    expect(result[0].books).toEqual(['GEN', 'EXO']);
+    expect(result[0].booksAndChapters).toEqual([{ bookId: 'GEN' }, { bookId: 'EXO' }]);
   });
 
   it('populates shortName from the range shortName', () => {
@@ -138,6 +138,19 @@ describe('toProjectBooks', () => {
     const result: ProjectBooks[] = toProjectBooks(ranges);
 
     expect(result[0].shortName).toBeUndefined();
+  });
+
+  it('parses chapter numbers from scripture range segments', () => {
+    const ranges: BuildReportProjectScriptureRange[] = [
+      { sfProjectId: 'p1', scriptureRange: 'GEN10,11,16-19;EXO', shortName: 'PRJ', name: undefined }
+    ];
+
+    const result: ProjectBooks[] = toProjectBooks(ranges);
+
+    expect(result[0].booksAndChapters).toEqual([
+      { bookId: 'GEN', chapters: [10, 11, 16, 17, 18, 19] },
+      { bookId: 'EXO' }
+    ]);
   });
 });
 

@@ -1134,13 +1134,13 @@ describe('ServalBuildsComponent', () => {
           sfProjectId: '112233',
           projectDisplayName: 'BSB - Berean Standard Bible',
           shortName: 'BSB',
-          books: ['GEN', 'EXO']
+          booksAndChapters: [{ bookId: 'GEN' }, { bookId: 'EXO' }]
         },
         {
           sfProjectId: '222333',
           projectDisplayName: 'ASV - American Standard Version',
           shortName: 'ASV',
-          books: ['EXO', 'LEV']
+          booksAndChapters: [{ bookId: 'EXO' }, { bookId: 'LEV' }]
         }
       ];
 
@@ -1152,13 +1152,41 @@ describe('ServalBuildsComponent', () => {
 
     it('falls back to just the project ID when short name is unavailable', () => {
       const projectBooks: ProjectBooks[] = [
-        { sfProjectId: '112233', projectDisplayName: '112233', shortName: undefined, books: ['GEN'] }
+        {
+          sfProjectId: '112233',
+          projectDisplayName: '112233',
+          shortName: undefined,
+          booksAndChapters: [{ bookId: 'GEN' }]
+        }
       ];
 
       // SUT
       const result: string = ServalBuildsComponent.formatProjectBooks(projectBooks);
 
       expect(result).toBe('112233: GEN');
+    });
+
+    it('includes chapter numbers in compact range notation', () => {
+      const projectBooks: ProjectBooks[] = [
+        {
+          sfProjectId: '112233',
+          projectDisplayName: 'BSB',
+          shortName: 'BSB',
+          booksAndChapters: [{ bookId: 'GEN', chapters: [10, 11, 16, 17, 18, 19] }, { bookId: 'EXO' }]
+        }
+      ];
+
+      // SUT
+      const result: string = ServalBuildsComponent.formatProjectBooks(projectBooks);
+
+      expect(result).toBe('112233 BSB: GEN 10-11, 16-19; EXO');
+    });
+
+    it('compactRangeNotation de-duplicates duplicate chapter numbers', () => {
+      // SUT
+      const result: string = ServalBuildsComponent.compactRangeNotation([10, 10, 11, 10, 16, 16, 17]);
+
+      expect(result).toBe('10-11, 16-17');
     });
   });
 
@@ -1457,7 +1485,9 @@ class TestEnvironment {
 
   createProjectBooks(projectId: string, books: string[], projectDisplayName?: string): ProjectBooks[] {
     const displayName: string = projectDisplayName ?? projectId.toUpperCase();
-    return [{ sfProjectId: projectId, projectDisplayName: displayName, books: books }];
+    return [
+      { sfProjectId: projectId, projectDisplayName: displayName, booksAndChapters: books.map(b => ({ bookId: b })) }
+    ];
   }
 
   createReport({

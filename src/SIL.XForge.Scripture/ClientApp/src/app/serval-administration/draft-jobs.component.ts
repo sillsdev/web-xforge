@@ -66,8 +66,8 @@ export interface DraftJob {
   duration: number | undefined;
   errorMessage?: string;
   userId?: string;
-  trainingBooks?: ProjectBooks[];
-  translationBooks?: ProjectBooks[];
+  trainingBooks?: DraftJobsProjectBooks[];
+  translationBooks?: DraftJobsProjectBooks[];
 }
 
 /** Data that makes up a row of information in the Draft Jobs table. */
@@ -81,9 +81,19 @@ export interface DraftJobsTableRow {
   durationTooltip?: string;
   status: string;
   userId?: string;
-  trainingBooks: ProjectBooks[];
-  translationBooks: ProjectBooks[];
+  trainingBooks: DraftJobsProjectBooks[];
+  translationBooks: DraftJobsProjectBooks[];
   clearmlUrl?: string;
+}
+
+/** Maps a project to the list of book identifiers involved in a build. */
+export interface DraftJobsProjectBooks {
+  sfProjectId: string;
+  /** Display string for the project, e.g. "ABC - My Project" or just "ABC". */
+  projectDisplayName: string;
+  /** Short name of the project if available. */
+  shortName?: string;
+  books: string[];
 }
 
 /** Names of events that are relevant for pre-translation draft generation requests and processing. */
@@ -133,6 +143,9 @@ const DRAFTING_EVENTS = [
   ]
 })
 export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
+  /** Help template access static methods. */
+  protected ServalBuildsComponent = ServalBuildsComponent;
+
   /** Time when draftGenerationRequestId began to be used, which was in SFv5.46.1 shortly before
    * 2025-12-18T17:48:57Z. */
   private static readonly requestIdIntroductionDate: Date = new Date('2025-12-18T17:48:57Z');
@@ -806,8 +819,8 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
   }
 
   private static extractBooksFromEvent(event: EventMetric): {
-    trainingBooks: ProjectBooks[];
-    translationBooks: ProjectBooks[];
+    trainingBooks: DraftJobsProjectBooks[];
+    translationBooks: DraftJobsProjectBooks[];
   } {
     const trainingProjects = new Map<string, string[]>();
     const translationProjects = new Map<string, string[]>();
@@ -857,18 +870,20 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
       // If there's an error parsing the data, return empty arrays
     }
 
-    // Convert maps to ProjectBooks arrays
-    const trainingBooks: ProjectBooks[] = Array.from(trainingProjects.entries()).map(([projectId, books]) => ({
+    // Convert maps to DraftJobsProjectBooks arrays
+    const trainingBooks: DraftJobsProjectBooks[] = Array.from(trainingProjects.entries()).map(([projectId, books]) => ({
       sfProjectId: projectId,
       projectDisplayName: '',
       books: books
     }));
 
-    const translationBooks: ProjectBooks[] = Array.from(translationProjects.entries()).map(([projectId, books]) => ({
-      sfProjectId: projectId,
-      projectDisplayName: '',
-      books: books
-    }));
+    const translationBooks: DraftJobsProjectBooks[] = Array.from(translationProjects.entries()).map(
+      ([projectId, books]) => ({
+        sfProjectId: projectId,
+        projectDisplayName: '',
+        books: books
+      })
+    );
 
     return { trainingBooks, translationBooks };
   }
@@ -909,8 +924,20 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
 
   private static createSpreadsheetRows(rows: DraftJobsTableRow[]): SpreadsheetRow[] {
     return rows.map<SpreadsheetRow>((row: DraftJobsTableRow) => {
-      const trainingBooksList = ServalBuildsComponent.formatProjectBooks(row.trainingBooks);
-      const translationBooksList = ServalBuildsComponent.formatProjectBooks(row.translationBooks);
+      const trainingBooksProjectBooks: ProjectBooks[] = row.trainingBooks.map(bookInfo => ({
+        sfProjectId: bookInfo.sfProjectId,
+        projectDisplayName: bookInfo.projectDisplayName,
+        shortName: bookInfo.shortName,
+        booksAndChapters: bookInfo.books.map(book => ({ bookId: book }))
+      }));
+      const translationBooksProjectBooks: ProjectBooks[] = row.translationBooks.map(bookInfo => ({
+        sfProjectId: bookInfo.sfProjectId,
+        projectDisplayName: bookInfo.projectDisplayName,
+        shortName: bookInfo.shortName,
+        booksAndChapters: bookInfo.books.map(book => ({ bookId: book }))
+      }));
+      const trainingBooksList = ServalBuildsComponent.formatProjectBooks(trainingBooksProjectBooks);
+      const translationBooksList = ServalBuildsComponent.formatProjectBooks(translationBooksProjectBooks);
 
       let durationMinutes: string = '';
       if (row.job.startTime != null && row.job.finishTime != null) {
