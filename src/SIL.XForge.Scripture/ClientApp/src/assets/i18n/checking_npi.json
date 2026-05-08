@@ -39,7 +39,8 @@
     "appearance": "रुपरंग",
     "appearance_device": "Device",
     "appearance_dark": "अँध्‍यारो",
-    "appearance_light": "चम्किलो"
+    "appearance_light": "चम्किलो",
+    "experimental_features": "Experimental features"
   },
   "attach_audio": {
     "tooltip_record": "Record audio",
@@ -342,6 +343,10 @@
     "network_request_failed": "नेटवर्क अनुरोध असफल भयो। केही कार्यात्मकता अनुपलब्ध हुन सक्छ।",
     "out_of_space": "तपाईंको उपकरणमा भण्डारण क्षमता कम भएकोले त्रुटि भयो।",
     "unknown_error": "अज्ञात त्रुटि"
+  },
+  "experimental_features_dialog": {
+    "title": "Experimental features",
+    "description": "These experimental features can be turned on or off and only apply to your account. Currently, logging out and back in will reset them. If you try them out, please leave us feedback so we can improve them."
   },
   "file_service": {
     "failed_to_save": "तपाइँका परिवर्तनहरू सुरक्षित गर्न असफल भयौ। कृपया तपाइँको उपकरणमा सिफारिस गरिएको ५०० एम्बी  खाली ठाउँ छ की भनी जाँच गर्नुहोस्।",
