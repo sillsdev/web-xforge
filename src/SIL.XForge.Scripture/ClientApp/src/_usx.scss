@@ -131,6 +131,12 @@ usx-para {
     margin-bottom: 2pt;
   }
 
+  &[data-style='rem'],
+  &[data-style='rem'] > usx-para-contents,
+  &[data-style='rem'] > usx-para-contents > usx-segment {
+    color: var(--sf-usx-rem-color) !important;
+  }
+
   &[data-style='s'],
   &[data-style='s1'] {
     font-weight: bold;

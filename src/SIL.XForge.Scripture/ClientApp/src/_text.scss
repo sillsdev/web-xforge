@@ -24,6 +24,7 @@
   --sf-quill-delete-segment-background: #{if($is-dark, #531c17, #e8cccc)};
   --sf-quill-delete-segment-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 96, 10))};
 
+  --sf-usx-rem-color: #{if($is-dark, #5c8dff, #003380)};
   --sf-usx-toc1-color: #{if($is-dark, #4bb74b, #004000)};
   --sf-usx-toc2-color: #{if($is-dark, #4bb74b, #004000)};
   --sf-usx-toc3-color: #{if($is-dark, #cf2f2f, #800000)};
