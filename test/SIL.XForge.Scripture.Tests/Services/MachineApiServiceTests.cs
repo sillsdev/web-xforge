@@ -1274,6 +1274,7 @@ public class MachineApiServiceTests
         Assert.IsNotNull(report.Build);
         Assert.IsNotNull(report.Project);
         Assert.AreEqual(Project01, report.Project!.SFProjectId);
+        Assert.AreEqual(project01.ParatextId, report.Project.PTProjectId);
         Assert.AreEqual(project01.ShortName, report.Project.ShortName);
         Assert.AreEqual(project01.Name, report.Project.Name);
         Assert.AreEqual(dateCreated, report.Timeline.ServalCreated);

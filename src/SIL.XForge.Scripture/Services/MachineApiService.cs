@@ -1350,6 +1350,7 @@ public class MachineApiService(
             projectInfo = new BuildReportProject
             {
                 SFProjectId = sfProjectId,
+                PTProjectId = sfProject?.ParatextId,
                 ShortName = sfProject?.ShortName,
                 Name = sfProject?.Name,
             };

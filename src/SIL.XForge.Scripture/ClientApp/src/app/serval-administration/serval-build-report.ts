@@ -20,6 +20,7 @@ export interface ServalBuildReportDto {
 /** SF project information for a build report entry.*/
 export interface BuildReportProject {
   sfProjectId: string;
+  ptProjectId?: string;
   shortName: string | undefined;
   name: string | undefined;
 }
@@ -142,6 +143,8 @@ export interface ProjectBooks {
   projectDisplayName: string;
   /** Short name of the project if available. */
   shortName?: string;
+  /** Project name if available. */
+  projectName?: string;
   books: string[];
 }
 
@@ -171,6 +174,7 @@ export function toProjectBooks(ranges: BuildReportProjectScriptureRange[] | unde
       sfProjectId: sfProjectId,
       projectDisplayName: displayName,
       shortName: range.shortName,
+      projectName: range.name,
       books: books
     });
   }
