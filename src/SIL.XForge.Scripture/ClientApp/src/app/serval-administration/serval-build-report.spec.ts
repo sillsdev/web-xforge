@@ -16,6 +16,7 @@ describe('toProjectBooks', () => {
     expect(result.length).toBe(1);
     expect(result[0].sfProjectId).toBe('p1');
     expect(result[0].projectDisplayName).toBe('ABC - Project ABC');
+    expect(result[0].projectName).toBe('Project ABC');
     expect(result[0].books).toEqual(['GEN', 'EXO']);
   });
 
@@ -41,9 +42,11 @@ describe('toProjectBooks', () => {
     expect(result.length).toBe(2);
     expect(result[0].sfProjectId).toBe('p1');
     expect(result[0].projectDisplayName).toBe('SRC - Source');
+    expect(result[0].projectName).toBe('Source');
     expect(result[0].books).toEqual(['GEN', 'EXO']);
     expect(result[1].sfProjectId).toBe('p2');
     expect(result[1].projectDisplayName).toBe('TRN - Training');
+    expect(result[1].projectName).toBe('Training');
     expect(result[1].books).toEqual(['MAT', 'MRK', 'LUK']);
   });
 
