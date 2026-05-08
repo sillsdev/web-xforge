@@ -9,7 +9,7 @@
       <button mat-raised-button color="primary" class="export-csv-button" (click)="exportCsv()">
         <mat-icon>download</mat-icon>
         <span class="export-item-label">
-          Export CSV <app-info text="Download a .csv spreadsheet of the table data"></app-info>
+          Export CSV <app-info text="Download a .csv (comma-separated values) spreadsheet of the table data"></app-info>
         </span>
       </button>
       <button mat-raised-button color="primary" class="export-menu-button" [matMenuTriggerFor]="exportMenu">
@@ -17,12 +17,18 @@
       </button>
     </div>
     <mat-menu #exportMenu="matMenu" xPosition="before">
+      <button mat-menu-item (click)="exportTsv()">
+        <mat-icon>download</mat-icon>
+        <span class="export-item-label">
+          Export TSV <app-info text="Download a .tsv (tab-separated values) spreadsheet of the table data"></app-info>
+        </span>
+      </button>
       <button mat-menu-item (click)="exportRsv()">
         <mat-icon>download</mat-icon>
         <span class="export-item-label">
           Export RSV
           <app-info
-            text="Download an .rsv Rows of String Values spreadsheet of the table data (https://github.com/Stenway/RSV-Specification)"
+            text="Download an .rsv (Rows of String Values) spreadsheet of the table data (https://github.com/Stenway/RSV-Specification)"
           >
           </app-info>
         </span>
