@@ -171,21 +171,6 @@
       "cwd": "${fileDirname}",
       "runtimeArgs": ["-r", "ts-node/register", "--inspect"],
       "args": ["${file}"]
-    },
-    {
-      "name": "Migration",
-      "type": "coreclr",
-      "request": "launch",
-      "preLaunchTask": "build-migrator",
-      // This build target can be adjusted to a newer migration being worked on by changing the path in 'program', and in the tasks.json build-migrator 'cwd'.
-      "program": "${workspaceRoot}/src/Migrations/WhitespaceRestoreMigration/bin/Debug/net10.0/WhitespaceRestoreMigration.dll",
-      "stopAtEntry": false,
-      "console": "integratedTerminal",
-      "args": ["read", "${workspaceRoot}/src/SIL.XForge.Scripture"],
-      "env": {
-        // "SF_PROJECT_SET": "544444444444444444444 655555555555555555555",
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      }
     }
   ]
 }
