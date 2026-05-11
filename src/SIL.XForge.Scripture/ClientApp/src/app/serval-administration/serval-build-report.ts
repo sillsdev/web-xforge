@@ -12,10 +12,25 @@ export interface ServalBuildReportDto {
   project: BuildReportProject | undefined;
   timeline: BuildReportTimeline;
   config: BuildReportConfig;
-  problems: string[];
+  problems: BuildReportProblem[];
   draftGenerationRequestId: string | undefined;
   requesterSFUserId: string | undefined;
   status: DraftGenerationBuildStatus;
+}
+
+export type BuildReportProblemSource = 'local' | 'serval';
+function isBuildReportProblemSource(value: unknown): value is BuildReportProblemSource {
+  return value === 'local' || value === 'serval';
+}
+export type BuildReportProblemSeverity = 'warning' | 'error';
+function isBuildReportProblemSeverity(value: unknown): value is BuildReportProblemSeverity {
+  return value === 'warning' || value === 'error';
+}
+
+export interface BuildReportProblem {
+  source: BuildReportProblemSource;
+  severity: BuildReportProblemSeverity;
+  message: string;
 }
 
 /** SF project information for a build report entry.*/
@@ -93,6 +108,12 @@ export function interpretTypes(report: ServalBuildReportDto): ServalBuildReportD
     ...phase,
     started: parseDate(phase.started)
   }));
+  report.problems.forEach((problem: BuildReportProblem) => {
+    if (!isBuildReportProblemSource(problem.source))
+      throw Error(`Unknown BuildReportProblemSource when interpreting DTO: ${problem.source}`);
+    if (!isBuildReportProblemSeverity(problem.severity))
+      throw Error(`Unknown BuildReportProblemSeverity when interpreting DTO: ${problem.severity}`);
+  });
 
   return {
     ...report,
