@@ -35,6 +35,17 @@ export function countBooks(projectBooks: ProjectBooks[]): number {
   return projectBooks.reduce((total: number, projectBook: ProjectBooks) => total + projectBook.books.length, 0);
 }
 
+/** Counts unique book codes across all project-book entries. */
+export function countUniqueBooks(projectBooks: ProjectBooks[]): number {
+  const uniqueBookCodes: Set<string> = new Set();
+  for (const projectBook of projectBooks) {
+    for (const bookCode of projectBook.books) {
+      uniqueBookCodes.add(bookCode);
+    }
+  }
+  return uniqueBookCodes.size;
+}
+
 /** Computes the arithmetic mean, returning undefined for an empty array. */
 export function averageNumbers(values: number[]): number | undefined {
   if (values.length === 0) return undefined;
@@ -148,6 +159,14 @@ export function calculatePercentTimeOnSF(rows: ServalBuildRow[]): number | undef
  * containing counts, averages, and timing statistics.
  */
 export function buildSummary(rows: ServalBuildRow[]): ServalBuildSummary {
+  const listedTotalTrainingBooks: number = rows.reduce(
+    (sum: number, row: ServalBuildRow) => sum + countBooks(row.trainingBooks),
+    0
+  );
+  const listedTotalUniqueTrainingBooks: number = countUniqueBooks(
+    rows.flatMap((row: ServalBuildRow) => row.trainingBooks)
+  );
+
   // Type for a build row where the SF project is known.
   type KnowableBuildRow = ServalBuildRow & { report: ServalBuildReportDto & { project: BuildReportProject } };
   // Rows with a known SF project. Any build that is not associable with a project will not be included or
@@ -168,6 +187,8 @@ export function buildSummary(rows: ServalBuildRow[]): ServalBuildSummary {
       faultedBuilds: 0,
       averageTrainingBooksPerBuild: undefined,
       averageTranslationBooksPerBuild: undefined,
+      totalUniqueTrainingBooks: listedTotalUniqueTrainingBooks,
+      totalTrainingBooks: listedTotalTrainingBooks,
       completedBuilds: 0,
       inProgressBuilds: 0,
       buildsWithProblems: 0,
@@ -269,6 +290,8 @@ export function buildSummary(rows: ServalBuildRow[]): ServalBuildSummary {
     faultedBuilds: faultedBuilds,
     averageTrainingBooksPerBuild: averageTrainingBooksPerBuild,
     averageTranslationBooksPerBuild: averageTranslationBooksPerBuild,
+    totalUniqueTrainingBooks: listedTotalUniqueTrainingBooks,
+    totalTrainingBooks: listedTotalTrainingBooks,
     completedBuilds: completedBuilds,
     inProgressBuilds: inProgressBuilds,
     buildsWithProblems: buildsWithProblems,

@@ -205,6 +205,8 @@ describe('ServalBuildsComponent', () => {
       expect(summary.faultedBuilds).toBe(1);
       expect(summary.averageTrainingBooksPerBuild).toBeCloseTo(1.1666666667);
       expect(summary.averageTranslationBooksPerBuild).toBeCloseTo(1);
+      expect(summary.totalUniqueTrainingBooks).toBe(7);
+      expect(summary.totalTrainingBooks).toBe(7);
       expect(summary.completedBuilds).toBe(3);
       expect(summary.inProgressBuilds).toBe(2);
       expect(summary.buildsWithProblems).toBe(1);
@@ -214,6 +216,45 @@ describe('ServalBuildsComponent', () => {
       // All rows created above with createRowWithDetails have a servalBuild and no events, so all are "SF did not know about"
       expect(summary.buildsServalDidNotKnowAbout).toBe(0);
       expect(summary.buildsSfDidNotKnowAbout).toBe(6);
+    });
+
+    it('counts total and unique training books across listed builds', () => {
+      const env = new TestEnvironment();
+      const baseStart: Date = new Date('2024-01-01T00:00:00Z');
+      const rows: ServalBuildRow[] = [
+        env.createRowWithDetails({
+          projectId: 'proj-a',
+          startDate: env.addHours(baseStart, 0),
+          finishDate: env.addHours(baseStart, 1),
+          requesterId: 'user-1',
+          trainingBooks: env.createProjectBooks('proj-a', ['GEN', 'EXO']),
+          status: DraftGenerationBuildStatus.Completed
+        }),
+        env.createRowWithDetails({
+          projectId: 'proj-b',
+          startDate: env.addHours(baseStart, 2),
+          finishDate: env.addHours(baseStart, 3),
+          requesterId: 'user-2',
+          trainingBooks: env.createProjectBooks('proj-b', ['GEN']),
+          status: DraftGenerationBuildStatus.Completed
+        }),
+        env.createRowWithDetails({
+          projectId: 'proj-c',
+          startDate: env.addHours(baseStart, 4),
+          finishDate: env.addHours(baseStart, 5),
+          requesterId: 'user-3',
+          trainingBooks: env.createProjectBooks('proj-c', ['LEV']),
+          status: DraftGenerationBuildStatus.Completed
+        })
+      ];
+
+      // SUT
+      const summary: ServalBuildSummary = buildSummary(rows);
+
+      // Total books includes duplicates: [GEN, EXO, GEN, LEV] => 4
+      expect(summary.totalTrainingBooks).toBe(4);
+      // Unique books dedupe by book code globally: [GEN, EXO, LEV] => 3
+      expect(summary.totalUniqueTrainingBooks).toBe(3);
     });
 
     it('uses only completed builds for mean duration', () => {
