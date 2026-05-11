@@ -39,7 +39,8 @@
     "appearance": "Darstellung",
     "appearance_device": "Gerät",
     "appearance_dark": "Dunkel",
-    "appearance_light": "Hell"
+    "appearance_light": "Hell",
+    "experimental_features": "Experimental features"
   },
   "attach_audio": {
     "tooltip_record": "Audio aufnehmen",
@@ -342,6 +343,10 @@
     "network_request_failed": "Es ist ein Netzwerkfehler aufgetreten. Einige Funktionen sind unter Umständen nicht verfügbar.",
     "out_of_space": "Es ist ein Fehler aufgetreten, weil der Speicherplatz auf Deinem Gerät voll ist.",
     "unknown_error": "Unbekannter Fehler"
+  },
+  "experimental_features_dialog": {
+    "title": "Experimental features",
+    "description": "These experimental features can be turned on or off and only apply to your account. Currently, logging out and back in will reset them. If you try them out, please leave us feedback so we can improve them."
   },
   "file_service": {
     "failed_to_save": "Deine Änderungen konnten nicht gespeichert werden. Bitte überprüfe, ob die empfohlenen 500 MB freier Speicherplatz auf Deinem Gerät vorhanden sind.",
