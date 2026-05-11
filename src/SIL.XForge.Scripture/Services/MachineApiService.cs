@@ -1228,6 +1228,49 @@ public class MachineApiService(
     }
 
     /// <summary>
+    /// Gets the confidence values for the specified project and build.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="buildId">The build identifier.</param>
+    /// <param name="isServalAdmin">If <c>true</c>, the current user is a Serval Administrator.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>
+    /// The confidence values for the books and chapters, and the quality estimation configuration used,
+    /// or <c>null</c> if the confidence data does not exist for the build.
+    /// </returns>
+    /// <exception cref="DataNotFoundException">The project does not exist.</exception>
+    public async Task<BuildConfidences?> GetBuildConfidencesAsync(
+        string curUserId,
+        string sfProjectId,
+        string buildId,
+        bool isServalAdmin,
+        CancellationToken cancellationToken
+    )
+    {
+        // Ensure that the user has permission
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin, cancellationToken);
+
+        // Retrieve the draft metrics, if they exist, or throw an error if they do not
+        Attempt<DraftMetrics> attempt = await draftMetrics.TryGetAsync(
+            DraftMetrics.GetDocId(sfProjectId, buildId),
+            cancellationToken
+        );
+        if (attempt.Success)
+        {
+            return new BuildConfidences
+            {
+                ProjectId = sfProjectId,
+                BuildId = buildId,
+                BookConfidences = attempt.Result.BookConfidences,
+                ChapterConfidences = attempt.Result.ChapterConfidences,
+            };
+        }
+
+        return null;
+    }
+
+    /// <summary>
     /// Builds a map from Serval pre-translation engine IDs to SF project info, for all engines referenced in the
     /// builds.
     /// </summary>
@@ -3014,7 +3057,7 @@ public class MachineApiService(
             );
             var entity = new DraftMetrics
             {
-                Id = $"{sfProjectId}:{buildId}",
+                Id = DraftMetrics.GetDocId(sfProjectId, buildId),
                 BookConfidences =
                 [
                     .. usabilityBooks.Select(b => new BookConfidence
