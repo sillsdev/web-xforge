@@ -166,7 +166,6 @@
     "close": "Cerrar",
     "failed_to_apply_chapters": "Fallo al aplicar estos capítulos:",
     "fail_cannot_edit": "El capítulo de destino no es editable. Ver ese capítulo para más información.",
-    "fail_legacy_format": "Formato de borrador heredado detectado. Por favor, aplíquelo capítulo por capítulo.",
     "fail_unknown": "Error desconocido. Inténtalo de nuevo más tarde. Si el error persiste, por favor reporta un problema.",
     "some_chapters_not_applied": "Los borradores de uno o más capítulos no pudieron aplicarse a {{ bookName }}",
     "successfully_applied_all_chapters": "Aplicación exitosa de todos los capítulos a {{ bookName }}"
@@ -378,6 +377,7 @@
   },
   "draft_sources": {
     "add_another_reference_project": "Añadir otro proyecto de referencia",
+    "additional_training_data_optional": "Additional training data (optional)",
     "all_changes_saved": "Todos los cambios guardados",
     "cancel": "Cancelar",
     "close": "Cerrar",
@@ -404,8 +404,10 @@
     "select_at_least_one_source_and_reference": "Por favor, seleccione al menos una fuente y un proyecto de referencia antes de guardar.",
     "select_at_least_one_source": "Por favor, seleccione al menos un proyecto fuente antes de guardar.",
     "select_primary_reference": "Seleccione su proyecto de referencia principal. Es el proyecto al que se refiere más a menudo mientras traduce.",
-    "select_project_to_translate": "Seleccione el proyecto a traducir.",
+    "select_project_to_translate_explanation": "Select the Paratext project or DBL resource you want the draft to be translated from.",
+    "select_project_to_translate": "Seleccione el proyecto a traducir",
     "some_projects_use_back_translation": "Algunos proyectos obtienen mejores resultados añadiendo una traducción inversa como otra referencia.",
+    "source_language": "the source language",
     "source_side_language_codes_differ": "Todos los proyectos fuente y de referencia deben estar en el mismo idioma. Seleccione proyectos fuente o de referencia diferentes.",
     "state_connecting": "Conectando",
     "state_sync_failed": "Se ha producido un error de sincronización",
@@ -414,7 +416,6 @@
     "stay_on_page": "Permanecer en la página",
     "target_language_data": "Datos de idioma de destino",
     "training_files_description": "Cargue cualquier dato adicional que pueda utilizarse para entrenar el modelo lingüístico. Estos archivos deben contener texto emparejado en {{ sourceLanguageDisplayName }} y {{ targetLanguageDisplayName }} basado en los proyectos seleccionados.",
-    "training_language_model": "Entrenamiento del modelo de idioma",
     "unknown_language_code": "desconocido"
   },
   "draft_usfm_format": {

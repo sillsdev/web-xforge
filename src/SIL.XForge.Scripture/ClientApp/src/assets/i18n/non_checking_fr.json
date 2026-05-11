@@ -166,7 +166,6 @@
     "close": "Fermer",
     "failed_to_apply_chapters": "Impossible d'appliquer les chapitres :",
     "fail_cannot_edit": "Le chapitre cible n'est pas modifiable. Voir ce chapitre pour plus d'informations.",
-    "fail_legacy_format": "Ancien format d'ébauche détecté. Veuillez appliquer chapitre par chapitre.",
     "fail_unknown": "Erreur inconnue. Veuillez réessayer plus tard. Si l'erreur persiste, veuillez signaler un problème.",
     "some_chapters_not_applied": "Les ébauches d'un ou plusieurs chapitres n'ont pas pu être appliqués à {{ bookName }}",
     "successfully_applied_all_chapters": "Application réussie de tous les chapitres sur {{ bookName }}"
@@ -378,6 +377,7 @@
   },
   "draft_sources": {
     "add_another_reference_project": "Ajouter un autre projet de référence",
+    "additional_training_data_optional": "Additional training data (optional)",
     "all_changes_saved": "Toutes les modifications ont été enregistrées",
     "cancel": "Annuler",
     "close": "Fermer",
@@ -404,8 +404,10 @@
     "select_at_least_one_source_and_reference": "Veuillez sélectionner au moins une source et un projet de référence avant de sauvegarder.",
     "select_at_least_one_source": "Veuillez sélectionner au moins un projet source avant de sauvegarder.",
     "select_primary_reference": "Sélectionnez votre projet de référence principale. C'est le projet auquel vous faites référence le plus souvent lorsque vous traduisez.",
-    "select_project_to_translate": "Sélectionnez le projet à traduire.",
+    "select_project_to_translate_explanation": "Select the Paratext project or DBL resource you want the draft to be translated from.",
+    "select_project_to_translate": "Sélectionnez le projet à traduire",
     "some_projects_use_back_translation": "Certains projets obtiennent de meilleurs résultats en ajoutant une retraduction comme autre référence.",
+    "source_language": "the source language",
     "source_side_language_codes_differ": "Tous les projets de source et de référence doivent être dans la même langue. Veuillez sélectionner des projets de source ou de référence différents.",
     "state_connecting": "Connexion en cours",
     "state_sync_failed": "Une erreur s'est produite lors de la synchronisation",
@@ -414,7 +416,6 @@
     "stay_on_page": "Restez sur la page",
     "target_language_data": "Données sur la langue cible",
     "training_files_description": "Téléchargez d'autres données qui peuvent être utilisées pour former le modèle de langue. Ces fichiers doivent contenir du texte jumelé en {{ sourceLanguageDisplayName }} et {{ targetLanguageDisplayName }} en fonction des projets sélectionnés.",
-    "training_language_model": "Formation du modèle de langue",
     "unknown_language_code": "inconnu"
   },
   "draft_usfm_format": {

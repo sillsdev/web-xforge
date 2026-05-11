@@ -166,7 +166,6 @@
     "close": "Tutup",
     "failed_to_apply_chapters": "Failed to apply these chapters:",
     "fail_cannot_edit": "The target chapter is not editable. View that chapter for more information.",
-    "fail_legacy_format": "Legacy draft format detected. Please apply chapter by chapter.",
     "fail_unknown": "Unknown error. Please try again later. If the error persists, please report an issue.",
     "some_chapters_not_applied": "Konsep dari satu atau beberapa pasal tidak dapat diterapkan ke {{ bookName }}",
     "successfully_applied_all_chapters": "Berhasil menerapkan semua pasal ke {{ bookName }}"
@@ -378,6 +377,7 @@
   },
   "draft_sources": {
     "add_another_reference_project": "Menambahkan proyek referensi lain",
+    "additional_training_data_optional": "Additional training data (optional)",
     "all_changes_saved": "Semua perubahan telah disimpan",
     "cancel": "Batal",
     "close": "Tutup",
@@ -404,8 +404,10 @@
     "select_at_least_one_source_and_reference": "Pilihlah setidaknya satu sumber dan satu proyek referensi sebelum menyimpan.",
     "select_at_least_one_source": "Pilihlah setidaknya satu proyek sumber sebelum menyimpan.",
     "select_primary_reference": "Select your primary reference project. This is the project that you refer to most often as you are translating.",
-    "select_project_to_translate": "Pilih proyek yang akan diterjemahkan.",
+    "select_project_to_translate_explanation": "Select the Paratext project or DBL resource you want the draft to be translated from.",
+    "select_project_to_translate": "Pilih proyek yang akan diterjemahkan",
     "some_projects_use_back_translation": "Some projects get better results by adding a back translation as another reference.",
+    "source_language": "the source language",
     "source_side_language_codes_differ": "Semua proyek sumber dan referensi harus dalam bahasa yang sama. Silakan pilih proyek sumber atau referensi yang berbeda.",
     "state_connecting": "Menghubungkan",
     "state_sync_failed": "Terjadi kesalahan sinkronisasi",
@@ -414,7 +416,6 @@
     "stay_on_page": "Tetap di halaman",
     "target_language_data": "Data Bahasa Sasaran",
     "training_files_description": "Upload any further data that can be used to train the language model. These files must contain paired text in {{ sourceLanguageDisplayName }} and {{ targetLanguageDisplayName }} based on the projects selected.",
-    "training_language_model": "Melatih model bahasa",
     "unknown_language_code": "tidak diketahui"
   },
   "draft_usfm_format": {

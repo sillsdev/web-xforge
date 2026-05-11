@@ -39,7 +39,8 @@
     "appearance": "المظهر",
     "appearance_device": "Device",
     "appearance_dark": "مُظلم",
-    "appearance_light": "ضوء"
+    "appearance_light": "ضوء",
+    "experimental_features": "Experimental features"
   },
   "attach_audio": {
     "tooltip_record": "Record audio",
@@ -342,6 +343,10 @@
     "network_request_failed": "فشل في طلب الشبكة. قد تكون بعض الوظائف غير متاحة.",
     "out_of_space": "حدث خطأ لأن جهازك لا يحتوي على مساحة التخزين اللازمة.",
     "unknown_error": "خطأ مجهول"
+  },
+  "experimental_features_dialog": {
+    "title": "Experimental features",
+    "description": "These experimental features can be turned on or off and only apply to your account. Currently, logging out and back in will reset them. If you try them out, please leave us feedback so we can improve them."
   },
   "file_service": {
     "failed_to_save": "لم نتمكن من حفظ تعديلاتك. يُرجى التأكد من أن في جهاز الـ500 ميغابايت الموصى بها من المساحة الحرّة.",

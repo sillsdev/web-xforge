@@ -166,7 +166,6 @@
     "close": "Bağla",
     "failed_to_apply_chapters": "Failed to apply these chapters:",
     "fail_cannot_edit": "The target chapter is not editable. View that chapter for more information.",
-    "fail_legacy_format": "Legacy draft format detected. Please apply chapter by chapter.",
     "fail_unknown": "Unknown error. Please try again later. If the error persists, please report an issue.",
     "some_chapters_not_applied": "Drafts of one or more chapters could not be applied to {{ bookName }}",
     "successfully_applied_all_chapters": "Successfully applied all chapters to {{ bookName }}"
@@ -378,6 +377,7 @@
   },
   "draft_sources": {
     "add_another_reference_project": "Add another reference project",
+    "additional_training_data_optional": "Additional training data (optional)",
     "all_changes_saved": "All changes saved",
     "cancel": "Ləğv etmək",
     "close": "Bağla",
@@ -404,8 +404,10 @@
     "select_at_least_one_source_and_reference": "Please select at least one source and one reference project before saving.",
     "select_at_least_one_source": "Please select at least one source project before saving.",
     "select_primary_reference": "Select your primary reference project. This is the project that you refer to most often as you are translating.",
-    "select_project_to_translate": "Select the project to translate.",
+    "select_project_to_translate_explanation": "Select the Paratext project or DBL resource you want the draft to be translated from.",
+    "select_project_to_translate": "Select the project to translate",
     "some_projects_use_back_translation": "Some projects get better results by adding a back translation as another reference.",
+    "source_language": "the source language",
     "source_side_language_codes_differ": "All source and reference projects must be in the same language. Please select different source or reference projects.",
     "state_connecting": "Qoşulur",
     "state_sync_failed": "There was an error syncing",
@@ -414,7 +416,6 @@
     "stay_on_page": "Stay on page",
     "target_language_data": "Target language data",
     "training_files_description": "Upload any further data that can be used to train the language model. These files must contain paired text in {{ sourceLanguageDisplayName }} and {{ targetLanguageDisplayName }} based on the projects selected.",
-    "training_language_model": "Training the language model",
     "unknown_language_code": "naməlum"
   },
   "draft_usfm_format": {
