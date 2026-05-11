@@ -118,6 +118,13 @@ public class MachineApiServiceTests
         DateFinished = DateTimeOffset.UtcNow,
     };
 
+    private static readonly QualityEstimationConfig QualityEstimationConfig = new QualityEstimationConfig
+    {
+        Version = "0.1",
+        Slope = 109.6145,
+        Intercept = -14.0633,
+    };
+
     [Test]
     public async Task ApplyPreTranslationToProjectAsync_BlankUsjFromMongo()
     {
@@ -2250,6 +2257,110 @@ public class MachineApiServiceTests
                 CancellationToken.None
             )
         );
+    }
+
+    [Test]
+    public void GetBuildConfidencesAsync_NoPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.GetBuildConfidencesAsync(
+                User02,
+                Project01,
+                ServalBuildId01,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+        );
+    }
+
+    [Test]
+    public void GetBuildConfidencesAsync_NoProject()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetBuildConfidencesAsync(
+                User01,
+                "invalid_project_id",
+                ServalBuildId01,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+        );
+    }
+
+    [Test]
+    public async Task GetBuildConfidencesAsync_NoContent()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        BuildConfidences actual = await env.Service.GetBuildConfidencesAsync(
+            User01,
+            Project01,
+            ServalBuildId01,
+            isServalAdmin: false,
+            CancellationToken.None
+        );
+
+        Assert.That(actual, Is.Null);
+    }
+
+    [Test]
+    public async Task GetBuildConfidencesAsync_ServalAdminDoesNotNeedPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.SetupDraftMetrics(Project01, ServalBuildId01, QualityEstimationConfig);
+
+        // SUT
+        BuildConfidences actual = await env.Service.GetBuildConfidencesAsync(
+            User02,
+            Project01,
+            ServalBuildId01,
+            isServalAdmin: true,
+            CancellationToken.None
+        );
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(actual.ProjectId, Is.EqualTo(Project01));
+            Assert.That(actual.BuildId, Is.EqualTo(ServalBuildId01));
+            Assert.That(actual.BookConfidences, Is.Not.Empty);
+            Assert.That(actual.ChapterConfidences, Is.Not.Empty);
+        }
+    }
+
+    [Test]
+    public async Task GetBuildConfidencesAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.SetupDraftMetrics(Project01, ServalBuildId01, QualityEstimationConfig);
+
+        // SUT
+        BuildConfidences actual = await env.Service.GetBuildConfidencesAsync(
+            User01,
+            Project01,
+            ServalBuildId01,
+            isServalAdmin: false,
+            CancellationToken.None
+        );
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(actual.ProjectId, Is.EqualTo(Project01));
+            Assert.That(actual.BuildId, Is.EqualTo(ServalBuildId01));
+            Assert.That(actual.BookConfidences, Is.Not.Empty);
+            Assert.That(actual.ChapterConfidences, Is.Not.Empty);
+        }
     }
 
     [Test]
@@ -5285,15 +5396,9 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        var qualityEstimationConfig = new QualityEstimationConfig
-        {
-            Version = "0.1",
-            Slope = 109.6145,
-            Intercept = -14.0633,
-        };
         await env.Projects.UpdateAsync(
             p => p.Id == Project01,
-            u => u.Set(s => s.TranslateConfig.DraftConfig.QualityEstimationConfig, qualityEstimationConfig)
+            u => u.Set(s => s.TranslateConfig.DraftConfig.QualityEstimationConfig, QualityEstimationConfig)
         );
         const int bookNum = 1;
         const int chapterNum = 0;
@@ -5323,7 +5428,7 @@ public class MachineApiServiceTests
             .PreTranslationService.Received(1)
             .GetPreTranslationsAsync(Project01, bookNum, chapterNum: 1, CancellationToken.None);
         env.ParatextService.Received(1).GetChaptersAsUsj(Arg.Any<UserSecret>(), Paratext01, bookNum, TestUsfm);
-        DraftMetrics draftMetrics = env.DraftMetrics.Get($"{Project01}:{ServalBuildId01}");
+        DraftMetrics draftMetrics = env.DraftMetrics.Get(DraftMetrics.GetDocId(Project01, ServalBuildId01));
         using (Assert.EnterMultipleScope())
         {
             Assert.That(await env.TextDocuments.CountDocumentsAsync(_ => true), Is.EqualTo(1));
@@ -5333,7 +5438,7 @@ public class MachineApiServiceTests
             Assert.That(draftMetrics.VerseConfidences, Has.Count.EqualTo(1));
             Assert.That(
                 draftMetrics.QualityEstimationConfig,
-                Is.EqualTo(qualityEstimationConfig).UsingPropertiesComparer()
+                Is.EqualTo(QualityEstimationConfig).UsingPropertiesComparer()
             );
         }
     }
@@ -6145,6 +6250,42 @@ public class MachineApiServiceTests
                     )
                 );
         }
+
+        public void SetupDraftMetrics(
+            string sfProjectId,
+            string buildId,
+            QualityEstimationConfig qualityEstimationConfig
+        ) =>
+            DraftMetrics.Add(
+                new DraftMetrics
+                {
+                    Id = Models.DraftMetrics.GetDocId(sfProjectId, buildId),
+                    QualityEstimationConfig = qualityEstimationConfig,
+                    BookConfidences =
+                    [
+                        new BookConfidence
+                        {
+                            BookNum = 1,
+                            Confidence = 0.6,
+                            Label = "Green",
+                            ProjectedChrF3 = 51.93,
+                            Usability = 0.765,
+                        },
+                    ],
+                    ChapterConfidences =
+                    [
+                        new ChapterConfidence
+                        {
+                            BookNum = 1,
+                            ChapterNum = 1,
+                            Confidence = 0.6,
+                            Label = "Green",
+                            ProjectedChrF3 = 51.93,
+                            Usability = 0.765,
+                        },
+                    ],
+                }
+            );
 
         public static void AssertCoreBuildProperties(TranslationBuild translationBuild, ServalBuildDto? actual)
         {
