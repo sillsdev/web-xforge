@@ -391,8 +391,10 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.emptyTranslateSourceBooks).toEqual([5]);
     }));
 
-    it('should set "trainingBooksWithoutEnoughData"', fakeAsync(() => {
-      expect(component.trainingBooksWithoutEnoughData).toEqual([3, 5, 8]);
+    it('should set "trainingBooksExcludingTranslatedWithoutEnoughData"', fakeAsync(() => {
+      expect(component.trainingBooksExcludingTranslatedWithoutEnoughData).toEqual([3, 5, 8]);
+      component.onTranslateBookSelect([3, 8], config.draftingSources[0]);
+      expect(component.trainingBooksExcludingTranslatedWithoutEnoughData).toEqual([5]);
     }));
 
     it('should set "unusableTranslateTargetBooks" and "unusableTrainingTargetBooks" correctly', fakeAsync(() => {
@@ -753,7 +755,7 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.unusableTranslateSourceBooks).toEqual([4]);
       expect(component.unusableTrainingSourceBooks).toEqual([5, 6]);
       expect(component.emptyTranslateSourceBooks).toEqual([6]);
-      expect(component.trainingBooksWithoutEnoughData).toEqual([3]);
+      expect(component.trainingBooksExcludingTranslatedWithoutEnoughData).toEqual([3]);
 
       // interact with unusable books notice
       const unusableTranslateBooks = fixture.nativeElement.querySelector('.unusable-translate-books');
