@@ -22,6 +22,7 @@ export interface BuildExecutionData {
   pretranslateCount: number;
   sourceLanguageTag?: string;
   targetLanguageTag?: string;
+  warnings: string[];
 }
 
 /** Additional information about a Serval build. */

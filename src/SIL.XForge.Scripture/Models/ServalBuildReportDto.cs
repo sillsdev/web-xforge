@@ -34,9 +34,9 @@ public class ServalBuildReportDto
     public BuildReportConfig Config { get; init; } = new();
 
     /// <summary>
-    /// Problems or warnings identified for this build.
+    /// Errors and warnings identified for this build.
     /// </summary>
-    public List<string> Problems { get; init; } = [];
+    public List<BuildReportProblem> Problems { get; init; } = [];
 
     /// <summary>
     /// The SF draft generation request identifier, if one was found.

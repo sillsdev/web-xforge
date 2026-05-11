@@ -114,8 +114,9 @@
                 >
                   {{ statusIcon(row.report.status) }}
                 </mat-icon>
-                @if (row.report.problems.length > 0) {
-                  <mat-icon class="problem-badge" [matTooltip]="row.report.problems.join('; ')">warning</mat-icon>
+                <!-- Don't also show the problem badge if already showing the faulted indication. -->
+                @if (row.report.problems.length > 0 && row.report.status !== DraftGenerationBuildStatus.Faulted) {
+                  <mat-icon class="problem-badge" [matTooltip]="problemsBadgeTooltip(row)">warning</mat-icon>
                 }
               </div>
             </div>
@@ -433,6 +434,84 @@
                         ></div>
                       }
                     </div>
+                  </mat-card-content>
+                </mat-card>
+
+                <mat-card appearance="filled" class="detail-card problems-card">
+                  <mat-card-header>
+                    <mat-card-title-group>
+                      <mat-icon>warning</mat-icon>
+                      <mat-card-title>Problems</mat-card-title>
+                    </mat-card-title-group>
+                  </mat-card-header>
+                  <mat-card-content class="detail-card-content">
+                    @let sfErrors = problems(row, "local", "error");
+                    @let sfWarnings = problems(row, "local", "warning");
+                    @let servalErrors = problems(row, "serval", "error");
+                    @let servalWarnings = problems(row, "serval", "warning");
+                    <div class="problems-sections">
+                      @if (!hasAnyProblems(row)) {
+                        <div class="problems-section">
+                          <span class="problems-none">No problems detected</span>
+                        </div>
+                      }
+                      @if (sfErrors.length > 0) {
+                        <div class="problems-section">
+                          <span class="problems-section-header">SF errors</span>
+                          <ul class="problems-list">
+                            @for (message of renderProblemMessagesForCard(sfErrors); track $index) {
+                              <li>
+                                <span class="problem-message">{{ message }}</span>
+                              </li>
+                            }
+                          </ul>
+                        </div>
+                      }
+                      @if (sfWarnings.length > 0) {
+                        <div class="problems-section">
+                          <span class="problems-section-header">SF warnings</span>
+                          <ul class="problems-list">
+                            @for (message of renderProblemMessagesForCard(sfWarnings); track $index) {
+                              <li>
+                                <span class="problem-message">{{ message }}</span>
+                              </li>
+                            }
+                          </ul>
+                        </div>
+                      }
+                      @if (servalErrors.length > 0) {
+                        <div class="problems-section">
+                          <span class="problems-section-header">Serval errors</span>
+                          <ul class="problems-list">
+                            @for (message of renderProblemMessagesForCard(servalErrors); track $index) {
+                              <li>
+                                <span class="problem-message">{{ message }}</span>
+                              </li>
+                            }
+                          </ul>
+                        </div>
+                      }
+                      @if (servalWarnings.length > 0) {
+                        <div class="problems-section">
+                          <span class="problems-section-header">Serval warnings</span>
+                          <ul class="problems-list">
+                            @for (message of renderProblemMessagesForCard(servalWarnings); track $index) {
+                              <li>
+                                <span class="problem-message">{{ message }}</span>
+                              </li>
+                            }
+                          </ul>
+                        </div>
+                      }
+                    </div>
+                    @if (hasAnyProblems(row)) {
+                      <div class="problems-actions">
+                        <button mat-button class="show-all-problems-button" (click)="showAllProblems(row)">
+                          <mat-icon>list</mat-icon>
+                          Show all
+                        </button>
+                      </div>
+                    }
                   </mat-card-content>
                 </mat-card>
 
