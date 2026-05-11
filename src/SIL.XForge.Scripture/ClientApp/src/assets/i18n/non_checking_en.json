@@ -415,7 +415,7 @@
     "state_syncing": "Syncing",
     "stay_on_page": "Stay on page",
     "target_language_data": "Target language data",
-    "training_files_description": "Upload any further data that can be used to train the language model. These files must contain paired text in {{ sourceLanguageDisplayName }} and {{ targetLanguageDisplayName }} based on the projects selected.",
+    "training_files_description": "Upload any further data that can be used to train the language model. The first column must contain {{ sourceLanguageDisplayName }} and the second column must contain {{ targetLanguageDisplayName }}.",
     "unknown_language_code": "unknown"
   },
   "draft_usfm_format": {
@@ -885,7 +885,7 @@
     "no_training_data_file_uploaded": "No training data file uploaded",
     "no_upload_offline": "Training data cannot be uploaded without connecting to the internet.",
     "save": "Save",
-    "upload_failed": "The training data file could not be uploaded. Please ensure that the spreadsheet contains two columns and try again.",
+    "upload_failed": "Your file needs to have two columns, and every row must have a value in both columns. Please fill in any empty cells and try again.",
     "upload_training_data": "Upload Training Data",
     "uploading": "Uploading..."
   },
