@@ -293,6 +293,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   draftTimestamp?: Date;
   lynxInsightsEnabled = false;
   lynxAutoCorrectionsEnabled = false;
+  readonly issueEmail = environment.issueEmail;
 
   @ViewChild('source') source?: TextComponent;
   @ViewChild('fabButton', { read: ElementRef }) insertNoteFab?: ElementRef<HTMLElement>;
@@ -597,7 +598,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get issueEmailLink(): string {
-    return getLinkHTML(environment.issueEmail, issuesEmailTemplate());
+    return getLinkHTML(this.issueEmail, issuesEmailTemplate());
   }
 
   get writingSystemWarningMessage(): string {

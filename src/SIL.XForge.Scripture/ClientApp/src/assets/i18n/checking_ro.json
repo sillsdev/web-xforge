@@ -39,7 +39,8 @@
     "appearance": "Appearance",
     "appearance_device": "Device",
     "appearance_dark": "Întunecat",
-    "appearance_light": "Deschis"
+    "appearance_light": "Deschis",
+    "experimental_features": "Experimental features"
   },
   "attach_audio": {
     "tooltip_record": "Record audio",
@@ -342,6 +343,10 @@
     "network_request_failed": "Solicitarea de rețea a eșuat. Unele funcționalități ar putea fi indisponibile.",
     "out_of_space": "A apărut o eroare deoarece dispozitivul dvs. nu mai are spațiu de stocare.",
     "unknown_error": "Eroare necunoscută"
+  },
+  "experimental_features_dialog": {
+    "title": "Experimental features",
+    "description": "These experimental features can be turned on or off and only apply to your account. Currently, logging out and back in will reset them. If you try them out, please leave us feedback so we can improve them."
   },
   "file_service": {
     "failed_to_save": "Nu s-a reușit salvarea modificărilor. Vă rugăm, verificați dacă dispuneți de cel puțin 500 MB spațiu liber pe dispozitivul dvs.",

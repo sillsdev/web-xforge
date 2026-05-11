@@ -39,7 +39,8 @@
     "appearance": "Apparence",
     "appearance_device": "Appareil",
     "appearance_dark": "Sombre",
-    "appearance_light": "Lumière"
+    "appearance_light": "Lumière",
+    "experimental_features": "Experimental features"
   },
   "attach_audio": {
     "tooltip_record": "Enregistrer l'audio",
@@ -342,6 +343,10 @@
     "network_request_failed": "Une requête réseau a échoué. Certaines fonctionnalités peuvent être indisponibles.",
     "out_of_space": "Une erreur s'est produite parce que votre appareil n'a plus d’espace de stockage.",
     "unknown_error": "Erreur inconnue"
+  },
+  "experimental_features_dialog": {
+    "title": "Experimental features",
+    "description": "These experimental features can be turned on or off and only apply to your account. Currently, logging out and back in will reset them. If you try them out, please leave us feedback so we can improve them."
   },
   "file_service": {
     "failed_to_save": "Impossible d'enregistrer vos modifications. Veuillez vérifier que vous disposez des 500 Mo d'espace libre recommandé sur votre appareil.",

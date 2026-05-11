@@ -39,7 +39,8 @@
     "appearance": "Appearance",
     "appearance_device": "Cihaz",
     "appearance_dark": "Dark",
-    "appearance_light": "Açıq rəngli"
+    "appearance_light": "Açıq rəngli",
+    "experimental_features": "Experimental features"
   },
   "attach_audio": {
     "tooltip_record": "Səs yazın",
@@ -342,6 +343,10 @@
     "network_request_failed": "Şəbəkə sorğusu baş tutmadı. Bəzi funksionallıq mövcud olmaya bilər.",
     "out_of_space": "Sizin cihazınızın boş saxlama yeri yoxa görə səhvi baş verdi. Zəhmət olmazsa, biraz yeri yeri boşaldın.",
     "unknown_error": "Naməlum səhv"
+  },
+  "experimental_features_dialog": {
+    "title": "Experimental features",
+    "description": "These experimental features can be turned on or off and only apply to your account. Currently, logging out and back in will reset them. If you try them out, please leave us feedback so we can improve them."
   },
   "file_service": {
     "failed_to_save": "Dəyişiklikləri saxlaya bilmədi. Zəhmət olmasa cihazınızda tövsiyə olunan 500 MB boş yerin olduğunu yoxlayın.",

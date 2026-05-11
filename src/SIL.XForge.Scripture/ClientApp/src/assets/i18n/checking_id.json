@@ -39,7 +39,8 @@
     "appearance": "Tampak, wujud",
     "appearance_device": "Perangkat",
     "appearance_dark": "Gelap",
-    "appearance_light": "Cahaya"
+    "appearance_light": "Cahaya",
+    "experimental_features": "Experimental features"
   },
   "attach_audio": {
     "tooltip_record": "Rekam suara",
@@ -342,6 +343,10 @@
     "network_request_failed": "Permintaan jaringan gagal. Beberapa fungsi mungkin tidak tersedia.",
     "out_of_space": "Terjadi kesalahan karena perangkat Anda kehabisan ruang penyimpanan.",
     "unknown_error": "Kesalahan yang tidak diketahui"
+  },
+  "experimental_features_dialog": {
+    "title": "Experimental features",
+    "description": "These experimental features can be turned on or off and only apply to your account. Currently, logging out and back in will reset them. If you try them out, please leave us feedback so we can improve them."
   },
   "file_service": {
     "failed_to_save": "Gagal menyimpan perubahan Anda. Periksa apakah Anda memiliki ruang kosong 500 MB yang disarankan pada perangkat Anda.",
