@@ -90,20 +90,26 @@ describe('ServalBuildsComponent', () => {
   });
 
   describe('sfProjectId filter', () => {
-    it('filters rows to only the matching project when sfProjectId is set', () => {
-      const env = new TestEnvironment();
-      const rowA = TestEnvironment.createRowWithDetails({
+    let rowA: any;
+    let rowB: any;
+    let rowC: any;
+    beforeEach(() => {
+      rowA = TestEnvironment.createRowWithDetails({
         projectId: 'project-a',
         startDate: new Date('2024-01-03T00:00:00Z')
       });
-      const rowB = TestEnvironment.createRowWithDetails({
+      rowB = TestEnvironment.createRowWithDetails({
         projectId: 'project-b',
         startDate: new Date('2024-01-02T00:00:00Z')
       });
-      const rowC = TestEnvironment.createRowWithDetails({
+      rowC = TestEnvironment.createRowWithDetails({
         projectId: 'project-a',
         startDate: new Date('2024-01-01T00:00:00Z')
       });
+    });
+
+    it('filters rows to only the matching project when sfProjectId is set', () => {
+      const env = new TestEnvironment();
       env.component['allRows'] = [rowA, rowB, rowC];
       env.component['currentProjectFilter'] = 'project-a';
 
@@ -116,18 +122,6 @@ describe('ServalBuildsComponent', () => {
 
     it('shows all rows when sfProjectId filter is cleared', () => {
       const env = new TestEnvironment();
-      const rowA = TestEnvironment.createRowWithDetails({
-        projectId: 'project-a',
-        startDate: new Date('2024-01-03T00:00:00Z')
-      });
-      const rowB = TestEnvironment.createRowWithDetails({
-        projectId: 'project-b',
-        startDate: new Date('2024-01-02T00:00:00Z')
-      });
-      const rowC = TestEnvironment.createRowWithDetails({
-        projectId: 'project-a',
-        startDate: new Date('2024-01-01T00:00:00Z')
-      });
       env.component['allRows'] = [rowA, rowB, rowC];
       env.component['currentProjectFilter'] = 'project-a';
 
