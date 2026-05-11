@@ -1,0 +1,34 @@
+<h2 mat-dialog-title>Problems for Serval build ID {{ data.servalBuildId }}</h2>
+
+<div mat-dialog-content class="problems-dialog-content">
+  @if (nonEmptySections.length > 0) {
+    @for (section of nonEmptySections; track section.heading) {
+      <div class="problems-dialog-section">
+        <div class="problems-dialog-section-header-row">
+          <div class="problems-dialog-section-header">{{ section.heading }}</div>
+          <app-copy [value]="sectionCopyValue(section)" tooltip="Copy section"></app-copy>
+        </div>
+        <ul class="problems-dialog-list">
+          @for (problem of section.problems; track $index) {
+            <li>
+              <span class="problems-dialog-message">{{ problem.message }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  } @else {
+    <div class="problems-dialog-empty">No problems detected</div>
+  }
+</div>
+
+<div mat-dialog-actions align="end" class="problems-dialog-actions">
+  <button mat-button (click)="copyAllToClipboard()">
+    <mat-icon>content_copy</mat-icon>
+    Copy all
+  </button>
+  <button mat-flat-button color="primary" mat-dialog-close>
+    <mat-icon>close</mat-icon>
+    Close
+  </button>
+</div>

@@ -54,9 +54,11 @@ import { DateRangePickerComponent, NormalizedDateRange } from './date-range-pick
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
 import { JobDetailsDialogComponent } from './job-details-dialog.component';
 import { ServalAdministrationService } from './serval-administration.service';
+import { ServalBuildProblemsDialog, ServalBuildProblemsDialogSection } from './serval-build-problems-dialog.component';
 import {
   BookAndChapters,
   buildProjectDisplayName,
+  BuildReportProblem,
   DraftGenerationBuildStatus,
   Phase,
   ProjectBooks,
@@ -159,8 +161,12 @@ interface SummaryDisplayItem {
   ]
 })
 export class ServalBuildsComponent extends DataLoadingComponent implements OnInit {
+  /** Max problems to preview in problems card. */
+  public readonly problemPreviewLimit: number = 8;
+
   /** Help template access static methods. */
   protected ServalBuildsComponent = ServalBuildsComponent;
+  protected DraftGenerationBuildStatus = DraftGenerationBuildStatus;
   protected columnsToDisplay: string[] = ['status', 'project', 'source', 'language', 'requested', 'expand'];
   /** Tracks which rows are currently expanded (by Serval build ID). */
   private expandedRows: Set<string> = new Set();
@@ -879,5 +885,50 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
       return `${langCode} (${languageName})`;
     }
     return langCode;
+  }
+
+  protected problems(
+    row: ServalBuildRow,
+    source: BuildReportProblem['source'],
+    severity: BuildReportProblem['severity']
+  ): BuildReportProblem[] {
+    return row.report.problems.filter((p: BuildReportProblem) => p.source === source && p.severity === severity);
+  }
+
+  protected hasAnyProblems(row: ServalBuildRow): boolean {
+    return row.report.problems.length > 0;
+  }
+
+  protected problemSections(row: ServalBuildRow): ServalBuildProblemsDialogSection[] {
+    const sections: ServalBuildProblemsDialogSection[] = [
+      { heading: 'SF errors', problems: this.problems(row, 'local', 'error') },
+      { heading: 'SF warnings', problems: this.problems(row, 'local', 'warning') },
+      { heading: 'Serval errors', problems: this.problems(row, 'serval', 'error') },
+      { heading: 'Serval warnings', problems: this.problems(row, 'serval', 'warning') }
+    ];
+    return sections;
+  }
+
+  protected renderProblemMessagesForCard(problems: BuildReportProblem[]): string[] {
+    const messages: string[] = problems.map((problem: BuildReportProblem) => problem.message);
+    // Limit the number of problems to show in the card.
+    if (messages.length <= this.problemPreviewLimit) {
+      return messages;
+    }
+
+    return [...messages.slice(0, this.problemPreviewLimit), '…'];
+  }
+
+  protected showAllProblems(row: ServalBuildRow): void {
+    const servalBuildId: string = row.report.build?.additionalInfo?.buildId ?? 'unknown';
+    const sections: ServalBuildProblemsDialogSection[] = this.problemSections(row);
+
+    this.dialogService.openMatDialog(ServalBuildProblemsDialog, {
+      data: { servalBuildId: servalBuildId, sections: sections }
+    });
+  }
+
+  protected problemsBadgeTooltip(row: ServalBuildRow): string {
+    return row.report.problems.map((p: BuildReportProblem) => p.message).join('. ');
   }
 }

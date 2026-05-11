@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace SIL.XForge.Scripture.Models;
 
 /// <summary>
@@ -10,4 +12,5 @@ public class ServalBuildExecutionData
     public int PretranslateCount { get; set; }
     public string? SourceLanguageTag { get; set; }
     public string? TargetLanguageTag { get; set; }
+    public List<string> Warnings { get; set; } = [];
 }

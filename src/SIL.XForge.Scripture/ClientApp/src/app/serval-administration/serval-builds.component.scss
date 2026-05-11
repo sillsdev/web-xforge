@@ -445,6 +445,49 @@
   margin-top: 8px;
 }
 
+.problems-section {
+  margin-bottom: 0.5em;
+}
+
+.problems-section-header {
+  font-weight: 600;
+}
+
+.problems-list {
+  margin: 0.25em 0 0 1.5em;
+  padding: 0;
+}
+
+.problem-message {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.problems-card {
+  display: flex;
+  flex-direction: column;
+
+  .detail-card-content {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+  }
+}
+
+.problems-sections {
+  display: flex;
+  flex-direction: column;
+}
+
+.problems-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: auto;
+}
+
 .details-dialog-button {
   mat-icon {
     margin-right: 8px;

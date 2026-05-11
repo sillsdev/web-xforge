@@ -21,8 +21,10 @@ import { DraftGenerationService } from '../translate/draft-generation/draft-gene
 import { NormalizedDateRange } from './date-range-picker.component';
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
 import { ServalAdministrationService } from './serval-administration.service';
+import { ServalBuildProblemsDialog } from './serval-build-problems-dialog.component';
 import {
   buildProjectDisplayName,
+  BuildReportProblem,
   BuildReportTimeline,
   DraftGenerationBuildStatus,
   ProjectBooks,
@@ -209,7 +211,7 @@ describe('ServalBuildsComponent', () => {
           requesterId: 'user-2',
           trainingBooks: env.createProjectBooks('proj-a', ['ROM', '1CO', '2CO']),
           translationBooks: env.createProjectBooks('proj-a', ['MAT', 'LUK']),
-          problems: ['Low confidence'],
+          problems: [{ source: 'serval', severity: 'warning', message: 'Low confidence' }],
           status: DraftGenerationBuildStatus.Completed
         }),
         TestEnvironment.createRowWithDetails({
@@ -1435,6 +1437,148 @@ describe('ServalBuildsComponent', () => {
       verify(mockExportService.exportTsv(anything(), anything(), anything(), anything(), anything())).once();
     });
   });
+
+  describe('problems', () => {
+    function createRowWithProblems(problems: BuildReportProblem[]): ServalBuildRow {
+      return TestEnvironment.createRowWithDetails({ problems: problems, startDate: new Date('2026-01-01T00:00:00Z') });
+    }
+
+    it('hasAnyProblems returns false when no problems are present', () => {
+      const env = new TestEnvironment();
+      const row: ServalBuildRow = createRowWithProblems([]);
+
+      expect(env.component['hasAnyProblems'](row)).toBeFalse();
+    });
+
+    it('hasAnyProblems returns true when at least one problem is present', () => {
+      const env = new TestEnvironment();
+      const row: ServalBuildRow = createRowWithProblems([
+        { source: 'serval', severity: 'error', message: 'Faulted: Engine crashed' }
+      ]);
+
+      expect(env.component['hasAnyProblems'](row)).toBeTrue();
+    });
+
+    it('problemsBySource filters to origin', () => {
+      const env = new TestEnvironment();
+      const problems: BuildReportProblem[] = [
+        { source: 'local', severity: 'error', message: 'SF error' },
+        { source: 'local', severity: 'warning', message: 'SF warning 2' },
+        { source: 'local', severity: 'warning', message: 'SF warning' },
+        { source: 'serval', severity: 'error', message: 'Faulted: Engine crashed' },
+        { source: 'serval', severity: 'error', message: 'Faulted: Engine crashed' },
+        { source: 'serval', severity: 'error', message: 'Faulted: Engine crashed' },
+        { source: 'serval', severity: 'warning', message: 'Missing data' },
+        { source: 'serval', severity: 'warning', message: 'Serval warning' },
+        { source: 'serval', severity: 'warning', message: 'Serval warning' },
+        { source: 'serval', severity: 'warning', message: 'Serval warning' }
+      ];
+      const row: ServalBuildRow = createRowWithProblems(problems);
+
+      expect(env.component['problems'](row, 'local', 'error').length).toBe(1);
+      expect(env.component['problems'](row, 'local', 'warning').length).toBe(2);
+      expect(env.component['problems'](row, 'serval', 'error').length).toBe(3);
+      expect(env.component['problems'](row, 'serval', 'warning').length).toBe(4);
+    });
+
+    it('problemsBadgeTooltip joins all problem messages', () => {
+      const env = new TestEnvironment();
+      const problems: BuildReportProblem[] = [
+        { source: 'local', severity: 'error', message: 'No Serval build' },
+        { source: 'serval', severity: 'warning', message: 'Low confidence' }
+      ];
+      const row: ServalBuildRow = createRowWithProblems(problems);
+
+      const tooltip: string = env.component['problemsBadgeTooltip'](row);
+
+      expect(tooltip).toBe('No Serval build. Low confidence');
+    });
+
+    it('problemSections keeps full untruncated problem text', () => {
+      const env = new TestEnvironment();
+      const fullMessage = 'This is a very long Serval warning message that must not be truncated in the dialog.';
+      const problems: BuildReportProblem[] = [
+        { source: 'local', severity: 'error', message: 'SF build failed with unrecoverable error state' },
+        { source: 'serval', severity: 'warning', message: fullMessage }
+      ];
+      const row: ServalBuildRow = createRowWithProblems(problems);
+
+      const sections: { heading: string; problems: BuildReportProblem[] }[] = env.component['problemSections'](row);
+
+      expect(sections[0].heading).toBe('SF errors');
+      expect(sections[0].problems[0].message).toBe('SF build failed with unrecoverable error state');
+      expect(sections[1].heading).toBe('SF warnings');
+      // There are no SF warnings.
+      expect(sections[1].problems.length).toBe(0);
+      expect(sections[2].heading).toBe('Serval errors');
+      // There are no Serval errors.
+      expect(sections[2].problems.length).toBe(0);
+      expect(sections[3].heading).toBe('Serval warnings');
+      expect(sections[3].problems[0].message).toBe(fullMessage);
+    });
+
+    it('renderProblemMessagesForCard limits returned amount of problems', () => {
+      const env = new TestEnvironment();
+      const problems: BuildReportProblem[] = [
+        { source: 'serval', severity: 'warning', message: 'Message 1' },
+        { source: 'serval', severity: 'warning', message: 'Message 2' },
+        { source: 'serval', severity: 'warning', message: 'Message 3' },
+        { source: 'serval', severity: 'warning', message: 'Message 4' },
+        { source: 'serval', severity: 'warning', message: 'Message 5' },
+        { source: 'serval', severity: 'warning', message: 'Message 6' },
+        { source: 'serval', severity: 'warning', message: 'Message 7' },
+        { source: 'serval', severity: 'warning', message: 'Message 8' },
+        { source: 'serval', severity: 'warning', message: 'Message 9' },
+        { source: 'serval', severity: 'warning', message: 'Message 10' },
+        { source: 'serval', severity: 'warning', message: 'Message 11' },
+        { source: 'serval', severity: 'warning', message: 'Message 12' }
+      ];
+
+      const preview: string[] = env.component['renderProblemMessagesForCard'](problems);
+      const limit: number = env.component.problemPreviewLimit;
+      const ellipsisItem: number = 1;
+      expect(preview.length).toBe(limit + ellipsisItem);
+      expect(preview[limit]).toEqual('…');
+    });
+
+    it('problemMessagesForCard returns all messages when not too many', () => {
+      const env = new TestEnvironment();
+      const problems: BuildReportProblem[] = [
+        { source: 'local', severity: 'error', message: 'Message 1' },
+        { source: 'local', severity: 'error', message: 'Message 2' }
+      ];
+
+      const preview: string[] = env.component['renderProblemMessagesForCard'](problems);
+      expect(preview.length).toBe(2);
+      expect(preview).toEqual(['Message 1', 'Message 2']);
+    });
+
+    it('showAllProblems opens serval build problems dialog', () => {
+      const env = new TestEnvironment();
+      let componentArg: any;
+      let configArg: any;
+      when(mockDialogService.openMatDialog(anything(), anything())).thenCall((component: any, config: any) => {
+        componentArg = component;
+        configArg = config;
+        return undefined as never;
+      });
+      const problems: BuildReportProblem[] = [
+        { source: 'local', severity: 'warning', message: 'SF warning message' },
+        { source: 'serval', severity: 'error', message: 'Faulted: Engine crashed' }
+      ];
+      const row: ServalBuildRow = createRowWithProblems(problems);
+
+      env.component['showAllProblems'](row);
+
+      verify(mockDialogService.openMatDialog(anything(), anything())).once();
+      expect(componentArg).toBe(ServalBuildProblemsDialog);
+      expect(configArg.data.sections.length).toBe(4);
+      expect(configArg.data.sections[0].heading).toBe('SF errors');
+      expect(configArg.data.sections[1].heading).toBe('SF warnings');
+      expect(configArg.data.sections[2].heading).toBe('Serval errors');
+      expect(configArg.data.sections[3].heading).toBe('Serval warnings');
+    });
+  });
 });
 
 /** Provides helpers for constructing test data for ServalBuildsComponent tests. */
@@ -1457,7 +1601,11 @@ class TestEnvironment {
     when(mockNoticeService.loadingStarted(anything())).thenReturn(undefined);
     when(mockNoticeService.loadingFinished(anything())).thenReturn(undefined);
     when(mockDraftGenerationService.getBuildsSince(anything())).thenReturn(this.builds$);
-    when(mockDialogService.openMatDialog(anything(), anything(), anything())).thenReturn(undefined as never);
+    when(mockDialogService.openMatDialog(anything(), anything())).thenReturn(undefined as never);
+    when(mockDialogService.openGenericDialog(anything())).thenReturn({
+      dialogRef: undefined as never,
+      result: Promise.resolve(undefined)
+    } as never);
     when(mockExportService.exportCsv(anything(), anything(), anything(), anything(), anything())).thenReturn(undefined);
     when(mockExportService.exportRsv(anything(), anything(), anything(), anything(), anything())).thenReturn(undefined);
     when(mockExportService.exportTsv(anything(), anything(), anything(), anything(), anything())).thenReturn(undefined);
@@ -1587,7 +1735,7 @@ class TestEnvironment {
     trainingBooks?: ProjectBooks[];
     translationBooks?: ProjectBooks[];
     status?: DraftGenerationBuildStatus;
-    problems?: string[];
+    problems?: BuildReportProblem[];
     sfUserRequestTime?: Date;
     sfAcknowledgedTime?: Date;
     hasServalBuild?: boolean;

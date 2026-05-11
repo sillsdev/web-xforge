@@ -1,0 +1,51 @@
+.problems-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: min(65vh, 600px);
+  overflow: auto;
+}
+
+.problems-dialog-section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.problems-dialog-section-header {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.problems-dialog-list {
+  margin: 0 0 0 1.5em;
+  padding: 0;
+  word-break: break-word;
+}
+
+.problems-dialog-message {
+  white-space: pre-wrap;
+}
+
+.problems-dialog-empty {
+  color: var(--sf-text-secondary-color);
+}
+
+.problems-dialog-actions button mat-icon {
+  margin-right: 8px;
+}
+
+app-copy ::ng-deep {
+  .copy-button,
+  .copied,
+  .copy {
+    width: 1em;
+    height: 1em;
+    font-size: 1em;
+  }
+
+  .copy-button {
+    padding: 0;
+  }
+}
