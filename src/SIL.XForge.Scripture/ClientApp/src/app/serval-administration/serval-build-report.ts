@@ -1,6 +1,7 @@
 import { Canon } from '@sillsdev/scripture';
 import { BuildDto } from '../machine-api/build-dto';
 import { booksFromScriptureRange } from '../shared/utils';
+import { BuildConfidences } from '../translate/draft-generation/build-confidences';
 
 /**
  * A report of a Serval build, combining Serval-native data with SF project information and event metrics information.
@@ -15,6 +16,7 @@ export interface ServalBuildReportDto {
   draftGenerationRequestId: string | undefined;
   requesterSFUserId: string | undefined;
   status: DraftGenerationBuildStatus;
+  buildConfidences: BuildConfidences | undefined;
 }
 
 /** SF project information for a build report entry.*/

@@ -476,6 +476,30 @@
                     </span>
                   </mat-card-content>
                 </mat-card>
+
+                <mat-card appearance="filled" class="detail-card">
+                  <mat-card-header>
+                    <mat-card-title-group>
+                      <mat-icon>traffic</mat-icon>
+                      <mat-card-title>Quality Estimation</mat-card-title>
+                    </mat-card-title-group>
+                  </mat-card-header>
+                  <mat-card-content class="detail-card-content">
+                    <span class="detail-area-stacked-keyvalues">
+                      @if (row.report.buildConfidences != null) {
+                        <div class="detail-keyvalue">
+                          <span class="detail-key">Configured</span>
+                          <span class="detail-value">Yes</span>
+                        </div>
+                      } @else {
+                        <div class="detail-keyvalue">
+                          <span class="detail-key">Configured</span>
+                          <span class="detail-value">No</span>
+                        </div>
+                      }
+                    </span>
+                  </mat-card-content>
+                </mat-card>
               </div>
 
               <div class="detail-actions">

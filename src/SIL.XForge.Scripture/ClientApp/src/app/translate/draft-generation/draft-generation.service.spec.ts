@@ -26,6 +26,7 @@ import { BuildDto, ServalBuildAdditionalInfo } from '../../machine-api/build-dto
 import { BuildStates } from '../../machine-api/build-states';
 import { MACHINE_API_BASE_URL } from '../../machine-api/http-client';
 import { DraftGenerationBuildStatus, ServalBuildReportDto } from '../../serval-administration/serval-build-report';
+import { BuildConfidences } from './build-confidences';
 import { BuildConfig } from './draft-generation';
 import { DraftGenerationService } from './draft-generation.service';
 
@@ -46,6 +47,13 @@ describe('DraftGenerationService', () => {
   }));
 
   const projectId = 'testProjectId';
+  const buildId = 'testBuildId';
+  const buildConfidences: BuildConfidences = {
+    projectId,
+    buildId,
+    bookConfidences: [],
+    chapterConfidences: []
+  };
   const buildConfig: BuildConfig = {
     projectId,
     trainingDataFiles: [],
@@ -56,7 +64,7 @@ describe('DraftGenerationService', () => {
     sendEmailOnBuildFinished: false
   };
   const buildDto: BuildDto = {
-    id: 'testId',
+    id: buildId,
     href: 'testHref',
     revision: 0,
     engine: {
@@ -139,6 +147,101 @@ describe('DraftGenerationService', () => {
         .subscribe(result => {
           expect(result).toBeUndefined();
         });
+      tick();
+    }));
+  });
+
+  describe('getBuildConfidences', () => {
+    it('should get build confidences and return an observable of BuildConfidences', fakeAsync(() => {
+      // SUT
+      service.getBuildConfidences(projectId, buildId).subscribe(result => {
+        expect(result).toEqual(buildConfidences);
+      });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/builds/id:${projectId}.${buildId}/confidences`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(buildConfidences);
+      tick();
+    }));
+
+    it('should return undefined if no confidence values are available for the build', fakeAsync(() => {
+      // SUT
+      service.getBuildConfidences(projectId, buildId).subscribe(result => {
+        expect(result).toBeUndefined();
+      });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/builds/id:${projectId}.${buildId}/confidences`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(null, { status: HttpStatusCode.NoContent, statusText: 'No Content' });
+      tick();
+    }));
+
+    it('should return undefined if offline', fakeAsync(() => {
+      testOnlineStatusService.setIsOnline(false);
+
+      // SUT
+      service.getBuildConfidences(projectId, buildId).subscribe(result => {
+        expect(result).toBeUndefined();
+      });
+      tick();
+    }));
+
+    it('should return undefined and not show error when server returns 403', fakeAsync(() => {
+      // SUT
+      service.getBuildConfidences(projectId, buildId).subscribe(result => {
+        expect(result).toBeUndefined();
+        verify(mockNoticeService.showError(anything())).never();
+      });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/builds/id:${projectId}.${buildId}/confidences`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(null, { status: HttpStatusCode.Forbidden, statusText: 'Forbidden' });
+      tick();
+    }));
+
+    it('should return undefined and not show error when server returns 404', fakeAsync(() => {
+      // SUT
+      service.getBuildConfidences(projectId, buildId).subscribe(result => {
+        expect(result).toBeUndefined();
+        verify(mockNoticeService.showError(anything())).never();
+      });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/builds/id:${projectId}.${buildId}/confidences`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(null, { status: HttpStatusCode.NotFound, statusText: 'Not Found' });
+      tick();
+    }));
+
+    it('should return undefined and show error when server returns 500', fakeAsync(() => {
+      // SUT
+      service.getBuildConfidences(projectId, buildId).subscribe(result => {
+        expect(result).toBeUndefined();
+        verify(mockNoticeService.showError(anything())).once();
+      });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/builds/id:${projectId}.${buildId}/confidences`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(null, { status: HttpStatusCode.InternalServerError, statusText: 'Server Error' });
       tick();
     }));
   });
@@ -354,7 +457,8 @@ describe('DraftGenerationService', () => {
       problems: [],
       draftGenerationRequestId: undefined,
       requesterSFUserId: undefined,
-      status: DraftGenerationBuildStatus.UserRequested
+      status: DraftGenerationBuildStatus.UserRequested,
+      buildConfidences: undefined
     };
 
     it('should request builds', fakeAsync(() => {
