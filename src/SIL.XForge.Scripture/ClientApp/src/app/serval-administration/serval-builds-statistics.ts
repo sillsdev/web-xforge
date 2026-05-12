@@ -1,5 +1,6 @@
 import { notNull } from '../../type-utils';
 import {
+  BookAndChapters,
   BuildReportProject,
   DraftGenerationBuildStatus,
   ProjectBooks,
@@ -42,7 +43,7 @@ export function countBooks(projectBooks: ProjectBooks[]): number {
 export function countUniqueBooks(projectBooks: ProjectBooks[]): number {
   const uniqueBookCodes: Set<string> = new Set();
   for (const projectBook of projectBooks) {
-    for (const bookCode of projectBook.books) {
+    for (const bookCode of projectBook.booksAndChapters.map((bncs: BookAndChapters) => bncs.bookId)) {
       uniqueBookCodes.add(bookCode);
     }
   }
