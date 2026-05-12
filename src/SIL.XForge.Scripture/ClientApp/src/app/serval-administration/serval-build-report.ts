@@ -1,7 +1,8 @@
 import { Canon } from '@sillsdev/scripture';
+import { notNull } from '../../type-utils';
 import { BuildDto } from '../machine-api/build-dto';
 import { expandNumbers } from '../shared/utils';
-import { notNull } from '../../type-utils';
+import { BuildConfidences } from '../translate/draft-generation/build-confidences/build-confidences';
 
 /**
  * A report of a Serval build, combining Serval-native data with SF project information and event metrics information.
@@ -16,6 +17,7 @@ export interface ServalBuildReportDto {
   draftGenerationRequestId: string | undefined;
   requesterSFUserId: string | undefined;
   status: DraftGenerationBuildStatus;
+  buildConfidences: BuildConfidences | undefined;
 }
 
 /** SF project information for a build report entry.*/

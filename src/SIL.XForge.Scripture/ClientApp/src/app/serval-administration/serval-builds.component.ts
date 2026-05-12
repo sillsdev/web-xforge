@@ -21,6 +21,8 @@ import {
 } from '@angular/material/table';
 import { MatTooltip } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslocoModule } from '@ngneat/transloco';
+import { Canon } from '@sillsdev/scripture';
 import {
   BehaviorSubject,
   catchError,
@@ -49,7 +51,10 @@ import { isPopulatedString, notNull } from '../../type-utils';
 import { InfoComponent } from '../shared/info/info.component';
 import { NoticeComponent } from '../shared/notice/notice.component';
 import { projectLabel } from '../shared/utils';
+import { BookConfidence, ChapterConfidence } from '../translate/draft-generation/build-confidences/build-confidences';
+import { DisplayConfidenceComponent } from '../translate/draft-generation/build-confidences/display-confidence.component';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
+import { BuildConfidencesExportService } from './build-confidences-export.service';
 import { DateRangePickerComponent, NormalizedDateRange } from './date-range-picker.component';
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
 import { JobDetailsDialogComponent } from './job-details-dialog.component';
@@ -157,7 +162,9 @@ interface SummaryDisplayItem {
     MatCardContent,
     MatCardTitleGroup,
     CopyComponent,
-    MatSlideToggle
+    MatSlideToggle,
+    TranslocoModule,
+    DisplayConfidenceComponent
   ]
 })
 export class ServalBuildsComponent extends DataLoadingComponent implements OnInit {
@@ -187,6 +194,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
 
   constructor(
     noticeService: NoticeService,
+    private readonly buildConfidencesExportService: BuildConfidencesExportService,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly dialogService: DialogService,
     private readonly onlineStatusService: OnlineStatusService,
@@ -243,19 +251,31 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     return this.expandedRows.has(id);
   }
 
-  protected exportCsv(): void {
-    const { spreadsheetRows, dateRange, meanDurationMs, maxDurationMs } = this.createSpreadsheetData();
-    this.exportService.exportCsv(spreadsheetRows, dateRange, meanDurationMs, maxDurationMs, 'serval_builds');
+  protected exportCsv(rows: (BookConfidence | ChapterConfidence)[] | undefined = undefined): void {
+    if (rows == null) {
+      const { spreadsheetRows, dateRange, meanDurationMs, maxDurationMs } = this.createSpreadsheetData();
+      this.exportService.exportCsv(spreadsheetRows, dateRange, meanDurationMs, maxDurationMs, 'serval_builds');
+    } else {
+      this.buildConfidencesExportService.exportCsv(rows, this.dateRange$.value);
+    }
   }
 
-  protected exportRsv(): void {
-    const { spreadsheetRows, dateRange, meanDurationMs, maxDurationMs } = this.createSpreadsheetData();
-    this.exportService.exportRsv(spreadsheetRows, dateRange, meanDurationMs, maxDurationMs, 'serval_builds');
+  protected exportRsv(rows: (BookConfidence | ChapterConfidence)[] | undefined = undefined): void {
+    if (rows == null) {
+      const { spreadsheetRows, dateRange, meanDurationMs, maxDurationMs } = this.createSpreadsheetData();
+      this.exportService.exportRsv(spreadsheetRows, dateRange, meanDurationMs, maxDurationMs, 'serval_builds');
+    } else {
+      this.buildConfidencesExportService.exportCsv(rows, this.dateRange$.value);
+    }
   }
 
-  protected exportTsv(): void {
-    const { spreadsheetRows, dateRange, meanDurationMs, maxDurationMs } = this.createSpreadsheetData();
-    this.exportService.exportTsv(spreadsheetRows, dateRange, meanDurationMs, maxDurationMs, 'serval_builds');
+  protected exportTsv(rows: (BookConfidence | ChapterConfidence)[] | undefined = undefined): void {
+    if (rows == null) {
+      const { spreadsheetRows, dateRange, meanDurationMs, maxDurationMs } = this.createSpreadsheetData();
+      this.exportService.exportTsv(spreadsheetRows, dateRange, meanDurationMs, maxDurationMs, 'serval_builds');
+    } else {
+      this.buildConfidencesExportService.exportCsv(rows, this.dateRange$.value);
+    }
   }
 
   private createSpreadsheetData(): {
@@ -346,6 +366,10 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
       return 'Submitted to Serval';
     }
     return status;
+  }
+
+  protected getBookId(bookConfidence: BookConfidence): string {
+    return Canon.bookNumberToId(bookConfidence.bookNum);
   }
 
   /** Returns the requested phase of the build.  */

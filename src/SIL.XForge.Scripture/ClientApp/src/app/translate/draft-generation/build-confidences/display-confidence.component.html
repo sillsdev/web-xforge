@@ -1,0 +1,11 @@
+@switch (usabilityLabel) {
+  @case ("Green") {
+    <div class="confidence green"><mat-icon>check</mat-icon> Likely good quality</div>
+  }
+  @case ("Yellow") {
+    <div class="confidence yellow"><mat-icon class="filled">circle</mat-icon> Likely moderate quality</div>
+  }
+  @case ("Red") {
+    <div class="confidence red"><mat-icon>warning</mat-icon> Likely poor quality</div>
+  }
+}

@@ -17,7 +17,9 @@ import { UserService } from 'xforge-common/user.service';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { BuildDto } from '../machine-api/build-dto';
 import { BuildStates } from '../machine-api/build-states';
+import { BuildConfidences } from '../translate/draft-generation/build-confidences/build-confidences';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
+import { BuildConfidencesExportService } from './build-confidences-export.service';
 import { NormalizedDateRange } from './date-range-picker.component';
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
 import { ServalAdministrationService } from './serval-administration.service';
@@ -32,6 +34,7 @@ import { buildSummary, gapsBetweenBuildsMs } from './serval-builds-statistics';
 import { ServalBuildRow, ServalBuildsComponent, ServalBuildSummary } from './serval-builds.component';
 
 const mockNoticeService = mock(NoticeService);
+const mockBuildConfidencesExportService = mock(BuildConfidencesExportService);
 const mockDraftGenerationService = mock(DraftGenerationService);
 const mockDialogService = mock(DialogService);
 const mockExportService = mock(DraftJobsExportService);
@@ -50,6 +53,7 @@ describe('ServalBuildsComponent', () => {
       provideRouter([]),
       { provide: NoticeService, useMock: mockNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      { provide: BuildConfidencesExportService, useMock: mockBuildConfidencesExportService },
       { provide: DraftGenerationService, useMock: mockDraftGenerationService },
       { provide: DialogService, useMock: mockDialogService },
       { provide: DraftJobsExportService, useMock: mockExportService },
@@ -1478,6 +1482,7 @@ describe('ServalBuildsComponent', () => {
       env.component['exportTsv']();
 
       verify(mockExportService.exportTsv(anything(), anything(), anything(), anything(), anything())).once();
+      expect().nothing();
     });
   });
 });
@@ -1546,7 +1551,8 @@ class TestEnvironment {
       problems: [],
       draftGenerationRequestId: undefined,
       requesterSFUserId: undefined,
-      status: DraftGenerationBuildStatus.Completed
+      status: DraftGenerationBuildStatus.Completed,
+      buildConfidences: undefined
     };
   }
 
@@ -1590,7 +1596,8 @@ class TestEnvironment {
       problems: [],
       draftGenerationRequestId: undefined,
       requesterSFUserId: sfProjectId == null ? undefined : 'requester-user-id',
-      status: DraftGenerationBuildStatus.Completed
+      status: DraftGenerationBuildStatus.Completed,
+      buildConfidences: undefined
     };
 
     return {
@@ -1619,7 +1626,8 @@ class TestEnvironment {
     sfUserRequestTime = undefined,
     sfAcknowledgedTime = undefined,
     hasServalBuild = true,
-    hasEvents = false
+    hasEvents = false,
+    buildConfidences = undefined
   }: {
     durationMs?: number;
     projectId?: string;
@@ -1637,6 +1645,7 @@ class TestEnvironment {
     sfAcknowledgedTime?: Date;
     hasServalBuild?: boolean;
     hasEvents?: boolean;
+    buildConfidences?: BuildConfidences;
   }): any {
     const start: Date = startDate ?? new Date(0);
     const computedFinish: Date = finishDate ?? new Date(start.getTime() + durationMs);
@@ -1683,7 +1692,8 @@ class TestEnvironment {
       problems: problems,
       draftGenerationRequestId: undefined,
       requesterSFUserId: requesterId,
-      status: status
+      status: status,
+      buildConfidences: buildConfidences
     };
 
     const durationValue: number = computedFinish.getTime() - start.getTime();
@@ -1757,7 +1767,8 @@ class TestEnvironment {
       problems: [],
       draftGenerationRequestId: undefined,
       requesterSFUserId: undefined,
-      status: DraftGenerationBuildStatus.Completed
+      status: DraftGenerationBuildStatus.Completed,
+      buildConfidences: undefined
     };
   }
 
