@@ -53,6 +53,11 @@ public class ServalBuildReportDto
     /// </summary>
     [JsonConverter(typeof(StringEnumConverter))]
     public DraftGenerationBuildStatus Status { get; init; }
+
+    /// <summary>
+    /// The confidence values for the build.
+    /// </summary>
+    public BuildConfidences? BuildConfidences { get; init; }
 }
 
 /// <summary>
