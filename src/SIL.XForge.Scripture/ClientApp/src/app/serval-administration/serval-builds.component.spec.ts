@@ -280,7 +280,7 @@ describe('ServalBuildsComponent', () => {
       const env = new TestEnvironment();
       const baseStart: Date = new Date('2024-01-01T00:00:00Z');
       const rows: ServalBuildRow[] = [
-        env.createRowWithDetails({
+        TestEnvironment.createRowWithDetails({
           projectId: 'proj-a',
           startDate: env.addHours(baseStart, 0),
           finishDate: env.addHours(baseStart, 1),
@@ -288,7 +288,7 @@ describe('ServalBuildsComponent', () => {
           trainingBooks: env.createProjectBooks('proj-a', ['GEN', 'EXO']),
           status: DraftGenerationBuildStatus.Completed
         }),
-        env.createRowWithDetails({
+        TestEnvironment.createRowWithDetails({
           projectId: 'proj-b',
           startDate: env.addHours(baseStart, 2),
           finishDate: env.addHours(baseStart, 3),
@@ -296,7 +296,7 @@ describe('ServalBuildsComponent', () => {
           trainingBooks: env.createProjectBooks('proj-b', ['GEN']),
           status: DraftGenerationBuildStatus.Completed
         }),
-        env.createRowWithDetails({
+        TestEnvironment.createRowWithDetails({
           projectId: 'proj-c',
           startDate: env.addHours(baseStart, 4),
           finishDate: env.addHours(baseStart, 5),
@@ -1285,9 +1285,10 @@ describe('ServalBuildsComponent', () => {
       };
       env.component['dateRange$'].next(range);
       env.component['rows'] = [
-        env.createRowWithDetails({
+        TestEnvironment.createRowWithDetails({
           projectId: 'proj-a',
           requesterId: 'user-1',
+          startDate: new Date('2024-01-01T00:00:00Z'),
           trainingBooks: env.createProjectBooks('proj-a', ['GEN']),
           translationBooks: env.createProjectBooks('proj-a', ['MAT'])
         })
