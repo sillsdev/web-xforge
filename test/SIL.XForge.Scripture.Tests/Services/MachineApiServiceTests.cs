@@ -1251,7 +1251,7 @@ public class MachineApiServiceTests
         DateTimeOffset dateCreated = DateTimeOffset.UtcNow.AddDays(-2);
         DateTimeOffset dateStarted = dateCreated.AddHours(6);
         DateTimeOffset dateFinished = dateCreated.AddDays(1);
-        DateTimeOffset dateCompleted = dateFinished;
+        DateTimeOffset dateCompleted = dateFinished.AddSeconds(1);
         TranslationBuild translationBuild = new TranslationBuild
         {
             Id = ServalBuildId01,
@@ -1269,6 +1269,7 @@ public class MachineApiServiceTests
             .Returns(Task.FromResult<IList<TranslationBuild>>([translationBuild]));
         const string draftGenerationRequestId = "draft-req";
         env.SetDraftGenerationMetricAssociation(draftGenerationRequestId);
+        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01, QualityEstimationConfig);
 
         // SUT
         IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
@@ -1291,6 +1292,8 @@ public class MachineApiServiceTests
         Assert.AreEqual(dateCompleted, report.Timeline.ServalCompleted);
         Assert.AreEqual(dateFinished, report.Timeline.ServalFinished);
         Assert.AreEqual(draftGenerationRequestId, report.DraftGenerationRequestId);
+        Assert.NotZero(report.BuildConfidences!.BookConfidences.Count);
+        Assert.NotZero(report.BuildConfidences!.ChapterConfidences.Count);
     }
 
     [Test]
@@ -2318,7 +2321,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.SetupDraftMetrics(Project01, ServalBuildId01, QualityEstimationConfig);
+        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01, QualityEstimationConfig);
 
         // SUT
         BuildConfidences actual = await env.Service.GetBuildConfidencesAsync(
@@ -2343,7 +2346,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.SetupDraftMetrics(Project01, ServalBuildId01, QualityEstimationConfig);
+        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01, QualityEstimationConfig);
 
         // SUT
         BuildConfidences actual = await env.Service.GetBuildConfidencesAsync(
@@ -5396,10 +5399,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.Projects.UpdateAsync(
-            p => p.Id == Project01,
-            u => u.Set(s => s.TranslateConfig.DraftConfig.QualityEstimationConfig, QualityEstimationConfig)
-        );
+        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01, QualityEstimationConfig);
         const int bookNum = 1;
         const int chapterNum = 0;
         string textDocumentId = TextDocument.GetDocId(Project01, bookNum, chapter: 1, TextDocument.Draft);
@@ -6251,11 +6251,12 @@ public class MachineApiServiceTests
                 );
         }
 
-        public void SetupDraftMetrics(
+        public async Task SetupDraftMetricsAsync(
             string sfProjectId,
             string buildId,
             QualityEstimationConfig qualityEstimationConfig
-        ) =>
+        )
+        {
             DraftMetrics.Add(
                 new DraftMetrics
                 {
@@ -6286,6 +6287,11 @@ public class MachineApiServiceTests
                     ],
                 }
             );
+            await Projects.UpdateAsync(
+                p => p.Id == sfProjectId,
+                u => u.Set(s => s.TranslateConfig.DraftConfig.QualityEstimationConfig, qualityEstimationConfig)
+            );
+        }
 
         public static void AssertCoreBuildProperties(TranslationBuild translationBuild, ServalBuildDto? actual)
         {
@@ -6301,7 +6307,7 @@ public class MachineApiServiceTests
             Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
         }
 
-        /// <remarks>Either to test the empty situation, or because it is not important for the test.</remarks>
+        /// <summary>Used either to test the empty situation, or because it is not important for the test.</summary>
         public void SetEmptyDraftGenerationMetricAssociations()
         {
             // Mock for GetEventMetricsAsync in GetDraftGenerationRequestIdForBuildAsync
