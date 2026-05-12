@@ -222,21 +222,32 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   }
 
   protected exportCsv(): void {
-    const dateRange: NormalizedDateRange | undefined = this.dateRange$.value;
-    if (dateRange == null) throw new Error('Date range is not set');
-    const spreadsheetRows: SpreadsheetRow[] = ServalBuildsComponent.createSpreadsheetRows(this.rows);
-    const meanDurationMs: number = this.summaryStats?.meanDurationMs ?? 0;
-    const maxDurationMs: number = this.summaryStats?.maxDurationMs ?? 0;
+    const { spreadsheetRows, dateRange, meanDurationMs, maxDurationMs } = this.createSpreadsheetData();
     this.exportService.exportCsv(spreadsheetRows, dateRange, meanDurationMs, maxDurationMs, 'serval_builds');
   }
 
   protected exportRsv(): void {
+    const { spreadsheetRows, dateRange, meanDurationMs, maxDurationMs } = this.createSpreadsheetData();
+    this.exportService.exportRsv(spreadsheetRows, dateRange, meanDurationMs, maxDurationMs, 'serval_builds');
+  }
+
+  protected exportTsv(): void {
+    const { spreadsheetRows, dateRange, meanDurationMs, maxDurationMs } = this.createSpreadsheetData();
+    this.exportService.exportTsv(spreadsheetRows, dateRange, meanDurationMs, maxDurationMs, 'serval_builds');
+  }
+
+  private createSpreadsheetData(): {
+    spreadsheetRows: SpreadsheetRow[];
+    dateRange: NormalizedDateRange;
+    meanDurationMs: number;
+    maxDurationMs: number;
+  } {
     const dateRange: NormalizedDateRange | undefined = this.dateRange$.value;
     if (dateRange == null) throw new Error('Date range is not set');
     const spreadsheetRows: SpreadsheetRow[] = ServalBuildsComponent.createSpreadsheetRows(this.rows);
     const meanDurationMs: number = this.summaryStats?.meanDurationMs ?? 0;
     const maxDurationMs: number = this.summaryStats?.maxDurationMs ?? 0;
-    this.exportService.exportRsv(spreadsheetRows, dateRange, meanDurationMs, maxDurationMs, 'serval_builds');
+    return { spreadsheetRows, dateRange, meanDurationMs, maxDurationMs };
   }
 
   protected clearMLUrl(servalBuildId: string): string {
