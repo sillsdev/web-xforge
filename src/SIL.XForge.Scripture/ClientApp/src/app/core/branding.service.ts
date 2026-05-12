@@ -9,4 +9,8 @@ export class BrandingService {
   get useScriptureForgeBranding(): boolean {
     return this.locationService.host === new URL(environment.masterUrl).host;
   }
+
+  get siteName(): string {
+    return this.useScriptureForgeBranding ? environment.siteName : this.locationService.hostname;
+  }
 }

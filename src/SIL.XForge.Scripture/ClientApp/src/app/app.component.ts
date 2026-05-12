@@ -51,6 +51,7 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
+import { BrandingService } from './core/branding.service';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
@@ -137,6 +138,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly pwaService: PwaService,
     private readonly themeService: ThemeService,
     private readonly fontService: FontService,
+    private readonly brandingService: BrandingService,
     onlineStatusService: OnlineStatusService,
     private destroyRef: DestroyRef
   ) {
@@ -291,7 +293,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   async ngOnInit(): Promise<void> {
     await this.authService.loggedIn;
-    this.document.title = environment.siteName;
+    this.document.title = this.brandingService.siteName;
     this.loadingStarted();
     this.currentUserDoc = await this.userService.getCurrentUser();
     const userData: User | undefined = cloneDeep(this.currentUserDoc.data);
