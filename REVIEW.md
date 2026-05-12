@@ -18,7 +18,8 @@ Code should follow the rules outlined in [Code rules](doc/code-rules.md).
 
 - Front-end strings that can be seen by community checkers should be put in `checking_en.json`, even if non community checkers might see them.
 - Front-end strings that can never be seen by community checkers should be put in `non_checking_en.json`.
-- New strings only need to be added to the English localization files. A separate process will update the translation files, and fallback to English will be used in the meantime. Unnecessary changes should be avoided.
+- New strings only need to be added to the English localization files; other localization files shouldn't be updated.
+- Localization files are updated from Crowdin by a script that opens a PR with the title "Update all translation files from Crowdin". When reviewing a PR with this title, pay particular attention to the variables and tags in the source string, and the translated string, to make sure they are correctly preserved from the source string.
 - Updates to strings while keeping the same localization key are allowed, but significant changes to a string should use a new key, otherwise existing translations will continue to show the old string.
 - Strings that use variables should not be changed to different variables, otherwise errors will occur when the existing translations use the old variables. Instead, create a new localization key.
 
