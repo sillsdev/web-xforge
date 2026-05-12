@@ -257,6 +257,55 @@ describe('ServalBuildsComponent', () => {
       expect(summary.totalUniqueTrainingBooks).toBe(3);
     });
 
+    it('handles book counting despite chapter numbers present', () => {
+      const env = new TestEnvironment();
+      const baseStart: Date = new Date('2024-01-01T00:00:00Z');
+      const rows: ServalBuildRow[] = [
+        env.createRowWithDetails({
+          projectId: 'proj-a',
+          startDate: env.addHours(baseStart, 0),
+          finishDate: env.addHours(baseStart, 1),
+          requesterId: 'user-1',
+          trainingBooks: env.createProjectBooks('proj-a', ['GEN1', 'EXO1-10,14']),
+          status: DraftGenerationBuildStatus.Completed
+        }),
+        env.createRowWithDetails({
+          projectId: 'proj-b',
+          startDate: env.addHours(baseStart, 2),
+          finishDate: env.addHours(baseStart, 3),
+          requesterId: 'user-2',
+          trainingBooks: env.createProjectBooks('proj-b', ['GEN1', 'EXO']),
+          status: DraftGenerationBuildStatus.Completed
+        }),
+        env.createRowWithDetails({
+          projectId: 'proj-c',
+          startDate: env.addHours(baseStart, 4),
+          finishDate: env.addHours(baseStart, 5),
+          requesterId: 'user-3',
+          trainingBooks: env.createProjectBooks('proj-c', ['GEN2', 'LEV']),
+          status: DraftGenerationBuildStatus.Completed
+        }),
+        env.createRowWithDetails({
+          projectId: 'proj-d',
+          startDate: env.addHours(baseStart, 6),
+          finishDate: env.addHours(baseStart, 7),
+          requesterId: 'user-3',
+          trainingBooks: env.createProjectBooks('proj-c', ['GEN']),
+          status: DraftGenerationBuildStatus.Completed
+        })
+      ];
+
+      // SUT
+      const summary: ServalBuildSummary = buildSummary(rows);
+
+      // Total books includes duplicates and is not influenced by chapter
+      // indications: [GEN, EXO, GEN, EXO, GEN, LEV, GEN] => 7
+      expect(summary.totalTrainingBooks).toBe(7);
+      // Unique books dedupe by book code globally, and is not influenced
+      // by chapter indications: [GEN, EXO, LEV] => 3
+      expect(summary.totalUniqueTrainingBooks).toBe(3);
+    });
+
     it('uses only completed builds for mean duration', () => {
       const env = new TestEnvironment();
       const baseStart: Date = new Date('2024-01-01T00:00:00Z');
