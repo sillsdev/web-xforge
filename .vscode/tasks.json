@@ -120,17 +120,6 @@
       "problemMatcher": "$msCompile"
     },
     {
-      "label": "build-migrator",
-      "command": "dotnet",
-      "args": ["build", "/property:GenerateFullPaths=true"],
-      "type": "shell",
-      "group": "build",
-      "options": {
-        "cwd": "${workspaceRoot}/src/Migrations/WhitespaceRestoreMigration"
-      },
-      "problemMatcher": "$msCompile"
-    },
-    {
       "label": "docker-compose-up",
       "type": "shell",
       "command": "docker compose up -d --build",
