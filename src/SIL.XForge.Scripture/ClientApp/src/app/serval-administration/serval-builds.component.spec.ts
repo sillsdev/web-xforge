@@ -364,6 +364,37 @@ describe('ServalBuildsComponent', () => {
       expect(summary.totalUniqueTrainingBooks).toBe(3);
     });
 
+    it('counts unique books by first three characters even for non-standard tokens', () => {
+      const env = new TestEnvironment();
+      const baseStart: Date = new Date('2024-01-01T00:00:00Z');
+      const rows: ServalBuildRow[] = [
+        env.createRowWithDetails({
+          projectId: 'proj-a',
+          startDate: env.addHours(baseStart, 0),
+          finishDate: env.addHours(baseStart, 1),
+          requesterId: 'user-1',
+          trainingBooks: env.createProjectBooks('proj-a', ['ABC1', 'ABC2']),
+          status: DraftGenerationBuildStatus.Completed
+        }),
+        env.createRowWithDetails({
+          projectId: 'proj-b',
+          startDate: env.addHours(baseStart, 2),
+          finishDate: env.addHours(baseStart, 3),
+          requesterId: 'user-2',
+          trainingBooks: env.createProjectBooks('proj-b', ['1234', '1235']),
+          status: DraftGenerationBuildStatus.Completed
+        })
+      ];
+
+      // SUT
+      const summary: ServalBuildSummary = buildSummary(rows);
+
+      // Total books: [ABC, ABC, 123, 123] => 4
+      expect(summary.totalTrainingBooks).toBe(4);
+      // Unique books dedupe by first three characters: [ABC, 123] => 2
+      expect(summary.totalUniqueTrainingBooks).toBe(2);
+    });
+
     it('uses only completed builds for mean duration', () => {
       const env = new TestEnvironment();
       const baseStart: Date = new Date('2024-01-01T00:00:00Z');
