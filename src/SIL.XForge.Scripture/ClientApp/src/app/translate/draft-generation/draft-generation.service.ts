@@ -18,6 +18,7 @@ import { BuildDto } from '../../machine-api/build-dto';
 import { HttpClient } from '../../machine-api/http-client';
 import { interpretTypes, ServalBuildReportDto } from '../../serval-administration/serval-build-report';
 import { booksFromScriptureRange, formatDateForFilename, getBookFileNameDigits } from '../../shared/utils';
+import { BuildConfidences } from './build-confidences/build-confidences';
 import {
   activeBuildStates,
   BuildConfig,
@@ -72,6 +73,30 @@ export class DraftGenerationService {
       map(res => res.data),
       catchError(err => {
         // If no build has ever been started, return undefined
+        if (err.status === 403 || err.status === 404) {
+          return of(undefined);
+        }
+
+        this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
+        return of(undefined);
+      })
+    );
+  }
+
+  /**
+   * Gets the build confidence scores for a build, if they are present.
+   * @param projectId The Scripture Forge project identifier.
+   * @param buildId The Serval build identifier.
+   * @returns The build confidences if present, otherwise undefined if they are not present or the user is offline.
+   */
+  getBuildConfidences(projectId: string, buildId: string): Observable<BuildConfidences | undefined> {
+    if (!this.onlineStatusService.isOnline) {
+      return of(undefined);
+    }
+    return this.httpClient.get<BuildConfidences>(`translation/builds/id:${projectId}.${buildId}/confidences`).pipe(
+      map(res => res.data),
+      catchError(err => {
+        // If build confidences do not exist or the user does not have permission, return undefined
         if (err.status === 403 || err.status === 404) {
           return of(undefined);
         }
