@@ -1186,6 +1186,32 @@ public class MachineApiService(
             .Values.GroupBy(entry => entry.sfProjectId)
             .ToDictionary(group => group.Key, group => group.First().sfProject);
 
+        // Build a list of project ids and build ids for the draft metric ids
+        // for all projects with quality estimation configured.
+        List<string> draftMetricIds = [];
+        foreach (TranslationBuild translationBuild in translationBuilds)
+        {
+            if (
+                engineToProject.TryGetValue(
+                    translationBuild.Engine.Id,
+                    out (string sfProjectId, SFProject? sfProject) project
+                ) && project.sfProject?.TranslateConfig.DraftConfig.QualityEstimationConfig is not null
+            )
+            {
+                draftMetricIds.Add($"{project.sfProjectId}:{translationBuild.Id}");
+            }
+        }
+
+        // Get the draft metrics for the specified projects/builds
+        List<DraftMetrics> draftMetricsForBuilds = [];
+        if (draftMetricIds.Count > 0)
+        {
+            draftMetricsForBuilds = await draftMetrics
+                .Query()
+                .Where(dm => draftMetricIds.Contains(dm.Id))
+                .ToListAsync(cancellationToken);
+        }
+
         // Build reports from Serval builds
         HashSet<string> matchedRequestIds = [];
         List<ServalBuildReportDto> reports = [];
@@ -1196,6 +1222,7 @@ public class MachineApiService(
                 engineToProject,
                 eventsByProject,
                 projectSnapshots,
+                draftMetricsForBuilds,
                 cancellationToken
             );
             if (report.DraftGenerationRequestId != null)
@@ -1258,16 +1285,27 @@ public class MachineApiService(
         );
         if (attempt.Success)
         {
-            return new BuildConfidences
-            {
-                ProjectId = sfProjectId,
-                BuildId = buildId,
-                BookConfidences = attempt.Result.BookConfidences,
-                ChapterConfidences = attempt.Result.ChapterConfidences,
-            };
+            return MapBuildConfidences(attempt.Result);
         }
 
         return null;
+    }
+
+    private static BuildConfidences? MapBuildConfidences(DraftMetrics? draftMetrics)
+    {
+        if (draftMetrics is null)
+        {
+            return null;
+        }
+
+        string[] id = draftMetrics.Id.Split(':');
+        return new BuildConfidences
+        {
+            ProjectId = id[0],
+            BuildId = id[1],
+            BookConfidences = draftMetrics.BookConfidences,
+            ChapterConfidences = draftMetrics.ChapterConfidences,
+        };
     }
 
     /// <summary>
@@ -1383,6 +1421,7 @@ public class MachineApiService(
         Dictionary<string, (string sfProjectId, SFProject? sfProject)> engineToProject,
         Dictionary<string, List<EventMetric>> eventsByProject,
         Dictionary<string, SFProject?> projectSnapshots,
+        List<DraftMetrics> draftMetricsForBuilds,
         CancellationToken cancellationToken
     )
     {
@@ -1423,6 +1462,12 @@ public class MachineApiService(
         // Build the timeline
         BuildReportTimeline timeline = BuildTimeline(translationBuild, projectEvents, draftGenerationRequestId);
 
+        // Get the draft metrics for the build
+        DraftMetrics buildDraftMetrics =
+            sfProjectId != null
+                ? draftMetricsForBuilds.SingleOrDefault(dm => dm.Id == $"{sfProjectId}:{buildDto.Id}")
+                : null;
+
         return new ServalBuildReportDto
         {
             Build = buildDto,
@@ -1432,6 +1477,7 @@ public class MachineApiService(
             DraftGenerationRequestId = draftGenerationRequestId,
             RequesterSFUserId = requesterUserId,
             Status = ToDraftGenerationBuildStatus(translationBuild.State),
+            BuildConfidences = MapBuildConfidences(buildDraftMetrics),
         };
     }
 
