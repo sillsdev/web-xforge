@@ -19,6 +19,7 @@ import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
+import { BrandingService } from '../../core/branding.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -30,6 +31,7 @@ const mockedProjectService = mock(SFProjectService);
 const mockedNavigator = mock(Navigator);
 const mockedNoticeService = mock(NoticeService);
 const mockedUserService = mock(UserService);
+const mockedBrandingService = mock(BrandingService);
 
 enum TestUsers {
   CommunityChecker = 'user01',
@@ -47,7 +49,8 @@ describe('ShareDialogComponent', () => {
       { provide: NAVIGATOR, useMock: mockedNavigator },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: UserService, useMock: mockedUserService }
+      { provide: UserService, useMock: mockedUserService },
+      { provide: BrandingService, useMock: mockedBrandingService }
     ]
   }));
 
@@ -419,6 +422,7 @@ class TestEnvironment {
         }`
     );
     when(mockedProjectService.isProjectAdmin(projectId, TestUsers.Admin)).thenResolve(true);
+    when(mockedBrandingService.siteName).thenReturn('Scripture Forge');
 
     const config: MatDialogConfig<ShareDialogData> = {
       data: {
