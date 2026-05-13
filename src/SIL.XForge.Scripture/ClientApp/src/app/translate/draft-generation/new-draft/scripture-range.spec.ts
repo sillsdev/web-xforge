@@ -1,4 +1,4 @@
-import { ChapterSet, ScriptureRange, ScriptureRangeBook } from './scripture-range';
+import { ChapterSet, ScriptureRangeBook, VerboseScriptureRange } from './scripture-range';
 
 fdescribe('ScriptureRange', () => {
   describe('ChapterSet', () => {
@@ -47,13 +47,13 @@ fdescribe('ScriptureRange', () => {
 
   describe('ScriptureRange', () => {
     it('creates an empty range when no input', () => {
-      const range = new ScriptureRange([]);
+      const range = new VerboseScriptureRange([]);
       expect(range.books).toEqual([]);
       expect(range.toString()).toBe('');
     });
 
     it('parses multiple books and round-trips toString', () => {
-      const range = new ScriptureRange('GEN1-3,5;EXO2;LEV');
+      const range = new VerboseScriptureRange('GEN1-3,5;EXO2;LEV');
       expect(range.toString()).toBe('GEN1-3,5;EXO2;LEV');
     });
   });

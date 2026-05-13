@@ -5,21 +5,26 @@ export class ChapterSet {
 
   chapters = new Set<number>();
 
-  constructor(range: string | null) {
-    if (range == null) return;
-    const ranges = range.split(ChapterSet.chapterRangeSeparator);
-    for (const range of ranges) {
-      const [startString, endString] = range.split(ChapterSet.chapterRangeStartEndSeparator);
-      if (!(/^\d+$/.test(startString) && (endString == null || /^\d+$/.test(endString)))) {
-        throw new Error(`Invalid chapter range: ${range}`);
+  constructor(range: string | number[]) {
+    if (typeof range === 'string') {
+      const ranges = range.split(ChapterSet.chapterRangeSeparator);
+      for (const range of ranges) {
+        const [startString, endString] = range.split(ChapterSet.chapterRangeStartEndSeparator);
+        if (!(/^\d+$/.test(startString) && (endString == null || /^\d+$/.test(endString)))) {
+          throw new Error(`Invalid chapter range: ${range}`);
+        }
+        const start = parseInt(startString, 10);
+        const end = endString == null ? start : parseInt(endString, 10);
+        if (start > end) {
+          throw new Error(`Start chapter must be less than or equal to end chapter: ${range}`);
+        }
+        for (let i = start; i <= end; i++) {
+          this.chapters.add(i);
+        }
       }
-      const start = parseInt(startString, 10);
-      const end = endString == null ? start : parseInt(endString, 10);
-      if (start > end) {
-        throw new Error(`Start chapter must be less than or equal to end chapter: ${range}`);
-      }
-      for (let i = start; i <= end; i++) {
-        this.chapters.add(i);
+    } else {
+      for (const chapter of range) {
+        this.chapters.add(chapter);
       }
     }
   }
@@ -57,19 +62,19 @@ export class ChapterSet {
   }
 
   intersection(other: ChapterSet): ChapterSet {
-    const result = new ChapterSet(null);
+    const result = new ChapterSet([]);
     result.chapters = this.chapters.intersection(other.chapters);
     return result;
   }
 
   union(other: ChapterSet): ChapterSet {
-    const result = new ChapterSet(null);
+    const result = new ChapterSet([]);
     result.chapters = this.chapters.union(other.chapters);
     return result;
   }
 
   difference(other: ChapterSet): ChapterSet {
-    const result = new ChapterSet(null);
+    const result = new ChapterSet([]);
     result.chapters = this.chapters.difference(other.chapters);
     return result;
   }
@@ -77,87 +82,69 @@ export class ChapterSet {
 
 /** Represents a book in a scripture range, optionally with a range of chapters */
 export class ScriptureRangeBook {
-  static chapterRangeSeparator = ',';
-  static chapterRangeStartEndSeparator = '-';
-
   constructor(
     readonly bookId: string,
-    range?: string
+    range: string | number[]
   ) {
-    if (range != null) {
-      this.chapters = new ChapterSet(range);
-    }
+    this.chapters = new ChapterSet(range);
   }
 
-  chapters?: ChapterSet;
+  chapters: ChapterSet;
 
   toString(): string {
-    return this.bookId + (this.chapters == null ? '' : this.chapters.toString());
+    return this.bookId + this.chapters.toString();
   }
 }
 
-/** Represents a scripture range, which is a set of books, each with an optional range of chapters */
-export class ScriptureRange {
+/**
+ * Represents a scripture range, which is a set of books, each with a range of chapters. Verbose, because the
+ * chapters are explicitly listed and never just implied
+ */
+export class VerboseScriptureRange {
   static bookSeparator = ';';
 
   books: ScriptureRangeBook[] = [];
 
   constructor(range: string | ScriptureRangeBook[]) {
-    if (range != null) {
-      if (typeof range === 'string') {
-        const books = range.split(ScriptureRange.bookSeparator);
-        for (const book of books) {
-          const bookId = book.slice(0, 3);
-          const chapterRange = book.slice(3);
-          this.books.push(new ScriptureRangeBook(bookId, chapterRange === '' ? undefined : chapterRange));
-        }
-      } else {
-        this.books = range;
+    if (typeof range === 'string') {
+      const books = range.split(VerboseScriptureRange.bookSeparator);
+      for (const book of books) {
+        const bookId = book.slice(0, 3);
+        const chapterRange = book.slice(3);
+        this.books.push(new ScriptureRangeBook(bookId, chapterRange));
       }
+    } else {
+      this.books = range;
     }
   }
 
   toString(): string {
-    return this.books.map(book => book.toString()).join(ScriptureRange.bookSeparator);
+    return this.books.map(book => book.toString()).join(VerboseScriptureRange.bookSeparator);
   }
 
-  intersection(other: ScriptureRange): ScriptureRange {
-    const result = new ScriptureRange([]);
+  intersection(other: VerboseScriptureRange): VerboseScriptureRange {
+    const result = new VerboseScriptureRange([]);
     const otherBooksById = new Map(other.books.map(book => [book.bookId, book]));
     for (const book of this.books) {
       const otherBook = otherBooksById.get(book.bookId);
       if (otherBook != null) {
-        const resultBook = new ScriptureRangeBook(book.bookId);
-
-        // If one of the books has no chapter range, treat it as including all chapters, so the intersection is the
-        // other book's chapter range. If both have chapter ranges, take the intersection of the chapter sets.
-        if (book.chapters != null && otherBook.chapters != null) {
-          resultBook.chapters = book.chapters.intersection(otherBook.chapters);
-        } else {
-          resultBook.chapters = book.chapters ?? otherBook.chapters;
-        }
+        const resultBook = new ScriptureRangeBook(book.bookId, [
+          ...otherBook.chapters.intersection(book.chapters).chapters
+        ]);
         result.books.push(resultBook);
       }
     }
     return result;
   }
 
-  union(other: ScriptureRange): ScriptureRange {
-    const result = new ScriptureRange([]);
+  union(other: VerboseScriptureRange): VerboseScriptureRange {
+    const result = new VerboseScriptureRange([]);
     const otherBooksById = new Map(other.books.map(book => [book.bookId, book]));
     for (const book of this.books) {
       const otherBook = otherBooksById.get(book.bookId);
-      const resultBook = new ScriptureRangeBook(book.bookId);
-
-      // If one of the books has no chapter range, treat it as including all chapters, so the union is also all
-      // chapters. If both have chapter ranges, take the union of the chapter sets.
-      if (book != null && book.chapters == null) {
-      } else if (otherBook != null && otherBook.chapters == null) {
-      } else if (book.chapters != null && otherBook?.chapters != null) {
-        resultBook.chapters = book.chapters.union(otherBook.chapters);
-      } else {
-        resultBook.chapters = book.chapters ?? otherBook?.chapters;
-      }
+      const resultBook = new ScriptureRangeBook(book.bookId, [
+        ...book.chapters.union(otherBook?.chapters ?? new ChapterSet([])).chapters
+      ]);
       result.books.push(resultBook);
     }
     for (const otherBook of other.books) {
@@ -168,23 +155,18 @@ export class ScriptureRange {
     return result;
   }
 
-  /**
-   * Returns a new ScriptureRange that includes all books/chapters in this range that are not in the other range. If a
-   * book is in both ranges but only has a chapter range in one, the result will include the chapters in the book that
-   * are not in the other range.
-   */
-  difference(other: ScriptureRange): ScriptureRange {
-    const result = new ScriptureRange([]);
+  difference(other: VerboseScriptureRange): VerboseScriptureRange {
+    const result = new VerboseScriptureRange([]);
     const otherBooksById = new Map(other.books.map(book => [book.bookId, book]));
     for (const book of this.books) {
       const otherBook = otherBooksById.get(book.bookId);
       if (otherBook != null) {
-        const resultBook = new ScriptureRangeBook(book.bookId);
+        const resultBook = new ScriptureRangeBook(book.bookId, []);
 
         // If this book has no chapter range, treat it as including all chapters, so the difference is all chapters
         // except the other book's chapter range. If both have chapter ranges, take the difference of the chapter sets.
         if (book.chapters == null && otherBook.chapters != null) {
-          const allChapters = new ChapterSet(null);
+          const allChapters = new ChapterSet([]);
           for (let i = 1; i <= 150; i++) {
             allChapters.chapters.add(i);
           }
