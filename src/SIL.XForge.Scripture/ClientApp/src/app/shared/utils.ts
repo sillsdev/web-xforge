@@ -75,13 +75,18 @@ export function checkAppAccess(
   router: Router
 ): void {
   if (projectDoc.data == null) return;
-  // Remove the record of the selected task so 'Project Home' will not redirect there
-  void projectUserConfigDoc.submitJson0Op(op => {
-    op.unset(puc => puc.selectedTask!);
-    op.unset(puc => puc.selectedQuestionRef!);
-  });
   const projectRole = projectDoc.data.userRoles[userId] as SFProjectRole;
   const route = '/projects/' + projectDoc.id;
+
+  // Do this in a timeout to allow time for the project user config doc to be deleted if the user was removed entirely
+  setTimeout(() => {
+    if (projectUserConfigDoc.data == null) return;
+    // Remove the record of the selected task so 'Project Home' will not redirect there
+    void projectUserConfigDoc.submitJson0Op(op => {
+      op.unset(puc => puc.selectedTask!);
+      op.unset(puc => puc.selectedQuestionRef!);
+    });
+  }, 1000);
 
   if (pathname.includes('translate') && !roleCanAccessTranslate(projectRole)) {
     void router.navigateByUrl(route, { replaceUrl: true });
