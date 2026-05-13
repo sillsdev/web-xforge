@@ -3,12 +3,12 @@ import { BehaviorSubject, firstValueFrom, map } from 'rxjs';
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
 import { DraftSourcesAsArrays } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
-import { ScriptureRange, ScriptureRangeBook } from './scripture-range';
+import { ScriptureRangeBook, VerboseScriptureRange } from './scripture-range';
 
 @Injectable({ providedIn: 'root' })
 class StubProgressServiceThatGivesChapterLevelInfo {
-  getProgressForProject(_projectId: string): Promise<ScriptureRange> {
-    return Promise.resolve(new ScriptureRange('GEN1-3,5;EXO2;LEV'));
+  getProgressForProject(_projectId: string): Promise<VerboseScriptureRange> {
+    return Promise.resolve(new VerboseScriptureRange('GEN1-3,5;EXO2;LEV'));
   }
 }
 
@@ -19,7 +19,7 @@ type NewDraftAbortMode = 'config_changed' | 'no_access' | null;
  * is useful when the chapter-level detail is not needed, such as when determining which books users can select. If a
  * book is in the range but has no chapters, it is excluded from the list, since it shouldn't be offered for selection.
  */
-function scriptureRangeToBookListWithoutChapterDetail(range: ScriptureRange): string[] {
+function scriptureRangeToBookListWithoutChapterDetail(range: VerboseScriptureRange): string[] {
   return range.books.filter(book => book.chapters == null || book.chapters.count() > 0).map(book => book.bookId);
 }
 
@@ -33,20 +33,20 @@ export class NewDraftLogicHandler {
 
   // A book can be present (in a project), available (logic rules do not forbit selecting it, and it is therefore
   // offered in the UI), and selected (user action, or default values selected the )
-  availableDraftingScriptureRange$ = new BehaviorSubject<ScriptureRange | null>(null);
+  availableDraftingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange | null>(null);
   availableDraftingBooks$ = this.availableDraftingScriptureRange$.pipe(
     map(range => (range ? scriptureRangeToBookListWithoutChapterDetail(range) : null))
   );
-  selectedDraftingScriptureRange$ = new BehaviorSubject<ScriptureRange | null>(null);
+  selectedDraftingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange | null>(null);
   selectedDraftingBooks$ = this.selectedDraftingScriptureRange$.pipe(
     map(range => (range ? scriptureRangeToBookListWithoutChapterDetail(range) : []))
   );
 
-  availableTargetTrainingScriptureRange$ = new BehaviorSubject<ScriptureRange | null>(null);
+  availableTargetTrainingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange | null>(null);
   availableTargetTrainingBooks$ = this.availableTargetTrainingScriptureRange$.pipe(
     map(range => (range ? scriptureRangeToBookListWithoutChapterDetail(range) : []))
   );
-  selectedTargetTrainingScriptureRange$ = new BehaviorSubject<ScriptureRange | null>(null);
+  selectedTargetTrainingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange | null>(null);
   selectedTargetTrainingBooks$ = this.selectedTargetTrainingScriptureRange$.pipe(
     map(range => (range ? scriptureRangeToBookListWithoutChapterDetail(range) : []))
   );
@@ -91,7 +91,7 @@ export class NewDraftLogicHandler {
   async init(): Promise<void> {
     if (this.activatedProjectService.projectId == null) throw new Error('No project selected');
 
-    let progressReport: ScriptureRange;
+    let progressReport: VerboseScriptureRange;
     [progressReport, this.sources] = await Promise.all([
       this.progressService.getProgressForProject(this.activatedProjectService.projectId),
       // // TODO listen for more updates to figure out if we need to bail out and restart the process
@@ -124,7 +124,7 @@ export class NewDraftLogicHandler {
     if (this.inputMode$.getValue() !== 'draft_books') {
       throw new Error('Cannot update draft books when not in draft_books input mode');
     }
-    const newBooksScriptureRange = new ScriptureRange(books.map(bookId => new ScriptureRangeBook(bookId)));
+    const newBooksScriptureRange = new VerboseScriptureRange(books.map(bookId => new ScriptureRangeBook(bookId)));
     const newDraftingScriptureRange = newBooksScriptureRange.intersection(
       this.availableDraftingScriptureRange$.getValue()!
     );
@@ -135,7 +135,7 @@ export class NewDraftLogicHandler {
     if (this.inputMode$.getValue() !== 'training_books') {
       throw new Error('Cannot update training books when not in training_books input mode');
     }
-    const newBooksScriptureRange = new ScriptureRange(books.map(bookId => new ScriptureRangeBook(bookId)));
+    const newBooksScriptureRange = new VerboseScriptureRange(books.map(bookId => new ScriptureRangeBook(bookId)));
     const newTargetTrainingScriptureRange = newBooksScriptureRange.intersection(
       this.availableTargetTrainingScriptureRange$.getValue()!
     );
@@ -147,5 +147,13 @@ export class NewDraftLogicHandler {
     this.status$.next('abort');
   }
 
-  private limitAvailableTrainingBooksBasedOnSelectedDraftingBooks(): void {}
+  private limitAvailableTrainingBooksBasedOnSelectedDraftingBooks(): void {
+    const selectedDraftingBooks = this.selectedDraftingScriptureRange$.getValue();
+    if (selectedDraftingBooks == null) return;
+
+    const availableTrainingBooks = this.availableTargetTrainingScriptureRange$.getValue();
+    if (availableTrainingBooks == null) return;
+
+    const draftingScriptureRange;
+  }
 }
