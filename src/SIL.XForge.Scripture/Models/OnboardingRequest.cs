@@ -114,6 +114,9 @@ public class OnboardingRequestFormData
     public string? sourceProjectB { get; set; }
     public string? sourceProjectC { get; set; }
     public string? DraftingSourceProject { get; set; }
+
+    /// <summary> Field manager for the project. Shown when <see cref="PartnerOrganization"/> is "Seed Company". </summary>
+    public string? FieldManager { get; set; }
     public string BackTranslationStage { get; set; } = string.Empty;
     public string? BackTranslationProject { get; set; }
     public string BackTranslationLanguageName { get; set; } = string.Empty;
