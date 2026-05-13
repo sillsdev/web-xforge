@@ -11,7 +11,6 @@ import { isObj } from '../../type-utils';
 import { SelectableProject } from '../core/models/selectable-project';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from '../core/models/sf-project-role-info';
-import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { DraftSource } from '../translate/draft-generation/draft-source';
 
 /**
@@ -70,23 +69,12 @@ export function attributeFromMouseEvent(event: MouseEvent, nodeName: string, att
 export function checkAppAccess(
   projectDoc: SFProjectProfileDoc,
   userId: string,
-  projectUserConfigDoc: SFProjectUserConfigDoc,
   pathname: string,
   router: Router
 ): void {
   if (projectDoc.data == null) return;
   const projectRole = projectDoc.data.userRoles[userId] as SFProjectRole;
   const route = '/projects/' + projectDoc.id;
-
-  // Do this in a timeout to allow time for the project user config doc to be deleted if the user was removed entirely
-  setTimeout(() => {
-    if (projectUserConfigDoc.data == null) return;
-    // Remove the record of the selected task so 'Project Home' will not redirect there
-    void projectUserConfigDoc.submitJson0Op(op => {
-      op.unset(puc => puc.selectedTask!);
-      op.unset(puc => puc.selectedQuestionRef!);
-    });
-  }, 1000);
 
   if (pathname.includes('translate') && !roleCanAccessTranslate(projectRole)) {
     void router.navigateByUrl(route, { replaceUrl: true });
