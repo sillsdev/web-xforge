@@ -1,31 +1,26 @@
-import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { BehaviorSubject } from 'rxjs';
+import { DestroyRef, Injectable } from '@angular/core';
+import { BehaviorSubject, firstValueFrom, map } from 'rxjs';
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
-import { SFProjectService } from '../../../core/sf-project.service';
-import { DraftSource } from '../draft-source';
+import { DraftSourcesAsArrays } from '../draft-source';
+import { DraftSourcesService } from '../draft-sources.service';
+import { ScriptureRange, ScriptureRangeBook } from './scripture-range';
 
-// 1:54
-class ScriptureRangeBook {
-  constructor(readonly bookId: string) {}
-  chapters?: Set<number>;
-  toString(): string {
-    return this.bookId + (this.chapters == null ? '' : [...this.chapters].join(','));
+@Injectable({ providedIn: 'root' })
+class StubProgressServiceThatGivesChapterLevelInfo {
+  getProgressForProject(_projectId: string): Promise<ScriptureRange> {
+    return Promise.resolve(new ScriptureRange('GEN1-3,5;EXO2;LEV'));
   }
 }
 
-class ScriptureRange {
-  books: ScriptureRangeBook[] = [];
-  constructor(private range?: string) {
-    if (range != null) {
-      const books = range?.split(';');
-      const bookId = range.slice(0, 3);
-      const chapterRange = range.slice(3);
-    }
-  }
+type NewDraftAbortMode = 'config_changed' | 'no_access' | null;
 
-  toString(): string {
-    return this.books.map(book => book.toString()).join(';');
-  }
+/**
+ * Converts a ScriptureRange to a list of book IDs without including details about which chapters are in each book. This
+ * is useful when the chapter-level detail is not needed, such as when determining which books users can select. If a
+ * book is in the range but has no chapters, it is excluded from the list, since it shouldn't be offered for selection.
+ */
+function scriptureRangeToBookListWithoutChapterDetail(range: ScriptureRange): string[] {
+  return range.books.filter(book => book.chapters == null || book.chapters.count() > 0).map(book => book.bookId);
 }
 
 /**
@@ -33,20 +28,32 @@ class ScriptureRange {
  * UI interaction.
  */
 export class NewDraftLogicHandler {
-  status$: BehaviorSubject<'init' | 'input' | 'abort'> = new BehaviorSubject('init');
+  status$ = new BehaviorSubject<'init' | 'input' | 'abort'>('init');
+  abortMode$ = new BehaviorSubject<NewDraftAbortMode>(null);
 
   // A book can be present (in a project), available (logic rules do not forbit selecting it, and it is therefore
   // offered in the UI), and selected (user action, or default values selected the )
+  availableDraftingScriptureRange$ = new BehaviorSubject<ScriptureRange | null>(null);
+  availableDraftingBooks$ = this.availableDraftingScriptureRange$.pipe(
+    map(range => (range ? scriptureRangeToBookListWithoutChapterDetail(range) : null))
+  );
+  selectedDraftingScriptureRange$ = new BehaviorSubject<ScriptureRange | null>(null);
+  selectedDraftingBooks$ = this.selectedDraftingScriptureRange$.pipe(
+    map(range => (range ? scriptureRangeToBookListWithoutChapterDetail(range) : []))
+  );
 
-  availableDraftingBooks$: BehaviorSubject<number[]> = new BehaviorSubject([]);
-  selectedDraftingBooks$: BehaviorSubject<number[]> = new BehaviorSubject([]);
+  availableTargetTrainingScriptureRange$ = new BehaviorSubject<ScriptureRange | null>(null);
+  availableTargetTrainingBooks$ = this.availableTargetTrainingScriptureRange$.pipe(
+    map(range => (range ? scriptureRangeToBookListWithoutChapterDetail(range) : []))
+  );
+  selectedTargetTrainingScriptureRange$ = new BehaviorSubject<ScriptureRange | null>(null);
+  selectedTargetTrainingBooks$ = this.selectedTargetTrainingScriptureRange$.pipe(
+    map(range => (range ? scriptureRangeToBookListWithoutChapterDetail(range) : []))
+  );
 
-  availableTargetTrainingBooks$: BehaviorSubject<number[]> = new BehaviorSubject([]);
-  selectedTargetTrainingBooks$: BehaviorSubject<number[]> = new BehaviorSubject([]);
-
-  availableSourceTrainingBooks$: BehaviorSubject<{ [key: string]: number[] }> = new BehaviorSubject([]);
+  availableSourceTrainingBooks$ = new BehaviorSubject<{ [key: string]: number[] }>({});
   /** The selected training books on the source side, by project ID (makes mixed source possible) */
-  selectedSourceTrainingBooks$: BehaviorSubject<{ [key: string]: number[] }> = new BehaviorSubject([]);
+  selectedSourceTrainingBooks$ = new BehaviorSubject<{ [key: string]: number[] }>({});
 
   /**
    * SPecifies what input mode the user is using. When a book is selected for use as drafting, it must be automatically
@@ -54,7 +61,7 @@ export class NewDraftLogicHandler {
    * draft, that book shouldn't be automatically removed from being used as training data. Tracking the input state
    * allows update rules to be enforced at the right point in time.
    */
-  private inputMode$: BehaviorSubject<'draft_books' | 'training_books'> = new BehaviorSubject('draft_books');
+  private inputMode$ = new BehaviorSubject<'draft_books' | 'training_books'>('draft_books');
 
   /**
    * Whether the user has edited the training books. This impacts how the previously selected training books are
@@ -65,15 +72,13 @@ export class NewDraftLogicHandler {
    */
   trainingBooksEdited: boolean = false;
 
-  sources: {
-    trainingSources: DraftSource[];
-    trainingTarget: SFProjectProfile;
-    draftingSourc: DraftSource;
-  } = {};
+  sources?: DraftSourcesAsArrays;
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
-    private readonly projectService: SFProjectService
+    private readonly draftSourcesService: DraftSourcesService,
+    private readonly progressService: StubProgressServiceThatGivesChapterLevelInfo,
+    private readonly destroyRef: DestroyRef
   ) {
     void this.init();
   }
@@ -84,9 +89,27 @@ export class NewDraftLogicHandler {
    * user to restart the process). Automatically sets training books to most recently selected training books.
    */
   async init(): Promise<void> {
-    // ensure projects do not have changes on Paratext that haven't synced yet
-    // load progress data
-    //
+    if (this.activatedProjectService.projectId == null) throw new Error('No project selected');
+
+    let progressReport: ScriptureRange;
+    [progressReport, this.sources] = await Promise.all([
+      this.progressService.getProgressForProject(this.activatedProjectService.projectId),
+      // // TODO listen for more updates to figure out if we need to bail out and restart the process
+      firstValueFrom(this.draftSourcesService.getDraftProjectSources())
+    ]);
+
+    const sourcesWithNoAccess = [
+      ...this.sources.trainingSources,
+      ...this.sources.trainingTargets,
+      ...this.sources.draftingSources
+    ].filter(source => source.noAccess);
+    if (sourcesWithNoAccess.length > 0) {
+      // TODO specify which projects cannot be accessed
+      this.abort('no_access');
+      return;
+    }
+
+    this.availableDraftingScriptureRange$.next(progressReport);
   }
 
   setInputMode(newMode: 'draft_books' | 'training_books'): void {
@@ -94,24 +117,35 @@ export class NewDraftLogicHandler {
     if (currentMode === 'draft_books' && newMode === 'training_books') {
       this.limitAvailableTrainingBooksBasedOnSelectedDraftingBooks();
     }
-    this.inputMode$.setValue(newMode);
+    this.inputMode$.next(newMode);
   }
 
-  selectDraftingBooks(books: number[]) {
+  selectDraftingBooks(books: string[]): void {
     if (this.inputMode$.getValue() !== 'draft_books') {
       throw new Error('Cannot update draft books when not in draft_books input mode');
     }
-    this.selectedDraftingBooks$.next(books);
+    const newBooksScriptureRange = new ScriptureRange(books.map(bookId => new ScriptureRangeBook(bookId)));
+    const newDraftingScriptureRange = newBooksScriptureRange.intersection(
+      this.availableDraftingScriptureRange$.getValue()!
+    );
+    this.selectedDraftingScriptureRange$.next(newDraftingScriptureRange);
   }
 
-  selectTargetTrainingBooks(books: number[]) {
+  selectTargetTrainingBooks(books: string[]): void {
     if (this.inputMode$.getValue() !== 'training_books') {
       throw new Error('Cannot update training books when not in training_books input mode');
     }
-    this.selectedTargetTrainingBooks$.next(books);
+    const newBooksScriptureRange = new ScriptureRange(books.map(bookId => new ScriptureRangeBook(bookId)));
+    const newTargetTrainingScriptureRange = newBooksScriptureRange.intersection(
+      this.availableTargetTrainingScriptureRange$.getValue()!
+    );
+    this.selectedTargetTrainingScriptureRange$.next(newTargetTrainingScriptureRange);
   }
 
-  private limitAvailableTrainingBooksBasedOnSelectedDraftingBooks(): void {
-    const targetBooks;
+  private abort(mode: NewDraftAbortMode): void {
+    this.abortMode$.next(mode);
+    this.status$.next('abort');
   }
+
+  private limitAvailableTrainingBooksBasedOnSelectedDraftingBooks(): void {}
 }
