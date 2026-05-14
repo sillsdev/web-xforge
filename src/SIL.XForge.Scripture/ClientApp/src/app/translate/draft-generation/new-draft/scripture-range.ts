@@ -7,6 +7,7 @@ export class ChapterSet {
 
   constructor(range: string | number[]) {
     if (typeof range === 'string') {
+      if (range === '') return;
       const ranges = range.split(ChapterSet.chapterRangeSeparator);
       for (const range of ranges) {
         const [startString, endString] = range.split(ChapterSet.chapterRangeStartEndSeparator);
@@ -80,22 +81,6 @@ export class ChapterSet {
   }
 }
 
-/** Represents a book in a scripture range, optionally with a range of chapters */
-export class ScriptureRangeBook {
-  constructor(
-    readonly bookId: string,
-    range: string | number[]
-  ) {
-    this.chapters = new ChapterSet(range);
-  }
-
-  chapters: ChapterSet;
-
-  toString(): string {
-    return this.bookId + this.chapters.toString();
-  }
-}
-
 /**
  * Represents a scripture range, which is a set of books, each with a range of chapters. Verbose, because the
  * chapters are explicitly listed and never just implied
@@ -103,15 +88,16 @@ export class ScriptureRangeBook {
 export class VerboseScriptureRange {
   static bookSeparator = ';';
 
-  books: ScriptureRangeBook[] = [];
+  books: Map<string, ChapterSet> = new Map();
 
-  constructor(range: string | ScriptureRangeBook[]) {
+  constructor(range: string) {
     if (typeof range === 'string') {
+      if (range === '') return;
       const books = range.split(VerboseScriptureRange.bookSeparator);
       for (const book of books) {
         const bookId = book.slice(0, 3);
         const chapterRange = book.slice(3);
-        this.books.push(new ScriptureRangeBook(bookId, chapterRange));
+        this.books.set(bookId, new ChapterSet(chapterRange));
       }
     } else {
       this.books = range;
@@ -119,68 +105,62 @@ export class VerboseScriptureRange {
   }
 
   toString(): string {
-    return this.books.map(book => book.toString()).join(VerboseScriptureRange.bookSeparator);
+    return Array.from(this.books.entries())
+      .map(([bookId, chapters]) => bookId + chapters.toString())
+      .join(VerboseScriptureRange.bookSeparator);
   }
 
   intersection(other: VerboseScriptureRange): VerboseScriptureRange {
-    const result = new VerboseScriptureRange([]);
-    const otherBooksById = new Map(other.books.map(book => [book.bookId, book]));
-    for (const book of this.books) {
-      const otherBook = otherBooksById.get(book.bookId);
-      if (otherBook != null) {
-        const resultBook = new ScriptureRangeBook(book.bookId, [
-          ...otherBook.chapters.intersection(book.chapters).chapters
-        ]);
-        result.books.push(resultBook);
+    const result = new VerboseScriptureRange('');
+    for (const [bookId, chapters] of this.books) {
+      const otherChapters = other.books.get(bookId);
+      if (otherChapters != null) {
+        const resultChapters = chapters.intersection(otherChapters);
+        result.books.set(bookId, resultChapters);
       }
     }
+    result.removeEmptyBooks();
     return result;
   }
 
   union(other: VerboseScriptureRange): VerboseScriptureRange {
-    const result = new VerboseScriptureRange([]);
-    const otherBooksById = new Map(other.books.map(book => [book.bookId, book]));
-    for (const book of this.books) {
-      const otherBook = otherBooksById.get(book.bookId);
-      const resultBook = new ScriptureRangeBook(book.bookId, [
-        ...book.chapters.union(otherBook?.chapters ?? new ChapterSet([])).chapters
-      ]);
-      result.books.push(resultBook);
-    }
-    for (const otherBook of other.books) {
-      if (!result.books.some(book => book.bookId === otherBook.bookId)) {
-        result.books.push(otherBook);
+    const result = new VerboseScriptureRange('');
+    for (const [bookId, chapters] of this.books) {
+      const otherChapters = other.books.get(bookId);
+      if (otherChapters != null) {
+        const resultChapters = chapters.union(otherChapters);
+        result.books.set(bookId, resultChapters);
+      } else {
+        result.books.set(bookId, chapters);
       }
     }
+    for (const [bookId, chapters] of other.books) {
+      if (!result.books.has(bookId)) {
+        result.books.set(bookId, chapters);
+      }
+    }
+    result.removeEmptyBooks();
     return result;
   }
 
   difference(other: VerboseScriptureRange): VerboseScriptureRange {
-    const result = new VerboseScriptureRange([]);
-    const otherBooksById = new Map(other.books.map(book => [book.bookId, book]));
-    for (const book of this.books) {
-      const otherBook = otherBooksById.get(book.bookId);
-      if (otherBook != null) {
-        const resultBook = new ScriptureRangeBook(book.bookId, []);
-
-        // If this book has no chapter range, treat it as including all chapters, so the difference is all chapters
-        // except the other book's chapter range. If both have chapter ranges, take the difference of the chapter sets.
-        if (book.chapters == null && otherBook.chapters != null) {
-          const allChapters = new ChapterSet([]);
-          for (let i = 1; i <= 150; i++) {
-            allChapters.chapters.add(i);
-          }
-          resultBook.chapters = allChapters.difference(otherBook.chapters);
-        } else if (book.chapters != null && otherBook.chapters != null) {
-          resultBook.chapters = book.chapters.difference(otherBook.chapters);
-        } else {
-          resultBook.chapters = book.chapters;
-        }
-        result.books.push(resultBook);
+    const result = new VerboseScriptureRange('');
+    for (const [bookId, chapters] of this.books) {
+      const otherChapters = other.books.get(bookId);
+      if (otherChapters != null) {
+        const resultChapters = chapters.difference(otherChapters);
+        result.books.set(bookId, resultChapters);
       } else {
-        result.books.push(book);
+        result.books.set(bookId, chapters);
       }
     }
+    result.removeEmptyBooks();
     return result;
+  }
+
+  private removeEmptyBooks(): void {
+    for (const [bookId, chapters] of this.books) {
+      if (chapters.count() === 0) this.books.delete(bookId);
+    }
   }
 }
