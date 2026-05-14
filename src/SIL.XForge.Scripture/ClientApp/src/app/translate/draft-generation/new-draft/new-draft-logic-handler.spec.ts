@@ -105,6 +105,45 @@ fdescribe('NewDraftLogicHandler', () => {
     expect(env.selectedTargetTrainingScriptureRange).toBe('MRK1-16;LUK1-24;JHN1-21');
     expect(env.selectedTrainingSourceBooks).toEqual({ 'training-source-1-id': ['MRK', 'LUK', 'JHN'] });
   });
+
+  it('allows drafting a subset of chapters of a partially completed book', async () => {
+    const testState = teamStartingToTranslateGenesis;
+    const env = new TestEnvironment(testState);
+    await env.waitForInit();
+
+    env.logicHandler.selectDraftingBooks(['GEN']);
+
+    // Even though the progress service indicates that GEN1-5 are completed, the user should still be able to select GEN1-50 for drafting
+    expect(env.selectedDraftingScriptureRange).toBe('GEN1-50');
+    expect(env.booksOfferedForPartialDrafting).toEqual(['GEN']);
+  });
+
+  it('does not allow drafting a subset of chapters of a book that has not been started', async () => {
+    const testState = teamStartingToTranslateGenesis;
+    const env = new TestEnvironment(testState);
+    await env.waitForInit();
+
+    env.logicHandler.selectDraftingBooks(['EXO']);
+
+    // Even though the progress service indicates that GEN1-5 are completed, the user should still be able to select GEN1-50 for drafting
+    expect(env.selectedDraftingScriptureRange).toBe('EXO1-40');
+    expect(env.booksOfferedForPartialDrafting).toEqual([]);
+  });
+
+  it('allows drafting a subset of chapters of a book that has been completed', async () => {
+    const testState = {
+      ...teamStartingToTranslateGenesis,
+      targetProjectBooksChapters: teamStartingToTranslateGenesis.targetProjectBooksChapters.replace('GEN1-5', 'GEN1-50')
+    };
+    const env = new TestEnvironment(testState);
+    await env.waitForInit();
+
+    env.logicHandler.selectDraftingBooks(['GEN']);
+
+    // Even though the progress service indicates that GEN1-50 are completed, the user should still be able to select GEN1-50 for drafting
+    expect(env.selectedDraftingScriptureRange).toBe('GEN1-50');
+    expect(env.booksOfferedForPartialDrafting).toEqual(['GEN']);
+  });
 });
 
 const mockedActivatedProjectService = mock(ActivatedProjectService);
@@ -221,5 +260,9 @@ class TestEnvironment {
 
   get selectedDraftingScriptureRange(): string {
     return this.logicHandler.selectedDraftingScriptureRange$.getValue().toString();
+  }
+
+  get booksOfferedForPartialDrafting(): string[] {
+    return this.logicHandler.booksOfferedForPartialDrafting$.getValue();
   }
 }
