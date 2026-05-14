@@ -1,12 +1,12 @@
-import { DestroyRef, Injectable } from '@angular/core';
-import { BehaviorSubject, firstValueFrom, map } from 'rxjs';
+import { Injectable } from '@angular/core';
+import { BehaviorSubject, firstValueFrom } from 'rxjs';
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
 import { DraftSourcesAsArrays } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
-import { ScriptureRangeBook, VerboseScriptureRange } from './scripture-range';
+import { VerboseScriptureRange } from './scripture-range';
 
 @Injectable({ providedIn: 'root' })
-class StubProgressServiceThatGivesChapterLevelInfo {
+export class StubProgressServiceThatGivesChapterLevelInfo {
   getProgressForProject(_projectId: string): Promise<VerboseScriptureRange> {
     return Promise.resolve(new VerboseScriptureRange('GEN1-3,5;EXO2;LEV'));
   }
@@ -20,12 +20,23 @@ type NewDraftAbortMode = 'config_changed' | 'no_access' | null;
  * book is in the range but has no chapters, it is excluded from the list, since it shouldn't be offered for selection.
  */
 function scriptureRangeToBookListWithoutChapterDetail(range: VerboseScriptureRange): string[] {
-  return range.books.filter(book => book.chapters == null || book.chapters.count() > 0).map(book => book.bookId);
+  return Array.from(range.books.keys());
+}
+
+function mapObject<T, U>(obj: { [key: string]: T }, mapFn: (key: string, value: T) => U): { [key: string]: U } {
+  return Object.fromEntries(Object.entries(obj).map(([key, value]) => [key, mapFn(key, value)]));
 }
 
 /**
- * Implements business logic for creating a new draft. Intended to be used in conjunction with component that handles
+ * Implements business logic for creating a new draft. Intended to be used in conjunction with a component that handles
  * UI interaction.
+ *
+ * Basic flow is:
+ * 1. Initilization: Loads project and progress data, determines which books and chapters are available for drafting and
+ * training, and sets up subscriptions to watch background changes that would necessitate forcing the user to start
+ * over. The draft source and target projects are tracked at a chapter level, while the training sources are only
+ * tracked at a book level.
+ *
  */
 export class NewDraftLogicHandler {
   status$ = new BehaviorSubject<'init' | 'input' | 'abort'>('init');
@@ -33,27 +44,16 @@ export class NewDraftLogicHandler {
 
   // A book can be present (in a project), available (logic rules do not forbit selecting it, and it is therefore
   // offered in the UI), and selected (user action, or default values selected the )
-  availableDraftingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange | null>(null);
-  availableDraftingBooks$ = this.availableDraftingScriptureRange$.pipe(
-    map(range => (range ? scriptureRangeToBookListWithoutChapterDetail(range) : null))
-  );
-  selectedDraftingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange | null>(null);
-  selectedDraftingBooks$ = this.selectedDraftingScriptureRange$.pipe(
-    map(range => (range ? scriptureRangeToBookListWithoutChapterDetail(range) : []))
-  );
+  availableDraftingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange>(new VerboseScriptureRange(''));
+  selectedDraftingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange>(new VerboseScriptureRange(''));
 
-  availableTargetTrainingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange | null>(null);
-  availableTargetTrainingBooks$ = this.availableTargetTrainingScriptureRange$.pipe(
-    map(range => (range ? scriptureRangeToBookListWithoutChapterDetail(range) : []))
-  );
-  selectedTargetTrainingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange | null>(null);
-  selectedTargetTrainingBooks$ = this.selectedTargetTrainingScriptureRange$.pipe(
-    map(range => (range ? scriptureRangeToBookListWithoutChapterDetail(range) : []))
-  );
+  availableTargetTrainingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange>(new VerboseScriptureRange(''));
+  selectedTargetTrainingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange>(new VerboseScriptureRange(''));
 
-  availableSourceTrainingBooks$ = new BehaviorSubject<{ [key: string]: number[] }>({});
-  /** The selected training books on the source side, by project ID (makes mixed source possible) */
-  selectedSourceTrainingBooks$ = new BehaviorSubject<{ [key: string]: number[] }>({});
+  /** Books that exist in the training sources, by project ID */
+  trainingSourceBooks$ = new BehaviorSubject<{ [projectId: string]: string[] }>({});
+  availableTrainingSourceBooks$ = new BehaviorSubject<{ [projectId: string]: string[] }>({});
+  selectedTrainingSourceBooks$ = new BehaviorSubject<{ [projectId: string]: string[] }>({});
 
   /**
    * SPecifies what input mode the user is using. When a book is selected for use as drafting, it must be automatically
@@ -77,8 +77,8 @@ export class NewDraftLogicHandler {
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly draftSourcesService: DraftSourcesService,
-    private readonly progressService: StubProgressServiceThatGivesChapterLevelInfo,
-    private readonly destroyRef: DestroyRef
+    private readonly progressService: StubProgressServiceThatGivesChapterLevelInfo
+    // private readonly _destroyRef: DestroyRef
   ) {
     void this.init();
   }
@@ -90,10 +90,33 @@ export class NewDraftLogicHandler {
    */
   async init(): Promise<void> {
     if (this.activatedProjectService.projectId == null) throw new Error('No project selected');
+    if (this.activatedProjectService.projectDoc?.data == null) throw new Error('Project data not loaded');
 
-    let progressReport: VerboseScriptureRange;
-    [progressReport, this.sources] = await Promise.all([
+    const draftConfig = this.activatedProjectService.projectDoc?.data?.translateConfig?.draftConfig;
+
+    if (draftConfig == null) throw new Error('Draft config not found in project data');
+
+    if (draftConfig.draftingSources.length !== 1) {
+      throw new Error(`Expected exactly one drafting source; found ${draftConfig.draftingSources.length}`);
+    }
+    const draftingSource = draftConfig.draftingSources[0];
+
+    let draftSourceProgress: VerboseScriptureRange;
+    let targetProjectProgress: VerboseScriptureRange;
+    let trainingSourcesProgress: { projectId: string; range: VerboseScriptureRange }[];
+    // Create a promise for loading the progress for all training sources, so that it can be done in parallel with
+    // loading the progress for the drafting source and target project
+    const trainingSourcesProgressPromise = Promise.all(
+      draftConfig.trainingSources.map(async trainingSource => {
+        const progress = await this.progressService.getProgressForProject(trainingSource.projectRef);
+        return { projectId: trainingSource.projectRef, range: progress };
+      })
+    );
+
+    [draftSourceProgress, targetProjectProgress, trainingSourcesProgress, this.sources] = await Promise.all([
+      this.progressService.getProgressForProject(draftingSource.projectRef),
       this.progressService.getProgressForProject(this.activatedProjectService.projectId),
+      trainingSourcesProgressPromise,
       // // TODO listen for more updates to figure out if we need to bail out and restart the process
       firstValueFrom(this.draftSourcesService.getDraftProjectSources())
     ]);
@@ -109,13 +132,29 @@ export class NewDraftLogicHandler {
       return;
     }
 
-    this.availableDraftingScriptureRange$.next(progressReport);
+    this.availableDraftingScriptureRange$.next(draftSourceProgress);
+    this.availableTargetTrainingScriptureRange$.next(targetProjectProgress);
+    this.trainingSourceBooks$.next(
+      Object.fromEntries(
+        trainingSourcesProgress.map(source => [
+          source.projectId,
+          scriptureRangeToBookListWithoutChapterDetail(source.range)
+        ])
+      )
+    );
+
+    this.status$.next('input');
   }
 
+  hasVisitedTrainingBooksInputMode = false;
   setInputMode(newMode: 'draft_books' | 'training_books'): void {
     const currentMode = this.inputMode$.getValue();
     if (currentMode === 'draft_books' && newMode === 'training_books') {
-      this.limitAvailableTrainingBooksBasedOnSelectedDraftingBooks();
+      if (!this.hasVisitedTrainingBooksInputMode) {
+        this.loadPreviouslySelectedTrainingBooks();
+        this.hasVisitedTrainingBooksInputMode = true;
+      }
+      this.limitAvailableTrainingRangeBasedOnSelectedDraftingRange();
     }
     this.inputMode$.next(newMode);
   }
@@ -124,10 +163,13 @@ export class NewDraftLogicHandler {
     if (this.inputMode$.getValue() !== 'draft_books') {
       throw new Error('Cannot update draft books when not in draft_books input mode');
     }
-    const newBooksScriptureRange = new VerboseScriptureRange(books.map(bookId => new ScriptureRangeBook(bookId)));
-    const newDraftingScriptureRange = newBooksScriptureRange.intersection(
-      this.availableDraftingScriptureRange$.getValue()!
-    );
+    const newDraftingScriptureRange = new VerboseScriptureRange('');
+    for (const bookId of books) {
+      const bookRange = this.availableDraftingScriptureRange$.getValue()?.books.get(bookId);
+      if (bookRange) {
+        newDraftingScriptureRange.books.set(bookId, bookRange);
+      }
+    }
     this.selectedDraftingScriptureRange$.next(newDraftingScriptureRange);
   }
 
@@ -135,10 +177,13 @@ export class NewDraftLogicHandler {
     if (this.inputMode$.getValue() !== 'training_books') {
       throw new Error('Cannot update training books when not in training_books input mode');
     }
-    const newBooksScriptureRange = new VerboseScriptureRange(books.map(bookId => new ScriptureRangeBook(bookId)));
-    const newTargetTrainingScriptureRange = newBooksScriptureRange.intersection(
-      this.availableTargetTrainingScriptureRange$.getValue()!
-    );
+    const newTargetTrainingScriptureRange = new VerboseScriptureRange('');
+    for (const bookId of books) {
+      const bookRange = this.availableTargetTrainingScriptureRange$.getValue()?.books.get(bookId);
+      if (bookRange) {
+        newTargetTrainingScriptureRange.books.set(bookId, bookRange);
+      }
+    }
     this.selectedTargetTrainingScriptureRange$.next(newTargetTrainingScriptureRange);
   }
 
@@ -147,13 +192,67 @@ export class NewDraftLogicHandler {
     this.status$.next('abort');
   }
 
-  private limitAvailableTrainingBooksBasedOnSelectedDraftingBooks(): void {
-    const selectedDraftingBooks = this.selectedDraftingScriptureRange$.getValue();
-    if (selectedDraftingBooks == null) return;
+  private loadPreviouslySelectedTrainingBooks(): void {
+    const draftConfig = this.activatedProjectService.projectDoc?.data?.translateConfig?.draftConfig;
+    if (draftConfig == null) throw new Error('Draft config not found in project data');
+    const selectedTrainingSourceBooksByProjectId: { [key: string]: string[] } = {};
+    const availableTrainingSourceBooksByProjectId: { [key: string]: string[] } = {};
+    for (const sourceScriptureRange of draftConfig.lastSelectedTrainingScriptureRanges ?? []) {
+      const previouslySelectedBooks = (selectedTrainingSourceBooksByProjectId[sourceScriptureRange.projectId] =
+        Array.from(new VerboseScriptureRange(sourceScriptureRange.scriptureRange).books.keys()));
+      const booksCurrentlyPresentInProject = this.trainingSourceBooks$.getValue()[sourceScriptureRange.projectId] ?? [];
+      availableTrainingSourceBooksByProjectId[sourceScriptureRange.projectId] = booksCurrentlyPresentInProject;
+      selectedTrainingSourceBooksByProjectId[sourceScriptureRange.projectId] = previouslySelectedBooks.filter(bookId =>
+        booksCurrentlyPresentInProject.includes(bookId)
+      );
+    }
+    this.availableTrainingSourceBooks$.next(availableTrainingSourceBooksByProjectId);
+    this.selectedTrainingSourceBooks$.next(selectedTrainingSourceBooksByProjectId);
 
-    const availableTrainingBooks = this.availableTargetTrainingScriptureRange$.getValue();
-    if (availableTrainingBooks == null) return;
+    // Combine the previously selected source training scripture ranges to estimate the previously selected target
+    // training scripture range. This isn't correct behavior (TODO fix), but is the current behavior, and we aren't
+    // storing the information we need to do it correctly.
+    const allPreviouslySelectedBooks = new Set(
+      Object.values(selectedTrainingSourceBooksByProjectId).reduce((acc, books) => acc.concat(books), [])
+    );
+    const availableTargetTrainingScriptureRange = this.availableTargetTrainingScriptureRange$.getValue();
+    if (availableTargetTrainingScriptureRange == null) {
+      throw new Error('Available target training scripture range not loaded');
+    }
+    const targetTrainingScriptureRange = new VerboseScriptureRange('');
+    for (const bookId of allPreviouslySelectedBooks) {
+      const bookRange = availableTargetTrainingScriptureRange.books.get(bookId);
+      if (bookRange) {
+        targetTrainingScriptureRange.books.set(bookId, bookRange);
+      }
+    }
 
-    const draftingScriptureRange;
+    this.selectedTargetTrainingScriptureRange$.next(targetTrainingScriptureRange);
+  }
+
+  private limitAvailableTrainingRangeBasedOnSelectedDraftingRange(): void {
+    // Limit available and selected target training scripture range to not overlap selected drafting range
+    this.availableTargetTrainingScriptureRange$.next(
+      this.availableTargetTrainingScriptureRange$
+        .getValue()!
+        .difference(this.selectedDraftingScriptureRange$.getValue()!)
+    );
+    this.selectedTargetTrainingScriptureRange$.next(
+      this.selectedTargetTrainingScriptureRange$
+        .getValue()!
+        .difference(this.selectedDraftingScriptureRange$.getValue()!)
+    );
+
+    // Limit available and selected training source books to not exceed available target training scripture range
+    this.availableTrainingSourceBooks$.next(
+      mapObject(this.trainingSourceBooks$.getValue()!, (_projectId, bookIds) =>
+        bookIds.filter(bookId => this.availableTargetTrainingScriptureRange$.getValue()?.books.has(bookId))
+      )
+    );
+    this.selectedTrainingSourceBooks$.next(
+      mapObject(this.selectedTrainingSourceBooks$.getValue()!, (projectId, bookIds) =>
+        bookIds.filter(bookId => this.availableTrainingSourceBooks$.getValue()?.[projectId]?.includes(bookId))
+      )
+    );
   }
 }

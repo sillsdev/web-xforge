@@ -1,6 +1,6 @@
-import { ChapterSet, ScriptureRangeBook, VerboseScriptureRange } from './scripture-range';
+import { ChapterSet, VerboseScriptureRange } from './scripture-range';
 
-fdescribe('ScriptureRange', () => {
+describe('ScriptureRange', () => {
   describe('ChapterSet', () => {
     it('parses ranges and single chapters correctly and round-trips toString', () => {
       const cs = new ChapterSet('1-3,7,10-12');
@@ -31,30 +31,37 @@ fdescribe('ScriptureRange', () => {
     });
   });
 
-  describe('ScriptureRangeBook', () => {
-    it('creates a book with no chapters when range omitted', () => {
-      const book = new ScriptureRangeBook('MAT');
-      expect(book.bookId).toBe('MAT');
-      expect(book.chapters).toBeUndefined();
-      expect(book.toString()).toBe('MAT');
-    });
-
-    it('parses book id and chapters and round-trips toString', () => {
-      const book = new ScriptureRangeBook('MRK', '1-2,4');
-      expect(book.toString()).toBe('MRK1-2,4');
-    });
-  });
-
   describe('ScriptureRange', () => {
     it('creates an empty range when no input', () => {
-      const range = new VerboseScriptureRange([]);
-      expect(range.books).toEqual([]);
+      const range = new VerboseScriptureRange('');
+      expect(range.books).toEqual(new Map());
       expect(range.toString()).toBe('');
     });
 
     it('parses multiple books and round-trips toString', () => {
-      const range = new VerboseScriptureRange('GEN1-3,5;EXO2;LEV');
-      expect(range.toString()).toBe('GEN1-3,5;EXO2;LEV');
+      const range = new VerboseScriptureRange('GEN1-3,5;EXO2;LEV1-28');
+      expect(range.toString()).toBe('GEN1-3,5;EXO2;LEV1-28');
+    });
+
+    it('computes intersection correctly', () => {
+      const range1 = new VerboseScriptureRange('GEN1-5,7;EXO2-4');
+      const range2 = new VerboseScriptureRange('GEN3-4,6;EXO3;LEV1-2');
+      const intersection = range1.intersection(range2);
+      expect(intersection.toString()).toBe('GEN3-4;EXO3');
+    });
+
+    it('computes union correctly', () => {
+      const range1 = new VerboseScriptureRange('GEN1-5,7;EXO2-4');
+      const range2 = new VerboseScriptureRange('GEN3-4,6;EXO3;LEV1-2');
+      const union = range1.union(range2);
+      expect(union.toString()).toBe('GEN1-7;EXO2-4;LEV1-2');
+    });
+
+    it('computes difference correctly', () => {
+      const range1 = new VerboseScriptureRange('GEN1-5,7;EXO2-4');
+      const range2 = new VerboseScriptureRange('GEN3-4,6;EXO3;LEV1-2');
+      const difference = range1.difference(range2);
+      expect(difference.toString()).toBe('GEN1-2,5,7;EXO2,4');
     });
   });
 });

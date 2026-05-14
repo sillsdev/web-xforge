@@ -116,7 +116,7 @@ const verseCounts: Record<string, number> = {
 };
 
 /** The expected number of chapters per book, based primarily on the eng.vrs versification files. */
-const chapterCounts: Record<string, number> = {
+export const chapterCounts: Record<string, number> = {
   GEN: 50,
   EXO: 40,
   LEV: 27,
