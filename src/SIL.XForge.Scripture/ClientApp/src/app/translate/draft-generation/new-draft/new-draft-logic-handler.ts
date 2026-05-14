@@ -55,6 +55,8 @@ export class NewDraftLogicHandler {
   availableTrainingSourceBooks$ = new BehaviorSubject<{ [projectId: string]: string[] }>({});
   selectedTrainingSourceBooks$ = new BehaviorSubject<{ [projectId: string]: string[] }>({});
 
+  booksOfferedForPartialDrafting$ = new BehaviorSubject<string[]>([]);
+
   /**
    * SPecifies what input mode the user is using. When a book is selected for use as drafting, it must be automatically
    * removed from being used as training. However, if a user selects and unselects a book while selecting books to
@@ -171,6 +173,22 @@ export class NewDraftLogicHandler {
       }
     }
     this.selectedDraftingScriptureRange$.next(newDraftingScriptureRange);
+
+    this.booksOfferedForPartialDrafting$.next(books.filter(bookId => this.isBookEligibleForPartialDrafting(bookId)));
+  }
+
+  isBookEligibleForPartialDrafting(bookId: string): boolean {
+    const sourceChapterCount = this.availableDraftingScriptureRange$.getValue()?.books.get(bookId)?.chapters.size;
+    // TODO FIXME not sure if this is looking at the number of chapters, or chapters with content. Need to check for actual content
+    const targetChaptersWithContent = this.availableTargetTrainingScriptureRange$.getValue()?.books.get(bookId)
+      ?.chapters.size;
+
+    return (
+      sourceChapterCount != null &&
+      sourceChapterCount >= 12 &&
+      targetChaptersWithContent != null &&
+      targetChaptersWithContent >= 1
+    );
   }
 
   selectTargetTrainingBooks(books: string[]): void {
