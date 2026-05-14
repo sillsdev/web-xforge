@@ -1459,7 +1459,7 @@ describe('ServalBuildsComponent', () => {
       expect(env.component['hasAnyProblems'](row)).toBeTrue();
     });
 
-    it('problemsBySource filters to origin', () => {
+    it('problems filters by origin and severity', () => {
       const env = new TestEnvironment();
       const problems: BuildReportProblem[] = [
         { source: 'local', severity: 'error', message: 'SF error' },
@@ -1541,7 +1541,7 @@ describe('ServalBuildsComponent', () => {
       expect(preview[limit]).toEqual('…');
     });
 
-    it('problemMessagesForCard returns all messages when not too many', () => {
+    it('renderProblemMessagesForCard returns all messages when not too many', () => {
       const env = new TestEnvironment();
       const problems: BuildReportProblem[] = [
         { source: 'local', severity: 'error', message: 'Message 1' },
