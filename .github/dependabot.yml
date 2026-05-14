@@ -9,5 +9,9 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    cooldown:
+      default-days: 7
+      semver-minor-days: 3
+      semver-patch-days: 3
     allow:
       - dependency-name: "Serval.Client"
