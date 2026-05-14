@@ -315,6 +315,86 @@ describe('ServalBuildsComponent', () => {
       expect(summary.totalUniqueTrainingBooks).toBe(3);
     });
 
+    it('handles book counting despite chapter numbers present', () => {
+      const env = new TestEnvironment();
+      const baseStart: Date = new Date('2024-01-01T00:00:00Z');
+      const rows: ServalBuildRow[] = [
+        TestEnvironment.createRowWithDetails({
+          projectId: 'proj-a',
+          startDate: env.addHours(baseStart, 0),
+          finishDate: env.addHours(baseStart, 1),
+          requesterId: 'user-1',
+          trainingBooks: env.createProjectBooks('proj-a', ['GEN1', 'EXO1-10,14']),
+          status: DraftGenerationBuildStatus.Completed
+        }),
+        TestEnvironment.createRowWithDetails({
+          projectId: 'proj-b',
+          startDate: env.addHours(baseStart, 2),
+          finishDate: env.addHours(baseStart, 3),
+          requesterId: 'user-2',
+          trainingBooks: env.createProjectBooks('proj-b', ['GEN1', 'EXO']),
+          status: DraftGenerationBuildStatus.Completed
+        }),
+        TestEnvironment.createRowWithDetails({
+          projectId: 'proj-c',
+          startDate: env.addHours(baseStart, 4),
+          finishDate: env.addHours(baseStart, 5),
+          requesterId: 'user-3',
+          trainingBooks: env.createProjectBooks('proj-c', ['GEN2', 'LEV']),
+          status: DraftGenerationBuildStatus.Completed
+        }),
+        TestEnvironment.createRowWithDetails({
+          projectId: 'proj-d',
+          startDate: env.addHours(baseStart, 6),
+          finishDate: env.addHours(baseStart, 7),
+          requesterId: 'user-3',
+          trainingBooks: env.createProjectBooks('proj-c', ['GEN']),
+          status: DraftGenerationBuildStatus.Completed
+        })
+      ];
+
+      // SUT
+      const summary: ServalBuildSummary = buildSummary(rows);
+
+      // Total books includes duplicates and is not influenced by chapter
+      // indications: [GEN, EXO, GEN, EXO, GEN, LEV, GEN] => 7
+      expect(summary.totalTrainingBooks).toBe(7);
+      // Unique books dedupe by book code globally, and is not influenced
+      // by chapter indications: [GEN, EXO, LEV] => 3
+      expect(summary.totalUniqueTrainingBooks).toBe(3);
+    });
+
+    it('counts unique books by first three characters even for non-standard tokens', () => {
+      const env = new TestEnvironment();
+      const baseStart: Date = new Date('2024-01-01T00:00:00Z');
+      const rows: ServalBuildRow[] = [
+        TestEnvironment.createRowWithDetails({
+          projectId: 'proj-a',
+          startDate: env.addHours(baseStart, 0),
+          finishDate: env.addHours(baseStart, 1),
+          requesterId: 'user-1',
+          trainingBooks: env.createProjectBooks('proj-a', ['ABC1', 'ABC2']),
+          status: DraftGenerationBuildStatus.Completed
+        }),
+        TestEnvironment.createRowWithDetails({
+          projectId: 'proj-b',
+          startDate: env.addHours(baseStart, 2),
+          finishDate: env.addHours(baseStart, 3),
+          requesterId: 'user-2',
+          trainingBooks: env.createProjectBooks('proj-b', ['1234', '1235']),
+          status: DraftGenerationBuildStatus.Completed
+        })
+      ];
+
+      // SUT
+      const summary: ServalBuildSummary = buildSummary(rows);
+
+      // Total books: [ABC, ABC, 123, 123] => 4
+      expect(summary.totalTrainingBooks).toBe(4);
+      // Unique books dedupe by first three characters: [ABC, 123] => 2
+      expect(summary.totalUniqueTrainingBooks).toBe(2);
+    });
+
     it('uses only completed builds for mean duration', () => {
       const env = new TestEnvironment();
       const baseStart: Date = new Date('2024-01-01T00:00:00Z');
@@ -1190,13 +1270,13 @@ describe('ServalBuildsComponent', () => {
           sfProjectId: '112233',
           projectDisplayName: 'BSB - Berean Standard Bible',
           shortName: 'BSB',
-          books: ['GEN', 'EXO']
+          booksAndChapters: [{ bookId: 'GEN' }, { bookId: 'EXO' }]
         },
         {
           sfProjectId: '222333',
           projectDisplayName: 'ASV - American Standard Version',
           shortName: 'ASV',
-          books: ['EXO', 'LEV']
+          booksAndChapters: [{ bookId: 'EXO' }, { bookId: 'LEV' }]
         }
       ];
 
@@ -1212,7 +1292,7 @@ describe('ServalBuildsComponent', () => {
           sfProjectId: '112233',
           projectDisplayName: '112233',
           shortName: undefined,
-          books: ['GEN']
+          booksAndChapters: [{ bookId: 'GEN' }]
         }
       ];
 
@@ -1220,6 +1300,29 @@ describe('ServalBuildsComponent', () => {
       const result: string = ServalBuildsComponent.formatProjectBooks(projectBooks);
 
       expect(result).toBe('112233: GEN');
+    });
+
+    it('includes chapter numbers in compact range notation', () => {
+      const projectBooks: ProjectBooks[] = [
+        {
+          sfProjectId: '112233',
+          projectDisplayName: 'BSB',
+          shortName: 'BSB',
+          booksAndChapters: [{ bookId: 'GEN', chapters: [10, 11, 16, 17, 18, 19] }, { bookId: 'EXO' }]
+        }
+      ];
+
+      // SUT
+      const result: string = ServalBuildsComponent.formatProjectBooks(projectBooks);
+
+      expect(result).toBe('112233 BSB: GEN 10-11, 16-19; EXO');
+    });
+
+    it('compactRangeNotation de-duplicates duplicate chapter numbers', () => {
+      // SUT
+      const result: string = ServalBuildsComponent.compactRangeNotation([10, 10, 11, 10, 16, 16, 17]);
+
+      expect(result).toBe('10-11, 16-17');
     });
   });
 
@@ -1521,7 +1624,9 @@ class TestEnvironment {
 
   createProjectBooks(projectId: string, books: string[], projectDisplayName?: string): ProjectBooks[] {
     const displayName: string = projectDisplayName ?? projectId.toUpperCase();
-    return [{ sfProjectId: projectId, projectDisplayName: displayName, books: books }];
+    return [
+      { sfProjectId: projectId, projectDisplayName: displayName, booksAndChapters: books.map(b => ({ bookId: b })) }
+    ];
   }
 
   createReport({
