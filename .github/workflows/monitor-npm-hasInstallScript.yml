@@ -1,0 +1,100 @@
+name: Monitor npm hasInstallScript
+permissions: {}
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: monitor-npm-hasinstallscript-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  monitor-install-scripts:
+    name: "Monitor npm install scripts"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2.0.4
+        with:
+          deno-version: v2.x
+
+      - name: Detect newly introduced npm install scripts
+        id: detect
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          BASE_SHA=$(git merge-base "${PR_BASE_SHA}" "${PR_HEAD_SHA}")
+          HEAD_SHA="${PR_HEAD_SHA}"
+
+          echo "merge_base_sha=${BASE_SHA}" >> "${GITHUB_OUTPUT}"
+          echo "head_sha=${HEAD_SHA}" >> "${GITHUB_OUTPUT}"
+
+          FINDINGS_FILE="${RUNNER_TEMP}/monitor-npm-has-install-script-findings.tsv"
+          COMMENT_FILE="${RUNNER_TEMP}/monitor-npm-has-install-script-comment.md"
+
+          deno run --allow-run=git --allow-write="${RUNNER_TEMP}" scripts/monitor-npm-has-install-script.mts \
+            --base-sha "${BASE_SHA}" \
+            --head-sha "${HEAD_SHA}" \
+            --findings-path "${FINDINGS_FILE}" \
+            --comment-path "${COMMENT_FILE}"
+
+          if [[ -s "${FINDINGS_FILE}" ]]; then
+            echo "has_findings=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "has_findings=false" >> "${GITHUB_OUTPUT}"
+          fi
+          echo "comment_path=${COMMENT_FILE}" >> "${GITHUB_OUTPUT}"
+
+      - name: Add result to workflow summary
+        run: cat "${{ steps.detect.outputs.comment_path }}" >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Create or update PR comment
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          COMMENT_PATH: ${{ steps.detect.outputs.comment_path }}
+        with:
+          script: |
+            const fs = require('node:fs');
+
+            const marker = '<!-- monitor-npm-hasInstallScript -->';
+            const commentBody = fs.readFileSync(process.env.COMMENT_PATH, 'utf8').trim();
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issueNumber = context.payload.pull_request.number;
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number: issueNumber,
+              per_page: 100,
+            });
+
+            const existingComment = comments.find(comment => comment.body?.includes(marker));
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existingComment.id,
+                body: commentBody,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: issueNumber,
+                body: commentBody,
+              });
+            }
