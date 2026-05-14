@@ -20,10 +20,12 @@ import {
   MatTable
 } from '@angular/material/table';
 import { MatTooltip } from '@angular/material/tooltip';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   BehaviorSubject,
   catchError,
   combineLatest,
+  distinctUntilChanged,
   filter,
   firstValueFrom,
   from,
@@ -46,11 +48,14 @@ import { UserService } from 'xforge-common/user.service';
 import { isPopulatedString, notNull } from '../../type-utils';
 import { InfoComponent } from '../shared/info/info.component';
 import { NoticeComponent } from '../shared/notice/notice.component';
+import { projectLabel } from '../shared/utils';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { DateRangePickerComponent, NormalizedDateRange } from './date-range-picker.component';
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
 import { JobDetailsDialogComponent } from './job-details-dialog.component';
+import { ServalAdministrationService } from './serval-administration.service';
 import {
+  BookAndChapters,
   buildProjectDisplayName,
   DraftGenerationBuildStatus,
   Phase,
@@ -168,6 +173,10 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
    * and was deleted. Maybe another SF installation has that project and requested a Serval build. */
   protected includeDeleted: boolean = false;
   protected summaryIsExpanded: boolean = false;
+  /** Current project ID filter from query params, if any. */
+  protected currentProjectFilter: string | undefined = undefined;
+  /** Display name for the active project filter. */
+  protected filteredProjectName: string | undefined = undefined;
   /** Data rows, including those that are filtered out by the includeDeleted toggle. */
   private allRows: ServalBuildRow[] = [];
   private readonly dateRange$ = new BehaviorSubject<NormalizedDateRange | undefined>(undefined);
@@ -181,7 +190,10 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     private readonly i18n: I18nService,
     private readonly exportService: DraftJobsExportService,
     private readonly userService: UserService,
-    private readonly destroyRef: DestroyRef
+    private readonly destroyRef: DestroyRef,
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
+    private readonly servalAdministrationService: ServalAdministrationService
   ) {
     super(noticeService, 'ServalBuildsComponent');
   }
@@ -191,11 +203,18 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   }
 
   ngOnInit(): void {
-    combineLatest([this.onlineStatusService.onlineStatus$, this.dateRange$.pipe(filter(notNull))])
+    combineLatest([
+      this.route.queryParams.pipe(
+        map(params => params['sfProjectId']),
+        distinctUntilChanged()
+      ),
+      this.onlineStatusService.onlineStatus$,
+      this.dateRange$.pipe(filter(notNull))
+    ])
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(([isOnline, range]) => {
+      .subscribe(([projectFilterId, isOnline, range]) => {
         this.loadingStarted();
-        void this.loadBuilds(range, isOnline);
+        void this.loadBuilds(range, isOnline, projectFilterId);
       });
   }
 
@@ -417,8 +436,36 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     return displayName$;
   }
 
-  private async loadBuilds(range: NormalizedDateRange, isOnline: boolean): Promise<void> {
+  protected clearProjectFilter(): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { sfProjectId: null },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  private async loadBuilds(
+    range: NormalizedDateRange,
+    isOnline: boolean,
+    projectFilterId: string | undefined
+  ): Promise<void> {
     try {
+      // Resolve project filter display name
+      if (isPopulatedString(projectFilterId)) {
+        let displayName: string = projectFilterId;
+        try {
+          const projectDoc = await this.servalAdministrationService.get(projectFilterId);
+          displayName = projectDoc?.data != null ? projectLabel(projectDoc.data) : projectFilterId;
+        } catch {
+          // Filter can reference a deleted project; fall back to the raw ID
+        }
+        this.currentProjectFilter = projectFilterId;
+        this.filteredProjectName = displayName;
+      } else {
+        this.currentProjectFilter = undefined;
+        this.filteredProjectName = undefined;
+      }
+
       if (!isOnline) {
         this.allRows = [];
         this.rows = [];
@@ -495,10 +542,14 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   }
 
   private filteredRows(): ServalBuildRow[] {
-    if (this.includeDeleted === true) {
-      return [...this.allRows];
+    let rows: ServalBuildRow[] = this.allRows;
+    if (this.includeDeleted !== true) {
+      rows = rows.filter((row: ServalBuildRow) => !row.projectDeleted);
     }
-    return this.allRows.filter((row: ServalBuildRow) => !row.projectDeleted);
+    if (this.currentProjectFilter !== undefined) {
+      rows = rows.filter((row: ServalBuildRow) => row.report.project?.sfProjectId === this.currentProjectFilter);
+    }
+    return rows;
   }
 
   private updateSummaryStats(): void {
@@ -776,9 +827,42 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     return projectBooks
       .map((pb: ProjectBooks) => {
         const prefix: string = pb.shortName != null ? `${pb.sfProjectId} ${pb.shortName}` : pb.sfProjectId;
-        return `${prefix}: ${pb.books.join('; ')}`;
+        const bookEntries: string = ServalBuildsComponent.formatBookEntries(pb.booksAndChapters);
+        return `${prefix}: ${bookEntries}`;
       })
       .join('. ');
+  }
+
+  /** Formats a BookAndChapters array into a display string, e.g. "GEN 10-11, 16-19; EXO". */
+  static formatBookEntries(booksAndChapters: BookAndChapters[]): string {
+    return booksAndChapters
+      .map(entry => {
+        if (entry.chapters == null || entry.chapters.length === 0) {
+          return entry.bookId;
+        }
+        return `${entry.bookId} ${ServalBuildsComponent.compactRangeNotation(entry.chapters)}`;
+      })
+      .join('; ');
+  }
+
+  /** Formats a sorted array of numbers into compact range notation, e.g. [1,2,3,5,7,8,9] → "1-3, 5, 7-9". */
+  static compactRangeNotation(nums: number[]): string {
+    if (nums.length === 0) return '';
+    const sortedUnique: number[] = [...new Set(nums)].sort((a, b) => a - b);
+    const ranges: string[] = [];
+    let rangeStart: number = sortedUnique[0];
+    let rangeEnd: number = sortedUnique[0];
+    for (let i = 1; i < sortedUnique.length; i++) {
+      if (sortedUnique[i] === rangeEnd + 1) {
+        rangeEnd = sortedUnique[i];
+      } else {
+        ranges.push(rangeStart === rangeEnd ? `${rangeStart}` : `${rangeStart}-${rangeEnd}`);
+        rangeStart = sortedUnique[i];
+        rangeEnd = sortedUnique[i];
+      }
+    }
+    ranges.push(rangeStart === rangeEnd ? `${rangeStart}` : `${rangeStart}-${rangeEnd}`);
+    return ranges.join(', ');
   }
 
   protected servalAdminProjectLinkFor(sfProjectId: string | undefined): string | undefined {

@@ -1,5 +1,6 @@
 import { notNull } from '../../type-utils';
 import {
+  BookAndChapters,
   BuildReportProject,
   DraftGenerationBuildStatus,
   ProjectBooks,
@@ -32,18 +33,36 @@ export function validDateMsFrom(date: Date | undefined): number | undefined {
 
 /** Counts the total number of books across all project-book entries. */
 export function countBooks(projectBooks: ProjectBooks[]): number {
-  return projectBooks.reduce((total: number, projectBook: ProjectBooks) => total + projectBook.books.length, 0);
+  return projectBooks.reduce(
+    (total: number, projectBook: ProjectBooks) => total + projectBook.booksAndChapters.length,
+    0
+  );
 }
 
 /** Counts unique book codes across all project-book entries. */
 export function countUniqueBooks(projectBooks: ProjectBooks[]): number {
   const uniqueBookCodes: Set<string> = new Set();
   for (const projectBook of projectBooks) {
-    for (const bookCode of projectBook.books) {
-      uniqueBookCodes.add(bookCode);
+    for (const bookCode of projectBook.booksAndChapters.map((bncs: BookAndChapters) => bncs.bookId)) {
+      const normalizedBookCode: string = normalizeBookCode(bookCode);
+      if (normalizedBookCode !== '') {
+        uniqueBookCodes.add(normalizedBookCode);
+      }
     }
   }
   return uniqueBookCodes.size;
+}
+
+/**
+ * Normalizes a book identifier to the first three characters. This supports values containing chapter notation
+ * (e.g. "GEN1" -> "GEN") and other non-standard tokens (e.g. "1234" -> "123").
+ */
+function normalizeBookCode(bookCode: string): string {
+  const trimmedBookCode: string = bookCode.trim().toUpperCase();
+  if (trimmedBookCode === '') {
+    return '';
+  }
+  return trimmedBookCode.length <= 3 ? trimmedBookCode : trimmedBookCode.slice(0, 3);
 }
 
 /** Computes the arithmetic mean, returning undefined for an empty array. */

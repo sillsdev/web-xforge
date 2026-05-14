@@ -27,7 +27,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
-import { environment } from '../../../environments/environment';
+import { BrandingService } from '../../core/branding.service';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { ShareLinkType } from '../../core/models/share-link-type';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -91,6 +91,7 @@ export class ShareDialogComponent extends ShareBaseComponent {
     private readonly noticeService: NoticeService,
     private readonly projectService: SFProjectService,
     private readonly onlineStatusService: OnlineStatusService,
+    private readonly brandingService: BrandingService,
     userService: UserService,
     private destroyRef: DestroyRef
   ) {
@@ -217,7 +218,7 @@ export class ShareDialogComponent extends ShareBaseComponent {
     const params = {
       inviteName: currentUser.data.displayName,
       projectName: this.projectDoc.data.name,
-      siteName: environment.siteName
+      siteName: this.brandingService.siteName
     };
     this.navigator
       .share({
