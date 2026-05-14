@@ -39,7 +39,7 @@ interface Snapshot {
 }
 
 const MARKER: string = '<!-- monitor-npm-hasInstallScript -->';
-const MAX_DIFF_LINES: number = 200;
+const MAX_DIFF_LINES: number = 30;
 
 function fail(message: string): never {
   console.error(message);
