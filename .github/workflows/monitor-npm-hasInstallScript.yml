@@ -59,7 +59,9 @@ jobs:
           echo "comment_path=${COMMENT_FILE}" >> "${GITHUB_OUTPUT}"
 
       - name: Add result to workflow summary
-        run: cat "${{ steps.detect.outputs.comment_path }}" >> "${GITHUB_STEP_SUMMARY}"
+        run: cat "${COMMENT_PATH}" >> "${GITHUB_STEP_SUMMARY}"
+        env:
+          COMMENT_PATH: ${{ steps.detect.outputs.comment_path }}
 
       - name: Create or update PR comment
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
