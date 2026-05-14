@@ -20,110 +20,90 @@ const FULL_CANON_SCRIPTURE_RANGE = new VerboseScriptureRange(
 
 fdescribe('NewDraftLogicHandler', () => {
   const teamStartingToTranslateGenesis = {
-    lastSelectedTranslationScriptureRanges: [{ projectId: 'draft-source-1-project-id', scriptureRange: 'GEN' }],
+    lastSelectedTranslationScriptureRanges: [{ projectId: 'draft-source-1-id', scriptureRange: 'GEN' }],
     previouslySelectedTrainingScriptureRanges: [
-      { projectId: 'training-source-1-project-id', scriptureRange: 'MAT;MRK;LUK;JHN' }
+      { projectId: 'training-source-1-id', scriptureRange: 'MAT;MRK;LUK;JHN' }
     ],
     draftingSourceBooksChapters: FULL_CANON_SCRIPTURE_RANGE,
     targetProjectBooksChapters: 'GEN1-5;MAT1-28;MRK1-16;LUK1-24;JHN1-21',
     trainingSourcesBooksChapters: {
-      'training-source-1-project-id': FULL_CANON_SCRIPTURE_RANGE
+      'training-source-1-id': FULL_CANON_SCRIPTURE_RANGE
     }
   } as const satisfies TestState;
 
   it('initializes available ranges based on progress service', async () => {
     const testState = teamStartingToTranslateGenesis;
     const env = new TestEnvironment(testState);
-    const handler = env.logicHandler;
     await env.waitForInit();
 
     // Ranges availble for selection should be set automatically upon init
-    expect(handler.availableDraftingScriptureRange$.value?.toString()).toBe(testState.draftingSourceBooksChapters);
-    expect(handler.availableTargetTrainingScriptureRange$.value?.toString()).toBe(testState.targetProjectBooksChapters);
+    expect(env.availableDraftingScriptureRange).toBe(testState.draftingSourceBooksChapters);
+    expect(env.availableTargetTrainingScriptureRange).toBe(testState.targetProjectBooksChapters);
 
     // Selections should be blank
-    expect(handler.selectedDraftingScriptureRange$.value?.toString()).toBe('');
-    expect(handler.selectedTargetTrainingScriptureRange$.value?.toString()).toBe('');
+    expect(env.selectedDraftingScriptureRange).toBe('');
+    expect(env.selectedTargetTrainingScriptureRange).toBe('');
   });
 
   it('allows selecting books and chapters within the available ranges', async () => {
     const testState = teamStartingToTranslateGenesis;
     const env = new TestEnvironment(testState);
-    const handler = env.logicHandler;
     await env.waitForInit();
 
     // Select Genesis for drafting
-    handler.selectDraftingBooks(['GEN']);
-    expect(handler.selectedDraftingScriptureRange$.value?.toString()).toBe('GEN1-50');
+    env.logicHandler.selectDraftingBooks(['GEN']);
+    expect(env.selectedDraftingScriptureRange).toBe('GEN1-50');
   });
 
   it('defaults to previous training data when going to the training step', async () => {
     const testState = teamStartingToTranslateGenesis;
     const env = new TestEnvironment(testState);
-    const handler = env.logicHandler;
     await env.waitForInit();
 
     // Initially no training books selected
-    expect(handler.selectedTargetTrainingScriptureRange$.value?.toString()).toBe('');
-    expect(handler.selectedTrainingSourceBooks$.value).toEqual({});
+    expect(env.selectedTargetTrainingScriptureRange).toBe('');
+    expect(env.selectedTrainingSourceBooks).toEqual({});
 
-    handler.setInputMode('training_books');
+    env.logicHandler.setInputMode('training_books');
 
     // Previous training selections should be selected by default when going to the training step
-    expect(handler.selectedTargetTrainingScriptureRange$.value?.toString()).toBe('MAT1-28;MRK1-16;LUK1-24;JHN1-21');
-    expect(Object.keys(handler.selectedTrainingSourceBooks$.value).length).toEqual(1);
-    expect(handler.selectedTrainingSourceBooks$.value['training-source-1-project-id']).toEqual([
-      'MAT',
-      'MRK',
-      'LUK',
-      'JHN'
-    ]);
+    expect(env.selectedTargetTrainingScriptureRange).toBe('MAT1-28;MRK1-16;LUK1-24;JHN1-21');
+    expect(env.selectedTrainingSourceBooks).toEqual({ 'training-source-1-id': ['MAT', 'MRK', 'LUK', 'JHN'] });
   });
 
   it('does not automatically select training data that was previously selected but is no longer available in the training sources', async () => {
     const testState = {
       ...teamStartingToTranslateGenesis,
       trainingSourcesBooksChapters: {
-        'training-source-1-project-id': FULL_CANON_SCRIPTURE_RANGE.replace('MAT1-28', '')
+        'training-source-1-id': FULL_CANON_SCRIPTURE_RANGE.replace('MAT1-28', '')
       }
     };
-    expect(testState.trainingSourcesBooksChapters['training-source-1-project-id']).not.toContain('MAT1-28');
+    expect(testState.trainingSourcesBooksChapters['training-source-1-id']).not.toContain('MAT1-28');
     const env = new TestEnvironment(testState);
-    const handler = env.logicHandler;
     await env.waitForInit();
 
-    handler.setInputMode('training_books');
+    env.logicHandler.setInputMode('training_books');
 
     // The previously selected training data included MAT, but since that's now unavailable, it should not be selected
-    expect(Object.keys(handler.availableTrainingSourceBooks$.value!).length).toBe(1);
-    expect(handler.availableTrainingSourceBooks$.value!['training-source-1-project-id']).toEqual([
-      'GEN',
-      'MRK',
-      'LUK',
-      'JHN'
-    ]);
-    expect(handler.selectedTargetTrainingScriptureRange$.value?.toString()).toBe('MRK1-16;LUK1-24;JHN1-21');
-    expect(Object.keys(handler.selectedTrainingSourceBooks$.value).length).toEqual(1);
-    expect(handler.selectedTrainingSourceBooks$.value['training-source-1-project-id']).toEqual(['MRK', 'LUK', 'JHN']);
-    expect(handler.selectedTargetTrainingScriptureRange$.value?.toString()).toBe('MRK1-16;LUK1-24;JHN1-21');
+    expect(env.availableTrainingSourceBooks).toEqual({ 'training-source-1-id': ['GEN', 'MRK', 'LUK', 'JHN'] });
+    expect(env.selectedTargetTrainingScriptureRange).toBe('MRK1-16;LUK1-24;JHN1-21');
+    expect(env.selectedTrainingSourceBooks).toEqual({ 'training-source-1-id': ['MRK', 'LUK', 'JHN'] });
   });
 
   it('does not automatically select training data that was previously selected but is now selected to be drafted', async () => {
     const testState = teamStartingToTranslateGenesis;
     const env = new TestEnvironment(testState);
-    const handler = env.logicHandler;
     await env.waitForInit();
 
-    handler.selectDraftingBooks(['MAT']);
+    env.logicHandler.selectDraftingBooks(['MAT']);
 
-    handler.setInputMode('training_books');
+    env.logicHandler.setInputMode('training_books');
 
     // The previously selected training data includes MAT, but since that's now selected as drafting material, it should
     // not be selected as training material
-    expect(handler.availableTargetTrainingScriptureRange$.value?.toString()).toBe('GEN1-5;MRK1-16;LUK1-24;JHN1-21');
-    expect(handler.selectedTargetTrainingScriptureRange$.value?.toString()).toBe('MRK1-16;LUK1-24;JHN1-21');
-    expect(Object.keys(handler.selectedTrainingSourceBooks$.value).length).toEqual(1);
-    expect(handler.selectedTrainingSourceBooks$.value['training-source-1-project-id']).toEqual(['MRK', 'LUK', 'JHN']);
+    expect(env.availableTargetTrainingScriptureRange).toBe('GEN1-5;MRK1-16;LUK1-24;JHN1-21');
+    expect(env.selectedTargetTrainingScriptureRange).toBe('MRK1-16;LUK1-24;JHN1-21');
+    expect(env.selectedTrainingSourceBooks).toEqual({ 'training-source-1-id': ['MRK', 'LUK', 'JHN'] });
   });
 });
 
@@ -164,7 +144,7 @@ class TestEnvironment {
           draftingSources: [
             {
               paratextId: 'draft-source-1-pt-id',
-              projectRef: 'draft-source-1-project-id',
+              projectRef: 'draft-source-1-id',
               name: 'Draft Source 1',
               shortName: 'DS1',
               writingSystem: { script: 'Latn', tag: 'es' }
@@ -197,9 +177,9 @@ class TestEnvironment {
     when(mockedStubProgressServiceThatGivesChapterLevelInfo.getProgressForProject(projectId)).thenResolve(
       new VerboseScriptureRange(state.targetProjectBooksChapters)
     );
-    when(
-      mockedStubProgressServiceThatGivesChapterLevelInfo.getProgressForProject('draft-source-1-project-id')
-    ).thenResolve(new VerboseScriptureRange(state.draftingSourceBooksChapters));
+    when(mockedStubProgressServiceThatGivesChapterLevelInfo.getProgressForProject('draft-source-1-id')).thenResolve(
+      new VerboseScriptureRange(state.draftingSourceBooksChapters)
+    );
     for (const [trainingSourceProjectId, booksChapters] of Object.entries(state.trainingSourcesBooksChapters)) {
       when(
         mockedStubProgressServiceThatGivesChapterLevelInfo.getProgressForProject(trainingSourceProjectId)
@@ -215,5 +195,31 @@ class TestEnvironment {
 
   async waitForInit(): Promise<void> {
     await firstValueFrom(this.logicHandler.status$.pipe(filter(status => status === 'input')));
+  }
+
+  // Aliases
+
+  get availableTrainingSourceBooks(): { [projectId: string]: string[] } {
+    return this.logicHandler.availableTrainingSourceBooks$.getValue();
+  }
+
+  get selectedTrainingSourceBooks(): { [projectId: string]: string[] } {
+    return this.logicHandler.selectedTrainingSourceBooks$.getValue();
+  }
+
+  get availableTargetTrainingScriptureRange(): string {
+    return this.logicHandler.availableTargetTrainingScriptureRange$.getValue().toString();
+  }
+
+  get selectedTargetTrainingScriptureRange(): string {
+    return this.logicHandler.selectedTargetTrainingScriptureRange$.getValue().toString();
+  }
+
+  get availableDraftingScriptureRange(): string {
+    return this.logicHandler.availableDraftingScriptureRange$.getValue().toString();
+  }
+
+  get selectedDraftingScriptureRange(): string {
+    return this.logicHandler.selectedDraftingScriptureRange$.getValue().toString();
   }
 }
