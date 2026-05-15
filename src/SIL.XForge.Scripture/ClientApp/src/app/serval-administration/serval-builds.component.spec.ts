@@ -1447,7 +1447,7 @@ describe('ServalBuildsComponent', () => {
       const env = new TestEnvironment();
       const row: ServalBuildRow = createRowWithProblems([]);
 
-      expect(env.component['hasAnyProblems'](row)).toBeFalse();
+      expect(env.component.hasAnyProblems(row)).toBeFalse();
     });
 
     it('hasAnyProblems returns true when at least one problem is present', () => {
@@ -1456,7 +1456,7 @@ describe('ServalBuildsComponent', () => {
         { source: 'serval', severity: 'error', message: 'Faulted: Engine crashed' }
       ]);
 
-      expect(env.component['hasAnyProblems'](row)).toBeTrue();
+      expect(env.component.hasAnyProblems(row)).toBeTrue();
     });
 
     it('problems filters by origin and severity', () => {
@@ -1475,10 +1475,10 @@ describe('ServalBuildsComponent', () => {
       ];
       const row: ServalBuildRow = createRowWithProblems(problems);
 
-      expect(env.component['problems'](row, 'local', 'error').length).toBe(1);
-      expect(env.component['problems'](row, 'local', 'warning').length).toBe(2);
-      expect(env.component['problems'](row, 'serval', 'error').length).toBe(3);
-      expect(env.component['problems'](row, 'serval', 'warning').length).toBe(4);
+      expect(env.component.problems(row, 'local', 'error').length).toBe(1);
+      expect(env.component.problems(row, 'local', 'warning').length).toBe(2);
+      expect(env.component.problems(row, 'serval', 'error').length).toBe(3);
+      expect(env.component.problems(row, 'serval', 'warning').length).toBe(4);
     });
 
     it('problemsBadgeTooltip joins all problem messages', () => {
@@ -1489,7 +1489,7 @@ describe('ServalBuildsComponent', () => {
       ];
       const row: ServalBuildRow = createRowWithProblems(problems);
 
-      const tooltip: string = env.component['problemsBadgeTooltip'](row);
+      const tooltip: string = env.component.problemsBadgeTooltip(row);
 
       expect(tooltip).toBe('No Serval build. Low confidence');
     });
@@ -1503,7 +1503,7 @@ describe('ServalBuildsComponent', () => {
       ];
       const row: ServalBuildRow = createRowWithProblems(problems);
 
-      const sections: { heading: string; problems: BuildReportProblem[] }[] = env.component['problemSections'](row);
+      const sections: { heading: string; problems: BuildReportProblem[] }[] = env.component.problemSections(row);
 
       expect(sections[0].heading).toBe('SF errors');
       expect(sections[0].problems[0].message).toBe('SF build failed with unrecoverable error state');
@@ -1534,7 +1534,7 @@ describe('ServalBuildsComponent', () => {
         { source: 'serval', severity: 'warning', message: 'Message 12' }
       ];
 
-      const preview: string[] = env.component['renderProblemMessagesForCard'](problems);
+      const preview: string[] = env.component.renderProblemMessagesForCard(problems);
       const limit: number = env.component.problemPreviewLimit;
       const ellipsisItem: number = 1;
       expect(preview.length).toBe(limit + ellipsisItem);
@@ -1548,7 +1548,7 @@ describe('ServalBuildsComponent', () => {
         { source: 'local', severity: 'error', message: 'Message 2' }
       ];
 
-      const preview: string[] = env.component['renderProblemMessagesForCard'](problems);
+      const preview: string[] = env.component.renderProblemMessagesForCard(problems);
       expect(preview.length).toBe(2);
       expect(preview).toEqual(['Message 1', 'Message 2']);
     });
@@ -1568,7 +1568,7 @@ describe('ServalBuildsComponent', () => {
       ];
       const row: ServalBuildRow = createRowWithProblems(problems);
 
-      env.component['showAllProblems'](row);
+      env.component.showAllProblems(row);
 
       verify(mockDialogService.openMatDialog(anything(), anything())).once();
       expect(componentArg).toBe(ServalBuildProblemsDialog);
