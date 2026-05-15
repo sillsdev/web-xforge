@@ -31,7 +31,7 @@ import {
   ServalBuildReportDto
 } from './serval-build-report';
 import { buildSummary, gapsBetweenBuildsMs } from './serval-builds-statistics';
-import { ServalBuildRow, ServalBuildsComponent, ServalBuildSummary } from './serval-builds.component';
+import { BuildInputItem, ServalBuildRow, ServalBuildsComponent, ServalBuildSummary } from './serval-builds.component';
 
 const mockNoticeService = mock(NoticeService);
 const mockDraftGenerationService = mock(DraftGenerationService);
@@ -1407,7 +1407,6 @@ describe('ServalBuildsComponent', () => {
 
   describe('determineBuildInputs', () => {
     it('builds result with desired info', () => {
-      const env = new TestEnvironment();
       const input: ProjectBooks[] = [
         {
           sfProjectId: 'proj-b-id',
@@ -1418,18 +1417,17 @@ describe('ServalBuildsComponent', () => {
         }
       ];
 
-      const rows: any[] = env.component['determineBuildInputs'](input);
+      const results: BuildInputItem[] = ServalBuildsComponent.determineBuildInputs(input);
 
-      expect(rows.length).toBe(1);
-      expect(rows[0].projectName).toBe('Project B');
-      expect(rows[0].shortName).toBe('B');
-      expect(rows[0].sfProjectId).toBe('proj-b-id');
-      expect(rows[0].projectLink).toBe('/serval-administration/proj-b-id');
-      expect(rows[0].booksDisplay).toBe('GEN; EXO');
+      expect(results.length).toBe(1);
+      expect(results[0].projectName).toBe('Project B');
+      expect(results[0].shortName).toBe('B');
+      expect(results[0].sfProjectId).toBe('proj-b-id');
+      expect(results[0].projectLink).toBe('/serval-administration/proj-b-id');
+      expect(results[0].booksDisplay).toBe('GEN; EXO');
     });
 
     it('omits missing project name and short name values', () => {
-      const env = new TestEnvironment();
       const input: ProjectBooks[] = [
         {
           sfProjectId: 'proj-c-id',
@@ -1440,13 +1438,18 @@ describe('ServalBuildsComponent', () => {
         }
       ];
 
-      const rows: any[] = env.component['determineBuildInputs'](input);
+      const results: BuildInputItem[] = ServalBuildsComponent.determineBuildInputs(input);
 
-      expect(rows.length).toBe(1);
-      expect(rows[0].projectName).toBeUndefined();
-      expect(rows[0].shortName).toBeUndefined();
-      expect(rows[0].sfProjectId).toBe('proj-c-id');
-      expect(rows[0].booksDisplay).toBe('LEV 1-3; NUM');
+      expect(results.length).toBe(1);
+      expect(results[0].projectName).toBeUndefined();
+      expect(results[0].shortName).toBeUndefined();
+      expect(results[0].sfProjectId).toBe('proj-c-id');
+      expect(results[0].booksDisplay).toBe('LEV 1-3; NUM');
+    });
+
+    it('returns empty array for undefined or null input', () => {
+      expect(ServalBuildsComponent.determineBuildInputs(undefined)).toEqual([]);
+      expect(ServalBuildsComponent.determineBuildInputs(null)).toEqual([]);
     });
   });
 

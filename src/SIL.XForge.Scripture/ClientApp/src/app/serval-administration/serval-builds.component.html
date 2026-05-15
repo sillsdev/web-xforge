@@ -157,7 +157,7 @@
         <ng-template #projectBooksCell let-projectBooks="projectBooks">
           @for (projectBook of projectBooks; track projectBook.sfProjectId) {
             <div>
-              @let link = servalAdminProjectLinkFor(projectBook.sfProjectId);
+              @let link = ServalBuildsComponent.servalAdminProjectLinkFor(projectBook.sfProjectId);
               @let short = projectBook.shortName ?? projectBook.sfProjectId;
               @let toolTip = projectBook.projectName ?? projectBook.sfProjectId;
               @if (link != null) {
@@ -343,7 +343,10 @@
                         <span class="detail-key">{{ sectionLabel }}</span>
                         <span class="detail-value">
                           <div class="detail-books-list">
-                            @for (projectBook of determineBuildInputs(projectBooks); track projectBook.sfProjectId) {
+                            @for (
+                              projectBook of projectBooks | transformWith: ServalBuildsComponent.determineBuildInputs;
+                              track projectBook.sfProjectId
+                            ) {
                               <div class="detail-project-books-item">
                                 <div class="detail-project-books-meta detail-value-with-copy">
                                   @if (projectBook.shortName != null) {
