@@ -315,6 +315,38 @@ describe('ServalBuildsComponent', () => {
       expect(summary.totalUniqueTrainingBooks).toBe(3);
     });
 
+    it('excludes unconsidered builds from listed training book totals', () => {
+      const env = new TestEnvironment();
+      const baseStart: Date = new Date('2024-01-01T00:00:00Z');
+      const rows: ServalBuildRow[] = [
+        TestEnvironment.createRowWithDetails({
+          projectId: 'proj-a',
+          startDate: env.addHours(baseStart, 0),
+          finishDate: env.addHours(baseStart, 1),
+          requesterId: 'user-1',
+          trainingBooks: env.createProjectBooks('proj-a', ['GEN', 'EXO']),
+          status: DraftGenerationBuildStatus.Completed
+        }),
+        TestEnvironment.createRowWithDetails({
+          projectId: undefined,
+          startDate: env.addHours(baseStart, 2),
+          finishDate: env.addHours(baseStart, 3),
+          requesterId: undefined,
+          trainingBooks: env.createProjectBooks('proj-orphan', ['LEV', 'NUM']),
+          status: DraftGenerationBuildStatus.Completed
+        })
+      ];
+
+      // SUT
+      const summary: ServalBuildSummary = buildSummary(rows);
+
+      expect(summary.totalBuilds).toBe(1);
+      expect(summary.unconsideredBuilds).toBe(1);
+      // The unconsidered build's books should not contribute to listed totals.
+      expect(summary.totalTrainingBooks).toBe(2);
+      expect(summary.totalUniqueTrainingBooks).toBe(2);
+    });
+
     it('handles book counting despite chapter numbers present', () => {
       const env = new TestEnvironment();
       const baseStart: Date = new Date('2024-01-01T00:00:00Z');
