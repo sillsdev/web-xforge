@@ -37,7 +37,6 @@ export class ServalBuildProblemsDialog {
     return this.data.sections.filter((section: ServalBuildProblemsDialogSection) => section.problems.length > 0);
   }
 
-  /** Returns the set of problems in text to be copied to the clipboard. */
   get copyAllValue(): string {
     let text: string = `# Problems with Serval build ID ${this.data.servalBuildId}\n`;
 
@@ -49,12 +48,10 @@ export class ServalBuildProblemsDialog {
     return text;
   }
 
-  /** Returns the set of problems in a section in text to be copied to the clipboard. */
   sectionCopyValue(section: ServalBuildProblemsDialogSection): string {
     return section.problems.map((problem: BuildReportProblem) => `- ${problem.message}`).join('\n');
   }
 
-  /** Copies all problems to the clipboard. */
   copyAllToClipboard(): void {
     void navigator.clipboard.writeText(this.copyAllValue);
   }
