@@ -200,6 +200,8 @@ export function buildSummary(rows: ServalBuildRow[]): ServalBuildSummary {
       averageTranslationBooksPerBuild: undefined,
       totalUniqueTrainingBooks: 0,
       totalTrainingBooks: 0,
+      totalUniqueTranslationBooks: 0,
+      totalTranslationBooks: 0,
       completedBuilds: 0,
       inProgressBuilds: 0,
       buildsWithProblems: 0,
@@ -277,6 +279,9 @@ export function buildSummary(rows: ServalBuildRow[]): ServalBuildSummary {
   const totalUniqueTrainingBooks: number = countUniqueBooks(
     rowsWithServalData.flatMap((row: KnowableBuildRow) => row.trainingBooks)
   );
+  const totalUniqueTranslationBooks: number = countUniqueBooks(
+    rowsWithServalData.flatMap((row: KnowableBuildRow) => row.translationBooks)
+  );
 
   const averageTrainingBooksPerBuild: number | undefined =
     servalBuildCount > 0 ? totalTrainingBooks / servalBuildCount : undefined;
@@ -306,6 +311,8 @@ export function buildSummary(rows: ServalBuildRow[]): ServalBuildSummary {
     averageTranslationBooksPerBuild: averageTranslationBooksPerBuild,
     totalUniqueTrainingBooks: totalUniqueTrainingBooks,
     totalTrainingBooks: totalTrainingBooks,
+    totalUniqueTranslationBooks: totalUniqueTranslationBooks,
+    totalTranslationBooks: totalTranslationBooks,
     completedBuilds: completedBuilds,
     inProgressBuilds: inProgressBuilds,
     buildsWithProblems: buildsWithProblems,
