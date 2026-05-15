@@ -305,51 +305,43 @@
                     </mat-card-title-group>
                   </mat-card-header>
                   <mat-card-content class="detail-card-content">
+                    <ng-template #projectBooksSection let-sectionLabel="sectionLabel" let-projectBooks="projectBooks">
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">{{ sectionLabel }}</span>
+                        <span class="detail-value">
+                          <div class="detail-books-list">
+                            @for (projectBook of projectBooks; track projectBook.sfProjectId) {
+                              <div>
+                                @let detailProjectLink = servalAdminProjectLinkFor(projectBook.sfProjectId);
+                                @if (detailProjectLink != null) {
+                                  <a [href]="detailProjectLink" target="_blank" rel="noopener" class="project-link">
+                                    {{ projectBook.projectDisplayName }}
+                                  </a>
+                                } @else {
+                                  <span class="project-link">{{ projectBook.projectDisplayName }}</span>
+                                }
+                                : {{ ServalBuildsComponent.formatBookEntries(projectBook.booksAndChapters) }}
+                              </div>
+                            } @empty {
+                              <span>None</span>
+                            }
+                          </div>
+                        </span>
+                      </div>
+                    </ng-template>
+
                     <span class="detail-area-stacked-keyvalues">
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">Training books</span>
-                        <span class="detail-value">
-                          <div class="detail-books-list">
-                            @for (projectBook of row.trainingBooks; track projectBook.sfProjectId) {
-                              <div>
-                                @let detailTrainingLink = servalAdminProjectLinkFor(projectBook.sfProjectId);
-                                @if (detailTrainingLink != null) {
-                                  <a [href]="detailTrainingLink" target="_blank" rel="noopener" class="project-link">
-                                    {{ projectBook.projectDisplayName }}
-                                  </a>
-                                } @else {
-                                  <span class="project-link">{{ projectBook.projectDisplayName }}</span>
-                                }
-                                : {{ ServalBuildsComponent.formatBookEntries(projectBook.booksAndChapters) }}
-                              </div>
-                            } @empty {
-                              <span>None</span>
-                            }
-                          </div>
-                        </span>
-                      </div>
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">Translation books</span>
-                        <span class="detail-value">
-                          <div class="detail-books-list">
-                            @for (projectBook of row.translationBooks; track projectBook.sfProjectId) {
-                              <div>
-                                @let detailTranslationLink = servalAdminProjectLinkFor(projectBook.sfProjectId);
-                                @if (detailTranslationLink != null) {
-                                  <a [href]="detailTranslationLink" target="_blank" rel="noopener" class="project-link">
-                                    {{ projectBook.projectDisplayName }}
-                                  </a>
-                                } @else {
-                                  <span class="project-link">{{ projectBook.projectDisplayName }}</span>
-                                }
-                                : {{ ServalBuildsComponent.formatBookEntries(projectBook.booksAndChapters) }}
-                              </div>
-                            } @empty {
-                              <span>None</span>
-                            }
-                          </div>
-                        </span>
-                      </div>
+                      <ng-container
+                        [ngTemplateOutlet]="projectBooksSection"
+                        [ngTemplateOutletContext]="{ sectionLabel: 'Training books', projectBooks: row.trainingBooks }"
+                      ></ng-container>
+                      <ng-container
+                        [ngTemplateOutlet]="projectBooksSection"
+                        [ngTemplateOutletContext]="{
+                          sectionLabel: 'Translation books',
+                          projectBooks: row.translationBooks
+                        }"
+                      ></ng-container>
                     </span>
                   </mat-card-content>
                 </mat-card>

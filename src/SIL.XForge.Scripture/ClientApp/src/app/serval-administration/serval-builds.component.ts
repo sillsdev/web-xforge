@@ -1,4 +1,4 @@
-import { AsyncPipe } from '@angular/common';
+import { AsyncPipe, NgTemplateOutlet } from '@angular/common';
 import { Component, DestroyRef, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButton, MatIconButton } from '@angular/material/button';
@@ -127,6 +127,7 @@ interface SummaryDisplayItem {
   providers: [provideNativeDateAdapter()],
   imports: [
     AsyncPipe,
+    NgTemplateOutlet,
     MatButton,
     MatIconButton,
     MatIcon,
