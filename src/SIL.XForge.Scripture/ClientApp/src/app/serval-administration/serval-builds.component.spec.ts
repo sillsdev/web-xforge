@@ -1,9 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { BehaviorSubject, firstValueFrom, Observable, skip, Subject, take } from 'rxjs';
 import { ActivatedRoute, provideRouter } from '@angular/router';
-import { anything, mock, when } from 'ts-mockito';
-import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { BehaviorSubject, firstValueFrom, Observable, skip, Subject, take } from 'rxjs';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { MockConsole } from 'xforge-common/mock-console';
@@ -1380,7 +1379,7 @@ describe('ServalBuildsComponent', () => {
     });
   });
 
-   describe('requesting user details', () => {
+  describe('requesting user details', () => {
     it('loads requester display name from user data', async () => {
       const env = new TestEnvironment();
 
@@ -1440,7 +1439,6 @@ describe('ServalBuildsComponent', () => {
     });
   });
 
-  
   describe('export', () => {
     it('exports tsv rows through DraftJobsExportService', () => {
       const env = new TestEnvironment();
