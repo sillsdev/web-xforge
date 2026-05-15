@@ -52,7 +52,8 @@ fdescribe('NewDraftLogicHandler', () => {
 
     // Select Genesis for drafting
     env.logicHandler.selectDraftingBooks(['GEN']);
-    expect(env.selectedDraftingScriptureRange).toBe('GEN1-50');
+    // Remaining undrafted chapters automatically selected
+    expect(env.selectedDraftingScriptureRange).toBe('GEN6-50');
   });
 
   it('defaults to previous training data when going to the training step', async () => {
@@ -64,9 +65,8 @@ fdescribe('NewDraftLogicHandler', () => {
     expect(env.selectedTargetTrainingScriptureRange).toBe('');
     expect(env.selectedTrainingSourceBooks).toEqual({});
 
-    env.logicHandler.setInputMode('training_books');
-
     // Previous training selections should be selected by default when going to the training step
+    env.logicHandler.setInputMode('training_books');
     expect(env.selectedTargetTrainingScriptureRange).toBe('MAT1-28;MRK1-16;LUK1-24;JHN1-21');
     expect(env.selectedTrainingSourceBooks).toEqual({ 'training-source-1-id': ['MAT', 'MRK', 'LUK', 'JHN'] });
   });
@@ -106,31 +106,29 @@ fdescribe('NewDraftLogicHandler', () => {
     expect(env.selectedTrainingSourceBooks).toEqual({ 'training-source-1-id': ['MRK', 'LUK', 'JHN'] });
   });
 
-  it('allows drafting a subset of chapters of a partially completed book', async () => {
+  it('offers to draft a subset of chapters of a partially completed book and defaults to the remaining undrafted chapters', async () => {
     const testState = teamStartingToTranslateGenesis;
     const env = new TestEnvironment(testState);
     await env.waitForInit();
 
     env.logicHandler.selectDraftingBooks(['GEN']);
 
-    // Even though the progress service indicates that GEN1-5 are completed, the user should still be able to select GEN1-50 for drafting
-    expect(env.selectedDraftingScriptureRange).toBe('GEN1-50');
     expect(env.booksOfferedForPartialDrafting).toEqual(['GEN']);
+    expect(env.selectedDraftingScriptureRange).toBe('GEN6-50');
   });
 
-  it('does not allow drafting a subset of chapters of a book that has not been started', async () => {
+  it('does not offer to draft a subset of chapters of a book that has not been started', async () => {
     const testState = teamStartingToTranslateGenesis;
     const env = new TestEnvironment(testState);
     await env.waitForInit();
 
     env.logicHandler.selectDraftingBooks(['EXO']);
 
-    // Even though the progress service indicates that GEN1-5 are completed, the user should still be able to select GEN1-50 for drafting
     expect(env.selectedDraftingScriptureRange).toBe('EXO1-40');
     expect(env.booksOfferedForPartialDrafting).toEqual([]);
   });
 
-  it('allows drafting a subset of chapters of a book that has been completed', async () => {
+  it('offers to draft a subset of chapters of a book that has been completed and defaults to all chapters', async () => {
     const testState = {
       ...teamStartingToTranslateGenesis,
       targetProjectBooksChapters: teamStartingToTranslateGenesis.targetProjectBooksChapters.replace('GEN1-5', 'GEN1-50')
@@ -140,9 +138,63 @@ fdescribe('NewDraftLogicHandler', () => {
 
     env.logicHandler.selectDraftingBooks(['GEN']);
 
-    // Even though the progress service indicates that GEN1-50 are completed, the user should still be able to select GEN1-50 for drafting
-    expect(env.selectedDraftingScriptureRange).toBe('GEN1-50');
     expect(env.booksOfferedForPartialDrafting).toEqual(['GEN']);
+    expect(env.selectedDraftingScriptureRange).toBe('GEN1-50');
+  });
+
+  it('allows selecting multiple books for drafting and only offers to draft subsets of books that have some progress', async () => {
+    const testState = teamStartingToTranslateGenesis;
+    const env = new TestEnvironment(testState);
+    await env.waitForInit();
+
+    env.logicHandler.selectDraftingBooks(['GEN', 'EXO']);
+
+    // User should be able to select both GEN and EXO for drafting, but only GEN should be offered for partial drafting since EXO has no progress
+    expect(env.booksOfferedForPartialDrafting).toEqual(['GEN']);
+    expect(env.selectedDraftingScriptureRange).toBe('GEN6-50;EXO1-40');
+  });
+
+  it('allows selecting which chapters in a book should be drafted when offering partial drafting of a book', async () => {
+    const testState = teamStartingToTranslateGenesis;
+    const env = new TestEnvironment(testState);
+    await env.waitForInit();
+
+    // User selects GEN for drafting, which offers partial drafting since GEN1-5 is completed
+    env.logicHandler.selectDraftingBooks(['GEN']);
+    expect(env.booksOfferedForPartialDrafting).toEqual(['GEN']);
+
+    // Expect the chapter range to be set by default to the chapters that are not completed
+    expect(env.selectedDraftingScriptureRange).toBe('GEN6-50');
+
+    // User selects to draft a different range of chapters in GEN
+    env.logicHandler.trySelectDraftingChapters('GEN', '7,20-50');
+    expect(env.selectedDraftingScriptureRange).toBe('GEN7,20-50');
+  });
+
+  it('limits the selection of training data to what is available in the training sources and not selected for drafting', async () => {
+    const testState = teamStartingToTranslateGenesis;
+    const env = new TestEnvironment(testState);
+    await env.waitForInit();
+
+    // User selects MAT for drafting, which should remove it from the available training data since it's not possible to both draft and train on the same material
+    env.logicHandler.selectDraftingBooks(['MAT']);
+
+    env.logicHandler.setInputMode('training_books');
+
+    expect(env.availableTargetTrainingScriptureRange).toBe('GEN1-5;MRK1-16;LUK1-24;JHN1-21');
+    expect(env.selectedTargetTrainingScriptureRange).toBe('MRK1-16;LUK1-24;JHN1-21');
+    expect(env.selectedTrainingSourceBooks).toEqual({ 'training-source-1-id': ['MRK', 'LUK', 'JHN'] });
+
+    // Go back and select Genesis instead
+    env.logicHandler.setInputMode('draft_books');
+    env.logicHandler.selectDraftingBooks(['GEN']);
+    expect(env.selectedDraftingScriptureRange).toBe('GEN6-50');
+    env.logicHandler.setInputMode('training_books');
+
+    // Now GEN should be removed from the available training data instead of MAT
+    expect(env.availableTargetTrainingScriptureRange).toBe('GEN1-5;MRK1-16;LUK1-24;JHN1-21');
+    expect(env.selectedTargetTrainingScriptureRange).toBe('MRK1-16;LUK1-24;JHN1-21');
+    expect(env.selectedTrainingSourceBooks).toEqual({ 'training-source-1-id': ['MRK', 'LUK', 'JHN'] });
   });
 });
 
