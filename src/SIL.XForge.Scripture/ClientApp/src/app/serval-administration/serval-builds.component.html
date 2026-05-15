@@ -317,36 +317,28 @@
                               <div class="detail-project-books-item">
                                 <div class="detail-project-books-meta detail-value-with-copy">
                                   @if (projectBook.shortName != null) {
-                                    @if (projectBook.projectLink != null) {
-                                      <a
-                                        [href]="projectBook.projectLink"
-                                        target="_blank"
-                                        rel="noopener"
-                                        class="project-link"
-                                      >
-                                        {{ projectBook.shortName }}
-                                      </a>
-                                    } @else {
-                                      <span class="project-link">{{ projectBook.shortName }}</span>
-                                    }
-                                  }
-                                  <span class="detail-project-books-id">{{ projectBook.sfProjectId }}</span>
-                                  <app-copy [value]="projectBook.sfProjectId"></app-copy>
-                                </div>
-
-                                @if (projectBook.projectName != null) {
-                                  @if (projectBook.projectLink != null) {
                                     <a
                                       [href]="projectBook.projectLink"
                                       target="_blank"
                                       rel="noopener"
                                       class="project-link"
                                     >
-                                      {{ projectBook.projectName }}
+                                      {{ projectBook.shortName }}
                                     </a>
-                                  } @else {
-                                    <span class="project-link">{{ projectBook.projectName }}</span>
                                   }
+                                  <span class="detail-project-books-id">{{ projectBook.sfProjectId }}</span>
+                                  <app-copy [value]="projectBook.sfProjectId"></app-copy>
+                                </div>
+
+                                @if (projectBook.projectName != null) {
+                                  <a
+                                    [href]="projectBook.projectLink"
+                                    target="_blank"
+                                    rel="noopener"
+                                    class="project-link"
+                                  >
+                                    {{ projectBook.projectName }}
+                                  </a>
                                 }
 
                                 <div>{{ projectBook.booksDisplay }}</div>

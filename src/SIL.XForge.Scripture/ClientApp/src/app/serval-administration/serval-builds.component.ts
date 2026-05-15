@@ -121,7 +121,7 @@ interface SummaryDisplayItem {
 /** View model for one project and its books, shown in Input card lists. */
 export interface BuildInputItem {
   sfProjectId: string;
-  projectLink?: string;
+  projectLink: string;
   projectName?: string;
   shortName?: string;
   booksDisplay: string;
@@ -850,7 +850,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
       return [];
     }
 
-    return projectBooks.map((projectBooksEntry: ProjectBooks) => {
+    const result: BuildInputItem[] = projectBooks.map((projectBooksEntry: ProjectBooks) => {
       const projectName: string | undefined = isPopulatedString(projectBooksEntry.projectName)
         ? projectBooksEntry.projectName
         : undefined;
@@ -866,6 +866,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
         booksDisplay: ServalBuildsComponent.formatBookEntries(projectBooksEntry.booksAndChapters)
       };
     });
+    return result;
   }
 
   /** Formats a BookAndChapters array into a display string, e.g. "GEN 10-11, 16-19; EXO". */
@@ -900,9 +901,13 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     return ranges.join(', ');
   }
 
-  static servalAdminProjectLinkFor(sfProjectId: string | undefined): string | undefined {
-    if (sfProjectId == null) return undefined;
-    return `/serval-administration/${sfProjectId}`;
+  /** (The return type is string if the input is a type string (at compile time), or undefined
+   * if the input is of type undefined (at compile time).) */
+  static servalAdminProjectLinkFor<T extends string | undefined>(
+    sfProjectId: T
+  ): T extends string ? string : undefined {
+    if (sfProjectId == null) return undefined as T extends string ? string : undefined;
+    return `/serval-administration/${sfProjectId}` as T extends string ? string : undefined;
   }
 
   /** Formats a language code with its display name, e.g. "es (Spanish)". Falls back to just the code. */
