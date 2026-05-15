@@ -40,7 +40,7 @@
     "appearance_device": "Gerät",
     "appearance_dark": "Dunkel",
     "appearance_light": "Hell",
-    "experimental_features": "Experimental features"
+    "experimental_features": "Experimentelle Funktionen"
   },
   "attach_audio": {
     "tooltip_record": "Audio aufnehmen",
@@ -345,8 +345,8 @@
     "unknown_error": "Unbekannter Fehler"
   },
   "experimental_features_dialog": {
-    "title": "Experimental features",
-    "description": "These experimental features can be turned on or off and only apply to your account. Currently, logging out and back in will reset them. If you try them out, please leave us feedback so we can improve them."
+    "title": "Experimentelle Funktionen",
+    "description": "Diese experimentellen Funktionen können ein- oder ausgeschaltet werden und gelten nur für Dein Konto. Zurzeit werden diese durch das An- und Abmelden zurückgesetzt. Wenn Du sie ausprobierst, gib uns bitte Rückmeldung, damit wir sie verbessern können."
   },
   "file_service": {
     "failed_to_save": "Deine Änderungen konnten nicht gespeichert werden. Bitte überprüfe, ob die empfohlenen 500 MB freier Speicherplatz auf Deinem Gerät vorhanden sind.",

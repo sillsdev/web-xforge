@@ -415,7 +415,7 @@
     "state_syncing": "Sinkronisasi",
     "stay_on_page": "Tetap di halaman",
     "target_language_data": "Data Bahasa Sasaran",
-    "training_files_description": "Upload any further data that can be used to train the language model. These files must contain paired text in {{ sourceLanguageDisplayName }} and {{ targetLanguageDisplayName }} based on the projects selected.",
+    "training_files_description": "Upload any further data that can be used to train the language model. The first column must contain {{ sourceLanguageDisplayName }} and the second column must contain {{ targetLanguageDisplayName }}.",
     "unknown_language_code": "tidak diketahui"
   },
   "draft_usfm_format": {
@@ -885,7 +885,7 @@
     "no_training_data_file_uploaded": "Tidak ada file data pelatihan yang diunggah",
     "no_upload_offline": "Data pelatihan tidak dapat diunggah tanpa terhubung ke internet.",
     "save": "Simpan",
-    "upload_failed": "The training data file could not be uploaded. Please ensure that the spreadsheet contains two columns and try again.",
+    "upload_failed": "Your file needs to have two columns, and every row must have a value in both columns. Please fill in any empty cells and try again.",
     "upload_training_data": "Unggah Data Pelatihan",
     "uploading": "Mengunggah..."
   },
@@ -907,7 +907,8 @@
     "training": "Pelatihan...",
     "training_unavailable": "Pelatihan untuk sementara tidak tersedia",
     "translate_overview": "Ringkasan Terjemahan",
-    "translated_segments": "{{ translatedSegments }} dari {{ total }} segmen"
+    "translated_segments": "{{ translatedSegments }} dari {{ total }} segmen",
+    "translation_suggestions_retirement_notice": "Your project appears to be using the translation suggestions feature. Translation suggestions will be retired soon. Please contact {{ email }} to discuss alternative ways to translate using Scripture Forge."
   },
   "draft_signup": {
     "additional_comments_label": "Additional comments",
@@ -939,6 +940,9 @@
     "email_label": "Surel",
     "email_placeholder": "your.email@example.com",
     "email_required": "Email is required",
+    "field_manager_label": "Field manager",
+    "field_manager_placeholder": "Name of your Seed Company field manager",
+    "field_manager_required": "Field manager is required for Seed Company projects",
     "first_reference_project_placeholder": "First reference project",
     "name_label": "Nama",
     "name_placeholder": "Nama Anda",
