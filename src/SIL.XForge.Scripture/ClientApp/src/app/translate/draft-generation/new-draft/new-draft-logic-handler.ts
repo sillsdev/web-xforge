@@ -3,7 +3,7 @@ import { BehaviorSubject, firstValueFrom } from 'rxjs';
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
 import { DraftSourcesAsArrays } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
-import { VerboseScriptureRange } from './scripture-range';
+import { ChapterSet, VerboseScriptureRange } from './scripture-range';
 
 @Injectable({ providedIn: 'root' })
 export class StubProgressServiceThatGivesChapterLevelInfo {
@@ -165,11 +165,29 @@ export class NewDraftLogicHandler {
     if (this.inputMode$.getValue() !== 'draft_books') {
       throw new Error('Cannot update draft books when not in draft_books input mode');
     }
+
     const newDraftingScriptureRange = new VerboseScriptureRange('');
-    for (const bookId of books) {
-      const bookRange = this.availableDraftingScriptureRange$.getValue()?.books.get(bookId);
-      if (bookRange) {
-        newDraftingScriptureRange.books.set(bookId, bookRange);
+    const newlySelectedBooks = books.filter(book => !this.selectedDraftingScriptureRange$.getValue().books.has(book));
+
+    for (const book of books) {
+      const chapters = this.availableDraftingScriptureRange$.getValue().books.get(book);
+      if (chapters == null) throw new Error(`Selected book ${book} not in available drafting scripture range`);
+      if (newlySelectedBooks.includes(book)) {
+        // Default to selecting chapters that are in the source but not the target, unless that's zero chapters, in
+        // which case default to selecting all chapters in the source
+        const chaptersInTarget = this.availableTargetTrainingScriptureRange$.getValue().books.get(book);
+        const chaptersInSource = this.availableDraftingScriptureRange$.getValue().books.get(book);
+        if (chaptersInSource == null)
+          throw new Error(`Selected book ${book} not in available drafting scripture range`);
+        if (chaptersInTarget == null) {
+          newDraftingScriptureRange.books.set(book, chaptersInSource);
+        } else {
+          const newChaptersToDraft = chaptersInSource.difference(chaptersInTarget);
+          if (newChaptersToDraft.count() > 0) newDraftingScriptureRange.books.set(book, newChaptersToDraft);
+          else newDraftingScriptureRange.books.set(book, chaptersInSource);
+        }
+      } else {
+        newDraftingScriptureRange.books.set(book, chapters);
       }
     }
     this.selectedDraftingScriptureRange$.next(newDraftingScriptureRange);
@@ -177,10 +195,39 @@ export class NewDraftLogicHandler {
     this.booksOfferedForPartialDrafting$.next(books.filter(bookId => this.isBookEligibleForPartialDrafting(bookId)));
   }
 
-  isBookEligibleForPartialDrafting(bookId: string): boolean {
-    const sourceChapterCount = this.availableDraftingScriptureRange$.getValue()?.books.get(bookId)?.chapters.size;
+  trySelectDraftingChapters(bookId: string, chapters: string): true | string {
+    if (this.inputMode$.getValue() !== 'draft_books') {
+      throw new Error('Cannot update draft books when not in draft_books input mode');
+    }
+
+    let selectedChapters: ChapterSet;
+    try {
+      selectedChapters = new ChapterSet(chapters);
+    } catch (e) {
+      return `Invalid chapter range: ${e instanceof Error ? e.message : String(e)}`;
+    }
+
+    if (this.booksOfferedForPartialDrafting$.getValue().includes(bookId) !== true) {
+      return `Book ${bookId} is not eligible for partial drafting`;
+    }
+    // Chapters need to exist in the source to be a valid selection
+    const chaptersInSource = this.availableDraftingScriptureRange$.getValue().books.get(bookId);
+    if (chaptersInSource == null) throw new Error(`Book ${bookId} not in available drafting scripture range`);
+    const selectedChaptersNotInSource = selectedChapters.difference(chaptersInSource);
+    if (selectedChaptersNotInSource.count() > 0) {
+      return `Selected chapters ${selectedChaptersNotInSource.toString()} are not in the available drafting scripture range for book ${bookId}`;
+    }
+
+    const newDraftingScriptureRange = this.selectedDraftingScriptureRange$.getValue();
+    newDraftingScriptureRange.books.set(bookId, selectedChapters);
+    this.selectedDraftingScriptureRange$.next(newDraftingScriptureRange);
+    return true;
+  }
+
+  private isBookEligibleForPartialDrafting(bookId: string): boolean {
+    const sourceChapterCount = this.availableDraftingScriptureRange$.getValue().books.get(bookId)?.chapters.size;
     // TODO FIXME not sure if this is looking at the number of chapters, or chapters with content. Need to check for actual content
-    const targetChaptersWithContent = this.availableTargetTrainingScriptureRange$.getValue()?.books.get(bookId)
+    const targetChaptersWithContent = this.availableTargetTrainingScriptureRange$.getValue().books.get(bookId)
       ?.chapters.size;
 
     return (
@@ -197,7 +244,7 @@ export class NewDraftLogicHandler {
     }
     const newTargetTrainingScriptureRange = new VerboseScriptureRange('');
     for (const bookId of books) {
-      const bookRange = this.availableTargetTrainingScriptureRange$.getValue()?.books.get(bookId);
+      const bookRange = this.availableTargetTrainingScriptureRange$.getValue().books.get(bookId);
       if (bookRange) {
         newTargetTrainingScriptureRange.books.set(bookId, bookRange);
       }
@@ -251,25 +298,21 @@ export class NewDraftLogicHandler {
   private limitAvailableTrainingRangeBasedOnSelectedDraftingRange(): void {
     // Limit available and selected target training scripture range to not overlap selected drafting range
     this.availableTargetTrainingScriptureRange$.next(
-      this.availableTargetTrainingScriptureRange$
-        .getValue()!
-        .difference(this.selectedDraftingScriptureRange$.getValue()!)
+      this.availableTargetTrainingScriptureRange$.getValue().difference(this.selectedDraftingScriptureRange$.getValue())
     );
     this.selectedTargetTrainingScriptureRange$.next(
-      this.selectedTargetTrainingScriptureRange$
-        .getValue()!
-        .difference(this.selectedDraftingScriptureRange$.getValue()!)
+      this.selectedTargetTrainingScriptureRange$.getValue().difference(this.selectedDraftingScriptureRange$.getValue())
     );
 
     // Limit available and selected training source books to not exceed available target training scripture range
     this.availableTrainingSourceBooks$.next(
-      mapObject(this.trainingSourceBooks$.getValue()!, (_projectId, bookIds) =>
-        bookIds.filter(bookId => this.availableTargetTrainingScriptureRange$.getValue()?.books.has(bookId))
+      mapObject(this.trainingSourceBooks$.getValue(), (_projectId, bookIds) =>
+        bookIds.filter(bookId => this.availableTargetTrainingScriptureRange$.getValue().books.has(bookId))
       )
     );
     this.selectedTrainingSourceBooks$.next(
-      mapObject(this.selectedTrainingSourceBooks$.getValue()!, (projectId, bookIds) =>
-        bookIds.filter(bookId => this.availableTrainingSourceBooks$.getValue()?.[projectId]?.includes(bookId))
+      mapObject(this.selectedTrainingSourceBooks$.getValue(), (projectId, bookIds) =>
+        bookIds.filter(bookId => this.availableTrainingSourceBooks$.getValue()[projectId]?.includes(bookId))
       )
     );
   }
