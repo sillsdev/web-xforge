@@ -1376,8 +1376,8 @@ public class MachineApiService(
         // Build the timeline
         BuildReportTimeline timeline = BuildTimeline(translationBuild, projectEvents, draftGenerationRequestId);
 
-        // Collect problems
-        List<BuildReportProblem> problems = CollectProblems(translationBuild, projectEvents);
+        // Identify problems
+        List<BuildReportProblem> problems = ExtractProblems(translationBuild, projectEvents);
 
         return new ServalBuildReportDto
         {
@@ -1421,10 +1421,10 @@ public class MachineApiService(
     }
 
     /// <summary>
-    /// Collects problems for a build report by inspecting the Serval build state, message, warnings,
+    /// Gathers problems for a build report from the Serval build state, message, warnings,
     /// and any SF event exceptions.
     /// </summary>
-    private static List<BuildReportProblem> CollectProblems(
+    private static List<BuildReportProblem> ExtractProblems(
         TranslationBuild translationBuild,
         List<EventMetric> projectEvents
     )
