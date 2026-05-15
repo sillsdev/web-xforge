@@ -123,6 +123,15 @@ interface SummaryDisplayItem {
   prominence: 'top' | 'hidden';
 }
 
+/** View model for one project, and its set of books, shown in the Input card book lists. */
+interface BuildInputItem {
+  sfProjectId: string;
+  projectLink?: string;
+  projectName?: string;
+  shortName?: string;
+  booksDisplay: string;
+}
+
 /**
  * Displays Serval builds in the Serval Administration area.
  */
@@ -891,6 +900,25 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
         return `${prefix}: ${bookEntries}`;
       })
       .join('. ');
+  }
+
+  protected determineBuildInputs(projectBooks: ProjectBooks[]): BuildInputItem[] {
+    return projectBooks.map((projectBooksEntry: ProjectBooks) => {
+      const projectName: string | undefined = isPopulatedString(projectBooksEntry.projectName)
+        ? projectBooksEntry.projectName
+        : undefined;
+      const shortName: string | undefined = isPopulatedString(projectBooksEntry.shortName)
+        ? projectBooksEntry.shortName
+        : undefined;
+
+      return {
+        sfProjectId: projectBooksEntry.sfProjectId,
+        projectLink: this.servalAdminProjectLinkFor(projectBooksEntry.sfProjectId),
+        projectName: projectName,
+        shortName: shortName,
+        booksDisplay: ServalBuildsComponent.formatBookEntries(projectBooksEntry.booksAndChapters)
+      };
+    });
   }
 
   /** Formats a BookAndChapters array into a display string, e.g. "GEN 10-11, 16-19; EXO". */
