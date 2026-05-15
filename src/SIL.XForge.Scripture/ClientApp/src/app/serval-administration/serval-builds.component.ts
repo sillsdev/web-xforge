@@ -59,6 +59,8 @@ import {
   BookAndChapters,
   buildProjectDisplayName,
   BuildReportProblem,
+  BuildReportProblemSeverity,
+  BuildReportProblemSource,
   DraftGenerationBuildStatus,
   Phase,
   ProjectBooks,
@@ -932,8 +934,8 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
 
   protected problems(
     row: ServalBuildRow,
-    source: BuildReportProblem['source'],
-    severity: BuildReportProblem['severity']
+    source: BuildReportProblemSource,
+    severity: BuildReportProblemSeverity
   ): BuildReportProblem[] {
     return row.report.problems.filter((p: BuildReportProblem) => p.source === source && p.severity === severity);
   }
