@@ -932,7 +932,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     return langCode;
   }
 
-  protected problems(
+  problems(
     row: ServalBuildRow,
     source: BuildReportProblemSource,
     severity: BuildReportProblemSeverity
@@ -940,11 +940,11 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     return row.report.problems.filter((p: BuildReportProblem) => p.source === source && p.severity === severity);
   }
 
-  protected hasAnyProblems(row: ServalBuildRow): boolean {
+  hasAnyProblems(row: ServalBuildRow): boolean {
     return row.report.problems.length > 0;
   }
 
-  protected problemSections(row: ServalBuildRow): ServalBuildProblemsDialogSection[] {
+  problemSections(row: ServalBuildRow): ServalBuildProblemsDialogSection[] {
     const sections: ServalBuildProblemsDialogSection[] = [
       { heading: 'SF errors', problems: this.problems(row, 'local', 'error') },
       { heading: 'SF warnings', problems: this.problems(row, 'local', 'warning') },
@@ -954,7 +954,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     return sections;
   }
 
-  protected renderProblemMessagesForCard(problems: BuildReportProblem[]): string[] {
+  renderProblemMessagesForCard(problems: BuildReportProblem[]): string[] {
     const messages: string[] = problems.map((problem: BuildReportProblem) => problem.message);
     // Limit the number of problems to show in the card.
     if (messages.length <= this.problemPreviewLimit) {
@@ -964,7 +964,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     return [...messages.slice(0, this.problemPreviewLimit), '…'];
   }
 
-  protected showAllProblems(row: ServalBuildRow): void {
+  showAllProblems(row: ServalBuildRow): void {
     const servalBuildId: string = row.report.build?.additionalInfo?.buildId ?? 'unknown';
     const sections: ServalBuildProblemsDialogSection[] = this.problemSections(row);
 
@@ -973,7 +973,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     });
   }
 
-  protected problemsBadgeTooltip(row: ServalBuildRow): string {
+  problemsBadgeTooltip(row: ServalBuildRow): string {
     return row.report.problems.map((p: BuildReportProblem) => p.message).join('. ');
   }
 }
