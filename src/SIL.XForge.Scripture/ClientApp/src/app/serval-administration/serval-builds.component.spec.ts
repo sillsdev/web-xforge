@@ -1326,6 +1326,51 @@ describe('ServalBuildsComponent', () => {
     });
   });
 
+  describe('determineBuildInputs', () => {
+    it('builds result with desired info', () => {
+      const env = new TestEnvironment();
+      const input: ProjectBooks[] = [
+        {
+          sfProjectId: 'proj-b-id',
+          projectDisplayName: 'B - Project B',
+          shortName: 'B',
+          projectName: 'Project B',
+          booksAndChapters: [{ bookId: 'GEN' }, { bookId: 'EXO' }]
+        }
+      ];
+
+      const rows: any[] = env.component['determineBuildInputs'](input);
+
+      expect(rows.length).toBe(1);
+      expect(rows[0].projectName).toBe('Project B');
+      expect(rows[0].shortName).toBe('B');
+      expect(rows[0].sfProjectId).toBe('proj-b-id');
+      expect(rows[0].projectLink).toBe('/serval-administration/proj-b-id');
+      expect(rows[0].booksDisplay).toBe('GEN; EXO');
+    });
+
+    it('omits missing project name and short name values', () => {
+      const env = new TestEnvironment();
+      const input: ProjectBooks[] = [
+        {
+          sfProjectId: 'proj-c-id',
+          projectDisplayName: 'proj-c-id',
+          shortName: undefined,
+          projectName: undefined,
+          booksAndChapters: [{ bookId: 'LEV', chapters: [1, 2, 3] }, { bookId: 'NUM' }]
+        }
+      ];
+
+      const rows: any[] = env.component['determineBuildInputs'](input);
+
+      expect(rows.length).toBe(1);
+      expect(rows[0].projectName).toBeUndefined();
+      expect(rows[0].shortName).toBeUndefined();
+      expect(rows[0].sfProjectId).toBe('proj-c-id');
+      expect(rows[0].booksDisplay).toBe('LEV 1-3; NUM');
+    });
+  });
+
   describe('requested sorting', () => {
     it('sorts by user request time with serval created fallback', () => {
       const env = new TestEnvironment();

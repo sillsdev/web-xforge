@@ -310,17 +310,43 @@
                         <span class="detail-key">{{ sectionLabel }}</span>
                         <span class="detail-value">
                           <div class="detail-books-list">
-                            @for (projectBook of projectBooks; track projectBook.sfProjectId) {
-                              <div>
-                                @let detailProjectLink = servalAdminProjectLinkFor(projectBook.sfProjectId);
-                                @if (detailProjectLink != null) {
-                                  <a [href]="detailProjectLink" target="_blank" rel="noopener" class="project-link">
-                                    {{ projectBook.projectDisplayName }}
-                                  </a>
-                                } @else {
-                                  <span class="project-link">{{ projectBook.projectDisplayName }}</span>
+                            @for (projectBook of determineBuildInputs(projectBooks); track projectBook.sfProjectId) {
+                              <div class="detail-project-books-item">
+                                <div class="detail-project-books-meta detail-value-with-copy">
+                                  @if (projectBook.shortName != null) {
+                                    @if (projectBook.projectLink != null) {
+                                      <a
+                                        [href]="projectBook.projectLink"
+                                        target="_blank"
+                                        rel="noopener"
+                                        class="project-link"
+                                      >
+                                        {{ projectBook.shortName }}
+                                      </a>
+                                    } @else {
+                                      <span class="project-link">{{ projectBook.shortName }}</span>
+                                    }
+                                  }
+                                  <span class="detail-project-books-id">{{ projectBook.sfProjectId }}</span>
+                                  <app-copy [value]="projectBook.sfProjectId"></app-copy>
+                                </div>
+
+                                @if (projectBook.projectName != null) {
+                                  @if (projectBook.projectLink != null) {
+                                    <a
+                                      [href]="projectBook.projectLink"
+                                      target="_blank"
+                                      rel="noopener"
+                                      class="project-link"
+                                    >
+                                      {{ projectBook.projectName }}
+                                    </a>
+                                  } @else {
+                                    <span class="project-link">{{ projectBook.projectName }}</span>
+                                  }
                                 }
-                                : {{ ServalBuildsComponent.formatBookEntries(projectBook.booksAndChapters) }}
+
+                                <div>{{ projectBook.booksDisplay }}</div>
                               </div>
                             } @empty {
                               <span>None</span>
