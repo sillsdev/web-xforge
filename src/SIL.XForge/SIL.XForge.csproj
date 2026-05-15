@@ -11,23 +11,21 @@
     <PackageReference Include="Autofac" Version="9.1.0" />
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="11.0.0" />
     <PackageReference Include="Autofac.Extras.DynamicProxy" Version="7.1.0" />
-    <PackageReference Include="Bugsnag.AspNet.Core" Version="4.1.0" />
+    <PackageReference Include="Bugsnag.AspNet.Core" Version="4.1.1" />
     <PackageReference Include="EdjCase.JsonRpc.Router" Version="6.1.0" />
     <PackageReference Include="Hangfire.AspNetCore" Version="1.8.23" />
     <PackageReference Include="Hangfire.Core" Version="1.8.23" />
     <PackageReference Include="Hangfire.Autofac" Version="2.7.0" />
-    <PackageReference Include="Hangfire.Mongo" Version="1.14.1" />
+    <PackageReference Include="Hangfire.Mongo" Version="1.15.0" />
     <PackageReference Include="Duende.IdentityModel" Version="8.1.0" />
-    <PackageReference Include="Jering.Javascript.NodeJS" Version="6.3.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.6" />
-    <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="10.0.6" />
-    <PackageReference Include="MongoDB.Driver" Version="3.7.1" />
+    <PackageReference Include="Jering.Javascript.NodeJS" Version="[6.3.1]" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="10.0.8" />
+    <PackageReference Include="MongoDB.Driver" Version="3.8.1" />
     <PackageReference Include="MailKit" Version="4.16.0" />
     <PackageReference Include="idunno.Authentication.Basic" Version="2.4.0" />
     <PackageReference Include="AbrarJahin.DiffMatchPatch" Version="0.1.0" />
     <PackageReference Include="SIL.Core" Version="17.0.0" />
-    <!-- Vulnerable dependency of MongoDB.Driver - see https://github.com/advisories/GHSA-pggp-6c3x-2xmx -->
-    <PackageReference Include="Snappier" Version="1.3.1" />
     <!-- Vulnerable dependency of MongoDB.Driver - see https://github.com/advisories/GHSA-6c8g-7p36-r338 -->
     <PackageReference Include="SharpCompress" Version="0.48.0" />
   </ItemGroup>
