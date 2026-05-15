@@ -54,7 +54,6 @@ import { environment } from '../environments/environment';
 import { BrandingService } from './core/branding.service';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
-import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
 import { SFProjectService } from './core/sf-project.service';
 import { NavigationComponent } from './navigation/navigation.component';
 import { GlobalNoticesComponent } from './shared/global-notices/global-notices.component';
@@ -109,7 +108,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   protected isScreenTiny = false;
 
   private currentUserDoc?: UserDoc;
-  private projectUserConfigDoc?: SFProjectUserConfigDoc;
   private isLoggedInUserAnonymous: boolean = false;
   private _selectedProjectDoc?: SFProjectProfileDoc;
   private selectedProjectDeleteSub?: Subscription;
@@ -334,10 +332,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         }
         this.projectFont = this.fontService.getFontFamilyFromProject(this._selectedProjectDoc.data);
         void this.userService.setCurrentProjectId(this.currentUserDoc!, this._selectedProjectDoc.id);
-        this.projectUserConfigDoc = await this.projectService.getUserConfig(
-          this._selectedProjectDoc.id,
-          this.currentUserDoc!.id
-        );
+
         if (this.selectedProjectDeleteSub != null) {
           this.selectedProjectDeleteSub.unsubscribe();
         }
@@ -371,15 +366,12 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
               void this.projectService.localDelete(this._selectedProjectDoc.id);
             }
 
-            if (this.projectUserConfigDoc != null) {
-              checkAppAccess(
-                this._selectedProjectDoc,
-                this.currentUserDoc.id,
-                this.projectUserConfigDoc,
-                this.locationService.pathname,
-                this.router
-              );
-            }
+            checkAppAccess(
+              this._selectedProjectDoc,
+              this.currentUserDoc.id,
+              this.locationService.pathname,
+              this.router
+            );
           }
         });
 
