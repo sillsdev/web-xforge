@@ -178,14 +178,6 @@ export function calculatePercentTimeOnSF(rows: ServalBuildRow[]): number | undef
  * containing counts, averages, and timing statistics.
  */
 export function buildSummary(rows: ServalBuildRow[]): ServalBuildSummary {
-  const listedTotalTrainingBooks: number = rows.reduce(
-    (sum: number, row: ServalBuildRow) => sum + countBooks(row.trainingBooks),
-    0
-  );
-  const listedTotalUniqueTrainingBooks: number = countUniqueBooks(
-    rows.flatMap((row: ServalBuildRow) => row.trainingBooks)
-  );
-
   // Type for a build row where the SF project is known.
   type KnowableBuildRow = ServalBuildRow & { report: ServalBuildReportDto & { project: BuildReportProject } };
   // Rows with a known SF project. Any build that is not associable with a project will not be included or
@@ -206,8 +198,8 @@ export function buildSummary(rows: ServalBuildRow[]): ServalBuildSummary {
       faultedBuilds: 0,
       averageTrainingBooksPerBuild: undefined,
       averageTranslationBooksPerBuild: undefined,
-      totalUniqueTrainingBooks: listedTotalUniqueTrainingBooks,
-      totalTrainingBooks: listedTotalTrainingBooks,
+      totalUniqueTrainingBooks: 0,
+      totalTrainingBooks: 0,
       completedBuilds: 0,
       inProgressBuilds: 0,
       buildsWithProblems: 0,
@@ -282,6 +274,9 @@ export function buildSummary(rows: ServalBuildRow[]): ServalBuildSummary {
     (sum: number, row: KnowableBuildRow) => sum + countBooks(row.translationBooks),
     0
   );
+  const totalUniqueTrainingBooks: number = countUniqueBooks(
+    rowsWithServalData.flatMap((row: KnowableBuildRow) => row.trainingBooks)
+  );
 
   const averageTrainingBooksPerBuild: number | undefined =
     servalBuildCount > 0 ? totalTrainingBooks / servalBuildCount : undefined;
@@ -309,8 +304,8 @@ export function buildSummary(rows: ServalBuildRow[]): ServalBuildSummary {
     faultedBuilds: faultedBuilds,
     averageTrainingBooksPerBuild: averageTrainingBooksPerBuild,
     averageTranslationBooksPerBuild: averageTranslationBooksPerBuild,
-    totalUniqueTrainingBooks: listedTotalUniqueTrainingBooks,
-    totalTrainingBooks: listedTotalTrainingBooks,
+    totalUniqueTrainingBooks: totalUniqueTrainingBooks,
+    totalTrainingBooks: totalTrainingBooks,
     completedBuilds: completedBuilds,
     inProgressBuilds: inProgressBuilds,
     buildsWithProblems: buildsWithProblems,
