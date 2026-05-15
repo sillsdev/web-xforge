@@ -6,6 +6,15 @@ import {
 import { BuildReportProblem } from './serval-build-report';
 
 describe('ServalBuildProblemsDialog', () => {
+  const problemsHeader: string = '# Problems with Serval build ID build-id';
+  const sfErrorsHeader: string = '## SF errors';
+  const sfFailureItem: string = '- SF failure';
+  const sfWarningsHeader: string = '## SF warnings';
+  const servalErrorsHeader: string = '## Serval errors';
+  const servalWarningsHeader: string = '## Serval warnings';
+  const servalWarningItem: string = '- Low confidence';
+  const noneReportedIndication: string = 'None reported';
+
   function createSection(heading: string, problems: BuildReportProblem[]): ServalBuildProblemsDialogSection {
     return { heading: heading, problems: problems };
   }
@@ -36,11 +45,11 @@ describe('ServalBuildProblemsDialog', () => {
 
     const result: string = dialog.copyAllValue;
 
-    expect(result).toContain('# Problems with Serval build ID build-id');
-    expect(result).toContain('## SF errors');
-    expect(result).toContain('- SF failure');
-    expect(result).toContain('## Serval warnings');
-    expect(result).toContain('- Low confidence');
+    expect(result).toContain(problemsHeader);
+    expect(result).toContain(sfErrorsHeader);
+    expect(result).toContain(sfFailureItem);
+    expect(result).toContain(servalWarningsHeader);
+    expect(result).toContain(servalWarningItem);
   });
 
   it('copyAllValue omits sections that have no problems', () => {
@@ -56,10 +65,10 @@ describe('ServalBuildProblemsDialog', () => {
 
     const result: string = dialog.copyAllValue;
 
-    expect(result).not.toContain('## SF errors');
-    expect(result).toContain('## SF warnings');
-    expect(result).not.toContain('## Serval errors');
-    expect(result).toContain('## Serval warnings');
-    expect(result).not.toContain('None reported');
+    expect(result).not.toContain(sfErrorsHeader);
+    expect(result).toContain(sfWarningsHeader);
+    expect(result).not.toContain(servalErrorsHeader);
+    expect(result).toContain(servalWarningsHeader);
+    expect(result).not.toContain(noneReportedIndication);
   });
 });
