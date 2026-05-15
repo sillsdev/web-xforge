@@ -158,7 +158,7 @@
           <td mat-cell *matCellDef="let row">
             @for (projectBook of row.translationBooks; track projectBook.sfProjectId) {
               <div>
-                @let translationLink = servalAdminProjectLinkFor(projectBook.sfProjectId);
+                @let translationLink = ServalBuildsComponent.servalAdminProjectLinkFor(projectBook.sfProjectId);
                 @let short = projectBook.shortName ?? projectBook.sfProjectId;
                 @let toolTip = projectBook.projectName ?? projectBook.sfProjectId;
                 @if (translationLink != null) {
@@ -310,7 +310,10 @@
                         <span class="detail-key">{{ sectionLabel }}</span>
                         <span class="detail-value">
                           <div class="detail-books-list">
-                            @for (projectBook of determineBuildInputs(projectBooks); track projectBook.sfProjectId) {
+                            @for (
+                              projectBook of projectBooks | transformWith: ServalBuildsComponent.determineBuildInputs;
+                              track projectBook.sfProjectId
+                            ) {
                               <div class="detail-project-books-item">
                                 <div class="detail-project-books-meta detail-value-with-copy">
                                   @if (projectBook.shortName != null) {
