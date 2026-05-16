@@ -377,7 +377,7 @@
   },
   "draft_sources": {
     "add_another_reference_project": "Ein anderes Referenzprojekt hinzufügen",
-    "additional_training_data_optional": "Additional training data (optional)",
+    "additional_training_data_optional": "Zusätzlicher Daten für die Schulung (optional)",
     "all_changes_saved": "Alle Änderungen gepeichert",
     "cancel": "Abbrechen",
     "close": "Schliessen",
@@ -404,10 +404,10 @@
     "select_at_least_one_source_and_reference": "Bitte wähle vor dem Speichern mindestens eine Quelle und ein Referenzprojekt aus.",
     "select_at_least_one_source": "Bitte wähle vor dem Speichern mindestens ein Ausgangsprojekt aus.",
     "select_primary_reference": "Wähle Dein primäres Referenzprojekt aus. Dies ist das Projekt, auf das Du Dich während der Übersetzung am häufigsten beziehst.",
-    "select_project_to_translate_explanation": "Select the Paratext project or DBL resource you want the draft to be translated from.",
+    "select_project_to_translate_explanation": "Wähle das Paratext-Projekt oder die DBL-Ressource, aus der der Entwurf übersetzt werden soll.",
     "select_project_to_translate": "Wähle das Projekt zum Übersetzen",
     "some_projects_use_back_translation": "Einige Projekte erhalten bessere Ergebnisse, wenn eine Rückübersetzung als eine weitere Referenz hinzugefügt wird.",
-    "source_language": "the source language",
+    "source_language": "die Ausgangssprache",
     "source_side_language_codes_differ": "Alle Ausgangs- und Referenzprojekte müssen in der gleichen Sprache sein. Bitte wähle verschiedene Ausgangs- oder Referenzprojekte.",
     "state_connecting": "Wird verbunden",
     "state_sync_failed": "Es ist ein Fehler bei der Synchronisierung aufgetreten",
@@ -415,7 +415,7 @@
     "state_syncing": "Wird synchronisiert",
     "stay_on_page": "Bleibe auf dieser Seite",
     "target_language_data": "Daten in der Zielsprache",
-    "training_files_description": "Lade alle weiteren Daten hoch, die zum Trainieren des Sprachmodells verwendet werden können. Diese Dateien müssen den passenden Text in {{ sourceLanguageDisplayName }} und {{ targetLanguageDisplayName }} enthalten, der auf den ausgewählten Projekten basiert.",
+    "training_files_description": "Lade weiteren Daten hoch, mit denen das Sprachmodell geschult werden kann. Die erste Spalte muss {{ sourceLanguageDisplayName }} und die zweite Spalte {{ targetLanguageDisplayName }} enthalten.",
     "unknown_language_code": "unbekannt"
   },
   "draft_usfm_format": {
@@ -885,7 +885,7 @@
     "no_training_data_file_uploaded": "Keine Schulungsdatendatei hochgeladen",
     "no_upload_offline": "Schulungsdaten können nicht ohne Internetverbindung hochgeladen werden.",
     "save": "Speichern",
-    "upload_failed": "Die Datei mit den Schulungsdaten konnte nicht hochgeladen werden. Bitte vergewissere Dich, dass das Arbeitsblatt zwei Spalten enthält und versuche es erneut.",
+    "upload_failed": "Deine Datei muss zwei Spalten und jede Zeile einen Wert in beiden Spalten haben. Bitte fülle alle leeren Zellen aus und versuche es erneut.",
     "upload_training_data": "Schulungsdaten hochladen",
     "uploading": "Hochladen im Gange..."
   },
@@ -907,7 +907,8 @@
     "training": "Schulung...",
     "training_unavailable": "Schulung ist vorübergehend nicht verfügbar",
     "translate_overview": "Übersicht übersetzen",
-    "translated_segments": "{{ translatedSegments }} von {{ total }} Segmenten"
+    "translated_segments": "{{ translatedSegments }} von {{ total }} Segmenten",
+    "translation_suggestions_retirement_notice": "Dein Projekt scheint die Funktion der Übersetzungsvorschläge zu verwenden. Die Übersetzungsvorschläge werden bald abgeschaltet. Bitte wende Dich an {{ email }} , um alternative Möglichkeiten zur Übersetzung mit Scripture Forge zu besprechen."
   },
   "draft_signup": {
     "additional_comments_label": "Zusätzliche Anmerkungen",
@@ -939,6 +940,9 @@
     "email_label": "E-Mail-Adresse",
     "email_placeholder": "dein.email@beispiel.de",
     "email_required": "E-Mail-Adresse ist erforderlich",
+    "field_manager_label": "Feldleiter",
+    "field_manager_placeholder": "Name Deines Seed Company Feldleiters",
+    "field_manager_required": "Feldleiter ist erforderlich für Seed Company Projekte",
     "first_reference_project_placeholder": "Erstes Referenzprojekt",
     "name_label": "Name",
     "name_placeholder": "Dein Name",

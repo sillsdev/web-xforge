@@ -415,7 +415,7 @@
     "state_syncing": "Syncing",
     "stay_on_page": "Stay on page",
     "target_language_data": "Target language data",
-    "training_files_description": "Upload any further data that can be used to train the language model. These files must contain paired text in {{ sourceLanguageDisplayName }} and {{ targetLanguageDisplayName }} based on the projects selected.",
+    "training_files_description": "Upload any further data that can be used to train the language model. The first column must contain {{ sourceLanguageDisplayName }} and the second column must contain {{ targetLanguageDisplayName }}.",
     "unknown_language_code": "unknown"
   },
   "draft_usfm_format": {
@@ -885,7 +885,7 @@
     "no_training_data_file_uploaded": "No training data file uploaded",
     "no_upload_offline": "Training data cannot be uploaded without connecting to the internet.",
     "save": "ວັກທີ່ມີຄຳຖາມ",
-    "upload_failed": "The training data file could not be uploaded. Please ensure that the spreadsheet contains two columns and try again.",
+    "upload_failed": "Your file needs to have two columns, and every row must have a value in both columns. Please fill in any empty cells and try again.",
     "upload_training_data": "Upload Training Data",
     "uploading": "ການອັບໂຫລດ..."
   },
@@ -907,7 +907,8 @@
     "training": "Training...",
     "training_unavailable": "Training is temporarily unavailable",
     "translate_overview": "Translate Overview",
-    "translated_segments": "{{ translatedSegments }} of {{ total }} segments"
+    "translated_segments": "{{ translatedSegments }} of {{ total }} segments",
+    "translation_suggestions_retirement_notice": "Your project appears to be using the translation suggestions feature. Translation suggestions will be retired soon. Please contact {{ email }} to discuss alternative ways to translate using Scripture Forge."
   },
   "draft_signup": {
     "additional_comments_label": "Additional comments",
@@ -939,6 +940,9 @@
     "email_label": "ອີເມວ",
     "email_placeholder": "your.email@example.com",
     "email_required": "Email is required",
+    "field_manager_label": "Field manager",
+    "field_manager_placeholder": "Name of your Seed Company field manager",
+    "field_manager_required": "Field manager is required for Seed Company projects",
     "first_reference_project_placeholder": "First reference project",
     "name_label": "ຊື່​ຂອງ​ເຈົ້າ",
     "name_placeholder": "ຊື່​ຂອງ​ເຈົ້າ",

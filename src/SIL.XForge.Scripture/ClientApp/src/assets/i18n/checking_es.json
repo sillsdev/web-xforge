@@ -40,7 +40,7 @@
     "appearance_device": "Dispositivo",
     "appearance_dark": "Oscuro",
     "appearance_light": "Luz",
-    "experimental_features": "Experimental features"
+    "experimental_features": "Funciones experimentales"
   },
   "attach_audio": {
     "tooltip_record": "Grabar audio",
@@ -345,8 +345,8 @@
     "unknown_error": "Error desconocido"
   },
   "experimental_features_dialog": {
-    "title": "Experimental features",
-    "description": "These experimental features can be turned on or off and only apply to your account. Currently, logging out and back in will reset them. If you try them out, please leave us feedback so we can improve them."
+    "title": "Funciones experimentales",
+    "description": "Estas funciones experimentales se pueden activar o desactivar y solo se aplican a su cuenta. Actualmente, al cerrar sesión y volver a iniciar sesión se restablecerán. Si las pruebas, envíanos tus comentarios para que podamos mejorarlas."
   },
   "file_service": {
     "failed_to_save": "No se guardaron los cambios. Por favor, compruebe que su dispositivo tenga los 500 MB de espacio libre recomendados.",
