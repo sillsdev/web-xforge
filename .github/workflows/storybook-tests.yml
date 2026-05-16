@@ -1,4 +1,4 @@
-name: "Chromatic"
+name: "Storybook tests"
 permissions: {}
 
 on:
@@ -9,8 +9,8 @@ on:
     branches: [master]
 
 jobs:
-  chromatic-deployment:
-    name: "Deploy Storybook to Chromatic"
+  storybook-tests:
+    name: "Storybook tests"
     strategy:
       matrix:
         os: ["ubuntu-24.04"]
@@ -22,8 +22,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          fetch-depth: 0 # Chromatic requires git history
-          ref: ${{ github.event.pull_request.head.sha }} # Chromatic needs the PR branch, not the merge to master
+          fetch-depth: 1
       - name: "Deps: Node"
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
@@ -68,24 +67,9 @@ jobs:
 
       - name: Build Storybook
         run: cd src/SIL.XForge.Scripture/ClientApp && npm run build-storybook -- --webpack-stats-json
-      - id: publish
-        name: Publish to Chromatic
-        uses: chromaui/action@f1f9e3277eb1eaa8cba4c6bcebc9809291ee29ea # v15.0.0
-        with:
-          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
-          workingDir: src/SIL.XForge.Scripture/ClientApp
-          storybookBuildDir: storybook-static
-          # Auto accept changes on master branch so we have a clean baseline
-          autoAcceptChanges: "master"
-          # Ignore any past builds on the branch that triggered the workflow. This prevents rebased branches from
-          # having the wrong baseline. On master this shouldn't have any effect because autoAcceptChanges is true.
-          ignoreLastBuildOnBranch: ${{ github.ref }}
-          onlyChanged: true
-          externals: |
-            - '*.scss'
-          # Force a rebuild even if Chromatic thinks there are no changes
-          forceRebuild: true
+      - name: Serve Storybook
+        run: npx http-server src/SIL.XForge.Scripture/ClientApp/storybook-static --port 6006 &
       - name: Run Storybook tests
         run: cd src/SIL.XForge.Scripture/ClientApp && npm run test-storybook -- --no-index-json
         env:
-          TARGET_URL: "${{steps.publish.outputs.storybookUrl}}"
+          TARGET_URL: "http://localhost:6006"
