@@ -1495,29 +1495,6 @@ describe('ServalBuildsComponent', () => {
       expect(await updatedDisplayNamePromise).toBe('Changed User');
       expect(await updatedEmailAddressPromise).toBe('changed@example.com');
     });
-
-    it('updates requester details when remoteChanges$ emits', async () => {
-      const env = new TestEnvironment();
-      const displayName$: Observable<string | undefined> = env.component['requesterDisplayName']('user02');
-      const emailAddress$: Observable<string | undefined> = env.component['requesterEmailAddress']('user02');
-
-      expect(await firstValueFrom(displayName$)).toBe('Test User');
-      expect(await firstValueFrom(emailAddress$)).toBe('user02@example.com');
-
-      const updatedDisplayNamePromise: Promise<string | undefined> = firstValueFrom(
-        displayName$.pipe(skip(1), take(1))
-      );
-      const updatedEmailAddressPromise: Promise<string | undefined> = firstValueFrom(
-        emailAddress$.pipe(skip(1), take(1))
-      );
-
-      env.userData.displayName = 'Remote Changed User';
-      env.userData.email = 'remote.changed@example.com';
-      env.userRemoteChanges$.next();
-
-      expect(await updatedDisplayNamePromise).toBe('Remote Changed User');
-      expect(await updatedEmailAddressPromise).toBe('remote.changed@example.com');
-    });
   });
 
   describe('export', () => {
@@ -1555,7 +1532,6 @@ class TestEnvironment {
   >(undefined);
   readonly userData: { displayName: string; avatarUrl: string; email: string };
   readonly userChanges$: Subject<void> = new Subject<void>();
-  readonly userRemoteChanges$: Subject<void> = new Subject<void>();
 
   constructor() {
     this.userData = {
@@ -1565,8 +1541,7 @@ class TestEnvironment {
     };
     const userDoc = {
       data: this.userData,
-      changes$: this.userChanges$,
-      remoteChanges$: this.userRemoteChanges$
+      changes$: this.userChanges$
     } as unknown as UserDoc;
 
     when(mockNoticeService.loadingStarted(anything())).thenReturn(undefined);
