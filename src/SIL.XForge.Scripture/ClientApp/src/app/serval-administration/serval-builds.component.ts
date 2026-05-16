@@ -30,7 +30,6 @@ import {
   firstValueFrom,
   from,
   map,
-  merge,
   Observable,
   of,
   shareReplay,
@@ -438,9 +437,9 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     const identity$: Observable<{ displayName?: string; emailAddress?: string }> = from(
       this.userService.get(requesterSFUserId)
     ).pipe(
-      // This switchMap to changes$ and remoteChanges$ lets us cache Observables with information that stays up-to-date.
+      // This switchMap to changes$ lets us cache Observables with information that stays up-to-date.
       switchMap((userDoc: UserDoc) =>
-        merge(userDoc.changes$, userDoc.remoteChanges$).pipe(
+        userDoc.changes$.pipe(
           startWith(undefined),
           map(() => {
             const displayName: string | undefined = userDoc.data?.displayName;
