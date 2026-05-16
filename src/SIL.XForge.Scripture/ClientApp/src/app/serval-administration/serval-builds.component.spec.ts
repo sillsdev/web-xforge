@@ -1415,7 +1415,7 @@ describe('ServalBuildsComponent', () => {
     it('loads requester display name from user data', async () => {
       const env = new TestEnvironment();
 
-      const displayName: string = await firstValueFrom(env.component['requesterDisplayName']('user02'));
+      const displayName: string | undefined = await firstValueFrom(env.component['requesterDisplayName']('user02'));
 
       expect(displayName).toBe('Test User');
     });
@@ -1430,13 +1430,15 @@ describe('ServalBuildsComponent', () => {
 
     it('updates requester details when changes$ emits', async () => {
       const env = new TestEnvironment();
-      const displayName$: Observable<string> = env.component['requesterDisplayName']('user02');
+      const displayName$: Observable<string | undefined> = env.component['requesterDisplayName']('user02');
       const emailAddress$: Observable<string | undefined> = env.component['requesterEmailAddress']('user02');
 
       expect(await firstValueFrom(displayName$)).toBe('Test User');
       expect(await firstValueFrom(emailAddress$)).toBe('user02@example.com');
 
-      const updatedDisplayNamePromise: Promise<string> = firstValueFrom(displayName$.pipe(skip(1), take(1)));
+      const updatedDisplayNamePromise: Promise<string | undefined> = firstValueFrom(
+        displayName$.pipe(skip(1), take(1))
+      );
       const updatedEmailAddressPromise: Promise<string | undefined> = firstValueFrom(
         emailAddress$.pipe(skip(1), take(1))
       );
@@ -1451,13 +1453,15 @@ describe('ServalBuildsComponent', () => {
 
     it('updates requester details when remoteChanges$ emits', async () => {
       const env = new TestEnvironment();
-      const displayName$: Observable<string> = env.component['requesterDisplayName']('user02');
+      const displayName$: Observable<string | undefined> = env.component['requesterDisplayName']('user02');
       const emailAddress$: Observable<string | undefined> = env.component['requesterEmailAddress']('user02');
 
       expect(await firstValueFrom(displayName$)).toBe('Test User');
       expect(await firstValueFrom(emailAddress$)).toBe('user02@example.com');
 
-      const updatedDisplayNamePromise: Promise<string> = firstValueFrom(displayName$.pipe(skip(1), take(1)));
+      const updatedDisplayNamePromise: Promise<string | undefined> = firstValueFrom(
+        displayName$.pipe(skip(1), take(1))
+      );
       const updatedEmailAddressPromise: Promise<string | undefined> = firstValueFrom(
         emailAddress$.pipe(skip(1), take(1))
       );
