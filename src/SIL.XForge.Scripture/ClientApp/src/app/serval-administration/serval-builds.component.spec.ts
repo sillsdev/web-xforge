@@ -29,7 +29,7 @@ import {
   ServalBuildReportDto
 } from './serval-build-report';
 import { buildSummary, gapsBetweenBuildsMs } from './serval-builds-statistics';
-import { ServalBuildRow, ServalBuildsComponent, ServalBuildSummary } from './serval-builds.component';
+import { BuildInputItem, ServalBuildRow, ServalBuildsComponent, ServalBuildSummary } from './serval-builds.component';
 
 const mockNoticeService = mock(NoticeService);
 const mockDraftGenerationService = mock(DraftGenerationService);
@@ -1355,6 +1355,54 @@ describe('ServalBuildsComponent', () => {
       const result: string = ServalBuildsComponent.compactRangeNotation([10, 10, 11, 10, 16, 16, 17]);
 
       expect(result).toBe('10-11, 16-17');
+    });
+  });
+
+  describe('determineBuildInputs', () => {
+    it('builds result with desired info', () => {
+      const input: ProjectBooks[] = [
+        {
+          sfProjectId: 'proj-b-id',
+          projectDisplayName: 'B - Project B',
+          shortName: 'B',
+          projectName: 'Project B',
+          booksAndChapters: [{ bookId: 'GEN' }, { bookId: 'EXO' }]
+        }
+      ];
+
+      const results: BuildInputItem[] = ServalBuildsComponent.determineBuildInputs(input);
+
+      expect(results.length).toBe(1);
+      expect(results[0].projectName).toBe('Project B');
+      expect(results[0].shortName).toBe('B');
+      expect(results[0].sfProjectId).toBe('proj-b-id');
+      expect(results[0].projectLink).toBe('/serval-administration/proj-b-id');
+      expect(results[0].booksDisplay).toBe('GEN; EXO');
+    });
+
+    it('omits missing project name and short name values', () => {
+      const input: ProjectBooks[] = [
+        {
+          sfProjectId: 'proj-c-id',
+          projectDisplayName: 'proj-c-id',
+          shortName: undefined,
+          projectName: undefined,
+          booksAndChapters: [{ bookId: 'LEV', chapters: [1, 2, 3] }, { bookId: 'NUM' }]
+        }
+      ];
+
+      const results: BuildInputItem[] = ServalBuildsComponent.determineBuildInputs(input);
+
+      expect(results.length).toBe(1);
+      expect(results[0].projectName).toBeUndefined();
+      expect(results[0].shortName).toBeUndefined();
+      expect(results[0].sfProjectId).toBe('proj-c-id');
+      expect(results[0].booksDisplay).toBe('LEV 1-3; NUM');
+    });
+
+    it('returns empty array for undefined or null input', () => {
+      expect(ServalBuildsComponent.determineBuildInputs(undefined)).toEqual([]);
+      expect(ServalBuildsComponent.determineBuildInputs(null)).toEqual([]);
     });
   });
 
