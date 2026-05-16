@@ -184,7 +184,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   /** Data rows, including those that are filtered out by the includeDeleted toggle. */
   private allRows: ServalBuildRow[] = [];
   private readonly dateRange$ = new BehaviorSubject<NormalizedDateRange | undefined>(undefined);
-  private readonly requesterIdentityCache: Map<string, Observable<{ displayName: string; emailAddress?: string }>> =
+  private readonly requesterIdentityCache: Map<string, Observable<{ displayName?: string; emailAddress?: string }>> =
     new Map();
 
   constructor(
@@ -416,7 +416,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     return `${durationMinutes} m`;
   }
 
-  protected requesterDisplayName(requesterSFUserId: string | undefined): Observable<string> {
+  protected requesterDisplayName(requesterSFUserId: string | undefined): Observable<string | undefined> {
     return this.requesterIdentity(requesterSFUserId).pipe(map(identity => identity.displayName));
   }
 
@@ -426,18 +426,18 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
 
   private requesterIdentity(
     requesterSFUserId: string | undefined
-  ): Observable<{ displayName: string; emailAddress?: string }> {
+  ): Observable<{ displayName?: string; emailAddress?: string }> {
     if (requesterSFUserId == null) {
-      return of({ displayName: 'Unknown' });
+      return of({});
     }
 
     const requesterKey: string = requesterSFUserId;
-    const cached$: Observable<{ displayName: string; emailAddress?: string }> | undefined =
+    const cached$: Observable<{ displayName?: string; emailAddress?: string }> | undefined =
       this.requesterIdentityCache.get(requesterKey);
     if (cached$ != null) return cached$;
 
     // Cache the lookups so multiple rows don't need to request the same thing.
-    const identity$: Observable<{ displayName: string; emailAddress?: string }> = from(
+    const identity$: Observable<{ displayName?: string; emailAddress?: string }> = from(
       this.userService.get(requesterSFUserId)
     ).pipe(
       // This switchMap to changes$ and remoteChanges$ lets us cache Observables with information that stays up-to-date.
@@ -445,17 +445,17 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
         merge(userDoc.changes$, userDoc.remoteChanges$).pipe(
           startWith(undefined),
           map(() => {
-            const displayName: string | undefined = userDoc.data?.displayName?.trim();
-            const emailAddress: string | undefined = userDoc.data?.email?.trim();
+            const displayName: string | undefined = userDoc.data?.displayName;
+            const emailAddress: string | undefined = userDoc.data?.email;
             return {
-              displayName: isPopulatedString(displayName) ? displayName : 'Unknown',
-              emailAddress: isPopulatedString(emailAddress) ? emailAddress : undefined
+              displayName: displayName,
+              emailAddress: emailAddress
             };
           })
         )
       ),
       shareReplay(1),
-      catchError(() => of({ displayName: 'Unknown' }))
+      catchError(() => of({}))
     );
 
     this.requesterIdentityCache.set(requesterKey, identity$);

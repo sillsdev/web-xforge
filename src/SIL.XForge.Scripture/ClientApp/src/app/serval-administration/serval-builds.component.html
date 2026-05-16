@@ -267,7 +267,7 @@
                       <div class="detail-keyvalue">
                         <span class="detail-key">Display name</span>
                         @let requesterName = requesterDisplayName(row.report.requesterSFUserId) | async;
-                        <span class="detail-value">{{ requesterName ?? "Unknown" }}</span>
+                        <span class="detail-value">{{ requesterName ?? "-" }}</span>
                       </div>
 
                       <div class="detail-keyvalue">
