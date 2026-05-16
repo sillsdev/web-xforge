@@ -377,7 +377,7 @@
   },
   "draft_sources": {
     "add_another_reference_project": "Añadir otro proyecto de referencia",
-    "additional_training_data_optional": "Additional training data (optional)",
+    "additional_training_data_optional": "Datos de entrenamiento adicionales (opcional)",
     "all_changes_saved": "Todos los cambios guardados",
     "cancel": "Cancelar",
     "close": "Cerrar",
@@ -404,10 +404,10 @@
     "select_at_least_one_source_and_reference": "Por favor, seleccione al menos una fuente y un proyecto de referencia antes de guardar.",
     "select_at_least_one_source": "Por favor, seleccione al menos un proyecto fuente antes de guardar.",
     "select_primary_reference": "Seleccione su proyecto de referencia principal. Es el proyecto al que se refiere más a menudo mientras traduce.",
-    "select_project_to_translate_explanation": "Select the Paratext project or DBL resource you want the draft to be translated from.",
+    "select_project_to_translate_explanation": "Seleccione el proyecto de Paratext o el recurso de DBL del que desea traducir el borrador.",
     "select_project_to_translate": "Seleccione el proyecto a traducir",
     "some_projects_use_back_translation": "Algunos proyectos obtienen mejores resultados añadiendo una traducción inversa como otra referencia.",
-    "source_language": "the source language",
+    "source_language": "el idioma de origen",
     "source_side_language_codes_differ": "Todos los proyectos fuente y de referencia deben estar en el mismo idioma. Seleccione proyectos fuente o de referencia diferentes.",
     "state_connecting": "Conectando",
     "state_sync_failed": "Se ha producido un error de sincronización",
@@ -415,7 +415,7 @@
     "state_syncing": "Sincronizando",
     "stay_on_page": "Permanecer en la página",
     "target_language_data": "Datos de idioma de destino",
-    "training_files_description": "Cargue cualquier dato adicional que pueda utilizarse para entrenar el modelo lingüístico. Estos archivos deben contener texto emparejado en {{ sourceLanguageDisplayName }} y {{ targetLanguageDisplayName }} basado en los proyectos seleccionados.",
+    "training_files_description": "Cargue cualquier otro dato que pueda utilizarse para entrenar el modelo lingüístico. La primera columna debe contener {{ sourceLanguageDisplayName }} y la segunda {{ targetLanguageDisplayName }}.",
     "unknown_language_code": "desconocido"
   },
   "draft_usfm_format": {
@@ -885,7 +885,7 @@
     "no_training_data_file_uploaded": "No se ha cargado ningún archivo de datos de entrenamiento",
     "no_upload_offline": "Los datos de entrenamiento no pueden cargarse sin conectarse a Internet.",
     "save": "Guardar",
-    "upload_failed": "No se ha podido cargar el archivo de datos de entrenamiento. Asegúrese de que la hoja de cálculo contiene dos columnas e inténtelo de nuevo.",
+    "upload_failed": "Su archivo debe tener dos columnas, y cada fila debe tener un valor en ambas columnas. Rellene las celdas vacías e inténtelo de nuevo.",
     "upload_training_data": "Cargar datos de entrenamiento",
     "uploading": "Subiendo..."
   },
@@ -907,7 +907,8 @@
     "training": "Entrenamiento...",
     "training_unavailable": "La formación no está disponible temporalmente",
     "translate_overview": "Resumen de la traducción",
-    "translated_segments": "{{ translatedSegments }} de {{ total }} segmentos"
+    "translated_segments": "{{ translatedSegments }} de {{ total }} segmentos",
+    "translation_suggestions_retirement_notice": "Parece que su proyecto utiliza la función de sugerencias de traducción. Esta función dejará de estar disponible en breve. Póngase en contacto con {{ email }} para hablar sobre otras formas de traducir utilizando Scripture Forge."
   },
   "draft_signup": {
     "additional_comments_label": "Comentarios adicionales",
@@ -939,6 +940,9 @@
     "email_label": "Correo electrónico",
     "email_placeholder": "su.email@ejemplo.com",
     "email_required": "El correo electrónico es obligatorio",
+    "field_manager_label": "Administrador de campo",
+    "field_manager_placeholder": "Nombre de su administrador de campo de Seed Company",
+    "field_manager_required": "Se requiere un administrador de campos para los proyectos de la Seed Company",
     "first_reference_project_placeholder": "Primer proyecto de referencia",
     "name_label": "Su nombre",
     "name_placeholder": "Su nombre",

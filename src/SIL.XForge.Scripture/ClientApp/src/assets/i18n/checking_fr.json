@@ -40,7 +40,7 @@
     "appearance_device": "Appareil",
     "appearance_dark": "Sombre",
     "appearance_light": "Lumière",
-    "experimental_features": "Experimental features"
+    "experimental_features": "Fonctionnalités expérimentales"
   },
   "attach_audio": {
     "tooltip_record": "Enregistrer l'audio",
@@ -345,8 +345,8 @@
     "unknown_error": "Erreur inconnue"
   },
   "experimental_features_dialog": {
-    "title": "Experimental features",
-    "description": "These experimental features can be turned on or off and only apply to your account. Currently, logging out and back in will reset them. If you try them out, please leave us feedback so we can improve them."
+    "title": "Fonctionnalités expérimentales",
+    "description": "Ces fonctionnalités expérimentales peuvent être activées ou désactivées et ne s'appliquent qu'à votre compte. Pour le moment, la déconnexion et le retour en arrière les réinitialiseront. Si vous les essayez, veuillez nous laisser vos commentaires afin que nous puissions les améliorer."
   },
   "file_service": {
     "failed_to_save": "Impossible d'enregistrer vos modifications. Veuillez vérifier que vous disposez des 500 Mo d'espace libre recommandé sur votre appareil.",
@@ -491,12 +491,12 @@
   },
   "text": {
     "book_is_empty": "Ce livre est vide. Ajoutez des chapitres dans Paratext.",
-    "chapter_does_not_exist": "This chapter does not exist in {{ projectName }}",
-    "error": "An error occurred while loading the text",
+    "chapter_does_not_exist": "Ce chapitre n'existe pas dans {{ projectName }}",
+    "error": "Une erreur s'est produite lors du chargement du texte",
     "loading": "Chargement...",
     "not_available_offline": "Ce texte n'est pas disponible hors connexion. Connectez-vous à Internet pour voir le texte.",
     "permission_denied": "Vous n'avez pas la permission d'écrire dans ce livre. Contactez l'administrateur du projet pour obtenir la permission.",
-    "this_book_does_not_exist": "{{ bookName }} does not exist in {{ projectName }}"
+    "this_book_does_not_exist": "{{ bookName }} n'existe pas dans {{ projectName }}"
   },
   "text_chooser_dialog": {
     "cancel": "Annuler",
