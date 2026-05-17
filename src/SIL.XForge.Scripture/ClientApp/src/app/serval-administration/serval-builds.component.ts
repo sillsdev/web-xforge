@@ -161,7 +161,7 @@ interface SummaryDisplayItem {
 export class ServalBuildsComponent extends DataLoadingComponent implements OnInit {
   /** Help template access static methods. */
   protected ServalBuildsComponent = ServalBuildsComponent;
-  protected columnsToDisplay: string[] = ['status', 'project', 'source', 'language', 'requested', 'expand'];
+  protected columnsToDisplay: string[] = ['status', 'project', 'training', 'source', 'language', 'requested', 'expand'];
   /** Tracks which rows are currently expanded (by Serval build ID). */
   private expandedRows: Set<string> = new Set();
   /** Data rows, excluding those that might be filtered out by the includeDeleted toggle. */
