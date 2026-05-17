@@ -90,6 +90,8 @@ export interface ServalBuildSummary {
   averageTranslationBooksPerBuild?: number;
   totalUniqueTrainingBooks: number;
   totalTrainingBooks: number;
+  totalUniqueTranslationBooks: number;
+  totalTranslationBooks: number;
   completedBuilds: number;
   inProgressBuilds: number;
   buildsWithProblems: number;
@@ -681,7 +683,8 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
 
     const totalTrainingBooksItem: SummaryDisplayItem = {
       label: 'Total training books',
-      explanation: 'Including counting the same book again when used in more than one project.',
+      explanation:
+        'The same book used in multiple projects is counted multiple times. For example, if two projects use GEN, and one project uses EXO, that is 3 total books: GEN, GEN, and EXO.',
       value: this.formatCount(summary.totalTrainingBooks),
       prominence: 'hidden'
     };
@@ -694,6 +697,24 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
       prominence: 'hidden'
     };
     items.push(averageTranslationBooksItem);
+
+    const totalUniqueTranslationBooksItem: SummaryDisplayItem = {
+      label: 'Total unique translation books',
+      explanation:
+        'A book is only counted once even if used in multiple projects. For example, if two projects use GEN, and one project uses EXO, that is 2 unique books: GEN and EXO.',
+      value: this.formatCount(summary.totalUniqueTranslationBooks),
+      prominence: 'hidden'
+    };
+    items.push(totalUniqueTranslationBooksItem);
+
+    const totalTranslationBooksItem: SummaryDisplayItem = {
+      label: 'Total translation books',
+      explanation:
+        'The same book used in multiple projects is counted multiple times. For example, if two projects use GEN, and one project uses EXO, that is 3 total books: GEN, GEN, and EXO.',
+      value: this.formatCount(summary.totalTranslationBooks),
+      prominence: 'hidden'
+    };
+    items.push(totalTranslationBooksItem);
 
     const buildsServalDidNotKnowAboutItem: SummaryDisplayItem = {
       label: 'Builds Serval did not know about',

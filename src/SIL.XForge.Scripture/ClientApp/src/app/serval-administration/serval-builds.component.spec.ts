@@ -265,6 +265,8 @@ describe('ServalBuildsComponent', () => {
       expect(summary.averageTranslationBooksPerBuild).toBeCloseTo(1);
       expect(summary.totalUniqueTrainingBooks).toBe(7);
       expect(summary.totalTrainingBooks).toBe(7);
+      expect(summary.totalUniqueTranslationBooks).toBe(6);
+      expect(summary.totalTranslationBooks).toBe(6);
       expect(summary.completedBuilds).toBe(3);
       expect(summary.inProgressBuilds).toBe(2);
       expect(summary.buildsWithProblems).toBe(1);
@@ -276,7 +278,7 @@ describe('ServalBuildsComponent', () => {
       expect(summary.buildsSfDidNotKnowAbout).toBe(6);
     });
 
-    it('counts total and unique training books across listed builds', () => {
+    it('counts total and unique training books', () => {
       const env = new TestEnvironment();
       const baseStart: Date = new Date('2024-01-01T00:00:00Z');
       const rows: ServalBuildRow[] = [
@@ -315,7 +317,46 @@ describe('ServalBuildsComponent', () => {
       expect(summary.totalUniqueTrainingBooks).toBe(3);
     });
 
-    it('excludes unconsidered builds from listed training book totals', () => {
+    it('counts total and unique translation books', () => {
+      const env = new TestEnvironment();
+      const baseStart: Date = new Date('2024-01-01T00:00:00Z');
+      const rows: ServalBuildRow[] = [
+        TestEnvironment.createRowWithDetails({
+          projectId: 'proj-a',
+          startDate: env.addHours(baseStart, 0),
+          finishDate: env.addHours(baseStart, 1),
+          requesterId: 'user-1',
+          translationBooks: env.createProjectBooks('proj-a', ['GEN', 'EXO']),
+          status: DraftGenerationBuildStatus.Completed
+        }),
+        TestEnvironment.createRowWithDetails({
+          projectId: 'proj-b',
+          startDate: env.addHours(baseStart, 2),
+          finishDate: env.addHours(baseStart, 3),
+          requesterId: 'user-2',
+          translationBooks: env.createProjectBooks('proj-b', ['GEN']),
+          status: DraftGenerationBuildStatus.Completed
+        }),
+        TestEnvironment.createRowWithDetails({
+          projectId: 'proj-c',
+          startDate: env.addHours(baseStart, 4),
+          finishDate: env.addHours(baseStart, 5),
+          requesterId: 'user-3',
+          translationBooks: env.createProjectBooks('proj-c', ['LEV']),
+          status: DraftGenerationBuildStatus.Completed
+        })
+      ];
+
+      // SUT
+      const summary: ServalBuildSummary = buildSummary(rows);
+
+      // Total books includes duplicates: [GEN, EXO, GEN, LEV] => 4
+      expect(summary.totalTranslationBooks).toBe(4);
+      // Unique books dedupe by book code globally: [GEN, EXO, LEV] => 3
+      expect(summary.totalUniqueTranslationBooks).toBe(3);
+    });
+
+    it('excludes unconsidered builds from book totals', () => {
       const env = new TestEnvironment();
       const baseStart: Date = new Date('2024-01-01T00:00:00Z');
       const rows: ServalBuildRow[] = [
@@ -325,6 +366,7 @@ describe('ServalBuildsComponent', () => {
           finishDate: env.addHours(baseStart, 1),
           requesterId: 'user-1',
           trainingBooks: env.createProjectBooks('proj-a', ['GEN', 'EXO']),
+          translationBooks: env.createProjectBooks('proj-a', ['PSA']),
           status: DraftGenerationBuildStatus.Completed
         }),
         TestEnvironment.createRowWithDetails({
@@ -333,6 +375,7 @@ describe('ServalBuildsComponent', () => {
           finishDate: env.addHours(baseStart, 3),
           requesterId: undefined,
           trainingBooks: env.createProjectBooks('proj-orphan', ['LEV', 'NUM']),
+          translationBooks: env.createProjectBooks('proj-orphan', ['ROM', 'ACT']),
           status: DraftGenerationBuildStatus.Completed
         })
       ];
@@ -345,6 +388,8 @@ describe('ServalBuildsComponent', () => {
       // The unconsidered build's books should not contribute to listed totals.
       expect(summary.totalTrainingBooks).toBe(2);
       expect(summary.totalUniqueTrainingBooks).toBe(2);
+      expect(summary.totalTranslationBooks).toBe(1);
+      expect(summary.totalUniqueTranslationBooks).toBe(1);
     });
 
     it('handles book counting despite chapter numbers present', () => {
