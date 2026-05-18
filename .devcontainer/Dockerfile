@@ -57,14 +57,14 @@ RUN userdel -r ubuntu 2>/dev/null || true \
     && chown -R ${USERNAME}:${USERNAME} /workspaces
 
 # Set up ParatextData config
-RUN mkdir --parents /home/${USERNAME}/.local/share/Paratext95 \
+RUN mkdir --parents /home/${USERNAME}/.local/share/Paratext96 \
     && mkdir --parents /home/${USERNAME}/.local/share/SIL/WritingSystemRepository/3 \
     && echo '<?xml version="1.0" encoding="utf-8"?>\
 <InternetSettingsMemento>\
   <SelectedServer>Development</SelectedServer>\
   <PermittedInternetUse>Enabled</PermittedInternetUse>\
   <ProxyPort>0</ProxyPort>\
-</InternetSettingsMemento>' > /home/${USERNAME}/.local/share/Paratext95/InternetSettings.xml \
+</InternetSettingsMemento>' > /home/${USERNAME}/.local/share/Paratext96/InternetSettings.xml \
     && chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.local \
     && chown -R ${USERNAME}:${USERNAME} /var/lib/scriptureforge \
     && chown -R ${USERNAME}:${USERNAME} /var/lib/xforge
