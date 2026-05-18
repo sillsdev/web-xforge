@@ -157,5 +157,5 @@
       become: false
       ansible.builtin.copy:
         src: InternetSettings.xml
-        dest: ~/.local/share/Paratext95/
+        dest: ~/.local/share/Paratext96/
         mode: "0644"
