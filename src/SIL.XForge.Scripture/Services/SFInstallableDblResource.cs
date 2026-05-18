@@ -179,6 +179,13 @@ public class SFInstallableDblResource : InstallableResource
                     {
                         _existingScrText = resourceScrText;
                     }
+                    else if (!ScrTextCollection.IsPresent(resourceScrText))
+                    {
+                        // In this case, we have a duplicate resource name, so to ensure that the resource about to be
+                        // installed does not overwrite the wrong p8z file, we will add this resource to ParatextData's
+                        // internal collection, if it is not already present in it.
+                        ScrTextCollection.Add(resourceScrText);
+                    }
                 }
             }
 
