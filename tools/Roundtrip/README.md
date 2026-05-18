@@ -36,6 +36,7 @@ dotnet run /var/lib/scriptureforge/sync/ --validate-usx
 
 ## Notes
 
+- You can combine arguments, but they must all appear after the path.
 - If on Linux, **you must** set the `PARATEXT_PROJECTS` environment variable to your Paratext project directory.
 - Unlike **ServalDownloader**, this tool does not utilize the user secrets you have configured for Scripture Forge.
 - To view a time series graph of the builds, select all of the data on the Summary sheet, and create a 2-D Line Graph.
