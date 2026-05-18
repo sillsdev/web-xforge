@@ -13,7 +13,6 @@ using Paratext.Data.ProjectComments;
 using Paratext.Data.ProjectFileAccess;
 using Paratext.Data.ProjectSettingsAccess;
 using Paratext.Data.Repository;
-using PtxUtils;
 using SIL.WritingSystems;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
@@ -311,6 +310,36 @@ public class ParatextDataHelperTests
         Assert.AreEqual(versification.ToString(), scrText.Settings.GetSetting(Setting.Versification));
     }
 
+    [Test]
+    public async Task MigrateResourceIfRequiredAsync_MigrateProjectSettings()
+    {
+        // Setup
+        var env = new TestEnvironment();
+        using MockScrText scrText = env.GetScrText(ResourceId01, paratext7: true);
+        const string settingName = "CreatedWithPTW6";
+        scrText.Settings.SetSetting(settingName, "T");
+
+        // SUT
+        await env.Service.MigrateResourceIfRequiredAsync(scrText, overrideLanguage: null, CancellationToken.None);
+
+        string actual = scrText.Settings.GetSetting(settingName);
+        Assert.That(actual, Is.Empty);
+        env.MockFileSystemService.Received().DeleteFile(Arg.Is<string>(s => s.EndsWith("Proj.ssf")));
+    }
+
+    [Test]
+    public async Task MigrateResourceIfRequiredAsync_MigrateProjectSettings_AlreadyMigrated()
+    {
+        // Setup
+        var env = new TestEnvironment();
+        using MockScrText scrText = env.GetScrText(ResourceId01, paratext7: false);
+
+        // SUT
+        await env.Service.MigrateResourceIfRequiredAsync(scrText, overrideLanguage: null, CancellationToken.None);
+
+        env.MockFileSystemService.DidNotReceive().DeleteFile(Arg.Is<string>(s => s.EndsWith("Proj.ssf")));
+    }
+
     private class TestEnvironment
     {
         private readonly string _syncDir = Path.GetTempPath();
@@ -384,7 +413,11 @@ public class ParatextDataHelperTests
             };
             scrText.Settings.LanguageID = LanguageId.English;
             scrText.Settings.FileNamePostPart = ".SFM";
-            if (!paratext7)
+            if (paratext7)
+            {
+                MockFileSystemService.FileExists(Arg.Is<string>(s => s.EndsWith("Proj.ssf"))).Returns(true);
+            }
+            else
             {
                 scrText.Settings.DefaultStylesheetFileName = DefaultStylesheetFileName;
             }

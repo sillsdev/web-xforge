@@ -88,6 +88,7 @@ public class ParatextDataHelper(IFileSystemService fileSystemService) : IParatex
     ///  - MigrateLanguage
     ///  - MigrateStyleSheet
     ///  - MigrateVersification
+    ///  - MigrateProjectSettings
     /// </remarks>
     public async Task MigrateResourceIfRequiredAsync(
         ScrText scrText,
@@ -149,6 +150,30 @@ public class ParatextDataHelper(IFileSystemService fileSystemService) : IParatex
                 scrText.Settings.Versification = ScrVers.Original;
                 scrText.Settings.Save();
             }
+        }
+
+        // Perform migration of the project settings (SSF file) to Settings.xml,
+        // remove settings that have been made obsolete and unused in Paratext 8+,
+        // and remove the now unnecessary .SSF file used to Paratext 7 settings.
+        string oldSsfFile = Path.Join(scrText.FullPath, scrText.Name + ".ssf");
+        if (fileSystemService.FileExists(oldSsfFile))
+        {
+            scrText.Settings.RemoveSetting("AllowAdvancedMorphology");
+            scrText.Settings.RemoveSetting("ChapterMarker");
+            scrText.Settings.RemoveSetting("CreatedWithPTW6");
+            scrText.Settings.RemoveSetting("Directory");
+            scrText.Settings.RemoveSetting("EthnologueCode");
+            scrText.Settings.RemoveSetting("FileNameChapterNumberForm");
+            scrText.Settings.RemoveSetting("LastBackedUp");
+            scrText.Settings.RemoveSetting("ResourceText");
+            scrText.Settings.RemoveSetting("RunFromCD");
+            scrText.Settings.RemoveSetting("SpellCheckingOn");
+            scrText.Settings.RemoveSetting("StylesheetModificationDate");
+            scrText.Settings.RemoveSetting("TextHasChanged");
+            scrText.Settings.RemoveSetting("VerseMarker");
+            scrText.Settings.RemoveSetting("Zipped");
+            scrText.Settings.Save();
+            fileSystemService.DeleteFile(oldSsfFile);
         }
     }
 
