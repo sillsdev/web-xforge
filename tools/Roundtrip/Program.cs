@@ -23,17 +23,17 @@ if (args.Length == 0 || string.IsNullOrWhiteSpace(args[0]) || !Path.Exists(args[
 }
 
 // See if we are outputting the round tripped SFM files when they differ
-bool outputSfmFiles = args.Length > 1 && args[1] == "--output-sfm";
+bool outputSfmFiles = args.Any(arg => arg == "--output-sfm");
 
 // See if we are to output all created files (used to compare how much a change will affect all projects)
-bool outputAllFiles = args.Length > 1 && args[1] == "--output-all";
-if (outputAllFiles)
+bool outputAllFiles = args.Any(arg => arg == "--output-all");
+if (outputAllFiles || outputSfmFiles)
 {
     Directory.CreateDirectory("output");
 }
 
 // See if we are validating the USX and outputting any error
-bool validateUsx = args.Length > 1 && args[1] == "--validate-usx";
+bool validateUsx = args.Any(arg => arg == "--validate-usx");
 var schemas = new XmlSchemaSet();
 schemas.Add(string.Empty, "usx-sf.xsd");
 schemas.Compile();
