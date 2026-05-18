@@ -28,14 +28,14 @@ RUN mkdir -p /var/lib/scriptureforge/sync \
     && mkdir -p /var/lib/scriptureforge/audio \
     && mkdir -p /var/lib/scriptureforge/training-data \
     && mkdir -p /var/lib/xforge/avatars \
-    && mkdir -p ~/.local/share/Paratext95 \
+    && mkdir -p ~/.local/share/Paratext96 \
     && mkdir -p ~/.local/share/SIL/WritingSystemRepository/3 \
     && echo '<?xml version="1.0" encoding="utf-8"?>\
     <InternetSettingsMemento>\
     <SelectedServer>Development</SelectedServer>\
     <PermittedInternetUse>Enabled</PermittedInternetUse>\
     <ProxyPort>0</ProxyPort>\
-    </InternetSettingsMemento>' > ~/.local/share/Paratext95/InternetSettings.xml
+    </InternetSettingsMemento>' > ~/.local/share/Paratext96/InternetSettings.xml
 
 # http port to dotnet
 EXPOSE 5000
