@@ -423,6 +423,10 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     return `${durationMinutes} m`;
   }
 
+  protected requesterName(requesterSFUserId: string | undefined): Observable<string | undefined> {
+    return this.requesterIdentity(requesterSFUserId).pipe(map(identity => identity.name));
+  }
+
   protected requesterDisplayName(requesterSFUserId: string | undefined): Observable<string | undefined> {
     return this.requesterIdentity(requesterSFUserId).pipe(map(identity => identity.displayName));
   }
@@ -433,18 +437,18 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
 
   private requesterIdentity(
     requesterSFUserId: string | undefined
-  ): Observable<{ displayName?: string; emailAddress?: string }> {
+  ): Observable<{ name?: string; displayName?: string; emailAddress?: string }> {
     if (requesterSFUserId == null) {
       return of({});
     }
 
     const requesterKey: string = requesterSFUserId;
-    const cached$: Observable<{ displayName?: string; emailAddress?: string }> | undefined =
+    const cached$: Observable<{ name?: string; displayName?: string; emailAddress?: string }> | undefined =
       this.requesterIdentityCache.get(requesterKey);
     if (cached$ != null) return cached$;
 
     // Cache the lookups so multiple rows don't need to request the same thing.
-    const identity$: Observable<{ displayName?: string; emailAddress?: string }> = from(
+    const identity$: Observable<{ name?: string; displayName?: string; emailAddress?: string }> = from(
       this.userService.get(requesterSFUserId)
     ).pipe(
       // This switchMap to changes$ lets us cache Observables with information that stays up-to-date.
@@ -452,9 +456,11 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
         userDoc.changes$.pipe(
           startWith(undefined),
           map(() => {
+            const name: string | undefined = userDoc.data?.name;
             const displayName: string | undefined = userDoc.data?.displayName;
             const emailAddress: string | undefined = userDoc.data?.email;
             return {
+              name: name,
               displayName: displayName,
               emailAddress: emailAddress
             };
