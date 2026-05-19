@@ -1,16 +1,10 @@
-namespace Paratext.Data.ProjectSettingsAccess;
+using Paratext.Data;
+using Paratext.Data.ProjectSettingsAccess;
+
+namespace SIL.XForge.Scripture.Services;
 
 /// <summary>Mock for tests.</summary>
-public class MockProjectSettings : ProjectSettings
+public class MockProjectSettings(ScrText scrText) : ProjectSettings(scrText)
 {
-    private bool _editable = true;
-
-    public MockProjectSettings(ScrText scrText)
-        : base(scrText) { }
-
-    public override bool Editable
-    {
-        get => _editable;
-        set => _editable = value;
-    }
+    public override bool Editable { get; set; } = true;
 }

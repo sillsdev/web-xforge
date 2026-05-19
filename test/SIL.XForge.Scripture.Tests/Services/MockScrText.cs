@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System.Collections.Generic;
 using NSubstitute;
 using Paratext.Data;
@@ -15,6 +14,9 @@ namespace SIL.XForge.Scripture.Services;
 /// </summary>
 public class MockScrText : ScrText
 {
+    private readonly ScrLanguage _language;
+    private readonly ProjectSettings _settings;
+
     public MockScrText(ParatextUser associatedPtUser, ProjectName projectName)
         : base(associatedPtUser)
     {
@@ -38,14 +40,14 @@ public class MockScrText : ScrText
 
     /// <summary>
     /// Return text of specified chapter or book.
-    /// Returns "" if the chapter or book is not found or chapterization problem
+    /// Returns an empty string if the chapter or book is not found or there is a problem with the chapter.
     /// </summary>
     /// <param name="vref">Specify book or chapter. Verse number is ignored.</param>
     /// <param name="singleChapter">True to get a single chapter.</param>
     /// <param name="doMapIn">true to do mapping (normally true)</param>
     /// <returns>Text of book or chapter</returns>
     public override string GetText(VerseRef vref, bool singleChapter, bool doMapIn) =>
-        Data.TryGetValue(singleChapter ? vref.Book + " " + vref.Chapter : vref.Book, out string usfm)
+        Data.TryGetValue(singleChapter ? vref.Book + " " + vref.Chapter : vref.Book, out string? usfm)
             ? usfm
             : string.Empty;
 
@@ -61,6 +63,4 @@ public class MockScrText : ScrText
     public override string Directory => projectName.ProjectPath;
     public override string Name => projectName.ShortName;
     public override ScrLanguage Language => _language;
-    private readonly ScrLanguage _language;
-    private readonly ProjectSettings _settings;
 }

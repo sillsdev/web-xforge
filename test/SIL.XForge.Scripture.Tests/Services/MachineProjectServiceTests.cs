@@ -41,11 +41,13 @@ public class MachineProjectServiceTests
     private const string Paratext03 = "paratext03";
     private const string Paratext04 = "paratext04";
     private const string Paratext05 = "paratext05";
+    private const string Paratext06 = "paratext06";
     private const string Project01 = "project01";
     private const string Project02 = "project02";
     private const string Project03 = "project03";
     private const string Project04 = "project04";
     private const string Project05 = "project05";
+    private const string Project06 = "project06";
     private const string User01 = "user01";
     private const string Build01 = "build01";
     private const string Corpus01 = "corpus01";
@@ -3374,6 +3376,10 @@ public class MachineProjectServiceTests
                 }
             }
         );
+        if (options is { HasBaseProject: true, BaseProjectIsDraftingSource: false })
+        {
+            await env.Projects.UpdateAsync(Project06, op => op.Set(p => p.WritingSystem.Tag, "fr"));
+        }
 
         // SUT 3
         actual = await env.Service.SyncProjectCorporaAsync(
@@ -4209,13 +4215,30 @@ public class MachineProjectServiceTests
                     PreTranslate = preTranslate,
                     Source = true,
                 };
+
+                // Emit special cases for base projects
+                foreach (bool baseProjectIsDraftingSource in boolValues)
+                {
+                    yield return new TestEnvironmentOptions
+                    {
+                        BaseProjectIsDraftingSource = baseProjectIsDraftingSource,
+                        DraftingSources = 1,
+                        HasBaseProject = true,
+                        TrainingSources = 1,
+                        DraftingSourceAndTrainingSourceAreTheSame = true,
+                        PreTranslate = preTranslate,
+                        Source = true,
+                    };
+                }
             }
         }
     }
 
     public record TestEnvironmentOptions
     {
+        public bool BaseProjectIsDraftingSource { get; init; }
         public bool DraftingSourceAndTrainingSourceAreTheSame { get; init; }
+        public bool HasBaseProject { get; init; }
         public bool HasTranslationEngineForNmt { get; init; }
         public bool HasTranslationEngineForSmt { get; init; }
         public bool LegacyCorpora { get; init; }
@@ -4458,6 +4481,13 @@ public class MachineProjectServiceTests
                                     : [],
                         },
                         PreTranslate = options.DraftingSources > 0 || options.TrainingSources > 0,
+                        BaseProject = options.HasBaseProject
+                            ? (
+                                options.BaseProjectIsDraftingSource
+                                    ? new BaseProject { ParatextId = Paratext03, ShortName = "P03" }
+                                    : new BaseProject { ParatextId = Paratext06, ShortName = "P06" }
+                            )
+                            : null,
                     },
                     WritingSystem = new WritingSystem { Tag = "en_US" },
                 },
@@ -4484,6 +4514,17 @@ public class MachineProjectServiceTests
                     CheckingConfig = new CheckingConfig(),
                     UserRoles = [],
                     TranslateConfig = new TranslateConfig { PreTranslate = true },
+                },
+                new SFProject
+                {
+                    Id = Project06,
+                    Name = "project06",
+                    ShortName = "P06",
+                    ParatextId = Paratext06,
+                    CheckingConfig = new CheckingConfig(),
+                    UserRoles = [],
+                    TranslateConfig = new TranslateConfig { PreTranslate = true },
+                    WritingSystem = new WritingSystem { Tag = "en" },
                 },
             ]);
 
@@ -4617,6 +4658,20 @@ public class MachineProjectServiceTests
                     .CreateAsync(Arg.Is<CorpusConfig>(c => c.Name == $"{Project02}_{Project05}"));
                 Assert.AreEqual(options.PreTranslate ? 1 : 0, actual.Count(s => s.ProjectId == Project05));
                 numberOfServalCorpusFiles++;
+            }
+
+            // A base project is specified
+            if (options is { HasBaseProject: true, BaseProjectIsDraftingSource: false })
+            {
+                bool baseProjectUploaded = options is { PreTranslate: true, BaseProjectIsDraftingSource: false };
+                await CorporaClient
+                    .Received(baseProjectUploaded && createsServalCorpora ? 1 : 0)
+                    .CreateAsync(Arg.Is<CorpusConfig>(c => c.Name == $"{Project02}_{Project06}"));
+                Assert.AreEqual(baseProjectUploaded ? 1 : 0, actual.Count(s => s.ProjectId == Project06));
+                if (baseProjectUploaded)
+                {
+                    numberOfServalCorpusFiles++;
+                }
             }
 
             // Each corpus will be updated, even after creation
