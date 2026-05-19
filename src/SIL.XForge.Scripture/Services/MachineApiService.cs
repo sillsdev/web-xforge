@@ -1964,37 +1964,6 @@ public class MachineApiService(
         return translationEngine;
     }
 
-    public async Task<PreTranslationDto> GetPreTranslationAsync(
-        string curUserId,
-        string sfProjectId,
-        int bookNum,
-        int chapterNum,
-        CancellationToken cancellationToken
-    )
-    {
-        // Create the DTO to return
-        PreTranslationDto preTranslation = new PreTranslationDto();
-
-        // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin: false, cancellationToken);
-
-        try
-        {
-            preTranslation.PreTranslations = await preTranslationService.GetPreTranslationsAsync(
-                sfProjectId,
-                bookNum,
-                chapterNum,
-                cancellationToken
-            );
-        }
-        catch (ServalApiException e)
-        {
-            ProcessServalApiException(e);
-        }
-
-        return preTranslation;
-    }
-
     public async Task<Dictionary<string, Snapshot<TextData>>> GetPreTranslationDeltaAsync(
         string curUserId,
         string sfProjectId,

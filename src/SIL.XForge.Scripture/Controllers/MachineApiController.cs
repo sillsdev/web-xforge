@@ -496,61 +496,6 @@ public class MachineApiController : ControllerBase
     }
 
     /// <summary>
-    /// Gets all the pre-translations for the specified chapter.
-    /// </summary>
-    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
-    /// <param name="bookNum">The book number.</param>
-    /// <param name="chapterNum">The chapter number.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <remarks>
-    /// If there are no pre-translations (because the build has not started, has not finished, or was cancelled),
-    /// The <c>preTranslations</c> property in the return object will be an empty collection.
-    /// </remarks>
-    /// <response code="200">The pre-translations were successfully queried for.</response>
-    /// <response code="403">You do not have permission to retrieve the pre-translations for this project.</response>
-    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
-    /// <response code="409">The engine has not been built on the ML server.</response>
-    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
-    [HttpGet(MachineApi.GetPreTranslation)]
-    [Obsolete("Use GetPreTranslationDeltaAsync instead to access the draft as ops in TextData.")]
-    public async Task<ActionResult<PreTranslationDto>> GetPreTranslationAsync(
-        string sfProjectId,
-        int bookNum,
-        int chapterNum,
-        CancellationToken cancellationToken
-    )
-    {
-        try
-        {
-            PreTranslationDto preTranslation = await _machineApiService.GetPreTranslationAsync(
-                _userAccessor.UserId,
-                sfProjectId,
-                bookNum,
-                chapterNum,
-                cancellationToken
-            );
-            return Ok(preTranslation);
-        }
-        catch (BrokenCircuitException e)
-        {
-            _exceptionHandler.ReportException(e);
-            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
-        }
-        catch (DataNotFoundException)
-        {
-            return NotFound();
-        }
-        catch (ForbiddenException)
-        {
-            return Forbid();
-        }
-        catch (InvalidOperationException)
-        {
-            return Conflict();
-        }
-    }
-
-    /// <summary>
     /// Gets the pre-translations for the specified chapter as a delta.
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
