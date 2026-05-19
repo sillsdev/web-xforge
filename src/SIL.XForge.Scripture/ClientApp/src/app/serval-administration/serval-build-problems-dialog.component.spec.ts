@@ -7,10 +7,14 @@ import { BuildReportProblem } from './serval-build-report';
 
 describe('ServalBuildProblemsDialog', () => {
   const problemsHeader: string = '# Problems with Serval build ID build-id';
+  const sfErrorsHeaderInput: string = 'SF errors';
   const sfErrorsHeader: string = '## SF errors';
   const sfFailureItem: string = '- SF failure';
+  const sfWarningsHeaderInput: string = 'SF warnings';
   const sfWarningsHeader: string = '## SF warnings';
+  const servalErrorsHeaderInput: string = 'Serval errors';
   const servalErrorsHeader: string = '## Serval errors';
+  const servalWarningsHeaderInput: string = 'Serval warnings';
   const servalWarningsHeader: string = '## Serval warnings';
   const servalWarningItem: string = '- Low confidence';
   const noneReportedIndication: string = 'None reported';
@@ -24,7 +28,7 @@ describe('ServalBuildProblemsDialog', () => {
   }
 
   it('sectionCopyValue returns section list entries with dash prefix', () => {
-    const section: ServalBuildProblemsDialogSection = createSection('Serval warnings', [
+    const section: ServalBuildProblemsDialogSection = createSection(servalWarningsHeaderInput, [
       { source: 'serval', severity: 'warning', message: 'Low confidence' },
       { source: 'serval', severity: 'warning', message: 'Missing data' }
     ]);
@@ -38,8 +42,8 @@ describe('ServalBuildProblemsDialog', () => {
     const dialog: ServalBuildProblemsDialog = createDialog({
       servalBuildId: 'build-id',
       sections: [
-        createSection('SF errors', [{ source: 'local', severity: 'error', message: 'SF failure' }]),
-        createSection('Serval warnings', [{ source: 'serval', severity: 'warning', message: 'Low confidence' }])
+        createSection(sfErrorsHeaderInput, [{ source: 'local', severity: 'error', message: 'SF failure' }]),
+        createSection(servalWarningsHeaderInput, [{ source: 'serval', severity: 'warning', message: 'Low confidence' }])
       ]
     });
 
@@ -56,10 +60,10 @@ describe('ServalBuildProblemsDialog', () => {
     const dialog: ServalBuildProblemsDialog = createDialog({
       servalBuildId: 'build-id',
       sections: [
-        createSection('SF errors', []),
-        createSection('SF warnings', [{ source: 'local', severity: 'warning', message: 'Minor issue' }]),
-        createSection('Serval errors', []),
-        createSection('Serval warnings', [{ source: 'serval', severity: 'warning', message: 'Low confidence' }])
+        createSection(sfErrorsHeaderInput, []),
+        createSection(sfWarningsHeaderInput, [{ source: 'local', severity: 'warning', message: 'Minor issue' }]),
+        createSection(servalErrorsHeaderInput, []),
+        createSection(servalWarningsHeaderInput, [{ source: 'serval', severity: 'warning', message: 'Low confidence' }])
       ]
     });
 
