@@ -185,8 +185,6 @@ public class ParatextService : DisposableBase, IParatextService
         WritingSystemRepository.Initialize();
         ScrTextCollection.Initialize(SyncDir);
         InstallStyles();
-        // Allow use of custom versification systems
-        Versification.Table.Implementation = new ParatextVersificationTable();
     }
 
     /// <summary>
