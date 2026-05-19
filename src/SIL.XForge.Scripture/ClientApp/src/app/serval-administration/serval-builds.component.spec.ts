@@ -1459,6 +1459,14 @@ describe('ServalBuildsComponent', () => {
   });
 
   describe('requesting user details', () => {
+    it('loads requester name from user data', async () => {
+      const env = new TestEnvironment();
+
+      const name: string | undefined = await firstValueFrom(env.component['requesterName']('user02'));
+
+      expect(name).toBe('Test Name');
+    });
+
     it('loads requester display name from user data', async () => {
       const env = new TestEnvironment();
 
@@ -1686,11 +1694,12 @@ class TestEnvironment {
   readonly builds$: BehaviorSubject<ServalBuildReportDto[] | undefined> = new BehaviorSubject<
     ServalBuildReportDto[] | undefined
   >(undefined);
-  readonly userData: { displayName: string; avatarUrl: string; email: string };
+  readonly userData: { name: string; displayName: string; avatarUrl: string; email: string };
   readonly userChanges$: Subject<void> = new Subject<void>();
 
   constructor() {
     this.userData = {
+      name: 'Test Name',
       displayName: 'Test User',
       avatarUrl: '',
       email: 'user02@example.com'

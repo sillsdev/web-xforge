@@ -266,9 +266,15 @@
                       </div>
 
                       <div class="detail-keyvalue">
+                        <span class="detail-key">Name</span>
+                        @let requesterUserName = requesterName(row.report.requesterSFUserId) | async;
+                        <span class="detail-value">{{ requesterUserName ?? "-" }}</span>
+                      </div>
+
+                      <div class="detail-keyvalue">
                         <span class="detail-key">Display name</span>
-                        @let requesterName = requesterDisplayName(row.report.requesterSFUserId) | async;
-                        <span class="detail-value">{{ requesterName ?? "-" }}</span>
+                        @let requesterDisplayNameValue = requesterDisplayName(row.report.requesterSFUserId) | async;
+                        <span class="detail-value">{{ requesterDisplayNameValue ?? "-" }}</span>
                       </div>
 
                       <div class="detail-keyvalue">
