@@ -191,8 +191,10 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   /** Data rows, including those that are filtered out by the includeDeleted toggle. */
   private allRows: ServalBuildRow[] = [];
   private readonly dateRange$ = new BehaviorSubject<NormalizedDateRange | undefined>(undefined);
-  private readonly requesterIdentityCache: Map<string, Observable<{ displayName?: string; emailAddress?: string }>> =
-    new Map();
+  private readonly requesterIdentityCache: Map<
+    string,
+    Observable<{ name?: string; displayName?: string; emailAddress?: string }>
+  > = new Map();
 
   constructor(
     noticeService: NoticeService,
