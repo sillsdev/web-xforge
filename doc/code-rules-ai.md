@@ -22,7 +22,7 @@ Follow all rules in [code-rules.md](code-rules.md) in addition to the below.
 ## Frontend testing
 
 - Write unit tests for new components and services
-- Do not put helper functions outside of TestEnvironment classes; helper functions or setup functions should be in the TestEnvironment class.
+- Do not put helper functions outside of TestEnvironment classes; helper functions or setup functions should be in the TestEnvironment class. For example, do not put a helper function, like `createRows()` as a top-level function in a .spec.ts file, or as a function in a `describe()` block. Instead, make the helper function as a method in the TestEnvironment class, like `TestEnvironment.createRows()`.
 - Test both online and offline scenarios
 - Test permission boundaries
 - When a TestEnvironment class is being given many optional arguments, prefer using object destructuring with default values, and the argument type definition specified inline rather than as an interface. For example,
