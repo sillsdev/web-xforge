@@ -1,10 +1,13 @@
 import { AsyncPipe, NgTemplateOutlet } from '@angular/common';
 import { Component, DestroyRef, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatCard, MatCardContent, MatCardHeader, MatCardTitle, MatCardTitleGroup } from '@angular/material/card';
 import { provideNativeDateAdapter } from '@angular/material/core';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
 import {
@@ -45,15 +48,13 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { UserService } from 'xforge-common/user.service';
-import { isPopulatedString, notNull } from '../../type-utils';
+import { isPopulatedString, isString, notNull } from '../../type-utils';
 import { InfoComponent } from '../shared/info/info.component';
 import { NoticeComponent } from '../shared/notice/notice.component';
-import { projectLabel } from '../shared/utils';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { DateRangePickerComponent, NormalizedDateRange } from './date-range-picker.component';
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
 import { JobDetailsDialogComponent } from './job-details-dialog.component';
-import { ServalAdministrationService } from './serval-administration.service';
 import { ServalBuildProblemsDialog, ServalBuildProblemsDialogSection } from './serval-build-problems-dialog.component';
 import {
   BookAndChapters,
@@ -79,6 +80,13 @@ export interface ServalBuildRow {
   projectServalAdminUrl?: string;
   /** True if the build is not associable with any SF project currently in the database. */
   projectDeleted: boolean;
+}
+
+/** Pertinent information about the requester of a Serval build. */
+export interface RequesterInfo {
+  name?: string;
+  displayName?: string;
+  email?: string;
 }
 
 /** Aggregated statistics for the currently visible Serval build rows. */
@@ -161,7 +169,10 @@ interface SummaryDisplayItem {
     MatCardContent,
     MatCardTitleGroup,
     CopyComponent,
-    MatSlideToggle
+    MatSlideToggle,
+    MatFormFieldModule,
+    MatInputModule,
+    ReactiveFormsModule
   ]
 })
 export class ServalBuildsComponent extends DataLoadingComponent implements OnInit {
@@ -184,17 +195,15 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
    * and was deleted. Maybe another SF installation has that project and requested a Serval build. */
   protected includeDeleted: boolean = false;
   protected summaryIsExpanded: boolean = false;
-  /** Current project ID filter from query params, if any. */
-  protected currentProjectFilter: string | undefined = undefined;
-  /** Display name for the active project filter. */
-  protected filteredProjectName: string | undefined = undefined;
   /** Data rows, including those that are filtered out by the includeDeleted toggle. */
   private allRows: ServalBuildRow[] = [];
+  protected readonly searchControl: FormControl<string> = new FormControl('', { nonNullable: true });
+  /** The URL parameter. */
+  private currentSearchQueryParam: string | null = null;
   private readonly dateRange$ = new BehaviorSubject<NormalizedDateRange | undefined>(undefined);
-  private readonly requesterIdentityCache: Map<
-    string,
-    Observable<{ name?: string; displayName?: string; emailAddress?: string }>
-  > = new Map();
+  private readonly requesterIdentityCache: Map<string, Observable<RequesterInfo>> = new Map();
+  /** Sequence ID of searching records. Later initiated searches have higher IDs. */
+  private searchId: number = 0;
 
   constructor(
     noticeService: NoticeService,
@@ -206,10 +215,14 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     private readonly userService: UserService,
     private readonly destroyRef: DestroyRef,
     private readonly route: ActivatedRoute,
-    private readonly router: Router,
-    private readonly servalAdministrationService: ServalAdministrationService
+    private readonly router: Router
   ) {
     super(noticeService, 'ServalBuildsComponent');
+
+    this.searchControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((searchTerm: string) => {
+      this.updateUrlSearchQueryParam(searchTerm);
+      this.applyFiltersAndStats();
+    });
   }
 
   protected get isOnline(): boolean {
@@ -217,23 +230,48 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   }
 
   ngOnInit(): void {
-    combineLatest([
-      this.route.queryParams.pipe(
-        map(params => params['sfProjectId']),
-        distinctUntilChanged()
-      ),
-      this.onlineStatusService.onlineStatus$,
-      this.dateRange$.pipe(filter(notNull))
-    ])
+    this.route.queryParams
+      .pipe(
+        map(params => params['q']),
+        map((queryParam: unknown) => (isString(queryParam) ? queryParam : null)),
+        distinctUntilChanged(),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((searchText: string | null) => {
+        this.currentSearchQueryParam = searchText;
+        const searchTextValue: string = searchText ?? '';
+        if (this.searchControl.value !== searchTextValue) {
+          this.searchControl.setValue(searchTextValue, { emitEvent: false });
+        }
+        this.applyFiltersAndStats();
+      });
+
+    combineLatest([this.onlineStatusService.onlineStatus$, this.dateRange$.pipe(filter(notNull))])
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(([projectFilterId, isOnline, range]) => {
+      .subscribe(([isOnline, range]) => {
         this.loadingStarted();
-        void this.loadBuilds(range, isOnline, projectFilterId);
+        void this.loadBuilds(range, isOnline);
       });
   }
 
   protected onDateRangeChange(range: NormalizedDateRange): void {
     this.dateRange$.next(range);
+  }
+
+  protected clearSearch(): void {
+    this.searchControl.setValue('');
+  }
+
+  /** Updating the URL with the search query allows searches to be bookmarked or shared by URL. */
+  private updateUrlSearchQueryParam(query: string): void {
+    const queryParam: string | null = isPopulatedString(query) ? query : null;
+    if (this.currentSearchQueryParam === queryParam) return;
+    this.currentSearchQueryParam = queryParam;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { q: queryParam },
+      queryParamsHandling: 'merge'
+    });
   }
 
   /** Toggle whether a row is expanded. */
@@ -434,25 +472,20 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   }
 
   protected requesterEmailAddress(requesterSFUserId: string | undefined): Observable<string | undefined> {
-    return this.requesterIdentity(requesterSFUserId).pipe(map(identity => identity.emailAddress));
+    return this.requesterIdentity(requesterSFUserId).pipe(map(identity => identity.email));
   }
 
-  private requesterIdentity(
-    requesterSFUserId: string | undefined
-  ): Observable<{ name?: string; displayName?: string; emailAddress?: string }> {
+  private requesterIdentity(requesterSFUserId: string | undefined): Observable<RequesterInfo> {
     if (requesterSFUserId == null) {
       return of({});
     }
 
     const requesterKey: string = requesterSFUserId;
-    const cached$: Observable<{ name?: string; displayName?: string; emailAddress?: string }> | undefined =
-      this.requesterIdentityCache.get(requesterKey);
+    const cached$: Observable<RequesterInfo> | undefined = this.requesterIdentityCache.get(requesterKey);
     if (cached$ != null) return cached$;
 
     // Cache the lookups so multiple rows don't need to request the same thing.
-    const identity$: Observable<{ name?: string; displayName?: string; emailAddress?: string }> = from(
-      this.userService.get(requesterSFUserId)
-    ).pipe(
+    const identity$: Observable<RequesterInfo> = from(this.userService.get(requesterSFUserId)).pipe(
       // This switchMap to changes$ lets us cache Observables with information that stays up-to-date.
       switchMap((userDoc: UserDoc) =>
         userDoc.changes$.pipe(
@@ -460,11 +493,11 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
           map(() => {
             const name: string | undefined = userDoc.data?.name;
             const displayName: string | undefined = userDoc.data?.displayName;
-            const emailAddress: string | undefined = userDoc.data?.email;
+            const email: string | undefined = userDoc.data?.email;
             return {
               name: name,
               displayName: displayName,
-              emailAddress: emailAddress
+              email: email
             };
           })
         )
@@ -477,36 +510,8 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     return identity$;
   }
 
-  protected clearProjectFilter(): void {
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { sfProjectId: null },
-      queryParamsHandling: 'merge'
-    });
-  }
-
-  private async loadBuilds(
-    range: NormalizedDateRange,
-    isOnline: boolean,
-    projectFilterId: string | undefined
-  ): Promise<void> {
+  private async loadBuilds(range: NormalizedDateRange, isOnline: boolean): Promise<void> {
     try {
-      // Resolve project filter display name
-      if (isPopulatedString(projectFilterId)) {
-        let displayName: string = projectFilterId;
-        try {
-          const projectDoc = await this.servalAdministrationService.get(projectFilterId);
-          displayName = projectDoc?.data != null ? projectLabel(projectDoc.data) : projectFilterId;
-        } catch {
-          // Filter can reference a deleted project; fall back to the raw ID
-        }
-        this.currentProjectFilter = projectFilterId;
-        this.filteredProjectName = displayName;
-      } else {
-        this.currentProjectFilter = undefined;
-        this.filteredProjectName = undefined;
-      }
-
       if (!isOnline) {
         this.allRows = [];
         this.rows = [];
@@ -578,19 +583,85 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   }
 
   private applyFiltersAndStats(): void {
-    this.rows = this.filteredRows();
+    const searchId: number = ++this.searchId;
+    void this.applyFilteredRowsAndStats(searchId);
+  }
+
+  private async applyFilteredRowsAndStats(searchId: number): Promise<void> {
+    const rows: ServalBuildRow[] = await this.filteredRows();
+    if (searchId !== this.searchId) {
+      // Discard preempted search.
+      return;
+    }
+
+    this.rows = rows;
     this.updateSummaryStats();
   }
 
-  private filteredRows(): ServalBuildRow[] {
-    let rows: ServalBuildRow[] = this.allRows;
-    if (this.includeDeleted !== true) {
-      rows = rows.filter((row: ServalBuildRow) => !row.projectDeleted);
+  private async filteredRows(): Promise<ServalBuildRow[]> {
+    const rows: ServalBuildRow[] =
+      this.includeDeleted === true
+        ? [...this.allRows]
+        : this.allRows.filter((row: ServalBuildRow) => !row.projectDeleted);
+
+    const normalizedSearchTerm: string = this.normalizeSearchTerm(this.searchControl.value);
+    if (!isPopulatedString(normalizedSearchTerm)) {
+      return rows;
     }
-    if (this.currentProjectFilter !== undefined) {
-      rows = rows.filter((row: ServalBuildRow) => row.report.project?.sfProjectId === this.currentProjectFilter);
-    }
-    return rows;
+
+    const matchedRows: ServalBuildRow[] = (
+      await Promise.all(
+        rows.map(async (row: ServalBuildRow) => {
+          if (await this.matchesSearch(row, normalizedSearchTerm)) return row;
+          return undefined;
+        })
+      )
+    ).filter(notNull);
+    return matchedRows;
+  }
+
+  /** Does a row match a search? */
+  private async matchesSearch(row: ServalBuildRow, normalizedSearchTerm: string): Promise<boolean> {
+    const data: string[] = await this.searchableData(row);
+    return data.some((data: string) => data.includes(normalizedSearchTerm));
+  }
+
+  /** Returns the tokens of a row that can be searched. */
+  private async searchableData(row: ServalBuildRow): Promise<string[]> {
+    const requesterId: string | undefined = row.report.requesterSFUserId;
+    const requesterIdentity: RequesterInfo = await firstValueFrom(this.requesterIdentity(requesterId));
+    const result: string[] = [
+      row.report.build?.additionalInfo?.buildId,
+      row.report.draftGenerationRequestId,
+      row.report.project?.sfProjectId,
+      row.report.project?.shortName,
+      row.report.project?.name,
+      row.report.project?.ptProjectId,
+      requesterId,
+      requesterIdentity?.name,
+      requesterIdentity?.displayName,
+      requesterIdentity?.email,
+      ...this.referenceProjectSearchTerms(row.trainingBooks),
+      ...this.referenceProjectSearchTerms(row.translationBooks)
+    ]
+      .filter(isPopulatedString)
+      .map((data: string) => this.normalizeSearchTerm(data));
+    return result;
+  }
+
+  /** Returns the tokens of a translation source or training project that can be searched. */
+  private referenceProjectSearchTerms(references: ProjectBooks[]): string[] {
+    return references.flatMap((reference: ProjectBooks) => {
+      const bookIds: string[] = reference.booksAndChapters.map(
+        (bookAndChapters: BookAndChapters) => bookAndChapters.bookId
+      );
+      const terms: Array<string | undefined> = [reference.shortName, reference.projectName, ...bookIds];
+      return terms.filter(isPopulatedString);
+    });
+  }
+
+  private normalizeSearchTerm(value: string): string {
+    return value.trim().toLowerCase();
   }
 
   private updateSummaryStats(): void {

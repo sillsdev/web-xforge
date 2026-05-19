@@ -42,21 +42,32 @@
         text="Include builds in the list that do not correspond to any projects that are currently in this site database."
       ></app-info>
     </div>
-  </div>
 
-  @if (currentProjectFilter != null) {
-    <app-notice icon="filter_alt" mode="fill-dark">
-      <div class="filter-notice-content">
-        <span>
-          Showing builds for project <strong>{{ filteredProjectName ?? currentProjectFilter }}</strong>
-        </span>
-        <button mat-button class="clear-filter-btn" (click)="clearProjectFilter()">
-          <mat-icon>filter_alt_off</mat-icon>
-          <span>Show all projects</span>
-        </button>
-      </div>
-    </app-notice>
-  }
+    <div class="identifier-search-group">
+      <mat-form-field
+        appearance="outline"
+        subscriptSizing="dynamic"
+        class="identifier-search-field"
+        [class.identifier-search-field-active]="searchControl.value.length > 0"
+      >
+        <mat-label>Search</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput type="text" [formControl]="searchControl" />
+
+        @if (searchControl.value.length > 0) {
+          <button mat-icon-button matSuffix type="button" (click)="clearSearch()" aria-label="Clear search">
+            <mat-icon>close</mat-icon>
+          </button>
+        } @else {
+          <app-info
+            matSuffix
+            class="identifier-search-info"
+            text="Search builds by project ID, name, books, user ID, name, email."
+          ></app-info>
+        }
+      </mat-form-field>
+    </div>
+  </div>
 
   @if (summaryDisplayItems.length > 0) {
     <div class="summary-area">
