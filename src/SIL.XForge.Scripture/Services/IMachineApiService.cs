@@ -94,13 +94,6 @@ public interface IMachineApiService
         bool isServalAdmin,
         CancellationToken cancellationToken
     );
-    Task<PreTranslationDto> GetPreTranslationAsync(
-        string curUserId,
-        string sfProjectId,
-        int bookNum,
-        int chapterNum,
-        CancellationToken cancellationToken
-    );
     Task<ServalBuildDto?> GetQueuedStateAsync(
         string curUserId,
         string sfProjectId,
