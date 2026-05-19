@@ -1271,7 +1271,9 @@ public class MachineProjectService(
                                 ScriptureRange = buildConfig
                                     .TranslationScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
                                     ?.ScriptureRange,
-                            }),
+                            })
+                            // Only the first source corpus in a parallel corpus may be filtered for pretranslation.
+                            .Take(1),
                     ],
                 },
             ],
@@ -1807,6 +1809,31 @@ public class MachineProjectService(
                 )
         );
 
+        // Get the drafting source projects for the NMT/SMT translation corpus
+        List<string> sourceProjectIds = preTranslate
+            ? [.. project.TranslateConfig.DraftConfig.DraftingSources.Select(s => s.ProjectRef)]
+            : [project.TranslateConfig.Source!.ProjectRef];
+
+        // If the base project is present, upload it for versification reference.
+        // The versification is only required for NMT/Echo builds.
+        if (preTranslate && !string.IsNullOrEmpty(project.TranslateConfig.BaseProject?.ParatextId))
+        {
+            SFProject baseProject = await realtimeService
+                .QuerySnapshots<SFProject>()
+                .FirstOrDefaultAsync(
+                    p => p.ParatextId == project.TranslateConfig.BaseProject.ParatextId,
+                    cancellationToken
+                );
+            if (baseProject is not null)
+            {
+                projects.Add((baseProject.Id, baseProject.ParatextId, baseProject.WritingSystem.Tag));
+
+                // Include the base project in the source project ids. Although it will not be used for drafting,
+                // it will be used for versification reference for the target project.
+                sourceProjectIds.Add(baseProject.Id);
+            }
+        }
+
         // Create and upload the Serval Corpus Files
         List<ServalCorpusFile> servalCorpusFiles = [];
         foreach ((string projectId, string paratextId, string languageCode) in projects)
@@ -1855,15 +1882,13 @@ public class MachineProjectService(
             );
         }
 
-        // Get the drafting source projects for the NMT/SMT translation corpus
-        string[] sourceProjectIds = preTranslate
-            ? [.. project.TranslateConfig.DraftConfig.DraftingSources.Select(s => s.ProjectRef)]
-            : [project.TranslateConfig.Source!.ProjectRef];
-
         // Set up the parallel corpus for NMT/SMT translation
         List<ServalCorpusFile> sourceCorpora =
         [
-            .. servalCorpusFiles.Where(f => sourceProjectIds.Contains(f.ProjectId)),
+            // The order is important, as filtering can only be performed on the first corpus
+            .. servalCorpusFiles
+                .Where(f => sourceProjectIds.Contains(f.ProjectId))
+                .OrderBy(i => sourceProjectIds.IndexOf(i.ProjectId)),
         ];
         List<ServalCorpusFile> targetCorpora = [servalCorpusFiles.Single(f => f.ProjectId == project.Id)];
         List<string> sourceCorpusIds = [.. sourceCorpora.Select(f => f.CorpusId)];
