@@ -19,6 +19,14 @@ describe('UserService', () => {
     await expect(fetchDoc(conn, USERS_COLLECTION, 'user02')).resolves.not.toThrow();
   });
 
+  it('allows serval admin to view others', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const conn = clientConnect(env.server, 'user02', SystemRole.ServalAdmin);
+    await expect(fetchDoc(conn, USERS_COLLECTION, 'user01')).resolves.not.toThrow();
+  });
+
   it('allows system admin to edit others', async () => {
     const env = new TestEnvironment();
     await env.createData();
