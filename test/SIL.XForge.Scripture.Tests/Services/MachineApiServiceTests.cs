@@ -66,6 +66,8 @@ public class MachineApiServiceTests
             ServalBuildId01
         );
 
+    private const string TestPreTranslation =
+        "The book of the generations of Jesus Christ, the son of David, the son of Abraham.";
     private const string TestUsfm = "\\c 1 \\v 1 Verse 1";
     private const string TestUsx =
         "<usx version=\"3.0\"><book code=\"MAT\" style=\"id\"></book><chapter number=\"1\" style=\"c\" />"
@@ -114,6 +116,13 @@ public class MachineApiServiceTests
         Revision = 43,
         State = JobState.Completed,
         DateFinished = DateTimeOffset.UtcNow,
+    };
+
+    private static readonly QualityEstimationConfig QualityEstimationConfig = new QualityEstimationConfig
+    {
+        Version = "0.1",
+        Slope = 109.6145,
+        Intercept = -14.0633,
     };
 
     [Test]
@@ -1242,7 +1251,7 @@ public class MachineApiServiceTests
         DateTimeOffset dateCreated = DateTimeOffset.UtcNow.AddDays(-2);
         DateTimeOffset dateStarted = dateCreated.AddHours(6);
         DateTimeOffset dateFinished = dateCreated.AddDays(1);
-        DateTimeOffset dateCompleted = dateFinished;
+        DateTimeOffset dateCompleted = dateFinished.AddSeconds(1);
         TranslationBuild translationBuild = new TranslationBuild
         {
             Id = ServalBuildId01,
@@ -1260,6 +1269,7 @@ public class MachineApiServiceTests
             .Returns(Task.FromResult<IList<TranslationBuild>>([translationBuild]));
         const string draftGenerationRequestId = "draft-req";
         env.SetDraftGenerationMetricAssociation(draftGenerationRequestId);
+        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01, QualityEstimationConfig);
 
         // SUT
         IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
@@ -1282,6 +1292,8 @@ public class MachineApiServiceTests
         Assert.AreEqual(dateCompleted, report.Timeline.ServalCompleted);
         Assert.AreEqual(dateFinished, report.Timeline.ServalFinished);
         Assert.AreEqual(draftGenerationRequestId, report.DraftGenerationRequestId);
+        Assert.NotZero(report.BuildConfidences!.BookConfidences.Count);
+        Assert.NotZero(report.BuildConfidences!.ChapterConfidences.Count);
     }
 
     [Test]
@@ -2251,6 +2263,110 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public void GetBuildConfidencesAsync_NoPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.GetBuildConfidencesAsync(
+                User02,
+                Project01,
+                ServalBuildId01,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+        );
+    }
+
+    [Test]
+    public void GetBuildConfidencesAsync_NoProject()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetBuildConfidencesAsync(
+                User01,
+                "invalid_project_id",
+                ServalBuildId01,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+        );
+    }
+
+    [Test]
+    public async Task GetBuildConfidencesAsync_NoContent()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        BuildConfidences actual = await env.Service.GetBuildConfidencesAsync(
+            User01,
+            Project01,
+            ServalBuildId01,
+            isServalAdmin: false,
+            CancellationToken.None
+        );
+
+        Assert.That(actual, Is.Null);
+    }
+
+    [Test]
+    public async Task GetBuildConfidencesAsync_ServalAdminDoesNotNeedPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01, QualityEstimationConfig);
+
+        // SUT
+        BuildConfidences actual = await env.Service.GetBuildConfidencesAsync(
+            User02,
+            Project01,
+            ServalBuildId01,
+            isServalAdmin: true,
+            CancellationToken.None
+        );
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(actual.ProjectId, Is.EqualTo(Project01));
+            Assert.That(actual.BuildId, Is.EqualTo(ServalBuildId01));
+            Assert.That(actual.BookConfidences, Is.Not.Empty);
+            Assert.That(actual.ChapterConfidences, Is.Not.Empty);
+        }
+    }
+
+    [Test]
+    public async Task GetBuildConfidencesAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01, QualityEstimationConfig);
+
+        // SUT
+        BuildConfidences actual = await env.Service.GetBuildConfidencesAsync(
+            User01,
+            Project01,
+            ServalBuildId01,
+            isServalAdmin: false,
+            CancellationToken.None
+        );
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(actual.ProjectId, Is.EqualTo(Project01));
+            Assert.That(actual.BuildId, Is.EqualTo(ServalBuildId01));
+            Assert.That(actual.BookConfidences, Is.Not.Empty);
+            Assert.That(actual.ChapterConfidences, Is.Not.Empty);
+        }
+    }
+
+    [Test]
     public void GetEngineAsync_NoPermission()
     {
         // Set up test environment
@@ -2760,29 +2876,28 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        const string reference = "MAT 1:1";
-        const string translation = "The book of the generations of Jesus Christ, the son of David, the son of Abraham.";
-        env.PreTranslationService.GetPreTranslationsAsync(Project01, 40, 1, CancellationToken.None)
-            .Returns(
-                Task.FromResult(
-                    new PreTranslation[]
-                    {
-                        new PreTranslation { Reference = reference, Translation = translation },
-                    }
-                )
-            );
+        const int bookNum = 40;
+        const int chapterNum = 1;
+        string textDocumentId = TextDocument.GetDocId(Project01, bookNum, chapterNum, TextDocument.Draft);
+        await env.SetupTextDocumentAsync(
+            textDocumentId,
+            bookNum,
+            chapterNum,
+            scriptureRange: "MAT",
+            alreadyExists: true
+        );
 
         // SUT
         PreTranslationDto actual = await env.Service.GetPreTranslationAsync(
             User01,
             Project01,
-            40,
-            1,
+            bookNum,
+            chapterNum,
             CancellationToken.None
         );
-        Assert.IsNotNull(actual);
-        Assert.AreEqual(reference, actual.PreTranslations.First().Reference);
-        Assert.AreEqual(translation, actual.PreTranslations.First().Translation);
+        Assert.That(actual, Is.Not.Null);
+        Assert.That(actual.PreTranslations.First().Reference, Is.EqualTo($"verse_{chapterNum}_1"));
+        Assert.That(actual.PreTranslations.First().Translation, Is.EqualTo(TestPreTranslation));
     }
 
     [Test]
@@ -4122,6 +4237,7 @@ public class MachineApiServiceTests
         env.ConfigureTranslationBuild(
             new TranslationBuild
             {
+                Id = ServalBuildId01,
                 State = JobState.Completed,
                 Pretranslate =
                 [
@@ -4130,7 +4246,7 @@ public class MachineApiServiceTests
             }
         );
         env.Service.Configure()
-            .UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None)
+            .UpdatePreTranslationTextDocumentsAsync(Project01, ServalBuildId01, CancellationToken.None)
             .Throws(new TaskCanceledException());
 
         // SUT
@@ -4148,6 +4264,7 @@ public class MachineApiServiceTests
         env.ConfigureTranslationBuild(
             new TranslationBuild
             {
+                Id = ServalBuildId01,
                 State = JobState.Completed,
                 Pretranslate =
                 [
@@ -4156,14 +4273,16 @@ public class MachineApiServiceTests
             }
         );
         env.Service.Configure()
-            .UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None)
+            .UpdatePreTranslationTextDocumentsAsync(Project01, ServalBuildId01, CancellationToken.None)
             .Returns(Task.CompletedTask);
         await env.ProjectSecrets.UpdateAsync(Project01, u => u.Set(p => p.ServalData.PreTranslationsRetrieved, false));
 
         // SUT
         await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
 
-        await env.Service.DidNotReceive().UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None);
+        await env
+            .Service.DidNotReceive()
+            .UpdatePreTranslationTextDocumentsAsync(Project01, ServalBuildId01, CancellationToken.None);
     }
 
     [Test]
@@ -4174,6 +4293,7 @@ public class MachineApiServiceTests
         env.ConfigureTranslationBuild(
             new TranslationBuild
             {
+                Id = ServalBuildId01,
                 State = JobState.Completed,
                 Pretranslate =
                 [
@@ -4182,7 +4302,9 @@ public class MachineApiServiceTests
             }
         );
         ServalApiException ex = ServalApiExceptions.Forbidden;
-        env.Service.Configure().UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None).Throws(ex);
+        env.Service.Configure()
+            .UpdatePreTranslationTextDocumentsAsync(Project01, ServalBuildId01, CancellationToken.None)
+            .Throws(ex);
 
         // SUT
         Assert.ThrowsAsync<ServalApiException>(() =>
@@ -4239,6 +4361,7 @@ public class MachineApiServiceTests
         env.ConfigureTranslationBuild(
             new TranslationBuild
             {
+                Id = ServalBuildId01,
                 State = JobState.Completed,
                 Pretranslate =
                 [
@@ -4246,14 +4369,23 @@ public class MachineApiServiceTests
                 ],
             }
         );
+        env.EventMetricService.GetEventMetricsAsync(
+                Project01,
+                Arg.Any<EventScope[]?>(),
+                Arg.Any<string[]>(),
+                Arg.Any<DateTime>()
+            )
+            .Returns(Task.FromResult(env.GetEventMetricsForBuildCompleted(true)));
         env.Service.Configure()
-            .UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None)
+            .UpdatePreTranslationTextDocumentsAsync(Project01, ServalBuildId01, CancellationToken.None)
             .Returns(Task.CompletedTask);
 
         // SUT
         await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
 
-        await env.Service.Received().UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None);
+        await env
+            .Service.Received()
+            .UpdatePreTranslationTextDocumentsAsync(Project01, ServalBuildId01, CancellationToken.None);
     }
 
     [Test]
@@ -4264,6 +4396,7 @@ public class MachineApiServiceTests
         env.ConfigureTranslationBuild(
             new TranslationBuild
             {
+                Id = ServalBuildId01,
                 State = JobState.Completed,
                 Pretranslate =
                 [
@@ -4271,15 +4404,24 @@ public class MachineApiServiceTests
                 ],
             }
         );
+        env.EventMetricService.GetEventMetricsAsync(
+                Project01,
+                Arg.Any<EventScope[]?>(),
+                Arg.Any<string[]>(),
+                Arg.Any<DateTime>()
+            )
+            .Returns(Task.FromResult(env.GetEventMetricsForBuildCompleted(true)));
         env.Service.Configure()
-            .UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None)
+            .UpdatePreTranslationTextDocumentsAsync(Project01, ServalBuildId01, CancellationToken.None)
             .Returns(Task.CompletedTask);
         await env.ProjectSecrets.UpdateAsync(Project01, u => u.Set(p => p.ServalData.PreTranslationsRetrieved, true));
 
         // SUT
         await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
 
-        await env.Service.Received().UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None);
+        await env
+            .Service.Received()
+            .UpdatePreTranslationTextDocumentsAsync(Project01, ServalBuildId01, CancellationToken.None);
     }
 
     [Test]
@@ -4335,7 +4477,7 @@ public class MachineApiServiceTests
             }
         );
         env.Service.Configure()
-            .UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None)
+            .UpdatePreTranslationTextDocumentsAsync(Project01, ServalBuildId01, CancellationToken.None)
             .Returns(Task.CompletedTask);
         const string draftGenerationRequestId = "1234";
         env.SetDraftGenerationMetricAssociation(draftGenerationRequestId);
@@ -5167,7 +5309,7 @@ public class MachineApiServiceTests
         );
 
         // SUT
-        await env.Service.UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None);
+        await env.Service.UpdatePreTranslationTextDocumentsAsync(Project01, ServalBuildId01, CancellationToken.None);
 
         await env
             .PreTranslationService.Received(1)
@@ -5192,7 +5334,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None)
+            env.Service.UpdatePreTranslationTextDocumentsAsync(Project01, ServalBuildId01, CancellationToken.None)
         );
     }
 
@@ -5204,7 +5346,11 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.UpdatePreTranslationTextDocumentsAsync("invalid_project_id", CancellationToken.None)
+            env.Service.UpdatePreTranslationTextDocumentsAsync(
+                "invalid_project_id",
+                ServalBuildId01,
+                CancellationToken.None
+            )
         );
     }
 
@@ -5216,7 +5362,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.UpdatePreTranslationTextDocumentsAsync(Project02, CancellationToken.None)
+            env.Service.UpdatePreTranslationTextDocumentsAsync(Project02, ServalBuildId01, CancellationToken.None)
         );
     }
 
@@ -5228,7 +5374,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.UpdatePreTranslationTextDocumentsAsync(Project03, CancellationToken.None)
+            env.Service.UpdatePreTranslationTextDocumentsAsync(Project03, ServalBuildId01, CancellationToken.None)
         );
     }
 
@@ -5244,8 +5390,57 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None)
+            env.Service.UpdatePreTranslationTextDocumentsAsync(Project01, ServalBuildId01, CancellationToken.None)
         );
+    }
+
+    [Test]
+    public async Task UpdatePreTranslationTextDocumentsAsync_QualityEstimation()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01, QualityEstimationConfig);
+        const int bookNum = 1;
+        const int chapterNum = 0;
+        string textDocumentId = TextDocument.GetDocId(Project01, bookNum, chapter: 1, TextDocument.Draft);
+        await env.SetupTextDocumentAsync(
+            textDocumentId,
+            bookNum,
+            chapterNum,
+            scriptureRange: "GEN",
+            alreadyExists: false
+        );
+
+        // SUT
+        await env.Service.UpdatePreTranslationTextDocumentsAsync(Project01, ServalBuildId01, CancellationToken.None);
+
+        await env
+            .PreTranslationService.Received(1)
+            .GetPreTranslationUsfmAsync(
+                Project01,
+                bookNum,
+                chapterNum,
+                Arg.Any<DraftUsfmConfig>(),
+                CancellationToken.None
+            );
+
+        await env
+            .PreTranslationService.Received(1)
+            .GetPreTranslationsAsync(Project01, bookNum, chapterNum: 1, CancellationToken.None);
+        env.ParatextService.Received(1).GetChaptersAsUsj(Arg.Any<UserSecret>(), Paratext01, bookNum, TestUsfm);
+        DraftMetrics draftMetrics = env.DraftMetrics.Get(DraftMetrics.GetDocId(Project01, ServalBuildId01));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(await env.TextDocuments.CountDocumentsAsync(_ => true), Is.EqualTo(1));
+            Assert.That(env.TextDocuments.Get(textDocumentId).Content, Is.Not.Empty);
+            Assert.That(draftMetrics.BookConfidences, Has.Count.EqualTo(1));
+            Assert.That(draftMetrics.ChapterConfidences, Has.Count.EqualTo(1));
+            Assert.That(draftMetrics.VerseConfidences, Has.Count.EqualTo(1));
+            Assert.That(
+                draftMetrics.QualityEstimationConfig,
+                Is.EqualTo(QualityEstimationConfig).UsingPropertiesComparer()
+            );
+        }
     }
 
     [Test]
@@ -5264,7 +5459,7 @@ public class MachineApiServiceTests
         );
 
         // SUT
-        await env.Service.UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None);
+        await env.Service.UpdatePreTranslationTextDocumentsAsync(Project01, ServalBuildId01, CancellationToken.None);
 
         await env
             .PreTranslationService.Received(1)
@@ -5288,7 +5483,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(() =>
-            env.Service.UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None)
+            env.Service.UpdatePreTranslationTextDocumentsAsync(Project01, ServalBuildId01, CancellationToken.None)
         );
     }
 
@@ -5309,7 +5504,7 @@ public class MachineApiServiceTests
         );
 
         // SUT
-        await env.Service.UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None);
+        await env.Service.UpdatePreTranslationTextDocumentsAsync(Project01, ServalBuildId01, CancellationToken.None);
 
         await env
             .PreTranslationService.Received(1)
@@ -5332,6 +5527,7 @@ public class MachineApiServiceTests
             BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
             BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns(HangfireJobId);
             DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
+            DraftMetrics = new MemoryRepository<DraftMetrics>();
             EventMetricService = Substitute.For<IEventMetricService>();
             ExceptionHandler = Substitute.For<IExceptionHandler>();
             HttpRequestAccessor = Substitute.For<IHttpRequestAccessor>();
@@ -5467,6 +5663,7 @@ public class MachineApiServiceTests
             Service = Substitute.ForPartsOf<MachineApiService>(
                 BackgroundJobClient,
                 DeltaUsxMapper,
+                DraftMetrics,
                 EventMetricService,
                 ExceptionHandler,
                 HttpRequestAccessor,
@@ -5499,6 +5696,7 @@ public class MachineApiServiceTests
         public MockLogger<MachineApiService> MockLogger { get; }
         public IParatextService ParatextService { get; }
         public IPreTranslationService PreTranslationService { get; }
+        public MemoryRepository<DraftMetrics> DraftMetrics { get; }
         public MemoryRepository<SFProject> Projects { get; }
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
         public MemoryRepository<TextDocument> TextDocuments { get; }
@@ -5950,6 +6148,22 @@ public class MachineApiServiceTests
                     CancellationToken.None
                 )
                 .Returns(Task.FromResult(TestUsfm));
+            int preTranslationChapterNum = chapterNum == 0 ? 1 : chapterNum;
+            PreTranslationService
+                .GetPreTranslationsAsync(Project01, bookNum, preTranslationChapterNum, CancellationToken.None)
+                .Returns(
+                    Task.FromResult(
+                        new[]
+                        {
+                            new PreTranslation
+                            {
+                                Reference = $"verse_{preTranslationChapterNum}_1",
+                                Translation = TestPreTranslation,
+                                Confidence = 0.6020749899712906,
+                            },
+                        }
+                    )
+                );
             ParatextService.GetChaptersAsUsj(Arg.Any<UserSecret>(), Paratext01, bookNum, TestUsfm).Returns([TestUsj]);
 
             if (alreadyExists)
@@ -6037,6 +6251,48 @@ public class MachineApiServiceTests
                 );
         }
 
+        public async Task SetupDraftMetricsAsync(
+            string sfProjectId,
+            string buildId,
+            QualityEstimationConfig qualityEstimationConfig
+        )
+        {
+            DraftMetrics.Add(
+                new DraftMetrics
+                {
+                    Id = Models.DraftMetrics.GetDocId(sfProjectId, buildId),
+                    QualityEstimationConfig = qualityEstimationConfig,
+                    BookConfidences =
+                    [
+                        new BookConfidence
+                        {
+                            BookNum = 1,
+                            Confidence = 0.6,
+                            Label = "Green",
+                            ProjectedChrF3 = 51.93,
+                            Usability = 0.765,
+                        },
+                    ],
+                    ChapterConfidences =
+                    [
+                        new ChapterConfidence
+                        {
+                            BookNum = 1,
+                            ChapterNum = 1,
+                            Confidence = 0.6,
+                            Label = "Green",
+                            ProjectedChrF3 = 51.93,
+                            Usability = 0.765,
+                        },
+                    ],
+                }
+            );
+            await Projects.UpdateAsync(
+                p => p.Id == sfProjectId,
+                u => u.Set(s => s.TranslateConfig.DraftConfig.QualityEstimationConfig, qualityEstimationConfig)
+            );
+        }
+
         public static void AssertCoreBuildProperties(TranslationBuild translationBuild, ServalBuildDto? actual)
         {
             string buildDtoId = $"{Project01}.{translationBuild.Id}";
@@ -6051,7 +6307,7 @@ public class MachineApiServiceTests
             Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
         }
 
-        /// <remarks>Either to test the empty situation, or because it is not important for the test.</remarks>
+        /// <summary>Used either to test the empty situation, or because it is not important for the test.</summary>
         public void SetEmptyDraftGenerationMetricAssociations()
         {
             // Mock for GetEventMetricsAsync in GetDraftGenerationRequestIdForBuildAsync

@@ -511,6 +511,99 @@
                     </span>
                   </mat-card-content>
                 </mat-card>
+
+                <mat-card appearance="filled" class="detail-card">
+                  <mat-card-header>
+                    <mat-card-title-group>
+                      <mat-icon>traffic</mat-icon>
+                      <mat-card-title>Quality Estimation</mat-card-title>
+                    </mat-card-title-group>
+                  </mat-card-header>
+                  <mat-card-content class="detail-card-content">
+                    <span class="detail-area-stacked-keyvalues">
+                      @if (row.report.buildConfidences != null) {
+                        <div class="book-confidences">
+                          @for (
+                            bookConfidence of row.report.buildConfidences.bookConfidences;
+                            track bookConfidence.bookNum
+                          ) {
+                            <div class="detail-keyvalue">
+                              <span class="detail-key">
+                                {{ "canon.book_names." + getBookId(bookConfidence) | transloco }}
+                              </span>
+                              <span class="detail-value">
+                                <app-display-confidence [confidence]="bookConfidence"></app-display-confidence>
+                              </span>
+                            </div>
+                          }
+                        </div>
+                        <div class="export-button-group">
+                          <button
+                            mat-raised-button
+                            color="primary"
+                            class="export-csv-button"
+                            (click)="exportCsv(row.report.buildConfidences.bookConfidences)"
+                          >
+                            <mat-icon>download</mat-icon>
+                            <span class="export-item-label"> Export Book Usability CSV </span>
+                          </button>
+                          <button
+                            mat-raised-button
+                            color="primary"
+                            class="export-menu-button"
+                            [matMenuTriggerFor]="exportBookMenu"
+                          >
+                            <mat-icon>arrow_drop_down</mat-icon>
+                          </button>
+                        </div>
+                        <mat-menu #exportBookMenu="matMenu" xPosition="before">
+                          <button mat-menu-item (click)="exportTsv(row.report.buildConfidences.bookConfidences)">
+                            <mat-icon>download</mat-icon>
+                            <span class="export-item-label"> Export Book Usability TSV </span>
+                          </button>
+                          <button mat-menu-item (click)="exportRsv(row.report.buildConfidences.bookConfidences)">
+                            <mat-icon>download</mat-icon>
+                            <span class="export-item-label"> Export Book Usability RSV </span>
+                          </button>
+                        </mat-menu>
+                        <div class="export-button-group">
+                          <button
+                            mat-raised-button
+                            color="primary"
+                            class="export-csv-button"
+                            (click)="exportCsv(row.report.buildConfidences.chapterConfidences)"
+                          >
+                            <mat-icon>download</mat-icon>
+                            <span class="export-item-label"> Export Chapter Usability CSV </span>
+                          </button>
+                          <button
+                            mat-raised-button
+                            color="primary"
+                            class="export-menu-button"
+                            [matMenuTriggerFor]="exportChapterMenu"
+                          >
+                            <mat-icon>arrow_drop_down</mat-icon>
+                          </button>
+                        </div>
+                        <mat-menu #exportChapterMenu="matMenu" xPosition="before">
+                          <button mat-menu-item (click)="exportTsv(row.report.buildConfidences.chapterConfidences)">
+                            <mat-icon>download</mat-icon>
+                            <span class="export-item-label"> Export Chapter Usability TSV </span>
+                          </button>
+                          <button mat-menu-item (click)="exportRsv(row.report.buildConfidences.chapterConfidences)">
+                            <mat-icon>download</mat-icon>
+                            <span class="export-item-label"> Export Chapter Usability RSV </span>
+                          </button>
+                        </mat-menu>
+                      } @else {
+                        <div class="detail-keyvalue">
+                          <span class="detail-key">Configured</span>
+                          <span class="detail-value">No</span>
+                        </div>
+                      }
+                    </span>
+                  </mat-card-content>
+                </mat-card>
               </div>
 
               <div class="detail-actions">

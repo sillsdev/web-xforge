@@ -63,10 +63,20 @@ public class PreTranslationService(
 
         foreach (Pretranslation preTranslation in servalPreTranslations)
         {
+            // Get the references - old builds will only have Refs specified,
+            // newer builds will have TargetRefs with Refs containing the same values
+            List<string> references = [.. preTranslation.TargetRefs];
+            if (references.Count == 0)
+            {
+#pragma warning disable CS0612 // Type or member is obsolete
+                references = [.. preTranslation.Refs ?? []];
+#pragma warning restore CS0612 // Type or member is obsolete
+            }
+
             // A reference will be in one of the formats:
             // FileFormat.Text: "40_1:verse_001_002"
             // FileFormat.Paratext: "MAT 1:2" or "MAT 1:2/1:p"
-            string reference = preTranslation.TargetRefs.FirstOrDefault();
+            string reference = references.FirstOrDefault();
             if (string.IsNullOrWhiteSpace(reference))
             {
                 continue;
@@ -84,7 +94,10 @@ public class PreTranslationService(
                 }
 
                 // Ensure we have a valid verse reference and it is for this chapter
-                if (!VerseRef.TryParse(reference, out VerseRef verseRef) || verseRef.ChapterNum != chapterNum)
+                if (
+                    !VerseRef.TryParse(reference, out VerseRef verseRef)
+                    || (chapterNum != 0 && verseRef.ChapterNum != chapterNum)
+                )
                 {
                     continue;
                 }
@@ -124,7 +137,7 @@ public class PreTranslationService(
                     if (
                         referenceParts.Length < 3
                         || !int.TryParse(referenceParts[1], out int refChapterNum)
-                        || refChapterNum != chapterNum
+                        || (chapterNum != 0 && refChapterNum != chapterNum)
                     )
                     {
                         continue;
@@ -165,12 +178,24 @@ public class PreTranslationService(
             // Add the pre-translation, or update if this is a segment of it
             if (preTranslations.Any(p => p.Reference == reference))
             {
-                preTranslations.First(p => p.Reference == reference).Translation += translation.TrimEnd() + " ";
+                PreTranslation versePreTranslation = preTranslations.First(p => p.Reference == reference);
+                versePreTranslation.Translation += translation.TrimEnd() + " ";
+
+                // If this pre-translation is for the verse content, set the confidence value
+                if (!references.First().Contains('/'))
+                {
+                    versePreTranslation.Confidence = preTranslation.Confidence;
+                }
             }
             else
             {
                 preTranslations.Add(
-                    new PreTranslation { Reference = reference, Translation = translation.TrimEnd() + " " }
+                    new PreTranslation
+                    {
+                        Reference = reference,
+                        Translation = translation.TrimEnd() + " ",
+                        Confidence = preTranslation.Confidence,
+                    }
                 );
             }
         }

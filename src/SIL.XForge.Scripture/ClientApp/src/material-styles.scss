@@ -18,6 +18,7 @@
 @use 'src/app/shared/json-viewer/json-viewer-theme' as sf-json-viewer;
 @use 'src/app/shared/audio-recorder-dialog/audio-recorder-dialog-theme' as sf-audio-recorder-dialog;
 @use 'src/app/sync/sync-theme' as sf-sync;
+@use 'src/app/translate/draft-generation/build-confidences/build-confidences-theme' as sf-build-confidences;
 @use 'src/app/translate/draft-generation/confirm-sources/confirm-sources-theme' as sf-confirm-sources;
 @use 'src/app/translate/draft-generation/draft-signup-form/draft-onboarding-form-theme' as sf-draft-onboarding-form;
 @use 'src/app/translate/draft-generation/draft-history-list/draft-history-entry/draft-history-entry-theme' as
@@ -61,6 +62,7 @@
   @include sf-attach-audio.theme($theme);
   @include sf-single-button-audio-player.theme($theme);
   @include sf-info.theme($theme);
+  @include sf-build-confidences.theme($theme);
   @include sf-confirm-sources.theme($theme);
   @include sf-draft-history-entry.theme($theme);
   @include sf-draft-import-wizard.theme($theme);

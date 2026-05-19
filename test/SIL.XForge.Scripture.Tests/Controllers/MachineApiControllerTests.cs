@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -93,7 +92,7 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
-            .Returns(Task.FromResult(Build01));
+            .Returns(Task.FromResult<string?>(Build01));
 
         // SUT
         ActionResult actual = await env.Controller.CancelPreTranslationBuildAsync(Project01, CancellationToken.None);
@@ -149,7 +148,7 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService.GetBuildAsync(User01, Project01, Build01, null, false, false, CancellationToken.None)
-            .Returns(Task.FromResult<ServalBuildDto>(null));
+            .Returns(Task.FromResult<ServalBuildDto?>(null));
 
         // SUT
         ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
@@ -215,7 +214,9 @@ public class MachineApiControllerTests
                 isServalAdmin: false,
                 CancellationToken.None
             )
-            .Returns(Task.FromResult(new ServalBuildDto { State = MachineApiService.BuildStateQueued }));
+            .Returns(
+                Task.FromResult<ServalBuildDto?>(new ServalBuildDto { State = MachineApiService.BuildStateQueued })
+            );
 
         // SUT
         ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
@@ -246,9 +247,9 @@ public class MachineApiControllerTests
                 User01,
                 Project01,
                 Build01,
-                minRevision: default,
-                preTranslate: default,
-                isServalAdmin: default,
+                minRevision: null,
+                preTranslate: false,
+                isServalAdmin: false,
                 CancellationToken.None
             );
     }
@@ -265,7 +266,7 @@ public class MachineApiControllerTests
                 isServalAdmin: false,
                 CancellationToken.None
             )
-            .Returns(Task.FromResult(new ServalBuildDto()));
+            .Returns(Task.FromResult<ServalBuildDto?>(new ServalBuildDto()));
 
         // SUT
         ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
@@ -294,7 +295,7 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService.GetCurrentBuildAsync(User01, Project01, null, true, false, CancellationToken.None)
-            .Returns(Task.FromResult(new ServalBuildDto()));
+            .Returns(Task.FromResult<ServalBuildDto?>(new ServalBuildDto()));
 
         // SUT
         ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
@@ -323,7 +324,7 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService.GetBuildAsync(User01, Project01, Build01, null, true, false, CancellationToken.None)
-            .Returns(Task.FromResult(new ServalBuildDto()));
+            .Returns(Task.FromResult<ServalBuildDto?>(new ServalBuildDto()));
 
         // SUT
         ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
@@ -352,7 +353,7 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService.GetBuildAsync(User01, Project01, Build01, null, true, true, CancellationToken.None)
-            .Returns(Task.FromResult(new ServalBuildDto()));
+            .Returns(Task.FromResult<ServalBuildDto?>(new ServalBuildDto()));
         env.UserAccessor.SystemRoles.Returns([SystemRole.ServalAdmin]);
 
         // SUT
@@ -376,7 +377,7 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService.GetBuildAsync(User01, Project01, Build01, null, false, false, CancellationToken.None)
-            .Returns(Task.FromResult(new ServalBuildDto()));
+            .Returns(Task.FromResult<ServalBuildDto?>(new ServalBuildDto()));
 
         // SUT
         ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
@@ -441,7 +442,7 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService.GetCurrentBuildAsync(User01, Project01, null, false, false, CancellationToken.None)
-            .Returns(Task.FromResult<ServalBuildDto>(null));
+            .Returns(Task.FromResult<ServalBuildDto?>(null));
 
         // SUT
         ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
@@ -501,7 +502,7 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService.GetCurrentBuildAsync(User01, Project01, null, false, false, CancellationToken.None)
-            .Returns(Task.FromResult(new ServalBuildDto()));
+            .Returns(Task.FromResult<ServalBuildDto?>(new ServalBuildDto()));
 
         // SUT
         ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
@@ -625,6 +626,112 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    public async Task GetBuildConfidencesAsync_NoContent()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetBuildConfidencesAsync(
+                User01,
+                Project01,
+                Build01,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+            .Returns(Task.FromResult<BuildConfidences?>(null));
+
+        // SUT
+        ActionResult<BuildConfidences> actual = await env.Controller.GetBuildConfidencesAsync(
+            Project01,
+            Build01,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<NoContentResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetBuildConfidencesAsync_NoPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetBuildConfidencesAsync(
+                User01,
+                Project01,
+                Build01,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+            .Throws(new ForbiddenException());
+
+        // SUT
+        ActionResult<BuildConfidences> actual = await env.Controller.GetBuildConfidencesAsync(
+            Project01,
+            Build01,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<ForbidResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetBuildConfidencesAsync_NoProject()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetBuildConfidencesAsync(
+                User01,
+                Project01,
+                Build01,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+            .Throws(new DataNotFoundException(string.Empty));
+
+        // SUT
+        ActionResult<BuildConfidences> actual = await env.Controller.GetBuildConfidencesAsync(
+            Project01,
+            Build01,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<NotFoundResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetBuildConfidencesAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetBuildConfidencesAsync(
+                User01,
+                Project01,
+                Build01,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+            .Returns(
+                Task.FromResult<BuildConfidences?>(
+                    new BuildConfidences
+                    {
+                        ProjectId = Project01,
+                        BuildId = Build01,
+                        BookConfidences = [],
+                        ChapterConfidences = [],
+                    }
+                )
+            );
+
+        // SUT
+        ActionResult<BuildConfidences> actual = await env.Controller.GetBuildConfidencesAsync(
+            Project01,
+            Build01,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+    }
+
+    [Test]
     public async Task GetEngineAsync_MachineApiDown()
     {
         // Set up test environment
@@ -707,7 +814,7 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService.GetLastCompletedPreTranslationBuildAsync(User01, Project01, false, CancellationToken.None)
-            .Returns(Task.FromResult<ServalBuildDto>(null));
+            .Returns(Task.FromResult<ServalBuildDto?>(null));
 
         // SUT
         ActionResult<ServalBuildDto?> actual = await env.Controller.GetLastCompletedPreTranslationBuildAsync(
@@ -758,7 +865,7 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService.GetLastCompletedPreTranslationBuildAsync(User01, Project01, true, CancellationToken.None)
-            .Returns(Task.FromResult(new ServalBuildDto()));
+            .Returns(Task.FromResult<ServalBuildDto?>(new ServalBuildDto()));
         env.UserAccessor.SystemRoles.Returns([SystemRole.ServalAdmin]);
 
         // SUT
@@ -780,7 +887,7 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService.GetLastCompletedPreTranslationBuildAsync(User01, Project01, false, CancellationToken.None)
-            .Returns(Task.FromResult(new ServalBuildDto()));
+            .Returns(Task.FromResult<ServalBuildDto?>(new ServalBuildDto()));
 
         // SUT
         ActionResult<ServalBuildDto?> actual = await env.Controller.GetLastCompletedPreTranslationBuildAsync(
@@ -800,7 +907,7 @@ public class MachineApiControllerTests
     {
         var env = new TestEnvironment();
         env.MachineApiService.GetLastPreTranslationBuildAsync(User01, Project01, false, CancellationToken.None)
-            .Returns(Task.FromResult<ServalBuildDto>(null));
+            .Returns(Task.FromResult<ServalBuildDto?>(null));
 
         ActionResult<ServalBuildDto?> actual = await env.Controller.GetLastPreTranslationBuildAsync(
             Project01,
@@ -830,7 +937,7 @@ public class MachineApiControllerTests
     {
         var env = new TestEnvironment();
         env.MachineApiService.GetLastPreTranslationBuildAsync(User01, Project01, false, CancellationToken.None)
-            .Returns(Task.FromResult(new ServalBuildDto()));
+            .Returns(Task.FromResult<ServalBuildDto?>(new ServalBuildDto()));
 
         ActionResult<ServalBuildDto?> actual = await env.Controller.GetLastPreTranslationBuildAsync(
             Project01,
@@ -963,7 +1070,7 @@ public class MachineApiControllerTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        ActionResult<Snapshot<TextData>> actual = await env.Controller.GetPreTranslationDeltaAsync(
+        ActionResult<Snapshot<TextData>?> actual = await env.Controller.GetPreTranslationDeltaAsync(
             Project01,
             40,
             1,
@@ -996,7 +1103,7 @@ public class MachineApiControllerTests
             .Throws(new ForbiddenException());
 
         // SUT
-        ActionResult<Snapshot<TextData>> actual = await env.Controller.GetPreTranslationDeltaAsync(
+        ActionResult<Snapshot<TextData>?> actual = await env.Controller.GetPreTranslationDeltaAsync(
             Project01,
             40,
             1,
@@ -1027,7 +1134,7 @@ public class MachineApiControllerTests
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
-        ActionResult<Snapshot<TextData>> actual = await env.Controller.GetPreTranslationDeltaAsync(
+        ActionResult<Snapshot<TextData>?> actual = await env.Controller.GetPreTranslationDeltaAsync(
             Project01,
             40,
             1,
@@ -1058,7 +1165,7 @@ public class MachineApiControllerTests
             .Throws(new InvalidOperationException());
 
         // SUT
-        ActionResult<Snapshot<TextData>> actual = await env.Controller.GetPreTranslationDeltaAsync(
+        ActionResult<Snapshot<TextData>?> actual = await env.Controller.GetPreTranslationDeltaAsync(
             Project01,
             40,
             1,
@@ -1089,7 +1196,7 @@ public class MachineApiControllerTests
             .Throws(new NotSupportedException());
 
         // SUT
-        ActionResult<Snapshot<TextData>> actual = await env.Controller.GetPreTranslationDeltaAsync(
+        ActionResult<Snapshot<TextData>?> actual = await env.Controller.GetPreTranslationDeltaAsync(
             Project01,
             40,
             1,
@@ -1126,7 +1233,7 @@ public class MachineApiControllerTests
             .Returns(Task.FromResult(new Dictionary<string, Snapshot<TextData>>()));
 
         // SUT
-        ActionResult<Snapshot<TextData>> actual = await env.Controller.GetPreTranslationDeltaAsync(
+        ActionResult<Snapshot<TextData>?> actual = await env.Controller.GetPreTranslationDeltaAsync(
             Project01,
             40,
             1,
@@ -1141,35 +1248,6 @@ public class MachineApiControllerTests
 
     [Test]
     public async Task GetPretranslationDeltaAsync_SuccessSpecificConfig()
-    {
-        var env = new TestEnvironment();
-        env.MachineApiService.GetPreTranslationDeltaAsync(
-                User01,
-                Project01,
-                40,
-                1,
-                false,
-                Arg.Any<DateTime>(),
-                Arg.Any<DraftUsfmConfig>(),
-                CancellationToken.None
-            )
-            .Returns(Task.FromResult(new Dictionary<string, Snapshot<TextData>>()));
-
-        // SUT
-        var result = await env.Controller.GetPreTranslationDeltaAsync(
-            Project01,
-            40,
-            1,
-            null,
-            paragraphFormat: ParagraphBreakFormatOptions.BestGuess,
-            quoteFormat: QuoteStyleOptions.Denormalized,
-            CancellationToken.None
-        );
-        Assert.IsInstanceOf<OkObjectResult>(result.Result);
-    }
-
-    [Test]
-    public async Task GetPretranslationDeltaAsync_MachineApiDown()
     {
         var env = new TestEnvironment();
         env.MachineApiService.GetPreTranslationDeltaAsync(
@@ -2058,6 +2136,272 @@ public class MachineApiControllerTests
             40,
             1,
             null,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetRawBuildAsync_MachineApiDown()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetRawBuildAsync(
+                User01,
+                Project01,
+                Build01,
+                minRevision: null,
+                preTranslate: true,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+            .Throws(new BrokenCircuitException());
+
+        // SUT
+        ActionResult<TranslationBuild?> actual = await env.Controller.GetRawBuildAsync(
+            Project01,
+            Build01,
+            minRevision: null,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
+        Assert.IsInstanceOf<ObjectResult>(actual.Result);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
+    }
+
+    [Test]
+    public async Task GetRawBuildAsync_NoPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetRawBuildAsync(
+                User01,
+                Project01,
+                Build01,
+                minRevision: null,
+                preTranslate: true,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+            .Throws(new ForbiddenException());
+
+        // SUT
+        ActionResult<TranslationBuild?> actual = await env.Controller.GetRawBuildAsync(
+            Project01,
+            Build01,
+            minRevision: null,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<ForbidResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetRawBuildAsync_NoProject()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetRawBuildAsync(
+                User01,
+                Project01,
+                Build01,
+                minRevision: null,
+                preTranslate: true,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+            .Throws(new DataNotFoundException(string.Empty));
+
+        // SUT
+        ActionResult<TranslationBuild?> actual = await env.Controller.GetRawBuildAsync(
+            Project01,
+            Build01,
+            minRevision: null,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<NotFoundResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetRawBuildAsync_ServalAdmin()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetRawBuildAsync(
+                User01,
+                Project01,
+                Build01,
+                minRevision: null,
+                preTranslate: true,
+                isServalAdmin: true,
+                CancellationToken.None
+            )
+            .Returns(Task.FromResult<TranslationBuild?>(new TranslationBuild()));
+        env.UserAccessor.SystemRoles.Returns([SystemRole.ServalAdmin]);
+
+        // SUT
+        ActionResult<TranslationBuild?> actual = await env.Controller.GetRawBuildAsync(
+            Project01,
+            Build01,
+            minRevision: null,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetRawBuildAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetRawBuildAsync(
+                User01,
+                Project01,
+                Build01,
+                minRevision: null,
+                preTranslate: true,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+            .Returns(Task.FromResult<TranslationBuild?>(new TranslationBuild()));
+
+        // SUT
+        ActionResult<TranslationBuild?> actual = await env.Controller.GetRawBuildAsync(
+            Project01,
+            Build01,
+            minRevision: null,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetRawEngineAsync_MachineApiDown()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetRawEngineAsync(
+                User01,
+                Project01,
+                preTranslate: true,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+            .Throws(new BrokenCircuitException());
+
+        // SUT
+        ActionResult<TranslationEngine?> actual = await env.Controller.GetRawEngineAsync(
+            Project01,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
+        Assert.IsInstanceOf<ObjectResult>(actual.Result);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
+    }
+
+    [Test]
+    public async Task GetRawEngineAsync_NoPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetRawEngineAsync(
+                User01,
+                Project01,
+                preTranslate: true,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+            .Throws(new ForbiddenException());
+
+        // SUT
+        ActionResult<TranslationEngine?> actual = await env.Controller.GetRawEngineAsync(
+            Project01,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<ForbidResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetRawEngineAsync_NoProject()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetRawEngineAsync(
+                User01,
+                Project01,
+                preTranslate: true,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+            .Throws(new DataNotFoundException(string.Empty));
+
+        // SUT
+        ActionResult<TranslationEngine?> actual = await env.Controller.GetRawEngineAsync(
+            Project01,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<NotFoundResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetRawEngineAsync_ServalAdmin()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetRawEngineAsync(
+                User01,
+                Project01,
+                preTranslate: true,
+                isServalAdmin: true,
+                CancellationToken.None
+            )
+            .Returns(Task.FromResult<TranslationEngine?>(new TranslationEngine()));
+        env.UserAccessor.SystemRoles.Returns([SystemRole.ServalAdmin]);
+
+        // SUT
+        ActionResult<TranslationEngine?> actual = await env.Controller.GetRawEngineAsync(
+            Project01,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetRawEngineAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetRawEngineAsync(
+                User01,
+                Project01,
+                preTranslate: true,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+            .Returns(Task.FromResult<TranslationEngine?>(new TranslationEngine()));
+
+        // SUT
+        ActionResult<TranslationEngine?> actual = await env.Controller.GetRawEngineAsync(
+            Project01,
+            preTranslate: true,
             CancellationToken.None
         );
 

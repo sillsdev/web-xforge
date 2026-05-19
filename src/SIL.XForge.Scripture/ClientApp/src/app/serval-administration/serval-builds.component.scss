@@ -454,3 +454,8 @@ a {
     margin-right: 8px;
   }
 }
+
+.book-confidences {
+  max-height: 13em;
+  overflow-y: auto;
+}
