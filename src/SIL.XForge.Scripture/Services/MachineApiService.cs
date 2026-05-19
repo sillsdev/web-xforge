@@ -1376,12 +1376,16 @@ public class MachineApiService(
         // Build the timeline
         BuildReportTimeline timeline = BuildTimeline(translationBuild, projectEvents, draftGenerationRequestId);
 
+        // Identify problems
+        List<BuildReportProblem> problems = ExtractProblems(translationBuild, projectEvents);
+
         return new ServalBuildReportDto
         {
             Build = buildDto,
             Project = projectInfo,
             Timeline = timeline,
             Config = config,
+            Problems = problems,
             DraftGenerationRequestId = draftGenerationRequestId,
             RequesterSFUserId = requesterUserId,
             Status = ToDraftGenerationBuildStatus(translationBuild.State),
@@ -1414,6 +1418,66 @@ public class MachineApiService(
     {
         EventMetric? buildEvent = FindBuildProjectEvent(projectEvents, servalBuildId);
         return buildEvent?.UserId;
+    }
+
+    /// <summary>
+    /// Gathers problems for a build report from the Serval build state, message, warnings,
+    /// and any SF event exceptions.
+    /// </summary>
+    private static List<BuildReportProblem> ExtractProblems(
+        TranslationBuild translationBuild,
+        List<EventMetric> projectEvents
+    )
+    {
+        List<BuildReportProblem> problems = [];
+
+        // SF (local) problems: exceptions from BuildProjectAsync events
+        EventMetric? buildEvent = FindBuildProjectEvent(projectEvents, translationBuild.Id);
+        if (!string.IsNullOrEmpty(buildEvent?.Exception))
+        {
+            problems.Add(
+                new BuildReportProblem
+                {
+                    Source = BuildReportProblemSource.Local,
+                    Severity = BuildReportProblemSeverity.Error,
+                    Message = buildEvent.Exception,
+                }
+            );
+        }
+
+        // Serval problems: faulted build
+        if (translationBuild.State == JobState.Faulted)
+        {
+            string faultedMessage = !string.IsNullOrEmpty(translationBuild.Message)
+                ? $"Faulted: {translationBuild.Message}"
+                : "Serval faulted the build for an unknown reason.";
+            problems.Add(
+                new BuildReportProblem
+                {
+                    Source = BuildReportProblemSource.Serval,
+                    Severity = BuildReportProblemSeverity.Error,
+                    Message = faultedMessage,
+                }
+            );
+        }
+
+        // Serval problems: execution data warnings
+        if (translationBuild.ExecutionData?.Warnings is { Count: > 0 } warnings)
+        {
+            foreach (string warning in warnings)
+            {
+                problems.Add(
+                    new BuildReportProblem
+                    {
+                        Source = BuildReportProblemSource.Serval,
+                        Severity = BuildReportProblemSeverity.Warning,
+                        Message = warning,
+                    }
+                );
+            }
+        }
+
+        return problems;
     }
 
     /// <summary>
@@ -1666,7 +1730,15 @@ public class MachineApiService(
                                 RequestTime = sfUserRequested,
                             },
                             Config = new BuildReportConfig(),
-                            Problems = ["No Serval build was reported for this draft generation request."],
+                            Problems =
+                            [
+                                new BuildReportProblem
+                                {
+                                    Source = BuildReportProblemSource.Local,
+                                    Severity = BuildReportProblemSeverity.Error,
+                                    Message = "No Serval build was reported for this draft generation request.",
+                                },
+                            ],
                             DraftGenerationRequestId = requestId,
                             RequesterSFUserId = startEvent?.UserId,
                             Status = status,
@@ -1701,7 +1773,15 @@ public class MachineApiService(
                                     RequestTime = sfUserRequested,
                                 },
                                 Config = new BuildReportConfig(),
-                                Problems = ["No Serval build was reported for this draft generation request."],
+                                Problems =
+                                [
+                                    new BuildReportProblem
+                                    {
+                                        Source = BuildReportProblemSource.Local,
+                                        Severity = BuildReportProblemSeverity.Error,
+                                        Message = "No Serval build was reported for this draft generation request.",
+                                    },
+                                ],
                                 RequesterSFUserId = startEvent.UserId,
                                 Status = DraftGenerationBuildStatus.UserRequested,
                             }
@@ -3021,6 +3101,7 @@ public class MachineApiService(
                         PretranslateCount = executionData.PretranslateCount,
                         SourceLanguageTag = executionData.EngineSourceLanguageTag,
                         TargetLanguageTag = executionData.EngineTargetLanguageTag,
+                        Warnings = [.. executionData.Warnings],
                     },
         };
 
