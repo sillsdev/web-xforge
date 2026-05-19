@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, firstValueFrom } from 'rxjs';
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
+import { filterNullish } from '../../../../xforge-common/util/rxjs-util';
 import { DraftSourcesAsArrays } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
 import { ChapterSet, VerboseScriptureRange } from './scripture-range';
@@ -19,7 +20,7 @@ type NewDraftAbortMode = 'config_changed' | 'no_access' | null;
  * is useful when the chapter-level detail is not needed, such as when determining which books users can select. If a
  * book is in the range but has no chapters, it is excluded from the list, since it shouldn't be offered for selection.
  */
-function scriptureRangeToBookListWithoutChapterDetail(range: VerboseScriptureRange): string[] {
+export function scriptureRangeToBookListWithoutChapterDetail(range: VerboseScriptureRange): string[] {
   return Array.from(range.books.keys());
 }
 
@@ -63,7 +64,7 @@ export class NewDraftLogicHandler {
    * draft, that book shouldn't be automatically removed from being used as training data. Tracking the input state
    * allows update rules to be enforced at the right point in time.
    */
-  private inputMode$ = new BehaviorSubject<'draft_books' | 'training_books'>('draft_books');
+  inputMode$ = new BehaviorSubject<'draft_books' | 'training_books'>('draft_books');
 
   /**
    * Whether the user has edited the training books. This impacts how the previously selected training books are
@@ -91,10 +92,13 @@ export class NewDraftLogicHandler {
    * user to restart the process). Automatically sets training books to most recently selected training books.
    */
   async init(): Promise<void> {
-    if (this.activatedProjectService.projectId == null) throw new Error('No project selected');
-    if (this.activatedProjectService.projectDoc?.data == null) throw new Error('Project data not loaded');
+    const projectId = await firstValueFrom(this.activatedProjectService.projectId$.pipe(filterNullish()));
+    const projectDoc = await firstValueFrom(this.activatedProjectService.projectDoc$.pipe(filterNullish()));
 
-    const draftConfig = this.activatedProjectService.projectDoc?.data?.translateConfig?.draftConfig;
+    if (projectId == null) throw new Error('No project selected');
+    if (projectDoc?.data == null) throw new Error('Project data not loaded');
+
+    const draftConfig = projectDoc?.data?.translateConfig?.draftConfig;
 
     if (draftConfig == null) throw new Error('Draft config not found in project data');
 
@@ -117,7 +121,7 @@ export class NewDraftLogicHandler {
 
     [draftSourceProgress, targetProjectProgress, trainingSourcesProgress, this.sources] = await Promise.all([
       this.progressService.getProgressForProject(draftingSource.projectRef),
-      this.progressService.getProgressForProject(this.activatedProjectService.projectId),
+      this.progressService.getProgressForProject(projectId),
       trainingSourcesProgressPromise,
       // // TODO listen for more updates to figure out if we need to bail out and restart the process
       firstValueFrom(this.draftSourcesService.getDraftProjectSources())

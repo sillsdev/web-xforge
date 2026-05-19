@@ -1,0 +1,37 @@
+<div class="wrapper">
+  @if (page === "loading") {
+    <mat-spinner></mat-spinner>
+  } @else {
+    @if (page === "preface") {
+      <app-confirm-sources></app-confirm-sources>
+    } @else if (page === "draft_books") {
+      <h1>Select books to draft</h1>
+      <app-book-multi-select
+        [availableBooks]="availableDraftingBooks"
+        [selectedBooks]="selectedDraftingBooks"
+        [basicMode]="true"
+        (bookSelect)="onDraftingBookSelect($event)"
+      ></app-book-multi-select>
+    } @else if (page === "training_books") {
+      <h1>Select books to train on</h1>
+    } @else if (page === "suffix") {
+      <p>Suffix page</p>
+    }
+    <div class="step-buttons">
+      <button mat-stroked-button (click)="back()">
+        <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon> Back
+      </button>
+      @if (page === "suffix") {
+        <button mat-flat-button color="primary" (click)="generateDraftClicked()">
+          <mat-icon>auto_awesome</mat-icon> Generate Draft
+        </button>
+      } @else {
+        <button mat-flat-button color="primary" (click)="next()">
+          Next <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
+        </button>
+      }
+    </div>
+  }
+</div>
+
+<app-json-viewer [data]="debugData"></app-json-viewer>

@@ -352,8 +352,11 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       return;
     }
 
-    // Display pre-generation steps
-    this.currentPage = 'steps';
+    // navigate to new draft page
+    const projectId = this.activatedProject.projectId;
+    if (projectId != null) {
+      await this.router.navigate(['/projects', projectId, 'draft-generation', 'new-draft']);
+    }
   }
 
   async cancel(): Promise<void> {
