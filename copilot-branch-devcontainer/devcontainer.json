@@ -1,0 +1,36 @@
+// For format details, see https://aka.ms/devcontainer.json.
+{
+  "name": "web-xforge",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  // Install .NET 8 SDK via the official devcontainer feature.
+  "features": {
+    "ghcr.io/devcontainers/features/dotnet:2": {
+      "version": "8"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "angular.ng-template",
+        "csharpier.csharpier-vscode",
+        "dbaeumer.vscode-eslint",
+        "editorconfig.editorconfig",
+        "esbenp.prettier-vscode",
+        "formulahendry.dotnet-test-explorer",
+        "ms-dotnettools.csharp",
+        "lucono.karma-test-explorer",
+        "streetsidesoftware.code-spell-checker",
+        "ms-azuretools.vscode-docker"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  // Install npm dependencies after the container is created.
+  "postCreateCommand": "(cd src/RealtimeServer && npm ci) && (cd src/SIL.XForge.Scripture/ClientApp && npm ci)",
+  "remoteUser": "vscode"
+}

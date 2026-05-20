@@ -5,7 +5,7 @@ ARG UBUNTU_NAME=noble
 
 FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}-${UBUNTU_NAME}-amd64
 
-ARG NODE_MAJOR=22
+ARG NODE_VERSION=22.22.2
 
 # Avoid prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -18,20 +18,42 @@ RUN apt-get update \
         git \
         procps \
         sudo \
+        unzip \
         wget \
-    && curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash - \
+        xz-utils \
     && apt-get install --yes --no-install-recommends \
         build-essential \
         ffmpeg \
         libc-dev \
         mercurial \
-        nodejs \
-    && curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg \
-      https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg \
-    && curl -fsSLo /etc/apt/sources.list.d/brave-browser-release.sources \
-      https://brave-browser-apt-release.s3.brave.com/brave-browser.sources \
-    && apt-get update \
-    && apt-get install --assume-yes brave-browser \
+    && curl -fsSLo /tmp/node.tar.xz "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
+    && tar -xJf /tmp/node.tar.xz --directory /usr/local --strip-components=1 --no-same-owner \
+    && rm -f /tmp/node.tar.xz \
+    && BRAVE_TAG=$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/brave/brave-browser/releases/latest | sed 's#.*/tag/##') \
+    && BRAVE_VERSION=${BRAVE_TAG#v} \
+    && mkdir -p /opt/brave-browser \
+    && curl -fsSLo /tmp/brave-browser.zip "https://github.com/brave/brave-browser/releases/download/${BRAVE_TAG}/brave-browser-${BRAVE_VERSION}-linux-amd64.zip" \
+    && unzip -q /tmp/brave-browser.zip -d /opt/brave-browser \
+    && apt-get install --yes --no-install-recommends \
+        libasound2t64 \
+        libatk-bridge2.0-0 \
+        libatk1.0-0 \
+        libatspi2.0-0 \
+        libcups2t64 \
+        libgbm1 \
+        libgtk-3-0t64 \
+        libnspr4 \
+        libnss3 \
+        libx11-xcb1 \
+        libxcomposite1 \
+        libxdamage1 \
+        libxfixes3 \
+        libxrandr2 \
+        libxshmfence1 \
+        xdg-utils \
+    && ln -sf /opt/brave-browser/brave /usr/bin/brave-browser \
+    && chmod 4755 /opt/brave-browser/chrome-sandbox \
+    && rm -f /tmp/brave-browser.zip \
     && apt-get distclean
 
 # Set up Scripture Forge data directories

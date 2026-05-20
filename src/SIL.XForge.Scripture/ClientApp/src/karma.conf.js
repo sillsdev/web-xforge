@@ -84,7 +84,9 @@ module.exports = function (config) {
           '--use-fake-device-for-media-stream',
           '--use-fake-ui-for-media-stream',
           '--autoplay-policy=no-user-gesture-required',
-          '--remote-debugging-port=9988'
+          '--remote-debugging-port=9988',
+          '--disable-crash-reporter',
+          '--disable-background-networking'
         ]
       },
       xForgeChromeHeadless: {
