@@ -248,7 +248,8 @@ export class NewDraftLogicHandler {
       return `Selected chapters ${selectedChaptersNotInSource.toString()} are not in the available drafting scripture range for book ${bookId}`;
     }
 
-    const newDraftingScriptureRange = this.selectedDraftingScriptureRange$.getValue();
+    const currentRange = this.selectedDraftingScriptureRange$.getValue();
+    const newDraftingScriptureRange = new VerboseScriptureRange(currentRange.toString());
     newDraftingScriptureRange.books.set(bookId, selectedChapters);
     this.selectedDraftingScriptureRange$.next(newDraftingScriptureRange);
     return true;
