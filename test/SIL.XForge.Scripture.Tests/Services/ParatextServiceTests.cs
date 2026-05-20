@@ -7555,7 +7555,7 @@ public class ParatextServiceTests
         {
             string ptProjectId = PTProjectIds[baseId].Id;
             ProjectScrText = GetScrText(associatedPtUser, ptProjectId, hasEditPermission);
-            ProjectScrTextCollection.AddToInternalIndex(ProjectScrText);
+            ScrTextCollection.Add(ProjectScrText);
 
             // We set the file manager here so we can track file manager operations after
             // the ScrText object has been disposed in ParatextService.
