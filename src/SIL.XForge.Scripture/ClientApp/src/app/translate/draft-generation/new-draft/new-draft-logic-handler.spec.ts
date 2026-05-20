@@ -142,7 +142,7 @@ fdescribe('NewDraftLogicHandler', () => {
     expect(env.selectedDraftingScriptureRange).toBe('GEN1-50');
   });
 
-  fit('allows selecting multiple books for drafting and only offers to draft subsets of books that have some progress', async () => {
+  it('allows selecting multiple books for drafting and only offers to draft subsets of books that have some progress', async () => {
     const testState = teamStartingToTranslateGenesis;
     const env = new TestEnvironment(testState);
     await env.waitForInit();

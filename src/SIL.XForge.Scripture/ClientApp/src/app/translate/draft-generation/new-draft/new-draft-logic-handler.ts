@@ -195,8 +195,9 @@ export class NewDraftLogicHandler {
     const newlySelectedBooks = books.filter(book => !this.selectedDraftingScriptureRange$.getValue().books.has(book));
 
     for (const book of books) {
-      const chapters = this.availableDraftingScriptureRange$.getValue().books.get(book);
-      if (chapters == null) throw new Error(`Selected book ${book} not in available drafting scripture range`);
+      if (!this.availableDraftingScriptureRange$.getValue().books.has(book)) {
+        throw new Error(`Selected book ${book} not in available drafting scripture range`);
+      }
       if (newlySelectedBooks.includes(book)) {
         // Default to selecting chapters that are in the source but not the target, unless that's zero chapters, in
         // which case default to selecting all chapters in the source
@@ -212,7 +213,9 @@ export class NewDraftLogicHandler {
           else newDraftingScriptureRange.books.set(book, chaptersInSource);
         }
       } else {
-        newDraftingScriptureRange.books.set(book, chapters);
+        const alreadySelectedChapters = this.selectedDraftingScriptureRange$.getValue().books.get(book);
+        if (alreadySelectedChapters == null) throw new Error('This should be unreachable');
+        newDraftingScriptureRange.books.set(book, alreadySelectedChapters);
       }
     }
     this.selectedDraftingScriptureRange$.next(newDraftingScriptureRange);
