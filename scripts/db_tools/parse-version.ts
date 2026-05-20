@@ -42,7 +42,7 @@ class ParseVersion {
     'Enable Lynx insights',
     'Preview new draft history interface',
     'USFM Format',
-    'Show in-app draft signup form instead of external link'
+    'Show in-app onboarding form instead of external link'
   ];
 
   constructor() {

@@ -86,28 +86,36 @@
       <mat-card-header> <mat-card-title>Request Information</mat-card-title> </mat-card-header>
       <mat-card-content>
         <div class="info-row skip-in-data-export">
-          <span class="label">Assignee:</span>
-          <span class="value">
-            @if (request.assigneeId) {
-              <app-owner [ownerRef]="request.assigneeId" [includeAvatar]="true"></app-owner>
-            } @else {
-              <em>Unassigned</em>
-            }
-          </span>
+          <span class="label">Status:</span>
+          <span class="value">{{ getStatus(request.status).label }}</span>
         </div>
         <div class="info-row skip-in-data-export">
-          <span class="label">Status:</span>
-          <span class="value" [style.color]="getStatus(request.status).color">
-            <mat-icon>{{ getStatus(request.status).icon }}</mat-icon>
-            {{ getStatus(request.status).label }}
+          <span class="label">Assignee:</span>
+          <span class="value">
+            <app-onboarding-request-assignee-select
+              [value]="request.assigneeId"
+              [knownAssigneeIds]="existingAssigneeIds"
+              [currentUserId]="userService.currentUserId"
+              (selectionChange)="onAssigneeChange($event)"
+            ></app-onboarding-request-assignee-select>
           </span>
         </div>
         <div class="info-row skip-in-data-export">
           <span class="label">Resolution:</span>
-          <span class="value" [style.color]="getResolution(request.resolution).color">
-            <mat-icon>{{ getResolution(request.resolution).icon }}</mat-icon>
-            {{ getResolution(request.resolution).label }}</span
-          >
+          <span class="value">
+            <mat-form-field class="resolution-field" subscriptSizing="dynamic">
+              <mat-select
+                [ngModel]="request.resolution"
+                (selectionChange)="onResolutionChange($event.value)"
+                [compareWith]="onboardingRequestService.compareResolutions"
+                canSelectNullableOptions
+              >
+                @for (option of resolutionOptions; track option) {
+                  <mat-option [value]="option.key">{{ option.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </span>
         </div>
       </mat-card-content>
     </mat-card>
