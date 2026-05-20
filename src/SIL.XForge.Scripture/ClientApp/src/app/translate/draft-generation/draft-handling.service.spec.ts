@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { ParagraphBreakFormat, QuoteFormat } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { DeltaOperation } from 'rich-text';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
@@ -30,23 +31,98 @@ describe('DraftHandlingService', () => {
     service = TestBed.inject(DraftHandlingService);
   });
 
-  describe('getDraft', () => {
-    it('should get a draft', () => {
+  describe('getBookDraft', () => {
+    it('should cache book drafts when timestamp provided and no config is undefined', () => {
       const textDocId = new TextDocId('project01', 1, 1);
-      const draftOps: DeltaOperation[] = [{ insert: 'In the beginning', attributes: { segment: 'verse_1_1' } }];
+      const timestamp = new Date('2025-03-25T01:02:03Z');
+      const bookDraftByChapter = new Map<string, DeltaOperation[]>([
+        ['1', [{ insert: 'In the beginning', attributes: { segment: 'verse_1_1' } }]]
+      ]);
+
       when(
-        mockedDraftGenerationService.getGeneratedDraftDeltaOperations(
-          anything(),
+        mockedDraftGenerationService.getGeneratedDraftBookDeltaOperations(
           anything(),
           anything(),
           anything(),
           anything()
         )
-      ).thenReturn(of(draftOps));
-      service.getDraft(textDocId, { timestamp: undefined }).subscribe(draftData => expect(draftData).toEqual(draftOps));
+      ).thenReturn(of(bookDraftByChapter));
+
+      let firstResult: Map<string, DeltaOperation[]> | undefined;
+      let secondResult: Map<string, DeltaOperation[]> | undefined;
+
+      service.getBookDraft(textDocId, { timestamp }).subscribe(draftData => (firstResult = draftData));
+      service.getBookDraft(textDocId, { timestamp }).subscribe(draftData => (secondResult = draftData));
+
+      expect(firstResult).toBe(bookDraftByChapter);
+      expect(secondResult).toBe(firstResult);
       verify(
-        mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1, undefined, undefined)
+        mockedDraftGenerationService.getGeneratedDraftBookDeltaOperations('project01', 1, timestamp, undefined)
       ).once();
+    });
+
+    it('should not cache book drafts when config is provided', () => {
+      const textDocId = new TextDocId('project01', 1, 1);
+      const timestamp = new Date('2025-03-25T01:02:03Z');
+      const config = { paragraphFormat: ParagraphBreakFormat.BestGuess, quoteFormat: QuoteFormat.Denormalized };
+      const firstDraft = new Map<string, DeltaOperation[]>([
+        ['1', [{ insert: 'First draft', attributes: { segment: 'verse_1_1' } }]]
+      ]);
+      const secondDraft = new Map<string, DeltaOperation[]>([
+        ['1', [{ insert: 'Second draft', attributes: { segment: 'verse_1_1' } }]]
+      ]);
+
+      when(
+        mockedDraftGenerationService.getGeneratedDraftBookDeltaOperations(
+          anything(),
+          anything(),
+          anything(),
+          anything()
+        )
+      ).thenReturn(of(firstDraft), of(secondDraft));
+
+      let firstResult: Map<string, DeltaOperation[]> | undefined;
+      let secondResult: Map<string, DeltaOperation[]> | undefined;
+
+      service.getBookDraft(textDocId, { timestamp, config }).subscribe(draftData => (firstResult = draftData));
+      service.getBookDraft(textDocId, { timestamp, config }).subscribe(draftData => (secondResult = draftData));
+
+      expect(firstResult).toBe(firstDraft);
+      expect(secondResult).toBe(secondDraft);
+      verify(
+        mockedDraftGenerationService.getGeneratedDraftBookDeltaOperations('project01', 1, timestamp, config)
+      ).twice();
+    });
+
+    it('should not cache book drafts when timestamp is undefined', () => {
+      const textDocId = new TextDocId('project01', 1, 1);
+      const firstDraft = new Map<string, DeltaOperation[]>([
+        ['1', [{ insert: 'First draft', attributes: { segment: 'verse_1_1' } }]]
+      ]);
+      const secondDraft = new Map<string, DeltaOperation[]>([
+        ['1', [{ insert: 'Second draft', attributes: { segment: 'verse_1_1' } }]]
+      ]);
+
+      when(
+        mockedDraftGenerationService.getGeneratedDraftBookDeltaOperations(
+          anything(),
+          anything(),
+          anything(),
+          anything()
+        )
+      ).thenReturn(of(firstDraft), of(secondDraft));
+
+      let firstResult: Map<string, DeltaOperation[]> | undefined;
+      let secondResult: Map<string, DeltaOperation[]> | undefined;
+
+      service.getBookDraft(textDocId, {}).subscribe(draftData => (firstResult = draftData));
+      service.getBookDraft(textDocId, {}).subscribe(draftData => (secondResult = draftData));
+
+      expect(firstResult).toBe(firstDraft);
+      expect(secondResult).toBe(secondDraft);
+      verify(
+        mockedDraftGenerationService.getGeneratedDraftBookDeltaOperations('project01', 1, undefined, undefined)
+      ).twice();
     });
   });
 

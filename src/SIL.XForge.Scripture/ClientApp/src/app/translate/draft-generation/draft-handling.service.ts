@@ -3,7 +3,7 @@ import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { DeltaOperation } from 'rich-text';
-import { Observable } from 'rxjs';
+import { Observable, of, tap } from 'rxjs';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
@@ -16,6 +16,8 @@ const VERSE_NUM_REGEX = /(\d+)\w?$/;
   providedIn: 'root'
 })
 export class DraftHandlingService {
+  private readonly bookDraftCache = new Map<string, Map<string, DeltaOperation[]>>();
+
   constructor(
     private readonly projectService: SFProjectService,
     private readonly textDocService: TextDocService,
@@ -23,35 +25,33 @@ export class DraftHandlingService {
   ) {}
 
   /**
-   * Gets the generated draft of a chapter for a book.
+   * Gets the generated drafts for every chapter of the book.
    * @param textDocId The text document identifier.
    * @param timestamp A timestamp indicating what version of the doc to fetch. Returns latest version if omitted.
    * @param config The format configuration to access the draft. Providing this will return a draft from serval.
-   * @returns The draft data in the current delta operation format.
+   * @returns The draft data as a map of chapter number to delta operation array.
    */
-  getDraft(
-    textDocId: TextDocId,
-    { timestamp, config }: { timestamp?: Date; config?: DraftUsfmConfig }
-  ): Observable<DeltaOperation[]> {
-    return this.draftGenerationService.getGeneratedDraftDeltaOperations(
-      textDocId.projectId,
-      textDocId.bookNum,
-      textDocId.chapterNum,
-      timestamp,
-      config
-    );
-  }
-
   getBookDraft(
     textDocId: TextDocId,
     { timestamp, config }: { timestamp?: Date; config?: DraftUsfmConfig }
   ): Observable<Map<string, DeltaOperation[]>> {
-    return this.draftGenerationService.getGeneratedDraftBookDeltaOperations(
-      textDocId.projectId,
-      textDocId.bookNum,
-      timestamp,
-      config
-    );
+    if (config == null && timestamp != null) {
+      const cachedDraft: Map<string, DeltaOperation[]> | undefined = this.bookDraftCache.get(
+        this.getBookDraftKey(textDocId, timestamp)
+      );
+      if (cachedDraft != null) {
+        return of(cachedDraft);
+      }
+    }
+
+    return this.draftGenerationService
+      .getGeneratedDraftBookDeltaOperations(textDocId.projectId, textDocId.bookNum, timestamp, config)
+      .pipe(
+        tap(chapterDrafts => {
+          if (config != null || timestamp == null) return;
+          this.bookDraftCache.set(this.getBookDraftKey(textDocId, timestamp), chapterDrafts);
+        })
+      );
   }
 
   canApplyDraft(
@@ -111,5 +111,14 @@ export class DraftHandlingService {
     const onlyTextOpIsTrailingNewline = indexOfFirstText === ops.length - 1 && ops[indexOfFirstText]?.insert === '\n';
     const hasNoExistingText = indexOfFirstText === -1 || onlyTextOpIsTrailingNewline;
     return !hasNoExistingText;
+  }
+
+  clearBookDraftCache(): void {
+    this.bookDraftCache.clear();
+  }
+
+  private getBookDraftKey(textDocId: TextDocId, timestamp: Date): string {
+    const timestampKey = timestamp?.toISOString();
+    return `${textDocId.projectId}:${textDocId.bookNum}:${timestampKey}`;
   }
 }
