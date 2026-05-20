@@ -12,6 +12,23 @@
         [basicMode]="true"
         (bookSelect)="onDraftingBookSelect($event)"
       ></app-book-multi-select>
+      @if (booksOfferedForPartialDrafting.length > 0) {
+        <h3>Which chapters of each book do you want to draft?</h3>
+        <p>
+          Some of the chapters in the books you selected already have text.
+          <!-- FIXME add url DO NOT MERGE -->
+          <a href="#">Learn more about drafting part of a book.</a>
+        </p>
+        <div class="partial-book-drafting-table">
+          @for (bookId of booksOfferedForPartialDrafting; track bookId) {
+            <span class="book-name">{{ i18n.localizeBook(bookId) }}</span>
+            <mat-form-field subscriptSizing="dynamic" class="chapter-input">
+              <input [value]="draftingRangeForBook(bookId)" matInput />
+            </mat-form-field>
+          }
+          <span class="example">(e.g. 1-5, 8, 11-13)</span>
+        </div>
+      }
     } @else if (page === "training_books") {
       <h1>Select books to train on</h1>
     } @else if (page === "suffix") {

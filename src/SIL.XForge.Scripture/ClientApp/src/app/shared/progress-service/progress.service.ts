@@ -236,6 +236,12 @@ export interface BookProgress {
 
   /** The number of blank verse segments in this book. */
   blankVerseSegments: number;
+
+  chapters: {
+    chapterNumber: number;
+    verseSegments: number;
+    blankVerseSegments: number;
+  }[];
 }
 
 export class ProjectProgress {
