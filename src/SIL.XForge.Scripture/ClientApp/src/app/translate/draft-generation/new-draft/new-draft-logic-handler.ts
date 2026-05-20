@@ -13,7 +13,9 @@ export class ProgressServiceThatGivesChapterLevelInfo {
   constructor(private readonly progressService: ProgressService) {}
 
   async getProgressForProject(projectId: string): Promise<VerboseScriptureRange> {
-    const progress = await this.progressService.getProgress(projectId, { maxStalenessMs: 1000 * 60 });
+    const progress = await this.progressService.getProgressWithChapterProgress(projectId, {
+      maxStalenessMs: 1000 * 60
+    });
     const scriptureRange = new VerboseScriptureRange('');
     for (const bookProgress of progress.books) {
       // Add the book to the scripture range

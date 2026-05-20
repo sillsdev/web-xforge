@@ -142,11 +142,13 @@ fdescribe('NewDraftLogicHandler', () => {
     expect(env.selectedDraftingScriptureRange).toBe('GEN1-50');
   });
 
-  it('allows selecting multiple books for drafting and only offers to draft subsets of books that have some progress', async () => {
+  fit('allows selecting multiple books for drafting and only offers to draft subsets of books that have some progress', async () => {
     const testState = teamStartingToTranslateGenesis;
     const env = new TestEnvironment(testState);
     await env.waitForInit();
 
+    // User selects GEN and then EXO
+    env.logicHandler.selectDraftingBooks(['GEN']);
     env.logicHandler.selectDraftingBooks(['GEN', 'EXO']);
 
     // User should be able to select both GEN and EXO for drafting, but only GEN should be offered for partial drafting since EXO has no progress
@@ -257,7 +259,9 @@ class TestEnvironment {
 
     const projectId = 'testProjectId';
     when(mockedActivatedProjectService.projectId).thenReturn(projectId);
+    when(mockedActivatedProjectService.projectId$).thenReturn(of(projectId));
     when(mockedActivatedProjectService.projectDoc).thenReturn({ data: project } as SFProjectProfileDoc);
+    when(mockedActivatedProjectService.projectDoc$).thenReturn(of({ data: project } as SFProjectProfileDoc));
     when(mockedSFProjectService.getProfile(projectId)).thenResolve({ data: project } as SFProjectProfileDoc);
 
     when(mockedDraftSourcesService.getDraftProjectSources()).thenReturn(

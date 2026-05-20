@@ -27,7 +27,7 @@ import { QueryParameters, QueryResults } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { RetryingRequest, RetryingRequestService } from 'xforge-common/retrying-request.service';
 import { EventMetric } from '../event-metrics/event-metric';
-import { BookProgress } from '../shared/progress-service/progress.service';
+import { BookProgressWithChapterProgress } from '../shared/progress-service/progress.service';
 import { expandNumbers } from '../shared/utils';
 import { BiblicalTermDoc } from './models/biblical-term-doc';
 import { InviteeStatus } from './models/invitee-status';
@@ -439,7 +439,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   /** Gets project progress by calling the backend aggregation endpoint. */
-  async getProjectProgress(projectId: string): Promise<BookProgress[]> {
-    return await this.onlineInvoke<BookProgress[]>('getProjectProgress', { projectId });
+  async getProjectProgress(projectId: string): Promise<BookProgressWithChapterProgress[]> {
+    return await this.onlineInvoke<BookProgressWithChapterProgress[]>('getProjectProgress', { projectId });
   }
 }
