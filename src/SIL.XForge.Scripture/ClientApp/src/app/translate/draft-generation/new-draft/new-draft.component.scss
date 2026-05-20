@@ -1,3 +1,5 @@
+@use '@angular/material' as mat;
+
 .wrapper {
   max-width: 120em;
 }
@@ -7,8 +9,29 @@ mat-spinner {
   top: 10em;
 }
 
+.partial-book-drafting-table {
+  display: inline-grid;
+  gap: 16px;
+  align-items: center;
+  .book-name {
+    grid-column-start: 1;
+    font-weight: 500;
+  }
+  .chapter-input {
+    grid-column-start: 2;
+  }
+  .example {
+    grid-column-start: 3;
+    grid-row-start: 1;
+  }
+}
+
 .step-buttons {
   display: flex;
   gap: 1em;
   margin-top: 1em;
+}
+
+.chapter-input {
+  @include mat.form-field-density(-5);
 }

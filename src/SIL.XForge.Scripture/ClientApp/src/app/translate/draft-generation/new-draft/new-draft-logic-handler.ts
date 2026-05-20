@@ -2,14 +2,32 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, firstValueFrom } from 'rxjs';
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
 import { filterNullish } from '../../../../xforge-common/util/rxjs-util';
+import { ProgressService } from '../../../shared/progress-service/progress.service';
 import { DraftSourcesAsArrays } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
 import { ChapterSet, VerboseScriptureRange } from './scripture-range';
 
 @Injectable({ providedIn: 'root' })
-export class StubProgressServiceThatGivesChapterLevelInfo {
-  getProgressForProject(_projectId: string): Promise<VerboseScriptureRange> {
-    return Promise.resolve(new VerboseScriptureRange('GEN1-3,5;EXO2;LEV'));
+// FIXME change class name
+export class ProgressServiceThatGivesChapterLevelInfo {
+  constructor(private readonly progressService: ProgressService) {}
+
+  async getProgressForProject(projectId: string): Promise<VerboseScriptureRange> {
+    const progress = await this.progressService.getProgress(projectId, { maxStalenessMs: 1000 * 60 });
+    const scriptureRange = new VerboseScriptureRange('');
+    for (const bookProgress of progress.books) {
+      // Add the book to the scripture range
+      scriptureRange.books.set(bookProgress.bookId, new ChapterSet([]));
+      for (const chapterProgress of bookProgress.chapters) {
+        const nonBlankSegments = chapterProgress.verseSegments - chapterProgress.blankVerseSegments;
+        const completionRatio =
+          chapterProgress.verseSegments === 0 ? 0 : nonBlankSegments / chapterProgress.verseSegments;
+        if (completionRatio > 0.1) {
+          scriptureRange.books.get(bookProgress.bookId)?.chapters.add(chapterProgress.chapterNumber);
+        }
+      }
+    }
+    return scriptureRange;
   }
 }
 
@@ -80,7 +98,7 @@ export class NewDraftLogicHandler {
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly draftSourcesService: DraftSourcesService,
-    private readonly progressService: StubProgressServiceThatGivesChapterLevelInfo
+    private readonly progressService: ProgressServiceThatGivesChapterLevelInfo
     // private readonly _destroyRef: DestroyRef
   ) {
     void this.init();
@@ -138,6 +156,7 @@ export class NewDraftLogicHandler {
       return;
     }
 
+    console.log('Draft source progress', draftSourceProgress);
     this.availableDraftingScriptureRange$.next(draftSourceProgress);
     this.availableTargetTrainingScriptureRange$.next(targetProjectProgress);
     this.trainingSourceBooks$.next(
@@ -196,7 +215,9 @@ export class NewDraftLogicHandler {
     }
     this.selectedDraftingScriptureRange$.next(newDraftingScriptureRange);
 
-    this.booksOfferedForPartialDrafting$.next(books.filter(bookId => this.isBookEligibleForPartialDrafting(bookId)));
+    const partialBookDraftingBooks = books.filter(bookId => this.isBookEligibleForPartialDrafting(bookId));
+    console.log('Books eligible for partial drafting', partialBookDraftingBooks);
+    this.booksOfferedForPartialDrafting$.next(partialBookDraftingBooks);
   }
 
   trySelectDraftingChapters(bookId: string, chapters: string): true | string {

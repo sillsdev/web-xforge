@@ -8,7 +8,7 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { SFProjectService } from '../../../core/sf-project.service';
 import { chapterCounts } from '../../../shared/progress-service/progress.service';
 import { DraftSourcesService } from '../draft-sources.service';
-import { NewDraftLogicHandler, StubProgressServiceThatGivesChapterLevelInfo } from './new-draft-logic-handler';
+import { NewDraftLogicHandler, ProgressServiceThatGivesChapterLevelInfo } from './new-draft-logic-handler';
 import { VerboseScriptureRange } from './scripture-range';
 
 const FULL_CANON_SCRIPTURE_RANGE = new VerboseScriptureRange(
@@ -201,7 +201,7 @@ fdescribe('NewDraftLogicHandler', () => {
 const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedDraftSourcesService = mock(DraftSourcesService);
-const mockedStubProgressServiceThatGivesChapterLevelInfo = mock(StubProgressServiceThatGivesChapterLevelInfo);
+const mockedStubProgressServiceThatGivesChapterLevelInfo = mock(ProgressServiceThatGivesChapterLevelInfo);
 
 interface TestState {
   lastSelectedTranslationScriptureRanges: ProjectScriptureRange[] | undefined;

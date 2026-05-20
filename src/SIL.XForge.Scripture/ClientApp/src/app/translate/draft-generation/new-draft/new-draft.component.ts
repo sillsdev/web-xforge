@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
@@ -15,8 +17,8 @@ import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.comp
 import { DraftSourcesService } from '../draft-sources.service';
 import {
   NewDraftLogicHandler,
-  scriptureRangeToBookListWithoutChapterDetail,
-  StubProgressServiceThatGivesChapterLevelInfo
+  ProgressServiceThatGivesChapterLevelInfo,
+  scriptureRangeToBookListWithoutChapterDetail
 } from './new-draft-logic-handler';
 
 // TODO impelement a step to sync sources first
@@ -37,7 +39,9 @@ const PAGES_BY_ORDER = [
     MatButtonModule,
     MatIconModule,
     JsonViewerComponent,
-    BookMultiSelectComponent
+    BookMultiSelectComponent,
+    MatFormFieldModule,
+    MatInputModule
   ]
 })
 export class NewDraftComponent {
@@ -48,7 +52,7 @@ export class NewDraftComponent {
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly draftSourcesService: DraftSourcesService,
-    private readonly progressService: StubProgressServiceThatGivesChapterLevelInfo,
+    private readonly progressService: ProgressServiceThatGivesChapterLevelInfo,
     readonly i18n: I18nService,
     private readonly router: Router
   ) {
@@ -97,11 +101,15 @@ export class NewDraftComponent {
     return {
       status: this.logicHandler.status$.getValue(),
       inputMode: this.logicHandler.inputMode$.getValue(),
-      availableDraftingScriptureRange: this.logicHandler.availableDraftingScriptureRange$.getValue(),
-      selectedDraftingScriptureRange: this.logicHandler.selectedDraftingScriptureRange$.getValue(),
+      availableDraftingScriptureRange: this.logicHandler.availableDraftingScriptureRange$.getValue().toString(),
+      selectedDraftingScriptureRange: this.logicHandler.selectedDraftingScriptureRange$.getValue().toString(),
 
-      availableTargetTrainingScriptureRange: this.logicHandler.availableTargetTrainingScriptureRange$.getValue(),
-      selectedTargetTrainingScriptureRange: this.logicHandler.selectedTargetTrainingScriptureRange$.getValue(),
+      availableTargetTrainingScriptureRange: this.logicHandler.availableTargetTrainingScriptureRange$
+        .getValue()
+        .toString(),
+      selectedTargetTrainingScriptureRange: this.logicHandler.selectedTargetTrainingScriptureRange$
+        .getValue()
+        .toString(),
 
       trainingSourceBooks: this.logicHandler.trainingSourceBooks$.getValue(),
       availableTrainingSourceBooks: this.logicHandler.availableTrainingSourceBooks$.getValue(),
@@ -129,6 +137,15 @@ export class NewDraftComponent {
       number: Canon.bookIdToNumber(id),
       selected: true
     }));
+  }
+
+  get booksOfferedForPartialDrafting(): string[] {
+    return this.logicHandler.booksOfferedForPartialDrafting$.getValue();
+  }
+
+  draftingRangeForBook(bookId: string): string {
+    const range = this.logicHandler.selectedDraftingScriptureRange$.getValue();
+    return range.books.get(bookId)?.toString() ?? '';
   }
 
   onDraftingBookSelect(books: number[]): void {
