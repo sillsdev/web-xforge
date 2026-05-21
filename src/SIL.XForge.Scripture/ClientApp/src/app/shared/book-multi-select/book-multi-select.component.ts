@@ -72,6 +72,7 @@ export class BookMultiSelectComponent implements OnChanges {
     let progress: ProjectProgress | undefined;
     if (this.basicMode === false) {
       if (this.projectId == null) {
+        this.basicMode = true;
         throw new Error('app-book-multi-select requires a projectId input to initialize when not in basic mode');
       }
       progress = await this.progressService.getProgress(this.projectId, { maxStalenessMs: 30_000 });

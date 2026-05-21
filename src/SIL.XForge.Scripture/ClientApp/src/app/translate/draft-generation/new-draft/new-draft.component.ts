@@ -11,6 +11,7 @@ import { JsonViewerComponent } from 'src/app/shared/json-viewer/json-viewer.comp
 import { hasStringProp } from '../../../../type-utils';
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
 import { I18nService } from '../../../../xforge-common/i18n.service';
+import { filterNullish } from '../../../../xforge-common/util/rxjs-util';
 import { Book } from '../../../shared/book-multi-select/book-multi-select';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
@@ -49,6 +50,9 @@ export class NewDraftComponent {
 
   page: (typeof PAGES_BY_ORDER)[number]['page'] | 'loading' = 'loading';
 
+  // Data that is guarnateed to be loaded post init
+  initData?: { projectId: string };
+
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly draftSourcesService: DraftSourcesService,
@@ -67,6 +71,9 @@ export class NewDraftComponent {
 
   async init(): Promise<void> {
     await firstValueFrom(this.logicHandler.status$.pipe(filter(status => status === 'input')));
+    this.initData = {
+      projectId: await firstValueFrom(this.activatedProjectService.projectId$.pipe(filterNullish()))
+    };
     this.page = 'preface';
   }
 
@@ -82,7 +89,7 @@ export class NewDraftComponent {
     const currentIndex = PAGES_BY_ORDER.findIndex(p => p.page === this.page);
     const newIndex = currentIndex + count;
     if (newIndex < 0) {
-      void this.router.navigate(['/projects', this.activatedProjectService.projectId, 'draft-generation']);
+      void this.router.navigate(['/projects', this.initData?.projectId, 'draft-generation']);
     } else if (newIndex < PAGES_BY_ORDER.length) {
       const newPage = PAGES_BY_ORDER[newIndex];
       this.page = newPage.page;
@@ -111,15 +118,18 @@ export class NewDraftComponent {
         .getValue()
         .toString(),
 
+      booksOfferedForPartialDrafting: this.logicHandler.booksOfferedForPartialDrafting$.getValue(),
+      booksOfferedForPartialTargetTraining: this.logicHandler.booksOfferedForPartialTargetTraining$.getValue(),
+
+      trainingBooksEdited: this.logicHandler.trainingBooksEdited,
+
       trainingSourceBooks: this.logicHandler.trainingSourceBooks$.getValue(),
       availableTrainingSourceBooks: this.logicHandler.availableTrainingSourceBooks$.getValue(),
-      selectedTrainingSourceBooks: this.logicHandler.selectedTrainingSourceBooks$.getValue(),
-
-      booksOfferedForPartialDrafting: this.logicHandler.booksOfferedForPartialDrafting$.getValue(),
-
-      trainingBooksEdited: this.logicHandler.trainingBooksEdited
+      selectedTrainingSourceBooks: this.logicHandler.selectedTrainingSourceBooks$.getValue()
     };
   }
+
+  // Section: Drafting books selection
 
   get availableDraftingBooks(): Book[] {
     return scriptureRangeToBookListWithoutChapterDetail(
@@ -143,13 +153,47 @@ export class NewDraftComponent {
     return this.logicHandler.booksOfferedForPartialDrafting$.getValue();
   }
 
+  onDraftingBookSelect(books: number[]): void {
+    const selectedBookIds = books.map(b => Canon.bookNumberToId(b));
+    this.logicHandler.selectDraftingBooks(selectedBookIds);
+  }
+
   draftingRangeForBook(bookId: string): string {
     const range = this.logicHandler.selectedDraftingScriptureRange$.getValue();
     return range.books.get(bookId)?.toString() ?? '';
   }
 
-  onDraftingBookSelect(books: number[]): void {
+  // Section: Target training books selection
+
+  get availableTargetTrainingBooks(): Book[] {
+    return scriptureRangeToBookListWithoutChapterDetail(
+      this.logicHandler.availableTargetTrainingScriptureRange$.getValue()
+    ).map(id => ({
+      number: Canon.bookIdToNumber(id),
+      selected: this.selectedTargetTrainingBooks.some(book => book.number === Canon.bookIdToNumber(id))
+    }));
+  }
+
+  get selectedTargetTrainingBooks(): Book[] {
+    return scriptureRangeToBookListWithoutChapterDetail(
+      this.logicHandler.selectedTargetTrainingScriptureRange$.getValue()
+    ).map(id => ({
+      number: Canon.bookIdToNumber(id),
+      selected: true
+    }));
+  }
+
+  get booksOfferedForPartialTargetTraining(): string[] {
+    return this.logicHandler.booksOfferedForPartialTargetTraining$.getValue();
+  }
+
+  onTargetTrainingBookSelect(books: number[]): void {
     const selectedBookIds = books.map(b => Canon.bookNumberToId(b));
-    this.logicHandler.selectDraftingBooks(selectedBookIds);
+    this.logicHandler.selectTargetTrainingBooks(selectedBookIds);
+  }
+
+  targetTrainingRangeForBook(bookId: string): string {
+    const range = this.logicHandler.selectedTargetTrainingScriptureRange$.getValue();
+    return range.books.get(bookId)?.toString() ?? '';
   }
 }

@@ -24,6 +24,9 @@ mat-spinner {
     grid-column-start: 3;
     grid-row-start: 1;
   }
+  .chapters-to-translate {
+    grid-column-start: 3;
+  }
 }
 
 .step-buttons {
@@ -34,4 +37,8 @@ mat-spinner {
 
 .chapter-input {
   @include mat.form-field-density(-5);
+}
+
+.chapter-list {
+  font-weight: 500;
 }

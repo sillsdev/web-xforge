@@ -29,6 +29,12 @@ export class ProgressServiceThatGivesChapterLevelInfo {
         }
       }
     }
+    // Remove empty books from the scripture ranges, since they shouldn't be offered for selection
+    for (const [bookId, chapterSet] of scriptureRange.books) {
+      if (chapterSet.chapters.size === 0) {
+        scriptureRange.books.delete(bookId);
+      }
+    }
     return scriptureRange;
   }
 }
@@ -77,6 +83,7 @@ export class NewDraftLogicHandler {
   selectedTrainingSourceBooks$ = new BehaviorSubject<{ [projectId: string]: string[] }>({});
 
   booksOfferedForPartialDrafting$ = new BehaviorSubject<string[]>([]);
+  booksOfferedForPartialTargetTraining$ = new BehaviorSubject<string[]>([]);
 
   /**
    * SPecifies what input mode the user is using. When a book is selected for use as drafting, it must be automatically
@@ -158,7 +165,6 @@ export class NewDraftLogicHandler {
       return;
     }
 
-    console.log('Draft source progress', draftSourceProgress);
     this.availableDraftingScriptureRange$.next(draftSourceProgress);
     this.availableTargetTrainingScriptureRange$.next(targetProjectProgress);
     this.trainingSourceBooks$.next(
@@ -281,6 +287,25 @@ export class NewDraftLogicHandler {
       }
     }
     this.selectedTargetTrainingScriptureRange$.next(newTargetTrainingScriptureRange);
+
+    const partialBookTargetTrainingBooks = books.filter(bookId => this.isBookEligibleForPartialTargetTraining(bookId));
+    console.log('Books eligible for partial target training', partialBookTargetTrainingBooks);
+    this.booksOfferedForPartialTargetTraining$.next(partialBookTargetTrainingBooks);
+  }
+
+  private isBookEligibleForPartialTargetTraining(bookId: string): boolean {
+    // Books should be available for partial training if selected on the prior step, if and only if the book has
+    // chapters that could be used for training data that weren't selected for drafting in the prior step.
+
+    if (!this.booksOfferedForPartialDrafting$.getValue().includes(bookId)) return false;
+
+    const chaptersSelectedForDrafting = this.selectedDraftingScriptureRange$.getValue().books.get(bookId);
+    const chaptersAvailableForTraining = this.availableTargetTrainingScriptureRange$.getValue().books.get(bookId);
+
+    if (chaptersSelectedForDrafting == null || chaptersAvailableForTraining == null) return false;
+
+    const chaptersThatCouldBeUsedForTraining = chaptersAvailableForTraining.difference(chaptersSelectedForDrafting);
+    return chaptersThatCouldBeUsedForTraining.count() >= 1;
   }
 
   private abort(mode: NewDraftAbortMode): void {

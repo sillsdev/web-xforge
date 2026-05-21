@@ -1,5 +1,5 @@
 <div class="wrapper">
-  @if (page === "loading") {
+  @if (initData == null) {
     <mat-spinner></mat-spinner>
   } @else {
     @if (page === "preface") {
@@ -31,6 +31,33 @@
       }
     } @else if (page === "training_books") {
       <h1>Select books to train on</h1>
+      <!-- [projectId]="initData.projectId" -->
+      <app-book-multi-select
+        [basicMode]="true"
+        [availableBooks]="availableTargetTrainingBooks"
+        [selectedBooks]="selectedTargetTrainingBooks"
+        (bookSelect)="onTargetTrainingBookSelect($event)"
+      ></app-book-multi-select>
+      @if (booksOfferedForPartialTargetTraining.length > 0) {
+        <h3>Which chapters of each book do you want to use to train the model?</h3>
+        <p>
+          Some of the chapters in the books you selected will be translated and cannot be used as training data.
+          <!-- FIXME add url DO NOT MERGE -->
+          <a href="#">Learn more about training on part of a book.</a>
+        </p>
+        <div class="partial-book-drafting-table">
+          @for (bookId of booksOfferedForPartialTargetTraining; track bookId) {
+            <span class="book-name">{{ i18n.localizeBook(bookId) }}</span>
+            <mat-form-field subscriptSizing="dynamic" class="chapter-input">
+              <input [value]="targetTrainingRangeForBook(bookId)" matInput />
+            </mat-form-field>
+            <span class="chapters-to-translate">
+              Chapters <span class="chapter-list">{{ targetTrainingRangeForBook(bookId) }}</span> will be translated and
+              cannot be used as training data.
+            </span>
+          }
+        </div>
+      }
     } @else if (page === "suffix") {
       <p>Suffix page</p>
     }
