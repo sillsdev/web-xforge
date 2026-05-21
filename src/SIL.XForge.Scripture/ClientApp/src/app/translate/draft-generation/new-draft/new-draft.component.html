@@ -6,6 +6,10 @@
       <app-confirm-sources></app-confirm-sources>
     } @else if (page === "draft_books") {
       <h1>Select books to draft</h1>
+      <h2>
+        Which books in <strong>NTV - Nueva Traducción Viviente</strong> do you want to translate from
+        <strong>Spanish (spa)</strong> to <strong>English (eng)</strong>?
+      </h2>
       <app-book-multi-select
         [availableBooks]="availableDraftingBooks"
         [selectedBooks]="selectedDraftingBooks"
@@ -31,6 +35,10 @@
       }
     } @else if (page === "training_books") {
       <h1>Select books to train on</h1>
+      <h2>
+        Which books in <strong>Stp22 - SF 2022 test project</strong> are good enough to use to train the model to
+        translate from <strong>Spanish (spa)</strong> to <strong>English (eng)</strong>?
+      </h2>
       <!-- [projectId]="initData.projectId" -->
       <app-book-multi-select
         [basicMode]="true"
@@ -78,4 +86,4 @@
   }
 </div>
 
-<app-json-viewer [data]="debugData"></app-json-viewer>
+<app-dev-only> <app-json-viewer [data]="debugData"></app-json-viewer> </app-dev-only>

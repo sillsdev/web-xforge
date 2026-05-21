@@ -198,6 +198,33 @@ fdescribe('NewDraftLogicHandler', () => {
     expect(env.selectedTargetTrainingScriptureRange).toBe('MRK1-16;LUK1-24;JHN1-21');
     expect(env.selectedTrainingSourceBooks).toEqual({ 'training-source-1-id': ['MRK', 'LUK', 'JHN'] });
   });
+
+  // Select GEN and NUM, go to next step, see NUM is not there, then go back and deselect NUM, then go forward again and see that NUM is now available for selection as training data
+  fit('reallows training data to be selected when it is deselected for drafting', async () => {
+    const testState = teamStartingToTranslateGenesis;
+    const env = new TestEnvironment(testState);
+    await env.waitForInit();
+
+    // User selects GEN and NUM for drafting, which should remove both from the available training data since it's not possible to both draft and train on the same material
+    env.logicHandler.selectDraftingBooks(['GEN']);
+    env.logicHandler.selectDraftingBooks(['GEN', 'NUM']);
+    expect(env.selectedDraftingScriptureRange).toBe('GEN6-50;NUM1-36');
+
+    // Go to training step and see that NUM is not available for training
+    env.logicHandler.setInputMode('training_books');
+    expect(env.availableTargetTrainingScriptureRange).toBe('GEN1-5;MAT1-28;MRK1-16;LUK1-24;JHN1-21');
+    expect(env.selectedTargetTrainingScriptureRange).toBe('MAT1-28;MRK1-16;LUK1-24;JHN1-21');
+    expect(env.selectedTrainingSourceBooks).toEqual({ 'training-source-1-id': ['MAT', 'MRK', 'LUK', 'JHN'] });
+
+    // Go back and deselect NUM for drafting
+    env.logicHandler.setInputMode('draft_books');
+    env.logicHandler.selectDraftingBooks(['GEN']);
+    expect(env.selectedDraftingScriptureRange).toBe('GEN6-50');
+
+    // Now NUM should be available again in the training data
+    env.logicHandler.setInputMode('training_books');
+    expect(env.availableTargetTrainingScriptureRange).toBe('GEN1-5;NUM1-36;MAT1-28;MRK1-16;LUK1-24;JHN1-21');
+  });
 });
 
 const mockedActivatedProjectService = mock(ActivatedProjectService);

@@ -7,6 +7,7 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
 import { filter, firstValueFrom } from 'rxjs';
+import { DevOnlyComponent } from 'src/app/shared/dev-only/dev-only.component';
 import { JsonViewerComponent } from 'src/app/shared/json-viewer/json-viewer.component';
 import { hasStringProp } from '../../../../type-utils';
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
@@ -42,7 +43,8 @@ const PAGES_BY_ORDER = [
     JsonViewerComponent,
     BookMultiSelectComponent,
     MatFormFieldModule,
-    MatInputModule
+    MatInputModule,
+    DevOnlyComponent
   ]
 })
 export class NewDraftComponent {
