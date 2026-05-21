@@ -2836,8 +2836,10 @@ public class ParatextService : DisposableBase, IParatextService
                 // Extract to the resource directory
                 _fileSystemService.CreateDirectory(path);
                 await resource.InstallableResource.ExtractToDirectoryAsync(path);
-                await MigrateResourceIfRequiredAsync(username, targetParatextId, overrideLanguageId, token);
             }
+
+            // Perform migrations, as resources may not have had all migrations run on them
+            await MigrateResourceIfRequiredAsync(username, targetParatextId, overrideLanguageId, token);
         }
         else
         {
