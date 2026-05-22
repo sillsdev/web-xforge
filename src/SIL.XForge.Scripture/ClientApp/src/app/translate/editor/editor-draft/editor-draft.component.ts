@@ -158,9 +158,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       await projectNotificationService.stop();
       projectNotificationService.removeNotifyBuildProgressHandler(this.notifyBuildProgressHandler);
     });
-
-    // Clear the book draft cache in case formatting options have changed
-    this.draftHandlingService.clearBookDraftCache();
   }
 
   get bookId(): string {
