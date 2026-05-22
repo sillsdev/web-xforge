@@ -91,14 +91,13 @@
         <h1>{{ t("connect_to_project") }}</h1>
 
         @if (selectedParatextProject != null) {
-          <p
-            [innerHtml]="
-              i18n.translateAndInsertTags('draft_import_wizard.connect_project_description', {
-                projectShortName: selectedParatextProject.shortName,
-                projectName: selectedParatextProject.name
-              })
-            "
-          ></p>
+          <transloco
+            key="draft_import_wizard.connect_project_description"
+            [params]="{
+              projectShortName: selectedParatextProject.shortName,
+              projectName: selectedParatextProject.name
+            }"
+          ></transloco>
         }
 
         @if (connectionError != null && connectionError.length > 0) {
@@ -233,32 +232,51 @@
         @if (booksWithExistingText.length === 1) {
           <!-- Single book variant -->
           <h1>{{ t("overwrite_book_question", { bookName: singleBookName }) }}</h1>
-          <p
-            [innerHTML]="
-              i18n.translateAndInsertTags('draft_import_wizard.overwrite_book_description', {
-                bookName: singleBookName,
-                numChapters: booksWithExistingText[0].chaptersWithText.length,
-                projectShortName: selectedParatextProject?.shortName,
-                projectName: selectedParatextProject?.name
-              })
-            "
-          ></p>
+          <transloco
+            key="draft_import_wizard.overwrite_book_description"
+            ,
+            [params]="{
+              bookName: singleBookName,
+              projectShortName: selectedParatextProject?.shortName,
+              projectName: selectedParatextProject?.name
+            }"
+          ></transloco>
+          <p class="chapter-list">
+            @for (chapterNum of booksWithExistingText[0].chapterNumbersWithText; track chapterNum) {
+              <transloco
+                key="draft_import_wizard.overwrite_chapter_link"
+                [params]="{
+                  chapterNum: chapterNum,
+                  chapterLink: bookChapterLink(booksWithExistingText[0].bookNum, chapterNum)
+                }"
+              ></transloco>
+            }
+          </p>
         } @else {
           <!-- Multiple books variant -->
           <h1>{{ t("overwrite_books_question") }}</h1>
-          <p
-            [innerHTML]="
-              i18n.translateAndInsertTags('draft_import_wizard.overwrite_books_description', {
-                projectShortName: selectedParatextProject?.shortName,
-                projectName: selectedParatextProject?.name
-              })
-            "
-          ></p>
+          <transloco
+            key="draft_import_wizard.overwrite_books_description"
+            [params]="{
+              projectShortName: selectedParatextProject?.shortName,
+              projectName: selectedParatextProject?.name
+            }"
+          ></transloco>
           <ul>
             @for (book of booksWithExistingText; track book.bookNum) {
               <li>
-                {{ book.bookName }}: {{ book.chaptersWithText.length }}
-                {{ book.chaptersWithText.length === 1 ? t("chapter") : t("chapters") }}
+                {{ book.bookName }}:
+                <span class="chapter-list">
+                  @for (chapterNum of book.chapterNumbersWithText; track chapterNum) {
+                    <transloco
+                      key="draft_import_wizard.overwrite_chapter_link"
+                      [params]="{
+                        chapterNum: chapterNum,
+                        chapterLink: bookChapterLink(book.bookNum, chapterNum)
+                      }"
+                    ></transloco>
+                  }
+                </span>
               </li>
             }
           </ul>
@@ -353,14 +371,13 @@
 
       @if (!isSyncing && !syncComplete && !skipSync && syncError == null) {
         <h1>{{ t("sync_project_question") }}</h1>
-        <p
-          [innerHtml]="
-            i18n.translateAndInsertTags('draft_import_wizard.sync_project_description', {
-              projectShortName: selectedParatextProject?.shortName,
-              projectName: selectedParatextProject?.name
-            })
-          "
-        ></p>
+        <transloco
+          key="draft_import_wizard.sync_project_description"
+          [params]="{
+            projectShortName: selectedParatextProject?.shortName,
+            projectName: selectedParatextProject?.name
+          }"
+        ></transloco>
 
         <div class="button-strip">
           <button
@@ -408,23 +425,21 @@
       @if (syncComplete || skipSync) {
         <h1>{{ t("complete") }}</h1>
         @if (skipSync) {
-          <p
-            [innerHtml]="
-              i18n.translateAndInsertTags('draft_import_wizard.import_complete_no_sync', {
-                projectShortName: selectedParatextProject?.shortName,
-                projectName: selectedParatextProject?.name
-              })
-            "
-          ></p>
+          <transloco
+            key="draft_import_wizard.import_complete_no_sync"
+            [params]="{
+              projectShortName: selectedParatextProject?.shortName,
+              projectName: selectedParatextProject?.name
+            }"
+          ></transloco>
         } @else {
-          <p
-            [innerHtml]="
-              i18n.translateAndInsertTags('draft_import_wizard.import_and_sync_complete', {
-                projectShortName: selectedParatextProject?.shortName,
-                projectName: selectedParatextProject?.name
-              })
-            "
-          ></p>
+          <transloco
+            key="draft_import_wizard.import_and_sync_complete"
+            [params]="{
+              projectShortName: selectedParatextProject?.shortName,
+              projectName: selectedParatextProject?.name
+            }"
+          ></transloco>
           <p>
             <b>{{ t("import_and_sync_complete_reminder") }}</b>
           </p>
