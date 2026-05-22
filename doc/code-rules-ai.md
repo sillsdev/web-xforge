@@ -85,6 +85,25 @@ Follow all rules in [code-rules.md](code-rules.md) in addition to the below.
   7. ngOnInit
   8. public static and instance methods
   9. non-public static and instance methods
+- When making an object literal to return from a method, do not create and return the object literal in one statement. Instead, set a variable's value to the object literal and return the variable. This way, the type system can check whether the return value conforms to the declared return type of the method. For example, don't write this:
+  ```
+  getThing(id: string): Thing {
+    return {
+      thingId: id,
+      color: 7
+    };
+  }
+  ```
+  Instead, write this:
+  ```
+  getThing(id: string): Thing {
+    const thing: Thing = {
+      thingId: id,
+      color: 7
+    };
+    return thing;
+  }
+  ```
 
 ## Angular templates
 
