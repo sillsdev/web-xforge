@@ -53,6 +53,12 @@
   }
 }
 
+.chapter-list {
+  display: flex;
+  column-gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
 h1 {
   margin-bottom: 1rem;
 }
