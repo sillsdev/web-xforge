@@ -1,9 +1,11 @@
-import { Injectable } from '@angular/core';
+import { DestroyRef, Injectable } from '@angular/core';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { DeltaOperation } from 'rich-text';
 import { Observable, of, tap } from 'rxjs';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
@@ -21,8 +23,16 @@ export class DraftHandlingService {
   constructor(
     private readonly projectService: SFProjectService,
     private readonly textDocService: TextDocService,
-    private readonly draftGenerationService: DraftGenerationService
-  ) {}
+    private readonly activatedProjectService: ActivatedProjectService,
+    private readonly draftGenerationService: DraftGenerationService,
+    private readonly destroyRef: DestroyRef
+  ) {
+    this.activatedProjectService.changes$
+      .pipe(quietTakeUntilDestroyed(this.destroyRef), filterNullish())
+      // Clear the cache when a user navigates to a different project
+      // or there is a change in the current project (e.g. change to the formatting options)
+      .subscribe(() => this.clearBookDraftCache());
+  }
 
   /**
    * Gets the generated drafts for every chapter of the book.
@@ -113,7 +123,7 @@ export class DraftHandlingService {
     return !hasNoExistingText;
   }
 
-  clearBookDraftCache(): void {
+  private clearBookDraftCache(): void {
     this.bookDraftCache.clear();
   }
 
