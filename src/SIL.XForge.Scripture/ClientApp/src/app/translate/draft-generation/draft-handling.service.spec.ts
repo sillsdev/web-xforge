@@ -5,7 +5,9 @@ import { ParagraphBreakFormat, QuoteFormat } from 'realtime-server/lib/esm/scrip
 import { DeltaOperation } from 'rich-text';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
@@ -15,19 +17,23 @@ import { DraftHandlingService } from './draft-handling.service';
 const mockedProjectService = mock(SFProjectService);
 const mockedTextDocService = mock(TextDocService);
 const mockedDraftGenerationService = mock(DraftGenerationService);
+const mockedActivatedProjectService = mock(ActivatedProjectService);
 
 describe('DraftHandlingService', () => {
   let service: DraftHandlingService;
+  const mockProject = mock(SFProjectProfileDoc);
 
   configureTestingModule(() => ({
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: TextDocService, useMock: mockedTextDocService },
-      { provide: DraftGenerationService, useMock: mockedDraftGenerationService }
+      { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
+      { provide: ActivatedProjectService, useMock: mockedActivatedProjectService }
     ]
   }));
 
   beforeEach(() => {
+    when(mockedActivatedProjectService.changes$).thenReturn(of(instance(mockProject)));
     service = TestBed.inject(DraftHandlingService);
   });
 
