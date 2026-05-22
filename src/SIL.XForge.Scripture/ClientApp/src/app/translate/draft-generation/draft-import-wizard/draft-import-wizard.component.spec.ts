@@ -145,6 +145,9 @@ describe('DraftImportWizardComponent', () => {
 
     // Step 5
     env.clickOverwriteCheckbox();
+    expect(env.component.booksWithExistingText.length).toEqual(4);
+    // 3 books have one chapter with text, book 4 has 2 chapters with text
+    expect(env.component.booksWithExistingText.flatMap(b => b.chapterNumbersWithText)).toEqual([1, 1, 1, 1, 2]);
     env.clickNextButton(5);
 
     // Step 6
@@ -295,7 +298,7 @@ class TestEnvironment {
             { bookNum: 1, chapters: [{ number: 1 }] },
             { bookNum: 2, chapters: [{ number: 1 }] },
             { bookNum: 3, chapters: [{ number: 1 }] },
-            { bookNum: 4, chapters: [{ number: 1 }] }
+            { bookNum: 4, chapters: [{ number: 1 }, { number: 2 }] }
           ]
         },
         4
