@@ -9,7 +9,7 @@
   $is-dark: mat.get-theme-type($theme) == dark;
 
   // Search box. The populated search box has a background colour different than the
-  // application palaette colours to make it stand out that not all the records are
+  // application palette colours to make it stand out that not all the records are
   // being shown.
   --sf-serval-builds-search-background-populated: #{if($is-dark, #453e00, #fff27c)};
 

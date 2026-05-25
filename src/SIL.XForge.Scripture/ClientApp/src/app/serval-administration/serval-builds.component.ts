@@ -270,7 +270,8 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { q: queryParam },
-      queryParamsHandling: 'merge'
+      queryParamsHandling: 'merge',
+      replaceUrl: true
     });
   }
 
