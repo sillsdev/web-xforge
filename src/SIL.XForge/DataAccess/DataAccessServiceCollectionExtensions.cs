@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using Autofac;
 using Hangfire;
@@ -8,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
+using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
@@ -55,13 +55,23 @@ public static class DataAccessServiceCollectionExtensions
         DataAccessClassMap.RegisterClass<ProjectSecret>(cm => cm.MapIdProperty(e => e.Id));
 
         services.AddSingleton<IMongoClient>(sp => new MongoClient(options.ConnectionString));
-        services.AddSingleton(sp => sp.GetService<IMongoClient>().GetDatabase(options.MongoDatabaseName));
+        services.AddSingleton(sp => sp.GetService<IMongoClient>()!.GetDatabase(options.MongoDatabaseName));
 
         services.AddMongoRepository<UserSecret>("user_secrets", cm => cm.MapIdProperty(us => us.Id));
         services.AddMongoRepository<EventMetric>(
             "event_metrics",
             cm => cm.MapIdProperty(em => em.Id),
             CreateEventMetricsIndexes
+        );
+        services.AddMongoRepository<SiteConfig>(
+            "site_configs",
+            cm =>
+            {
+                cm.MapIdProperty(sm => sm.Id);
+                cm.MapMember(sm => sm.LastFinishedBuild).SetSerializer(new DateTimeOffsetSerializer(BsonType.DateTime));
+            },
+            im =>
+                im.CreateOne(new CreateIndexModel<SiteConfig>(Builders<SiteConfig>.IndexKeys.Ascending(sc => sc.Name)))
         );
 
         return services;
@@ -113,7 +123,7 @@ public static class DataAccessServiceCollectionExtensions
     )
         where T : IIdentifiable =>
         new MongoRepository<T>(
-            sp.GetService<IMongoDatabase>().GetCollection<T>(collection),
+            sp.GetService<IMongoDatabase>()!.GetCollection<T>(collection),
             c => indexSetup?.Invoke(c.Indexes)
         );
 }
