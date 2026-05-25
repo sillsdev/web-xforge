@@ -440,7 +440,21 @@ a {
 .detail-books-list {
   display: flex;
   flex-direction: column;
+  gap: 10px;
+}
+
+.detail-project-books-item {
+  display: flex;
+  flex-direction: column;
   gap: 2px;
+}
+
+.detail-project-books-meta {
+  align-self: flex-start;
+}
+
+.detail-project-books-id {
+  font-family: monospace;
 }
 
 .detail-actions {

@@ -68,6 +68,7 @@ import {
   toProjectBooks
 } from './serval-build-report';
 import { buildSummary } from './serval-builds-statistics';
+import { TransformWithPipe } from './transform.pipe';
 
 /** Represents a row of Serval build data in the builds table. */
 export interface ServalBuildRow {
@@ -123,6 +124,15 @@ interface SummaryDisplayItem {
   prominence: 'top' | 'hidden';
 }
 
+/** View model for one project and its books, shown in Input card lists. */
+export interface BuildInputItem {
+  sfProjectId: string;
+  projectLink: string;
+  projectName?: string;
+  shortName?: string;
+  booksDisplay: string;
+}
+
 /**
  * Displays Serval builds in the Serval Administration area.
  */
@@ -134,6 +144,7 @@ interface SummaryDisplayItem {
   imports: [
     AsyncPipe,
     NgTemplateOutlet,
+    TransformWithPipe,
     MatButton,
     MatIconButton,
     MatIcon,
@@ -548,7 +559,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
         report.project?.name,
         sfProjectId
       );
-      const projectLink: string | undefined = this.servalAdminProjectLinkFor(sfProjectId);
+      const projectLink: string | undefined = ServalBuildsComponent.servalAdminProjectLinkFor(sfProjectId);
       const trainingBooks: ProjectBooks[] = toProjectBooks(report.config.trainingScriptureRanges);
       const translationBooks: ProjectBooks[] = toProjectBooks(report.config.translationScriptureRanges);
 
@@ -893,6 +904,30 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
       .join('. ');
   }
 
+  static determineBuildInputs(projectBooks: ProjectBooks[] | null | undefined): BuildInputItem[] {
+    if (projectBooks == null) {
+      return [];
+    }
+
+    const result: BuildInputItem[] = projectBooks.map((projectBooksEntry: ProjectBooks) => {
+      const projectName: string | undefined = isPopulatedString(projectBooksEntry.projectName)
+        ? projectBooksEntry.projectName
+        : undefined;
+      const shortName: string | undefined = isPopulatedString(projectBooksEntry.shortName)
+        ? projectBooksEntry.shortName
+        : undefined;
+
+      return {
+        sfProjectId: projectBooksEntry.sfProjectId,
+        projectLink: ServalBuildsComponent.servalAdminProjectLinkFor(projectBooksEntry.sfProjectId),
+        projectName: projectName,
+        shortName: shortName,
+        booksDisplay: ServalBuildsComponent.formatBookEntries(projectBooksEntry.booksAndChapters)
+      };
+    });
+    return result;
+  }
+
   /** Formats a BookAndChapters array into a display string, e.g. "GEN 10-11, 16-19; EXO". */
   static formatBookEntries(booksAndChapters: BookAndChapters[]): string {
     return booksAndChapters
@@ -925,9 +960,13 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     return ranges.join(', ');
   }
 
-  protected servalAdminProjectLinkFor(sfProjectId: string | undefined): string | undefined {
-    if (sfProjectId == null) return undefined;
-    return `/serval-administration/${sfProjectId}`;
+  /** (The return type is string if the input is a type string (at compile time), or undefined
+   * if the input is of type undefined (at compile time).) */
+  static servalAdminProjectLinkFor<T extends string | undefined>(
+    sfProjectId: T
+  ): T extends string ? string : undefined {
+    if (sfProjectId == null) return undefined as T extends string ? string : undefined;
+    return `/serval-administration/${sfProjectId}` as T extends string ? string : undefined;
   }
 
   /** Formats a language code with its display name, e.g. "es (Spanish)". Falls back to just the code. */
