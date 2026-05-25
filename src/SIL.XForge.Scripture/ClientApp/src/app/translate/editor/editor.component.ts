@@ -336,6 +336,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private selectionClickSubs: Subscription[] = [];
   private noteThreadQuery?: RealtimeQuery<NoteThreadDoc>;
   private toggleNoteThreadVerseRefs$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
+  private initializeLynxStateSub?: Subscription;
   private targetEditorLoaded$: Subject<void> = new Subject<void>();
   private syncScrollRequested$: Subject<void> = new Subject<void>();
   private toggleNoteThreadSub?: Subscription;
@@ -796,9 +797,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           );
 
           this.sourceProjectDoc = await this.getSourceProjectDoc();
-          if (this.projectUserConfigChangesSub != null) {
-            this.projectUserConfigChangesSub.unsubscribe();
-          }
+          this.projectUserConfigChangesSub?.unsubscribe();
+
           this.projectUserConfigChangesSub = this.projectUserConfigDoc.remoteChanges$.subscribe(async () => {
             if (this.projectUserConfigDoc?.data != null) {
               // Reload config if the checksum has been reset on the server
@@ -838,9 +838,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
         if (this.projectDoc.id !== prevProjectId) {
           this.setupTranslationEngine();
-          if (this.projectDataChangesSub != null) {
-            this.projectDataChangesSub.unsubscribe();
-          }
+          this.projectDataChangesSub?.unsubscribe();
           this.projectDataChangesSub = this.projectDoc.remoteChanges$.subscribe(() => {
             let sourceId: TextDocId | undefined;
             if (this.hasSource && this.chapter != null) {
@@ -935,6 +933,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.projectUserConfigChangesSub?.unsubscribe();
     this.trainingSub?.unsubscribe();
     this.projectDataChangesSub?.unsubscribe();
+    this.initializeLynxStateSub?.unsubscribe();
     this.metricsSession?.dispose();
     this.onTargetDeleteSub?.unsubscribe();
     this.bottomSheet?.dismiss();
@@ -2669,7 +2668,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
    * Subscribes to project- and user-level lynx config changes and updates lynx feature states accordingly.
    */
   private initLynxFeatureStates(projectUserConfigDoc: SFProjectUserConfigDoc | undefined): void {
-    combineLatest([
+    this.initializeLynxStateSub?.unsubscribe();
+    this.initializeLynxStateSub = combineLatest([
       this.canEdit$.pipe(map(canEdit => canEdit ?? false)),
       this.activatedProject.changes$.pipe(map(projectDoc => projectDoc?.data?.lynxConfig)),
       projectUserConfigDoc?.changes$.pipe(
