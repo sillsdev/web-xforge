@@ -129,8 +129,8 @@ describe('ProgressService', () => {
     const project1Books: BookProgress[] = [{ bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20 }];
     const project2Books: BookProgress[] = [{ bookId: 'MAT', verseSegments: 50, blankVerseSegments: 10 }];
 
-    when(mockedProjectService.getProjectProgress('project1')).thenReturn(Promise.resolve(project1Books));
-    when(mockedProjectService.getProjectProgress('project2')).thenReturn(Promise.resolve(project2Books));
+    when(mockedProjectService.getProjectProgress('project1')).thenResolve(project1Books);
+    when(mockedProjectService.getProjectProgress('project2')).thenResolve(project2Books);
 
     let result1: ProjectProgress | undefined;
     let result2: ProjectProgress | undefined;
