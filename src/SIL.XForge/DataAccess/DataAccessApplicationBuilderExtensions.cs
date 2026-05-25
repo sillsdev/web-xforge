@@ -1,4 +1,3 @@
-#nullable disable warnings
 using Microsoft.Extensions.DependencyInjection;
 using SIL.XForge.DataAccess;
 using SIL.XForge.EventMetrics;
@@ -8,12 +7,16 @@ namespace Microsoft.AspNetCore.Builder;
 
 public static class DataAccessApplicationBuilderExtensions
 {
-    public static void UseDataAccess(this IApplicationBuilder app)
+    extension(IApplicationBuilder app)
     {
-        app.InitRepository<EventMetric>();
-        app.InitRepository<UserSecret>();
-    }
+        public void UseDataAccess()
+        {
+            app.InitRepository<EventMetric>();
+            app.InitRepository<SiteConfig>();
+            app.InitRepository<UserSecret>();
+        }
 
-    public static void InitRepository<T>(this IApplicationBuilder app)
-        where T : IIdentifiable => app.ApplicationServices.GetService<IRepository<T>>().Init();
+        public void InitRepository<T>()
+            where T : IIdentifiable => app.ApplicationServices.GetService<IRepository<T>>()?.Init();
+    }
 }
