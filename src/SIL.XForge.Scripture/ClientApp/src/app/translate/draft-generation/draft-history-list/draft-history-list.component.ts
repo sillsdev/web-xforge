@@ -1,9 +1,10 @@
 import { Component, DestroyRef } from '@angular/core';
 import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import ObjectID from 'bson-objectid';
-import { take } from 'rxjs';
+import { combineLatest, filter, take } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { ProjectNotificationService } from '../../../core/project-notification.service';
 import { BuildDto } from '../../../machine-api/build-dto';
@@ -29,17 +30,20 @@ export class DraftHistoryListComponent {
     this.loadHistory(projectId);
   };
 
+  private readonly projectId$ = this.activatedProject.projectId$.pipe(filterNullish(), take(1));
+
   constructor(
-    activatedProject: ActivatedProjectService,
+    private readonly activatedProject: ActivatedProjectService,
     private destroyRef: DestroyRef,
     private readonly draftGenerationService: DraftGenerationService,
     projectNotificationService: ProjectNotificationService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly transloco: TranslocoService,
     private readonly i18n: I18nService
   ) {
-    activatedProject.projectId$
-      .pipe(quietTakeUntilDestroyed(destroyRef), filterNullish(), take(1))
-      .subscribe(async projectId => {
+    combineLatest([this.projectId$, this.onlineStatusService.onlineStatus$.pipe(filter(isOnline => isOnline))])
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(async ([projectId]) => {
         // Determine whether to show or hide the older drafts warning
         this.showOlderDraftsNotSupportedWarning =
           ObjectID.isValid(projectId) &&
