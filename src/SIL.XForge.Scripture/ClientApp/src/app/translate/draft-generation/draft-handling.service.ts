@@ -127,8 +127,14 @@ export class DraftHandlingService {
     this.bookDraftCache.clear();
   }
 
+  /**
+   * Gets a key to use for caching the draft of a book.
+   * @param textDocId The text doc identifier.
+   * @param timestamp The timestamp of the draft.
+   * @returns The string key to use for caching the draft of a book.
+   */
   private getBookDraftKey(textDocId: TextDocId, timestamp: Date): string {
-    const timestampKey = timestamp?.toISOString();
+    const timestampKey: string = timestamp.toISOString();
     return `${textDocId.projectId}:${textDocId.bookNum}:${timestampKey}`;
   }
 }
