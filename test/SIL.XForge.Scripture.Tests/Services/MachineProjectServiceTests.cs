@@ -499,7 +499,9 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await env
+            .EmailService.Received()
+            .SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
     }
 
     [Test]
@@ -534,7 +536,9 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await env
+            .EmailService.Received()
+            .SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
     }
 
     [Test]
@@ -569,7 +573,9 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await env
+            .EmailService.Received()
+            .SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
     }
 
     [Test]
@@ -2951,10 +2957,13 @@ public class MachineProjectServiceTests
             User01,
             Project01,
             Build01,
-            nameof(JobState.Completed),
-            new Uri(env.SiteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+            JobState.Completed,
+            new Uri(env.SiteOptions.Value.Origin.Split(';').First(), UriKind.Absolute),
+            CancellationToken.None
         );
-        await env.EmailService.DidNotReceive().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await env
+            .EmailService.DidNotReceive()
+            .SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
         env.MockLogger.AssertHasEvent(logEvent => logEvent.LogLevel == LogLevel.Error);
     }
 
@@ -2970,16 +2979,19 @@ public class MachineProjectServiceTests
             User01,
             Project01,
             Build01,
-            nameof(JobState.Completed),
-            new Uri(env.SiteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+            JobState.Completed,
+            new Uri(env.SiteOptions.Value.Origin.Split(';').First(), UriKind.Absolute),
+            CancellationToken.None
         );
-        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await env
+            .EmailService.Received()
+            .SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
     }
 
-    [TestCase(nameof(JobState.Canceled))]
-    [TestCase(nameof(JobState.Completed))]
-    [TestCase(nameof(JobState.Faulted))]
-    public async Task SendBuildCompletedEmailAsync_Success(string buildState)
+    [TestCase(JobState.Canceled)]
+    [TestCase(JobState.Completed)]
+    [TestCase(JobState.Faulted)]
+    public async Task SendBuildCompletedEmailAsync_Success(JobState buildState)
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -2998,9 +3010,12 @@ public class MachineProjectServiceTests
             Project01,
             Build01,
             buildState,
-            new Uri(env.SiteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+            new Uri(env.SiteOptions.Value.Origin.Split(';').First(), UriKind.Absolute),
+            CancellationToken.None
         );
-        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await env
+            .EmailService.Received()
+            .SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
     }
 
     [Test]

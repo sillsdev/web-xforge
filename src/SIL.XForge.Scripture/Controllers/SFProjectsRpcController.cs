@@ -362,7 +362,17 @@ public class SFProjectsRpcController(
     {
         try
         {
-            if (await projectService.InviteAsync(UserId, projectId, email, locale, role, httpRequestAccessor.SiteRoot))
+            if (
+                await projectService.InviteAsync(
+                    UserId,
+                    projectId,
+                    email,
+                    locale,
+                    role,
+                    httpRequestAccessor.SiteRoot,
+                    CancellationToken.None
+                )
+            )
                 return Ok();
             return Ok(AlreadyProjectMemberResponse);
         }
