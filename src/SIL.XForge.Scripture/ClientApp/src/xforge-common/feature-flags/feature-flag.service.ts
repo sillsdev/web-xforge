@@ -349,19 +349,14 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
-  readonly newDraftHistory: FeatureFlag = new FeatureFlagFromStorage(
+  readonly newDraftHistory: FeatureFlag = new ServerOnlyFeatureFlag(
     'NewDraftHistory',
     'Preview new draft history interface',
     17,
-    new StaticFeatureFlagStore(true)
+    this.featureFlagStore
   );
 
-  readonly usfmFormat: ObservableFeatureFlag = new FeatureFlagFromStorage(
-    'UsfmFormat',
-    'USFM Format',
-    18,
-    new StaticFeatureFlagStore(true)
-  );
+  readonly usfmFormat: FeatureFlag = new ServerOnlyFeatureFlag('UsfmFormat', 'USFM Format', 18, this.featureFlagStore);
 
   readonly inAppDraftSignupForm: ObservableFeatureFlag = new FeatureFlagFromStorage(
     'InAppDraftSignupForm',

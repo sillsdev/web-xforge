@@ -14,7 +14,6 @@ import { instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -47,7 +46,6 @@ describe('DraftGenerationComponent', () => {
   let mockNoticeService: jasmine.SpyObj<NoticeService>;
   let mockNllbLanguageService: jasmine.SpyObj<NllbLanguageService>;
   let mockTrainingDataService: jasmine.SpyObj<TrainingDataService>;
-  let mockFeatureFlagService: jasmine.SpyObj<FeatureFlagService>;
   let mockSFProjectService: jasmine.SpyObj<SFProjectService>;
   let mockProjectNotificationService: jasmine.SpyObj<ProjectNotificationService>;
 
@@ -99,7 +97,6 @@ describe('DraftGenerationComponent', () => {
           { provide: OnlineStatusService, useClass: TestOnlineStatusService },
           { provide: TrainingDataService, useValue: mockTrainingDataService },
           { provide: ProgressService, useValue: undefined },
-          { provide: FeatureFlagService, useValue: mockFeatureFlagService },
           { provide: ProjectNotificationService, useValue: mockProjectNotificationService }
         ]
       });
@@ -154,11 +151,6 @@ describe('DraftGenerationComponent', () => {
 
       mockTrainingDataService = jasmine.createSpyObj<TrainingDataService>(['getTrainingData']);
       mockTrainingDataService.getTrainingData.and.returnValue(of([]));
-      mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>({
-        newDraftHistory: createTestFeatureFlag(false),
-        usfmFormat: createTestFeatureFlag(false),
-        inAppDraftSignupForm: createTestFeatureFlag(true)
-      });
     }
 
     static initProject(currentUserId: string, preTranslate: boolean = true): void {

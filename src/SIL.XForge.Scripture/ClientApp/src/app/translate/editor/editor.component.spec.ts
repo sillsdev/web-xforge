@@ -69,7 +69,6 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -149,7 +148,6 @@ const mockedDraftOptionsService = mock(DraftOptionsService);
 const mockedParatextService = mock(ParatextService);
 const mockedPermissionsService = mock(PermissionsService);
 const mockedLynxWorkspaceService = mock(LynxWorkspaceService);
-const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedProjectNotificationService = mock(ProjectNotificationService);
 
 class MockComponent {}
@@ -222,7 +220,6 @@ describe('EditorComponent', () => {
       { provide: TabMenuService, useValue: EditorTabMenuService },
       { provide: PermissionsService, useMock: mockedPermissionsService },
       { provide: LynxWorkspaceService, useMock: mockedLynxWorkspaceService },
-      { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
       provideNoopAnimations()
     ]
   }));
@@ -5007,7 +5004,6 @@ class TestEnvironment {
     when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected(anything())).thenReturn(false);
     when(mockedPermissionsService.isUserOnProject(anything())).thenResolve(true);
     when(mockedPermissionsService.canAccessText(anything(), anything())).thenReturn(true);
-    when(mockedFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(false));
     when(mockedLynxWorkspaceService.rawInsightSource$).thenReturn(of([]));
 
     this.realtimeService = TestBed.inject(TestRealtimeService);

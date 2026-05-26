@@ -6,27 +6,20 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { DraftOptionsService, FORMATTING_OPTIONS_SUPPORTED_DATE } from './draft-options.service';
 
 const mockedActivatedProject = mock(ActivatedProjectService);
-const mockedFeatureFlagService = mock(FeatureFlagService);
 
 describe('DraftOptionsService', () => {
   let service: DraftOptionsService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        DraftOptionsService,
-        { provide: ActivatedProjectService, useValue: instance(mockedActivatedProject) },
-        { provide: FeatureFlagService, useValue: instance(mockedFeatureFlagService) }
-      ]
+      providers: [DraftOptionsService, { provide: ActivatedProjectService, useValue: instance(mockedActivatedProject) }]
     });
-    when(mockedFeatureFlagService.usfmFormat).thenReturn(createTestFeatureFlag(true));
     service = TestBed.inject(DraftOptionsService);
   });
 
@@ -84,47 +77,35 @@ describe('DraftOptionsService', () => {
   const PROJECT_DOC_EMPTY_USFM: SFProjectProfileDoc = buildProjectDoc({});
 
   describe('areFormattingOptionsSelected', () => {
-    it('returns true when flag enabled and both options set', () => {
+    it('returns true when both options set', () => {
       when(mockedActivatedProject.projectDoc).thenReturn(PROJECT_DOC_BOTH_FORMATS);
       expect(service.areFormattingOptionsSelected()).toBe(true);
     });
 
-    it('returns false when flag enabled and one option missing', () => {
+    it('returns false when one option missing', () => {
       when(mockedActivatedProject.projectDoc).thenReturn(PROJECT_DOC_PARAGRAPH_ONLY);
       expect(service.areFormattingOptionsSelected()).toBe(false);
     });
 
-    it('returns false when flag enabled and both options missing', () => {
+    it('returns false when both options missing', () => {
       when(mockedActivatedProject.projectDoc).thenReturn(PROJECT_DOC_EMPTY_USFM);
-      expect(service.areFormattingOptionsSelected()).toBe(false);
-    });
-
-    it('returns false when flag disabled even if both options set', () => {
-      when(mockedFeatureFlagService.usfmFormat).thenReturn(createTestFeatureFlag(false));
-      when(mockedActivatedProject.projectDoc).thenReturn(PROJECT_DOC_BOTH_FORMATS);
       expect(service.areFormattingOptionsSelected()).toBe(false);
     });
   });
 
   describe('areFormattingOptionsAvailableButUnselected', () => {
-    it('returns true when flag enabled and both options missing', () => {
+    it('returns true when both options missing', () => {
       when(mockedActivatedProject.projectDoc).thenReturn(PROJECT_DOC_EMPTY_USFM);
       expect(service.areFormattingOptionsAvailableButUnselected(SUPPORTED_BUILD_ENTRY)).toBe(true);
     });
 
-    it('returns true when flag enabled and one option missing', () => {
+    it('returns true when one option missing', () => {
       when(mockedActivatedProject.projectDoc).thenReturn(PROJECT_DOC_QUOTE_ONLY);
       expect(service.areFormattingOptionsAvailableButUnselected(SUPPORTED_BUILD_ENTRY)).toBe(true);
     });
 
-    it('returns false when flag enabled and both options set', () => {
+    it('returns false when both options set', () => {
       when(mockedActivatedProject.projectDoc).thenReturn(PROJECT_DOC_BOTH_FORMATS);
-      expect(service.areFormattingOptionsAvailableButUnselected(SUPPORTED_BUILD_ENTRY)).toBe(false);
-    });
-
-    it('returns false when flag disabled', () => {
-      when(mockedFeatureFlagService.usfmFormat).thenReturn(createTestFeatureFlag(false));
-      when(mockedActivatedProject.projectDoc).thenReturn(PROJECT_DOC_EMPTY_USFM);
       expect(service.areFormattingOptionsAvailableButUnselected(SUPPORTED_BUILD_ENTRY)).toBe(false);
     });
 
@@ -135,8 +116,7 @@ describe('DraftOptionsService', () => {
   });
 
   describe('areFormattingOptionsSupportedForBuild', () => {
-    function buildWith(date: Date | undefined, flagEnabled: boolean = true): BuildDto | undefined {
-      when(mockedFeatureFlagService.usfmFormat).thenReturn(createTestFeatureFlag(flagEnabled));
+    function buildWith(date: Date | undefined): BuildDto | undefined {
       if (date == null) {
         return {
           id: 'build-id',
@@ -152,14 +132,9 @@ describe('DraftOptionsService', () => {
       return buildDtoWithDate(date);
     }
 
-    it('returns true when flag enabled and date after supported date', () => {
+    it('returns true when date after supported date', () => {
       const entry = buildWith(new Date(FORMATTING_OPTIONS_SUPPORTED_DATE.getTime() + 1));
       expect(service.areFormattingOptionsSupportedForBuild(entry)).toBe(true);
-    });
-
-    it('returns false when flag disabled even if date after supported date', () => {
-      const entry = buildWith(new Date(FORMATTING_OPTIONS_SUPPORTED_DATE.getTime() + 1), false);
-      expect(service.areFormattingOptionsSupportedForBuild(entry)).toBe(false);
     });
 
     it('returns false when date before supported date', () => {

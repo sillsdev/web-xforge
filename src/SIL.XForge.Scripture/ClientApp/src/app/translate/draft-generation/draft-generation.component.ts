@@ -23,7 +23,6 @@ import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { L10nNumberPipe } from 'xforge-common/l10n-number.pipe';
 import { L10nPercentPipe } from 'xforge-common/l10n-percent.pipe';
@@ -54,7 +53,6 @@ import { DRAFT_SIGNUP_RESPONSE_DAYS } from './draft-signup-form/draft-onboarding
 import { DraftSource } from './draft-source';
 import { DraftSourcesService } from './draft-sources.service';
 import { OnboardingRequest, OnboardingRequestService } from './onboarding-request.service';
-import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
 import { SupportedBackTranslationLanguagesDialogComponent } from './supported-back-translation-languages-dialog/supported-back-translation-languages-dialog.component';
 
 @Component({
@@ -134,7 +132,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   hasDraftBooksAvailable = false;
 
   isPreTranslationApproved = false;
-  signupFormUrl?: string;
   onboardingRequest?: OnboardingRequest | null;
   responseDays = DRAFT_SIGNUP_RESPONSE_DAYS;
 
@@ -159,11 +156,9 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     private readonly nllbService: NllbLanguageService,
     protected readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
-    private readonly preTranslationSignupUrlService: PreTranslationSignupUrlService,
     private readonly draftingSignupService: OnboardingRequestService,
     protected readonly noticeService: NoticeService,
     protected readonly urlService: ExternalUrlService,
-    protected readonly featureFlags: FeatureFlagService,
     protected readonly draftOptionsService: DraftOptionsService,
     private readonly projectService: SFProjectService,
     private destroyRef: DestroyRef
@@ -268,10 +263,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       .subscribe(async () => {
         this.isTargetLanguageSupported =
           !this.isBackTranslation || (await this.nllbService.isNllbLanguageAsync(this.targetLanguage));
-
-        if (!this.draftEnabled) {
-          this.signupFormUrl = await this.preTranslationSignupUrlService.generateSignupUrl();
-        }
 
         // Check if user has already submitted a signup for this project
         if (this.activatedProject.projectId != null) {

@@ -16,7 +16,6 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -45,7 +44,6 @@ const mockI18nService = mock(I18nService);
 const mockDialogService = mock(DialogService);
 const mockNoticeService = mock(NoticeService);
 const mockErrorReportingService = mock(ErrorReportingService);
-const mockFeatureFlagService = mock(FeatureFlagService);
 const mockSFProjectService = mock(SFProjectService);
 const mockProjectNotificationService = mock(ProjectNotificationService);
 
@@ -78,7 +76,6 @@ describe('EditorDraftComponent', () => {
       { provide: DialogService, useMock: mockDialogService },
       { provide: NoticeService, useMock: mockNoticeService },
       { provide: ErrorReportingService, useMock: mockErrorReportingService },
-      { provide: FeatureFlagService, useMock: mockFeatureFlagService },
       { provide: SFProjectService, useMock: mockSFProjectService },
       { provide: ProjectNotificationService, useMock: mockProjectNotificationService }
     ]
@@ -91,7 +88,6 @@ describe('EditorDraftComponent', () => {
   });
 
   beforeEach(() => {
-    when(mockFeatureFlagService.usfmFormat).thenReturn(createTestFeatureFlag(true));
     when(mockDraftGenerationService.pollBuildProgress(anything())).thenReturn(buildProgress$.asObservable());
     buildProgress$.next({ state: BuildStates.Completed } as BuildDto);
     when(mockActivatedProjectService.projectId$).thenReturn(of('targetProjectId'));

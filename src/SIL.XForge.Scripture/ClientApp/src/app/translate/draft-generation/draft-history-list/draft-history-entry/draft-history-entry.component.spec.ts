@@ -8,7 +8,7 @@ import { ParagraphBreakFormat, QuoteFormat } from 'realtime-server/lib/esm/scrip
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
@@ -58,7 +58,6 @@ describe('DraftHistoryEntryComponent', () => {
   }));
 
   beforeEach(() => {
-    when(mockedFeatureFlagsService.usfmFormat).thenReturn(createTestFeatureFlag(true));
     when(mockedActivatedProjectService.projectId).thenReturn('project01');
     const targetProjectDoc = {
       id: 'project01',
@@ -410,26 +409,6 @@ describe('DraftHistoryEntryComponent', () => {
       tick();
       fixture.detectChanges();
       expect(fixture.nativeElement.querySelector('.require-formatting-options')).not.toBeNull();
-    }));
-
-    it('should hide draft format UI when feature not enabled', fakeAsync(() => {
-      when(mockedFeatureFlagsService.usfmFormat).thenReturn(createTestFeatureFlag(false));
-      component.entry = {
-        id: 'build01',
-        engine: { id: 'project01' },
-        state: BuildStates.Completed,
-        message: 'Completed',
-        additionalInfo: {
-          dateGenerated: dateAfterFormattingSupported,
-          dateFinished: dateAfterFormattingSupported,
-          translationScriptureRanges: [{ projectId: 'source01', scriptureRange: 'EXO' }]
-        }
-      } as BuildDto;
-      component.isLatestBuild = true;
-      component.draftIsAvailable = true;
-      tick();
-      fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.require-formatting-options')).toBeNull();
     }));
 
     it('should hide draft format UI if not the latest build', fakeAsync(() => {
