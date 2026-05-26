@@ -3,6 +3,8 @@
 # Script to find folders containing Settings.xml files and listing the TranslationInfo value
 # Usage: find-project-types <directory>
 
+set -ueo pipefail
+
 if [[ $# -lt 1 ]]; then
     echo "Usage: $0 <directory>"
     exit 1
