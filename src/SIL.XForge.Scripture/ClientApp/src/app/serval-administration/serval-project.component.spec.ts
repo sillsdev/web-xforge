@@ -89,17 +89,17 @@ describe('ServalProjectComponent', () => {
     }));
   });
 
-  describe('run webhook button', () => {
-    it('should disable the run webhook button when offline', fakeAsync(() => {
+  describe('run retrieve pre-translations button', () => {
+    it('should disable the run retrieve pre-translations button when offline', fakeAsync(() => {
       const env = new TestEnvironment();
       env.onlineStatus = false;
-      expect(env.runWebhookButton.disabled).toBe(true);
+      expect(env.retrievePreTranslationsButton.disabled).toBe(true);
     }));
 
-    it('should allow running the webhook', fakeAsync(() => {
+    it('should allow running the retrieve pre-translations', fakeAsync(() => {
       const env = new TestEnvironment({ preTranslate: false });
-      expect(env.runWebhookButton.disabled).toBe(false);
-      env.clickElement(env.runWebhookButton);
+      expect(env.retrievePreTranslationsButton.disabled).toBe(false);
+      env.clickElement(env.retrievePreTranslationsButton);
       verify(mockServalAdministrationService.onlineRetrievePreTranslationStatus(env.mockProjectId)).once();
       verify(mockNoticeService.show(anything())).once();
     }));
@@ -530,8 +530,8 @@ describe('ServalProjectComponent', () => {
       return this.fixture.nativeElement.querySelector('mat-checkbox input');
     }
 
-    get runWebhookButton(): HTMLInputElement {
-      return this.fixture.nativeElement.querySelector('#run-webhook');
+    get retrievePreTranslationsButton(): HTMLInputElement {
+      return this.fixture.nativeElement.querySelector('#retrieve-pre-translations');
     }
 
     get viewEventLogButton(): HTMLAnchorElement {

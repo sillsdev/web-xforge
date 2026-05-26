@@ -107,7 +107,6 @@ jobs:
       paratext_resource_password_base64: ${{ secrets.paratext_resource_password_base64 }}
       paratext_resource_password_hash: ${{ secrets.paratext_resource_password_hash }}
       serval_client_secret: ${{ secrets.serval_client_secret }}
-      serval_webhook_secret: ${{ secrets.serval_webhook_secret }}
     with:
       environment: "production"
       build_commit: "${{ needs.determine_build_commit.outputs.build_commit }}"

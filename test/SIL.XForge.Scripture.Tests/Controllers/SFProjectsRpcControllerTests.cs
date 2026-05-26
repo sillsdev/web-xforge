@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using EdjCase.JsonRpc.Common;
 using EdjCase.JsonRpc.Router.Defaults;
@@ -321,20 +322,22 @@ public class SFProjectsRpcControllerTests
     public async Task Invite_Success()
     {
         var env = new TestEnvironment();
-        env.SFProjectService.InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl)
+        env.SFProjectService.InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl, CancellationToken.None)
             .Returns(Task.FromResult(true));
 
         // SUT
         var result = await env.Controller.Invite(Project01, Email, Locale, Role);
         Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
-        await env.SFProjectService.Received().InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl);
+        await env
+            .SFProjectService.Received()
+            .InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl, CancellationToken.None);
     }
 
     [Test]
     public async Task Invite_SuccessAlreadyMember()
     {
         var env = new TestEnvironment();
-        env.SFProjectService.InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl)
+        env.SFProjectService.InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl, CancellationToken.None)
             .Returns(Task.FromResult(false));
 
         // SUT
@@ -344,14 +347,16 @@ public class SFProjectsRpcControllerTests
             SFProjectsRpcController.AlreadyProjectMemberResponse,
             (result as RpcMethodSuccessResult)!.ReturnObject
         );
-        await env.SFProjectService.Received().InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl);
+        await env
+            .SFProjectService.Received()
+            .InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl, CancellationToken.None);
     }
 
     [Test]
     public async Task Invite_Forbidden()
     {
         var env = new TestEnvironment();
-        env.SFProjectService.InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl)
+        env.SFProjectService.InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl, CancellationToken.None)
             .Throws(new ForbiddenException());
 
         // SUT
@@ -365,7 +370,7 @@ public class SFProjectsRpcControllerTests
     {
         var env = new TestEnvironment();
         const string errorMessage = SFProjectService.InvalidEmailAddress;
-        env.SFProjectService.InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl)
+        env.SFProjectService.InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl, CancellationToken.None)
             .Throws(new InvalidOperationException(errorMessage));
 
         // SUT
@@ -380,7 +385,7 @@ public class SFProjectsRpcControllerTests
     {
         var env = new TestEnvironment();
         const string errorMessage = "Not Found";
-        env.SFProjectService.InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl)
+        env.SFProjectService.InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl, CancellationToken.None)
             .Throws(new DataNotFoundException(errorMessage));
 
         // SUT
@@ -394,7 +399,7 @@ public class SFProjectsRpcControllerTests
     public void Invite_UnknownError()
     {
         var env = new TestEnvironment();
-        env.SFProjectService.InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl)
+        env.SFProjectService.InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl, CancellationToken.None)
             .Throws(new ArgumentNullException());
 
         // SUT

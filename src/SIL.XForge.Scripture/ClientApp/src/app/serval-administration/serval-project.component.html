@@ -13,13 +13,13 @@
   </div>
   <div class="admin-tool-control">
     <button
-      id="run-webhook"
+      id="retrieve-pre-translations"
       mat-flat-button
       color="primary"
       (click)="retrievePreTranslationStatus()"
       [disabled]="!isOnline"
     >
-      Run webhook to update draft status
+      Force Pre-Translation Retrieval
     </button>
     <app-info
       text="This will check Serval for any draft pre-translations for this project and update the project's chapters."
