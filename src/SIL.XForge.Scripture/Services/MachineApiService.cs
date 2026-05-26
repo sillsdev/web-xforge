@@ -3,8 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -56,7 +54,6 @@ public class MachineApiService(
     ISFProjectRights projectRights,
     ISFProjectService projectService,
     IRealtimeService realtimeService,
-    IOptions<ServalOptions> servalOptions,
     IOptions<SiteOptions> siteOptions,
     ISyncService syncService,
     ITranslationBuildsClient translationBuildsClient,
@@ -85,7 +82,7 @@ public class MachineApiService(
     /// The Finishing build state.
     /// </summary>
     /// <remarks>
-    /// SF returns this state while the webhook is running and the drafts are being downloaded to SF.
+    /// SF returns this state while the pre-translation drafts are being downloaded to SF.
     /// </remarks>
     internal const string BuildStateFinishing = "FINISHING";
 
@@ -748,7 +745,13 @@ public class MachineApiService(
         return result;
     }
 
-    public async Task BuildCompletedAsync(string sfProjectId, string buildId, string buildState, Uri websiteUrl)
+    public async Task BuildCompletedAsync(
+        string sfProjectId,
+        string buildId,
+        JobState buildState,
+        Uri websiteUrl,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
@@ -781,7 +784,8 @@ public class MachineApiService(
                         sfProjectId,
                         buildId,
                         buildState,
-                        websiteUrl
+                        websiteUrl,
+                        cancellationToken
                     );
                 }
             }
@@ -875,112 +879,6 @@ public class MachineApiService(
 
         // No build was cancelled
         return null;
-    }
-
-    public async Task ExecuteWebhookAsync(string json, string signature)
-    {
-        // Generate a signature for the JSON
-        string calculatedSignature = CalculateSignature(json);
-
-        // Ensure that the signatures match
-        if (signature != calculatedSignature)
-        {
-            throw new ArgumentException(@"Signatures do not match", nameof(signature));
-        }
-
-        // Get the translation id from the JSON
-        var anonymousType = new
-        {
-            Event = string.Empty,
-            Payload = new
-            {
-                Build = new { Id = string.Empty },
-                Engine = new { Id = string.Empty },
-                BuildState = string.Empty,
-            },
-        };
-        var delivery = JsonConvert.DeserializeAnonymousType(json, anonymousType);
-
-        // Retrieve the translation engine id from the delivery
-        string translationEngineId = delivery.Payload?.Engine?.Id;
-        if (string.IsNullOrWhiteSpace(translationEngineId))
-        {
-            throw new DataNotFoundException("A translation engine id could not be retrieved from the webhook");
-        }
-
-        // Get the project id from the project secret
-        string? projectId = await projectSecrets
-            .Query()
-            .Where(p => p.ServalData.PreTranslationEngineId == translationEngineId)
-            .Select(p => p.Id)
-            .FirstOrDefaultAsync();
-
-        // Ensure we have a project id
-        if (string.IsNullOrWhiteSpace(projectId))
-        {
-            // Log the error in the console. We do not need to throw it, as the engine will be for another SF environment
-            logger.LogWarning(
-                "A project id could not be found for translation engine id {translationEngineId}",
-                translationEngineId
-            );
-            return;
-        }
-
-        // Notify any SignalR clients subscribed to the project
-        string buildId = delivery.Payload.Build.Id;
-        string buildState = delivery.Payload.BuildState;
-        await hubContext.NotifyBuildProgress(projectId, new ServalBuildState { BuildId = buildId, State = buildState });
-
-        // We only support translation build finished events for completed builds
-        if (delivery.Event != nameof(WebhookEvent.TranslationBuildFinished))
-        {
-            return;
-        }
-
-        // Job was canceled or faulted
-        if (buildState != nameof(JobState.Completed))
-        {
-            backgroundJobClient.Enqueue<IMachineApiService>(r =>
-                r.BuildCompletedAsync(projectId, buildId, buildState, httpRequestAccessor.SiteRoot)
-            );
-            return;
-        }
-
-        // Add the draftGenerationRequestId to associate with other events.
-        string? draftGenerationRequestId = await GetDraftGenerationRequestIdForBuildAsync(projectId, buildId);
-        if (!string.IsNullOrEmpty(draftGenerationRequestId))
-        {
-            Activity.Current?.AddTag(MachineProjectService.DraftGenerationRequestIdKey, draftGenerationRequestId);
-        }
-
-        // Record that the webhook was run successfully
-        var arguments = new Dictionary<string, object>
-        {
-            { "buildId", buildId },
-            { "buildState", buildState },
-            { "event", delivery.Event },
-            { "translationEngineId", delivery.Payload.Engine.Id },
-        };
-        await eventMetricService.SaveEventMetricAsync(
-            projectId,
-            userId: null,
-            nameof(ExecuteWebhookAsync),
-            EventScope.Drafting,
-            arguments,
-            result: buildId
-        );
-
-        // Run the background job
-        string jobId = backgroundJobClient.Enqueue<IMachineApiService>(r =>
-            r.RetrievePreTranslationStatusAsync(projectId, CancellationToken.None)
-        );
-
-        // Run the build completed job afterward, which will notify the user if needed
-        backgroundJobClient.ContinueJobWith<IMachineApiService>(
-            jobId,
-            r => r.BuildCompletedAsync(projectId, buildId, buildState, httpRequestAccessor.SiteRoot),
-            JobContinuationOptions.OnAnyFinishedState
-        );
     }
 
     public async Task<ServalBuildDto?> GetBuildAsync(
@@ -2142,8 +2040,9 @@ public class MachineApiService(
             }
             else
             {
-                // If the webhook is running, and no build is queued, display that as a build state to the user
-                // We don't show this if a build is queued, as we will want that build's state to be displayed
+                // If the pre-translations are being retrieved, and no build is queued,
+                // display that as a build state to the user. We don't show this if a build is queued,
+                // as we will want that build's state to be displayed.
                 if (preTranslate && queuedAt is null && projectSecret.ServalData.PreTranslationsRetrieved == false)
                 {
                     buildDto = new ServalBuildDto
@@ -2501,6 +2400,80 @@ public class MachineApiService(
             LanguageCode = languageInfo.InternalCode ?? languageCode,
             IsSupported = languageInfo.IsNative,
         };
+    }
+
+    /// <summary>
+    /// Processes a build, and retrieves the pre-translations for it
+    /// </summary>
+    /// <param name="translationEngineId">The translation engine identifier.</param>
+    /// <param name="buildId">The build identifier.</param>
+    /// <param name="buildState">The build state.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>An asynchronous task.</returns>
+    public async Task ProcessBuildAsync(
+        string translationEngineId,
+        string buildId,
+        JobState buildState,
+        CancellationToken cancellationToken
+    )
+    {
+        // Get the project id from the project secret
+        string? projectId = await projectSecrets
+            .Query()
+            .Where(p => p.ServalData.PreTranslationEngineId == translationEngineId)
+            .Select(p => p.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        // Ensure we have a project id
+        if (string.IsNullOrWhiteSpace(projectId))
+        {
+            // Log the error in the console. We do not need to throw it, as the engine will be for another SF environment
+            logger.LogWarning(
+                "A project id could not be found for translation engine id {translationEngineId}",
+                translationEngineId
+            );
+            return;
+        }
+
+        // Notify any SignalR clients subscribed to the project
+        await hubContext.NotifyBuildProgress(
+            projectId,
+            new ServalBuildState { BuildId = buildId, State = buildState.ToString() }
+        );
+
+        // Job was canceled or faulted
+        if (buildState != JobState.Completed)
+        {
+            backgroundJobClient.Enqueue<IMachineApiService>(r =>
+                r.BuildCompletedAsync(
+                    projectId,
+                    buildId,
+                    buildState,
+                    httpRequestAccessor.SiteRoot,
+                    CancellationToken.None
+                )
+            );
+            return;
+        }
+
+        // Run the background job
+        string jobId = backgroundJobClient.Enqueue<IMachineApiService>(r =>
+            r.RetrievePreTranslationStatusAsync(projectId, CancellationToken.None)
+        );
+
+        // Run the build completed job afterward, which will notify the user if needed
+        backgroundJobClient.ContinueJobWith<IMachineApiService>(
+            jobId,
+            r =>
+                r.BuildCompletedAsync(
+                    projectId,
+                    buildId,
+                    buildState,
+                    httpRequestAccessor.SiteRoot,
+                    CancellationToken.None
+                ),
+            JobContinuationOptions.OnAnyFinishedState
+        );
     }
 
     /// <summary>
@@ -2894,19 +2867,6 @@ public class MachineApiService(
     }
 
     /// <summary>
-    /// Calculate the SHA256 HMAC signature for the given JSON payload using the webhook secret.
-    /// </summary>
-    /// <param name="json">The JSON payload.</param>
-    /// <returns>The SHA256 HMAC signature.</returns>
-    /// <remarks>This method is internal so unit tests can use it.</remarks>
-    internal string CalculateSignature(string json)
-    {
-        using HMACSHA256 hmacHasher = new HMACSHA256(Encoding.UTF8.GetBytes(servalOptions.Value.WebhookSecret));
-        byte[] hash = hmacHasher.ComputeHash(Encoding.UTF8.GetBytes(json));
-        return $"sha256={Convert.ToHexString(hash)}";
-    }
-
-    /// <summary>
     /// Updates the text documents locally with the latest pre-translation drafts.
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
@@ -3109,7 +3069,7 @@ public class MachineApiService(
         {
             // We are using the TranslationBuild.Pretranslate.SourceFilters.ScriptureRange to find the
             // books selected for drafting. Some projects may have used the now obsolete field
-            // TranslationBuild.Pretranslate.ScriptureRange and will not get checked for webhook failures.
+            // TranslationBuild.Pretranslate.ScriptureRange.
             foreach (ParallelCorpusFilter source in ptc.SourceFilters?.Where(s => s.ScriptureRange is not null) ?? [])
             {
                 ParseScriptureRange(source.ScriptureRange, scriptureRangeParser, ref booksWithDrafts);

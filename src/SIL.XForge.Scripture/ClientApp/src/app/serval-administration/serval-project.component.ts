@@ -341,7 +341,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
 
   async retrievePreTranslationStatus(): Promise<void> {
     await this.servalAdministrationService.onlineRetrievePreTranslationStatus(this.activatedProjectService.projectId!);
-    this.noticeService.show('Webhook job started.');
+    this.noticeService.show('Pretranslation retrieval started.');
   }
 
   navigateToDraftJobs(): void {

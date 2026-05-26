@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using MailKit.Net.Smtp;
 using MailKit.Security;
@@ -11,7 +12,7 @@ namespace SIL.XForge.Services;
 
 public class EmailService(IOptions<SiteOptions> options, ILogger<EmailService> logger) : IEmailService
 {
-    public async Task SendEmailAsync(string email, string subject, string body)
+    public async Task SendEmailAsync(string email, string subject, string body, CancellationToken cancellationToken)
     {
         SiteOptions siteOptions = options.Value;
         string fromAddress = siteOptions.EmailFromAddress;
@@ -30,10 +31,11 @@ public class EmailService(IOptions<SiteOptions> options, ILogger<EmailService> l
             await client.ConnectAsync(
                 siteOptions.SmtpServer,
                 Convert.ToInt32(siteOptions.PortNumber),
-                SecureSocketOptions.None
+                SecureSocketOptions.None,
+                cancellationToken
             );
-            await client.SendAsync(mimeMessage);
-            await client.DisconnectAsync(true);
+            await client.SendAsync(mimeMessage, cancellationToken);
+            await client.DisconnectAsync(true, cancellationToken);
         }
 
         logger.LogInformation("Email Sent\n{mimeMessage}", mimeMessage.ToString());
