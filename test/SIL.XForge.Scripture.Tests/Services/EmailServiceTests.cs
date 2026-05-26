@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using NSubstitute;
@@ -16,7 +17,7 @@ public class EmailServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        await env.Service.SendEmailAsync("test@example.com", "Subject", "Body");
+        await env.Service.SendEmailAsync("test@example.com", "Subject", "Body", CancellationToken.None);
         env.MockLogger.AssertHasEvent(e => e.Message!.Contains("Email Sent"));
     }
 

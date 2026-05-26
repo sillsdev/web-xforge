@@ -26,7 +26,13 @@ public interface IMachineApiService
     );
 
     [LogEventMetric(EventScope.Drafting, projectId: nameof(sfProjectId))]
-    Task BuildCompletedAsync(string sfProjectId, string buildId, string buildState, Uri websiteUrl);
+    Task BuildCompletedAsync(
+        string sfProjectId,
+        string buildId,
+        JobState buildState,
+        Uri websiteUrl,
+        CancellationToken cancellationToken
+    );
 
     [LogEventMetric(EventScope.Drafting, nameof(curUserId), nameof(sfProjectId), captureReturnValue: true)]
     Task<string?> CancelPreTranslationBuildAsync(
@@ -34,7 +40,6 @@ public interface IMachineApiService
         string sfProjectId,
         CancellationToken cancellationToken
     );
-    Task ExecuteWebhookAsync(string json, string signature);
     Task<ServalBuildDto?> GetBuildAsync(
         string curUserId,
         string sfProjectId,
@@ -159,6 +164,13 @@ public interface IMachineApiService
         CancellationToken cancellationToken
     );
     Task<LanguageDto> IsLanguageSupportedAsync(string languageCode, CancellationToken cancellationToken);
+
+    Task ProcessBuildAsync(
+        string translationEngineId,
+        string buildId,
+        JobState buildState,
+        CancellationToken cancellationToken
+    );
 
     [Mutex]
     [LogEventMetric(EventScope.Drafting, projectId: nameof(sfProjectId), captureReturnValue: true)]
