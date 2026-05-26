@@ -29,7 +29,8 @@ public interface ISFProjectService : IProjectService
         string email,
         string locale,
         string role,
-        Uri websiteUrl
+        Uri websiteUrl,
+        CancellationToken cancellationToken
     );
     Task<string> GetLinkSharingKeyAsync(
         string curUserId,

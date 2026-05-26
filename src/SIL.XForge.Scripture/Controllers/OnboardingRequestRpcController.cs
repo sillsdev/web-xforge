@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
@@ -136,7 +137,7 @@ public class OnboardingRequestRpcController(
                 ";
             foreach (string email in adminEmails)
             {
-                await scopedEmailService.SendEmailAsync(email, subject, body);
+                await scopedEmailService.SendEmailAsync(email, subject, body, CancellationToken.None);
             }
         }
         catch (Exception exception)

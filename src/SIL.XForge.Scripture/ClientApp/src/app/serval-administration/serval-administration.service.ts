@@ -38,7 +38,6 @@ export class ServalAdministrationService extends ProjectService<SFProjectProfile
 
   /**
    * Starts a job to retrieve the pre-translation status for a project.
-   * This is the equivalent of running the webhook.
    * @param projectId The Scripture Forge project identifier.
    * @returns An promise.
    */

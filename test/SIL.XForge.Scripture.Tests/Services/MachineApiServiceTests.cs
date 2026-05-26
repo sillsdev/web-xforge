@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,7 +11,6 @@ using Hangfire.Common;
 using Hangfire.States;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -35,7 +33,6 @@ using SIL.XForge.Scripture.Realtime;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
 using Options = Microsoft.Extensions.Options.Options;
-using ServalOptions = SIL.XForge.Configuration.ServalOptions;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -59,12 +56,6 @@ public class MachineApiServiceTests
     private const string TargetSegment = "targetSegment";
     private const string HangfireJobId = "jobId";
     private const string Data01 = "data01";
-
-    private readonly string JsonPayload =
-        """{"event":"TranslationBuildFinished","payload":{"build":{"id":"ServalBuildId01","url":"/api/v1/translation/engines/translationEngine01/builds/ServalBuildId01"},"engine":{"id":"translationEngine01","url":"/api/v1/translation/engines/translationEngine01"},"buildState":"Completed","dateFinished":"2024-03-12T21:14:10.789Z"}}""".Replace(
-            "ServalBuildId01",
-            ServalBuildId01
-        );
 
     private const string TestUsfm = "\\c 1 \\v 1 Verse 1";
     private const string TestUsx =
@@ -473,8 +464,9 @@ public class MachineApiServiceTests
         await env.Service.BuildCompletedAsync(
             Project01,
             ServalBuildId01,
-            nameof(JobState.Completed),
-            env.HttpRequestAccessor.SiteRoot
+            JobState.Completed,
+            env.HttpRequestAccessor.SiteRoot,
+            CancellationToken.None
         );
         env.MockLogger.AssertHasEvent(logEvent => logEvent.LogLevel == LogLevel.Information);
     }
@@ -492,8 +484,9 @@ public class MachineApiServiceTests
         await env.Service.BuildCompletedAsync(
             Project01,
             ServalBuildId01,
-            nameof(JobState.Completed),
-            env.HttpRequestAccessor.SiteRoot
+            JobState.Completed,
+            env.HttpRequestAccessor.SiteRoot,
+            CancellationToken.None
         );
         env.MockLogger.AssertHasEvent(logEvent => logEvent.LogLevel == LogLevel.Information);
     }
@@ -512,8 +505,9 @@ public class MachineApiServiceTests
         await env.Service.BuildCompletedAsync(
             Project01,
             ServalBuildId01,
-            nameof(JobState.Completed),
-            env.HttpRequestAccessor.SiteRoot
+            JobState.Completed,
+            env.HttpRequestAccessor.SiteRoot,
+            CancellationToken.None
         );
         env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == ex);
         env.ExceptionHandler.Received().ReportException(ex);
@@ -532,8 +526,9 @@ public class MachineApiServiceTests
         await env.Service.BuildCompletedAsync(
             Project01,
             ServalBuildId01,
-            nameof(JobState.Completed),
-            env.HttpRequestAccessor.SiteRoot
+            JobState.Completed,
+            env.HttpRequestAccessor.SiteRoot,
+            CancellationToken.None
         );
         await env
             .MachineProjectService.Received()
@@ -541,8 +536,9 @@ public class MachineApiServiceTests
                 User01,
                 Project01,
                 ServalBuildId01,
-                nameof(JobState.Completed),
-                env.HttpRequestAccessor.SiteRoot
+                JobState.Completed,
+                env.HttpRequestAccessor.SiteRoot,
+                CancellationToken.None
             );
     }
 
@@ -559,8 +555,9 @@ public class MachineApiServiceTests
         await env.Service.BuildCompletedAsync(
             Project01,
             ServalBuildId01,
-            nameof(JobState.Completed),
-            env.HttpRequestAccessor.SiteRoot
+            JobState.Completed,
+            env.HttpRequestAccessor.SiteRoot,
+            CancellationToken.None
         );
         await env
             .MachineProjectService.DidNotReceive()
@@ -568,8 +565,9 @@ public class MachineApiServiceTests
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<Uri>()
+                Arg.Any<JobState>(),
+                Arg.Any<Uri>(),
+                CancellationToken.None
             );
     }
 
@@ -591,8 +589,9 @@ public class MachineApiServiceTests
             await env.Service.BuildCompletedAsync(
                 Project01,
                 ServalBuildId01,
-                nameof(JobState.Completed),
-                env.HttpRequestAccessor.SiteRoot
+                JobState.Completed,
+                env.HttpRequestAccessor.SiteRoot,
+                CancellationToken.None
             );
 
             activity = Activity.Current;
@@ -664,7 +663,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.ProjectSecrets.UpdateAsync(Project01, op => op.Unset(p => p.ServalData.PreTranslationEngineId));
+        await env.ProjectSecrets.UpdateAsync(Project01, op => op.Unset(p => p.ServalData!.PreTranslationEngineId));
         await env.QueueBuildAsync(Project01, preTranslate: true, dateTime: DateTime.UtcNow);
 
         // SUT
@@ -686,7 +685,7 @@ public class MachineApiServiceTests
         env.ConfigureTranslationBuild();
         env.SetEmptyDraftGenerationMetricAssociations();
         // SUT
-        string actual = await env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None);
+        string? actual = await env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None);
         Assert.AreEqual(ServalBuildId01, actual);
 
         await env.TranslationEnginesClient.Received(1).CancelBuildAsync(TranslationEngine01, CancellationToken.None);
@@ -708,145 +707,16 @@ public class MachineApiServiceTests
         using (new Activity("TestActivity").Start())
         {
             // SUT
-            string actual = await env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None);
+            string? actual = await env.Service.CancelPreTranslationBuildAsync(
+                User01,
+                Project01,
+                CancellationToken.None
+            );
 
             activity = Activity.Current;
 
             Assert.AreEqual(ServalBuildId01, actual);
 
-            // Verify the Activity has the draftGenerationRequestId tag
-            Assert.IsNotNull(activity, "Activity.Current should be set during execution");
-            Assert.IsTrue(
-                activity!.TagObjects.Any(t =>
-                    t.Key == MachineProjectService.DraftGenerationRequestIdKey
-                    && t.Value?.ToString() == draftGenerationRequestId
-                ),
-                "Activity should contain draftGenerationRequestId tag with correct value"
-            );
-        }
-    }
-
-    [Test]
-    public void CalculateSignature_Success()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        const string expected = "sha256=8C8E8C11165F748AFC6621F1DB213F79CE52759757D9BD6382C94E92C5B31063";
-
-        const string ExamplePayload =
-            """{"event":"TranslationBuildFinished","payload":{"build":{"id":"65f0c455682bb17bc4066917","url":"/api/v1/translation/engines/translationEngine01/builds/65f0c455682bb17bc4066917"},"engine":{"id":"translationEngine01","url":"/api/v1/translation/engines/translationEngine01"},"buildState":"Completed","dateFinished":"2024-03-12T21:14:10.789Z"}}""";
-
-        // SUT
-        string actual = env.Service.CalculateSignature(ExamplePayload);
-        Assert.AreEqual(expected, actual);
-    }
-
-    [Test]
-    public void ExecuteWebhook_InvalidSignature()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        string signature = env.Service.CalculateSignature("{}");
-
-        // SUT
-        Assert.ThrowsAsync<ArgumentException>(() => env.Service.ExecuteWebhookAsync(JsonPayload, signature));
-    }
-
-    [Test]
-    public async Task ExecuteWebhook_MissingProjectId()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // Change payload.engine.id to "invalid_translation_id"
-        JObject payload = JObject.Parse(JsonPayload);
-        payload["payload"]!["engine"]!["id"] = "invalid_translation_id";
-        string json = payload.ToString();
-        string signature = env.Service.CalculateSignature(json);
-
-        // SUT
-        await env.Service.ExecuteWebhookAsync(json, signature);
-        env.MockLogger.AssertHasEvent(logEvent => logEvent.LogLevel == LogLevel.Warning);
-    }
-
-    [Test]
-    public void ExecuteWebhook_MissingTranslationEngineId()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // Remove payload.engine
-        JObject payload = JObject.Parse(JsonPayload);
-        ((JObject)payload["payload"])!.Remove("engine");
-        string json = payload.ToString();
-        string signature = env.Service.CalculateSignature(json);
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.ExecuteWebhookAsync(json, signature));
-    }
-
-    [Test]
-    public async Task ExecuteWebhook_UnsupportedBuildState()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // Change payload.buildState to "Faulted"
-        JObject payload = JObject.Parse(JsonPayload);
-        payload["payload"]!["buildState"] = "Faulted";
-        string json = payload.ToString();
-        string signature = env.Service.CalculateSignature(json);
-
-        // SUT
-        await env.Service.ExecuteWebhookAsync(json, signature);
-        // One job: BuildCompletedAsync
-        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
-    }
-
-    [Test]
-    public async Task ExecuteWebhook_UnsupportedEvent()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        JObject payload = JObject.Parse(JsonPayload);
-
-        // Change event to "TranslationBuildStarted"
-        payload["event"] = "TranslationBuildStarted";
-        string json = payload.ToString();
-        string signature = env.Service.CalculateSignature(json);
-
-        // SUT
-        await env.Service.ExecuteWebhookAsync(json, signature);
-        env.BackgroundJobClient.DidNotReceive().Create(Arg.Any<Job>(), Arg.Any<IState>());
-    }
-
-    [Test]
-    public async Task ExecuteWebhook_Success()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        string signature = env.Service.CalculateSignature(JsonPayload);
-        env.SetEmptyDraftGenerationMetricAssociations();
-        // SUT
-        await env.Service.ExecuteWebhookAsync(JsonPayload, signature);
-        // Two jobs: BuildCompletedAsync & RetrievePreTranslationStatusAsync
-        env.BackgroundJobClient.Received(2).Create(Arg.Any<Job>(), Arg.Any<IState>());
-    }
-
-    [Test]
-    public async Task ExecuteWebhook_RecordsDraftGenerationRequestId()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        string signature = env.Service.CalculateSignature(JsonPayload);
-        const string draftGenerationRequestId = "3456";
-        env.SetDraftGenerationMetricAssociation(draftGenerationRequestId);
-        Activity? activity = null;
-        using (new Activity("TestActivity").Start())
-        {
-            // SUT
-            await env.Service.ExecuteWebhookAsync(JsonPayload, signature);
-            activity = Activity.Current;
             // Verify the Activity has the draftGenerationRequestId tag
             Assert.IsNotNull(activity, "Activity.Current should be set during execution");
             Assert.IsTrue(
@@ -1011,10 +881,10 @@ public class MachineApiServiceTests
         );
 
         TestEnvironment.AssertCoreBuildProperties(translationBuild, actual);
-        Assert.NotNull(actual.AdditionalInfo);
+        Assert.NotNull(actual?.AdditionalInfo);
         Assert.AreEqual(
             new ProjectScriptureRange { ProjectId = Project03, ScriptureRange = "GEN" },
-            actual.AdditionalInfo.TranslationScriptureRanges.Single()
+            actual!.AdditionalInfo!.TranslationScriptureRanges.Single()
         );
         Assert.AreEqual(
             new ProjectScriptureRange { ProjectId = Project02, ScriptureRange = "EXO" },
@@ -1127,13 +997,13 @@ public class MachineApiServiceTests
         Assert.AreEqual(engineId, actual.AdditionalInfo.TranslationEngineId);
         Assert.IsNotNull(actual.AdditionalInfo.CorporaIds);
         Assert.AreEqual(4, actual.AdditionalInfo.CorporaIds!.Count());
-        Assert.AreEqual(corpusId1, actual.AdditionalInfo.CorporaIds.ElementAt(0));
-        Assert.AreEqual(corpusId2, actual.AdditionalInfo.CorporaIds.ElementAt(1));
-        Assert.AreEqual(corpusId3, actual.AdditionalInfo.CorporaIds.ElementAt(2));
-        Assert.AreEqual(corpusId4, actual.AdditionalInfo.CorporaIds.ElementAt(3));
+        Assert.AreEqual(corpusId1, actual.AdditionalInfo.CorporaIds!.ElementAt(0));
+        Assert.AreEqual(corpusId2, actual.AdditionalInfo.CorporaIds!.ElementAt(1));
+        Assert.AreEqual(corpusId3, actual.AdditionalInfo.CorporaIds!.ElementAt(2));
+        Assert.AreEqual(corpusId4, actual.AdditionalInfo.CorporaIds!.ElementAt(3));
         Assert.IsNotNull(actual.AdditionalInfo.ParallelCorporaIds);
         Assert.AreEqual(ParallelCorpusId01, actual.AdditionalInfo.ParallelCorporaIds!.ElementAt(0));
-        Assert.AreEqual(parallelCorpusId2, actual.AdditionalInfo.ParallelCorporaIds.ElementAt(1));
+        Assert.AreEqual(parallelCorpusId2, actual.AdditionalInfo.ParallelCorporaIds!.ElementAt(1));
         Assert.That(actual.AdditionalInfo.CanDenormalizeQuotes, Is.True);
     }
 
@@ -1234,7 +1104,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         SFProjectSecret project02Secret = env.ProjectSecrets.Get(Project02);
-        project02Secret.ServalData.PreTranslationEngineId = "differentEngine";
+        project02Secret.ServalData!.PreTranslationEngineId = "differentEngine";
         env.ProjectSecrets.Replace(project02Secret);
         SFProject project01 = env.Projects.Get(Project01);
         project01.Name = "Project 1";
@@ -1417,8 +1287,8 @@ public class MachineApiServiceTests
         env.SetEmptyDraftGenerationMetricAssociations();
 
         Assert.GreaterOrEqual(
-            (await env.ProjectSecrets.GetAllAsync()).Count(
-                (SFProjectSecret ps) => ps.ServalData?.PreTranslationEngineId == TranslationEngine01
+            (await env.ProjectSecrets.GetAllAsync()).Count(ps =>
+                ps.ServalData?.PreTranslationEngineId == TranslationEngine01
             ),
             2,
             "Invalid test setup."
@@ -1479,7 +1349,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         SFProjectSecret project02Secret = env.ProjectSecrets.Get(Project02);
-        project02Secret.ServalData.PreTranslationEngineId = "differentEngine";
+        project02Secret.ServalData!.PreTranslationEngineId = "differentEngine";
         env.ProjectSecrets.Replace(project02Secret);
 
         // Configure project names for source projects
@@ -1626,7 +1496,7 @@ public class MachineApiServiceTests
                                 EventType = nameof(MachineApiService.StartPreTranslationBuildAsync),
                                 ProjectId = Project01,
                                 UserId = User01,
-                                Tags = new Dictionary<string, BsonValue?>
+                                Tags = new Dictionary<string, BsonValue>
                                 {
                                     { MachineProjectService.DraftGenerationRequestIdKey, "orphan-request-1" },
                                 },
@@ -1683,7 +1553,7 @@ public class MachineApiServiceTests
                                 EventType = nameof(MachineApiService.StartPreTranslationBuildAsync),
                                 ProjectId = null,
                                 UserId = User01,
-                                Tags = new Dictionary<string, BsonValue?>
+                                Tags = new Dictionary<string, BsonValue>
                                 {
                                     { MachineProjectService.DraftGenerationRequestIdKey, "null-project-request" },
                                 },
@@ -1944,14 +1814,14 @@ public class MachineApiServiceTests
         Assert.NotNull(builds[0].AdditionalInfo);
         Assert.AreEqual(
             translationScriptureRange,
-            builds[0].AdditionalInfo.TranslationScriptureRanges.Single().ScriptureRange
+            builds[0].AdditionalInfo!.TranslationScriptureRanges.Single().ScriptureRange
         );
         Assert.AreEqual(
             trainingScriptureRange,
-            builds[0].AdditionalInfo.TrainingScriptureRanges.Single().ScriptureRange
+            builds[0].AdditionalInfo!.TrainingScriptureRanges.Single().ScriptureRange
         );
-        Assert.AreEqual(TrainingDataId01, builds[0].AdditionalInfo.TrainingDataFileIds.Single());
-        Assert.That(builds[0].AdditionalInfo.CanDenormalizeQuotes, Is.True);
+        Assert.AreEqual(TrainingDataId01, builds[0].AdditionalInfo!.TrainingDataFileIds.Single());
+        Assert.That(builds[0].AdditionalInfo!.CanDenormalizeQuotes, Is.True);
     }
 
     [Test]
@@ -2186,10 +2056,10 @@ public class MachineApiServiceTests
         );
 
         TestEnvironment.AssertCoreBuildProperties(translationBuild, actual);
-        Assert.NotNull(actual.AdditionalInfo);
+        Assert.NotNull(actual?.AdditionalInfo);
         Assert.AreEqual(
             new ProjectScriptureRange { ScriptureRange = "GEN" },
-            actual.AdditionalInfo.TranslationScriptureRanges.Single()
+            actual!.AdditionalInfo!.TranslationScriptureRanges.Single()
         );
         Assert.AreEqual(
             new ProjectScriptureRange { ScriptureRange = "EXO" },
@@ -2685,7 +2555,7 @@ public class MachineApiServiceTests
         );
 
         Assert.IsNotNull(actual);
-        Assert.AreEqual(MachineApi.GetBuildHref(Project01, ServalBuildId02), actual.Href);
+        Assert.AreEqual(MachineApi.GetBuildHref(Project01, ServalBuildId02), actual!.Href);
         Assert.AreEqual(ServalBuildId02, actual.Id.Split('.')[1]);
     }
 
@@ -3994,7 +3864,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetQueuedStateAsync_WebhookRunning()
+    public async Task GetQueuedStateAsync_PreTranslationsRetrieving()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -4016,6 +3886,58 @@ public class MachineApiServiceTests
         );
         Assert.AreEqual(MachineApiService.BuildStateFinishing, actual?.State);
         Assert.IsFalse(string.IsNullOrWhiteSpace(actual?.Message));
+    }
+
+    [Test]
+    public async Task ProcessBuildAsync_MissingProjectId()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.ProcessBuildAsync(
+            "invalid_translation_id",
+            ServalBuildId01,
+            JobState.Completed,
+            CancellationToken.None
+        );
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.LogLevel == LogLevel.Warning);
+    }
+
+    [Test]
+    public async Task ProcessBuildAsync_Canceled()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.ProcessBuildAsync(
+            TranslationEngine01,
+            ServalBuildId01,
+            JobState.Canceled,
+            CancellationToken.None
+        );
+
+        // One job: BuildCompletedAsync
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+    }
+
+    [Test]
+    public async Task ProcessBuildAsync_Completed()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.ProcessBuildAsync(
+            TranslationEngine01,
+            ServalBuildId01,
+            JobState.Completed,
+            CancellationToken.None
+        );
+
+        // Two jobs: BuildCompletedAsync & RetrievePreTranslationStatusAsync
+        env.BackgroundJobClient.Received(2).Create(Arg.Any<Job>(), Arg.Any<IState>());
     }
 
     [Test]
@@ -4062,7 +3984,7 @@ public class MachineApiServiceTests
         env.Service.Configure()
             .UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None)
             .Returns(Task.CompletedTask);
-        await env.ProjectSecrets.UpdateAsync(Project01, u => u.Set(p => p.ServalData.PreTranslationsRetrieved, false));
+        await env.ProjectSecrets.UpdateAsync(Project01, u => u.Set(p => p.ServalData!.PreTranslationsRetrieved, false));
 
         // SUT
         await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
@@ -4178,7 +4100,7 @@ public class MachineApiServiceTests
         env.Service.Configure()
             .UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None)
             .Returns(Task.CompletedTask);
-        await env.ProjectSecrets.UpdateAsync(Project01, u => u.Set(p => p.ServalData.PreTranslationsRetrieved, true));
+        await env.ProjectSecrets.UpdateAsync(Project01, u => u.Set(p => p.ServalData!.PreTranslationsRetrieved, true));
 
         // SUT
         await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
@@ -5342,7 +5264,6 @@ public class MachineApiServiceTests
             RealtimeService.AddRepository("sf_projects", OTType.Json0, Projects);
             RealtimeService.AddRepository("text_documents", OTType.Json0, TextDocuments);
             RealtimeService.AddRepository("texts", OTType.RichText, Texts);
-            ServalOptions = Options.Create(new ServalOptions { WebhookSecret = "this_is_a_secret" });
             var siteOptions = Options.Create(new SiteOptions { IssuesEmail = "help@scriptureforge.org" });
             SyncService = Substitute.For<ISyncService>();
             SyncService.SyncAsync(Arg.Any<SyncConfig>()).Returns(Task.FromResult(HangfireJobId));
@@ -5384,7 +5305,6 @@ public class MachineApiServiceTests
                 ProjectRights,
                 ProjectService,
                 RealtimeService,
-                ServalOptions,
                 siteOptions,
                 SyncService,
                 TranslationBuildsClient,
@@ -5411,7 +5331,6 @@ public class MachineApiServiceTests
         public ISFProjectService ProjectService { get; }
         public SFMemoryRealtimeService RealtimeService { get; }
         public MachineApiService Service { get; }
-        public IOptions<ServalOptions> ServalOptions { get; }
         public ISyncService SyncService { get; }
         public ITranslationBuildsClient TranslationBuildsClient { get; }
         public ITranslationEnginesClient TranslationEnginesClient { get; }
@@ -5795,29 +5714,29 @@ public class MachineApiServiceTests
                 {
                     if (preTranslate)
                     {
-                        u.Set(p => p.ServalData.PreTranslationJobId, HangfireJobId);
-                        u.Set(p => p.ServalData.PreTranslationQueuedAt, dateTime);
-                        u.Set(p => p.ServalData.PreTranslationsRetrieved, preTranslationsRetrieved);
+                        u.Set(p => p.ServalData!.PreTranslationJobId, HangfireJobId);
+                        u.Set(p => p.ServalData!.PreTranslationQueuedAt, dateTime);
+                        u.Set(p => p.ServalData!.PreTranslationsRetrieved, preTranslationsRetrieved);
                         if (string.IsNullOrWhiteSpace(errorMessage))
                         {
-                            u.Unset(p => p.ServalData.PreTranslationErrorMessage);
+                            u.Unset(p => p.ServalData!.PreTranslationErrorMessage);
                         }
                         else
                         {
-                            u.Set(p => p.ServalData.PreTranslationErrorMessage, errorMessage);
+                            u.Set(p => p.ServalData!.PreTranslationErrorMessage, errorMessage);
                         }
                     }
                     else
                     {
-                        u.Set(p => p.ServalData.TranslationJobId, HangfireJobId);
-                        u.Set(p => p.ServalData.TranslationQueuedAt, dateTime);
+                        u.Set(p => p.ServalData!.TranslationJobId, HangfireJobId);
+                        u.Set(p => p.ServalData!.TranslationQueuedAt, dateTime);
                         if (string.IsNullOrWhiteSpace(errorMessage))
                         {
-                            u.Unset(p => p.ServalData.TranslationErrorMessage);
+                            u.Unset(p => p.ServalData!.TranslationErrorMessage);
                         }
                         else
                         {
-                            u.Set(p => p.ServalData.TranslationErrorMessage, errorMessage);
+                            u.Set(p => p.ServalData!.TranslationErrorMessage, errorMessage);
                         }
                     }
                 }
@@ -5996,7 +5915,7 @@ public class MachineApiServiceTests
                                     EventType = nameof(Services.MachineProjectService.BuildProjectAsync),
                                     ProjectId = Project01,
                                     Result = ServalBuildId01,
-                                    Tags = new Dictionary<string, BsonValue?>
+                                    Tags = new Dictionary<string, BsonValue>
                                     {
                                         {
                                             Services.MachineProjectService.DraftGenerationRequestIdKey,

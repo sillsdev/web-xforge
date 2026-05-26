@@ -1,14 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Net.Http;
 using System.Security;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.FeatureManagement;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -27,8 +24,7 @@ namespace SIL.XForge.Scripture.Controllers;
 public class AnonymousController(
     IAnonymousService anonymousService,
     IExceptionHandler exceptionHandler,
-    IFeatureManager featureManager,
-    IMachineApiService machineApiService
+    IFeatureManager featureManager
 ) : ControllerBase
 {
     /// <summary>
@@ -139,40 +135,6 @@ public class AnonymousController(
         }
         catch (SecurityException e)
         {
-            exceptionHandler.ReportException(e);
-            return NoContent();
-        }
-    }
-
-    /// <summary>
-    /// Executes a webhook callback.
-    /// </summary>
-    /// <param name="_">The json data containing the event and the payload.</param>
-    /// <param name="signature">The SHA256 signature for the payload.</param>
-    /// <returns><c>true</c> on success.</returns>
-    /// <response code="200">The webhook was executed.</response>
-    /// <response code="204">There was a problem executing the webhook.</response>
-    /// <remarks>Serval requires a Success code, even on failure, so we return </remarks>
-    [HttpPost("webhook")]
-    public async Task<ActionResult<bool>> Webhook(
-        [FromHeader(Name = "X-Hub-Signature-256")] string signature,
-        [BindNever, FromBody] object? _ = null
-    )
-    {
-        // NOTE: The discard parameter is so that Swagger can allow us to enter a Request body, and so we can read the
-        // Request.Body stream in this action. If we did not read the body in this way and set BindNever, we would not
-        // be able to get the JSON data as sent by Serval from the Request Body, and validate the HMAC signature.
-        try
-        {
-            // Get the json as a raw string form the body so that we can validate the signature
-            using var reader = new StreamReader(Request.Body, Encoding.UTF8);
-            string json = await reader.ReadToEndAsync();
-            await machineApiService.ExecuteWebhookAsync(json, signature);
-            return Ok(true);
-        }
-        catch (Exception e)
-        {
-            // Report the exception, but do not throw it as Serval requires a success code
             exceptionHandler.ReportException(e);
             return NoContent();
         }
