@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Script to find folders containing Settings.xml files and listing the TranslationInfo value
+# Usage: find-project-types <directory>
+
+if [[ $# -lt 1 ]]; then
+    echo "Usage: $0 <directory>"
+    exit 1
+fi
+
+DIRECTORY="$1"
+SEARCH_STRING="<TranslationInfo>"
+COUNT=0
+
+if [[ ! -d "$DIRECTORY" ]]; then
+    echo "Error: Directory '$DIRECTORY' does not exist"
+    exit 1
+fi
+
+for folder in "$DIRECTORY"/*; do
+    if [[ -d "$folder" ]]; then
+        SETTINGS_FILE="$folder/target/Settings.xml"
+        if [[ -f "$SETTINGS_FILE" ]]; then
+            GREP_RESULT=$(grep "$SEARCH_STRING" "$SETTINGS_FILE" 2>/dev/null)
+            if [[ -n "$GREP_RESULT" ]]; then
+                echo "$GREP_RESULT"
+                ((COUNT++))
+            fi
+        fi
+    fi
+done
+
+echo "Total projects: $COUNT"
