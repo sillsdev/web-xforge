@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { BuildDto } from '../../machine-api/build-dto';
 
 // Corresponds to Serval 1.11.0 release
@@ -10,14 +9,10 @@ export const FORMATTING_OPTIONS_SUPPORTED_DATE: Date = new Date('2025-09-25T00:0
   providedIn: 'root'
 })
 export class DraftOptionsService {
-  constructor(
-    private readonly activatedProjectService: ActivatedProjectService,
-    private readonly featureFlags: FeatureFlagService
-  ) {}
+  constructor(private readonly activatedProjectService: ActivatedProjectService) {}
 
   areFormattingOptionsSelected(): boolean {
     return (
-      this.featureFlags.usfmFormat.enabled &&
       this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.usfmConfig?.paragraphFormat != null &&
       this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.usfmConfig?.quoteFormat != null
     );
@@ -27,12 +22,12 @@ export class DraftOptionsService {
     const usfmConfig = this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.usfmConfig;
     const optionsSelected = usfmConfig?.paragraphFormat != null && usfmConfig?.quoteFormat != null;
 
-    const available = this.featureFlags.usfmFormat.enabled && this.areFormattingOptionsSupportedForBuild(draftBuild);
+    const available = this.areFormattingOptionsSupportedForBuild(draftBuild);
     return available && !optionsSelected;
   }
 
   areFormattingOptionsSupportedForBuild(entry: BuildDto | undefined): boolean {
-    return this.featureFlags.usfmFormat.enabled && entry?.additionalInfo?.dateFinished != null
+    return entry?.additionalInfo?.dateFinished != null
       ? new Date(entry.additionalInfo.dateFinished) > FORMATTING_OPTIONS_SUPPORTED_DATE
       : false;
   }

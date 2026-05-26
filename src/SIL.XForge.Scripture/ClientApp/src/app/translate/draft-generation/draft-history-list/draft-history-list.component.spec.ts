@@ -5,7 +5,6 @@ import { provideRouter } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
@@ -24,7 +23,6 @@ const mockedI18nService = mock(I18nService);
 const mockedProjectNotificationService = mock(ProjectNotificationService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
-const mockedFeatureFlagsService = mock(FeatureFlagService);
 
 describe('DraftHistoryListComponent', () => {
   configureTestingModule(() => ({
@@ -39,8 +37,7 @@ describe('DraftHistoryListComponent', () => {
       { provide: I18nService, useMock: mockedI18nService },
       { provide: ProjectNotificationService, useMock: mockedProjectNotificationService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
-      { provide: UserService, useMock: mockedUserService },
-      { provide: FeatureFlagService, useMock: mockedFeatureFlagsService }
+      { provide: UserService, useMock: mockedUserService }
     ]
   }));
 
@@ -229,7 +226,6 @@ describe('DraftHistoryListComponent', () => {
       when(mockedDraftGenerationService.getBuildHistory(projectId)).thenReturn(new BehaviorSubject(buildHistory));
       when(mockedDraftGenerationService.draftHistoryCutOffDate).thenReturn(new Date('2025-06-04T00:00:00.000Z'));
       when(mockedI18nService.formatDate(anything())).thenCall(date => date.toLocaleString(['en']));
-      when(mockedFeatureFlagsService.usfmFormat).thenReturn(createTestFeatureFlag(true));
 
       this.fixture = TestBed.createComponent(DraftHistoryListComponent);
       this.component = this.fixture.componentInstance;

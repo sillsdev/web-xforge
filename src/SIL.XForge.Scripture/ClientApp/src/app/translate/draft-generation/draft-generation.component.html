@@ -144,14 +144,10 @@
     } @else {
       @if (!draftEnabled) {
         <section data-test-id="approval-needed">
-          @if (featureFlags.inAppDraftSignupForm.enabled && !onboardingRequest) {
+          @if (!onboardingRequest) {
             <button mat-flat-button color="primary" [routerLink]="['signup']">
               {{ t("sign_up_for_drafting") }}
             </button>
-          } @else if (!onboardingRequest) {
-            <a [href]="signupFormUrl" mat-flat-button color="primary" target="_blank" rel="noopener noreferrer">
-              {{ t("sign_up_for_drafting") }}
-            </a>
           } @else {
             <app-notice type="primary" icon="checkmark" mode="fill-dark">
               <p>
