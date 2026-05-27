@@ -2659,7 +2659,7 @@ public class MachineApiServiceTests
         );
         Assert.AreEqual(expected.Ops[0], actual["1"].Data.Ops[0]);
         Assert.AreEqual(TextData.GetTextDocId(Project01, "MAT", 1), actual["1"].Id);
-        Attempt<TextDocument> attempt = await env
+        Attempt<TextDocument?> attempt = await env
             .RealtimeService.GetRepository<TextDocument>()
             .TryGetAsync(actual["1"].Id);
         Assert.False(attempt.Success);
@@ -2697,7 +2697,7 @@ public class MachineApiServiceTests
         );
         Assert.AreEqual(expected.Ops[0], actual["1"].Data.Ops[0]);
         Assert.AreEqual(TextData.GetTextDocId(Project01, "MAT", 1), actual["1"].Id);
-        Attempt<TextDocument> attempt = await env
+        Attempt<TextDocument?> attempt = await env
             .RealtimeService.GetRepository<TextDocument>()
             .TryGetAsync(actual["1"].Id);
         Assert.False(attempt.Success);

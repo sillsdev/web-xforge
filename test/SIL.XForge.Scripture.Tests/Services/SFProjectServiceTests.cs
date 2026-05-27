@@ -5966,6 +5966,7 @@ public class SFProjectServiceTests
                         },
                     ],
                 },
+                new SFProjectSecret { Id = SourceOnly },
             ]);
             Logger = new MockLogger<SFProjectService>();
             MachineProjectService = Substitute.For<IMachineProjectService>();
