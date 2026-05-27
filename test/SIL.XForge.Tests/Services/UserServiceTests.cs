@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,7 +39,7 @@ public class UserServiceTests
             "incoming older refresh token is ignored"
         );
         env.Logger.AssertHasEvent(
-            (LogEvent ev) => ev.Message.Contains("earlier than") && ev.Message.Contains("ignoring"),
+            (LogEvent ev) => ev.Message!.Contains("earlier than") && ev.Message.Contains("ignoring"),
             "but we make a note of this potentially problematic situation"
         );
     }
@@ -423,6 +422,7 @@ public class UserServiceTests
                             RefreshToken = "refresh_token",
                         },
                     },
+                    new UserSecret { Id = "user02" },
                 }
             );
 
@@ -465,28 +465,6 @@ public class UserServiceTests
         public User GetUser(string id) => RealtimeService.GetRepository<User>().Get(id);
 
         public bool ContainsUser(string id) => RealtimeService.GetRepository<User>().Contains(id);
-
-        public static JObject CreateSMSUserProfile(string userId, string authId, RoleType roleType = RoleType.None) =>
-            new JObject(
-                new JProperty("user_id", authId),
-                new JProperty("name", "+123456789"),
-                new JProperty("nickname", "+123456789"),
-                new JProperty("phone_number", "+123456789"),
-                new JProperty("picture", "http://example.com/new-avatar.png"),
-                new JProperty("app_metadata", GetAppMetaData(userId, roleType)),
-                new JProperty(
-                    "identities",
-                    new JArray(
-                        new JObject(
-                            new JProperty("connection", "sms"),
-                            new JProperty("user_id", authId),
-                            new JProperty("provider", "sms"),
-                            new JProperty("isSocial", false)
-                        )
-                    )
-                ),
-                new JProperty("logins_count", 1)
-            );
 
         public static JObject CreateUserProfile(
             string userId,
