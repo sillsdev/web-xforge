@@ -110,6 +110,7 @@ public static class MachineServiceCollectionExtensions
         services.AddSingleton<IMachineProjectService, MachineProjectService>();
         services.AddSingleton<IPreTranslationService, PreTranslationService>();
         services.AddSingleton<ITrainingDataService, TrainingDataService>();
+        services.AddHostedService<MachineBackgroundService>();
         return services;
     }
 
