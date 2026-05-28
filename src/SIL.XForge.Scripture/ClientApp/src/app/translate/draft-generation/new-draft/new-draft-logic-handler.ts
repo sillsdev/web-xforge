@@ -223,34 +223,29 @@ export class NewDraftLogicHandler {
     this.booksOfferedForPartialDrafting$.next(partialBookDraftingBooks);
   }
 
-  trySelectDraftingChapters(bookId: string, chapters: string): true | string {
+  selectDraftingChapters(bookId: string, chapters: string): void {
     if (this.inputMode$.getValue() !== 'draft_books') {
       throw new Error('Cannot update draft books when not in draft_books input mode');
     }
 
-    let selectedChapters: ChapterSet;
-    try {
-      selectedChapters = new ChapterSet(chapters);
-    } catch (e) {
-      return `Invalid chapter range: ${e instanceof Error ? e.message : String(e)}`;
-    }
+    const selectedChapters = new ChapterSet(chapters);
 
-    if (this.booksOfferedForPartialDrafting$.getValue().includes(bookId) !== true) {
-      return `Book ${bookId} is not eligible for partial drafting`;
+    if (!this.booksOfferedForPartialDrafting$.getValue().includes(bookId)) {
+      throw new Error(`Book ${bookId} is not eligible for partial drafting`);
     }
-    // Chapters need to exist in the source to be a valid selection
     const chaptersInSource = this.availableDraftingScriptureRange$.getValue().books.get(bookId);
     if (chaptersInSource == null) throw new Error(`Book ${bookId} not in available drafting scripture range`);
     const selectedChaptersNotInSource = selectedChapters.difference(chaptersInSource);
     if (selectedChaptersNotInSource.count() > 0) {
-      return `Selected chapters ${selectedChaptersNotInSource.toString()} are not in the available drafting scripture range for book ${bookId}`;
+      throw new Error(
+        `Selected chapters ${selectedChaptersNotInSource.toString()} are not in the available drafting scripture range for book ${bookId}`
+      );
     }
 
     const currentRange = this.selectedDraftingScriptureRange$.getValue();
     const newDraftingScriptureRange = new VerboseScriptureRange(currentRange.toString());
     newDraftingScriptureRange.books.set(bookId, selectedChapters);
     this.selectedDraftingScriptureRange$.next(newDraftingScriptureRange);
-    return true;
   }
 
   private isBookEligibleForPartialDrafting(bookId: string): boolean {
