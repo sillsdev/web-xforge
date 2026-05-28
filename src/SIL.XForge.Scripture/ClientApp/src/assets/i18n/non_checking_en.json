@@ -230,6 +230,15 @@
     "warning_generation_faulted": "Last generation attempt failed. Click [em]\"{{ generateButtonText }}\"[/em] below to try again.",
     "click_book_to_preview": "Click a book below to preview the draft and add it to your project."
   },
+  "draft_wizard": {
+    "chapter_input": {
+      "available": "Available: {{ range }}",
+      "invalid_range": "Invalid chapter range.",
+      "chapters_not_in_source": "Chapters {{ chapters }} cannot be generated because they are not in the source project, {{ sourceName }}.",
+      "chapters_not_in_target": "Chapters {{ chapters }} cannot be used for training because they are not in the main project, {{ targetName }}.",
+      "chapters_will_be_translated": "Chapters {{ chapters }} cannot be used for training because they are going to be translated."
+    }
+  },
   "draft_generation_steps": {
     "back": "Back",
     "books_are_hidden_hide_explanation": "{{ numBooks }} books are hidden. {{ underlineStart }}Hide explanation{{ underlineEnd }}",

@@ -376,6 +376,54 @@ describe('NewDraftLogicHandler', () => {
     });
   });
 
+  describe('selectTargetTrainingChapters', () => {
+    it('updates the selected target training scripture range', async () => {
+      const env = new TestEnvironment(teamStartingToTranslateGenesis);
+      await env.waitForInit();
+
+      env.logicHandler.selectDraftingBooks(['GEN']); // defaults to GEN6-50
+      env.logicHandler.setInputMode('training_books');
+      env.logicHandler.selectTargetTrainingBooks(['GEN']); // GEN1-5 available for training
+
+      env.logicHandler.selectTargetTrainingChapters('GEN', '1-3');
+      expect(env.selectedTargetTrainingScriptureRange).toBe('GEN1-3');
+    });
+
+    it('throws when called in draft_books mode', async () => {
+      const env = new TestEnvironment(teamStartingToTranslateGenesis);
+      await env.waitForInit();
+
+      env.logicHandler.selectDraftingBooks(['GEN']);
+      // still in draft_books mode
+      expect(() => env.logicHandler.selectTargetTrainingChapters('GEN', '1-3')).toThrow();
+    });
+
+    it('throws when selected chapters are outside the available target training range', async () => {
+      const env = new TestEnvironment(teamStartingToTranslateGenesis);
+      await env.waitForInit();
+
+      env.logicHandler.selectDraftingBooks(['GEN']); // GEN6-50 drafted
+      env.logicHandler.setInputMode('training_books');
+      env.logicHandler.selectTargetTrainingBooks(['GEN']); // only GEN1-5 available for training
+
+      // GEN6 is being drafted, so it's not available for target training
+      expect(() => env.logicHandler.selectTargetTrainingChapters('GEN', '1-10')).toThrow();
+    });
+
+    it('throws when the book is not eligible for partial target training', async () => {
+      const env = new TestEnvironment(teamStartingToTranslateGenesis);
+      await env.waitForInit();
+
+      env.logicHandler.selectDraftingBooks(['GEN']);
+      env.logicHandler.setInputMode('training_books');
+      // MAT is available for training but was not offered for partial drafting
+      env.logicHandler.selectTargetTrainingBooks(['MAT']);
+      expect(env.booksOfferedForPartialTargetTraining).toEqual([]);
+
+      expect(() => env.logicHandler.selectTargetTrainingChapters('MAT', '1-10')).toThrow();
+    });
+  });
+
   describe('selectTargetTrainingBooks', () => {
     it('updates the selected target training range', async () => {
       const env = new TestEnvironment(teamStartingToTranslateGenesis);

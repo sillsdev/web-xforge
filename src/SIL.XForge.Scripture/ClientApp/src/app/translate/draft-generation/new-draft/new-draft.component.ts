@@ -5,23 +5,27 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { filter, firstValueFrom } from 'rxjs';
 import { DevOnlyComponent } from 'src/app/shared/dev-only/dev-only.component';
 import { JsonViewerComponent } from 'src/app/shared/json-viewer/json-viewer.component';
 import { hasStringProp } from '../../../../type-utils';
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
-import { I18nService } from '../../../../xforge-common/i18n.service';
+import { I18nKeyForComponent, I18nService } from '../../../../xforge-common/i18n.service';
 import { filterNullish } from '../../../../xforge-common/util/rxjs-util';
 import { Book } from '../../../shared/book-multi-select/book-multi-select';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
 import { DraftSourcesService } from '../draft-sources.service';
+import { ChapterSet } from './scripture-range';
 import {
   NewDraftLogicHandler,
   ProgressServiceThatGivesChapterLevelInfo,
   scriptureRangeToBookListWithoutChapterDetail
 } from './new-draft-logic-handler';
+
+type ChapterInputError = { key: I18nKeyForComponent<'draft_wizard'>; params?: object };
 
 // TODO impelement a step to sync sources first
 const PAGES_BY_ORDER = [
@@ -44,13 +48,17 @@ const PAGES_BY_ORDER = [
     BookMultiSelectComponent,
     MatFormFieldModule,
     MatInputModule,
-    DevOnlyComponent
+    DevOnlyComponent,
+    TranslocoModule
   ]
 })
 export class NewDraftComponent {
   logicHandler: NewDraftLogicHandler;
 
   page: (typeof PAGES_BY_ORDER)[number]['page'] | 'loading' = 'loading';
+
+  draftingChapterErrors = new Map<string, ChapterInputError>();
+  targetTrainingChapterErrors = new Map<string, ChapterInputError>();
 
   // Data that is guarnateed to be loaded post init
   initData?: { projectId: string };
@@ -156,11 +164,46 @@ export class NewDraftComponent {
   onDraftingBookSelect(books: number[]): void {
     const selectedBookIds = books.map(b => Canon.bookNumberToId(b));
     this.logicHandler.selectDraftingBooks(selectedBookIds);
+    for (const bookId of this.draftingChapterErrors.keys()) {
+      if (!this.logicHandler.booksOfferedForPartialDrafting$.getValue().includes(bookId)) {
+        this.draftingChapterErrors.delete(bookId);
+      }
+    }
+  }
+
+  onDraftingChaptersBlurred(bookId: string, value: string): void {
+    let parsed: ChapterSet;
+    try {
+      parsed = new ChapterSet(value);
+    } catch {
+      this.draftingChapterErrors.set(bookId, { key: 'chapter_input.invalid_range' });
+      return;
+    }
+
+    const available = this.logicHandler.availableDraftingScriptureRange$.getValue().books.get(bookId);
+    const badChapters = available != null ? parsed.difference(available) : parsed;
+    if (badChapters.count() > 0) {
+      this.draftingChapterErrors.set(bookId, {
+        key: 'chapter_input.chapters_not_in_source',
+        params: {
+          chapters: badChapters.toString(),
+          sourceName: this.logicHandler.sources?.draftingSources[0]?.shortName ?? ''
+        }
+      });
+      return;
+    }
+
+    this.draftingChapterErrors.delete(bookId);
+    this.logicHandler.selectDraftingChapters(bookId, value);
   }
 
   draftingRangeForBook(bookId: string): string {
     const range = this.logicHandler.selectedDraftingScriptureRange$.getValue();
     return range.books.get(bookId)?.toString() ?? '';
+  }
+
+  draftingChapterHint(bookId: string): string {
+    return this.logicHandler.availableDraftingScriptureRange$.getValue().books.get(bookId)?.toString() ?? '';
   }
 
   // Section: Target training books selection
@@ -190,10 +233,53 @@ export class NewDraftComponent {
   onTargetTrainingBookSelect(books: number[]): void {
     const selectedBookIds = books.map(b => Canon.bookNumberToId(b));
     this.logicHandler.selectTargetTrainingBooks(selectedBookIds);
+    for (const bookId of this.targetTrainingChapterErrors.keys()) {
+      if (!this.logicHandler.booksOfferedForPartialTargetTraining$.getValue().includes(bookId)) {
+        this.targetTrainingChapterErrors.delete(bookId);
+      }
+    }
+  }
+
+  onTargetTrainingChaptersBlurred(bookId: string, value: string): void {
+    let parsed: ChapterSet;
+    try {
+      parsed = new ChapterSet(value);
+    } catch {
+      this.targetTrainingChapterErrors.set(bookId, { key: 'chapter_input.invalid_range' });
+      return;
+    }
+
+    const available = this.logicHandler.availableTargetTrainingScriptureRange$.getValue().books.get(bookId);
+    const unavailable = available != null ? parsed.difference(available) : parsed;
+
+    if (unavailable.count() > 0) {
+      const drafted = this.logicHandler.selectedDraftingScriptureRange$.getValue().books.get(bookId);
+      const draftedUnavailable = drafted != null ? unavailable.intersection(drafted) : new ChapterSet([]);
+      if (draftedUnavailable.count() > 0) {
+        this.targetTrainingChapterErrors.set(bookId, {
+          key: 'chapter_input.chapters_will_be_translated',
+          params: { chapters: draftedUnavailable.toString() }
+        });
+      } else {
+        const targetName = this.activatedProjectService.projectDoc?.data?.shortName ?? '';
+        this.targetTrainingChapterErrors.set(bookId, {
+          key: 'chapter_input.chapters_not_in_target',
+          params: { chapters: unavailable.toString(), targetName }
+        });
+      }
+      return;
+    }
+
+    this.targetTrainingChapterErrors.delete(bookId);
+    this.logicHandler.selectTargetTrainingChapters(bookId, value);
   }
 
   targetTrainingRangeForBook(bookId: string): string {
     const range = this.logicHandler.selectedTargetTrainingScriptureRange$.getValue();
     return range.books.get(bookId)?.toString() ?? '';
+  }
+
+  targetTrainingChapterHint(bookId: string): string {
+    return this.logicHandler.availableTargetTrainingScriptureRange$.getValue().books.get(bookId)?.toString() ?? '';
   }
 }

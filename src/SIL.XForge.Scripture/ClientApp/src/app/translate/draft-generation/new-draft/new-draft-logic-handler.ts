@@ -260,6 +260,32 @@ export class NewDraftLogicHandler {
     );
   }
 
+  selectTargetTrainingChapters(bookId: string, chapters: string): void {
+    if (this.inputMode$.getValue() !== 'training_books') {
+      throw new Error('Cannot update training chapters when not in training_books input mode');
+    }
+
+    const selectedChapters = new ChapterSet(chapters);
+
+    if (!this.booksOfferedForPartialTargetTraining$.getValue().includes(bookId)) {
+      throw new Error(`Book ${bookId} is not eligible for partial target training`);
+    }
+    const chaptersAvailableForTraining = this.availableTargetTrainingScriptureRange$.getValue().books.get(bookId);
+    if (chaptersAvailableForTraining == null)
+      throw new Error(`Book ${bookId} not in available target training scripture range`);
+    const selectedChaptersNotAvailable = selectedChapters.difference(chaptersAvailableForTraining);
+    if (selectedChaptersNotAvailable.count() > 0) {
+      throw new Error(
+        `Selected chapters ${selectedChaptersNotAvailable.toString()} are not available for target training for book ${bookId}`
+      );
+    }
+
+    const currentRange = this.selectedTargetTrainingScriptureRange$.getValue();
+    const newTargetTrainingScriptureRange = new VerboseScriptureRange(currentRange.toString());
+    newTargetTrainingScriptureRange.books.set(bookId, selectedChapters);
+    this.selectedTargetTrainingScriptureRange$.next(newTargetTrainingScriptureRange);
+  }
+
   selectTargetTrainingBooks(books: string[]): void {
     if (this.inputMode$.getValue() !== 'training_books') {
       throw new Error('Cannot update training books when not in training_books input mode');
