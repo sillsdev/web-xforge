@@ -81,6 +81,18 @@
           }
         </div>
       }
+      @if (trainingSources.length > 0) {
+        <h2>{{ t("reference_books") }}</h2>
+        @for (source of trainingSources; track source.projectRef) {
+          <p>{{ source.shortName }}</p>
+          <app-book-multi-select
+            [basicMode]="true"
+            [availableBooks]="availableTrainingSourceBooksForProject(source.projectRef)"
+            [selectedBooks]="selectedTrainingSourceBooksForProject(source.projectRef)"
+            (bookSelect)="onTrainingSourceBookSelect($event, source.projectRef)"
+          ></app-book-multi-select>
+        }
+      }
     } @else if (page === "suffix") {
       <p>Suffix page</p>
     }

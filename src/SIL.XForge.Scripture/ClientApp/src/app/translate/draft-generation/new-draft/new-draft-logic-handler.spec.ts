@@ -469,6 +469,46 @@ describe('NewDraftLogicHandler', () => {
       expect(env.booksOfferedForPartialTargetTraining).toEqual([]);
     });
   });
+
+  describe('selectTrainingSourceBooks', () => {
+    it('updates the selected training source books for a project', async () => {
+      const env = new TestEnvironment(teamStartingToTranslateGenesis);
+      await env.waitForInit();
+
+      env.logicHandler.setInputMode('training_books');
+      env.logicHandler.selectTrainingSourceBooks('training-source-1-id', ['MAT', 'MRK']);
+
+      expect(env.logicHandler.selectedTrainingSourceBooks$.getValue()['training-source-1-id']).toEqual(['MAT', 'MRK']);
+    });
+
+    it('throws when called in draft_books mode', async () => {
+      const env = new TestEnvironment(teamStartingToTranslateGenesis);
+      await env.waitForInit();
+
+      expect(() => env.logicHandler.selectTrainingSourceBooks('training-source-1-id', ['MAT'])).toThrow();
+    });
+
+    it('throws when selecting a book not in the available set', async () => {
+      const env = new TestEnvironment(teamStartingToTranslateGenesis);
+      await env.waitForInit();
+
+      env.logicHandler.setInputMode('training_books');
+      // REV is not in the target project, so it can never be in the available training source books
+      expect(() => env.logicHandler.selectTrainingSourceBooks('training-source-1-id', ['REV'])).toThrow();
+    });
+
+    it('preserves selections for other projects when updating one', async () => {
+      const env = new TestEnvironment(teamWithTwoTrainingSources);
+      await env.waitForInit();
+
+      env.logicHandler.setInputMode('training_books');
+      env.logicHandler.selectTrainingSourceBooks('training-source-1-id', ['MAT']);
+      env.logicHandler.selectTrainingSourceBooks('training-source-2-id', ['LUK']);
+
+      expect(env.logicHandler.selectedTrainingSourceBooks$.getValue()['training-source-1-id']).toEqual(['MAT']);
+      expect(env.logicHandler.selectedTrainingSourceBooks$.getValue()['training-source-2-id']).toEqual(['LUK']);
+    });
+  });
 });
 
 const mockedActivatedProjectService = mock(ActivatedProjectService);

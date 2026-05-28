@@ -17,6 +17,7 @@ import { filterNullish } from '../../../../xforge-common/util/rxjs-util';
 import { Book } from '../../../shared/book-multi-select/book-multi-select';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
+import { DraftSource } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
 import {
   NewDraftLogicHandler,
@@ -295,5 +296,30 @@ export class NewDraftComponent {
 
   targetTrainingChapterHint(bookId: string): string {
     return this.logicHandler.availableTargetTrainingScriptureRange$.getValue().books.get(bookId)?.toString() ?? '';
+  }
+
+  // Section: Training source book selection
+
+  get trainingSources(): DraftSource[] {
+    return this.logicHandler.sources?.trainingSources ?? [];
+  }
+
+  onTrainingSourceBookSelect(books: number[], projectId: string): void {
+    const bookIds = books.map(b => Canon.bookNumberToId(b));
+    this.logicHandler.selectTrainingSourceBooks(projectId, bookIds);
+  }
+
+  availableTrainingSourceBooksForProject(projectId: string): Book[] {
+    const bookIds = this.logicHandler.availableTrainingSourceBooks$.getValue()[projectId] ?? [];
+    const selectedIds = this.logicHandler.selectedTrainingSourceBooks$.getValue()[projectId] ?? [];
+    return bookIds.map(id => ({
+      number: Canon.bookIdToNumber(id),
+      selected: selectedIds.includes(id)
+    }));
+  }
+
+  selectedTrainingSourceBooksForProject(projectId: string): Book[] {
+    const bookIds = this.logicHandler.selectedTrainingSourceBooks$.getValue()[projectId] ?? [];
+    return bookIds.map(id => ({ number: Canon.bookIdToNumber(id), selected: true }));
   }
 }

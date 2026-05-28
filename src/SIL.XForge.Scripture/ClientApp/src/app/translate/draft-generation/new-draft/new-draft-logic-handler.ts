@@ -285,6 +285,21 @@ export class NewDraftLogicHandler {
     this.selectedTargetTrainingScriptureRange$.next(newTargetTrainingScriptureRange);
   }
 
+  selectTrainingSourceBooks(projectId: string, bookIds: string[]): void {
+    if (this.inputMode$.getValue() !== 'training_books') {
+      throw new Error('Cannot update training source books when not in training_books input mode');
+    }
+    const available = this.availableTrainingSourceBooks$.getValue()[projectId] ?? [];
+    for (const bookId of bookIds) {
+      if (!available.includes(bookId)) {
+        throw new Error(`Selected book ${bookId} is not available for training source project ${projectId}`);
+      }
+    }
+    const current = { ...this.selectedTrainingSourceBooks$.getValue() };
+    current[projectId] = bookIds;
+    this.selectedTrainingSourceBooks$.next(current);
+  }
+
   selectTargetTrainingBooks(books: string[]): void {
     if (this.inputMode$.getValue() !== 'training_books') {
       throw new Error('Cannot update training books when not in training_books input mode');
@@ -292,9 +307,10 @@ export class NewDraftLogicHandler {
     const newTargetTrainingScriptureRange = new VerboseScriptureRange('');
     for (const bookId of books) {
       const bookRange = this.availableTargetTrainingScriptureRange$.getValue().books.get(bookId);
-      if (bookRange) {
-        newTargetTrainingScriptureRange.books.set(bookId, bookRange.clone());
+      if (bookRange == null) {
+        throw new Error(`Selected book ${bookId} not in available target training scripture range`);
       }
+      newTargetTrainingScriptureRange.books.set(bookId, bookRange.clone());
     }
     this.selectedTargetTrainingScriptureRange$.next(newTargetTrainingScriptureRange);
 
