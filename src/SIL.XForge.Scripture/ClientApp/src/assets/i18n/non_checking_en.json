@@ -237,7 +237,8 @@
       "chapters_not_in_source": "Chapters {{ chapters }} cannot be generated because they are not in the source project, {{ sourceName }}.",
       "chapters_not_in_target": "Chapters {{ chapters }} cannot be used for training because they are not in the main project, {{ targetName }}.",
       "chapters_will_be_translated": "Chapters {{ chapters }} cannot be used for training because they are going to be translated."
-    }
+    },
+    "fix_chapter_errors": "Please fix the chapter range errors above before continuing."
   },
   "draft_generation_steps": {
     "back": "Back",

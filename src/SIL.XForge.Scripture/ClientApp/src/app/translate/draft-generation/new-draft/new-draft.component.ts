@@ -59,6 +59,7 @@ export class NewDraftComponent {
 
   draftingChapterErrors = new Map<string, ChapterInputError>();
   targetTrainingChapterErrors = new Map<string, ChapterInputError>();
+  stepError: I18nKeyForComponent<'draft_wizard'> | null = null;
 
   // Data that is guarnateed to be loaded post init
   initData?: { projectId: string };
@@ -96,6 +97,17 @@ export class NewDraftComponent {
   }
 
   private step(count: 1 | -1): void {
+    if (count === 1) {
+      if (this.page === 'draft_books' && this.draftingChapterErrors.size > 0) {
+        this.stepError = 'fix_chapter_errors';
+        return;
+      }
+      if (this.page === 'training_books' && this.targetTrainingChapterErrors.size > 0) {
+        this.stepError = 'fix_chapter_errors';
+        return;
+      }
+    }
+    this.stepError = null;
     const currentIndex = PAGES_BY_ORDER.findIndex(p => p.page === this.page);
     const newIndex = currentIndex + count;
     if (newIndex < 0) {
@@ -104,6 +116,8 @@ export class NewDraftComponent {
       const newPage = PAGES_BY_ORDER[newIndex];
       this.page = newPage.page;
       if (hasStringProp(newPage, 'inputState')) {
+        this.draftingChapterErrors.clear();
+        this.targetTrainingChapterErrors.clear();
         this.logicHandler.setInputMode(newPage.inputState as 'draft_books' | 'training_books');
       }
     } else throw new Error(`Cannot navigate from page ${this.page} to index ${newIndex}`);

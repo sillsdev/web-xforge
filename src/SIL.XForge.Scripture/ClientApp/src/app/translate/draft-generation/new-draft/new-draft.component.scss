@@ -38,6 +38,11 @@ mat-spinner {
   padding-left: 16px;
 }
 
+.step-error {
+  color: var(--mat-form-field-error-text-color);
+  align-self: center;
+}
+
 strong {
   font-weight: 500;
 }

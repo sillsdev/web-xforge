@@ -352,18 +352,18 @@ This change is additive: builds that don't include a target project entry in `Tr
 
 ### Step 2: Books to Draft
 
-- [ ] Wire up `BookMultiSelectComponent` to `NewDraftLogicHandler.selectDraftingBooks()`
-- [ ] Add chapter range text inputs for eligible books (currently in HTML but not wired up)
-- [ ] Wire chapter input change/blur events to `trySelectDraftingChapters()`
-- [ ] Show inline validation errors from `trySelectDraftingChapters()`
-- [ ] Show available chapter hint after each input
-- [ ] Pre-populate inputs with default chapter selection on book selection
+- [x] Wire up `BookMultiSelectComponent` to `NewDraftLogicHandler.selectDraftingBooks()`
+- [x] Add chapter range text inputs for eligible books (currently in HTML but not wired up)
+- [x] Wire chapter input change/blur events to `trySelectDraftingChapters()`
+- [x] Show inline validation errors from `trySelectDraftingChapters()`
+- [x] Show available chapter hint after each input
+- [x] Pre-populate inputs with default chapter selection on book selection
 
 ### Step 3: Training Data
 
-- [ ] Wire up target training `BookMultiSelectComponent` to `NewDraftLogicHandler.selectTargetTrainingBooks()`
-- [ ] Add chapter range inputs for eligible target training books
-- [ ] Wire chapter input events to the equivalent of `trySelectDraftingChapters` for training
+- [x] Wire up target training `BookMultiSelectComponent` to `NewDraftLogicHandler.selectTargetTrainingBooks()`
+- [x] Add chapter range inputs for eligible target training books
+- [x] Wire chapter input events to the equivalent of `trySelectDraftingChapters` for training
 - [ ] Add per-training-source `BookMultiSelectComponent` sections
 - [ ] Wire training source book selections to `NewDraftLogicHandler.selectedTrainingSourceBooks$`
 - [ ] Add NLLB info banner (conditional on both language tags being in NLLB)
@@ -392,7 +392,7 @@ This change is additive: builds that don't include a target project entry in `Tr
       `lastSelectedTrainingScriptureRanges` by project ID, extract the book IDs (ignoring any chapter
       detail), then call the normal book-selection logic to derive chapter defaults from current project
       state — the same path as when the user manually picks books
-- [ ] Remove stray `console.log` statements from `NewDraftLogicHandler`
+- [x] Remove stray `console.log` statements from `NewDraftLogicHandler`
 - [ ] Resolve FIXME: `isBookEligibleForPartialDrafting` source chapter count uses chapters-with-content
       (confirmed correct — remove the TODO/FIXME comment)
 - [ ] Add multiple-drafting-source abort: if `draftingSources.length !== 1`, trigger abort screen with an unsupported-configuration message (do not silently continue)
@@ -405,7 +405,7 @@ This change is additive: builds that don't include a target project entry in `Tr
 
 ### Tests
 
-- [ ] Unit tests for `NewDraftLogicHandler` (chapter selection, eligibility, training limits)
-- [ ] Unit tests for `NewDraftComponent` (step navigation, form state, error display)
+- [x] Unit tests for `NewDraftLogicHandler` (chapter selection, eligibility, training limits)
+- [x] Unit tests for `NewDraftComponent` (step navigation, form state, error display)
 - [ ] Unit tests for `scripture-range.ts` (VerboseScriptureRange, ChapterSet)
 - [ ] Update/fix existing tests marked with FIXME/DO_NOT_MERGE
