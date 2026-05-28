@@ -45,9 +45,9 @@ export interface LynxTextModelConverter {
   getEmbedCountsToOffsetFunc(): LynxCountToOffsetFunc;
 
   /**
-   * Observable that emits when embedded element positions change.
+   * Observable that emits when the number of embedded elements changes.
    * This is useful for detecting when note embeds are added/removed (including remotely),
    * which affect the mapping between data model positions and editor positions.
    */
-  readonly embedPositionsChanged$: Observable<void>;
+  readonly numberEmbedsChanged$: Observable<void>;
 }
