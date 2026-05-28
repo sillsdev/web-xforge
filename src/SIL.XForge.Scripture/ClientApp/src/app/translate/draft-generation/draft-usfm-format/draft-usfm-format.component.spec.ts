@@ -111,6 +111,18 @@ describe('DraftUsfmFormatComponent', () => {
     expect(isDisabled).toBe(true);
   }));
 
+  it('allows selecting any book with a completed draft', fakeAsync(() => {
+    const env = new TestEnvironment({
+      project: {
+        translateConfig: { draftConfig: { currentScriptureRange: 'GEN;EXO;NUM;' } as DraftConfig } as TranslateConfig
+      }
+    });
+    tick(EDITOR_READY_TIMEOUT);
+    env.fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+    expect(env.component.booksWithDrafts).toEqual([1, 2, 4]);
+  }));
+
   it('navigates to book and chapter from route params', fakeAsync(() => {
     when(mockedActivatedRoute.params).thenReturn(of({ bookId: 'EXO', chapter: '2' }));
     const env = new TestEnvironment();
@@ -143,10 +155,10 @@ describe('DraftUsfmFormatComponent', () => {
             hasSource: true,
             permissions: {}
           }
-        ]
+        ],
+        translateConfig: { draftConfig: { currentScriptureRange: 'LEV' } as DraftConfig } as TranslateConfig
       }
     });
-    when(mockedProjectService.hasDraft(anything(), anything(), anything(), anything())).thenReturn(false);
     tick(EDITOR_READY_TIMEOUT);
     env.fixture.detectChanges();
     tick(EDITOR_READY_TIMEOUT);
@@ -188,7 +200,8 @@ describe('DraftUsfmFormatComponent', () => {
       project: {
         translateConfig: {
           draftConfig: {
-            usfmConfig: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Denormalized }
+            usfmConfig: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Denormalized },
+            currentScriptureRange: 'GEN;EXO;LEV'
           } as DraftConfig
         } as TranslateConfig
       }
@@ -238,7 +251,8 @@ describe('DraftUsfmFormatComponent', () => {
       project: {
         translateConfig: {
           draftConfig: {
-            usfmConfig: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Denormalized }
+            usfmConfig: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Denormalized },
+            currentScriptureRange: 'GEN;EXO'
           } as DraftConfig
         } as TranslateConfig,
         texts: [
@@ -273,7 +287,8 @@ describe('DraftUsfmFormatComponent', () => {
       project: {
         translateConfig: {
           draftConfig: {
-            usfmConfig: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Denormalized }
+            usfmConfig: { paragraphFormat: ParagraphBreakFormat.MoveToEnd, quoteFormat: QuoteFormat.Denormalized },
+            currentScriptureRange: 'GEN;EXO'
           } as DraftConfig
         } as TranslateConfig
       }
@@ -337,6 +352,10 @@ class TestEnvironment {
   readonly userId = 'user01';
   onlineStatusService: TestOnlineStatusService;
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
+
+  private translateConfig: Partial<TranslateConfig> = {
+    draftConfig: { currentScriptureRange: 'GEN;EXO' } as DraftConfig
+  };
 
   constructor(
     args: {
@@ -404,7 +423,7 @@ class TestEnvironment {
     return this.fixture.nativeElement.querySelector('.quote-format-warning');
   }
 
-  setupProject(project?: Partial<SFProjectProfile>): void {
+  private setupProject(project?: Partial<SFProjectProfile>): void {
     const texts: TextInfo[] = [
       {
         bookNum: 1,
@@ -437,7 +456,10 @@ class TestEnvironment {
     ];
     const projectDoc = {
       id: this.projectId,
-      data: createTestProjectProfile({ translateConfig: project?.translateConfig, texts: project?.texts ?? texts })
+      data: createTestProjectProfile({
+        translateConfig: project?.translateConfig ?? this.translateConfig,
+        texts: project?.texts ?? texts
+      })
     } as SFProjectProfileDoc;
     when(mockedActivatedProjectService.projectId).thenReturn(this.projectId);
     when(mockedActivatedProjectService.projectDoc$).thenReturn(of(projectDoc));

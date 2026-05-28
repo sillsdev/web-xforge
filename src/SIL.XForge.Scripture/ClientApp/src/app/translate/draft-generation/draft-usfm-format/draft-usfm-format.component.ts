@@ -12,7 +12,6 @@ import { Canon } from '@sillsdev/scripture';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import {
   DraftUsfmConfig,
   ParagraphBreakFormat,
@@ -46,7 +45,7 @@ import { BookChapterChooserComponent } from '../../../shared/book-chapter-choose
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { ConfirmOnLeave } from '../../../shared/project-router.guard';
 import { TextComponent } from '../../../shared/text/text.component';
-import { projectLabel } from '../../../shared/utils';
+import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftHandlingService } from '../draft-handling.service';
 import { DraftSourcesAsArrays } from '../draft-source';
@@ -168,10 +167,9 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
         const projectDoc = this.activatedProjectService.projectDoc;
         if (projectDoc?.data == null) return;
         this.setUsfmConfig(projectDoc.data.translateConfig.draftConfig.usfmConfig);
-        const texts: TextInfo[] = projectDoc.data.texts;
-        this.booksWithDrafts = texts
-          .filter(t => this.projectService.hasDraft(projectDoc.data, t.bookNum, undefined, true))
-          .map(t => t.bookNum);
+        this.booksWithDrafts = booksFromScriptureRange(
+          projectDoc.data.translateConfig.draftConfig.currentScriptureRange
+        );
 
         if (this.booksWithDrafts.length === 0) return;
         this.loadingStarted();
