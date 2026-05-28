@@ -123,8 +123,6 @@ export class NewDraftComponent {
       booksOfferedForPartialDrafting: this.logicHandler.booksOfferedForPartialDrafting$.getValue(),
       booksOfferedForPartialTargetTraining: this.logicHandler.booksOfferedForPartialTargetTraining$.getValue(),
 
-      trainingBooksEdited: this.logicHandler.trainingBooksEdited,
-
       trainingSourceBooks: this.logicHandler.trainingSourceBooks$.getValue(),
       availableTrainingSourceBooks: this.logicHandler.availableTrainingSourceBooks$.getValue(),
       selectedTrainingSourceBooks: this.logicHandler.selectedTrainingSourceBooks$.getValue()

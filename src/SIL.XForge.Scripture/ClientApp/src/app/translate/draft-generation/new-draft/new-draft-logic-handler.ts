@@ -94,15 +94,6 @@ export class NewDraftLogicHandler {
    */
   inputMode$ = new BehaviorSubject<'draft_books' | 'training_books'>('draft_books');
 
-  /**
-   * Whether the user has edited the training books. This impacts how the previously selected training books are
-   * handled. If the last draft included a book as training data, it's automatically selected as training data for this
-   * run. However, if the user selects it as a book to draft, it must be removed from the training data selection
-   * automatically. If the user selects the book to draft, and then unselects the book, it should return to being auto
-   * selected training book.
-   */
-  trainingBooksEdited: boolean = false;
-
   sources?: DraftSourcesAsArrays;
 
   constructor(
