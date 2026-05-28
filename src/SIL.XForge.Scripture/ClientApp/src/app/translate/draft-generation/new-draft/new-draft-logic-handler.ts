@@ -278,18 +278,13 @@ export class NewDraftLogicHandler {
   }
 
   private isBookEligibleForPartialTargetTraining(bookId: string): boolean {
-    // Books should be available for partial training if selected on the prior step, if and only if the book has
-    // chapters that could be used for training data that weren't selected for drafting in the prior step.
-
+    // Only books offered for partial drafting can have their target training chapters selected individually.
+    // Additionally, at least one target chapter must remain available for training after the drafted chapters are
+    // excluded.
     if (!this.booksOfferedForPartialDrafting$.getValue().includes(bookId)) return false;
 
-    const chaptersSelectedForDrafting = this.selectedDraftingScriptureRange$.getValue().books.get(bookId);
     const chaptersAvailableForTraining = this.availableTargetTrainingScriptureRange$.getValue().books.get(bookId);
-
-    if (chaptersSelectedForDrafting == null || chaptersAvailableForTraining == null) return false;
-
-    const chaptersThatCouldBeUsedForTraining = chaptersAvailableForTraining.difference(chaptersSelectedForDrafting);
-    return chaptersThatCouldBeUsedForTraining.count() >= 1;
+    return chaptersAvailableForTraining != null && chaptersAvailableForTraining.count() >= 1;
   }
 
   private abort(mode: NewDraftAbortMode): void {
