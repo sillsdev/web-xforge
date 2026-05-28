@@ -11,12 +11,16 @@ import { DraftSourcesService } from '../draft-sources.service';
 import { NewDraftLogicHandler, ProgressServiceThatGivesChapterLevelInfo } from './new-draft-logic-handler';
 import { VerboseScriptureRange } from './scripture-range';
 
-const FULL_CANON_SCRIPTURE_RANGE = new VerboseScriptureRange(
-  Canon.allBookIds
-    .filter(book => Canon.isBookOTNT(Canon.bookIdToNumber(book)))
-    .map(book => `${book}1-${chapterCounts[book]}`)
-    .join(';')
-).toString();
+function allBooksExcept(excludedBooks: string[]): string {
+  return new VerboseScriptureRange(
+    Canon.allBookIds
+      .filter(book => Canon.isBookOTNT(Canon.bookIdToNumber(book)) && !excludedBooks.includes(book))
+      .map(book => `${book}1-${chapterCounts[book]}`)
+      .join(';')
+  ).toString();
+}
+
+const FULL_CANON_SCRIPTURE_RANGE = allBooksExcept([]);
 
 describe('NewDraftLogicHandler', () => {
   const teamStartingToTranslateGenesis = {
@@ -75,10 +79,10 @@ describe('NewDraftLogicHandler', () => {
     const testState = {
       ...teamStartingToTranslateGenesis,
       trainingSourcesBooksChapters: {
-        'training-source-1-id': FULL_CANON_SCRIPTURE_RANGE.replace('MAT1-28', '')
+        'training-source-1-id': allBooksExcept(['MAT'])
       }
     };
-    expect(testState.trainingSourcesBooksChapters['training-source-1-id']).not.toContain('MAT1-28');
+    expect(testState.trainingSourcesBooksChapters['training-source-1-id']).not.toContain('MAT');
     const env = new TestEnvironment(testState);
     await env.waitForInit();
 
