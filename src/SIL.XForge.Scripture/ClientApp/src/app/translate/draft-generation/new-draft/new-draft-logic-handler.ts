@@ -172,7 +172,7 @@ export class NewDraftLogicHandler {
     this.status$.next('input');
   }
 
-  hasVisitedTrainingBooksInputMode = false;
+  private hasVisitedTrainingBooksInputMode = false;
   setInputMode(newMode: 'draft_books' | 'training_books'): void {
     const currentMode = this.inputMode$.getValue();
     if (currentMode === 'draft_books' && newMode === 'training_books') {
@@ -249,8 +249,8 @@ export class NewDraftLogicHandler {
   }
 
   private isBookEligibleForPartialDrafting(bookId: string): boolean {
-    const sourceChapterCount = this.availableDraftingScriptureRange$.getValue().books.get(bookId)?.chapters.size;
-    const targetChaptersWithContent = this.targetProjectScriptureRange.books.get(bookId)?.chapters.size;
+    const sourceChapterCount = this.availableDraftingScriptureRange$.getValue().books.get(bookId)?.count();
+    const targetChaptersWithContent = this.targetProjectScriptureRange.books.get(bookId)?.count();
 
     return (
       sourceChapterCount != null &&
