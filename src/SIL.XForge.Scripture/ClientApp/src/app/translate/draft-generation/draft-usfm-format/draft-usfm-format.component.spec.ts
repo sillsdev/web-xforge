@@ -146,6 +146,12 @@ describe('DraftUsfmFormatComponent', () => {
   }));
 
   it('can navigate to book and chapter if first chapter has no draft', fakeAsync(() => {
+    const bookDraft: Map<string, DeltaOperation[]> = new Map<string, DeltaOperation[]>();
+    bookDraft.set('2', [
+      { insert: { chapter: { number: 2 } }, attributes: { style: 'c' } },
+      { insert: { verse: { number: 1 } }, attributes: { style: 'v' } },
+      { insert: 'Verse 1 text.' }
+    ]);
     const env = new TestEnvironment({
       project: {
         texts: [
@@ -157,19 +163,19 @@ describe('DraftUsfmFormatComponent', () => {
           }
         ],
         translateConfig: { draftConfig: { currentScriptureRange: 'LEV' } as DraftConfig } as TranslateConfig
-      }
+      },
+      bookDraft
     });
     tick(EDITOR_READY_TIMEOUT);
     env.fixture.detectChanges();
     tick(EDITOR_READY_TIMEOUT);
     expect(env.component.bookNum).toBe(3);
-    // book 3 on the source starts at chapter 2
     expect(env.component.chapterNum).toBe(2);
-    expect(env.component.chaptersWithDrafts).toEqual([2, 3]);
+    expect(env.component.chaptersWithDrafts).toEqual([2]);
     verify(mockedDraftHandlingService.getBookDraft(anything(), anything())).once();
   }));
 
-  it('determines chapters with drafts based on translation source chapters', fakeAsync(() => {
+  it('determines chapters with drafts based draft chapters', fakeAsync(() => {
     const env = new TestEnvironment({
       project: {
         texts: [
@@ -182,14 +188,13 @@ describe('DraftUsfmFormatComponent', () => {
         ]
       }
     });
-    when(mockedProjectService.hasDraft(anything(), anything(), anything(), anything())).thenReturn(true);
     tick(EDITOR_READY_TIMEOUT);
     env.fixture.detectChanges();
     tick(EDITOR_READY_TIMEOUT);
     expect(env.component.bookNum).toBe(1);
     expect(env.component.chapterNum).toBe(1);
     // source has 3 chapters on book 1
-    expect(env.component.chaptersWithDrafts).toEqual([1, 2, 3]);
+    expect(env.component.chaptersWithDrafts).toEqual([1, 2]);
     expect(env.component.showDraftSourceWarning).toBe(false);
     verify(mockedDraftHandlingService.getBookDraft(anything(), anything())).once();
   }));
@@ -208,7 +213,7 @@ describe('DraftUsfmFormatComponent', () => {
     });
 
     verify(mockedDraftHandlingService.getBookDraft(anything(), anything())).once();
-    expect(env.component.chaptersWithDrafts.length).toEqual(3);
+    expect(env.component.chaptersWithDrafts.length).toEqual(2);
     expect(env.component.booksWithDrafts.length).toEqual(3);
 
     env.component.bookChanged(2);
@@ -362,6 +367,7 @@ class TestEnvironment {
       project?: Partial<SFProjectProfile>;
       canDenormalizeQuotes?: boolean;
       userCanAccessDraftingSource?: boolean;
+      bookDraft?: Map<string, DeltaOperation[]>;
     } = {}
   ) {
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
@@ -387,7 +393,12 @@ class TestEnvironment {
       { insert: { verse: { number: 1 } }, attributes: { style: 'v' } },
       { insert: 'Verse 1 text.' }
     ]);
-    when(mockedDraftHandlingService.getBookDraft(anything(), anything())).thenReturn(of(bookDraft));
+    bookDraft.set('2', [
+      { insert: { chapter: { number: 2 } }, attributes: { style: 'c' } },
+      { insert: { verse: { number: 1 } }, attributes: { style: 'v' } },
+      { insert: 'Verse 1 text.' }
+    ]);
+    when(mockedDraftHandlingService.getBookDraft(anything(), anything())).thenReturn(of(args.bookDraft ?? bookDraft));
     when(mockedActivatedProjectService.projectId$).thenReturn(of(this.projectId));
     this.onlineStatusService.setIsOnline(true);
     when(mockedNoticeService.show(anything())).thenResolve();

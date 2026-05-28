@@ -182,7 +182,8 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
         if (params['chapter'] !== undefined) {
           initialChapterNum = Number(params['chapter']);
         }
-        await this.subscribeBookAndChapters(initialBookNum, initialChapterNum);
+        this.chapterNum = initialChapterNum;
+        await this.subscribeBookAndChapters(initialBookNum);
       });
 
     this.updateDraftConfig$
@@ -197,11 +198,17 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
       )
       .subscribe(chapterDeltas => {
         this.chapterDeltas.clear();
+        this.chaptersWithDrafts = [];
         for (const chapter of chapterDeltas.keys()) {
           const draftDelta: Delta = new Delta(chapterDeltas.get(chapter));
           this.chapterDeltas.set(+chapter, draftDelta.ops);
+          this.chaptersWithDrafts.push(+chapter);
         }
+
         if (this.chapterNum != null) {
+          this.chapterNum = this.chaptersWithDrafts.includes(this.chapterNum)
+            ? this.chapterNum
+            : this.chaptersWithDrafts[0];
           this.setChapterContents(this.chapterNum);
         }
         this.draftText.applyEditorStyles();
@@ -230,11 +237,6 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   close(): void {
     // go back to the draft generation or edit and review page
     this.location.back();
-  }
-
-  reloadText(): void {
-    this.loadingStarted();
-    this.updateDraftConfig$.next(this.currentFormat);
   }
 
   async saveChanges(): Promise<void> {
@@ -269,6 +271,11 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     );
   }
 
+  reloadText(): void {
+    this.loadingStarted();
+    this.updateDraftConfig$.next(this.currentFormat);
+  }
+
   private setUsfmConfig(config?: DraftUsfmConfig): void {
     this.usfmFormatForm.setValue({
       paragraphFormat: config?.paragraphFormat ?? ParagraphBreakFormat.BestGuess,
@@ -294,30 +301,19 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     }
   }
 
-  private async subscribeBookAndChapters(initialBookNum: number, initialChapterNum?: number): Promise<void> {
+  private async subscribeBookAndChapters(initialBookNum: number): Promise<void> {
     const currentUser = await this.userService.getCurrentUser();
     combineLatest([this.draftSources$, this.bookNum$.pipe(filterNullish())])
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(async ([source, bookNum]) => {
+      .subscribe(async ([source]) => {
         if (currentUser.data?.sites[environment.siteId].projects.includes(source.draftingSources[0].projectRef)) {
           this.translateSource ??= (await this.projectService.getProfile(source.draftingSources[0].projectRef)).data;
         }
 
         this.showDraftSourceWarning = this.translateSource == null;
         this.sourceProjectName = projectLabel(source.draftingSources[0]);
-
-        // Determine the chapter to navigate to, using the initial chapter if it exists and no chapter is defined yet
-        // If the user does not have access to the source project, just show the initial chapter, and if null, chapter 1
-        const chapters =
-          this.translateSource?.texts.find(t => t.bookNum === bookNum)?.chapters.map(c => c.number) ?? [];
-        if (chapters.length > 0) {
-          this.chaptersWithDrafts = chapters;
-        } else {
-          this.chaptersWithDrafts = [1];
-          initialChapterNum = 1;
-        }
-        this.chapterNum =
-          this.chapterNum == null ? (initialChapterNum ?? this.chaptersWithDrafts[0]) : this.chaptersWithDrafts[0];
+        // Default the chapter num to 1. This will be updated when we load the drafts and drafted chapters are known
+        if (this.chapterNum == null) this.chapterNum = 1;
         this.reloadText();
       });
 
