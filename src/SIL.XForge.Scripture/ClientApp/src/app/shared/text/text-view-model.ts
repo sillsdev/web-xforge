@@ -143,8 +143,8 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
   private readonly _segments: Map<string, Range> = new Map<string, Range>();
   private readonly segments$ = new BehaviorSubject<ReadonlyMap<string, Range>>(this._segments);
 
-  private readonly _embedPositionsChanged$ = new Subject<void>();
-  readonly embedPositionsChanged$ = this._embedPositionsChanged$.asObservable();
+  private readonly _numberEmbedsChanged$ = new Subject<void>();
+  readonly numberEmbedsChanged$ = this._numberEmbedsChanged$.asObservable();
 
   get segments(): IterableIterator<[string, Range]> {
     return this._segments.entries();
@@ -658,6 +658,7 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
     let fixDelta = new Delta();
     let fixOffset = 0;
     const delta = editor.getContents();
+    const prevEmbedCount: number = this._embeddedElements.size;
     this._segments.clear();
     this._embeddedElements.clear();
     if (delta.ops == null) {
@@ -785,7 +786,9 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
     }
 
     this.segments$.next(this._segments);
-    this._embedPositionsChanged$.next();
+    if (this._embeddedElements.size !== prevEmbedCount) {
+      this._numberEmbedsChanged$.next();
+    }
 
     return convertDelta.compose(fixDelta).chop();
   }

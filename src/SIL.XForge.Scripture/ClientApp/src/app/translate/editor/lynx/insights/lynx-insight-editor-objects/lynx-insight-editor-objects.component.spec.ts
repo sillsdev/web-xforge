@@ -529,7 +529,7 @@ class TestEnvironment {
     when(mockOverlayService.isOpen).thenReturn(false);
     when(mockLynxWorkspaceService.getOnTypeEdits(anything(), anything())).thenResolve([]);
     when(mockTextModelConverter.dataDeltaToEditorDelta(anything())).thenCall((delta: Delta) => delta);
-    when(mockTextModelConverter.embedPositionsChanged$).thenReturn(this.embedPositionsChangedSubject);
+    when(mockTextModelConverter.numberEmbedsChanged$).thenReturn(this.embedPositionsChangedSubject);
 
     // Setup text model converter to return ranges as-is (prevents null range issues)
     when(mockTextModelConverter.dataRangeToEditorRange(anything())).thenCall((range: LynxInsightRange) => range);
