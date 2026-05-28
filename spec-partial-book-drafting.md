@@ -41,9 +41,9 @@ Add a new `FeatureFlagFromStorage` entry to `FeatureFlagService` (next sequentia
 highest):
 
 ```typescript
-readonly newDraftWizard: FeatureFlag = new FeatureFlagFromStorage(
-  'NewDraftWizard',
-  'New draft wizard with partial book drafting support',
+readonly partialBookDrafting: FeatureFlag = new FeatureFlagFromStorage(
+  'PartialBookDrafting',
+  'Partial book drafting',
   20,
   new StaticFeatureFlagStore(false)
 );
@@ -55,21 +55,22 @@ Add an entry to `experimentalFeatures` array in `ExperimentalFeaturesService`:
 
 ```typescript
 {
-  name: 'New draft wizard',
-  description: 'A new wizard for creating AI drafts with support for drafting specific chapters of a book.',
-  available: () => this.doesUserHaveRoleOnAnyProject(SFProjectRole.ParatextAdministrator),
-  featureFlag: this.featureFlagService.newDraftWizard
+  name: 'Draft specific chapters',
+  description: 'Choose which chapters to draft, so that your existing translations of other chapters in the same book can be used to train the language model and improve draft quality.',
+  available: () =>
+    this.doesUserHaveRoleOnAnyProject(SFProjectRole.ParatextAdministrator) ||
+    this.doesUserHaveRoleOnAnyProject(SFProjectRole.ParatextTranslator),
+  featureFlag: this.featureFlagService.partialBookDrafting
 }
 ```
 
-The `available` check limits visibility to project administrators (matching the pattern from the existing
-entry). Adjust the role if a broader or narrower audience is appropriate.
+The `available` check limits visibility to project administrators and translators, matching the roles that have access to the draft generation feature.
 
 ### Wire up the gate
 
 Update `DraftGenerationComponent.generateDraftClicked()` to check the flag:
 
-- If `featureFlags.newDraftWizard.enabled`: navigate to `new-draft` route
+- If `featureFlags.partialBookDrafting.enabled`: navigate to `new-draft` route
 - Else: set `currentPage = 'steps'` (existing behavior)
 
 ---
@@ -315,7 +316,7 @@ This change is additive: builds that don't include a target project entry in `Tr
 
 ### `DraftGenerationComponent`
 
-- Update `generateDraftClicked()` to check `featureFlags.newDraftWizard.enabled` before deciding old vs. new
+- Update `generateDraftClicked()` to check `featureFlags.partialBookDrafting.enabled` before deciding old vs. new
   path
 - Keep `currentPage = 'steps'` path and `DraftGenerationStepsComponent` intact
 
@@ -333,10 +334,10 @@ This change is additive: builds that don't include a target project entry in `Tr
 
 ### Infrastructure
 
-- [ ] Restore `ExperimentalFeaturesService` and `ExperimentalFeaturesDialogComponent` from commit `151ad279c` (including app.component wiring, menu entry, i18n strings)
-- [ ] Add `newDraftWizard` feature flag to `FeatureFlagService`
-- [ ] Register `newDraftWizard` in `ExperimentalFeaturesService.experimentalFeatures`
-- [ ] Update `DraftGenerationComponent.generateDraftClicked()` to check the feature flag
+- [x] Restore `ExperimentalFeaturesService` and `ExperimentalFeaturesDialogComponent` from commit `151ad279c` (including app.component wiring, menu entry, i18n strings)
+- [x] Add `partialBookDrafting` feature flag to `FeatureFlagService`
+- [x] Register `partialBookDrafting` in `ExperimentalFeaturesService.experimentalFeatures`
+- [x] Update `DraftGenerationComponent.generateDraftClicked()` to check the feature flag
 
 ### Pre-step: Pending Updates
 

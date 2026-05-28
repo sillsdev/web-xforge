@@ -18,7 +18,7 @@ const FULL_CANON_SCRIPTURE_RANGE = new VerboseScriptureRange(
     .join(';')
 ).toString();
 
-fdescribe('NewDraftLogicHandler', () => {
+describe('NewDraftLogicHandler', () => {
   const teamStartingToTranslateGenesis = {
     lastSelectedTranslationScriptureRanges: [{ projectId: 'draft-source-1-id', scriptureRange: 'GEN' }],
     previouslySelectedTrainingScriptureRanges: [
@@ -200,7 +200,7 @@ fdescribe('NewDraftLogicHandler', () => {
   });
 
   // Select GEN and MRK, go to next step, see MRK is not there, then go back and deselect MRK, then go forward again and see that MRK is now available for selection as training data
-  fit('reallows training data to be selected when it is deselected for drafting', async () => {
+  it('reallows training data to be selected when it is deselected for drafting', async () => {
     const testState = teamStartingToTranslateGenesis;
     const env = new TestEnvironment(testState);
     await env.waitForInit();

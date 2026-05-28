@@ -365,6 +365,13 @@ export class FeatureFlagService {
     new StaticFeatureFlagStore(true)
   );
 
+  readonly partialBookDrafting: FeatureFlag = new FeatureFlagFromStorage(
+    'PartialBookDrafting',
+    'Partial book drafting',
+    20,
+    new StaticFeatureFlagStore(false)
+  );
+
   get featureFlags(): FeatureFlag[] {
     return Object.values(this).filter(value => value instanceof FeatureFlagFromStorage);
   }

@@ -31,6 +31,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { issuesEmailTemplate } from 'xforge-common/utils';
 import { environment } from '../../../environments/environment';
+import { FeatureFlagService } from '../../../xforge-common/feature-flags/feature-flag.service';
 import { SelectableProject } from '../../core/models/selectable-project';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -159,6 +160,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     protected readonly urlService: ExternalUrlService,
     protected readonly draftOptionsService: DraftOptionsService,
     private readonly projectService: SFProjectService,
+    private readonly featureFlags: FeatureFlagService,
     private destroyRef: DestroyRef
   ) {
     super(noticeService, 'DraftGenerationComponent');
@@ -341,10 +343,13 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       return;
     }
 
-    // navigate to new draft page
     const projectId = this.activatedProject.projectId;
     if (projectId != null) {
-      await this.router.navigate(['/projects', projectId, 'draft-generation', 'new-draft']);
+      if (this.featureFlags.partialBookDrafting.enabled) {
+        await this.router.navigate(['/projects', projectId, 'draft-generation', 'new-draft']);
+      } else {
+        this.currentPage = 'steps';
+      }
     }
   }
 
