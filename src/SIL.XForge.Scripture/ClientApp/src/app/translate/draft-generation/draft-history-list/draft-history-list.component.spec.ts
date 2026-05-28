@@ -3,9 +3,12 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
-import { anything, mock, when } from 'ts-mockito';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
@@ -32,17 +35,19 @@ describe('DraftHistoryListComponent', () => {
       provideTestRealtime(SF_TYPE_REGISTRY),
       provideHttpClient(withFetch()),
       provideHttpClientTesting(),
+      provideTestOnlineStatus(),
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
       { provide: I18nService, useMock: mockedI18nService },
       { provide: ProjectNotificationService, useMock: mockedProjectNotificationService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
-      { provide: UserService, useMock: mockedUserService }
+      { provide: UserService, useMock: mockedUserService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
 
   it('should handle a missing build history', () => {
-    const env = new TestEnvironment(undefined);
+    const env = new TestEnvironment({ buildHistory: undefined });
     expect(env.component.history).toEqual([]);
     expect(env.component.savedHistoricalBuilds).toEqual([]);
     expect(env.component.isBuildActive).toBe(false);
@@ -52,7 +57,7 @@ describe('DraftHistoryListComponent', () => {
   });
 
   it('should handle an empty build history', () => {
-    const env = new TestEnvironment([]);
+    const env = new TestEnvironment({ buildHistory: [] });
     expect(env.component.history).toEqual([]);
     expect(env.component.savedHistoricalBuilds).toEqual([]);
     expect(env.component.isBuildActive).toBe(false);
@@ -67,7 +72,7 @@ describe('DraftHistoryListComponent', () => {
       state: BuildStates.Completed,
       additionalInfo: { dateRequested: '2025-08-01T12:00:00.000Z' }
     } as BuildDto;
-    const env = new TestEnvironment([completedBuild, activeBuild]);
+    const env = new TestEnvironment({ buildHistory: [completedBuild, activeBuild] });
     expect(env.component.history).toEqual([activeBuild, completedBuild]);
     expect(env.component.savedHistoricalBuilds).toEqual([completedBuild]);
     expect(env.component.isBuildActive).toBe(true);
@@ -80,7 +85,7 @@ describe('DraftHistoryListComponent', () => {
     const buildHistory = [
       { state: BuildStates.Active, additionalInfo: { dateRequested: '2025-08-01T12:00:00.000Z' } } as BuildDto
     ];
-    const env = new TestEnvironment(buildHistory);
+    const env = new TestEnvironment({ buildHistory });
     expect(env.component.history).toEqual(buildHistory);
     expect(env.component.savedHistoricalBuilds).toEqual([]);
     expect(env.component.isBuildActive).toBe(true);
@@ -95,7 +100,7 @@ describe('DraftHistoryListComponent', () => {
       additionalInfo: { dateRequested: '2025-08-01T12:00:00.000Z' }
     } as BuildDto;
     const buildHistory = [build];
-    const env = new TestEnvironment(buildHistory);
+    const env = new TestEnvironment({ buildHistory });
     expect(env.component.history).toEqual(buildHistory);
     expect(env.component.savedHistoricalBuilds).toEqual([]);
     expect(env.component.isBuildActive).toBe(false);
@@ -110,11 +115,35 @@ describe('DraftHistoryListComponent', () => {
       additionalInfo: { dateRequested: '2025-08-01T12:00:00.000Z' }
     } as BuildDto;
     const buildHistory = [build];
-    const env = new TestEnvironment(buildHistory);
+    const env = new TestEnvironment({ buildHistory });
     expect(env.component.history).toEqual(buildHistory);
     expect(env.component.savedHistoricalBuilds).toEqual([]);
     expect(env.component.isBuildActive).toBe(false);
     expect(env.component.latestBuild).toBe(build);
+    expect(env.component.lastCompletedBuildMessage).not.toBe('');
+    expect(env.component.nonActiveBuilds).toEqual(buildHistory);
+  }));
+
+  it('should load history when internet connection is restored', fakeAsync(() => {
+    const build1 = {
+      state: BuildStates.Completed,
+      additionalInfo: { dateRequested: '2025-07-31T12:00:00.000Z' }
+    } as BuildDto;
+    const build2 = {
+      state: BuildStates.Completed,
+      additionalInfo: { dateRequested: '2025-08-01T12:00:00.000Z' }
+    } as BuildDto;
+
+    const buildHistory = [build1, build2];
+    const env = new TestEnvironment({ buildHistory, isOnline: false });
+    verify(mockedDraftGenerationService.getBuildHistory(anything())).never();
+    env.onlineStatusService.setIsOnline(true);
+    env.fixture.detectChanges();
+    verify(mockedDraftGenerationService.getBuildHistory(anything())).once();
+    expect(env.component.history).toEqual(buildHistory);
+    expect(env.component.savedHistoricalBuilds).toEqual([build1]);
+    expect(env.component.isBuildActive).toBe(false);
+    expect(env.component.latestBuild).toBe(build2);
     expect(env.component.lastCompletedBuildMessage).not.toBe('');
     expect(env.component.nonActiveBuilds).toEqual(buildHistory);
   }));
@@ -125,7 +154,7 @@ describe('DraftHistoryListComponent', () => {
       additionalInfo: { dateRequested: '2025-08-01T12:00:00.000Z' }
     } as BuildDto;
     const buildHistory = [build];
-    const env = new TestEnvironment(buildHistory);
+    const env = new TestEnvironment({ buildHistory });
     expect(env.component.history).toEqual(buildHistory);
     expect(env.component.savedHistoricalBuilds).toEqual([]);
     expect(env.component.isBuildActive).toBe(false);
@@ -140,7 +169,7 @@ describe('DraftHistoryListComponent', () => {
       additionalInfo: { dateRequested: '2025-08-01T12:00:00.000Z' }
     } as BuildDto;
     const buildHistory = [build];
-    const env = new TestEnvironment(buildHistory);
+    const env = new TestEnvironment({ buildHistory });
     expect(env.component.history).toEqual(buildHistory);
     expect(env.component.isBuildActive).toBe(false);
     expect(env.component.latestBuild).toBe(build);
@@ -173,7 +202,7 @@ describe('DraftHistoryListComponent', () => {
       additionalInfo: { dateRequested: '2025-07-01T12:00:00.000Z' }
     } as BuildDto;
     const buildHistory = [faulted, canceled, build];
-    const env = new TestEnvironment(buildHistory);
+    const env = new TestEnvironment({ buildHistory });
     expect(env.component.history).toEqual(buildHistory);
     expect(env.component.savedHistoricalBuilds).toEqual([canceled, faulted]);
     expect(env.component.isBuildActive).toBe(false);
@@ -193,7 +222,7 @@ describe('DraftHistoryListComponent', () => {
     } as BuildDto;
     const buildHistory = [olderBuild, build];
     // ObjectID was created at 2025-06-03T00:00:00.000Z
-    const env = new TestEnvironment(buildHistory, '683e3b000000000000000000');
+    const env = new TestEnvironment({ buildHistory, projectId: '683e3b000000000000000000' });
     expect(env.component.history).toEqual(buildHistory);
     expect(env.component.nonActiveBuilds).toEqual(buildHistory);
     expect(env.olderDraftsMessage).not.toBeNull();
@@ -210,7 +239,7 @@ describe('DraftHistoryListComponent', () => {
     } as BuildDto;
     const buildHistory = [olderBuild, build];
     // ObjectID was created at 2025-06-05T00:00:00.000Z
-    const env = new TestEnvironment(buildHistory, '6840de000000000000000000');
+    const env = new TestEnvironment({ buildHistory, projectId: '6840de000000000000000000' });
     expect(env.component.history).toEqual(buildHistory);
     expect(env.component.nonActiveBuilds).toEqual(buildHistory);
     expect(env.olderDraftsMessage).toBeNull();
@@ -219,11 +248,19 @@ describe('DraftHistoryListComponent', () => {
   class TestEnvironment {
     component: DraftHistoryListComponent;
     fixture: ComponentFixture<DraftHistoryListComponent>;
+    onlineStatusService: TestOnlineStatusService;
 
-    constructor(buildHistory: BuildDto[] | undefined, projectId: string = 'project01') {
-      when(mockedActivatedProjectService.projectId$).thenReturn(of(projectId));
+    constructor(args: { buildHistory: BuildDto[] | undefined; isOnline?: boolean; projectId?: string }) {
+      const { buildHistory, isOnline, projectId } = args;
+      const effectiveProjectId = projectId ?? 'project01';
+      when(mockedActivatedProjectService.projectId$).thenReturn(of(effectiveProjectId));
       when(mockedActivatedProjectService.changes$).thenReturn(of(undefined)); // Required for DraftPreviewBooksComponent
-      when(mockedDraftGenerationService.getBuildHistory(projectId)).thenReturn(new BehaviorSubject(buildHistory));
+      when(mockedDraftGenerationService.getBuildHistory(effectiveProjectId)).thenReturn(
+        new BehaviorSubject(buildHistory)
+      );
+
+      this.onlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
+      if (isOnline === false) this.onlineStatusService.setIsOnline(false);
       when(mockedDraftGenerationService.draftHistoryCutOffDate).thenReturn(new Date('2025-06-04T00:00:00.000Z'));
       when(mockedI18nService.formatDate(anything())).thenCall(date => date.toLocaleString(['en']));
 
