@@ -100,7 +100,6 @@ export class NewDraftLogicHandler {
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly draftSourcesService: DraftSourcesService,
     private readonly progressService: ProgressServiceThatGivesChapterLevelInfo
-    // private readonly _destroyRef: DestroyRef
   ) {
     void this.init();
   }
@@ -205,11 +204,11 @@ export class NewDraftLogicHandler {
         if (chaptersInSource == null)
           throw new Error(`Selected book ${book} not in available drafting scripture range`);
         if (chaptersInTarget == null) {
-          newDraftingScriptureRange.books.set(book, chaptersInSource);
+          newDraftingScriptureRange.books.set(book, chaptersInSource.clone());
         } else {
           const newChaptersToDraft = chaptersInSource.difference(chaptersInTarget);
           if (newChaptersToDraft.count() > 0) newDraftingScriptureRange.books.set(book, newChaptersToDraft);
-          else newDraftingScriptureRange.books.set(book, chaptersInSource);
+          else newDraftingScriptureRange.books.set(book, chaptersInSource.clone());
         }
       } else {
         const alreadySelectedChapters = this.selectedDraftingScriptureRange$.getValue().books.get(book);
@@ -294,7 +293,7 @@ export class NewDraftLogicHandler {
     for (const bookId of books) {
       const bookRange = this.availableTargetTrainingScriptureRange$.getValue().books.get(bookId);
       if (bookRange) {
-        newTargetTrainingScriptureRange.books.set(bookId, bookRange);
+        newTargetTrainingScriptureRange.books.set(bookId, bookRange.clone());
       }
     }
     this.selectedTargetTrainingScriptureRange$.next(newTargetTrainingScriptureRange);
@@ -347,7 +346,7 @@ export class NewDraftLogicHandler {
     for (const bookId of allPreviouslySelectedBooks) {
       const bookRange = availableTargetTrainingScriptureRange.books.get(bookId);
       if (bookRange) {
-        targetTrainingScriptureRange.books.set(bookId, bookRange);
+        targetTrainingScriptureRange.books.set(bookId, bookRange.clone());
       }
     }
 

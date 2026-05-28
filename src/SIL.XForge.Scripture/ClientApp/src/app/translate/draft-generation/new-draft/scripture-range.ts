@@ -30,6 +30,10 @@ export class ChapterSet {
     }
   }
 
+  clone(): ChapterSet {
+    return new ChapterSet([...this.chapters]);
+  }
+
   toString(): string {
     const sortedChapters = [...this.chapters].sort((a, b) => a - b);
     const ranges: string[] = [];
