@@ -36,6 +36,20 @@ describe('NewDraftLogicHandler', () => {
     }
   } as const satisfies TestState;
 
+  const teamWithTwoTrainingSources = {
+    lastSelectedTranslationScriptureRanges: undefined,
+    previouslySelectedTrainingScriptureRanges: [
+      { projectId: 'training-source-1-id', scriptureRange: 'MAT;MRK' },
+      { projectId: 'training-source-2-id', scriptureRange: 'LUK;JHN' }
+    ],
+    draftingSourceBooksChapters: FULL_CANON_SCRIPTURE_RANGE,
+    targetProjectBooksChapters: 'GEN1-5;MAT1-28;MRK1-16;LUK1-24;JHN1-21',
+    trainingSourcesBooksChapters: {
+      'training-source-1-id': FULL_CANON_SCRIPTURE_RANGE,
+      'training-source-2-id': FULL_CANON_SCRIPTURE_RANGE
+    }
+  } as const satisfies TestState;
+
   describe('initialization', () => {
     it('aborts when a source project is inaccessible', async () => {
       const env = new TestEnvironment({ ...teamStartingToTranslateGenesis, noAccessSources: true });
@@ -304,6 +318,61 @@ describe('NewDraftLogicHandler', () => {
       // Now MRK should be available again in the training data
       env.logicHandler.setInputMode('training_books');
       expect(env.availableTargetTrainingScriptureRange).toBe('GEN1-5;MAT1-28;MRK1-16;LUK1-24;JHN1-21');
+    });
+
+    it('restores previously selected books independently for each training source', async () => {
+      const env = new TestEnvironment(teamWithTwoTrainingSources);
+      await env.waitForInit();
+
+      env.logicHandler.setInputMode('training_books');
+
+      // Each source gets its own prior selection restored, with no cross-contamination
+      expect(env.selectedTrainingSourceBooks).toEqual({
+        'training-source-1-id': ['MAT', 'MRK'],
+        'training-source-2-id': ['LUK', 'JHN']
+      });
+    });
+
+    it('a book selected for drafting is excluded from all training sources', async () => {
+      const testState = {
+        ...teamWithTwoTrainingSources,
+        previouslySelectedTrainingScriptureRanges: [
+          { projectId: 'training-source-1-id', scriptureRange: 'MAT;MRK;LUK;JHN' },
+          { projectId: 'training-source-2-id', scriptureRange: 'MAT;MRK;LUK;JHN' }
+        ]
+      };
+      const env = new TestEnvironment(testState);
+      await env.waitForInit();
+
+      env.logicHandler.selectDraftingBooks(['MAT']);
+      env.logicHandler.setInputMode('training_books');
+
+      expect(env.selectedTrainingSourceBooks['training-source-1-id']).not.toContain('MAT');
+      expect(env.selectedTrainingSourceBooks['training-source-2-id']).not.toContain('MAT');
+    });
+
+    it('filters a book from one source independently when it is absent from that source but present in another', async () => {
+      const testState = {
+        ...teamWithTwoTrainingSources,
+        previouslySelectedTrainingScriptureRanges: [
+          { projectId: 'training-source-1-id', scriptureRange: 'MAT' },
+          { projectId: 'training-source-2-id', scriptureRange: 'MAT' }
+        ],
+        trainingSourcesBooksChapters: {
+          'training-source-1-id': FULL_CANON_SCRIPTURE_RANGE,
+          'training-source-2-id': allBooksExcept(['MAT'])
+        }
+      };
+      const env = new TestEnvironment(testState);
+      await env.waitForInit();
+
+      env.logicHandler.setInputMode('training_books');
+
+      // Source 1 still has MAT available and selected; source 2 does not
+      expect(env.availableTrainingSourceBooks['training-source-1-id']).toContain('MAT');
+      expect(env.availableTrainingSourceBooks['training-source-2-id']).not.toContain('MAT');
+      expect(env.selectedTrainingSourceBooks['training-source-1-id']).toContain('MAT');
+      expect(env.selectedTrainingSourceBooks['training-source-2-id']).not.toContain('MAT');
     });
   });
 
