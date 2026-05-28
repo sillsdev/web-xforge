@@ -12,20 +12,13 @@ mat-spinner {
 .partial-book-drafting-table {
   display: inline-grid;
   gap: 16px;
-  align-items: center;
+  align-items: baseline;
   .book-name {
     grid-column-start: 1;
     font-weight: 500;
   }
-  .chapter-input {
+  .chapter-input-wrapper {
     grid-column-start: 2;
-  }
-  .example {
-    grid-column-start: 3;
-    grid-row-start: 1;
-  }
-  .chapters-to-translate {
-    grid-column-start: 3;
   }
 }
 
@@ -37,6 +30,12 @@ mat-spinner {
 
 .chapter-input {
   @include mat.form-field-density(-5);
+}
+
+.chapter-error {
+  font-size: 0.875em;
+  color: var(--mat-form-field-error-text-color);
+  padding-left: 16px;
 }
 
 strong {

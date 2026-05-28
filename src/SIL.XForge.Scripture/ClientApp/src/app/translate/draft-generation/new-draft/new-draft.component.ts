@@ -18,12 +18,12 @@ import { Book } from '../../../shared/book-multi-select/book-multi-select';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
 import { DraftSourcesService } from '../draft-sources.service';
-import { ChapterSet } from './scripture-range';
 import {
   NewDraftLogicHandler,
   ProgressServiceThatGivesChapterLevelInfo,
   scriptureRangeToBookListWithoutChapterDetail
 } from './new-draft-logic-handler';
+import { ChapterSet } from './scripture-range';
 
 type ChapterInputError = { key: I18nKeyForComponent<'draft_wizard'>; params?: object };
 

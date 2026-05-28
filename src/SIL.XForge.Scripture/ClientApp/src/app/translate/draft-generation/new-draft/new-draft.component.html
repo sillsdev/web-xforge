@@ -40,7 +40,6 @@
               }
             </div>
           }
-          <span class="example">(e.g. 1-5, 8, 11-13)</span>
         </div>
       }
     } @else if (page === "training_books") {
@@ -79,10 +78,6 @@
                 <span class="chapter-error">{{ t(error.key, error.params) }}</span>
               }
             </div>
-            <span class="chapters-to-translate">
-              Chapters <span class="chapter-list">{{ draftingRangeForBook(bookId) }}</span> will be translated and
-              cannot be used as training data.
-            </span>
           }
         </div>
       }
