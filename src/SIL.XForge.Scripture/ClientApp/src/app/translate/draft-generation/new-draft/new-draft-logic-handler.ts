@@ -301,17 +301,15 @@ export class NewDraftLogicHandler {
     const draftConfig = this.activatedProjectService.projectDoc?.data?.translateConfig?.draftConfig;
     if (draftConfig == null) throw new Error('Draft config not found in project data');
     const selectedTrainingSourceBooksByProjectId: { [key: string]: string[] } = {};
-    const availableTrainingSourceBooksByProjectId: { [key: string]: string[] } = {};
     for (const sourceScriptureRange of draftConfig.lastSelectedTrainingScriptureRanges ?? []) {
-      const previouslySelectedBooks = (selectedTrainingSourceBooksByProjectId[sourceScriptureRange.projectId] =
-        Array.from(new VerboseScriptureRange(sourceScriptureRange.scriptureRange).books.keys()));
+      const previouslySelectedBooks = Array.from(
+        new VerboseScriptureRange(sourceScriptureRange.scriptureRange).books.keys()
+      );
       const booksCurrentlyPresentInProject = this.trainingSourceBooks$.getValue()[sourceScriptureRange.projectId] ?? [];
-      availableTrainingSourceBooksByProjectId[sourceScriptureRange.projectId] = booksCurrentlyPresentInProject;
       selectedTrainingSourceBooksByProjectId[sourceScriptureRange.projectId] = previouslySelectedBooks.filter(bookId =>
         booksCurrentlyPresentInProject.includes(bookId)
       );
     }
-    this.availableTrainingSourceBooks$.next(availableTrainingSourceBooksByProjectId);
     this.selectedTrainingSourceBooks$.next(selectedTrainingSourceBooksByProjectId);
 
     // Combine the previously selected source training scripture ranges to estimate the previously selected target
