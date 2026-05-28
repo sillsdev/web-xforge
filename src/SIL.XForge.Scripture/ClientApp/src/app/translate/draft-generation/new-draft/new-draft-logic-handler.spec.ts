@@ -194,7 +194,7 @@ describe('NewDraftLogicHandler', () => {
     env.logicHandler.setInputMode('training_books');
 
     // Now GEN should be removed from the available training data instead of MAT
-    expect(env.availableTargetTrainingScriptureRange).toBe('GEN1-5;MRK1-16;LUK1-24;JHN1-21');
+    expect(env.availableTargetTrainingScriptureRange).toBe('GEN1-5;MAT1-28;MRK1-16;LUK1-24;JHN1-21');
     expect(env.selectedTargetTrainingScriptureRange).toBe('MRK1-16;LUK1-24;JHN1-21');
     expect(env.selectedTrainingSourceBooks).toEqual({ 'training-source-1-id': ['MRK', 'LUK', 'JHN'] });
   });
@@ -224,6 +224,34 @@ describe('NewDraftLogicHandler', () => {
     // Now MRK should be available again in the training data
     env.logicHandler.setInputMode('training_books');
     expect(env.availableTargetTrainingScriptureRange).toBe('GEN1-5;MAT1-28;MRK1-16;LUK1-24;JHN1-21');
+  });
+
+  it('defaults to remaining undrafted chapters when re-selecting a book after visiting the training step', async () => {
+    // Target has all 50 chapters of Genesis — nothing left to draft
+    const testState = {
+      ...teamStartingToTranslateGenesis,
+      targetProjectBooksChapters: 'GEN1-50;MAT1-28;MRK1-16;LUK1-24;JHN1-21'
+    };
+    const env = new TestEnvironment(testState);
+    await env.waitForInit();
+
+    // Selecting GEN defaults to all 50 chapters (source - target = 0 → fallback to all)
+    env.logicHandler.selectDraftingBooks(['GEN']);
+    expect(env.selectedDraftingScriptureRange).toBe('GEN1-50');
+
+    // User manually narrows the selection to just GEN1-30
+    env.logicHandler.trySelectDraftingChapters('GEN', '1-30');
+    expect(env.selectedDraftingScriptureRange).toBe('GEN1-30');
+
+    // Visit training step — GEN1-30 is subtracted from the available target training range
+    env.logicHandler.setInputMode('training_books');
+    expect(env.availableTargetTrainingScriptureRange).toBe('GEN31-50;MAT1-28;MRK1-16;LUK1-24;JHN1-21');
+    env.logicHandler.setInputMode('draft_books');
+
+    // Deselect then re-select GEN — default should be all 50 chapters since target has all of them
+    env.logicHandler.selectDraftingBooks([]);
+    env.logicHandler.selectDraftingBooks(['GEN']);
+    expect(env.selectedDraftingScriptureRange).toBe('GEN1-50');
   });
 });
 

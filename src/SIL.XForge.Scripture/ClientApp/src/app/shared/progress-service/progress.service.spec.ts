@@ -7,7 +7,8 @@ import {
   BookProgressWithChapterProgress,
   estimatedActualBookProgress,
   ProgressService,
-  ProjectProgress
+  ProjectProgress,
+  ProjectProgressWithChapterProgress
 } from './progress.service';
 
 const mockedNoticeService = mock(NoticeService);
@@ -132,11 +133,11 @@ describe('ProgressService', () => {
 
     expect(firstError).toBe(error);
 
-    let result2: ProjectProgress | undefined;
-    env.service.getProgress(projectId, { maxStalenessMs: 1000 }).then(r => (result2 = r));
+    let result2: ProjectProgressWithChapterProgress | undefined;
+    env.service.getProgress(projectId, { maxStalenessMs: 1000 }).then(r => (result2 = r as any));
     flushMicrotasks();
 
-    expect(result2?.books).toEqual([{ bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20 }]);
+    expect(result2?.books).toEqual([{ bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }]);
     verify(mockedProjectService.getProjectProgress(projectId)).twice();
   }));
 

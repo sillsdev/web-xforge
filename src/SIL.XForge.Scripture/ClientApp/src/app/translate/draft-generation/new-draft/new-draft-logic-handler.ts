@@ -209,7 +209,7 @@ export class NewDraftLogicHandler {
       if (newlySelectedBooks.includes(book)) {
         // Default to selecting chapters that are in the source but not the target, unless that's zero chapters, in
         // which case default to selecting all chapters in the source
-        const chaptersInTarget = this.availableTargetTrainingScriptureRange$.getValue().books.get(book);
+        const chaptersInTarget = this.targetProjectScriptureRange.books.get(book);
         const chaptersInSource = this.availableDraftingScriptureRange$.getValue().books.get(book);
         if (chaptersInSource == null)
           throw new Error(`Selected book ${book} not in available drafting scripture range`);
@@ -229,7 +229,6 @@ export class NewDraftLogicHandler {
     this.selectedDraftingScriptureRange$.next(newDraftingScriptureRange);
 
     const partialBookDraftingBooks = books.filter(bookId => this.isBookEligibleForPartialDrafting(bookId));
-    console.log('Books eligible for partial drafting', partialBookDraftingBooks);
     this.booksOfferedForPartialDrafting$.next(partialBookDraftingBooks);
   }
 
@@ -265,9 +264,7 @@ export class NewDraftLogicHandler {
 
   private isBookEligibleForPartialDrafting(bookId: string): boolean {
     const sourceChapterCount = this.availableDraftingScriptureRange$.getValue().books.get(bookId)?.chapters.size;
-    // TODO FIXME not sure if this is looking at the number of chapters, or chapters with content. Need to check for actual content
-    const targetChaptersWithContent = this.availableTargetTrainingScriptureRange$.getValue().books.get(bookId)
-      ?.chapters.size;
+    const targetChaptersWithContent = this.targetProjectScriptureRange.books.get(bookId)?.chapters.size;
 
     return (
       sourceChapterCount != null &&
@@ -291,7 +288,6 @@ export class NewDraftLogicHandler {
     this.selectedTargetTrainingScriptureRange$.next(newTargetTrainingScriptureRange);
 
     const partialBookTargetTrainingBooks = books.filter(bookId => this.isBookEligibleForPartialTargetTraining(bookId));
-    console.log('Books eligible for partial target training', partialBookTargetTrainingBooks);
     this.booksOfferedForPartialTargetTraining$.next(partialBookTargetTrainingBooks);
   }
 
@@ -354,7 +350,6 @@ export class NewDraftLogicHandler {
   }
 
   private limitAvailableTrainingRangeBasedOnSelectedDraftingRange(): void {
-    console.log('limitAvailableTrainingRangeBasedOnSelectedDraftingRange');
     // Limit available and selected target training scripture range to not overlap selected drafting range
     this.availableTargetTrainingScriptureRange$.next(
       this.targetProjectScriptureRange.difference(this.selectedDraftingScriptureRange$.getValue())
