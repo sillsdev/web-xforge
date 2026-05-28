@@ -7,6 +7,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { chapterCounts } from '../../../shared/progress-service/progress.service';
+import { DraftSource } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
 import { NewDraftLogicHandler, ProgressServiceThatGivesChapterLevelInfo } from './new-draft-logic-handler';
 import { VerboseScriptureRange } from './scripture-range';
@@ -36,6 +37,14 @@ describe('NewDraftLogicHandler', () => {
   } as const satisfies TestState;
 
   describe('initialization', () => {
+    it('aborts when a source project is inaccessible', async () => {
+      const env = new TestEnvironment({ ...teamStartingToTranslateGenesis, noAccessSources: true });
+      await env.waitForAbort();
+
+      expect(env.logicHandler.status$.getValue()).toBe('abort');
+      expect(env.logicHandler.abortMode$.getValue()).toBe('no_access');
+    });
+
     it('initializes available ranges based on progress service', async () => {
       const testState = teamStartingToTranslateGenesis;
       const env = new TestEnvironment(testState);
@@ -297,6 +306,52 @@ describe('NewDraftLogicHandler', () => {
       expect(env.availableTargetTrainingScriptureRange).toBe('GEN1-5;MAT1-28;MRK1-16;LUK1-24;JHN1-21');
     });
   });
+
+  describe('selectTargetTrainingBooks', () => {
+    it('updates the selected target training range', async () => {
+      const env = new TestEnvironment(teamStartingToTranslateGenesis);
+      await env.waitForInit();
+
+      env.logicHandler.setInputMode('training_books');
+      env.logicHandler.selectTargetTrainingBooks(['MRK', 'LUK']);
+
+      expect(env.selectedTargetTrainingScriptureRange).toBe('MRK1-16;LUK1-24');
+    });
+
+    it('throws when called in draft_books mode', async () => {
+      const env = new TestEnvironment(teamStartingToTranslateGenesis);
+      await env.waitForInit();
+
+      expect(() => env.logicHandler.selectTargetTrainingBooks(['MAT'])).toThrow();
+    });
+
+    it('offers partial target training for a book that was partially drafted with target chapters remaining', async () => {
+      const env = new TestEnvironment(teamStartingToTranslateGenesis);
+      await env.waitForInit();
+
+      // GEN: source has 50 chapters (≥12), target has GEN1-5 (≥1) — eligible for partial drafting
+      env.logicHandler.selectDraftingBooks(['GEN']);
+      expect(env.selectedDraftingScriptureRange).toBe('GEN6-50');
+
+      env.logicHandler.setInputMode('training_books');
+      // GEN1-5 remain available for target training since only GEN6-50 is being drafted
+      env.logicHandler.selectTargetTrainingBooks(['GEN']);
+
+      expect(env.booksOfferedForPartialTargetTraining).toEqual(['GEN']);
+    });
+
+    it('does not offer partial target training for books not offered for partial drafting', async () => {
+      const env = new TestEnvironment(teamStartingToTranslateGenesis);
+      await env.waitForInit();
+
+      env.logicHandler.selectDraftingBooks(['GEN']);
+      env.logicHandler.setInputMode('training_books');
+      // MAT is available for target training but was not offered for partial drafting
+      env.logicHandler.selectTargetTrainingBooks(['MAT']);
+
+      expect(env.booksOfferedForPartialTargetTraining).toEqual([]);
+    });
+  });
 });
 
 const mockedActivatedProjectService = mock(ActivatedProjectService);
@@ -318,6 +373,7 @@ interface TestState {
    * by project ID.
    */
   trainingSourcesBooksChapters: { [key: string]: string };
+  noAccessSources?: boolean;
 }
 
 class TestEnvironment {
@@ -364,7 +420,11 @@ class TestEnvironment {
     when(mockedSFProjectService.getProfile(projectId)).thenResolve({ data: project } as SFProjectProfileDoc);
 
     when(mockedDraftSourcesService.getDraftProjectSources()).thenReturn(
-      of({ trainingSources: [], trainingTargets: [], draftingSources: [] })
+      of({
+        trainingSources: state.noAccessSources ? ([{ noAccess: true }] as unknown as DraftSource[]) : [],
+        trainingTargets: [],
+        draftingSources: []
+      })
     );
 
     // Set up the progress service to return the specified scripture ranges for the project and sources
@@ -389,6 +449,10 @@ class TestEnvironment {
 
   async waitForInit(): Promise<void> {
     await firstValueFrom(this.logicHandler.status$.pipe(filter(status => status === 'input')));
+  }
+
+  async waitForAbort(): Promise<void> {
+    await firstValueFrom(this.logicHandler.status$.pipe(filter(status => status === 'abort')));
   }
 
   // Aliases
@@ -419,5 +483,9 @@ class TestEnvironment {
 
   get booksOfferedForPartialDrafting(): string[] {
     return this.logicHandler.booksOfferedForPartialDrafting$.getValue();
+  }
+
+  get booksOfferedForPartialTargetTraining(): string[] {
+    return this.logicHandler.booksOfferedForPartialTargetTraining$.getValue();
   }
 }
