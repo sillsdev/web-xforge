@@ -30,7 +30,13 @@ import {
   ServalBuildReportDto
 } from './serval-build-report';
 import { buildSummary, gapsBetweenBuildsMs } from './serval-builds-statistics';
-import { BuildInputItem, RequesterInfo, ServalBuildRow, ServalBuildsComponent, ServalBuildSummary } from './serval-builds.component';
+import {
+  BuildInputItem,
+  RequesterInfo,
+  ServalBuildRow,
+  ServalBuildsComponent,
+  ServalBuildSummary
+} from './serval-builds.component';
 
 const mockNoticeService = mock(NoticeService);
 const mockDraftGenerationService = mock(DraftGenerationService);
