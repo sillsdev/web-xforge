@@ -1,0 +1,53 @@
+.dialog-subtitle {
+  margin: 0 0 16px;
+  font-size: 1rem;
+  color: #3c3c3c;
+}
+
+.source-options {
+  display: flex;
+  flex-direction: column;
+}
+
+// Suppresses a phantom scrollbar; remove if this dialog ever needs real scrolling.
+mat-dialog-content {
+  overflow-y: hidden;
+}
+
+h3 {
+  margin-top: 0;
+}
+
+.language-code {
+  margin-left: 4px;
+  font-size: 0.875rem;
+  color: #616161;
+  font-family: monospace;
+}
+
+.hint {
+  margin-top: 0;
+}
+
+.training-source-option {
+  display: flex;
+  align-items: center;
+}
+
+.order-label {
+  margin-left: 8px;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 12px;
+
+  &--primary {
+    background-color: #e8f0fe;
+    color: #1967d2;
+  }
+
+  &--secondary {
+    background-color: #f1f3f4;
+    color: #5f6368;
+  }
+}

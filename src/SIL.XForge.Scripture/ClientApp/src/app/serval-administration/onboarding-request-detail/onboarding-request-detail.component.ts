@@ -13,6 +13,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatDialogRef } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
 import { saveAs } from 'file-saver';
@@ -27,6 +28,7 @@ import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { isPopulatedString } from '../../../type-utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { ParatextService } from '../../core/paratext.service';
+import { SFProjectService } from '../../core/sf-project.service';
 import { DevOnlyComponent } from '../../shared/dev-only/dev-only.component';
 import { JsonViewerComponent } from '../../shared/json-viewer/json-viewer.component';
 import { MobileNotSupportedComponent } from '../../shared/mobile-not-supported/mobile-not-supported.component';
@@ -41,6 +43,12 @@ import {
   OnboardingRequestService
 } from '../../translate/draft-generation/onboarding-request.service';
 import { ServalAdministrationService } from '../serval-administration.service';
+import {
+  ApproveRequestDialogComponent,
+  ApproveRequestDialogData,
+  ApproveRequestDialogResult,
+  ProjectInfo
+} from './approve-request-dialog/approve-request-dialog.component';
 import { formatBookListForSILNLP } from './draft-request-detail-utils';
 
 /**
@@ -93,6 +101,7 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
     private readonly servalAdministrationService: ServalAdministrationService,
     private readonly onboardingRequestService: OnboardingRequestService,
     private readonly dialogService: DialogService,
+    private readonly projectService: SFProjectService,
     protected readonly noticeService: NoticeService
   ) {
     super(noticeService, 'OnboardingRequestDetailComponent');
@@ -381,24 +390,70 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
   }
 
   async approveRequest(): Promise<void> {
-    const shortName = this.projectShortNames.get(this.request?.submission.projectId ?? '');
-    const result = await this.dialogService.confirm(
-      of(`Mark request as approved and enable drafting on the ${shortName} project?`),
-      of('Approve')
-    );
-    if (result && this.request != null) {
-      this.loadingStarted();
-      try {
-        const request = await this.onboardingRequestService.approveRequest({
-          requestId: this.request.id,
-          sfProjectId: this.request.submission.projectId
+    if (this.request == null) return;
+
+    const dialogData = this.buildApproveDialogData();
+    const dialogRef = this.dialogService.openMatDialog(ApproveRequestDialogComponent, {
+      data: dialogData
+    }) as MatDialogRef<ApproveRequestDialogComponent, ApproveRequestDialogResult>;
+    const result = await lastValueFrom(dialogRef.afterClosed());
+    if (result == null || this.request == null) return;
+
+    this.loadingStarted();
+    try {
+      await this.projectService.onlineUpdateSettings(this.request.submission.projectId, {
+        draftingSourcesParatextIds: [result.draftingSourceParatextId],
+        trainingSourcesParatextIds: result.trainingSourceParatextIds
+      });
+      const request = await this.onboardingRequestService.approveRequest({
+        requestId: this.request.id,
+        sfProjectId: this.request.submission.projectId
+      });
+      this.request = request;
+      this.noticeService.show('Onboarding request approved successfully');
+    } catch {
+      this.noticeService.showError('Failed to approve onboarding request');
+    } finally {
+      this.loadingFinished();
+    }
+  }
+
+  private buildApproveDialogData(): ApproveRequestDialogData {
+    const formData = this.formData;
+    const draftingSourceOptions = [
+      ...new Set(
+        [
+          formData.draftingSourceProject,
+          formData.sourceProjectA,
+          formData.sourceProjectB,
+          formData.sourceProjectC
+        ].filter((id): id is string => id != null)
+      )
+    ];
+    const trainingSourceOptions = [
+      ...new Set([...draftingSourceOptions, formData.backTranslationProject].filter((id): id is string => id != null))
+    ];
+
+    const projectInfo = new Map<string, ProjectInfo>();
+    for (const paratextId of new Set([...draftingSourceOptions, ...trainingSourceOptions])) {
+      const doc = this.projectDocs.get(paratextId);
+      if (doc?.data != null) {
+        projectInfo.set(paratextId, {
+          name: projectLabel(doc.data),
+          shortName: doc.data.shortName,
+          languageCode: doc.data.writingSystem.tag
         });
-        this.request = request;
-        this.noticeService.show('Onboarding request approved successfully');
-      } finally {
-        this.loadingFinished();
       }
     }
+
+    return {
+      projectInfo,
+      projectName: this.projectName ?? '',
+      draftingSourceOptions,
+      trainingSourceOptions,
+      defaultDraftingSource: draftingSourceOptions[0],
+      defaultTrainingSources: [formData.sourceProjectA].filter((id): id is string => id != null)
+    };
   }
 
   downloadProjects(): void {

@@ -1,0 +1,61 @@
+<h1 mat-dialog-title>Approve &amp; enable drafting</h1>
+<mat-dialog-content>
+  <p class="dialog-subtitle">Configure sources for {{ data.projectName }}</p>
+  <form [formGroup]="form">
+    <h3>Drafting source</h3>
+    <mat-radio-group formControlName="draftingSource" class="source-options">
+      @for (id of data.draftingSourceOptions; track id) {
+        <mat-radio-button [value]="id">
+          @if (data.projectInfo.get(id); as info) {
+            {{ info.name }} <span class="language-code">{{ info.languageCode }}</span>
+          } @else {
+            {{ id }}
+          }
+        </mat-radio-button>
+      }
+    </mat-radio-group>
+
+    <h3>Training sources</h3>
+    <p class="hint">Select 1 or 2 training sources.</p>
+    <div class="source-options">
+      @for (id of data.trainingSourceOptions; track id) {
+        <div class="training-source-option">
+          <mat-checkbox [checked]="isTrainingSourceSelected(id)" (change)="toggleTrainingSource(id, $event.checked)">
+            @if (data.projectInfo.get(id); as info) {
+              {{ info.name }} <span class="language-code">{{ info.languageCode }}</span>
+            } @else {
+              {{ id }}
+            }
+          </mat-checkbox>
+          @if (trainingSourceOrder(id); as order) {
+            <span
+              [class]="'order-label order-label--' + order.toLowerCase()"
+              [matTooltip]="
+                order === 'Primary'
+                  ? 'This project will be saved as the first training source'
+                  : 'This project will be saved as the second training source'
+              "
+              >{{ order }}</span
+            >
+          }
+        </div>
+      }
+    </div>
+    @if (form.hasError("languageCodesDiffer")) {
+      <app-notice type="error">All source projects must be in the same language.</app-notice>
+    }
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close id="cancel-button"><mat-icon>close</mat-icon> Cancel</button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    (click)="approve()"
+    [disabled]="form.invalid"
+    id="approve-button"
+  >
+    <mat-icon>check_circle</mat-icon> Approve
+  </button>
+</mat-dialog-actions>
