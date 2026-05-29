@@ -208,7 +208,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
         if (this.chapterNum != null) {
           this.chapterNum = this.chaptersWithDrafts.includes(this.chapterNum)
             ? this.chapterNum
-            : this.chaptersWithDrafts[0];
+            : (this.chaptersWithDrafts[0] ?? this.chapterNum);
           this.setChapterContents(this.chapterNum);
         }
         this.draftText.applyEditorStyles();

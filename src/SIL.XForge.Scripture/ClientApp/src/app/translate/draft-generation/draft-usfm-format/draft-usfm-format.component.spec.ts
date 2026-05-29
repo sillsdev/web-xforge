@@ -175,7 +175,7 @@ describe('DraftUsfmFormatComponent', () => {
     verify(mockedDraftHandlingService.getBookDraft(anything(), anything())).once();
   }));
 
-  it('determines chapters with drafts based draft chapters', fakeAsync(() => {
+  it('determines chapters with drafts based on draft chapters', fakeAsync(() => {
     const env = new TestEnvironment({
       project: {
         texts: [
@@ -193,7 +193,7 @@ describe('DraftUsfmFormatComponent', () => {
     tick(EDITOR_READY_TIMEOUT);
     expect(env.component.bookNum).toBe(1);
     expect(env.component.chapterNum).toBe(1);
-    // source has 3 chapters on book 1
+    // draft has 2 chapters
     expect(env.component.chaptersWithDrafts).toEqual([1, 2]);
     expect(env.component.showDraftSourceWarning).toBe(false);
     verify(mockedDraftHandlingService.getBookDraft(anything(), anything())).once();
@@ -404,7 +404,6 @@ class TestEnvironment {
     when(mockedNoticeService.show(anything())).thenResolve();
     when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(true);
     when(mockedServalAdministration.onlineRetrievePreTranslationStatus(anything())).thenResolve();
-    when(mockedProjectService.hasDraft(anything(), anything(), anything(), anything())).thenReturn(true);
     this.setupProject(args.project);
     this.fixture = TestBed.createComponent(DraftUsfmFormatComponent);
     this.component = this.fixture.componentInstance;
