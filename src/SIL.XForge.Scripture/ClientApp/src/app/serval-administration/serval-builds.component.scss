@@ -75,6 +75,7 @@ a {
 
 :host ::ng-deep .identifier-search-field.identifier-search-field-active .mat-mdc-text-field-wrapper {
   background-color: var(--sf-serval-builds-search-background-populated);
+  color: var(--sf-serval-builds-search-text-populated);
   transition: background-color 150ms ease-in;
 }
 
