@@ -118,6 +118,9 @@ describe('ServalBuildsComponent', () => {
     }));
 
     it('filters rows by Serval build ID', fakeAsync(() => {
+      // Suppose a user searches for a Serval build ID. It should match. And the matching
+      // for this and any other searchable fields is both case insensitive and partial,
+      // as a substring.
       const env = new TestEnvironment();
       const matchingRow: ServalBuildRow = env.createSearchRow({ servalBuildId: 'SERVAL-BUILD-777' });
       const otherRow: ServalBuildRow = env.createSearchRow({ servalBuildId: 'SERVAL-BUILD-888' });
@@ -151,19 +154,6 @@ describe('ServalBuildsComponent', () => {
 
       // SUT
       env.component['searchControl'].setValue('req-555');
-      env.waitForRowUpdate();
-
-      expect(env.component['rows']).toEqual([matchingRow]);
-    }));
-
-    it('matches search terms using case-insensitive partial matching', fakeAsync(() => {
-      const env = new TestEnvironment();
-      const matchingRow: ServalBuildRow = env.createSearchRow({ servalBuildId: 'SERVAL-BUILD-777' });
-      const otherRow: ServalBuildRow = env.createSearchRow({ servalBuildId: 'SERVAL-BUILD-888' });
-      env.component['allRows'] = [matchingRow, otherRow];
-
-      // SUT
-      env.component['searchControl'].setValue('serval-builD-7');
       env.waitForRowUpdate();
 
       expect(env.component['rows']).toEqual([matchingRow]);
