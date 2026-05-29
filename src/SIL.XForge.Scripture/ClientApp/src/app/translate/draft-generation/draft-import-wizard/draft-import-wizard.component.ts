@@ -18,11 +18,13 @@ import {
 } from '@angular/material/stepper';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
+import { TranslocoMarkupComponent } from 'ngx-transloco-markup';
 import { BehaviorSubject, filter } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { LocationService } from 'xforge-common/location.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -59,7 +61,7 @@ export interface BookForImport {
 export interface BookWithExistingText {
   bookNum: number;
   bookName: string;
-  chaptersWithText: number[];
+  chapterNumbersWithText: number[];
 }
 
 /**
@@ -113,6 +115,7 @@ export enum DraftApplyStatus {
     MatStepperNext,
     MatStepperPrevious,
     TranslocoModule,
+    TranslocoMarkupComponent,
     NoticeComponent,
     ProjectSelectComponent,
     BookMultiSelectComponent,
@@ -304,6 +307,7 @@ export class DraftImportWizardComponent implements OnInit {
     private readonly projectService: SFProjectService,
     private readonly textDocService: TextDocService,
     readonly i18n: I18nService,
+    private readonly locationService: LocationService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly authService: AuthService,
@@ -364,6 +368,10 @@ export class DraftImportWizardComponent implements OnInit {
         this.initializeAvailableBooks();
         this.sourceProjectId = projectId;
       });
+  }
+
+  bookChapterLink(bookNum: number, chapterNum: number): string {
+    return `${this.locationService.origin}/projects/${this.targetProjectId}/translate/${Canon.bookNumberToId(bookNum)}/${chapterNum}`;
   }
 
   private async loadProjects(): Promise<void> {
@@ -555,15 +563,15 @@ export class DraftImportWizardComponent implements OnInit {
     if (this.targetProjectId == null) return;
 
     this.booksWithExistingText = [];
-    const booksToCheck = this.booksToImport;
+    const booksToCheck: BookForImport[] = this.booksToImport;
 
     for (const book of booksToCheck) {
-      const chaptersWithText = await this.getChaptersWithText(book.bookNum);
-      if (chaptersWithText.length > 0) {
+      const chapterNumbersWithText: number[] = await this.getChaptersWithText(book.bookNum);
+      if (chapterNumbersWithText.length > 0) {
         this.booksWithExistingText.push({
           bookNum: book.bookNum,
           bookName: book.bookName,
-          chaptersWithText
+          chapterNumbersWithText
         });
       }
     }
@@ -583,7 +591,7 @@ export class DraftImportWizardComponent implements OnInit {
     const chaptersWithText: number[] = [];
     for (const chapter of targetBook.chapters) {
       const textDocId = new TextDocId(this.targetProjectId, bookNum, chapter.number);
-      const hasText = await this.hasTextInChapter(textDocId);
+      const hasText: boolean = await this.hasTextInChapter(textDocId);
       if (hasText) {
         chaptersWithText.push(chapter.number);
       }
@@ -621,7 +629,8 @@ export class DraftImportWizardComponent implements OnInit {
       bookNum: book.bookNum,
       bookId: book.bookId,
       bookName: book.bookName,
-      totalChapters: this.booksWithExistingText.find(b => b.bookNum === book.bookNum)?.chaptersWithText.length ?? 0,
+      totalChapters:
+        this.booksWithExistingText.find(b => b.bookNum === book.bookNum)?.chapterNumbersWithText.length ?? 0,
       completedChapters: [],
       failedChapters: []
     }));

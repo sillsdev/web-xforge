@@ -380,7 +380,7 @@ function getBookWithExistingText(bookNum: number, numberOfChaptersWithText: numb
   return {
     bookNum: bookNum,
     bookName: Canon.bookNumberToEnglishName(bookNum),
-    chaptersWithText: new Array(numberOfChaptersWithText).fill(null).map((_, i) => i + 1)
+    chapterNumbersWithText: new Array(numberOfChaptersWithText).fill(null).map((_, i) => i + 1)
   };
 }
 
