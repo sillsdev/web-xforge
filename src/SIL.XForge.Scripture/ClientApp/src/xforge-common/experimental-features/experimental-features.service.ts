@@ -22,9 +22,9 @@ export class ExperimentalFeaturesService {
 
   public experimentalFeatures: ExperimentalFeature[] = [
     {
-      name: 'Draft specific chapters',
+      name: 'Enable chapter-level drafting & training',
       description:
-        'Choose which chapters to draft, so that your existing translations of other chapters in the same book can be used to train the language model and improve draft quality.',
+        'Choose which chapters to generate, so that your existing translations of other chapters in the same book can be used to train the language model and improve draft quality.',
       available: () =>
         this.doesUserHaveRoleOnAnyProject(SFProjectRole.ParatextAdministrator) ||
         this.doesUserHaveRoleOnAnyProject(SFProjectRole.ParatextTranslator),
