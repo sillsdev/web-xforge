@@ -123,6 +123,86 @@ describe('NewDraftComponent', () => {
     });
   });
 
+  describe('training source book sync', () => {
+    it('shows no source books when no target training books are selected', async () => {
+      const env = new TestEnvironment(testState);
+      await env.waitForInit();
+      env.component.logicHandler.setInputMode('training_books');
+
+      expect(env.component.availableTrainingSourceBooksForProject('training-source-1-id')).toEqual([]);
+    });
+
+    it('limits available source books to those selected in the target', async () => {
+      const env = new TestEnvironment(testState);
+      await env.waitForInit();
+      env.component.logicHandler.setInputMode('training_books');
+
+      env.component.onTargetTrainingBookSelect([Canon.bookIdToNumber('MAT'), Canon.bookIdToNumber('MRK')]);
+
+      expect(env.availableTrainingSourceBookIds('training-source-1-id')).toEqual(['MAT', 'MRK']);
+    });
+
+    it('auto-selects source books when they are selected in the target', async () => {
+      const env = new TestEnvironment(testState);
+      await env.waitForInit();
+      env.component.logicHandler.setInputMode('training_books');
+
+      env.component.onTargetTrainingBookSelect([Canon.bookIdToNumber('MAT'), Canon.bookIdToNumber('MRK')]);
+
+      const available = env.component.availableTrainingSourceBooksForProject('training-source-1-id');
+      expect(available.every(b => b.selected)).toBeTrue();
+    });
+
+    it('does not show a book in the source when it is not in the training source', async () => {
+      const stateWithoutGEN = {
+        ...testState,
+        trainingSourcesBooksChapters: { 'training-source-1-id': 'MAT1-28;MRK1-16;LUK1-24;JHN1-21' }
+      };
+      const env = new TestEnvironment(stateWithoutGEN);
+      await env.waitForInit();
+      env.component.logicHandler.setInputMode('training_books');
+
+      // GEN is in the target project but not in the training source
+      env.component.onTargetTrainingBookSelect([Canon.bookIdToNumber('GEN')]);
+
+      expect(env.availableTrainingSourceBookIds('training-source-1-id')).not.toContain('GEN');
+      expect(env.availableTrainingSourceBookIds('training-source-1-id')).toEqual([]);
+    });
+
+    it('removes a book from source when it is deselected in the target', async () => {
+      const env = new TestEnvironment(testState);
+      await env.waitForInit();
+      env.component.logicHandler.setInputMode('training_books');
+      env.component.onTargetTrainingBookSelect([Canon.bookIdToNumber('MAT'), Canon.bookIdToNumber('MRK')]);
+
+      env.component.onTargetTrainingBookSelect([Canon.bookIdToNumber('MAT')]);
+
+      expect(env.availableTrainingSourceBookIds('training-source-1-id')).not.toContain('MRK');
+      expect(env.selectedTrainingSourceBookIds('training-source-1-id')).not.toContain('MRK');
+    });
+
+    it('preserves a manual source deselection when other target books change', async () => {
+      const env = new TestEnvironment(testState);
+      await env.waitForInit();
+      env.component.logicHandler.setInputMode('training_books');
+      // Select MAT and MRK — both auto-selected in source
+      env.component.onTargetTrainingBookSelect([Canon.bookIdToNumber('MAT'), Canon.bookIdToNumber('MRK')]);
+      // User manually deselects MRK from the source
+      env.component.onTrainingSourceBookSelect([Canon.bookIdToNumber('MAT')], 'training-source-1-id');
+
+      // Add LUK to target — LUK should be auto-selected, MRK should stay deselected
+      env.component.onTargetTrainingBookSelect([
+        Canon.bookIdToNumber('MAT'),
+        Canon.bookIdToNumber('MRK'),
+        Canon.bookIdToNumber('LUK')
+      ]);
+
+      expect(env.selectedTrainingSourceBookIds('training-source-1-id')).not.toContain('MRK');
+      expect(env.selectedTrainingSourceBookIds('training-source-1-id')).toContain('MAT');
+      expect(env.selectedTrainingSourceBookIds('training-source-1-id')).toContain('LUK');
+    });
+  });
+
   describe('onDraftingBookSelect', () => {
     it('removes stale errors for books no longer offered for partial drafting', async () => {
       const env = new TestEnvironment(testState);
@@ -203,7 +283,14 @@ class TestEnvironment {
 
     when(mockedDraftSourcesService.getDraftProjectSources()).thenReturn(
       of({
-        trainingSources: [],
+        trainingSources: Object.keys(state.trainingSourcesBooksChapters).map(projectId => ({
+          paratextId: `${projectId}-pt-id`,
+          projectRef: projectId,
+          name: `Training Source for ${projectId}`,
+          shortName: `TS-${projectId}`,
+          writingSystem: { script: 'Latn', tag: 'es' },
+          texts: []
+        })) as DraftSource[],
         trainingTargets: [],
         draftingSources: [
           {
@@ -248,6 +335,14 @@ class TestEnvironment {
     this.component.logicHandler.selectDraftingBooks(['GEN']);
     this.component.logicHandler.setInputMode('training_books');
     this.component.logicHandler.selectTargetTrainingBooks(['GEN']);
+  }
+
+  availableTrainingSourceBookIds(projectId: string): string[] {
+    return this.component.availableTrainingSourceBooksForProject(projectId).map(b => Canon.bookNumberToId(b.number));
+  }
+
+  selectedTrainingSourceBookIds(projectId: string): string[] {
+    return this.component.selectedTrainingSourceBooksForProject(projectId).map(b => Canon.bookNumberToId(b.number));
   }
 
   get selectedDraftingScriptureRange(): string {

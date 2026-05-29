@@ -246,12 +246,26 @@ export class NewDraftComponent {
   }
 
   onTargetTrainingBookSelect(books: number[]): void {
-    const selectedBookIds = books.map(b => Canon.bookNumberToId(b));
-    this.logicHandler.selectTargetTrainingBooks(selectedBookIds);
+    const previousSelectedTargetIds = new Set(
+      scriptureRangeToBookListWithoutChapterDetail(this.logicHandler.selectedTargetTrainingScriptureRange$.getValue())
+    );
+    const newSelectedIds = new Set(books.map(n => Canon.bookNumberToId(n)));
+    const addedIds = [...newSelectedIds].filter(id => !previousSelectedTargetIds.has(id));
+
+    this.logicHandler.selectTargetTrainingBooks([...newSelectedIds]);
     for (const bookId of this.targetTrainingChapterErrors.keys()) {
       if (!this.logicHandler.booksOfferedForPartialTargetTraining$.getValue().includes(bookId)) {
         this.targetTrainingChapterErrors.delete(bookId);
       }
+    }
+
+    // Auto-select newly added target books in each training source; drop removed books
+    for (const source of this.trainingSources) {
+      const available = this.logicHandler.availableTrainingSourceBooks$.getValue()[source.projectRef] ?? [];
+      const currentSelected = this.logicHandler.selectedTrainingSourceBooks$.getValue()[source.projectRef] ?? [];
+      const stillValid = currentSelected.filter(id => newSelectedIds.has(id));
+      const autoAdded = addedIds.filter(id => available.includes(id));
+      this.logicHandler.selectTrainingSourceBooks(source.projectRef, [...new Set([...stillValid, ...autoAdded])]);
     }
   }
 
@@ -311,11 +325,13 @@ export class NewDraftComponent {
 
   availableTrainingSourceBooksForProject(projectId: string): Book[] {
     const bookIds = this.logicHandler.availableTrainingSourceBooks$.getValue()[projectId] ?? [];
+    const selectedTargetIds = new Set(
+      scriptureRangeToBookListWithoutChapterDetail(this.logicHandler.selectedTargetTrainingScriptureRange$.getValue())
+    );
     const selectedIds = this.logicHandler.selectedTrainingSourceBooks$.getValue()[projectId] ?? [];
-    return bookIds.map(id => ({
-      number: Canon.bookIdToNumber(id),
-      selected: selectedIds.includes(id)
-    }));
+    return bookIds
+      .filter(id => selectedTargetIds.has(id))
+      .map(id => ({ number: Canon.bookIdToNumber(id), selected: selectedIds.includes(id) }));
   }
 
   selectedTrainingSourceBooksForProject(projectId: string): Book[] {

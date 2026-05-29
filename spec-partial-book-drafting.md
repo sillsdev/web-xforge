@@ -364,8 +364,8 @@ This change is additive: builds that don't include a target project entry in `Tr
 - [x] Wire up target training `BookMultiSelectComponent` to `NewDraftLogicHandler.selectTargetTrainingBooks()`
 - [x] Add chapter range inputs for eligible target training books
 - [x] Wire chapter input events to the equivalent of `trySelectDraftingChapters` for training
-- [ ] Add per-training-source `BookMultiSelectComponent` sections
-- [ ] Wire training source book selections to `NewDraftLogicHandler.selectedTrainingSourceBooks$`
+- [x] Add per-training-source `BookMultiSelectComponent` sections
+- [x] Wire training source book selections to `NewDraftLogicHandler.selectedTrainingSourceBooks$`
 - [ ] Add NLLB info banner (conditional on both language tags being in NLLB)
 - [ ] Add training data files read-only section
 
