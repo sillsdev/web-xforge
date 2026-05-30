@@ -8,6 +8,11 @@
 @mixin color($theme) {
   $is-dark: mat.get-theme-type($theme) == dark;
 
+  // Search box. When populated, the search box has a fill colour to make it stand out that
+  // the records are being limited by the search.
+  --sf-serval-builds-search-text-populated: var(--mat-sys-on-primary-container);
+  --sf-serval-builds-search-background-populated: var(--mat-sys-primary-container);
+
   // Status icon colors
   --sf-serval-builds-status-userrequested: #{mat.get-theme-color($theme, neutral, if($is-dark, 40, 60))};
   --sf-serval-builds-status-submittedtoserval: #{mat.get-theme-color($theme, neutral, if($is-dark, 40, 60))};

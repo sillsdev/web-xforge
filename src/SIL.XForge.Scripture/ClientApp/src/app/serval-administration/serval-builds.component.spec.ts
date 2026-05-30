@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { BehaviorSubject, firstValueFrom, Observable, skip, Subject, take } from 'rxjs';
@@ -20,7 +20,6 @@ import { BuildStates } from '../machine-api/build-states';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { NormalizedDateRange } from './date-range-picker.component';
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
-import { ServalAdministrationService } from './serval-administration.service';
 import { ServalBuildProblemsDialog } from './serval-build-problems-dialog.component';
 import {
   buildProjectDisplayName,
@@ -31,7 +30,13 @@ import {
   ServalBuildReportDto
 } from './serval-build-report';
 import { buildSummary, gapsBetweenBuildsMs } from './serval-builds-statistics';
-import { BuildInputItem, ServalBuildRow, ServalBuildsComponent, ServalBuildSummary } from './serval-builds.component';
+import {
+  BuildInputItem,
+  RequesterInfo,
+  ServalBuildRow,
+  ServalBuildsComponent,
+  ServalBuildSummary
+} from './serval-builds.component';
 
 const mockNoticeService = mock(NoticeService);
 const mockDraftGenerationService = mock(DraftGenerationService);
@@ -39,7 +44,6 @@ const mockDialogService = mock(DialogService);
 const mockExportService = mock(DraftJobsExportService);
 const mockUserService = mock(UserService);
 const mockI18nService = mock(I18nService);
-const mockServalAdministrationService = mock(ServalAdministrationService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedConsole: MockConsole = MockConsole.install();
 
@@ -57,14 +61,13 @@ describe('ServalBuildsComponent', () => {
       { provide: DraftJobsExportService, useMock: mockExportService },
       { provide: UserService, useMock: mockUserService },
       { provide: I18nService, useMock: mockI18nService },
-      { provide: ServalAdministrationService, useMock: mockServalAdministrationService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       provideNoopAnimations()
     ]
   }));
 
   describe('include deleted toggle', () => {
-    it('excludes deleted projects when toggle is off', () => {
+    it('excludes deleted projects when toggle is off', fakeAsync(() => {
       const env = new TestEnvironment();
       const activeRow = env.createRow(false, 1000);
       const deletedRow = env.createRow(true, 3000);
@@ -72,12 +75,13 @@ describe('ServalBuildsComponent', () => {
 
       // SUT
       env.component['onIncludeDeletedChange'](false);
+      env.waitForRowUpdate();
 
       expect(env.component['rows'].length).toBe(1);
       expect(env.component['rows'][0].report.project?.sfProjectId).toBeDefined();
-    });
+    }));
 
-    it('includes deleted projects when toggle is on', () => {
+    it('includes deleted projects when toggle is on', fakeAsync(() => {
       const env = new TestEnvironment();
       const activeRow = env.createRow(false, 1000);
       const deletedRow = env.createRow(true, 3000);
@@ -85,63 +89,314 @@ describe('ServalBuildsComponent', () => {
 
       // SUT
       env.component['onIncludeDeletedChange'](true);
+      env.waitForRowUpdate();
 
       expect(env.component['rows'].length).toBe(2);
       expect(env.component['rows'][1].report.project?.sfProjectId).toBeUndefined();
-    });
+    }));
   });
 
-  describe('sfProjectId filter', () => {
-    let rowA: any;
-    let rowB: any;
-    let rowC: any;
-    beforeEach(() => {
-      rowA = TestEnvironment.createRowWithDetails({
-        projectId: 'project-a',
-        startDate: new Date('2024-01-03T00:00:00Z')
-      });
-      rowB = TestEnvironment.createRowWithDetails({
-        projectId: 'project-b',
-        startDate: new Date('2024-01-02T00:00:00Z')
-      });
-      rowC = TestEnvironment.createRowWithDetails({
-        projectId: 'project-a',
-        startDate: new Date('2024-01-01T00:00:00Z')
-      });
-    });
-
-    it('filters rows to only the matching project when sfProjectId is set', () => {
+  describe('search', () => {
+    it('filters rows by SF project ID', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.component['allRows'] = [rowA, rowB, rowC];
-      env.component['currentProjectFilter'] = 'project-a';
+      const matchingRow: ServalBuildRow = env.createSearchRow({ projectId: 'sf-project-123' });
+      const otherRow: ServalBuildRow = env.createSearchRow({ projectId: 'sf-project-999' });
+      env.component['allRows'] = [matchingRow, otherRow];
 
       // SUT
-      env.component['applyFiltersAndStats']();
+      env.component['searchControl'].setValue('project-123');
+      env.waitForRowUpdate();
 
-      expect(env.component['rows'].length).toBe(2);
-      expect(env.component['rows'].every(r => r.report.project?.sfProjectId === 'project-a')).toBeTrue();
-    });
+      expect(env.component['rows']).toEqual([matchingRow]);
+    }));
 
-    it('shows all rows when sfProjectId filter is cleared', () => {
+    it('filters rows by PT project ID', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.component['allRows'] = [rowA, rowB, rowC];
-      env.component['currentProjectFilter'] = 'project-a';
-
-      // First confirm filtering is active.
-      env.component['applyFiltersAndStats']();
-
-      expect(env.component['rows'].length).toBe(2);
-      expect(env.component['rows'].every(r => r.report.project?.sfProjectId === 'project-a')).toBeTrue();
-
-      // Then clear and confirm all rows are shown.
-      env.component['currentProjectFilter'] = undefined;
+      const matchingRow: ServalBuildRow = env.createSearchRow({ ptProjectId: 'PT-PROJ-XYZ' });
+      const otherRow: ServalBuildRow = env.createSearchRow({ ptProjectId: 'PT-PROJ-OTHER' });
+      env.component['allRows'] = [matchingRow, otherRow];
 
       // SUT
-      env.component['applyFiltersAndStats']();
+      env.component['searchControl'].setValue('proj-xyz');
+      env.waitForRowUpdate();
 
-      expect(env.component['rows'].length).toBe(3);
-    });
+      expect(env.component['rows']).toEqual([matchingRow]);
+    }));
+
+    it('filters rows by Serval build ID', fakeAsync(() => {
+      // Suppose a user searches for a Serval build ID. It should match. And the matching
+      // for this and any other searchable fields is both case insensitive and partial,
+      // as a substring.
+      const env = new TestEnvironment();
+      const matchingRow: ServalBuildRow = env.createSearchRow({ servalBuildId: 'SERVAL-BUILD-777' });
+      const otherRow: ServalBuildRow = env.createSearchRow({ servalBuildId: 'SERVAL-BUILD-888' });
+      env.component['allRows'] = [matchingRow, otherRow];
+
+      // SUT
+      env.component['searchControl'].setValue('build-777');
+      env.waitForRowUpdate();
+
+      expect(env.component['rows']).toEqual([matchingRow]);
+    }));
+
+    it('filters rows by SF user ID', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const matchingRow: ServalBuildRow = env.createSearchRow({ requesterId: 'user-alpha' });
+      const otherRow: ServalBuildRow = env.createSearchRow({ requesterId: 'user-beta' });
+      env.component['allRows'] = [matchingRow, otherRow];
+
+      // SUT
+      env.component['searchControl'].setValue('user-alpha');
+      env.waitForRowUpdate();
+
+      expect(env.component['rows']).toEqual([matchingRow]);
+    }));
+
+    it('filters rows by draft generation request ID', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const matchingRow: ServalBuildRow = env.createSearchRow({ draftGenerationRequestId: 'DRAFT-REQ-555' });
+      const otherRow: ServalBuildRow = env.createSearchRow({ draftGenerationRequestId: 'DRAFT-REQ-111' });
+      env.component['allRows'] = [matchingRow, otherRow];
+
+      // SUT
+      env.component['searchControl'].setValue('req-555');
+      env.waitForRowUpdate();
+
+      expect(env.component['rows']).toEqual([matchingRow]);
+    }));
+
+    it('filters rows by requester display name', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const firstRow: ServalBuildRow = env.createSearchRow({ requesterId: 'user-alpha' });
+      const secondRow: ServalBuildRow = env.createSearchRow({ requesterId: 'user-beta' });
+      env.component['allRows'] = [firstRow, secondRow];
+      env.setRequesterData('user-alpha', {
+        displayName: 'Alpha Display User',
+        name: 'Alpha Name User',
+        email: 'alpha@example.com'
+      });
+      env.setRequesterData('user-beta', {
+        displayName: 'Beta Display User',
+        name: 'Beta Name User',
+        email: 'beta@example.com'
+      });
+
+      // SUT
+      env.component['searchControl'].setValue('alpha display');
+      env.waitForRowUpdate();
+
+      expect(env.component['rows']).toEqual([firstRow]);
+    }));
+
+    it('filters rows by requester name', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const firstRow: ServalBuildRow = env.createSearchRow({ requesterId: 'user-alpha' });
+      const secondRow: ServalBuildRow = env.createSearchRow({ requesterId: 'user-beta' });
+      env.component['allRows'] = [firstRow, secondRow];
+      env.setRequesterData('user-alpha', {
+        displayName: 'Alpha Display User',
+        name: 'Alpha Name User',
+        email: 'alpha@example.com'
+      });
+      env.setRequesterData('user-beta', {
+        displayName: 'Beta Display User',
+        name: 'Beta Name User',
+        email: 'beta@example.com'
+      });
+
+      // SUT
+      env.component['searchControl'].setValue('alpha name');
+      env.waitForRowUpdate();
+
+      expect(env.component['rows']).toEqual([firstRow]);
+    }));
+
+    it('filters rows by requester email address', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const firstRow: ServalBuildRow = env.createSearchRow({ requesterId: 'user-alpha' });
+      const secondRow: ServalBuildRow = env.createSearchRow({ requesterId: 'user-beta' });
+      env.component['allRows'] = [firstRow, secondRow];
+      env.setRequesterData('user-alpha', {
+        displayName: 'Alpha Display User',
+        name: 'Alpha Name User',
+        email: 'alpha@example.com'
+      });
+      env.setRequesterData('user-beta', {
+        displayName: 'Beta Display User',
+        name: 'Beta Name User',
+        email: 'beta@example.com'
+      });
+
+      // SUT
+      env.component['searchControl'].setValue('alpha@example.com');
+      env.waitForRowUpdate();
+
+      expect(env.component['rows']).toEqual([firstRow]);
+    }));
+
+    it('filters rows by project short name and project name', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const matchingRow: ServalBuildRow = env.createSearchRow({
+        projectShortName: 'ABC',
+        projectName: 'Alpha Build Project'
+      });
+      const otherRow: ServalBuildRow = env.createSearchRow({
+        projectShortName: 'XYZ',
+        projectName: 'Other Build Project'
+      });
+      env.component['allRows'] = [matchingRow, otherRow];
+
+      env.component['searchControl'].setValue('abc');
+      env.waitForRowUpdate();
+      const rowsByShortName: ServalBuildRow[] = [...env.component['rows']];
+
+      env.component['searchControl'].setValue('alpha build project');
+      env.waitForRowUpdate();
+      const rowsByName: ServalBuildRow[] = [...env.component['rows']];
+
+      expect(rowsByShortName).toEqual([matchingRow]);
+      expect(rowsByName).toEqual([matchingRow]);
+    }));
+
+    it('filters rows by training or translation reference project short/name', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const matchingTrainingReference: ProjectBooks[] = [
+        {
+          sfProjectId: 'train-1',
+          projectDisplayName: 'TRN - Training Reference Project',
+          shortName: 'TRN',
+          projectName: 'Training Reference Project',
+          booksAndChapters: [{ bookId: 'GEN' }, { bookId: 'EXO' }]
+        }
+      ];
+      const matchingTranslationReference: ProjectBooks[] = [
+        {
+          sfProjectId: 'trans-1',
+          projectDisplayName: 'TLR - Translation Reference Project',
+          shortName: 'TLR',
+          projectName: 'Translation Reference Project',
+          booksAndChapters: [{ bookId: 'MRK' }]
+        }
+      ];
+      const matchingRow: ServalBuildRow = env.createSearchRow({
+        trainingBooks: matchingTrainingReference,
+        translationBooks: matchingTranslationReference
+      });
+      const otherRow: ServalBuildRow = env.createSearchRow({
+        trainingBooks: [
+          {
+            sfProjectId: 'train-2',
+            projectDisplayName: 'OTR - Other Training Project',
+            shortName: 'OTR',
+            projectName: 'Other Training Project',
+            booksAndChapters: [{ bookId: 'LUK' }]
+          }
+        ],
+        translationBooks: []
+      });
+      env.component['allRows'] = [matchingRow, otherRow];
+
+      env.component['searchControl'].setValue('trn');
+      env.waitForRowUpdate();
+      const rowsByTrainingShortName: ServalBuildRow[] = [...env.component['rows']];
+
+      env.component['searchControl'].setValue('translation reference project');
+      env.waitForRowUpdate();
+      const rowsByTranslationName: ServalBuildRow[] = [...env.component['rows']];
+
+      expect(rowsByTrainingShortName).toEqual([matchingRow]);
+      expect(rowsByTranslationName).toEqual([matchingRow]);
+    }));
+
+    it('filters rows by referenced book code', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const matchingRow: ServalBuildRow = env.createSearchRow({
+        trainingBooks: env.createProjectBooks('train-1', ['GEN'])
+      });
+      const otherRow: ServalBuildRow = env.createSearchRow({
+        trainingBooks: env.createProjectBooks('train-2', ['LUK'])
+      });
+      env.component['allRows'] = [matchingRow, otherRow];
+
+      // SUT
+      env.component['searchControl'].setValue('gen');
+      env.waitForRowUpdate();
+
+      expect(env.component['rows']).toEqual([matchingRow]);
+    }));
+
+    it('clearSearch clears search text and resets filtered rows', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const matchingRow: ServalBuildRow = env.createSearchRow({ projectId: 'sf-project-123' });
+      const otherRow: ServalBuildRow = env.createSearchRow({ projectId: 'sf-project-999' });
+      env.component['allRows'] = [matchingRow, otherRow];
+
+      env.component['searchControl'].setValue('project-123');
+      env.waitForRowUpdate();
+      expect(env.component['rows']).toEqual([matchingRow]);
+
+      // SUT
+      env.component['clearSearch']();
+      env.waitForRowUpdate();
+
+      expect(env.component['searchControl'].value).toBe('');
+      expect(env.component['rows']).toEqual([matchingRow, otherRow]);
+    }));
+
+    it('uses query param q to set search text and filter rows', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const matchingRow: ServalBuildRow = env.createSearchRow({ projectId: 'sf-project-123' });
+      const otherRow: ServalBuildRow = env.createSearchRow({ projectId: 'sf-project-999' });
+      env.component['allRows'] = [matchingRow, otherRow];
+
+      // SUT
+      env.component.ngOnInit();
+      env.queryParams$.next({ q: 'project-123' });
+      env.waitForRowUpdate();
+
+      expect(env.component['searchControl'].value).toBe('project-123');
+      expect(env.component['rows']).toEqual([matchingRow]);
+    }));
+
+    it('updates query param q when search text changes', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const navigateSpy = spyOn(env.component['router'], 'navigate').and.resolveTo(true);
+
+      // SUT
+      env.component['searchControl'].setValue('project-123');
+      env.waitForRowUpdate();
+
+      expect(navigateSpy).toHaveBeenCalledWith(
+        [],
+        jasmine.objectContaining({
+          queryParams: { q: 'project-123' },
+          queryParamsHandling: 'merge'
+        })
+      );
+    }));
+
+    it('clears query param q when search text is cleared', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const navigateSpy = spyOn(env.component['router'], 'navigate').and.resolveTo(true);
+
+      env.component['searchControl'].setValue('project-123');
+      env.waitForRowUpdate();
+      navigateSpy.calls.reset();
+
+      // SUT
+      env.component['searchControl'].setValue('');
+      env.waitForRowUpdate();
+
+      expect(navigateSpy).toHaveBeenCalledWith(
+        [],
+        jasmine.objectContaining({
+          queryParams: { q: null },
+          queryParamsHandling: 'merge'
+        })
+      );
+    }));
   });
+
   describe('summary stats', () => {
     it('returns undefined average requesters when a requester is missing', () => {
       // Suppose some builds for a project have a record of who requested them, and some builds for that or another
@@ -1512,7 +1767,7 @@ describe('ServalBuildsComponent', () => {
 
       const name: string | undefined = await firstValueFrom(env.component['requesterName']('user02'));
 
-      expect(name).toBe('Test Name');
+      expect(name).toBe('Test User Name');
     });
 
     it('loads requester display name from user data', async () => {
@@ -1533,11 +1788,15 @@ describe('ServalBuildsComponent', () => {
 
     it('updates requester details when changes$ emits', async () => {
       const env = new TestEnvironment();
+      const name$: Observable<string | undefined> = env.component['requesterName']('user02');
       const displayName$: Observable<string | undefined> = env.component['requesterDisplayName']('user02');
       const emailAddress$: Observable<string | undefined> = env.component['requesterEmailAddress']('user02');
 
+      expect(await firstValueFrom(name$)).toBe('Test User Name');
       expect(await firstValueFrom(displayName$)).toBe('Test User');
       expect(await firstValueFrom(emailAddress$)).toBe('user02@example.com');
+
+      const updatedNamePromise: Promise<string | undefined> = firstValueFrom(name$.pipe(skip(1), take(1)));
 
       const updatedDisplayNamePromise: Promise<string | undefined> = firstValueFrom(
         displayName$.pipe(skip(1), take(1))
@@ -1546,10 +1805,12 @@ describe('ServalBuildsComponent', () => {
         emailAddress$.pipe(skip(1), take(1))
       );
 
-      env.userData.displayName = 'Changed User';
-      env.userData.email = 'changed@example.com';
-      env.userChanges$.next();
+      env.requesterDataById.get('user02')!.name = 'Changed User Name';
+      env.requesterDataById.get('user02')!.displayName = 'Changed User';
+      env.requesterDataById.get('user02')!.email = 'changed@example.com';
+      env.requesterChangesById.get('user02')!.next();
 
+      expect(await updatedNamePromise).toBe('Changed User Name');
       expect(await updatedDisplayNamePromise).toBe('Changed User');
       expect(await updatedEmailAddressPromise).toBe('changed@example.com');
     });
@@ -1739,23 +2000,16 @@ describe('ServalBuildsComponent', () => {
 class TestEnvironment {
   readonly component: ServalBuildsComponent;
   readonly fixture: ComponentFixture<ServalBuildsComponent>;
+  private searchRowIndex: number = 0;
+  readonly requesterDataById: Map<string, RequesterInfo> = new Map<string, RequesterInfo>();
+  readonly requesterChangesById: Map<string, Subject<void>> = new Map<string, Subject<void>>();
   readonly builds$: BehaviorSubject<ServalBuildReportDto[] | undefined> = new BehaviorSubject<
     ServalBuildReportDto[] | undefined
   >(undefined);
-  readonly userData: { name: string; displayName: string; avatarUrl: string; email: string };
-  readonly userChanges$: Subject<void> = new Subject<void>();
+  readonly queryParams$: BehaviorSubject<Record<string, unknown>> = new BehaviorSubject<Record<string, unknown>>({});
 
   constructor() {
-    this.userData = {
-      name: 'Test Name',
-      displayName: 'Test User',
-      avatarUrl: '',
-      email: 'user02@example.com'
-    };
-    const userDoc = {
-      data: this.userData,
-      changes$: this.userChanges$
-    } as unknown as UserDoc;
+    this.setRequesterData('user02', { name: 'Test User Name', displayName: 'Test User', email: 'user02@example.com' });
 
     when(mockNoticeService.loadingStarted(anything())).thenReturn(undefined);
     when(mockNoticeService.loadingFinished(anything())).thenReturn(undefined);
@@ -1768,18 +2022,84 @@ class TestEnvironment {
     when(mockExportService.exportCsv(anything(), anything(), anything(), anything(), anything())).thenReturn(undefined);
     when(mockExportService.exportRsv(anything(), anything(), anything(), anything(), anything())).thenReturn(undefined);
     when(mockExportService.exportTsv(anything(), anything(), anything(), anything(), anything())).thenReturn(undefined);
-    when(mockUserService.get(anything())).thenResolve(userDoc);
+    when(mockUserService.get(anything())).thenCall((requesterSFUserId: string) => {
+      const userData: RequesterInfo | undefined = this.requesterDataById.get(requesterSFUserId);
+      const changes$: Subject<void> | undefined = this.requesterChangesById.get(requesterSFUserId);
+      const userDoc = {
+        data: userData,
+        changes$: changes$
+      } as unknown as UserDoc;
+      return Promise.resolve(userDoc);
+    });
     when(mockI18nService.localeCode).thenReturn('en');
     when(mockI18nService.getLanguageDisplayName(anything())).thenReturn(undefined);
-    when(mockedActivatedRoute.queryParams).thenReturn(new BehaviorSubject({}));
+    when(mockedActivatedRoute.queryParams).thenReturn(this.queryParams$);
 
     this.fixture = TestBed.createComponent(ServalBuildsComponent);
     this.component = this.fixture.componentInstance;
   }
 
+  /** Adequate wait for rows to update in response to any changes in filtering/searching. */
+  waitForRowUpdate(): void {
+    flush();
+  }
+
+  setRequesterData(requesterSFUserId: string, userData: RequesterInfo): void {
+    const defaultUserData: RequesterInfo = {
+      name: `${requesterSFUserId} Name`,
+      displayName: `${requesterSFUserId} Display`,
+      email: `${requesterSFUserId}@example.com`
+    };
+    this.requesterDataById.set(requesterSFUserId, { ...defaultUserData, ...userData });
+    this.requesterChangesById.set(requesterSFUserId, new Subject<void>());
+  }
+
+  createSearchRow({
+    projectId = undefined,
+    ptProjectId = undefined,
+    projectShortName = 'PRJ',
+    projectName = 'Project Name',
+    requesterId = 'user-alpha',
+    servalBuildId = undefined,
+    draftGenerationRequestId = undefined,
+    startDate = undefined,
+    trainingBooks = [],
+    translationBooks = []
+  }: {
+    projectId?: string;
+    ptProjectId?: string;
+    projectShortName?: string;
+    projectName?: string;
+    requesterId?: string;
+    servalBuildId?: string;
+    draftGenerationRequestId?: string;
+    startDate?: Date;
+    trainingBooks?: ProjectBooks[];
+    translationBooks?: ProjectBooks[];
+  } = {}): ServalBuildRow {
+    const rowIndex: number = ++this.searchRowIndex;
+    const generatedProjectId: string = `sf-project-${rowIndex}`;
+    const generatedBuildId: string = `build-${rowIndex}`;
+    const generatedDraftGenerationRequestId: string = `draft-request-${rowIndex}`;
+    const generatedStartDate: Date = new Date(Date.UTC(2024, 0, 1 + rowIndex));
+
+    return TestEnvironment.createRowWithDetails({
+      projectId: projectId ?? generatedProjectId,
+      ptProjectId: ptProjectId,
+      projectShortName: projectShortName,
+      projectName: projectName,
+      requesterId: requesterId,
+      servalBuildId: servalBuildId ?? generatedBuildId,
+      draftGenerationRequestId: draftGenerationRequestId ?? generatedDraftGenerationRequestId,
+      startDate: startDate ?? generatedStartDate,
+      trainingBooks: trainingBooks,
+      translationBooks: translationBooks
+    });
+  }
+
   /** Creates a default BuildReportTimeline with optional overrides. */
   static makeTimeline(overrides: Partial<BuildReportTimeline> = {}): BuildReportTimeline {
-    return {
+    const result = {
       servalCreated: undefined,
       servalStarted: undefined,
       servalCompleted: undefined,
@@ -1792,11 +2112,12 @@ class TestEnvironment {
       phases: undefined,
       ...overrides
     };
+    return result;
   }
 
   /** Creates a default ServalBuildReportDto with optional timeline overrides. */
   makeReport(timelineOverrides: Partial<BuildReportTimeline> = {}): ServalBuildReportDto {
-    return {
+    const result = {
       build: undefined,
       project: undefined,
       timeline: TestEnvironment.makeTimeline(timelineOverrides),
@@ -1810,6 +2131,7 @@ class TestEnvironment {
       requesterSFUserId: undefined,
       status: DraftGenerationBuildStatus.Completed
     };
+    return result;
   }
 
   createRow(projectDeleted: boolean, durationMs: number): any {
@@ -1869,9 +2191,12 @@ class TestEnvironment {
   static createRowWithDetails({
     durationMs = 1000,
     projectId = undefined,
+    ptProjectId = undefined,
     projectShortName = 'PRJ',
     projectName = 'Project Name',
     requesterId = undefined,
+    servalBuildId = 'build-id',
+    draftGenerationRequestId = undefined,
     startDate = new Date(0),
     finishDate,
     trainingBooks = [],
@@ -1885,9 +2210,12 @@ class TestEnvironment {
   }: {
     durationMs?: number;
     projectId?: string;
+    ptProjectId?: string;
     projectShortName?: string;
     projectName?: string;
     requesterId?: string;
+    servalBuildId?: string;
+    draftGenerationRequestId?: string;
     /** null can be given for no start date, but be careful not to generate errors about overlapping builds. */
     startDate: Date | null;
     finishDate?: Date;
@@ -1914,7 +2242,7 @@ class TestEnvironment {
           state: status.toUpperCase() as BuildStates,
           queueDepth: 0,
           additionalInfo: {
-            buildId: 'build-id',
+            buildId: servalBuildId,
             step: 0,
             trainingScriptureRanges: [],
             translationEngineId: 'translation-engine-id',
@@ -1929,7 +2257,9 @@ class TestEnvironment {
     const report: ServalBuildReportDto = {
       build: servalBuild,
       project:
-        projectId != null ? { sfProjectId: projectId, shortName: projectShortName, name: projectName } : undefined,
+        projectId != null
+          ? { sfProjectId: projectId, ptProjectId: ptProjectId, shortName: projectShortName, name: projectName }
+          : undefined,
       timeline: TestEnvironment.makeTimeline({
         servalCreated: hasServalBuild ? start : undefined,
         servalFinished: hasServalBuild ? computedFinish : undefined,
@@ -1943,7 +2273,7 @@ class TestEnvironment {
         trainingDataFileIds: []
       },
       problems: problems,
-      draftGenerationRequestId: undefined,
+      draftGenerationRequestId: draftGenerationRequestId,
       requesterSFUserId: requesterId,
       status: status
     };
