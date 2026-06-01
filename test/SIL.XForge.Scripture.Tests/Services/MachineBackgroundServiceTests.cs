@@ -24,7 +24,7 @@ public class MachineBackgroundServiceTests
         // Setup
         var env = new TestEnvironment();
         env.TranslationBuildsClient.When(x =>
-                x.GetNextFinishedBuildAsync(Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+                x.GetNextFinishedBuildAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>())
             )
             .Do(_ =>
             {
@@ -39,6 +39,7 @@ public class MachineBackgroundServiceTests
             .MachineApiService.DidNotReceive()
             .ProcessBuildAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<JobState>(), Arg.Any<CancellationToken>());
         env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception?.GetType() == typeof(ServalApiException));
+        env.ExceptionHandler.Received().ReportException(Arg.Any<Exception>());
     }
 
     [Test]
@@ -47,7 +48,7 @@ public class MachineBackgroundServiceTests
         // Setup
         var env = new TestEnvironment();
         env.TranslationBuildsClient.When(x =>
-                x.GetNextFinishedBuildAsync(Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+                x.GetNextFinishedBuildAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>())
             )
             .Do(_ =>
             {
@@ -62,6 +63,7 @@ public class MachineBackgroundServiceTests
             .MachineApiService.DidNotReceive()
             .ProcessBuildAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<JobState>(), Arg.Any<CancellationToken>());
         env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception?.GetType() == typeof(ServalApiException));
+        env.ExceptionHandler.Received().ReportException(Arg.Any<Exception>());
     }
 
     [Test]
@@ -69,7 +71,7 @@ public class MachineBackgroundServiceTests
     {
         // Setup
         var env = new TestEnvironment();
-        var build = env.ConfigureBuild(DateTimeOffset.Now);
+        var build = env.ConfigureBuild();
 
         // Confirm initial environment
         long siteConfigCount = await env.SiteConfigs.CountDocumentsAsync(_ => true, CancellationToken.None);
@@ -91,7 +93,7 @@ public class MachineBackgroundServiceTests
         // Setup
         var env = new TestEnvironment();
         env.TranslationBuildsClient.When(x =>
-                x.GetNextFinishedBuildAsync(Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+                x.GetNextFinishedBuildAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>())
             )
             .Do(_ =>
             {
@@ -107,30 +109,7 @@ public class MachineBackgroundServiceTests
             .MachineApiService.DidNotReceive()
             .ProcessBuildAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<JobState>(), Arg.Any<CancellationToken>());
         env.MockLogger.AssertNoEvent(_ => true);
-    }
-
-    [Test]
-    public async Task ExecuteAsync_MissingDateFinished()
-    {
-        // Setup
-        var env = new TestEnvironment();
-        var build = env.ConfigureBuild(finished: null);
-
-        // Confirm initial environment
-        long siteConfigCount = await env.SiteConfigs.CountDocumentsAsync(_ => true, CancellationToken.None);
-        Assert.That(siteConfigCount, Is.Zero);
-
-        // SUT
-        await env.Service.RunExecuteAsync(env.CancellationTokenSource.Token);
-
-        await env
-            .MachineApiService.Received()
-            .ProcessBuildAsync(build.Engine.Id, build.Id, build.State, Arg.Any<CancellationToken>());
-        env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception?.GetType() == typeof(DataNotFoundException));
-
-        // Confirm the site config was not modified
-        siteConfigCount = await env.SiteConfigs.CountDocumentsAsync(_ => true, CancellationToken.None);
-        Assert.That(siteConfigCount, Is.Zero);
+        env.ExceptionHandler.DidNotReceive().ReportException(Arg.Any<Exception>());
     }
 
     [Test]
@@ -138,7 +117,7 @@ public class MachineBackgroundServiceTests
     {
         // Setup
         var env = new TestEnvironment();
-        var build = env.ConfigureBuild(DateTimeOffset.Now);
+        var build = env.ConfigureBuild();
         env.ConfigureSiteConfig();
 
         // SUT
@@ -157,7 +136,7 @@ public class MachineBackgroundServiceTests
         // Setup
         var env = new TestEnvironment();
         env.TranslationBuildsClient.When(x =>
-                x.GetNextFinishedBuildAsync(Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+                x.GetNextFinishedBuildAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>())
             )
             .Do(_ => env.CancellationTokenSource.Cancel());
 
@@ -167,6 +146,7 @@ public class MachineBackgroundServiceTests
         await env
             .MachineApiService.DidNotReceive()
             .ProcessBuildAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<JobState>(), Arg.Any<CancellationToken>());
+        env.ExceptionHandler.DidNotReceive().ReportException(Arg.Any<Exception>());
     }
 
     [Test]
@@ -175,7 +155,7 @@ public class MachineBackgroundServiceTests
         // Setup
         var env = new TestEnvironment();
         env.TranslationBuildsClient.When(x =>
-                x.GetNextFinishedBuildAsync(Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+                x.GetNextFinishedBuildAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>())
             )
             .Do(_ => throw new TaskCanceledException());
 
@@ -185,6 +165,7 @@ public class MachineBackgroundServiceTests
         await env
             .MachineApiService.DidNotReceive()
             .ProcessBuildAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<JobState>(), Arg.Any<CancellationToken>());
+        env.ExceptionHandler.DidNotReceive().ReportException(Arg.Any<Exception>());
     }
 
     private class TestEnvironment
@@ -194,6 +175,7 @@ public class MachineBackgroundServiceTests
         public TestEnvironment()
         {
             CancellationTokenSource = new CancellationTokenSource();
+            ExceptionHandler = Substitute.For<IExceptionHandler>();
             IOptions<SiteOptions> options = Options.Create(new SiteOptions { Id = SiteId });
             MachineApiService = Substitute.For<IMachineApiService>();
             MachineApiService
@@ -211,6 +193,7 @@ public class MachineBackgroundServiceTests
             TranslationBuildsClient = Substitute.For<ITranslationBuildsClient>();
 
             ServiceCollection services = [];
+            services.AddSingleton(ExceptionHandler);
             services.AddSingleton(MachineApiService);
             services.AddSingleton<IRepository<SiteConfig>>(SiteConfigs);
             services.AddSingleton(TranslationBuildsClient);
@@ -220,35 +203,29 @@ public class MachineBackgroundServiceTests
         }
 
         public CancellationTokenSource CancellationTokenSource { get; }
+        public IExceptionHandler ExceptionHandler { get; }
         public IMachineApiService MachineApiService { get; }
         public MockLogger<MachineBackgroundService> MockLogger { get; }
         public MemoryRepository<SiteConfig> SiteConfigs { get; }
         public ITranslationBuildsClient TranslationBuildsClient { get; }
         public MachineBackgroundService Service { get; }
 
-        public TranslationBuild ConfigureBuild(DateTimeOffset? finished)
+        public TranslationBuild ConfigureBuild()
         {
             var build = new TranslationBuild
             {
                 Id = "build01",
                 Engine = { Id = "translationEngine01" },
                 State = JobState.Completed,
-                DateFinished = finished,
+                DateFinished = DateTimeOffset.Now,
             };
             TranslationBuildsClient
-                .GetNextFinishedBuildAsync(Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+                .GetNextFinishedBuildAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(build));
             return build;
         }
 
         public void ConfigureSiteConfig() =>
-            SiteConfigs.Add(
-                new SiteConfig
-                {
-                    Id = ObjectId.GenerateNewId().ToString(),
-                    LastFinishedBuild = DateTimeOffset.Now,
-                    Name = SiteId,
-                }
-            );
+            SiteConfigs.Add(new SiteConfig { Id = ObjectId.GenerateNewId().ToString(), Name = SiteId });
     }
 }

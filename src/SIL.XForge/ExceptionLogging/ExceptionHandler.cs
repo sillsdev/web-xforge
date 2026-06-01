@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,10 +9,8 @@ using Microsoft.AspNetCore.Http;
 
 namespace SIL.XForge;
 
-public class ExceptionHandler : IExceptionHandler
+public class ExceptionHandler(Bugsnag.IClient client) : IExceptionHandler
 {
-    private readonly Bugsnag.IClient _bugsnag;
-
     public static async Task<string> CreateHttpRequestErrorMessage(HttpResponseMessage response)
     {
         string responseContent = string.Join("\n", (await response.Content.ReadAsStringAsync()).Split('\n').Take(10));
@@ -21,7 +18,7 @@ public class ExceptionHandler : IExceptionHandler
                 "\n",
                 [
                     "HTTP Request error:",
-                    $"{response.RequestMessage.Method} {response.RequestMessage.RequestUri}",
+                    $"{response.RequestMessage?.Method} {response.RequestMessage?.RequestUri}",
                     "Response:",
                     response.ToString(),
                     "Response content begins with:",
@@ -31,9 +28,7 @@ public class ExceptionHandler : IExceptionHandler
             .Replace("\n", "\n    ");
     }
 
-    public ExceptionHandler(Bugsnag.IClient client) => _bugsnag = client;
-
-    public void ReportException(Exception exception) => _bugsnag.Notify(exception);
+    public void ReportException(Exception? exception) => client.Notify(exception);
 
     public async Task EnsureSuccessStatusCode(HttpResponseMessage response)
     {
@@ -58,18 +53,18 @@ public class ExceptionHandler : IExceptionHandler
             await context.Response.WriteAsync("500 Internal Server Error");
 
             var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
-            ReportException(exceptionHandlerPathFeature.Error);
+            ReportException(exceptionHandlerPathFeature?.Error);
         });
     }
 
     public void RecordEndpointInfoForException(Dictionary<string, string> metadata) =>
-        _bugsnag.BeforeNotify(report => report.Event.Metadata.Add("endpoint", metadata));
+        client.BeforeNotify(report => report.Event.Metadata.Add("endpoint", metadata));
 
     public void RecordUserIdForException(string userId)
     {
         if (!string.IsNullOrWhiteSpace(userId))
         {
-            _bugsnag.BeforeNotify(report => report.Event.User = new Bugsnag.Payload.User { Id = userId });
+            client.BeforeNotify(report => report.Event.User = new Bugsnag.Payload.User { Id = userId });
         }
     }
 }

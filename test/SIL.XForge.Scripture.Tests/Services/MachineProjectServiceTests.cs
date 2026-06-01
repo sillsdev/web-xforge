@@ -2958,7 +2958,7 @@ public class MachineProjectServiceTests
             Project01,
             Build01,
             JobState.Completed,
-            new Uri(env.SiteOptions.Value.Origin.Split(';').First(), UriKind.Absolute),
+            env.SiteOptions.Value.WebsiteUrl,
             CancellationToken.None
         );
         await env
@@ -2980,7 +2980,7 @@ public class MachineProjectServiceTests
             Project01,
             Build01,
             JobState.Completed,
-            new Uri(env.SiteOptions.Value.Origin.Split(';').First(), UriKind.Absolute),
+            env.SiteOptions.Value.WebsiteUrl,
             CancellationToken.None
         );
         await env
@@ -3010,7 +3010,7 @@ public class MachineProjectServiceTests
             Project01,
             Build01,
             buildState,
-            new Uri(env.SiteOptions.Value.Origin.Split(';').First(), UriKind.Absolute),
+            env.SiteOptions.Value.WebsiteUrl,
             CancellationToken.None
         );
         await env
