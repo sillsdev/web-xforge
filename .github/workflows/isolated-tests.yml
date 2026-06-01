@@ -17,27 +17,27 @@ jobs:
       matrix:
         # Environments in which to run, such as those used in development and production, or which are candidates to
         # move to.
-        os: ["ubuntu-22.04"]
-        dotnet_version: ["8.0.x"]
+        os: ["ubuntu-24.04"]
+        dotnet_version: ["10.0.x"]
         node_version: ["22.13.0"]
-        npm_version: ["10.9.2"]
+        npm_version: ["11.11.0"]
       # Continue building in other environments to see which are working.
       fail-fast: false
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
       - name: "Deps: .NET"
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
         with:
           dotnet-version: ${{matrix.dotnet_version}}
           cache: true
           cache-dependency-path: src/SIL.XForge.Scripture/packages.lock.json
       - name: "Deps: Node"
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: ${{matrix.node_version}}
           cache: "npm"
