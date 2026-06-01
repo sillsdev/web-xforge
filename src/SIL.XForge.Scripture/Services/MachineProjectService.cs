@@ -169,7 +169,7 @@ public class MachineProjectService(
                     buildConfig.ProjectId,
                     buildId: null,
                     buildState: JobState.Canceled,
-                    websiteUrl: new Uri(siteOptions.Value.Origin.Split(';').First(), UriKind.Absolute),
+                    websiteUrl: siteOptions.Value.WebsiteUrl,
                     cancellationToken
                 );
             }
@@ -203,7 +203,7 @@ public class MachineProjectService(
                     buildConfig.ProjectId,
                     buildId: null,
                     buildState: JobState.Canceled,
-                    websiteUrl: new Uri(siteOptions.Value.Origin.Split(';').First(), UriKind.Absolute),
+                    websiteUrl: siteOptions.Value.WebsiteUrl,
                     cancellationToken
                 );
             }
@@ -255,7 +255,7 @@ public class MachineProjectService(
                     buildConfig.ProjectId,
                     buildId: null,
                     buildState: JobState.Faulted,
-                    websiteUrl: new Uri(siteOptions.Value.Origin.Split(';').First(), UriKind.Absolute),
+                    websiteUrl: siteOptions.Value.WebsiteUrl,
                     cancellationToken
                 );
             }
