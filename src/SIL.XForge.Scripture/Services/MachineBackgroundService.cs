@@ -11,7 +11,6 @@ using Serval.Client;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
-using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -29,23 +28,15 @@ public class MachineBackgroundService(
     {
         // Create a scope to use services, and get required services
         using var scope = services.CreateScope();
-        IRepository<SiteConfig> siteConfigs = scope.ServiceProvider.GetRequiredService<IRepository<SiteConfig>>();
+        IExceptionHandler exceptionHandler = scope.ServiceProvider.GetRequiredService<IExceptionHandler>();
         ITranslationBuildsClient translationBuildsClient =
             scope.ServiceProvider.GetRequiredService<ITranslationBuildsClient>();
         IMachineApiService machineApiService = scope.ServiceProvider.GetRequiredService<IMachineApiService>();
+        IRepository<SiteConfig> siteConfigs = scope.ServiceProvider.GetRequiredService<IRepository<SiteConfig>>();
+        SiteConfig? siteConfig = null;
 
         // Get the site name from SiteOptions configuration
         string siteName = options.Value.Id;
-
-        // Load the site_config document by name, creating a new one if missing
-        SiteConfig siteConfig =
-            await siteConfigs.Query().FirstOrDefaultAsync(s => s.Name == siteName, stoppingToken)
-            ?? new SiteConfig
-            {
-                Id = ObjectId.GenerateNewId().ToString(),
-                Name = siteName,
-                LastFinishedBuild = DateTimeOffset.Now,
-            };
 
         // Track the number of consecutive failures for the retry backoff
         int consecutiveFailures = 0;
@@ -55,9 +46,14 @@ public class MachineBackgroundService(
         {
             try
             {
+                // If we do not have it already, load the site_config document by name, creating a new one if missing
+                siteConfig ??=
+                    await siteConfigs.Query().FirstOrDefaultAsync(s => s.Name == siteName, stoppingToken)
+                    ?? new SiteConfig { Id = ObjectId.GenerateNewId().ToString(), Name = siteName };
+
                 // Poll for the latest build
                 TranslationBuild build = await translationBuildsClient.GetNextFinishedBuildAsync(
-                    siteConfig.LastFinishedBuild,
+                    siteConfig.LastFinishedBuildId,
                     stoppingToken
                 );
                 if (stoppingToken.IsCancellationRequested)
@@ -69,9 +65,7 @@ public class MachineBackgroundService(
                 // Create/Replace the site_config document.
                 // On failure throw an exception, so the next iteration of the loop will begin.
                 // This is OK, as we will record the last build finished on the next iteration of the loop
-                siteConfig.LastFinishedBuild =
-                    build.DateFinished
-                    ?? throw new DataNotFoundException("The finished build did not contain a finished date");
+                siteConfig.LastFinishedBuildId = build.Id;
                 await siteConfigs.ReplaceAsync(siteConfig, upsert: true, stoppingToken);
 
                 // Reset the consecutive failure count
@@ -91,6 +85,7 @@ public class MachineBackgroundService(
             {
                 // Log the exception, and wait with a linear stepped backoff
                 // These exceptions will include errors communicating with Serval or MongoDB
+                exceptionHandler.ReportException(e);
 
                 // If the task is being canceled, just log the exception and note that the task is being canceled
                 if (stoppingToken.IsCancellationRequested)

@@ -11,6 +11,7 @@ using Hangfire.Common;
 using Hangfire.States;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -465,7 +466,7 @@ public class MachineApiServiceTests
             Project01,
             ServalBuildId01,
             JobState.Completed,
-            env.HttpRequestAccessor.SiteRoot,
+            env.SiteOptions.Value.WebsiteUrl,
             CancellationToken.None
         );
         env.MockLogger.AssertHasEvent(logEvent => logEvent.LogLevel == LogLevel.Information);
@@ -485,7 +486,7 @@ public class MachineApiServiceTests
             Project01,
             ServalBuildId01,
             JobState.Completed,
-            env.HttpRequestAccessor.SiteRoot,
+            env.SiteOptions.Value.WebsiteUrl,
             CancellationToken.None
         );
         env.MockLogger.AssertHasEvent(logEvent => logEvent.LogLevel == LogLevel.Information);
@@ -506,7 +507,7 @@ public class MachineApiServiceTests
             Project01,
             ServalBuildId01,
             JobState.Completed,
-            env.HttpRequestAccessor.SiteRoot,
+            env.SiteOptions.Value.WebsiteUrl,
             CancellationToken.None
         );
         env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == ex);
@@ -527,7 +528,7 @@ public class MachineApiServiceTests
             Project01,
             ServalBuildId01,
             JobState.Completed,
-            env.HttpRequestAccessor.SiteRoot,
+            env.SiteOptions.Value.WebsiteUrl,
             CancellationToken.None
         );
         await env
@@ -537,7 +538,7 @@ public class MachineApiServiceTests
                 Project01,
                 ServalBuildId01,
                 JobState.Completed,
-                env.HttpRequestAccessor.SiteRoot,
+                env.SiteOptions.Value.WebsiteUrl,
                 CancellationToken.None
             );
     }
@@ -556,7 +557,7 @@ public class MachineApiServiceTests
             Project01,
             ServalBuildId01,
             JobState.Completed,
-            env.HttpRequestAccessor.SiteRoot,
+            env.SiteOptions.Value.WebsiteUrl,
             CancellationToken.None
         );
         await env
@@ -590,7 +591,7 @@ public class MachineApiServiceTests
                 Project01,
                 ServalBuildId01,
                 JobState.Completed,
-                env.HttpRequestAccessor.SiteRoot,
+                env.SiteOptions.Value.WebsiteUrl,
                 CancellationToken.None
             );
 
@@ -5160,8 +5161,6 @@ public class MachineApiServiceTests
             DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
             EventMetricService = Substitute.For<IEventMetricService>();
             ExceptionHandler = Substitute.For<IExceptionHandler>();
-            HttpRequestAccessor = Substitute.For<IHttpRequestAccessor>();
-            HttpRequestAccessor.SiteRoot.Returns(new Uri("https://scriptureforge.org", UriKind.Absolute));
             var hubContext = Substitute.For<IHubContext<NotificationHub, INotifier>>();
             var draftHubContext = Substitute.For<IHubContext<DraftNotificationHub, IDraftNotifier>>();
             MachineProjectService = Substitute.For<IMachineProjectService>();
@@ -5264,7 +5263,9 @@ public class MachineApiServiceTests
             RealtimeService.AddRepository("sf_projects", OTType.Json0, Projects);
             RealtimeService.AddRepository("text_documents", OTType.Json0, TextDocuments);
             RealtimeService.AddRepository("texts", OTType.RichText, Texts);
-            var siteOptions = Options.Create(new SiteOptions { IssuesEmail = "help@scriptureforge.org" });
+            SiteOptions = Options.Create(
+                new SiteOptions { IssuesEmail = "help@scriptureforge.org", Origin = "https://scriptureforge.org" }
+            );
             SyncService = Substitute.For<ISyncService>();
             SyncService.SyncAsync(Arg.Any<SyncConfig>()).Returns(Task.FromResult(HangfireJobId));
             TranslationBuildsClient = Substitute.For<ITranslationBuildsClient>();
@@ -5294,7 +5295,6 @@ public class MachineApiServiceTests
                 DeltaUsxMapper,
                 EventMetricService,
                 ExceptionHandler,
-                HttpRequestAccessor,
                 hubContext,
                 draftHubContext,
                 MockLogger,
@@ -5305,7 +5305,7 @@ public class MachineApiServiceTests
                 ProjectRights,
                 ProjectService,
                 RealtimeService,
-                siteOptions,
+                SiteOptions,
                 SyncService,
                 TranslationBuildsClient,
                 TranslationEnginesClient,
@@ -5318,7 +5318,6 @@ public class MachineApiServiceTests
         public IDeltaUsxMapper DeltaUsxMapper { get; }
         public IEventMetricService EventMetricService { get; }
         public IExceptionHandler ExceptionHandler { get; }
-        public IHttpRequestAccessor HttpRequestAccessor { get; }
         public IMachineProjectService MachineProjectService { get; }
         public MockLogger<MachineApiService> MockLogger { get; }
         public IParatextService ParatextService { get; }
@@ -5331,6 +5330,7 @@ public class MachineApiServiceTests
         public ISFProjectService ProjectService { get; }
         public SFMemoryRealtimeService RealtimeService { get; }
         public MachineApiService Service { get; }
+        public IOptions<SiteOptions> SiteOptions { get; }
         public ISyncService SyncService { get; }
         public ITranslationBuildsClient TranslationBuildsClient { get; }
         public ITranslationEnginesClient TranslationEnginesClient { get; }

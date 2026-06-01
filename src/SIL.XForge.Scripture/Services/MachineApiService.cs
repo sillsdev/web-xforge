@@ -43,7 +43,6 @@ public class MachineApiService(
     IDeltaUsxMapper deltaUsxMapper,
     IEventMetricService eventMetricService,
     IExceptionHandler exceptionHandler,
-    IHttpRequestAccessor httpRequestAccessor,
     IHubContext<NotificationHub, INotifier> hubContext,
     IHubContext<DraftNotificationHub, IDraftNotifier> draftHubContext,
     ILogger<MachineApiService> logger,
@@ -2449,7 +2448,7 @@ public class MachineApiService(
                     projectId,
                     buildId,
                     buildState,
-                    httpRequestAccessor.SiteRoot,
+                    siteOptions.Value.WebsiteUrl,
                     CancellationToken.None
                 )
             );
@@ -2469,7 +2468,7 @@ public class MachineApiService(
                     projectId,
                     buildId,
                     buildState,
-                    httpRequestAccessor.SiteRoot,
+                    siteOptions.Value.WebsiteUrl,
                     CancellationToken.None
                 ),
             JobContinuationOptions.OnAnyFinishedState
