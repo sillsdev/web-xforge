@@ -14,6 +14,7 @@ import { TestOnlineStatusService } from 'xforge-common/test-online-status.servic
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
+import { notNull } from '../../type-utils';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { BuildDto } from '../machine-api/build-dto';
 import { BuildStates } from '../machine-api/build-states';
@@ -69,8 +70,8 @@ describe('ServalBuildsComponent', () => {
   describe('include deleted toggle', () => {
     it('excludes deleted projects when toggle is off', fakeAsync(() => {
       const env = new TestEnvironment();
-      const activeRow = env.createRow(false, 1000);
-      const deletedRow = env.createRow(true, 3000);
+      const activeRow = env.createRow({});
+      const deletedRow = env.createRow({ projectId: null, projectDeleted: true });
       env.component['allRows'] = [activeRow, deletedRow];
 
       // SUT
@@ -83,8 +84,8 @@ describe('ServalBuildsComponent', () => {
 
     it('includes deleted projects when toggle is on', fakeAsync(() => {
       const env = new TestEnvironment();
-      const activeRow = env.createRow(false, 1000);
-      const deletedRow = env.createRow(true, 3000);
+      const activeRow = env.createRow({});
+      const deletedRow = env.createRow({ projectId: null, projectDeleted: true });
       env.component['allRows'] = [activeRow, deletedRow];
 
       // SUT
@@ -99,8 +100,8 @@ describe('ServalBuildsComponent', () => {
   describe('search', () => {
     it('filters rows by SF project ID', fakeAsync(() => {
       const env = new TestEnvironment();
-      const matchingRow: ServalBuildRow = env.createSearchRow({ projectId: 'sf-project-123' });
-      const otherRow: ServalBuildRow = env.createSearchRow({ projectId: 'sf-project-999' });
+      const matchingRow: ServalBuildRow = env.createRow({ projectId: 'sf-project-123' });
+      const otherRow: ServalBuildRow = env.createRow({ projectId: 'sf-project-999' });
       env.component['allRows'] = [matchingRow, otherRow];
 
       // SUT
@@ -112,8 +113,8 @@ describe('ServalBuildsComponent', () => {
 
     it('filters rows by PT project ID', fakeAsync(() => {
       const env = new TestEnvironment();
-      const matchingRow: ServalBuildRow = env.createSearchRow({ ptProjectId: 'PT-PROJ-XYZ' });
-      const otherRow: ServalBuildRow = env.createSearchRow({ ptProjectId: 'PT-PROJ-OTHER' });
+      const matchingRow: ServalBuildRow = env.createRow({ ptProjectId: 'PT-PROJ-XYZ' });
+      const otherRow: ServalBuildRow = env.createRow({ ptProjectId: 'PT-PROJ-OTHER' });
       env.component['allRows'] = [matchingRow, otherRow];
 
       // SUT
@@ -128,8 +129,8 @@ describe('ServalBuildsComponent', () => {
       // for this and any other searchable fields is both case insensitive and partial,
       // as a substring.
       const env = new TestEnvironment();
-      const matchingRow: ServalBuildRow = env.createSearchRow({ servalBuildId: 'SERVAL-BUILD-777' });
-      const otherRow: ServalBuildRow = env.createSearchRow({ servalBuildId: 'SERVAL-BUILD-888' });
+      const matchingRow: ServalBuildRow = env.createRow({ servalBuildId: 'SERVAL-BUILD-777' });
+      const otherRow: ServalBuildRow = env.createRow({ servalBuildId: 'SERVAL-BUILD-888' });
       env.component['allRows'] = [matchingRow, otherRow];
 
       // SUT
@@ -141,8 +142,8 @@ describe('ServalBuildsComponent', () => {
 
     it('filters rows by SF user ID', fakeAsync(() => {
       const env = new TestEnvironment();
-      const matchingRow: ServalBuildRow = env.createSearchRow({ requesterId: 'user-alpha' });
-      const otherRow: ServalBuildRow = env.createSearchRow({ requesterId: 'user-beta' });
+      const matchingRow: ServalBuildRow = env.createRow({ requesterId: 'user-alpha' });
+      const otherRow: ServalBuildRow = env.createRow({ requesterId: 'user-beta' });
       env.component['allRows'] = [matchingRow, otherRow];
 
       // SUT
@@ -154,8 +155,8 @@ describe('ServalBuildsComponent', () => {
 
     it('filters rows by draft generation request ID', fakeAsync(() => {
       const env = new TestEnvironment();
-      const matchingRow: ServalBuildRow = env.createSearchRow({ draftGenerationRequestId: 'DRAFT-REQ-555' });
-      const otherRow: ServalBuildRow = env.createSearchRow({ draftGenerationRequestId: 'DRAFT-REQ-111' });
+      const matchingRow: ServalBuildRow = env.createRow({ draftGenerationRequestId: 'DRAFT-REQ-555' });
+      const otherRow: ServalBuildRow = env.createRow({ draftGenerationRequestId: 'DRAFT-REQ-111' });
       env.component['allRows'] = [matchingRow, otherRow];
 
       // SUT
@@ -167,8 +168,8 @@ describe('ServalBuildsComponent', () => {
 
     it('filters rows by requester display name', fakeAsync(() => {
       const env = new TestEnvironment();
-      const firstRow: ServalBuildRow = env.createSearchRow({ requesterId: 'user-alpha' });
-      const secondRow: ServalBuildRow = env.createSearchRow({ requesterId: 'user-beta' });
+      const firstRow: ServalBuildRow = env.createRow({ requesterId: 'user-alpha' });
+      const secondRow: ServalBuildRow = env.createRow({ requesterId: 'user-beta' });
       env.component['allRows'] = [firstRow, secondRow];
       env.setRequesterData('user-alpha', {
         displayName: 'Alpha Display User',
@@ -190,8 +191,8 @@ describe('ServalBuildsComponent', () => {
 
     it('filters rows by requester name', fakeAsync(() => {
       const env = new TestEnvironment();
-      const firstRow: ServalBuildRow = env.createSearchRow({ requesterId: 'user-alpha' });
-      const secondRow: ServalBuildRow = env.createSearchRow({ requesterId: 'user-beta' });
+      const firstRow: ServalBuildRow = env.createRow({ requesterId: 'user-alpha' });
+      const secondRow: ServalBuildRow = env.createRow({ requesterId: 'user-beta' });
       env.component['allRows'] = [firstRow, secondRow];
       env.setRequesterData('user-alpha', {
         displayName: 'Alpha Display User',
@@ -213,8 +214,8 @@ describe('ServalBuildsComponent', () => {
 
     it('filters rows by requester email address', fakeAsync(() => {
       const env = new TestEnvironment();
-      const firstRow: ServalBuildRow = env.createSearchRow({ requesterId: 'user-alpha' });
-      const secondRow: ServalBuildRow = env.createSearchRow({ requesterId: 'user-beta' });
+      const firstRow: ServalBuildRow = env.createRow({ requesterId: 'user-alpha' });
+      const secondRow: ServalBuildRow = env.createRow({ requesterId: 'user-beta' });
       env.component['allRows'] = [firstRow, secondRow];
       env.setRequesterData('user-alpha', {
         displayName: 'Alpha Display User',
@@ -236,11 +237,11 @@ describe('ServalBuildsComponent', () => {
 
     it('filters rows by project short name and project name', fakeAsync(() => {
       const env = new TestEnvironment();
-      const matchingRow: ServalBuildRow = env.createSearchRow({
+      const matchingRow: ServalBuildRow = env.createRow({
         projectShortName: 'ABC',
         projectName: 'Alpha Build Project'
       });
-      const otherRow: ServalBuildRow = env.createSearchRow({
+      const otherRow: ServalBuildRow = env.createRow({
         projectShortName: 'XYZ',
         projectName: 'Other Build Project'
       });
@@ -278,11 +279,11 @@ describe('ServalBuildsComponent', () => {
           booksAndChapters: [{ bookId: 'MRK' }]
         }
       ];
-      const matchingRow: ServalBuildRow = env.createSearchRow({
+      const matchingRow: ServalBuildRow = env.createRow({
         trainingBooks: matchingTrainingReference,
         translationBooks: matchingTranslationReference
       });
-      const otherRow: ServalBuildRow = env.createSearchRow({
+      const otherRow: ServalBuildRow = env.createRow({
         trainingBooks: [
           {
             sfProjectId: 'train-2',
@@ -310,10 +311,10 @@ describe('ServalBuildsComponent', () => {
 
     it('filters rows by referenced book code', fakeAsync(() => {
       const env = new TestEnvironment();
-      const matchingRow: ServalBuildRow = env.createSearchRow({
+      const matchingRow: ServalBuildRow = env.createRow({
         trainingBooks: env.createProjectBooks('train-1', ['GEN'])
       });
-      const otherRow: ServalBuildRow = env.createSearchRow({
+      const otherRow: ServalBuildRow = env.createRow({
         trainingBooks: env.createProjectBooks('train-2', ['LUK'])
       });
       env.component['allRows'] = [matchingRow, otherRow];
@@ -327,8 +328,8 @@ describe('ServalBuildsComponent', () => {
 
     it('clearSearch clears search text and resets filtered rows', fakeAsync(() => {
       const env = new TestEnvironment();
-      const matchingRow: ServalBuildRow = env.createSearchRow({ projectId: 'sf-project-123' });
-      const otherRow: ServalBuildRow = env.createSearchRow({ projectId: 'sf-project-999' });
+      const matchingRow: ServalBuildRow = env.createRow({ projectId: 'sf-project-123' });
+      const otherRow: ServalBuildRow = env.createRow({ projectId: 'sf-project-999' });
       env.component['allRows'] = [matchingRow, otherRow];
 
       env.component['searchControl'].setValue('project-123');
@@ -345,8 +346,8 @@ describe('ServalBuildsComponent', () => {
 
     it('uses query param q to set search text and filter rows', fakeAsync(() => {
       const env = new TestEnvironment();
-      const matchingRow: ServalBuildRow = env.createSearchRow({ projectId: 'sf-project-123' });
-      const otherRow: ServalBuildRow = env.createSearchRow({ projectId: 'sf-project-999' });
+      const matchingRow: ServalBuildRow = env.createRow({ projectId: 'sf-project-123' });
+      const otherRow: ServalBuildRow = env.createRow({ projectId: 'sf-project-999' });
       env.component['allRows'] = [matchingRow, otherRow];
 
       // SUT
@@ -406,18 +407,18 @@ describe('ServalBuildsComponent', () => {
       const env = new TestEnvironment();
       const baseStart: Date = new Date('2024-01-01T00:00:00Z');
       const rows: any[] = [
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'project-a',
-          startDate: env.addHours(baseStart, 0),
-          finishDate: env.addHours(baseStart, 1),
+          servalCreated: env.addHours(baseStart, 0),
+          servalFinished: env.addHours(baseStart, 1),
           requesterId: 'user-1',
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'project-a',
-          startDate: env.addHours(baseStart, 2),
-          finishDate: env.addHours(baseStart, 3),
-          requesterId: undefined,
+          servalCreated: env.addHours(baseStart, 2),
+          servalFinished: env.addHours(baseStart, 3),
+          requesterId: null,
           status: DraftGenerationBuildStatus.Completed
         })
       ];
@@ -441,70 +442,84 @@ describe('ServalBuildsComponent', () => {
       const baseStart: Date = new Date('2024-01-01T00:00:00Z');
 
       const rows = [
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 0),
-          finishDate: env.addHours(baseStart, 1),
+          sfUserRequested: env.addHours(baseStart, 0),
+          servalCreated: env.addHours(baseStart, 0),
+          servalFinished: env.addHours(baseStart, 1),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 1),
           requesterId: 'user-1',
           trainingBooks: env.createProjectBooks('proj-a', ['GEN', 'EXO']),
           translationBooks: env.createProjectBooks('proj-a', ['PSA']),
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 3),
-          finishDate: env.addHours(baseStart, 4),
+          sfUserRequested: env.addHours(baseStart, 3),
+          servalCreated: env.addHours(baseStart, 3),
+          servalFinished: env.addHours(baseStart, 4),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 4),
           requesterId: 'user-2',
           trainingBooks: env.createProjectBooks('proj-a', ['MRK']),
           translationBooks: [],
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 7),
-          finishDate: env.addHours(baseStart, 8),
+          sfUserRequested: env.addHours(baseStart, 7),
+          servalCreated: env.addHours(baseStart, 7),
+          servalFinished: env.addHours(baseStart, 8),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 8),
           requesterId: 'user-2',
           trainingBooks: env.createProjectBooks('proj-a', ['ROM', '1CO', '2CO']),
           translationBooks: env.createProjectBooks('proj-a', ['MAT', 'LUK']),
           problems: [{ source: 'serval', severity: 'warning', message: 'Low confidence' }],
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-b',
-          startDate: env.addHours(baseStart, 2),
-          finishDate: env.addHours(baseStart, 2.5),
+          sfUserRequested: env.addHours(baseStart, 2),
+          servalCreated: env.addHours(baseStart, 2),
+          servalFinished: env.addHours(baseStart, 2.5),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 2.5),
           requesterId: 'user-2',
           trainingBooks: [],
           translationBooks: [],
           status: DraftGenerationBuildStatus.Active
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-b',
-          startDate: env.addHours(baseStart, 5),
-          finishDate: env.addHours(baseStart, 6),
+          sfUserRequested: env.addHours(baseStart, 5),
+          servalCreated: env.addHours(baseStart, 5),
+          servalFinished: env.addHours(baseStart, 6),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 6),
           requesterId: 'user-3',
           trainingBooks: env.createProjectBooks('proj-b', ['ACT']),
           translationBooks: env.createProjectBooks('proj-b', ['ISA', 'JER', 'EZE']),
           status: DraftGenerationBuildStatus.Faulted
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-c',
-          startDate: env.addHours(baseStart, 9),
-          finishDate: env.addHours(baseStart, 10),
+          sfUserRequested: env.addHours(baseStart, 9),
+          servalCreated: env.addHours(baseStart, 9),
+          servalFinished: env.addHours(baseStart, 10),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 10),
+          requesterId: 'user-4',
           trainingBooks: [],
           translationBooks: [],
-          status: DraftGenerationBuildStatus.Pending,
-          requesterId: 'user-4'
+          status: DraftGenerationBuildStatus.Pending
         }),
-        // This build could not be associated with a project. And so it also will not have been associated with a requester.
-        TestEnvironment.createRowWithDetails({
-          projectId: undefined,
-          startDate: env.addHours(baseStart, 11),
-          finishDate: env.addHours(baseStart, 12),
+        // This build could not be associated with a project.
+        env.createRow({
+          projectId: null,
+          projectDeleted: true,
+          sfUserRequested: env.addHours(baseStart, 11),
+          servalCreated: env.addHours(baseStart, 11),
+          servalFinished: env.addHours(baseStart, 12),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 12),
           trainingBooks: [],
           translationBooks: [],
-          status: DraftGenerationBuildStatus.Pending,
-          requesterId: undefined
+          status: DraftGenerationBuildStatus.Pending
         })
       ];
 
@@ -530,35 +545,34 @@ describe('ServalBuildsComponent', () => {
       expect(summary.unconsideredBuilds).toBe(1);
       expect(summary.meanDurationMs).toBe(3600000);
       expect(summary.maxDurationMs).toBe(3600000);
-      // All rows created above with createRowWithDetails have a servalBuild and no events, so all are "SF did not know about"
       expect(summary.buildsServalDidNotKnowAbout).toBe(0);
-      expect(summary.buildsSfDidNotKnowAbout).toBe(6);
+      expect(summary.buildsSfDidNotKnowAbout).toBe(0);
     });
 
     it('counts total and unique training books', () => {
       const env = new TestEnvironment();
       const baseStart: Date = new Date('2024-01-01T00:00:00Z');
       const rows: ServalBuildRow[] = [
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 0),
-          finishDate: env.addHours(baseStart, 1),
+          servalCreated: env.addHours(baseStart, 0),
+          servalFinished: env.addHours(baseStart, 1),
           requesterId: 'user-1',
           trainingBooks: env.createProjectBooks('proj-a', ['GEN', 'EXO']),
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-b',
-          startDate: env.addHours(baseStart, 2),
-          finishDate: env.addHours(baseStart, 3),
+          servalCreated: env.addHours(baseStart, 2),
+          servalFinished: env.addHours(baseStart, 3),
           requesterId: 'user-2',
           trainingBooks: env.createProjectBooks('proj-b', ['GEN']),
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-c',
-          startDate: env.addHours(baseStart, 4),
-          finishDate: env.addHours(baseStart, 5),
+          servalCreated: env.addHours(baseStart, 4),
+          servalFinished: env.addHours(baseStart, 5),
           requesterId: 'user-3',
           trainingBooks: env.createProjectBooks('proj-c', ['LEV']),
           status: DraftGenerationBuildStatus.Completed
@@ -578,26 +592,26 @@ describe('ServalBuildsComponent', () => {
       const env = new TestEnvironment();
       const baseStart: Date = new Date('2024-01-01T00:00:00Z');
       const rows: ServalBuildRow[] = [
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 0),
-          finishDate: env.addHours(baseStart, 1),
+          servalCreated: env.addHours(baseStart, 0),
+          servalFinished: env.addHours(baseStart, 1),
           requesterId: 'user-1',
           translationBooks: env.createProjectBooks('proj-a', ['GEN', 'EXO']),
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-b',
-          startDate: env.addHours(baseStart, 2),
-          finishDate: env.addHours(baseStart, 3),
+          servalCreated: env.addHours(baseStart, 2),
+          servalFinished: env.addHours(baseStart, 3),
           requesterId: 'user-2',
           translationBooks: env.createProjectBooks('proj-b', ['GEN']),
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-c',
-          startDate: env.addHours(baseStart, 4),
-          finishDate: env.addHours(baseStart, 5),
+          servalCreated: env.addHours(baseStart, 4),
+          servalFinished: env.addHours(baseStart, 5),
           requesterId: 'user-3',
           translationBooks: env.createProjectBooks('proj-c', ['LEV']),
           status: DraftGenerationBuildStatus.Completed
@@ -617,20 +631,21 @@ describe('ServalBuildsComponent', () => {
       const env = new TestEnvironment();
       const baseStart: Date = new Date('2024-01-01T00:00:00Z');
       const rows: ServalBuildRow[] = [
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 0),
-          finishDate: env.addHours(baseStart, 1),
+          servalCreated: env.addHours(baseStart, 0),
+          servalFinished: env.addHours(baseStart, 1),
           requesterId: 'user-1',
           trainingBooks: env.createProjectBooks('proj-a', ['GEN', 'EXO']),
           translationBooks: env.createProjectBooks('proj-a', ['PSA']),
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
-          projectId: undefined,
-          startDate: env.addHours(baseStart, 2),
-          finishDate: env.addHours(baseStart, 3),
-          requesterId: undefined,
+        env.createRow({
+          projectId: null,
+          projectDeleted: true,
+          servalCreated: env.addHours(baseStart, 2),
+          servalFinished: env.addHours(baseStart, 3),
+          requesterId: null,
           trainingBooks: env.createProjectBooks('proj-orphan', ['LEV', 'NUM']),
           translationBooks: env.createProjectBooks('proj-orphan', ['ROM', 'ACT']),
           status: DraftGenerationBuildStatus.Completed
@@ -653,34 +668,34 @@ describe('ServalBuildsComponent', () => {
       const env = new TestEnvironment();
       const baseStart: Date = new Date('2024-01-01T00:00:00Z');
       const rows: ServalBuildRow[] = [
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 0),
-          finishDate: env.addHours(baseStart, 1),
+          servalCreated: env.addHours(baseStart, 0),
+          servalFinished: env.addHours(baseStart, 1),
           requesterId: 'user-1',
           trainingBooks: env.createProjectBooks('proj-a', ['GEN1', 'EXO1-10,14']),
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-b',
-          startDate: env.addHours(baseStart, 2),
-          finishDate: env.addHours(baseStart, 3),
+          servalCreated: env.addHours(baseStart, 2),
+          servalFinished: env.addHours(baseStart, 3),
           requesterId: 'user-2',
           trainingBooks: env.createProjectBooks('proj-b', ['GEN1', 'EXO']),
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-c',
-          startDate: env.addHours(baseStart, 4),
-          finishDate: env.addHours(baseStart, 5),
+          servalCreated: env.addHours(baseStart, 4),
+          servalFinished: env.addHours(baseStart, 5),
           requesterId: 'user-3',
           trainingBooks: env.createProjectBooks('proj-c', ['GEN2', 'LEV']),
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-d',
-          startDate: env.addHours(baseStart, 6),
-          finishDate: env.addHours(baseStart, 7),
+          servalCreated: env.addHours(baseStart, 6),
+          servalFinished: env.addHours(baseStart, 7),
           requesterId: 'user-3',
           trainingBooks: env.createProjectBooks('proj-c', ['GEN']),
           status: DraftGenerationBuildStatus.Completed
@@ -702,18 +717,18 @@ describe('ServalBuildsComponent', () => {
       const env = new TestEnvironment();
       const baseStart: Date = new Date('2024-01-01T00:00:00Z');
       const rows: ServalBuildRow[] = [
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 0),
-          finishDate: env.addHours(baseStart, 1),
+          servalCreated: env.addHours(baseStart, 0),
+          servalFinished: env.addHours(baseStart, 1),
           requesterId: 'user-1',
           trainingBooks: env.createProjectBooks('proj-a', ['ABC1', 'ABC2']),
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-b',
-          startDate: env.addHours(baseStart, 2),
-          finishDate: env.addHours(baseStart, 3),
+          servalCreated: env.addHours(baseStart, 2),
+          servalFinished: env.addHours(baseStart, 3),
           requesterId: 'user-2',
           trainingBooks: env.createProjectBooks('proj-b', ['1234', '1235']),
           status: DraftGenerationBuildStatus.Completed
@@ -734,24 +749,30 @@ describe('ServalBuildsComponent', () => {
       const baseStart: Date = new Date('2024-01-01T00:00:00Z');
 
       const rows = [
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 0),
-          finishDate: env.addHours(baseStart, 2),
+          sfUserRequested: env.addHours(baseStart, 0),
+          servalCreated: env.addHours(baseStart, 0),
+          servalFinished: env.addHours(baseStart, 2),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 2),
           requesterId: 'user-1',
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 3),
-          finishDate: env.addHours(baseStart, 4),
+          sfUserRequested: env.addHours(baseStart, 3),
+          servalCreated: env.addHours(baseStart, 3),
+          servalFinished: env.addHours(baseStart, 4),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 4),
           requesterId: 'user-1',
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 5),
-          finishDate: env.addHours(baseStart, 10),
+          sfUserRequested: env.addHours(baseStart, 5),
+          servalCreated: env.addHours(baseStart, 5),
+          servalFinished: env.addHours(baseStart, 10),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 10),
           requesterId: 'user-1',
           status: DraftGenerationBuildStatus.Active
         })
@@ -781,10 +802,10 @@ describe('ServalBuildsComponent', () => {
       for (let index = 0; index < totalProjects; index++) {
         const requesterId: string = index < 50 ? 'user-1' : 'user-2';
         rows.push(
-          TestEnvironment.createRowWithDetails({
+          env.createRow({
             projectId: `project-${index}`,
-            startDate: env.addHours(baseStart, index * 2),
-            finishDate: env.addHours(baseStart, index * 2 + 1),
+            servalCreated: env.addHours(baseStart, index * 2),
+            servalFinished: env.addHours(baseStart, index * 2 + 1),
             requesterId: requesterId,
             status: DraftGenerationBuildStatus.Completed
           })
@@ -812,10 +833,10 @@ describe('ServalBuildsComponent', () => {
       for (let index = 0; index < totalBuilds; index++) {
         const requesterId: string = index < 50 ? 'user-1' : 'user-2';
         rows.push(
-          TestEnvironment.createRowWithDetails({
+          env.createRow({
             projectId: 'project-1',
-            startDate: env.addHours(baseStart, index * 2),
-            finishDate: env.addHours(baseStart, index * 2 + 1),
+            servalCreated: env.addHours(baseStart, index * 2),
+            servalFinished: env.addHours(baseStart, index * 2 + 1),
             requesterId: requesterId,
             status: DraftGenerationBuildStatus.Completed
           })
@@ -843,10 +864,10 @@ describe('ServalBuildsComponent', () => {
 
       for (let index = 0; index < totalBuildsPerProject; index++) {
         rows.push(
-          TestEnvironment.createRowWithDetails({
+          env.createRow({
             projectId: 'project-a',
-            startDate: env.addHours(baseStart, index * 2),
-            finishDate: env.addHours(baseStart, index * 2 + 1),
+            servalCreated: env.addHours(baseStart, index * 2),
+            servalFinished: env.addHours(baseStart, index * 2 + 1),
             requesterId: 'user-1',
             status: DraftGenerationBuildStatus.Completed
           })
@@ -856,10 +877,10 @@ describe('ServalBuildsComponent', () => {
       for (let index = 0; index < totalBuildsPerProject; index++) {
         const requesterId: string = index < 25 ? 'user-1' : 'user-2';
         rows.push(
-          TestEnvironment.createRowWithDetails({
+          env.createRow({
             projectId: 'project-b',
-            startDate: env.addHours(baseStart, index * 2),
-            finishDate: env.addHours(baseStart, index * 2 + 1),
+            servalCreated: env.addHours(baseStart, index * 2),
+            servalFinished: env.addHours(baseStart, index * 2 + 1),
             requesterId: requesterId,
             status: DraftGenerationBuildStatus.Completed
           })
@@ -881,10 +902,11 @@ describe('ServalBuildsComponent', () => {
 
       const rows = [
         // Build with Serval data - has 2 training books and 1 translation book
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 0),
-          finishDate: env.addHours(baseStart, 1),
+          sfUserRequested: env.addHours(baseStart, 0),
+          servalCreated: env.addHours(baseStart, 0),
+          servalFinished: env.addHours(baseStart, 1),
           requesterId: 'user-1',
           trainingBooks: env.createProjectBooks('proj-a', ['GEN', 'EXO']),
           translationBooks: env.createProjectBooks('proj-a', ['PSA']),
@@ -893,10 +915,11 @@ describe('ServalBuildsComponent', () => {
           hasEvents: true
         }),
         // Build with Serval data - has 3 training books and 2 translation books
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 2),
-          finishDate: env.addHours(baseStart, 3),
+          sfUserRequested: env.addHours(baseStart, 2),
+          servalCreated: env.addHours(baseStart, 2),
+          servalFinished: env.addHours(baseStart, 3),
           requesterId: 'user-1',
           trainingBooks: env.createProjectBooks('proj-a', ['MRK', 'LUK', 'JHN']),
           translationBooks: env.createProjectBooks('proj-a', ['MAT', 'ROM']),
@@ -906,11 +929,13 @@ describe('ServalBuildsComponent', () => {
         }),
         // Events-only build - has no Serval data, so no book info is present
         // This should not be counted in the book averages denominator
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-b',
-          startDate: env.addHours(baseStart, 4),
-          finishDate: env.addHours(baseStart, 5),
+          sfUserRequested: env.addHours(baseStart, 4),
+          servalCreated: null,
+          servalFinished: null,
           requesterId: 'user-2',
+          servalBuildId: null,
           trainingBooks: [],
           translationBooks: [],
           status: DraftGenerationBuildStatus.Completed,
@@ -939,43 +964,53 @@ describe('ServalBuildsComponent', () => {
 
       const rows = [
         // Build with Serval data and events (fully known)
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 0),
-          finishDate: env.addHours(baseStart, 1),
+          sfUserRequested: env.addHours(baseStart, 0),
+          servalCreated: env.addHours(baseStart, 0),
+          servalFinished: env.addHours(baseStart, 1),
           requesterId: 'user-1',
           status: DraftGenerationBuildStatus.Completed,
           hasServalBuild: true,
           hasEvents: true
         }),
         // Build with events only - no Serval data (Serval did not know about)
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 2),
-          finishDate: env.addHours(baseStart, 3),
+          sfUserRequested: env.addHours(baseStart, 2),
+          servalCreated: null,
+          servalFinished: null,
           requesterId: 'user-1',
+          servalBuildId: null,
           status: DraftGenerationBuildStatus.Completed,
           hasServalBuild: false,
           hasEvents: true
         }),
         // Another build with events only (Serval did not know about)
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-b',
-          startDate: env.addHours(baseStart, 4),
-          finishDate: env.addHours(baseStart, 5),
+          sfUserRequested: env.addHours(baseStart, 4),
+          servalCreated: null,
+          servalFinished: null,
           requesterId: 'user-2',
+          servalBuildId: null,
           status: DraftGenerationBuildStatus.Active,
           hasServalBuild: false,
           hasEvents: true
         }),
-        // Build without SF project ID (unconsidered - should not count)
-        TestEnvironment.createRowWithDetails({
-          projectId: undefined,
-          startDate: env.addHours(baseStart, 6),
-          finishDate: env.addHours(baseStart, 7),
-          requesterId: undefined,
+        // Build without SF project ID (unconsidered - should not count).
+        env.createRow({
+          projectId: null,
+          projectDeleted: true,
+          sfUserRequested: env.addHours(baseStart, 6),
+          servalCreated: null,
+          servalFinished: null,
+          requesterId: null,
+          servalBuildId: null,
           status: DraftGenerationBuildStatus.Pending,
           hasServalBuild: false,
+          // This record doesn't really make sense, if the record has events, but not projectId. But it is
+          // included as part of specification and testing.
           hasEvents: true
         })
       ];
@@ -994,41 +1029,52 @@ describe('ServalBuildsComponent', () => {
 
       const rows = [
         // Build with Serval data and events (fully known)
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 0),
-          finishDate: env.addHours(baseStart, 1),
+          sfUserRequested: env.addHours(baseStart, 0),
+          servalCreated: env.addHours(baseStart, 0),
+          servalFinished: env.addHours(baseStart, 1),
           requesterId: 'user-1',
           status: DraftGenerationBuildStatus.Completed,
           hasServalBuild: true,
           hasEvents: true
         }),
         // Build with Serval data only - no SF events (SF did not know about)
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 2),
-          finishDate: env.addHours(baseStart, 3),
-          requesterId: 'user-1',
+          sfUserRequested: null,
+          servalCreated: env.addHours(baseStart, 2),
+          servalFinished: env.addHours(baseStart, 3),
+          sfAcknowledgedCompletion: null,
+          requesterId: null,
+          draftGenerationRequestId: null,
           status: DraftGenerationBuildStatus.Completed,
           hasServalBuild: true,
           hasEvents: false
         }),
         // Another build with Serval data only (SF did not know about)
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-b',
-          startDate: env.addHours(baseStart, 4),
-          finishDate: env.addHours(baseStart, 5),
-          requesterId: 'user-2',
+          sfUserRequested: null,
+          servalCreated: env.addHours(baseStart, 4),
+          servalFinished: env.addHours(baseStart, 5),
+          sfAcknowledgedCompletion: null,
+          requesterId: null,
+          draftGenerationRequestId: null,
           status: DraftGenerationBuildStatus.Active,
           hasServalBuild: true,
           hasEvents: false
         }),
         // Build without SF project ID (unconsidered - should not count)
-        TestEnvironment.createRowWithDetails({
-          projectId: undefined,
-          startDate: env.addHours(baseStart, 6),
-          finishDate: env.addHours(baseStart, 7),
-          requesterId: undefined,
+        env.createRow({
+          projectId: null,
+          projectDeleted: true,
+          sfUserRequested: null,
+          servalCreated: env.addHours(baseStart, 6),
+          servalFinished: env.addHours(baseStart, 7),
+          sfAcknowledgedCompletion: null,
+          requesterId: null,
+          draftGenerationRequestId: null,
           status: DraftGenerationBuildStatus.Pending,
           hasServalBuild: true,
           hasEvents: false
@@ -1055,19 +1101,19 @@ describe('ServalBuildsComponent', () => {
       // Without SF timestamps, gap would be: Serval finish (hour 1) to Serval created (hour 4) = 3 hours = 10800000 ms
 
       const rows = [
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 0),
-          finishDate: env.addHours(baseStart, 1),
-          sfAcknowledgedTime: env.addHours(baseStart, 1.5),
+          servalCreated: env.addHours(baseStart, 0),
+          servalFinished: env.addHours(baseStart, 1),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 1.5),
           requesterId: 'user-1',
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 4),
-          finishDate: env.addHours(baseStart, 5),
-          sfUserRequestTime: env.addHours(baseStart, 3),
+          sfUserRequested: env.addHours(baseStart, 3),
+          servalCreated: env.addHours(baseStart, 4),
+          servalFinished: env.addHours(baseStart, 5),
           requesterId: 'user-1',
           status: DraftGenerationBuildStatus.Completed
         })
@@ -1090,17 +1136,21 @@ describe('ServalBuildsComponent', () => {
       // Expected gap: From Serval finish (hour 1) to Serval created (hour 4) = 3 hours = 10800000 ms
 
       const rows = [
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 0),
-          finishDate: env.addHours(baseStart, 1),
+          sfUserRequested: null,
+          servalCreated: env.addHours(baseStart, 0),
+          servalFinished: env.addHours(baseStart, 1),
+          sfAcknowledgedCompletion: null,
           requesterId: 'user-1',
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 4),
-          finishDate: env.addHours(baseStart, 5),
+          sfUserRequested: null,
+          servalCreated: env.addHours(baseStart, 4),
+          servalFinished: env.addHours(baseStart, 5),
+          sfAcknowledgedCompletion: null,
           requesterId: 'user-1',
           status: DraftGenerationBuildStatus.Completed
         })
@@ -1123,38 +1173,48 @@ describe('ServalBuildsComponent', () => {
       // Average-of-averages would give (2h + 1h) / 2 = 1.5h
       // Flat average of all gaps [1h, 3h, 1h] gives (1 + 3 + 1) / 3 = 5/3 h ≈ 1.667h
       const rows: ServalBuildRow[] = [
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 0),
-          finishDate: env.addHours(baseStart, 1),
+          sfUserRequested: null,
+          servalCreated: env.addHours(baseStart, 0),
+          servalFinished: env.addHours(baseStart, 1),
+          sfAcknowledgedCompletion: null,
           requesterId: 'user-1',
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 2),
-          finishDate: env.addHours(baseStart, 3),
+          sfUserRequested: null,
+          servalCreated: env.addHours(baseStart, 2),
+          servalFinished: env.addHours(baseStart, 3),
+          sfAcknowledgedCompletion: null,
           requesterId: 'user-1',
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 6),
-          finishDate: env.addHours(baseStart, 7),
+          sfUserRequested: null,
+          servalCreated: env.addHours(baseStart, 6),
+          servalFinished: env.addHours(baseStart, 7),
+          sfAcknowledgedCompletion: null,
           requesterId: 'user-1',
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-b',
-          startDate: env.addHours(baseStart, 0),
-          finishDate: env.addHours(baseStart, 1),
+          sfUserRequested: null,
+          servalCreated: env.addHours(baseStart, 0),
+          servalFinished: env.addHours(baseStart, 1),
+          sfAcknowledgedCompletion: null,
           requesterId: 'user-2',
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-b',
-          startDate: env.addHours(baseStart, 2),
-          finishDate: env.addHours(baseStart, 3),
+          sfUserRequested: null,
+          servalCreated: env.addHours(baseStart, 2),
+          servalFinished: env.addHours(baseStart, 3),
+          sfAcknowledgedCompletion: null,
           requesterId: 'user-2',
           status: DraftGenerationBuildStatus.Completed
         })
@@ -1180,21 +1240,21 @@ describe('ServalBuildsComponent', () => {
       // % on SF = 8/18 = 44.44%
 
       const rows = [
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          sfUserRequestTime: env.addHours(baseStart, 0),
-          sfAcknowledgedTime: env.addHours(baseStart, 10),
-          startDate: env.addHours(baseStart, 2), // Serval created
-          finishDate: env.addHours(baseStart, 8), // Serval finished (6 hours on Serval)
+          sfUserRequested: env.addHours(baseStart, 0),
+          servalCreated: env.addHours(baseStart, 2),
+          servalFinished: env.addHours(baseStart, 8),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 10),
           requesterId: 'user-1',
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-b',
-          sfUserRequestTime: env.addHours(baseStart, 0),
-          sfAcknowledgedTime: env.addHours(baseStart, 8),
-          startDate: env.addHours(baseStart, 2), // Serval created
-          finishDate: env.addHours(baseStart, 6), // Serval finished (4 hours on Serval)
+          sfUserRequested: env.addHours(baseStart, 0),
+          servalCreated: env.addHours(baseStart, 2),
+          servalFinished: env.addHours(baseStart, 6),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 8),
           requesterId: 'user-2',
           status: DraftGenerationBuildStatus.Completed
         })
@@ -1215,41 +1275,45 @@ describe('ServalBuildsComponent', () => {
       const baseStart: Date = new Date('2024-01-01T00:00:00Z');
 
       const rows = [
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          sfUserRequestTime: env.addHours(baseStart, 0),
-          sfAcknowledgedTime: env.addHours(baseStart, 10),
-          startDate: env.addHours(baseStart, 2),
-          finishDate: env.addHours(baseStart, 8),
+          sfUserRequested: env.addHours(baseStart, 0),
+          servalCreated: env.addHours(baseStart, 2),
+          servalFinished: env.addHours(baseStart, 8),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 10),
           requesterId: 'user-1',
-          status: DraftGenerationBuildStatus.Completed // This one counts: 40% SF time
+          // This one counts: 40% SF time
+          status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-b',
-          sfUserRequestTime: env.addHours(baseStart, 0),
-          sfAcknowledgedTime: env.addHours(baseStart, 20),
-          startDate: env.addHours(baseStart, 2),
-          finishDate: env.addHours(baseStart, 4),
+          sfUserRequested: env.addHours(baseStart, 0),
+          servalCreated: env.addHours(baseStart, 2),
+          servalFinished: env.addHours(baseStart, 4),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 20),
           requesterId: 'user-2',
-          status: DraftGenerationBuildStatus.Active // In progress - should be excluded
+          // In progress - should be excluded
+          status: DraftGenerationBuildStatus.Active
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-c',
-          sfUserRequestTime: env.addHours(baseStart, 0),
-          sfAcknowledgedTime: env.addHours(baseStart, 20),
-          startDate: env.addHours(baseStart, 2),
-          finishDate: env.addHours(baseStart, 4),
+          sfUserRequested: env.addHours(baseStart, 0),
+          servalCreated: env.addHours(baseStart, 2),
+          servalFinished: env.addHours(baseStart, 4),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 20),
           requesterId: 'user-3',
-          status: DraftGenerationBuildStatus.Faulted // Faulted - should be excluded
+          // Faulted - should be excluded
+          status: DraftGenerationBuildStatus.Faulted
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-d',
-          sfUserRequestTime: env.addHours(baseStart, 0),
-          sfAcknowledgedTime: env.addHours(baseStart, 20),
-          startDate: env.addHours(baseStart, 2),
-          finishDate: env.addHours(baseStart, 4),
+          sfUserRequested: env.addHours(baseStart, 0),
+          servalCreated: env.addHours(baseStart, 2),
+          servalFinished: env.addHours(baseStart, 4),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 20),
           requesterId: 'user-4',
-          status: DraftGenerationBuildStatus.Canceled // Cancelled - should be excluded
+          // Cancelled - should be excluded
+          status: DraftGenerationBuildStatus.Canceled
         })
       ];
 
@@ -1265,21 +1329,23 @@ describe('ServalBuildsComponent', () => {
       const baseStart: Date = new Date('2024-01-01T00:00:00Z');
 
       const rows = [
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          // Missing sfUserRequestTime
-          sfAcknowledgedTime: env.addHours(baseStart, 10),
-          startDate: env.addHours(baseStart, 2),
-          finishDate: env.addHours(baseStart, 8),
+          // Missing sfUserRequested.
+          sfUserRequested: null,
+          servalCreated: env.addHours(baseStart, 2),
+          servalFinished: env.addHours(baseStart, 8),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 10),
           requesterId: 'user-1',
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-b',
-          sfUserRequestTime: env.addHours(baseStart, 0),
-          // Missing sfAcknowledgedTime
-          startDate: env.addHours(baseStart, 2),
-          finishDate: env.addHours(baseStart, 8),
+          sfUserRequested: env.addHours(baseStart, 0),
+          servalCreated: env.addHours(baseStart, 2),
+          servalFinished: env.addHours(baseStart, 8),
+          // Missing sfAcknowledgedCompletion
+          sfAcknowledgedCompletion: null,
           requesterId: 'user-2',
           status: DraftGenerationBuildStatus.Completed
         })
@@ -1296,42 +1362,42 @@ describe('ServalBuildsComponent', () => {
       const baseStart: Date = new Date('2024-01-01T00:00:00Z');
 
       const rows = [
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-valid',
-          sfUserRequestTime: env.addHours(baseStart, 0),
-          sfAcknowledgedTime: env.addHours(baseStart, 10),
-          startDate: env.addHours(baseStart, 2),
-          finishDate: env.addHours(baseStart, 8),
+          sfUserRequested: env.addHours(baseStart, 0),
+          servalCreated: env.addHours(baseStart, 2),
+          servalFinished: env.addHours(baseStart, 8),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 10),
           requesterId: 'user-1',
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-invalid-total',
+          sfUserRequested: env.addHours(baseStart, 10),
+          servalCreated: env.addHours(baseStart, 2),
+          servalFinished: env.addHours(baseStart, 4),
           // Invalid total duration: acknowledgment before request
-          sfUserRequestTime: env.addHours(baseStart, 10),
-          sfAcknowledgedTime: env.addHours(baseStart, 8),
-          startDate: env.addHours(baseStart, 2),
-          finishDate: env.addHours(baseStart, 4),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 8),
           requesterId: 'user-2',
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-invalid-serval',
+          sfUserRequested: env.addHours(baseStart, 0),
+          servalCreated: env.addHours(baseStart, 7),
           // Invalid Serval duration: finish before created
-          sfUserRequestTime: env.addHours(baseStart, 0),
-          sfAcknowledgedTime: env.addHours(baseStart, 10),
-          startDate: env.addHours(baseStart, 7),
-          finishDate: env.addHours(baseStart, 6),
+          servalFinished: env.addHours(baseStart, 6),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 10),
           requesterId: 'user-3',
           status: DraftGenerationBuildStatus.Completed
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-invalid-overlap',
+          sfUserRequested: env.addHours(baseStart, 0),
+          servalCreated: env.addHours(baseStart, 1),
+          servalFinished: env.addHours(baseStart, 8),
           // Invalid overlap: Serval runtime longer than full lifecycle in SF
-          sfUserRequestTime: env.addHours(baseStart, 0),
-          sfAcknowledgedTime: env.addHours(baseStart, 5),
-          startDate: env.addHours(baseStart, 1),
-          finishDate: env.addHours(baseStart, 8),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 5),
           requesterId: 'user-4',
           status: DraftGenerationBuildStatus.Completed
         })
@@ -1348,31 +1414,34 @@ describe('ServalBuildsComponent', () => {
       const env = new TestEnvironment();
       const baseStart: Date = new Date('2024-01-01T00:00:00Z');
       const rows = [
-        // Build 1: has Serval data, finishes at hour 1 (servalFinished). No sfAcknowledgedTime, so the gap
+        // Build 1: has Serval data, finishes at hour 1 (servalFinished). No sfAcknowledgedCompletion, so the gap
         // calculation will fall back to servalFinished for the "previous finish" time.
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 0),
-          finishDate: env.addHours(baseStart, 1),
-          sfUserRequestTime: env.addHours(baseStart, 0),
+          sfUserRequested: env.addHours(baseStart, 0),
+          servalCreated: env.addHours(baseStart, 0),
+          servalFinished: env.addHours(baseStart, 1),
+          sfAcknowledgedCompletion: null,
           hasServalBuild: true
         }),
-        // Build 2: NO Serval data (hasServalBuild=false), so servalFinished is undefined. Since sfAcknowledgedTime
-        // is also undefined, this build has no known finish time.
-        TestEnvironment.createRowWithDetails({
+        // Build 2: NO Serval data (hasServalBuild=false), so servalFinished is not set. Since sfAcknowledgedCompletion
+        // is also not set, this build has no known finish time.
+        env.createRow({
           projectId: 'proj-a',
-          startDate: null,
-          finishDate: undefined,
-          sfUserRequestTime: env.addHours(baseStart, 3),
-          sfAcknowledgedTime: undefined,
+          sfUserRequested: env.addHours(baseStart, 3),
+          servalCreated: null,
+          servalFinished: null,
+          sfAcknowledgedCompletion: null,
+          servalBuildId: null,
           hasServalBuild: false
         }),
         // Build 3: has Serval data, starts at hour 6.
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 6),
-          finishDate: env.addHours(baseStart, 7),
-          sfUserRequestTime: env.addHours(baseStart, 6),
+          sfUserRequested: env.addHours(baseStart, 6),
+          servalCreated: env.addHours(baseStart, 6),
+          servalFinished: env.addHours(baseStart, 7),
+          sfAcknowledgedCompletion: null,
           hasServalBuild: true
         })
       ];
@@ -1382,9 +1451,9 @@ describe('ServalBuildsComponent', () => {
       const summary = buildSummary(rows);
 
       expect(gaps.length).toBe(2);
-      // Gap 1→2: Build 1 finishes (servalFinished) at hour 1, Build 2 starts (sfUserRequestTime) at hour 3 = 2h gap.
+      // Gap 1→2: Build 1 finishes (servalFinished) at hour 1, Build 2 starts (sfUserRequested) at hour 3 = 2h gap.
       expect(gaps[0]).toBe(2 * 60 * 60 * 1000);
-      // Gap 2→3: Build 2 has no finish time (no sfAcknowledgedTime and no servalFinished), so the gap is unknown.
+      // Gap 2→3: Build 2 has no finish time (no sfAcknowledgedCompletion and no servalFinished), so the gap is unknown.
       expect(gaps[1]).toBeUndefined();
       // The average only counts known gaps, so the average is just the 2h gap.
       expect(summary.averageInterBuildTimeMs).toBe(2 * 60 * 60 * 1000);
@@ -1393,23 +1462,25 @@ describe('ServalBuildsComponent', () => {
     it('records undefined gap and logs error when consecutive builds have overlapping durations', () => {
       const env = new TestEnvironment();
       mockedConsole.reset();
-      mockedConsole.expectAndHide(/Two consecutive builds \(build-id, build-id\) have overlapping durations\./);
+      mockedConsole.expectAndHide(/Two consecutive builds \(build-id1, build-id2\) have overlapping durations\./);
       const baseStart: Date = new Date('2024-01-01T00:00:00Z');
       // Build 1 finishes at hour 5, but build 2 starts at hour 3 — the next build started before the previous
       // finished, so the gap is negative (overlapping).
       const rows = [
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 0),
-          finishDate: env.addHours(baseStart, 5),
-          sfUserRequestTime: env.addHours(baseStart, 0),
+          sfUserRequested: env.addHours(baseStart, 0),
+          servalCreated: env.addHours(baseStart, 0),
+          servalFinished: env.addHours(baseStart, 5),
+          servalBuildId: 'build-id1',
           hasServalBuild: true
         }),
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
-          startDate: env.addHours(baseStart, 3),
-          finishDate: env.addHours(baseStart, 6),
-          sfUserRequestTime: env.addHours(baseStart, 3),
+          sfUserRequested: env.addHours(baseStart, 3),
+          servalCreated: env.addHours(baseStart, 3),
+          servalFinished: env.addHours(baseStart, 6),
+          servalBuildId: 'build-id2',
           hasServalBuild: true
         })
       ];
@@ -1539,26 +1610,25 @@ describe('ServalBuildsComponent', () => {
 
   describe('createSpreadsheetRows', () => {
     it('should use SF timestamps with fallback to Serval timestamps', () => {
+      const env = new TestEnvironment();
       const sfUserRequestTime: Date = new Date('2024-06-01T08:00:00Z');
       const sfAcknowledgedTime: Date = new Date('2024-06-01T10:00:00Z');
       const servalCreated: Date = new Date('2024-06-01T08:05:00Z');
       const servalFinished: Date = new Date('2024-06-01T09:55:00Z');
 
-      const rowWithSfTimestamps: ServalBuildRow = TestEnvironment.createRowWithDetails({
+      const rowWithSfTimestamps: ServalBuildRow = env.createRow({
         projectId: 'proj-1',
-        startDate: servalCreated,
-        finishDate: servalFinished,
-        sfUserRequestTime: sfUserRequestTime,
-        sfAcknowledgedTime: sfAcknowledgedTime,
-        hasServalBuild: true
+        sfUserRequested: sfUserRequestTime,
+        servalCreated: servalCreated,
+        servalFinished: servalFinished,
+        sfAcknowledgedCompletion: sfAcknowledgedTime
       });
-      const rowWithServalOnly: ServalBuildRow = TestEnvironment.createRowWithDetails({
+      const rowWithServalOnly: ServalBuildRow = env.createRow({
         projectId: 'proj-2',
-        startDate: servalCreated,
-        finishDate: servalFinished,
-        sfUserRequestTime: undefined,
-        sfAcknowledgedTime: undefined,
-        hasServalBuild: true
+        sfUserRequested: null,
+        servalCreated: servalCreated,
+        servalFinished: servalFinished,
+        sfAcknowledgedCompletion: null
       });
 
       // SUT
@@ -1577,16 +1647,16 @@ describe('ServalBuildsComponent', () => {
     });
 
     it('should compute duration from effective start and end timestamps', () => {
+      const env = new TestEnvironment();
       const sfUserRequestTime: Date = new Date('2024-06-01T08:00:00Z');
       const sfAcknowledgedTime: Date = new Date('2024-06-01T10:00:00Z');
 
-      const row: ServalBuildRow = TestEnvironment.createRowWithDetails({
+      const row: ServalBuildRow = env.createRow({
         projectId: 'proj-1',
-        startDate: new Date('2024-06-01T08:05:00Z'),
-        finishDate: new Date('2024-06-01T09:55:00Z'),
-        sfUserRequestTime: sfUserRequestTime,
-        sfAcknowledgedTime: sfAcknowledgedTime,
-        hasServalBuild: true
+        sfUserRequested: sfUserRequestTime,
+        servalCreated: new Date('2024-06-01T08:05:00Z'),
+        servalFinished: new Date('2024-06-01T09:55:00Z'),
+        sfAcknowledgedCompletion: sfAcknowledgedTime
       });
 
       // SUT
@@ -1825,10 +1895,10 @@ describe('ServalBuildsComponent', () => {
       };
       env.component['dateRange$'].next(range);
       env.component['rows'] = [
-        TestEnvironment.createRowWithDetails({
+        env.createRow({
           projectId: 'proj-a',
+          servalCreated: new Date('2024-01-01T00:00:00Z'),
           requesterId: 'user-1',
-          startDate: new Date('2024-01-01T00:00:00Z'),
           trainingBooks: env.createProjectBooks('proj-a', ['GEN']),
           translationBooks: env.createProjectBooks('proj-a', ['MAT'])
         })
@@ -1856,20 +1926,18 @@ describe('ServalBuildsComponent', () => {
     const msgMessage1: string = 'Message 1';
     const msgMessage2: string = 'Message 2';
 
-    function createRowWithProblems(problems: BuildReportProblem[]): ServalBuildRow {
-      return TestEnvironment.createRowWithDetails({ problems: problems, startDate: new Date('2026-01-01T00:00:00Z') });
-    }
-
     it('hasAnyProblems returns false when no problems are present', () => {
       const env = new TestEnvironment();
-      const row: ServalBuildRow = createRowWithProblems([]);
+      const row: ServalBuildRow = env.createRow({ problems: [] });
 
       expect(env.component.hasAnyProblems(row)).toBeFalse();
     });
 
     it('hasAnyProblems returns true when at least one problem is present', () => {
       const env = new TestEnvironment();
-      const row: ServalBuildRow = createRowWithProblems([{ source: 'serval', severity: 'error', message: msgFaulted }]);
+      const row: ServalBuildRow = env.createRow({
+        problems: [{ source: 'serval', severity: 'error', message: msgFaulted }]
+      });
 
       expect(env.component.hasAnyProblems(row)).toBeTrue();
     });
@@ -1888,7 +1956,7 @@ describe('ServalBuildsComponent', () => {
         { source: 'serval', severity: 'warning', message: msgServalWarning },
         { source: 'serval', severity: 'warning', message: msgServalWarning }
       ];
-      const row: ServalBuildRow = createRowWithProblems(problems);
+      const row: ServalBuildRow = env.createRow({ problems });
 
       expect(env.component.problems(row, 'local', 'error').length).toBe(1);
       expect(env.component.problems(row, 'local', 'warning').length).toBe(2);
@@ -1902,7 +1970,7 @@ describe('ServalBuildsComponent', () => {
         { source: 'local', severity: 'error', message: msgSFError },
         { source: 'serval', severity: 'warning', message: msgServalWarning }
       ];
-      const row: ServalBuildRow = createRowWithProblems(problems);
+      const row: ServalBuildRow = env.createRow({ problems });
 
       const tooltip: string = env.component.problemsBadgeTooltip(row);
 
@@ -1916,7 +1984,7 @@ describe('ServalBuildsComponent', () => {
         { source: 'local', severity: 'error', message: msgSFError },
         { source: 'serval', severity: 'warning', message: fullMessage }
       ];
-      const row: ServalBuildRow = createRowWithProblems(problems);
+      const row: ServalBuildRow = env.createRow({ problems });
 
       const sections: { heading: string; problems: BuildReportProblem[] }[] = env.component.problemSections(row);
 
@@ -1981,7 +2049,7 @@ describe('ServalBuildsComponent', () => {
         { source: 'local', severity: 'warning', message: msgSFWarning },
         { source: 'serval', severity: 'error', message: msgFaulted }
       ];
-      const row: ServalBuildRow = createRowWithProblems(problems);
+      const row: ServalBuildRow = env.createRow({ problems });
 
       env.component.showAllProblems(row);
 
@@ -2000,7 +2068,7 @@ describe('ServalBuildsComponent', () => {
 class TestEnvironment {
   readonly component: ServalBuildsComponent;
   readonly fixture: ComponentFixture<ServalBuildsComponent>;
-  private searchRowIndex: number = 0;
+  private createdRowIndex: number = 0;
   readonly requesterDataById: Map<string, RequesterInfo> = new Map<string, RequesterInfo>();
   readonly requesterChangesById: Map<string, Subject<void>> = new Map<string, Subject<void>>();
   readonly builds$: BehaviorSubject<ServalBuildReportDto[] | undefined> = new BehaviorSubject<
@@ -2054,49 +2122,6 @@ class TestEnvironment {
     this.requesterChangesById.set(requesterSFUserId, new Subject<void>());
   }
 
-  createSearchRow({
-    projectId = undefined,
-    ptProjectId = undefined,
-    projectShortName = 'PRJ',
-    projectName = 'Project Name',
-    requesterId = 'user-alpha',
-    servalBuildId = undefined,
-    draftGenerationRequestId = undefined,
-    startDate = undefined,
-    trainingBooks = [],
-    translationBooks = []
-  }: {
-    projectId?: string;
-    ptProjectId?: string;
-    projectShortName?: string;
-    projectName?: string;
-    requesterId?: string;
-    servalBuildId?: string;
-    draftGenerationRequestId?: string;
-    startDate?: Date;
-    trainingBooks?: ProjectBooks[];
-    translationBooks?: ProjectBooks[];
-  } = {}): ServalBuildRow {
-    const rowIndex: number = ++this.searchRowIndex;
-    const generatedProjectId: string = `sf-project-${rowIndex}`;
-    const generatedBuildId: string = `build-${rowIndex}`;
-    const generatedDraftGenerationRequestId: string = `draft-request-${rowIndex}`;
-    const generatedStartDate: Date = new Date(Date.UTC(2024, 0, 1 + rowIndex));
-
-    return TestEnvironment.createRowWithDetails({
-      projectId: projectId ?? generatedProjectId,
-      ptProjectId: ptProjectId,
-      projectShortName: projectShortName,
-      projectName: projectName,
-      requesterId: requesterId,
-      servalBuildId: servalBuildId ?? generatedBuildId,
-      draftGenerationRequestId: draftGenerationRequestId ?? generatedDraftGenerationRequestId,
-      startDate: startDate ?? generatedStartDate,
-      trainingBooks: trainingBooks,
-      translationBooks: translationBooks
-    });
-  }
-
   /** Creates a default BuildReportTimeline with optional overrides. */
   static makeTimeline(overrides: Partial<BuildReportTimeline> = {}): BuildReportTimeline {
     const result = {
@@ -2134,102 +2159,83 @@ class TestEnvironment {
     return result;
   }
 
-  createRow(projectDeleted: boolean, durationMs: number): any {
-    const sfProjectId: string | undefined = projectDeleted ? undefined : 'active-project-id';
-    const shortName: string = projectDeleted ? 'DEL' : 'ACT';
-    const name: string = projectDeleted ? 'Deleted Project' : 'Active Project';
-
-    const servalBuild: BuildDto = {
-      id: 'resource-id',
-      href: 'resource-href',
-      revision: 1,
-      engine: { id: 'engine-id', href: 'engine-href' },
-      percentCompleted: 100,
-      message: 'done',
-      state: BuildStates.Completed,
-      queueDepth: 0,
-      additionalInfo: {
-        buildId: 'build-id',
-        step: 0,
-        trainingScriptureRanges: [],
-        translationEngineId: 'translation-engine-id',
-        translationScriptureRanges: [],
-        trainingDataFileIds: [],
-        canDenormalizeQuotes: true
-      }
-    };
-
-    const report: ServalBuildReportDto = {
-      build: servalBuild,
-      project: sfProjectId != null ? { sfProjectId: sfProjectId, shortName: shortName, name: name } : undefined,
-      timeline: TestEnvironment.makeTimeline({
-        servalCreated: new Date(0),
-        servalFinished: new Date(durationMs)
-      }),
-      config: {
-        trainingScriptureRanges: [],
-        translationScriptureRanges: [],
-        trainingDataFileIds: []
-      },
-      problems: [],
-      draftGenerationRequestId: undefined,
-      requesterSFUserId: sfProjectId == null ? undefined : 'requester-user-id',
-      status: DraftGenerationBuildStatus.Completed
-    };
-
-    return {
-      report: report,
-      trainingBooks: [],
-      translationBooks: [],
-      projectNameDisplay: buildProjectDisplayName(shortName, name, sfProjectId),
-      durationMs: durationMs,
-      projectServalAdminUrl: undefined,
-      projectDeleted: sfProjectId == null
-    };
-  }
-
-  static createRowWithDetails({
-    durationMs = 1000,
-    projectId = undefined,
-    ptProjectId = undefined,
-    projectShortName = 'PRJ',
-    projectName = 'Project Name',
-    requesterId = undefined,
-    servalBuildId = 'build-id',
-    draftGenerationRequestId = undefined,
-    startDate = new Date(0),
-    finishDate,
+  /** This helper attempts to allow both (1) creating a populated data row with minimal specification, and (2) creating
+   *  a data row with specific missing data fields. Unspecified data will have a default set. If data should be missing,
+   *  specify null. */
+  createRow({
+    projectId = `sf-project-${this.createdRowIndex}`,
+    ptProjectId = `pt-project-${this.createdRowIndex}`,
+    projectShortName = `PRJ${this.createdRowIndex}`,
+    projectName = `Project Name ${this.createdRowIndex}`,
+    sfUserRequested = new Date(Date.UTC(2024, 0, 1 + this.createdRowIndex, 0, 0, 0, 0)),
+    // servalCreated is at minute 2 since the SF build request could be at minute 1 if included here.
+    servalCreated = notNull(sfUserRequested) ? this.addMinutes(sfUserRequested, 2) : null,
+    servalFinished = notNull(servalCreated) ? this.addMinutes(servalCreated, 1) : null,
+    sfAcknowledgedCompletion = notNull(servalFinished) ? this.addMinutes(servalFinished, 1) : null,
+    requesterId = `user-${this.createdRowIndex}`,
+    servalBuildId = `build-${this.createdRowIndex}`,
+    draftGenerationRequestId = `draft-request-${this.createdRowIndex}`,
     trainingBooks = [],
     translationBooks = [],
     status = DraftGenerationBuildStatus.Completed,
     problems = [],
-    sfUserRequestTime = undefined,
-    sfAcknowledgedTime = undefined,
+    projectDeleted = false,
     hasServalBuild = true,
-    hasEvents = false
+    hasEvents = true
   }: {
-    durationMs?: number;
-    projectId?: string;
+    projectId?: string | null;
     ptProjectId?: string;
     projectShortName?: string;
     projectName?: string;
-    requesterId?: string;
-    servalBuildId?: string;
-    draftGenerationRequestId?: string;
-    /** null can be given for no start date, but be careful not to generate errors about overlapping builds. */
-    startDate: Date | null;
-    finishDate?: Date;
+    sfUserRequested?: Date | null;
+    servalCreated?: Date | null;
+    servalFinished?: Date | null;
+    sfAcknowledgedCompletion?: Date | null;
+    requesterId?: string | null;
+    servalBuildId?: string | null;
+    draftGenerationRequestId?: string | null;
     trainingBooks?: ProjectBooks[];
     translationBooks?: ProjectBooks[];
     status?: DraftGenerationBuildStatus;
     problems?: BuildReportProblem[];
-    sfUserRequestTime?: Date;
-    sfAcknowledgedTime?: Date;
+    projectDeleted?: boolean;
+    /** Whether or not there is a Serval build that this row is based on. Records that correspond to no Serval build
+     * aren't able to have certain kinds of data. */
     hasServalBuild?: boolean;
+    /** Whether or not there are any events from which this row is based on. Records that correspond to no events
+     * aren't able to have certain kinds of data. */
     hasEvents?: boolean;
-  }): any {
-    const start: Date = startDate ?? new Date(0);
-    const computedFinish: Date = finishDate ?? new Date(start.getTime() + durationMs);
+  }): ServalBuildRow {
+    if (!hasEvents) {
+      // Check data consistency here rather than expect each caller to not make a mistake.
+      if (
+        sfUserRequested != null ||
+        sfAcknowledgedCompletion != null ||
+        draftGenerationRequestId != null ||
+        requesterId != null ||
+        trainingBooks.length > 0 ||
+        translationBooks.length > 0
+      ) {
+        throw Error(`test setup error: hasEvents is false but event-derived data is set.`);
+      }
+    }
+
+    if (!hasServalBuild && (servalCreated != null || servalFinished != null || servalBuildId != null)) {
+      // Note that an events-only build *could* contain the Serval build ID, since it is stored in
+      // some events. But the backend would need to bring that information through in the
+      // ServalBuildReportDto. For now, an events-only build should not have a Serval build ID.
+      //
+      // Note: Lists of training books and translation books come from events, not from the Serval build
+      // information. So they are not part of this data consistency check.
+      throw Error('test setup error: hasServalBuild is false but Serval-derived data is set.');
+    }
+
+    this.createdRowIndex++;
+
+    const computedDurationMs: number | undefined = ServalBuildsComponent['calculateDurationMs'](
+      sfUserRequested ?? servalCreated ?? undefined,
+      sfAcknowledgedCompletion ?? servalFinished ?? undefined
+    );
 
     const servalBuild: BuildDto | undefined = hasServalBuild
       ? {
@@ -2242,14 +2248,14 @@ class TestEnvironment {
           state: status.toUpperCase() as BuildStates,
           queueDepth: 0,
           additionalInfo: {
-            buildId: servalBuildId,
+            buildId: servalBuildId ?? '',
             step: 0,
             trainingScriptureRanges: [],
             translationEngineId: 'translation-engine-id',
             translationScriptureRanges: [],
             trainingDataFileIds: [],
             canDenormalizeQuotes: true,
-            requestedByUserId: requesterId
+            requestedByUserId: requesterId ?? undefined
           }
         }
       : undefined;
@@ -2261,11 +2267,11 @@ class TestEnvironment {
           ? { sfProjectId: projectId, ptProjectId: ptProjectId, shortName: projectShortName, name: projectName }
           : undefined,
       timeline: TestEnvironment.makeTimeline({
-        servalCreated: hasServalBuild ? start : undefined,
-        servalFinished: hasServalBuild ? computedFinish : undefined,
-        sfUserRequested: sfUserRequestTime ?? (hasEvents ? start : undefined),
-        sfAcknowledgedCompletion: sfAcknowledgedTime,
-        requestTime: sfUserRequestTime ?? start
+        servalCreated: servalCreated ?? undefined,
+        servalFinished: servalFinished ?? undefined,
+        sfUserRequested: sfUserRequested ?? undefined,
+        sfAcknowledgedCompletion: sfAcknowledgedCompletion ?? undefined,
+        requestTime: sfUserRequested ?? servalCreated ?? undefined
       }),
       config: {
         trainingScriptureRanges: [],
@@ -2273,22 +2279,21 @@ class TestEnvironment {
         trainingDataFileIds: []
       },
       problems: problems,
-      draftGenerationRequestId: draftGenerationRequestId,
-      requesterSFUserId: requesterId,
+      draftGenerationRequestId: draftGenerationRequestId ?? undefined,
+      requesterSFUserId: requesterId ?? undefined,
       status: status
     };
 
-    const durationValue: number = computedFinish.getTime() - start.getTime();
-
-    return {
+    const result: ServalBuildRow = {
       report: report,
       trainingBooks: trainingBooks,
       translationBooks: translationBooks,
-      projectNameDisplay: buildProjectDisplayName(projectShortName, projectName, projectId),
-      durationMs: durationValue,
+      projectNameDisplay: buildProjectDisplayName(projectShortName, projectName, projectId ?? undefined),
+      durationMs: computedDurationMs,
       projectServalAdminUrl: undefined,
-      projectDeleted: projectId == null
+      projectDeleted: projectDeleted
     };
+    return result;
   }
 
   createProjectBooks(projectId: string, books: string[], projectDisplayName?: string): ProjectBooks[] {
@@ -2357,5 +2362,11 @@ class TestEnvironment {
     const millisecondsPerHour: number = 1000 * 60 * 60;
     const startMs: number = date.getTime();
     return new Date(startMs + hours * millisecondsPerHour);
+  }
+
+  addMinutes(date: Date, minutes: number): Date {
+    const millisecondsPerMinute: number = 1000 * 60;
+    const startMs: number = date.getTime();
+    return new Date(startMs + minutes * millisecondsPerMinute);
   }
 }
