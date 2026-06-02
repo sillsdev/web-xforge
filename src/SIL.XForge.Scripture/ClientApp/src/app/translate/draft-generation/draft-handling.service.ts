@@ -3,7 +3,7 @@ import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { DeltaOperation } from 'rich-text';
-import { Observable, of, tap } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { TextDocId } from '../../core/models/text-doc';
@@ -41,27 +41,32 @@ export class DraftHandlingService {
    * @param config The format configuration to access the draft. Providing this will return a draft from serval.
    * @returns The draft data as a map of chapter number to delta operation array.
    */
-  getBookDraft(
+  async getBookDraft(
     textDocId: TextDocId,
     { timestamp, config }: { timestamp?: Date; config?: DraftUsfmConfig }
-  ): Observable<Map<string, DeltaOperation[]>> {
+  ): Promise<Map<string, DeltaOperation[]>> {
     if (config == null && timestamp != null) {
       const cachedDraft: Map<string, DeltaOperation[]> | undefined = this.bookDraftCache.get(
         this.getBookDraftKey(textDocId, timestamp)
       );
       if (cachedDraft != null) {
-        return of(cachedDraft);
+        return cachedDraft;
       }
     }
 
-    return this.draftGenerationService
-      .getGeneratedDraftBookDeltaOperations(textDocId.projectId, textDocId.bookNum, timestamp, config)
-      .pipe(
-        tap(chapterDrafts => {
-          if (config != null || timestamp == null) return;
-          this.bookDraftCache.set(this.getBookDraftKey(textDocId, timestamp), chapterDrafts);
-        })
-      );
+    const chapterDrafts = await firstValueFrom(
+      this.draftGenerationService.getGeneratedDraftBookDeltaOperations(
+        textDocId.projectId,
+        textDocId.bookNum,
+        timestamp,
+        config
+      )
+    );
+    if (config == null && timestamp != null) {
+      this.bookDraftCache.set(this.getBookDraftKey(textDocId, timestamp), chapterDrafts);
+    }
+
+    return chapterDrafts;
   }
 
   canApplyDraft(

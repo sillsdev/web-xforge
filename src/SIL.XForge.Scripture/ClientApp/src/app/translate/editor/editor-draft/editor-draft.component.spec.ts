@@ -96,7 +96,7 @@ describe('EditorDraftComponent', () => {
     when(mockDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(
       of({ state: BuildStates.Completed } as BuildDto)
     );
-    when(mockDraftHandlingService.getBookDraft(anything(), anything())).thenReturn(of(bookDraftByChapters));
+    when(mockDraftHandlingService.getBookDraft(anything(), anything())).thenResolve(bookDraftByChapters);
     when(mockDraftHandlingService.opsHaveContent(anything())).thenReturn(true);
     when(mockSFProjectService.hasDraft(anything(), anything(), anything(), anything())).thenReturn(true);
 
@@ -314,7 +314,7 @@ describe('EditorDraftComponent', () => {
     );
     when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
     spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
-    when(mockDraftHandlingService.getBookDraft(anything(), anything())).thenReturn(of(emptyBookDraftByChapters));
+    when(mockDraftHandlingService.getBookDraft(anything(), anything())).thenResolve(emptyBookDraftByChapters);
     when(mockDraftHandlingService.opsHaveContent(anything())).thenReturn(false);
 
     // SUT

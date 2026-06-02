@@ -38,7 +38,7 @@ describe('DraftHandlingService', () => {
   });
 
   describe('getBookDraft', () => {
-    it('should cache book drafts when timestamp provided and no config is undefined', () => {
+    it('should cache book drafts when timestamp provided and no config is undefined', async () => {
       const textDocId = new TextDocId('project01', 1, 1);
       const timestamp = new Date('2025-03-25T01:02:03Z');
       const bookDraftByChapter = new Map<string, DeltaOperation[]>([
@@ -54,11 +54,8 @@ describe('DraftHandlingService', () => {
         )
       ).thenReturn(of(bookDraftByChapter));
 
-      let firstResult: Map<string, DeltaOperation[]> | undefined;
-      let secondResult: Map<string, DeltaOperation[]> | undefined;
-
-      service.getBookDraft(textDocId, { timestamp }).subscribe(draftData => (firstResult = draftData));
-      service.getBookDraft(textDocId, { timestamp }).subscribe(draftData => (secondResult = draftData));
+      const firstResult: Map<string, DeltaOperation[]> = await service.getBookDraft(textDocId, { timestamp });
+      const secondResult: Map<string, DeltaOperation[]> = await service.getBookDraft(textDocId, { timestamp });
 
       expect(firstResult).toBe(bookDraftByChapter);
       expect(secondResult).toBe(firstResult);
@@ -67,7 +64,7 @@ describe('DraftHandlingService', () => {
       ).once();
     });
 
-    it('should not cache book drafts when config is provided', () => {
+    it('should not cache book drafts when config is provided', async () => {
       const textDocId = new TextDocId('project01', 1, 1);
       const timestamp = new Date('2025-03-25T01:02:03Z');
       const config = { paragraphFormat: ParagraphBreakFormat.BestGuess, quoteFormat: QuoteFormat.Denormalized };
@@ -87,11 +84,8 @@ describe('DraftHandlingService', () => {
         )
       ).thenReturn(of(firstDraft), of(secondDraft));
 
-      let firstResult: Map<string, DeltaOperation[]> | undefined;
-      let secondResult: Map<string, DeltaOperation[]> | undefined;
-
-      service.getBookDraft(textDocId, { timestamp, config }).subscribe(draftData => (firstResult = draftData));
-      service.getBookDraft(textDocId, { timestamp, config }).subscribe(draftData => (secondResult = draftData));
+      const firstResult: Map<string, DeltaOperation[]> = await service.getBookDraft(textDocId, { timestamp, config });
+      const secondResult: Map<string, DeltaOperation[]> = await service.getBookDraft(textDocId, { timestamp, config });
 
       expect(firstResult).toBe(firstDraft);
       expect(secondResult).toBe(secondDraft);
@@ -100,7 +94,7 @@ describe('DraftHandlingService', () => {
       ).twice();
     });
 
-    it('should not cache book drafts when timestamp is undefined', () => {
+    it('should not cache book drafts when timestamp is undefined', async () => {
       const textDocId = new TextDocId('project01', 1, 1);
       const firstDraft = new Map<string, DeltaOperation[]>([
         ['1', [{ insert: 'First draft', attributes: { segment: 'verse_1_1' } }]]
@@ -118,11 +112,8 @@ describe('DraftHandlingService', () => {
         )
       ).thenReturn(of(firstDraft), of(secondDraft));
 
-      let firstResult: Map<string, DeltaOperation[]> | undefined;
-      let secondResult: Map<string, DeltaOperation[]> | undefined;
-
-      service.getBookDraft(textDocId, {}).subscribe(draftData => (firstResult = draftData));
-      service.getBookDraft(textDocId, {}).subscribe(draftData => (secondResult = draftData));
+      const firstResult: Map<string, DeltaOperation[]> = await service.getBookDraft(textDocId, {});
+      const secondResult: Map<string, DeltaOperation[]> = await service.getBookDraft(textDocId, {});
 
       expect(firstResult).toBe(firstDraft);
       expect(secondResult).toBe(secondDraft);

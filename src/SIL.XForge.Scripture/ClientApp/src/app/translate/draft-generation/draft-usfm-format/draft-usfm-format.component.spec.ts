@@ -398,7 +398,7 @@ class TestEnvironment {
       { insert: { verse: { number: 1 } }, attributes: { style: 'v' } },
       { insert: 'Verse 1 text.' }
     ]);
-    when(mockedDraftHandlingService.getBookDraft(anything(), anything())).thenReturn(of(args.bookDraft ?? bookDraft));
+    when(mockedDraftHandlingService.getBookDraft(anything(), anything())).thenResolve(args.bookDraft ?? bookDraft);
     when(mockedActivatedProjectService.projectId$).thenReturn(of(this.projectId));
     this.onlineStatusService.setIsOnline(true);
     when(mockedNoticeService.show(anything())).thenResolve();
