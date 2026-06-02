@@ -102,6 +102,11 @@ interface SourceInfo {
   templateUrl: './draft-history-entry.component.html',
   styleUrl: './draft-history-entry.component.scss'
 })
+/**
+ * Displays a single draft generation build entry within the draft history list. Shows the build's status, date,
+ * scripture range, training configuration, fault details, and provides actions like downloading or importing the draft.
+ * Used as a repeated item inside DraftHistoryListComponent on the draft generation page.
+ */
 export class DraftHistoryEntryComponent {
   private _entry?: BuildDto;
   private entryChanged: Subject<void> = new Subject<void>();
@@ -119,12 +124,15 @@ export class DraftHistoryEntryComponent {
     this._buildRequestedByUserName = undefined;
     if (this._entry?.additionalInfo?.requestedByUserId != null) {
       void this.userService
-        .getProfile(this._entry.additionalInfo.requestedByUserId, new DocSubscription('DraftHistoryEntry', this.destroyRef))
+        .getProfile(
+          this._entry.additionalInfo.requestedByUserId,
+          new DocSubscription('DraftHistoryEntry', this.destroyRef)
+        )
         .then(user => {
-        if (user.data != null) {
-          this._buildRequestedByUserName = user.data.displayName;
-        }
-      });
+          if (user.data != null) {
+            this._buildRequestedByUserName = user.data.displayName;
+          }
+        });
     }
 
     // Clear the data for the table
@@ -391,7 +399,10 @@ export class DraftHistoryEntryComponent {
     let target: SFProjectProfileDoc | undefined = undefined;
     let draftSources: DraftSourcesAsTranslateSourceArrays | undefined;
     if (targetId != null) {
-      target = await this.projectService.getProfile(targetId, new DocSubscription('DraftHistoryEntry', this.destroyRef));
+      target = await this.projectService.getProfile(
+        targetId,
+        new DocSubscription('DraftHistoryEntry', this.destroyRef)
+      );
       if (target?.data != null) {
         draftSources = projectToDraftSources(target.data);
       }
