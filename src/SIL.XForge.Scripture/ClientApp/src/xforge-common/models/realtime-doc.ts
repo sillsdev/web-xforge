@@ -237,7 +237,6 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
     this.onDeleteSub.unsubscribe();
     await this.adapter.destroy();
     this.subscribedState = false;
-    await this.realtimeService.offlineStore.delete(this.collection, this.id);
     this.realtimeService.onDocDisposeFinished(this);
   }
 
