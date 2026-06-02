@@ -17,7 +17,6 @@ using Serval.Client;
 using SIL.Converters.Usj;
 using SIL.Machine.Corpora;
 using SIL.Machine.QualityEstimation;
-using SIL.Machine.Statistics;
 using SIL.ObjectModel;
 using SIL.Scripture;
 using SIL.XForge.Configuration;
@@ -3022,8 +3021,12 @@ public class MachineApiService(
         }
 
         // Only calculate quality estimation if the project is configured for it, and we have not calculated it already
-        List<VerseConfidence> verseConfidences = [];
         bool calculateQualityEstimation = projectDoc.Data.TranslateConfig.DraftConfig.QualityEstimationConfig != null;
+
+        // Retrieve the pre-translation verse confidences from Serval
+        List<VerseConfidence> verseConfidences = calculateQualityEstimation
+            ? [.. await preTranslationService.GetVerseConfidencesAsync(sfProjectId, cancellationToken)]
+            : [];
 
         // For every text we have a draft applied to, get the pre-translation
         foreach (
@@ -3069,28 +3072,6 @@ public class MachineApiService(
                     );
                     IDocument<TextDocument> textDocument = await conn.FetchAsync<TextDocument>(id);
                     await SaveTextDocumentAsync(textDocument, usj);
-
-                    // Get the verse confidences
-                    if (calculateQualityEstimation)
-                    {
-                        PreTranslation[] preTranslations = await preTranslationService.GetPreTranslationsAsync(
-                            sfProjectId,
-                            bookNum,
-                            chapterNum,
-                            cancellationToken
-                        );
-                        foreach (PreTranslation preTranslation in preTranslations)
-                        {
-                            string verse = preTranslation.Reference.Split('_').Last();
-                            var verseConfidence = new VerseConfidence(
-                                bookNum,
-                                chapterNum,
-                                verse,
-                                preTranslation.Confidence
-                            );
-                            verseConfidences.Add(verseConfidence);
-                        }
-                    }
                 }
             }
         }
@@ -3117,12 +3098,7 @@ public class MachineApiService(
                     .. usabilityBooks.Select(b => new BookConfidence
                     {
                         BookNum = Canon.BookIdToNumber(b.Book),
-                        // TODO: Update Machine to pass through this value, i.e. Confidence = b.Confidence,
-                        Confidence = StatisticalMethods.GeometricMean([
-                            .. verseConfidences
-                                .Where(vc => vc.BookNum == Canon.BookIdToNumber(b.Book))
-                                .Select(vc => vc.Confidence),
-                        ]),
+                        Confidence = b.Confidence,
                         Label = b.Label.ToString(),
                         ProjectedChrF3 = b.ProjectedChrF3,
                         Usability = b.Usability,
@@ -3134,12 +3110,7 @@ public class MachineApiService(
                     {
                         BookNum = Canon.BookIdToNumber(c.Book),
                         ChapterNum = c.Chapter,
-                        // TODO: Update Machine to pass through this value, i.e. Confidence = b.Confidence,
-                        Confidence = StatisticalMethods.GeometricMean([
-                            .. verseConfidences
-                                .Where(vc => vc.BookNum == Canon.BookIdToNumber(c.Book) && vc.ChapterNum == c.Chapter)
-                                .Select(vc => vc.Confidence),
-                        ]),
+                        Confidence = c.Confidence,
                         Label = c.Label.ToString(),
                         ProjectedChrF3 = c.ProjectedChrF3,
                         Usability = c.Usability,

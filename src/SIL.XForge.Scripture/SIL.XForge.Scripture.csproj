@@ -46,7 +46,7 @@
     <!-- When updating Serval.Client consider that API changes must be released to Serval Prod
         prior to testing on SF QA -->
     <PackageReference Include="Serval.Client" Version="1.18.0" />
-    <PackageReference Include="SIL.Machine" Version="3.8.2" />
+    <PackageReference Include="SIL.Machine" Version="3.8.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
     <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="10.1.7" />
   </ItemGroup>
