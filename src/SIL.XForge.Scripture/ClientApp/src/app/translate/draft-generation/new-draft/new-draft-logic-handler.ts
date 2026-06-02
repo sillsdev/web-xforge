@@ -175,11 +175,11 @@ export class NewDraftLogicHandler {
   setInputMode(newMode: 'draft_books' | 'training_books'): void {
     const currentMode = this.inputMode$.getValue();
     if (currentMode === 'draft_books' && newMode === 'training_books') {
+      this.limitAvailableTrainingRangeBasedOnSelectedDraftingRange();
       if (!this.hasVisitedTrainingBooksInputMode) {
         this.loadPreviouslySelectedTrainingBooks();
         this.hasVisitedTrainingBooksInputMode = true;
       }
-      this.limitAvailableTrainingRangeBasedOnSelectedDraftingRange();
     }
     this.inputMode$.next(newMode);
   }
@@ -341,9 +341,10 @@ export class NewDraftLogicHandler {
       const previouslySelectedBooks = Array.from(
         new VerboseScriptureRange(sourceScriptureRange.scriptureRange).books.keys()
       );
-      const booksCurrentlyPresentInProject = this.trainingSourceBooks$.getValue()[sourceScriptureRange.projectId] ?? [];
+      const booksAvailableForTraining =
+        this.availableTrainingSourceBooks$.getValue()[sourceScriptureRange.projectId] ?? [];
       selectedTrainingSourceBooksByProjectId[sourceScriptureRange.projectId] = previouslySelectedBooks.filter(bookId =>
-        booksCurrentlyPresentInProject.includes(bookId)
+        booksAvailableForTraining.includes(bookId)
       );
     }
     this.selectedTrainingSourceBooks$.next(selectedTrainingSourceBooksByProjectId);
