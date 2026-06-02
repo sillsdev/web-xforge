@@ -78,8 +78,8 @@ public class MongoRepository<T>(IMongoCollection<T> collection, Action<IMongoCol
         }
     }
 
-    public Task<T> DeleteAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default) =>
-        collection.FindOneAndDeleteAsync(filter, options: null, cancellationToken);
+    public Task<T?> DeleteAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default) =>
+        collection.FindOneAndDeleteAsync<T?>(filter, options: null, cancellationToken);
 
     public async Task<long> DeleteAllAsync(
         Expression<Func<T, bool>> filter,

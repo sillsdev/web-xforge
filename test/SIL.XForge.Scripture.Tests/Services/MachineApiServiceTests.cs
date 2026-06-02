@@ -3890,22 +3890,6 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task ProcessBuildAsync_MissingProjectId()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        await env.Service.ProcessBuildAsync(
-            "invalid_translation_id",
-            ServalBuildId01,
-            JobState.Completed,
-            CancellationToken.None
-        );
-        env.MockLogger.AssertHasEvent(logEvent => logEvent.LogLevel == LogLevel.Warning);
-    }
-
-    [Test]
     public async Task ProcessBuildAsync_Canceled()
     {
         // Set up test environment
@@ -3939,6 +3923,22 @@ public class MachineApiServiceTests
 
         // Two jobs: BuildCompletedAsync & RetrievePreTranslationStatusAsync
         env.BackgroundJobClient.Received(2).Create(Arg.Any<Job>(), Arg.Any<IState>());
+    }
+
+    [Test]
+    public async Task ProcessBuildAsync_InvalidTranslationEngineId()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.ProcessBuildAsync(
+            "invalid_translation_id",
+            ServalBuildId01,
+            JobState.Completed,
+            CancellationToken.None
+        );
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.LogLevel == LogLevel.Warning);
     }
 
     [Test]

@@ -178,10 +178,11 @@ public class MemoryRepository<T> : IRepository<T>
         return Task.FromResult(entity!);
     }
 
-    public Task<T> DeleteAsync(Expression<Func<T, bool>> filter, CancellationToken _ = default)
+    public Task<T?> DeleteAsync(Expression<Func<T, bool>> filter, CancellationToken _ = default)
     {
-        T entity = Query().First(filter);
-        Remove(entity);
+        T? entity = Query().FirstOrDefault(filter);
+        if (entity != null)
+            Remove(entity);
         return Task.FromResult(entity);
     }
 
