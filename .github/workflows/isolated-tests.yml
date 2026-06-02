@@ -97,10 +97,12 @@ jobs:
         run: |
           set -xeuo pipefail
           cd src/SIL.XForge.Scripture/ClientApp
-          find src -name \*.spec.ts -exec echo Checking {} \; -exec npm run test:gha -- --include {} \; |& tee test_output.log
-          echo "Checking output logs."
-          ! grep --perl-regex 'NG\d+'  test_output.log
-          ! grep --perl-regex 'ERROR:' test_output.log
-          ! grep --perl-regex 'WARN:'  test_output.log
-          ! grep --perl-regex 'LOG:'   test_output.log
-          ! grep --perl-regex 'INFO:'  test_output.log
+          for SPEC in $(find src -name \*.spec.ts ); do
+            echo "Checking ${SPEC}"
+            npm run test:gha -- --include "${SPEC}" |& tee test_output.log
+            echo "Checking output logs."
+            if grep --perl-regex '\bNG\d+\b|ERROR:|WARN:|LOG:|INFO:' test_output.log; then
+              echo "Error: Disallowed token found in test run output, as shown above.";
+              exit 1;
+            fi
+          done
