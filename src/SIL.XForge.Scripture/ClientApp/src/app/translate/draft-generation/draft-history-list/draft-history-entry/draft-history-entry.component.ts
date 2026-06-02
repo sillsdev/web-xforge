@@ -103,8 +103,8 @@ interface SourceInfo {
   styleUrl: './draft-history-entry.component.scss'
 })
 /**
- * Displays a single draft generation build entry within the draft history list. Shows the build's status, date,
- * scripture range, training configuration, fault details, and provides actions like downloading or importing the draft.
+ * Displays a single draft generation build entry within the draft history list. Shows information about
+ * the build and provides actions like downloading or importing the draft.
  * Used as a repeated item inside DraftHistoryListComponent on the draft generation page.
  */
 export class DraftHistoryEntryComponent {
