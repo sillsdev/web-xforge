@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, Output } from '@angular/core';
 import { MatBadge } from '@angular/material/badge';
 import { MatIcon } from '@angular/material/icon';
 import { MatListItem, MatNavList } from '@angular/material/list';
@@ -8,14 +8,15 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { combineLatest, Observable, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { asyncScheduler, combineLatest, Observable, of } from 'rxjs';
+import { map, shareReplay, switchMap, throttleTime } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { UserService } from 'xforge-common/user.service';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 import { ResumeTranslateService } from '../checking/checking/resume-translate.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
@@ -29,21 +30,27 @@ import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } f
   imports: [TranslocoModule, MatNavList, MatListItem, RouterLinkDirective, MatIcon, MatBadge, AsyncPipe]
 })
 export class NavigationComponent {
-  canSeeSettings$: Observable<boolean> = this.activatedProjectService.projectId$.pipe(
-    switchMap(projectId => (projectId == null ? of(false) : this.settingsAuthGuard.allowTransition(projectId)))
+  private readonly projectChanges$ = this.activatedProjectService.changes$.pipe(
+    throttleTime(50, asyncScheduler, { leading: true, trailing: true }),
+    quietTakeUntilDestroyed(this.destroyRef),
+    shareReplay(1)
   );
-  canSeeUsers$: Observable<boolean> = this.activatedProjectService.projectId$.pipe(
-    switchMap(projectId => (projectId == null ? of(false) : this.usersAuthGuard.allowTransition(projectId)))
+
+  canSeeSettings$: Observable<boolean> = this.projectChanges$.pipe(
+    switchMap(projectDoc => (projectDoc == null ? of(false) : this.settingsAuthGuard.allowTransition(projectDoc.id)))
   );
-  canSync$: Observable<boolean> = this.activatedProjectService.projectId$.pipe(
-    switchMap(projectId => (projectId == null ? of(false) : this.syncAuthGuard.allowTransition(projectId)))
+  canSeeUsers$: Observable<boolean> = this.projectChanges$.pipe(
+    switchMap(projectDoc => (projectDoc == null ? of(false) : this.usersAuthGuard.allowTransition(projectDoc.id)))
+  );
+  canSync$: Observable<boolean> = this.projectChanges$.pipe(
+    switchMap(projectDoc => (projectDoc == null ? of(false) : this.syncAuthGuard.allowTransition(projectDoc.id)))
   );
   /** Whether the user can see at least one of settings, users, or sync page */
   canSeeAdminPages$: Observable<boolean> = combineLatest([this.canSeeSettings$, this.canSeeUsers$, this.canSync$]).pipe(
     map(([settings, users, sync]) => settings || users || sync)
   );
-  canGenerateDraft$: Observable<boolean> = this.activatedProjectService.projectId$.pipe(
-    switchMap(projectId => (projectId == null ? of(false) : this.nmtDraftAuthGuard.allowTransition(projectId)))
+  canGenerateDraft$: Observable<boolean> = this.projectChanges$.pipe(
+    switchMap(projectDoc => (projectDoc == null ? of(false) : this.nmtDraftAuthGuard.allowTransition(projectDoc.id)))
   );
 
   @Output() readonly menuItemClicked = new EventEmitter<void>();
@@ -53,6 +60,7 @@ export class NavigationComponent {
 
   constructor(
     readonly i18n: I18nService,
+    private readonly destroyRef: DestroyRef,
     private readonly nmtDraftAuthGuard: NmtDraftAuthGuard,
     private readonly settingsAuthGuard: SettingsAuthGuard,
     private readonly syncAuthGuard: SyncAuthGuard,
