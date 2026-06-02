@@ -66,8 +66,6 @@ public class MachineApiServiceTests
             ServalBuildId01
         );
 
-    private const string TestPreTranslation =
-        "The book of the generations of Jesus Christ, the son of David, the son of Abraham.";
     private const string TestUsfm = "\\c 1 \\v 1 Verse 1";
     private const string TestUsx =
         "<usx version=\"3.0\"><book code=\"MAT\" style=\"id\"></book><chapter number=\"1\" style=\"c\" />"
@@ -5329,9 +5327,7 @@ public class MachineApiServiceTests
                 CancellationToken.None
             );
 
-        await env
-            .PreTranslationService.Received(1)
-            .GetPreTranslationsAsync(Project01, bookNum, chapterNum: 1, CancellationToken.None);
+        await env.PreTranslationService.Received(1).GetVerseConfidencesAsync(Project01, CancellationToken.None);
         env.ParatextService.Received(1).GetChaptersAsUsj(Arg.Any<UserSecret>(), Paratext01, bookNum, TestUsfm);
         DraftMetrics draftMetrics = env.DraftMetrics.Get(DraftMetrics.GetDocId(Project01, ServalBuildId01));
         using (Assert.EnterMultipleScope())
@@ -6055,19 +6051,16 @@ public class MachineApiServiceTests
                 .Returns(Task.FromResult(TestUsfm));
             int preTranslationChapterNum = chapterNum == 0 ? 1 : chapterNum;
             PreTranslationService
-                .GetPreTranslationsAsync(Project01, bookNum, preTranslationChapterNum, CancellationToken.None)
+                .GetVerseConfidencesAsync(Project01, CancellationToken.None)
                 .Returns(
-                    Task.FromResult(
-                        new[]
-                        {
-                            new PreTranslation
-                            {
-                                Reference = $"verse_{preTranslationChapterNum}_1",
-                                Translation = TestPreTranslation,
-                                Confidence = 0.6020749899712906,
-                            },
-                        }
-                    )
+                    Task.FromResult<IEnumerable<VerseConfidence>>([
+                        new VerseConfidence(
+                            bookNum,
+                            preTranslationChapterNum,
+                            verseNum: 1,
+                            confidence: 0.6020749899712906
+                        ),
+                    ])
                 );
             ParatextService.GetChaptersAsUsj(Arg.Any<UserSecret>(), Paratext01, bookNum, TestUsfm).Returns([TestUsj]);
 

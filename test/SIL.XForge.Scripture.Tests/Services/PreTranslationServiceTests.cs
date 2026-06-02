@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -21,9 +20,8 @@ public class PreTranslationServiceTests
     private const string ParallelCorpus01 = "parallelCorpus01";
     private const string TranslationEngine01 = "translationEngine01";
 
-    [TestCase(true)]
-    [TestCase(false)]
-    public async Task GetPreTranslationParametersAsync_CompatibleWithLegacyCorpora(bool uploadParatextZipFile)
+    [Test]
+    public async Task GetPreTranslationParametersAsync_CompatibleWithLegacyCorpora()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -39,19 +37,18 @@ public class PreTranslationServiceTests
                     },
                     {
                         Corpus01,
-                        new ServalCorpus { PreTranslate = true, UploadParatextZipFile = uploadParatextZipFile }
+                        new ServalCorpus { PreTranslate = true }
                     },
                 },
             }
         );
 
         // SUT
-        (string translationEngineId, string corpusId, string parallelCorpusId, bool useParatextVerseRef) =
+        (string translationEngineId, string? corpusId, string? parallelCorpusId) =
             await env.Service.GetPreTranslationParametersAsync(Project01);
         Assert.AreEqual(TranslationEngine01, translationEngineId);
         Assert.AreEqual(Corpus01, corpusId);
         Assert.IsNull(parallelCorpusId);
-        Assert.AreEqual(uploadParatextZipFile, useParatextVerseRef);
     }
 
     [Test]
@@ -68,12 +65,11 @@ public class PreTranslationServiceTests
         );
 
         // SUT
-        (string translationEngineId, string corpusId, string parallelCorpusId, bool useParatextVerseRef) =
+        (string translationEngineId, string? corpusId, string? parallelCorpusId) =
             await env.Service.GetPreTranslationParametersAsync(Project01);
         Assert.AreEqual(TranslationEngine01, translationEngineId);
         Assert.IsNull(corpusId);
         Assert.AreEqual(ParallelCorpus01, parallelCorpusId);
-        Assert.IsTrue(useParatextVerseRef);
     }
 
     [Test]
@@ -126,9 +122,7 @@ public class PreTranslationServiceTests
     public async Task GetPreTranslationUsfmAsync_LegacyCorpus()
     {
         // Set up test environment
-        var env = new TestEnvironment(
-            new TestEnvironmentOptions { MockLegacyPreTranslationParameters = true, UseParatextZipFile = true }
-        );
+        var env = new TestEnvironment(new TestEnvironmentOptions { MockLegacyPreTranslationParameters = true });
         env.TranslationEnginesClient.GetCorpusPretranslatedUsfmAsync(
                 id: Arg.Any<string>(),
                 corpusId: Arg.Any<string>(),
@@ -158,9 +152,7 @@ public class PreTranslationServiceTests
     public async Task GetPreTranslationUsfmAsync_ReturnsEntireBook()
     {
         // Set up test environment
-        var env = new TestEnvironment(
-            new TestEnvironmentOptions { MockPreTranslationParameters = true, UseParatextZipFile = true }
-        );
+        var env = new TestEnvironment(new TestEnvironmentOptions { MockPreTranslationParameters = true });
 
         // SUT
         string usfm = await env.Service.GetPreTranslationUsfmAsync(
@@ -177,9 +169,7 @@ public class PreTranslationServiceTests
     public async Task GetPreTranslationUsfmAsync_ReturnsChapterOneWithIntroductoryMaterial()
     {
         // Set up test environment
-        var env = new TestEnvironment(
-            new TestEnvironmentOptions { MockPreTranslationParameters = true, UseParatextZipFile = true }
-        );
+        var env = new TestEnvironment(new TestEnvironmentOptions { MockPreTranslationParameters = true });
 
         // SUT
         string usfm = await env.Service.GetPreTranslationUsfmAsync(
@@ -196,9 +186,7 @@ public class PreTranslationServiceTests
     public async Task GetPreTranslationUsfmAsync_ReturnsSpecificChapter()
     {
         // Set up test environment
-        var env = new TestEnvironment(
-            new TestEnvironmentOptions { MockPreTranslationParameters = true, UseParatextZipFile = true }
-        );
+        var env = new TestEnvironment(new TestEnvironmentOptions { MockPreTranslationParameters = true });
 
         // SUT
         string usfm = await env.Service.GetPreTranslationUsfmAsync(
@@ -215,9 +203,7 @@ public class PreTranslationServiceTests
     public async Task GetPreTranslationUsfmAsync_ParagraphFormatSpecified()
     {
         // Set up test environment
-        var env = new TestEnvironment(
-            new TestEnvironmentOptions { MockPreTranslationParameters = true, UseParatextZipFile = true }
-        );
+        var env = new TestEnvironment(new TestEnvironmentOptions { MockPreTranslationParameters = true });
 
         // SUT
         await env.Service.GetPreTranslationUsfmAsync(
@@ -293,9 +279,7 @@ public class PreTranslationServiceTests
     public async Task GetPreTranslationUsfmAsync_QuoteFormatSpecified()
     {
         // Set up test environment
-        var env = new TestEnvironment(
-            new TestEnvironmentOptions { MockPreTranslationParameters = true, UseParatextZipFile = true }
-        );
+        var env = new TestEnvironment(new TestEnvironmentOptions { MockPreTranslationParameters = true });
 
         // SUT
         await env.Service.GetPreTranslationUsfmAsync(
@@ -348,9 +332,7 @@ public class PreTranslationServiceTests
     public async Task GetPreTranslationUsfmAsync_ReturnsEmptyStringForMissingChapter()
     {
         // Set up test environment
-        var env = new TestEnvironment(
-            new TestEnvironmentOptions { MockPreTranslationParameters = true, UseParatextZipFile = true }
-        );
+        var env = new TestEnvironment(new TestEnvironmentOptions { MockPreTranslationParameters = true });
 
         // SUT
         string usfm = await env.Service.GetPreTranslationUsfmAsync(
@@ -363,11 +345,41 @@ public class PreTranslationServiceTests
         Assert.IsEmpty(usfm);
     }
 
+    [Test]
+    public async Task GetVerseConfidencesAsync_LegacyCorpus()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions { MockLegacyPreTranslationParameters = true });
+
+        // SUT
+        IEnumerable<VerseConfidence> actual = await env.Service.GetVerseConfidencesAsync(
+            Project01,
+            CancellationToken.None
+        );
+        Assert.IsEmpty(actual);
+    }
+
+    [Test]
+    public async Task GetVerseConfidencesAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions { MockPreTranslationParameters = true });
+
+        // SUT
+        List<VerseConfidence> actual =
+        [
+            .. await env.Service.GetVerseConfidencesAsync(Project01, CancellationToken.None),
+        ];
+        Assert.That(actual, Has.Count.EqualTo(3));
+        Assert.That(actual[0], Is.EqualTo(new VerseConfidence(40, 1, "1", 0.2)).UsingPropertiesComparer());
+        Assert.That(actual[1], Is.EqualTo(new VerseConfidence(40, 1, "2", 0.4)).UsingPropertiesComparer());
+        Assert.That(actual[2], Is.EqualTo(new VerseConfidence(40, 1, "3", 0.7)).UsingPropertiesComparer());
+    }
+
     private class TestEnvironmentOptions
     {
         public bool MockLegacyPreTranslationParameters { get; init; }
         public bool MockPreTranslationParameters { get; init; }
-        public bool UseParatextZipFile { get; init; }
     }
 
     private class TestEnvironment
@@ -396,17 +408,72 @@ public class PreTranslationServiceTests
                     cancellationToken: CancellationToken.None
                 )
                 .Returns(MatthewBookUsfm);
+            TranslationEnginesClient
+                .GetAllPretranslationConfidencesAsync(
+                    id: Arg.Any<string>(),
+                    parallelCorpusId: Arg.Any<string>(),
+                    cancellationToken: CancellationToken.None
+                )
+                .Returns(
+                    Task.FromResult<IList<PretranslationConfidence>>([
+                        new PretranslationConfidence
+                        {
+                            // A pre-translation confidence value with no references
+                            SourceRefs = [],
+                            TargetRefs = [],
+                            Confidence = 0.1,
+                        },
+                        new PretranslationConfidence
+                        {
+                            // A pre-translation confidence value from a build of Serval before 1.18.0
+                            SourceRefs = [],
+                            TargetRefs = ["MAT 1:1"],
+                            Confidence = 0.2,
+                        },
+                        new PretranslationConfidence
+                        {
+                            // A pre-translation confidence value with an invalid references
+                            SourceRefs = ["invalid_reference"],
+                            TargetRefs = ["invalid_reference"],
+                            Confidence = 0.3,
+                        },
+                        new PretranslationConfidence
+                        {
+                            // A pre-translation confidence value from a segment
+                            SourceRefs = ["MAT 1:2/1:p"],
+                            TargetRefs = ["MAT 1:2/1:p"],
+                            Confidence = 0.4,
+                        },
+                        new PretranslationConfidence
+                        {
+                            // A pre-translation confidence value from a segment that will be overridden by the verse
+                            SourceRefs = ["MAT 1:3/2:p"],
+                            TargetRefs = ["MAT 1:3/2:p"],
+                            Confidence = 0.5,
+                        },
+                        new PretranslationConfidence
+                        {
+                            // A pre-translation confidence value from another  segment that will be overridden by the verse
+                            SourceRefs = ["MAT 1:3/3:p"],
+                            TargetRefs = ["MAT 1:3/3:p"],
+                            Confidence = 0.6,
+                        },
+                        new PretranslationConfidence
+                        {
+                            // A pre-translation confidence value for a verse
+                            SourceRefs = ["MAT 1:3"],
+                            TargetRefs = ["MAT 1:3"],
+                            Confidence = 0.7,
+                        },
+                    ])
+                );
             Service = Substitute.ForPartsOf<PreTranslationService>(ProjectSecrets, TranslationEnginesClient);
             if (options.MockLegacyPreTranslationParameters)
             {
                 Service
                     .Configure()
                     .GetPreTranslationParametersAsync(Project01)
-                    .Returns(
-                        Task.FromResult<(string, string, string, bool)>(
-                            (TranslationEngine01, Corpus01, null, options.UseParatextZipFile)
-                        )
-                    );
+                    .Returns(Task.FromResult<(string, string?, string?)>((TranslationEngine01, Corpus01, null)));
             }
             else if (options.MockPreTranslationParameters)
             {
@@ -414,9 +481,7 @@ public class PreTranslationServiceTests
                     .Configure()
                     .GetPreTranslationParametersAsync(Project01)
                     .Returns(
-                        Task.FromResult<(string, string, string, bool)>(
-                            (TranslationEngine01, null, ParallelCorpus01, options.UseParatextZipFile)
-                        )
+                        Task.FromResult<(string, string?, string?)>((TranslationEngine01, null, ParallelCorpus01))
                     );
             }
         }
