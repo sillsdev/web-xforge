@@ -751,22 +751,28 @@ describe('ServalBuildsComponent', () => {
       const rows = [
         env.createRow({
           projectId: 'proj-a',
+          sfUserRequested: env.addHours(baseStart, 0),
           servalCreated: env.addHours(baseStart, 0),
           servalFinished: env.addHours(baseStart, 2),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 2),
           requesterId: 'user-1',
           status: DraftGenerationBuildStatus.Completed
         }),
         env.createRow({
           projectId: 'proj-a',
+          sfUserRequested: env.addHours(baseStart, 3),
           servalCreated: env.addHours(baseStart, 3),
           servalFinished: env.addHours(baseStart, 4),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 4),
           requesterId: 'user-1',
           status: DraftGenerationBuildStatus.Completed
         }),
         env.createRow({
           projectId: 'proj-a',
+          sfUserRequested: env.addHours(baseStart, 5),
           servalCreated: env.addHours(baseStart, 5),
           servalFinished: env.addHours(baseStart, 10),
+          sfAcknowledgedCompletion: env.addHours(baseStart, 10),
           requesterId: 'user-1',
           status: DraftGenerationBuildStatus.Active
         })
@@ -2223,8 +2229,10 @@ class TestEnvironment {
 
     this.createdRowIndex++;
 
-    const computedDurationMs: number | undefined =
-      servalCreated != null && servalFinished != null ? servalFinished.getTime() - servalCreated.getTime() : undefined;
+    const computedDurationMs: number | undefined = ServalBuildsComponent['calculateDurationMs'](
+      sfUserRequested ?? servalCreated ?? undefined,
+      sfAcknowledgedCompletion ?? servalFinished ?? undefined
+    );
 
     const servalBuild: BuildDto | undefined = hasServalBuild
       ? {
