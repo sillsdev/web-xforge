@@ -23,6 +23,7 @@ import {
 } from '@angular/material/table';
 import { Router } from '@angular/router';
 import { saveAs } from 'file-saver';
+import { cloneDeep } from 'lodash-es';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import {
@@ -254,9 +255,14 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
 
           // Setup the serval config and quality estimation config values
           this.servalConfig.setValue(project.translateConfig.draftConfig.servalConfig);
-          this.qualityEstimationConfig.setValue(
-            JSON.stringify(project.translateConfig.draftConfig.qualityEstimationConfig)
+
+          // Clone the quality estimation config and remove the last saved date,
+          // as that is right now only used in the backend, and is not a part of the config entered by the user.
+          const qualityEstimationConfig: QualityEstimationConfig | undefined = cloneDeep(
+            project.translateConfig.draftConfig.qualityEstimationConfig
           );
+          delete qualityEstimationConfig?.dateUpdated;
+          this.qualityEstimationConfig.setValue(JSON.stringify(qualityEstimationConfig));
 
           // Get the last completed build
           if (this.isOnline && this.projectService.hasDraft(project)) {

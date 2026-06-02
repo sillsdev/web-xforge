@@ -3118,6 +3118,7 @@ public class MachineApiService(
                 ],
                 QualityEstimationConfig = projectDoc.Data.TranslateConfig.DraftConfig.QualityEstimationConfig,
                 VerseConfidences = verseConfidences,
+                DateUpdated = DateTime.UtcNow,
             };
             await draftMetrics.ReplaceAsync(entity, upsert: true, cancellationToken);
         }

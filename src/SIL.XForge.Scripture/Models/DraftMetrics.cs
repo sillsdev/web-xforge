@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using SIL.XForge.Models;
 
@@ -41,6 +42,11 @@ public class DraftMetrics : IIdentifiable
     /// The confidence scores for every verse in the draft.
     /// </summary>
     public List<VerseConfidence> VerseConfidences { get; set; } = [];
+
+    /// <summary>
+    /// The date and time in UTC when these metrics were last updated.
+    /// </summary>
+    public DateTime DateUpdated { get; set; }
 }
 
 public class VerseConfidence : VerseRefData
