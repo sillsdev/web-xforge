@@ -2224,6 +2224,9 @@ class TestEnvironment {
       // Note that an events-only build *could* contain the Serval build ID, since it is stored in
       // some events. But the backend would need to bring that information through in the
       // ServalBuildReportDto. For now, an events-only build should not have a Serval build ID.
+      //
+      // Note: Lists of training books and translation books come from events, not from the Serval build
+      // information. So they are not part of this data consistency check.
       throw Error('test setup error: hasServalBuild is false but Serval-derived data is set.');
     }
 
