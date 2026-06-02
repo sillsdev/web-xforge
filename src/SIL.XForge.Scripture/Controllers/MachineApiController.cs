@@ -319,11 +319,12 @@ public class MachineApiController : ControllerBase
     /// <param name="buildId">The build identifier.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <response code="200">The build is returned.</response>
-    /// <response code="403">You do not have permission to retrieve build confidence data for this project.</response>
-    /// <response code="404">
+    /// <response code="204">
     /// Confidence data is not available for this build. Either quality estimation is not configured for the project,
     /// or the build was created before quality estimation was configured for the project.
     /// </response>
+    /// <response code="403">You do not have permission to retrieve build confidence data for this project.</response>
+    /// <response code="404">The project does not exist.</response>
     [HttpGet(MachineApi.GetBuildConfidences)]
     public async Task<ActionResult<BuildConfidences>> GetBuildConfidencesAsync(
         string sfProjectId,
