@@ -76,7 +76,6 @@ export class DraftSourcesService {
     source: TranslateSource | SFProjectProfile,
     currentProjectDoc: SFProjectProfileDoc
   ): Promise<DraftSource> {
-    const docSubscription = new DocSubscription('DraftSources', this.destroyRef);
     const currentUser = await this.userService.getCurrentUser();
     const projectId = hasStringProp(source, 'projectRef') ? source.projectRef : currentProjectDoc.id;
 
@@ -85,7 +84,12 @@ export class DraftSourcesService {
     let project: SFProjectProfile | undefined;
     if (source === currentProjectDoc?.data) project = currentProjectDoc.data;
     else if (currentUser.data?.sites[environment.siteId].projects?.includes(projectId)) {
-      project = (await this.projectService.getProfile(projectId, docSubscription)).data;
+      const docSubscription = new DocSubscription('DraftSourcesService.mapDraftSourceToFullSource');
+      try {
+        project = (await this.projectService.getProfile(projectId, docSubscription)).data;
+      } finally {
+        docSubscription.unsubscribe();
+      }
     }
 
     if (project != null) {
