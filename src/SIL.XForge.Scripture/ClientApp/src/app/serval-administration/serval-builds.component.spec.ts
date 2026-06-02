@@ -444,10 +444,10 @@ describe('ServalBuildsComponent', () => {
       const rows = [
         env.createRow({
           projectId: 'proj-a',
-          sfUserRequested: null,
+          sfUserRequested: env.addHours(baseStart, 0),
           servalCreated: env.addHours(baseStart, 0),
           servalFinished: env.addHours(baseStart, 1),
-          sfAcknowledgedCompletion: null,
+          sfAcknowledgedCompletion: env.addHours(baseStart, 1),
           requesterId: 'user-1',
           trainingBooks: env.createProjectBooks('proj-a', ['GEN', 'EXO']),
           translationBooks: env.createProjectBooks('proj-a', ['PSA']),
@@ -455,10 +455,10 @@ describe('ServalBuildsComponent', () => {
         }),
         env.createRow({
           projectId: 'proj-a',
-          sfUserRequested: null,
+          sfUserRequested: env.addHours(baseStart, 3),
           servalCreated: env.addHours(baseStart, 3),
           servalFinished: env.addHours(baseStart, 4),
-          sfAcknowledgedCompletion: null,
+          sfAcknowledgedCompletion: env.addHours(baseStart, 4),
           requesterId: 'user-2',
           trainingBooks: env.createProjectBooks('proj-a', ['MRK']),
           translationBooks: [],
@@ -466,10 +466,10 @@ describe('ServalBuildsComponent', () => {
         }),
         env.createRow({
           projectId: 'proj-a',
-          sfUserRequested: null,
+          sfUserRequested: env.addHours(baseStart, 7),
           servalCreated: env.addHours(baseStart, 7),
           servalFinished: env.addHours(baseStart, 8),
-          sfAcknowledgedCompletion: null,
+          sfAcknowledgedCompletion: env.addHours(baseStart, 8),
           requesterId: 'user-2',
           trainingBooks: env.createProjectBooks('proj-a', ['ROM', '1CO', '2CO']),
           translationBooks: env.createProjectBooks('proj-a', ['MAT', 'LUK']),
@@ -478,10 +478,10 @@ describe('ServalBuildsComponent', () => {
         }),
         env.createRow({
           projectId: 'proj-b',
-          sfUserRequested: null,
+          sfUserRequested: env.addHours(baseStart, 2),
           servalCreated: env.addHours(baseStart, 2),
           servalFinished: env.addHours(baseStart, 2.5),
-          sfAcknowledgedCompletion: null,
+          sfAcknowledgedCompletion: env.addHours(baseStart, 2.5),
           requesterId: 'user-2',
           trainingBooks: [],
           translationBooks: [],
@@ -489,10 +489,10 @@ describe('ServalBuildsComponent', () => {
         }),
         env.createRow({
           projectId: 'proj-b',
-          sfUserRequested: null,
+          sfUserRequested: env.addHours(baseStart, 5),
           servalCreated: env.addHours(baseStart, 5),
           servalFinished: env.addHours(baseStart, 6),
-          sfAcknowledgedCompletion: null,
+          sfAcknowledgedCompletion: env.addHours(baseStart, 6),
           requesterId: 'user-3',
           trainingBooks: env.createProjectBooks('proj-b', ['ACT']),
           translationBooks: env.createProjectBooks('proj-b', ['ISA', 'JER', 'EZE']),
@@ -500,10 +500,10 @@ describe('ServalBuildsComponent', () => {
         }),
         env.createRow({
           projectId: 'proj-c',
-          sfUserRequested: null,
+          sfUserRequested: env.addHours(baseStart, 9),
           servalCreated: env.addHours(baseStart, 9),
           servalFinished: env.addHours(baseStart, 10),
-          sfAcknowledgedCompletion: null,
+          sfAcknowledgedCompletion: env.addHours(baseStart, 10),
           requesterId: 'user-4',
           trainingBooks: [],
           translationBooks: [],
@@ -513,10 +513,10 @@ describe('ServalBuildsComponent', () => {
         env.createRow({
           projectId: null,
           projectDeleted: true,
-          sfUserRequested: null,
+          sfUserRequested: env.addHours(baseStart, 11),
           servalCreated: env.addHours(baseStart, 11),
           servalFinished: env.addHours(baseStart, 12),
-          sfAcknowledgedCompletion: null,
+          sfAcknowledgedCompletion: env.addHours(baseStart, 12),
           trainingBooks: [],
           translationBooks: [],
           status: DraftGenerationBuildStatus.Pending
@@ -545,9 +545,8 @@ describe('ServalBuildsComponent', () => {
       expect(summary.unconsideredBuilds).toBe(1);
       expect(summary.meanDurationMs).toBe(3600000);
       expect(summary.maxDurationMs).toBe(3600000);
-      // All rows created above with createRow have a servalBuild and no events, so all are "SF did not know about"
       expect(summary.buildsServalDidNotKnowAbout).toBe(0);
-      expect(summary.buildsSfDidNotKnowAbout).toBe(6);
+      expect(summary.buildsSfDidNotKnowAbout).toBe(0);
     });
 
     it('counts total and unique training books', () => {
