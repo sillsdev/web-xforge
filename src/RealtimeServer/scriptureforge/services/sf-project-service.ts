@@ -287,6 +287,9 @@ export class SFProjectService extends ProjectService<SFProject> {
                   },
                   intercept: {
                     bsonType: 'number'
+                  },
+                  dateUpdated: {
+                    bsonType: 'string'
                   }
                 },
                 additionalProperties: false

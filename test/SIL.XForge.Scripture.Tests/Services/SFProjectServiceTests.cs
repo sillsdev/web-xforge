@@ -3955,7 +3955,8 @@ public class SFProjectServiceTests
         project = env.GetProject(Project01);
         Assert.That(
             project.TranslateConfig.DraftConfig.QualityEstimationConfig,
-            Is.EqualTo(qualityEstimationConfig).UsingPropertiesComparer()
+            Is.EqualTo(qualityEstimationConfig)
+                .UsingPropertiesComparer<QualityEstimationConfig>(c => c.Excluding(p => p.DateUpdated))
         );
     }
 
