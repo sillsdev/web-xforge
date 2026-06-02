@@ -30,7 +30,7 @@ public static class DataAccessExtensions
     )
         where T : IIdentifiable => repo.UpdateAsync(entity.Id, update, upsert, cancellationToken);
 
-    public static Task<T> DeleteAsync<T>(
+    public static Task<T?> DeleteAsync<T>(
         this IRepository<T> repo,
         string id,
         CancellationToken cancellationToken = default
