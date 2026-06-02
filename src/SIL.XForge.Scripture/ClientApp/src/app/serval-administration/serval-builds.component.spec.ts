@@ -929,6 +929,7 @@ describe('ServalBuildsComponent', () => {
           servalCreated: null,
           servalFinished: null,
           requesterId: 'user-2',
+          servalBuildId: null,
           trainingBooks: [],
           translationBooks: [],
           status: DraftGenerationBuildStatus.Completed,
@@ -974,6 +975,7 @@ describe('ServalBuildsComponent', () => {
           servalCreated: null,
           servalFinished: null,
           requesterId: 'user-1',
+          servalBuildId: null,
           status: DraftGenerationBuildStatus.Completed,
           hasServalBuild: false,
           hasEvents: true
@@ -985,6 +987,7 @@ describe('ServalBuildsComponent', () => {
           servalCreated: null,
           servalFinished: null,
           requesterId: 'user-2',
+          servalBuildId: null,
           status: DraftGenerationBuildStatus.Active,
           hasServalBuild: false,
           hasEvents: true
@@ -997,6 +1000,7 @@ describe('ServalBuildsComponent', () => {
           servalCreated: null,
           servalFinished: null,
           requesterId: null,
+          servalBuildId: null,
           status: DraftGenerationBuildStatus.Pending,
           hasServalBuild: false,
           // This record doesn't really make sense, if the record has events, but not projectId. But it is
@@ -1422,6 +1426,7 @@ describe('ServalBuildsComponent', () => {
           servalCreated: null,
           servalFinished: null,
           sfAcknowledgedCompletion: null,
+          servalBuildId: null,
           hasServalBuild: false
         }),
         // Build 3: has Serval data, starts at hour 6.
@@ -2181,7 +2186,7 @@ class TestEnvironment {
     servalFinished?: Date | null;
     sfAcknowledgedCompletion?: Date | null;
     requesterId?: string | null;
-    servalBuildId?: string;
+    servalBuildId?: string | null;
     draftGenerationRequestId?: string | null;
     trainingBooks?: ProjectBooks[];
     translationBooks?: ProjectBooks[];
@@ -2209,8 +2214,11 @@ class TestEnvironment {
       }
     }
 
-    if (!hasServalBuild && (servalCreated != null || servalFinished != null)) {
-      throw Error('test setup error: hasServalBuild is false but a Serval-derived time is set.');
+    if (!hasServalBuild && (servalCreated != null || servalFinished != null || servalBuildId != null)) {
+      // Note that an events-only build *could* contain the Serval build ID, since it is stored in
+      // some events. But the backend would need to bring that information through in the
+      // ServalBuildReportDto. For now, an events-only build should not have a Serval build ID.
+      throw Error('test setup error: hasServalBuild is false but Serval-derived data is set.');
     }
 
     this.createdRowIndex++;
@@ -2229,7 +2237,7 @@ class TestEnvironment {
           state: status.toUpperCase() as BuildStates,
           queueDepth: 0,
           additionalInfo: {
-            buildId: servalBuildId,
+            buildId: servalBuildId ?? '',
             step: 0,
             trainingScriptureRanges: [],
             translationEngineId: 'translation-engine-id',
