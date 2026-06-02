@@ -2058,7 +2058,7 @@ describe('ServalBuildsComponent', () => {
 class TestEnvironment {
   readonly component: ServalBuildsComponent;
   readonly fixture: ComponentFixture<ServalBuildsComponent>;
-  private rowIndex: number = 0;
+  private createdRowIndex: number = 0;
   readonly requesterDataById: Map<string, RequesterInfo> = new Map<string, RequesterInfo>();
   readonly requesterChangesById: Map<string, Subject<void>> = new Map<string, Subject<void>>();
   readonly builds$: BehaviorSubject<ServalBuildReportDto[] | undefined> = new BehaviorSubject<
@@ -2153,18 +2153,18 @@ class TestEnvironment {
    *  a data row with specific missing data fields. Unspecified data will have a default set. If data should be missing,
    *  specify null. */
   createRow({
-    projectId = `sf-project-${++this.rowIndex}`,
-    ptProjectId = `pt-project-${this.rowIndex}`,
-    projectShortName = `PRJ${this.rowIndex}`,
-    projectName = `Project Name ${this.rowIndex}`,
-    sfUserRequested = new Date(Date.UTC(2024, 0, 1 + this.rowIndex, 0, 0, 0, 0)),
+    projectId = `sf-project-${this.createdRowIndex}`,
+    ptProjectId = `pt-project-${this.createdRowIndex}`,
+    projectShortName = `PRJ${this.createdRowIndex}`,
+    projectName = `Project Name ${this.createdRowIndex}`,
+    sfUserRequested = new Date(Date.UTC(2024, 0, 1 + this.createdRowIndex, 0, 0, 0, 0)),
     // servalCreated is at minute 2 since the SF build request could be at minute 1 if included here.
     servalCreated = notNull(sfUserRequested) ? this.addMinutes(sfUserRequested, 2) : null,
     servalFinished = notNull(servalCreated) ? this.addMinutes(servalCreated, 1) : null,
     sfAcknowledgedCompletion = notNull(servalFinished) ? this.addMinutes(servalFinished, 1) : null,
-    requesterId = `user-${this.rowIndex}`,
-    servalBuildId = `build-${this.rowIndex}`,
-    draftGenerationRequestId = `draft-request-${this.rowIndex}`,
+    requesterId = `user-${this.createdRowIndex}`,
+    servalBuildId = `build-${this.createdRowIndex}`,
+    draftGenerationRequestId = `draft-request-${this.createdRowIndex}`,
     trainingBooks = [],
     translationBooks = [],
     status = DraftGenerationBuildStatus.Completed,
@@ -2213,6 +2213,8 @@ class TestEnvironment {
     if (!hasServalBuild && (servalCreated != null || servalFinished != null)) {
       throw Error('test setup error: hasServalBuild is false but a Serval-derived time is set.');
     }
+
+    this.createdRowIndex++;
 
     const computedDurationMs: number | undefined =
       servalCreated != null && servalFinished != null ? servalFinished.getTime() - servalCreated.getTime() : undefined;
