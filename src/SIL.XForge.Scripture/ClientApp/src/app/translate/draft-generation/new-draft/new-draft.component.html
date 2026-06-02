@@ -94,7 +94,91 @@
         }
       }
     } @else if (page === "suffix") {
-      <p>Suffix page</p>
+      <!-- Card 1: What will be drafted -->
+      <mat-card class="summary-card">
+        <mat-card-content>
+          <h1 class="draft-heading">
+            Translate
+            @for (item of draftingItems; track item.bookId; let idx = $index; let last = $last; let count = $count) {
+              @if (idx > 0 && last && count === 2) {
+                and
+              }
+              @if (idx > 0 && last && count > 2) {
+                , and
+              }
+              @if (idx > 0 && !last) {
+                ,
+              }
+              <strong>{{ i18n.localizeBook(item.bookId) }}</strong>
+              @if (item.chapterRange != null) {
+                <span> ({{ item.chapterRange }})</span>
+              }
+            }
+            from <strong>{{ draftingSourceName }}</strong> into <strong>{{ targetLanguageDisplay }}</strong>
+          </h1>
+          <button mat-button color="primary" (click)="goToPage('draft_books')">
+            <mat-icon>edit</mat-icon>{{ t("summary.edit_draft_books") }}
+          </button>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Card 2: Example translations (training data) -->
+      <mat-card class="summary-card">
+        <mat-card-content>
+          <h1>{{ t("summary.example_translations") }}</h1>
+          <p
+            class="summary-subtitle"
+            [innerHTML]="
+              i18n.translateAndInsertTags('draft_wizard.summary.example_translations_subtitle', {
+                sourceLanguage: sourceLanguageDisplay,
+                targetLanguage: targetLanguageDisplay
+              })
+            "
+          ></p>
+          <div class="training-columns">
+            <div class="training-column">
+              <p class="column-header">
+                {{ t("summary.source_language_examples", { language: sourceLanguageDisplay }) }}
+              </p>
+              @if (sourceTrainingSections.length === 0) {
+                <p class="summary-empty">{{ t("summary.no_training_books") }}</p>
+              } @else {
+                @for (source of sourceTrainingSections; track source.projectRef) {
+                  <div class="training-source-row">
+                    <strong>{{ source.displayName }}</strong>
+                    <span class="book-range-label">{{ i18n.formatAndLocalizeBookRange(source.bookNumbers) }}</span>
+                  </div>
+                }
+              }
+            </div>
+            <div class="column-divider"></div>
+            <div class="training-column">
+              <p class="column-header">
+                {{ t("summary.translation_language_examples", { language: targetLanguageDisplay }) }}
+              </p>
+              @if (hasNoTrainingData) {
+                <p class="summary-empty">{{ t("summary.no_training_books") }}</p>
+              } @else {
+                <div class="training-source-row">
+                  <strong>{{ targetProjectDisplayName }}</strong>
+                  <span class="book-range-label">{{ targetTrainingFormattedDisplay }}</span>
+                </div>
+              }
+            </div>
+          </div>
+          <button mat-button color="primary" (click)="goToPage('training_books')">
+            <mat-icon>edit</mat-icon>{{ t("summary.edit_training_data") }}
+          </button>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Card 3: Settings -->
+      <mat-card class="summary-card">
+        <mat-card-content>
+          <h1>{{ t("summary.settings") }}</h1>
+          <p class="summary-subtitle">{{ t("summary.settings_placeholder") }}</p>
+        </mat-card-content>
+      </mat-card>
     }
     <div class="step-buttons">
       <button mat-stroked-button (click)="back()">

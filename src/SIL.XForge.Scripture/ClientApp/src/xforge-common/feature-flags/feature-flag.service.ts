@@ -369,7 +369,7 @@ export class FeatureFlagService {
     'PartialBookDrafting',
     'Partial book drafting',
     20,
-    new StaticFeatureFlagStore(false)
+    this.featureFlagStore
   );
 
   get featureFlags(): FeatureFlag[] {

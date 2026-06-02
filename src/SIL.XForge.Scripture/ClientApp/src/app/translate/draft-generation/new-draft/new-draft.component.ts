@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -10,6 +11,7 @@ import { Canon } from '@sillsdev/scripture';
 import { filter, firstValueFrom } from 'rxjs';
 import { DevOnlyComponent } from 'src/app/shared/dev-only/dev-only.component';
 import { JsonViewerComponent } from 'src/app/shared/json-viewer/json-viewer.component';
+import { projectLabel } from '../../../shared/utils';
 import { hasStringProp } from '../../../../type-utils';
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
 import { I18nKeyForComponent, I18nService } from '../../../../xforge-common/i18n.service';
@@ -28,6 +30,12 @@ import { ChapterSet } from './scripture-range';
 
 type ChapterInputError = { key: I18nKeyForComponent<'draft_wizard'>; params?: object };
 
+type TargetTrainingItem = { kind: 'book'; bookId: string; chapterRange: string } | { kind: 'range'; label: string };
+
+function formatChapterRange(range: string): string {
+  return range.replace(/,/g, ', ');
+}
+
 // TODO impelement a step to sync sources first
 const PAGES_BY_ORDER = [
   { page: 'preface' },
@@ -44,6 +52,7 @@ const PAGES_BY_ORDER = [
     MatProgressSpinner,
     ConfirmSourcesComponent,
     MatButtonModule,
+    MatCardModule,
     MatIconModule,
     JsonViewerComponent,
     BookMultiSelectComponent,
@@ -337,5 +346,107 @@ export class NewDraftComponent {
   selectedTrainingSourceBooksForProject(projectId: string): Book[] {
     const bookIds = this.logicHandler.selectedTrainingSourceBooks$.getValue()[projectId] ?? [];
     return bookIds.map(id => ({ number: Canon.bookIdToNumber(id), selected: true }));
+  }
+
+  // Section: Summary (Step 4)
+
+  get draftingItems(): { bookId: string; chapterRange: string | null }[] {
+    const selectedRange = this.logicHandler.selectedDraftingScriptureRange$.getValue();
+    const availableRange = this.logicHandler.availableDraftingScriptureRange$.getValue();
+    return Array.from(selectedRange.books.entries())
+      .sort(([a], [b]) => Canon.bookIdToNumber(a) - Canon.bookIdToNumber(b))
+      .map(([bookId, selected]) => {
+        const available = availableRange.books.get(bookId);
+        const isPartial = available != null && available.difference(selected).count() > 0;
+        return { bookId, chapterRange: isPartial ? formatChapterRange(selected.toString()) : null };
+      });
+  }
+
+  /** Returns items for the "Your translation" training section in canonical order.
+   * Consecutive full-book selections are collapsed into a single range label. */
+  get targetTrainingItems(): TargetTrainingItem[] {
+    const selectedRange = this.logicHandler.selectedTargetTrainingScriptureRange$.getValue();
+    const availableRange = this.logicHandler.availableTargetTrainingScriptureRange$.getValue();
+    const result: TargetTrainingItem[] = [];
+    let pendingBookNumbers: number[] = [];
+
+    const flushPending = (): void => {
+      if (pendingBookNumbers.length > 0) {
+        result.push({ kind: 'range', label: this.i18n.formatAndLocalizeBookRange(pendingBookNumbers) });
+        pendingBookNumbers = [];
+      }
+    };
+
+    const sortedEntries = Array.from(selectedRange.books.entries()).sort(
+      ([a], [b]) => Canon.bookIdToNumber(a) - Canon.bookIdToNumber(b)
+    );
+    for (const [bookId, selected] of sortedEntries) {
+      const available = availableRange.books.get(bookId);
+      const isPartial = available != null && available.difference(selected).count() > 0;
+      if (isPartial) {
+        flushPending();
+        result.push({ kind: 'book', bookId, chapterRange: formatChapterRange(selected.toString()) });
+      } else {
+        pendingBookNumbers.push(Canon.bookIdToNumber(bookId));
+      }
+    }
+    flushPending();
+    return result;
+  }
+
+  get sourceTrainingSections(): { projectRef: string; displayName: string; bookNumbers: number[] }[] {
+    return this.trainingSources
+      .map(source => {
+        const bookIds = this.logicHandler.selectedTrainingSourceBooks$.getValue()[source.projectRef] ?? [];
+        return {
+          projectRef: source.projectRef,
+          displayName: projectLabel(source),
+          bookNumbers: bookIds.map(id => Canon.bookIdToNumber(id)).sort((a, b) => a - b)
+        };
+      })
+      .filter(s => s.bookNumbers.length > 0);
+  }
+
+  get draftingSourceName(): string {
+    return this.logicHandler.sources?.draftingSources[0]?.shortName ?? '';
+  }
+
+  get sourceLanguageDisplay(): string {
+    const tag = this.logicHandler.sources?.draftingSources[0]?.writingSystem?.tag;
+    return tag != null ? this.languageDisplay(tag) : '';
+  }
+
+  get targetLanguageDisplay(): string {
+    const tag = this.activatedProjectService.projectDoc?.data?.writingSystem?.tag;
+    return tag != null ? this.languageDisplay(tag) : '';
+  }
+
+  private languageDisplay(tag: string): string {
+    const name = this.i18n.getLanguageDisplayName(tag);
+    return name === tag ? tag : `${name} (${tag})`;
+  }
+
+  get targetProjectDisplayName(): string {
+    return this.activatedProjectService.projectDoc?.data?.shortName ?? '';
+  }
+
+  get targetTrainingFormattedDisplay(): string {
+    return this.targetTrainingItems
+      .map(item =>
+        item.kind === 'book' ? `${this.i18n.localizeBook(item.bookId)} (ch. ${item.chapterRange})` : item.label
+      )
+      .join(', ');
+  }
+
+  get hasNoTrainingData(): boolean {
+    return this.logicHandler.selectedTargetTrainingScriptureRange$.getValue().books.size === 0;
+  }
+
+  goToPage(page: 'draft_books' | 'training_books'): void {
+    this.stepError = null;
+    if (page === 'draft_books') {
+      this.logicHandler.setInputMode('draft_books');
+    }
+    this.page = page;
   }
 }

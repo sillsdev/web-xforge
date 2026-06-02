@@ -239,7 +239,18 @@
       "chapters_will_be_translated": "Chapters {{ chapters }} cannot be used for training because they are going to be translated."
     },
     "fix_chapter_errors": "Please fix the chapter range errors above before continuing.",
-    "reference_books": "Reference books"
+    "reference_books": "Reference books",
+    "summary": {
+      "example_translations": "Language training data",
+      "source_language_examples": "Source language examples — {{ language }}",
+      "translation_language_examples": "Translation language examples — {{ language }}",
+      "no_training_books": "No training books selected.",
+      "settings": "Settings",
+      "edit_draft_books": "Edit draft books",
+      "edit_training_data": "Edit training data",
+      "settings_placeholder": "You will be able to configure email notifications and other options here.",
+      "example_translations_subtitle": "Scripture Forge uses training data (example translations) to learn how to translate from {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} into {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}."
+    }
   },
   "draft_generation_steps": {
     "back": "Back",
