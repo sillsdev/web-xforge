@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Bson;
@@ -224,7 +225,7 @@ public class OnboardingRequestService(
                 ";
             foreach (string email in adminEmails)
             {
-                await scopedEmailService.SendEmailAsync(email, subject, body);
+                await scopedEmailService.SendEmailAsync(email, subject, body, CancellationToken.None);
             }
         }
         catch (Exception exception)
