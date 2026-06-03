@@ -2207,6 +2207,7 @@ public class MachineApiServiceTests
             Assert.That(actual.BuildId, Is.EqualTo(ServalBuildId01));
             Assert.That(actual.BookConfidences, Is.Not.Empty);
             Assert.That(actual.ChapterConfidences, Is.Not.Empty);
+            Assert.That(actual.LowestConfidence, Is.Not.Null);
         }
     }
 
@@ -2232,6 +2233,7 @@ public class MachineApiServiceTests
             Assert.That(actual.BuildId, Is.EqualTo(ServalBuildId01));
             Assert.That(actual.BookConfidences, Is.Not.Empty);
             Assert.That(actual.ChapterConfidences, Is.Not.Empty);
+            Assert.That(actual.LowestConfidence, Is.Not.Null);
         }
     }
 

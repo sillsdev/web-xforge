@@ -4,6 +4,7 @@ export interface BuildConfidences {
   buildId: string;
   bookConfidences: BookConfidence[];
   chapterConfidences: ChapterConfidence[];
+  lowestConfidence?: Confidence;
 }
 
 /** The confidence values */

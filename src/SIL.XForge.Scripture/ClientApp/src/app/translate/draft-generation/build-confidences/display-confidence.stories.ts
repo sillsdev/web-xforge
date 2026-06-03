@@ -11,7 +11,7 @@ export default meta;
 type Story = StoryObj<DisplayConfidenceComponent>;
 
 export const GoodQuality: Story = {
-  args: { confidence: { label: UsabilityLabel.Green } as Confidence }
+  args: { confidence: { label: UsabilityLabel.Green } as Confidence, showText: true }
 };
 
 export const ModerateQuality: Story = {

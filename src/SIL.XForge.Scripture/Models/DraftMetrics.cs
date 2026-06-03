@@ -62,13 +62,17 @@ public class VerseConfidence : VerseRefData
     public double Confidence { get; set; }
 }
 
-public class BookConfidence
+public class ConfidenceScore
 {
-    public required int BookNum { get; set; }
     public required double Confidence { get; set; }
     public required string Label { get; set; }
     public required double ProjectedChrF3 { get; set; }
     public required double Usability { get; set; }
+}
+
+public class BookConfidence : ConfidenceScore
+{
+    public required int BookNum { get; set; }
 }
 
 public class ChapterConfidence : BookConfidence
@@ -100,4 +104,9 @@ public class BuildConfidences
     /// Gets or sets the confidence scores for every chapter in the build.
     /// </summary>
     public required List<ChapterConfidence> ChapterConfidences { get; init; }
+
+    /// <summary>
+    /// Gets or sets the lowest confidence score.
+    /// </summary>
+    public ConfidenceScore? LowestConfidence { get; init; }
 }
