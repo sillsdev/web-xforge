@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -11,13 +13,17 @@ import { Canon } from '@sillsdev/scripture';
 import { filter, firstValueFrom } from 'rxjs';
 import { DevOnlyComponent } from 'src/app/shared/dev-only/dev-only.component';
 import { JsonViewerComponent } from 'src/app/shared/json-viewer/json-viewer.component';
-import { projectLabel } from '../../../shared/utils';
 import { hasStringProp } from '../../../../type-utils';
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
+import { FeatureFlagService } from '../../../../xforge-common/feature-flags/feature-flag.service';
 import { I18nKeyForComponent, I18nService } from '../../../../xforge-common/i18n.service';
+import { UserDoc } from '../../../../xforge-common/models/user-doc';
+import { UserService } from '../../../../xforge-common/user.service';
 import { filterNullish } from '../../../../xforge-common/util/rxjs-util';
 import { Book } from '../../../shared/book-multi-select/book-multi-select';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
+import { NoticeComponent } from '../../../shared/notice/notice.component';
+import { projectLabel } from '../../../shared/utils';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
 import { DraftSource } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
@@ -28,7 +34,7 @@ import {
 } from './new-draft-logic-handler';
 import { ChapterSet } from './scripture-range';
 
-type ChapterInputError = { key: I18nKeyForComponent<'draft_wizard'>; params?: object };
+type ChapterInputError = { key: I18nKeyForComponent<'new_draft'>; params?: object };
 
 type TargetTrainingItem = { kind: 'book'; bookId: string; chapterRange: string } | { kind: 'range'; label: string };
 
@@ -53,12 +59,15 @@ const PAGES_BY_ORDER = [
     ConfirmSourcesComponent,
     MatButtonModule,
     MatCardModule,
+    MatCheckboxModule,
     MatIconModule,
     JsonViewerComponent,
     BookMultiSelectComponent,
     MatFormFieldModule,
     MatInputModule,
+    NoticeComponent,
     DevOnlyComponent,
+    FormsModule,
     TranslocoModule
   ]
 })
@@ -69,16 +78,24 @@ export class NewDraftComponent {
 
   draftingChapterErrors = new Map<string, ChapterInputError>();
   targetTrainingChapterErrors = new Map<string, ChapterInputError>();
-  stepError: I18nKeyForComponent<'draft_wizard'> | null = null;
+  stepError: I18nKeyForComponent<'new_draft'> | null = null;
+
+  sendEmailOnBuildFinished: boolean = false;
+  fastTraining: boolean = false;
+  useEcho: boolean = false;
 
   // Data that is guarnateed to be loaded post init
   initData?: { projectId: string };
+
+  private currentUserDoc?: UserDoc;
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly draftSourcesService: DraftSourcesService,
     private readonly progressService: ProgressServiceThatGivesChapterLevelInfo,
     readonly i18n: I18nService,
+    readonly featureFlags: FeatureFlagService,
+    private readonly userService: UserService,
     private readonly router: Router
   ) {
     this.logicHandler = new NewDraftLogicHandler(
@@ -91,11 +108,26 @@ export class NewDraftComponent {
   }
 
   async init(): Promise<void> {
-    await firstValueFrom(this.logicHandler.status$.pipe(filter(status => status === 'input')));
+    [this.currentUserDoc] = await Promise.all([
+      this.userService.getCurrentUser(),
+      firstValueFrom(this.logicHandler.status$.pipe(filter(status => status === 'input')))
+    ]);
     this.initData = {
       projectId: await firstValueFrom(this.activatedProjectService.projectId$.pipe(filterNullish()))
     };
+
+    const draftConfig = this.activatedProjectService.projectDoc?.data?.translateConfig?.draftConfig;
+    this.sendEmailOnBuildFinished = draftConfig?.sendEmailOnBuildFinished ?? false;
+    if (this.featureFlags.showDeveloperTools.enabled) {
+      this.fastTraining = draftConfig?.fastTraining ?? false;
+      this.useEcho = draftConfig?.useEcho ?? false;
+    }
+
     this.page = 'preface';
+  }
+
+  get currentUserEmail(): string | undefined {
+    return this.currentUserDoc?.data?.email;
   }
 
   back(): void {

@@ -1,4 +1,4 @@
-<div class="wrapper" *transloco="let t; read: 'draft_wizard'">
+<div class="wrapper" *transloco="let t; read: 'new_draft'">
   @if (initData == null) {
     <mat-spinner></mat-spinner>
   } @else {
@@ -94,7 +94,6 @@
         }
       }
     } @else if (page === "suffix") {
-      <!-- Card 1: What will be drafted -->
       <mat-card class="summary-card">
         <mat-card-content>
           <h1 class="draft-heading">
@@ -122,14 +121,13 @@
         </mat-card-content>
       </mat-card>
 
-      <!-- Card 2: Example translations (training data) -->
       <mat-card class="summary-card">
         <mat-card-content>
           <h1>{{ t("summary.example_translations") }}</h1>
           <p
             class="summary-subtitle"
             [innerHTML]="
-              i18n.translateAndInsertTags('draft_wizard.summary.example_translations_subtitle', {
+              i18n.translateAndInsertTags('new_draft.summary.example_translations_subtitle', {
                 sourceLanguage: sourceLanguageDisplay,
                 targetLanguage: targetLanguageDisplay
               })
@@ -172,13 +170,36 @@
         </mat-card-content>
       </mat-card>
 
-      <!-- Card 3: Settings -->
       <mat-card class="summary-card">
         <mat-card-content>
           <h1>{{ t("summary.settings") }}</h1>
-          <p class="summary-subtitle">{{ t("summary.settings_placeholder") }}</p>
+          @if (currentUserEmail != null) {
+            <mat-checkbox [(ngModel)]="sendEmailOnBuildFinished">
+              {{ t("summary.email_me", { email: currentUserEmail }) }}
+            </mat-checkbox>
+          }
         </mat-card-content>
       </mat-card>
+
+      @if (featureFlags.showDeveloperTools.enabled) {
+        <mat-card class="summary-card">
+          <mat-card-content>
+            <h1>{{ t("summary.developer_options") }}</h1>
+            <div>
+              <mat-checkbox [(ngModel)]="fastTraining">{{ t("summary.fast_training") }}</mat-checkbox>
+            </div>
+            @if (fastTraining) {
+              <app-notice icon="warning" type="warning">{{ t("summary.fast_training_warning") }}</app-notice>
+            }
+            <div>
+              <mat-checkbox [(ngModel)]="useEcho">{{ t("summary.use_echo") }}</mat-checkbox>
+            </div>
+            @if (useEcho) {
+              <app-notice icon="warning" type="warning">{{ t("summary.use_echo_warning") }}</app-notice>
+            }
+          </mat-card-content>
+        </mat-card>
+      }
     }
     <div class="step-buttons">
       <button mat-stroked-button (click)="back()">

@@ -371,9 +371,9 @@ This change is additive: builds that don't include a target project entry in `Tr
 
 ### Step 4: Confirm & Generate
 
-- [ ] Build summary display of selected draft and training books
-- [ ] Add email notification toggle
-- [ ] Add developer options section (fast training, use echo) gated on `showDeveloperTools`
+- [x] Build summary display of selected draft and training books
+- [x] Add email notification toggle
+- [x] Add developer options section (fast training, use echo) gated on `showDeveloperTools`
 - [ ] Implement `generateDraftClicked()` — assemble `BuildConfig` and call backend
 - [ ] Handle offline state (disable generate button, show notice)
 - [ ] Navigate back to `DraftGenerationComponent` after successful build launch
