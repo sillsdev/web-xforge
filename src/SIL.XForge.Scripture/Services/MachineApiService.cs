@@ -1304,6 +1304,7 @@ public class MachineApiService(
             BuildId = id[1],
             BookConfidences = draftMetrics.BookConfidences,
             ChapterConfidences = draftMetrics.ChapterConfidences,
+            LowestConfidence = draftMetrics.BookConfidences.OrderBy(b => b.Usability).FirstOrDefault(),
         };
     }
 

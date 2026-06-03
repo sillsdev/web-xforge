@@ -6,6 +6,7 @@
   --sf-build-confidence-red-color: #{if($is-dark, red, darkRed)};
   --sf-build-confidence-yellow-color: #{if($is-dark, #dbdb00, #ffcc00)};
   --sf-build-confidence-green-color: #{if($is-dark, lightGreen, darkGreen)};
+  --sf-build-confidence-grey-color: #{if($is-dark, hsl(0 0% 60%), hsl(0 0% 45%))};
 }
 
 @mixin theme($theme) {

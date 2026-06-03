@@ -1,11 +1,18 @@
 @switch (usabilityLabel) {
   @case ("Green") {
-    <div class="confidence green"><mat-icon>check</mat-icon> Likely good quality</div>
+    <div class="confidence green">
+      <mat-icon [matTooltip]="usabilityTooltip">check_circle</mat-icon>{{ usabilityText }}
+    </div>
   }
   @case ("Yellow") {
-    <div class="confidence yellow"><mat-icon class="filled">circle</mat-icon> Likely moderate quality</div>
+    <div class="confidence yellow"><mat-icon [matTooltip]="usabilityTooltip">circle</mat-icon>{{ usabilityText }}</div>
   }
   @case ("Red") {
-    <div class="confidence red"><mat-icon>warning</mat-icon> Likely poor quality</div>
+    <div class="confidence red"><mat-icon [matTooltip]="usabilityTooltip">error</mat-icon>{{ usabilityText }}</div>
+  }
+  @case (undefined) {
+    <div class="confidence grey">
+      <mat-icon class="material-icons-outlined" [matTooltip]="usabilityTooltip">circle</mat-icon>{{ usabilityText }}
+    </div>
   }
 }

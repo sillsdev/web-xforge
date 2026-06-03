@@ -130,6 +130,10 @@
                   <mat-icon class="problem-badge" [matTooltip]="problemsBadgeTooltip(row)">warning</mat-icon>
                 }
               </div>
+              <app-display-confidence
+                [confidence]="row.report.buildConfidences?.lowestConfidence"
+                [showText]="false"
+              ></app-display-confidence>
             </div>
           </td>
         </ng-container>
