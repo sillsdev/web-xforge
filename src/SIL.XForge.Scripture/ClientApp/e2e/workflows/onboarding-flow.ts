@@ -205,7 +205,7 @@ export async function onboardingFlow(
   await screenshot(adminBrowser.page, { pageName: 'admin_comment_added', ...context });
 
   // Approve the request
-  await adminUser.click(adminBrowser.page.getByRole('button', { name: 'Approve & Enable' }));
+  await adminUser.click(adminBrowser.page.getByRole('button', { name: 'Approve & Configure Sources' }));
   await adminUser.click(adminBrowser.page.getByRole('button', { name: 'Approve', exact: true })); // Confirm in dialog
 
   // Verify the user now sees drafting enabled

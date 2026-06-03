@@ -382,6 +382,18 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     });
   }
 
+  async onlineSetDraftSources(
+    projectId: string,
+    draftingSourcesParatextIds: string[],
+    trainingSourcesParatextIds: string[]
+  ): Promise<void> {
+    return await this.onlineInvoke<void>('setDraftSources', {
+      projectId,
+      draftingSourcesParatextIds,
+      trainingSourcesParatextIds
+    });
+  }
+
   async onlineSetUsfmConfig(projectId: string, config: DraftUsfmConfig): Promise<void> {
     return await this.onlineInvoke<void>('setUsfmConfig', {
       projectId,

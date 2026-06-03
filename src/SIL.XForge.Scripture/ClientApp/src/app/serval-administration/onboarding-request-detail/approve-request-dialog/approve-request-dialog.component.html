@@ -1,0 +1,70 @@
+<h1 mat-dialog-title>Approve &amp; enable drafting</h1>
+<mat-dialog-content>
+  <p class="dialog-subtitle">Configure sources for {{ data.targetProject.name }}</p>
+  <form [formGroup]="form">
+    <h3>Drafting source</h3>
+    <mat-radio-group formControlName="draftingSource" class="source-options">
+      @for (option of data.draftingSourceOptions; track option.paratextId) {
+        <mat-radio-button [value]="option.paratextId">
+          {{ option.name }} <span class="language-code">{{ option.languageCode }}</span>
+        </mat-radio-button>
+      }
+    </mat-radio-group>
+
+    <h3>Training sources</h3>
+    <p class="hint">Select 1 or 2 training sources.</p>
+    <div class="source-options">
+      @for (option of data.trainingSourceOptions; track option.paratextId) {
+        <div class="training-source-option">
+          <mat-checkbox
+            [checked]="isTrainingSourceSelected(option.paratextId)"
+            (change)="toggleTrainingSource(option.paratextId, $event.checked)"
+          >
+            {{ option.name }} <span class="language-code">{{ option.languageCode }}</span>
+          </mat-checkbox>
+          @if (trainingSourceOrder(option.paratextId); as trainingSourceOrder) {
+            <span
+              class="order-label"
+              [matTooltip]="`Project will be saved as the ${trainingSourceOrder.order} training source`"
+            >
+              {{ trainingSourceOrder.name }}
+            </span>
+          }
+        </div>
+      }
+    </div>
+    @if (data.backTranslation; as bt) {
+      <h3>Back translation project</h3>
+      <mat-checkbox [formControl]="enableBackTranslationDrafting">
+        Enable draft generation for {{ bt.name }}
+        <span class="language-code">{{ bt.languageCode }}</span>
+      </mat-checkbox>
+      <p class="hint">
+        @if (bt.draftingAlreadyEnabled) {
+          Draft generation is already enabled for this project.
+        } @else if (backTranslationLanguageMatchesTarget) {
+          Back translation must be a different language than the target project.
+        } @else {
+          Enabling will set {{ data.targetProject.name }} as the drafting and training source for the back translation.
+        }
+      </p>
+    }
+    @if (form.hasError("languageCodesDiffer")) {
+      <app-notice type="error" mode="outline">All source projects must be in the same language.</app-notice>
+    }
+    @if (sourcesMatchTargetLanguage) {
+      <app-notice type="warning" mode="outline">
+        Sources are in the same language as the target project. This may be a mistake.
+      </app-notice>
+    }
+    @if (trainingSources.hasError("trainingSourceCount")) {
+      <app-notice type="error" mode="outline">Select one or two training sources.</app-notice>
+    }
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close id="cancel-button"><mat-icon>close</mat-icon> Cancel</button>
+  <button mat-flat-button color="primary" type="button" (click)="approve()" id="approve-button">
+    <mat-icon>check_circle</mat-icon> Approve
+  </button>
+</mat-dialog-actions>

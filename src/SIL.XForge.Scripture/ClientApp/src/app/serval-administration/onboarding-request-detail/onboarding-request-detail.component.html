@@ -3,6 +3,9 @@
 @if (isLoadingData) {
   <div class="loading-container">
     <mat-spinner></mat-spinner>
+    @if (loadingMessage) {
+      <p class="loading-message">{{ loadingMessage }}</p>
+    }
   </div>
 } @else if (request != null) {
   <div class="detail-container">
@@ -74,7 +77,7 @@
           </button>
           @if (!isResolved) {
             <button mat-button color="primary" (click)="approveRequest()">
-              <mat-icon>check_circle</mat-icon> Approve & Enable
+              <mat-icon>check_circle</mat-icon> Approve & Configure Sources
             </button>
           }
           <button mat-button color="warn" (click)="deleteRequest()"><mat-icon>delete</mat-icon> Delete Request</button>
