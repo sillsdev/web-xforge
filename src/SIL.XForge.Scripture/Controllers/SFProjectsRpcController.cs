@@ -989,6 +989,50 @@ public class SFProjectsRpcController(
         }
     }
 
+    public async Task<IRpcMethodResult> SetDraftSources(
+        string projectId,
+        IEnumerable<string> draftingSourcesParatextIds,
+        IEnumerable<string> trainingSourcesParatextIds
+    )
+    {
+        try
+        {
+            await projectService.SetDraftSourcesAsync(
+                UserId,
+                SystemRoles,
+                projectId,
+                draftingSourcesParatextIds,
+                trainingSourcesParatextIds
+            );
+            return Ok();
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch (InvalidOperationException e)
+        {
+            return InvalidParamsError(e.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", "SetDraftSources" },
+                    { "projectId", projectId },
+                    { "draftingSourcesParatextIds", string.Join(',', draftingSourcesParatextIds) },
+                    { "trainingSourcesParatextIds", string.Join(',', trainingSourcesParatextIds) },
+                }
+            );
+            throw;
+        }
+    }
+
     public async Task<IRpcMethodResult> SetUsfmConfig(string projectId, DraftUsfmConfig config)
     {
         try

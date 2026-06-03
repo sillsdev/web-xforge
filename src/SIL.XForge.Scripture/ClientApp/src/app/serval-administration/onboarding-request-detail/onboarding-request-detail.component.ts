@@ -26,9 +26,10 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { UserService } from 'xforge-common/user.service';
-import { isPopulatedString } from '../../../type-utils';
+import { isPopulatedString, notNull } from '../../../type-utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { ParatextService } from '../../core/paratext.service';
+import { SFProjectService } from '../../core/sf-project.service';
 import { DevOnlyComponent } from '../../shared/dev-only/dev-only.component';
 import { JsonViewerComponent } from '../../shared/json-viewer/json-viewer.component';
 import { MobileNotSupportedComponent } from '../../shared/mobile-not-supported/mobile-not-supported.component';
@@ -45,6 +46,13 @@ import {
 } from '../../translate/draft-generation/onboarding-request.service';
 import { OnboardingRequestAssigneeSelectComponent } from '../onboarding-request-assignee-select/onboarding-request-assignee-select.component';
 import { ServalAdministrationService } from '../serval-administration.service';
+import {
+  ApproveRequestDialogComponent,
+  ApproveRequestDialogData,
+  ApproveRequestDialogResult,
+  BackTranslationInfo,
+  SourceOption
+} from './approve-request-dialog/approve-request-dialog.component';
 import { formatBookListForSILNLP } from './draft-request-detail-utils';
 
 /**
@@ -90,6 +98,7 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
   projectNames: Map<string, string> = new Map();
   projectIds: Map<string, string> = new Map(); // Maps Paratext ID to SF project ID
   projectShortNames: Map<string, string> = new Map(); // Maps Paratext ID to project short name
+  loadingMessage: string = '';
   newCommentText: string = '';
   isAddingComment: boolean = false;
   resolutionOptions = ONBOARDING_REQUEST_RESOLUTION_OPTIONS;
@@ -102,7 +111,8 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
     readonly onboardingRequestService: OnboardingRequestService,
     private readonly dialogService: DialogService,
     protected readonly userService: UserService,
-    noticeService: NoticeService
+    private readonly projectService: SFProjectService,
+    protected readonly noticeService: NoticeService
   ) {
     super(noticeService, 'OnboardingRequestDetailComponent');
   }
@@ -403,24 +413,108 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
   }
 
   async approveRequest(): Promise<void> {
-    const shortName = this.projectShortNames.get(this.request?.submission.projectId ?? '');
-    const result = await this.dialogService.confirm(
-      of(`Mark request as approved and enable drafting on the ${shortName} project?`),
-      of('Approve')
-    );
-    if (result && this.request != null) {
-      this.loadingStarted();
-      try {
-        const request = await this.onboardingRequestService.approveRequest({
-          requestId: this.request.id,
-          sfProjectId: this.request.submission.projectId
-        });
-        this.request = request;
-        this.noticeService.show('Onboarding request approved successfully');
-      } finally {
-        this.loadingFinished();
+    if (this.request == null) return;
+
+    const dialogData = this.buildApproveDialogData();
+    const dialogRef = this.dialogService.openMatDialog<
+      ApproveRequestDialogComponent,
+      ApproveRequestDialogData,
+      ApproveRequestDialogResult
+    >(ApproveRequestDialogComponent, { data: dialogData });
+    const result = await lastValueFrom(dialogRef.afterClosed());
+    if (result == null || this.request == null) return;
+
+    this.loadingStarted();
+    try {
+      this.loadingMessage = 'Configuring drafting sources…';
+      await this.projectService.onlineSetDraftSources(
+        this.request.submission.projectId,
+        [result.draftingSourceParatextId],
+        result.trainingSourceParatextIds
+      );
+      if (result.enableBackTranslationDrafting) {
+        const btParatextId = this.formData.backTranslationProject;
+        const btSfProjectId = btParatextId != null ? this.projectIds.get(btParatextId) : undefined;
+        if (btSfProjectId == null) {
+          throw new Error(
+            `Cannot enable drafting for back translation project: SF project ID not found for Paratext ID "${btParatextId}"`
+          );
+        }
+        const targetParatextId = this.mainProjectDoc!.data!.paratextId;
+        this.loadingMessage = 'Enabling back translation drafting…';
+        await this.projectService.onlineSetDraftSources(btSfProjectId, [targetParatextId], [targetParatextId]);
+        await this.projectService.onlineSetPreTranslate(btSfProjectId, true);
+      }
+      this.loadingMessage = 'Approving request…';
+      const request = await this.onboardingRequestService.approveRequest({
+        requestId: this.request.id,
+        sfProjectId: this.request.submission.projectId
+      });
+      this.request = request;
+      this.noticeService.show('Onboarding request approved successfully');
+    } finally {
+      this.loadingMessage = '';
+      this.loadingFinished();
+    }
+  }
+
+  private buildApproveDialogData(): ApproveRequestDialogData {
+    const formData = this.formData;
+    const mainData = this.mainProjectDoc?.data;
+    if (mainData == null) throw new Error('Main project data not loaded');
+
+    const toSourceOption = (paratextId: string): SourceOption | undefined => {
+      const doc = this.projectDocs.get(paratextId);
+      if (doc?.data == null) return undefined;
+      return { paratextId, name: projectLabel(doc.data), languageCode: doc.data.writingSystem.tag };
+    };
+
+    const draftingSourceOptions = [
+      ...new Set(
+        [
+          formData.draftingSourceProject,
+          formData.sourceProjectA,
+          formData.sourceProjectB,
+          formData.sourceProjectC
+        ].filter(notNull)
+      )
+    ]
+      .map(toSourceOption)
+      .filter(notNull);
+
+    const btParatextId = formData.backTranslationProject;
+    let backTranslation: BackTranslationInfo | undefined;
+    if (btParatextId != null) {
+      const btData = this.projectDocs.get(btParatextId)?.data;
+      if (btData != null) {
+        const btConfig = btData.translateConfig;
+        backTranslation = {
+          paratextId: btParatextId,
+          name: projectLabel(btData),
+          languageCode: btData.writingSystem.tag,
+          draftingAlreadyEnabled: btConfig.projectType === ProjectType.BackTranslation || btConfig.preTranslate === true
+        };
       }
     }
+
+    const trainingSourceOptions =
+      backTranslation != null && !draftingSourceOptions.some(o => o.paratextId === backTranslation.paratextId)
+        ? [...draftingSourceOptions, backTranslation]
+        : draftingSourceOptions;
+
+    const targetProject: SourceOption = {
+      paratextId: mainData.paratextId,
+      name: projectLabel(mainData),
+      languageCode: mainData.writingSystem.tag
+    };
+
+    return {
+      targetProject,
+      draftingSourceOptions,
+      trainingSourceOptions,
+      defaultTrainingSource: formData.sourceProjectA,
+      backTranslation
+    };
   }
 
   downloadProjects(): void {
