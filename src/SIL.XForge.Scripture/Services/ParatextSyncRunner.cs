@@ -1777,6 +1777,9 @@ public class ParatextSyncRunner : IParatextSyncRunner
             }
         }
 
+        ParatextSettings? settings = _paratextService.GetParatextSettings(_userSecret, _projectDoc.Data.ParatextId);
+
+        // Update the project
         await _projectDoc.SubmitJson0OpAsync(op =>
         {
             // Get the latest shared revision of the local hg repo. On a failed synchronize attempt, the data
@@ -1811,7 +1814,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 }
             }
 
-            ParatextSettings? settings = _paratextService.GetParatextSettings(_userSecret, _projectDoc.Data.ParatextId);
             if (settings != null)
             {
                 // See if the full name of the project needs updating
@@ -1907,6 +1909,13 @@ public class ParatextSyncRunner : IParatextSyncRunner
             }
         });
         await NotifySyncProgress(SyncPhase.Phase9, 80.0);
+
+        // Update any references to this project
+        if (settings is not null)
+        {
+            await _projectService.UpdateProjectReferencesAsync(_projectDoc.Id, settings);
+            await NotifySyncProgress(SyncPhase.Phase9, 85.0);
+        }
 
         _syncMetrics?.Users.Deleted = userIdsToRemove.Count;
 

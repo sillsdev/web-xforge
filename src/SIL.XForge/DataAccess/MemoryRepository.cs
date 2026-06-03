@@ -45,6 +45,8 @@ public class MemoryRepository<T> : IRepository<T>
             Add(entities);
     }
 
+    public bool EntitiesUpdated { get; set; }
+
     public void Init() { }
 
     public void Add(T entity)
@@ -56,6 +58,7 @@ public class MemoryRepository<T> : IRepository<T>
                 _uniqueKeys[i].Add(key);
         }
         _entities[entity.Id] = JsonConvert.SerializeObject(entity, Settings);
+        EntitiesUpdated = true;
     }
 
     public void Add(IEnumerable<T> entities)
@@ -73,6 +76,7 @@ public class MemoryRepository<T> : IRepository<T>
                 _uniqueKeys[i].Remove(key);
         }
         _entities.TryRemove(entity.Id, out _);
+        EntitiesUpdated = true;
     }
 
     public void Replace(T entity)
@@ -83,6 +87,7 @@ public class MemoryRepository<T> : IRepository<T>
             Remove(existing);
         }
         Add(entity);
+        EntitiesUpdated = true;
     }
 
     public bool Contains(string id) => _entities.ContainsKey(id);
