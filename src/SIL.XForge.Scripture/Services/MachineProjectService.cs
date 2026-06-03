@@ -535,6 +535,22 @@ public class MachineProjectService(
                         );
                     }
 
+                    if (translateSourceSettings.LanguageScript is not null)
+                    {
+                        op.Set(
+                            pd => pd.TranslateConfig.DraftConfig.TrainingSources[pos].WritingSystem.Script,
+                            translateSourceSettings.LanguageScript
+                        );
+                    }
+
+                    if (translateSourceSettings.LanguageRegion is not null)
+                    {
+                        op.Set(
+                            pd => pd.TranslateConfig.DraftConfig.TrainingSources[pos].WritingSystem.Region,
+                            translateSourceSettings.LanguageRegion
+                        );
+                    }
+
                     if (translateSourceSettings.FullName is not null)
                     {
                         op.Set(
@@ -570,6 +586,22 @@ public class MachineProjectService(
                         op.Set(
                             pd => pd.TranslateConfig.DraftConfig.DraftingSources[pos].WritingSystem.Tag,
                             translateSourceSettings.LanguageTag
+                        );
+                    }
+
+                    if (translateSourceSettings.LanguageScript is not null)
+                    {
+                        op.Set(
+                            pd => pd.TranslateConfig.DraftConfig.DraftingSources[pos].WritingSystem.Script,
+                            translateSourceSettings.LanguageScript
+                        );
+                    }
+
+                    if (translateSourceSettings.LanguageRegion is not null)
+                    {
+                        op.Set(
+                            pd => pd.TranslateConfig.DraftConfig.DraftingSources[pos].WritingSystem.Region,
+                            translateSourceSettings.LanguageRegion
                         );
                     }
 
@@ -1091,8 +1123,11 @@ public class MachineProjectService(
                     if (!string.IsNullOrWhiteSpace(writingSystem.Tag))
                     {
                         await projectDoc.SubmitJson0OpAsync(op =>
-                            op.Set(p => p.TranslateConfig.Source.WritingSystem.Tag, writingSystem.Tag)
-                        );
+                        {
+                            op.Set(p => p.TranslateConfig.Source.WritingSystem.Region, writingSystem.Region);
+                            op.Set(p => p.TranslateConfig.Source.WritingSystem.Script, writingSystem.Script);
+                            op.Set(p => p.TranslateConfig.Source.WritingSystem.Tag, writingSystem.Tag);
+                        });
                     }
                 }
             }

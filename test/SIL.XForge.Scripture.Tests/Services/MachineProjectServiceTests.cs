@@ -68,6 +68,8 @@ public class MachineProjectServiceTests
     private const string ParallelCorpus03 = "parallelCorpus03";
     private const string TranslationEngine01 = "translationEngine01";
     private const string TranslationEngine02 = "translationEngine02";
+    private const string LanguageRegion = "nz";
+    private const string LanguageScript = "latn";
     private const string LanguageTag = "he";
 
     [Test]
@@ -3778,8 +3780,16 @@ public class MachineProjectServiceTests
         env.ParatextService.Received(1).GetParatextSettings(Arg.Any<UserSecret>(), Paratext01);
         Assert.IsTrue(env.Projects.Get(Project01).TranslateConfig.DraftConfig.DraftingSources[0].IsRightToLeft);
         Assert.AreEqual(
+            LanguageRegion,
+            env.Projects.Get(Project01).TranslateConfig.DraftConfig.DraftingSources[0].WritingSystem.Region
+        );
+        Assert.AreEqual(
+            LanguageScript,
+            env.Projects.Get(Project01).TranslateConfig.DraftConfig.DraftingSources[0].WritingSystem.Script
+        );
+        Assert.AreEqual(
             LanguageTag,
-            env.Projects.Get(Project01).TranslateConfig.DraftConfig.DraftingSources[0]?.WritingSystem.Tag
+            env.Projects.Get(Project01).TranslateConfig.DraftConfig.DraftingSources[0].WritingSystem.Tag
         );
     }
 
@@ -3801,6 +3811,14 @@ public class MachineProjectServiceTests
         await env.Service.UpdateTranslationSourcesAsync(User01, Project01);
         env.ParatextService.Received(1).GetParatextSettings(Arg.Any<UserSecret>(), Paratext01);
         Assert.IsTrue(env.Projects.Get(Project01).TranslateConfig.DraftConfig.TrainingSources[0].IsRightToLeft);
+        Assert.AreEqual(
+            LanguageRegion,
+            env.Projects.Get(Project01).TranslateConfig.DraftConfig.TrainingSources[0].WritingSystem.Region
+        );
+        Assert.AreEqual(
+            LanguageScript,
+            env.Projects.Get(Project01).TranslateConfig.DraftConfig.TrainingSources[0].WritingSystem.Script
+        );
         Assert.AreEqual(
             LanguageTag,
             env.Projects.Get(Project01).TranslateConfig.DraftConfig.TrainingSources[0].WritingSystem.Tag
@@ -4325,7 +4343,15 @@ public class MachineProjectServiceTests
                 .Returns(new WritingSystem { Tag = "en" });
             ParatextService
                 .GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
-                .Returns(new ParatextSettings { IsRightToLeft = true, LanguageTag = LanguageTag });
+                .Returns(
+                    new ParatextSettings
+                    {
+                        IsRightToLeft = true,
+                        LanguageTag = LanguageTag,
+                        LanguageRegion = LanguageRegion,
+                        LanguageScript = LanguageScript,
+                    }
+                );
 
             FileSystemService = Substitute.For<IFileSystemService>();
             FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(true);
