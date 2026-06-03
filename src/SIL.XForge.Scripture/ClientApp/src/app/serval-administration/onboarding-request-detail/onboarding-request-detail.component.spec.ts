@@ -12,6 +12,7 @@ import { provideTestOnlineStatus } from 'xforge-common/test-online-status-provid
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
+import { SFProjectService } from '../../core/sf-project.service';
 import {
   OnboardingRequest,
   OnboardingRequestResolutionKey,
@@ -26,6 +27,7 @@ const mockedNoticeService = mock(NoticeService);
 const mockedOnboardingRequestService = mock(OnboardingRequestService);
 const mockedServalAdministrationService = mock(ServalAdministrationService);
 const mockedUserService = mock(UserService);
+const mockedProjectService = mock(SFProjectService);
 
 const REQUEST_ID = 'request01';
 const CURRENT_USER_ID = 'user01';
@@ -77,7 +79,8 @@ describe('OnboardingRequestDetailComponent', () => {
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: OnboardingRequestService, useMock: mockedOnboardingRequestService },
       { provide: ServalAdministrationService, useMock: mockedServalAdministrationService },
-      { provide: UserService, useMock: mockedUserService }
+      { provide: UserService, useMock: mockedUserService },
+      { provide: SFProjectService, useMock: mockedProjectService }
     ]
   }));
 

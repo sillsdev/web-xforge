@@ -95,6 +95,15 @@ public interface ISFProjectService : IProjectService
         QualityEstimationConfig? qualityEstimationConfig
     );
 
+    [LogEventMetric(EventScope.Drafting, nameof(curUserId))]
+    Task SetServalSourcesAsync(
+        string curUserId,
+        string[] systemRoles,
+        string projectId,
+        IEnumerable<string> draftingSourcesParatextIds,
+        IEnumerable<string> trainingSourcesParatextIds
+    );
+
     Task<string> GetProjectIdFromParatextIdAsync(string[] systemRoles, string paratextId);
 
     Task SetUsfmConfigAsync(string curUserId, string projectId, DraftUsfmConfig config);

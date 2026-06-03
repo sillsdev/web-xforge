@@ -1,0 +1,38 @@
+@use 'src/variables' as colors;
+
+.dialog-subtitle {
+  margin: 0 0 16px;
+  font-size: 1rem;
+}
+
+.source-options {
+  display: flex;
+  flex-direction: column;
+}
+
+h3:first-of-type {
+  margin-top: 0;
+}
+
+.language-code {
+  margin-left: 4px;
+  font-size: 0.875rem;
+  font-family: monospace;
+  color: colors.$greyDark;
+}
+
+.training-source-option {
+  display: flex;
+  align-items: center;
+}
+
+.order-label {
+  margin-left: 8px;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 12px;
+
+  color: colors.$info-color;
+  background-color: #e8f0fe;
+}

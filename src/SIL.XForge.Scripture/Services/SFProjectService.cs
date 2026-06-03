@@ -1262,6 +1262,41 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
     }
 
+    public async Task SetServalSourcesAsync(
+        string curUserId,
+        string[] systemRoles,
+        string projectId,
+        IEnumerable<string> draftingSourcesParatextIds,
+        IEnumerable<string> trainingSourcesParatextIds
+    )
+    {
+        if (!systemRoles.Contains(SystemRole.ServalAdmin))
+            throw new ForbiddenException();
+
+        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+
+        List<TranslateSource> draftingSources = [.. draftingSourcesParatextIds.Select(GetTranslateSourceFromDatabase)];
+        List<TranslateSource> trainingSources = [.. trainingSourcesParatextIds.Select(GetTranslateSourceFromDatabase)];
+        List<TranslateSource> allSources = [.. draftingSources, .. trainingSources];
+
+        if (allSources.Any(s => s.ProjectRef == projectId))
+            throw new InvalidOperationException("A project cannot be its own source.");
+
+        HashSet<string> processedSourceRefs = [.. allSources.Select(s => s.ProjectRef)];
+
+        await projectDoc.SubmitJson0OpAsync(op =>
+        {
+            op.Set(p => p.TranslateConfig.DraftConfig.DraftingSources, draftingSources);
+            op.Set(p => p.TranslateConfig.DraftConfig.TrainingSources, trainingSources);
+        });
+
+        foreach (string sourceProjectRef in processedSourceRefs)
+        {
+            _backgroundJobClient.Enqueue<ISFProjectService>(r => r.SyncUserRoleAsync(curUserId, sourceProjectRef));
+        }
+    }
+
     public Task<string> GetProjectIdFromParatextIdAsync(string[] systemRoles, string paratextId)
     {
         if (!(systemRoles.Contains(SystemRole.ServalAdmin) || systemRoles.Contains(SystemRole.SystemAdmin)))
@@ -2267,7 +2302,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         // If it is not a project, see if there is a matching resource
         sourcePTProject ??=
             resources.SingleOrDefault(r => r.ParatextId == paratextId)
-            ?? throw new DataNotFoundException("The source paratext project does not exist.");
+            ?? throw new DataNotFoundException($"The source paratext project {paratextId} does not exist.");
 
         // Get the users who will access this source resource or project
         IEnumerable<string> userIds = userRoles is not null ? userRoles.Keys : [curUserId];
@@ -2344,6 +2379,27 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 Region = sourcePTProject.LanguageRegion,
                 Script = sourcePTProject.LanguageScript,
                 Tag = sourcePTProject.LanguageTag,
+            },
+        };
+    }
+
+    private TranslateSource GetTranslateSourceFromDatabase(string paratextId)
+    {
+        SFProject sourceProject =
+            RealtimeService.QuerySnapshots<SFProject>().FirstOrDefault(p => p.ParatextId == paratextId)
+            ?? throw new DataNotFoundException($"The source paratext project {paratextId} does not exist.");
+        return new TranslateSource
+        {
+            IsRightToLeft = sourceProject.IsRightToLeft,
+            ParatextId = paratextId,
+            ProjectRef = sourceProject.Id,
+            Name = sourceProject.Name,
+            ShortName = sourceProject.ShortName,
+            WritingSystem = new WritingSystem
+            {
+                Region = sourceProject.WritingSystem.Region,
+                Script = sourceProject.WritingSystem.Script,
+                Tag = sourceProject.WritingSystem.Tag,
             },
         };
     }
