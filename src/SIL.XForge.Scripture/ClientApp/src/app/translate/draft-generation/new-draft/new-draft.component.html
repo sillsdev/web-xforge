@@ -120,7 +120,7 @@
             }
           </h1>
           <button mat-button color="primary" (click)="goToPage('draft_books')">
-            <mat-icon>edit</mat-icon>{{ t("summary.edit_draft_books") }}
+            <mat-icon>edit</mat-icon>{{ t("summary.choose_different_books") }}
           </button>
         </mat-card-content>
       </mat-card>
@@ -139,9 +139,9 @@
           ></p>
           <div class="training-columns">
             <div class="training-column">
-              <p class="column-header">
+              <h3 class="column-header">
                 {{ t("summary.source_language_examples", { language: sourceLanguageDisplay }) }}
-              </p>
+              </h3>
               @if (sourceTrainingSections.length === 0) {
                 <p class="summary-empty">{{ t("summary.no_training_books") }}</p>
               } @else {
@@ -155,9 +155,9 @@
             </div>
             <div class="column-divider"></div>
             <div class="training-column">
-              <p class="column-header">
+              <h3 class="column-header">
                 {{ t("summary.translation_language_examples", { language: targetLanguageDisplay }) }}
-              </p>
+              </h3>
               @if (hasNoTrainingData) {
                 <p class="summary-empty">{{ t("summary.no_training_books") }}</p>
               } @else {
@@ -169,7 +169,7 @@
             </div>
           </div>
           <button mat-button color="primary" (click)="goToPage('training_books')">
-            <mat-icon>edit</mat-icon>{{ t("summary.edit_training_data") }}
+            <mat-icon>edit</mat-icon>{{ t("summary.choose_different_training_data") }}
           </button>
         </mat-card-content>
       </mat-card>

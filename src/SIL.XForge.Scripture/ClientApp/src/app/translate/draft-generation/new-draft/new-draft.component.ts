@@ -476,7 +476,8 @@ export class NewDraftComponent {
   }
 
   get targetProjectDisplayName(): string {
-    return this.activatedProjectService.projectDoc?.data?.shortName ?? '';
+    const projectData = this.activatedProjectService.projectDoc?.data;
+    return projectData != null ? projectLabel(projectData) : '';
   }
 
   get targetTrainingFormattedDisplay(): string {
