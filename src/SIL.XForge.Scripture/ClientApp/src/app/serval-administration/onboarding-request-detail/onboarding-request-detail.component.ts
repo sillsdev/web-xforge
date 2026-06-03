@@ -36,9 +36,9 @@ import { NoticeComponent } from '../../shared/notice/notice.component';
 import { projectLabel } from '../../shared/utils';
 import { normalizeLanguageCodeToISO639_3 } from '../../translate/draft-generation/draft-utils';
 import {
-  DraftingSignupFormData,
   ONBOARDING_REQUEST_RESOLUTION_OPTIONS,
   OnboardingRequest,
+  OnboardingRequestFormData,
   OnboardingRequestResolutionKey,
   OnboardingRequestResolutionMetadata,
   OnboardingRequestService
@@ -258,7 +258,7 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
     return this.request?.resolution != null && this.request.resolution !== 'unresolved';
   }
 
-  get formData(): DraftingSignupFormData {
+  get formData(): OnboardingRequestFormData {
     return this.request!.submission.formData;
   }
 
