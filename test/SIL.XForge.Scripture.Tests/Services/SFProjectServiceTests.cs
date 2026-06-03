@@ -3999,6 +3999,73 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public void SetDraftSourcesAsync_RequiresServalAdmin()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.SetDraftSourcesAsync(
+                User01,
+                [SystemRole.User],
+                Project01,
+                ["paratext_" + Project02],
+                ["paratext_" + Project03]
+            )
+        );
+    }
+
+    [Test]
+    public async Task SetDraftSourcesAsync_UpdatesDraftingAndTrainingSourcesFromDatabase()
+    {
+        var env = new TestEnvironment();
+
+        // SUT — ServalAdmin sets sources by Paratext ID; source projects already exist in the DB
+        await env.Service.SetDraftSourcesAsync(
+            User01,
+            [SystemRole.ServalAdmin],
+            Project01,
+            draftingSourcesParatextIds: ["paratext_" + Project02],
+            trainingSourcesParatextIds: ["paratext_" + Project03]
+        );
+
+        // Verify project document
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.TranslateConfig.DraftConfig.DraftingSources, Has.Count.EqualTo(1));
+        Assert.That(
+            project.TranslateConfig.DraftConfig.DraftingSources![0].ParatextId,
+            Is.EqualTo("paratext_" + Project02)
+        );
+        Assert.That(project.TranslateConfig.DraftConfig.DraftingSources[0].ProjectRef, Is.EqualTo(Project02));
+        Assert.That(project.TranslateConfig.DraftConfig.TrainingSources, Has.Count.EqualTo(1));
+        Assert.That(
+            project.TranslateConfig.DraftConfig.TrainingSources![0].ParatextId,
+            Is.EqualTo("paratext_" + Project03)
+        );
+        Assert.That(project.TranslateConfig.DraftConfig.TrainingSources[0].ProjectRef, Is.EqualTo(Project03));
+
+        // Verify Paratext credential lookup was never needed
+        _ = env.ParatextService.DidNotReceive().GetProjectsAsync(Arg.Any<UserSecret>());
+    }
+
+    [Test]
+    public void SetDraftSourcesAsync_ThrowsWhenSourceNotInDatabase()
+    {
+        var env = new TestEnvironment();
+
+        // SUT — a Paratext ID that does not correspond to any SFProject in the DB
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.SetDraftSourcesAsync(
+                User01,
+                [SystemRole.ServalAdmin],
+                Project01,
+                draftingSourcesParatextIds: ["paratext_nonexistent"],
+                trainingSourcesParatextIds: []
+            )
+        );
+    }
+
+    [Test]
     public async Task SetUsfmConfigAsync_UpdatesUsfmConfig()
     {
         var env = new TestEnvironment();
