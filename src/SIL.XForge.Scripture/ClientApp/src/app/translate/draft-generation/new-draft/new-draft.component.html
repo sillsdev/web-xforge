@@ -97,23 +97,27 @@
       <mat-card class="summary-card">
         <mat-card-content>
           <h1 class="draft-heading">
-            Translate
-            @for (item of draftingItems; track item.bookId; let idx = $index; let last = $last; let count = $count) {
-              @if (idx > 0 && last && count === 2) {
-                and
+            <!-- Localized heading parts: {1} for books, {2} for source, {3} for target -->
+            @for (part of draftHeadingParts; track $index) {
+              <!-- prettier-ignore -->
+              @if (part.id === "books") {
+                <!-- Render formatted books with locale-aware list conjunction -->
+                @for (bookPart of draftingItemsFormatted; track $index) {
+                  @if (bookPart.type === "element") {
+                    <strong>{{ bookPart.value }}</strong>
+                  } 
+                  <!-- prettier-ignore -->
+                  @else {{{ bookPart.value }}}
+                }
               }
-              @if (idx > 0 && last && count > 2) {
-                , and
-              }
-              @if (idx > 0 && !last) {
-                ,
-              }
-              <strong>{{ i18n.localizeBook(item.bookId) }}</strong>
-              @if (item.chapterRange != null) {
-                <span> ({{ item.chapterRange }})</span>
+              @else if (part.id === "sourceLanguage") {
+                <strong>{{ draftingSourceName }}</strong>
+              } @else if (part.id === "targetLanguage") {
+                <strong>{{ targetLanguageDisplay }}</strong>
+              } @else {
+                {{ part.text }}
               }
             }
-            from <strong>{{ draftingSourceName }}</strong> into <strong>{{ targetLanguageDisplay }}</strong>
           </h1>
           <button mat-button color="primary" (click)="goToPage('draft_books')">
             <mat-icon>edit</mat-icon>{{ t("summary.edit_draft_books") }}

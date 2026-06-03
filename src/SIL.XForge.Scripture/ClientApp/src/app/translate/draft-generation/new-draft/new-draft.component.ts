@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -34,7 +35,10 @@ import {
 } from './new-draft-logic-handler';
 import { ChapterSet } from './scripture-range';
 
-type ChapterInputError = { key: I18nKeyForComponent<'new_draft'>; params?: object };
+interface ChapterInputError {
+  key: I18nKeyForComponent<'new_draft'>;
+  params?: object;
+}
 
 type TargetTrainingItem = { kind: 'book'; bookId: string; chapterRange: string } | { kind: 'range'; label: string };
 
@@ -68,7 +72,8 @@ const PAGES_BY_ORDER = [
     NoticeComponent,
     DevOnlyComponent,
     FormsModule,
-    TranslocoModule
+    TranslocoModule,
+    CommonModule
   ]
 })
 export class NewDraftComponent {
@@ -392,6 +397,18 @@ export class NewDraftComponent {
         const isPartial = available != null && available.difference(selected).count() > 0;
         return { bookId, chapterRange: isPartial ? formatChapterRange(selected.toString()) : null };
       });
+  }
+
+  get draftingItemsFormatted(): { type: 'element' | 'literal'; value: string }[] {
+    const items = this.draftingItems.map(item => {
+      const bookName = this.i18n.localizeBook(item.bookId);
+      return item.chapterRange ? `${bookName} (${item.chapterRange})` : bookName;
+    });
+    return this.i18n.enumerateListParts(items);
+  }
+
+  get draftHeadingParts(): { text: string; id?: string }[] {
+    return this.i18n.interpolateVariables('new_draft.summary.draft_heading');
   }
 
   /** Returns items for the "Your translation" training section in canonical order.
