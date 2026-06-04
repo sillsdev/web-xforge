@@ -381,10 +381,10 @@ This change is additive: builds that don't include a target project entry in `Tr
 
 ### Backend
 
-- [ ] `MachineProjectService.GetTranslationBuildConfig()`: use explicit target project entry from
+- [x] `MachineProjectService.GetTranslationBuildConfig()`: use explicit target project entry from
       `buildConfig.TrainingScriptureRanges` for target training filter when present, rather than always
       copying from source filter (see "Backend Change" section above)
-- [ ] Add/update backend tests for this behavior
+- [x] Add/update backend tests for this behavior
 
 ### Logic Handler & Data
 
