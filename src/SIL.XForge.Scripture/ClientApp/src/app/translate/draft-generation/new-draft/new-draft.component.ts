@@ -27,6 +27,7 @@ import { Book } from '../../../shared/book-multi-select/book-multi-select';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { projectLabel } from '../../../shared/utils';
+import { CopyrightBannerComponent } from '../../../shared/copyright-banner/copyright-banner.component';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
 import { BuildConfig } from '../draft-generation';
 import { DraftGenerationService } from '../draft-generation.service';
@@ -38,6 +39,11 @@ import {
   scriptureRangeToBookListWithoutChapterDetail
 } from './new-draft-logic-handler';
 import { ChapterSet } from './scripture-range';
+
+interface CopyrightMessage {
+  banner: string;
+  notice?: string;
+}
 
 interface ChapterInputError {
   key: I18nKeyForComponent<'new_draft'>;
@@ -65,6 +71,7 @@ const PAGES_BY_ORDER = [
   imports: [
     MatProgressSpinner,
     ConfirmSourcesComponent,
+    CopyrightBannerComponent,
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
@@ -139,6 +146,18 @@ export class NewDraftComponent {
 
   get currentUserEmail(): string | undefined {
     return this.currentUserDoc?.data?.email;
+  }
+
+  get copyrightMessages(): CopyrightMessage[] {
+    const sources = this.logicHandler.sources;
+    if (sources == null) return [];
+    return (
+      [...sources.trainingSources, ...sources.draftingSources]
+        .map(s => ({ banner: s.copyrightBanner, notice: s.copyrightNotice }))
+        .filter(s => s.banner != null)
+        // deduplicate by banner text
+        .filter((value, index, self) => index === self.findIndex(v => v.banner === value.banner)) as CopyrightMessage[]
+    );
   }
 
   back(): void {

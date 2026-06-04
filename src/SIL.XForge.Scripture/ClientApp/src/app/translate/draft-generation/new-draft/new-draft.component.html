@@ -4,6 +4,9 @@
   } @else {
     @if (page === "preface") {
       <app-confirm-sources></app-confirm-sources>
+      @for (msg of copyrightMessages; track msg.banner) {
+        <app-copyright-banner [notice]="msg.notice" [banner]="msg.banner"></app-copyright-banner>
+      }
     } @else if (page === "draft_books") {
       <h1>Select books to draft</h1>
       <h2>

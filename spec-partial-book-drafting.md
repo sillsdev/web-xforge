@@ -103,10 +103,10 @@ The wizard template wraps the embedded component with the additional elements St
 
 **Contents (in order):**
 
-- **Copyright banners** from all source projects — placed above the `ConfirmSourcesComponent` (mirrors
-  existing behavior from old stepper; use the same `CopyrightBannerComponent` pattern)
 - `<app-confirm-sources>` — the existing component showing drafting source, training sources, target, and
   training data files
+- **Copyright banners** from all source projects — placed below the `ConfirmSourcesComponent`, near the
+  navigation buttons (use the same `CopyrightBannerComponent` pattern)
 - A link/button: **"Change source configuration"** — navigates to the configure-sources settings page (exits
   the wizard entirely), placed below the component
 
@@ -346,8 +346,8 @@ This change is additive: builds that don't include a target project entry in `Tr
 
 ### Step 1: Source Setup
 
-- [ ] Wire up `ConfirmSourcesComponent` (or equivalent) as Step 1
-- [ ] Add copyright banners to Step 1
+- [x] Wire up `ConfirmSourcesComponent` (or equivalent) as Step 1
+- [x] Add copyright banners to Step 1
 - [ ] Add "Change source configuration" link that exits the wizard
 
 ### Step 2: Books to Draft
@@ -412,6 +412,7 @@ This change is additive: builds that don't include a target project entry in `Tr
 
 ### Work that still needs to be defined
 
+- [ ] Indicate what step we're on
 - [ ] Take an inventory of notices in the old draft stepper and make sure we aren't dropping anything relevant
 - [ ] Do a feature parity review between the old stepper and the new design to ensure all existing features are accounted for in the new design
 - [ ] Do a UX review

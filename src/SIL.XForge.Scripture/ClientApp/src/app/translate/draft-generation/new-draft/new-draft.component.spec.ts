@@ -240,6 +240,41 @@ describe('NewDraftComponent', () => {
     });
   });
 
+  describe('copyrightMessages', () => {
+    it('returns empty when no sources have copyright banners', async () => {
+      const env = new TestEnvironment(testState);
+      await env.waitForInit();
+
+      expect(env.component.copyrightMessages).toEqual([]);
+    });
+
+    it('returns messages from both drafting and training sources', async () => {
+      const env = new TestEnvironment({
+        ...testState,
+        draftingSourceCopyrightBanner: 'Drafting source copyright',
+        trainingSourceCopyrightBanners: { 'training-source-1-id': 'Training source copyright' }
+      });
+      await env.waitForInit();
+
+      const banners = env.component.copyrightMessages.map(m => m.banner);
+      expect(banners).toContain('Drafting source copyright');
+      expect(banners).toContain('Training source copyright');
+    });
+
+    it('deduplicates sources that share the same banner text', async () => {
+      const sharedBanner = 'Shared copyright notice';
+      const env = new TestEnvironment({
+        ...testState,
+        draftingSourceCopyrightBanner: sharedBanner,
+        trainingSourceCopyrightBanners: { 'training-source-1-id': sharedBanner }
+      });
+      await env.waitForInit();
+
+      expect(env.component.copyrightMessages.length).toBe(1);
+      expect(env.component.copyrightMessages[0].banner).toBe(sharedBanner);
+    });
+  });
+
   describe('generateDraftClicked', () => {
     beforeEach(() => {
       reset(mockedDraftGenerationService);
@@ -342,6 +377,8 @@ interface TestState {
   draftingSourceBooksChapters: string;
   targetProjectBooksChapters: string;
   trainingSourcesBooksChapters: { [key: string]: string };
+  draftingSourceCopyrightBanner?: string;
+  trainingSourceCopyrightBanners?: { [key: string]: string };
 }
 
 class TestEnvironment {
@@ -391,7 +428,8 @@ class TestEnvironment {
           name: `Training Source for ${projectId}`,
           shortName: `TS-${projectId}`,
           writingSystem: { script: 'Latn', tag: 'es' },
-          texts: []
+          texts: [],
+          copyrightBanner: state.trainingSourceCopyrightBanners?.[projectId]
         })) as DraftSource[],
         trainingTargets: [],
         draftingSources: [
@@ -401,7 +439,8 @@ class TestEnvironment {
             name: 'Draft Source 1',
             shortName: SOURCE_SHORT_NAME,
             writingSystem: { script: 'Latn', tag: 'es' },
-            texts: []
+            texts: [],
+            copyrightBanner: state.draftingSourceCopyrightBanner
           } as DraftSource
         ]
       })
