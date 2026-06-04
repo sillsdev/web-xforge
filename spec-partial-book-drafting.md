@@ -388,7 +388,7 @@ This change is additive: builds that don't include a target project entry in `Tr
 
 ### Logic Handler & Data
 
-- [ ] Rename `ProgressServiceThatGivesChapterLevelInfo` to an appropriate name
+- [x] Rename `ProgressServiceThatGivesChapterLevelInfo` to an appropriate name
 - [ ] Fix `loadPreviouslySelectedTrainingBooks()`: look up the target project entry in
       `lastSelectedTrainingScriptureRanges` by project ID, extract the book IDs (ignoring any chapter
       detail), then call the normal book-selection logic to derive chapter defaults from current project

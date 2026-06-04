@@ -25,18 +25,18 @@ import { UserService } from '../../../../xforge-common/user.service';
 import { filterNullish } from '../../../../xforge-common/util/rxjs-util';
 import { Book } from '../../../shared/book-multi-select/book-multi-select';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
+import { CopyrightBannerComponent } from '../../../shared/copyright-banner/copyright-banner.component';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { projectLabel } from '../../../shared/utils';
-import { CopyrightBannerComponent } from '../../../shared/copyright-banner/copyright-banner.component';
+import { NllbLanguageService } from '../../nllb-language.service';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
 import { BuildConfig } from '../draft-generation';
 import { DraftGenerationService } from '../draft-generation.service';
-import { NllbLanguageService } from '../../nllb-language.service';
 import { DraftSource } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
 import {
+  DraftProgressService,
   NewDraftLogicHandler,
-  ProgressServiceThatGivesChapterLevelInfo,
   scriptureRangeToBookListWithoutChapterDetail
 } from './new-draft-logic-handler';
 import { ChapterSet } from './scripture-range';
@@ -111,7 +111,7 @@ export class NewDraftComponent {
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly draftSourcesService: DraftSourcesService,
     private readonly draftGenerationService: DraftGenerationService,
-    private readonly progressService: ProgressServiceThatGivesChapterLevelInfo,
+    private readonly progressService: DraftProgressService,
     readonly i18n: I18nService,
     readonly featureFlags: FeatureFlagService,
     protected readonly onlineStatusService: OnlineStatusService,

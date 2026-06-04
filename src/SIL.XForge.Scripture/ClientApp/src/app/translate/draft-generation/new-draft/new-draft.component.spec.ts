@@ -1,5 +1,6 @@
-import { Canon } from '@sillsdev/scripture';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { Canon } from '@sillsdev/scripture';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { filter, firstValueFrom, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, reset, verify, when } from 'ts-mockito';
@@ -9,14 +10,13 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { Router } from '@angular/router';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
-import { DraftSource } from '../draft-source';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { DraftGenerationService } from '../draft-generation.service';
+import { DraftSource } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
+import { DraftProgressService } from './new-draft-logic-handler';
 import { NewDraftComponent } from './new-draft.component';
-import { ProgressServiceThatGivesChapterLevelInfo } from './new-draft-logic-handler';
 import { VerboseScriptureRange } from './scripture-range';
 
 const SOURCE_SHORT_NAME = 'DS1';
@@ -368,7 +368,7 @@ describe('NewDraftComponent', () => {
 const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedDraftSourcesService = mock(DraftSourcesService);
 const mockedDraftGenerationService = mock(DraftGenerationService);
-const mockedProgressService = mock(ProgressServiceThatGivesChapterLevelInfo);
+const mockedProgressService = mock(DraftProgressService);
 const mockedI18nService = mock(I18nService);
 const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedUserService = mock(UserService);

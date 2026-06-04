@@ -9,7 +9,7 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { chapterCounts } from '../../../shared/progress-service/progress.service';
 import { DraftSource } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
-import { NewDraftLogicHandler, ProgressServiceThatGivesChapterLevelInfo } from './new-draft-logic-handler';
+import { DraftProgressService, NewDraftLogicHandler } from './new-draft-logic-handler';
 import { VerboseScriptureRange } from './scripture-range';
 
 function allBooksExcept(excludedBooks: string[]): string {
@@ -514,7 +514,7 @@ describe('NewDraftLogicHandler', () => {
 const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedDraftSourcesService = mock(DraftSourcesService);
-const mockedStubProgressServiceThatGivesChapterLevelInfo = mock(ProgressServiceThatGivesChapterLevelInfo);
+const mockedDraftProgressService = mock(DraftProgressService);
 
 interface TestState {
   lastSelectedTranslationScriptureRanges: ProjectScriptureRange[] | undefined;
@@ -539,7 +539,7 @@ class TestEnvironment {
   activatedProjectService = instance(mockedActivatedProjectService);
   sfProjectService = instance(mockedSFProjectService);
   draftSourcesService = instance(mockedDraftSourcesService);
-  stubProgressServiceThatGivesChapterLevelInfo = instance(mockedStubProgressServiceThatGivesChapterLevelInfo);
+  draftProgressService = instance(mockedDraftProgressService);
 
   constructor(state: TestState) {
     const project = createTestProjectProfile({
@@ -585,22 +585,22 @@ class TestEnvironment {
     );
 
     // Set up the progress service to return the specified scripture ranges for the project and sources
-    when(mockedStubProgressServiceThatGivesChapterLevelInfo.getProgressForProject(projectId)).thenResolve(
+    when(mockedDraftProgressService.getProgressForProject(projectId)).thenResolve(
       new VerboseScriptureRange(state.targetProjectBooksChapters)
     );
-    when(mockedStubProgressServiceThatGivesChapterLevelInfo.getProgressForProject('draft-source-1-id')).thenResolve(
+    when(mockedDraftProgressService.getProgressForProject('draft-source-1-id')).thenResolve(
       new VerboseScriptureRange(state.draftingSourceBooksChapters)
     );
     for (const [trainingSourceProjectId, booksChapters] of Object.entries(state.trainingSourcesBooksChapters)) {
-      when(
-        mockedStubProgressServiceThatGivesChapterLevelInfo.getProgressForProject(trainingSourceProjectId)
-      ).thenResolve(new VerboseScriptureRange(booksChapters));
+      when(mockedDraftProgressService.getProgressForProject(trainingSourceProjectId)).thenResolve(
+        new VerboseScriptureRange(booksChapters)
+      );
     }
 
     this.logicHandler = new NewDraftLogicHandler(
       this.activatedProjectService,
       this.draftSourcesService,
-      this.stubProgressServiceThatGivesChapterLevelInfo
+      this.draftProgressService
     );
   }
 

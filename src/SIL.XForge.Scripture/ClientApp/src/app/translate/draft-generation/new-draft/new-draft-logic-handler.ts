@@ -8,8 +8,8 @@ import { DraftSourcesService } from '../draft-sources.service';
 import { ChapterSet, VerboseScriptureRange } from './scripture-range';
 
 @Injectable({ providedIn: 'root' })
-// FIXME change class name
-export class ProgressServiceThatGivesChapterLevelInfo {
+/** Like ProgressService, but provides a VerboseScriptureRange instead of raw progress data */
+export class DraftProgressService {
   constructor(private readonly progressService: ProgressService) {}
 
   async getProgressForProject(projectId: string): Promise<VerboseScriptureRange> {
@@ -99,7 +99,7 @@ export class NewDraftLogicHandler {
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly draftSourcesService: DraftSourcesService,
-    private readonly progressService: ProgressServiceThatGivesChapterLevelInfo
+    private readonly progressService: DraftProgressService
   ) {
     void this.init();
   }
