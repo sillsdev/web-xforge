@@ -231,6 +231,7 @@
     "click_book_to_preview": "Click a book below to preview the draft and add it to your project."
   },
   "new_draft": {
+    "offline_message": "Draft generation is not available offline.",
     "chapter_input": {
       "available": "Available chapters: {{ range }}",
       "invalid_range": "Invalid chapter range.",

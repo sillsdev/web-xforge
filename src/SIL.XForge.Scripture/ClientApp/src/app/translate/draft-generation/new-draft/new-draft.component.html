@@ -204,13 +204,23 @@
           </mat-card-content>
         </mat-card>
       }
+
+      @if (!onlineStatusService.isOnline) {
+        <span class="offline-text">{{ t("offline_message") }}</span>
+      }
     }
+
     <div class="step-buttons">
       <button mat-stroked-button (click)="back()">
         <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon> Back
       </button>
       @if (page === "suffix") {
-        <button mat-flat-button color="primary" (click)="generateDraftClicked()">
+        <button
+          mat-flat-button
+          color="primary"
+          (click)="generateDraftClicked()"
+          [disabled]="!onlineStatusService.isOnline"
+        >
           <mat-icon>auto_awesome</mat-icon> Generate Draft
         </button>
       } @else {

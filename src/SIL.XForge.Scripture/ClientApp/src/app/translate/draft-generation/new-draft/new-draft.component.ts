@@ -12,6 +12,7 @@ import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { filter, firstValueFrom } from 'rxjs';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { DevOnlyComponent } from 'src/app/shared/dev-only/dev-only.component';
 import { JsonViewerComponent } from 'src/app/shared/json-viewer/json-viewer.component';
 import { hasStringProp } from '../../../../type-utils';
@@ -26,6 +27,9 @@ import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { projectLabel } from '../../../shared/utils';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
+import { ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { BuildConfig } from '../draft-generation';
+import { DraftGenerationService } from '../draft-generation.service';
 import { DraftSource } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
 import {
@@ -97,9 +101,11 @@ export class NewDraftComponent {
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly draftSourcesService: DraftSourcesService,
+    private readonly draftGenerationService: DraftGenerationService,
     private readonly progressService: ProgressServiceThatGivesChapterLevelInfo,
     readonly i18n: I18nService,
     readonly featureFlags: FeatureFlagService,
+    protected readonly onlineStatusService: OnlineStatusService,
     private readonly userService: UserService,
     private readonly router: Router
   ) {
@@ -171,8 +177,48 @@ export class NewDraftComponent {
   }
 
   async generateDraftClicked(): Promise<void> {
-    // FIXME DO_NOT_MERGE
-    throw new Error('Draft generation not implemented yet');
+    if (!this.onlineStatusService.isOnline || this.initData == null) return;
+
+    const projectId = this.initData.projectId;
+    const draftingSource = this.logicHandler.sources?.draftingSources[0];
+    if (draftingSource == null) return;
+
+    const translationScriptureRanges: ProjectScriptureRange[] = [
+      {
+        projectId: draftingSource.projectRef,
+        scriptureRange: this.logicHandler.selectedDraftingScriptureRange$.getValue().toString()
+      }
+    ];
+
+    const trainingScriptureRanges: ProjectScriptureRange[] = [];
+    const selectedSrcBooks = this.logicHandler.selectedTrainingSourceBooks$.getValue();
+    for (const source of this.logicHandler.sources?.trainingSources ?? []) {
+      const bookIds = selectedSrcBooks[source.projectRef] ?? [];
+      if (bookIds.length > 0) {
+        trainingScriptureRanges.push({ projectId: source.projectRef, scriptureRange: bookIds.join(';') });
+      }
+    }
+    // Include target project entry at chapter-level: persists training selection and drives backend filter
+    trainingScriptureRanges.push({
+      projectId,
+      scriptureRange: this.logicHandler.selectedTargetTrainingScriptureRange$.getValue().toString()
+    });
+
+    const trainingDataFiles =
+      this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingDataFiles ?? [];
+
+    const buildConfig: BuildConfig = {
+      projectId,
+      translationScriptureRanges,
+      trainingScriptureRanges,
+      trainingDataFiles,
+      fastTraining: this.fastTraining,
+      useEcho: this.useEcho,
+      sendEmailOnBuildFinished: this.sendEmailOnBuildFinished
+    };
+
+    await firstValueFrom(this.draftGenerationService.startBuildOrGetActiveBuild(buildConfig));
+    void this.router.navigate(['/projects', projectId, 'draft-generation']);
   }
 
   get debugData(): unknown {

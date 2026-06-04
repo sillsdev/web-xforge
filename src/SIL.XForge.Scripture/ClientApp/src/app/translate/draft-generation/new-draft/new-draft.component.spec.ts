@@ -1,12 +1,18 @@
 import { Canon } from '@sillsdev/scripture';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { filter, firstValueFrom, of } from 'rxjs';
-import { instance, mock, when } from 'ts-mockito';
+import { anything, deepEqual, instance, mock, reset, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
+import { UserService } from 'xforge-common/user.service';
 import { Router } from '@angular/router';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { DraftSource } from '../draft-source';
+import { DraftGenerationService } from '../draft-generation.service';
 import { DraftSourcesService } from '../draft-sources.service';
 import { NewDraftComponent } from './new-draft.component';
 import { ProgressServiceThatGivesChapterLevelInfo } from './new-draft-logic-handler';
@@ -16,6 +22,10 @@ const SOURCE_SHORT_NAME = 'DS1';
 const TARGET_SHORT_NAME = 'TP1';
 
 describe('NewDraftComponent', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [TestOnlineStatusService, provideTestOnlineStatus()] });
+  });
+
   // GEN: source has 50 chapters, target has GEN1-5 → eligible for partial drafting
   const testState = {
     draftingSourceBooksChapters: 'GEN1-50;MAT1-28;MRK1-16;LUK1-24;JHN1-21',
@@ -229,12 +239,103 @@ describe('NewDraftComponent', () => {
       expect(env.component.draftingChapterErrors.has('GEN')).toBeTrue();
     });
   });
+
+  describe('generateDraftClicked', () => {
+    beforeEach(() => {
+      reset(mockedDraftGenerationService);
+      reset(mockedRouter);
+      when(mockedDraftGenerationService.startBuildOrGetActiveBuild(anything())).thenReturn(of(undefined));
+    });
+
+    it('sends chapter-level translation range for a partially drafted book', fakeAsync(() => {
+      const env = new TestEnvironment(testState);
+      tick(); // runs logicHandler.init() and component.init() to completion (sets initData)
+      // GEN: source has chapters 1-50, target has 1-5 → default draft selection is 6-50
+      env.component.logicHandler.selectDraftingBooks(['GEN']);
+
+      env.component.generateDraftClicked();
+      tick();
+
+      verify(
+        mockedDraftGenerationService.startBuildOrGetActiveBuild(
+          deepEqual({
+            projectId: 'testProjectId',
+            translationScriptureRanges: [{ projectId: 'draft-source-1-id', scriptureRange: 'GEN6-50' }],
+            trainingScriptureRanges: [{ projectId: 'testProjectId', scriptureRange: '' }],
+            trainingDataFiles: [],
+            fastTraining: false,
+            useEcho: false,
+            sendEmailOnBuildFinished: false
+          })
+        )
+      ).once();
+      expect().nothing();
+    }));
+
+    it('includes chapter-level target training range and book-level training source ranges', fakeAsync(() => {
+      const env = new TestEnvironment(testState);
+      tick();
+      // Draft GEN 6-50; target training defaults to non-drafted chapters GEN 1-5
+      env.component.logicHandler.selectDraftingBooks(['GEN']);
+      env.component.logicHandler.setInputMode('training_books');
+      env.component.logicHandler.selectTargetTrainingBooks(['GEN']);
+      env.component.logicHandler.selectTrainingSourceBooks('training-source-1-id', ['GEN']);
+
+      env.component.generateDraftClicked();
+      tick();
+
+      verify(
+        mockedDraftGenerationService.startBuildOrGetActiveBuild(
+          deepEqual({
+            projectId: 'testProjectId',
+            translationScriptureRanges: [{ projectId: 'draft-source-1-id', scriptureRange: 'GEN6-50' }],
+            trainingScriptureRanges: [
+              { projectId: 'training-source-1-id', scriptureRange: 'GEN' },
+              { projectId: 'testProjectId', scriptureRange: 'GEN1-5' }
+            ],
+            trainingDataFiles: [],
+            fastTraining: false,
+            useEcho: false,
+            sendEmailOnBuildFinished: false
+          })
+        )
+      ).once();
+      expect().nothing();
+    }));
+
+    it('navigates to draft-generation after submitting the build', fakeAsync(() => {
+      const env = new TestEnvironment(testState);
+      tick();
+      env.component.logicHandler.selectDraftingBooks(['GEN']);
+
+      env.component.generateDraftClicked();
+      tick();
+
+      verify(mockedRouter.navigate(deepEqual(['/projects', 'testProjectId', 'draft-generation']))).once();
+      expect().nothing();
+    }));
+
+    it('does not call the backend when offline', fakeAsync(() => {
+      const env = new TestEnvironment(testState);
+      tick();
+      env.onlineStatusService.setIsOnline(false);
+
+      env.component.generateDraftClicked();
+      tick();
+
+      verify(mockedDraftGenerationService.startBuildOrGetActiveBuild(anything())).never();
+      expect().nothing();
+    }));
+  });
 });
 
 const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedDraftSourcesService = mock(DraftSourcesService);
+const mockedDraftGenerationService = mock(DraftGenerationService);
 const mockedProgressService = mock(ProgressServiceThatGivesChapterLevelInfo);
 const mockedI18nService = mock(I18nService);
+const mockedFeatureFlagService = mock(FeatureFlagService);
+const mockedUserService = mock(UserService);
 const mockedRouter = mock(Router);
 
 interface TestState {
@@ -245,6 +346,7 @@ interface TestState {
 
 class TestEnvironment {
   component: NewDraftComponent;
+  readonly onlineStatusService = TestBed.inject(TestOnlineStatusService);
 
   constructor(state: TestState) {
     const project = createTestProjectProfile({
@@ -317,11 +419,18 @@ class TestEnvironment {
       );
     }
 
+    when(mockedFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
+    when(mockedUserService.getCurrentUser()).thenResolve(undefined as any);
+
     this.component = new NewDraftComponent(
       instance(mockedActivatedProjectService),
       instance(mockedDraftSourcesService),
+      instance(mockedDraftGenerationService),
       instance(mockedProgressService),
       instance(mockedI18nService),
+      instance(mockedFeatureFlagService),
+      this.onlineStatusService,
+      instance(mockedUserService),
       instance(mockedRouter)
     );
   }
