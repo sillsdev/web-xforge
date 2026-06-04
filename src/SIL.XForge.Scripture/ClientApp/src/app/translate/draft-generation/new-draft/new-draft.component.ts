@@ -11,10 +11,11 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
+import { ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { filter, firstValueFrom } from 'rxjs';
-import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { DevOnlyComponent } from 'src/app/shared/dev-only/dev-only.component';
 import { JsonViewerComponent } from 'src/app/shared/json-viewer/json-viewer.component';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { hasStringProp } from '../../../../type-utils';
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
 import { FeatureFlagService } from '../../../../xforge-common/feature-flags/feature-flag.service';
@@ -27,7 +28,6 @@ import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { projectLabel } from '../../../shared/utils';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
-import { ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BuildConfig } from '../draft-generation';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftSource } from '../draft-source';
@@ -176,49 +176,59 @@ export class NewDraftComponent {
     } else throw new Error(`Cannot navigate from page ${this.page} to index ${newIndex}`);
   }
 
+  submitting = false;
   async generateDraftClicked(): Promise<void> {
     if (!this.onlineStatusService.isOnline || this.initData == null) return;
 
-    const projectId = this.initData.projectId;
-    const draftingSource = this.logicHandler.sources?.draftingSources[0];
-    if (draftingSource == null) return;
+    this.submitting = true;
 
-    const translationScriptureRanges: ProjectScriptureRange[] = [
-      {
-        projectId: draftingSource.projectRef,
-        scriptureRange: this.logicHandler.selectedDraftingScriptureRange$.getValue().toString()
-      }
-    ];
+    await Promise.resolve();
 
-    const trainingScriptureRanges: ProjectScriptureRange[] = [];
-    const selectedSrcBooks = this.logicHandler.selectedTrainingSourceBooks$.getValue();
-    for (const source of this.logicHandler.sources?.trainingSources ?? []) {
-      const bookIds = selectedSrcBooks[source.projectRef] ?? [];
-      if (bookIds.length > 0) {
-        trainingScriptureRanges.push({ projectId: source.projectRef, scriptureRange: bookIds.join(';') });
+    try {
+      const projectId = this.initData.projectId;
+      const draftingSource = this.logicHandler.sources?.draftingSources[0];
+      if (draftingSource == null) return;
+
+      const translationScriptureRanges: ProjectScriptureRange[] = [
+        {
+          projectId: draftingSource.projectRef,
+          scriptureRange: this.logicHandler.selectedDraftingScriptureRange$.getValue().toString()
+        }
+      ];
+
+      const trainingScriptureRanges: ProjectScriptureRange[] = [];
+      const selectedSrcBooks = this.logicHandler.selectedTrainingSourceBooks$.getValue();
+      for (const source of this.logicHandler.sources?.trainingSources ?? []) {
+        const bookIds = selectedSrcBooks[source.projectRef] ?? [];
+        if (bookIds.length > 0) {
+          trainingScriptureRanges.push({ projectId: source.projectRef, scriptureRange: bookIds.join(';') });
+        }
       }
+      // Include target project entry at chapter-level: persists training selection and drives backend filter
+      trainingScriptureRanges.push({
+        projectId,
+        scriptureRange: this.logicHandler.selectedTargetTrainingScriptureRange$.getValue().toString()
+      });
+
+      const trainingDataFiles =
+        this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingDataFiles ?? [];
+
+      const buildConfig: BuildConfig = {
+        projectId,
+        translationScriptureRanges,
+        trainingScriptureRanges,
+        trainingDataFiles,
+        fastTraining: this.fastTraining,
+        useEcho: this.useEcho,
+        sendEmailOnBuildFinished: this.sendEmailOnBuildFinished
+      };
+
+      await firstValueFrom(this.draftGenerationService.startBuildOrGetActiveBuild(buildConfig));
+
+      void this.router.navigate(['/projects', projectId, 'draft-generation']);
+    } finally {
+      this.submitting = false;
     }
-    // Include target project entry at chapter-level: persists training selection and drives backend filter
-    trainingScriptureRanges.push({
-      projectId,
-      scriptureRange: this.logicHandler.selectedTargetTrainingScriptureRange$.getValue().toString()
-    });
-
-    const trainingDataFiles =
-      this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingDataFiles ?? [];
-
-    const buildConfig: BuildConfig = {
-      projectId,
-      translationScriptureRanges,
-      trainingScriptureRanges,
-      trainingDataFiles,
-      fastTraining: this.fastTraining,
-      useEcho: this.useEcho,
-      sendEmailOnBuildFinished: this.sendEmailOnBuildFinished
-    };
-
-    await firstValueFrom(this.draftGenerationService.startBuildOrGetActiveBuild(buildConfig));
-    void this.router.navigate(['/projects', projectId, 'draft-generation']);
   }
 
   get debugData(): unknown {

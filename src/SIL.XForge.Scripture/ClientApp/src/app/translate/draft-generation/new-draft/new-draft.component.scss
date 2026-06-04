@@ -5,7 +5,7 @@
   max-width: 120em;
 }
 
-mat-spinner {
+.loading-indicator {
   margin: 0 auto;
   top: 10em;
 }
@@ -107,4 +107,10 @@ strong {
 .summary-empty {
   color: variables.$greyLight;
   font-style: italic;
+}
+
+.save-container {
+  display: flex;
+  align-items: center;
+  gap: 1em;
 }

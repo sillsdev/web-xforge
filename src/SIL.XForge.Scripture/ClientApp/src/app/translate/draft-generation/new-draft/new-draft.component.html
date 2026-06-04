@@ -1,6 +1,6 @@
 <div class="wrapper" *transloco="let t; read: 'new_draft'">
   @if (initData == null) {
-    <mat-spinner></mat-spinner>
+    <mat-spinner class="loading-indicator"></mat-spinner>
   } @else {
     @if (page === "preface") {
       <app-confirm-sources></app-confirm-sources>
@@ -215,14 +215,19 @@
         <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon> Back
       </button>
       @if (page === "suffix") {
-        <button
-          mat-flat-button
-          color="primary"
-          (click)="generateDraftClicked()"
-          [disabled]="!onlineStatusService.isOnline"
-        >
-          <mat-icon>auto_awesome</mat-icon> Generate Draft
-        </button>
+        <div class="save-container">
+          @if (submitting) {
+            <div class="progress"><mat-spinner diameter="24"></mat-spinner></div>
+          }
+          <button
+            mat-flat-button
+            color="primary"
+            [disabled]="submitting || !onlineStatusService.isOnline"
+            (click)="generateDraftClicked()"
+          >
+            <mat-icon>auto_awesome</mat-icon> Generate Draft
+          </button>
+        </div>
       } @else {
         <button mat-flat-button color="primary" (click)="next()">
           Next <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
