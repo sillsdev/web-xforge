@@ -18,6 +18,8 @@ export class DisplayConfidenceComponent {
   @Input() confidence: Confidence | undefined;
   @Input() showText: boolean | undefined;
 
+  UsabilityLabel = UsabilityLabel;
+
   get usabilityLabel(): UsabilityLabel | undefined {
     return this.confidence?.label;
   }

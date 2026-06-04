@@ -75,7 +75,7 @@ public class PreTranslationService(
                 continue;
             }
 
-            // Add the confidence value. HHowever, if the confidence value already exists, see if this pre-translation
+            // Add the confidence value. However, if the confidence value already exists, see if this pre-translation
             // is for the verse content, and if so, set the confidence value.
             if (!confidences.TryAdd(verseRef, pretranslationConfidence.Confidence) && !references.First().Contains('/'))
             {

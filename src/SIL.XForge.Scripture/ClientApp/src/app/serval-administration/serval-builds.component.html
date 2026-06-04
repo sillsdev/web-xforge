@@ -648,13 +648,33 @@
                             bookConfidence of row.report.buildConfidences.bookConfidences;
                             track bookConfidence.bookNum
                           ) {
-                            <div class="detail-keyvalue">
-                              <span class="detail-key">
-                                {{ "canon.book_names." + getBookId(bookConfidence) | transloco }}
-                              </span>
-                              <span class="detail-value">
-                                <app-display-confidence [confidence]="bookConfidence"></app-display-confidence>
-                              </span>
+                            <div class="book-confidence">
+                              <div class="detail-keyvalue">
+                                <span class="detail-key">
+                                  {{ "canon.book_names." + getBookId(bookConfidence) | transloco }}
+                                </span>
+                                <span class="detail-value">
+                                  <app-display-confidence [confidence]="bookConfidence"></app-display-confidence>
+                                </span>
+                              </div>
+                              <div class="detail-keyvalue">
+                                <span class="detail-key">
+                                  {{ "canon.book_names." + getBookId(bookConfidence) | transloco }} - Projected ChrF3
+                                </span>
+                                <span class="detail-value">{{ bookConfidence.projectedChrF3.toFixed(3) }}</span>
+                              </div>
+                              <div class="detail-keyvalue">
+                                <span class="detail-key">
+                                  {{ "canon.book_names." + getBookId(bookConfidence) | transloco }} - Confidence
+                                </span>
+                                <span class="detail-value">{{ bookConfidence.confidence.toFixed(3) }}</span>
+                              </div>
+                              <div class="detail-keyvalue">
+                                <span class="detail-key">
+                                  {{ "canon.book_names." + getBookId(bookConfidence) | transloco }} - Usability
+                                </span>
+                                <span class="detail-value">{{ bookConfidence.usability.toFixed(3) }}</span>
+                              </div>
                             </div>
                           }
                         </div>
