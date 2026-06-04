@@ -79,7 +79,7 @@ export class BuildConfidencesExportService extends BaseExportService {
 
   private createRsvRows(rows: (BookConfidence | ChapterConfidence)[]): string[][] {
     if (this.isChapterConfidenceArray(rows)) {
-      const headers: string[] = ['Book', 'Chapter', 'Projected chrF3', 'Usability', 'Label'];
+      const headers: string[] = ['Book', 'Chapter', 'Projected chrF3', 'Usability', 'Label', 'Confidence'];
       const dataRows: string[][] = rows.map(row => [
         Canon.bookNumberToId(row.bookNum),
         row.chapterNum.toString(),
@@ -89,7 +89,7 @@ export class BuildConfidencesExportService extends BaseExportService {
       ]);
       return [headers, ...dataRows];
     } else {
-      const headers: string[] = ['Book', 'Projected chrF3', 'Usability', 'Label'];
+      const headers: string[] = ['Book', 'Projected chrF3', 'Usability', 'Label', 'Confidence'];
       const dataRows: string[][] = rows.map(row => [
         Canon.bookNumberToId(row.bookNum),
         row.projectedChrF3.toString(),

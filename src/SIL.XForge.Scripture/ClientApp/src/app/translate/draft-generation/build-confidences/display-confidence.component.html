@@ -1,13 +1,13 @@
 @switch (usabilityLabel) {
-  @case ("Green") {
+  @case (UsabilityLabel.Green) {
     <div class="confidence green">
       <mat-icon [matTooltip]="usabilityTooltip">check_circle</mat-icon>{{ usabilityText }}
     </div>
   }
-  @case ("Yellow") {
+  @case (UsabilityLabel.Yellow) {
     <div class="confidence yellow"><mat-icon [matTooltip]="usabilityTooltip">circle</mat-icon>{{ usabilityText }}</div>
   }
-  @case ("Red") {
+  @case (UsabilityLabel.Red) {
     <div class="confidence red"><mat-icon [matTooltip]="usabilityTooltip">error</mat-icon>{{ usabilityText }}</div>
   }
   @case (undefined) {

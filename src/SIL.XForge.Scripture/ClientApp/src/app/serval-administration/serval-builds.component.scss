@@ -533,4 +533,10 @@ a {
 .book-confidences {
   max-height: 13em;
   overflow-y: auto;
+  display: grid;
+  row-gap: 1em;
+  .book-confidence {
+    display: grid;
+    row-gap: 0;
+  }
 }
