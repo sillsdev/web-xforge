@@ -409,3 +409,12 @@ This change is additive: builds that don't include a target project entry in `Tr
 - [x] Unit tests for `NewDraftComponent` (step navigation, form state, error display)
 - [ ] Unit tests for `scripture-range.ts` (VerboseScriptureRange, ChapterSet)
 - [ ] Update/fix existing tests marked with FIXME/DO_NOT_MERGE
+
+### Work that still needs to be defined
+
+- [ ] Take an inventory of notices in the old draft stepper and make sure we aren't dropping anything relevant
+- [ ] Do a feature parity review between the old stepper and the new design to ensure all existing features are accounted for in the new design
+- [ ] Do a UX review
+- [ ] Check for wording consitency across all new UI elements, and consistency with existing draft generation UI and help
+- [ ] Define manual tests for test team
+- [ ] E2E tests for the new drafting flow
