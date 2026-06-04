@@ -12,6 +12,7 @@ import { UserService } from 'xforge-common/user.service';
 import { Router } from '@angular/router';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { DraftSource } from '../draft-source';
+import { NllbLanguageService } from '../../nllb-language.service';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftSourcesService } from '../draft-sources.service';
 import { NewDraftComponent } from './new-draft.component';
@@ -372,6 +373,7 @@ const mockedI18nService = mock(I18nService);
 const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedUserService = mock(UserService);
 const mockedRouter = mock(Router);
+const mockedNllbLanguageService = mock(NllbLanguageService);
 
 interface TestState {
   draftingSourceBooksChapters: string;
@@ -460,6 +462,7 @@ class TestEnvironment {
 
     when(mockedFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
     when(mockedUserService.getCurrentUser()).thenResolve(undefined as any);
+    when(mockedNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(false);
 
     this.component = new NewDraftComponent(
       instance(mockedActivatedProjectService),
@@ -470,7 +473,8 @@ class TestEnvironment {
       instance(mockedFeatureFlagService),
       this.onlineStatusService,
       instance(mockedUserService),
-      instance(mockedRouter)
+      instance(mockedRouter),
+      instance(mockedNllbLanguageService)
     );
   }
 

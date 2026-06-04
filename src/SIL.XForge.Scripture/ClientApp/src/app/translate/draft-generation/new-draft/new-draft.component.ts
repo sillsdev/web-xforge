@@ -31,6 +31,7 @@ import { CopyrightBannerComponent } from '../../../shared/copyright-banner/copyr
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
 import { BuildConfig } from '../draft-generation';
 import { DraftGenerationService } from '../draft-generation.service';
+import { NllbLanguageService } from '../../nllb-language.service';
 import { DraftSource } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
 import {
@@ -99,6 +100,7 @@ export class NewDraftComponent {
   sendEmailOnBuildFinished: boolean = false;
   fastTraining: boolean = false;
   useEcho: boolean = false;
+  isTrainingOptional: boolean = false;
 
   // Data that is guarnateed to be loaded post init
   initData?: { projectId: string };
@@ -114,7 +116,8 @@ export class NewDraftComponent {
     readonly featureFlags: FeatureFlagService,
     protected readonly onlineStatusService: OnlineStatusService,
     private readonly userService: UserService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly nllbLanguageService: NllbLanguageService
   ) {
     this.logicHandler = new NewDraftLogicHandler(
       this.activatedProjectService,
@@ -133,6 +136,15 @@ export class NewDraftComponent {
     this.initData = {
       projectId: await firstValueFrom(this.activatedProjectService.projectId$.pipe(filterNullish()))
     };
+
+    const sources = this.logicHandler.sources;
+    const targetTag = this.activatedProjectService.projectDoc?.data?.writingSystem.tag;
+    const draftingSourceTag = sources?.draftingSources[0]?.writingSystem?.tag;
+    if (targetTag != null && draftingSourceTag != null) {
+      this.isTrainingOptional =
+        (await this.nllbLanguageService.isNllbLanguageAsync(targetTag)) &&
+        (await this.nllbLanguageService.isNllbLanguageAsync(draftingSourceTag));
+    }
 
     const draftConfig = this.activatedProjectService.projectDoc?.data?.translateConfig?.draftConfig;
     this.sendEmailOnBuildFinished = draftConfig?.sendEmailOnBuildFinished ?? false;
@@ -168,14 +180,39 @@ export class NewDraftComponent {
     this.step(1);
   }
 
+  private getForwardError(): I18nKeyForComponent<'new_draft'> | null {
+    if (this.page === 'draft_books') {
+      if (this.logicHandler.selectedDraftingScriptureRange$.getValue().books.size === 0)
+        return 'no_drafting_books_selected';
+      if (this.draftingChapterErrors.size > 0) return 'fix_chapter_errors';
+    }
+    if (this.page === 'training_books') {
+      if (!this.isTrainingOptional && !this.hasTrainingBooksSelected) return 'no_training_books_selected';
+      if (this.targetTrainingChapterErrors.size > 0) return 'fix_chapter_errors';
+    }
+    return null;
+  }
+
+  private get hasTrainingBooksSelected(): boolean {
+    // selectedTargetTrainingScriptureRange reflects the logic handler's view of what's actually available
+    // for training (drafted chapters excluded), so it's the right thing to check — not just whether the
+    // user clicked a book in the multi-select
+    const hasTargetBooks = this.logicHandler.selectedTargetTrainingScriptureRange$.getValue().books.size > 0;
+    if (!hasTargetBooks) return false;
+    if (this.trainingSources.length === 0) return true;
+    const selected = this.logicHandler.selectedTrainingSourceBooks$.getValue();
+    return Object.values(selected).some(books => books.length > 0);
+  }
+
+  private clearStepErrorIfResolved(): void {
+    if (this.stepError != null && this.getForwardError() !== this.stepError) this.stepError = null;
+  }
+
   private step(count: 1 | -1): void {
     if (count === 1) {
-      if (this.page === 'draft_books' && this.draftingChapterErrors.size > 0) {
-        this.stepError = 'fix_chapter_errors';
-        return;
-      }
-      if (this.page === 'training_books' && this.targetTrainingChapterErrors.size > 0) {
-        this.stepError = 'fix_chapter_errors';
+      const error = this.getForwardError();
+      if (error != null) {
+        this.stepError = error;
         return;
       }
     }
@@ -305,6 +342,7 @@ export class NewDraftComponent {
         this.draftingChapterErrors.delete(bookId);
       }
     }
+    this.clearStepErrorIfResolved();
   }
 
   onDraftingChaptersBlurred(bookId: string, value: string): void {
@@ -388,6 +426,7 @@ export class NewDraftComponent {
       const autoAdded = addedIds.filter(id => available.includes(id));
       this.logicHandler.selectTrainingSourceBooks(source.projectRef, [...new Set([...stillValid, ...autoAdded])]);
     }
+    this.clearStepErrorIfResolved();
   }
 
   onTargetTrainingChaptersBlurred(bookId: string, value: string): void {
@@ -442,6 +481,7 @@ export class NewDraftComponent {
   onTrainingSourceBookSelect(books: number[], projectId: string): void {
     const bookIds = books.map(b => Canon.bookNumberToId(b));
     this.logicHandler.selectTrainingSourceBooks(projectId, bookIds);
+    this.clearStepErrorIfResolved();
   }
 
   availableTrainingSourceBooksForProject(projectId: string): Book[] {
@@ -565,6 +605,13 @@ export class NewDraftComponent {
 
   get hasNoTrainingData(): boolean {
     return this.logicHandler.selectedTargetTrainingScriptureRange$.getValue().books.size === 0;
+  }
+
+  goToConfigureSources(): void {
+    const projectId = this.initData?.projectId;
+    if (projectId != null) {
+      void this.router.navigate(['/projects', projectId, 'draft-generation', 'configure-sources']);
+    }
   }
 
   goToPage(page: 'draft_books' | 'training_books'): void {

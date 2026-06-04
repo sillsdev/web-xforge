@@ -239,7 +239,10 @@
       "chapters_not_in_target": "Chapters {{ chapters }} cannot be used for training because they are not in the main project, {{ targetName }}.",
       "chapters_will_be_translated": "Chapters {{ chapters }} cannot be used for training because they are going to be translated."
     },
+    "change_source_configuration": "Change source configuration",
     "fix_chapter_errors": "Please fix the chapter range errors above before continuing.",
+    "no_drafting_books_selected": "Select at least one book to draft before continuing.",
+    "no_training_books_selected": "Select training books from your project and at least one source project before continuing.",
     "reference_books": "Reference books",
     "summary": {
       "example_translations": "Language training data",
@@ -252,11 +255,6 @@
       "settings_placeholder": "You will be able to configure email notifications and other options here.",
       "example_translations_subtitle": "Scripture Forge uses training data (example translations) to learn how to translate from {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} into {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}.",
       "email_me": "Email me at {{ email }} when the draft is finished.",
-      "developer_options": "Developer options",
-      "fast_training": "Enable Fast Training",
-      "fast_training_warning": "Enabling this will save time but greatly reduce accuracy.",
-      "use_echo": "Use Echo Translation Engine",
-      "use_echo_warning": "Enabling this will echo your source text instead of translating it.",
       "draft_heading": "Translate {{ books }} in {{ sourceLanguage }} into {{ targetLanguage }}"
     }
   },

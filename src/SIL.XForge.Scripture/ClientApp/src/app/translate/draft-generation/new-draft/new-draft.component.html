@@ -7,6 +7,9 @@
       @for (msg of copyrightMessages; track msg.banner) {
         <app-copyright-banner [notice]="msg.notice" [banner]="msg.banner"></app-copyright-banner>
       }
+      <button mat-button class="configure-sources-link" (click)="goToConfigureSources()">
+        <mat-icon>edit</mat-icon>{{ t("change_source_configuration") }}
+      </button>
     } @else if (page === "draft_books") {
       <h1>Select books to draft</h1>
       <h2>
@@ -191,19 +194,17 @@
       @if (featureFlags.showDeveloperTools.enabled) {
         <mat-card class="summary-card">
           <mat-card-content>
-            <h1>{{ t("summary.developer_options") }}</h1>
+            <h1>Developer options</h1>
             <div>
-              <mat-checkbox [(ngModel)]="fastTraining">{{ t("summary.fast_training") }}</mat-checkbox>
+              <mat-checkbox [(ngModel)]="fastTraining"
+                >Fast Training - saves time but greatly reduces accuracy</mat-checkbox
+              >
             </div>
-            @if (fastTraining) {
-              <app-notice icon="warning" type="warning">{{ t("summary.fast_training_warning") }}</app-notice>
-            }
             <div>
-              <mat-checkbox [(ngModel)]="useEcho">{{ t("summary.use_echo") }}</mat-checkbox>
+              <mat-checkbox [(ngModel)]="useEcho"
+                >Echo Translation Engine - echoes source text instead of translating</mat-checkbox
+              >
             </div>
-            @if (useEcho) {
-              <app-notice icon="warning" type="warning">{{ t("summary.use_echo_warning") }}</app-notice>
-            }
           </mat-card-content>
         </mat-card>
       }
@@ -213,6 +214,9 @@
       }
     }
 
+    @if (stepError) {
+      <p class="step-error">{{ t(stepError) }}</p>
+    }
     <div class="step-buttons">
       <button mat-stroked-button (click)="back()">
         <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon> Back
@@ -235,9 +239,6 @@
         <button mat-flat-button color="primary" (click)="next()">
           Next <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
         </button>
-      }
-      @if (stepError) {
-        <span class="step-error">{{ t(stepError) }}</span>
       }
     </div>
   }

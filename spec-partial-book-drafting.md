@@ -348,7 +348,7 @@ This change is additive: builds that don't include a target project entry in `Tr
 
 - [x] Wire up `ConfirmSourcesComponent` (or equivalent) as Step 1
 - [x] Add copyright banners to Step 1
-- [ ] Add "Change source configuration" link that exits the wizard
+- [x] Add "Change source configuration" link that exits the wizard
 
 ### Step 2: Books to Draft
 
@@ -366,7 +366,8 @@ This change is additive: builds that don't include a target project entry in `Tr
 - [x] Wire chapter input events to the equivalent of `trySelectDraftingChapters` for training
 - [x] Add per-training-source `BookMultiSelectComponent` sections
 - [x] Wire training source book selections to `NewDraftLogicHandler.selectedTrainingSourceBooks$`
-- [ ] Add NLLB info banner (conditional on both language tags being in NLLB)
+- [x] Block advancing past draft books step until at least one book is selected
+- [x] Block advancing past training books step until training books are selected (skipped when both languages are in NLLB)
 - [ ] Add training data files read-only section
 
 ### Step 4: Confirm & Generate
