@@ -1,10 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { ParagraphBreakFormat, QuoteFormat } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { DeltaOperation } from 'rich-text';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
@@ -14,39 +17,109 @@ import { DraftHandlingService } from './draft-handling.service';
 const mockedProjectService = mock(SFProjectService);
 const mockedTextDocService = mock(TextDocService);
 const mockedDraftGenerationService = mock(DraftGenerationService);
+const mockedActivatedProjectService = mock(ActivatedProjectService);
 
 describe('DraftHandlingService', () => {
   let service: DraftHandlingService;
+  const mockProject = mock(SFProjectProfileDoc);
 
   configureTestingModule(() => ({
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: TextDocService, useMock: mockedTextDocService },
-      { provide: DraftGenerationService, useMock: mockedDraftGenerationService }
+      { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
+      { provide: ActivatedProjectService, useMock: mockedActivatedProjectService }
     ]
   }));
 
   beforeEach(() => {
+    when(mockedActivatedProjectService.changes$).thenReturn(of(instance(mockProject)));
     service = TestBed.inject(DraftHandlingService);
   });
 
-  describe('getDraft', () => {
-    it('should get a draft', () => {
+  describe('getBookDraft', () => {
+    it('should cache book drafts when timestamp provided and no config is undefined', async () => {
       const textDocId = new TextDocId('project01', 1, 1);
-      const draftOps: DeltaOperation[] = [{ insert: 'In the beginning', attributes: { segment: 'verse_1_1' } }];
+      const timestamp = new Date('2025-03-25T01:02:03Z');
+      const bookDraftByChapter = new Map<string, DeltaOperation[]>([
+        ['1', [{ insert: 'In the beginning', attributes: { segment: 'verse_1_1' } }]]
+      ]);
+
       when(
-        mockedDraftGenerationService.getGeneratedDraftDeltaOperations(
-          anything(),
+        mockedDraftGenerationService.getGeneratedDraftBookDeltaOperations(
           anything(),
           anything(),
           anything(),
           anything()
         )
-      ).thenReturn(of(draftOps));
-      service.getDraft(textDocId, { timestamp: undefined }).subscribe(draftData => expect(draftData).toEqual(draftOps));
+      ).thenReturn(of(bookDraftByChapter));
+
+      const firstResult: Map<string, DeltaOperation[]> = await service.getBookDraft(textDocId, { timestamp });
+      const secondResult: Map<string, DeltaOperation[]> = await service.getBookDraft(textDocId, { timestamp });
+
+      expect(firstResult).toBe(bookDraftByChapter);
+      expect(secondResult).toBe(firstResult);
       verify(
-        mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1, undefined, undefined)
+        mockedDraftGenerationService.getGeneratedDraftBookDeltaOperations('project01', 1, timestamp, undefined)
       ).once();
+    });
+
+    it('should not cache book drafts when config is provided', async () => {
+      const textDocId = new TextDocId('project01', 1, 1);
+      const timestamp = new Date('2025-03-25T01:02:03Z');
+      const config = { paragraphFormat: ParagraphBreakFormat.BestGuess, quoteFormat: QuoteFormat.Denormalized };
+      const firstDraft = new Map<string, DeltaOperation[]>([
+        ['1', [{ insert: 'First draft', attributes: { segment: 'verse_1_1' } }]]
+      ]);
+      const secondDraft = new Map<string, DeltaOperation[]>([
+        ['1', [{ insert: 'Second draft', attributes: { segment: 'verse_1_1' } }]]
+      ]);
+
+      when(
+        mockedDraftGenerationService.getGeneratedDraftBookDeltaOperations(
+          anything(),
+          anything(),
+          anything(),
+          anything()
+        )
+      ).thenReturn(of(firstDraft), of(secondDraft));
+
+      const firstResult: Map<string, DeltaOperation[]> = await service.getBookDraft(textDocId, { timestamp, config });
+      const secondResult: Map<string, DeltaOperation[]> = await service.getBookDraft(textDocId, { timestamp, config });
+
+      expect(firstResult).toBe(firstDraft);
+      expect(secondResult).toBe(secondDraft);
+      verify(
+        mockedDraftGenerationService.getGeneratedDraftBookDeltaOperations('project01', 1, timestamp, config)
+      ).twice();
+    });
+
+    it('should not cache book drafts when timestamp is undefined', async () => {
+      const textDocId = new TextDocId('project01', 1, 1);
+      const firstDraft = new Map<string, DeltaOperation[]>([
+        ['1', [{ insert: 'First draft', attributes: { segment: 'verse_1_1' } }]]
+      ]);
+      const secondDraft = new Map<string, DeltaOperation[]>([
+        ['1', [{ insert: 'Second draft', attributes: { segment: 'verse_1_1' } }]]
+      ]);
+
+      when(
+        mockedDraftGenerationService.getGeneratedDraftBookDeltaOperations(
+          anything(),
+          anything(),
+          anything(),
+          anything()
+        )
+      ).thenReturn(of(firstDraft), of(secondDraft));
+
+      const firstResult: Map<string, DeltaOperation[]> = await service.getBookDraft(textDocId, {});
+      const secondResult: Map<string, DeltaOperation[]> = await service.getBookDraft(textDocId, {});
+
+      expect(firstResult).toBe(firstDraft);
+      expect(secondResult).toBe(secondDraft);
+      verify(
+        mockedDraftGenerationService.getGeneratedDraftBookDeltaOperations('project01', 1, undefined, undefined)
+      ).twice();
     });
   });
 

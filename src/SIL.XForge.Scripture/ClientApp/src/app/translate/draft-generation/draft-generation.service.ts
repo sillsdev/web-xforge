@@ -315,8 +315,8 @@ export class DraftGenerationService {
   getGeneratedDraftBookDeltaOperations(
     projectId: string,
     book: number,
-    timestamp?: Date,
-    usfmConfig?: DraftUsfmConfig
+    timestamp: Date | undefined,
+    usfmConfig: DraftUsfmConfig | undefined
   ): Observable<Map<string, DeltaOperation[]>> {
     if (!this.onlineStatusService.isOnline) {
       return of(new Map<string, DeltaOperation[]>());

@@ -18,17 +18,7 @@ import {
   QuoteFormat
 } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { DeltaOperation } from 'rich-text';
-import {
-  BehaviorSubject,
-  combineLatest,
-  EMPTY,
-  first,
-  firstValueFrom,
-  map,
-  Observable,
-  Subject,
-  switchMap
-} from 'rxjs';
+import { BehaviorSubject, combineLatest, first, firstValueFrom, map, Observable, Subject, switchMap } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -189,14 +179,14 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     this.updateDraftConfig$
       .pipe(
         quietTakeUntilDestroyed(this.destroyRef),
-        map(config => ({ config, textDocId: this.textDocId })),
-        switchMap(({ config, textDocId }) => {
-          // the textDocId would only be empty if a user unexpectedly navigates to formatting options by URL
-          if (textDocId == null) return EMPTY;
-          return this.draftHandlingService.getBookDraft(textDocId, { config });
-        })
+        map(config => ({ config, textDocId: this.textDocId }))
       )
-      .subscribe(chapterDeltas => {
+      .subscribe(async ({ config, textDocId }) => {
+        // the textDocId would only be empty if a user unexpectedly navigates to formatting options by URL
+        if (textDocId == null) return;
+        const chapterDeltas: Map<string, DeltaOperation[]> = await this.draftHandlingService.getBookDraft(textDocId, {
+          config
+        });
         this.chapterDeltas.clear();
         this.chaptersWithDrafts = [];
         for (const chapter of chapterDeltas.keys()) {

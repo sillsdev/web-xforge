@@ -28,7 +28,6 @@ import {
   observeOn,
   of,
   startWith,
-  Subject,
   switchMap,
   take,
   tap,
@@ -91,7 +90,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
   @ViewChild(TextComponent) draftText!: TextComponent;
 
-  inputChanged$ = new Subject<void>();
+  inputChanged$ = new BehaviorSubject<TextDocId | undefined>(this.textDocId);
   draftCheckState: 'draft-unknown' | 'draft-present' | 'draft-empty' = 'draft-unknown';
   selectedRevision: Revision | undefined;
   generateDraftUrl?: string;
@@ -211,7 +210,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     }
 
     this.textDocId = new TextDocId(this.projectId, this.bookNum, this.chapter, 'target');
-    this.inputChanged$.next();
+    this.inputChanged$.next(this.textDocId);
   }
 
   ngAfterViewInit(): void {
@@ -228,17 +227,17 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     combineLatest([
       this.onlineStatusService.onlineStatus$,
       this.draftGenerationService.pollBuildProgress(this.textDocId!.projectId),
-      this.draftText.editorCreated as EventEmitter<any>,
-      this.inputChanged$.pipe(startWith(undefined))
+      this.inputChanged$.pipe(filterNullish()),
+      this.draftText.editorCreated as EventEmitter<any>
     ])
       .pipe(
         quietTakeUntilDestroyed(this.destroyRef),
         filter(([isOnline, build]) => isOnline && build != null && build.state !== BuildStates.Finishing),
         tap(() => this.setInitialState()),
-        switchMap(() =>
+        switchMap(([, , textDocId]) =>
           merge(
             this.draftGenerationService
-              .getGeneratedDraftHistory(this.textDocId!.projectId, this.textDocId!.bookNum, this.textDocId!.chapterNum)
+              .getGeneratedDraftHistory(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum)
               .pipe(
                 map(revisions => {
                   if (revisions != null && revisions.length > 0) {
@@ -249,21 +248,21 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
                     const date = this.timestamp ?? new Date();
                     // Don't emit this.selectedRevision$, as the merge will handle this
                     this.selectedRevision = this.findClosestRevision(date, this.draftRevisions);
-                    return date;
+                    return { textDocId, timestamp: this.selectedRevision?.timestamp };
                   } else {
-                    return undefined;
+                    return { textDocId };
                   }
                 })
               ),
             this.selectedRevision$.pipe(
               filter((rev): rev is { timestamp: string } => rev != null),
-              map(revision => new Date(revision.timestamp))
+              map(revision => ({ textDocId, timestamp: revision.timestamp }))
             )
           )
         ),
-        switchMap(timestamp => {
-          // If an earlier draft exists, hide it if the draft history feature is not enabled
+        switchMap(({ textDocId, timestamp }) => {
           if (timestamp == null) {
+            // Unable to find a draft to display
             this.draftCheckState = 'draft-empty';
             return EMPTY;
           }
@@ -272,19 +271,17 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
           return this.activatedProjectService.changes$.pipe(
             filterNullish(),
             distinctUntilChanged(),
-            map(() => timestamp)
+            map(() => ({ textDocId, timestamp }))
           );
         }),
-        switchMap((timestamp: Date | undefined) =>
-          combineLatest([this.getTargetOps(), this.draftHandlingService.getDraft(this.textDocId!, { timestamp })])
-        ),
-        switchMap(([targetOps, draftOps]) => {
-          // Look for verses that contain text. If these are present, this is a non-empty draft
-          if (this.draftHandlingService.opsHaveContent(draftOps)) {
-            this.draftCheckState = 'draft-present';
-            return of({ targetOps, draftOps });
-          }
-
+        switchMap(({ textDocId, timestamp }) =>
+          this.getTargetOps().pipe(map(targetOps => ({ targetOps, textDocId, timestamp })))
+        )
+      )
+      .subscribe(async ({ targetOps, textDocId, timestamp }) => {
+        const draftOps: DeltaOperation[] = await this.getChapterDraftOps(textDocId, timestamp);
+        // Look for verses that contain text. If these are present, this is a non-empty draft
+        if (!this.draftHandlingService.opsHaveContent(draftOps)) {
           // If there are previous draft revisions, we should still show the selector to choose them
           this.canSelectDraft = this._draftRevisions.length > 1;
 
@@ -294,10 +291,10 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
           // No generated verse segments were found, return an empty draft
           this.draftCheckState = 'draft-empty';
-          return EMPTY;
-        })
-      )
-      .subscribe(({ targetOps, draftOps }) => {
+          return;
+        }
+        this.draftCheckState = 'draft-present';
+        this.canSelectDraft = true;
         this.draftDelta = new Delta(draftOps);
         this.targetDelta = new Delta(targetOps);
 
@@ -308,15 +305,13 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         this.isDraftApplied =
           this.targetProject?.texts.find(t => t.bookNum === this.bookNum)?.chapters.find(c => c.number === this.chapter)
             ?.draftApplied ?? false;
-
-        this.canSelectDraft = this.draftCheckState === 'draft-present';
       });
 
     combineLatest([
       this.onlineStatusService.onlineStatus$,
       this.activatedProjectService.projectDoc$,
       this.draftText.editorCreated as EventEmitter<any>,
-      this.inputChanged$.pipe(startWith(undefined))
+      this.inputChanged$
     ])
       .pipe(
         quietTakeUntilDestroyed(this.destroyRef),
@@ -434,5 +429,15 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         else return of([] as DeltaOperation[]);
       })
     );
+  }
+
+  private async getChapterDraftOps(textDocId: TextDocId, timestamp: string): Promise<DeltaOperation[]> {
+    const chapterNum: string = textDocId.chapterNum.toString();
+    const timestampAsDate = new Date(timestamp);
+
+    const chapterDrafts: Map<string, DeltaOperation[]> = await this.draftHandlingService.getBookDraft(textDocId, {
+      timestamp: timestampAsDate
+    });
+    return chapterDrafts.get(chapterNum) ?? [];
   }
 }
