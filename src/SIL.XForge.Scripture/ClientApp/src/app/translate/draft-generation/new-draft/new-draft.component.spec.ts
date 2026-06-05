@@ -11,6 +11,7 @@ import { provideTestOnlineStatus } from 'xforge-common/test-online-status-provid
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
+import { ParatextService } from '../../../core/paratext.service';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftSource } from '../draft-source';
@@ -374,6 +375,7 @@ const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedUserService = mock(UserService);
 const mockedRouter = mock(Router);
 const mockedNllbLanguageService = mock(NllbLanguageService);
+const mockedParatextService = mock(ParatextService);
 
 interface TestState {
   draftingSourceBooksChapters: string;
@@ -463,6 +465,7 @@ class TestEnvironment {
     when(mockedFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
     when(mockedUserService.getCurrentUser()).thenResolve(undefined as any);
     when(mockedNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(false);
+    when(mockedParatextService.getProjects()).thenResolve(undefined);
 
     this.component = new NewDraftComponent(
       instance(mockedActivatedProjectService),
@@ -474,7 +477,8 @@ class TestEnvironment {
       this.onlineStatusService,
       instance(mockedUserService),
       instance(mockedRouter),
-      instance(mockedNllbLanguageService)
+      instance(mockedNllbLanguageService),
+      instance(mockedParatextService)
     );
   }
 

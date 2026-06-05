@@ -77,19 +77,79 @@ Update `DraftGenerationComponent.generateDraftClicked()` to check the flag:
 
 ## Wizard Steps
 
-### Pre-step: Pending Updates (blocking interstitial)
+### Pre-step: Pending Updates (in-place sync interstitial)
 
 Shown **before** any wizard step if any project involved in drafting (drafting source, training sources, target)
-has a pending Paratext update (`hasUpdate && isConnected`).
+has a pending Paratext update (`isConnected && hasUpdate`). The interstitial replaces the wizard entirely
+(no step indicator / wizard chrome) until the user advances or continues. If no projects have pending updates,
+skip this step entirely.
 
-- Full-screen interstitial, replaces the wizard entirely until dismissed
-- Lists each affected project with a sync button per project (links to `/projects/:projectId/sync`)
-- Primary CTA: **"Sync projects with changes"** (or similar) — opens sync page
-- Secondary CTA: **"Continue without syncing"** — dismisses the interstitial and proceeds to Step 1
-- If no projects have pending updates, skip this step entirely
+The goal: let the user **sync stale projects in place and proceed without leaving the wizard**, rather than
+navigating away to the sync page and losing context.
 
-The pending-update check uses project data loaded during init. It is part of the init flow but displayed at the
-component level, not inside `NewDraftLogicHandler`.
+#### Detection (one-shot, at init)
+
+- `hasUpdate` is **not** on the realtime doc — it comes from `ParatextService.getProjects()` (HTTP). Reuse the
+  exact filter the old stepper uses (`draft-generation-steps.component.ts:~397`): take all involved project IDs
+  (drafting source, training sources, target), call `getProjects()`, keep those where
+  `projectId != null && isConnected && hasUpdate`, map to `{ projectId, name, syncUrl }`.
+- Non-connected projects are intentionally **out of scope** here (the old stepper notes they surface a warning on
+  the primary generate-draft page). Only `isConnected && hasUpdate` qualifies.
+- This check is part of the init flow but lives at the **component level** (`NewDraftComponent`), not in
+  `NewDraftLogicHandler` (which stays focused on book/chapter selection).
+
+#### Gating: soft block
+
+The interstitial always offers **"Continue anyway"** (proceeds to Step 1 with un-synced data). Nothing is ever
+hard-blocked.
+
+#### Per-project rows
+
+Each affected project is a row whose treatment depends on the user's permission and the live sync state. Sync
+requires `Texts.Edit` (`SyncAuthGuard` / `project-router.guard.ts:~85`) — held only by **ParatextAdministrator**
+and **ParatextTranslator**. The user is normally admin/translator on the **target** (so the target is always
+syncable), but frequently has **no edit role on source/reference projects**.
+
+| Row state       | Condition                                              | UI                                                                          |
+| --------------- | ------------------------------------------------------ | --------------------------------------------------------------------------- |
+| **Syncable**    | pending + user has `Texts.Edit` on it                  | `[ Sync ]` button → in-place progress → `✓`                                 |
+| **Syncing**     | `sync.queuedCount > 0` (on entry or after trigger)     | live `SyncProgressComponent`, no button (don't re-trigger)                  |
+| **Synced**      | `queuedCount === 0` after a sync, `lastSyncSuccessful` | `✓ Up to date`                                                              |
+| **Sync failed** | `lastSyncSuccessful === false`                         | `⚠ Sync failed` + `[ Retry ]` (does not block)                             |
+| **Can't sync**  | pending + no `Texts.Edit`                              | informational `⚠ Has changes — ask a project admin to sync`, **no action** |
+
+Rows the user cannot sync are **informational only** — linking out would not help, since `SyncAuthGuard` blocks
+the sync page for them too. They rely on "Continue anyway."
+
+#### Actions
+
+- **`[ Sync ]` (per row):** for a syncable row, hold its `SFProjectDoc` (`projectService.get(id)`), call
+  `projectService.onlineSync(id)`, and watch `projectDoc.remoteChanges$` until `sync.queuedCount === 0`; then read
+  `sync.lastSyncSuccessful` to resolve to `✓` or the failed state. (Mirror `SyncComponent.syncProject()` /
+  `SyncProgressComponent`.)
+- **`[ Sync all ]` (primary CTA):** fires `onlineSync` for **every syncable row** concurrently (each project has
+  its own `queuedCount`). Hidden when there are zero syncable rows (all pending rows are can't-sync) — then only
+  "Continue anyway" is shown.
+- **`[ Continue anyway ]` (secondary CTA):** always present; advances to Step 1.
+
+#### Auto-advance
+
+When **every project is clear** — i.e. all syncable rows have reached `✓` _and_ no can't-sync rows remain —
+auto-advance to Step 1 (after a brief "All synced ✓" beat so it isn't jarring). If any can't-sync row remains,
+do **not** auto-advance; the user must explicitly "Continue anyway."
+
+#### Edge cases
+
+- **Offline:** detection itself needs the network (`getProjects()` is HTTP). If offline at init, **skip the
+  pre-step** — Step 4's Generate is already offline-disabled, so no un-synced build slips through.
+- **Precedence:** abort screens (`no_access`, multiple drafting sources, init failure) outrank the pre-step;
+  the pre-step outranks Step 1. Order: **abort → pre-step → Step 1**.
+
+#### Copy (draft — pending wording-consistency pass)
+
+- Heading: "Sync before drafting" / "These projects have changes in Paratext"
+- Body: explain that unsynced changes won't be reflected in the draft and may reduce draft quality.
+- Use singular/plural variants based on row count.
 
 ---
 
@@ -341,8 +401,18 @@ This change is additive: builds that don't include a target project entry in `Tr
 
 ### Pre-step: Pending Updates
 
-- [ ] Detect pending updates during init (check `hasUpdate && isConnected` for all involved projects)
-- [ ] Build pending-update interstitial UI with per-project sync links and "Continue without syncing" option
+- [x] Detect pending updates during init at component level: `getProjects()` filtered to involved IDs with
+      `isConnected && hasUpdate` (reuse old stepper filter); skip entirely if offline or none pending
+- [x] Build the in-place interstitial (outside wizard step chrome), with per-project rows
+- [x] Per-row permission check (`Texts.Edit` via `SF_PROJECT_RIGHTS` / `SyncAuthGuard`) → syncable vs informational
+- [x] Syncable rows: `[ Sync ]` triggers `onlineSync(id)`, embed/observe `SyncProgressComponent`, resolve to
+      `✓` / `⚠ Sync failed` + `[ Retry ]` via `remoteChanges$` + `queuedCount`/`lastSyncSuccessful`
+- [x] Can't-sync rows: informational "ask a project admin to sync", no action
+- [x] `[ Sync all ]` primary CTA (syncable rows only; hidden when none syncable)
+- [x] `[ Continue anyway ]` secondary CTA (soft block; always present)
+- [x] Auto-advance to Step 1 when all projects clear (no syncing + no can't-sync rows remain)
+- [x] Precedence: abort screens outrank pre-step; pre-step outranks Step 1
+- [ ] Finalize copy (heading/body/CTA labels, singular/plural) in the wording-consistency pass
 
 ### Step 1: Source Setup
 

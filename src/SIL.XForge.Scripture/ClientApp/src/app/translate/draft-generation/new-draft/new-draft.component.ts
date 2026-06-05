@@ -34,12 +34,14 @@ import { BuildConfig } from '../draft-generation';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftSource } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
+import { ParatextService } from '../../../core/paratext.service';
 import {
   DraftProgressService,
   NewDraftLogicHandler,
   scriptureRangeToBookListWithoutChapterDetail
 } from './new-draft-logic-handler';
 import { ChapterSet } from './scripture-range';
+import { DraftPendingUpdatesComponent } from './draft-pending-updates/draft-pending-updates.component';
 
 interface CopyrightMessage {
   banner: string;
@@ -57,7 +59,6 @@ function formatChapterRange(range: string): string {
   return range.replace(/,/g, ', ');
 }
 
-// TODO impelement a step to sync sources first
 const PAGES_BY_ORDER = [
   { page: 'preface' },
   { page: 'draft_books', inputState: 'draft_books' },
@@ -83,6 +84,7 @@ const PAGES_BY_ORDER = [
     MatInputModule,
     NoticeComponent,
     DevOnlyComponent,
+    DraftPendingUpdatesComponent,
     FormsModule,
     TranslocoModule,
     CommonModule
@@ -91,7 +93,9 @@ const PAGES_BY_ORDER = [
 export class NewDraftComponent {
   logicHandler: NewDraftLogicHandler;
 
-  page: (typeof PAGES_BY_ORDER)[number]['page'] | 'loading' = 'loading';
+  page: (typeof PAGES_BY_ORDER)[number]['page'] | 'loading' | 'pending_updates' = 'loading';
+
+  pendingProjects: { projectId: string; name: string }[] = [];
 
   draftingChapterErrors = new Map<string, ChapterInputError>();
   targetTrainingChapterErrors = new Map<string, ChapterInputError>();
@@ -117,7 +121,8 @@ export class NewDraftComponent {
     protected readonly onlineStatusService: OnlineStatusService,
     private readonly userService: UserService,
     private readonly router: Router,
-    private readonly nllbLanguageService: NllbLanguageService
+    private readonly nllbLanguageService: NllbLanguageService,
+    private readonly paratextService: ParatextService
   ) {
     this.logicHandler = new NewDraftLogicHandler(
       this.activatedProjectService,
@@ -153,7 +158,28 @@ export class NewDraftComponent {
       this.useEcho = draftConfig?.useEcho ?? false;
     }
 
-    this.page = 'preface';
+    if (this.onlineStatusService.isOnline) {
+      await this.detectPendingUpdates();
+    }
+    this.page = this.pendingProjects.length > 0 ? 'pending_updates' : 'preface';
+  }
+
+  private async detectPendingUpdates(): Promise<void> {
+    const sources = this.logicHandler.sources;
+    const projectId = this.initData!.projectId;
+    const involvedIds = new Set([
+      projectId,
+      ...(sources?.draftingSources.map(s => s.projectRef) ?? []),
+      ...(sources?.trainingSources.map(s => s.projectRef) ?? [])
+    ]);
+
+    const projects = await this.paratextService.getProjects();
+    this.pendingProjects = (projects ?? [])
+      .filter(p => p.projectId != null && involvedIds.has(p.projectId) && p.isConnected && p.hasUpdate)
+      .map(p => ({
+        projectId: p.projectId!,
+        name: p.name?.length ? p.name : p.shortName
+      }));
   }
 
   get currentUserEmail(): string | undefined {

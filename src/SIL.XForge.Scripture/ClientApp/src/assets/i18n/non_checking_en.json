@@ -256,6 +256,17 @@
       "example_translations_subtitle": "Scripture Forge uses training data (example translations) to learn how to translate from {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} into {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}.",
       "email_me": "Email me at {{ email }} when the draft is finished.",
       "draft_heading": "Translate {{ books }} in {{ sourceLanguage }} into {{ targetLanguage }}"
+    },
+    "pending_updates": {
+      "heading": "Sync before drafting",
+      "body": "These projects have changes in Paratext that aren't reflected here yet. Drafting without syncing may reduce draft quality.",
+      "sync": "Sync",
+      "sync_all": "Sync all",
+      "continue_anyway": "Continue anyway",
+      "synced": "Up to date",
+      "sync_failed": "Sync failed",
+      "retry": "Retry",
+      "cant_sync": "Has changes — ask a project admin to sync"
     }
   },
   "draft_generation_steps": {
