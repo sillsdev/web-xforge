@@ -53,7 +53,7 @@ export class LynxInsightEditorObjectsComponent implements OnChanges, OnInit, OnD
   @Input() autoCorrectionsEnabled: boolean = false;
   @Input() insightsEnabled: boolean = false;
 
-  readonly embedPositionsChangedDebounceTime = 100;
+  readonly numberEmbedsChangedDebounceTime = 100;
 
   readonly insightSelector = `.${LynxInsightBlot.superClassName}`;
   private readonly dataIdProp = LynxInsightBlot.idDatasetPropName;
@@ -179,7 +179,7 @@ export class LynxInsightEditorObjectsComponent implements OnChanges, OnInit, OnD
                   })
                 ),
                 (this.lynxTextModelConverter?.numberEmbedsChanged$ ?? EMPTY).pipe(
-                  debounceTime(this.embedPositionsChangedDebounceTime),
+                  debounceTime(this.numberEmbedsChangedDebounceTime),
                   withLatestFrom(this.insightState.filteredChapterInsights$),
                   switchMap(([_, insights]) => {
                     return from(

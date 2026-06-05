@@ -347,8 +347,8 @@ describe('LynxInsightEditorObjectsComponent', () => {
     }));
   });
 
-  describe('embed position changes', () => {
-    it('should re-render insights when embed positions change', fakeAsync(() => {
+  describe('number of embeds changes', () => {
+    it('should re-render insights when number of embeds change', fakeAsync(() => {
       // Start with editor not ready
       const env = new TestEnvironment({ initialEditorReady: false });
       const testInsight = env.createTestInsight();
@@ -368,15 +368,15 @@ describe('LynxInsightEditorObjectsComponent', () => {
       verify(mockInsightRenderService.render(anything(), anything())).once();
       verify(mockInsightRenderService.renderActionOverlay(anything(), anything(), anything(), anything())).once();
 
-      // Embed position change should trigger second insights render, but not action overlay render
-      env.triggerEmbedPositionChange();
-      tick(env.component.embedPositionsChangedDebounceTime);
+      // Number of embeds change should trigger second insights render, but not action overlay render
+      env.triggerNumberEmbedsChanged();
+      tick(env.component.numberEmbedsChangedDebounceTime);
       flush();
       verify(mockInsightRenderService.render(anything(), anything())).twice();
       verify(mockInsightRenderService.renderActionOverlay(anything(), anything(), anything(), anything())).once();
     }));
 
-    it('should not reset overlay state when embed positions change', fakeAsync(() => {
+    it('should not reset overlay state when number of embeds change', fakeAsync(() => {
       // Start with editor not ready
       const env = new TestEnvironment({ initialEditorReady: false });
       const testInsight = env.createTestInsight();
@@ -408,9 +408,9 @@ describe('LynxInsightEditorObjectsComponent', () => {
       verify(mockInsightRenderService.render(anything(), anything())).once(); // No new insight render
       verify(mockInsightRenderService.renderActionOverlay(anything(), anything(), anything(), anything())).twice();
 
-      // Embed position change should trigger second insights render, but not action overlay render
-      env.triggerEmbedPositionChange();
-      tick(env.component.embedPositionsChangedDebounceTime);
+      // Number of embeds change should trigger second insights render, but not action overlay render
+      env.triggerNumberEmbedsChanged();
+      tick(env.component.numberEmbedsChangedDebounceTime);
       flush();
       verify(mockInsightRenderService.render(anything(), anything())).twice();
       verify(mockInsightRenderService.renderActionOverlay(anything(), anything(), anything(), anything())).twice();
@@ -456,7 +456,7 @@ class TestEnvironment {
   private filterSubject: BehaviorSubject<LynxInsightFilter>;
   private filteredInsightCountsByTypeSubject: BehaviorSubject<Record<LynxInsightType, number>>;
   private taskRunningStatusSubject: BehaviorSubject<boolean>;
-  private embedPositionsChangedSubject: Subject<void>;
+  private numberEmbedsChangedSubject: Subject<void>;
 
   constructor(args: TestEnvArgs = {}) {
     const textModelConverter = instance(mockTextModelConverter);
@@ -482,7 +482,7 @@ class TestEnvironment {
     this.filteredInsightCountsByTypeSubject = new BehaviorSubject<any>({ info: 0, warning: 0, error: 0 });
     this.taskRunningStatusSubject = new BehaviorSubject<boolean>(false);
 
-    this.embedPositionsChangedSubject = new Subject<void>();
+    this.numberEmbedsChangedSubject = new Subject<void>();
 
     // Create mock editor
     const mockRoot = document.createElement('div');
@@ -529,7 +529,7 @@ class TestEnvironment {
     when(mockOverlayService.isOpen).thenReturn(false);
     when(mockLynxWorkspaceService.getOnTypeEdits(anything(), anything())).thenResolve([]);
     when(mockTextModelConverter.dataDeltaToEditorDelta(anything())).thenCall((delta: Delta) => delta);
-    when(mockTextModelConverter.numberEmbedsChanged$).thenReturn(this.embedPositionsChangedSubject);
+    when(mockTextModelConverter.numberEmbedsChanged$).thenReturn(this.numberEmbedsChangedSubject);
 
     // Setup text model converter to return ranges as-is (prevents null range issues)
     when(mockTextModelConverter.dataRangeToEditorRange(anything())).thenCall((range: LynxInsightRange) => range);
@@ -588,8 +588,8 @@ class TestEnvironment {
     }
   }
 
-  triggerEmbedPositionChange(): void {
-    this.embedPositionsChangedSubject.next();
+  triggerNumberEmbedsChanged(): void {
+    this.numberEmbedsChangedSubject.next();
   }
 
   createTestInsight(props: Partial<LynxInsight> = {}): LynxInsight {
