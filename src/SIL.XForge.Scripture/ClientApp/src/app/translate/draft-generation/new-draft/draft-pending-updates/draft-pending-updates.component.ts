@@ -10,6 +10,9 @@ import { SFProjectService } from '../../../../core/sf-project.service';
 import { isSFProjectSyncing } from '../../../../sync/sync.component';
 import { SyncProgressComponent } from '../../../../sync/sync-progress/sync-progress.component';
 
+/** How long the "All synced" state lingers before auto-advancing, so the transition isn't jarring. */
+const AUTO_ADVANCE_DELAY_MS = 1500;
+
 interface PendingProjectRow {
   projectId: string;
   name: string;
@@ -35,15 +38,23 @@ export class DraftPendingUpdatesComponent implements OnInit {
   rows: PendingProjectRow[] = [];
   loading = true;
 
+  private autoAdvanceTimeout?: ReturnType<typeof setTimeout>;
+
   constructor(
     private readonly projectService: SFProjectService,
     private readonly permissionsService: PermissionsService,
     private readonly destroyRef: DestroyRef
-  ) {}
+  ) {
+    this.destroyRef.onDestroy(() => {
+      if (this.autoAdvanceTimeout != null) clearTimeout(this.autoAdvanceTimeout);
+    });
+  }
 
   async ngOnInit(): Promise<void> {
-    for (const { projectId, name } of this.pendingProjects) {
-      const projectDoc = await this.projectService.get(projectId);
+    // Load all the project docs concurrently, then build rows in the original order.
+    const projectDocs = await Promise.all(this.pendingProjects.map(p => this.projectService.get(p.projectId)));
+    for (const [i, { projectId, name }] of this.pendingProjects.entries()) {
+      const projectDoc = projectDocs[i];
       const canSync = this.permissionsService.canSync(projectDoc);
       const syncing = projectDoc.data != null && isSFProjectSyncing(projectDoc.data);
       const row: PendingProjectRow = {
@@ -118,11 +129,11 @@ export class DraftPendingUpdatesComponent implements OnInit {
   }
 
   private checkAutoAdvance(): void {
-    if (this.syncableRows.length === 0) return;
+    if (this.autoAdvanceTimeout != null || this.syncableRows.length === 0) return;
     const hasCannotSyncRow = this.rows.some(r => !r.canSync);
     const allSyncableSynced = this.syncableRows.every(r => r.syncState === 'synced');
     if (!hasCannotSyncRow && allSyncableSynced) {
-      setTimeout(() => this.continue.emit(), 1500);
+      this.autoAdvanceTimeout = setTimeout(() => this.continue.emit(), AUTO_ADVANCE_DELAY_MS);
     }
   }
 }

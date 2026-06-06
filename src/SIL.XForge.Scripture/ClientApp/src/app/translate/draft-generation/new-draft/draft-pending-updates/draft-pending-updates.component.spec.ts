@@ -1,9 +1,9 @@
+import { DestroyRef } from '@angular/core';
 import { fakeAsync, tick } from '@angular/core/testing';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
-import { noopDestroyRef } from 'xforge-common/realtime.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
 import { PermissionsService } from '../../../../core/permissions.service';
@@ -309,6 +309,19 @@ describe('DraftPendingUpdatesComponent', () => {
 
       expect(emitted).toBeFalse();
     }));
+
+    it('cancels the pending auto-advance when the component is destroyed', fakeAsync(async () => {
+      const env = new TestEnvironment([makeProject('proj1', 'P1', SFProjectRole.ParatextAdministrator, 1)]);
+      await env.component.ngOnInit();
+      let emitted = false;
+      env.component.continue.subscribe(() => (emitted = true));
+
+      env.completeSync('proj1', true); // schedules the auto-advance
+      env.destroyRef.destroy(); // component torn down before it fires
+      tick(1500);
+
+      expect(emitted).toBeFalse();
+    }));
   });
 });
 
@@ -329,9 +342,27 @@ function makeResource(projectId: string, name: string, role: SFProjectRole, queu
   return { projectId, name, role, queuedCount, paratextId: 'resource16char01' };
 }
 
+/** A DestroyRef whose registered teardown callbacks can be fired on demand via destroy(). */
+class FakeDestroyRef implements DestroyRef {
+  destroyed = false;
+  private callbacks: (() => void)[] = [];
+
+  onDestroy(callback: () => void): () => void {
+    this.callbacks.push(callback);
+    return () => (this.callbacks = this.callbacks.filter(cb => cb !== callback));
+  }
+
+  destroy(): void {
+    this.destroyed = true;
+    this.callbacks.forEach(cb => cb());
+    this.callbacks = [];
+  }
+}
+
 class TestEnvironment {
   component: DraftPendingUpdatesComponent;
   readonly mockedProjectService = mock(SFProjectService);
+  readonly destroyRef = new FakeDestroyRef();
   private readonly mockedUserService = mock(UserService);
   private readonly projectDocs = new Map<string, { data: any; remoteChanges$: Subject<void> }>();
 
@@ -358,7 +389,7 @@ class TestEnvironment {
     this.component = new DraftPendingUpdatesComponent(
       instance(this.mockedProjectService),
       permissionsService,
-      noopDestroyRef
+      this.destroyRef
     );
     this.component.pendingProjects = projects.map(p => ({ projectId: p.projectId, name: p.name }));
   }
