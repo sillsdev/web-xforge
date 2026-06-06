@@ -1,6 +1,7 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { filter, firstValueFrom, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, reset, verify, when } from 'ts-mockito';
@@ -12,6 +13,7 @@ import { provideTestOnlineStatus } from 'xforge-common/test-online-status-provid
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
+import { ParatextProject } from '../../../core/models/paratext-project';
 import { ParatextService } from '../../../core/paratext.service';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { DraftGenerationService } from '../draft-generation.service';
@@ -367,6 +369,58 @@ describe('NewDraftComponent', () => {
   });
 
   describe('detectPendingUpdates', () => {
+    // Reset call history so the per-test verify() counts aren't inflated by other tests' init flows.
+    beforeEach(() => {
+      reset(mockedParatextService);
+      reset(mockedErrorReportingService);
+    });
+
+    it('shows the pending-updates page for an involved, connected project with an update', fakeAsync(() => {
+      const env = new TestEnvironment(testState, {
+        projects: [makeParatextProject({ projectId: 'draft-source-1-id', name: 'Draft Source 1', hasUpdate: true })]
+      });
+      tick();
+
+      expect(env.component.page).toEqual('pending_updates');
+      expect(env.component.pendingProjects).toEqual([{ projectId: 'draft-source-1-id', name: 'Draft Source 1' }]);
+    }));
+
+    it('excludes projects that are not involved, not connected, or have no update', fakeAsync(() => {
+      const env = new TestEnvironment(testState, {
+        projects: [
+          makeParatextProject({ projectId: 'unrelated-id', hasUpdate: true }), // not involved
+          makeParatextProject({ projectId: 'draft-source-1-id', isConnected: false, hasUpdate: true }), // not connected
+          makeParatextProject({ projectId: 'training-source-1-id', hasUpdate: false }), // no update
+          makeParatextProject({ projectId: null, hasUpdate: true }) // no SF project id
+        ]
+      });
+      tick();
+
+      expect(env.component.pendingProjects).toEqual([]);
+      expect(env.component.page).toEqual('preface');
+    }));
+
+    it('falls back to shortName when the project name is empty', fakeAsync(() => {
+      const env = new TestEnvironment(testState, {
+        projects: [makeParatextProject({ projectId: 'testProjectId', name: '', shortName: 'TGT', hasUpdate: true })]
+      });
+      tick();
+
+      expect(env.component.pendingProjects).toEqual([{ projectId: 'testProjectId', name: 'TGT' }]);
+    }));
+
+    it('skips detection entirely when offline', fakeAsync(() => {
+      const env = new TestEnvironment(testState, {
+        offline: true,
+        projects: [makeParatextProject({ projectId: 'draft-source-1-id', hasUpdate: true })]
+      });
+      tick();
+
+      expect(env.component.pendingProjects).toEqual([]);
+      expect(env.component.page).toEqual('preface');
+      verify(mockedParatextService.getProjects()).never();
+    }));
+
     it('proceeds to the preface page when getProjects fails', fakeAsync(() => {
       const env = new TestEnvironment(testState, { getProjectsError: true });
       tick();
@@ -397,11 +451,32 @@ interface TestState {
   trainingSourceCopyrightBanners?: { [key: string]: string };
 }
 
+// `hasUpdate` is required so each call states explicitly whether the project has a pending update.
+function makeParatextProject(
+  overrides: Partial<ParatextProject> & Pick<ParatextProject, 'hasUpdate'>
+): ParatextProject {
+  return {
+    paratextId: 'pt-id',
+    name: 'A Project',
+    shortName: 'PRJ',
+    languageTag: 'en',
+    projectId: 'sf-project-id',
+    isConnectable: true,
+    isConnected: true,
+    hasUserRoleChanged: false,
+    role: SFProjectRole.ParatextAdministrator,
+    ...overrides
+  };
+}
+
 class TestEnvironment {
   component: NewDraftComponent;
   readonly onlineStatusService = TestBed.inject(TestOnlineStatusService);
 
-  constructor(state: TestState, options: { getProjectsError?: boolean } = {}) {
+  constructor(
+    state: TestState,
+    options: { getProjectsError?: boolean; projects?: ParatextProject[]; offline?: boolean } = {}
+  ) {
     const project = createTestProjectProfile({
       shortName: TARGET_SHORT_NAME,
       translateConfig: {
@@ -477,10 +552,12 @@ class TestEnvironment {
     when(mockedFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
     when(mockedUserService.getCurrentUser()).thenResolve(undefined as any);
     when(mockedNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(false);
+    // Set the online state before the component is constructed so init()'s online check sees it.
+    this.onlineStatusService.setIsOnline(!options.offline);
     if (options.getProjectsError) {
       when(mockedParatextService.getProjects()).thenReject(new Error('network error'));
     } else {
-      when(mockedParatextService.getProjects()).thenResolve(undefined);
+      when(mockedParatextService.getProjects()).thenResolve(options.projects);
     }
 
     this.component = new NewDraftComponent(
