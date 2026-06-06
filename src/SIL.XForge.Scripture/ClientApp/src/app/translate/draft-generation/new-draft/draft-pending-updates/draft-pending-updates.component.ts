@@ -3,11 +3,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslocoModule } from '@ngneat/transloco';
-import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
+import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { isSFProjectSyncing } from '../../../../sync/sync.component';
 import { SyncProgressComponent } from '../../../../sync/sync-progress/sync-progress.component';
@@ -39,21 +37,14 @@ export class DraftPendingUpdatesComponent implements OnInit {
 
   constructor(
     private readonly projectService: SFProjectService,
-    private readonly userService: UserService,
+    private readonly permissionsService: PermissionsService,
     private readonly destroyRef: DestroyRef
   ) {}
 
   async ngOnInit(): Promise<void> {
     for (const { projectId, name } of this.pendingProjects) {
       const projectDoc = await this.projectService.get(projectId);
-      const canSync =
-        projectDoc.data != null &&
-        SF_PROJECT_RIGHTS.hasRight(
-          projectDoc.data,
-          this.userService.currentUserId,
-          SFProjectDomain.Texts,
-          Operation.Edit
-        );
+      const canSync = this.permissionsService.canSync(projectDoc);
       const syncing = projectDoc.data != null && isSFProjectSyncing(projectDoc.data);
       const row: PendingProjectRow = {
         projectId,

@@ -6,6 +6,7 @@ import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { noopDestroyRef } from 'xforge-common/realtime.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
+import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { DraftPendingUpdatesComponent } from './draft-pending-updates.component';
 
@@ -27,6 +28,23 @@ describe('DraftPendingUpdatesComponent', () => {
 
     it('creates a non-syncable row when user lacks Texts.Edit', async () => {
       const env = new TestEnvironment([makeProject('proj1', 'Project One', SFProjectRole.CommunityChecker)]);
+
+      await env.component.ngOnInit();
+
+      expect(env.component.rows[0].canSync).toBeFalse();
+    });
+
+    it('creates a syncable row for a DBL resource when the user has any Paratext role', async () => {
+      // A Paratext observer cannot edit, but may still sync a DBL resource.
+      const env = new TestEnvironment([makeResource('res1', 'Resource One', SFProjectRole.ParatextObserver)]);
+
+      await env.component.ngOnInit();
+
+      expect(env.component.rows[0].canSync).toBeTrue();
+    });
+
+    it('creates a non-syncable row for a DBL resource when the user has no Paratext role', async () => {
+      const env = new TestEnvironment([makeResource('res1', 'Resource One', SFProjectRole.CommunityChecker)]);
 
       await env.component.ngOnInit();
 
@@ -98,6 +116,7 @@ describe('DraftPendingUpdatesComponent', () => {
       env.component.syncProject(env.component.rows[0]);
 
       verify(env.mockedProjectService.onlineSync(anything())).never();
+      expect().nothing();
     });
 
     it('does nothing when canSync is false', async () => {
@@ -108,6 +127,7 @@ describe('DraftPendingUpdatesComponent', () => {
       env.component.syncProject(env.component.rows[0]);
 
       verify(env.mockedProjectService.onlineSync(anything())).never();
+      expect().nothing();
     });
 
     it('sets syncState to failed when onlineSync rejects', fakeAsync(async () => {
@@ -151,6 +171,7 @@ describe('DraftPendingUpdatesComponent', () => {
       verify(env.mockedProjectService.onlineSync('proj1')).once();
       verify(env.mockedProjectService.onlineSync('proj2')).once();
       verify(env.mockedProjectService.onlineSync('proj3')).never();
+      expect().nothing();
     });
 
     it('skips rows already syncing', async () => {
@@ -166,6 +187,7 @@ describe('DraftPendingUpdatesComponent', () => {
 
       verify(env.mockedProjectService.onlineSync('proj1')).never();
       verify(env.mockedProjectService.onlineSync('proj2')).once();
+      expect().nothing();
     });
   });
 
@@ -295,10 +317,16 @@ interface ProjectSpec {
   name: string;
   role: SFProjectRole;
   queuedCount: number;
+  paratextId?: string;
 }
 
 function makeProject(projectId: string, name: string, role: SFProjectRole, queuedCount = 0): ProjectSpec {
   return { projectId, name, role, queuedCount };
+}
+
+// A DBL resource is identified by a 16-character paratextId.
+function makeResource(projectId: string, name: string, role: SFProjectRole, queuedCount = 0): ProjectSpec {
+  return { projectId, name, role, queuedCount, paratextId: 'resource16char01' };
 }
 
 class TestEnvironment {
@@ -314,16 +342,22 @@ class TestEnvironment {
       const projectData = createTestProjectProfile({
         shortName: spec.name,
         userRoles: { [USER_ID]: spec.role },
-        sync: { queuedCount: spec.queuedCount }
+        sync: { queuedCount: spec.queuedCount },
+        ...(spec.paratextId != null ? { paratextId: spec.paratextId } : {})
       });
       const doc = { data: projectData, remoteChanges$: new Subject<void>() } as unknown as SFProjectDoc;
       this.projectDocs.set(spec.projectId, doc as any);
       when(this.mockedProjectService.get(spec.projectId)).thenResolve(doc);
     }
 
+    // Use a real PermissionsService so the role/resource permission logic is exercised, not stubbed.
+    const permissionsService = new PermissionsService(
+      instance(this.mockedUserService),
+      instance(this.mockedProjectService)
+    );
     this.component = new DraftPendingUpdatesComponent(
       instance(this.mockedProjectService),
-      instance(this.mockedUserService),
+      permissionsService,
       noopDestroyRef
     );
     this.component.pendingProjects = projects.map(p => ({ projectId: p.projectId, name: p.name }));
