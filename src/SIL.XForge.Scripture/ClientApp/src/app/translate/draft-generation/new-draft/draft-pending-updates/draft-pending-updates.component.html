@@ -14,11 +14,7 @@
               @if (row.syncState === "pending") {
                 <button mat-stroked-button (click)="syncProject(row)"><mat-icon>sync</mat-icon>{{ t("sync") }}</button>
               } @else if (row.syncState === "syncing") {
-                <app-sync-progress
-                  [projectDoc]="row.projectDoc"
-                  [showSyncStatus]="false"
-                  (inProgress)="onSyncProgressChanged(row, $event)"
-                ></app-sync-progress>
+                <app-sync-progress [projectDoc]="row.projectDoc" [showSyncStatus]="false"></app-sync-progress>
               } @else if (row.syncState === "synced") {
                 <span class="sync-done"><mat-icon>check_circle</mat-icon>{{ t("synced") }}</span>
               } @else if (row.syncState === "failed") {

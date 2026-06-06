@@ -5,6 +5,7 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { filter, firstValueFrom, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, reset, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
@@ -364,6 +365,16 @@ describe('NewDraftComponent', () => {
       expect().nothing();
     }));
   });
+
+  describe('detectPendingUpdates', () => {
+    it('proceeds to the preface page when getProjects fails', fakeAsync(() => {
+      const env = new TestEnvironment(testState, { getProjectsError: true });
+      tick();
+
+      expect(env.component.page).toEqual('preface');
+      verify(mockedErrorReportingService.silentError(anything(), anything())).once();
+    }));
+  });
 });
 
 const mockedActivatedProjectService = mock(ActivatedProjectService);
@@ -376,6 +387,7 @@ const mockedUserService = mock(UserService);
 const mockedRouter = mock(Router);
 const mockedNllbLanguageService = mock(NllbLanguageService);
 const mockedParatextService = mock(ParatextService);
+const mockedErrorReportingService = mock(ErrorReportingService);
 
 interface TestState {
   draftingSourceBooksChapters: string;
@@ -389,7 +401,7 @@ class TestEnvironment {
   component: NewDraftComponent;
   readonly onlineStatusService = TestBed.inject(TestOnlineStatusService);
 
-  constructor(state: TestState) {
+  constructor(state: TestState, options: { getProjectsError?: boolean } = {}) {
     const project = createTestProjectProfile({
       shortName: TARGET_SHORT_NAME,
       translateConfig: {
@@ -465,7 +477,11 @@ class TestEnvironment {
     when(mockedFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
     when(mockedUserService.getCurrentUser()).thenResolve(undefined as any);
     when(mockedNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(false);
-    when(mockedParatextService.getProjects()).thenResolve(undefined);
+    if (options.getProjectsError) {
+      when(mockedParatextService.getProjects()).thenReject(new Error('network error'));
+    } else {
+      when(mockedParatextService.getProjects()).thenResolve(undefined);
+    }
 
     this.component = new NewDraftComponent(
       instance(mockedActivatedProjectService),
@@ -478,7 +494,8 @@ class TestEnvironment {
       instance(mockedUserService),
       instance(mockedRouter),
       instance(mockedNllbLanguageService),
-      instance(mockedParatextService)
+      instance(mockedParatextService),
+      instance(mockedErrorReportingService)
     );
   }
 

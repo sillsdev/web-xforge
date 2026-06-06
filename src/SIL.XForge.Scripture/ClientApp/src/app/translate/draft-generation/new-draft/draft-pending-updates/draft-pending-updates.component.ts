@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
@@ -6,8 +6,10 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { UserService } from 'xforge-common/user.service';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
+import { isSFProjectSyncing } from '../../../../sync/sync.component';
 import { SyncProgressComponent } from '../../../../sync/sync-progress/sync-progress.component';
 
 interface PendingProjectRow {
@@ -16,6 +18,10 @@ interface PendingProjectRow {
   canSync: boolean;
   projectDoc?: SFProjectDoc;
   syncState: 'pending' | 'syncing' | 'synced' | 'failed';
+  /** Latch tracking whether this project has been observed actively syncing, so completion is the high→low edge. */
+  wasSyncing: boolean;
+  /** Whether a remoteChanges$ subscription is already watching this row's sync state. */
+  monitoring: boolean;
 }
 
 @Component({
@@ -33,7 +39,8 @@ export class DraftPendingUpdatesComponent implements OnInit {
 
   constructor(
     private readonly projectService: SFProjectService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly destroyRef: DestroyRef
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -47,14 +54,19 @@ export class DraftPendingUpdatesComponent implements OnInit {
           SFProjectDomain.Texts,
           Operation.Edit
         );
-      const alreadySyncing = (projectDoc.data?.sync.queuedCount ?? 0) > 0;
-      this.rows.push({
+      const syncing = projectDoc.data != null && isSFProjectSyncing(projectDoc.data);
+      const row: PendingProjectRow = {
         projectId,
         name,
         canSync,
         projectDoc,
-        syncState: alreadySyncing ? 'syncing' : 'pending'
-      });
+        syncState: syncing ? 'syncing' : 'pending',
+        wasSyncing: syncing,
+        monitoring: false
+      };
+      this.rows.push(row);
+      // A project already syncing when the wizard opens still needs its completion observed.
+      if (syncing) this.monitorSync(row);
     }
     this.loading = false;
   }
@@ -66,7 +78,10 @@ export class DraftPendingUpdatesComponent implements OnInit {
   syncProject(row: PendingProjectRow): void {
     if (!row.canSync || row.syncState === 'syncing') return;
     row.syncState = 'syncing';
+    // Subscribe before the network round-trip so the queuedCount transition can't be missed.
+    this.monitorSync(row);
     this.projectService.onlineSync(row.projectId).catch(() => {
+      // Failure to even enqueue the sync (e.g. RPC/network error).
       row.syncState = 'failed';
     });
   }
@@ -82,14 +97,33 @@ export class DraftPendingUpdatesComponent implements OnInit {
     }
   }
 
-  onSyncProgressChanged(row: PendingProjectRow, inProgress: boolean): void {
-    if (inProgress) return;
-    row.syncState = row.projectDoc?.data?.sync.lastSyncSuccessful === true ? 'synced' : 'failed';
-    this.checkAutoAdvance();
-  }
-
   continueAnyway(): void {
     this.continue.emit();
+  }
+
+  /** Watches a row's project doc for the sync to complete (queuedCount returning to 0). */
+  private monitorSync(row: PendingProjectRow): void {
+    if (row.monitoring || row.projectDoc == null) return;
+    row.monitoring = true;
+    row.projectDoc.remoteChanges$
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.checkSyncStatus(row));
+    // Resolve immediately in case the sync already finished during the get()/subscribe gap.
+    this.checkSyncStatus(row);
+  }
+
+  private checkSyncStatus(row: PendingProjectRow): void {
+    const data = row.projectDoc?.data;
+    if (data == null) return;
+    if (isSFProjectSyncing(data)) {
+      row.wasSyncing = true;
+      row.syncState = 'syncing';
+    } else if (row.wasSyncing) {
+      // High→low edge of queuedCount: the sync that we observed running has now completed.
+      row.wasSyncing = false;
+      row.syncState = data.sync.lastSyncSuccessful === true ? 'synced' : 'failed';
+      this.checkAutoAdvance();
+    }
   }
 
   private checkAutoAdvance(): void {

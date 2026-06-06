@@ -15,6 +15,7 @@ import { ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/mo
 import { filter, firstValueFrom } from 'rxjs';
 import { DevOnlyComponent } from 'src/app/shared/dev-only/dev-only.component';
 import { JsonViewerComponent } from 'src/app/shared/json-viewer/json-viewer.component';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { hasStringProp } from '../../../../type-utils';
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
@@ -34,6 +35,7 @@ import { BuildConfig } from '../draft-generation';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftSource } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
+import { ParatextProject } from '../../../core/models/paratext-project';
 import { ParatextService } from '../../../core/paratext.service';
 import {
   DraftProgressService,
@@ -122,7 +124,8 @@ export class NewDraftComponent {
     private readonly userService: UserService,
     private readonly router: Router,
     private readonly nllbLanguageService: NllbLanguageService,
-    private readonly paratextService: ParatextService
+    private readonly paratextService: ParatextService,
+    private readonly errorReportingService: ErrorReportingService
   ) {
     this.logicHandler = new NewDraftLogicHandler(
       this.activatedProjectService,
@@ -173,7 +176,18 @@ export class NewDraftComponent {
       ...(sources?.trainingSources.map(s => s.projectRef) ?? [])
     ]);
 
-    const projects = await this.paratextService.getProjects();
+    let projects: ParatextProject[] | undefined;
+    try {
+      projects = await this.paratextService.getProjects();
+    } catch (error) {
+      // Detection is advisory — if we can't reach Paratext, proceed into the wizard rather than
+      // stranding the user on the loading spinner. (Step 4's Generate is still offline/sync-gated.)
+      this.errorReportingService.silentError(
+        'Failed to check for pending Paratext updates before drafting',
+        ErrorReportingService.normalizeError(error)
+      );
+      return;
+    }
     this.pendingProjects = (projects ?? [])
       .filter(p => p.projectId != null && involvedIds.has(p.projectId) && p.isConnected && p.hasUpdate)
       .map(p => ({
