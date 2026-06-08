@@ -354,7 +354,7 @@
     "overwrite_book_question": "Overwrite {{ bookName }}?",
     "overwrite_books_description": "One or more chapters have existing content that will be overwritten in [b]{{ projectShortName }} - {{ projectName }}[/b]. Chapters with existing content are listed below. Click each chapter to view the content.",
     "overwrite_books_question": "Overwrite books?",
-    "overwrite_chapter_link": "[link:chapterLink]Chapter\u00A0{{ chapterNum }}[/link]",
+    "overwrite_chapter_link": "[link:chapterLink]Chapter {{ chapterNum }}[/link]",
     "please_select_valid_project": "Please select a valid project",
     "project_context_unavailable": "Project context unavailable. Please close the dialog and try again.",
     "project_deleted": "This project has been deleted. Please contact your project administrator.",
