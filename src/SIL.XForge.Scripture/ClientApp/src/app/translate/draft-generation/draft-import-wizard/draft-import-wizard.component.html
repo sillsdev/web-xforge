@@ -50,8 +50,7 @@
             <app-notice [icon]="'verified'">
               {{
                 t("ready_to_import", {
-                  projectShortName: projectDoc.data.shortName,
-                  projectName: projectDoc.data.name
+                  projectNameLabel: projectLabel(projectDoc.data)
                 })
               }}
             </app-notice>
@@ -163,8 +162,7 @@
               <app-notice [icon]="'verified'">
                 {{
                   t("ready_to_import", {
-                    projectShortName: projectDoc.data.shortName,
-                    projectName: projectDoc.data.name
+                    projectNameLabel: projectLabel(projectDoc.data)
                   })
                 }}
               </app-notice>
@@ -236,8 +234,7 @@
             key="draft_import_wizard.overwrite_book_description"
             [params]="{
               bookName: singleBookName,
-              projectShortName: selectedParatextProject?.shortName,
-              projectName: selectedParatextProject?.name
+              projectNameLabel: projectLabel(selectedParatextProject)
             }"
           ></transloco>
           <p class="chapter-list">
@@ -257,8 +254,7 @@
           <transloco
             key="draft_import_wizard.overwrite_books_description"
             [params]="{
-              projectShortName: selectedParatextProject?.shortName,
-              projectName: selectedParatextProject?.name
+              projectNameLabel: projectLabel(selectedParatextProject)
             }"
           ></transloco>
           <ul>
@@ -373,8 +369,7 @@
         <transloco
           key="draft_import_wizard.sync_project_description"
           [params]="{
-            projectShortName: selectedParatextProject?.shortName,
-            projectName: selectedParatextProject?.name
+            projectNameLabel: projectLabel(selectedParatextProject)
           }"
         ></transloco>
 
@@ -427,16 +422,14 @@
           <transloco
             key="draft_import_wizard.import_complete_no_sync"
             [params]="{
-              projectShortName: selectedParatextProject?.shortName,
-              projectName: selectedParatextProject?.name
+              projectNameLabel: projectLabel(selectedParatextProject)
             }"
           ></transloco>
         } @else {
           <transloco
             key="draft_import_wizard.import_and_sync_complete"
             [params]="{
-              projectShortName: selectedParatextProject?.shortName,
-              projectName: selectedParatextProject?.name
+              projectNameLabel: projectLabel(selectedParatextProject)
             }"
           ></transloco>
           <p>
