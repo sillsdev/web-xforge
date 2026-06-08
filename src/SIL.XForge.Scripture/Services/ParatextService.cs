@@ -240,7 +240,7 @@ public class ParatextService : DisposableBase, IParatextService
 
                     // Set up the projects metadata
                     projectsMetadata = [projectMetadata];
-                    projectGuids = [projectMetadata.ProjectGuid.Id];
+                    projectGuids = projectMetadata.ProjectGuid == null ? [] : [projectMetadata.ProjectGuid.Id];
                 }
             }
 
@@ -252,7 +252,7 @@ public class ParatextService : DisposableBase, IParatextService
                     $"For SF user id {userSecret.Id}, while attempting to sync PT project id {paratextId}."
                 );
                 projectsMetadata = source.GetProjectsMetaData();
-                projectGuids = projectsMetadata.Select(pmd => pmd.ProjectGuid.Id);
+                projectGuids = projectsMetadata.Select(pmd => pmd.ProjectGuid?.Id).Where(p => p != null);
                 sendReceiveRepository = repositories.FirstOrDefault(r => r.SendReceiveId.Id == paratextId);
             }
 
