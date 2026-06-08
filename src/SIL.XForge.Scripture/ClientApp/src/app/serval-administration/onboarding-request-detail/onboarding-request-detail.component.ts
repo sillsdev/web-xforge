@@ -35,7 +35,7 @@ import { JsonViewerComponent } from '../../shared/json-viewer/json-viewer.compon
 import { MobileNotSupportedComponent } from '../../shared/mobile-not-supported/mobile-not-supported.component';
 import { NoticeComponent } from '../../shared/notice/notice.component';
 import { projectLabel } from '../../shared/utils';
-import { normalizeLanguageCodeToISO639_3 } from '../../translate/draft-generation/draft-utils';
+import { draftingEnabled, normalizeLanguageCodeToISO639_3 } from '../../translate/draft-generation/draft-utils';
 import {
   ONBOARDING_REQUEST_RESOLUTION_OPTIONS,
   OnboardingRequest,
@@ -459,7 +459,7 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
   }
 
   private buildApproveDialogData(): ApproveRequestDialogData {
-    const formData = this.formData;
+    const onboardingRequestFormData = this.formData;
     const mainData = this.mainProjectDoc?.data;
     if (mainData == null) throw new Error('Main project data not loaded');
 
@@ -472,17 +472,17 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
     const draftingSourceOptions = [
       ...new Set(
         [
-          formData.draftingSourceProject,
-          formData.sourceProjectA,
-          formData.sourceProjectB,
-          formData.sourceProjectC
+          onboardingRequestFormData.draftingSourceProject,
+          onboardingRequestFormData.sourceProjectA,
+          onboardingRequestFormData.sourceProjectB,
+          onboardingRequestFormData.sourceProjectC
         ].filter(notNull)
       )
     ]
       .map(toSourceOption)
       .filter(notNull);
 
-    const btParatextId = formData.backTranslationProject;
+    const btParatextId = onboardingRequestFormData.backTranslationProject;
     let backTranslation: BackTranslationInfo | undefined;
     if (btParatextId != null) {
       const btData = this.projectDocs.get(btParatextId)?.data;
@@ -492,7 +492,7 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
           paratextId: btParatextId,
           name: projectLabel(btData),
           languageCode: btData.writingSystem.tag,
-          draftingAlreadyEnabled: btConfig.projectType === ProjectType.BackTranslation || btConfig.preTranslate === true
+          draftingAlreadyEnabled: draftingEnabled(btConfig)
         };
       }
     }
@@ -512,7 +512,7 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
       targetProject,
       draftingSourceOptions,
       trainingSourceOptions,
-      defaultTrainingSource: formData.sourceProjectA,
+      defaultTrainingSource: onboardingRequestFormData.sourceProjectA,
       backTranslation
     };
   }

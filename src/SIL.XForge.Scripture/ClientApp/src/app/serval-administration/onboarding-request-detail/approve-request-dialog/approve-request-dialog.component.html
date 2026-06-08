@@ -22,12 +22,9 @@
           >
             {{ option.name }} <span class="language-code">{{ option.languageCode }}</span>
           </mat-checkbox>
-          @if (trainingSourceOrder(option.paratextId); as trainingSourceOrder) {
-            <span
-              class="order-label"
-              [matTooltip]="`Project will be saved as the ${trainingSourceOrder.order} training source`"
-            >
-              {{ trainingSourceOrder.name }}
+          @if (trainingSourceOrder(option.paratextId); as order) {
+            <span class="order-label" [matTooltip]="`Project will be saved as the ${order.order} training source`">
+              {{ order.name }}
             </span>
           }
         </div>
@@ -35,7 +32,7 @@
     </div>
     @if (data.backTranslation; as bt) {
       <h3>Back translation project</h3>
-      <mat-checkbox [formControl]="enableBackTranslationDrafting">
+      <mat-checkbox [formControl]="enableBackTranslationDrafting" data-test-id="enable-bt-drafting">
         Enable draft generation for {{ bt.name }}
         <span class="language-code">{{ bt.languageCode }}</span>
       </mat-checkbox>
