@@ -287,7 +287,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   suggestions: Suggestion[] = [];
   showSuggestions: boolean = false;
   books: number[] = [];
-  chapters: number[] = [];
   text?: TextInfo;
   isProjectAdmin: boolean = false;
   metricsSession?: TranslateMetricsSession;
@@ -330,6 +329,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private targetLoaded: boolean = false;
   private _targetFocused: boolean = false;
   private chapter$ = new BehaviorSubject<number | undefined>(undefined);
+  private bookChapters: number[] = [];
+  private chaptersUniqueInDraft: number[] = [];
   private _verse: string = '0';
   private lastShownSuggestions: Suggestion[] = [];
   private readonly segmentUpdated$: Subject<void>;
@@ -470,6 +471,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         `/projects/${this.projectId}/translate/${Canon.bookNumberToId(this.bookNum!)}/${value}`
       );
     }
+  }
+
+  get availableChapters(): number[] {
+    return [...this.bookChapters, ...this.chaptersUniqueInDraft];
   }
 
   setBook(book: number): void {
@@ -840,7 +845,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.text?.chapters[this.text.chapters.length - 1]?.number ?? 1,
           expectedBookChapters(Canon.bookNumberToId(bookNum))
         );
-        this.chapters = Array.from({ length: allChapters }, (_, i) => i + 1);
+        this.bookChapters = Array.from({ length: allChapters }, (_, i) => i + 1);
 
         this.updateVerseNumber();
 
@@ -1337,6 +1342,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     this.changeDetector.detectChanges();
+  }
+
+  // Determines the chapters in the draft that are not part of the existing chapters
+  onDraftChaptersUpdated(draftChapters: number[]): void {
+    // We may want to expand this range of chapters to not have any gaps
+    this.chaptersUniqueInDraft = Array.from(new Set(draftChapters).difference(new Set(this.bookChapters)));
   }
 
   /**
@@ -2158,16 +2169,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       if (this.text != null && this.projectUserConfigDoc.data.selectedBookNum === this.text.bookNum) {
         if (
           this.projectUserConfigDoc.data.selectedChapterNum != null &&
-          this.chapters.includes(this.projectUserConfigDoc.data.selectedChapterNum)
+          this.availableChapters.includes(this.projectUserConfigDoc.data.selectedChapterNum)
         ) {
           chapter = this.projectUserConfigDoc.data.selectedChapterNum;
         }
       }
     }
 
-    if (!this.chapters.includes(chapter)) {
+    if (!this.availableChapters.includes(chapter)) {
       this.loadingFinished();
-      this.chapter = this.chapters[0] ?? 1;
+      this.chapter = this.availableChapters[0] ?? 1;
       return;
     }
     this.toggleNoteThreadVerses(false);

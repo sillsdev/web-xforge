@@ -1,5 +1,5 @@
 import { AsyncPipe, NgClass } from '@angular/common';
-import { AfterViewInit, Component, DestroyRef, Input, OnChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, OnChanges, Output, ViewChild } from '@angular/core';
 import { MatOption } from '@angular/material/autocomplete';
 import { MatButton } from '@angular/material/button';
 import { MatFormField } from '@angular/material/form-field';
@@ -88,6 +88,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   @Input() isRightToLeft!: boolean;
   @Input() fontSize?: string;
   @Input() timestamp?: Date;
+  @Output() readonly chaptersUpdated = new EventEmitter<number[]>();
 
   @ViewChild(TextComponent) draftText!: TextComponent;
 
@@ -289,7 +290,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         )
       )
       .subscribe(async ({ targetOps, textDocId, timestamp }) => {
-        const draftOps: DeltaOperation[] = await this.getChapterDraftOps(textDocId, timestamp);
+        const draftOps: DeltaOperation[] = await this.getAndRefreshChapters(textDocId, timestamp);
         // The user may have navigated to another chapter while this draft was being fetched, in which case the result
         // must not be kept as the current chapter's draft. The current chapter's own fetch is either in flight or
         // complete, so nothing is lost by discarding this one.
@@ -447,13 +448,20 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     );
   }
 
-  private async getChapterDraftOps(textDocId: TextDocId, timestamp: string): Promise<DeltaOperation[]> {
+  /**
+   * Gets the chapters with drafts and emits the chapter numbers.
+   * Returns the draft for the specified text and timestamp.
+   */
+  private async getAndRefreshChapters(textDocId: TextDocId, timestamp: string): Promise<DeltaOperation[]> {
     const chapterNum: string = textDocId.chapterNum.toString();
     const timestampAsDate = new Date(timestamp);
 
     const chapterDrafts: Map<string, DeltaOperation[]> = await this.draftHandlingService.getBookDraft(textDocId, {
       timestamp: timestampAsDate
     });
+    console.log(chapterDrafts);
+    this.chaptersUpdated.emit(Array.from(chapterDrafts.keys()).map(chapterNumStr => +chapterNumStr));
+    // this.chaptersUpdated.emit([1, 2]);
     return chapterDrafts.get(chapterNum) ?? [];
   }
 }
