@@ -88,16 +88,12 @@
         <ng-template matStepLabel>{{ t("connect_project") }}</ng-template>
 
         <h1>{{ t("connect_to_project") }}</h1>
-
-        @if (selectedParatextProject != null) {
-          <transloco
-            key="draft_import_wizard.connect_project_description"
-            [params]="{
-              projectShortName: selectedParatextProject.shortName,
-              projectName: selectedParatextProject.name
-            }"
-          ></transloco>
-        }
+        <transloco
+          key="draft_import_wizard.connect_project_description"
+          [params]="{
+            projectNameLabel: projectLabel(selectedParatextProject)
+          }"
+        ></transloco>
 
         @if (connectionError != null && connectionError.length > 0) {
           <app-notice type="error">{{ connectionError }}</app-notice>
