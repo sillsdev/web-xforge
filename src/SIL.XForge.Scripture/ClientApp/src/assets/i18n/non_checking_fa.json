@@ -409,6 +409,7 @@
     "some_projects_use_back_translation": "Some projects get better results by adding a back translation as another reference.",
     "source_language": "the source language",
     "source_side_language_codes_differ": "All source and reference projects must be in the same language. Please select different source or reference projects.",
+    "request_already_submitted": "A request to activate drafting on this project has already been submitted. Please wait for a response from the team.",
     "state_connecting": "برقراری ارتباط",
     "state_sync_failed": "There was an error syncing",
     "state_sync_successful": "Sync successful",

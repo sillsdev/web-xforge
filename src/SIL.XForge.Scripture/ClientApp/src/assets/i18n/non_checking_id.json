@@ -409,6 +409,7 @@
     "some_projects_use_back_translation": "Some projects get better results by adding a back translation as another reference.",
     "source_language": "the source language",
     "source_side_language_codes_differ": "Semua proyek sumber dan referensi harus dalam bahasa yang sama. Silakan pilih proyek sumber atau referensi yang berbeda.",
+    "request_already_submitted": "A request to activate drafting on this project has already been submitted. Please wait for a response from the team.",
     "state_connecting": "Menghubungkan",
     "state_sync_failed": "Terjadi kesalahan sinkronisasi",
     "state_sync_successful": "Sinkronisasi berhasil",
