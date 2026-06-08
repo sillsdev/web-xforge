@@ -31,11 +31,11 @@ export class DisplayConfidenceComponent {
   get usabilityTooltip(): string {
     switch (this.usabilityLabel) {
       case UsabilityLabel.Green:
-        return 'Likely good quality';
+        return 'Likely to be useful';
       case UsabilityLabel.Yellow:
-        return 'Likely moderate quality';
+        return 'Probably useful';
       case UsabilityLabel.Red:
-        return 'Likely poor quality';
+        return 'May not be useful';
       default:
         return 'Not configured';
     }
