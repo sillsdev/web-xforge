@@ -1,5 +1,9 @@
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import {
+  ProjectType,
+  TranslateConfig,
+  TranslateSource
+} from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import language_code_mapping from '../../../../../language_code_mapping.json';
 import { SelectableProjectWithLanguageCode } from '../../core/models/selectable-project';
 
@@ -74,4 +78,12 @@ export function normalizeLanguageCodeToISO639_3(code: string): string {
     code = language_code_mapping.bibliographicToTerminology[code];
   }
   return code;
+}
+
+/**
+ * Checks if drafting is enabled for the given translate configuration. It's enabled if it's been approved
+ * (preTranslate is set to true), or if it's a backtranslation.
+ */
+export function draftingEnabled(translateConfig: TranslateConfig): boolean {
+  return translateConfig.preTranslate === true || translateConfig.projectType === ProjectType.BackTranslation;
 }

@@ -1286,7 +1286,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         {
             SFProject p =
                 sourceProjectMap.GetValueOrDefault(paratextId)
-                ?? throw new DataNotFoundException($"The source paratext project {paratextId} does not exist.");
+                ?? throw new DataNotFoundException(
+                    $"Specified source Paratext project {paratextId} not found in Scripture Forge."
+                );
             return new TranslateSource
             {
                 IsRightToLeft = p.IsRightToLeft,
@@ -1308,9 +1310,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         List<TranslateSource> draftingSources = [.. draftingIds.Select(BuildSource)];
         List<TranslateSource> trainingSources = [.. trainingIds.Select(BuildSource)];
-        HashSet<string> processedSourceRefs = [.. draftingSources.Concat(trainingSources).Select(s => s.ProjectRef)];
+        HashSet<string> allSourceRefs = [.. draftingSources.Concat(trainingSources).Select(s => s.ProjectRef)];
 
-        if (processedSourceRefs.Contains(projectId))
+        if (allSourceRefs.Contains(projectId))
             throw new InvalidOperationException("A project cannot be its own source.");
 
         await projectDoc.SubmitJson0OpAsync(op =>
@@ -1318,11 +1320,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             op.Set(p => p.TranslateConfig.DraftConfig.DraftingSources, draftingSources);
             op.Set(p => p.TranslateConfig.DraftConfig.TrainingSources, trainingSources);
         });
-
-        foreach (string sourceProjectRef in processedSourceRefs)
-        {
-            _backgroundJobClient.Enqueue<ISFProjectService>(r => r.SyncUserRoleAsync(curUserId, sourceProjectRef));
-        }
     }
 
     public Task<string> GetProjectIdFromParatextIdAsync(string[] systemRoles, string paratextId)
@@ -2330,7 +2327,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         // If it is not a project, see if there is a matching resource
         sourcePTProject ??=
             resources.SingleOrDefault(r => r.ParatextId == paratextId)
-            ?? throw new DataNotFoundException($"The source paratext project {paratextId} does not exist.");
+            ?? throw new DataNotFoundException(
+                $"Specified source Paratext project {paratextId} not found in Scripture Forge."
+            );
 
         // Get the users who will access this source resource or project
         IEnumerable<string> userIds = userRoles is not null ? userRoles.Keys : [curUserId];

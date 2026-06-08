@@ -55,8 +55,8 @@ function createTestRequest(overrides: Partial<OnboardingRequest> = {}): Onboardi
         translationLanguageIsoCode: 'en',
         completedBooks: [40, 41, 42, 43],
         nextBooksToDraft: [44],
-        sourceProjectA: 'ptproject01',
-        draftingSourceProject: 'ptproject02',
+        sourceProjectA: 'training_source_pt',
+        draftingSourceProject: 'drafting_source_pt',
         backTranslationStage: 'None',
         backTranslationProject: null
       }
@@ -191,8 +191,8 @@ describe('OnboardingRequestDetailComponent', () => {
       const env = new TestEnvironment({
         mainProjectDoc,
         approveDialogResult: {
-          draftingSourceParatextId: 'ptproject02',
-          trainingSourceParatextIds: ['ptproject01'],
+          draftingSourceParatextId: 'drafting_source_pt',
+          trainingSourceParatextIds: ['training_source_pt'],
           enableBackTranslationDrafting: false
         }
       });
@@ -202,7 +202,11 @@ describe('OnboardingRequestDetailComponent', () => {
       flush();
 
       verify(
-        mockedProjectService.onlineSetDraftSources('project01', deepEqual(['ptproject02']), deepEqual(['ptproject01']))
+        mockedProjectService.onlineSetDraftSources(
+          'project01',
+          deepEqual(['drafting_source_pt']),
+          deepEqual(['training_source_pt'])
+        )
       ).once();
       verify(
         mockedOnboardingRequestService.approveRequest(deepEqual({ requestId: REQUEST_ID, sfProjectId: 'project01' }))
@@ -223,8 +227,8 @@ describe('OnboardingRequestDetailComponent', () => {
         },
         projectDocsByParatextId: new Map([[BT_PARATEXT_ID, createProjectDoc(BT_SF_PROJECT_ID, BT_PARATEXT_ID, 'BT')]]),
         approveDialogResult: {
-          draftingSourceParatextId: 'ptproject02',
-          trainingSourceParatextIds: ['ptproject01'],
+          draftingSourceParatextId: 'drafting_source_pt',
+          trainingSourceParatextIds: ['training_source_pt'],
           enableBackTranslationDrafting: true
         }
       });
@@ -234,7 +238,11 @@ describe('OnboardingRequestDetailComponent', () => {
       flush();
 
       verify(
-        mockedProjectService.onlineSetDraftSources('project01', deepEqual(['ptproject02']), deepEqual(['ptproject01']))
+        mockedProjectService.onlineSetDraftSources(
+          'project01',
+          deepEqual(['drafting_source_pt']),
+          deepEqual(['training_source_pt'])
+        )
       ).once();
       verify(
         mockedProjectService.onlineSetDraftSources(

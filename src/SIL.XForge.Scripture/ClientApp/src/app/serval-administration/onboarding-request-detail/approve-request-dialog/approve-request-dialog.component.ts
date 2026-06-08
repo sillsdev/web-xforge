@@ -20,6 +20,7 @@ import {
 import { MatIcon } from '@angular/material/icon';
 import { MatRadioButton, MatRadioGroup } from '@angular/material/radio';
 import { MatTooltip } from '@angular/material/tooltip';
+import { isPopulatedString, isString } from '../../../../type-utils';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { normalizeLanguageCodeToISO639_3 } from '../../../translate/draft-generation/draft-utils';
 
@@ -49,7 +50,8 @@ export interface ApproveRequestDialogResult {
 
 /** Validates that the number of selected training sources is 1 or 2. */
 function trainingSourcesValidator(control: AbstractControl): ValidationErrors | null {
-  const value: string[] = control.value ?? [];
+  const value = control.value ?? [];
+  if (!Array.isArray(value)) throw new Error('Expected an array of training source IDs');
   return value.length >= 1 && value.length <= 2 ? null : { trainingSourceCount: true };
 }
 
@@ -57,21 +59,21 @@ function uniqueNormalizedCodes(ids: string[], languageCodes: Map<string, string>
   return new Set(
     ids
       .map(id => languageCodes.get(id))
-      .filter((c): c is string => c != null && c !== '')
+      .filter(isPopulatedString)
       .map(normalizeLanguageCodeToISO639_3)
   );
 }
-
 /** Validates that all selected sources have the same language code. */
 function languageCodesValidator(languageCodes: Map<string, string>) {
   return (control: AbstractControl): ValidationErrors | null => {
     const draftingSourceId: string = control.get('draftingSource')?.value;
     const trainingSourceIds: string[] = control.get('trainingSources')?.value ?? [];
-    const allIds = [draftingSourceId, ...trainingSourceIds].filter((id): id is string => id != null);
+    const allIds = [draftingSourceId, ...trainingSourceIds].filter(isString);
     return uniqueNormalizedCodes(allIds, languageCodes).size > 1 ? { languageCodesDiffer: true } : null;
   };
 }
 
+/** Dialog for Serval admins to configure sources, enable drafting, and mark an onboarding request as approved. */
 @Component({
   selector: 'app-approve-request-dialog',
   templateUrl: './approve-request-dialog.component.html',
