@@ -2400,8 +2400,7 @@ public class SFProjectServiceTests
         await env
             .MachineProjectService.DidNotReceive()
             .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
-        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
-        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        await env.SyncService.Received(1).SyncAsync(Arg.Any<SyncConfig>());
 
         // Check that the project was created
         Assert.That(
@@ -2457,8 +2456,7 @@ public class SFProjectServiceTests
         Assert.That(draftingSourceProject.UserRoles, Does.Not.ContainKey(User02));
 
         // Verify that a sync is scheduled
-        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
-        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        await env.SyncService.Received(1).SyncAsync(Arg.Any<SyncConfig>());
 
         // Verify that the drafting source project was created
         Assert.That(
@@ -2531,8 +2529,7 @@ public class SFProjectServiceTests
         await env
             .MachineProjectService.DidNotReceive()
             .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
-        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
-        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        await env.SyncService.Received(1).SyncAsync(Arg.Any<SyncConfig>());
 
         // Check that the project was created
         Assert.That(
@@ -2575,7 +2572,6 @@ public class SFProjectServiceTests
         Assert.That(draftingSourceProject.Name, Is.EqualTo("Resource Needs Sync"));
 
         await env.SyncService.Received(1).SyncAsync(Arg.Any<SyncConfig>());
-        env.BackgroundJobClient.Received().Create(Arg.Any<Job>(), Arg.Any<IState>());
     }
 
     [Test]
@@ -2641,8 +2637,7 @@ public class SFProjectServiceTests
         await env
             .MachineProjectService.DidNotReceive()
             .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
-        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
-        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        await env.SyncService.Received(1).SyncAsync(Arg.Any<SyncConfig>());
 
         // Check that the project was created
         Assert.That(

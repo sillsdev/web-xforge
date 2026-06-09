@@ -177,7 +177,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 TranslateSource source = await GetTranslateSourceAsync(
                     conn,
                     curUserId,
-                    projectDoc.Id,
                     settings.SourceParatextId,
                     skipSync: true,
                     updatePermissions: false,
@@ -411,7 +410,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             source = await GetTranslateSourceAsync(
                 conn,
                 curUserId,
-                projectId,
                 settings.SourceParatextId,
                 skipSync: true,
                 updatePermissions: true,
@@ -434,7 +432,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             TranslateSource translateSource = await GetTranslateSourceAsync(
                 conn,
                 curUserId,
-                projectId,
                 paratextId,
                 skipSync: false,
                 // Only update permissions if this project is different to the preceding projects
@@ -460,7 +457,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             TranslateSource translateSource = await GetTranslateSourceAsync(
                 conn,
                 curUserId,
-                projectId,
                 paratextId,
                 skipSync: false,
                 // Only update permissions if this project is different to the preceding projects
@@ -1292,7 +1288,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// <param name="projectId">The project identifier.</param>
     /// <param name="settings">The Paratext settings for the project.</param>
     /// <returns>An asynchronous task.</returns>
-    /// <remarks>This should only be called on sync. A tran</remarks>
+    /// <remarks>This should only be called on sync.</remarks>
     public async Task UpdateProjectReferencesAsync(string projectId, ParatextSettings settings)
     {
         // Get the projects referencing the specified project id
@@ -1348,7 +1344,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
                 for (int i = 0; i < projectDoc.Data.TranslateConfig.DraftConfig.TrainingSources.Count; i++)
                 {
-                    // Skip drafting sources that are not the specified project
+                    // Skip training sources that are not the specified project
                     if (projectDoc.Data.TranslateConfig.DraftConfig.TrainingSources[i].ProjectRef != projectId)
                     {
                         continue;
@@ -2389,7 +2385,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// </summary>
     /// <param name="conn">The connection to the realtime server.</param>
     /// <param name="curUserId">The current user identifier.</param>
-    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="paratextId">The paratext identifier.</param>
     /// <param name="skipSync">If <c>true</c> the project will not be synced even if it is not already synced.</param>
     /// <param name="updatePermissions">If <c>true</c> update the project's permissions.</param>
@@ -2401,7 +2396,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     private async Task<TranslateSource> GetTranslateSourceAsync(
         IConnection conn,
         string curUserId,
-        string sfProjectId,
         string paratextId,
         bool skipSync,
         bool updatePermissions,
@@ -2464,16 +2458,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             projectCreated || (sourceProject is not null && sourceProject.Sync.LastSyncSuccessful == false);
         if (syncNeeded && !skipSync)
         {
-            string jobId = await _syncService.SyncAsync(
-                new SyncConfig { ProjectId = sourceProjectRef, UserId = curUserId }
-            );
-
-            // After syncing the source project (which will take some time), ensure that the writing system matches
-            // what is in the project document
-            _backgroundJobClient.ContinueJobWith<IMachineProjectService>(
-                jobId,
-                r => r.UpdateTranslationSourcesAsync(curUserId, sfProjectId)
-            );
+            // This will also update any references in the target project to the source project
+            await _syncService.SyncAsync(new SyncConfig { ProjectId = sourceProjectRef, UserId = curUserId });
         }
         else if (updatePermissions)
         {

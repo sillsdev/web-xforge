@@ -1888,30 +1888,11 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
                 op.Set(pd => pd.Visibility, settings.Visibility);
             }
-
-            // The source can be null if there was an error getting a resource from the DBL
-            if (_projectDoc.Data.TranslateConfig.Source != null)
-            {
-                ParatextSettings? sourceSettings = _paratextService.GetParatextSettings(
-                    _userSecret,
-                    _projectDoc.Data.TranslateConfig.Source.ParatextId
-                );
-                if (sourceSettings != null)
-                {
-                    op.Set(pd => pd.TranslateConfig.Source.IsRightToLeft, sourceSettings.IsRightToLeft);
-                    if (sourceSettings.LanguageRegion != null)
-                        op.Set(pd => pd.WritingSystem.Region, sourceSettings.LanguageRegion);
-                    if (sourceSettings.LanguageScript != null)
-                        op.Set(pd => pd.WritingSystem.Script, sourceSettings.LanguageScript);
-                    if (sourceSettings.LanguageTag != null)
-                        op.Set(pd => pd.TranslateConfig.Source.WritingSystem.Tag, sourceSettings.LanguageTag);
-                }
-            }
         });
         await NotifySyncProgress(SyncPhase.Phase9, 80.0);
 
         // Update any references to this project
-        if (settings is not null)
+        if (successful && settings is not null)
         {
             await _projectService.UpdateProjectReferencesAsync(_projectDoc.Id, settings);
             await NotifySyncProgress(SyncPhase.Phase9, 85.0);
