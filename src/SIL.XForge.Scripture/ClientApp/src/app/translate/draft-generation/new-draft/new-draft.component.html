@@ -29,11 +29,16 @@
         <mat-icon>edit</mat-icon>{{ t("change_source_configuration") }}
       </button>
     } @else if (page === "draft_books") {
-      <h1>Select books to draft</h1>
-      <h2>
-        Which books in <strong>NTV - Nueva Traducción Viviente</strong> do you want to translate from
-        <strong>Spanish (spa)</strong> to <strong>English (eng)</strong>?
-      </h2>
+      <h1>{{ t("draft_books.title") }}</h1>
+      <h2
+        [innerHTML]="
+          i18n.translateAndInsertTags('new_draft.draft_books.subtitle', {
+            project: targetProjectDisplayName,
+            sourceLanguage: sourceLanguageDisplay,
+            targetLanguage: targetLanguageDisplay
+          })
+        "
+      ></h2>
       <app-book-multi-select
         [availableBooks]="availableDraftingBooks"
         [selectedBooks]="selectedDraftingBooks"
@@ -41,11 +46,11 @@
         (bookSelect)="onDraftingBookSelect($event)"
       ></app-book-multi-select>
       @if (booksOfferedForPartialDrafting.length > 0) {
-        <h3>Which chapters of each book do you want to draft?</h3>
+        <h3>{{ t("draft_books.which_chapters") }}</h3>
         <p>
-          Some of the chapters in the books you selected already have text.
+          {{ t("draft_books.partial_explanation") }}
           <!-- FIXME add url DO NOT MERGE -->
-          <a href="#">Learn more about drafting part of a book.</a>
+          <a href="#">{{ t("draft_books.learn_more") }}</a>
         </p>
         <div class="partial-book-drafting-table">
           @for (bookId of booksOfferedForPartialDrafting; track bookId) {
@@ -67,11 +72,16 @@
         </div>
       }
     } @else if (page === "training_books") {
-      <h1>Select books to train on</h1>
-      <h2>
-        Which books in <strong>Stp22 - SF 2022 test project</strong> are good enough to use to train the model to
-        translate from <strong>Spanish (spa)</strong> to <strong>English (eng)</strong>?
-      </h2>
+      <h1>{{ t("training_books.title") }}</h1>
+      <h2
+        [innerHTML]="
+          i18n.translateAndInsertTags('new_draft.training_books.subtitle', {
+            project: targetProjectDisplayName,
+            sourceLanguage: sourceLanguageDisplay,
+            targetLanguage: targetLanguageDisplay
+          })
+        "
+      ></h2>
       <!-- [projectId]="initData.projectId" -->
       <app-book-multi-select
         [basicMode]="true"
@@ -80,11 +90,11 @@
         (bookSelect)="onTargetTrainingBookSelect($event)"
       ></app-book-multi-select>
       @if (booksOfferedForPartialTargetTraining.length > 0) {
-        <h3>Which chapters of each book do you want to use to train the model?</h3>
+        <h3>{{ t("training_books.which_chapters") }}</h3>
         <p>
-          Some of the chapters in the books you selected will be translated and cannot be used as training data.
+          {{ t("training_books.partial_explanation") }}
           <!-- FIXME add url DO NOT MERGE -->
-          <a href="#">Learn more about training on part of a book.</a>
+          <a href="#">{{ t("training_books.learn_more") }}</a>
         </p>
         <div class="partial-book-drafting-table">
           @for (bookId of booksOfferedForPartialTargetTraining; track bookId) {
@@ -251,7 +261,7 @@
       }
       <div class="step-buttons">
         <button mat-stroked-button (click)="back()">
-          <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon> Back
+          <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon> {{ t("navigation.back") }}
         </button>
         @if (page === "suffix") {
           <div class="save-container">
@@ -264,12 +274,12 @@
               [disabled]="submitting || !onlineStatusService.isOnline"
               (click)="generateDraftClicked()"
             >
-              <mat-icon>auto_awesome</mat-icon> Generate Draft
+              <mat-icon>auto_awesome</mat-icon> {{ t("navigation.generate_draft") }}
             </button>
           </div>
         } @else {
           <button mat-flat-button color="primary" (click)="next()">
-            Next <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
+            {{ t("navigation.next") }} <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
           </button>
         }
       </div>
