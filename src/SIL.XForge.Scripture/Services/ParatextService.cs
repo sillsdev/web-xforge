@@ -227,7 +227,6 @@ public class ParatextService : DisposableBase, IParatextService
             ProjectMetadata? projectMetadata = source.GetProjectMetadata(paratextId);
             SharedRepository? sendReceiveRepository = null;
             IEnumerable<ProjectMetadata> projectsMetadata = [];
-            IEnumerable<string> projectGuids = [];
             if (projectMetadata is not null)
             {
                 // Get the project license, so we can get the repositories for it
@@ -240,7 +239,6 @@ public class ParatextService : DisposableBase, IParatextService
 
                     // Set up the projects metadata
                     projectsMetadata = [projectMetadata];
-                    projectGuids = [projectMetadata.ProjectGuid.Id];
                 }
             }
 
@@ -252,18 +250,10 @@ public class ParatextService : DisposableBase, IParatextService
                     $"For SF user id {userSecret.Id}, while attempting to sync PT project id {paratextId}."
                 );
                 projectsMetadata = source.GetProjectsMetaData();
-                projectGuids = projectsMetadata.Select(pmd => pmd.ProjectGuid.Id);
                 sendReceiveRepository = repositories.FirstOrDefault(r => r.SendReceiveId.Id == paratextId);
             }
 
-            if (TryGetProject(userSecret, sendReceiveRepository, projectsMetadata, out ParatextProject ptProject))
-            {
-                if (!projectGuids.Contains(paratextId))
-                {
-                    SyncMetricsLog($"The project with PT ID {paratextId} did not have a full name available.");
-                }
-            }
-            else
+            if (!TryGetProject(userSecret, sendReceiveRepository, projectsMetadata, out ParatextProject ptProject))
             {
                 // See if this is a resource
                 IReadOnlyList<ParatextResource> resources = await GetResourcesInternalAsync(userSecret.Id, true, token);
