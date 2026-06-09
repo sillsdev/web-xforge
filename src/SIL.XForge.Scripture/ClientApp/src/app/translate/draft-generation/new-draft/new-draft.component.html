@@ -1,5 +1,18 @@
 <div class="wrapper" *transloco="let t; read: 'new_draft'">
-  @if (initData == null || page === "loading") {
+  @if (page === "abort") {
+    <div class="abort-screen">
+      <mat-icon class="abort-icon" color="warn">error_outline</mat-icon>
+      @if (inaccessibleProjectNames.length > 0) {
+        <p>{{ t("abort.no_access_with_projects", { projects: inaccessibleProjectNames.join(", ") }) }}</p>
+      } @else {
+        <p>{{ t("abort.no_access") }}</p>
+      }
+      <button mat-flat-button color="primary" (click)="goBack()">
+        <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon
+        >{{ t("abort.go_back") }}
+      </button>
+    </div>
+  } @else if (initData == null || page === "loading") {
     <mat-spinner class="loading-indicator"></mat-spinner>
   } @else {
     @if (page === "pending_updates") {

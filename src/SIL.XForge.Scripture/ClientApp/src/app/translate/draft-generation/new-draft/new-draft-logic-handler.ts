@@ -39,7 +39,7 @@ export class DraftProgressService {
   }
 }
 
-type NewDraftAbortMode = 'config_changed' | 'no_access' | null;
+export type NewDraftAbortMode = 'config_changed' | 'no_access' | 'init_failure' | null;
 
 /**
  * Converts a ScriptureRange to a list of book IDs without including details about which chapters are in each book. This
@@ -68,6 +68,11 @@ function mapObject<T, U>(obj: { [key: string]: T }, mapFn: (key: string, value: 
 export class NewDraftLogicHandler {
   status$ = new BehaviorSubject<'init' | 'input' | 'abort'>('init');
   abortMode$ = new BehaviorSubject<NewDraftAbortMode>(null);
+
+  /** Names of the projects that could not be accessed, populated when aborting with mode 'no_access'. */
+  inaccessibleProjectNames: string[] = [];
+  /** The error that caused an 'init_failure' abort, retained so the component can report it. */
+  initError?: unknown;
 
   // A book can be present (in a project), available (logic rules do not forbit selecting it, and it is therefore
   // offered in the UI), and selected (user action, or default values selected the )
@@ -110,78 +115,91 @@ export class NewDraftLogicHandler {
    * user to restart the process). Automatically sets training books to most recently selected training books.
    */
   async init(): Promise<void> {
-    const projectId = await firstValueFrom(this.activatedProjectService.projectId$.pipe(filterNullish()));
-    const projectDoc = await firstValueFrom(this.activatedProjectService.projectDoc$.pipe(filterNullish()));
+    try {
+      const projectId = await firstValueFrom(this.activatedProjectService.projectId$.pipe(filterNullish()));
+      const projectDoc = await firstValueFrom(this.activatedProjectService.projectDoc$.pipe(filterNullish()));
 
-    if (projectId == null) throw new Error('No project selected');
-    if (projectDoc?.data == null) throw new Error('Project data not loaded');
+      if (projectId == null) throw new Error('No project selected');
+      if (projectDoc?.data == null) throw new Error('Project data not loaded');
 
-    const draftConfig = projectDoc?.data?.translateConfig?.draftConfig;
+      const draftConfig = projectDoc?.data?.translateConfig?.draftConfig;
 
-    if (draftConfig == null) throw new Error('Draft config not found in project data');
+      if (draftConfig == null) throw new Error('Draft config not found in project data');
 
-    if (draftConfig.draftingSources.length !== 1) {
-      throw new Error(`Expected exactly one drafting source; found ${draftConfig.draftingSources.length}`);
+      // The UI never allows configuring more than one drafting source, so this is treated as an impossible state.
+      if (draftConfig.draftingSources.length !== 1) {
+        throw new Error(`Expected exactly one drafting source; found ${draftConfig.draftingSources.length}`);
+      }
+      const draftingSource = draftConfig.draftingSources[0];
+
+      let draftSourceProgress: VerboseScriptureRange;
+      let targetProjectProgress: VerboseScriptureRange;
+      let trainingSourcesProgress: { projectId: string; range: VerboseScriptureRange }[];
+      // Create a promise for loading the progress for all training sources, so that it can be done in parallel with
+      // loading the progress for the drafting source and target project
+      const trainingSourcesProgressPromise = Promise.all(
+        draftConfig.trainingSources.map(async trainingSource => {
+          const progress = await this.progressService.getProgressForProject(trainingSource.projectRef);
+          return { projectId: trainingSource.projectRef, range: progress };
+        })
+      );
+
+      [draftSourceProgress, targetProjectProgress, trainingSourcesProgress, this.sources] = await Promise.all([
+        this.progressService.getProgressForProject(draftingSource.projectRef),
+        this.progressService.getProgressForProject(projectId),
+        trainingSourcesProgressPromise,
+        // // TODO listen for more updates to figure out if we need to bail out and restart the process
+        firstValueFrom(this.draftSourcesService.getDraftProjectSources())
+      ]);
+
+      const sourcesWithNoAccess = [
+        ...this.sources.trainingSources,
+        ...this.sources.trainingTargets,
+        ...this.sources.draftingSources
+      ].filter(source => source.noAccess);
+      if (sourcesWithNoAccess.length > 0) {
+        this.inaccessibleProjectNames = sourcesWithNoAccess
+          .map(source => source.name ?? source.shortName ?? '')
+          .filter(name => name !== '');
+        this.abort('no_access');
+        return;
+      }
+
+      this.targetProjectScriptureRange = targetProjectProgress;
+      this.availableDraftingScriptureRange$.next(draftSourceProgress);
+      this.availableTargetTrainingScriptureRange$.next(targetProjectProgress);
+      this.trainingSourceBooks$.next(
+        Object.fromEntries(
+          trainingSourcesProgress.map(source => [
+            source.projectId,
+            scriptureRangeToBookListWithoutChapterDetail(source.range)
+          ])
+        )
+      );
+
+      this.status$.next('input');
+    } catch (error) {
+      // Any unanticipated failure while loading project/progress data (network errors, missing config, etc.) aborts
+      // into a generic failure state rather than leaving the wizard stuck on its loading spinner. The error is
+      // retained so the component can route it to the global error handler.
+      this.initError = error;
+      this.abort('init_failure');
     }
-    const draftingSource = draftConfig.draftingSources[0];
-
-    let draftSourceProgress: VerboseScriptureRange;
-    let targetProjectProgress: VerboseScriptureRange;
-    let trainingSourcesProgress: { projectId: string; range: VerboseScriptureRange }[];
-    // Create a promise for loading the progress for all training sources, so that it can be done in parallel with
-    // loading the progress for the drafting source and target project
-    const trainingSourcesProgressPromise = Promise.all(
-      draftConfig.trainingSources.map(async trainingSource => {
-        const progress = await this.progressService.getProgressForProject(trainingSource.projectRef);
-        return { projectId: trainingSource.projectRef, range: progress };
-      })
-    );
-
-    [draftSourceProgress, targetProjectProgress, trainingSourcesProgress, this.sources] = await Promise.all([
-      this.progressService.getProgressForProject(draftingSource.projectRef),
-      this.progressService.getProgressForProject(projectId),
-      trainingSourcesProgressPromise,
-      // // TODO listen for more updates to figure out if we need to bail out and restart the process
-      firstValueFrom(this.draftSourcesService.getDraftProjectSources())
-    ]);
-
-    const sourcesWithNoAccess = [
-      ...this.sources.trainingSources,
-      ...this.sources.trainingTargets,
-      ...this.sources.draftingSources
-    ].filter(source => source.noAccess);
-    if (sourcesWithNoAccess.length > 0) {
-      // TODO specify which projects cannot be accessed
-      this.abort('no_access');
-      return;
-    }
-
-    this.targetProjectScriptureRange = targetProjectProgress;
-    this.availableDraftingScriptureRange$.next(draftSourceProgress);
-    this.availableTargetTrainingScriptureRange$.next(targetProjectProgress);
-    this.trainingSourceBooks$.next(
-      Object.fromEntries(
-        trainingSourcesProgress.map(source => [
-          source.projectId,
-          scriptureRangeToBookListWithoutChapterDetail(source.range)
-        ])
-      )
-    );
-
-    this.status$.next('input');
   }
 
   private hasVisitedTrainingBooksInputMode = false;
   setInputMode(newMode: 'draft_books' | 'training_books'): void {
-    const currentMode = this.inputMode$.getValue();
-    if (currentMode === 'draft_books' && newMode === 'training_books') {
+    const priorMode = this.inputMode$.getValue();
+    // Switch the mode first so that loadPreviouslySelectedTrainingBooks() can use the normal training-book selection
+    // path (e.g. selectTargetTrainingBooks), which requires being in training_books mode.
+    this.inputMode$.next(newMode);
+    if (priorMode === 'draft_books' && newMode === 'training_books') {
       this.limitAvailableTrainingRangeBasedOnSelectedDraftingRange();
       if (!this.hasVisitedTrainingBooksInputMode) {
         this.loadPreviouslySelectedTrainingBooks();
         this.hasVisitedTrainingBooksInputMode = true;
       }
     }
-    this.inputMode$.next(newMode);
   }
 
   selectDraftingBooks(books: string[]): void {
@@ -336,8 +354,14 @@ export class NewDraftLogicHandler {
   private loadPreviouslySelectedTrainingBooks(): void {
     const draftConfig = this.activatedProjectService.projectDoc?.data?.translateConfig?.draftConfig;
     if (draftConfig == null) throw new Error('Draft config not found in project data');
+    const targetProjectId = this.activatedProjectService.projectId;
+    const lastSelectedTrainingScriptureRanges = draftConfig.lastSelectedTrainingScriptureRanges ?? [];
+
+    // Restore the previously selected books for each training source, ignoring the target project's own entry (handled
+    // separately below). Only keep books that are still available for training in that source.
     const selectedTrainingSourceBooksByProjectId: { [key: string]: string[] } = {};
-    for (const sourceScriptureRange of draftConfig.lastSelectedTrainingScriptureRanges ?? []) {
+    for (const sourceScriptureRange of lastSelectedTrainingScriptureRanges) {
+      if (sourceScriptureRange.projectId === targetProjectId) continue;
       const previouslySelectedBooks = Array.from(
         new VerboseScriptureRange(sourceScriptureRange.scriptureRange).books.keys()
       );
@@ -349,25 +373,25 @@ export class NewDraftLogicHandler {
     }
     this.selectedTrainingSourceBooks$.next(selectedTrainingSourceBooksByProjectId);
 
-    // Combine the previously selected source training scripture ranges to estimate the previously selected target
-    // training scripture range. This isn't correct behavior (TODO fix), but is the current behavior, and we aren't
-    // storing the information we need to do it correctly.
-    const allPreviouslySelectedBooks = new Set(
-      Object.values(selectedTrainingSourceBooksByProjectId).reduce((acc, books) => acc.concat(books), [])
+    // Determine the previously selected target training books. Prefer the target project's own saved entry (looked up
+    // by project ID); its chapter detail is ignored so that chapter defaults are re-derived from current project
+    // state. Older draft configs predate saving a target entry, so when none exists fall back to inferring it from
+    // the union of the selected source training books (the previous behavior).
+    const savedTargetTrainingRange = lastSelectedTrainingScriptureRanges.find(
+      range => range.projectId === targetProjectId
     );
-    const availableTargetTrainingScriptureRange = this.availableTargetTrainingScriptureRange$.getValue();
-    if (availableTargetTrainingScriptureRange == null) {
-      throw new Error('Available target training scripture range not loaded');
-    }
-    const targetTrainingScriptureRange = new VerboseScriptureRange('');
-    for (const bookId of allPreviouslySelectedBooks) {
-      const bookRange = availableTargetTrainingScriptureRange.books.get(bookId);
-      if (bookRange) {
-        targetTrainingScriptureRange.books.set(bookId, bookRange.clone());
-      }
-    }
+    const previouslySelectedTargetBooks =
+      savedTargetTrainingRange != null
+        ? Array.from(new VerboseScriptureRange(savedTargetTrainingRange.scriptureRange).books.keys())
+        : Array.from(new Set(Object.values(selectedTrainingSourceBooksByProjectId).flat()));
 
-    this.selectedTargetTrainingScriptureRange$.next(targetTrainingScriptureRange);
+    // Run the books through the normal book-selection path so chapter defaults match a manual selection. Filter to
+    // books still available for target training first, since selectTargetTrainingBooks requires available books.
+    const availableTargetTrainingScriptureRange = this.availableTargetTrainingScriptureRange$.getValue();
+    const availableTargetBooks = previouslySelectedTargetBooks.filter(bookId =>
+      availableTargetTrainingScriptureRange.books.has(bookId)
+    );
+    this.selectTargetTrainingBooks(availableTargetBooks);
   }
 
   private limitAvailableTrainingRangeBasedOnSelectedDraftingRange(): void {

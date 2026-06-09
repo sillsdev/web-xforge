@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, ErrorHandler } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -39,6 +39,7 @@ import { ParatextProject } from '../../../core/models/paratext-project';
 import { ParatextService } from '../../../core/paratext.service';
 import {
   DraftProgressService,
+  NewDraftAbortMode,
   NewDraftLogicHandler,
   scriptureRangeToBookListWithoutChapterDetail
 } from './new-draft-logic-handler';
@@ -95,7 +96,7 @@ const PAGES_BY_ORDER = [
 export class NewDraftComponent {
   logicHandler: NewDraftLogicHandler;
 
-  page: (typeof PAGES_BY_ORDER)[number]['page'] | 'loading' | 'pending_updates' = 'loading';
+  page: (typeof PAGES_BY_ORDER)[number]['page'] | 'loading' | 'pending_updates' | 'abort' = 'loading';
 
   pendingProjects: { projectId: string; name: string }[] = [];
 
@@ -125,7 +126,8 @@ export class NewDraftComponent {
     private readonly router: Router,
     private readonly nllbLanguageService: NllbLanguageService,
     private readonly paratextService: ParatextService,
-    private readonly errorReportingService: ErrorReportingService
+    private readonly errorReportingService: ErrorReportingService,
+    private readonly errorHandler: ErrorHandler
   ) {
     this.logicHandler = new NewDraftLogicHandler(
       this.activatedProjectService,
@@ -137,10 +139,14 @@ export class NewDraftComponent {
   }
 
   async init(): Promise<void> {
-    [this.currentUserDoc] = await Promise.all([
-      this.userService.getCurrentUser(),
-      firstValueFrom(this.logicHandler.status$.pipe(filter(status => status === 'input')))
+    const [, status] = await Promise.all([
+      this.userService.getCurrentUser().then(doc => (this.currentUserDoc = doc)),
+      firstValueFrom(this.logicHandler.status$.pipe(filter(status => status === 'input' || status === 'abort')))
     ]);
+    if (status === 'abort') {
+      this.handleAbort();
+      return;
+    }
     this.initData = {
       projectId: await firstValueFrom(this.activatedProjectService.projectId$.pipe(filterNullish()))
     };
@@ -165,6 +171,33 @@ export class NewDraftComponent {
       await this.detectPendingUpdates();
     }
     this.page = this.pendingProjects.length > 0 ? 'pending_updates' : 'preface';
+  }
+
+  /**
+   * Handles the logic handler entering its 'abort' state. An anticipated, explainable failure (no_access) shows a
+   * blocking abort screen with a "Go back" action. Any other (unanticipated) failure is routed to the app-wide error
+   * handler — which shows the standard error dialog and reports it — and the wizard navigates back to the
+   * draft-generation page so the user isn't stranded on the loading spinner.
+   */
+  private handleAbort(): void {
+    if (this.logicHandler.abortMode$.getValue() === 'no_access') {
+      this.page = 'abort';
+      return;
+    }
+    this.errorHandler.handleError(this.logicHandler.initError);
+    this.goBack();
+  }
+
+  get abortMode(): NewDraftAbortMode {
+    return this.logicHandler.abortMode$.getValue();
+  }
+
+  get inaccessibleProjectNames(): string[] {
+    return this.logicHandler.inaccessibleProjectNames;
+  }
+
+  goBack(): void {
+    void this.router.navigate(['/projects', this.activatedProjectService.projectId, 'draft-generation']);
   }
 
   private async detectPendingUpdates(): Promise<void> {

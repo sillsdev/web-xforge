@@ -1,3 +1,4 @@
+import { ErrorHandler } from '@angular/core';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
@@ -429,6 +430,48 @@ describe('NewDraftComponent', () => {
       verify(mockedErrorReportingService.silentError(anything(), anything())).once();
     }));
   });
+
+  describe('abort handling', () => {
+    // Reset call history so the per-test verify() counts aren't inflated by other tests' flows.
+    beforeEach(() => {
+      reset(mockedRouter);
+      reset(mockedErrorHandler);
+    });
+
+    it('shows the abort screen with no_access mode when a project is inaccessible', fakeAsync(() => {
+      const env = new TestEnvironment(testState, { noAccessSources: true });
+      tick();
+
+      expect(env.component.page).toEqual('abort');
+      expect(env.component.abortMode).toEqual('no_access');
+    }));
+
+    it('exposes the inaccessible project names for the abort screen', fakeAsync(() => {
+      const env = new TestEnvironment(testState, { noAccessSources: true });
+      tick();
+
+      expect(env.component.inaccessibleProjectNames).toEqual(['Inaccessible Source']);
+    }));
+
+    it('navigates back to draft generation from the no_access abort screen', fakeAsync(() => {
+      const env = new TestEnvironment(testState, { noAccessSources: true });
+      tick();
+
+      env.component.goBack();
+
+      verify(mockedRouter.navigate(deepEqual(['/projects', 'testProjectId', 'draft-generation']))).once();
+    }));
+
+    it('delegates to the global error handler and navigates back when initialization fails', fakeAsync(() => {
+      const env = new TestEnvironment(testState, { progressError: true });
+      tick();
+
+      // Fatal/unanticipated failures go to the app-wide error dialog rather than a bespoke abort screen.
+      verify(mockedErrorHandler.handleError(anything())).once();
+      verify(mockedRouter.navigate(deepEqual(['/projects', 'testProjectId', 'draft-generation']))).once();
+      expect(env.component.page).not.toEqual('abort');
+    }));
+  });
 });
 
 const mockedActivatedProjectService = mock(ActivatedProjectService);
@@ -442,6 +485,7 @@ const mockedRouter = mock(Router);
 const mockedNllbLanguageService = mock(NllbLanguageService);
 const mockedParatextService = mock(ParatextService);
 const mockedErrorReportingService = mock(ErrorReportingService);
+const mockedErrorHandler = mock<ErrorHandler>(ErrorHandler);
 
 interface TestState {
   draftingSourceBooksChapters: string;
@@ -475,7 +519,13 @@ class TestEnvironment {
 
   constructor(
     state: TestState,
-    options: { getProjectsError?: boolean; projects?: ParatextProject[]; offline?: boolean } = {}
+    options: {
+      getProjectsError?: boolean;
+      projects?: ParatextProject[];
+      offline?: boolean;
+      noAccessSources?: boolean;
+      progressError?: boolean;
+    } = {}
   ) {
     const project = createTestProjectProfile({
       shortName: TARGET_SHORT_NAME,
@@ -511,35 +561,49 @@ class TestEnvironment {
     when(mockedActivatedProjectService.projectDoc).thenReturn({ data: project } as SFProjectProfileDoc);
     when(mockedActivatedProjectService.projectDoc$).thenReturn(of({ data: project } as SFProjectProfileDoc));
 
-    when(mockedDraftSourcesService.getDraftProjectSources()).thenReturn(
-      of({
-        trainingSources: Object.keys(state.trainingSourcesBooksChapters).map(projectId => ({
-          paratextId: `${projectId}-pt-id`,
-          projectRef: projectId,
-          name: `Training Source for ${projectId}`,
-          shortName: `TS-${projectId}`,
-          writingSystem: { script: 'Latn', tag: 'es' },
-          texts: [],
-          copyrightBanner: state.trainingSourceCopyrightBanners?.[projectId]
-        })) as DraftSource[],
-        trainingTargets: [],
-        draftingSources: [
-          {
-            paratextId: 'draft-source-1-pt-id',
-            projectRef: 'draft-source-1-id',
-            name: 'Draft Source 1',
-            shortName: SOURCE_SHORT_NAME,
+    if (options.noAccessSources) {
+      when(mockedDraftSourcesService.getDraftProjectSources()).thenReturn(
+        of({
+          trainingSources: [{ noAccess: true, name: 'Inaccessible Source' } as unknown as DraftSource],
+          trainingTargets: [],
+          draftingSources: []
+        })
+      );
+    } else {
+      when(mockedDraftSourcesService.getDraftProjectSources()).thenReturn(
+        of({
+          trainingSources: Object.keys(state.trainingSourcesBooksChapters).map(projectId => ({
+            paratextId: `${projectId}-pt-id`,
+            projectRef: projectId,
+            name: `Training Source for ${projectId}`,
+            shortName: `TS-${projectId}`,
             writingSystem: { script: 'Latn', tag: 'es' },
             texts: [],
-            copyrightBanner: state.draftingSourceCopyrightBanner
-          } as DraftSource
-        ]
-      })
-    );
+            copyrightBanner: state.trainingSourceCopyrightBanners?.[projectId]
+          })) as DraftSource[],
+          trainingTargets: [],
+          draftingSources: [
+            {
+              paratextId: 'draft-source-1-pt-id',
+              projectRef: 'draft-source-1-id',
+              name: 'Draft Source 1',
+              shortName: SOURCE_SHORT_NAME,
+              writingSystem: { script: 'Latn', tag: 'es' },
+              texts: [],
+              copyrightBanner: state.draftingSourceCopyrightBanner
+            } as DraftSource
+          ]
+        })
+      );
+    }
 
-    when(mockedProgressService.getProgressForProject(projectId)).thenResolve(
-      new VerboseScriptureRange(state.targetProjectBooksChapters)
-    );
+    if (options.progressError) {
+      when(mockedProgressService.getProgressForProject(projectId)).thenReject(new Error('progress failed'));
+    } else {
+      when(mockedProgressService.getProgressForProject(projectId)).thenResolve(
+        new VerboseScriptureRange(state.targetProjectBooksChapters)
+      );
+    }
     when(mockedProgressService.getProgressForProject('draft-source-1-id')).thenResolve(
       new VerboseScriptureRange(state.draftingSourceBooksChapters)
     );
@@ -572,7 +636,8 @@ class TestEnvironment {
       instance(mockedRouter),
       instance(mockedNllbLanguageService),
       instance(mockedParatextService),
-      instance(mockedErrorReportingService)
+      instance(mockedErrorReportingService),
+      instance(mockedErrorHandler)
     );
   }
 

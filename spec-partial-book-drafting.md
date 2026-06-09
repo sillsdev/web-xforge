@@ -273,14 +273,21 @@ Note: copyright banners are on **Step 1**, not Step 4.
 
 ## Error / Abort States
 
-If `NewDraftLogicHandler` enters `status$ = 'abort'`, the wizard shows a blocking error screen:
+If `NewDraftLogicHandler` enters `status$ = 'abort'`, the component (which races `status$` for `input` **or**
+`abort`) handles it by mode:
 
-- **`no_access`**: "The following projects could not be accessed: [project names]. Check that you have access
-  and try again." + "Go back" button → navigates to `DraftGenerationComponent`
-- **Multiple drafting sources** (`draftingSources.length !== 1`): The wizard requires exactly one drafting
-  source. Show the abort screen with a message indicating the configuration is unsupported, and a "Go back"
-  button. Do not attempt to continue or silently fall back.
-- **Other init failures**: Generic error message + "Go back" button
+- **`no_access`** (anticipated, explainable): blocking abort screen — "The following projects could not be
+  accessed: [project names]. Check that you have access and try again." + "Go back" button → navigates to
+  `DraftGenerationComponent`. The logic handler captures the names in `inaccessibleProjectNames`.
+- **`init_failure`** (unanticipated/fatal — network errors, missing config, etc.): the retained error is handed
+  to the app-wide `ErrorHandler` (standard error dialog + reporting) and the wizard navigates back to
+  `DraftGenerationComponent`. No bespoke localized screen. (Rationale: the fire-and-forget `init()` rejection
+  would otherwise reach nothing — there's no `unhandledrejection` wiring and Bugsnag runs with
+  `autoDetectErrors: false` — and the component would hang on its loading spinner.)
+- **Multiple drafting sources** (`draftingSources.length !== 1`): the UI never allows configuring more than one
+  drafting source, so this is treated as an impossible state rather than a user-facing abort (no localized
+  strings). `init()`'s defensive `throw` is caught by the same try/catch and surfaces via the `init_failure`
+  path above (global error dialog + navigate back).
 
 ---
 
@@ -292,19 +299,23 @@ pending update checks, developer settings, or email toggles — those are handle
 **Rename:** `ProgressServiceThatGivesChapterLevelInfo` → `DraftProgressService` (or similar — the existing
 name has a FIXME comment).
 
-**Fix for training book persistence TODO:**
+**Fix for training book persistence TODO (DONE):**
 
-Currently, `loadPreviouslySelectedTrainingBooks()` estimates the target project's training book selection from
-the source training book selections. This is incorrect.
+Previously, `loadPreviouslySelectedTrainingBooks()` estimated the target project's training book selection from
+the source training book selections, which is incorrect.
 
-Fix: include the **target project** as an entry in `BuildConfig.TrainingScriptureRanges` when submitting the
-build, alongside source project entries. The backend ignores it (it filters sources by `s.IsSource`, and the
-target project is registered as a target corpus, not a source — so this entry is safely ignored at the Serval
-layer). But it **is** saved to `DraftConfig.LastSelectedTrainingScriptureRanges` by the backend
-(`MachineApiService` line ~2741).
+Fix (implemented): include the **target project** as an entry in `BuildConfig.TrainingScriptureRanges` when
+submitting the build, alongside source project entries. The backend ignores it (it filters sources by
+`s.IsSource`, and the target project is registered as a target corpus, not a source — so this entry is safely
+ignored at the Serval layer). But it **is** saved to `DraftConfig.LastSelectedTrainingScriptureRanges` by the
+backend (`MachineApiService` line ~2741).
 
-On restore, look up the target project's entry in `lastSelectedTrainingScriptureRanges` by project ID directly,
-rather than estimating from source books.
+On restore, `loadPreviouslySelectedTrainingBooks()` looks up the target project's entry in
+`lastSelectedTrainingScriptureRanges` by project ID, extracts the book IDs (chapter detail ignored), and runs
+them through the normal `selectTargetTrainingBooks()` path so chapter defaults are re-derived from current
+project state. The target entry is excluded from source-book restoration. For backward compatibility, when no
+target entry exists (older configs), the target selection is inferred from the union of the source training
+ranges, as before.
 
 ---
 
@@ -459,20 +470,32 @@ This change is additive: builds that don't include a target project entry in `Tr
 ### Logic Handler & Data
 
 - [x] Rename `ProgressServiceThatGivesChapterLevelInfo` to an appropriate name
-- [ ] Fix `loadPreviouslySelectedTrainingBooks()`: look up the target project entry in
+- [x] Fix `loadPreviouslySelectedTrainingBooks()`: look up the target project entry in
       `lastSelectedTrainingScriptureRanges` by project ID, extract the book IDs (ignoring any chapter
       detail), then call the normal book-selection logic to derive chapter defaults from current project
-      state — the same path as when the user manually picks books
+      state — the same path as when the user manually picks books. Backward compatible: older configs that
+      never saved a target entry fall back to inferring the target selection from the union of the source
+      training ranges (the previous behavior). The target entry is also excluded from source-book restoration.
 - [x] Remove stray `console.log` statements from `NewDraftLogicHandler`
-- [ ] Resolve FIXME: `isBookEligibleForPartialDrafting` source chapter count uses chapters-with-content
-      (confirmed correct — remove the TODO/FIXME comment)
-- [ ] Add multiple-drafting-source abort: if `draftingSources.length !== 1`, trigger abort screen with an unsupported-configuration message (do not silently continue)
+- [x] Resolve FIXME: `isBookEligibleForPartialDrafting` source chapter count uses chapters-with-content
+      (confirmed correct — comment already removed)
+- [x] ~~Add multiple-drafting-source abort~~ — DROPPED. The UI never allows more than one drafting source,
+      so this is an impossible state; we don't want translators to localize strings for it. The existing
+      defensive `throw` in `init()` (no localized strings) is kept and will surface via the generic
+      init-failure path.
 
 ### Error Handling
 
-- [ ] Implement abort screen for `no_access` state (show inaccessible project names)
-- [ ] Implement abort screen for general init failure
-- [ ] Handle mid-flow project config changes (currently has a TODO for this)
+- [x] Implement abort screen for `no_access` state (show inaccessible project names). `NewDraftLogicHandler`
+      captures `inaccessibleProjectNames` and aborts with mode `no_access`; the component renders a blocking
+      abort screen with a "Go back" button. Strings: `new_draft.abort.*`.
+- [x] Handle general init failure. `init()` is wrapped in try/catch; any unanticipated failure aborts with mode
+      `init_failure` and retains the error. The component routes it to the app-wide `ErrorHandler` (standard
+      error dialog + report) and navigates back to draft-generation — no bespoke localized screen (only
+      `no_access` gets one). This also fixes the previous behavior where an init throw left the wizard stuck on
+      the loading spinner forever (the component now races `status$` for `input` **or** `abort`).
+- [ ] Handle mid-flow project config changes (currently has a TODO for this — `config_changed` mode is declared
+      but not yet triggered)
 
 ### Tests
 

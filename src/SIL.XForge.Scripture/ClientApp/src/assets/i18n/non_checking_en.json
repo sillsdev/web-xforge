@@ -232,6 +232,11 @@
   },
   "new_draft": {
     "offline_message": "Draft generation is not available offline.",
+    "abort": {
+      "no_access_with_projects": "The following projects could not be accessed: {{ projects }}. Check that you have access and try again.",
+      "no_access": "Some projects could not be accessed. Check that you have access and try again.",
+      "go_back": "Go back"
+    },
     "chapter_input": {
       "available": "Available chapters: {{ range }}",
       "invalid_range": "Invalid chapter range.",

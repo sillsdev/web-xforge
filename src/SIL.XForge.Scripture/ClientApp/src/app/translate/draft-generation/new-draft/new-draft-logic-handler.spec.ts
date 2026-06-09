@@ -333,6 +333,75 @@ describe('NewDraftLogicHandler', () => {
       });
     });
 
+    it("restores the target training selection from the target project's own saved entry, not from the training sources", async () => {
+      const testState = {
+        ...teamStartingToTranslateGenesis,
+        previouslySelectedTrainingScriptureRanges: [
+          { projectId: 'training-source-1-id', scriptureRange: 'MAT;MRK;LUK;JHN' },
+          // The target project's own previously selected training books, looked up by project ID
+          { projectId: 'testProjectId', scriptureRange: 'MAT;LUK' }
+        ]
+      };
+      const env = new TestEnvironment(testState);
+      await env.waitForInit();
+
+      env.logicHandler.setInputMode('training_books');
+
+      // Target training comes from the target's own entry (MAT, LUK), not the union of the source books
+      expect(env.selectedTargetTrainingScriptureRange).toBe('MAT1-28;LUK1-24');
+    });
+
+    it('ignores chapter detail in the saved target entry and re-derives chapter defaults from current project state', async () => {
+      const testState = {
+        ...teamStartingToTranslateGenesis,
+        previouslySelectedTrainingScriptureRanges: [
+          { projectId: 'training-source-1-id', scriptureRange: 'MAT' },
+          // Chapter detail (LUK1-5) should be ignored; chapters default to all available in the current target
+          { projectId: 'testProjectId', scriptureRange: 'LUK1-5' }
+        ]
+      };
+      const env = new TestEnvironment(testState);
+      await env.waitForInit();
+
+      env.logicHandler.setInputMode('training_books');
+
+      expect(env.selectedTargetTrainingScriptureRange).toBe('LUK1-24');
+    });
+
+    it('infers the target training selection from the source training ranges when no saved target entry exists', async () => {
+      // Older draft configs predate saving a target training entry, so the target selection must be inferred from the
+      // union of the source training books.
+      const testState = {
+        ...teamStartingToTranslateGenesis,
+        previouslySelectedTrainingScriptureRanges: [
+          { projectId: 'training-source-1-id', scriptureRange: 'MAT;MRK;LUK;JHN' }
+          // No entry for the target project ('testProjectId')
+        ]
+      };
+      const env = new TestEnvironment(testState);
+      await env.waitForInit();
+
+      env.logicHandler.setInputMode('training_books');
+
+      expect(env.selectedTargetTrainingScriptureRange).toBe('MAT1-28;MRK1-16;LUK1-24;JHN1-21');
+    });
+
+    it("does not treat the target project's own training entry as a training source", async () => {
+      const testState = {
+        ...teamStartingToTranslateGenesis,
+        previouslySelectedTrainingScriptureRanges: [
+          { projectId: 'training-source-1-id', scriptureRange: 'MAT' },
+          { projectId: 'testProjectId', scriptureRange: 'MAT;LUK' }
+        ]
+      };
+      const env = new TestEnvironment(testState);
+      await env.waitForInit();
+
+      env.logicHandler.setInputMode('training_books');
+
+      expect(env.selectedTrainingSourceBooks['testProjectId']).toBeUndefined();
+    });
+
     it('a book selected for drafting is excluded from all training sources', async () => {
       const testState = {
         ...teamWithTwoTrainingSources,

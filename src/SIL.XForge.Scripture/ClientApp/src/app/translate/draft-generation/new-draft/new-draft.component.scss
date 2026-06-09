@@ -10,6 +10,22 @@
   top: 10em;
 }
 
+.abort-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1em;
+  max-width: 40em;
+  margin: 6em auto 0;
+
+  .abort-icon {
+    font-size: 3em;
+    width: auto;
+    height: auto;
+  }
+}
+
 .partial-book-drafting-table {
   display: inline-grid;
   gap: 16px;
