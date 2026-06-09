@@ -331,10 +331,10 @@ async function toggleBook(canvas: Canvas, bookName: string): Promise<void> {
   await userEvent.click(await canvas.findByText(bookName));
 }
 
-/** preface → draft_books, selecting GEN (the first chip) so the step's validation passes. Selecting by position
+/** preface -> draft_books, selecting GEN (the first chip) so the step's validation passes. Selecting by position
  * rather than by name keeps this working under any locale (book names are localized; the chrome is not). */
 async function gotoDraftBooksWithGen(canvas: Canvas): Promise<void> {
-  await clickNext(canvas); // preface → draft_books
+  await clickNext(canvas); // preface -> draft_books
   await canvas.findByText('Select books to draft');
   const books = await canvas.findAllByRole('option'); // ordered by book number, so GEN is first
   await userEvent.click(books[0]);
@@ -392,7 +392,7 @@ export const PrefaceWithCopyright: Story = {
 export const SelectBooksToDraft: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await clickNext(canvas); // preface → draft_books
+    await clickNext(canvas); // preface -> draft_books
     await canvas.findByText('Select books to draft');
     await toggleBook(canvas, 'Jude');
     // JUD isn't eligible for partial drafting, so no chapter inputs appear.
@@ -420,7 +420,7 @@ export const SelectTrainingBooks: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await gotoDraftBooksWithGen(canvas);
-    await clickNext(canvas); // draft_books → training_books
+    await clickNext(canvas); // draft_books -> training_books
     await canvas.findByText('Select books to train on');
     // The reference source and the training-data files both render.
     await canvas.findByText('RP1');
@@ -433,9 +433,9 @@ export const Summary: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await gotoDraftBooksWithGen(canvas);
-    await clickNext(canvas); // draft_books → training_books
+    await clickNext(canvas); // draft_books -> training_books
     await canvas.findByText('Select books to train on');
-    await clickNext(canvas); // training_books → suffix
+    await clickNext(canvas); // training_books -> suffix
     await canvas.findByRole('button', { name: /generate draft/i });
   }
 };
@@ -446,9 +446,9 @@ export const SummaryOfflineDevTools: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await gotoDraftBooksWithGen(canvas);
-    await clickNext(canvas); // draft_books → training_books
+    await clickNext(canvas); // draft_books -> training_books
     await canvas.findByText('Select books to train on');
-    await clickNext(canvas); // training_books → suffix
+    await clickNext(canvas); // training_books -> suffix
     await canvas.findByText('Developer options');
     const generate = await canvas.findByRole('button', { name: /generate draft/i });
     expect(generate).toBeDisabled();
@@ -462,7 +462,7 @@ export const RTL: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await gotoDraftBooksWithGen(canvas);
-    await clickNext(canvas); // draft_books → training_books
+    await clickNext(canvas); // draft_books -> training_books
     await canvas.findByText('RP1');
   }
 };

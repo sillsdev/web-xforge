@@ -14,8 +14,8 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { ParatextProject } from '../../../core/models/paratext-project';
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { ParatextService } from '../../../core/paratext.service';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { DraftGenerationService } from '../draft-generation.service';
@@ -34,7 +34,7 @@ describe('NewDraftComponent', () => {
     TestBed.configureTestingModule({ providers: [TestOnlineStatusService, provideTestOnlineStatus()] });
   });
 
-  // GEN: source has 50 chapters, target has GEN1-5 → eligible for partial drafting
+  // GEN: source has 50 chapters, target has GEN1-5 -> eligible for partial drafting
   const testState = {
     draftingSourceBooksChapters: 'GEN1-50;MAT1-28;MRK1-16;LUK1-24;JHN1-21',
     targetProjectBooksChapters: 'GEN1-5;MAT1-28;MRK1-16;LUK1-24;JHN1-21',
@@ -133,7 +133,7 @@ describe('NewDraftComponent', () => {
       env.component.onTargetTrainingChaptersBlurred('GEN', 'xyz');
       expect(env.component.targetTrainingChapterErrors.has('GEN')).toBeTrue();
 
-      // Then provide valid input — GEN1-3 is within the available training range GEN1-5
+      // Then provide valid input - GEN1-3 is within the available training range GEN1-5
       env.component.onTargetTrainingChaptersBlurred('GEN', '1-3');
 
       expect(env.component.targetTrainingChapterErrors.has('GEN')).toBeFalse();
@@ -203,12 +203,12 @@ describe('NewDraftComponent', () => {
       const env = new TestEnvironment(testState);
       await env.waitForInit();
       env.component.logicHandler.setInputMode('training_books');
-      // Select MAT and MRK — both auto-selected in source
+      // Select MAT and MRK - both auto-selected in source
       env.component.onTargetTrainingBookSelect([Canon.bookIdToNumber('MAT'), Canon.bookIdToNumber('MRK')]);
       // User manually deselects MRK from the source
       env.component.onTrainingSourceBookSelect([Canon.bookIdToNumber('MAT')], 'training-source-1-id');
 
-      // Add LUK to target — LUK should be auto-selected, MRK should stay deselected
+      // Add LUK to target - LUK should be auto-selected, MRK should stay deselected
       env.component.onTargetTrainingBookSelect([
         Canon.bookIdToNumber('MAT'),
         Canon.bookIdToNumber('MRK'),
@@ -229,7 +229,7 @@ describe('NewDraftComponent', () => {
       env.component.onDraftingChaptersBlurred('GEN', 'abc');
       expect(env.component.draftingChapterErrors.has('GEN')).toBeTrue();
 
-      // Deselect GEN — switch to MAT only, removing GEN from booksOfferedForPartialDrafting
+      // Deselect GEN - switch to MAT only, removing GEN from booksOfferedForPartialDrafting
       env.component.onDraftingBookSelect([Canon.bookIdToNumber('MAT')]);
 
       expect(env.component.draftingChapterErrors.has('GEN')).toBeFalse();
@@ -241,7 +241,7 @@ describe('NewDraftComponent', () => {
       env.component.logicHandler.selectDraftingBooks(['GEN']);
       env.component.onDraftingChaptersBlurred('GEN', 'abc');
 
-      // Re-select GEN along with another book — GEN remains offered for partial drafting
+      // Re-select GEN along with another book - GEN remains offered for partial drafting
       env.component.onDraftingBookSelect([Canon.bookIdToNumber('GEN'), Canon.bookIdToNumber('MAT')]);
 
       expect(env.component.draftingChapterErrors.has('GEN')).toBeTrue();
@@ -293,7 +293,7 @@ describe('NewDraftComponent', () => {
     it('sends chapter-level translation range for a partially drafted book', fakeAsync(() => {
       const env = new TestEnvironment(testState);
       tick(); // runs logicHandler.init() and component.init() to completion (sets initData)
-      // GEN: source has chapters 1-50, target has 1-5 → default draft selection is 6-50
+      // GEN: source has chapters 1-50, target has 1-5 -> default draft selection is 6-50
       env.component.logicHandler.selectDraftingBooks(['GEN']);
 
       env.component.generateDraftClicked();
@@ -550,6 +550,7 @@ describe('NewDraftComponent', () => {
       env.component.goBack();
 
       verify(mockedRouter.navigate(deepEqual(['/projects', 'testProjectId', 'draft-generation']))).once();
+      expect().nothing();
     }));
 
     it('delegates to the global error handler and navigates back when initialization fails', fakeAsync(() => {

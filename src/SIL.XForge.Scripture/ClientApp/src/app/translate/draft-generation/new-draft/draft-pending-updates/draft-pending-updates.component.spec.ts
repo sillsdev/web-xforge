@@ -192,7 +192,7 @@ describe('DraftPendingUpdatesComponent', () => {
   });
 
   describe('sync completion', () => {
-    it('resolves to synced on the queuedCount high→low edge when lastSyncSuccessful is true', async () => {
+    it('resolves to synced on the queuedCount high->low edge when lastSyncSuccessful is true', async () => {
       const env = new TestEnvironment([makeProject('proj1', 'P1', SFProjectRole.ParatextAdministrator)]);
       await env.component.ngOnInit();
       when(env.mockedProjectService.onlineSync('proj1')).thenResolve();
