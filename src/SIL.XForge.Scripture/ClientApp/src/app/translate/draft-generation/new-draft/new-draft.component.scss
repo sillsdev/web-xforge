@@ -137,6 +137,13 @@ strong {
   font-style: italic;
 }
 
+.training-data-files {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  margin-bottom: 0.875em;
+}
+
 .save-container {
   display: flex;
   align-items: center;

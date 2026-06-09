@@ -1,11 +1,12 @@
-import { ErrorHandler } from '@angular/core';
+import { DestroyRef, ErrorHandler } from '@angular/core';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { filter, firstValueFrom, of } from 'rxjs';
-import { anything, deepEqual, instance, mock, reset, verify, when } from 'ts-mockito';
+import { anything, capture, deepEqual, instance, mock, reset, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -20,6 +21,7 @@ import { NllbLanguageService } from '../../nllb-language.service';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftSource } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
+import { TrainingDataService } from '../training-data/training-data.service';
 import { DraftProgressService } from './new-draft-logic-handler';
 import { NewDraftComponent } from './new-draft.component';
 import { VerboseScriptureRange } from './scripture-range';
@@ -304,6 +306,7 @@ describe('NewDraftComponent', () => {
             translationScriptureRanges: [{ projectId: 'draft-source-1-id', scriptureRange: 'GEN6-50' }],
             trainingScriptureRanges: [{ projectId: 'testProjectId', scriptureRange: '' }],
             trainingDataFiles: [],
+            availableTrainingDataFiles: [],
             fastTraining: false,
             useEcho: false,
             sendEmailOnBuildFinished: false
@@ -335,6 +338,7 @@ describe('NewDraftComponent', () => {
               { projectId: 'testProjectId', scriptureRange: 'GEN1-5' }
             ],
             trainingDataFiles: [],
+            availableTrainingDataFiles: [],
             fastTraining: false,
             useEcho: false,
             sendEmailOnBuildFinished: false
@@ -366,6 +370,71 @@ describe('NewDraftComponent', () => {
 
       verify(mockedDraftGenerationService.startBuildOrGetActiveBuild(anything())).never();
       expect().nothing();
+    }));
+
+    it('sends the selected files and the full available set of training data files', fakeAsync(() => {
+      const env = new TestEnvironment({
+        ...testState,
+        trainingDataFiles: [makeTrainingData('a'), makeTrainingData('b'), makeTrainingData('c')],
+        // 'a' was used last time; 'b' was offered but deselected; 'c' is newly added
+        lastSelectedTrainingDataFiles: ['a'],
+        lastAvailableTrainingDataFiles: ['a', 'b']
+      });
+      tick();
+      env.component.logicHandler.selectDraftingBooks(['GEN']);
+
+      env.component.generateDraftClicked();
+      tick();
+
+      const [config] = capture(mockedDraftGenerationService.startBuildOrGetActiveBuild).last();
+      // 'a' (used last time) and 'c' (new) default selected; 'b' (deselected last time) stays off
+      expect(config.trainingDataFiles).toEqual(['a', 'c']);
+      // The full set offered is always reported so a later build can detect new vs deselected files
+      expect(config.availableTrainingDataFiles).toEqual(['a', 'b', 'c']);
+    }));
+  });
+
+  describe('training data file selection', () => {
+    it('defaults selection from the last build, keeping used and newly added files', fakeAsync(() => {
+      const env = new TestEnvironment({
+        ...testState,
+        trainingDataFiles: [makeTrainingData('a'), makeTrainingData('b'), makeTrainingData('c')],
+        lastSelectedTrainingDataFiles: ['a'],
+        lastAvailableTrainingDataFiles: ['a', 'b']
+      });
+      tick();
+
+      expect(env.component.isTrainingDataFileSelected('a')).toBe(true); // used last time
+      expect(env.component.isTrainingDataFileSelected('b')).toBe(false); // deselected last time
+      expect(env.component.isTrainingDataFileSelected('c')).toBe(true); // newly added
+    }));
+
+    it('selects all files for a legacy config with no recorded available set', fakeAsync(() => {
+      const env = new TestEnvironment({
+        ...testState,
+        trainingDataFiles: [makeTrainingData('a'), makeTrainingData('b')],
+        lastSelectedTrainingDataFiles: [],
+        lastAvailableTrainingDataFiles: undefined
+      });
+      tick();
+
+      expect(env.component.isTrainingDataFileSelected('a')).toBe(true);
+      expect(env.component.isTrainingDataFileSelected('b')).toBe(true);
+    }));
+
+    it('toggles a file selection on and off', fakeAsync(() => {
+      const env = new TestEnvironment({
+        ...testState,
+        trainingDataFiles: [makeTrainingData('a')],
+        lastSelectedTrainingDataFiles: ['a'],
+        lastAvailableTrainingDataFiles: ['a']
+      });
+      tick();
+
+      env.component.onTrainingDataFileToggled('a', false);
+      expect(env.component.isTrainingDataFileSelected('a')).toBe(false);
+      env.component.onTrainingDataFileToggled('a', true);
+      expect(env.component.isTrainingDataFileSelected('a')).toBe(true);
     }));
   });
 
@@ -486,6 +555,7 @@ const mockedNllbLanguageService = mock(NllbLanguageService);
 const mockedParatextService = mock(ParatextService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedErrorHandler = mock<ErrorHandler>(ErrorHandler);
+const mockedTrainingDataService = mock(TrainingDataService);
 
 interface TestState {
   draftingSourceBooksChapters: string;
@@ -493,6 +563,22 @@ interface TestState {
   trainingSourcesBooksChapters: { [key: string]: string };
   draftingSourceCopyrightBanner?: string;
   trainingSourceCopyrightBanners?: { [key: string]: string };
+  /** Training data files currently available for the project. */
+  trainingDataFiles?: TrainingData[];
+  lastSelectedTrainingDataFiles?: string[];
+  lastAvailableTrainingDataFiles?: string[];
+}
+
+function makeTrainingData(dataId: string, title: string = dataId): TrainingData {
+  return {
+    dataId,
+    title,
+    projectRef: 'testProjectId',
+    ownerRef: 'user01',
+    fileUrl: `https://example.com/${dataId}.csv`,
+    mimeType: 'text/csv',
+    skipRows: 0
+  };
 }
 
 // `hasUpdate` is required so each call states explicitly whether the project has a pending update.
@@ -549,7 +635,8 @@ class TestEnvironment {
             writingSystem: { script: 'Latn', tag: 'es' }
           })),
           lastSelectedTrainingScriptureRanges: [],
-          lastSelectedTrainingDataFiles: [],
+          lastSelectedTrainingDataFiles: state.lastSelectedTrainingDataFiles ?? [],
+          lastAvailableTrainingDataFiles: state.lastAvailableTrainingDataFiles,
           lastSelectedTranslationScriptureRanges: undefined
         }
       }
@@ -613,6 +700,10 @@ class TestEnvironment {
       );
     }
 
+    when(mockedTrainingDataService.getTrainingData(anything(), anything())).thenReturn(
+      of(state.trainingDataFiles ?? [])
+    );
+
     when(mockedFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
     when(mockedUserService.getCurrentUser()).thenResolve(undefined as any);
     when(mockedNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(false);
@@ -637,7 +728,9 @@ class TestEnvironment {
       instance(mockedNllbLanguageService),
       instance(mockedParatextService),
       instance(mockedErrorReportingService),
-      instance(mockedErrorHandler)
+      instance(mockedErrorHandler),
+      instance(mockedTrainingDataService),
+      { onDestroy: () => () => {} } as unknown as DestroyRef
     );
   }
 

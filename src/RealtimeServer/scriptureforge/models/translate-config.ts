@@ -71,6 +71,12 @@ export interface DraftConfig {
   draftingSources: TranslateSource[];
   trainingSources: TranslateSource[];
   lastSelectedTrainingDataFiles: string[];
+  /**
+   * The training data files that were available to choose from at the time of the last build. Used to distinguish
+   * newly added files (which default to selected) from files the user deliberately deselected. Absent for builds made
+   * before this was recorded.
+   */
+  lastAvailableTrainingDataFiles?: string[];
   lastSelectedTrainingScriptureRanges?: ProjectScriptureRange[];
   lastSelectedTranslationScriptureRanges?: ProjectScriptureRange[];
   fastTraining?: boolean;

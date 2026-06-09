@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ErrorHandler } from '@angular/core';
+import { Component, DestroyRef, ErrorHandler } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -11,6 +11,7 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
+import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { filter, firstValueFrom } from 'rxjs';
 import { DevOnlyComponent } from 'src/app/shared/dev-only/dev-only.component';
@@ -23,7 +24,7 @@ import { FeatureFlagService } from '../../../../xforge-common/feature-flags/feat
 import { I18nKeyForComponent, I18nService } from '../../../../xforge-common/i18n.service';
 import { UserDoc } from '../../../../xforge-common/models/user-doc';
 import { UserService } from '../../../../xforge-common/user.service';
-import { filterNullish } from '../../../../xforge-common/util/rxjs-util';
+import { filterNullish, quietTakeUntilDestroyed } from '../../../../xforge-common/util/rxjs-util';
 import { Book } from '../../../shared/book-multi-select/book-multi-select';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { CopyrightBannerComponent } from '../../../shared/copyright-banner/copyright-banner.component';
@@ -35,6 +36,8 @@ import { BuildConfig } from '../draft-generation';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftSource } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
+import { TrainingDataService } from '../training-data/training-data.service';
+import { defaultSelectedTrainingDataFiles } from './training-data-file-selection';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { ParatextService } from '../../../core/paratext.service';
 import {
@@ -109,6 +112,12 @@ export class NewDraftComponent {
   useEcho: boolean = false;
   isTrainingOptional: boolean = false;
 
+  /** All training data files currently available for the project. */
+  trainingDataFiles: TrainingData[] = [];
+  /** DataIds of the training data files the user has chosen to include in this build. */
+  selectedTrainingDataFileIds = new Set<string>();
+  private hasInitializedTrainingDataSelection = false;
+
   // Data that is guarnateed to be loaded post init
   initData?: { projectId: string };
 
@@ -127,7 +136,9 @@ export class NewDraftComponent {
     private readonly nllbLanguageService: NllbLanguageService,
     private readonly paratextService: ParatextService,
     private readonly errorReportingService: ErrorReportingService,
-    private readonly errorHandler: ErrorHandler
+    private readonly errorHandler: ErrorHandler,
+    private readonly trainingDataService: TrainingDataService,
+    private readonly destroyRef: DestroyRef
   ) {
     this.logicHandler = new NewDraftLogicHandler(
       this.activatedProjectService,
@@ -150,6 +161,8 @@ export class NewDraftComponent {
     this.initData = {
       projectId: await firstValueFrom(this.activatedProjectService.projectId$.pipe(filterNullish()))
     };
+
+    this.initTrainingDataFiles(this.initData.projectId);
 
     const sources = this.logicHandler.sources;
     const targetTag = this.activatedProjectService.projectDoc?.data?.writingSystem.tag;
@@ -198,6 +211,54 @@ export class NewDraftComponent {
 
   goBack(): void {
     void this.router.navigate(['/projects', this.activatedProjectService.projectId, 'draft-generation']);
+  }
+
+  /**
+   * Watches the project's training data files. The first time they load, the default selection is computed from the
+   * previous build's selection and the files available at that time (see {@link defaultSelectedTrainingDataFiles}).
+   * Later changes keep the displayed list current and drop any selected files that no longer exist, without clobbering
+   * the user's in-session choices.
+   */
+  private initTrainingDataFiles(projectId: string): void {
+    this.trainingDataService
+      .getTrainingData(projectId, this.destroyRef)
+      .pipe(quietTakeUntilDestroyed(this.destroyRef, { logWarnings: false }))
+      .subscribe(files => {
+        this.trainingDataFiles = files;
+        const currentFileIds = files.map(f => f.dataId);
+        if (!this.hasInitializedTrainingDataSelection) {
+          const draftConfig = this.activatedProjectService.projectDoc?.data?.translateConfig?.draftConfig;
+          this.selectedTrainingDataFileIds = new Set(
+            defaultSelectedTrainingDataFiles(
+              currentFileIds,
+              draftConfig?.lastSelectedTrainingDataFiles,
+              draftConfig?.lastAvailableTrainingDataFiles
+            )
+          );
+          this.hasInitializedTrainingDataSelection = true;
+        } else {
+          // Prune selections for files that have since been removed.
+          const stillPresent = new Set(currentFileIds);
+          this.selectedTrainingDataFileIds = new Set(
+            [...this.selectedTrainingDataFileIds].filter(id => stillPresent.has(id))
+          );
+        }
+      });
+  }
+
+  isTrainingDataFileSelected(dataId: string): boolean {
+    return this.selectedTrainingDataFileIds.has(dataId);
+  }
+
+  onTrainingDataFileToggled(dataId: string, selected: boolean): void {
+    // Replace the Set so the template's change detection picks up the change.
+    const updated = new Set(this.selectedTrainingDataFileIds);
+    if (selected) {
+      updated.add(dataId);
+    } else {
+      updated.delete(dataId);
+    }
+    this.selectedTrainingDataFileIds = updated;
   }
 
   private async detectPendingUpdates(): Promise<void> {
@@ -339,14 +400,17 @@ export class NewDraftComponent {
         scriptureRange: this.logicHandler.selectedTargetTrainingScriptureRange$.getValue().toString()
       });
 
-      const trainingDataFiles =
-        this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingDataFiles ?? [];
+      // Report the files offered to the user (available) and the subset they chose (selected). Recording the
+      // available set lets a later build tell newly added files apart from deliberately deselected ones.
+      const availableTrainingDataFiles = this.trainingDataFiles.map(f => f.dataId);
+      const trainingDataFiles = availableTrainingDataFiles.filter(id => this.selectedTrainingDataFileIds.has(id));
 
       const buildConfig: BuildConfig = {
         projectId,
         translationScriptureRanges,
         trainingScriptureRanges,
         trainingDataFiles,
+        availableTrainingDataFiles,
         fastTraining: this.fastTraining,
         useEcho: this.useEcho,
         sendEmailOnBuildFinished: this.sendEmailOnBuildFinished

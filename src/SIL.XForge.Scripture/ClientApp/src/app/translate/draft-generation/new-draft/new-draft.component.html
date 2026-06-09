@@ -117,6 +117,19 @@
           ></app-book-multi-select>
         }
       }
+      @if (trainingDataFiles.length > 0) {
+        <h2>{{ t("training_files") }}</h2>
+        <div class="training-data-files">
+          @for (file of trainingDataFiles; track file.dataId) {
+            <mat-checkbox
+              [checked]="isTrainingDataFileSelected(file.dataId)"
+              (change)="onTrainingDataFileToggled(file.dataId, $event.checked)"
+            >
+              {{ file.title }}
+            </mat-checkbox>
+          }
+        </div>
+      }
     } @else if (page === "suffix") {
       <mat-card class="summary-card">
         <mat-card-content>

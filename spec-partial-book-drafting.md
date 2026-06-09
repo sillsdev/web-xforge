@@ -246,7 +246,20 @@ book is only excluded entirely if all of its available target chapters are being
 
 **Section 3: Training data files**
 
-- Read-only list of uploaded training data files (same as what `ConfirmSourcesComponent` shows today)
+- **Selectable** checkbox list of the project's uploaded training data files (the backend honors a per-build
+  file selection via `BuildConfig.TrainingDataFiles`).
+- **Default selection:** files used at the last build (and still present) start selected; newly added files
+  start selected; files that were offered but deselected last time start deselected. Distinguishing newly
+  added from deselected files requires knowing what was offered last time, so the build now records the
+  available set:
+  - `DraftConfig.lastAvailableTrainingDataFiles` (new, optional) — the files offered at the last build,
+    persisted from `BuildConfig.availableTrainingDataFiles`. `null`/absent means a build predating this
+    (legacy), distinct from an empty array (a build that recorded zero available files).
+  - Default logic lives in the component-level pure helper `defaultSelectedTrainingDataFiles()`:
+    `(lastSelected ∩ current) ∪ (current − lastAvailable)`. Legacy fallback (no `lastAvailable`): follow
+    `lastSelected` if any, else select all.
+- On generate, the wizard sends both the selected subset (`trainingDataFiles`) and the full offered set
+  (`availableTrainingDataFiles`); the backend persists both.
 
 ---
 
@@ -449,7 +462,9 @@ This change is additive: builds that don't include a target project entry in `Tr
 - [x] Wire training source book selections to `NewDraftLogicHandler.selectedTrainingSourceBooks$`
 - [x] Block advancing past draft books step until at least one book is selected
 - [x] Block advancing past training books step until training books are selected (skipped when both languages are in NLLB)
-- [ ] Add training data files read-only section
+- [x] Add training data files section — made **selectable** (not read-only): checkbox list with default
+      selection from the last build, recording the available set (`lastAvailableTrainingDataFiles`) to tell
+      newly added files from deselected ones. Backend persists selected + available sets.
 
 ### Step 4: Confirm & Generate
 
