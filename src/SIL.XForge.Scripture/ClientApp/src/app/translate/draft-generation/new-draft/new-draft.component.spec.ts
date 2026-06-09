@@ -5,7 +5,7 @@ import { Canon } from '@sillsdev/scripture';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
-import { filter, firstValueFrom, of } from 'rxjs';
+import { BehaviorSubject, filter, firstValueFrom, Observable, of } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, reset, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -436,6 +436,27 @@ describe('NewDraftComponent', () => {
       env.component.onTrainingDataFileToggled('a', true);
       expect(env.component.isTrainingDataFileSelected('a')).toBe(true);
     }));
+
+    it('prunes the selection when a file is removed, without re-running the defaults', fakeAsync(() => {
+      const trainingData$ = new BehaviorSubject<TrainingData[]>([makeTrainingData('a'), makeTrainingData('b')]);
+      const env = new TestEnvironment(
+        { ...testState, lastSelectedTrainingDataFiles: ['a', 'b'], lastAvailableTrainingDataFiles: ['a', 'b'] },
+        { trainingData$ }
+      );
+      tick();
+
+      expect(env.component.isTrainingDataFileSelected('a')).toBe(true);
+      expect(env.component.isTrainingDataFileSelected('b')).toBe(true);
+
+      // 'b' is deleted from the project after the wizard has already loaded
+      trainingData$.next([makeTrainingData('a')]);
+      tick();
+
+      expect(env.component.trainingDataFiles.map(f => f.dataId)).toEqual(['a']);
+      expect(env.component.isTrainingDataFileSelected('a')).toBe(true);
+      // The removed file is dropped from the selection rather than lingering
+      expect(env.component.isTrainingDataFileSelected('b')).toBe(false);
+    }));
   });
 
   describe('detectPendingUpdates', () => {
@@ -611,6 +632,8 @@ class TestEnvironment {
       offline?: boolean;
       noAccessSources?: boolean;
       progressError?: boolean;
+      /** Overrides the training-data stream so a test can emit changes over time (e.g. a file being removed). */
+      trainingData$?: Observable<TrainingData[]>;
     } = {}
   ) {
     const project = createTestProjectProfile({
@@ -701,7 +724,7 @@ class TestEnvironment {
     }
 
     when(mockedTrainingDataService.getTrainingData(anything(), anything())).thenReturn(
-      of(state.trainingDataFiles ?? [])
+      options.trainingData$ ?? of(state.trainingDataFiles ?? [])
     );
 
     when(mockedFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
