@@ -95,7 +95,7 @@ type FilterName = keyof typeof filterOptions;
 export class OnboardingRequestsComponent extends DataLoadingComponent implements OnInit {
   requests: OnboardingRequest[] = [];
   filteredRequests: OnboardingRequest[] = [];
-  displayedColumns: string[] = ['status', 'project', 'languageCode', 'user', 'assignee', 'resolution'];
+  displayedColumns: string[] = ['status', 'project', 'languageCode', 'user', 'email', 'assignee', 'resolution'];
   currentUserId?: string;
   assignedUserIds: Set<string> = new Set();
   userDisplayNames: Map<string, string> = new Map();

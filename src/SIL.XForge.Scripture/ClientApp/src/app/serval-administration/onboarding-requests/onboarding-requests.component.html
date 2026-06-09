@@ -58,6 +58,16 @@
           </td>
         </ng-container>
 
+        <!-- Email Column -->
+        <ng-container matColumnDef="email">
+          <th mat-header-cell *matHeaderCellDef>Email</th>
+          <td mat-cell *matCellDef="let request">
+            <a [href]="'mailto:' + request.submission.formData.email" target="_blank" rel="noopener noreferrer">{{
+              request.submission.formData.email
+            }}</a>
+          </td>
+        </ng-container>
+
         <!-- Assignee Column -->
         <ng-container matColumnDef="assignee">
           <th mat-header-cell *matHeaderCellDef>Assignee</th>
