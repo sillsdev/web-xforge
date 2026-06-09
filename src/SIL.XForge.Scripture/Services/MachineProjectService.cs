@@ -835,14 +835,14 @@ public class MachineProjectService(
             throw new DataNotFoundException($"The directory could not be found for {paratextId}");
         }
 
-        using var archive = new ZipArchive(outputStream, ZipArchiveMode.Create, leaveOpen: true);
+        await using var archive = new ZipArchive(outputStream, ZipArchiveMode.Create, leaveOpen: true);
         foreach (string filePath in fileSystemService.EnumerateFiles(path))
         {
             try
             {
                 await using Stream fileStream = fileSystemService.OpenFile(filePath, FileMode.Open);
                 ZipArchiveEntry entry = archive.CreateEntry(Path.GetFileName(filePath));
-                await using Stream entryStream = entry.Open();
+                await using Stream entryStream = await entry.OpenAsync(cancellationToken);
                 await fileStream.CopyToAsync(entryStream, cancellationToken);
             }
             catch (FileNotFoundException e)
@@ -1721,7 +1721,7 @@ public class MachineProjectService(
         // The versification is only required for NMT/Echo builds.
         if (preTranslate && !string.IsNullOrEmpty(project.TranslateConfig.BaseProject?.ParatextId))
         {
-            SFProject baseProject = await realtimeService
+            SFProject? baseProject = await realtimeService
                 .QuerySnapshots<SFProject>()
                 .FirstOrDefaultAsync(
                     p => p.ParatextId == project.TranslateConfig.BaseProject.ParatextId,
@@ -1729,11 +1729,19 @@ public class MachineProjectService(
                 );
             if (baseProject is not null)
             {
-                projects.Add((baseProject.Id, baseProject.ParatextId, baseProject.WritingSystem.Tag));
+                // If there is no writing system, or the project is not on disk, we cannot upload the project to Serval
+                string baseProjectPath = Path.Join(siteOptions.Value.SiteDir, "sync", baseProject.ParatextId, "target");
+                if (
+                    !string.IsNullOrWhiteSpace(baseProject.WritingSystem.Tag)
+                    && fileSystemService.DirectoryExists(baseProjectPath)
+                )
+                {
+                    projects.Add((baseProject.Id, baseProject.ParatextId, baseProject.WritingSystem.Tag));
 
-                // Include the base project in the source project ids. Although it will not be used for drafting,
-                // it will be used for versification reference for the target project.
-                sourceProjectIds.Add(baseProject.Id);
+                    // Include the base project in the source project ids. Although it will not be used for drafting,
+                    // it will be used for versification reference for the target project.
+                    sourceProjectIds.Add(baseProject.Id);
+                }
             }
         }
 

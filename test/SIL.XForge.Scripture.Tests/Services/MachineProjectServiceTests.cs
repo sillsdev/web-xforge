@@ -3380,7 +3380,10 @@ public class MachineProjectServiceTests
         );
         if (options is { HasBaseProject: true, BaseProjectIsDraftingSource: false })
         {
-            await env.Projects.UpdateAsync(Project06, op => op.Set(p => p.WritingSystem.Tag, "fr"));
+            await env.Projects.UpdateAsync(
+                Project06,
+                op => op.Set(p => p.WritingSystem.Tag, options.BaseProjectIsMissingWritingSystem ? string.Empty : "fr")
+            );
         }
 
         // SUT 3
@@ -4149,6 +4152,26 @@ public class MachineProjectServiceTests
                         Source = true,
                     };
                 }
+                yield return new TestEnvironmentOptions
+                {
+                    BaseProjectIsMissingWritingSystem = true,
+                    DraftingSources = 1,
+                    HasBaseProject = true,
+                    TrainingSources = 1,
+                    DraftingSourceAndTrainingSourceAreTheSame = true,
+                    PreTranslate = preTranslate,
+                    Source = true,
+                };
+                yield return new TestEnvironmentOptions
+                {
+                    BaseProjectIsMissingFromDisk = true,
+                    DraftingSources = 1,
+                    HasBaseProject = true,
+                    TrainingSources = 1,
+                    DraftingSourceAndTrainingSourceAreTheSame = true,
+                    PreTranslate = preTranslate,
+                    Source = true,
+                };
             }
         }
     }
@@ -4156,6 +4179,8 @@ public class MachineProjectServiceTests
     public record TestEnvironmentOptions
     {
         public bool BaseProjectIsDraftingSource { get; init; }
+        public bool BaseProjectIsMissingFromDisk { get; init; }
+        public bool BaseProjectIsMissingWritingSystem { get; init; }
         public bool DraftingSourceAndTrainingSourceAreTheSame { get; init; }
         public bool HasBaseProject { get; init; }
         public bool HasTranslationEngineForNmt { get; init; }
@@ -4255,7 +4280,9 @@ public class MachineProjectServiceTests
                 );
 
             FileSystemService = Substitute.For<IFileSystemService>();
-            FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(true);
+            FileSystemService
+                .DirectoryExists(Arg.Any<string>())
+                .Returns(s => !(options.BaseProjectIsMissingFromDisk && s.ArgAt<string>(0).Contains(Paratext06)));
             FileSystemService
                 .EnumerateFiles(Arg.Any<string>())
                 .Returns(callInfo => [Path.Join(callInfo.ArgAt<string>(0), "file")]);
@@ -4451,7 +4478,10 @@ public class MachineProjectServiceTests
                     CheckingConfig = new CheckingConfig(),
                     UserRoles = [],
                     TranslateConfig = new TranslateConfig { PreTranslate = true },
-                    WritingSystem = new WritingSystem { Tag = "en" },
+                    WritingSystem = new WritingSystem
+                    {
+                        Tag = options.BaseProjectIsMissingWritingSystem ? string.Empty : "en",
+                    },
                 },
             ]);
 
@@ -4590,7 +4620,14 @@ public class MachineProjectServiceTests
             // A base project is specified
             if (options is { HasBaseProject: true, BaseProjectIsDraftingSource: false })
             {
-                bool baseProjectUploaded = options is { PreTranslate: true, BaseProjectIsDraftingSource: false };
+                bool baseProjectUploaded =
+                    options is
+                    {
+                        PreTranslate: true,
+                        BaseProjectIsDraftingSource: false,
+                        BaseProjectIsMissingFromDisk: false,
+                        BaseProjectIsMissingWritingSystem: false
+                    };
                 await CorporaClient
                     .Received(baseProjectUploaded && createsServalCorpora ? 1 : 0)
                     .CreateAsync(Arg.Is<CorpusConfig>(c => c.Name == $"{Project02}_{Project06}"));
