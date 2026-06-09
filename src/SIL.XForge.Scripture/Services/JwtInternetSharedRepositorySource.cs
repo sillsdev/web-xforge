@@ -91,7 +91,7 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
         byte[] bundle = client.GetStreaming("pullbundle", [.. query]);
         // Finish bundle
         client.Get("pullbundlefinish", "guid", guid);
-        if (bundle.Length == 0)
+        if (bundle == null || bundle.Length == 0)
             return [];
 
         // Use bundle
