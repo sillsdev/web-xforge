@@ -29,6 +29,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { ParatextProject } from '../../../core/models/paratext-project';
+import { SelectableProject } from '../../../core/models/selectable-project';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { roleCanEditTexts } from '../../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
@@ -40,7 +41,7 @@ import { BuildDto } from '../../../machine-api/build-dto';
 import { ProjectSelectComponent } from '../../../project-select/project-select.component';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
-import { booksFromScriptureRange } from '../../../shared/utils';
+import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
 import { SyncProgressComponent } from '../../../sync/sync-progress/sync-progress.component';
 import { DraftNotificationService } from '../draft-notification.service';
 
@@ -398,6 +399,10 @@ export class DraftImportWizardComponent implements OnInit {
     this.isLoadingProjects = true;
     this.projectLoadingFailed = false;
     void this.loadProjects();
+  }
+
+  projectLabel(project: SelectableProject | undefined): string {
+    return projectLabel(project);
   }
 
   /**
