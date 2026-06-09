@@ -97,6 +97,7 @@ public class MemoryRealtimeService : IRealtimeService
     {
         _repos[typeof(T)] = repo;
         _docConfigs[typeof(T)] = new DocConfig(collectionName, typeof(T), otTypeName);
+        repo.EntitiesUpdated = false;
     }
 
     public MemoryRepository<T> GetRepository<T>()

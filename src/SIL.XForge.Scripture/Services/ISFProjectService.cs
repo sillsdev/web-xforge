@@ -108,4 +108,5 @@ public interface ISFProjectService : IProjectService
     Task SetRoleProjectPermissionsAsync(string curUserId, string projectId, string role, string[] permissions);
     Task SetUserProjectPermissionsAsync(string curUserId, string projectId, string userId, string[] permissions);
     Task<BookProgress[]> GetProjectProgressAsync(string curUserId, string projectId);
+    Task UpdateProjectReferencesAsync(string projectId, ParatextSettings settings);
 }

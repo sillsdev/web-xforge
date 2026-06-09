@@ -2400,8 +2400,7 @@ public class SFProjectServiceTests
         await env
             .MachineProjectService.DidNotReceive()
             .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
-        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
-        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        await env.SyncService.Received(1).SyncAsync(Arg.Any<SyncConfig>());
 
         // Check that the project was created
         Assert.That(
@@ -2457,8 +2456,7 @@ public class SFProjectServiceTests
         Assert.That(draftingSourceProject.UserRoles, Does.Not.ContainKey(User02));
 
         // Verify that a sync is scheduled
-        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
-        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        await env.SyncService.Received(1).SyncAsync(Arg.Any<SyncConfig>());
 
         // Verify that the drafting source project was created
         Assert.That(
@@ -2531,8 +2529,7 @@ public class SFProjectServiceTests
         await env
             .MachineProjectService.DidNotReceive()
             .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
-        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
-        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        await env.SyncService.Received(1).SyncAsync(Arg.Any<SyncConfig>());
 
         // Check that the project was created
         Assert.That(
@@ -2575,7 +2572,6 @@ public class SFProjectServiceTests
         Assert.That(draftingSourceProject.Name, Is.EqualTo("Resource Needs Sync"));
 
         await env.SyncService.Received(1).SyncAsync(Arg.Any<SyncConfig>());
-        env.BackgroundJobClient.Received().Create(Arg.Any<Job>(), Arg.Any<IState>());
     }
 
     [Test]
@@ -2641,8 +2637,7 @@ public class SFProjectServiceTests
         await env
             .MachineProjectService.DidNotReceive()
             .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
-        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
-        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        await env.SyncService.Received(1).SyncAsync(Arg.Any<SyncConfig>());
 
         // Check that the project was created
         Assert.That(
@@ -4805,6 +4800,189 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         Assert.ThrowsAsync<ForbiddenException>(() => env.Service.GetProjectProgressAsync(User04, Project01));
+    }
+
+    [Test]
+    public async Task UpdateProjectReferencesAsync_NoMatchingSources()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.UpdateProjectReferencesAsync(Project01, new ParatextSettings());
+        Assert.That(env.RealtimeService.GetRepository<SFProject>().EntitiesUpdated, Is.False);
+    }
+
+    [Test]
+    public async Task UpdateProjectReferencesAsync_Success()
+    {
+        var env = new TestEnvironment();
+        const string willNotChange = "will_not_change";
+        var paratextSettings = new ParatextSettings
+        {
+            FullName = "new_name",
+            IsRightToLeft = true,
+            LanguageRegion = "new_region",
+            LanguageScript = "new_script",
+            LanguageTag = "new_tag",
+        };
+
+        // Configure every place a source can be used
+        await env
+            .RealtimeService.GetRepository<SFProject>()
+            .UpdateAsync(
+                Project02,
+                u =>
+                    u.Set(
+                        p => p.TranslateConfig.Source,
+                        new TranslateSource
+                        {
+                            ProjectRef = Project01,
+                            ParatextId = willNotChange,
+                            IsRightToLeft = false,
+                            Name = "old_name",
+                            WritingSystem =
+                            {
+                                Region = "old_region",
+                                Script = "old_script",
+                                Tag = "old_tag",
+                            },
+                        }
+                    )
+            );
+        await env
+            .RealtimeService.GetRepository<SFProject>()
+            .UpdateAsync(
+                Project03,
+                u =>
+                    u.Set(
+                        p => p.TranslateConfig.DraftConfig.DraftingSources,
+                        [
+                            new TranslateSource
+                            {
+                                ProjectRef = Project01,
+                                ParatextId = willNotChange,
+                                IsRightToLeft = false,
+                                Name = "old_name",
+                                WritingSystem =
+                                {
+                                    Region = "old_region",
+                                    Script = "old_script",
+                                    Tag = "old_tag",
+                                },
+                            },
+                            new TranslateSource
+                            {
+                                ProjectRef = Project02,
+                                ParatextId = willNotChange,
+                                IsRightToLeft = false,
+                                Name = willNotChange,
+                                WritingSystem =
+                                {
+                                    Region = willNotChange,
+                                    Script = willNotChange,
+                                    Tag = willNotChange,
+                                },
+                            },
+                        ]
+                    )
+            );
+        await env
+            .RealtimeService.GetRepository<SFProject>()
+            .UpdateAsync(
+                Project04,
+                u =>
+                    u.Set(
+                        p => p.TranslateConfig.DraftConfig.TrainingSources,
+                        [
+                            new TranslateSource
+                            {
+                                ProjectRef = Project01,
+                                ParatextId = willNotChange,
+                                IsRightToLeft = false,
+                                Name = "old_name",
+                                WritingSystem =
+                                {
+                                    Region = "old_region",
+                                    Script = "old_script",
+                                    Tag = "old_tag",
+                                },
+                            },
+                            new TranslateSource
+                            {
+                                ProjectRef = Project02,
+                                ParatextId = willNotChange,
+                                IsRightToLeft = false,
+                                Name = willNotChange,
+                                WritingSystem =
+                                {
+                                    Region = willNotChange,
+                                    Script = willNotChange,
+                                    Tag = willNotChange,
+                                },
+                            },
+                        ]
+                    )
+            );
+        env.RealtimeService.GetRepository<SFProject>().EntitiesUpdated = false;
+
+        // SUT
+        await env.Service.UpdateProjectReferencesAsync(Project01, paratextSettings);
+
+        Assert.That(env.RealtimeService.GetRepository<SFProject>().EntitiesUpdated, Is.True);
+        TranslateSource firstSource = env
+            .RealtimeService.GetRepository<SFProject>()
+            .Get(Project02)
+            .TranslateConfig.Source;
+        Assert.That(firstSource.ParatextId, Is.EqualTo(willNotChange));
+        Assert.That(firstSource.Name, Is.EqualTo(paratextSettings.FullName));
+        Assert.That(firstSource.IsRightToLeft, Is.EqualTo(paratextSettings.IsRightToLeft));
+        Assert.That(firstSource.WritingSystem.Region, Is.EqualTo(paratextSettings.LanguageRegion));
+        Assert.That(firstSource.WritingSystem.Script, Is.EqualTo(paratextSettings.LanguageScript));
+        Assert.That(firstSource.WritingSystem.Tag, Is.EqualTo(paratextSettings.LanguageTag));
+
+        TranslateSource secondSource = env
+            .RealtimeService.GetRepository<SFProject>()
+            .Get(Project03)
+            .TranslateConfig.DraftConfig.DraftingSources.Single(s => s.ProjectRef == Project01);
+        Assert.That(secondSource.ParatextId, Is.EqualTo(willNotChange));
+        Assert.That(secondSource.Name, Is.EqualTo(paratextSettings.FullName));
+        Assert.That(secondSource.IsRightToLeft, Is.EqualTo(paratextSettings.IsRightToLeft));
+        Assert.That(secondSource.WritingSystem.Region, Is.EqualTo(paratextSettings.LanguageRegion));
+        Assert.That(secondSource.WritingSystem.Script, Is.EqualTo(paratextSettings.LanguageScript));
+        Assert.That(secondSource.WritingSystem.Tag, Is.EqualTo(paratextSettings.LanguageTag));
+
+        TranslateSource secondUnchangedSource = env
+            .RealtimeService.GetRepository<SFProject>()
+            .Get(Project03)
+            .TranslateConfig.DraftConfig.DraftingSources.Single(s => s.ProjectRef == Project02);
+        Assert.That(secondUnchangedSource.ParatextId, Is.EqualTo(willNotChange));
+        Assert.That(secondUnchangedSource.Name, Is.EqualTo(willNotChange));
+        Assert.That(secondUnchangedSource.IsRightToLeft, Is.False);
+        Assert.That(secondUnchangedSource.WritingSystem.Region, Is.EqualTo(willNotChange));
+        Assert.That(secondUnchangedSource.WritingSystem.Script, Is.EqualTo(willNotChange));
+        Assert.That(secondUnchangedSource.WritingSystem.Tag, Is.EqualTo(willNotChange));
+
+        TranslateSource thirdSource = env
+            .RealtimeService.GetRepository<SFProject>()
+            .Get(Project04)
+            .TranslateConfig.DraftConfig.TrainingSources.Single(s => s.ProjectRef == Project01);
+        Assert.That(thirdSource.ParatextId, Is.EqualTo(willNotChange));
+        Assert.That(thirdSource.Name, Is.EqualTo(paratextSettings.FullName));
+        Assert.That(thirdSource.IsRightToLeft, Is.EqualTo(paratextSettings.IsRightToLeft));
+        Assert.That(thirdSource.WritingSystem.Region, Is.EqualTo(paratextSettings.LanguageRegion));
+        Assert.That(thirdSource.WritingSystem.Script, Is.EqualTo(paratextSettings.LanguageScript));
+        Assert.That(thirdSource.WritingSystem.Tag, Is.EqualTo(paratextSettings.LanguageTag));
+
+        TranslateSource thirdUnchangedSource = env
+            .RealtimeService.GetRepository<SFProject>()
+            .Get(Project04)
+            .TranslateConfig.DraftConfig.TrainingSources.Single(s => s.ProjectRef == Project02);
+        Assert.That(thirdUnchangedSource.ParatextId, Is.EqualTo(willNotChange));
+        Assert.That(thirdUnchangedSource.Name, Is.EqualTo(willNotChange));
+        Assert.That(thirdUnchangedSource.IsRightToLeft, Is.False);
+        Assert.That(thirdUnchangedSource.WritingSystem.Region, Is.EqualTo(willNotChange));
+        Assert.That(thirdUnchangedSource.WritingSystem.Script, Is.EqualTo(willNotChange));
+        Assert.That(thirdUnchangedSource.WritingSystem.Tag, Is.EqualTo(willNotChange));
     }
 
     private class TestEnvironment

@@ -35,8 +35,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     public const string ErrorAlreadyConnectedKey = "error-already-connected";
     internal const string ProjectSettingValueUnset = "unset";
     internal const string InvalidEmailAddress = "invalid-email-address";
-    private static readonly IEqualityComparer<Dictionary<string, string>> _permissionDictionaryEqualityComparer =
-        new DictionaryComparer<string, string>();
     private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly ILogger<SFProjectService> _logger;
     private readonly IMachineProjectService _machineProjectService;
@@ -179,7 +177,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 TranslateSource source = await GetTranslateSourceAsync(
                     conn,
                     curUserId,
-                    projectDoc.Id,
                     settings.SourceParatextId,
                     skipSync: true,
                     updatePermissions: false,
@@ -413,7 +410,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             source = await GetTranslateSourceAsync(
                 conn,
                 curUserId,
-                projectId,
                 settings.SourceParatextId,
                 skipSync: true,
                 updatePermissions: true,
@@ -436,7 +432,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             TranslateSource translateSource = await GetTranslateSourceAsync(
                 conn,
                 curUserId,
-                projectId,
                 paratextId,
                 skipSync: false,
                 // Only update permissions if this project is different to the preceding projects
@@ -462,7 +457,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             TranslateSource translateSource = await GetTranslateSourceAsync(
                 conn,
                 curUserId,
-                projectId,
                 paratextId,
                 skipSync: false,
                 // Only update permissions if this project is different to the preceding projects
@@ -1286,6 +1280,157 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (!HasParatextRole(projectDoc.Data, curUserId))
             throw new ForbiddenException();
         await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.TranslateConfig.DraftConfig.UsfmConfig, config));
+    }
+
+    /// <summary>
+    /// Updates the source configuration for any projects that reference the specified project.
+    /// </summary>
+    /// <param name="projectId">The project identifier.</param>
+    /// <param name="settings">The Paratext settings for the project.</param>
+    /// <returns>An asynchronous task.</returns>
+    /// <remarks>This should only be called on sync.</remarks>
+    public async Task UpdateProjectReferencesAsync(string projectId, ParatextSettings settings)
+    {
+        // Get the projects referencing the specified project id
+        string[] sourceProjectIds =
+        [
+            .. RealtimeService
+                .QuerySnapshots<SFProject>()
+                .Where(p =>
+                    (p.TranslateConfig.Source != null && p.TranslateConfig.Source.ProjectRef == projectId)
+                    || p.TranslateConfig.DraftConfig.DraftingSources.Any(s => s.ProjectRef == projectId)
+                    || p.TranslateConfig.DraftConfig.TrainingSources.Any(s => s.ProjectRef == projectId)
+                )
+                .Select(p => p.Id),
+        ];
+
+        // Connect without a username, as there is no guarantee a user will have access to all projects referencing this one.
+        await using IConnection conn = await RealtimeService.ConnectAsync();
+        foreach (string sourceProjectId in sourceProjectIds)
+        {
+            IDocument<SFProject> projectDoc = conn.Get<SFProject>(sourceProjectId);
+            await projectDoc.FetchAsync();
+            if (!projectDoc.IsLoaded)
+            {
+                // The project does not exist, so there is nothing to update
+                continue;
+            }
+
+            await projectDoc.SubmitJson0OpAsync(op =>
+            {
+                if (projectDoc.Data.TranslateConfig.Source?.ProjectRef == projectId)
+                {
+                    op.Set(p => p.TranslateConfig.Source.IsRightToLeft, settings.IsRightToLeft);
+                    if (settings.LanguageTag is not null)
+                    {
+                        op.Set(pd => pd.TranslateConfig.Source.WritingSystem.Tag, settings.LanguageTag);
+                    }
+
+                    if (settings.LanguageScript is not null)
+                    {
+                        op.Set(pd => pd.TranslateConfig.Source.WritingSystem.Script, settings.LanguageScript);
+                    }
+
+                    if (settings.LanguageRegion is not null)
+                    {
+                        op.Set(pd => pd.TranslateConfig.Source.WritingSystem.Region, settings.LanguageRegion);
+                    }
+
+                    if (settings.FullName is not null)
+                    {
+                        op.Set(pd => pd.TranslateConfig.Source.Name, settings.FullName);
+                    }
+                }
+
+                for (int i = 0; i < projectDoc.Data.TranslateConfig.DraftConfig.TrainingSources.Count; i++)
+                {
+                    // Skip training sources that are not the specified project
+                    if (projectDoc.Data.TranslateConfig.DraftConfig.TrainingSources[i].ProjectRef != projectId)
+                    {
+                        continue;
+                    }
+
+                    // Copy to a local variable to capture scope
+                    int index = i;
+                    op.Set(
+                        p => p.TranslateConfig.DraftConfig.TrainingSources[index].IsRightToLeft,
+                        settings.IsRightToLeft
+                    );
+                    if (settings.LanguageTag is not null)
+                    {
+                        op.Set(
+                            pd => pd.TranslateConfig.DraftConfig.TrainingSources[index].WritingSystem.Tag,
+                            settings.LanguageTag
+                        );
+                    }
+
+                    if (settings.LanguageScript is not null)
+                    {
+                        op.Set(
+                            pd => pd.TranslateConfig.DraftConfig.TrainingSources[index].WritingSystem.Script,
+                            settings.LanguageScript
+                        );
+                    }
+
+                    if (settings.LanguageRegion is not null)
+                    {
+                        op.Set(
+                            pd => pd.TranslateConfig.DraftConfig.TrainingSources[index].WritingSystem.Region,
+                            settings.LanguageRegion
+                        );
+                    }
+
+                    if (settings.FullName is not null)
+                    {
+                        op.Set(pd => pd.TranslateConfig.DraftConfig.TrainingSources[index].Name, settings.FullName);
+                    }
+                }
+
+                for (int i = 0; i < projectDoc.Data.TranslateConfig.DraftConfig.DraftingSources.Count; i++)
+                {
+                    // Skip drafting sources that are not the specified project
+                    if (projectDoc.Data.TranslateConfig.DraftConfig.DraftingSources[i].ProjectRef != projectId)
+                    {
+                        continue;
+                    }
+
+                    // Copy to a local variable to capture scope
+                    int index = i;
+                    op.Set(
+                        p => p.TranslateConfig.DraftConfig.DraftingSources[index].IsRightToLeft,
+                        settings.IsRightToLeft
+                    );
+                    if (settings.LanguageTag is not null)
+                    {
+                        op.Set(
+                            pd => pd.TranslateConfig.DraftConfig.DraftingSources[index].WritingSystem.Tag,
+                            settings.LanguageTag
+                        );
+                    }
+
+                    if (settings.LanguageScript is not null)
+                    {
+                        op.Set(
+                            pd => pd.TranslateConfig.DraftConfig.DraftingSources[index].WritingSystem.Script,
+                            settings.LanguageScript
+                        );
+                    }
+
+                    if (settings.LanguageRegion is not null)
+                    {
+                        op.Set(
+                            pd => pd.TranslateConfig.DraftConfig.DraftingSources[index].WritingSystem.Region,
+                            settings.LanguageRegion
+                        );
+                    }
+
+                    if (settings.FullName is not null)
+                    {
+                        op.Set(pd => pd.TranslateConfig.DraftConfig.DraftingSources[index].Name, settings.FullName);
+                    }
+                }
+            });
+        }
     }
 
     protected override async Task AddUserToProjectAsync(
@@ -2240,7 +2385,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// </summary>
     /// <param name="conn">The connection to the realtime server.</param>
     /// <param name="curUserId">The current user identifier.</param>
-    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="paratextId">The paratext identifier.</param>
     /// <param name="skipSync">If <c>true</c> the project will not be synced even if it is not already synced.</param>
     /// <param name="updatePermissions">If <c>true</c> update the project's permissions.</param>
@@ -2252,7 +2396,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     private async Task<TranslateSource> GetTranslateSourceAsync(
         IConnection conn,
         string curUserId,
-        string sfProjectId,
         string paratextId,
         bool skipSync,
         bool updatePermissions,
@@ -2315,16 +2458,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             projectCreated || (sourceProject is not null && sourceProject.Sync.LastSyncSuccessful == false);
         if (syncNeeded && !skipSync)
         {
-            string jobId = await _syncService.SyncAsync(
-                new SyncConfig { ProjectId = sourceProjectRef, UserId = curUserId }
-            );
-
-            // After syncing the source project (which will take some time), ensure that the writing system matches
-            // what is in the project document
-            _backgroundJobClient.ContinueJobWith<IMachineProjectService>(
-                jobId,
-                r => r.UpdateTranslationSourcesAsync(curUserId, sfProjectId)
-            );
+            // This will also update any references in the target project to the source project
+            await _syncService.SyncAsync(new SyncConfig { ProjectId = sourceProjectRef, UserId = curUserId });
         }
         else if (updatePermissions)
         {

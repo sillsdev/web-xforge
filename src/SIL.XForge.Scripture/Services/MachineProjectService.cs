@@ -486,106 +486,6 @@ public class MachineProjectService(
     }
 
     /// <summary>
-    /// Updates the language configuration for the training and drafting sources.
-    /// </summary>
-    /// <param name="curUserId">The current user identifier.</param>
-    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
-    /// <returns>The asynchronous task.</returns>
-    /// <exception cref="DataNotFoundException">The project or user secret does not exist.</exception>
-    public async Task UpdateTranslationSourcesAsync(string curUserId, string sfProjectId)
-    {
-        // Get the user secret
-        if (!(await userSecrets.TryGetAsync(curUserId)).TryResult(out UserSecret userSecret))
-        {
-            throw new DataNotFoundException("The user secret does not exist.");
-        }
-
-        // Load the project from the realtime service
-        await using IConnection conn = await realtimeService.ConnectAsync(curUserId);
-        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
-        if (!projectDoc.IsLoaded)
-        {
-            throw new DataNotFoundException("The project does not exist.");
-        }
-
-        // Ensure that name, writing system and RTL are correct for training sources
-        for (int index = 0; index < projectDoc.Data.TranslateConfig.DraftConfig.TrainingSources.Count; index++)
-        {
-            // Retrieve the Paratext settings for the training source
-            ParatextSettings? translateSourceSettings = paratextService.GetParatextSettings(
-                userSecret,
-                projectDoc.Data.TranslateConfig.DraftConfig.TrainingSources[index].ParatextId
-            );
-
-            // Copy the index so that it is captured correctly in the lambda
-            int pos = index;
-            if (translateSourceSettings is not null)
-            {
-                await projectDoc.SubmitJson0OpAsync(op =>
-                {
-                    op.Set(
-                        pd => pd.TranslateConfig.DraftConfig.TrainingSources[pos].IsRightToLeft,
-                        translateSourceSettings.IsRightToLeft
-                    );
-                    if (translateSourceSettings.LanguageTag is not null)
-                    {
-                        op.Set(
-                            pd => pd.TranslateConfig.DraftConfig.TrainingSources[pos].WritingSystem.Tag,
-                            translateSourceSettings.LanguageTag
-                        );
-                    }
-
-                    if (translateSourceSettings.FullName is not null)
-                    {
-                        op.Set(
-                            pd => pd.TranslateConfig.DraftConfig.TrainingSources[pos].Name,
-                            translateSourceSettings.FullName
-                        );
-                    }
-                });
-            }
-        }
-
-        // Ensure that name, writing system and RTL are correct for drafting sources
-        for (int index = 0; index < projectDoc.Data.TranslateConfig.DraftConfig.DraftingSources.Count; index++)
-        {
-            // Retrieve the Paratext settings for the drafting source
-            ParatextSettings? translateSourceSettings = paratextService.GetParatextSettings(
-                userSecret,
-                projectDoc.Data.TranslateConfig.DraftConfig.DraftingSources[index].ParatextId
-            );
-
-            // Copy the index so that it is captured correctly in the lambda
-            int pos = index;
-            if (translateSourceSettings is not null)
-            {
-                await projectDoc.SubmitJson0OpAsync(op =>
-                {
-                    op.Set(
-                        pd => pd.TranslateConfig.DraftConfig.DraftingSources[pos].IsRightToLeft,
-                        translateSourceSettings.IsRightToLeft
-                    );
-                    if (translateSourceSettings.LanguageTag is not null)
-                    {
-                        op.Set(
-                            pd => pd.TranslateConfig.DraftConfig.DraftingSources[pos].WritingSystem.Tag,
-                            translateSourceSettings.LanguageTag
-                        );
-                    }
-
-                    if (translateSourceSettings.FullName is not null)
-                    {
-                        op.Set(
-                            pd => pd.TranslateConfig.DraftConfig.DraftingSources[pos].Name,
-                            translateSourceSettings.FullName
-                        );
-                    }
-                });
-            }
-        }
-    }
-
-    /// <summary>
     /// Builds a project on Serval, including syncing and any required setup.
     /// </summary>
     /// <param name="curUserId">The current user identifier.</param>
@@ -1091,8 +991,11 @@ public class MachineProjectService(
                     if (!string.IsNullOrWhiteSpace(writingSystem.Tag))
                     {
                         await projectDoc.SubmitJson0OpAsync(op =>
-                            op.Set(p => p.TranslateConfig.Source.WritingSystem.Tag, writingSystem.Tag)
-                        );
+                        {
+                            op.Set(p => p.TranslateConfig.Source.WritingSystem.Region, writingSystem.Region);
+                            op.Set(p => p.TranslateConfig.Source.WritingSystem.Script, writingSystem.Script);
+                            op.Set(p => p.TranslateConfig.Source.WritingSystem.Tag, writingSystem.Tag);
+                        });
                     }
                 }
             }

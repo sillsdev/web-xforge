@@ -68,6 +68,8 @@ public class MachineProjectServiceTests
     private const string ParallelCorpus03 = "parallelCorpus03";
     private const string TranslationEngine01 = "translationEngine01";
     private const string TranslationEngine02 = "translationEngine02";
+    private const string LanguageRegion = "nz";
+    private const string LanguageScript = "latn";
     private const string LanguageTag = "he";
 
     [Test]
@@ -3725,89 +3727,6 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task UpdateTranslationSourcesAsync_DoesNotUpdateIfNoDraftingSources()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        await env.Service.UpdateTranslationSourcesAsync(User01, Project01);
-        env.ParatextService.DidNotReceiveWithAnyArgs().GetParatextSettings(Arg.Any<UserSecret>(), Paratext01);
-    }
-
-    [Test]
-    public void UpdateTranslationSourcesAsync_ThrowsMissingProjectException()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.UpdateTranslationSourcesAsync(User01, "invalid_project_id")
-        );
-    }
-
-    [Test]
-    public void UpdateTranslationSourcesAsync_ThrowsMissingUserSecretException()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.UpdateTranslationSourcesAsync("invalid_user_id", Project01)
-        );
-    }
-
-    [Test]
-    public async Task UpdateTranslationSourcesAsync_UpdatesDraftingSources()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        await env.Projects.UpdateAsync(
-            p => p.Id == Project01,
-            u =>
-                u.Set(
-                    s => s.TranslateConfig.DraftConfig,
-                    new DraftConfig { DraftingSources = [new TranslateSource { ParatextId = Paratext01 }] }
-                )
-        );
-
-        // SUT
-        await env.Service.UpdateTranslationSourcesAsync(User01, Project01);
-        env.ParatextService.Received(1).GetParatextSettings(Arg.Any<UserSecret>(), Paratext01);
-        Assert.IsTrue(env.Projects.Get(Project01).TranslateConfig.DraftConfig.DraftingSources[0].IsRightToLeft);
-        Assert.AreEqual(
-            LanguageTag,
-            env.Projects.Get(Project01).TranslateConfig.DraftConfig.DraftingSources[0]?.WritingSystem.Tag
-        );
-    }
-
-    [Test]
-    public async Task UpdateTranslationSourcesAsync_UpdatesTrainingSources()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        await env.Projects.UpdateAsync(
-            p => p.Id == Project01,
-            u =>
-                u.Set(
-                    s => s.TranslateConfig.DraftConfig,
-                    new DraftConfig { TrainingSources = [new TranslateSource { ParatextId = Paratext01 }] }
-                )
-        );
-
-        // SUT
-        await env.Service.UpdateTranslationSourcesAsync(User01, Project01);
-        env.ParatextService.Received(1).GetParatextSettings(Arg.Any<UserSecret>(), Paratext01);
-        Assert.IsTrue(env.Projects.Get(Project01).TranslateConfig.DraftConfig.TrainingSources[0].IsRightToLeft);
-        Assert.AreEqual(
-            LanguageTag,
-            env.Projects.Get(Project01).TranslateConfig.DraftConfig.TrainingSources[0].WritingSystem.Tag
-        );
-    }
-
-    [Test]
     public async Task UploadAdditionalTrainingDataAsync_CreatesTheCorpusIfMissing()
     {
         // Set up test environment
@@ -4325,7 +4244,15 @@ public class MachineProjectServiceTests
                 .Returns(new WritingSystem { Tag = "en" });
             ParatextService
                 .GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
-                .Returns(new ParatextSettings { IsRightToLeft = true, LanguageTag = LanguageTag });
+                .Returns(
+                    new ParatextSettings
+                    {
+                        IsRightToLeft = true,
+                        LanguageTag = LanguageTag,
+                        LanguageRegion = LanguageRegion,
+                        LanguageScript = LanguageScript,
+                    }
+                );
 
             FileSystemService = Substitute.For<IFileSystemService>();
             FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(true);

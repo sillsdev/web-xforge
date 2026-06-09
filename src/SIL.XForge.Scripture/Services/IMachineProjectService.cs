@@ -28,7 +28,4 @@ public interface IMachineProjectService
         string buildState,
         Uri websiteUrl
     );
-
-    [Mutex]
-    Task UpdateTranslationSourcesAsync(string curUserId, string sfProjectId);
 }

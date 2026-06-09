@@ -910,7 +910,6 @@ public class ParatextSyncRunnerTests
             .Returns([TestEnvironment.ParatextProjectUser01]);
         const int fontSize = 10;
         const string font = ProjectSettings.defaultFontName;
-        const string sourceWritingSystemTag = "en";
         SFProject project = env.GetProject();
         Assert.That(project.DefaultFontSize, Is.EqualTo(fontSize));
         Assert.That(project.DefaultFont, Is.EqualTo(font));
@@ -918,7 +917,6 @@ public class ParatextSyncRunnerTests
         Assert.IsNull(project.CopyrightBanner);
         Assert.IsNull(project.CopyrightNotice);
         Assert.IsNull(project.Visibility);
-        Assert.That(project.TranslateConfig.Source.WritingSystem.Tag, Is.EqualTo(sourceWritingSystemTag));
         const int newFontSize = 16;
         const string newFont = "Doulos SIL";
         const string customIcon = "customIcon01";
@@ -968,7 +966,6 @@ public class ParatextSyncRunnerTests
         Assert.That(project.WritingSystem.Region, Is.EqualTo(newWritingSystemRegion));
         Assert.That(project.WritingSystem.Script, Is.EqualTo(newWritingSystemScript));
         Assert.That(project.WritingSystem.Tag, Is.EqualTo(newWritingSystemTag));
-        Assert.That(project.TranslateConfig.Source!.WritingSystem.Tag, Is.EqualTo(newWritingSystemTag));
         Assert.That(project.TranslateConfig.ProjectType, Is.EqualTo(newProjectType));
         Assert.That(project.TranslateConfig.BaseProject!.ParatextId, Is.EqualTo(newBaseProjectParatextId));
         Assert.That(project.TranslateConfig.BaseProject.ShortName, Is.EqualTo(newBaseProjectShortName));
@@ -1084,9 +1081,7 @@ public class ParatextSyncRunnerTests
 
         SFProject project = env.GetProject();
         env.ParatextService.Received().GetParatextSettings(Arg.Any<UserSecret>(), "target");
-        env.ParatextService.Received().GetParatextSettings(Arg.Any<UserSecret>(), "source");
         Assert.That(project.IsRightToLeft, Is.True);
-        Assert.That(project.TranslateConfig.Source.IsRightToLeft, Is.False);
     }
 
     [Test]
