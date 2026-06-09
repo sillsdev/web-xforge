@@ -34,5 +34,5 @@ h3:first-of-type {
   border-radius: 12px;
 
   color: colors.$info-color;
-  background-color: #e8f0fe;
+  background-color: rgba(colors.$info-color, 0.12);
 }

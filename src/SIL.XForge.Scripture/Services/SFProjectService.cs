@@ -2470,9 +2470,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         // If it is not a project, see if there is a matching resource
         sourcePTProject ??=
             resources.SingleOrDefault(r => r.ParatextId == paratextId)
-            ?? throw new DataNotFoundException(
-                $"Specified source Paratext project {paratextId} not found in Scripture Forge."
-            );
+            ?? throw new DataNotFoundException($"The source paratext project {paratextId} does not exist.");
 
         // Get the users who will access this source resource or project
         IEnumerable<string> userIds = userRoles is not null ? userRoles.Keys : [curUserId];
