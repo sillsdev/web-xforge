@@ -326,7 +326,9 @@ a {
 
 .detail-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  // The min width of the columns should be big enough for the Timing card to show dates and
+  // durations without truncating.
+  grid-template-columns: repeat(auto-fill, minmax(285px, 1fr));
   gap: 12px 24px;
   margin-bottom: 16px;
 }
@@ -392,7 +394,8 @@ a {
 }
 
 .pt-project-id {
-  max-width: 21ch;
+  // Wrap the PT Project ID where it will align with the SF IDs.
+  max-width: 25ch;
 }
 
 .detail-area-stacked-keyvalues {
@@ -468,10 +471,31 @@ a {
 
 .detail-project-books-meta {
   align-self: flex-start;
+  // Help SF project ID truncate within the width.
+  max-width: 100%;
+}
+
+.input-shortname {
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.time-and-duration {
+  display: inline-block;
+  max-width: 100%;
+  // The Timing card should be given enough width to display its content without needing to
+  // overflow. But if it does need to overflow, truncate and use an ellipsis.
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .detail-project-books-id {
   font-family: monospace;
+  // Truncate the SF project ID, which may be needed if the shortname is long.
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .detail-actions {
