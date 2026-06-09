@@ -947,8 +947,6 @@ describe('DraftGenerationComponent', () => {
 
       expect(env.component.currentPage).toBe('initial');
       expect(env.component['draftJob']).not.toBeNull();
-      // FIXME This assertion does nothing because it's misusing anything()
-      // expect(mockDraftGenerationService.startBuildOrGetActiveBuild).not.toHaveBeenCalledWith(anything());
       expect(mockDialogService.message).toHaveBeenCalledTimes(1);
     });
 

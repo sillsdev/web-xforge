@@ -516,8 +516,8 @@ This change is additive: builds that don't include a target project entry in `Tr
 
 - [x] Unit tests for `NewDraftLogicHandler` (chapter selection, eligibility, training limits)
 - [x] Unit tests for `NewDraftComponent` (step navigation, form state, error display)
-- [ ] Unit tests for `scripture-range.ts` (VerboseScriptureRange, ChapterSet)
-- [ ] Update/fix existing tests marked with FIXME/DO_NOT_MERGE
+- [x] Unit tests for `scripture-range.ts` (VerboseScriptureRange, ChapterSet)
+- [x] Update/fix existing tests marked with FIXME/DO_NOT_MERGE
 
 ### Work that still needs to be defined
 
