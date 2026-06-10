@@ -84,30 +84,8 @@ public class UsersRpcController : RpcControllerBase
         return Ok();
     }
 
-    public async Task<IRpcMethodResult> LinkParatextAccount(string primaryId, string secondaryId)
-    {
-        try
-        {
-            await _userService.LinkParatextAccountAsync(primaryId, secondaryId);
-            return Ok();
-        }
-        catch (ArgumentException e)
-        {
-            return InvalidParamsError(e.Message);
-        }
-        catch (Exception)
-        {
-            _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string>
-                {
-                    { "method", "LinkParatextAccount" },
-                    { "primaryId", primaryId },
-                    { "secondaryId", secondaryId },
-                }
-            );
-            throw;
-        }
-    }
+    // Linking Paratext accounts is currently disabled
+    public async Task<IRpcMethodResult> LinkParatextAccount(string primaryId, string secondaryId) => ForbiddenError();
 
     public async Task<IRpcMethodResult> UpdateAvatarFromDisplayName()
     {
