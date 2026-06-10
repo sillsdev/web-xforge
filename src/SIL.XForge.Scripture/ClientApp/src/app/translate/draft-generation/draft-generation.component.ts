@@ -343,13 +343,13 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       return;
     }
 
-    const projectId = this.activatedProject.projectId;
-    if (projectId != null) {
-      if (this.featureFlags.partialBookDrafting.enabled) {
+    if (this.featureFlags.partialBookDrafting.enabled) {
+      const projectId = this.activatedProject.projectId;
+      if (projectId != null) {
         await this.router.navigate(['/projects', projectId, 'draft-generation', 'new-draft']);
-      } else {
-        this.currentPage = 'steps';
       }
+    } else {
+      this.currentPage = 'steps';
     }
   }
 
