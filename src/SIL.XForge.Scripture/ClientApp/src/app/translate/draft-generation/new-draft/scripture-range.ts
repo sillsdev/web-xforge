@@ -108,6 +108,14 @@ export class VerboseScriptureRange {
     }
   }
 
+  clone(): VerboseScriptureRange {
+    const result = new VerboseScriptureRange('');
+    for (const [bookId, chapters] of this.books) {
+      result.books.set(bookId, chapters.clone());
+    }
+    return result;
+  }
+
   toString(): string {
     return Array.from(this.books.entries())
       .map(([bookId, chapters]) => bookId + chapters.toString())

@@ -8,6 +8,12 @@ import { DraftSourcesAsArrays } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
 import { ChapterSet, VerboseScriptureRange } from './scripture-range';
 
+/**
+ * Minimum number of chapters a source book must have before it is offered for partial (chapter-level) drafting.
+ * Books smaller than this are only ever drafted in full.
+ */
+const MIN_SOURCE_CHAPTERS_FOR_PARTIAL_DRAFTING = 12;
+
 @Injectable({ providedIn: 'root' })
 /** Like ProgressService, but provides a VerboseScriptureRange instead of raw progress data */
 export class DraftProgressService {
@@ -271,8 +277,7 @@ export class NewDraftLogicHandler {
       );
     }
 
-    const currentRange = this.selectedDraftingScriptureRange$.getValue();
-    const newDraftingScriptureRange = new VerboseScriptureRange(currentRange.toString());
+    const newDraftingScriptureRange = this.selectedDraftingScriptureRange$.getValue().clone();
     newDraftingScriptureRange.books.set(bookId, selectedChapters);
     this.selectedDraftingScriptureRange$.next(newDraftingScriptureRange);
   }
@@ -283,7 +288,7 @@ export class NewDraftLogicHandler {
 
     return (
       sourceChapterCount != null &&
-      sourceChapterCount >= 12 &&
+      sourceChapterCount >= MIN_SOURCE_CHAPTERS_FOR_PARTIAL_DRAFTING &&
       targetChaptersWithContent != null &&
       targetChaptersWithContent >= 1
     );
@@ -309,8 +314,7 @@ export class NewDraftLogicHandler {
       );
     }
 
-    const currentRange = this.selectedTargetTrainingScriptureRange$.getValue();
-    const newTargetTrainingScriptureRange = new VerboseScriptureRange(currentRange.toString());
+    const newTargetTrainingScriptureRange = this.selectedTargetTrainingScriptureRange$.getValue().clone();
     newTargetTrainingScriptureRange.books.set(bookId, selectedChapters);
     this.selectedTargetTrainingScriptureRange$.next(newTargetTrainingScriptureRange);
   }
