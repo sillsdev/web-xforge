@@ -23,7 +23,6 @@ namespace SIL.XForge.Services;
 /// </summary>
 public class UserService : IUserService
 {
-    private const string PTLinkedToAnotherUserKey = "paratext-linked-to-another-user";
     private const string EMAIL_PATTERN = "^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9.-]+[.]+[a-zA-Z]{2,}$";
     private static readonly IEqualityComparer<IList<string>> _listStringComparer = SequenceEqualityComparer.Create(
         EqualityComparer<string>.Default
@@ -153,48 +152,6 @@ public class UserService : IUserService
     }
 
     /// <summary>
-    /// Links the secondary Auth0 account (Paratext account) to the primary Auth0 account for the specified user.
-    /// </summary>
-    public async Task LinkParatextAccountAsync(string primaryAuthId, string paratextAuthId)
-    {
-        if (!await CheckIsParatextProfileAndFirstLogin(paratextAuthId))
-        {
-            // Another auth0 profile already exists that is linked to the paratext account
-            throw new ArgumentException(PTLinkedToAnotherUserKey);
-        }
-
-        JObject secondaryAuth0UserProfile = JObject.Parse(await _authService.GetUserAsync(paratextAuthId));
-        string secondarySFUserId = (string)secondaryAuth0UserProfile["app_metadata"]["xf_user_id"];
-
-        await _authService.LinkAccounts(primaryAuthId, paratextAuthId);
-        JObject userProfile = JObject.Parse(await _authService.GetUserAsync(primaryAuthId));
-        var primaryUserId = (string)userProfile["app_metadata"]["xf_user_id"];
-        var identities = (JArray)userProfile["identities"];
-        JObject ptIdentity = identities.OfType<JObject>().First(i => (string)i["connection"] == "paratext");
-        var ptId = (string)ptIdentity["user_id"];
-        var ptTokens = new Tokens
-        {
-            AccessToken = (string)ptIdentity["access_token"],
-            RefreshToken = (string)ptIdentity["refresh_token"],
-        };
-        await _userSecrets.UpdateAsync(primaryUserId, update => update.Set(us => us.ParatextTokens, ptTokens), true);
-
-        await using IConnection conn = await _realtimeService.ConnectAsync(primaryUserId);
-        IDocument<User> userDoc = await conn.FetchAsync<User>(primaryUserId);
-        await userDoc.SubmitJson0OpAsync(op => op.Set(u => u.ParatextId, GetIdpIdFromAuthId(ptId)));
-        IDocument<User> secondaryUserDoc = await conn.FetchAsync<User>(secondarySFUserId);
-        if (secondaryUserDoc.Data != null)
-        {
-            this._logger.LogInformation(
-                $"UserService.LinkParatextAccountAsync() will remove the paratextId and tokens from SF user id {secondarySFUserId}. Perhaps a race condition occurred, resulting in a situation like SF-1849. This secondary SF user and associated user_secret can probably be deleted."
-            );
-            await secondaryUserDoc.SubmitJson0OpAsync(op => op.Set(u => u.ParatextId, null));
-        }
-
-        await _userSecrets.UpdateAsync(secondarySFUserId, update => update.Set(us => us.ParatextTokens, null));
-    }
-
-    /// <summary>
     /// Updates the user avatar on their Auth0 account based off their display name
     /// </summary>
     public async Task UpdateAvatarFromDisplayNameAsync(string curUserId, string authId)
@@ -298,14 +255,4 @@ public class UserService : IUserService
     /// Gets the identity provider ID from the specified Auth0 ID.
     /// </summary>
     private static string GetIdpIdFromAuthId(string authId) => authId.Split('|')[1];
-
-    private async Task<bool> CheckIsParatextProfileAndFirstLogin(string authId)
-    {
-        JObject userProfile = JObject.Parse(await _authService.GetUserAsync(authId));
-        // Check that the profile for 'authId' is from a paratext connection. If it is not, then
-        // this 'authId' is not from an account with paratext as the primary connection.
-        if (!((string)userProfile["user_id"]).Contains("paratext"))
-            return false;
-        return (int)userProfile["logins_count"] <= 1;
-    }
 }
