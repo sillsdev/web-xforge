@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router.Defaults;
-using Microsoft.AspNetCore.Hosting;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
@@ -62,9 +61,8 @@ public class UsersRpcControllerTests
             userAccessor.SystemRoles.Returns(Roles);
             UserService = Substitute.For<IUserService>();
             var authService = Substitute.For<IAuthService>();
-            var hostingEnv = Substitute.For<IWebHostEnvironment>();
             ExceptionHandler = Substitute.For<IExceptionHandler>();
-            Controller = new UsersRpcController(userAccessor, UserService, authService, hostingEnv, ExceptionHandler);
+            Controller = new UsersRpcController(userAccessor, UserService, authService, ExceptionHandler);
         }
 
         public UsersRpcController Controller { get; }
