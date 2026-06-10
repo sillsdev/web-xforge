@@ -258,7 +258,12 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
       const updateDelta = this.updateSegments(editor, isOnline);
       if (updateDelta.ops != null && updateDelta.ops.length > 0) {
         // Clean up blanks in quill editor. This may result in re-entering the update() method.
-        editor.updateContents(updateDelta, source);
+        // We force the source to be user for blank ops so that any created when coming online are sent to ShareDB.
+        // (Blank ops created by user deletion of text already have the source of 'user'.)
+        const hasBlank = updateDelta.ops.some(
+          op => op.insert != null && typeof op.insert === 'object' && op.insert.blank === true
+        );
+        editor.updateContents(updateDelta, hasBlank ? 'user' : source);
       }
 
       const removeDuplicateDelta: Delta = this.fixDeltaForDuplicateEmbeds();
