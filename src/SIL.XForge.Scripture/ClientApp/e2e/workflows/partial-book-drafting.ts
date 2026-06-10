@@ -296,13 +296,22 @@ async function importDraft(page: Page, user: UserEmulator, context: ScreenshotCo
   await user.click(page.getByRole('combobox', { name: 'Choose a project' }));
   await user.type(TARGET_PROJECT_SHORT_NAME);
   await user.click(page.getByRole('option', { name: `${TARGET_PROJECT_SHORT_NAME} -` }));
-  await user.click(page.getByRole('button', { name: 'Next' }));
-  await user.check(page.getByRole('checkbox', { name: /I understand that existing content will be overwritten/ }));
-  await user.click(page.getByRole('button', { name: 'Import' }));
+  // Advance from project selection. When the drafted chapters are empty in the target there is no overwrite step, and
+  // this button starts the import directly; otherwise it advances to the overwrite confirmation.
+  await user.click(page.locator('[data-test-id="step-1-next"]'));
+
+  // Overwrite confirmation only appears when drafted chapters already have content in the target. We're importing
+  // untranslated chapters, so it should be skipped — but handle it defensively in case the seed changes.
+  const understand = page.getByRole('checkbox', { name: /I understand that existing content will be overwritten/ });
+  if (await understand.isVisible().catch(() => false)) {
+    await user.check(understand);
+    await user.click(page.locator('[data-test-id="step-5-next"]'));
+  }
+
   await expect(page.getByText('Import complete', { exact: true })).toBeVisible({ timeout: 5 * 60_000 });
 
   // Finish the wizard through the sync step, as a real user would, so the imported draft lands in the project.
-  await user.click(page.getByRole('button', { name: 'Next' }));
+  await user.click(page.locator('[data-test-id="step-6-next"]'));
   await user.click(page.locator('[data-test-id="step-7-sync"]'));
   await expect(page.getByText(`The draft has been imported into ${TARGET_PROJECT_SHORT_NAME}`)).toBeVisible({
     timeout: E2E_SYNC_DEFAULT_TIMEOUT

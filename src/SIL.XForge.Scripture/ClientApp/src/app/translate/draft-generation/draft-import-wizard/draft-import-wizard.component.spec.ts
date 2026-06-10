@@ -214,6 +214,60 @@ describe('DraftImportWizardComponent', () => {
     verify(mockMatDialogRef.close(true)).once();
   }));
 
+  it('applies only the drafted chapters for a partial-book draft', fakeAsync(() => {
+    // The build drafted only Genesis 30-32, not the whole book.
+    configurePartialDraft('GEN30-32');
+
+    const env = new TestEnvironment();
+    env.wait();
+
+    // project04 has text only in Genesis 1, which is not part of the drafted range, so nothing will be overwritten.
+    env.selectProject('paratext04');
+    env.clickNextButton(1);
+
+    // No overwrite confirmation, because none of the drafted chapters (30-32) have existing text in the target.
+    expect(env.component.showOverwriteConfirmation).toBe(false);
+
+    // Only the drafted chapters are applied — not the entire book (which would fail to retrieve undrafted chapters).
+    verify(
+      mockProjectService.onlineApplyPreTranslationToProject('project01', 'GEN30-32', anything(), anything())
+    ).once();
+
+    env.importDraft();
+    env.clickNextButton(6);
+    env.clickNextButton(7, 'skip');
+    env.clickNextButton(7, 'done');
+    verify(mockMatDialogRef.close(true)).once();
+  }));
+
+  it('scopes the overwrite confirmation to the drafted chapters', fakeAsync(() => {
+    // The build drafted Genesis 1-3; project04 has existing text in Genesis 1 only.
+    configurePartialDraft('GEN1-3');
+
+    const env = new TestEnvironment();
+    env.wait();
+
+    env.selectProject('paratext04');
+    env.clickNextButton(1);
+
+    // The overwrite warning covers only the drafted chapter that has existing text (Genesis 1), not every chapter
+    // with text in the book.
+    expect(env.component.showOverwriteConfirmation).toBe(true);
+    expect(env.component.booksWithExistingText.length).toEqual(1);
+    expect(env.component.booksWithExistingText.flatMap(b => b.chapterNumbersWithText)).toEqual([1]);
+
+    env.clickOverwriteCheckbox();
+    env.clickNextButton(5);
+
+    verify(mockProjectService.onlineApplyPreTranslationToProject('project01', 'GEN1-3', anything(), anything())).once();
+
+    env.importDraft();
+    env.clickNextButton(6);
+    env.clickNextButton(7, 'skip');
+    env.clickNextButton(7, 'done');
+    verify(mockMatDialogRef.close(true)).once();
+  }));
+
   it('can populate project select with previously selected project', fakeAsync(() => {
     const env = new TestEnvironment();
     env.wait();
@@ -426,6 +480,17 @@ function configureDraftForOneBook(): void {
     additionalInfo: {
       dateFinished: '2026-01-14T15:16:17.18+00:00',
       translationScriptureRanges: [{ projectId: 'P01', scriptureRange: 'GEN' }]
+    }
+  } as BuildDto;
+  TestBed.overrideProvider(MAT_DIALOG_DATA, { useValue: buildDto });
+}
+
+function configurePartialDraft(scriptureRange: string): void {
+  // Configure the draft as a partial-book range (e.g. specific chapters of a book)
+  const buildDto: BuildDto = {
+    additionalInfo: {
+      dateFinished: '2026-01-14T15:16:17.18+00:00',
+      translationScriptureRanges: [{ projectId: 'P01', scriptureRange }]
     }
   } as BuildDto;
   TestBed.overrideProvider(MAT_DIALOG_DATA, { useValue: buildDto });
