@@ -2278,7 +2278,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 BookId = doc["_id"].AsString,
                 VerseSegments = doc["verseSegments"].AsInt32,
                 BlankVerseSegments = doc["blankVerseSegments"].AsInt32,
-                // System.InvalidCastException: Unable to cast object of type 'MongoDB.Bson.BsonDocument' to type 'MongoDB.Bson.BsonArray'.
                 Chapters =
                 [
                     .. doc["chapters"]
