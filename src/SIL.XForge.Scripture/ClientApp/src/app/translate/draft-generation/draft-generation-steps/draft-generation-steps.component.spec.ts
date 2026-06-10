@@ -316,7 +316,6 @@ describe('DraftGenerationStepsComponent', () => {
         emptyBookNums
       );
       when(mockNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(true);
-      when(mockNllbLanguageService.isNllbLanguageAsync('xyz')).thenResolve(false);
       when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
@@ -533,6 +532,34 @@ describe('DraftGenerationStepsComponent', () => {
       ]);
       expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([{ number: 1, selected: true }]);
       expect(component.selectedTrainingBooksByProj('project01')).toEqual([{ number: 1, selected: true }]);
+    });
+
+    it('shows notice when project has no translated books', () => {
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      // all books
+      component.onTranslateBookSelect([1, 2, 3], config.draftingSources[0]);
+      fixture.detectChanges();
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      expect(component.selectedTrainingBooksByProj('project01').length).toBe(0);
+      expect(fixture.nativeElement.querySelector('.info-no-translated-books')).not.toBeNull();
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      expect(component.showBookSelectionError).toBe(false);
+      component.stepper.selectedIndex = 1;
+      fixture.detectChanges();
+      // deselect Genesis and Exodus
+      component.onTranslateBookSelect([3], config.draftingSources[0]);
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      // Genesis and Exodus becomes a selectable training book
+      expect(component.selectableTrainingBooksByProj('project01')).toEqual([
+        { number: 1, selected: false },
+        { number: 2, selected: false }
+      ]);
+      expect(fixture.nativeElement.querySelector('.info-no-translated-books')).toBeNull();
+      expect(component.showBookSelectionError).toBe(false);
     });
   });
 
