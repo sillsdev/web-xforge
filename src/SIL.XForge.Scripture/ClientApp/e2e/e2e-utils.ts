@@ -290,6 +290,21 @@ export async function disableFeatureFlag(page: Page, flag: string): Promise<void
   await setFeatureFlagState(page, flag, false);
 }
 
+/**
+ * Enables an experimental feature the way a real user would: via the user (avatar) menu's "Experimental features"
+ * dialog, rather than poking the developer settings or storage directly. The `featureName` must match the label shown
+ * in the dialog (e.g. "Enable chapter-level drafting & training"). Each feature defines its own availability check, so a
+ * given feature (and the menu item itself) may only appear for certain users/projects; ensure the calling test has
+ * satisfied that feature's prerequisites first.
+ */
+export async function enableExperimentalFeature(page: Page, featureName: string): Promise<void> {
+  await page.locator('#avatarId').click();
+  await page.getByRole('menuitem', { name: 'Experimental features' }).click();
+  // The checkbox is two-way bound to the feature flag, which persists to storage immediately on toggle.
+  await page.getByRole('checkbox', { name: featureName }).check();
+  await page.keyboard.press('Escape');
+}
+
 export async function enableDeveloperMode(page: Page, options = { closeMenu: false }): Promise<void> {
   await page.getByRole('button').filter({ hasText: 'help' }).click();
 
