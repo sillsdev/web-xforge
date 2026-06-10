@@ -46,7 +46,7 @@ import {
   NewDraftLogicHandler,
   scriptureRangeToBookListWithoutChapterDetail
 } from './new-draft-logic-handler';
-import { ChapterSet } from './scripture-range';
+import { ChapterSet, VerboseScriptureRange } from './scripture-range';
 import { DraftPendingUpdatesComponent } from './draft-pending-updates/draft-pending-updates.component';
 
 interface CopyrightMessage {
@@ -458,24 +458,32 @@ export class NewDraftComponent {
     };
   }
 
+  /**
+   * Maps a range's books to the `Book[]` shape the multi-select expects. With no `selectedIds`, every book is marked
+   * selected (the range itself is the selection); otherwise a book is selected iff its number is in `selectedIds`.
+   */
+  private toBookList(range: VerboseScriptureRange, selectedIds?: Set<number>): Book[] {
+    return scriptureRangeToBookListWithoutChapterDetail(range).map(id => {
+      const number = Canon.bookIdToNumber(id);
+      return { number, selected: selectedIds == null || selectedIds.has(number) };
+    });
+  }
+
+  private bookNumbersOf(range: VerboseScriptureRange): Set<number> {
+    return new Set(scriptureRangeToBookListWithoutChapterDetail(range).map(id => Canon.bookIdToNumber(id)));
+  }
+
   // Section: Drafting books selection
 
   get availableDraftingBooks(): Book[] {
-    return scriptureRangeToBookListWithoutChapterDetail(
-      this.logicHandler.availableDraftingScriptureRange$.getValue()
-    ).map(id => ({
-      number: Canon.bookIdToNumber(id),
-      selected: this.selectedDraftingBooks.some(book => book.number === Canon.bookIdToNumber(id))
-    }));
+    return this.toBookList(
+      this.logicHandler.availableDraftingScriptureRange$.getValue(),
+      this.bookNumbersOf(this.logicHandler.selectedDraftingScriptureRange$.getValue())
+    );
   }
 
   get selectedDraftingBooks(): Book[] {
-    return scriptureRangeToBookListWithoutChapterDetail(
-      this.logicHandler.selectedDraftingScriptureRange$.getValue()
-    ).map(id => ({
-      number: Canon.bookIdToNumber(id),
-      selected: true
-    }));
+    return this.toBookList(this.logicHandler.selectedDraftingScriptureRange$.getValue());
   }
 
   get booksOfferedForPartialDrafting(): string[] {
@@ -493,14 +501,19 @@ export class NewDraftComponent {
     this.clearStepErrorIfResolved();
   }
 
-  onDraftingChaptersBlurred(bookId: string, value: string): void {
-    let parsed: ChapterSet;
+  /** Parses a chapter-range input, recording an invalid_range error against `bookId` and returning null on failure. */
+  private parseChapterInput(bookId: string, value: string, errors: Map<string, ChapterInputError>): ChapterSet | null {
     try {
-      parsed = new ChapterSet(value);
+      return new ChapterSet(value);
     } catch {
-      this.draftingChapterErrors.set(bookId, { key: 'chapter_input.invalid_range' });
-      return;
+      errors.set(bookId, { key: 'chapter_input.invalid_range' });
+      return null;
     }
+  }
+
+  onDraftingChaptersBlurred(bookId: string, value: string): void {
+    const parsed = this.parseChapterInput(bookId, value, this.draftingChapterErrors);
+    if (parsed == null) return;
 
     const available = this.logicHandler.availableDraftingScriptureRange$.getValue().books.get(bookId);
     const badChapters = available != null ? parsed.difference(available) : parsed;
@@ -531,21 +544,14 @@ export class NewDraftComponent {
   // Section: Target training books selection
 
   get availableTargetTrainingBooks(): Book[] {
-    return scriptureRangeToBookListWithoutChapterDetail(
-      this.logicHandler.availableTargetTrainingScriptureRange$.getValue()
-    ).map(id => ({
-      number: Canon.bookIdToNumber(id),
-      selected: this.selectedTargetTrainingBooks.some(book => book.number === Canon.bookIdToNumber(id))
-    }));
+    return this.toBookList(
+      this.logicHandler.availableTargetTrainingScriptureRange$.getValue(),
+      this.bookNumbersOf(this.logicHandler.selectedTargetTrainingScriptureRange$.getValue())
+    );
   }
 
   get selectedTargetTrainingBooks(): Book[] {
-    return scriptureRangeToBookListWithoutChapterDetail(
-      this.logicHandler.selectedTargetTrainingScriptureRange$.getValue()
-    ).map(id => ({
-      number: Canon.bookIdToNumber(id),
-      selected: true
-    }));
+    return this.toBookList(this.logicHandler.selectedTargetTrainingScriptureRange$.getValue());
   }
 
   get booksOfferedForPartialTargetTraining(): string[] {
@@ -578,13 +584,8 @@ export class NewDraftComponent {
   }
 
   onTargetTrainingChaptersBlurred(bookId: string, value: string): void {
-    let parsed: ChapterSet;
-    try {
-      parsed = new ChapterSet(value);
-    } catch {
-      this.targetTrainingChapterErrors.set(bookId, { key: 'chapter_input.invalid_range' });
-      return;
-    }
+    const parsed = this.parseChapterInput(bookId, value, this.targetTrainingChapterErrors);
+    if (parsed == null) return;
 
     const available = this.logicHandler.availableTargetTrainingScriptureRange$.getValue().books.get(bookId);
     const unavailable = available != null ? parsed.difference(available) : parsed;

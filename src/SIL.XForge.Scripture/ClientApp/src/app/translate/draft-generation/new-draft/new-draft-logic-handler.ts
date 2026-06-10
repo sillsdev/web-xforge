@@ -49,9 +49,9 @@ export class DraftProgressService {
 export type NewDraftAbortMode = 'config_changed' | 'no_access' | 'init_failure' | null;
 
 /**
- * Converts a ScriptureRange to a list of book IDs without including details about which chapters are in each book. This
- * is useful when the chapter-level detail is not needed, such as when determining which books users can select. If a
- * book is in the range but has no chapters, it is excluded from the list, since it shouldn't be offered for selection.
+ * Returns the book IDs in a ScriptureRange, dropping the chapter-level detail. Useful when only the set of books
+ * matters, such as determining which books users can select. Books with no chapters are already pruned when ranges are
+ * built (see getProgressForProject and VerboseScriptureRange.removeEmptyBooks), so every returned book is selectable.
  */
 export function scriptureRangeToBookListWithoutChapterDetail(range: VerboseScriptureRange): string[] {
   return Array.from(range.books.keys());

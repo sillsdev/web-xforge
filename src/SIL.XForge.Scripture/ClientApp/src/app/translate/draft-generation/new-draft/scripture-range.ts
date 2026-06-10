@@ -95,16 +95,12 @@ export class VerboseScriptureRange {
   books: Map<string, ChapterSet> = new Map();
 
   constructor(range: string) {
-    if (typeof range === 'string') {
-      if (range === '') return;
-      const books = range.split(VerboseScriptureRange.bookSeparator);
-      for (const book of books) {
-        const bookId = book.slice(0, 3);
-        const chapterRange = book.slice(3);
-        this.books.set(bookId, new ChapterSet(chapterRange));
-      }
-    } else {
-      this.books = range;
+    if (range === '') return;
+    const books = range.split(VerboseScriptureRange.bookSeparator);
+    for (const book of books) {
+      const bookId = book.slice(0, 3);
+      const chapterRange = book.slice(3);
+      this.books.set(bookId, new ChapterSet(chapterRange));
     }
   }
 
