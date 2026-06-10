@@ -102,45 +102,6 @@ public class TrainingDataService(
         }
     }
 
-    public async Task DeleteTrainingDataAsync(string userId, string projectId, string ownerId, string dataId)
-    {
-        // Validate input
-        if (!StringUtils.ValidateId(dataId))
-        {
-            throw new FormatException($"{nameof(dataId)} is not a valid id.");
-        }
-
-        // Load the project so we can check permissions
-        await using IConnection conn = await realtimeService.ConnectAsync(userId);
-        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
-        if (!projectDoc.IsLoaded)
-        {
-            throw new DataNotFoundException("The project does not exist.");
-        }
-
-        // Ensure permission to delete training data
-        if (!projectRights.HasRight(projectDoc.Data, userId, SFProjectDomain.TrainingData, Operation.Delete))
-        {
-            throw new ForbiddenException();
-        }
-
-        // Ensure the user is the owner of the file, or an administrator
-        if (
-            userId != ownerId
-            && !(projectDoc.Data.UserRoles.TryGetValue(userId, out string role) && role is SFProjectRole.Administrator)
-        )
-        {
-            throw new ForbiddenException();
-        }
-
-        // Delete the file, if it exists
-        string filePath = GetTrainingDataFilePath(userId, projectDoc.Id, dataId);
-        if (fileSystemService.FileExists(filePath))
-        {
-            fileSystemService.DeleteFile(filePath);
-        }
-    }
-
     public async Task MarkFileDeleted(string userId, string projectId, string fileId)
     {
         await using IConnection conn = await realtimeService.ConnectAsync(userId);
@@ -156,6 +117,19 @@ public class TrainingDataService(
         if (!trainingDataDoc.IsLoaded)
         {
             throw new DataNotFoundException("The training data does not exist.");
+        }
+
+        if (
+            !projectRights.HasRight(
+                projectDoc.Data,
+                userId,
+                SFProjectDomain.TrainingData,
+                Operation.Edit,
+                trainingDataDoc.Data
+            )
+        )
+        {
+            throw new ForbiddenException();
         }
 
         await trainingDataDoc.SubmitJson0OpAsync(op => op.Set(td => td.Deleted, true));

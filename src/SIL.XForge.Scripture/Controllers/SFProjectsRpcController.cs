@@ -681,40 +681,6 @@ public class SFProjectsRpcController(
         }
     }
 
-    public async Task<IRpcMethodResult> DeleteTrainingData(string projectId, string ownerId, string dataId)
-    {
-        try
-        {
-            await trainingDataService.DeleteTrainingDataAsync(UserId, projectId, ownerId, dataId);
-            return Ok();
-        }
-        catch (ForbiddenException)
-        {
-            return ForbiddenError();
-        }
-        catch (DataNotFoundException dnfe)
-        {
-            return NotFoundError(dnfe.Message);
-        }
-        catch (FormatException fe)
-        {
-            return InvalidParamsError(fe.Message);
-        }
-        catch (Exception)
-        {
-            _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string>
-                {
-                    { "method", "DeleteTrainingData" },
-                    { "projectId", projectId },
-                    { "ownerId", ownerId },
-                    { "dataId", dataId },
-                }
-            );
-            throw;
-        }
-    }
-
     public async Task<IRpcMethodResult> MarkTrainingDataDeleted(string projectId, string dataId)
     {
         try

@@ -12,6 +12,7 @@ using NSubstitute;
 using NUnit.Framework;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
+using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
@@ -33,49 +34,6 @@ public class TrainingDataServiceTests
     private const string User01 = "user01";
     private const string User02 = "user02";
     private const string User03 = "user03";
-
-    [Test]
-    public void DeleteTrainingDataAsync_InvalidDataId()
-    {
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<FormatException>(() =>
-            env.Service.DeleteTrainingDataAsync(User01, Project01, User01, "invalid_data_id")
-        );
-    }
-
-    [Test]
-    public void DeleteTrainingDataAsync_MissingProject()
-    {
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.DeleteTrainingDataAsync(User01, "invalid_project_id", User01, Data01)
-        );
-    }
-
-    [Test]
-    public void DeleteTrainingDataAsync_NoPermission()
-    {
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
-            env.Service.DeleteTrainingDataAsync(User02, Project01, User01, Data01)
-        );
-    }
-
-    [Test]
-    public async Task DeleteTrainingDataAsync_Success()
-    {
-        var env = new TestEnvironment();
-
-        // SUT
-        await env.Service.DeleteTrainingDataAsync(User01, Project01, User01, Data01);
-        env.FileSystemService.Received().DeleteFile(Arg.Any<string>());
-    }
 
     [Test]
     public async Task GetTextsAsync_DoesNotGenerateTextsIfTooFewColumns()
@@ -696,6 +654,42 @@ public class TrainingDataServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.MarkFileDeleted(User01, Project01, "missing_id"));
     }
 
+    [Test]
+    public void MarkFileDeleted_MissingProject()
+    {
+        var env = new TestEnvironment();
+
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.MarkFileDeleted(User01, "invalid_project_id", Data01)
+        );
+    }
+
+    [Test]
+    public void MarkFileDeleted_NoPermission()
+    {
+        var env = new TestEnvironment();
+
+        // User03 (a consultant) does not have the right to edit the training data
+        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.MarkFileDeleted(User03, Project01, Data01));
+    }
+
+    [Test]
+    public async Task MarkFileDeleted_ChecksRightAgainstTrainingDataDocument()
+    {
+        var env = new TestEnvironment();
+
+        await env.Service.MarkFileDeleted(User01, Project01, Data01);
+
+        env.ProjectRights.Received()
+            .HasRight(
+                Arg.Any<SFProject>(),
+                User01,
+                SFProjectDomain.TrainingData,
+                Operation.Edit,
+                Arg.Is<TrainingData>(td => td.DataId == Data01)
+            );
+    }
+
     private class TestEnvironment
     {
         public TestEnvironment()
@@ -746,11 +740,19 @@ public class TrainingDataServiceTests
             var realtimeService = new SFMemoryRealtimeService();
             realtimeService.AddRepository("sf_projects", OTType.Json0, projects);
             realtimeService.AddRepository("training_data", OTType.Json0, trainingData);
-            var projectRights = Substitute.For<ISFProjectRights>();
-            projectRights
-                .HasRight(Arg.Any<SFProject>(), User01, SFProjectDomain.TrainingData, Arg.Any<string>())
+            ProjectRights = Substitute.For<ISFProjectRights>();
+            // Arg.Any<IOwnedData>() also matches the null default, so this covers both the 4-argument call sites
+            // (e.g. SaveTrainingDataAsync, GetTextsAsync) and the 5-argument MarkFileDeleted call.
+            ProjectRights
+                .HasRight(
+                    Arg.Any<SFProject>(),
+                    User01,
+                    SFProjectDomain.TrainingData,
+                    Arg.Any<string>(),
+                    Arg.Any<IOwnedData>()
+                )
                 .Returns(true);
-            Service = new TrainingDataService(FileSystemService, realtimeService, projectRights, SiteOptions);
+            Service = new TrainingDataService(FileSystemService, realtimeService, ProjectRights, SiteOptions);
             RealtimeService = realtimeService;
         }
 
@@ -758,5 +760,6 @@ public class TrainingDataServiceTests
         public TrainingDataService Service { get; }
         public IOptions<SiteOptions> SiteOptions { get; }
         public IRealtimeService RealtimeService { get; }
+        public ISFProjectRights ProjectRights { get; }
     }
 }
