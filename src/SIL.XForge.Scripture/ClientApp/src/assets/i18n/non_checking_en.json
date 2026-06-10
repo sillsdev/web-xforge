@@ -256,6 +256,7 @@
       "source_language_examples": "Source language examples — {{ language }}",
       "translation_language_examples": "Translation language examples — {{ language }}",
       "no_training_books": "No training books selected.",
+      "custom_configurations_apply": "Custom draft configurations have been applied by an administrator.",
       "settings": "Settings",
       "choose_different_books": "Choose different books",
       "choose_different_training_data": "Choose different training data",

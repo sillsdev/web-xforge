@@ -234,6 +234,10 @@
         </mat-card-content>
       </mat-card>
 
+      @if (isCustomConfigSet) {
+        <app-notice icon="info" type="info">{{ t("summary.custom_configurations_apply") }}</app-notice>
+      }
+
       @if (featureFlags.showDeveloperTools.enabled) {
         <mat-card class="summary-card">
           <mat-card-content>

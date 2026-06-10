@@ -755,6 +755,11 @@ export class NewDraftComponent {
     return this.logicHandler.selectedTargetTrainingScriptureRange$.getValue().books.size === 0;
   }
 
+  /** Whether an administrator has applied a custom Serval config to this project (shown as a notice on the summary). */
+  get isCustomConfigSet(): boolean {
+    return this.activatedProjectService.projectDoc?.data?.translateConfig?.draftConfig?.servalConfig != null;
+  }
+
   goToConfigureSources(): void {
     const projectId = this.initData?.projectId;
     if (projectId != null) {

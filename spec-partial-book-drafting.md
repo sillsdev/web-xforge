@@ -180,8 +180,43 @@ User selects which books (and optionally chapters) to draft from the drafting so
 
 **Book selection:**
 
-- `BookMultiSelectComponent` showing books available in the drafting source (books with content, non-extra-material)
+- `BookMultiSelectComponent` showing the books offered for drafting (see "Which books are offered for drafting" below)
 - Default selection on first visit: none selected
+
+#### Which books are offered for drafting
+
+`availableDraftingScriptureRange` (the books shown in the multi-select) is derived from the drafting source's
+chapter-level progress. A book is offered for drafting only if **all** of the following hold:
+
+1. **Canonical:** the book is not extra-material — `Canon.isExtraMaterial(bookNum)` is `false`. Front/back matter,
+   glossaries, and other non-canonical books are never offered. (Legacy parity — the old stepper skips these at
+   `draft-generation-steps.component.ts:288`.)
+2. **Has source content:** the drafting source has at least one chapter with content — the existing
+   `getProgressForProject` rule, where a chapter counts when > 10% of its verse segments are non-blank.
+3. **Present in the target** — gated by `ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET` (see below).
+
+##### `ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET`
+
+A constant in `NewDraftLogicHandler`, default **`false`**.
+
+- **`false` (current behavior — legacy parity):** a book is offered only if it also exists in the **target
+  project's text list** (`projectDoc.data.texts` — book _membership_, not whether the target has _content_ for
+  it). A draft is generated _into_ the target project, so today the book must already exist there as a text; a
+  book present in the source but absent from the target is excluded (this is legacy's `unusableTranslateTargetBooks`
+  bucket).
+- **`true` (future behavior):** the target-membership requirement is dropped; any canonical book with source
+  content is offered, regardless of whether it exists in the target.
+
+The constant exists so we can flip to `true` as soon as the backend supports drafting books not yet present in
+the target. It must be implemented so tests can exercise **both** values without editing the constant (e.g. an
+overridable `static`/property on `NewDraftLogicHandler` defaulting to the constant, or an exported binding the
+spec can stub). Both branches are covered by tests now (see Tests) so flipping the switch is a one-line change
+with known-good behavior on each side.
+
+> Note: target _membership_ (in `texts`) is intentionally distinct from target _content_
+> (`targetProjectScriptureRange`, which is content-filtered to chapters > 10% complete). This gate uses
+> membership, to match legacy. Target content is still used separately, for partial-chapter eligibility and
+> chapter-range defaults.
 
 **Chapter range input (eligible books only):**
 
@@ -281,6 +316,101 @@ Summary and launch.
     `DraftGenerationComponent`
 
 Note: copyright banners are on **Step 1**, not Step 4.
+
+---
+
+## Legacy Parity: Notices, Auto-Selection, Validation & Empty States
+
+A feature-parity review against `DraftGenerationStepsComponent` surfaced several behaviors the new wizard had
+dropped or weakened. Two are intentionally **excluded** from this section:
+
+- The source-content eligibility **threshold change** (legacy's whole-book "≥ 3 non-blank segments" floor vs. the
+  new "≥ 1 chapter over 10% non-blank" rule) is an accepted, deliberate change and is not restored.
+- The mid-flow **`config_changed`** "start over" dialog (declared but never triggered) is tracked separately and
+  is out of scope here.
+
+The items below are in scope.
+
+### Auto-selection of training books (first visit)
+
+On a project with **no previously saved training selection**, the legacy stepper pre-selects training books so a
+first-time user isn't faced with an empty selection. We want to preserve that "sensible default on first visit"
+behavior, plus the accompanying "books were automatically selected" notice.
+
+We are **not** committing to legacy's exact criteria. Legacy used whole-book segment counts (> 10 non-blank
+segments AND (≥ 99% translated OR ≤ 3 blank segments)) from `ProjectProgress`. The new flow tracks content only at
+the **chapter level** (`getProgressForProject` keeps chapters > 10% non-blank and discards raw segment/blank
+counts), so reusing legacy's thresholds verbatim would require a new data path the new flow doesn't currently
+have.
+
+- Define the criterion in terms of **data the new flow already exposes** (the existing chapter-level "has content"
+  model), not a re-introduced whole-book segment count — unless we deliberately decide the finer heuristic is
+  worth the extra data path.
+- Apply only in the no-prior-selection case (the restore path, `loadPreviouslySelectedTrainingBooks`, handles
+  saved selections; the two are mutually exclusive, matching legacy's `!hasPreviousTrainingRange` gate).
+- Show the equivalent "books were automatically selected" notice on Step 3 when any book was auto-selected.
+- **Open question:** the exact auto-selection rule, expressed via chapter-level data. To be decided.
+
+### "Hidden / unusable books" notices
+
+Legacy shows expandable "N books are hidden — show why" notices on the draft step and the training step,
+explaining each category of excluded book:
+
+- blank in the drafting source (`emptyTranslateSourceBooks`)
+- present in the target but not the drafting source (`unusableTranslateSourceBooks`)
+- present in a source but not the target (`unusableTranslateTargetBooks` / `unusableTrainingTargetBooks`)
+- blank in / not enough data from the training source (`unusableTrainingSourceBooks`,
+  `trainingBooksExcludingTranslatedWithoutEnoughData`)
+
+The new wizard currently omits excluded books silently. We **do** want to explain why books are missing, but the
+categories should be **re-derived from the new chapter-level model rather than ported 1:1** — some legacy
+categories may no longer apply, and partial availability introduces new cases:
+
+- Recompute the exclusion categories from the new gating rules (canonical, source content, target membership via
+  `ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET`). A book excluded purely for being non-canonical probably should **not** be
+  surfaced; a book excluded for "no source content" or "not in target" probably should.
+- Account for **partial availability**: a book that is offered for only some chapters is not "hidden" and must not
+  appear in these notices.
+- **Open question:** confirm the final category list, and whether the draft step and training step need different
+  messaging now that target training can include partially-drafted books.
+
+### Custom Serval configuration notice
+
+Legacy (`:309`, HTML `:341-345`): when the project has a custom Serval config
+(`translateConfig.draftConfig.servalConfig != null`), the summary shows the `custom_configurations_apply` info
+notice. New wizard: add the equivalent check and show the notice on Step 4. Mechanical port — no new logic.
+
+### Per-book training-pair validation
+
+Legacy requires that **every** selected target/translated training book has a matching selection in at least one
+training source (`translatedBooksSelectedInTrainingSources`; blocks advancing with the error
+`translated_book_selected_no_training_pair`). The new `hasTrainingBooksSelected` only checks that _some_ target
+book and _some_ source book are selected, so manually deselecting a source book can leave an unpaired target book
+that advances anyway.
+
+- Restore per-book pairing validation as a forward-gate on the training step, with an equivalent error message.
+- Interaction with auto-pairing: selecting a target book already auto-selects it in each source that has it
+  (`onTargetTrainingBookSelect`), so an unpaired book only arises from a manual source deselection — the
+  validation catches exactly that case.
+- Skipped when training is optional (both languages in NLLB), consistent with the existing forward-gate.
+
+### Empty-state messages
+
+Legacy provides explicit empty/placeholder copy the new wizard is missing. Add messages for:
+
+- **No books available to draft** (legacy `no_available_books`): the drafting source has no offerable books.
+- **No target training books available** on Step 3 (e.g. everything available is being drafted).
+- **Reference (training source) books not yet selectable** (legacy `training_books_will_appear`): shown per
+  training source when no translated books are selected yet.
+- **Loading** copy where the wizard currently shows a bare spinner.
+
+(The summary's "no training data" empty state — `summary.no_training_books` — is already covered.)
+
+### Training-data files on the summary (minor)
+
+Legacy lists the training-data files on the summary step. The new wizard makes files explicitly selectable on
+Step 3 and does not re-list them on the summary. **Decision:** acceptable to omit — recorded here so it isn't
+re-flagged as a regression. Revisit only if reviewers want a "confirm what I selected" recap.
 
 ---
 
@@ -447,6 +577,11 @@ This change is additive: builds that don't include a target project entry in `Tr
 ### Step 2: Books to Draft
 
 - [x] Wire up `BookMultiSelectComponent` to `NewDraftLogicHandler.selectDraftingBooks()`
+- [ ] Exclude extra-material (non-canonical) books from the offered drafting books (`Canon.isExtraMaterial`) —
+      legacy parity, currently missing in `NewDraftLogicHandler`
+- [ ] Gate the target-membership requirement behind `ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET` (default `false`):
+      when `false`, only books present in the target's text list are offered for drafting (legacy parity);
+      when `true`, any canonical book with source content is offered
 - [x] Add chapter range text inputs for eligible books (currently in HTML but not wired up)
 - [x] Wire chapter input change/blur events to `trySelectDraftingChapters()`
 - [x] Show inline validation errors from `trySelectDraftingChapters()`
@@ -517,13 +652,33 @@ This change is additive: builds that don't include a target project entry in `Tr
 - [x] Unit tests for `NewDraftLogicHandler` (chapter selection, eligibility, training limits)
 - [x] Unit tests for `NewDraftComponent` (step navigation, form state, error display)
 - [x] Unit tests for `scripture-range.ts` (VerboseScriptureRange, ChapterSet)
+- [ ] Test that extra-material (non-canonical) books are never offered for drafting, even when the source
+      reports content for them
+- [ ] Test both `ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET` paths: with `false`, a source book missing from the target's
+      text list is **not** offered; with `true`, the same book **is** offered
 - [x] Update/fix existing tests marked with FIXME/DO_NOT_MERGE
+
+### Legacy parity follow-ups (from the parity review)
+
+See "Legacy Parity: Notices, Auto-Selection, Validation & Empty States" for details.
+
+- [ ] Auto-select training books on first visit (no saved selection); show the "books were automatically
+      selected" notice; resolve the open question on the chapter-level selection rule
+- [ ] Re-derive and surface "hidden / unusable book" notices from the new chapter-level gating (not a 1:1 port);
+      decide the final category list
+- [x] Port the custom Serval config notice (`servalConfig != null`) to Step 4
+- [ ] Restore per-book training-pair validation as a training-step forward gate (skipped when NLLB-optional)
+- [ ] Add empty-state messages: no draftable books, no target training books, "reference books will appear",
+      and loading copy
 
 ### Work that still needs to be defined
 
 - [ ] Indicate what step we're on
-- [ ] Take an inventory of notices in the old draft stepper and make sure we aren't dropping anything relevant
-- [ ] Do a feature parity review between the old stepper and the new design to ensure all existing features are accounted for in the new design
+- [x] Take an inventory of notices in the old draft stepper and make sure we aren't dropping anything relevant —
+      captured in "Legacy Parity: Notices, Auto-Selection, Validation & Empty States"; implementation tracked in
+      the follow-ups above
+- [x] Do a feature parity review between the old stepper and the new design — complete; findings captured in the
+      "Legacy Parity…" section and the Step 2 book-draftability gates, with remaining work tracked above
 - [ ] Do a UX review
 - [ ] Check for wording consitency across all new UI elements, and consistency with existing draft generation UI and help
 - [ ] Define manual tests for test team

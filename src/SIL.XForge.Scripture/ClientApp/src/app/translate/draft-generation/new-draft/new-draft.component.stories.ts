@@ -74,6 +74,8 @@ interface StoryArgs {
   withCopyright: boolean;
   /** Provides a couple of training-data files for the training step. */
   withTrainingDataFiles: boolean;
+  /** An administrator has applied a custom Serval config, shown as a notice on the summary. */
+  withCustomConfig: boolean;
   /** A source/target project is inaccessible, so the wizard aborts with the no-access screen. */
   noAccess: boolean;
   /** An involved project has un-synced Paratext changes, so the sync interstitial is shown first. */
@@ -87,6 +89,7 @@ const defaultArgs: StoryArgs = {
   developerTools: false,
   withCopyright: false,
   withTrainingDataFiles: false,
+  withCustomConfig: false,
   noAccess: false,
   hasPendingUpdates: false,
   neverLoad: false
@@ -138,6 +141,7 @@ function buildProjectProfile(args: StoryArgs): SFProjectProfile {
         ],
         lastSelectedTrainingDataFiles: args.withTrainingDataFiles ? ['glossary'] : [],
         lastAvailableTrainingDataFiles: args.withTrainingDataFiles ? ['glossary'] : [],
+        servalConfig: args.withCustomConfig ? '{ "custom": "value" }' : undefined,
         sendEmailOnBuildFinished: false,
         fastTraining: false,
         useEcho: false
@@ -428,8 +432,10 @@ export const SelectTrainingBooks: Story = {
   }
 };
 
-/** Final summary step, ready to generate the draft. */
+/** Final summary step, ready to generate the draft. A custom Serval config is set, so the summary also shows the
+ * "custom draft configurations have been applied" notice. */
 export const Summary: Story = {
+  args: { withCustomConfig: true },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await gotoDraftBooksWithGen(canvas);
@@ -437,6 +443,7 @@ export const Summary: Story = {
     await canvas.findByText('Select books to train on');
     await clickNext(canvas); // training_books -> suffix
     await canvas.findByRole('button', { name: /generate draft/i });
+    await canvas.findByText('Custom draft configurations have been applied by an administrator.');
   }
 };
 
