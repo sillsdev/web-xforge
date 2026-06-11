@@ -34,18 +34,18 @@
 //   --pr-number N   GitHub PR number displayed on the diff page
 //   --pr-title STR  GitHub PR title displayed on the diff page
 
-import { Buffer } from 'node:buffer';
 import { join } from 'node:path';
-import { PNG } from 'npm:pngjs@7.0.0';
+import { decode as decodePng } from 'npm:fast-png@8.0.0';
 
 /** Default per-channel pixel difference threshold. Higher values tolerate minor rendering variance. */
 const DEFAULT_THRESHOLD = 8;
 
-/** Decoded PNG image with raw RGBA pixel data. */
+/** Decoded PNG image with raw pixel data. */
 interface DecodedPng {
   width: number;
   height: number;
-  /** Flat RGBA buffer: 4 bytes per pixel, row-major order. */
+  channels: 3 | 4;
+  /** Flat pixel buffer: `channels` bytes per pixel, row-major order. */
   data: Uint8Array;
 }
 
@@ -79,35 +79,39 @@ function readMetadata(dir: string): Metadata {
   };
 }
 
-/** Decodes a PNG file synchronously to raw RGBA pixel data. */
+/** Decodes a PNG file synchronously to raw pixel data. */
 function readPng(filePath: string): DecodedPng {
   const fileData = Deno.readFileSync(filePath);
-  const png = PNG.sync.read(Buffer.from(fileData));
-  return {
-    width: png.width,
-    height: png.height,
-    data: new Uint8Array(png.data.buffer, png.data.byteOffset, png.data.byteLength)
-  };
+  const png = decodePng(fileData);
+
+  if (png.channels !== 3 && png.channels !== 4) {
+    throw new Error(`Unsupported PNG channel count ${png.channels} in ${filePath}`);
+  }
+  if (!(png.data instanceof Uint8Array)) {
+    throw new Error(`Unsupported bit depth in ${filePath}`);
+  }
+
+  return { width: png.width, height: png.height, channels: png.channels, data: png.data };
 }
 
 /**
  * Compares two decoded PNGs at the pixel level using a per-channel threshold.
- * A pixel is considered different if any channel (R, G, B, A) differs by more than the threshold.
- * Returns the number of differing pixels, or -1 if the images have different dimensions.
+ * A pixel is considered different if any channel differs by more than the threshold.
+ * Returns the number of differing pixels, or -1 if the images have different dimensions or channels.
  */
 function countDifferingPixels(a: DecodedPng, b: DecodedPng, threshold: number): number {
-  if (a.width !== b.width || a.height !== b.height) return -1;
+  if (a.width !== b.width || a.height !== b.height || a.channels !== b.channels) return -1;
+  const ch = a.channels;
   let diffCount = 0;
-  // Each pixel is 4 bytes (R, G, B, A). A pixel is changed if any channel exceeds the threshold.
-  for (let i = 0; i < a.data.length; i += 4) {
-    if (
-      Math.abs(a.data[i] - b.data[i]) > threshold ||
-      Math.abs(a.data[i + 1] - b.data[i + 1]) > threshold ||
-      Math.abs(a.data[i + 2] - b.data[i + 2]) > threshold ||
-      Math.abs(a.data[i + 3] - b.data[i + 3]) > threshold
-    ) {
-      diffCount++;
+  for (let i = 0; i < a.data.length; i += ch) {
+    let differs = false;
+    for (let c = 0; c < ch; c++) {
+      if (Math.abs(a.data[i + c] - b.data[i + c]) > threshold) {
+        differs = true;
+        break;
+      }
     }
+    if (differs) diffCount++;
   }
   return diffCount;
 }
