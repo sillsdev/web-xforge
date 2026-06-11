@@ -295,6 +295,52 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task InviteAsync_SendsCorrectEmailBody()
+    {
+        var env = new TestEnvironment();
+        const string email = "newuser@example.com";
+        const string role = SFProjectRole.CommunityChecker;
+
+        // Set the inviter name to a value containing HTML to verify it is encoded in the body
+        await env
+            .RealtimeService.GetRepository<User>()
+            .ReplaceAsync(
+                new User
+                {
+                    Id = User01,
+                    Email = "user01@example.com",
+                    ParatextId = "pt-user01",
+                    Name = "User <01>",
+                    Roles = [SystemRole.User],
+                    Sites = new Dictionary<string, Site>
+                    {
+                        {
+                            SiteId,
+                            new Site { Projects = { Project01, Project03, SourceOnly } }
+                        },
+                    },
+                }
+            );
+
+        await env.Service.InviteAsync(User01, Project03, email, "en", role, TestEnvironment.WebsiteUrl);
+
+        const string url = "http://localhost/projects/project03?sharing=true&shareKey=1234abc&locale=en";
+        const string expectedSubject = "You've been invited to the project project03 on xForge";
+        string expectedBody =
+            $"<p>Hello,<p>User &lt;01&gt; invites you to join the project03 project on xForge."
+            + "<p>Just click the link below, choose how to log in, and you will be ready to start."
+            + $"<p><p>To join, go to <a href=\"{url}\">{url}</a><p>"
+            + "The project invitation link expires in 14 days."
+            + "<p>If you are not already a xForge user, then after clicking the link, click <b>Sign Up</b> and do one of the following:"
+            + "<ul><li>Click <b>Sign up with Paratext</b> and follow the instructions to access xForge using an existing Paratext account, or</li>"
+            + "<li>Click <b>Sign up with Google</b> and follow the instructions to access xForge using an existing Google account (such as Gmail), or</li>"
+            + "<li>Click <b>Sign up with Facebook</b> and follow the instructions to access xForge using an existing Facebook account, or</li>"
+            + "<li>Enter your email address and a new password for your xForge account and click Sign up.</li></ul></p><p></p>"
+            + "<p>Regards,<p>The xForge team</p>";
+        await env.EmailService.Received(1).SendEmailAsync(email, expectedSubject, expectedBody);
+    }
+
+    [Test]
     public async Task InviteAsync_SharingDisabled_ForbiddenError()
     {
         var env = new TestEnvironment();

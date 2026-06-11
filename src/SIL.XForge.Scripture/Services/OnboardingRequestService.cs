@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Bson;
@@ -217,8 +218,8 @@ public class OnboardingRequestService(
             string link = $"{siteRoot}/serval-administration/onboarding-requests/{request.Id}";
             string body =
                 $@"
-                    <p>A new onboarding request has been submitted for the project <strong>{projectDoc.ShortName} - {projectDoc.Name}</strong>.</p>
-                    <p><strong>Submitted by:</strong> {userName}</p>
+                    <p>A new onboarding request has been submitted for the project <strong>{WebUtility.HtmlEncode(projectDoc.ShortName)} - {WebUtility.HtmlEncode(projectDoc.Name)}</strong>.</p>
+                    <p><strong>Submitted by:</strong> {WebUtility.HtmlEncode(userName)}</p>
                     <p><strong>Submission Time:</strong> {request.Submission.Timestamp:u}</p>
                     <p>The request can be viewed at <a href=""{link}"">{link}</a></p>
                 ";
