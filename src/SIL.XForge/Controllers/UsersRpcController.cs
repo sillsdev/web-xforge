@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router.Abstractions;
 using idunno.Authentication.Basic;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
 using SIL.XForge.Services;
 
 namespace SIL.XForge.Controllers;
@@ -35,21 +34,18 @@ public class UsersRpcController : RpcControllerBase
 {
     private readonly IAuthService _authService;
     private readonly IExceptionHandler _exceptionHandler;
-    private readonly IWebHostEnvironment _hostingEnv;
     private readonly IUserService _userService;
 
     public UsersRpcController(
         IUserAccessor userAccessor,
         IUserService userService,
         IAuthService authService,
-        IWebHostEnvironment hostingEnv,
         IExceptionHandler exceptionHandler
     )
         : base(userAccessor, exceptionHandler)
     {
         _userService = userService;
         _authService = authService;
-        _hostingEnv = hostingEnv;
         _exceptionHandler = exceptionHandler;
     }
 
@@ -73,9 +69,8 @@ public class UsersRpcController : RpcControllerBase
     }
 
     /// <summary>
-    /// Updates the current user's entity from the user's corresponding Auth0 profile. This command is used instead
-    /// of <see cref="PushAuthUserProfile"/> in development environments, because Auth0 rules cannot call a local
-    /// development machine.
+    /// Updates the current user's entity from the user's corresponding Auth0 profile. Called by the front end after
+    /// login to ensure the user profile is up to date.
     /// </summary>
     public async Task<IRpcMethodResult> PullAuthUserProfile()
     {
