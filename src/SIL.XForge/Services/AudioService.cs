@@ -26,7 +26,9 @@ public class AudioService : IAudioService
             StartInfo = new ProcessStartInfo
             {
                 FileName = _audioOptions.Value.FfmpegPath,
-                Arguments = $"-y -i \"{inputPath}\" \"{outputPath}\"",
+                // Pass each argument as a discrete entry rather than formatting them into a single string,
+                // so that quotes or spaces in a path can never be reinterpreted as additional ffmpeg options.
+                ArgumentList = { "-y", "-i", inputPath, outputPath },
                 UseShellExecute = false,
                 CreateNoWindow = true,
             },
