@@ -1,5 +1,6 @@
 import { ErrorHandler } from '@angular/core';
 import { Router } from '@angular/router';
+import { Canon } from '@sillsdev/scripture';
 import { Meta, StoryObj } from '@storybook/angular';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
@@ -112,6 +113,15 @@ function buildProjectProfile(args: StoryArgs): SFProjectProfile {
     name: 'NTV - Nueva Traducción Viviente',
     shortName: 'TP1',
     writingSystem: { tag: 'en' },
+    // The target's text list (book membership) gates which source books are offered for drafting. Include the books
+    // the target contains; the drafting source's extra book (JUD) is intentionally absent so the story shows the
+    // "not in the project" notice.
+    texts: Array.from(new VerboseScriptureRange(TARGET_BOOKS).books.keys()).map(bookId => ({
+      bookNum: Canon.bookIdToNumber(bookId),
+      hasSource: false,
+      chapters: [],
+      permissions: {}
+    })),
     translateConfig: {
       preTranslate: true,
       draftConfig: {

@@ -201,22 +201,42 @@ A constant in `NewDraftLogicHandler`, default **`false`**.
 
 - **`false` (current behavior — legacy parity):** a book is offered only if it also exists in the **target
   project's text list** (`projectDoc.data.texts` — book _membership_, not whether the target has _content_ for
-  it). A draft is generated _into_ the target project, so today the book must already exist there as a text; a
-  book present in the source but absent from the target is excluded (this is legacy's `unusableTranslateTargetBooks`
-  bucket).
+  it). A book present in the source but absent from the target is excluded (this is legacy's
+  `unusableTranslateTargetBooks` bucket). This is a **temporary UI limitation**, not a fundamental constraint: the
+  current UI doesn't handle drafting a book that isn't already in the target. **SF-3822** is intended to lift this.
 - **`true` (future behavior):** the target-membership requirement is dropped; any canonical book with source
   content is offered, regardless of whether it exists in the target.
 
-The constant exists so we can flip to `true` as soon as the backend supports drafting books not yet present in
-the target. It must be implemented so tests can exercise **both** values without editing the constant (e.g. an
-overridable `static`/property on `NewDraftLogicHandler` defaulting to the constant, or an exported binding the
-spec can stub). Both branches are covered by tests now (see Tests) so flipping the switch is a one-line change
-with known-good behavior on each side.
+The constant exists so we can change it to `true` once SF-3822 lands. It is implemented as the overridable static
+`NewDraftLogicHandler.allowDraftingBooksNotInTarget` (defaulting to the constant) so tests can exercise **both**
+values without editing the constant. Both branches are covered by tests now (see Tests) so changing the switch is
+a one-line change with known-good behavior on each side.
 
 > Note: target _membership_ (in `texts`) is intentionally distinct from target _content_
 > (`targetProjectScriptureRange`, which is content-filtered to chapters > 10% complete). This gate uses
 > membership, to match legacy. Target content is still used separately, for partial-chapter eligibility and
 > chapter-range defaults.
+
+##### Drafting book exclusions & notices
+
+`NewDraftLogicHandler.computeOfferedDraftingBooks()` is the single place that decides which books are offered. It
+considers the union of the books with content in the drafting source and the books in the target's text list, and
+for every book that is **not** offered it records an `ExcludedDraftingBook { bookId, reason }` on
+`excludedDraftingBooks$`. Reasons (`DraftingBookExclusionReason`), evaluated in this precedence:
+
+1. **`non_canonical`** — `Canon.isExtraMaterial(bookId)`. **Tracked but never surfaced** — users don't expect
+   front/back matter, glossaries, etc. to be draftable.
+2. **`no_source_content`** — the drafting source has no content for a book the target contains. **Surfaced.**
+3. **`not_in_target`** — the book has source content but isn't in the target's text list, and
+   `allowDraftingBooksNotInTarget` is `false`. **Surfaced.** Goes away once the gate is flipped (SF-3822).
+
+The component exposes `draftingExclusionNotices` (one entry per **surfaced** reason that has books), rendered as
+`app-notice` info banners under the book multi-select on Step 2. Strings:
+`new_draft.draft_books.excluded_no_source_content` / `excluded_not_in_target`.
+
+The reason set is **not** assumed to be exhaustive — additional categories may be added (e.g. as the training-step
+notices are built out, or if more drafting-source cases are identified). The model (track-all, surface-a-subset) is
+designed to extend.
 
 **Chapter range input (eligible books only):**
 
@@ -577,11 +597,14 @@ This change is additive: builds that don't include a target project entry in `Tr
 ### Step 2: Books to Draft
 
 - [x] Wire up `BookMultiSelectComponent` to `NewDraftLogicHandler.selectDraftingBooks()`
-- [ ] Exclude extra-material (non-canonical) books from the offered drafting books (`Canon.isExtraMaterial`) —
-      legacy parity, currently missing in `NewDraftLogicHandler`
-- [ ] Gate the target-membership requirement behind `ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET` (default `false`):
+- [x] Exclude extra-material (non-canonical) books from the offered drafting books (`Canon.isExtraMaterial`) —
+      legacy parity. Implemented in `NewDraftLogicHandler.computeOfferedDraftingBooks()`, which also records _why_
+      each excluded book was left out (see "Drafting book exclusions & notices" below).
+- [x] Gate the target-membership requirement behind `ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET` (default `false`):
       when `false`, only books present in the target's text list are offered for drafting (legacy parity);
-      when `true`, any canonical book with source content is offered
+      when `true`, any canonical book with source content is offered. Implemented as the overridable static
+      `NewDraftLogicHandler.allowDraftingBooksNotInTarget`. This restriction is temporary — SF-3822 is intended to
+      lift it, at which point the constant can be changed to `true`.
 - [x] Add chapter range text inputs for eligible books (currently in HTML but not wired up)
 - [x] Wire chapter input change/blur events to `trySelectDraftingChapters()`
 - [x] Show inline validation errors from `trySelectDraftingChapters()`
@@ -600,6 +623,10 @@ This change is additive: builds that don't include a target project entry in `Tr
 - [x] Add training data files section — made **selectable** (not read-only): checkbox list with default
       selection from the last build, recording the available set (`lastAvailableTrainingDataFiles`) to tell
       newly added files from deselected ones. Backend persists selected + available sets.
+- [ ] Exclude extra-material (non-canonical) books from the training-step lists too (target training + training
+      sources). The drafting list now filters these, but the training lists still come straight from
+      `getProgressForProject`, which doesn't strip non-canonical books. Decide whether to filter centrally in
+      `getProgressForProject` or per-list, and whether the training step needs its own exclusion notices.
 
 ### Step 4: Confirm & Generate
 
@@ -652,9 +679,9 @@ This change is additive: builds that don't include a target project entry in `Tr
 - [x] Unit tests for `NewDraftLogicHandler` (chapter selection, eligibility, training limits)
 - [x] Unit tests for `NewDraftComponent` (step navigation, form state, error display)
 - [x] Unit tests for `scripture-range.ts` (VerboseScriptureRange, ChapterSet)
-- [ ] Test that extra-material (non-canonical) books are never offered for drafting, even when the source
+- [x] Test that extra-material (non-canonical) books are never offered for drafting, even when the source
       reports content for them
-- [ ] Test both `ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET` paths: with `false`, a source book missing from the target's
+- [x] Test both `ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET` paths: with `false`, a source book missing from the target's
       text list is **not** offered; with `true`, the same book **is** offered
 - [x] Update/fix existing tests marked with FIXME/DO_NOT_MERGE
 
@@ -664,8 +691,10 @@ See "Legacy Parity: Notices, Auto-Selection, Validation & Empty States" for deta
 
 - [ ] Auto-select training books on first visit (no saved selection); show the "books were automatically
       selected" notice; resolve the open question on the chapter-level selection rule
-- [ ] Re-derive and surface "hidden / unusable book" notices from the new chapter-level gating (not a 1:1 port);
-      decide the final category list
+- [~] Re-derive and surface "hidden / unusable book" notices from the new chapter-level gating (not a 1:1 port);
+  decide the final category list. **Draft step done** (see "Drafting book exclusions & notices": surfaces
+  `no_source_content` + `not_in_target`, silently drops `non_canonical`). **Training step still TODO**, and the
+  final category list across both steps is not yet locked.
 - [x] Port the custom Serval config notice (`servalConfig != null`) to Step 4
 - [ ] Restore per-book training-pair validation as a training-step forward gate (skipped when NLLB-optional)
 - [ ] Add empty-state messages: no draftable books, no target training books, "reference books will appear",

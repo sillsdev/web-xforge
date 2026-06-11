@@ -41,6 +41,7 @@ import { defaultSelectedTrainingDataFiles } from './training-data-file-selection
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { ParatextService } from '../../../core/paratext.service';
 import {
+  DraftingBookExclusionReason,
   DraftProgressService,
   NewDraftAbortMode,
   NewDraftLogicHandler,
@@ -488,6 +489,33 @@ export class NewDraftComponent {
 
   get booksOfferedForPartialDrafting(): string[] {
     return this.logicHandler.booksOfferedForPartialDrafting$.getValue();
+  }
+
+  /**
+   * Notices explaining books the user might expect that were left out of the drafting list, one per surfaced reason.
+   * Non-canonical exclusions are intentionally tracked but not surfaced. Each entry carries the i18n key for its
+   * reason and the parameters that message needs.
+   */
+  get draftingExclusionNotices(): { key: I18nKeyForComponent<'new_draft'>; params: Record<string, string> }[] {
+    // Reasons shown to the user, in display order. Books excluded only for being non-canonical are omitted.
+    const surfacedReasons: DraftingBookExclusionReason[] = ['no_source_content', 'not_in_target'];
+    const excluded = this.logicHandler.excludedDraftingBooks$.getValue();
+    return surfacedReasons
+      .map(reason => {
+        const bookNames = excluded
+          .filter(book => book.reason === reason)
+          .map(book => this.i18n.localizeBook(book.bookId));
+        return { reason, bookNames };
+      })
+      .filter(group => group.bookNames.length > 0)
+      .map(group => ({
+        key: `draft_books.excluded_${group.reason}` as I18nKeyForComponent<'new_draft'>,
+        params: {
+          books: this.i18n.enumerateList(group.bookNames),
+          source: this.draftingSourceName,
+          project: this.targetProjectDisplayName
+        }
+      }));
   }
 
   onDraftingBookSelect(books: number[]): void {

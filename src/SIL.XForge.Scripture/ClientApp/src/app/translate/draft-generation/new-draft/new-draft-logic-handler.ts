@@ -1,4 +1,5 @@
 import { DestroyRef, Injectable } from '@angular/core';
+import { Canon } from '@sillsdev/scripture';
 import { isEqual } from 'lodash-es';
 import { BehaviorSubject, firstValueFrom, skip } from 'rxjs';
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
@@ -13,6 +14,28 @@ import { ChapterSet, VerboseScriptureRange } from './scripture-range';
  * Books smaller than this are only ever drafted in full.
  */
 const MIN_SOURCE_CHAPTERS_FOR_PARTIAL_DRAFTING = 12;
+
+/**
+ * When false (current behavior, matching the legacy stepper), a book is only offered for drafting if it also exists in
+ * the target project's text list. This is a temporary restriction: the current UI doesn't handle drafting a book that
+ * isn't already in the target. SF-3822 is intended to lift this soon, at which point this can be changed to true and
+ * any canonical book with source content is offered regardless of target membership.
+ *
+ * Overridable on the class (NewDraftLogicHandler.allowDraftingBooksNotInTarget) so tests can exercise both branches.
+ */
+export const ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET = false;
+
+/**
+ * Why a book that a user might expect to see was left out of the list offered for drafting. Every excluded book is
+ * recorded with its reason so the UI can explain the omission. Not every reason is surfaced to the user: 'non_canonical'
+ * books (front/back matter, glossaries, etc.) are excluded silently, since users don't expect them to be draftable.
+ */
+export type DraftingBookExclusionReason = 'non_canonical' | 'no_source_content' | 'not_in_target';
+
+export interface ExcludedDraftingBook {
+  bookId: string;
+  reason: DraftingBookExclusionReason;
+}
 
 @Injectable({ providedIn: 'root' })
 /** Like ProgressService, but provides a VerboseScriptureRange instead of raw progress data */
@@ -73,6 +96,9 @@ function mapObject<T, U>(obj: { [key: string]: T }, mapFn: (key: string, value: 
  *
  */
 export class NewDraftLogicHandler {
+  /** See ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET. Exposed as a static so tests can exercise both branches. */
+  static allowDraftingBooksNotInTarget = ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET;
+
   status$ = new BehaviorSubject<'init' | 'input' | 'abort'>('init');
   abortMode$ = new BehaviorSubject<NewDraftAbortMode>(null);
 
@@ -85,6 +111,9 @@ export class NewDraftLogicHandler {
   // offered in the UI), and selected (user action, or default values selected the )
   availableDraftingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange>(new VerboseScriptureRange(''));
   selectedDraftingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange>(new VerboseScriptureRange(''));
+
+  /** Books left out of the drafting list, with the reason for each (see DraftingBookExclusionReason). */
+  excludedDraftingBooks$ = new BehaviorSubject<ExcludedDraftingBook[]>([]);
 
   targetProjectScriptureRange = new VerboseScriptureRange('');
   availableTargetTrainingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange>(new VerboseScriptureRange(''));
@@ -172,8 +201,12 @@ export class NewDraftLogicHandler {
         return;
       }
 
+      const targetTextBookIds = new Set((projectDoc.data.texts ?? []).map(text => Canon.bookNumberToId(text.bookNum)));
+      const { available, excluded } = this.computeOfferedDraftingBooks(draftSourceProgress, targetTextBookIds);
+
       this.targetProjectScriptureRange = targetProjectProgress;
-      this.availableDraftingScriptureRange$.next(draftSourceProgress);
+      this.availableDraftingScriptureRange$.next(available);
+      this.excludedDraftingBooks$.next(excluded);
       this.availableTargetTrainingScriptureRange$.next(targetProjectProgress);
       this.trainingSourceBooks$.next(
         Object.fromEntries(
@@ -280,6 +313,42 @@ export class NewDraftLogicHandler {
     const newDraftingScriptureRange = this.selectedDraftingScriptureRange$.getValue().clone();
     newDraftingScriptureRange.books.set(bookId, selectedChapters);
     this.selectedDraftingScriptureRange$.next(newDraftingScriptureRange);
+  }
+
+  /**
+   * Determines which books from the drafting source are offered for drafting, and records why each book the user might
+   * expect to see was left out. A book is offered only if it is canonical, has content in the drafting source, and
+   * (unless allowDraftingBooksNotInTarget is set) exists in the target project's text list.
+   *
+   * The books considered are those with content in the drafting source plus those present in the target project. This
+   * lets the UI explain both books the target contains but the source has no text for ('no_source_content') and books
+   * the source has but the target lacks ('not_in_target'). Books that are excluded purely for being non-canonical are
+   * recorded as 'non_canonical' but are not surfaced to the user.
+   */
+  private computeOfferedDraftingBooks(
+    draftSourceProgress: VerboseScriptureRange,
+    targetTextBookIds: Set<string>
+  ): { available: VerboseScriptureRange; excluded: ExcludedDraftingBook[] } {
+    const available = new VerboseScriptureRange('');
+    const excluded: ExcludedDraftingBook[] = [];
+
+    const booksToConsider = new Set<string>([...draftSourceProgress.books.keys(), ...targetTextBookIds]);
+    // Evaluate in canonical order so the excluded list (and any notice built from it) reads naturally.
+    const orderedBooks = Array.from(booksToConsider).sort((a, b) => Canon.bookIdToNumber(a) - Canon.bookIdToNumber(b));
+
+    for (const bookId of orderedBooks) {
+      if (Canon.isExtraMaterial(bookId)) {
+        excluded.push({ bookId, reason: 'non_canonical' });
+      } else if (!draftSourceProgress.books.has(bookId)) {
+        excluded.push({ bookId, reason: 'no_source_content' });
+      } else if (!NewDraftLogicHandler.allowDraftingBooksNotInTarget && !targetTextBookIds.has(bookId)) {
+        excluded.push({ bookId, reason: 'not_in_target' });
+      } else {
+        available.books.set(bookId, draftSourceProgress.books.get(bookId)!.clone());
+      }
+    }
+
+    return { available, excluded };
   }
 
   private isBookEligibleForPartialDrafting(bookId: string): boolean {

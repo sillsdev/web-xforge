@@ -10,7 +10,12 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { chapterCounts } from '../../../shared/progress-service/progress.service';
 import { DraftSource, DraftSourcesAsArrays } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
-import { DraftProgressService, NewDraftLogicHandler } from './new-draft-logic-handler';
+import {
+  ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET,
+  DraftProgressService,
+  ExcludedDraftingBook,
+  NewDraftLogicHandler
+} from './new-draft-logic-handler';
 import { VerboseScriptureRange } from './scripture-range';
 
 const mockDestroyRef = { onDestroy: () => () => {}, destroyed: false } as unknown as DestroyRef;
@@ -52,6 +57,11 @@ describe('NewDraftLogicHandler', () => {
       'training-source-2-id': FULL_CANON_SCRIPTURE_RANGE
     }
   } as const satisfies TestState;
+
+  // The gate is shared static state; reset it after each test so a gate test doesn't leak into other specs.
+  afterEach(() => {
+    NewDraftLogicHandler.allowDraftingBooksNotInTarget = ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET;
+  });
 
   describe('initialization', () => {
     it('aborts when a source project is inaccessible', async () => {
@@ -108,6 +118,68 @@ describe('NewDraftLogicHandler', () => {
       // Selections should be blank
       expect(env.selectedDraftingScriptureRange).toBe('');
       expect(env.selectedTargetTrainingScriptureRange).toBe('');
+    });
+  });
+
+  describe('books offered for drafting', () => {
+    it('never offers extra-material (non-canonical) books, even when the source reports content for them', async () => {
+      // The drafting source has content for the front matter and a glossary, alongside Genesis.
+      const env = new TestEnvironment({
+        ...teamStartingToTranslateGenesis,
+        draftingSourceBooksChapters: 'FRT1;GEN1-50;GLO1'
+      });
+      await env.waitForInit();
+
+      expect(env.availableDraftingScriptureRange).toBe('GEN1-50');
+      // Non-canonical exclusions are tracked but not surfaced to the user.
+      expect(env.excludedDraftingBooks).toEqual(
+        jasmine.arrayWithExactContents([
+          { bookId: 'FRT', reason: 'non_canonical' },
+          { bookId: 'GLO', reason: 'non_canonical' }
+        ])
+      );
+    });
+
+    it('does not offer source books missing from the target when drafting books not in the target is disallowed', async () => {
+      const env = new TestEnvironment({
+        ...teamStartingToTranslateGenesis,
+        allowDraftingBooksNotInTarget: false,
+        draftingSourceBooksChapters: 'GEN1-50;EXO1-40;MAT1-28',
+        targetTextBooks: ['GEN', 'MAT']
+      });
+      await env.waitForInit();
+
+      // EXO has source content but isn't in the target's text list, so it isn't offered.
+      expect(env.availableDraftingScriptureRange).toBe('GEN1-50;MAT1-28');
+      expect(env.excludedDraftingBooks).toContain({ bookId: 'EXO', reason: 'not_in_target' });
+    });
+
+    it('offers source books missing from the target when drafting books not in the target is allowed', async () => {
+      const env = new TestEnvironment({
+        ...teamStartingToTranslateGenesis,
+        allowDraftingBooksNotInTarget: true,
+        draftingSourceBooksChapters: 'GEN1-50;EXO1-40;MAT1-28',
+        targetTextBooks: ['GEN', 'MAT']
+      });
+      await env.waitForInit();
+
+      // The same EXO book is now offered, since target membership is no longer required.
+      expect(env.availableDraftingScriptureRange).toBe('GEN1-50;EXO1-40;MAT1-28');
+      expect(env.excludedDraftingBooks).not.toContain({ bookId: 'EXO', reason: 'not_in_target' });
+    });
+
+    it('reports target books the drafting source has no content for', async () => {
+      const env = new TestEnvironment({
+        ...teamStartingToTranslateGenesis,
+        allowDraftingBooksNotInTarget: false,
+        draftingSourceBooksChapters: 'GEN1-50',
+        targetTextBooks: ['GEN', 'EXO']
+      });
+      await env.waitForInit();
+
+      // EXO is in the target but the drafting source has no text for it.
+      expect(env.availableDraftingScriptureRange).toBe('GEN1-50');
+      expect(env.excludedDraftingBooks).toContain({ bookId: 'EXO', reason: 'no_source_content' });
     });
   });
 
@@ -637,6 +709,19 @@ interface TestState {
    */
   trainingSourcesBooksChapters: { [key: string]: string };
   noAccessSources?: boolean;
+
+  /**
+   * The books that exist in the target project's text list (membership, independent of content). Only consulted when
+   * the target-membership gate is enforced (allowDraftingBooksNotInTarget === false). Defaults to undefined (no texts).
+   */
+  targetTextBooks?: string[];
+
+  /**
+   * Whether to allow drafting books not present in the target project. Defaults to true in tests so that the
+   * target-membership gate doesn't interfere with tests that aren't exercising it; tests for the gate set it
+   * explicitly.
+   */
+  allowDraftingBooksNotInTarget?: boolean;
 }
 
 class TestEnvironment {
@@ -648,7 +733,17 @@ class TestEnvironment {
   draftProgressService = instance(mockedDraftProgressService);
 
   constructor(state: TestState, sources$?: BehaviorSubject<DraftSourcesAsArrays>) {
+    // Default to allowing books not in the target so the membership gate stays out of the way of tests that aren't
+    // exercising it. Gate tests set this explicitly.
+    NewDraftLogicHandler.allowDraftingBooksNotInTarget = state.allowDraftingBooksNotInTarget ?? true;
+
     const project = createTestProjectProfile({
+      texts: (state.targetTextBooks ?? []).map(bookId => ({
+        bookNum: Canon.bookIdToNumber(bookId),
+        hasSource: false,
+        chapters: [],
+        permissions: {}
+      })),
       translateConfig: {
         preTranslate: true,
         draftConfig: {
@@ -740,6 +835,10 @@ class TestEnvironment {
 
   get availableDraftingScriptureRange(): string {
     return this.logicHandler.availableDraftingScriptureRange$.getValue().toString();
+  }
+
+  get excludedDraftingBooks(): ExcludedDraftingBook[] {
+    return this.logicHandler.excludedDraftingBooks$.getValue();
   }
 
   get selectedDraftingScriptureRange(): string {

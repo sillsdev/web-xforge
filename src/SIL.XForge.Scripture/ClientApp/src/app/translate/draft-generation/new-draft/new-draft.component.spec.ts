@@ -22,7 +22,11 @@ import { DraftGenerationService } from '../draft-generation.service';
 import { DraftSource } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataService } from '../training-data/training-data.service';
-import { DraftProgressService } from './new-draft-logic-handler';
+import {
+  ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET,
+  DraftProgressService,
+  NewDraftLogicHandler
+} from './new-draft-logic-handler';
 import { NewDraftComponent } from './new-draft.component';
 import { VerboseScriptureRange } from './scripture-range';
 
@@ -32,6 +36,13 @@ const TARGET_SHORT_NAME = 'TP1';
 describe('NewDraftComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({ providers: [TestOnlineStatusService, provideTestOnlineStatus()] });
+    // These tests aren't exercising the target-membership gate, and the test project has no text list, so allow
+    // drafting books regardless of target membership. Reset afterwards so it doesn't leak into other specs.
+    NewDraftLogicHandler.allowDraftingBooksNotInTarget = true;
+  });
+
+  afterEach(() => {
+    NewDraftLogicHandler.allowDraftingBooksNotInTarget = ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET;
   });
 
   // GEN: source has 50 chapters, target has GEN1-5 -> eligible for partial drafting

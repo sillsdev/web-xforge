@@ -47,6 +47,9 @@
         [basicMode]="true"
         (bookSelect)="onDraftingBookSelect($event)"
       ></app-book-multi-select>
+      @for (notice of draftingExclusionNotices; track notice.key) {
+        <app-notice icon="info" type="info">{{ t(notice.key, notice.params) }}</app-notice>
+      }
       @if (booksOfferedForPartialDrafting.length > 0) {
         <h3>{{ t("draft_books.which_chapters") }}</h3>
         <p>
