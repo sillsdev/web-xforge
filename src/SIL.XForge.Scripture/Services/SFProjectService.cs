@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Hangfire;
@@ -718,7 +719,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         User inviter = await RealtimeService.GetSnapshotAsync<User>(curUserId);
         string subject = _localizer[SharedResource.Keys.InviteSubject, project.Name, siteOptions.Name];
         var greeting =
-            $"<p>{_localizer[SharedResource.Keys.InviteGreeting, "<p>", inviter.Name, project.Name, siteOptions.Name, $"<a href=\"{url}\">{url}</a><p>"]}";
+            $"<p>{_localizer[SharedResource.Keys.InviteGreeting, "<p>", WebUtility.HtmlEncode(inviter.Name), WebUtility.HtmlEncode(project.Name), siteOptions.Name, $"<a href=\"{url}\">{url}</a><p>"]}";
         var instructions = $"<p>{_localizer[SharedResource.Keys.InviteInstructions, siteOptions.Name, "<b>", "</b>"]}";
         var pt = $"<ul><li>{_localizer[SharedResource.Keys.InvitePTOption, "<b>", "</b>", siteOptions.Name]}</li>";
         var google = $"<li>{_localizer[SharedResource.Keys.InviteGoogleOption, "<b>", "</b>", siteOptions.Name]}</li>";

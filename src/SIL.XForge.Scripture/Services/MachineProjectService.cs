@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -469,7 +470,7 @@ public class MachineProjectService(
             };
             string url = $"{websiteUrl.ToString().TrimEnd('/')}/projects/{sfProjectId}/draft-generation";
             string body =
-                $"<p>{localizer[resourceKeyBody, projectDoc.Data.ShortName]}</p>"
+                $"<p>{localizer[resourceKeyBody, WebUtility.HtmlEncode(projectDoc.Data.ShortName)]}</p>"
                 + $"<p>{localizer[SharedResource.Keys.DraftEmailMoreInformation, url]}</p>";
             await emailService.SendEmailAsync(userDoc.Data.Email, subject, body);
         }

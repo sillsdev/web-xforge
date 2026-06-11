@@ -575,6 +575,41 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task SendBuildCompletedEmailAsync_SendsCorrectEmailBody()
+    {
+        var env = new TestEnvironment();
+
+        // Set the project short name to a value containing HTML to verify it is encoded in the body
+        await env.Projects.ReplaceAsync(
+            new SFProject
+            {
+                Id = Project01,
+                Name = "project01",
+                ShortName = "P<01>",
+                ParatextId = Paratext01,
+                CheckingConfig = new CheckingConfig(),
+                UserRoles = [],
+                TranslateConfig = new TranslateConfig { TranslationSuggestionsEnabled = true },
+                WritingSystem = new WritingSystem { Tag = "en_US" },
+            }
+        );
+
+        await env.Service.SendBuildCompletedEmailAsync(
+            User01,
+            Project01,
+            Build01,
+            nameof(JobState.Completed),
+            new Uri(env.SiteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+        );
+
+        const string expectedSubject = "Scripture Forge draft generated successfully";
+        const string expectedBody =
+            "<p>Your draft for P&lt;01&gt; was generated successfully.</p>"
+            + "<p>For more information see https://localhost:5000/projects/project01/draft-generation</p>";
+        await env.EmailService.Received(1).SendEmailAsync("test@example.com", expectedSubject, expectedBody);
+    }
+
+    [Test]
     public async Task BuildProjectForBackgroundJobAsync_AddsDraftGenerationRequestIdTag()
     {
         // Set up test environment
