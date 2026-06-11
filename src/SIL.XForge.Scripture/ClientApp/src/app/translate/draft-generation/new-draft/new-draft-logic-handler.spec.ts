@@ -183,6 +183,24 @@ describe('NewDraftLogicHandler', () => {
     });
   });
 
+  describe('books offered for training', () => {
+    it('excludes extra-material (non-canonical) books from the target and training-source lists', async () => {
+      // The target and a training source both report content for a glossary (extra-material).
+      const env = new TestEnvironment({
+        ...teamStartingToTranslateGenesis,
+        targetProjectBooksChapters: 'GEN1-5;GLO1;MAT1-28',
+        trainingSourcesBooksChapters: {
+          'training-source-1-id': 'GEN1-50;GLO1;MAT1-28'
+        }
+      });
+      await env.waitForInit();
+
+      // The glossary is offered neither as a target training book nor as a training-source book.
+      expect(env.logicHandler.availableTargetTrainingScriptureRange$.getValue().books.has('GLO')).toBe(false);
+      expect(env.logicHandler.trainingSourceBooks$.getValue()['training-source-1-id']).not.toContain('GLO');
+    });
+  });
+
   describe('selectDraftingBooks', () => {
     it('allows selecting books and chapters within the available ranges', async () => {
       const testState = teamStartingToTranslateGenesis;

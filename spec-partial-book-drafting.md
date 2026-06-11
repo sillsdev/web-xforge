@@ -623,10 +623,12 @@ This change is additive: builds that don't include a target project entry in `Tr
 - [x] Add training data files section — made **selectable** (not read-only): checkbox list with default
       selection from the last build, recording the available set (`lastAvailableTrainingDataFiles`) to tell
       newly added files from deselected ones. Backend persists selected + available sets.
-- [ ] Exclude extra-material (non-canonical) books from the training-step lists too (target training + training
-      sources). The drafting list now filters these, but the training lists still come straight from
-      `getProgressForProject`, which doesn't strip non-canonical books. Decide whether to filter centrally in
-      `getProgressForProject` or per-list, and whether the training step needs its own exclusion notices.
+- [x] Exclude extra-material (non-canonical) books from the training-step lists too (target training + training
+      sources). Filtered in `NewDraftLogicHandler.init()` via the `withoutExtraMaterialBooks()` helper, applied to
+      the target training range and each training-source range. Kept in the handler (the selection-policy layer)
+      rather than in the `DraftProgressService` adapter, which stays a faithful content-range reporter. Training
+      exclusions are not surfaced as notices (consistent with non-canonical drafting exclusions being silent); a
+      training-step exclusion-notice design remains open if/when needed.
 
 ### Step 4: Confirm & Generate
 

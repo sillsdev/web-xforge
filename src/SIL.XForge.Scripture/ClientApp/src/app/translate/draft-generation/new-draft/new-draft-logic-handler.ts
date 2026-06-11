@@ -85,6 +85,20 @@ function mapObject<T, U>(obj: { [key: string]: T }, mapFn: (key: string, value: 
 }
 
 /**
+ * Returns a copy of the range with extra-material (non-canonical) books removed. Such books (front/back matter,
+ * glossaries, etc.) are never drafted or used as training data, so they should not be offered for selection.
+ */
+function withoutExtraMaterialBooks(range: VerboseScriptureRange): VerboseScriptureRange {
+  const result = range.clone();
+  for (const bookId of result.books.keys()) {
+    if (Canon.isExtraMaterial(bookId)) {
+      result.books.delete(bookId);
+    }
+  }
+  return result;
+}
+
+/**
  * Implements business logic for creating a new draft. Intended to be used in conjunction with a component that handles
  * UI interaction.
  *
@@ -204,15 +218,19 @@ export class NewDraftLogicHandler {
       const targetTextBookIds = new Set((projectDoc.data.texts ?? []).map(text => Canon.bookNumberToId(text.bookNum)));
       const { available, excluded } = this.computeOfferedDraftingBooks(draftSourceProgress, targetTextBookIds);
 
-      this.targetProjectScriptureRange = targetProjectProgress;
+      // Extra-material (non-canonical) books are never offered for training. (The drafting list handles them
+      // separately via computeOfferedDraftingBooks.)
+      const canonicalTargetProgress = withoutExtraMaterialBooks(targetProjectProgress);
+
+      this.targetProjectScriptureRange = canonicalTargetProgress;
       this.availableDraftingScriptureRange$.next(available);
       this.excludedDraftingBooks$.next(excluded);
-      this.availableTargetTrainingScriptureRange$.next(targetProjectProgress);
+      this.availableTargetTrainingScriptureRange$.next(canonicalTargetProgress);
       this.trainingSourceBooks$.next(
         Object.fromEntries(
           trainingSourcesProgress.map(source => [
             source.projectId,
-            scriptureRangeToBookListWithoutChapterDetail(source.range)
+            scriptureRangeToBookListWithoutChapterDetail(withoutExtraMaterialBooks(source.range))
           ])
         )
       );
