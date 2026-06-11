@@ -290,7 +290,8 @@
       "subtitle": "Which books in {{ boldStart }}{{ project }}{{ boldEnd }} are good enough to use to train the model to translate from {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} to {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}?",
       "which_chapters": "Which chapters of each book do you want to use to train the model?",
       "partial_explanation": "Some of the chapters in the books you selected will be translated and cannot be used as training data.",
-      "learn_more": "Learn more about training on part of a book."
+      "learn_more": "Learn more about training on part of a book.",
+      "excluded_not_in_any_source": "These books aren't available to train on because they aren't in any of the reference projects: {{ books }}."
     },
     "navigation": {
       "back": "Back",

@@ -94,6 +94,11 @@
         [selectedBooks]="selectedTargetTrainingBooks"
         (bookSelect)="onTargetTrainingBookSelect($event)"
       ></app-book-multi-select>
+      @if (hasTargetTrainingBooksWithoutSource) {
+        <app-notice icon="info" type="info">{{
+          t("training_books.excluded_not_in_any_source", { books: targetTrainingBooksWithoutSourceNames })
+        }}</app-notice>
+      }
       @if (booksOfferedForPartialTargetTraining.length > 0) {
         <h3>{{ t("training_books.which_chapters") }}</h3>
         <p>

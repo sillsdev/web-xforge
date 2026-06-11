@@ -182,7 +182,7 @@ describe('NewDraftComponent', () => {
       expect(available.every(b => b.selected)).toBeTrue();
     });
 
-    it('does not show a book in the source when it is not in the training source', async () => {
+    it('does not offer a target book that is not in any training source', async () => {
       const stateWithoutGEN = {
         ...testState,
         trainingSourcesBooksChapters: { 'training-source-1-id': 'MAT1-28;MRK1-16;LUK1-24;JHN1-21' }
@@ -191,11 +191,12 @@ describe('NewDraftComponent', () => {
       await env.waitForInit();
       env.component.logicHandler.setInputMode('training_books');
 
-      // GEN is in the target project but not in the training source
-      env.component.onTargetTrainingBookSelect([Canon.bookIdToNumber('GEN')]);
-
-      expect(env.availableTrainingSourceBookIds('training-source-1-id')).not.toContain('GEN');
-      expect(env.availableTrainingSourceBookIds('training-source-1-id')).toEqual([]);
+      // GEN is in the target project but not in the training source, so it isn't offered as a target training book.
+      // Instead it's recorded so the UI can explain why it's missing.
+      expect(env.component.availableTargetTrainingBooks.map(book => book.number)).not.toContain(
+        Canon.bookIdToNumber('GEN')
+      );
+      expect(env.component.logicHandler.targetTrainingBooksWithoutSource$.getValue()).toContain('GEN');
     });
 
     it('removes a book from source when it is deselected in the target', async () => {

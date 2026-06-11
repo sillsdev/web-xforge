@@ -586,6 +586,18 @@ export class NewDraftComponent {
     return this.logicHandler.booksOfferedForPartialTargetTraining$.getValue();
   }
 
+  /** Whether any target book is hidden from the training list for lacking a matching book in any training source. */
+  get hasTargetTrainingBooksWithoutSource(): boolean {
+    return this.logicHandler.targetTrainingBooksWithoutSource$.getValue().length > 0;
+  }
+
+  /** Localized, comma-joined names of the target books hidden from the training list for lacking a training source. */
+  get targetTrainingBooksWithoutSourceNames(): string {
+    return this.i18n.enumerateList(
+      this.logicHandler.targetTrainingBooksWithoutSource$.getValue().map(bookId => this.i18n.localizeBook(bookId))
+    );
+  }
+
   onTargetTrainingBookSelect(books: number[]): void {
     const previousSelectedTargetIds = new Set(
       scriptureRangeToBookListWithoutChapterDetail(this.logicHandler.selectedTargetTrainingScriptureRange$.getValue())

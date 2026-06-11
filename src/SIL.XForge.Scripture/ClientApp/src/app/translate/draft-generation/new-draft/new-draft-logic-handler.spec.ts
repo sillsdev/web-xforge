@@ -199,6 +199,24 @@ describe('NewDraftLogicHandler', () => {
       expect(env.logicHandler.availableTargetTrainingScriptureRange$.getValue().books.has('GLO')).toBe(false);
       expect(env.logicHandler.trainingSourceBooks$.getValue()['training-source-1-id']).not.toContain('GLO');
     });
+
+    it('excludes target books absent from every training source and tracks them for the notice', async () => {
+      const env = new TestEnvironment({
+        ...teamStartingToTranslateGenesis,
+        targetProjectBooksChapters: 'GEN1-5;MAT1-28;LUK1-24',
+        // The training source has Genesis and Matthew, but not Luke.
+        trainingSourcesBooksChapters: { 'training-source-1-id': 'GEN1-50;MAT1-28' }
+      });
+      await env.waitForInit();
+      env.logicHandler.setInputMode('training_books');
+
+      const availableTargetTraining = env.logicHandler.availableTargetTrainingScriptureRange$.getValue();
+      // Genesis and Matthew remain available; Luke is withheld because no training source contains it.
+      expect(availableTargetTraining.books.has('GEN')).toBe(true);
+      expect(availableTargetTraining.books.has('MAT')).toBe(true);
+      expect(availableTargetTraining.books.has('LUK')).toBe(false);
+      expect(env.logicHandler.targetTrainingBooksWithoutSource$.getValue()).toEqual(['LUK']);
+    });
   });
 
   describe('selectDraftingBooks', () => {

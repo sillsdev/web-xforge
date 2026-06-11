@@ -133,6 +133,13 @@ export class NewDraftLogicHandler {
   availableTargetTrainingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange>(new VerboseScriptureRange(''));
   selectedTargetTrainingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange>(new VerboseScriptureRange(''));
 
+  /**
+   * Target books that have content available for training but are not offered, because no training source contains
+   * the book (so it could never be paired with a source). Populated when the training step is entered; used to explain
+   * why those books are missing from the target training list.
+   */
+  targetTrainingBooksWithoutSource$ = new BehaviorSubject<string[]>([]);
+
   /** Books that exist in the training sources, by project ID */
   trainingSourceBooks$ = new BehaviorSubject<{ [projectId: string]: string[] }>({});
   availableTrainingSourceBooks$ = new BehaviorSubject<{ [projectId: string]: string[] }>({});
@@ -498,10 +505,26 @@ export class NewDraftLogicHandler {
   }
 
   private limitAvailableTrainingRangeBasedOnSelectedDraftingRange(): void {
-    // Limit available and selected target training scripture range to not overlap selected drafting range
-    this.availableTargetTrainingScriptureRange$.next(
-      this.targetProjectScriptureRange.difference(this.selectedDraftingScriptureRange$.getValue())
+    // Available target training books are the target's content minus what's being drafted, further limited to books
+    // that exist in at least one training source: a target book can only be used as training data if a source
+    // provides the matching book to pair it with. Books with no such source are recorded
+    // (targetTrainingBooksWithoutSource$) so the UI can explain why they aren't offered.
+    const targetTrainingRange = this.targetProjectScriptureRange.difference(
+      this.selectedDraftingScriptureRange$.getValue()
     );
+    const booksInAnyTrainingSource = new Set(Object.values(this.trainingSourceBooks$.getValue()).flat());
+
+    const availableTargetTrainingRange = new VerboseScriptureRange('');
+    const booksWithoutSource: string[] = [];
+    for (const [bookId, chapters] of targetTrainingRange.books) {
+      if (booksInAnyTrainingSource.has(bookId)) {
+        availableTargetTrainingRange.books.set(bookId, chapters);
+      } else {
+        booksWithoutSource.push(bookId);
+      }
+    }
+    this.availableTargetTrainingScriptureRange$.next(availableTargetTrainingRange);
+    this.targetTrainingBooksWithoutSource$.next(booksWithoutSource);
     this.selectedTargetTrainingScriptureRange$.next(
       this.selectedTargetTrainingScriptureRange$.getValue().difference(this.selectedDraftingScriptureRange$.getValue())
     );

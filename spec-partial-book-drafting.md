@@ -274,12 +274,21 @@ User selects training data sources. Three sections:
 **Section 1: Target project training books**
 
 A book is shown in the training list if the target project has **at least one chapter with content that is not
-being drafted**. Concretely: `availableTargetTrainingScriptureRange` (which is the target project's chapters
-with content minus the selected drafting chapters) must have at least one chapter for that book.
+being drafted** AND the book exists in **at least one training source**. Concretely:
+`availableTargetTrainingScriptureRange` (the target project's chapters with content, minus the selected drafting
+chapters, restricted to books present in some training source) must have at least one chapter for that book.
 
 This means a book being partially drafted can still appear here. Example: if the user drafts Luke 1–10 and
 the target has Luke 11–28 with content, Luke appears in the training list with chapters 11–28 available. The
-book is only excluded entirely if all of its available target chapters are being drafted.
+book is excluded entirely if all of its available target chapters are being drafted.
+
+**Books with no matching training source:** a target book can only be trained on if a training source supplies the
+matching book to pair it with, so target books absent from **every** training source are withheld from the list
+(legacy's `unusableTrainingSourceBooks`). They are recorded on `NewDraftLogicHandler.targetTrainingBooksWithoutSource$`
+(computed in `limitAvailableTrainingRangeBasedOnSelectedDraftingRange()`, since the source-membership limit lives
+alongside the drafting-range limit) and surfaced as an info notice under the target training selector
+(`new_draft.training_books.excluded_not_in_any_source`). There is always at least one training source, so this is
+independent of NLLB training-optionality (which depends on language support, not source count).
 
 - `BookMultiSelectComponent` driven by `availableTargetTrainingScriptureRange$`
 - Chapter range input for eligible books:
@@ -695,8 +704,10 @@ See "Legacy Parity: Notices, Auto-Selection, Validation & Empty States" for deta
       selected" notice; resolve the open question on the chapter-level selection rule
 - [~] Re-derive and surface "hidden / unusable book" notices from the new chapter-level gating (not a 1:1 port);
   decide the final category list. **Draft step done** (see "Drafting book exclusions & notices": surfaces
-  `no_source_content` + `not_in_target`, silently drops `non_canonical`). **Training step still TODO**, and the
-  final category list across both steps is not yet locked.
+  `no_source_content` + `not_in_target`, silently drops `non_canonical`). **Training step partially done**: target
+  books absent from every training source are withheld and surfaced (`excluded_not_in_any_source`, legacy's
+  `unusableTrainingSourceBooks`); still TODO are the other training categories (e.g. training-source books not in
+  the target — legacy's `unusableTrainingTargetBooks`) and locking the final category list across both steps.
 - [x] Port the custom Serval config notice (`servalConfig != null`) to Step 4
 - [ ] Restore per-book training-pair validation as a training-step forward gate (skipped when NLLB-optional)
 - [ ] Add empty-state messages: no draftable books, no target training books, "reference books will appear",
