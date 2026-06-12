@@ -84,6 +84,7 @@ public class ParatextService : DisposableBase, IParatextService
     private readonly DotNetCoreAlert _alertSystem;
     private readonly IDeltaUsxMapper _deltaUsxMapper;
     private readonly IAuthService _authService;
+    private readonly ISFProjectRights _projectRights;
     private readonly Dictionary<string, string> _forcedUsernames = [];
 
     public ParatextService(
@@ -102,7 +103,8 @@ public class ParatextService : DisposableBase, IParatextService
         ISFRestClientFactory restClientFactory,
         IHgWrapper hgWrapper,
         IDeltaUsxMapper deltaUsxMapper,
-        IAuthService authService
+        IAuthService authService,
+        ISFProjectRights projectRights
     )
     {
         _paratextOptions = paratextOptions;
@@ -122,6 +124,7 @@ public class ParatextService : DisposableBase, IParatextService
         _alertSystem = new DotNetCoreAlert(_logger);
         _deltaUsxMapper = deltaUsxMapper;
         _authService = authService;
+        _projectRights = projectRights;
 
         _httpClientHandler = new HttpClientHandler();
         _registryClient = new HttpClient(_httpClientHandler);
@@ -1291,9 +1294,22 @@ public class ParatextService : DisposableBase, IParatextService
     }
 
     /// <summary> Gets note threads from the Paratext project and maps them to Scripture Forge models. </summary>
-    public IReadOnlyList<ParatextNote>? GetNoteThreads(UserSecret userSecret, string paratextId)
+    public async Task<IReadOnlyList<ParatextNote>?> GetNoteThreadsAsync(UserSecret userSecret, string paratextId)
     {
-        using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
+        SFProject sfProject =
+            await _realtimeService.QuerySnapshots<SFProject>().FirstOrDefaultAsync(p => p.ParatextId == paratextId)
+            ?? throw new DataNotFoundException($"No SF project found with PT project ID {paratextId}.");
+        if (!_projectRights.HasRight(sfProject, userSecret.Id, SFProjectDomain.PTNoteThreads, Operation.View))
+        {
+            throw new ForbiddenException(
+                $"SF user ID {userSecret.Id} does not have PT note view access to SF project ID {sfProject.Id}."
+            );
+        }
+
+        string username =
+            GetParatextUsername(userSecret)
+            ?? throw new ForbiddenException($"SF user ID {userSecret.Id} does not have a Paratext username.");
+        using ScrText scrText = ScrTextCollection.FindById(username, paratextId);
         if (scrText == null)
             return null;
 

@@ -289,7 +289,7 @@ public class ParatextController : ControllerBase
 
         try
         {
-            IReadOnlyList<ParatextNote> notes = _paratextService.GetNoteThreads(userSecret, projectId);
+            IReadOnlyList<ParatextNote>? notes = await _paratextService.GetNoteThreadsAsync(userSecret, projectId);
             if (notes == null)
             {
                 return NotFound();
