@@ -651,6 +651,8 @@ interface TestState {
   trainingDataFiles?: TrainingData[];
   lastSelectedTrainingDataFiles?: string[];
   lastAvailableTrainingDataFiles?: string[];
+  /** Target books getCompleteBookIds should report as complete (auto-selectable on first draft). Defaults to none. */
+  completeTargetBooks?: string[];
 }
 
 function makeTrainingData(dataId: string, title: string = dataId): TrainingData {
@@ -787,6 +789,7 @@ class TestEnvironment {
         new VerboseScriptureRange(booksChapters)
       );
     }
+    when(mockedProgressService.getCompleteBookIds(projectId)).thenResolve(new Set(state.completeTargetBooks ?? []));
 
     when(mockedTrainingDataService.getTrainingData(anything(), anything())).thenReturn(
       options.trainingData$ ?? of(state.trainingDataFiles ?? [])

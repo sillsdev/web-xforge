@@ -700,8 +700,21 @@ This change is additive: builds that don't include a target project entry in `Tr
 
 See "Legacy Parity: Notices, Auto-Selection, Validation & Empty States" for details.
 
-- [ ] Auto-select training books on first visit (no saved selection); show the "books were automatically
-      selected" notice; resolve the open question on the chapter-level selection rule
+- [x] Auto-select training books on first visit (no saved selection); show the "books were automatically
+      selected" notice; resolve the open question on the chapter-level selection rule. **Resolved:** auto-selection is
+      high-conviction because it persists to `lastSelectedTrainingScriptureRanges` and is reused for later builds — a
+      false positive would silently degrade future drafts. A target book is auto-selected only if it (1) is offered for
+      target training, (2) appears essentially fully translated, and (3) is **not** itself being drafted (a book whose
+      translation is in progress is a lower-conviction case the user should opt into deliberately). The completeness
+      check intentionally uses the **segment-level** signal (legacy's `nonBlank > 10 && (blank/total ≤ 1% || blank ≤
+    3)`), not the chapter-level "has content" model — the chapter-level 10%-per-chapter bar can't distinguish a
+      fully-translated book from one sitting uniformly at ~12%, and a sticky false positive is exactly what we're
+      avoiding. This reintroduces the segment-level read the spec had deferred, which is the "deliberately decide the
+      finer heuristic is worth the extra data path" case. The rule is extracted into the shared
+      `bookAppearsCompleteForTrainingAutoSelection()` helper in `progress.service.ts`, called by both the legacy stepper
+      and the new flow's `DraftProgressService.getCompleteBookIds()`, so the two stay in lockstep. Auto-selected target
+      books are paired into every training source that contains them; the `new_draft.training_books.auto_selected`
+      notice is shown and cleared once the user deselects every target training book.
 - [~] Re-derive and surface "hidden / unusable book" notices from the new chapter-level gating (not a 1:1 port);
   decide the final category list. **Draft step done** (see "Drafting book exclusions & notices": surfaces
   `no_source_content` + `not_in_target`, silently drops `non_canonical`). **Training step partially done**: target

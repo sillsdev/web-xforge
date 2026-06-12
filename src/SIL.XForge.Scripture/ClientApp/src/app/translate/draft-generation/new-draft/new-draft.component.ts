@@ -14,8 +14,6 @@ import { Canon } from '@sillsdev/scripture';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { filter, firstValueFrom, take } from 'rxjs';
-import { DevOnlyComponent } from 'src/app/shared/dev-only/dev-only.component';
-import { JsonViewerComponent } from 'src/app/shared/json-viewer/json-viewer.component';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { hasStringProp } from '../../../../type-utils';
@@ -25,6 +23,8 @@ import { I18nKeyForComponent, I18nService } from '../../../../xforge-common/i18n
 import { UserDoc } from '../../../../xforge-common/models/user-doc';
 import { UserService } from '../../../../xforge-common/user.service';
 import { filterNullish, quietTakeUntilDestroyed } from '../../../../xforge-common/util/rxjs-util';
+import { ParatextProject } from '../../../core/models/paratext-project';
+import { ParatextService } from '../../../core/paratext.service';
 import { Book } from '../../../shared/book-multi-select/book-multi-select';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { CopyrightBannerComponent } from '../../../shared/copyright-banner/copyright-banner.component';
@@ -37,9 +37,7 @@ import { DraftGenerationService } from '../draft-generation.service';
 import { DraftSource } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataService } from '../training-data/training-data.service';
-import { defaultSelectedTrainingDataFiles } from './training-data-file-selection';
-import { ParatextProject } from '../../../core/models/paratext-project';
-import { ParatextService } from '../../../core/paratext.service';
+import { DraftPendingUpdatesComponent } from './draft-pending-updates/draft-pending-updates.component';
 import {
   DraftingBookExclusionReason,
   DraftProgressService,
@@ -48,7 +46,7 @@ import {
   scriptureRangeToBookListWithoutChapterDetail
 } from './new-draft-logic-handler';
 import { ChapterSet, VerboseScriptureRange } from './scripture-range';
-import { DraftPendingUpdatesComponent } from './draft-pending-updates/draft-pending-updates.component';
+import { defaultSelectedTrainingDataFiles } from './training-data-file-selection';
 
 interface CopyrightMessage {
   banner: string;
@@ -85,12 +83,10 @@ const PAGES_BY_ORDER = [
     MatCardModule,
     MatCheckboxModule,
     MatIconModule,
-    JsonViewerComponent,
     BookMultiSelectComponent,
     MatFormFieldModule,
     MatInputModule,
     NoticeComponent,
-    DevOnlyComponent,
     DraftPendingUpdatesComponent,
     FormsModule,
     TranslocoModule,
@@ -608,6 +604,11 @@ export class NewDraftComponent {
     return this.logicHandler.targetTrainingBooksWithoutSource$.getValue().length > 0;
   }
 
+  /** Whether training books were pre-selected on this project's first draft (shows the "review these" notice). */
+  get trainingBooksWereAutoSelected(): boolean {
+    return this.logicHandler.trainingBooksWereAutoSelected$.getValue();
+  }
+
   /** Localized, comma-joined names of the target books hidden from the training list for lacking a training source. */
   get targetTrainingBooksWithoutSourceNames(): string {
     return this.i18n.enumerateList(
@@ -637,6 +638,7 @@ export class NewDraftComponent {
       const autoAdded = addedIds.filter(id => available.includes(id));
       this.logicHandler.selectTrainingSourceBooks(source.projectRef, [...new Set([...stillValid, ...autoAdded])]);
     }
+    this.logicHandler.dismissAutoSelectNoticeIfSelectionEmpty();
     this.clearStepErrorIfResolved();
   }
 

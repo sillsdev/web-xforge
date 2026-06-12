@@ -608,6 +608,105 @@ describe('NewDraftLogicHandler', () => {
     });
   });
 
+  describe('auto-selecting training books on first visit', () => {
+    // A team generating their first draft: no previously saved training selection, so training books are auto-selected.
+    const teamWithNoPriorTrainingSelection = {
+      ...teamStartingToTranslateGenesis,
+      previouslySelectedTrainingScriptureRanges: undefined
+    } as const satisfies TestState;
+
+    it('pre-selects only books that appear complete, and pairs them in the training sources', async () => {
+      const env = new TestEnvironment({
+        ...teamWithNoPriorTrainingSelection,
+        // MAT and MRK look complete; LUK and JHN do not (e.g. still in progress).
+        completeTargetBooks: ['MAT', 'MRK']
+      });
+      await env.waitForInit();
+
+      env.logicHandler.setInputMode('training_books');
+
+      expect(env.selectedTargetTrainingScriptureRange).toBe('MAT1-28;MRK1-16');
+      expect(env.selectedTrainingSourceBooks).toEqual({ 'training-source-1-id': ['MAT', 'MRK'] });
+      expect(env.trainingBooksWereAutoSelected).toBe(true);
+    });
+
+    it('never pre-selects a book that is being drafted, even when it appears complete', async () => {
+      const env = new TestEnvironment({
+        ...teamWithNoPriorTrainingSelection,
+        completeTargetBooks: ['GEN', 'MAT']
+      });
+      await env.waitForInit();
+
+      // Partially draft GEN (GEN6-50), leaving GEN1-5 available for training. GEN appears complete, but since the user
+      // is drafting it, it is a lower-conviction case and must not be auto-selected. MAT is complete and not drafted.
+      env.logicHandler.selectDraftingBooks(['GEN']);
+      expect(env.selectedDraftingScriptureRange).toBe('GEN6-50');
+
+      env.logicHandler.setInputMode('training_books');
+
+      expect(env.selectedTargetTrainingScriptureRange).toBe('MAT1-28');
+      expect(env.selectedTrainingSourceBooks).toEqual({ 'training-source-1-id': ['MAT'] });
+      expect(env.trainingBooksWereAutoSelected).toBe(true);
+    });
+
+    it('selects nothing and shows no notice when no book appears complete', async () => {
+      const env = new TestEnvironment({ ...teamWithNoPriorTrainingSelection, completeTargetBooks: [] });
+      await env.waitForInit();
+
+      env.logicHandler.setInputMode('training_books');
+
+      expect(env.selectedTargetTrainingScriptureRange).toBe('');
+      expect(env.trainingBooksWereAutoSelected).toBe(false);
+    });
+
+    it('pairs auto-selected books across every training source that contains them', async () => {
+      const env = new TestEnvironment({
+        ...teamWithTwoTrainingSources,
+        previouslySelectedTrainingScriptureRanges: undefined,
+        completeTargetBooks: ['MAT', 'LUK']
+      });
+      await env.waitForInit();
+
+      env.logicHandler.setInputMode('training_books');
+
+      expect(env.selectedTargetTrainingScriptureRange).toBe('MAT1-28;LUK1-24');
+      expect(env.selectedTrainingSourceBooks).toEqual({
+        'training-source-1-id': ['MAT', 'LUK'],
+        'training-source-2-id': ['MAT', 'LUK']
+      });
+      expect(env.trainingBooksWereAutoSelected).toBe(true);
+    });
+
+    it('does not auto-select when a previous training selection exists (restore takes precedence)', async () => {
+      // teamStartingToTranslateGenesis has a saved selection (MAT;MRK;LUK;JHN); the complete-book set should be ignored.
+      const env = new TestEnvironment({ ...teamStartingToTranslateGenesis, completeTargetBooks: ['GEN'] });
+      await env.waitForInit();
+
+      env.logicHandler.setInputMode('training_books');
+
+      expect(env.selectedTargetTrainingScriptureRange).toBe('MAT1-28;MRK1-16;LUK1-24;JHN1-21');
+      expect(env.trainingBooksWereAutoSelected).toBe(false);
+    });
+
+    it('clears the auto-selected notice once the user deselects every target training book', async () => {
+      const env = new TestEnvironment({ ...teamWithNoPriorTrainingSelection, completeTargetBooks: ['MAT', 'MRK'] });
+      await env.waitForInit();
+
+      env.logicHandler.setInputMode('training_books');
+      expect(env.trainingBooksWereAutoSelected).toBe(true);
+
+      // Deselecting down to a non-empty selection keeps the review notice.
+      env.logicHandler.selectTargetTrainingBooks(['MAT']);
+      env.logicHandler.dismissAutoSelectNoticeIfSelectionEmpty();
+      expect(env.trainingBooksWereAutoSelected).toBe(true);
+
+      // Deselecting everything clears it.
+      env.logicHandler.selectTargetTrainingBooks([]);
+      env.logicHandler.dismissAutoSelectNoticeIfSelectionEmpty();
+      expect(env.trainingBooksWereAutoSelected).toBe(false);
+    });
+  });
+
   describe('selectTargetTrainingChapters', () => {
     it('updates the selected target training scripture range', async () => {
       const env = new TestEnvironment(teamStartingToTranslateGenesis);
@@ -765,6 +864,13 @@ interface TestState {
   noAccessSources?: boolean;
 
   /**
+   * The target books that appear complete enough to be auto-selected as training data on a first draft (what
+   * getCompleteBookIds reports). Independent of the chapter-level ranges above, since completeness is a segment-level
+   * judgment. Defaults to none.
+   */
+  completeTargetBooks?: string[];
+
+  /**
    * The books that exist in the target project's text list (membership, independent of content). Only consulted when
    * the target-membership gate is enforced (allowDraftingBooksNotInTarget === false). Defaults to undefined (no texts).
    */
@@ -852,6 +958,9 @@ class TestEnvironment {
         new VerboseScriptureRange(booksChapters)
       );
     }
+    when(mockedDraftProgressService.getCompleteBookIds(projectId)).thenResolve(
+      new Set(state.completeTargetBooks ?? [])
+    );
 
     this.logicHandler = new NewDraftLogicHandler(
       this.activatedProjectService,
@@ -885,6 +994,10 @@ class TestEnvironment {
 
   get selectedTargetTrainingScriptureRange(): string {
     return this.logicHandler.selectedTargetTrainingScriptureRange$.getValue().toString();
+  }
+
+  get trainingBooksWereAutoSelected(): boolean {
+    return this.logicHandler.trainingBooksWereAutoSelected$.getValue();
   }
 
   get availableDraftingScriptureRange(): string {

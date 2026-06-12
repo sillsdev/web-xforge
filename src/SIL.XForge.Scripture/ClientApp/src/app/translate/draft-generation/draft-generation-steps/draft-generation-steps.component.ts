@@ -46,7 +46,12 @@ import { Book } from '../../../shared/book-multi-select/book-multi-select';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { CopyrightBannerComponent } from '../../../shared/copyright-banner/copyright-banner.component';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
-import { BookProgress, ProgressService, ProjectProgress } from '../../../shared/progress-service/progress.service';
+import {
+  bookAppearsCompleteForTrainingAutoSelection,
+  BookProgress,
+  ProgressService,
+  ProjectProgress
+} from '../../../shared/progress-service/progress.service';
 import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
@@ -54,7 +59,6 @@ import { DraftSource } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataService } from '../training-data/training-data.service';
 
-const MIN_TRANSLATED_SEGMENTS_TO_AUTO_SELECT_BOOK = 10 as const;
 const MIN_TRANSLATED_SEGMENTS_FOR_NON_EMPTY_BOOK = 3 as const;
 
 export interface DraftGenerationStepsResult {
@@ -310,19 +314,14 @@ export class DraftGenerationStepsComponent implements OnInit {
             const hasPreviousTrainingRange: boolean =
               (draftConfig?.lastSelectedTrainingScriptureRanges ?? []).length > 0;
 
-            // Determine if this book should be auto selected. The requirements are:
-            // 1. The project does not have any previous training selections made.
-            // 2. At least 10 non-blank segments in the book
-            // 3. At least 99 percent of the book has been translated or 3 or fewer blank segments.
+            // Determine if this book should be auto selected: the project must have no previous training selections,
+            // and the book must appear complete (see bookAppearsCompleteForTrainingAutoSelection).
             const bookId = Canon.bookNumberToId(bookNum);
             const bookProgress: BookProgress | undefined = projectProgress.books.find(b => b.bookId === bookId);
             const selected: boolean =
               !hasPreviousTrainingRange &&
               bookProgress != null &&
-              bookProgress.verseSegments - bookProgress.blankVerseSegments >
-                MIN_TRANSLATED_SEGMENTS_TO_AUTO_SELECT_BOOK &&
-              (bookProgress.blankVerseSegments / bookProgress.verseSegments <= 0.01 ||
-                bookProgress.blankVerseSegments <= 3);
+              bookAppearsCompleteForTrainingAutoSelection(bookProgress);
 
             // If books were automatically selected, reflect this in the UI via a notice
             this.trainingBooksWereAutoSelected ||= selected;

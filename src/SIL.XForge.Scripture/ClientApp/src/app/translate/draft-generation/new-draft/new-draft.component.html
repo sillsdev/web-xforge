@@ -94,6 +94,9 @@
         [selectedBooks]="selectedTargetTrainingBooks"
         (bookSelect)="onTargetTrainingBookSelect($event)"
       ></app-book-multi-select>
+      @if (trainingBooksWereAutoSelected) {
+        <app-notice icon="info" type="info">{{ t("training_books.auto_selected") }}</app-notice>
+      }
       @if (hasTargetTrainingBooksWithoutSource) {
         <app-notice icon="info" type="info">{{
           t("training_books.excluded_not_in_any_source", { books: targetTrainingBooksWithoutSourceNames })
@@ -300,5 +303,3 @@
     }
   }
 </div>
-
-<app-dev-only> <app-json-viewer [data]="debugData"></app-json-viewer> </app-dev-only>

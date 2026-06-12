@@ -290,6 +290,30 @@ export function expectedBookChapters(bookId: string): number {
   return chapterCounts[bookId] ?? 1;
 }
 
+/**
+ * Minimum number of translated (non-blank) verse segments a book must have before it can be auto-selected as training
+ * data on a project's first draft. See {@link bookAppearsCompleteForTrainingAutoSelection}.
+ */
+const MIN_TRANSLATED_SEGMENTS_TO_AUTO_SELECT_BOOK = 10;
+
+/**
+ * Whether a book appears complete enough to be auto-selected as training data on a project's first draft (i.e. when the
+ * project has no previously saved training selection). The criteria are:
+ *   1. more than {@link MIN_TRANSLATED_SEGMENTS_TO_AUTO_SELECT_BOOK} translated (non-blank) verse segments, and
+ *   2. at least 99% of the book translated, or no more than 3 blank verse segments.
+ *
+ * Auto-selection is intentionally high-conviction: the selection is persisted and reused for later builds, so a wrong
+ * pick would silently degrade future drafts. This favors only books that look essentially fully translated. Shared by
+ * the legacy draft-generation stepper and the new draft wizard so both flows stay in lockstep.
+ */
+export function bookAppearsCompleteForTrainingAutoSelection(bookProgress: BookProgress): boolean {
+  const translatedSegments = bookProgress.verseSegments - bookProgress.blankVerseSegments;
+  return (
+    translatedSegments > MIN_TRANSLATED_SEGMENTS_TO_AUTO_SELECT_BOOK &&
+    (bookProgress.blankVerseSegments / bookProgress.verseSegments <= 0.01 || bookProgress.blankVerseSegments <= 3)
+  );
+}
+
 @Injectable({ providedIn: 'root' })
 export class ProgressService {
   constructor(

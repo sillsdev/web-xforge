@@ -4,7 +4,10 @@ import { isEqual } from 'lodash-es';
 import { BehaviorSubject, firstValueFrom, skip } from 'rxjs';
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
 import { filterNullish, quietTakeUntilDestroyed } from '../../../../xforge-common/util/rxjs-util';
-import { ProgressService } from '../../../shared/progress-service/progress.service';
+import {
+  bookAppearsCompleteForTrainingAutoSelection,
+  ProgressService
+} from '../../../shared/progress-service/progress.service';
 import { DraftSourcesAsArrays } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
 import { ChapterSet, VerboseScriptureRange } from './scripture-range';
@@ -66,6 +69,25 @@ export class DraftProgressService {
       }
     }
     return scriptureRange;
+  }
+
+  /**
+   * Returns the IDs of the books in a project that appear complete enough to be auto-selected as training data (see
+   * bookAppearsCompleteForTrainingAutoSelection). Derived from the segment-level progress counts that getProgressFor
+   * Project discards, which is why this is computed separately. Reuses the cached progress, so calling it alongside
+   * getProgressForProject for the same project costs no extra request.
+   */
+  async getCompleteBookIds(projectId: string): Promise<Set<string>> {
+    const progress = await this.progressService.getProgressWithChapterProgress(projectId, {
+      maxStalenessMs: 1000 * 60
+    });
+    const completeBookIds = new Set<string>();
+    for (const bookProgress of progress.books) {
+      if (bookAppearsCompleteForTrainingAutoSelection(bookProgress)) {
+        completeBookIds.add(bookProgress.bookId);
+      }
+    }
+    return completeBookIds;
   }
 }
 
@@ -132,6 +154,15 @@ export class NewDraftLogicHandler {
   targetProjectScriptureRange = new VerboseScriptureRange('');
   availableTargetTrainingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange>(new VerboseScriptureRange(''));
   selectedTargetTrainingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange>(new VerboseScriptureRange(''));
+
+  /**
+   * Whether training books were automatically selected on this project's first draft (no previously saved training
+   * selection). Used to show the "review the pre-selected books" notice on the training step.
+   */
+  trainingBooksWereAutoSelected$ = new BehaviorSubject<boolean>(false);
+
+  /** Target books that appear complete enough to auto-select as training data (see getCompleteBookIds). */
+  private completeTargetBookIds = new Set<string>();
 
   /**
    * Target books that have content available for training but are not offered, because no training source contains
@@ -202,12 +233,14 @@ export class NewDraftLogicHandler {
         })
       );
 
-      [draftSourceProgress, targetProjectProgress, trainingSourcesProgress, this.sources] = await Promise.all([
-        this.progressService.getProgressForProject(draftingSource.projectRef),
-        this.progressService.getProgressForProject(projectId),
-        trainingSourcesProgressPromise,
-        firstValueFrom(this.draftSourcesService.getDraftProjectSources())
-      ]);
+      [draftSourceProgress, targetProjectProgress, trainingSourcesProgress, this.sources, this.completeTargetBookIds] =
+        await Promise.all([
+          this.progressService.getProgressForProject(draftingSource.projectRef),
+          this.progressService.getProgressForProject(projectId),
+          trainingSourcesProgressPromise,
+          firstValueFrom(this.draftSourcesService.getDraftProjectSources()),
+          this.progressService.getCompleteBookIds(projectId)
+        ]);
 
       const sourcesWithNoAccess = [
         ...this.sources.trainingSources,
@@ -472,6 +505,13 @@ export class NewDraftLogicHandler {
     const targetProjectId = this.activatedProjectService.projectId;
     const lastSelectedTrainingScriptureRanges = draftConfig.lastSelectedTrainingScriptureRanges ?? [];
 
+    // On a project's first draft there is nothing to restore; instead auto-select a sensible default of training books.
+    // This is mutually exclusive with the restore path, matching the legacy stepper's !hasPreviousTrainingRange gate.
+    if (lastSelectedTrainingScriptureRanges.length === 0) {
+      this.autoSelectTrainingBooks();
+      return;
+    }
+
     // Restore the previously selected books for each training source, ignoring the target project's own entry (handled
     // separately below). Only keep books that are still available for training in that source.
     const selectedTrainingSourceBooksByProjectId: { [key: string]: string[] } = {};
@@ -507,6 +547,52 @@ export class NewDraftLogicHandler {
       availableTargetTrainingScriptureRange.books.has(bookId)
     );
     this.selectTargetTrainingBooks(availableTargetBooks);
+  }
+
+  /**
+   * Pre-selects a sensible default of training books on a project's first draft (no previously saved training
+   * selection), so the user isn't faced with an empty list. Auto-selection is intentionally high-conviction: the
+   * selection is persisted and reused for later builds, so a wrong pick would silently degrade future drafts. A target
+   * book is auto-selected only if it is offered for target training, appears essentially fully translated (see
+   * getCompleteBookIds), and is not itself being drafted — a book whose translation is still in progress (i.e. one the
+   * user is drafting) is a lower-conviction case they should opt into deliberately. Each auto-selected target book is
+   * also selected in every training source that contains it, mirroring a manual selection. Sets
+   * trainingBooksWereAutoSelected$ so the component can show the accompanying "review these" notice.
+   */
+  private autoSelectTrainingBooks(): void {
+    const availableTargetTrainingRange = this.availableTargetTrainingScriptureRange$.getValue();
+    const draftedBooks = this.selectedDraftingScriptureRange$.getValue().books;
+    const booksToAutoSelect = Array.from(availableTargetTrainingRange.books.keys()).filter(
+      bookId => this.completeTargetBookIds.has(bookId) && !draftedBooks.has(bookId)
+    );
+
+    this.selectTargetTrainingBooks(booksToAutoSelect);
+
+    // Pair each auto-selected target book with the matching book in every training source that has it, mirroring the
+    // component's per-book auto-pairing when a user selects a target book (otherwise the books would have no reference
+    // pair and forward-validation would block).
+    const autoSelected = new Set(booksToAutoSelect);
+    this.selectedTrainingSourceBooks$.next(
+      mapObject(this.availableTrainingSourceBooks$.getValue(), (_projectId, bookIds) =>
+        bookIds.filter(bookId => autoSelected.has(bookId))
+      )
+    );
+
+    this.trainingBooksWereAutoSelected$.next(booksToAutoSelect.length > 0);
+  }
+
+  /**
+   * Clears the "books were auto-selected" notice once the user has deselected every target training book, matching the
+   * legacy stepper: the notice prompts the user to review the pre-selection, so it is no longer relevant once nothing
+   * auto-selected remains. Only ever clears the flag (a manual reselection doesn't re-arm it).
+   */
+  dismissAutoSelectNoticeIfSelectionEmpty(): void {
+    if (
+      this.trainingBooksWereAutoSelected$.getValue() &&
+      this.selectedTargetTrainingScriptureRange$.getValue().books.size === 0
+    ) {
+      this.trainingBooksWereAutoSelected$.next(false);
+    }
   }
 
   private limitAvailableTrainingRangeBasedOnSelectedDraftingRange(): void {
