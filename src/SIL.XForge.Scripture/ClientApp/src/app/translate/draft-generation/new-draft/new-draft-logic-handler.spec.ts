@@ -253,6 +253,24 @@ describe('NewDraftLogicHandler', () => {
       expect(env.booksOfferedForPartialDrafting).toEqual([]);
     });
 
+    it('does not offer or silently apply partial drafting to a book that is not eligible for it', async () => {
+      // Ruth has 4 source chapters (below the 12-chapter partial-drafting threshold) and the target already has
+      // chapters 1-2. Ruth is therefore not eligible for partial drafting, so no chapter input is shown for it.
+      // Selecting it must default to the whole book, not silently to just the untranslated chapters (which the user
+      // would have no way to change back).
+      const env = new TestEnvironment({
+        ...teamStartingToTranslateGenesis,
+        draftingSourceBooksChapters: 'GEN1-50;RUT1-4',
+        targetProjectBooksChapters: 'GEN1-5;RUT1-2'
+      });
+      await env.waitForInit();
+
+      env.logicHandler.selectDraftingBooks(['RUT']);
+
+      expect(env.booksOfferedForPartialDrafting).not.toContain('RUT');
+      expect(env.selectedDraftingScriptureRange).toBe('RUT1-4');
+    });
+
     it('offers to draft a subset of chapters of a book that has been completed and defaults to all chapters', async () => {
       const testState = {
         ...teamStartingToTranslateGenesis,

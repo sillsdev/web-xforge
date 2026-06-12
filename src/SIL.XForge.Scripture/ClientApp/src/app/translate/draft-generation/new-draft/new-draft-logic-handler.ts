@@ -291,18 +291,23 @@ export class NewDraftLogicHandler {
         throw new Error(`Selected book ${book} not in available drafting scripture range`);
       }
       if (newlySelectedBooks.includes(book)) {
-        // Default to selecting chapters that are in the source but not the target, unless that's zero chapters, in
-        // which case default to selecting all chapters in the source
         const chaptersInTarget = this.targetProjectScriptureRange.books.get(book);
         const chaptersInSource = this.availableDraftingScriptureRange$.getValue().books.get(book);
         if (chaptersInSource == null)
           throw new Error(`Selected book ${book} not in available drafting scripture range`);
-        if (chaptersInTarget == null) {
-          newDraftingScriptureRange.books.set(book, chaptersInSource.clone());
-        } else {
+        // Only books eligible for partial drafting get a chapter input, so only they may default to a subset.
+        // Default an eligible book to the untranslated chapters (those in the source but not the target), falling
+        // back to the whole book when none remain untranslated. A book that is not eligible has no input, so it must
+        // default to the whole book; defaulting it to a subset would silently drop chapters the user couldn't add
+        // back.
+        if (this.isBookEligibleForPartialDrafting(book) && chaptersInTarget != null) {
           const newChaptersToDraft = chaptersInSource.difference(chaptersInTarget);
-          if (newChaptersToDraft.count() > 0) newDraftingScriptureRange.books.set(book, newChaptersToDraft);
-          else newDraftingScriptureRange.books.set(book, chaptersInSource.clone());
+          newDraftingScriptureRange.books.set(
+            book,
+            newChaptersToDraft.count() > 0 ? newChaptersToDraft : chaptersInSource.clone()
+          );
+        } else {
+          newDraftingScriptureRange.books.set(book, chaptersInSource.clone());
         }
       } else {
         const alreadySelectedChapters = this.selectedDraftingScriptureRange$.getValue().books.get(book);
