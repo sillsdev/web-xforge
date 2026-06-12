@@ -709,7 +709,18 @@ See "Legacy Parity: Notices, Auto-Selection, Validation & Empty States" for deta
   `unusableTrainingSourceBooks`); still TODO are the other training categories (e.g. training-source books not in
   the target — legacy's `unusableTrainingTargetBooks`) and locking the final category list across both steps.
 - [x] Port the custom Serval config notice (`servalConfig != null`) to Step 4
-- [ ] Restore per-book training-pair validation as a training-step forward gate (skipped when NLLB-optional)
+- [x] Restore per-book training-pair validation as a training-step forward gate. Every selected target training book
+      must be selected in at least one training source; otherwise advancing is blocked with
+      `new_draft.no_training_pair_selected`. Since selecting a target book auto-selects it in each source that has it, and
+      target books with no source are withheld entirely, this only triggers after a manual source deselection orphans a
+      target book. **Not** skipped when training is NLLB-optional: an unpaired book is an inconsistent state (the user
+      chose to train on a book their selection can't pair), distinct from the "select something" requirement that the
+      optional case waives.
+- [decided: no] Surface training-source books that aren't in the target (legacy's `unusableTrainingTargetBooks`).
+  These are already silently excluded from the source selectors (`availableTrainingSourceBooks$` is intersected with
+  the target's available training range), and users don't expect to train on books their target doesn't contain — a
+  reference book the target lacks can't form a pair — so no notice is shown. (Contrast with target books missing a
+  source, which _are_ surfaced, since users do expect to train on their own books.)
 - [ ] Add empty-state messages: no draftable books, no target training books, "reference books will appear",
       and loading copy
 

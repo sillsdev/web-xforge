@@ -233,6 +233,56 @@ describe('NewDraftComponent', () => {
     });
   });
 
+  describe('training-pair forward gate', () => {
+    // Select MAT and MRK as target training books (auto-selected in the source), then manually deselect MRK from the
+    // source. MRK is now a selected training book with no matching reference selected. Position the wizard on the
+    // training step so next() exercises the forward gate.
+    async function setUpOrphanedTrainingBook(env: TestEnvironment): Promise<void> {
+      await env.waitForInit();
+      env.component.logicHandler.setInputMode('training_books');
+      env.component.onTargetTrainingBookSelect([Canon.bookIdToNumber('MAT'), Canon.bookIdToNumber('MRK')]);
+      env.component.onTrainingSourceBookSelect([Canon.bookIdToNumber('MAT')], 'training-source-1-id');
+      env.component.page = 'training_books';
+    }
+
+    it('blocks advancing when a selected training book has no matching reference book selected', async () => {
+      const env = new TestEnvironment(testState);
+      await setUpOrphanedTrainingBook(env);
+
+      env.component.next();
+
+      expect(env.component.stepError).toBe('no_training_pair_selected');
+      expect(env.component.page).toBe('training_books');
+    });
+
+    it('clears the error and advances once a matching reference book is selected', async () => {
+      const env = new TestEnvironment(testState);
+      await setUpOrphanedTrainingBook(env);
+      env.component.next();
+      expect(env.component.stepError).toBe('no_training_pair_selected');
+
+      // Re-select MRK in the source, pairing it again.
+      env.component.onTrainingSourceBookSelect(
+        [Canon.bookIdToNumber('MAT'), Canon.bookIdToNumber('MRK')],
+        'training-source-1-id'
+      );
+      env.component.next();
+
+      expect(env.component.stepError).toBeNull();
+      expect(env.component.page).toBe('suffix');
+    });
+
+    it('blocks an unpaired training book even when training is optional', async () => {
+      const env = new TestEnvironment(testState, { trainingOptional: true });
+      await setUpOrphanedTrainingBook(env);
+
+      env.component.next();
+
+      expect(env.component.stepError).toBe('no_training_pair_selected');
+      expect(env.component.page).toBe('training_books');
+    });
+  });
+
   describe('onDraftingBookSelect', () => {
     it('removes stale errors for books no longer offered for partial drafting', async () => {
       const env = new TestEnvironment(testState);
@@ -645,6 +695,8 @@ class TestEnvironment {
       offline?: boolean;
       noAccessSources?: boolean;
       progressError?: boolean;
+      /** When true, both languages are treated as NLLB languages so that training is optional. */
+      trainingOptional?: boolean;
       /** Overrides the training-data stream so a test can emit changes over time (e.g. a file being removed). */
       trainingData$?: Observable<TrainingData[]>;
     } = {}
@@ -742,7 +794,7 @@ class TestEnvironment {
 
     when(mockedFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
     when(mockedUserService.getCurrentUser()).thenResolve(undefined as any);
-    when(mockedNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(false);
+    when(mockedNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(options.trainingOptional === true);
     // Set the online state before the component is constructed so init()'s online check sees it.
     this.onlineStatusService.setIsOnline(!options.offline);
     if (options.getProjectsError) {

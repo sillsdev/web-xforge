@@ -334,9 +334,26 @@ export class NewDraftComponent {
     }
     if (this.page === 'training_books') {
       if (!this.isTrainingOptional && !this.hasTrainingBooksSelected) return 'no_training_books_selected';
+      // Unlike the "select something" requirement above, an unpaired book is an inconsistent state, not a missing
+      // optional choice: the user chose to train on a book but then deselected the matching reference book from every
+      // source, so their selection leaves nothing to pair it with. Block it regardless of whether training is optional.
+      if (this.unpairedTargetTrainingBooks.length > 0) return 'no_training_pair_selected';
       if (this.targetTrainingChapterErrors.size > 0) return 'fix_chapter_errors';
     }
     return null;
+  }
+
+  /**
+   * Selected target training books with no matching book currently selected in any training source, so they can't form
+   * a training pair. A target book is only offered when at least one source contains it, and selecting it auto-selects
+   * it in each such source — so this is only non-empty after the user manually deselects that book from the source(s).
+   */
+  private get unpairedTargetTrainingBooks(): string[] {
+    const targetBooks = Array.from(this.logicHandler.selectedTargetTrainingScriptureRange$.getValue().books.keys());
+    const selectedSourceBooks = new Set(
+      Object.values(this.logicHandler.selectedTrainingSourceBooks$.getValue()).flat()
+    );
+    return targetBooks.filter(bookId => !selectedSourceBooks.has(bookId));
   }
 
   private get hasTrainingBooksSelected(): boolean {

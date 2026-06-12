@@ -250,6 +250,7 @@
     "fix_chapter_errors": "Please fix the chapter range errors above before continuing.",
     "no_drafting_books_selected": "Select at least one book to draft before continuing.",
     "no_training_books_selected": "Select training books from your project and at least one source project before continuing.",
+    "no_training_pair_selected": "Some of the books you selected to train on don't have a matching reference book selected. Select a matching reference book for each.",
     "reference_books": "Reference books",
     "summary": {
       "example_translations": "Language training data",
