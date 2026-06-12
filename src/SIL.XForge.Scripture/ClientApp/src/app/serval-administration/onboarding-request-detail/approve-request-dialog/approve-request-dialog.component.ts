@@ -98,7 +98,8 @@ export class ApproveRequestDialogComponent {
   readonly trainingSources: FormControl<string[]>;
   readonly form: FormGroup;
   readonly enableBackTranslationDrafting: FormControl<boolean>;
-  readonly backTranslationLanguageMatchesTarget: boolean;
+  /** Whether the BT exists and has the same language code as the target (which would be a wrong language code) */
+  readonly btHasWrongLanguageCode: boolean;
   private readonly languageCodes: Map<string, string>;
   private readonly normalizedTargetLanguageCode: string;
 
@@ -109,7 +110,7 @@ export class ApproveRequestDialogComponent {
     if (data.defaultTrainingSource == null) throw new Error('defaultTrainingSource is required');
 
     this.normalizedTargetLanguageCode = normalizeLanguageCodeToISO639_3(data.targetProject.languageCode);
-    this.backTranslationLanguageMatchesTarget =
+    this.btHasWrongLanguageCode =
       data.backTranslation != null &&
       normalizeLanguageCodeToISO639_3(data.backTranslation.languageCode) === this.normalizedTargetLanguageCode;
     this.draftingSource = new FormControl<string>(data.draftingSourceOptions[0]?.paratextId ?? '', {
@@ -127,9 +128,9 @@ export class ApproveRequestDialogComponent {
       { draftingSource: this.draftingSource, trainingSources: this.trainingSources },
       { validators: languageCodesValidator(this.languageCodes) }
     );
-    this.enableBackTranslationDrafting = new FormControl<boolean>(!this.backTranslationLanguageMatchesTarget, {
-      nonNullable: true
-    });
+    const defaultBTCheckboxState =
+      this.canEnableBackTranslationDrafting || this.data.backTranslation?.draftingAlreadyEnabled === true;
+    this.enableBackTranslationDrafting = new FormControl<boolean>(defaultBTCheckboxState, { nonNullable: true });
     if (!this.canEnableBackTranslationDrafting) {
       this.enableBackTranslationDrafting.disable();
     }
@@ -139,7 +140,7 @@ export class ApproveRequestDialogComponent {
     return (
       this.data.backTranslation != null &&
       !this.data.backTranslation.draftingAlreadyEnabled &&
-      !this.backTranslationLanguageMatchesTarget
+      !this.btHasWrongLanguageCode
     );
   }
 

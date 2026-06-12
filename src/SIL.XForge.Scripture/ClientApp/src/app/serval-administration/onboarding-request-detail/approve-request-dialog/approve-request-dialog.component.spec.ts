@@ -233,9 +233,9 @@ describe('ApproveRequestDialogComponent', () => {
         expect(env.component.enableBackTranslationDrafting.disabled).toBeTrue();
       });
 
-      it('backTranslationLanguageMatchesTarget is true', () => {
+      it('btHasWrongLanguageCode is true', () => {
         const env = new TestEnvironment(BT_SAME_LANGUAGE_DATA);
-        expect(env.component.backTranslationLanguageMatchesTarget).toBeTrue();
+        expect(env.component.btHasWrongLanguageCode).toBeTrue();
       });
     });
   });

@@ -39,7 +39,7 @@
       <p class="hint">
         @if (bt.draftingAlreadyEnabled) {
           Draft generation is already enabled for this project.
-        } @else if (backTranslationLanguageMatchesTarget) {
+        } @else if (btHasWrongLanguageCode) {
           Back translation must be a different language than the target project.
         } @else {
           Enabling will set {{ data.targetProject.name }} as the drafting and training source for the back translation.

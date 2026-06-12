@@ -497,10 +497,19 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
       }
     }
 
-    const trainingSourceOptions =
-      backTranslation != null && !draftingSourceOptions.some(o => o.paratextId === backTranslation.paratextId)
-        ? [...draftingSourceOptions, backTranslation]
-        : draftingSourceOptions;
+    const trainingSourceOptions = [
+      ...new Set(
+        [
+          onboardingRequestFormData.sourceProjectA,
+          onboardingRequestFormData.sourceProjectB,
+          onboardingRequestFormData.sourceProjectC,
+          onboardingRequestFormData.draftingSourceProject,
+          onboardingRequestFormData.backTranslationProject
+        ].filter(notNull)
+      )
+    ]
+      .map(toSourceOption)
+      .filter(notNull);
 
     const targetProject: SourceOption = {
       paratextId: mainData.paratextId,
