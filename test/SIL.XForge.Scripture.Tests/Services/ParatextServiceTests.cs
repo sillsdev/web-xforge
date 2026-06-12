@@ -871,7 +871,7 @@ public class ParatextServiceTests
         };
         env.MockParatextDataHelper.GetNotes(Arg.Any<CommentManager>(), Arg.Any<CommentTags>()).Returns(expectedNotes);
 
-        IReadOnlyList<ParatextNote> actual = await env.Service.GetNoteThreads(userSecret, paratextId);
+        IReadOnlyList<ParatextNote>? actual = await env.Service.GetNoteThreadsAsync(userSecret, paratextId);
 
         Assert.AreSame(expectedNotes, actual);
         env.MockParatextDataHelper.Received(1)
@@ -886,7 +886,7 @@ public class ParatextServiceTests
         var associatedPtUser = new SFParatextUser(env.Username01);
         string paratextId = env.SetupProject(env.Project01, associatedPtUser);
 
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.GetNoteThreads(userSecret, paratextId));
+        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.GetNoteThreadsAsync(userSecret, paratextId));
     }
 
     [Test]
@@ -901,7 +901,7 @@ public class ParatextServiceTests
         var associatedPtUser = new SFParatextUser(env.Username01);
         string paratextId = env.SetupProject(env.Project01, associatedPtUser);
 
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.GetNoteThreads(userSecret, paratextId));
+        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.GetNoteThreadsAsync(userSecret, paratextId));
     }
 
     [Test]
@@ -910,7 +910,7 @@ public class ParatextServiceTests
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
-        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GetNoteThreads(userSecret, "missing-pt-id"));
+        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GetNoteThreadsAsync(userSecret, "missing-pt-id"));
     }
 
     [Test]

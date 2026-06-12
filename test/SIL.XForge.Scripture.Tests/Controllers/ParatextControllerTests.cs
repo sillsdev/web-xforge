@@ -252,7 +252,7 @@ public class ParatextControllerTests
                 Comments = [new ParatextNoteComment { VerseRef = "GEN 1:1", Content = "<p>Content</p>" }],
             },
         };
-        env.ParatextService.GetNoteThreads(Arg.Any<UserSecret>(), Project01)
+        env.ParatextService.GetNoteThreadsAsync(Arg.Any<UserSecret>(), Project01)
             .Returns(Task.FromResult<IReadOnlyList<ParatextNote>?>(expectedNotes));
 
         // SUT
@@ -266,7 +266,7 @@ public class ParatextControllerTests
     public async Task GetNotesAsync_Forbidden()
     {
         var env = new TestEnvironment();
-        env.ParatextService.GetNoteThreads(Arg.Any<UserSecret>(), Project01).ThrowsAsync(new ForbiddenException());
+        env.ParatextService.GetNoteThreadsAsync(Arg.Any<UserSecret>(), Project01).ThrowsAsync(new ForbiddenException());
 
         ActionResult<IEnumerable<ParatextNote>> actual = await env.Controller.GetNotesAsync(Project01);
 
@@ -277,7 +277,7 @@ public class ParatextControllerTests
     public async Task GetNotesAsync_NotFound()
     {
         var env = new TestEnvironment();
-        env.ParatextService.GetNoteThreads(Arg.Any<UserSecret>(), Project01)
+        env.ParatextService.GetNoteThreadsAsync(Arg.Any<UserSecret>(), Project01)
             .ThrowsAsync(new DataNotFoundException("missing"));
 
         ActionResult<IEnumerable<ParatextNote>> actual = await env.Controller.GetNotesAsync(Project01);

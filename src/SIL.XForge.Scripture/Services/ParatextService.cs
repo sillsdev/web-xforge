@@ -1291,7 +1291,7 @@ public class ParatextService : DisposableBase, IParatextService
     }
 
     /// <summary> Gets note threads from the Paratext project and maps them to Scripture Forge models. </summary>
-    public async Task<IReadOnlyList<ParatextNote>?> GetNoteThreads(UserSecret userSecret, string paratextId)
+    public async Task<IReadOnlyList<ParatextNote>?> GetNoteThreadsAsync(UserSecret userSecret, string paratextId)
     {
         SFProject sfProject =
             await _realtimeService.QuerySnapshots<SFProject>().FirstOrDefaultAsync(p => p.ParatextId == paratextId)
