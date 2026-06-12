@@ -860,6 +860,8 @@ public class ParatextServiceTests
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
         var associatedPtUser = new SFParatextUser(env.Username01);
         string paratextId = env.SetupProject(env.Project01, associatedPtUser);
+        env.MockProjectRights.HasRight(Arg.Any<Project>(), userSecret.Id, SFProjectDomain.PTNoteThreads, Operation.View)
+            .Returns(true);
         IReadOnlyList<ParatextNote> expectedNotes = new List<ParatextNote>
         {
             new ParatextNote
@@ -876,6 +878,13 @@ public class ParatextServiceTests
         Assert.AreSame(expectedNotes, actual);
         env.MockParatextDataHelper.Received(1)
             .GetNotes(env.ProjectCommentManager, Arg.Is<CommentTags>(tags => tags != null));
+        env.MockProjectRights.Received(1)
+            .HasRight(
+                Arg.Is<Project>(project => project is SFProject && ((SFProject)project).ParatextId == paratextId),
+                userSecret.Id,
+                SFProjectDomain.PTNoteThreads,
+                Operation.View
+            );
     }
 
     [Test]
@@ -885,23 +894,38 @@ public class ParatextServiceTests
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User03, env.Username03, env.ParatextUserId03);
         var associatedPtUser = new SFParatextUser(env.Username01);
         string paratextId = env.SetupProject(env.Project01, associatedPtUser);
+        env.MockProjectRights.HasRight(Arg.Any<Project>(), userSecret.Id, SFProjectDomain.PTNoteThreads, Operation.View)
+            .Returns(false);
 
         Assert.ThrowsAsync<ForbiddenException>(() => env.Service.GetNoteThreadsAsync(userSecret, paratextId));
+        env.MockProjectRights.Received(1)
+            .HasRight(
+                Arg.Is<Project>(project => project is SFProject && ((SFProject)project).ParatextId == paratextId),
+                userSecret.Id,
+                SFProjectDomain.PTNoteThreads,
+                Operation.View
+            );
     }
 
     [Test]
     public void GetNoteThreads_UserMissingParatextUsername_ThrowsForbidden()
     {
         var env = new TestEnvironment();
-        SFProject project = env.NewSFProject();
-        project.UserRoles[env.User04] = SFProjectRole.Administrator;
-        env.AddProjectRepository(project);
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User04, "Unused", "paratext04");
         env.MockJwtTokenHelper.GetParatextUsername(userSecret).Returns(_ => null);
         var associatedPtUser = new SFParatextUser(env.Username01);
         string paratextId = env.SetupProject(env.Project01, associatedPtUser);
+        env.MockProjectRights.HasRight(Arg.Any<Project>(), userSecret.Id, SFProjectDomain.PTNoteThreads, Operation.View)
+            .Returns(true);
 
         Assert.ThrowsAsync<ForbiddenException>(() => env.Service.GetNoteThreadsAsync(userSecret, paratextId));
+        env.MockProjectRights.Received(1)
+            .HasRight(
+                Arg.Is<Project>(project => project is SFProject && ((SFProject)project).ParatextId == paratextId),
+                userSecret.Id,
+                SFProjectDomain.PTNoteThreads,
+                Operation.View
+            );
     }
 
     [Test]
@@ -911,6 +935,7 @@ public class ParatextServiceTests
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
         Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GetNoteThreadsAsync(userSecret, "missing-pt-id"));
+        env.MockProjectRights.DidNotReceiveWithAnyArgs().HasRight(default, default, default, default, default);
     }
 
     [Test]
@@ -6771,6 +6796,7 @@ public class ParatextServiceTests
         public readonly IInternetSharedRepositorySourceProvider MockInternetSharedRepositorySourceProvider;
         public readonly ISFRestClientFactory MockRestClientFactory;
         public readonly IGuidService MockGuidService;
+        public readonly ISFProjectRights MockProjectRights;
         public readonly ParatextService Service;
         public readonly HttpClient MockRegistryHttpClient;
         public readonly IDeltaUsxMapper MockDeltaUsxMapper;
@@ -6794,6 +6820,7 @@ public class ParatextServiceTests
             MockInternetSharedRepositorySourceProvider = Substitute.For<IInternetSharedRepositorySourceProvider>();
             MockRestClientFactory = Substitute.For<ISFRestClientFactory>();
             MockGuidService = Substitute.For<IGuidService>();
+            MockProjectRights = Substitute.For<ISFProjectRights>();
             MockRegistryHttpClient = Substitute.For<HttpClient>();
             MockDeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
             MockAuthService = Substitute.For<IAuthService>();
@@ -6867,7 +6894,8 @@ public class ParatextServiceTests
                 MockRestClientFactory,
                 MockHgWrapper,
                 MockDeltaUsxMapper,
-                MockAuthService
+                MockAuthService,
+                MockProjectRights
             )
             {
                 ScrTextCollection = MockScrTextCollection,

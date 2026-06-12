@@ -84,6 +84,7 @@ public class ParatextService : DisposableBase, IParatextService
     private readonly DotNetCoreAlert _alertSystem;
     private readonly IDeltaUsxMapper _deltaUsxMapper;
     private readonly IAuthService _authService;
+    private readonly ISFProjectRights _projectRights;
     private readonly Dictionary<string, string> _forcedUsernames = [];
 
     public ParatextService(
@@ -102,7 +103,8 @@ public class ParatextService : DisposableBase, IParatextService
         ISFRestClientFactory restClientFactory,
         IHgWrapper hgWrapper,
         IDeltaUsxMapper deltaUsxMapper,
-        IAuthService authService
+        IAuthService authService,
+        ISFProjectRights projectRights
     )
     {
         _paratextOptions = paratextOptions;
@@ -122,6 +124,7 @@ public class ParatextService : DisposableBase, IParatextService
         _alertSystem = new DotNetCoreAlert(_logger);
         _deltaUsxMapper = deltaUsxMapper;
         _authService = authService;
+        _projectRights = projectRights;
 
         _httpClientHandler = new HttpClientHandler();
         _registryClient = new HttpClient(_httpClientHandler);
@@ -1296,10 +1299,10 @@ public class ParatextService : DisposableBase, IParatextService
         SFProject sfProject =
             await _realtimeService.QuerySnapshots<SFProject>().FirstOrDefaultAsync(p => p.ParatextId == paratextId)
             ?? throw new DataNotFoundException($"No SF project found with PT project ID {paratextId}.");
-        if (!sfProject.UserRoles.TryGetValue(userSecret.Id, out string role) || !SFProjectRole.IsParatextRole(role))
+        if (!_projectRights.HasRight(sfProject, userSecret.Id, SFProjectDomain.PTNoteThreads, Operation.View))
         {
             throw new ForbiddenException(
-                $"SF user ID {userSecret.Id} does not have PT role on PT project ID {paratextId}."
+                $"SF user ID {userSecret.Id} does not have PT note view access to SF project ID {sfProject.Id}."
             );
         }
 
