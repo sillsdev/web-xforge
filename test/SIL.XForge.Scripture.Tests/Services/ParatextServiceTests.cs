@@ -854,7 +854,7 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public void GetNoteThreads_ReturnsNotesFromDataHelper()
+    public async Task GetNoteThreads_ReturnsNotesFromDataHelper()
     {
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -871,11 +871,46 @@ public class ParatextServiceTests
         };
         env.MockParatextDataHelper.GetNotes(Arg.Any<CommentManager>(), Arg.Any<CommentTags>()).Returns(expectedNotes);
 
-        IReadOnlyList<ParatextNote> actual = env.Service.GetNoteThreads(userSecret, paratextId);
+        IReadOnlyList<ParatextNote> actual = await env.Service.GetNoteThreads(userSecret, paratextId);
 
         Assert.AreSame(expectedNotes, actual);
         env.MockParatextDataHelper.Received(1)
             .GetNotes(env.ProjectCommentManager, Arg.Is<CommentTags>(tags => tags != null));
+    }
+
+    [Test]
+    public void GetNoteThreads_UserNotOnProject_ThrowsForbidden()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User03, env.Username03, env.ParatextUserId03);
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string paratextId = env.SetupProject(env.Project01, associatedPtUser);
+
+        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.GetNoteThreads(userSecret, paratextId));
+    }
+
+    [Test]
+    public void GetNoteThreads_UserMissingParatextUsername_ThrowsForbidden()
+    {
+        var env = new TestEnvironment();
+        SFProject project = env.NewSFProject();
+        project.UserRoles[env.User04] = SFProjectRole.Administrator;
+        env.AddProjectRepository(project);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User04, "Unused", "paratext04");
+        env.MockJwtTokenHelper.GetParatextUsername(userSecret).Returns(_ => null);
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string paratextId = env.SetupProject(env.Project01, associatedPtUser);
+
+        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.GetNoteThreads(userSecret, paratextId));
+    }
+
+    [Test]
+    public void GetNoteThreads_ProjectMissing_ThrowsDataNotFound()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GetNoteThreads(userSecret, "missing-pt-id"));
     }
 
     [Test]

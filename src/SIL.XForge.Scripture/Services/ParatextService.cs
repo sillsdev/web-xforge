@@ -1291,9 +1291,22 @@ public class ParatextService : DisposableBase, IParatextService
     }
 
     /// <summary> Gets note threads from the Paratext project and maps them to Scripture Forge models. </summary>
-    public IReadOnlyList<ParatextNote>? GetNoteThreads(UserSecret userSecret, string paratextId)
+    public async Task<IReadOnlyList<ParatextNote>?> GetNoteThreads(UserSecret userSecret, string paratextId)
     {
-        using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
+        SFProject sfProject =
+            await _realtimeService.QuerySnapshots<SFProject>().FirstOrDefaultAsync(p => p.ParatextId == paratextId)
+            ?? throw new DataNotFoundException($"No SF project found with PT project ID {paratextId}.");
+        if (!sfProject.UserRoles.TryGetValue(userSecret.Id, out string role) || !SFProjectRole.IsParatextRole(role))
+        {
+            throw new ForbiddenException(
+                $"SF user ID {userSecret.Id} does not have PT role on PT project ID {paratextId}."
+            );
+        }
+
+        string username =
+            GetParatextUsername(userSecret)
+            ?? throw new ForbiddenException($"SF user ID {userSecret.Id} does not have a Paratext username.");
+        using ScrText scrText = ScrTextCollection.FindById(username, paratextId);
         if (scrText == null)
             return null;
 
