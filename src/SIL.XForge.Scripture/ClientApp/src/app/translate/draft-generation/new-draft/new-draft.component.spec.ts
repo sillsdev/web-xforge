@@ -6,7 +6,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { BehaviorSubject, filter, firstValueFrom, Observable, of } from 'rxjs';
-import { anything, capture, deepEqual, instance, mock, reset, verify, when } from 'ts-mockito';
+import { anything, capture, deepEqual, instance, mock, reset, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -625,6 +625,54 @@ describe('NewDraftComponent', () => {
       expect(env.component.page).not.toEqual('abort');
     }));
   });
+
+  describe('onPendingUpdatesComplete', () => {
+    beforeEach(() => {
+      reset(mockedRouter);
+      reset(mockedErrorHandler);
+    });
+
+    it('re-derives progress fresh for the synced projects, then shows the preface', fakeAsync(() => {
+      const env = new TestEnvironment(testState);
+      tick();
+      resetCalls(mockedProgressService); // ignore the calls made during init
+
+      void env.component.onPendingUpdatesComplete(['draft-source-1-id']);
+      tick();
+
+      // The reload re-fetches and forces fresh data (maxStalenessMs: 0) for the synced project.
+      verify(mockedProgressService.getProgressForProject('draft-source-1-id', deepEqual({ maxStalenessMs: 0 }))).once();
+      expect(env.component.page).toEqual('preface');
+    }));
+
+    it('skips the reload and goes straight to the preface when nothing was synced', fakeAsync(() => {
+      const env = new TestEnvironment(testState);
+      tick();
+      resetCalls(mockedProgressService);
+
+      void env.component.onPendingUpdatesComplete([]);
+      tick();
+
+      verify(mockedProgressService.getProgressForProject(anything(), anything())).never();
+      expect(env.component.page).toEqual('preface');
+    }));
+
+    it('routes a reload failure to the global error handler and navigates back', fakeAsync(() => {
+      const env = new TestEnvironment(testState);
+      tick();
+      // Init has already succeeded; make the reload's progress fetch fail.
+      when(mockedProgressService.getProgressForProject('draft-source-1-id', anything())).thenReject(
+        new Error('reload failed')
+      );
+
+      void env.component.onPendingUpdatesComplete(['draft-source-1-id']);
+      tick();
+
+      verify(mockedErrorHandler.handleError(anything())).once();
+      verify(mockedRouter.navigate(deepEqual(['/projects', 'testProjectId', 'draft-generation']))).once();
+      expect().nothing();
+    }));
+  });
 });
 
 const mockedActivatedProjectService = mock(ActivatedProjectService);
@@ -775,21 +823,23 @@ class TestEnvironment {
     }
 
     if (options.progressError) {
-      when(mockedProgressService.getProgressForProject(projectId)).thenReject(new Error('progress failed'));
+      when(mockedProgressService.getProgressForProject(projectId, anything())).thenReject(new Error('progress failed'));
     } else {
-      when(mockedProgressService.getProgressForProject(projectId)).thenResolve(
+      when(mockedProgressService.getProgressForProject(projectId, anything())).thenResolve(
         new VerboseScriptureRange(state.targetProjectBooksChapters)
       );
     }
-    when(mockedProgressService.getProgressForProject('draft-source-1-id')).thenResolve(
+    when(mockedProgressService.getProgressForProject('draft-source-1-id', anything())).thenResolve(
       new VerboseScriptureRange(state.draftingSourceBooksChapters)
     );
     for (const [trainingSourceId, booksChapters] of Object.entries(state.trainingSourcesBooksChapters)) {
-      when(mockedProgressService.getProgressForProject(trainingSourceId)).thenResolve(
+      when(mockedProgressService.getProgressForProject(trainingSourceId, anything())).thenResolve(
         new VerboseScriptureRange(booksChapters)
       );
     }
-    when(mockedProgressService.getCompleteBookIds(projectId)).thenResolve(new Set(state.completeTargetBooks ?? []));
+    when(mockedProgressService.getCompleteBookIds(projectId, anything())).thenResolve(
+      new Set(state.completeTargetBooks ?? [])
+    );
 
     when(mockedTrainingDataService.getTrainingData(anything(), anything())).thenReturn(
       options.trainingData$ ?? of(state.trainingDataFiles ?? [])

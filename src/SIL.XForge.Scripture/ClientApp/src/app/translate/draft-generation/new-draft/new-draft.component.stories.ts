@@ -250,13 +250,16 @@ function setUpMocks(args: StoryArgs): void {
   // set the progress promises never resolve, leaving the wizard stuck on its loading spinner.
   const progressFor = (range: string): Promise<VerboseScriptureRange> =>
     args.neverLoad ? new Promise<VerboseScriptureRange>(() => {}) : Promise.resolve(new VerboseScriptureRange(range));
-  when(mockedDraftProgressService.getProgressForProject(TARGET_ID)).thenCall(() => progressFor(TARGET_BOOKS));
-  when(mockedDraftProgressService.getProgressForProject(DRAFT_SOURCE_ID)).thenCall(() =>
+  when(mockedDraftProgressService.getProgressForProject(TARGET_ID, anything())).thenCall(() =>
+    progressFor(TARGET_BOOKS)
+  );
+  when(mockedDraftProgressService.getProgressForProject(DRAFT_SOURCE_ID, anything())).thenCall(() =>
     progressFor(DRAFT_SOURCE_BOOKS)
   );
-  when(mockedDraftProgressService.getProgressForProject(TRAINING_SOURCE_ID)).thenCall(() =>
+  when(mockedDraftProgressService.getProgressForProject(TRAINING_SOURCE_ID, anything())).thenCall(() =>
     progressFor(TRAINING_SOURCE_BOOKS)
   );
+  when(mockedDraftProgressService.getCompleteBookIds(TARGET_ID, anything())).thenResolve(new Set<string>());
 
   when(mockedFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(args.developerTools));
 

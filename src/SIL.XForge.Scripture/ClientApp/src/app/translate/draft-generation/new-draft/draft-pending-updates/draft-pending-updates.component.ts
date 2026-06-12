@@ -33,7 +33,8 @@ interface PendingProjectRow {
 })
 export class DraftPendingUpdatesComponent implements OnInit {
   @Input() pendingProjects: { projectId: string; name: string }[] = [];
-  @Output() continue = new EventEmitter<void>();
+  /** Emits when the user leaves the pre-step, carrying the IDs of the projects that were synced in place (if any). */
+  @Output() continue = new EventEmitter<string[]>();
 
   rows: PendingProjectRow[] = [];
   loading = true;
@@ -100,7 +101,12 @@ export class DraftPendingUpdatesComponent implements OnInit {
   }
 
   continueAnyway(): void {
-    this.continue.emit();
+    this.continue.emit(this.syncedProjectIds());
+  }
+
+  /** IDs of the projects that completed a sync during this pre-step (so the wizard can re-derive from fresh data). */
+  private syncedProjectIds(): string[] {
+    return this.rows.filter(r => r.syncState === 'synced').map(r => r.projectId);
   }
 
   /** Watches a row's project doc for the sync to complete (queuedCount returning to 0). */
@@ -133,7 +139,7 @@ export class DraftPendingUpdatesComponent implements OnInit {
     const hasCannotSyncRow = this.rows.some(r => !r.canSync);
     const allSyncableSynced = this.syncableRows.every(r => r.syncState === 'synced');
     if (!hasCannotSyncRow && allSyncableSynced) {
-      this.autoAdvanceTimeout = setTimeout(() => this.continue.emit(), AUTO_ADVANCE_DELAY_MS);
+      this.autoAdvanceTimeout = setTimeout(() => this.continue.emit(this.syncedProjectIds()), AUTO_ADVANCE_DELAY_MS);
     }
   }
 }

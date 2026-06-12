@@ -43,6 +43,9 @@ const UNDRAFTED_CHAPTER = 33; // immediately outside the drafted range; must rem
 
 // Whole books we train on from the (complete) New Testament, to verify training-book persistence on return.
 const TRAINING_NT_BOOKS = ['Matthew', 'Mark'];
+// A book we deliberately leave UNSELECTED in run 1. On return it must still be unselected — this is what distinguishes
+// "the wizard remembered my selection" from "the step just defaults to selecting everything".
+const UNSELECTED_TRAINING_BOOK = 'Luke';
 
 const TRAINING_FILES = [
   { path: 'test_data/partial_draft_training_1.tsv', title: 'partial_draft_training_1' },
@@ -193,8 +196,9 @@ async function selectPartialDraftBook(page: Page, user: UserEmulator, context: S
 
 /** On the training step: pick target training NT books, per-source books, and deselect one training-data file. */
 async function selectTrainingData(page: Page, user: UserEmulator, context: ScreenshotContext): Promise<void> {
-  // Target project training books (the complete NT is available; Genesis 1-20 is also available since only 30-32 is
-  // being drafted, but here we deliberately pick whole NT books for a clean persistence check).
+  // Target project training books. We pick a specific subset (TRAINING_NT_BOOKS) and deliberately leave
+  // UNSELECTED_TRAINING_BOOK untouched, so the return visit can prove persistence both ways (selected stays selected,
+  // unselected stays unselected).
   const targetBookSelect = page.locator('app-book-multi-select').first();
   for (const book of TRAINING_NT_BOOKS) {
     await user.click(targetBookSelect.getByRole('option', { name: book, exact: true }));
@@ -221,8 +225,9 @@ async function selectTrainingData(page: Page, user: UserEmulator, context: Scree
 
 /** The summary should reflect the partial book selection; set the engine and launch. */
 async function reviewSummaryAndGenerate(page: Page, user: UserEmulator, context: ScreenshotContext): Promise<void> {
-  // The summary heading names the book(s) being drafted, including the chapter range.
-  await expect(page.locator('.draft-heading')).toContainText(PARTIAL_BOOK_NAME);
+  // The summary heading must reflect the exact partial selection, including the chapter range (e.g. "Genesis (30-32)"),
+  // so the wizard itself confirms "this is what I told it to draft" — not merely the book.
+  await expect(page.locator('.draft-heading')).toContainText(`${PARTIAL_BOOK_NAME} (${DRAFT_CHAPTERS})`);
 
   if (ENGINE_MODE === 'echo') {
     await user.check(page.getByRole('checkbox', { name: 'Echo Translation Engine' }));
@@ -331,15 +336,28 @@ async function verifyDraftedChaptersInEditor(page: Page, user: UserEmulator): Pr
 
   // A drafted chapter (inside 30-32) should now have content in the target.
   await selectBookAndChapter(page, user, PARTIAL_BOOK_NAME, DRAFTED_CHAPTER);
+  await expectEditorOnChapter(page, PARTIAL_BOOK_NAME, DRAFTED_CHAPTER);
   const draftedSegment = getTargetSegment(page, DRAFTED_CHAPTER, 1);
   await expect(draftedSegment).toBeVisible();
   expect(((await draftedSegment.textContent()) ?? '').trim().length).toBeGreaterThan(0);
 
-  // The chapter immediately after the drafted range was not drafted, so it must remain empty (no verse content).
+  // The chapter immediately after the drafted range was not drafted, so it must remain empty. Crucially, first confirm
+  // we actually navigated to that chapter and the target editor loaded — otherwise "no content found" could be a
+  // navigation/load failure masquerading as a correctly-empty chapter. Only then assert no verse carries any text.
   await selectBookAndChapter(page, user, PARTIAL_BOOK_NAME, UNDRAFTED_CHAPTER);
-  const undraftedSegment = getTargetSegment(page, UNDRAFTED_CHAPTER, 1);
-  const undraftedText = ((await undraftedSegment.textContent().catch(() => '')) ?? '').trim();
-  expect(undraftedText.length).toBe(0);
+  await expectEditorOnChapter(page, PARTIAL_BOOK_NAME, UNDRAFTED_CHAPTER);
+  const targetEditor = page.locator('app-tab-group:has(#target) .ql-editor').filter({ visible: true });
+  await expect(targetEditor).toBeVisible();
+  const verseTexts = await targetEditor.locator(`[data-segment^="verse_${UNDRAFTED_CHAPTER}_"]`).allTextContents();
+  const versesWithContent = verseTexts.filter(text => text.trim().length > 0);
+  expect(versesWithContent).toEqual([]);
+}
+
+/** Asserts the editor's book/chapter chooser is actually showing the given book and chapter (navigation succeeded). */
+async function expectEditorOnChapter(page: Page, book: string, chapter: number): Promise<void> {
+  const chooser = page.locator('.toolbar app-book-chapter-chooser');
+  await expect(chooser.getByRole('combobox').first()).toContainText(book);
+  await expect(chooser.getByRole('combobox').last()).toContainText(String(chapter));
 }
 
 /**
@@ -367,19 +385,35 @@ async function verifyRememberedSelectionsOnReturn(
   await chapterInput.blur();
   await user.click(page.getByRole('button', { name: 'Next' }));
 
-  // Training selections ARE persisted: the NT training books and the file deselection should be restored.
-  const targetBookSelect = page.locator('app-book-multi-select').first();
-  for (const book of TRAINING_NT_BOOKS) {
-    await expect(targetBookSelect.getByRole('option', { name: book, exact: true })).toHaveAttribute(
-      'aria-selected',
-      'true'
-    );
+  // Training selections ARE persisted. Check every book multi-select on the step — the target project (first) and each
+  // training-source project (the rest): the books we picked come back selected, and the book we deliberately left
+  // unselected stays unselected. The negative assertion is what proves real persistence rather than a select-all
+  // default, and covering the source selects (not just the target) exercises the source-book restoration too.
+  const bookSelects = page.locator('app-book-multi-select');
+  const bookSelectCount = await bookSelects.count();
+  expect(bookSelectCount).toBeGreaterThan(1); // target + at least one training source
+  for (let i = 0; i < bookSelectCount; i++) {
+    const bookSelect = bookSelects.nth(i);
+    for (const book of TRAINING_NT_BOOKS) {
+      await expectBookSelected(bookSelect, book, true);
+    }
+    await expectBookSelected(bookSelect, UNSELECTED_TRAINING_BOOK, false);
   }
 
   const fileCheckbox = page.locator('.training-data-files').getByRole('checkbox', { name: DESELECTED_FILE.title });
   await expect(fileCheckbox).not.toBeChecked();
 
   await screenshot(page, { pageName: 'partial_draft_remembered_selections', ...context });
+}
+
+/** Asserts whether a book option is selected within a given `app-book-multi-select`. */
+async function expectBookSelected(bookSelect: Locator, book: string, selected: boolean): Promise<void> {
+  const option = bookSelect.getByRole('option', { name: book, exact: true });
+  if (selected) {
+    await expect(option).toHaveAttribute('aria-selected', 'true');
+  } else {
+    await expect(option).not.toHaveAttribute('aria-selected', 'true');
+  }
 }
 
 // ---- Editor helpers (mirrors edit-translation.ts) -----------------------------------------------------------------

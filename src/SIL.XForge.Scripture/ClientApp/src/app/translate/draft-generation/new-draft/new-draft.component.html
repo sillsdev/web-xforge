@@ -20,7 +20,7 @@
     @if (page === "pending_updates") {
       <app-draft-pending-updates
         [pendingProjects]="pendingProjects"
-        (continue)="page = 'preface'"
+        (continue)="onPendingUpdatesComplete($event)"
       ></app-draft-pending-updates>
     } @else if (page === "preface") {
       <app-confirm-sources></app-confirm-sources>

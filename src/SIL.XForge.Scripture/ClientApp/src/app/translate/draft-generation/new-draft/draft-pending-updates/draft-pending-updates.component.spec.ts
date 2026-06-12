@@ -251,20 +251,47 @@ describe('DraftPendingUpdatesComponent', () => {
 
       expect(emitted).toBeTrue();
     });
+
+    it('emits the IDs of the projects that synced', async () => {
+      const env = new TestEnvironment([
+        makeProject('proj1', 'P1', SFProjectRole.ParatextAdministrator, 1),
+        makeProject('proj2', 'P2', SFProjectRole.ParatextAdministrator)
+      ]);
+      await env.component.ngOnInit();
+      let emitted: string[] | undefined;
+      env.component.continue.subscribe(ids => (emitted = ids));
+
+      env.completeSync('proj1', true); // proj1 syncs; proj2 stays pending
+
+      env.component.continueAnyway();
+
+      expect(emitted).toEqual(['proj1']);
+    });
+
+    it('emits an empty array when nothing was synced', async () => {
+      const env = new TestEnvironment([makeProject('proj1', 'P1', SFProjectRole.ParatextAdministrator)]);
+      await env.component.ngOnInit();
+      let emitted: string[] | undefined;
+      env.component.continue.subscribe(ids => (emitted = ids));
+
+      env.component.continueAnyway();
+
+      expect(emitted).toEqual([]);
+    });
   });
 
   describe('auto-advance', () => {
     it('auto-advances after delay when all syncable rows are synced and no cant-sync rows', fakeAsync(async () => {
       const env = new TestEnvironment([makeProject('proj1', 'P1', SFProjectRole.ParatextAdministrator, 1)]);
       await env.component.ngOnInit();
-      let emitted = false;
-      env.component.continue.subscribe(() => (emitted = true));
+      let emitted: string[] | undefined;
+      env.component.continue.subscribe(ids => (emitted = ids));
 
       env.completeSync('proj1', true);
-      expect(emitted).toBeFalse();
+      expect(emitted).toBeUndefined();
 
       tick(1500);
-      expect(emitted).toBeTrue();
+      expect(emitted).toEqual(['proj1']);
     }));
 
     it('does not auto-advance when cant-sync rows exist', fakeAsync(async () => {

@@ -298,6 +298,29 @@ export class NewDraftComponent {
       }));
   }
 
+  /**
+   * Handles leaving the pending-updates pre-step. If the user synced any projects in place, their data has changed, so
+   * the wizard re-derives book/chapter availability from fresh progress (only the synced projects are re-fetched)
+   * before showing Step 1 — otherwise the selection UI (offered books, "untranslated chapters" defaults, hints) would
+   * reflect pre-sync state. With nothing synced there's nothing to refresh, so proceed straight to Step 1.
+   */
+  async onPendingUpdatesComplete(syncedProjectIds: string[]): Promise<void> {
+    if (syncedProjectIds.length === 0) {
+      this.page = 'preface';
+      return;
+    }
+    this.page = 'loading';
+    try {
+      await this.logicHandler.reload(syncedProjectIds);
+      this.page = 'preface';
+    } catch (error) {
+      // Mirror init-failure handling: route to the app-wide error handler and navigate back rather than stranding the
+      // user on the spinner with stale data.
+      this.errorHandler.handleError(error);
+      this.goBack();
+    }
+  }
+
   get currentUserEmail(): string | undefined {
     return this.currentUserDoc?.data?.email;
   }

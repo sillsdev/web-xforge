@@ -90,6 +90,31 @@ describe('ProgressService', () => {
     verify(mockedProjectService.getProjectProgress(projectId)).twice();
   }));
 
+  it('always fetches fresh data when maxStalenessMs is 0, even with a warm cache', fakeAsync(() => {
+    // maxStalenessMs: 0 is how callers force a fresh fetch (e.g. right after an in-place sync): the freshness check
+    // `now - timestamp < 0` is never true, so a just-cached entry is still bypassed.
+    const env = new TestEnvironment();
+    const projectId = 'project1';
+    const firstBooks: BookProgressWithChapterProgress[] = [
+      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }
+    ];
+    const secondBooks: BookProgressWithChapterProgress[] = [
+      { bookId: 'GEN', verseSegments: 120, blankVerseSegments: 15, chapters: [] }
+    ];
+    when(mockedProjectService.getProjectProgress(projectId)).thenResolve(firstBooks).thenResolve(secondBooks);
+
+    let result1: ProjectProgress | undefined;
+    let result2: ProjectProgress | undefined;
+    env.service.getProgress(projectId, { maxStalenessMs: 0 }).then(r => (result1 = r));
+    flushMicrotasks();
+    env.service.getProgress(projectId, { maxStalenessMs: 0 }).then(r => (result2 = r));
+    flushMicrotasks();
+
+    expect(result1?.books).toEqual(firstBooks);
+    expect(result2?.books).toEqual(secondBooks);
+    verify(mockedProjectService.getProjectProgress(projectId)).twice();
+  }));
+
   it('should deduplicate concurrent requests for the same project', fakeAsync(() => {
     const env = new TestEnvironment();
     const projectId = 'project1';

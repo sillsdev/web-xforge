@@ -35,6 +35,12 @@ export const ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET = false;
  */
 export type DraftingBookExclusionReason = 'non_canonical' | 'no_source_content' | 'not_in_target';
 
+/**
+ * Default freshness window for progress lookups. Progress data older than this is re-fetched. Callers that must have
+ * up-to-the-moment data (e.g. just after an in-place sync) pass `maxStalenessMs: 0` to force a fresh fetch.
+ */
+const DEFAULT_PROGRESS_STALENESS_MS = 1000 * 60;
+
 export interface ExcludedDraftingBook {
   bookId: string;
   reason: DraftingBookExclusionReason;
@@ -45,9 +51,12 @@ export interface ExcludedDraftingBook {
 export class DraftProgressService {
   constructor(private readonly progressService: ProgressService) {}
 
-  async getProgressForProject(projectId: string): Promise<VerboseScriptureRange> {
+  async getProgressForProject(
+    projectId: string,
+    options: { maxStalenessMs?: number } = {}
+  ): Promise<VerboseScriptureRange> {
     const progress = await this.progressService.getProgressWithChapterProgress(projectId, {
-      maxStalenessMs: 1000 * 60
+      maxStalenessMs: options.maxStalenessMs ?? DEFAULT_PROGRESS_STALENESS_MS
     });
     const scriptureRange = new VerboseScriptureRange('');
     for (const bookProgress of progress.books) {
@@ -75,11 +84,11 @@ export class DraftProgressService {
    * Returns the IDs of the books in a project that appear complete enough to be auto-selected as training data (see
    * bookAppearsCompleteForTrainingAutoSelection). Derived from the segment-level progress counts that getProgressFor
    * Project discards, which is why this is computed separately. Reuses the cached progress, so calling it alongside
-   * getProgressForProject for the same project costs no extra request.
+   * getProgressForProject for the same project (with the same staleness) costs no extra request.
    */
-  async getCompleteBookIds(projectId: string): Promise<Set<string>> {
+  async getCompleteBookIds(projectId: string, options: { maxStalenessMs?: number } = {}): Promise<Set<string>> {
     const progress = await this.progressService.getProgressWithChapterProgress(projectId, {
-      maxStalenessMs: 1000 * 60
+      maxStalenessMs: options.maxStalenessMs ?? DEFAULT_PROGRESS_STALENESS_MS
     });
     const completeBookIds = new Set<string>();
     for (const bookProgress of progress.books) {
@@ -205,42 +214,13 @@ export class NewDraftLogicHandler {
    */
   async init(): Promise<void> {
     try {
-      const projectId = await firstValueFrom(this.activatedProjectService.projectId$.pipe(filterNullish()));
-      const projectDoc = await firstValueFrom(this.activatedProjectService.projectDoc$.pipe(filterNullish()));
-
-      if (projectId == null) throw new Error('No project selected');
-      if (projectDoc?.data == null) throw new Error('Project data not loaded');
-
-      const draftConfig = projectDoc?.data?.translateConfig?.draftConfig;
-
-      if (draftConfig == null) throw new Error('Draft config not found in project data');
-
-      // The UI never allows configuring more than one drafting source, so this is treated as an impossible state.
-      if (draftConfig.draftingSources.length !== 1) {
-        throw new Error(`Expected exactly one drafting source; found ${draftConfig.draftingSources.length}`);
-      }
-      const draftingSource = draftConfig.draftingSources[0];
-
-      let draftSourceProgress: VerboseScriptureRange;
-      let targetProjectProgress: VerboseScriptureRange;
-      let trainingSourcesProgress: { projectId: string; range: VerboseScriptureRange }[];
-      // Create a promise for loading the progress for all training sources, so that it can be done in parallel with
-      // loading the progress for the drafting source and target project
-      const trainingSourcesProgressPromise = Promise.all(
-        draftConfig.trainingSources.map(async trainingSource => {
-          const progress = await this.progressService.getProgressForProject(trainingSource.projectRef);
-          return { projectId: trainingSource.projectRef, range: progress };
-        })
-      );
-
-      [draftSourceProgress, targetProjectProgress, trainingSourcesProgress, this.sources, this.completeTargetBookIds] =
-        await Promise.all([
-          this.progressService.getProgressForProject(draftingSource.projectRef),
-          this.progressService.getProgressForProject(projectId),
-          trainingSourcesProgressPromise,
-          firstValueFrom(this.draftSourcesService.getDraftProjectSources()),
-          this.progressService.getCompleteBookIds(projectId)
-        ]);
+      // Load progress and the source configuration in parallel. fetchProgressBundle (with no fresh-project overrides)
+      // uses the default staleness, so this is identical to fetching everything fresh on first load.
+      const [bundle, sources] = await Promise.all([
+        this.fetchProgressBundle(),
+        firstValueFrom(this.draftSourcesService.getDraftProjectSources())
+      ]);
+      this.sources = sources;
 
       const sourcesWithNoAccess = [
         ...this.sources.trainingSources,
@@ -255,25 +235,7 @@ export class NewDraftLogicHandler {
         return;
       }
 
-      const targetTextBookIds = new Set((projectDoc.data.texts ?? []).map(text => Canon.bookNumberToId(text.bookNum)));
-      const { available, excluded } = this.computeOfferedDraftingBooks(draftSourceProgress, targetTextBookIds);
-
-      // Extra-material (non-canonical) books are never offered for training. (The drafting list handles them
-      // separately via computeOfferedDraftingBooks.)
-      const canonicalTargetProgress = withoutExtraMaterialBooks(targetProjectProgress);
-
-      this.targetProjectScriptureRange = canonicalTargetProgress;
-      this.availableDraftingScriptureRange$.next(available);
-      this.excludedDraftingBooks$.next(excluded);
-      this.availableTargetTrainingScriptureRange$.next(canonicalTargetProgress);
-      this.trainingSourceBooks$.next(
-        Object.fromEntries(
-          trainingSourcesProgress.map(source => [
-            source.projectId,
-            scriptureRangeToBookListWithoutChapterDetail(withoutExtraMaterialBooks(source.range))
-          ])
-        )
-      );
+      this.applyDerivedRanges(bundle);
 
       this.status$.next('input');
 
@@ -294,6 +256,120 @@ export class NewDraftLogicHandler {
       this.initError = error;
       this.abort('init_failure');
     }
+  }
+
+  /**
+   * Loads the progress data needed to derive book/chapter availability: the drafting source's content, the target's
+   * content, each training source's content, and the set of target books that appear complete (for auto-selection).
+   * Projects in `freshProjectIds` are fetched with no staleness tolerance (forcing a fresh fetch — used after an
+   * in-place sync); all others use the default freshness window, so unchanged projects are served from cache.
+   */
+  private async fetchProgressBundle(freshProjectIds: Set<string> = new Set()): Promise<{
+    draftSourceProgress: VerboseScriptureRange;
+    targetProjectProgress: VerboseScriptureRange;
+    trainingSourcesProgress: { projectId: string; range: VerboseScriptureRange }[];
+    completeTargetBookIds: Set<string>;
+  }> {
+    const projectId = await firstValueFrom(this.activatedProjectService.projectId$.pipe(filterNullish()));
+    const projectDoc = await firstValueFrom(this.activatedProjectService.projectDoc$.pipe(filterNullish()));
+
+    if (projectId == null) throw new Error('No project selected');
+    if (projectDoc?.data == null) throw new Error('Project data not loaded');
+
+    const draftConfig = projectDoc.data.translateConfig?.draftConfig;
+    if (draftConfig == null) throw new Error('Draft config not found in project data');
+
+    // The UI never allows configuring more than one drafting source, so this is treated as an impossible state.
+    if (draftConfig.draftingSources.length !== 1) {
+      throw new Error(`Expected exactly one drafting source; found ${draftConfig.draftingSources.length}`);
+    }
+    const draftingSource = draftConfig.draftingSources[0];
+
+    const staleness = (id: string): { maxStalenessMs?: number } =>
+      freshProjectIds.has(id) ? { maxStalenessMs: 0 } : {};
+
+    // Load the progress for all training sources in parallel with the drafting source and target project.
+    const trainingSourcesProgressPromise = Promise.all(
+      draftConfig.trainingSources.map(async trainingSource => {
+        const range = await this.progressService.getProgressForProject(
+          trainingSource.projectRef,
+          staleness(trainingSource.projectRef)
+        );
+        return { projectId: trainingSource.projectRef, range };
+      })
+    );
+
+    // Order matters: the target's range (getProgressForProject) is invoked before its complete-book set
+    // (getCompleteBookIds) so the two reads of the same project coalesce onto a single in-flight request.
+    const [draftSourceProgress, targetProjectProgress, trainingSourcesProgress, completeTargetBookIds] =
+      await Promise.all([
+        this.progressService.getProgressForProject(draftingSource.projectRef, staleness(draftingSource.projectRef)),
+        this.progressService.getProgressForProject(projectId, staleness(projectId)),
+        trainingSourcesProgressPromise,
+        this.progressService.getCompleteBookIds(projectId, staleness(projectId))
+      ]);
+
+    return { draftSourceProgress, targetProjectProgress, trainingSourcesProgress, completeTargetBookIds };
+  }
+
+  /**
+   * Derives the offered drafting books, available ranges, and training-source book lists from a freshly loaded progress
+   * bundle and publishes them on the relevant subjects. Reads the target's text list from the (live) project doc for
+   * membership, so a reload after an in-place sync picks up newly synced books. Does not touch the user's selections.
+   */
+  private applyDerivedRanges(bundle: {
+    draftSourceProgress: VerboseScriptureRange;
+    targetProjectProgress: VerboseScriptureRange;
+    trainingSourcesProgress: { projectId: string; range: VerboseScriptureRange }[];
+    completeTargetBookIds: Set<string>;
+  }): void {
+    const texts = this.activatedProjectService.projectDoc?.data?.texts ?? [];
+    const targetTextBookIds = new Set(texts.map(text => Canon.bookNumberToId(text.bookNum)));
+    const { available, excluded } = this.computeOfferedDraftingBooks(bundle.draftSourceProgress, targetTextBookIds);
+
+    // Extra-material (non-canonical) books are never offered for training. (The drafting list handles them
+    // separately via computeOfferedDraftingBooks.)
+    const canonicalTargetProgress = withoutExtraMaterialBooks(bundle.targetProjectProgress);
+
+    this.completeTargetBookIds = bundle.completeTargetBookIds;
+    this.targetProjectScriptureRange = canonicalTargetProgress;
+    this.availableDraftingScriptureRange$.next(available);
+    this.excludedDraftingBooks$.next(excluded);
+    this.availableTargetTrainingScriptureRange$.next(canonicalTargetProgress);
+    this.trainingSourceBooks$.next(
+      Object.fromEntries(
+        bundle.trainingSourcesProgress.map(source => [
+          source.projectId,
+          scriptureRangeToBookListWithoutChapterDetail(withoutExtraMaterialBooks(source.range))
+        ])
+      )
+    );
+  }
+
+  /**
+   * Re-derives book/chapter availability after the user syncs stale projects in place via the pending-updates
+   * pre-step. Only the projects in `syncedProjectIds` are re-fetched fresh; unchanged projects are served from cache.
+   * Valid only before the user has made any selection (the pre-step precedes Step 1), so it returns the selection
+   * state to its post-init baseline rather than trying to preserve stale selections.
+   */
+  async reload(syncedProjectIds: string[]): Promise<void> {
+    const bundle = await this.fetchProgressBundle(new Set(syncedProjectIds));
+    this.applyDerivedRanges(bundle);
+    this.resetSelectionState();
+  }
+
+  /** Returns all selection-derived state to its post-init baseline. */
+  private resetSelectionState(): void {
+    this.selectedDraftingScriptureRange$.next(new VerboseScriptureRange(''));
+    this.selectedTargetTrainingScriptureRange$.next(new VerboseScriptureRange(''));
+    this.selectedTrainingSourceBooks$.next({});
+    this.availableTrainingSourceBooks$.next({});
+    this.targetTrainingBooksWithoutSource$.next([]);
+    this.booksOfferedForPartialDrafting$.next([]);
+    this.booksOfferedForPartialTargetTraining$.next([]);
+    this.trainingBooksWereAutoSelected$.next(false);
+    this.hasVisitedTrainingBooksInputMode = false;
+    this.inputMode$.next('draft_books');
   }
 
   private hasVisitedTrainingBooksInputMode = false;
