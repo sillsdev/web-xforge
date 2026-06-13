@@ -47,8 +47,26 @@
         [basicMode]="true"
         (bookSelect)="onDraftingBookSelect($event)"
       ></app-book-multi-select>
-      @for (notice of draftingExclusionNotices; track notice.key) {
-        <app-notice icon="info" type="info">{{ t(notice.key, notice.params) }}</app-notice>
+      @if (draftingExclusionNotices.length > 0) {
+        <app-notice icon="info" type="info" class="books-hidden">
+          <div class="books-hidden-container">
+            <span
+              class="books-hidden-message"
+              (click)="draftingExclusionsExpanded = !draftingExclusionsExpanded"
+              [innerHTML]="
+                i18n.translateAndInsertTags(
+                  draftingExclusionsExpanded ? 'new_draft.books_hidden.hide' : 'new_draft.books_hidden.show_why',
+                  { numBooks: draftingHiddenBookCount }
+                )
+              "
+            ></span>
+            @if (draftingExclusionsExpanded) {
+              @for (notice of draftingExclusionNotices; track notice.key) {
+                <p class="books-hidden-explanation">{{ t(notice.key, notice.params) }}</p>
+              }
+            }
+          </div>
+        </app-notice>
       }
       @if (booksOfferedForPartialDrafting.length > 0) {
         <h3>{{ t("draft_books.which_chapters") }}</h3>
@@ -98,9 +116,25 @@
         <app-notice icon="info" type="info">{{ t("training_books.auto_selected") }}</app-notice>
       }
       @if (hasTargetTrainingBooksWithoutSource) {
-        <app-notice icon="info" type="info">{{
-          t("training_books.excluded_not_in_any_source", { books: targetTrainingBooksWithoutSourceNames })
-        }}</app-notice>
+        <app-notice icon="info" type="info" class="books-hidden">
+          <div class="books-hidden-container">
+            <span
+              class="books-hidden-message"
+              (click)="trainingExclusionsExpanded = !trainingExclusionsExpanded"
+              [innerHTML]="
+                i18n.translateAndInsertTags(
+                  trainingExclusionsExpanded ? 'new_draft.books_hidden.hide' : 'new_draft.books_hidden.show_why',
+                  { numBooks: targetTrainingHiddenBookCount }
+                )
+              "
+            ></span>
+            @if (trainingExclusionsExpanded) {
+              <p class="books-hidden-explanation">
+                {{ t("training_books.excluded_not_in_any_source", { books: targetTrainingBooksWithoutSourceNames }) }}
+              </p>
+            }
+          </div>
+        </app-notice>
       }
       @if (booksOfferedForPartialTargetTraining.length > 0) {
         <h3>{{ t("training_books.which_chapters") }}</h3>

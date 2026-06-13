@@ -104,6 +104,10 @@ export class NewDraftComponent {
   targetTrainingChapterErrors = new Map<string, ChapterInputError>();
   stepError: I18nKeyForComponent<'new_draft'> | null = null;
 
+  /** Whether the "N books are hidden" explanations are expanded, on the draft step and the training step respectively. */
+  draftingExclusionsExpanded = false;
+  trainingExclusionsExpanded = false;
+
   sendEmailOnBuildFinished: boolean = false;
   fastTraining: boolean = false;
   useEcho: boolean = false;
@@ -527,16 +531,27 @@ export class NewDraftComponent {
     return this.logicHandler.booksOfferedForPartialDrafting$.getValue();
   }
 
+  /** Drafting-exclusion reasons shown to the user, in display order. Non-canonical exclusions are never surfaced. */
+  private readonly surfacedDraftingExclusionReasons: DraftingBookExclusionReason[] = [
+    'no_source_content',
+    'not_in_target'
+  ];
+
+  /** How many books are hidden from the drafting list for a surfaced reason (used by the "N books are hidden" toggle). */
+  get draftingHiddenBookCount(): number {
+    return this.logicHandler.excludedDraftingBooks$
+      .getValue()
+      .filter(book => this.surfacedDraftingExclusionReasons.includes(book.reason)).length;
+  }
+
   /**
    * Notices explaining books the user might expect that were left out of the drafting list, one per surfaced reason.
    * Non-canonical exclusions are intentionally tracked but not surfaced. Each entry carries the i18n key for its
    * reason and the parameters that message needs.
    */
   get draftingExclusionNotices(): { key: I18nKeyForComponent<'new_draft'>; params: Record<string, string> }[] {
-    // Reasons shown to the user, in display order. Books excluded only for being non-canonical are omitted.
-    const surfacedReasons: DraftingBookExclusionReason[] = ['no_source_content', 'not_in_target'];
     const excluded = this.logicHandler.excludedDraftingBooks$.getValue();
-    return surfacedReasons
+    return this.surfacedDraftingExclusionReasons
       .map(reason => {
         const bookNames = excluded
           .filter(book => book.reason === reason)
@@ -625,6 +640,11 @@ export class NewDraftComponent {
   /** Whether any target book is hidden from the training list for lacking a matching book in any training source. */
   get hasTargetTrainingBooksWithoutSource(): boolean {
     return this.logicHandler.targetTrainingBooksWithoutSource$.getValue().length > 0;
+  }
+
+  /** How many target books are hidden from the training list (used by the "N books are hidden" toggle). */
+  get targetTrainingHiddenBookCount(): number {
+    return this.logicHandler.targetTrainingBooksWithoutSource$.getValue().length;
   }
 
   /** Whether training books were pre-selected on this project's first draft (shows the "review these" notice). */

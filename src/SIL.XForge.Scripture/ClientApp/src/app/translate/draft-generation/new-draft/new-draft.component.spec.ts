@@ -673,6 +673,38 @@ describe('NewDraftComponent', () => {
       expect().nothing();
     }));
   });
+
+  describe('hidden-books notices', () => {
+    it('counts only the surfaced drafting-exclusion reasons (not non-canonical)', fakeAsync(() => {
+      const env = new TestEnvironment(testState);
+      tick();
+      env.component.logicHandler.excludedDraftingBooks$.next([
+        { bookId: 'GEN', reason: 'no_source_content' },
+        { bookId: 'EXO', reason: 'not_in_target' },
+        { bookId: 'FRT', reason: 'non_canonical' } // tracked but never surfaced
+      ]);
+
+      expect(env.component.draftingHiddenBookCount).toBe(2);
+      expect(env.component.draftingExclusionNotices.length).toBe(2);
+    }));
+
+    it('counts target training books hidden for lacking a matching source', fakeAsync(() => {
+      const env = new TestEnvironment(testState);
+      tick();
+      env.component.logicHandler.targetTrainingBooksWithoutSource$.next(['LEV', 'NUM']);
+
+      expect(env.component.targetTrainingHiddenBookCount).toBe(2);
+      expect(env.component.hasTargetTrainingBooksWithoutSource).toBeTrue();
+    }));
+
+    it('starts with the explanations collapsed on both steps', fakeAsync(() => {
+      const env = new TestEnvironment(testState);
+      tick();
+
+      expect(env.component.draftingExclusionsExpanded).toBeFalse();
+      expect(env.component.trainingExclusionsExpanded).toBeFalse();
+    }));
+  });
 });
 
 const mockedActivatedProjectService = mock(ActivatedProjectService);

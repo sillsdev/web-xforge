@@ -246,6 +246,10 @@
       "chapters_will_be_translated": "Chapters {{ chapters }} cannot be used for training because they are going to be translated."
     },
     "change_source_configuration": "Change source configuration",
+    "books_hidden": {
+      "show_why": "{{ numBooks }} books are hidden. {{ underlineStart }}Show why{{ underlineEnd }}",
+      "hide": "{{ numBooks }} books are hidden. {{ underlineStart }}Hide explanation{{ underlineEnd }}"
+    },
     "training_files": "Training data files",
     "fix_chapter_errors": "Please fix the chapter range errors above before continuing.",
     "no_drafting_books_selected": "Select at least one book to draft before continuing.",
