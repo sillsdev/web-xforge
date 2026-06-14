@@ -249,6 +249,7 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
+  /** @deprecated This feature flag is no longer used */
   readonly showNmtDrafting: FeatureFlag = new ServerOnlyFeatureFlag(
     'SHOW_NMT_DRAFTING',
     'Show NMT drafting',
@@ -256,6 +257,7 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
+  /** @deprecated This feature flag is no longer used */
   readonly allowForwardTranslationNmtDrafting: FeatureFlag = new ServerOnlyFeatureFlag(
     'ALLOW_FORWARD_TRANSLATION_NMT_DRAFTING',
     'Allow Forward Translation NMT drafting',
@@ -263,6 +265,7 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
+  /** @deprecated This feature flag is no longer used */
   readonly scriptureAudio: FeatureFlag = new ServerOnlyFeatureFlag(
     'SCRIPTURE_AUDIO',
     'Scripture audio',
@@ -291,6 +294,7 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
+  /** @deprecated This feature flag is no longer used */
   readonly machineInProcess: FeatureFlag = new ServerOnlyFeatureFlag(
     'MachineInProcess',
     'Use In-Process Machine for Suggestions',
@@ -298,6 +302,7 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
+  /** @deprecated This feature flag is no longer used */
   readonly serval: FeatureFlag = new ServerOnlyFeatureFlag(
     'Serval',
     'Use Serval for Suggestions',
@@ -305,6 +310,7 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
+  /** @deprecated This feature flag is no longer used */
   readonly useEchoForPreTranslation: FeatureFlag = new ServerOnlyFeatureFlag(
     'UseEchoForPreTranslation',
     'Allow Echo for Pre-Translation Drafting',
@@ -312,6 +318,7 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
+  /** @deprecated This feature flag is no longer used */
   readonly allowFastTraining: FeatureFlag = new ServerOnlyFeatureFlag(
     'ALLOW_FAST_TRAINING',
     'Allow Fast Pre-Translation Training',
@@ -319,6 +326,7 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
+  /** @deprecated This feature flag is no longer used */
   readonly uploadParatextZipForPreTranslation: FeatureFlag = new ServerOnlyFeatureFlag(
     'UploadParatextZipForPreTranslation',
     'Upload Paratext Zip Files for Pre-Translation Drafting',
@@ -326,6 +334,7 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
+  /** @deprecated This feature flag is no longer used */
   readonly allowAdditionalTrainingSource: FeatureFlag = new ServerOnlyFeatureFlag(
     'AllowAdditionalTrainingSource',
     'Allow mixing in an additional training source',
@@ -333,6 +342,7 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
+  /** @deprecated This feature flag is no longer used */
   readonly updatedLearningRateForServal: FeatureFlag = new ServerOnlyFeatureFlag(
     'UpdatedLearningRateForServal',
     'Updated Learning Rate For Serval',
@@ -342,6 +352,7 @@ export class FeatureFlagService {
 
   readonly darkMode: FeatureFlag = new ServerOnlyFeatureFlag('DarkMode', 'Dark mode', 15, this.featureFlagStore);
 
+  /** @deprecated This feature flag is no longer used */
   readonly enableLynxInsights: FeatureFlag = new ServerOnlyFeatureFlag(
     'EnableLynxInsights',
     'Enable Lynx insights',
@@ -349,6 +360,7 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
+  /** @deprecated This feature flag is no longer used */
   readonly newDraftHistory: FeatureFlag = new ServerOnlyFeatureFlag(
     'NewDraftHistory',
     'Preview new draft history interface',
@@ -356,13 +368,15 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
+  /** @deprecated This feature flag is no longer used */
   readonly usfmFormat: FeatureFlag = new ServerOnlyFeatureFlag('UsfmFormat', 'USFM Format', 18, this.featureFlagStore);
 
-  readonly inAppOnboardingForm: ObservableFeatureFlag = new FeatureFlagFromStorage(
+  /** @deprecated This feature flag is no longer used */
+  readonly inAppOnboardingForm: FeatureFlag = new ServerOnlyFeatureFlag(
     'InAppOnboardingForm',
     'Show in-app onboarding form instead of external link',
     19,
-    new StaticFeatureFlagStore(true)
+    this.featureFlagStore
   );
 
   get featureFlags(): FeatureFlag[] {
