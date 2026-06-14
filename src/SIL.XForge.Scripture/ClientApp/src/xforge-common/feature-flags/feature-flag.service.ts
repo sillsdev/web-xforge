@@ -203,7 +203,7 @@ class StaticFeatureFlagStore implements IFeatureFlagStore {
   }
 }
 
-class ServerOnlyFeatureFlag implements FeatureFlag {
+class StaticFeatureFlag implements FeatureFlag {
   constructor(
     readonly key: string,
     readonly description: string,
@@ -249,21 +249,24 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
-  readonly showNmtDrafting: FeatureFlag = new ServerOnlyFeatureFlag(
+  /** @deprecated This feature flag is no longer used */
+  readonly showNmtDrafting: FeatureFlag = new StaticFeatureFlag(
     'SHOW_NMT_DRAFTING',
     'Show NMT drafting',
     2,
     this.featureFlagStore
   );
 
-  readonly allowForwardTranslationNmtDrafting: FeatureFlag = new ServerOnlyFeatureFlag(
+  /** @deprecated This feature flag is no longer used */
+  readonly allowForwardTranslationNmtDrafting: FeatureFlag = new StaticFeatureFlag(
     'ALLOW_FORWARD_TRANSLATION_NMT_DRAFTING',
     'Allow Forward Translation NMT drafting',
     3,
     this.featureFlagStore
   );
 
-  readonly scriptureAudio: FeatureFlag = new ServerOnlyFeatureFlag(
+  /** @deprecated This feature flag is no longer used */
+  readonly scriptureAudio: FeatureFlag = new StaticFeatureFlag(
     'SCRIPTURE_AUDIO',
     'Scripture audio',
     4,
@@ -291,78 +294,89 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
-  readonly machineInProcess: FeatureFlag = new ServerOnlyFeatureFlag(
+  /** @deprecated This feature flag is no longer used */
+  readonly machineInProcess: FeatureFlag = new StaticFeatureFlag(
     'MachineInProcess',
     'Use In-Process Machine for Suggestions',
     8,
     this.featureFlagStore
   );
 
-  readonly serval: FeatureFlag = new ServerOnlyFeatureFlag(
+  /** @deprecated This feature flag is no longer used */
+  readonly serval: FeatureFlag = new StaticFeatureFlag(
     'Serval',
     'Use Serval for Suggestions',
     9,
     this.featureFlagStore
   );
 
-  readonly useEchoForPreTranslation: FeatureFlag = new ServerOnlyFeatureFlag(
+  /** @deprecated This feature flag is no longer used */
+  readonly useEchoForPreTranslation: FeatureFlag = new StaticFeatureFlag(
     'UseEchoForPreTranslation',
     'Allow Echo for Pre-Translation Drafting',
     10,
     this.featureFlagStore
   );
 
-  readonly allowFastTraining: FeatureFlag = new ServerOnlyFeatureFlag(
+  /** @deprecated This feature flag is no longer used */
+  readonly allowFastTraining: FeatureFlag = new StaticFeatureFlag(
     'ALLOW_FAST_TRAINING',
     'Allow Fast Pre-Translation Training',
     11,
     this.featureFlagStore
   );
 
-  readonly uploadParatextZipForPreTranslation: FeatureFlag = new ServerOnlyFeatureFlag(
+  /** @deprecated This feature flag is no longer used */
+  readonly uploadParatextZipForPreTranslation: FeatureFlag = new StaticFeatureFlag(
     'UploadParatextZipForPreTranslation',
     'Upload Paratext Zip Files for Pre-Translation Drafting',
     12,
     this.featureFlagStore
   );
 
-  readonly allowAdditionalTrainingSource: FeatureFlag = new ServerOnlyFeatureFlag(
+  /** @deprecated This feature flag is no longer used */
+  readonly allowAdditionalTrainingSource: FeatureFlag = new StaticFeatureFlag(
     'AllowAdditionalTrainingSource',
     'Allow mixing in an additional training source',
     13,
     this.featureFlagStore
   );
 
-  readonly updatedLearningRateForServal: FeatureFlag = new ServerOnlyFeatureFlag(
+  /** @deprecated This feature flag is no longer used */
+  readonly updatedLearningRateForServal: FeatureFlag = new StaticFeatureFlag(
     'UpdatedLearningRateForServal',
     'Updated Learning Rate For Serval',
     14,
     this.featureFlagStore
   );
 
-  readonly darkMode: FeatureFlag = new ServerOnlyFeatureFlag('DarkMode', 'Dark mode', 15, this.featureFlagStore);
+  readonly darkMode: FeatureFlag = new StaticFeatureFlag('DarkMode', 'Dark mode', 15, this.featureFlagStore);
 
-  readonly enableLynxInsights: FeatureFlag = new ServerOnlyFeatureFlag(
+  /** @deprecated This feature flag is no longer used */
+  readonly enableLynxInsights: FeatureFlag = new StaticFeatureFlag(
     'EnableLynxInsights',
     'Enable Lynx insights',
     16,
     this.featureFlagStore
   );
 
-  readonly newDraftHistory: FeatureFlag = new ServerOnlyFeatureFlag(
+  /** @deprecated This feature flag is no longer used */
+  readonly newDraftHistory: FeatureFlag = new StaticFeatureFlag(
     'NewDraftHistory',
     'Preview new draft history interface',
     17,
     this.featureFlagStore
   );
 
-  readonly usfmFormat: FeatureFlag = new ServerOnlyFeatureFlag('UsfmFormat', 'USFM Format', 18, this.featureFlagStore);
+  /** @deprecated This feature flag is no longer used */
+  readonly usfmFormat: FeatureFlag = new StaticFeatureFlag('UsfmFormat', 'USFM Format', 18, this.featureFlagStore);
 
-  readonly inAppOnboardingForm: ObservableFeatureFlag = new FeatureFlagFromStorage(
+  /** @deprecated This feature flag is no longer used */
+  readonly inAppOnboardingForm: FeatureFlag = new StaticFeatureFlag(
     'InAppOnboardingForm',
     'Show in-app onboarding form instead of external link',
     19,
-    new StaticFeatureFlagStore(true)
+    this.featureFlagStore
   );
 
   get featureFlags(): FeatureFlag[] {
@@ -372,7 +386,7 @@ export class FeatureFlagService {
   get versionSuffix(): string {
     // Get the feature flags, sorted alphabetically
     const featureFlags: FeatureFlag[] = Object.values(this).filter(
-      value => value instanceof FeatureFlagFromStorage || value instanceof ServerOnlyFeatureFlag
+      value => value instanceof FeatureFlagFromStorage || value instanceof StaticFeatureFlag
     );
     featureFlags.sort((a, b) => a.position - b.position);
     const versionNumber = this.getFeatureFlagVersion(featureFlags);
