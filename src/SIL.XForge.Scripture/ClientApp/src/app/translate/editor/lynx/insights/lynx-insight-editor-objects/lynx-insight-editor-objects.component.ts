@@ -1,13 +1,13 @@
 import {
   Component,
   DestroyRef,
+  DOCUMENT,
   Inject,
   Input,
   OnChanges,
   OnDestroy,
   OnInit,
-  SimpleChanges,
-  DOCUMENT
+  SimpleChanges
 } from '@angular/core';
 import { isEqual } from 'lodash-es';
 import { Delta } from 'quill';
@@ -30,13 +30,13 @@ import { EditorReadyService } from '../base-services/editor-ready.service';
 import { InsightRenderService } from '../base-services/insight-render.service';
 import { LynxableEditor, LynxTextModelConverter } from '../lynx-editor';
 import { LynxInsight, LynxInsightDisplayState, LynxInsightRange } from '../lynx-insight';
+import { LynxInsightActionPromptComponent } from '../lynx-insight-action-prompt/lynx-insight-action-prompt.component';
 import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
+import { LynxInsightScrollPositionIndicatorComponent } from '../lynx-insight-scroll-position-indicator/lynx-insight-scroll-position-indicator.component';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
+import { LynxInsightStatusIndicatorComponent } from '../lynx-insight-status-indicator/lynx-insight-status-indicator.component';
 import { LynxWorkspaceService } from '../lynx-workspace.service';
 import { LynxInsightBlot } from '../quill-services/blots/lynx-insight-blot';
-import { LynxInsightStatusIndicatorComponent } from '../lynx-insight-status-indicator/lynx-insight-status-indicator.component';
-import { LynxInsightScrollPositionIndicatorComponent } from '../lynx-insight-scroll-position-indicator/lynx-insight-scroll-position-indicator.component';
-import { LynxInsightActionPromptComponent } from '../lynx-insight-action-prompt/lynx-insight-action-prompt.component';
 
 @Component({
   selector: 'app-lynx-insight-editor-objects',
@@ -53,7 +53,7 @@ export class LynxInsightEditorObjectsComponent implements OnChanges, OnInit, OnD
   @Input() autoCorrectionsEnabled: boolean = false;
   @Input() insightsEnabled: boolean = false;
 
-  readonly embedPositionsChangedDebounceTime = 100;
+  readonly numberEmbedsChangedDebounceTime = 100;
 
   readonly insightSelector = `.${LynxInsightBlot.superClassName}`;
   private readonly dataIdProp = LynxInsightBlot.idDatasetPropName;
@@ -178,8 +178,8 @@ export class LynxInsightEditorObjectsComponent implements OnChanges, OnInit, OnD
                     ).pipe(tap(() => chapterInsightsRendered$.next(true)));
                   })
                 ),
-                (this.lynxTextModelConverter?.embedPositionsChanged$ ?? EMPTY).pipe(
-                  debounceTime(this.embedPositionsChangedDebounceTime),
+                (this.lynxTextModelConverter?.numberEmbedsChanged$ ?? EMPTY).pipe(
+                  debounceTime(this.numberEmbedsChangedDebounceTime),
                   withLatestFrom(this.insightState.filteredChapterInsights$),
                   switchMap(([_, insights]) => {
                     return from(
