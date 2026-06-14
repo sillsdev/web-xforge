@@ -184,8 +184,8 @@
             </div>
           </app-notice>
         }
+        <h2>{{ t("reference_books") }}</h2>
         @if (selectableTrainingBooksByProj(activatedProject.projectId).length > 0) {
-          <h2>{{ t("reference_books") }}</h2>
           @for (source of trainingSources; track source) {
             <p class="reference-project-label">{{ projectLabel(source) }}</p>
             @if (selectableTrainingBooksByProj(source.projectRef).length === 0) {
