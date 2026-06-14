@@ -361,14 +361,16 @@
                               <div class="detail-project-books-item">
                                 <div class="detail-project-books-meta detail-value-with-copy">
                                   @if (projectBook.shortName != null) {
-                                    <a
-                                      [href]="projectBook.projectLink"
-                                      target="_blank"
-                                      rel="noopener"
-                                      class="project-link"
-                                    >
-                                      {{ projectBook.shortName }}
-                                    </a>
+                                    <span class="input-shortname">
+                                      <a
+                                        [href]="projectBook.projectLink"
+                                        target="_blank"
+                                        rel="noopener"
+                                        class="project-link"
+                                      >
+                                        {{ projectBook.shortName }}
+                                      </a>
+                                    </span>
                                   }
                                   <span class="detail-project-books-id">{{ projectBook.sfProjectId }}</span>
                                   <app-copy [value]="projectBook.sfProjectId"></app-copy>
@@ -422,53 +424,55 @@
                     <div class="detail-area-stacked-keyvalues timing-grid">
                       <div class="detail-keyvalue">
                         <span class="detail-key">User request</span>
-                        <span class="detail-value"
+                        <span class="detail-value time-and-duration"
                           >{{ formatDateTime(row.report.timeline.sfUserRequested) ?? "-" }} &nbsp;
                           {{ durationUserRequestToCompletionAcknowledged(row.report) }}</span
                         >
                       </div>
                       <div class="detail-keyvalue">
                         <span class="detail-key">SF build request</span>
-                        <span class="detail-value">{{
+                        <span class="detail-value time-and-duration">{{
                           formatDateTime(row.report.timeline.sfBuildProjectSubmitted) ?? "-"
                         }}</span>
                       </div>
                       <div class="detail-keyvalue">
                         <span class="detail-key">Serval creation</span>
-                        <span class="detail-value"
+                        <span class="detail-value time-and-duration"
                           >{{ formatDateTime(row.report.timeline.servalCreated) ?? "-" }} &nbsp;
                           {{ durationServalCreatedToFinish(row.report) }}</span
                         >
                       </div>
                       <div class="detail-keyvalue">
                         <span class="detail-key">Train phase</span>
-                        <span class="detail-value"
+                        <span class="detail-value time-and-duration"
                           >{{ formatDateTime(getPhase(row.report, "Train")?.started) ?? "-" }} &nbsp;
                           {{ durationPhaseTrain(row.report) }}</span
                         >
                       </div>
                       <div class="detail-keyvalue">
                         <span class="detail-key">Inference phase</span>
-                        <span class="detail-value"
+                        <span class="detail-value time-and-duration"
                           >{{ formatDateTime(getPhase(row.report, "Inference")?.started) ?? "-" }} &nbsp;
                           {{ durationPhaseInference(row.report) }}</span
                         >
                       </div>
                       <div class="detail-keyvalue">
                         <span class="detail-key">Serval finish</span>
-                        <span class="detail-value">{{
+                        <span class="detail-value time-and-duration">{{
                           formatDateTime(row.report.timeline.servalFinished) ?? "-"
                         }}</span>
                       </div>
                       @if (row.report.timeline.sfUserCancelled != null) {
                         <div class="detail-keyvalue">
                           <span class="detail-key">User cancel</span>
-                          <span class="detail-value">{{ formatDateTime(row.report.timeline.sfUserCancelled) }}</span>
+                          <span class="detail-value time-and-duration">{{
+                            formatDateTime(row.report.timeline.sfUserCancelled)
+                          }}</span>
                         </div>
                       }
                       <div class="detail-keyvalue">
                         <span class="detail-key">SF acknowledges Serval completion</span>
-                        <span class="detail-value">{{
+                        <span class="detail-value time-and-duration">{{
                           formatDateTime(row.report.timeline.sfAcknowledgedCompletion) ?? "-"
                         }}</span>
                       </div>
