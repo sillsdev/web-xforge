@@ -379,7 +379,15 @@ public class SFProjectServiceTests
                 }
             );
 
-        await env.Service.InviteAsync(User01, Project03, email, "en", role, TestEnvironment.WebsiteUrl);
+        await env.Service.InviteAsync(
+            User01,
+            Project03,
+            email,
+            "en",
+            role,
+            TestEnvironment.WebsiteUrl,
+            CancellationToken.None
+        );
 
         const string url = "http://localhost/projects/project03?sharing=true&shareKey=1234abc&locale=en";
         const string expectedSubject = "You've been invited to the project project03 on xForge";
@@ -394,7 +402,7 @@ public class SFProjectServiceTests
             + "<li>Click <b>Sign up with Facebook</b> and follow the instructions to access xForge using an existing Facebook account, or</li>"
             + "<li>Enter your email address and a new password for your xForge account and click Sign up.</li></ul></p><p></p>"
             + "<p>Regards,<p>The xForge team</p>";
-        await env.EmailService.Received(1).SendEmailAsync(email, expectedSubject, expectedBody);
+        await env.EmailService.Received(1).SendEmailAsync(email, expectedSubject, expectedBody, CancellationToken.None);
     }
 
     [Test]

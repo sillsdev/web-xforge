@@ -604,15 +604,18 @@ public class MachineProjectServiceTests
             User01,
             Project01,
             Build01,
-            nameof(JobState.Completed),
-            new Uri(env.SiteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+            JobState.Completed,
+            new Uri(env.SiteOptions.Value.Origin.Split(';').First(), UriKind.Absolute),
+            CancellationToken.None
         );
 
         const string expectedSubject = "Scripture Forge draft generated successfully";
         const string expectedBody =
             "<p>Your draft for P&lt;01&gt; was generated successfully.</p>"
             + "<p>For more information see https://localhost:5000/projects/project01/draft-generation</p>";
-        await env.EmailService.Received(1).SendEmailAsync("test@example.com", expectedSubject, expectedBody);
+        await env
+            .EmailService.Received(1)
+            .SendEmailAsync("test@example.com", expectedSubject, expectedBody, CancellationToken.None);
     }
 
     [Test]
