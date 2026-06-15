@@ -45,6 +45,13 @@ export class BookMultiSelectComponent implements OnChanges {
 
   protected loaded = false;
 
+  // Fetch progress only when projectId changes, not on every ngOnChanges. Otherwise, if a consumer binds
+  // availableBooks/selectedBooks to a new array reference each change-detection pass, the awaited fetch reschedules
+  // change detection on every pass and loops forever (browser freeze). Caching keeps initBookOptions synchronous
+  // after the first load, breaking the loop.
+  private cachedProgress?: ProjectProgress;
+  private loadedProgressProjectId?: string;
+
   bookOptions: BookOption[] = [];
 
   booksOT: Book[] = [];
@@ -75,7 +82,12 @@ export class BookMultiSelectComponent implements OnChanges {
         this.basicMode = true;
         throw new Error('app-book-multi-select requires a projectId input to initialize when not in basic mode');
       }
-      progress = await this.progressService.getProgress(this.projectId, { maxStalenessMs: 30_000 });
+      // Reuse the cached progress unless the project changed (see cachedProgress above).
+      if (this.projectId !== this.loadedProgressProjectId) {
+        this.cachedProgress = await this.progressService.getProgress(this.projectId, { maxStalenessMs: 30_000 });
+        this.loadedProgressProjectId = this.projectId;
+      }
+      progress = this.cachedProgress;
     }
     this.loaded = true;
 
