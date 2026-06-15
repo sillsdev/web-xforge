@@ -267,16 +267,6 @@
                   <mat-card-content class="detail-card-content">
                     <span class="detail-area-stacked-keyvalues">
                       <div class="detail-keyvalue">
-                        <span class="detail-key">SF user ID</span>
-                        <span class="detail-value detail-value-with-copy code">
-                          <span>{{ row.report.requesterSFUserId ?? "-" }}</span>
-                          @if (row.report.requesterSFUserId != null) {
-                            <app-copy [value]="row.report.requesterSFUserId"></app-copy>
-                          }
-                        </span>
-                      </div>
-
-                      <div class="detail-keyvalue">
                         <span class="detail-key">Name</span>
                         @let requesterUserName = requesterName(row.report.requesterSFUserId) | async;
                         <span class="detail-value">{{ requesterUserName ?? "-" }}</span>
@@ -299,6 +289,16 @@
                             <app-copy [value]="requesterEmail"></app-copy>
                           } @else {
                             <span>-</span>
+                          }
+                        </span>
+                      </div>
+
+                      <div class="detail-keyvalue">
+                        <span class="detail-key">SF user ID</span>
+                        <span class="detail-value detail-value-with-copy code">
+                          <span>{{ row.report.requesterSFUserId ?? "-" }}</span>
+                          @if (row.report.requesterSFUserId != null) {
+                            <app-copy [value]="row.report.requesterSFUserId"></app-copy>
                           }
                         </span>
                       </div>
