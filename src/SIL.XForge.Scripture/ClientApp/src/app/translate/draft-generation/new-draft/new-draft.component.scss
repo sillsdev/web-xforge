@@ -52,6 +52,12 @@ app-copyright-banner {
   margin-top: 1em;
 }
 
+.step-indicator {
+  color: variables.$lighterTextColor;
+  font-size: 0.85em;
+  margin: 0 0 1em;
+}
+
 .step-buttons {
   display: flex;
   gap: 1em;

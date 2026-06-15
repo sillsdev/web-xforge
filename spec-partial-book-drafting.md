@@ -707,7 +707,7 @@ See "Legacy Parity: Notices, Auto-Selection, Validation & Empty States" for deta
       target training, (2) appears essentially fully translated, and (3) is **not** itself being drafted (a book whose
       translation is in progress is a lower-conviction case the user should opt into deliberately). The completeness
       check intentionally uses the **segment-level** signal (legacy's `nonBlank > 10 && (blank/total ≤ 1% || blank ≤
-    3)`), not the chapter-level "has content" model — the chapter-level 10%-per-chapter bar can't distinguish a
+  3)`), not the chapter-level "has content" model — the chapter-level 10%-per-chapter bar can't distinguish a
       fully-translated book from one sitting uniformly at ~12%, and a sticky false positive is exactly what we're
       avoiding. This reintroduces the segment-level read the spec had deferred, which is the "deliberately decide the
       finer heuristic is worth the extra data path" case. The rule is extracted into the shared
@@ -737,9 +737,28 @@ See "Legacy Parity: Notices, Auto-Selection, Validation & Empty States" for deta
 - [ ] Add empty-state messages: no draftable books, no target training books, "reference books will appear",
       and loading copy
 
+### Feature-review follow-ups (2026-06-12)
+
+From the feature review of this branch; both are outside the wizard itself.
+
+- [ ] **Downstream surfaces still assume whole-book drafts.** `draft-preview-books.component.ts` lists _all_ target
+      chapters for a partially drafted book and `navigate()` jumps to the book's first chapter with
+      `draft-active=true` — for a partial draft (e.g. LUK 11–24) that lands the user on a draft tab with no draft.
+      Draft history entries display book-level ranges only, so a partial draft is indistinguishable from a full one.
+      (The import wizard and `hasDraft` are already chapter-aware; its silent whole-book fallback on missing chapter
+      metadata is worth a second look at the same time.)
+- [x] **Exclusion notices don't scale.** The Step 2/Step 3 exclusion notices enumerate full localized book lists
+      (e.g. full-Bible target + NT-only training source → a banner naming 39 OT books). Use a collapsed
+      "N books are hidden — show why" expander like legacy. **Done:** both steps now render a collapsed
+      `books_hidden.show_why` expander (`new-draft.component.html:50`, `:118`) gated on
+      `draftingExclusionsExpanded` / `trainingExclusionsExpanded`, so the full book lists only appear when expanded.
+      The broader "lock the final notice design / category list" question remains open (see the `[~]` item above).
+
 ### Work that still needs to be defined
 
-- [ ] Indicate what step we're on
+- [x] Indicate what step we're on — compact "Step X of 4" text indicator (`step_indicator` string,
+      `stepNumber`/`totalStepCount` getters), shown on the four wizard steps but hidden on the pending-updates
+      pre-step, loading, and abort pages. No page name, no progress bar, no interactivity.
 - [x] Take an inventory of notices in the old draft stepper and make sure we aren't dropping anything relevant —
       captured in "Legacy Parity: Notices, Auto-Selection, Validation & Empty States"; implementation tracked in
       the follow-ups above
@@ -749,3 +768,36 @@ See "Legacy Parity: Notices, Auto-Selection, Validation & Empty States" for deta
 - [ ] Check for wording consitency across all new UI elements, and consistency with existing draft generation UI and help
 - [ ] Define manual tests for test team
 - [ ] E2E tests for the new drafting flow
+
+### Additional notes
+
+- Need to address "" being considered valid range. Consequence: blurring an empty chapter input passes validation
+  (`ChapterSet('')` is valid/empty) and stores the book with zero chapters — `getForwardError` only checks
+  `books.size === 0` so the step advances, the `BuildConfig` emits a bare `"LUK"` (likely read as the whole book by
+  the backend), and the summary renders `Luke ()`. Treat empty input as a validation error on both the drafting and
+  target-training chapter inputs.
+- Handle button click twice to prevent double submit. The button is disabled on `submitting`, but
+  `generateDraftClicked()` lacks an early `if (this.submitting) return;` and yields (`await Promise.resolve()`) before
+  the work, so a fast double-click before change detection flips the disabled state can fire twice.
+- Need to look for other bugs found by Fable (about 4 total)
+
+### Functionality review follow-ups (2026-06-15)
+
+From a higher-level functionality review of `NewDraftComponent` / `NewDraftLogicHandler`. Items here are not covered
+elsewhere in the spec.
+
+- [ ] **Build-launch failure is swallowed.** `generateDraftClicked()` wraps the build call in `try/finally` with no
+      `catch`. If `startBuildOrGetActiveBuild` rejects, the rejection is unhandled, nothing is shown to the user, and
+      no navigation happens — the button just re-enables. Add a `catch` that surfaces the error (mirror
+      `onPendingUpdatesComplete`'s routing to `ErrorHandler`).
+- [ ] **Verify `config_changed` can't fire during the in-place pre-step sync.** The watcher is armed when `status$`
+      reaches `'input'`, which is _before_ the pending-updates pre-step runs. Syncing a source project in place
+      re-emits `getDraftProjectSources()`; if the `isEqual(this.sources, newSources)` comparison includes any
+      content-derived field, the user would be aborted out of the very flow meant to "sync in place and continue."
+      Confirm the compared shape is config-only (project refs/names/langs), not content.
+- [ ] **Confirm `config_changed` discarding all work is intended.** Any source-config change at any point — including
+      on Step 4 after full configuration, possibly made by a different admin — drops the user to the blocking abort
+      screen and forces a full restart with no warning and no preserved selection. Decide whether a warning or
+      selection-preservation is warranted vs. legacy's "start over" dialog.
+- [ ] **`goToPage('draft_books')` doesn't clear chapter errors** the way `step()` does, so returning to the draft step
+      from the summary can keep stale `draftingChapterErrors`. Clear errors on `goToPage` for consistency.

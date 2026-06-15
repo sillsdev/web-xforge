@@ -341,6 +341,17 @@ export class NewDraftComponent {
     );
   }
 
+  /** The 1-based number of the current wizard step, or null on non-step pages (loading, pending updates, abort). */
+  get stepNumber(): number | null {
+    const index = PAGES_BY_ORDER.findIndex(p => p.page === this.page);
+    return index >= 0 ? index + 1 : null;
+  }
+
+  /** Total number of wizard steps shown in the step indicator. */
+  get totalStepCount(): number {
+    return PAGES_BY_ORDER.length;
+  }
+
   back(): void {
     this.step(-1);
   }

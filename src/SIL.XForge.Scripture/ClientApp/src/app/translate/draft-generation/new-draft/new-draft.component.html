@@ -17,6 +17,9 @@
   } @else if (initData == null || page === "loading") {
     <mat-spinner class="loading-indicator"></mat-spinner>
   } @else {
+    @if (stepNumber != null) {
+      <p class="step-indicator">{{ t("step_indicator", { step: stepNumber, total: totalStepCount }) }}</p>
+    }
     @if (page === "pending_updates") {
       <app-draft-pending-updates
         [pendingProjects]="pendingProjects"

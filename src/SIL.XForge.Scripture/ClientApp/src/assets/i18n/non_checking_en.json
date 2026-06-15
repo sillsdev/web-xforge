@@ -232,6 +232,7 @@
   },
   "new_draft": {
     "offline_message": "Draft generation is not available offline.",
+    "step_indicator": "Step {{ step }} of {{ total }}",
     "abort": {
       "config_changed": "The draft configuration has changed. Please go back and try again.",
       "no_access_with_projects": "The following projects could not be accessed: {{ projects }}. Check that you have access and try again.",
