@@ -9,10 +9,11 @@ namespace SIL.XForge;
 public interface IExceptionHandler
 {
     void ReportException(Exception exception);
+    void ReportUnhandledException(Exception exception);
 
     Task EnsureSuccessStatusCode(HttpResponseMessage response);
 
-    void ReportExceptions(IApplicationBuilder app);
+    void ReportUnhandledExceptions(IApplicationBuilder app);
 
     void RecordEndpointInfoForException(Dictionary<string, string> metadata);
 

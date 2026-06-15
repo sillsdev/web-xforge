@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using EdjCase.JsonRpc.Common;
@@ -36,8 +35,8 @@ public static class JsonRpcServiceCollectionExtensions
             config.JsonSerializerSettings = JsonSerializerOptions;
             config.OnInvokeException = context =>
             {
-                var exceptionHandler = context.ServiceProvider.GetService<IExceptionHandler>();
-                exceptionHandler.ReportException(context.Exception);
+                IExceptionHandler? exceptionHandler = context.ServiceProvider.GetService<IExceptionHandler>();
+                exceptionHandler?.ReportUnhandledException(context.Exception);
                 var rpcException = new RpcException(
                     (int)RpcErrorCode.InternalError,
                     "Exception occurred from target method execution.",
