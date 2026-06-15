@@ -707,7 +707,7 @@ See "Legacy Parity: Notices, Auto-Selection, Validation & Empty States" for deta
       target training, (2) appears essentially fully translated, and (3) is **not** itself being drafted (a book whose
       translation is in progress is a lower-conviction case the user should opt into deliberately). The completeness
       check intentionally uses the **segment-level** signal (legacy's `nonBlank > 10 && (blank/total ≤ 1% || blank ≤
-  3)`), not the chapter-level "has content" model — the chapter-level 10%-per-chapter bar can't distinguish a
+3)`), not the chapter-level "has content" model — the chapter-level 10%-per-chapter bar can't distinguish a
       fully-translated book from one sitting uniformly at ~12%, and a sticky false positive is exactly what we're
       avoiding. This reintroduces the segment-level read the spec had deferred, which is the "deliberately decide the
       finer heuristic is worth the extra data path" case. The rule is extracted into the shared
@@ -771,14 +771,16 @@ From the feature review of this branch; both are outside the wizard itself.
 
 ### Additional notes
 
-- Need to address "" being considered valid range. Consequence: blurring an empty chapter input passes validation
-  (`ChapterSet('')` is valid/empty) and stores the book with zero chapters — `getForwardError` only checks
-  `books.size === 0` so the step advances, the `BuildConfig` emits a bare `"LUK"` (likely read as the whole book by
-  the backend), and the summary renders `Luke ()`. Treat empty input as a validation error on both the drafting and
-  target-training chapter inputs.
-- Handle button click twice to prevent double submit. The button is disabled on `submitting`, but
-  `generateDraftClicked()` lacks an early `if (this.submitting) return;` and yields (`await Promise.resolve()`) before
-  the work, so a fast double-click before change detection flips the disabled state can fire twice.
+- [x] ~~Address "" being considered a valid range.~~ **Done.** `ChapterSet('')` stays a valid empty set (correct at
+      the data layer), but `parseChapterInput()` now rejects empty/whitespace-only input with a caller-specific error
+      (`chapter_input.empty_draft` / `chapter_input.empty_training`) before any selection is stored, so a still-selected
+      book can no longer be left with zero chapters. The messages name both resolutions (enter chapters, or deselect the
+      book). Covered by tests in both `onDraftingChaptersBlurred` and `onTargetTrainingChaptersBlurred`.
+- ~~Handle button click twice to prevent double submit.~~ **Decided: no action needed.** `submitting` is set
+  synchronously on first click before the `await`, the button is `[disabled]="submitting || !online"`, and the
+  `try/finally` clears `submitting` on every exit path — so the flag is correctly managed and the disabled binding
+  already wins (browser clicks dispatch in separate tasks with change detection between them). The proposed early
+  `if (this.submitting) return;` would be belt-and-suspenders only.
 - Need to look for other bugs found by Fable (about 4 total)
 
 ### Functionality review follow-ups (2026-06-15)
@@ -786,10 +788,13 @@ From the feature review of this branch; both are outside the wizard itself.
 From a higher-level functionality review of `NewDraftComponent` / `NewDraftLogicHandler`. Items here are not covered
 elsewhere in the spec.
 
-- [ ] **Build-launch failure is swallowed.** `generateDraftClicked()` wraps the build call in `try/finally` with no
-      `catch`. If `startBuildOrGetActiveBuild` rejects, the rejection is unhandled, nothing is shown to the user, and
-      no navigation happens — the button just re-enables. Add a `catch` that surfaces the error (mirror
-      `onPendingUpdatesComplete`'s routing to `ErrorHandler`).
+- [decided: no] ~~Build-launch failure is swallowed.~~ Retracted after review. The `finally` resets `submitting`
+  (button re-enables, user stays on Step 4 — no stuck state), and an async rejection from the `(click)` handler
+  reaches the global `ExceptionHandlingService` error dialog. The legacy path
+  (`draft-generation.component.ts:489`) actually swallows build errors itself (`catchError → of(undefined)`)
+  except for 401, so the new code surfaces more, not less. **Minor parity nit (optional):** legacy special-cases
+  `401 → requestParatextCredentialUpdate()`; the new path shows a generic dialog instead. Port only if Paratext
+  re-auth on build launch is wanted.
 - [ ] **Verify `config_changed` can't fire during the in-place pre-step sync.** The watcher is armed when `status$`
       reaches `'input'`, which is _before_ the pending-updates pre-step runs. Syncing a source project in place
       re-emits `getDraftProjectSources()`; if the `isEqual(this.sources, newSources)` comparison includes any
@@ -799,5 +804,7 @@ elsewhere in the spec.
       on Step 4 after full configuration, possibly made by a different admin — drops the user to the blocking abort
       screen and forces a full restart with no warning and no preserved selection. Decide whether a warning or
       selection-preservation is warranted vs. legacy's "start over" dialog.
-- [ ] **`goToPage('draft_books')` doesn't clear chapter errors** the way `step()` does, so returning to the draft step
-      from the summary can keep stale `draftingChapterErrors`. Clear errors on `goToPage` for consistency.
+- [decided: no] ~~`goToPage('draft_books')` doesn't clear chapter errors.~~ Effectively unreachable: forward
+  navigation is blocked while `…ChapterErrors.size > 0` (`getForwardError` returns `fix_chapter_errors`), so the
+  summary can only be reached with both error maps already empty. Returning via `goToPage` finds nothing stale.
+  Defensive only — not worth the change.

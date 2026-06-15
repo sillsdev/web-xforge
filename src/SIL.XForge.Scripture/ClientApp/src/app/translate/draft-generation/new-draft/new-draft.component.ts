@@ -591,8 +591,23 @@ export class NewDraftComponent {
     this.clearStepErrorIfResolved();
   }
 
-  /** Parses a chapter-range input, recording an invalid_range error against `bookId` and returning null on failure. */
-  private parseChapterInput(bookId: string, value: string, errors: Map<string, ChapterInputError>): ChapterSet | null {
+  /**
+   * Parses a chapter-range input, recording an error against `bookId` and returning null on failure. An empty (or
+   * whitespace-only) input is rejected with `emptyErrorKey`: a still-selected book must have at least one chapter, so
+   * an empty range is unreasonable input even though `ChapterSet('')` is a valid empty set. The empty message is
+   * caller-specific because the resolution differs (deselect the book in the draft vs. training step) — clearing the
+   * input is not how a book is removed.
+   */
+  private parseChapterInput(
+    bookId: string,
+    value: string,
+    errors: Map<string, ChapterInputError>,
+    emptyErrorKey: I18nKeyForComponent<'new_draft'>
+  ): ChapterSet | null {
+    if (value.trim() === '') {
+      errors.set(bookId, { key: emptyErrorKey });
+      return null;
+    }
     try {
       return new ChapterSet(value);
     } catch {
@@ -602,7 +617,7 @@ export class NewDraftComponent {
   }
 
   onDraftingChaptersBlurred(bookId: string, value: string): void {
-    const parsed = this.parseChapterInput(bookId, value, this.draftingChapterErrors);
+    const parsed = this.parseChapterInput(bookId, value, this.draftingChapterErrors, 'chapter_input.empty_draft');
     if (parsed == null) return;
 
     const available = this.logicHandler.availableDraftingScriptureRange$.getValue().books.get(bookId);
@@ -697,7 +712,12 @@ export class NewDraftComponent {
   }
 
   onTargetTrainingChaptersBlurred(bookId: string, value: string): void {
-    const parsed = this.parseChapterInput(bookId, value, this.targetTrainingChapterErrors);
+    const parsed = this.parseChapterInput(
+      bookId,
+      value,
+      this.targetTrainingChapterErrors,
+      'chapter_input.empty_training'
+    );
     if (parsed == null) return;
 
     const available = this.logicHandler.availableTargetTrainingScriptureRange$.getValue().books.get(bookId);

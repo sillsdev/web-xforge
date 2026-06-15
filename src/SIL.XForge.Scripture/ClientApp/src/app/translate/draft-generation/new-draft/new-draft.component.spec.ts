@@ -63,6 +63,23 @@ describe('NewDraftComponent', () => {
       expect(env.component.draftingChapterErrors.get('GEN')?.key).toBe('chapter_input.invalid_range');
     });
 
+    it('rejects empty or whitespace-only input without changing the drafting selection', async () => {
+      const env = new TestEnvironment(testState);
+      await env.waitForInit();
+      env.component.logicHandler.selectDraftingBooks(['GEN']);
+      const defaultRange = env.selectedDraftingScriptureRange;
+
+      env.component.onDraftingChaptersBlurred('GEN', '');
+      expect(env.component.draftingChapterErrors.get('GEN')?.key).toBe('chapter_input.empty_draft');
+
+      env.component.onDraftingChaptersBlurred('GEN', '   ');
+      expect(env.component.draftingChapterErrors.get('GEN')?.key).toBe('chapter_input.empty_draft');
+
+      // The book keeps its prior (non-empty) range rather than being stored with zero chapters.
+      expect(env.selectedDraftingScriptureRange).toBe(defaultRange);
+      expect(env.selectedDraftingScriptureRange).not.toBe('GEN');
+    });
+
     it('sets a chapters_not_in_source error with source name for out-of-range chapters', async () => {
       const env = new TestEnvironment(testState);
       await env.waitForInit();
@@ -102,6 +119,22 @@ describe('NewDraftComponent', () => {
       env.component.onTargetTrainingChaptersBlurred('GEN', 'xyz');
 
       expect(env.component.targetTrainingChapterErrors.get('GEN')?.key).toBe('chapter_input.invalid_range');
+    });
+
+    it('rejects empty or whitespace-only input without changing the target training selection', async () => {
+      const env = new TestEnvironment(testState);
+      await env.waitForInit();
+      await env.selectGENForTraining();
+      const defaultRange = env.selectedTargetTrainingScriptureRange;
+
+      env.component.onTargetTrainingChaptersBlurred('GEN', '');
+      expect(env.component.targetTrainingChapterErrors.get('GEN')?.key).toBe('chapter_input.empty_training');
+
+      env.component.onTargetTrainingChaptersBlurred('GEN', '   ');
+      expect(env.component.targetTrainingChapterErrors.get('GEN')?.key).toBe('chapter_input.empty_training');
+
+      expect(env.selectedTargetTrainingScriptureRange).toBe(defaultRange);
+      expect(env.selectedTargetTrainingScriptureRange).not.toBe('GEN');
     });
 
     it('sets a chapters_will_be_translated error when selected chapters are being drafted', async () => {

@@ -242,6 +242,8 @@
     "chapter_input": {
       "available": "Available chapters: {{ range }}",
       "invalid_range": "Invalid chapter range.",
+      "empty_draft": "Enter the chapters to draft, or deselect this book if you don't want to draft it.",
+      "empty_training": "Enter the chapters to use for training, or deselect this book if you don't want to train on it.",
       "chapters_not_in_source": "Chapters {{ chapters }} cannot be generated because they are not in the source project, {{ sourceName }}.",
       "chapters_not_in_target": "Chapters {{ chapters }} cannot be used for training because they are not in the main project, {{ targetName }}.",
       "chapters_will_be_translated": "Chapters {{ chapters }} cannot be used for training because they are going to be translated."
