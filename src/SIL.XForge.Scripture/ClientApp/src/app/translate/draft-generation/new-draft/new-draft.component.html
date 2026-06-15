@@ -4,6 +4,8 @@
       <mat-icon class="abort-icon" color="warn">error_outline</mat-icon>
       @if (abortMode === "config_changed") {
         <p>{{ t("abort.config_changed") }}</p>
+      } @else if (abortMode === "project_syncing") {
+        <p>{{ t("abort.project_syncing") }}</p>
       } @else if (inaccessibleProjectNames.length > 0) {
         <p>{{ t("abort.no_access_with_projects", { projects: inaccessibleProjectNames.join(", ") }) }}</p>
       } @else {

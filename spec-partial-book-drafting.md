@@ -795,16 +795,24 @@ elsewhere in the spec.
   except for 401, so the new code surfaces more, not less. **Minor parity nit (optional):** legacy special-cases
   `401 → requestParatextCredentialUpdate()`; the new path shows a generic dialog instead. Port only if Paratext
   re-auth on build launch is wanted.
-- [ ] **Verify `config_changed` can't fire during the in-place pre-step sync.** The watcher is armed when `status$`
-      reaches `'input'`, which is _before_ the pending-updates pre-step runs. Syncing a source project in place
-      re-emits `getDraftProjectSources()`; if the `isEqual(this.sources, newSources)` comparison includes any
-      content-derived field, the user would be aborted out of the very flow meant to "sync in place and continue."
-      Confirm the compared shape is config-only (project refs/names/langs), not content.
-- [ ] **Confirm `config_changed` discarding all work is intended.** Any source-config change at any point — including
-      on Step 4 after full configuration, possibly made by a different admin — drops the user to the blocking abort
-      screen and forces a full restart with no warning and no preserved selection. Decide whether a warning or
-      selection-preservation is warranted vs. legacy's "start over" dialog.
+- [x] **`config_changed` no longer fires during the in-place pre-step sync.** Confirmed the old watcher deep-compared
+      full `SFProjectProfile`s (incl. `sync`/`texts`) and was armed before the pre-step, so syncing the target in place
+      aborted the wizard. **Reworked into two purpose-built watchers:** - **Config watcher** (`NewDraftLogicHandler`, continuous from init): compares only the _set of source project
+      refs_ (`sourceConfigSignature`), so content/sync changes never trip it; a genuine source reconfiguration still
+      aborts `config_changed` at any stage (incl. during the pre-step — never missed). - **Sync watcher** (`NewDraftComponent`, armed at lock-in — leaving the pre-step, or immediately when there is no
+      pre-step): watches the target + source profile docs and aborts `project_syncing` on the not-syncing→syncing
+      edge. A sync _starting_ is enough (a sync can change data even when it later fails). A project already syncing
+      at lock-in is the baseline (no abort), so a pre-existing/stuck sync can't trap the user.
+      Coupled UX: **"Continue anyway" is disabled while a _user-initiated_ sync runs** (gated via `userInitiated` +
+      `userSyncInProgress`), but stays available for a pre-existing sync. Covered by tests in all three specs.
+- [decided: yes] **`config_changed` discarding all work is intended.** A genuine source-config change (or a sync after
+  lock-in) invalidates the wizard's basis, so the blocking abort + restart is correct. The over-sensitivity that
+  prompted this concern is gone (unrelated profile churn no longer aborts), so no warning/selection-preservation is
+  warranted now.
 - [decided: no] ~~`goToPage('draft_books')` doesn't clear chapter errors.~~ Effectively unreachable: forward
   navigation is blocked while `…ChapterErrors.size > 0` (`getForwardError` returns `fix_chapter_errors`), so the
   summary can only be reached with both error maps already empty. Returning via `goToPage` finds nothing stale.
   Defensive only — not worth the change.
+- [ ] Show training data files on final page
+- [ ] Saw a bug where training data books were not available to select, so got message saying couldn't continue without
+      selecting matching training books. Possible to repro or find cause?

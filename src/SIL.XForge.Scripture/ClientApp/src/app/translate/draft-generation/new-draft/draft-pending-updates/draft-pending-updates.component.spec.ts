@@ -240,6 +240,41 @@ describe('DraftPendingUpdatesComponent', () => {
     });
   });
 
+  describe('Continue anyway gating', () => {
+    it('blocks continuing while a sync the user started is still running', async () => {
+      const env = new TestEnvironment([makeProject('proj1', 'P1', SFProjectRole.ParatextAdministrator)]);
+      await env.component.ngOnInit();
+      when(env.mockedProjectService.onlineSync('proj1')).thenResolve();
+      expect(env.component.userSyncInProgress).toBeFalse();
+
+      env.component.syncProject(env.component.rows[0]);
+
+      expect(env.component.userSyncInProgress).toBeTrue();
+    });
+
+    it('still allows continuing when a project was already syncing on entry (not user-initiated)', async () => {
+      const env = new TestEnvironment([makeProject('proj1', 'P1', SFProjectRole.ParatextAdministrator, 1)]);
+      await env.component.ngOnInit();
+
+      expect(env.component.rows[0].syncState).toBe('syncing');
+      // A pre-existing (possibly stuck) sync must not trap the user, so continuing stays allowed.
+      expect(env.component.userSyncInProgress).toBeFalse();
+    });
+
+    it('allows continuing again once the user-initiated sync finishes', async () => {
+      const env = new TestEnvironment([makeProject('proj1', 'P1', SFProjectRole.ParatextAdministrator)]);
+      await env.component.ngOnInit();
+      when(env.mockedProjectService.onlineSync('proj1')).thenResolve();
+      env.component.syncProject(env.component.rows[0]);
+      env.startSync('proj1');
+      expect(env.component.userSyncInProgress).toBeTrue();
+
+      env.completeSync('proj1', true);
+
+      expect(env.component.userSyncInProgress).toBeFalse();
+    });
+  });
+
   describe('continueAnyway', () => {
     it('emits continue', async () => {
       const env = new TestEnvironment([]);

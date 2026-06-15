@@ -23,8 +23,11 @@ import { I18nKeyForComponent, I18nService } from '../../../../xforge-common/i18n
 import { UserDoc } from '../../../../xforge-common/models/user-doc';
 import { UserService } from '../../../../xforge-common/user.service';
 import { filterNullish, quietTakeUntilDestroyed } from '../../../../xforge-common/util/rxjs-util';
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { ParatextService } from '../../../core/paratext.service';
+import { SFProjectService } from '../../../core/sf-project.service';
+import { isSFProjectSyncing } from '../../../sync/sync.component';
 import { Book } from '../../../shared/book-multi-select/book-multi-select';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { CopyrightBannerComponent } from '../../../shared/copyright-banner/copyright-banner.component';
@@ -139,6 +142,7 @@ export class NewDraftComponent {
     private readonly errorReportingService: ErrorReportingService,
     private readonly errorHandler: ErrorHandler,
     private readonly trainingDataService: TrainingDataService,
+    private readonly projectService: SFProjectService,
     private readonly destroyRef: DestroyRef
   ) {
     this.logicHandler = new NewDraftLogicHandler(
@@ -185,7 +189,13 @@ export class NewDraftComponent {
     if (this.onlineStatusService.isOnline) {
       await this.detectPendingUpdates();
     }
-    this.page = this.pendingProjects.length > 0 ? 'pending_updates' : 'preface';
+    if (this.pendingProjects.length > 0) {
+      this.page = 'pending_updates';
+    } else {
+      // No pre-step, so we lock in immediately: start watching the involved projects for a sync.
+      this.page = 'preface';
+      this.armSyncWatcher();
+    }
 
     // Watch for mid-flow aborts (e.g. config_changed) that occur after initialization completes.
     this.logicHandler.status$
@@ -205,7 +215,7 @@ export class NewDraftComponent {
    */
   private handleAbort(): void {
     const mode = this.logicHandler.abortMode$.getValue();
-    if (mode === 'no_access' || mode === 'config_changed') {
+    if (mode === 'no_access' || mode === 'config_changed' || mode === 'project_syncing') {
       this.page = 'abort';
       return;
     }
@@ -311,17 +321,71 @@ export class NewDraftComponent {
   async onPendingUpdatesComplete(syncedProjectIds: string[]): Promise<void> {
     if (syncedProjectIds.length === 0) {
       this.page = 'preface';
+      this.armSyncWatcher();
       return;
     }
     this.page = 'loading';
     try {
       await this.logicHandler.reload(syncedProjectIds);
       this.page = 'preface';
+      this.armSyncWatcher();
     } catch (error) {
       // Mirror init-failure handling: route to the app-wide error handler and navigate back rather than stranding the
       // user on the spinner with stale data.
       this.errorHandler.handleError(error);
       this.goBack();
+    }
+  }
+
+  private syncWatcherArmed = false;
+
+  /**
+   * Begins watching the projects involved in drafting (target + drafting/training sources) for a sync that *starts*
+   * after this point, aborting the wizard if one does. Called at "lock-in" — when the user leaves the
+   * pending-updates pre-step, or immediately when there was no pre-step. Before lock-in, syncs are expected and
+   * absorbed by reloading; after it, a sync changes the progress/book data the user's in-progress selections are
+   * based on, so we bail rather than draft against stale data. A project already syncing at lock-in is treated as the
+   * baseline (no abort) — that only happens when the user continued past a pre-existing, possibly stuck, sync.
+   */
+  private armSyncWatcher(): void {
+    if (this.syncWatcherArmed) return;
+    this.syncWatcherArmed = true;
+
+    const sources = this.logicHandler.sources;
+    const involvedIds = new Set([
+      this.initData!.projectId,
+      ...(sources?.draftingSources.map(s => s.projectRef) ?? []),
+      ...(sources?.trainingSources.map(s => s.projectRef) ?? [])
+    ]);
+
+    for (const projectId of involvedIds) {
+      void this.watchProjectForSync(projectId);
+    }
+  }
+
+  private async watchProjectForSync(projectId: string): Promise<void> {
+    try {
+      // The target is already loaded as the activated project; sources are fetched as profile docs (we have profile
+      // access to all of them, since init aborts with no_access otherwise). Both carry the sync status.
+      const projectDoc: SFProjectProfileDoc =
+        projectId === this.initData?.projectId && this.activatedProjectService.projectDoc != null
+          ? this.activatedProjectService.projectDoc
+          : await this.projectService.getProfile(projectId);
+
+      let wasSyncing = projectDoc.data != null && isSFProjectSyncing(projectDoc.data);
+      projectDoc.remoteChanges$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
+        const data = projectDoc.data;
+        if (data == null) return;
+        const syncing = isSFProjectSyncing(data);
+        // Abort only on the not-syncing → syncing edge; a project already syncing at arm time is the baseline.
+        if (syncing && !wasSyncing) this.logicHandler.abort('project_syncing');
+        wasSyncing = syncing;
+      });
+    } catch (error) {
+      this.errorReportingService.silentError(
+        'Failed to watch a project for sync during drafting',
+        ErrorReportingService.normalizeError(error)
+      );
     }
   }
 

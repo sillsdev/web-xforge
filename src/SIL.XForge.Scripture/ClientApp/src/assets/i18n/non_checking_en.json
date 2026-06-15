@@ -235,6 +235,7 @@
     "step_indicator": "Step {{ step }} of {{ total }}",
     "abort": {
       "config_changed": "The draft configuration has changed. Please go back and try again.",
+      "project_syncing": "A project started syncing, which can change the available books and chapters. Please go back and try again.",
       "no_access_with_projects": "The following projects could not be accessed: {{ projects }}. Check that you have access and try again.",
       "no_access": "Some projects could not be accessed. Check that you have access and try again.",
       "go_back": "Go back"
@@ -282,7 +283,8 @@
       "synced": "Up to date",
       "sync_failed": "Sync failed",
       "retry": "Retry",
-      "cant_sync": "Has changes — ask a project admin to sync"
+      "cant_sync": "Has changes — ask a project admin to sync",
+      "wait_for_sync": "Wait for the sync to finish before continuing."
     },
     "draft_books": {
       "title": "Select books to draft",

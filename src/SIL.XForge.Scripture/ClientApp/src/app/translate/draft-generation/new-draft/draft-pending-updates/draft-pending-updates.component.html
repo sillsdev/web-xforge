@@ -35,7 +35,12 @@
           <mat-icon>sync</mat-icon>{{ t("sync_all") }}
         </button>
       }
-      <button mat-stroked-button (click)="continueAnyway()">{{ t("continue_anyway") }}</button>
+      <button mat-stroked-button [disabled]="userSyncInProgress" (click)="continueAnyway()">
+        {{ t("continue_anyway") }}
+      </button>
     </div>
+    @if (userSyncInProgress) {
+      <p class="wait-for-sync">{{ t("wait_for_sync") }}</p>
+    }
   }
 </div>

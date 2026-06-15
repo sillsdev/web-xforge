@@ -1,3 +1,5 @@
+@use 'src/variables';
+
 .pending-project-rows {
   display: flex;
   flex-direction: column;
@@ -34,4 +36,10 @@
   display: flex;
   gap: 12px;
   margin-top: 24px;
+}
+
+.wait-for-sync {
+  color: variables.$lighterTextColor;
+  font-size: 0.85em;
+  margin: 8px 0 0;
 }

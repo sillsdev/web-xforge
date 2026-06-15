@@ -5,7 +5,7 @@ import { Canon } from '@sillsdev/scripture';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
-import { BehaviorSubject, filter, firstValueFrom, Observable, of } from 'rxjs';
+import { BehaviorSubject, filter, firstValueFrom, Observable, of, Subject } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, reset, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -17,6 +17,7 @@ import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { ParatextService } from '../../../core/paratext.service';
+import { SFProjectService } from '../../../core/sf-project.service';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftSource } from '../draft-source';
@@ -707,6 +708,77 @@ describe('NewDraftComponent', () => {
     }));
   });
 
+  describe('sync watcher', () => {
+    it('does not abort when a project starts syncing during the pending-updates pre-step', fakeAsync(() => {
+      const env = new TestEnvironment(testState, {
+        projects: [makeParatextProject({ projectId: 'draft-source-1-id', name: 'Draft Source 1', hasUpdate: true })]
+      });
+      tick();
+      expect(env.component.page).toEqual('pending_updates');
+
+      // The pre-step is designed to absorb syncs (via reload), so the watcher must not be armed yet.
+      env.startSyncFor('draft-source-1-id');
+      tick();
+
+      expect(env.component.page).toEqual('pending_updates');
+    }));
+
+    it('aborts with project_syncing when an involved project starts syncing after lock-in', fakeAsync(() => {
+      const env = new TestEnvironment(testState);
+      tick();
+      expect(env.component.page).toEqual('preface');
+
+      env.startSyncFor('draft-source-1-id');
+      tick();
+
+      expect(env.component.page).toEqual('abort');
+      expect(env.component.abortMode).toEqual('project_syncing');
+    }));
+
+    it('aborts when the target project starts syncing after lock-in', fakeAsync(() => {
+      const env = new TestEnvironment(testState);
+      tick();
+
+      env.startSyncFor('testProjectId');
+      tick();
+
+      expect(env.component.page).toEqual('abort');
+      expect(env.component.abortMode).toEqual('project_syncing');
+    }));
+
+    it('does not abort when a project was already syncing at lock-in', fakeAsync(() => {
+      // The user continued past a pre-existing (possibly stuck) sync; that in-flight sync is the baseline, not an edge.
+      const env = new TestEnvironment(testState, { targetSyncing: true });
+      tick();
+
+      expect(env.component.page).toEqual('preface');
+
+      // A further change while it is still syncing is not a not-syncing→syncing edge, so it still must not abort.
+      env.startSyncFor('testProjectId');
+      tick();
+
+      expect(env.component.page).toEqual('preface');
+    }));
+
+    it('arms the watcher after the user leaves the pending-updates pre-step', fakeAsync(() => {
+      const env = new TestEnvironment(testState, {
+        projects: [makeParatextProject({ projectId: 'draft-source-1-id', name: 'Draft Source 1', hasUpdate: true })]
+      });
+      tick();
+      expect(env.component.page).toEqual('pending_updates');
+
+      void env.component.onPendingUpdatesComplete([]);
+      tick();
+      expect(env.component.page).toEqual('preface');
+
+      env.startSyncFor('draft-source-1-id');
+      tick();
+
+      expect(env.component.page).toEqual('abort');
+      expect(env.component.abortMode).toEqual('project_syncing');
+    }));
+  });
+
   describe('hidden-books notices', () => {
     it('counts only the surfaced drafting-exclusion reasons (not non-canonical)', fakeAsync(() => {
       const env = new TestEnvironment(testState);
@@ -753,6 +825,7 @@ const mockedParatextService = mock(ParatextService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedErrorHandler = mock<ErrorHandler>(ErrorHandler);
 const mockedTrainingDataService = mock(TrainingDataService);
+const mockedSFProjectService = mock(SFProjectService);
 
 interface TestState {
   draftingSourceBooksChapters: string;
@@ -802,6 +875,23 @@ class TestEnvironment {
   component: NewDraftComponent;
   readonly onlineStatusService = TestBed.inject(TestOnlineStatusService);
 
+  /** Mutable sync-state profile docs (target + sources) the sync watcher subscribes to, keyed by project id. */
+  private readonly syncDocs = new Map<string, { data: { sync: { queuedCount: number } }; changes$: Subject<void> }>();
+
+  private makeSyncDoc(projectId: string, data: { sync: { queuedCount: number } }): SFProjectProfileDoc {
+    const changes$ = new Subject<void>();
+    this.syncDocs.set(projectId, { data, changes$ });
+    return { data, remoteChanges$: changes$ } as unknown as SFProjectProfileDoc;
+  }
+
+  /** Simulates a project starting to sync (queuedCount 0 → 1) and notifying watchers. */
+  startSyncFor(projectId: string): void {
+    const entry = this.syncDocs.get(projectId);
+    if (entry == null) throw new Error(`No sync doc registered for ${projectId}`);
+    entry.data.sync.queuedCount = 1;
+    entry.changes$.next();
+  }
+
   constructor(
     state: TestState,
     options: {
@@ -814,6 +904,8 @@ class TestEnvironment {
       trainingOptional?: boolean;
       /** Overrides the training-data stream so a test can emit changes over time (e.g. a file being removed). */
       trainingData$?: Observable<TrainingData[]>;
+      /** When true, the target project is already syncing on entry (baseline for the sync watcher). */
+      targetSyncing?: boolean;
     } = {}
   ) {
     const project = createTestProjectProfile({
@@ -845,11 +937,22 @@ class TestEnvironment {
       }
     });
 
+    if (options.targetSyncing) project.sync.queuedCount = 1;
+
     const projectId = 'testProjectId';
+    // The target doc doubles as a sync-watcher doc so tests can simulate the target starting to sync.
+    const targetDoc = this.makeSyncDoc(projectId, project as unknown as { sync: { queuedCount: number } });
     when(mockedActivatedProjectService.projectId).thenReturn(projectId);
     when(mockedActivatedProjectService.projectId$).thenReturn(of(projectId));
-    when(mockedActivatedProjectService.projectDoc).thenReturn({ data: project } as SFProjectProfileDoc);
-    when(mockedActivatedProjectService.projectDoc$).thenReturn(of({ data: project } as SFProjectProfileDoc));
+    when(mockedActivatedProjectService.projectDoc).thenReturn(targetDoc);
+    when(mockedActivatedProjectService.projectDoc$).thenReturn(of(targetDoc));
+
+    // Sync-watcher profile docs for the source projects (start not-syncing).
+    for (const sourceId of ['draft-source-1-id', ...Object.keys(state.trainingSourcesBooksChapters)]) {
+      when(mockedSFProjectService.getProfile(sourceId)).thenResolve(
+        this.makeSyncDoc(sourceId, { sync: { queuedCount: 0 } })
+      );
+    }
 
     if (options.noAccessSources) {
       when(mockedDraftSourcesService.getDraftProjectSources()).thenReturn(
@@ -936,6 +1039,7 @@ class TestEnvironment {
       instance(mockedErrorReportingService),
       instance(mockedErrorHandler),
       instance(mockedTrainingDataService),
+      instance(mockedSFProjectService),
       { onDestroy: () => () => {} } as unknown as DestroyRef
     );
   }

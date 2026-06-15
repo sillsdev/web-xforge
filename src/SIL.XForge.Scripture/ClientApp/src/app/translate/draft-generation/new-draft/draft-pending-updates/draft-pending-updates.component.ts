@@ -23,6 +23,12 @@ interface PendingProjectRow {
   wasSyncing: boolean;
   /** Whether a remoteChanges$ subscription is already watching this row's sync state. */
   monitoring: boolean;
+  /**
+   * Whether the user kicked off this row's sync from the pre-step (vs. it already syncing on entry). A user-initiated
+   * sync suppresses "Continue anyway" (they chose to wait); a pre-existing one does not (it may be stuck, and we must
+   * not trap the user).
+   */
+  userInitiated: boolean;
 }
 
 @Component({
@@ -65,7 +71,8 @@ export class DraftPendingUpdatesComponent implements OnInit {
         projectDoc,
         syncState: syncing ? 'syncing' : 'pending',
         wasSyncing: syncing,
-        monitoring: false
+        monitoring: false,
+        userInitiated: false
       };
       this.rows.push(row);
       // A project already syncing when the wizard opens still needs its completion observed.
@@ -78,8 +85,18 @@ export class DraftPendingUpdatesComponent implements OnInit {
     return this.rows.filter(r => r.canSync);
   }
 
+  /**
+   * Whether a sync the user started from this pre-step is still running. While true, "Continue anyway" is suppressed
+   * so the user can't bail out of a sync they chose to start. It clears automatically once that sync reaches a
+   * terminal state. A project that was already syncing on entry does not count, so a stuck project can't trap the user.
+   */
+  get userSyncInProgress(): boolean {
+    return this.rows.some(r => r.userInitiated && r.syncState === 'syncing');
+  }
+
   syncProject(row: PendingProjectRow): void {
     if (!row.canSync || row.syncState === 'syncing') return;
+    row.userInitiated = true;
     row.syncState = 'syncing';
     // Subscribe before the network round-trip so the queuedCount transition can't be missed.
     this.monitorSync(row);

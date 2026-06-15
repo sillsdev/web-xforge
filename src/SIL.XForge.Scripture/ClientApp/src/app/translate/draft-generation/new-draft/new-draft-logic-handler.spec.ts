@@ -106,6 +106,26 @@ describe('NewDraftLogicHandler', () => {
       expect(env.logicHandler.status$.getValue()).toBe('input');
     });
 
+    it('does not abort when a non-config field changes but the source set is unchanged', async () => {
+      const sources$ = new BehaviorSubject<DraftSourcesAsArrays>({
+        trainingSources: [],
+        trainingTargets: [],
+        draftingSources: [{ projectRef: 'draft-source-1-id', name: 'Original' } as DraftSource]
+      });
+      const env = new TestEnvironment(teamStartingToTranslateGenesis, sources$);
+      await env.waitForInit();
+
+      // Same project ref, but other fields (name, sync status, content) changed — e.g. after a sync. The configured
+      // source set is unchanged, so this must not abort (content/sync changes are handled separately).
+      sources$.next({
+        trainingSources: [],
+        trainingTargets: [],
+        draftingSources: [{ projectRef: 'draft-source-1-id', name: 'Renamed' } as DraftSource]
+      });
+
+      expect(env.logicHandler.status$.getValue()).toBe('input');
+    });
+
     it('initializes available ranges based on progress service', async () => {
       const testState = teamStartingToTranslateGenesis;
       const env = new TestEnvironment(testState);

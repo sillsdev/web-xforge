@@ -1,6 +1,5 @@
 import { DestroyRef, Injectable } from '@angular/core';
 import { Canon } from '@sillsdev/scripture';
-import { isEqual } from 'lodash-es';
 import { BehaviorSubject, firstValueFrom, skip } from 'rxjs';
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
 import { filterNullish, quietTakeUntilDestroyed } from '../../../../xforge-common/util/rxjs-util';
@@ -100,7 +99,7 @@ export class DraftProgressService {
   }
 }
 
-export type NewDraftAbortMode = 'config_changed' | 'no_access' | 'init_failure' | null;
+export type NewDraftAbortMode = 'config_changed' | 'project_syncing' | 'no_access' | 'init_failure' | null;
 
 /**
  * Returns the book IDs in a ScriptureRange, dropping the chapter-level detail. Useful when only the set of books
@@ -239,13 +238,18 @@ export class NewDraftLogicHandler {
 
       this.status$.next('input');
 
-      // Watch for mid-flow config changes. Skip the initial emission (already consumed above) and abort if the
-      // sources change, matching the behavior of the legacy draft-generation-steps component.
+      // Watch for mid-flow changes to the configured source set (which projects are used for drafting/training).
+      // This is watched continuously, from init onward (including during the pending-updates pre-step): a change to
+      // the configured sources means the whole wizard was operating on a stale premise, so it is never absorbable and
+      // must always abort. Only the source *identity* is compared (the set of project refs), not the full profiles —
+      // content/sync changes are handled separately, at the component level, after the pre-step. Skip the initial
+      // emission (its state is the baseline captured above).
+      const baselineSignature = this.sourceConfigSignature(this.sources);
       this.draftSourcesService
         .getDraftProjectSources()
         .pipe(skip(1), quietTakeUntilDestroyed(this.destroyRef))
         .subscribe(newSources => {
-          if (!isEqual(this.sources, newSources)) {
+          if (this.sourceConfigSignature(newSources) !== baselineSignature) {
             this.abort('config_changed');
           }
         });
@@ -568,6 +572,16 @@ export class NewDraftLogicHandler {
 
     const chaptersAvailableForTraining = this.availableTargetTrainingScriptureRange$.getValue().books.get(bookId);
     return chaptersAvailableForTraining != null && chaptersAvailableForTraining.count() >= 1;
+  }
+
+  /**
+   * A stable fingerprint of which projects are configured as drafting/training sources, used to detect mid-flow
+   * reconfiguration. Only the set of project refs matters (order-independent); the target is excluded since it is
+   * fixed (it is the activated project). Content and sync changes deliberately do not affect this signature.
+   */
+  private sourceConfigSignature(sources: DraftSourcesAsArrays): string {
+    const refs = [...sources.draftingSources, ...sources.trainingSources].map(source => source.projectRef);
+    return JSON.stringify([...new Set(refs)].sort());
   }
 
   abort(mode: NewDraftAbortMode): void {
