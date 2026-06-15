@@ -299,3 +299,16 @@ export function formatDateForFilename(date: Date): string {
   const minutes = String(date.getMinutes()).padStart(2, '0');
   return `${year}-${month}-${day}_${hours}${minutes}`;
 }
+
+/**
+ * Parses a value into a Date, returning undefined if the value is null, not a string/number, or not a valid date.
+ */
+export function parseDate(value: unknown): Date | undefined {
+  if (value instanceof Date) return value;
+  if (value == null) return undefined;
+  if (typeof value !== 'string' && typeof value !== 'number') return undefined;
+
+  const parsed: Date = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return undefined;
+  return parsed;
+}
