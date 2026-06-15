@@ -18,6 +18,7 @@
     </div>
   } @else if (initData == null || page === "loading") {
     <mat-spinner class="loading-indicator"></mat-spinner>
+    <p class="loading-text">{{ t("loading") }}</p>
   } @else {
     @if (stepNumber != null) {
       <p class="step-indicator">{{ t("step_indicator", { step: stepNumber, total: totalStepCount }) }}</p>
@@ -46,12 +47,16 @@
           })
         "
       ></h2>
-      <app-book-multi-select
-        [availableBooks]="availableDraftingBooks"
-        [selectedBooks]="selectedDraftingBooks"
-        [basicMode]="true"
-        (bookSelect)="onDraftingBookSelect($event)"
-      ></app-book-multi-select>
+      @if (availableDraftingBooks.length === 0) {
+        <app-notice icon="info" type="info">{{ t("draft_books.no_available_books") }}</app-notice>
+      } @else {
+        <app-book-multi-select
+          [availableBooks]="availableDraftingBooks"
+          [selectedBooks]="selectedDraftingBooks"
+          [basicMode]="true"
+          (bookSelect)="onDraftingBookSelect($event)"
+        ></app-book-multi-select>
+      }
       @if (draftingExclusionNotices.length > 0) {
         <app-notice icon="info" type="info" class="books-hidden">
           <div class="books-hidden-container">
@@ -110,13 +115,16 @@
           })
         "
       ></h2>
-      <!-- [projectId]="initData.projectId" -->
-      <app-book-multi-select
-        [basicMode]="true"
-        [availableBooks]="availableTargetTrainingBooks"
-        [selectedBooks]="selectedTargetTrainingBooks"
-        (bookSelect)="onTargetTrainingBookSelect($event)"
-      ></app-book-multi-select>
+      @if (availableTargetTrainingBooks.length === 0) {
+        <app-notice icon="info" type="info">{{ t("training_books.no_target_books") }}</app-notice>
+      } @else {
+        <app-book-multi-select
+          [basicMode]="true"
+          [availableBooks]="availableTargetTrainingBooks"
+          [selectedBooks]="selectedTargetTrainingBooks"
+          (bookSelect)="onTargetTrainingBookSelect($event)"
+        ></app-book-multi-select>
+      }
       @if (trainingBooksWereAutoSelected) {
         <app-notice icon="info" type="info">{{ t("training_books.auto_selected") }}</app-notice>
       }
@@ -171,12 +179,16 @@
         <h2>{{ t("reference_books") }}</h2>
         @for (source of trainingSources; track source.projectRef) {
           <p>{{ source.shortName }}</p>
-          <app-book-multi-select
-            [basicMode]="true"
-            [availableBooks]="availableTrainingSourceBooksForProject(source.projectRef)"
-            [selectedBooks]="selectedTrainingSourceBooksForProject(source.projectRef)"
-            (bookSelect)="onTrainingSourceBookSelect($event, source.projectRef)"
-          ></app-book-multi-select>
+          @if (availableTrainingSourceBooksForProject(source.projectRef).length === 0) {
+            <p class="empty-state">{{ t("training_books.reference_books_will_appear") }}</p>
+          } @else {
+            <app-book-multi-select
+              [basicMode]="true"
+              [availableBooks]="availableTrainingSourceBooksForProject(source.projectRef)"
+              [selectedBooks]="selectedTrainingSourceBooksForProject(source.projectRef)"
+              (bookSelect)="onTrainingSourceBookSelect($event, source.projectRef)"
+            ></app-book-multi-select>
+          }
         }
       }
       @if (trainingDataFiles.length > 0) {

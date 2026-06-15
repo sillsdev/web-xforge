@@ -734,8 +734,10 @@ See "Legacy Parity: Notices, Auto-Selection, Validation & Empty States" for deta
   the target's available training range), and users don't expect to train on books their target doesn't contain — a
   reference book the target lacks can't form a pair — so no notice is shown. (Contrast with target books missing a
   source, which _are_ surfaced, since users do expect to train on their own books.)
-- [ ] Add empty-state messages: no draftable books, no target training books, "reference books will appear",
-      and loading copy
+- [x] Add empty-state messages: no draftable books (`draft_books.no_available_books`), no target training books
+      (`training_books.no_target_books`), "reference books will appear" per source
+      (`training_books.reference_books_will_appear`), and loading copy (`loading`). Rendered via `@if` branches in the
+      wizard template; placeholder copy pending the final wording pass.
 
 ### Feature-review follow-ups (2026-06-12)
 

@@ -232,6 +232,7 @@
   },
   "new_draft": {
     "offline_message": "Draft generation is not available offline.",
+    "loading": "Loading…",
     "step_indicator": "Step {{ step }} of {{ total }}",
     "abort": {
       "config_changed": "The draft configuration has changed. Please go back and try again.",
@@ -293,7 +294,8 @@
       "partial_explanation": "Some of the chapters in the books you selected already have text.",
       "learn_more": "Learn more about drafting part of a book.",
       "excluded_no_source_content": "These books aren't available to draft because {{ source }} has no text for them: {{ books }}.",
-      "excluded_not_in_target": "These books aren't available to draft because they aren't in {{ project }} yet: {{ books }}."
+      "excluded_not_in_target": "These books aren't available to draft because they aren't in {{ project }} yet: {{ books }}.",
+      "no_available_books": "You have no books available for drafting."
     },
     "training_books": {
       "title": "Select books to train on",
@@ -302,7 +304,9 @@
       "partial_explanation": "Some of the chapters in the books you selected will be translated and cannot be used as training data.",
       "learn_more": "Learn more about training on part of a book.",
       "excluded_not_in_any_source": "These books aren't available to train on because they aren't in any of the reference projects: {{ books }}.",
-      "auto_selected": "Books that appear to be complete have been pre-selected. Please review and update the training data that should be included."
+      "auto_selected": "Books that appear to be complete have been pre-selected. Please review and update the training data that should be included.",
+      "no_target_books": "No books from your project are available for training.",
+      "reference_books_will_appear": "Reference books will appear here as you select books from your project."
     },
     "navigation": {
       "back": "Back",

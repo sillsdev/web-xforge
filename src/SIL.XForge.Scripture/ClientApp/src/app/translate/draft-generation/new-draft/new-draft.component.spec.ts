@@ -779,6 +779,34 @@ describe('NewDraftComponent', () => {
     }));
   });
 
+  describe('empty states', () => {
+    it('reports no available drafting books when the source offers none', async () => {
+      const env = new TestEnvironment({
+        draftingSourceBooksChapters: '',
+        targetProjectBooksChapters: 'GEN1-5',
+        trainingSourcesBooksChapters: { 'training-source-1-id': 'GEN1-50' }
+      });
+      await env.waitForInit();
+
+      // Drives the "no books available to draft" empty state on Step 2.
+      expect(env.component.availableDraftingBooks).toEqual([]);
+    });
+
+    it('reports no target training books when none are in any reference project', async () => {
+      const env = new TestEnvironment({
+        draftingSourceBooksChapters: 'GEN1-50',
+        targetProjectBooksChapters: 'GEN1-5',
+        trainingSourcesBooksChapters: { 'training-source-1-id': 'EXO1-40' }
+      });
+      await env.waitForInit();
+      env.component.logicHandler.selectDraftingBooks(['GEN']);
+      env.component.logicHandler.setInputMode('training_books');
+
+      // GEN is the only target book and it isn't in the reference project, so it's withheld → empty state on Step 3.
+      expect(env.component.availableTargetTrainingBooks).toEqual([]);
+    });
+  });
+
   describe('hidden-books notices', () => {
     it('counts only the surfaced drafting-exclusion reasons (not non-canonical)', fakeAsync(() => {
       const env = new TestEnvironment(testState);
