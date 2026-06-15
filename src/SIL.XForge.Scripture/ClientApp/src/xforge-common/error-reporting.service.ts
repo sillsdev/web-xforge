@@ -9,7 +9,7 @@ export interface EventMetadata {
   providedIn: 'root'
 })
 export class ErrorReportingService {
-  static beforeSend(metaData: EventMetadata, event: Event): any {
+  static beforeSend(metaData: EventMetadata, event: Event, unhandled: boolean): any {
     if (typeof event.request.url === 'string') {
       event.request.url = ErrorReportingService.redactAccessToken(event.request.url as string);
     }
@@ -20,6 +20,10 @@ export class ErrorReportingService {
       }
       return breadcrumb;
     });
+    if (unhandled) {
+      event.severity = 'error';
+      event.unhandled = true;
+    }
 
     for (const tabName in metaData) {
       if (metaData.hasOwnProperty(tabName)) {
@@ -50,16 +54,16 @@ export class ErrorReportingService {
     this.metadata[tabName] = { ...this.metadata[tabName], ...data };
   }
 
-  notify(error: NotifiableError, callback?: (err: any, report: any) => void): void {
+  notify(error: NotifiableError, callback?: (err: any, report: any) => void, unhandled: boolean = true): void {
     if (Bugsnag.isStarted())
-      Bugsnag.notify(error, event => ErrorReportingService.beforeSend(this.metadata, event), callback);
+      Bugsnag.notify(error, event => ErrorReportingService.beforeSend(this.metadata, event, unhandled), callback);
   }
 
   silentError(message: string, metadata?: object): void {
     if (metadata != null) {
       this.addMeta(metadata);
     }
-    this.notify({ name: 'Silent Error', message: message });
+    this.notify({ name: 'Silent Error', message: message }, undefined, false);
     console.error(message);
   }
 }
