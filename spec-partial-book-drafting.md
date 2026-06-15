@@ -290,7 +290,13 @@ alongside the drafting-range limit) and surfaced as an info notice under the tar
 (`new_draft.training_books.excluded_not_in_any_source`). There is always at least one training source, so this is
 independent of NLLB training-optionality (which depends on language support, not source count).
 
-- `BookMultiSelectComponent` driven by `availableTargetTrainingScriptureRange$`
+- `BookMultiSelectComponent` driven by `availableTargetTrainingScriptureRange$`, in **rich mode** (`basicMode`
+  unset/`false`, passing the target `projectId` + `projectName`) — restores the legacy stepper's per-book translation
+  **progress bars** and **OT/NT/DC bulk-select** here, since how complete a book is drives whether it's good training
+  data (and reinforces the auto-select-complete-books behavior). The Step 2 drafting selector and the per-source
+  reference selectors stay `basicMode="true"`, matching legacy (only the target training selector was rich there).
+  Note: the progress bar reflects **whole-book** translation, not the chapter-level training-available range — the
+  per-book chapter input below clarifies the actual range for partially-drafted books.
 - Chapter range input for eligible books:
   - Eligible if: the book was offered for partial drafting on Step 2 (i.e., meets the ≥12 source chapters AND
     ≥1 target chapter criteria) AND `availableTargetTrainingScriptureRange` has ≥1 chapter remaining for that
@@ -818,3 +824,4 @@ elsewhere in the spec.
 - [ ] Show training data files on final page
 - [ ] Saw a bug where training data books were not available to select, so got message saying couldn't continue without
       selecting matching training books. Possible to repro or find cause?
+- [ ] bulk selection of training books

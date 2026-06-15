@@ -216,6 +216,22 @@ describe('NewDraftComponent', () => {
       expect(available.every(b => b.selected)).toBeTrue();
     });
 
+    it('pairs every book into the reference sources when many are selected at once (bulk select)', async () => {
+      // The OT/NT/DC "select all" controls (rich mode) emit the whole set of book numbers in one event; the pairing
+      // must handle a multi-book selection, not just one book at a time.
+      const env = new TestEnvironment(testState);
+      await env.waitForInit();
+      env.component.logicHandler.setInputMode('training_books');
+
+      const allTargetBookNumbers = env.component.availableTargetTrainingBooks.map(b => b.number);
+      expect(allTargetBookNumbers.length).toBeGreaterThan(1);
+      env.component.onTargetTrainingBookSelect(allTargetBookNumbers);
+
+      // Every selected target book that exists in the source is now selected there too.
+      const expectedIds = allTargetBookNumbers.map(n => Canon.bookNumberToId(n)).sort();
+      expect(env.selectedTrainingSourceBookIds('training-source-1-id').sort()).toEqual(expectedIds);
+    });
+
     it('does not offer a target book that is not in any training source', async () => {
       const stateWithoutGEN = {
         ...testState,

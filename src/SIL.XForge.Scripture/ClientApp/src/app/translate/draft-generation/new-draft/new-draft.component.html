@@ -118,10 +118,13 @@
       @if (availableTargetTrainingBooks.length === 0) {
         <app-notice icon="info" type="info">{{ t("training_books.no_target_books") }}</app-notice>
       } @else {
+        <!-- Rich mode (not basic): shows per-book translation progress and OT/NT/DC bulk-select, since how complete a
+        book is drives whether it makes good training data. Requires the target projectId to fetch progress. -->
         <app-book-multi-select
-          [basicMode]="true"
           [availableBooks]="availableTargetTrainingBooks"
           [selectedBooks]="selectedTargetTrainingBooks"
+          [projectId]="initData.projectId"
+          [projectName]="targetProjectDisplayName"
           (bookSelect)="onTargetTrainingBookSelect($event)"
         ></app-book-multi-select>
       }
