@@ -199,19 +199,31 @@ async function selectTrainingData(page: Page, user: UserEmulator, context: Scree
   // Target project training books. We pick a specific subset (TRAINING_NT_BOOKS) and deliberately leave
   // UNSELECTED_TRAINING_BOOK untouched, so the return visit can prove persistence both ways (selected stays selected,
   // unselected stays unselected).
-  const targetBookSelect = page.locator('app-book-multi-select').first();
+  const bookSelects = page.locator('app-book-multi-select');
+  const targetBookSelect = bookSelects.first();
   for (const book of TRAINING_NT_BOOKS) {
     await user.click(targetBookSelect.getByRole('option', { name: book, exact: true }));
   }
 
-  // Per training-source book selections: choose the same NT books from each reference project's selector.
-  const sourceSelects = page.locator('app-book-multi-select');
-  const sourceCount = await sourceSelects.count();
+  // Selecting a target training book auto-selects the matching book in each training source, forming the required
+  // training pair. Verify that auto-pairing happened in every source. (Clicking these books here would toggle the
+  // auto-paired selection back off and leave the target books unpaired, so we don't.)
+  const sourceCount = await bookSelects.count();
+  expect(sourceCount).toBeGreaterThan(1); // target + at least one training source
   for (let i = 1; i < sourceCount; i++) {
     for (const book of TRAINING_NT_BOOKS) {
-      await user.click(sourceSelects.nth(i).getByRole('option', { name: book, exact: true }));
+      await expectBookSelected(bookSelects.nth(i), book, true);
     }
   }
+
+  // Exercise the source-selection logic directly: deselecting an auto-paired book in one source removes it (the book
+  // stays paired via the other source, so this is allowed), and re-selecting it restores the uniform paired state.
+  const toggledBook = TRAINING_NT_BOOKS[TRAINING_NT_BOOKS.length - 1];
+  const firstSourceSelect = bookSelects.nth(1);
+  await user.click(firstSourceSelect.getByRole('option', { name: toggledBook, exact: true }));
+  await expectBookSelected(firstSourceSelect, toggledBook, false);
+  await user.click(firstSourceSelect.getByRole('option', { name: toggledBook, exact: true }));
+  await expectBookSelected(firstSourceSelect, toggledBook, true);
 
   // Deselect the second training-data file; both start selected by default for a first build.
   const fileCheckbox = page.locator('.training-data-files').getByRole('checkbox', { name: DESELECTED_FILE.title });
@@ -397,8 +409,14 @@ async function verifyRememberedSelectionsOnReturn(
     for (const book of TRAINING_NT_BOOKS) {
       await expectBookSelected(bookSelect, book, true);
     }
-    await expectBookSelected(bookSelect, UNSELECTED_TRAINING_BOOK, false);
   }
+
+  // The negative assertion — proving the restored selection is a real subset, not a select-all default — belongs on
+  // the target selector, which lists every available training book. The source selectors only list books that are
+  // currently selected as target training books (they exist to assign references to the books being trained on), so a
+  // deliberately-unselected book like Luke never appears there; its absence plus the positive checks above already
+  // show the source selection wasn't select-all.
+  await expectBookSelected(bookSelects.first(), UNSELECTED_TRAINING_BOOK, false);
 
   const fileCheckbox = page.locator('.training-data-files').getByRole('checkbox', { name: DESELECTED_FILE.title });
   await expect(fileCheckbox).not.toBeChecked();
