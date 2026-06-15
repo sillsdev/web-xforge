@@ -1,7 +1,7 @@
 import { Canon } from '@sillsdev/scripture';
-import { BuildDto } from '../machine-api/build-dto';
-import { expandNumbers } from '../shared/utils';
 import { notNull } from '../../type-utils';
+import { BuildDto } from '../machine-api/build-dto';
+import { expandNumbers, parseDate } from '../shared/utils';
 
 /**
  * A report of a Serval build, combining Serval-native data with SF project information and event metrics information.
@@ -87,16 +87,6 @@ export interface BuildReportProjectScriptureRange {
 /** Takes a ServalBuildReportDto with JSON-typed values (date strings, status strings) and converts them to proper
  * TypeScript types. */
 export function interpretTypes(report: ServalBuildReportDto): ServalBuildReportDto {
-  const parseDate = (value: unknown): Date | undefined => {
-    if (value instanceof Date) return value;
-    if (value == null) return undefined;
-    if (typeof value !== 'string' && typeof value !== 'number') return undefined;
-
-    const parsed: Date = new Date(value);
-    if (Number.isNaN(parsed.getTime())) return undefined;
-    return parsed;
-  };
-
   const status: string = report.status;
   if (!isDraftGenerationBuildStatus(status)) {
     // Noisily handle invalid data.

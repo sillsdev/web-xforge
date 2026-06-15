@@ -4,16 +4,20 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { TranslocoModule } from '@ngneat/transloco';
+import { saveAs } from 'file-saver';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { UserService } from 'xforge-common/user.service';
+import { InfoComponent } from '../../shared/info/info.component';
 import { NoticeComponent } from '../../shared/notice/notice.component';
 import { projectLabel } from '../../shared/utils';
 import {
@@ -24,6 +28,7 @@ import {
 } from '../../translate/draft-generation/onboarding-request.service';
 import { OnboardingRequestAssigneeSelectComponent } from '../onboarding-request-assignee-select/onboarding-request-assignee-select.component';
 import { ServalAdministrationService } from '../serval-administration.service';
+import { OnboardingRequestsExportService } from './onboarding-requests-export.service';
 
 type RequestFilterFunction = (request: OnboardingRequest, currentUserId: string | undefined) => boolean;
 
@@ -89,7 +94,10 @@ type FilterName = keyof typeof filterOptions;
     MatProgressSpinnerModule,
     MatButtonToggleModule,
     RouterLinkDirective,
-    MatInputModule
+    MatIconModule,
+    MatInputModule,
+    MatMenuModule,
+    InfoComponent
   ]
 })
 export class OnboardingRequestsComponent extends DataLoadingComponent implements OnInit {
@@ -98,7 +106,6 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
   displayedColumns: string[] = ['status', 'project', 'languageCode', 'user', 'email', 'assignee', 'resolution'];
   currentUserId?: string;
   assignedUserIds: Set<string> = new Set();
-  userDisplayNames: Map<string, string> = new Map();
   projectNames: Map<string, string> = new Map();
   filterOptions = filterOptions;
 
@@ -111,7 +118,8 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
     readonly userService: UserService,
     noticeService: NoticeService,
     private readonly servalAdministrationService: ServalAdministrationService,
-    readonly onboardingRequestService: OnboardingRequestService
+    readonly onboardingRequestService: OnboardingRequestService,
+    private readonly exportService: OnboardingRequestsExportService
   ) {
     super(noticeService, 'OnboardingRequestsComponent');
   }
@@ -153,6 +161,30 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
         this.projectNames.set(projectId, projectId);
       }
     }
+  }
+
+  /** Exports the currently filtered requests as a CSV file. */
+  exportCsv(): Promise<void> {
+    return this.export('csv');
+  }
+
+  /** Exports the currently filtered requests as a TSV file. */
+  exportTsv(): Promise<void> {
+    return this.export('tsv');
+  }
+
+  private async export(extension: 'csv' | 'tsv'): Promise<void> {
+    const requests = this.filteredRequests;
+    if (requests.length === 0) {
+      this.noticeService.show('No data to export.');
+      return;
+    }
+
+    const content =
+      extension === 'csv' ? await this.exportService.createCsv(requests) : await this.exportService.createTsv(requests);
+    const mimeType = extension === 'csv' ? 'text/csv;charset=utf-8;' : 'text/tab-separated-values;charset=utf-8;';
+    const blob = new Blob([content], { type: mimeType });
+    saveAs(blob, this.exportService.exportFilename(extension));
   }
 
   /** Gets the project name for display, or falls back to project ID if not loaded yet. */

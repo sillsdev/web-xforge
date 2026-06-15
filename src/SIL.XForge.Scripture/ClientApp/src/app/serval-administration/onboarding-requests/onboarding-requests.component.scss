@@ -16,6 +16,43 @@
   padding: 40px;
 }
 
+.filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.export-button-group {
+  display: flex;
+
+  .export-csv-button {
+    // Be flush with the drop-down arrow
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: none;
+  }
+
+  .export-menu-button {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    min-width: 40px;
+    padding: 0 8px;
+
+    mat-icon {
+      margin: 0;
+    }
+  }
+}
+
+.export-item-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .requests-table {
   width: 100%;
   margin-top: 20px;

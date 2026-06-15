@@ -10,13 +10,34 @@
       as resolved does not automatically enable drafting on the project.
     </app-notice>
 
-    <p>
+    <div class="filter-bar">
       <mat-button-toggle-group [(ngModel)]="activeFilter" class="status-filter">
         @for (option of filterOptions | keyvalue: null; track option.key) {
           <mat-button-toggle [value]="option.key">{{ option.value.name }}</mat-button-toggle>
         }
       </mat-button-toggle-group>
-    </p>
+      <div class="export-button-group">
+        <button mat-raised-button color="primary" class="export-csv-button" (click)="exportCsv()">
+          <mat-icon>download</mat-icon>
+          <span class="export-item-label">
+            Export CSV
+            <app-info text="Download a .csv (comma-separated values) spreadsheet of the table data"></app-info>
+          </span>
+        </button>
+        <button mat-raised-button color="primary" class="export-menu-button" [matMenuTriggerFor]="exportMenu">
+          <mat-icon>arrow_drop_down</mat-icon>
+        </button>
+      </div>
+      <mat-menu #exportMenu="matMenu" xPosition="before">
+        <button mat-menu-item (click)="exportTsv()">
+          <mat-icon>download</mat-icon>
+          <span class="export-item-label">
+            Export TSV
+            <app-info text="Download a .tsv (tab-separated values) spreadsheet of the table data"></app-info>
+          </span>
+        </button>
+      </mat-menu>
+    </div>
 
     @if (filteredRequests.length === 0) {
       <p class="no-requests">No requests are in the "{{ currentFilterName }}" category.</p>
