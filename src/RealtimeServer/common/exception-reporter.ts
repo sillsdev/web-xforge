@@ -14,7 +14,15 @@ export class ExceptionReporter {
     });
   }
 
+  /**
+   * Reports an unhandled exception.
+   *
+   * @param error The exception.
+   */
   report(error: NotifiableError): void {
-    this.bugsnagClient.notify(error);
+    this.bugsnagClient.notify(error, event => {
+      event.severity = 'error';
+      event.unhandled = true;
+    });
   }
 }
