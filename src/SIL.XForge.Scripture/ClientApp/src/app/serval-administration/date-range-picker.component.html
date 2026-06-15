@@ -1,9 +1,20 @@
-<mat-form-field class="date-range-field">
+<mat-form-field class="date-range-field" [class.date-range-field-active]="showReset && !isDefaultRange">
   <mat-label>Date range</mat-label>
   <mat-date-range-input [formGroup]="dateRangeForm" [rangePicker]="dateRangePicker" [dateFilter]="disableFutureDates">
     <input matStartDate matInput formControlName="start" [max]="maxSelectableDate" placeholder="Start date" />
     <input matEndDate matInput formControlName="end" [max]="maxSelectableDate" placeholder="End date" />
   </mat-date-range-input>
+  @if (showReset && !isDefaultRange) {
+    <button
+      matSuffix
+      type="button"
+      class="date-range-reset-button"
+      (click)="resetToDefaultDateRange()"
+      aria-label="Reset date range"
+    >
+      <span class="material-icons date-range-reset-icon" aria-hidden="true">close</span>
+    </button>
+  }
   <mat-datepicker-toggle matIconSuffix [for]="dateRangePicker"></mat-datepicker-toggle>
   <mat-date-range-picker #dateRangePicker></mat-date-range-picker>
   @if (dateRangeFormatHint != null) {

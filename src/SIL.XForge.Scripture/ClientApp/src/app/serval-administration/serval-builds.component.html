@@ -4,7 +4,7 @@
 
 @if (isOnline) {
   <div class="filter-controls">
-    <app-date-range-picker (dateRangeChange)="onDateRangeChange($event)"></app-date-range-picker>
+    <app-date-range-picker [showReset]="true" (dateRangeChange)="onDateRangeChange($event)"></app-date-range-picker>
     <div class="export-button-group">
       <button mat-raised-button color="primary" class="export-csv-button" (click)="exportCsv()">
         <mat-icon>download</mat-icon>

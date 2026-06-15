@@ -1,4 +1,4 @@
-import { Component, DestroyRef, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -56,6 +56,9 @@ export interface NormalizedDateRange {
   ]
 })
 export class DateRangePickerComponent implements OnInit {
+  /** When the date range is not the default, highlight the control and show a reset button. */
+  @Input() showReset: boolean = false;
+
   /** Maximum selectable date (today) */
   readonly maxSelectableDate: Date;
 
@@ -72,6 +75,11 @@ export class DateRangePickerComponent implements OnInit {
 
   /** Event emitted when the date range changes with a valid normalized range */
   @Output() dateRangeChange = new EventEmitter<NormalizedDateRange>();
+
+  /** Whether current range is equal to the initial default range. */
+  isDefaultRange: boolean = true;
+
+  private defaultRange: NormalizedDateRange | undefined;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -109,11 +117,16 @@ export class DateRangePickerComponent implements OnInit {
     const normalizedEnd = this.endOfTheDayOf(initialEndDate);
 
     this.dateRangeForm.setValue({ start: normalizedStart, end: normalizedEnd }, { emitEvent: false });
+    this.defaultRange = {
+      start: new Date(normalizedStart),
+      end: new Date(normalizedEnd)
+    };
+    this.isDefaultRange = true;
 
     // Tell parent of the initial range.
     this.dateRangeChange.emit({
-      start: new Date(normalizedStart.getTime()),
-      end: new Date(normalizedEnd.getTime())
+      start: new Date(normalizedStart),
+      end: new Date(normalizedEnd)
     });
 
     // Update format hint based on current locale
@@ -140,6 +153,18 @@ export class DateRangePickerComponent implements OnInit {
       });
   }
 
+  protected resetToDefaultDateRange(): void {
+    if (this.defaultRange == null) return;
+
+    this.dateRangeForm.setValue(
+      {
+        start: new Date(this.defaultRange.start),
+        end: new Date(this.defaultRange.end)
+      },
+      { emitEvent: true }
+    );
+  }
+
   /**
    * Process form input. Emits a normalized and valid range if possible. This method will be called for each start and
    * end date selection when working with the popup calendar control. Sometimes it will be called twice when a start
@@ -164,7 +189,14 @@ export class DateRangePickerComponent implements OnInit {
 
     // Dates are a valid and normalized range. Emit.
     const normalizedRange: NormalizedDateRange = { start: normalizedStart, end: normalizedEnd };
+    this.isDefaultRange = this.areRangesEqual(normalizedRange, this.defaultRange);
     this.dateRangeChange.emit(normalizedRange);
+  }
+
+  private areRangesEqual(left: NormalizedDateRange | undefined, right: NormalizedDateRange | undefined): boolean {
+    if (left == null && right == null) return true;
+    if (left == null || right == null) return false;
+    return left.start.getTime() === right.start.getTime() && left.end.getTime() === right.end.getTime();
   }
 
   /** Get the beginning of the day for a date */
