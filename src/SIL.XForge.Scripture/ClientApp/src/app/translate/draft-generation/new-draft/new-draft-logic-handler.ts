@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, firstValueFrom } from 'rxjs';
+import { DestroyRef, Injectable } from '@angular/core';
+import { isEqual } from 'lodash-es';
+import { BehaviorSubject, firstValueFrom, skip } from 'rxjs';
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
-import { filterNullish } from '../../../../xforge-common/util/rxjs-util';
+import { filterNullish, quietTakeUntilDestroyed } from '../../../../xforge-common/util/rxjs-util';
 import { ProgressService } from '../../../shared/progress-service/progress.service';
 import { DraftSourcesAsArrays } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
@@ -104,7 +105,8 @@ export class NewDraftLogicHandler {
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly draftSourcesService: DraftSourcesService,
-    private readonly progressService: DraftProgressService
+    private readonly progressService: DraftProgressService,
+    private readonly destroyRef: DestroyRef
   ) {
     void this.init();
   }
@@ -148,7 +150,6 @@ export class NewDraftLogicHandler {
         this.progressService.getProgressForProject(draftingSource.projectRef),
         this.progressService.getProgressForProject(projectId),
         trainingSourcesProgressPromise,
-        // // TODO listen for more updates to figure out if we need to bail out and restart the process
         firstValueFrom(this.draftSourcesService.getDraftProjectSources())
       ]);
 
@@ -178,6 +179,17 @@ export class NewDraftLogicHandler {
       );
 
       this.status$.next('input');
+
+      // Watch for mid-flow config changes. Skip the initial emission (already consumed above) and abort if the
+      // sources change, matching the behavior of the legacy draft-generation-steps component.
+      this.draftSourcesService
+        .getDraftProjectSources()
+        .pipe(skip(1), quietTakeUntilDestroyed(this.destroyRef))
+        .subscribe(newSources => {
+          if (!isEqual(this.sources, newSources)) {
+            this.abort('config_changed');
+          }
+        });
     } catch (error) {
       // Any unanticipated failure while loading project/progress data (network errors, missing config, etc.) aborts
       // into a generic failure state rather than leaving the wizard stuck on its loading spinner. The error is
@@ -346,7 +358,7 @@ export class NewDraftLogicHandler {
     return chaptersAvailableForTraining != null && chaptersAvailableForTraining.count() >= 1;
   }
 
-  private abort(mode: NewDraftAbortMode): void {
+  abort(mode: NewDraftAbortMode): void {
     this.abortMode$.next(mode);
     this.status$.next('abort');
   }

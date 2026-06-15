@@ -509,7 +509,7 @@ This change is additive: builds that don't include a target project entry in `Tr
       error dialog + report) and navigates back to draft-generation — no bespoke localized screen (only
       `no_access` gets one). This also fixes the previous behavior where an init throw left the wizard stuck on
       the loading spinner forever (the component now races `status$` for `input` **or** `abort`).
-- [ ] Handle mid-flow project config changes (currently has a TODO for this — `config_changed` mode is declared
+- [x] Handle mid-flow project config changes (currently has a TODO for this — `config_changed` mode is declared
       but not yet triggered)
 
 ### Tests

@@ -2,7 +2,9 @@
   @if (page === "abort") {
     <div class="abort-screen">
       <mat-icon class="abort-icon" color="warn">error_outline</mat-icon>
-      @if (inaccessibleProjectNames.length > 0) {
+      @if (abortMode === "config_changed") {
+        <p>{{ t("abort.config_changed") }}</p>
+      } @else if (inaccessibleProjectNames.length > 0) {
         <p>{{ t("abort.no_access_with_projects", { projects: inaccessibleProjectNames.join(", ") }) }}</p>
       } @else {
         <p>{{ t("abort.no_access") }}</p>

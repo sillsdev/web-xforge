@@ -1,16 +1,19 @@
+import { DestroyRef } from '@angular/core';
 import { Canon } from '@sillsdev/scripture';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { filter, firstValueFrom, of } from 'rxjs';
+import { BehaviorSubject, filter, firstValueFrom, of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { chapterCounts } from '../../../shared/progress-service/progress.service';
-import { DraftSource } from '../draft-source';
+import { DraftSource, DraftSourcesAsArrays } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
 import { DraftProgressService, NewDraftLogicHandler } from './new-draft-logic-handler';
 import { VerboseScriptureRange } from './scripture-range';
+
+const mockDestroyRef = { onDestroy: () => () => {}, destroyed: false } as unknown as DestroyRef;
 
 function allBooksExcept(excludedBooks: string[]): string {
   return new VerboseScriptureRange(
@@ -57,6 +60,40 @@ describe('NewDraftLogicHandler', () => {
 
       expect(env.logicHandler.status$.getValue()).toBe('abort');
       expect(env.logicHandler.abortMode$.getValue()).toBe('no_access');
+    });
+
+    it('aborts with config_changed when sources change after initialization', async () => {
+      const sources$ = new BehaviorSubject<DraftSourcesAsArrays>({
+        trainingSources: [],
+        trainingTargets: [],
+        draftingSources: [{ projectRef: 'draft-source-1-id' } as DraftSource]
+      });
+      const env = new TestEnvironment(teamStartingToTranslateGenesis, sources$);
+      await env.waitForInit();
+
+      sources$.next({
+        trainingSources: [],
+        trainingTargets: [],
+        draftingSources: [{ projectRef: 'different-source-id' } as DraftSource]
+      });
+
+      expect(env.logicHandler.status$.getValue()).toBe('abort');
+      expect(env.logicHandler.abortMode$.getValue()).toBe('config_changed');
+    });
+
+    it('does not abort when sources re-emit without changing', async () => {
+      const initialSources: DraftSourcesAsArrays = {
+        trainingSources: [],
+        trainingTargets: [],
+        draftingSources: [{ projectRef: 'draft-source-1-id' } as DraftSource]
+      };
+      const sources$ = new BehaviorSubject<DraftSourcesAsArrays>(initialSources);
+      const env = new TestEnvironment(teamStartingToTranslateGenesis, sources$);
+      await env.waitForInit();
+
+      sources$.next({ ...initialSources });
+
+      expect(env.logicHandler.status$.getValue()).toBe('input');
     });
 
     it('initializes available ranges based on progress service', async () => {
@@ -610,7 +647,7 @@ class TestEnvironment {
   draftSourcesService = instance(mockedDraftSourcesService);
   draftProgressService = instance(mockedDraftProgressService);
 
-  constructor(state: TestState) {
+  constructor(state: TestState, sources$?: BehaviorSubject<DraftSourcesAsArrays>) {
     const project = createTestProjectProfile({
       translateConfig: {
         preTranslate: true,
@@ -646,11 +683,12 @@ class TestEnvironment {
     when(mockedSFProjectService.getProfile(projectId)).thenResolve({ data: project } as SFProjectProfileDoc);
 
     when(mockedDraftSourcesService.getDraftProjectSources()).thenReturn(
-      of({
-        trainingSources: state.noAccessSources ? ([{ noAccess: true }] as unknown as DraftSource[]) : [],
-        trainingTargets: [],
-        draftingSources: []
-      })
+      sources$ ??
+        of({
+          trainingSources: state.noAccessSources ? ([{ noAccess: true }] as unknown as DraftSource[]) : [],
+          trainingTargets: [],
+          draftingSources: []
+        })
     );
 
     // Set up the progress service to return the specified scripture ranges for the project and sources
@@ -669,7 +707,8 @@ class TestEnvironment {
     this.logicHandler = new NewDraftLogicHandler(
       this.activatedProjectService,
       this.draftSourcesService,
-      this.draftProgressService
+      this.draftProgressService,
+      mockDestroyRef
     );
   }
 

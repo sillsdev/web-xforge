@@ -13,7 +13,7 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { filter, firstValueFrom } from 'rxjs';
+import { filter, firstValueFrom, take } from 'rxjs';
 import { DevOnlyComponent } from 'src/app/shared/dev-only/dev-only.component';
 import { JsonViewerComponent } from 'src/app/shared/json-viewer/json-viewer.component';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -143,7 +143,8 @@ export class NewDraftComponent {
     this.logicHandler = new NewDraftLogicHandler(
       this.activatedProjectService,
       this.draftSourcesService,
-      this.progressService
+      this.progressService,
+      this.destroyRef
     );
 
     void this.init();
@@ -184,6 +185,15 @@ export class NewDraftComponent {
       await this.detectPendingUpdates();
     }
     this.page = this.pendingProjects.length > 0 ? 'pending_updates' : 'preface';
+
+    // Watch for mid-flow aborts (e.g. config_changed) that occur after initialization completes.
+    this.logicHandler.status$
+      .pipe(
+        filter(s => s === 'abort'),
+        take(1),
+        quietTakeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => this.handleAbort());
   }
 
   /**
@@ -193,7 +203,8 @@ export class NewDraftComponent {
    * draft-generation page so the user isn't stranded on the loading spinner.
    */
   private handleAbort(): void {
-    if (this.logicHandler.abortMode$.getValue() === 'no_access') {
+    const mode = this.logicHandler.abortMode$.getValue();
+    if (mode === 'no_access' || mode === 'config_changed') {
       this.page = 'abort';
       return;
     }
