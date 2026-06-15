@@ -824,4 +824,7 @@ elsewhere in the spec.
 - [ ] Show training data files on final page
 - [ ] Saw a bug where training data books were not available to select, so got message saying couldn't continue without
       selecting matching training books. Possible to repro or find cause?
-- [ ] bulk selection of training books
+- [x] bulk selection of training books — the Step 3 target ("your project") selector now runs in rich mode (see the
+      "Section 1" note above), restoring the legacy OT/NT/DC bulk-select (and per-book progress bars). Fixed an
+      infinite change-detection freeze in `BookMultiSelectComponent` (non-basic mode re-fetched progress on every
+      `ngOnChanges`) that this surfaced.
