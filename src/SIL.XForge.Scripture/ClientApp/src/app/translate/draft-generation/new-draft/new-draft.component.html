@@ -282,6 +282,16 @@
               }
             </div>
           </div>
+          @if (selectedTrainingDataFileTitles.length > 0) {
+            <div class="summary-training-files">
+              <h3 class="column-header">{{ t("training_files") }}</h3>
+              <ul>
+                @for (title of selectedTrainingDataFileTitles; track title) {
+                  <li>{{ title }}</li>
+                }
+              </ul>
+            </div>
+          }
           <button mat-button color="primary" (click)="goToPage('training_books')">
             <mat-icon>edit</mat-icon>{{ t("summary.choose_different_training_data") }}
           </button>

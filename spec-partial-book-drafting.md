@@ -441,11 +441,13 @@ Legacy provides explicit empty/placeholder copy the new wizard is missing. Add m
 
 (The summary's "no training data" empty state — `summary.no_training_books` — is already covered.)
 
-### Training-data files on the summary (minor)
+### Training-data files on the summary (DONE)
 
 Legacy lists the training-data files on the summary step. The new wizard makes files explicitly selectable on
-Step 3 and does not re-list them on the summary. **Decision:** acceptable to omit — recorded here so it isn't
-re-flagged as a regression. Revisit only if reviewers want a "confirm what I selected" recap.
+Step 3. **Decision (reversed):** the summary now recaps the selected files too, as a "confirm what I selected"
+section. Rendered in the "Language training data" card below the source/target columns via the
+`selectedTrainingDataFileTitles` getter (titles of files whose id is in `selectedTrainingDataFileIds`); the
+section is hidden when nothing is selected. Reuses the `new_draft.training_files` heading from Step 3.
 
 ---
 
@@ -821,7 +823,7 @@ elsewhere in the spec.
   navigation is blocked while `…ChapterErrors.size > 0` (`getForwardError` returns `fix_chapter_errors`), so the
   summary can only be reached with both error maps already empty. Returning via `goToPage` finds nothing stale.
   Defensive only — not worth the change.
-- [ ] Show training data files on final page
+- [x] Show training data files on final page
 - [x] Saw a bug where training data books were not available to select, so got message saying couldn't continue without
       selecting matching training books. (trainingSource.length == 0) **Root cause found:** `getDraftProjectSources()`
       could emit the all-empty fallback (`{trainingSources:[], trainingTargets:[], draftingSources:[]}`) before the

@@ -534,6 +534,26 @@ describe('NewDraftComponent', () => {
       expect(env.component.isTrainingDataFileSelected('b')).toBe(true);
     }));
 
+    it('exposes the titles of the selected files for the summary recap', fakeAsync(() => {
+      const env = new TestEnvironment({
+        ...testState,
+        trainingDataFiles: [
+          makeTrainingData('a', 'Alpha'),
+          makeTrainingData('b', 'Beta'),
+          makeTrainingData('c', 'Gamma')
+        ],
+        lastSelectedTrainingDataFiles: ['a'],
+        lastAvailableTrainingDataFiles: ['a', 'b']
+      });
+      tick();
+
+      // 'a' (used last time) and 'c' (new) default selected; 'b' (deselected last time) stays off
+      expect(env.component.selectedTrainingDataFileTitles).toEqual(['Alpha', 'Gamma']);
+
+      env.component.onTrainingDataFileToggled('b', true);
+      expect(env.component.selectedTrainingDataFileTitles).toEqual(['Alpha', 'Beta', 'Gamma']);
+    }));
+
     it('toggles a file selection on and off', fakeAsync(() => {
       const env = new TestEnvironment({
         ...testState,

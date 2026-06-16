@@ -272,6 +272,11 @@ export class NewDraftComponent {
     return this.selectedTrainingDataFileIds.has(dataId);
   }
 
+  /** Titles of the training data files the user has selected, for the summary recap. */
+  get selectedTrainingDataFileTitles(): string[] {
+    return this.trainingDataFiles.filter(f => this.selectedTrainingDataFileIds.has(f.dataId)).map(f => f.title);
+  }
+
   onTrainingDataFileToggled(dataId: string, selected: boolean): void {
     // Replace the Set so the template's change detection picks up the change.
     const updated = new Set(this.selectedTrainingDataFileIds);

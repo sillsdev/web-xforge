@@ -159,6 +159,20 @@ strong {
   margin-bottom: 0.875em;
 }
 
+.summary-training-files {
+  margin-top: 2em;
+
+  .column-header {
+    margin: 0 0 0.5em;
+    padding-bottom: 0.5em;
+    border-bottom: 1px solid variables.$border-color;
+  }
+
+  ul {
+    margin: 0;
+  }
+}
+
 .save-container {
   display: flex;
   align-items: center;
