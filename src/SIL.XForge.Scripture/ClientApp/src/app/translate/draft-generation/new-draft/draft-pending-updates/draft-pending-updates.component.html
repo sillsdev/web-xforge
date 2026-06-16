@@ -30,7 +30,8 @@
     </div>
 
     <div class="pending-actions">
-      @if (syncableRows.length > 0) {
+      <!-- "Sync all" only makes sense with more than one syncable project; a single one uses its own row's Sync button. -->
+      @if (syncableRows.length > 1) {
         <button mat-flat-button color="primary" (click)="syncAll()">
           <mat-icon>sync</mat-icon>{{ t("sync_all") }}
         </button>
