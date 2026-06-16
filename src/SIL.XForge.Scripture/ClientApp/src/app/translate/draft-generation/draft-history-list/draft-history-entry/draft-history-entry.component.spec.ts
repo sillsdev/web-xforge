@@ -99,16 +99,10 @@ describe('DraftHistoryEntryComponent', () => {
     });
 
     it('should handle builds with additional info', fakeAsync(() => {
-      const user = 'user-display-name';
-      const date = dateAfterFormattingSupported;
-      const trainingBooks = ['EXO'];
-      const translateBooks = ['GEN'];
+      const user = 'build-user-display-name';
       const trainingDataFiles: Map<string, string> = new Map([['file01', 'training-data.txt']]);
       const entry = getStandardBuildDto({
         user,
-        date,
-        trainingBooks,
-        translateBooks,
         trainingDataFiles: Array.from(trainingDataFiles.keys())
       });
 
@@ -144,16 +138,7 @@ describe('DraftHistoryEntryComponent', () => {
     it('should show the title of deleted training data files used in the build', fakeAsync(() => {
       const deletedFile: TrainingData = { dataId: 'file01', title: 'deleted-file.txt', deleted: true } as TrainingData;
       when(mockedTrainingDataService.getTrainingData(anything(), anything(), anything())).thenReturn(of([deletedFile]));
-
-      const user = 'user-display-name';
-      const date = dateAfterFormattingSupported;
-      const entry = getStandardBuildDto({
-        user,
-        date,
-        trainingBooks: ['EXO'],
-        translateBooks: ['GEN'],
-        trainingDataFiles: ['file01']
-      });
+      const entry = getStandardBuildDto({});
 
       // SUT
       component.entry = entry;
@@ -166,12 +151,10 @@ describe('DraftHistoryEntryComponent', () => {
 
     it('should not get source project if user does not have permission', fakeAsync(() => {
       when(mockedPermissionsService.isUserOnProject(anything())).thenResolve(false);
-      const user = 'user-display-name';
-      const date = dateAfterFormattingSupported;
       const trainingBooks = ['GEN'];
       const translateBooks = ['EXO'];
       const trainingDataFiles = [];
-      const entry = getStandardBuildDto({ user, date, trainingBooks, translateBooks, trainingDataFiles });
+      const entry = getStandardBuildDto({ trainingBooks, translateBooks, trainingDataFiles });
 
       // SUT
       component.entry = entry;
@@ -186,12 +169,9 @@ describe('DraftHistoryEntryComponent', () => {
     }));
 
     it('should state that the model did not have training configuration', fakeAsync(() => {
-      const user = 'user-display-name';
-      const date = dateAfterFormattingSupported;
       const trainingBooks = [];
-      const translateBooks = ['GEN'];
       const trainingDataFiles = [];
-      const entry = getStandardBuildDto({ user, date, trainingBooks, translateBooks, trainingDataFiles });
+      const entry = getStandardBuildDto({ trainingBooks, trainingDataFiles });
 
       // SUT
       component.entry = entry;
@@ -205,12 +185,7 @@ describe('DraftHistoryEntryComponent', () => {
     it('should show the USFM format option when the project is the latest draft', fakeAsync(() => {
       when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected(anything())).thenReturn(false);
       when(mockedDraftOptionsService.areFormattingOptionsSupportedForBuild(anything())).thenReturn(true);
-      const user = 'user-display-name';
-      const date = dateAfterFormattingSupported;
-      const trainingBooks = ['EXO'];
-      const translateBooks = ['GEN'];
-      const trainingDataFiles = ['file01'];
-      const entry = getStandardBuildDto({ user, date, trainingBooks, translateBooks, trainingDataFiles });
+      const entry = getStandardBuildDto({});
 
       // SUT
       component.entry = entry;
@@ -446,12 +421,8 @@ describe('DraftHistoryEntryComponent', () => {
 
     it('should not show the USFM format option for drafts created before the supported date', fakeAsync(() => {
       when(mockedDraftOptionsService.areFormattingOptionsSupportedForBuild(anything())).thenReturn(false);
-      const user = 'user-display-name';
       const date = dateBeforeFormattingSupported;
-      const trainingBooks = ['EXO'];
-      const translateBooks = ['GEN'];
-      const trainingDataFiles = ['file01'];
-      const entry = getStandardBuildDto({ user, date, trainingBooks, translateBooks, trainingDataFiles });
+      const entry = getStandardBuildDto({ date });
 
       // SUT
       component.entry = entry;
@@ -464,6 +435,77 @@ describe('DraftHistoryEntryComponent', () => {
       expect(fixture.nativeElement.querySelector('.format-usfm')).toBeNull();
       expect(component.formattingOptionsSupported).toBe(false);
     }));
+
+    describe('per-chapter remarks', () => {
+      it('should not show the notice for version 1.17', fakeAsync(() => {
+        const entry = getStandardBuildDto({ servalVersion: '1.17.1' });
+
+        // SUT
+        component.entry = entry;
+        component.isLatestBuild = true;
+        tick();
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('.per-chapter-remarks-notice')).toBeNull();
+      }));
+
+      it('should not show the notice for an invalid version string', fakeAsync(() => {
+        const entry = getStandardBuildDto({ servalVersion: 'invalid-version' });
+
+        // SUT
+        component.entry = entry;
+        component.isLatestBuild = true;
+        tick();
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('.per-chapter-remarks-notice')).toBeNull();
+      }));
+
+      it('should show the notice for version 1.18', fakeAsync(() => {
+        const entry = getStandardBuildDto({ servalVersion: '1.18.0' });
+
+        // SUT
+        component.entry = entry;
+        component.isLatestBuild = true;
+        tick();
+        fixture.detectChanges();
+
+        expect(
+          fixture.nativeElement.querySelector('.per-chapter-remarks-notice') ||
+            !component.timeframeForPerChapterRemarksNotice
+        ).not.toBeNull();
+      }));
+
+      it('should show the notice for version 1.18 release candidate', fakeAsync(() => {
+        const entry = getStandardBuildDto({ servalVersion: '1.18.0-rc.3' });
+
+        // SUT
+        component.entry = entry;
+        component.isLatestBuild = true;
+        tick();
+        fixture.detectChanges();
+
+        expect(
+          fixture.nativeElement.querySelector('.per-chapter-remarks-notice') ||
+            !component.timeframeForPerChapterRemarksNotice
+        ).not.toBeNull();
+      }));
+
+      it('should show the notice for version 1.19', fakeAsync(() => {
+        const entry = getStandardBuildDto({ servalVersion: '1.19.1' });
+
+        // SUT
+        component.entry = entry;
+        component.isLatestBuild = true;
+        tick();
+        fixture.detectChanges();
+
+        expect(
+          fixture.nativeElement.querySelector('.per-chapter-remarks-notice') ||
+            !component.timeframeForPerChapterRemarksNotice
+        ).not.toBeNull();
+      }));
+    });
   });
 
   describe('formatDate', () => {
@@ -483,17 +525,19 @@ describe('DraftHistoryEntryComponent', () => {
   });
 
   function getStandardBuildDto({
-    user,
-    date,
-    trainingBooks,
-    translateBooks,
-    trainingDataFiles
+    user = 'user-display-name',
+    date = dateAfterFormattingSupported,
+    trainingBooks = ['EXO'],
+    translateBooks = ['GEN'],
+    trainingDataFiles = ['file01'],
+    servalVersion
   }: {
-    user: string;
-    date: string;
-    trainingBooks: string[];
-    translateBooks: string[];
-    trainingDataFiles: string[];
+    user?: string;
+    date?: string;
+    trainingBooks?: string[];
+    translateBooks?: string[];
+    trainingDataFiles?: string[];
+    servalVersion?: string;
   }): BuildDto {
     const userDoc = {
       id: 'sf-user-id',
@@ -533,7 +577,8 @@ describe('DraftHistoryEntryComponent', () => {
           trainingBooks.length > 0 ? [{ projectId: 'project02', scriptureRange: trainingBooks.join(';') }] : [],
         translationScriptureRanges: [{ projectId: 'project02', scriptureRange: translateBooks.join(';') }],
         trainingDataFileIds: trainingDataFiles
-      }
+      },
+      deploymentVersion: servalVersion
     } as BuildDto;
 
     return entry;

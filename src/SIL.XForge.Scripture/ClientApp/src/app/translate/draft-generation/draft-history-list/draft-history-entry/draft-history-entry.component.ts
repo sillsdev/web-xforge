@@ -34,6 +34,7 @@ import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { BuildDto } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
+import { NoticeComponent } from '../../../../shared/notice/notice.component';
 import { booksFromScriptureRange } from '../../../../shared/utils';
 import { RIGHT_TO_LEFT_MARK } from '../../../../shared/verse-utils';
 import { DraftDownloadButtonComponent } from '../../draft-download-button/draft-download-button.component';
@@ -92,6 +93,7 @@ interface SourceInfo {
     MatHeaderRowDef,
     MatRow,
     MatRowDef,
+    NoticeComponent,
     RouterLink,
     TranslocoModule,
     TranslocoMarkupModule
@@ -319,9 +321,10 @@ export class DraftHistoryEntryComponent {
 
   readonly columnsToDisplay: string[] = ['scriptureRange', 'source', 'target'];
 
-  private readonly showSelectFormatNoticeExpireDate = new Date('2025-12-01T12:00:00.000Z');
+  private readonly showPerChapterRemarksNoticeExpireDate = new Date('2026-12-31T12:00:00.000Z');
 
-  readonly timeframeForSelectFormatNotice: boolean = Date.now() < this.showSelectFormatNoticeExpireDate.getTime();
+  readonly timeframeForPerChapterRemarksNotice: boolean =
+    Date.now() < this.showPerChapterRemarksNoticeExpireDate.getTime();
 
   constructor(
     readonly i18n: I18nService,
@@ -338,6 +341,12 @@ export class DraftHistoryEntryComponent {
   formatDate(date?: string): string {
     const formattedDate = date == null ? '' : this.i18n.formatDate(new Date(date));
     return formattedDate.indexOf(RIGHT_TO_LEFT_MARK) !== -1 ? RIGHT_TO_LEFT_MARK + formattedDate : formattedDate;
+  }
+
+  getMajorMinorVersion(version: string | undefined): number {
+    const match = version?.match(/^(\d+)\.(\d+)/);
+    if (!match) return 0;
+    return Number(`${match[1]}.${match[2]}`);
   }
 
   getStatus(state: BuildStates): { icons: string; text: string; color: string } {

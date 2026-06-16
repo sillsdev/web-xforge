@@ -31,18 +31,16 @@
               <span class="hide-lt-lg">{{ t("formatting_options") }}</span>
               <span class="hide-gt-lg">{{ t("formatting") }}</span>
             </button>
-            @if (timeframeForSelectFormatNotice) {
-              <div class="new-formatting-options-notice">
-                <div class="new-and-arrow-wrapper">
-                  <mat-icon class="new-arrow">{{ i18n.isRtl ? "east" : "west" }}</mat-icon>
-                  <span class="new-label">{{ t("new") }}</span>
-                </div>
-                {{ t("options_for_paragraph_breaks_and_quotation_marks") }}
-              </div>
-            }
           </div>
         } @else {
           @if (draftIsAvailable) {
+            @if (isLatestBuild && getMajorMinorVersion(entry.deploymentVersion) >= 1.18) {
+              <p class="per-chapter-remarks-notice">
+                <app-notice type="success" icon="auto_awesome">
+                  <transloco key="draft_history_entry.per_chapter_remarks_notice"></transloco>
+                </app-notice>
+              </p>
+            }
             <p>{{ t("click_book_to_preview_draft") }}</p>
             <p class="book-buttons">
               <app-draft-preview-books [build]="entry" />
