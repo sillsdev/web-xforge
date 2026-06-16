@@ -822,8 +822,13 @@ elsewhere in the spec.
   summary can only be reached with both error maps already empty. Returning via `goToPage` finds nothing stale.
   Defensive only — not worth the change.
 - [ ] Show training data files on final page
-- [ ] Saw a bug where training data books were not available to select, so got message saying couldn't continue without
-      selecting matching training books. Possible to repro or find cause?
+- [x] Saw a bug where training data books were not available to select, so got message saying couldn't continue without
+      selecting matching training books. (trainingSource.length == 0) **Root cause found:** `getDraftProjectSources()`
+      could emit the all-empty fallback (`{trainingSources:[], trainingTargets:[], draftingSources:[]}`) before the
+      project doc's data loaded, and `NewDraftLogicHandler.init()`'s `firstValueFrom` latched that — leaving
+      `this.sources.trainingSources` empty (so no reference projects) while the progress bundle had the real config.
+      Fixed in `DraftSourcesService.getDraftProjectSources()` by filtering out emissions where the doc data isn't
+      loaded, so consumers can't latch the empty value (the legacy stepper already guarded this itself).
 - [x] bulk selection of training books — the Step 3 target ("your project") selector now runs in rich mode (see the
       "Section 1" note above), restoring the legacy OT/NT/DC bulk-select (and per-book progress bars). Fixed an
       infinite change-detection freeze in `BookMultiSelectComponent` (non-basic mode re-fetched progress on every
