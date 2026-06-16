@@ -273,7 +273,7 @@
               <tbody>
                 @for (source of sourceTrainingSections; track source.projectRef) {
                   <tr>
-                    <td>{{ i18n.formatAndLocalizeBookRange(source.bookNumbers) }}</td>
+                    <td>{{ formatTrainingBooks(source.bookNumbers) }}</td>
                     <td>{{ source.shortName }}</td>
                     <td>{{ targetShortName }}</td>
                   </tr>

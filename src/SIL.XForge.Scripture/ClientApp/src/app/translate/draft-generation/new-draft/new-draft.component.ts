@@ -50,6 +50,7 @@ import {
 } from './new-draft-logic-handler';
 import { ChapterSet, VerboseScriptureRange } from './scripture-range';
 import { defaultSelectedTrainingDataFiles } from './training-data-file-selection';
+import { formatTrainingBooksSummary } from './training-data-summary';
 
 interface CopyrightMessage {
   banner: string;
@@ -892,6 +893,20 @@ export class NewDraftComponent {
         };
       })
       .filter(s => s.bookNumbers.length > 0);
+  }
+
+  /**
+   * Localized training-book list for a source row in the summary table. Fully-used books collapse into ranges;
+   * a book that is only partly used as training data is shown with its chapter range (and broken out of any range).
+   */
+  formatTrainingBooks(bookNumbers: number[]): string {
+    return formatTrainingBooksSummary(
+      bookNumbers,
+      this.logicHandler.selectedTargetTrainingScriptureRange$.getValue(),
+      this.logicHandler.availableTargetTrainingScriptureRange$.getValue(),
+      this.logicHandler.selectedDraftingScriptureRange$.getValue(),
+      this.i18n
+    );
   }
 
   get draftingSourceName(): string {
