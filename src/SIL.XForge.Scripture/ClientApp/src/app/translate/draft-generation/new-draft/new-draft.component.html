@@ -183,16 +183,15 @@
       @if (trainingSources.length > 0) {
         <h2>{{ t("reference_books") }}</h2>
         @for (source of trainingSources; track source.projectRef) {
-          <p>{{ source.shortName }}</p>
+          <app-book-multi-select
+            [basicMode]="true"
+            [projectName]="source.shortName"
+            [availableBooks]="availableTrainingSourceBooksForProject(source.projectRef)"
+            [selectedBooks]="selectedTrainingSourceBooksForProject(source.projectRef)"
+            (bookSelect)="onTrainingSourceBookSelect($event, source.projectRef)"
+          ></app-book-multi-select>
           @if (availableTrainingSourceBooksForProject(source.projectRef).length === 0) {
             <p class="empty-state">{{ t("training_books.reference_books_will_appear") }}</p>
-          } @else {
-            <app-book-multi-select
-              [basicMode]="true"
-              [availableBooks]="availableTrainingSourceBooksForProject(source.projectRef)"
-              [selectedBooks]="selectedTrainingSourceBooksForProject(source.projectRef)"
-              (bookSelect)="onTrainingSourceBookSelect($event, source.projectRef)"
-            ></app-book-multi-select>
           }
         }
       }
