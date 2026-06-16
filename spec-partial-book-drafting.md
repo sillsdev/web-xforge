@@ -406,8 +406,24 @@ categories may no longer apply, and partial availability introduces new cases:
   surfaced; a book excluded for "no source content" or "not in target" probably should.
 - Account for **partial availability**: a book that is offered for only some chapters is not "hidden" and must not
   appear in these notices.
-- **Open question:** confirm the final category list, and whether the draft step and training step need different
-  messaging now that target training can include partially-drafted books.
+- **Resolved — final category list (locked):**
+  - **Draft step** (`computeOfferedDraftingBooks`, surfaced via `draftingExclusionNotices`):
+    - `no_source_content` (surfaced) — folds legacy's `emptyTranslateSourceBooks` _and_ `unusableTranslateSourceBooks`
+      (a target book the source has no text for) into one reason; the chapter-level model doesn't distinguish "blank"
+      from "absent".
+    - `not_in_target` (surfaced) — legacy's `unusableTranslateTargetBooks`; gated by `ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET`
+      and so temporary — the category disappears when SF-3822 flips the flag.
+    - `non_canonical` (tracked, never surfaced).
+  - **Training step:**
+    - `excluded_not_in_any_source` (surfaced via `targetTrainingBooksWithoutSource$`) — legacy's
+      `unusableTrainingSourceBooks` / `trainingBooksExcludingTranslatedWithoutEnoughData`.
+    - training-source books not in the target (legacy `unusableTrainingTargetBooks`) — **decided: no notice** (see the
+      `[decided: no]` item in the checklist); silently excluded.
+    - non-canonical training books — silently filtered via `withoutExtraMaterialBooks()`.
+  - The two steps already use distinct messaging (different keys/reasons). No extra "partially-drafted" wording is
+    needed in these notices: partially-offered books are not hidden — they appear in the offered list with chapter
+    inputs — so they never reach an exclusion notice. The "some chapters will be translated and can't be used as
+    training data" caveat is handled separately by `training_books.partial_explanation`.
 
 ### Custom Serval configuration notice
 
@@ -644,8 +660,9 @@ This change is additive: builds that don't include a target project entry in `Tr
       sources). Filtered in `NewDraftLogicHandler.init()` via the `withoutExtraMaterialBooks()` helper, applied to
       the target training range and each training-source range. Kept in the handler (the selection-policy layer)
       rather than in the `DraftProgressService` adapter, which stays a faithful content-range reporter. Training
-      exclusions are not surfaced as notices (consistent with non-canonical drafting exclusions being silent); a
-      training-step exclusion-notice design remains open if/when needed.
+      exclusions are not surfaced as notices (consistent with non-canonical drafting exclusions being silent). The
+      training-step exclusion-notice design is now locked (see "Resolved — final category list (locked)"): the only
+      surfaced training category is `excluded_not_in_any_source`.
 
 ### Step 4: Confirm & Generate
 
@@ -723,12 +740,12 @@ See "Legacy Parity: Notices, Auto-Selection, Validation & Empty States" for deta
       and the new flow's `DraftProgressService.getCompleteBookIds()`, so the two stay in lockstep. Auto-selected target
       books are paired into every training source that contains them; the `new_draft.training_books.auto_selected`
       notice is shown and cleared once the user deselects every target training book.
-- [~] Re-derive and surface "hidden / unusable book" notices from the new chapter-level gating (not a 1:1 port);
-  decide the final category list. **Draft step done** (see "Drafting book exclusions & notices": surfaces
-  `no_source_content` + `not_in_target`, silently drops `non_canonical`). **Training step partially done**: target
-  books absent from every training source are withheld and surfaced (`excluded_not_in_any_source`, legacy's
-  `unusableTrainingSourceBooks`); still TODO are the other training categories (e.g. training-source books not in
-  the target — legacy's `unusableTrainingTargetBooks`) and locking the final category list across both steps.
+- [x] Re-derive and surface "hidden / unusable book" notices from the new chapter-level gating (not a 1:1 port);
+      decide the final category list. **Done** — the final category list is locked across both steps (see the
+      "Resolved — final category list (locked)" bullet under "Hidden / unusable books" notices). Draft step surfaces
+      `no_source_content` + `not_in_target` and silently drops `non_canonical`; training step surfaces
+      `excluded_not_in_any_source`. The remaining legacy category (`unusableTrainingTargetBooks`) was decided "no"
+      (see the `[decided: no]` item below). Both steps render the collapsed `books_hidden.show_why` expander.
 - [x] Port the custom Serval config notice (`servalConfig != null`) to Step 4
 - [x] Restore per-book training-pair validation as a training-step forward gate. Every selected target training book
       must be selected in at least one training source; otherwise advancing is blocked with
@@ -762,7 +779,8 @@ From the feature review of this branch; both are outside the wizard itself.
       "N books are hidden — show why" expander like legacy. **Done:** both steps now render a collapsed
       `books_hidden.show_why` expander (`new-draft.component.html:50`, `:118`) gated on
       `draftingExclusionsExpanded` / `trainingExclusionsExpanded`, so the full book lists only appear when expanded.
-      The broader "lock the final notice design / category list" question remains open (see the `[~]` item above).
+      The broader "lock the final notice design / category list" question is now resolved (see the
+      "Re-derive and surface hidden/unusable book notices" item above).
 
 ### Work that still needs to be defined
 
