@@ -263,8 +263,6 @@
     "reference_books": "Reference books",
     "summary": {
       "example_translations": "Language training data",
-      "source_language_examples": "Source language examples — {{ language }}",
-      "translation_language_examples": "Translation language examples — {{ language }}",
       "no_training_books": "No training books selected.",
       "custom_configurations_apply": "Custom draft configurations have been applied by an administrator.",
       "settings": "Settings",
@@ -273,7 +271,10 @@
       "settings_placeholder": "You will be able to configure email notifications and other options here.",
       "example_translations_subtitle": "Scripture Forge uses training data (example translations) to learn how to translate from {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} into {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}.",
       "email_me": "Email me at {{ email }} when the draft is finished.",
-      "draft_heading": "Translate {{ books }} in {{ sourceLanguage }} into {{ targetLanguage }}"
+      "draft_title": "Draft {{ books }}",
+      "draft_books": "Draft books",
+      "training_books": "Training books",
+      "draft_books_subtitle": "The following books in {{ boldStart }}{{ source }}{{ boldEnd }} will be translated from {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} to {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}"
     },
     "pending_updates": {
       "heading": "Sync before drafting",

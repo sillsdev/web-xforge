@@ -61,8 +61,6 @@ interface ChapterInputError {
   params?: object;
 }
 
-type TargetTrainingItem = { kind: 'book'; bookId: string; chapterRange: string } | { kind: 'range'; label: string };
-
 function formatChapterRange(range: string): string {
   return range.replace(/,/g, ', ');
 }
@@ -865,57 +863,31 @@ export class NewDraftComponent {
       });
   }
 
-  get draftingItemsFormatted(): { type: 'element' | 'literal'; value: string }[] {
-    const items = this.draftingItems.map(item => {
+  /** Selected drafting book names with chapter ranges (for partially-drafted books), as bulleted-list items. */
+  get draftingBookListItems(): string[] {
+    return this.draftingItems.map(item => {
       const bookName = this.i18n.localizeBook(item.bookId);
-      return item.chapterRange ? `${bookName} (${item.chapterRange})` : bookName;
+      return item.chapterRange != null ? `${bookName} (${item.chapterRange})` : bookName;
     });
-    return this.i18n.enumerateListParts(items);
   }
 
-  get draftHeadingParts(): { text: string; id?: string }[] {
-    return this.i18n.interpolateVariables('new_draft.summary.draft_heading');
+  /** Selected drafting book names without chapter detail, as a locale-aware conjunction list (for the page title). */
+  get draftingBookNamesFormatted(): string {
+    const selectedRange = this.logicHandler.selectedDraftingScriptureRange$.getValue();
+    const names = Array.from(selectedRange.books.keys())
+      .sort((a, b) => Canon.bookIdToNumber(a) - Canon.bookIdToNumber(b))
+      .map(bookId => this.i18n.localizeBook(bookId));
+    return this.i18n.enumerateList(names);
   }
 
-  /** Returns items for the "Your translation" training section in canonical order.
-   * Consecutive full-book selections are collapsed into a single range label. */
-  get targetTrainingItems(): TargetTrainingItem[] {
-    const selectedRange = this.logicHandler.selectedTargetTrainingScriptureRange$.getValue();
-    const availableRange = this.logicHandler.availableTargetTrainingScriptureRange$.getValue();
-    const result: TargetTrainingItem[] = [];
-    let pendingBookNumbers: number[] = [];
-
-    const flushPending = (): void => {
-      if (pendingBookNumbers.length > 0) {
-        result.push({ kind: 'range', label: this.i18n.formatAndLocalizeBookRange(pendingBookNumbers) });
-        pendingBookNumbers = [];
-      }
-    };
-
-    const sortedEntries = Array.from(selectedRange.books.entries()).sort(
-      ([a], [b]) => Canon.bookIdToNumber(a) - Canon.bookIdToNumber(b)
-    );
-    for (const [bookId, selected] of sortedEntries) {
-      const available = availableRange.books.get(bookId);
-      const isPartial = available != null && available.difference(selected).count() > 0;
-      if (isPartial) {
-        flushPending();
-        result.push({ kind: 'book', bookId, chapterRange: formatChapterRange(selected.toString()) });
-      } else {
-        pendingBookNumbers.push(Canon.bookIdToNumber(bookId));
-      }
-    }
-    flushPending();
-    return result;
-  }
-
-  get sourceTrainingSections(): { projectRef: string; displayName: string; bookNumbers: number[] }[] {
+  /** One row per training source that has selected books, for the summary's training-books table. */
+  get sourceTrainingSections(): { projectRef: string; shortName: string; bookNumbers: number[] }[] {
     return this.trainingSources
       .map(source => {
         const bookIds = this.logicHandler.selectedTrainingSourceBooks$.getValue()[source.projectRef] ?? [];
         return {
           projectRef: source.projectRef,
-          displayName: projectLabel(source),
+          shortName: source.shortName,
           bookNumbers: bookIds.map(id => Canon.bookIdToNumber(id)).sort((a, b) => a - b)
         };
       })
@@ -924,6 +896,12 @@ export class NewDraftComponent {
 
   get draftingSourceName(): string {
     return this.logicHandler.sources?.draftingSources[0]?.shortName ?? '';
+  }
+
+  /** The drafting source's "shortName - name" label (shown in the draft-books summary subtitle). */
+  get draftingSourceLabel(): string {
+    const draftingSource = this.logicHandler.sources?.draftingSources[0];
+    return draftingSource != null ? projectLabel(draftingSource) : '';
   }
 
   get sourceLanguageDisplay(): string {
@@ -946,16 +924,21 @@ export class NewDraftComponent {
     return projectData != null ? projectLabel(projectData) : '';
   }
 
-  get targetTrainingFormattedDisplay(): string {
-    return this.targetTrainingItems
-      .map(item =>
-        item.kind === 'book' ? `${this.i18n.localizeBook(item.bookId)} (ch. ${item.chapterRange})` : item.label
-      )
-      .join(', ');
+  /** The target project's short name (the target column in the summary's training-books table). */
+  get targetShortName(): string {
+    return this.activatedProjectService.projectDoc?.data?.shortName ?? '';
   }
 
-  get hasNoTrainingData(): boolean {
-    return this.logicHandler.selectedTargetTrainingScriptureRange$.getValue().books.size === 0;
+  /** Plain language name (no tag) for the training-source column header. Matches the legacy stepper's summary. */
+  get sourceTrainingLanguageName(): string {
+    const tag = this.trainingSources[0]?.writingSystem?.tag;
+    return tag != null ? (this.i18n.getLanguageDisplayName(tag) ?? tag) : '';
+  }
+
+  /** Plain language name (no tag) for the target column header. */
+  get targetLanguageName(): string {
+    const tag = this.activatedProjectService.projectDoc?.data?.writingSystem?.tag;
+    return tag != null ? (this.i18n.getLanguageDisplayName(tag) ?? tag) : '';
   }
 
   /** Whether an administrator has applied a custom Serval config to this project (shown as a notice on the summary). */

@@ -210,93 +210,93 @@
         </div>
       }
     } @else if (page === "suffix") {
+      <h1>{{ t("summary.draft_title", { books: draftingBookNamesFormatted }) }}</h1>
+
       <mat-card class="summary-card">
         <mat-card-content>
-          <h1 class="draft-heading semi-bold">
-            <!-- Localized heading parts: {1} for books, {2} for source, {3} for target -->
-            @for (part of draftHeadingParts; track $index) {
-              <!-- prettier-ignore -->
-              @if (part.id === "books") {
-                <!-- Render formatted books with locale-aware list conjunction -->
-                @for (bookPart of draftingItemsFormatted; track $index) {
-                  @if (bookPart.type === "element") {
-                    <strong>{{ bookPart.value }}</strong>
-                  } 
-                  <!-- prettier-ignore -->
-                  @else {{{ bookPart.value }}}
-                }
-              }
-              @else if (part.id === "sourceLanguage") {
-                <strong>{{ draftingSourceName }}</strong>
-              } @else if (part.id === "targetLanguage") {
-                <strong>{{ targetLanguageDisplay }}</strong>
-              } @else {
-                {{ part.text }}
-              }
+          <div class="card-header">
+            <div class="card-header-text">
+              <h1>{{ t("summary.draft_books") }}</h1>
+              <p
+                class="summary-subtitle semi-bold"
+                [innerHTML]="
+                  i18n.translateAndInsertTags('new_draft.summary.draft_books_subtitle', {
+                    source: draftingSourceLabel,
+                    sourceLanguage: sourceLanguageDisplay,
+                    targetLanguage: targetLanguageDisplay
+                  })
+                "
+              ></p>
+            </div>
+            <button mat-button color="primary" class="card-header-action" (click)="goToPage('draft_books')">
+              <mat-icon>edit</mat-icon>{{ t("summary.choose_different_books") }}
+            </button>
+          </div>
+          <ul class="draft-books-list">
+            @for (item of draftingBookListItems; track item) {
+              <li>{{ item }}</li>
             }
-          </h1>
-          <button mat-button color="primary" (click)="goToPage('draft_books')">
-            <mat-icon>edit</mat-icon>{{ t("summary.choose_different_books") }}
-          </button>
+          </ul>
         </mat-card-content>
       </mat-card>
 
       <mat-card class="summary-card">
         <mat-card-content>
-          <h1>{{ t("summary.example_translations") }}</h1>
-          <p
-            class="summary-subtitle semi-bold"
-            [innerHTML]="
-              i18n.translateAndInsertTags('new_draft.summary.example_translations_subtitle', {
-                sourceLanguage: sourceLanguageDisplay,
-                targetLanguage: targetLanguageDisplay
-              })
-            "
-          ></p>
-          <div class="training-columns">
-            <div class="training-column">
-              <h3 class="column-header">
-                {{ t("summary.source_language_examples", { language: sourceLanguageDisplay }) }}
-              </h3>
-              @if (sourceTrainingSections.length === 0) {
-                <p class="summary-empty">{{ t("summary.no_training_books") }}</p>
-              } @else {
-                @for (source of sourceTrainingSections; track source.projectRef) {
-                  <div class="training-source-row">
-                    <strong class="semi-bold">{{ source.displayName }}</strong>
-                    <span class="book-range-label">{{ i18n.formatAndLocalizeBookRange(source.bookNumbers) }}</span>
-                  </div>
-                }
-              }
+          <div class="card-header">
+            <div class="card-header-text">
+              <h1>{{ t("summary.example_translations") }}</h1>
+              <p
+                class="summary-subtitle semi-bold"
+                [innerHTML]="
+                  i18n.translateAndInsertTags('new_draft.summary.example_translations_subtitle', {
+                    sourceLanguage: sourceLanguageDisplay,
+                    targetLanguage: targetLanguageDisplay
+                  })
+                "
+              ></p>
             </div>
-            <div class="column-divider"></div>
-            <div class="training-column">
-              <h3 class="column-header">
-                {{ t("summary.translation_language_examples", { language: targetLanguageDisplay }) }}
-              </h3>
-              @if (hasNoTrainingData) {
-                <p class="summary-empty">{{ t("summary.no_training_books") }}</p>
-              } @else {
-                <div class="training-source-row">
-                  <strong class="semi-bold">{{ targetProjectDisplayName }}</strong>
-                  <span class="book-range-label">{{ targetTrainingFormattedDisplay }}</span>
-                </div>
-              }
-            </div>
+            <button mat-button color="primary" class="card-header-action" (click)="goToPage('training_books')">
+              <mat-icon>edit</mat-icon>{{ t("summary.choose_different_training_data") }}
+            </button>
           </div>
-          @if (selectedTrainingDataFileTitles.length > 0) {
-            <div class="summary-training-files">
-              <h3 class="column-header">{{ t("training_files") }}</h3>
-              <ul>
-                @for (title of selectedTrainingDataFileTitles; track title) {
-                  <li>{{ title }}</li>
+          @if (sourceTrainingSections.length === 0) {
+            <p class="summary-empty">{{ t("summary.no_training_books") }}</p>
+          } @else {
+            <table class="summary-table">
+              <thead>
+                <tr>
+                  <th>{{ t("summary.training_books") }}</th>
+                  <th>{{ sourceTrainingLanguageName }}</th>
+                  <th>{{ targetLanguageName }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (source of sourceTrainingSections; track source.projectRef) {
+                  <tr>
+                    <td>{{ i18n.formatAndLocalizeBookRange(source.bookNumbers) }}</td>
+                    <td>{{ source.shortName }}</td>
+                    <td>{{ targetShortName }}</td>
+                  </tr>
                 }
-              </ul>
-            </div>
+              </tbody>
+            </table>
           }
-          <button mat-button color="primary" (click)="goToPage('training_books')">
-            <mat-icon>edit</mat-icon>{{ t("summary.choose_different_training_data") }}
-          </button>
+          @if (selectedTrainingDataFileTitles.length > 0) {
+            <table class="summary-table">
+              <thead>
+                <tr>
+                  <th>{{ t("training_files") }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (title of selectedTrainingDataFileTitles; track title) {
+                  <tr>
+                    <td>{{ title }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
         </mat-card-content>
       </mat-card>
 
