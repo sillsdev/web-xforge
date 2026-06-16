@@ -41,7 +41,7 @@ import { isEqual } from 'lodash-es';
 import Quill, { Bounds, Delta, Range } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
-import { EditorTabGroupType } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
+import { EditorTabGroupType, editorTabGroupTypes } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
 import { EditorTabPersistData } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab-persist-data';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { BIBLICAL_TERM_TAG_ICON, NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
@@ -127,6 +127,7 @@ import { CopyrightBannerComponent } from '../../shared/copyright-banner/copyrigh
 import { NoticeComponent } from '../../shared/notice/notice.component';
 import { expectedBookChapters } from '../../shared/progress-service/progress.service';
 import {
+  FlatTabInfo,
   TabAddRequestService,
   TabFactoryService,
   TabGroup,
@@ -347,6 +348,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private resizeObserver?: ResizeObserver;
   private scrollSubscription?: Subscription;
   private tabStateInitialized$ = new BehaviorSubject<boolean>(false);
+  private visibleTabGroups: EditorTabGroupType[] = editorTabGroupTypes.slice();
   private readonly fabDiameter = 40;
   readonly fabVerticalCushion = 5;
 
@@ -489,14 +491,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   get defaultShareRole(): SFProjectRole {
     return SF_DEFAULT_TRANSLATE_SHARE_ROLE;
-  }
-
-  get showSource(): boolean {
-    return this.hasSource && this.hasSourceViewRight;
-  }
-
-  get showPersistedTabsOnSource(): boolean {
-    return this.tabState.getTabGroup('source')?.tabs.some(tab => tab.persist) ?? false;
   }
 
   get hasEditRight(): boolean {
@@ -923,10 +917,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     ])
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(([breakpointState]) => {
-        if (breakpointState.matches && this.showSource) {
+        if (breakpointState.matches) {
+          this.visibleTabGroups = ['target'];
           this.tabState.consolidateTabGroups('target');
         } else {
-          this.tabState.deconsolidateTabGroups();
+          this.visibleTabGroups = editorTabGroupTypes.slice();
+          if (this.tabState.deconsolidateTabGroups()) {
+            this.addBlankTab();
+          }
         }
       });
   }
@@ -1317,7 +1315,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   /**
    * Initializes the tab state from persisted tabs plus non-persisted tabs (source and target projects),
-   * then listens for tab state changes to update the persisted tabs.
+   * then listens for tab state changes to update the persisted tabs or add the blank tab.
    * Returns an observable that can be piped from projectDoc changes, allowing a single call to `subscribe`,
    * avoiding potential NG0911 error 'View has already been destroyed'.
    */
@@ -1393,7 +1391,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             tooltip: tabData.projectDoc?.data?.name
           });
 
-          if (tabData.groupId === 'source' && canViewSource) {
+          if (tabData.groupId === 'source') {
             sourceTabGroup.addTab(tab, tabData.isSelected);
           } else {
             targetTabGroup.addTab(tab, tabData.isSelected);
@@ -1430,6 +1428,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           }
         });
 
+        // Handle the showing/hiding of the blank tab
+        setTimeout(() => {
+          this.addBlankTab(tabs);
+        }, 0);
+
         return tabsToPersist;
       }),
       tap((tabs: EditorTabPersistData[]) => {
@@ -1439,6 +1442,24 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     // Combine so both observables are triggered with single subscription
     return merge(storeToState$, stateToStore$);
+  }
+
+  private addBlankTab(tabs: FlatTabInfo<EditorTabGroupType, EditorTabInfo>[] | undefined = undefined): void {
+    for (const groupId of this.visibleTabGroups) {
+      // For each tab group (i.e. source and target)
+      const blankTab = this.tabState.getFirstTabOfTypeIndex('blank-tab', groupId);
+      const groupTabs: EditorTabInfo[] =
+        tabs == null
+          ? (this.tabState.getTabGroup(groupId)?.tabs ?? []).slice()
+          : tabs.filter(t => t.groupId === groupId);
+      if (groupTabs.length === 0 && blankTab == null) {
+        // Add the blank tab, if there are no in tabs the tab group
+        this.tabState.addTab(groupId, this.editorTabFactory.createTab('blank-tab'));
+      } else if (groupTabs.length > 1 && blankTab != null) {
+        // Remove the blank tab if the tab group has a non-blank tab
+        this.tabState.removeTab(groupId, blankTab.index);
+      }
+    }
   }
 
   private async saveNote(params: SaveNoteParameters): Promise<void> {
@@ -1548,13 +1569,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.draftOptionsService.areFormattingOptionsAvailableButUnselected(draftBuild);
 
     if (draftShouldBeVisible && canViewDrafts && draftBuild != null && !isBlockedByFormattingOptions) {
-      // URL may indicate to select the 'draft' tab (such as when coming from generate draft page)
-      const groupIdToAddTo: EditorTabGroupType = this.showSource ? 'source' : 'target';
-
-      // Add to 'source' (or 'target' if showSource is false) tab group if no existing draft tab
+      // Add to 'source' tab group if no existing draft tab
       if (existingDraftTab == null) {
         this.tabState.addTab(
-          groupIdToAddTo,
+          'source',
           this.editorTabFactory.createTab('draft', {
             tooltip: `Draft - ${this.editorHistoryService.formatTimestamp(
               draftBuild?.additionalInfo?.dateFinished,
@@ -1569,7 +1587,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         // Remove 'draft-active' and 'draft-timestamp' query string from url when another tab from group is selected
         this.tabState.tabs$
           .pipe(
-            filter(tabs => tabs.some(tab => tab.groupId === groupIdToAddTo && tab.type !== 'draft' && tab.isSelected)),
+            filter(tabs => tabs.some(tab => tab.groupId === 'source' && tab.type !== 'draft' && tab.isSelected)),
             take(1)
           )
           .subscribe(() => {
@@ -1596,8 +1614,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true &&
       this.projectUserConfigDoc?.data?.biblicalTermsEnabled === true
     ) {
-      const groupIdToAddTo: EditorTabGroupType = this.showSource ? 'source' : 'target';
-      this.tabState.addTab(groupIdToAddTo, this.editorTabFactory.createTab('biblical-terms'), false);
+      this.tabState.addTab('source', this.editorTabFactory.createTab('biblical-terms'), false);
       await this.projectUserConfigDoc?.submitJson0Op(op => op.unset(p => p.biblicalTermsEnabled));
     }
   }
