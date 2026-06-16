@@ -49,7 +49,7 @@
         class="semi-bold"
       ></h2>
       @if (availableDraftingBooks.length === 0) {
-        <app-notice icon="info" type="info">{{ t("draft_books.no_available_books") }}</app-notice>
+        <app-notice icon="info" mode="basic" type="light">{{ t("draft_books.no_available_books") }}</app-notice>
       } @else {
         <app-book-multi-select
           [availableBooks]="availableDraftingBooks"
@@ -59,7 +59,7 @@
         ></app-book-multi-select>
       }
       @if (draftingExclusionNotices.length > 0) {
-        <app-notice icon="info" type="info" class="books-hidden">
+        <app-notice icon="info" mode="basic" type="light" class="books-hidden">
           <div class="books-hidden-container">
             <span
               class="books-hidden-message"
@@ -118,7 +118,7 @@
         class="semi-bold"
       ></h2>
       @if (availableTargetTrainingBooks.length === 0) {
-        <app-notice icon="info" type="info">{{ t("training_books.no_target_books") }}</app-notice>
+        <app-notice icon="info" mode="basic" type="light">{{ t("training_books.no_target_books") }}</app-notice>
       } @else {
         <!-- Rich mode (not basic): shows per-book translation progress and OT/NT/DC bulk-select, since how complete a
         book is drives whether it makes good training data. Requires the target projectId to fetch progress. -->
@@ -131,10 +131,10 @@
         ></app-book-multi-select>
       }
       @if (trainingBooksWereAutoSelected) {
-        <app-notice icon="info" type="info">{{ t("training_books.auto_selected") }}</app-notice>
+        <app-notice icon="info" mode="basic" type="light">{{ t("training_books.auto_selected") }}</app-notice>
       }
       @if (hasTargetTrainingBooksWithoutSource) {
-        <app-notice icon="info" type="info" class="books-hidden">
+        <app-notice icon="info" mode="basic" type="light" class="books-hidden">
           <div class="books-hidden-container">
             <span
               class="books-hidden-message"
@@ -312,7 +312,7 @@
       </mat-card>
 
       @if (isCustomConfigSet) {
-        <app-notice icon="info" type="info">{{ t("summary.custom_configurations_apply") }}</app-notice>
+        <app-notice icon="info" mode="basic" type="light">{{ t("summary.custom_configurations_apply") }}</app-notice>
       }
 
       @if (featureFlags.showDeveloperTools.enabled) {
