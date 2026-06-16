@@ -400,6 +400,36 @@ describe('NewDraftLogicHandler', () => {
     });
   });
 
+  describe('partial-training offering tracks the drafting selection', () => {
+    // A book is only offered for partial target training while it is itself being drafted; otherwise the whole book
+    // is available for training with no per-chapter restriction. This must still hold after the drafting selection
+    // changes and the user returns to the training step — the offering can't be left over from the earlier selection.
+    it('stops offering a book for partial target training once it is no longer being drafted', async () => {
+      const env = new TestEnvironment(teamStartingToTranslateGenesis);
+      await env.waitForInit();
+
+      // Draft GEN (partial: source GEN1-50, target GEN1-5) and MAT, so deselecting GEN later still leaves a valid
+      // drafting selection (the step can't be left with nothing selected).
+      env.logicHandler.selectDraftingBooks(['GEN', 'MAT']);
+      expect(env.booksOfferedForPartialDrafting).toEqual(['GEN', 'MAT']);
+
+      // On the training step, select GEN to train on — it is offered for partial target training.
+      env.logicHandler.setInputMode('training_books');
+      env.logicHandler.selectTargetTrainingBooks(['GEN']);
+      expect(env.booksOfferedForPartialTargetTraining).toEqual(['GEN']);
+
+      // Go back and drop GEN from the drafting selection (MAT remains, so the step is still valid).
+      env.logicHandler.setInputMode('draft_books');
+      env.logicHandler.selectDraftingBooks(['MAT']);
+      expect(env.booksOfferedForPartialDrafting).toEqual(['MAT']);
+
+      // Return to the training step. GEN is no longer being drafted, so it must no longer be offered for partial
+      // target training.
+      env.logicHandler.setInputMode('training_books');
+      expect(env.booksOfferedForPartialTargetTraining).not.toContain('GEN');
+    });
+  });
+
   describe('training book selection', () => {
     it('defaults to previous training data when going to the training step', async () => {
       const testState = teamStartingToTranslateGenesis;

@@ -710,6 +710,15 @@ export class NewDraftLogicHandler {
       this.selectedTargetTrainingScriptureRange$.getValue().difference(this.selectedDraftingScriptureRange$.getValue())
     );
 
+    // Re-derive the partial-training offering from the current selection: a book is only offered for partial target
+    // training while it is being drafted, so a book dropped from the drafting selection must drop out here too
+    // (otherwise it would keep a stale per-chapter input when the user returns to the training step).
+    this.booksOfferedForPartialTargetTraining$.next(
+      Array.from(this.selectedTargetTrainingScriptureRange$.getValue().books.keys()).filter(bookId =>
+        this.isBookEligibleForPartialTargetTraining(bookId)
+      )
+    );
+
     // Limit available and selected training source books to not exceed available target training scripture range
     const availableTargetRange = this.availableTargetTrainingScriptureRange$.getValue();
     this.availableTrainingSourceBooks$.next(
