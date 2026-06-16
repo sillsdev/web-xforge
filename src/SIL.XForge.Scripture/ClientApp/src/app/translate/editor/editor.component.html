@@ -2,11 +2,7 @@
   @if (translationSuggestionsEnabled && userHasGeneralEditRight) {
     <app-smt-retirement-notice></app-smt-retirement-notice>
   }
-  <div
-    class="content"
-    [class.reverse-columns]="!isTargetTextRight"
-    [class.target-only]="!showSource && !showPersistedTabsOnSource"
-  >
+  <div class="content" [class.reverse-columns]="!isTargetTextRight">
     <div class="toolbar">
       <div class="toolbar-options">
         <app-book-chapter-chooser
@@ -16,32 +12,28 @@
           [(chapter)]="chapter"
           [chapters]="chapters"
         ></app-book-chapter-chooser>
-        @if (showSource || translatorSettingsEnabled) {
-          <div class="toolbar-separator" [ngClass]="{ 'hide-lt-sm': !translatorSettingsEnabled }">&nbsp;</div>
-          @if (showSource) {
-            <button
-              mat-icon-button
-              appBlurOnClick
-              type="button"
-              (click)="isTargetTextRight = !isTargetTextRight"
-              [matTooltip]="t('swap_source_and_target')"
-              class="hide-lt-sm"
-            >
-              <mat-icon>swap_horiz</mat-icon>
-            </button>
-          }
-          @if (translatorSettingsEnabled) {
-            <button
-              mat-icon-button
-              appBlurOnClick
-              type="button"
-              id="settings-btn"
-              (click)="openTranslatorSettings()"
-              [matTooltip]="t('configure_translator_settings')"
-            >
-              <mat-icon>settings</mat-icon>
-            </button>
-          }
+        <div class="toolbar-separator" [ngClass]="{ 'hide-lt-sm': !translatorSettingsEnabled }">&nbsp;</div>
+        <button
+          mat-icon-button
+          appBlurOnClick
+          type="button"
+          (click)="isTargetTextRight = !isTargetTextRight"
+          [matTooltip]="t('swap_source_and_target')"
+          class="hide-lt-sm"
+        >
+          <mat-icon>swap_horiz</mat-icon>
+        </button>
+        @if (translatorSettingsEnabled) {
+          <button
+            mat-icon-button
+            appBlurOnClick
+            type="button"
+            id="settings-btn"
+            (click)="openTranslatorSettings()"
+            [matTooltip]="t('configure_translator_settings')"
+          >
+            <mat-icon>settings</mat-icon>
+          </button>
         }
         @if (canShare) {
           <div class="toolbar-separator">&nbsp;</div>
@@ -82,6 +74,13 @@
                   [verse]="verse"
                   [projectId]="projectId"
                 ></app-biblical-terms>
+              }
+              @case ("blank-tab") {
+                <div class="blank-tab-container">
+                  <app-notice icon="help_outline" type="info" mode="outline">
+                    {{ t("blank_tab_notice") }}
+                  </app-notice>
+                </div>
               }
               @case ("project-resource") {
                 <app-editor-resource
