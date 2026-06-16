@@ -46,6 +46,7 @@
             targetLanguage: targetLanguageDisplay
           })
         "
+        class="semi-bold"
       ></h2>
       @if (availableDraftingBooks.length === 0) {
         <app-notice icon="info" type="info">{{ t("draft_books.no_available_books") }}</app-notice>
@@ -114,6 +115,7 @@
             targetLanguage: targetLanguageDisplay
           })
         "
+        class="semi-bold"
       ></h2>
       @if (availableTargetTrainingBooks.length === 0) {
         <app-notice icon="info" type="info">{{ t("training_books.no_target_books") }}</app-notice>
@@ -210,7 +212,7 @@
     } @else if (page === "suffix") {
       <mat-card class="summary-card">
         <mat-card-content>
-          <h1 class="draft-heading">
+          <h1 class="draft-heading semi-bold">
             <!-- Localized heading parts: {1} for books, {2} for source, {3} for target -->
             @for (part of draftHeadingParts; track $index) {
               <!-- prettier-ignore -->
@@ -243,7 +245,7 @@
         <mat-card-content>
           <h1>{{ t("summary.example_translations") }}</h1>
           <p
-            class="summary-subtitle"
+            class="summary-subtitle semi-bold"
             [innerHTML]="
               i18n.translateAndInsertTags('new_draft.summary.example_translations_subtitle', {
                 sourceLanguage: sourceLanguageDisplay,
@@ -261,7 +263,7 @@
               } @else {
                 @for (source of sourceTrainingSections; track source.projectRef) {
                   <div class="training-source-row">
-                    <strong>{{ source.displayName }}</strong>
+                    <strong class="semi-bold">{{ source.displayName }}</strong>
                     <span class="book-range-label">{{ i18n.formatAndLocalizeBookRange(source.bookNumbers) }}</span>
                   </div>
                 }
@@ -276,7 +278,7 @@
                 <p class="summary-empty">{{ t("summary.no_training_books") }}</p>
               } @else {
                 <div class="training-source-row">
-                  <strong>{{ targetProjectDisplayName }}</strong>
+                  <strong class="semi-bold">{{ targetProjectDisplayName }}</strong>
                   <span class="book-range-label">{{ targetTrainingFormattedDisplay }}</span>
                 </div>
               }
@@ -318,14 +320,14 @@
           <mat-card-content>
             <h1>Developer options</h1>
             <div>
-              <mat-checkbox [(ngModel)]="fastTraining"
-                >Fast Training - saves time but greatly reduces accuracy</mat-checkbox
-              >
+              <mat-checkbox [(ngModel)]="fastTraining">
+                <strong class="semi-bold">Fast Training</strong> - saves time but greatly reduces accuracy
+              </mat-checkbox>
             </div>
             <div>
-              <mat-checkbox [(ngModel)]="useEcho"
-                >Echo Translation Engine - echoes source text instead of translating</mat-checkbox
-              >
+              <mat-checkbox [(ngModel)]="useEcho">
+                <strong class="semi-bold">Echo Translation Engine</strong> - echoes source text instead of translating
+              </mat-checkbox>
             </div>
           </mat-card-content>
         </mat-card>
