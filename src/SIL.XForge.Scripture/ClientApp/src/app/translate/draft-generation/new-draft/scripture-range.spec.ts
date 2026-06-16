@@ -18,6 +18,11 @@ describe('ScriptureRange', () => {
       expect(() => new ChapterSet('1-3,foo')).toThrowError(/Invalid chapter range/);
     });
 
+    it('throws on a malformed range with more than one separator', () => {
+      // Must not silently truncate "1-3-5" to "1-3".
+      expect(() => new ChapterSet('1-3-5')).toThrowError(/Invalid chapter range/);
+    });
+
     it('throws when start > end', () => {
       expect(() => new ChapterSet('5-3')).toThrowError(/Start chapter must be less than or equal to end chapter/);
     });

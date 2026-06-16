@@ -12,7 +12,13 @@ export class ChapterSet {
       if (range === '') return;
       const ranges = range.split(ChapterSet.chapterRangeSeparator);
       for (const range of ranges) {
-        const [startString, endString] = range.split(ChapterSet.chapterRangeStartEndSeparator);
+        const parts = range.split(ChapterSet.chapterRangeStartEndSeparator);
+        // A token is either a single chapter ("5") or a start-end pair ("1-3"). More than one separator (e.g.
+        // "1-3-5") is malformed and must be rejected rather than silently truncated to the first two parts.
+        if (parts.length > 2) {
+          throw new Error(`Invalid chapter range: ${range}`);
+        }
+        const [startString, endString] = parts;
         if (!(/^\d+$/.test(startString) && (endString == null || /^\d+$/.test(endString)))) {
           throw new Error(`Invalid chapter range: ${range}`);
         }
