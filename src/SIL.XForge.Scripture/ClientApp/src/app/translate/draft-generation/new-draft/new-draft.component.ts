@@ -409,9 +409,14 @@ export class NewDraftComponent {
     );
   }
 
+  /** Index of the current page in PAGES_BY_ORDER, or -1 on non-step pages (loading, pending updates, abort). */
+  private get currentPageIndex(): number {
+    return PAGES_BY_ORDER.findIndex(p => p.page === this.page);
+  }
+
   /** The 1-based number of the current wizard step, or null on non-step pages (loading, pending updates, abort). */
   get stepNumber(): number | null {
-    const index = PAGES_BY_ORDER.findIndex(p => p.page === this.page);
+    const index = this.currentPageIndex;
     return index >= 0 ? index + 1 : null;
   }
 
@@ -482,8 +487,7 @@ export class NewDraftComponent {
       }
     }
     this.stepError = null;
-    const currentIndex = PAGES_BY_ORDER.findIndex(p => p.page === this.page);
-    const newIndex = currentIndex + count;
+    const newIndex = this.currentPageIndex + count;
     if (newIndex < 0) {
       void this.router.navigate(['/projects', this.initData?.projectId, 'draft-generation']);
     } else if (newIndex < PAGES_BY_ORDER.length) {
@@ -555,42 +559,15 @@ export class NewDraftComponent {
     }
   }
 
-  get debugData(): unknown {
-    return {
-      status: this.logicHandler.status$.getValue(),
-      inputMode: this.logicHandler.inputMode$.getValue(),
-      availableDraftingScriptureRange: this.logicHandler.availableDraftingScriptureRange$.getValue().toString(),
-      selectedDraftingScriptureRange: this.logicHandler.selectedDraftingScriptureRange$.getValue().toString(),
-
-      availableTargetTrainingScriptureRange: this.logicHandler.availableTargetTrainingScriptureRange$
-        .getValue()
-        .toString(),
-      selectedTargetTrainingScriptureRange: this.logicHandler.selectedTargetTrainingScriptureRange$
-        .getValue()
-        .toString(),
-
-      booksOfferedForPartialDrafting: this.logicHandler.booksOfferedForPartialDrafting$.getValue(),
-      booksOfferedForPartialTargetTraining: this.logicHandler.booksOfferedForPartialTargetTraining$.getValue(),
-
-      trainingSourceBooks: this.logicHandler.trainingSourceBooks$.getValue(),
-      availableTrainingSourceBooks: this.logicHandler.availableTrainingSourceBooks$.getValue(),
-      selectedTrainingSourceBooks: this.logicHandler.selectedTrainingSourceBooks$.getValue()
-    };
-  }
-
   /**
-   * Maps a range's books to the `Book[]` shape the multi-select expects. With no `selectedIds`, every book is marked
-   * selected (the range itself is the selection); otherwise a book is selected iff its number is in `selectedIds`.
+   * Maps a range's books to the `Book[]` shape the multi-select expects. With no `selectedBookIds`, every book is
+   * marked selected (the range itself is the selection); otherwise a book is selected iff its id is in `selectedBookIds`.
    */
-  private toBookList(range: VerboseScriptureRange, selectedIds?: Set<number>): Book[] {
-    return scriptureRangeToBookListWithoutChapterDetail(range).map(id => {
-      const number = Canon.bookIdToNumber(id);
-      return { number, selected: selectedIds == null || selectedIds.has(number) };
-    });
-  }
-
-  private bookNumbersOf(range: VerboseScriptureRange): Set<number> {
-    return new Set(scriptureRangeToBookListWithoutChapterDetail(range).map(id => Canon.bookIdToNumber(id)));
+  private toBookList(range: VerboseScriptureRange, selectedBookIds?: Set<string>): Book[] {
+    return scriptureRangeToBookListWithoutChapterDetail(range).map(id => ({
+      number: Canon.bookIdToNumber(id),
+      selected: selectedBookIds == null || selectedBookIds.has(id)
+    }));
   }
 
   // Section: Drafting books selection
@@ -598,7 +575,7 @@ export class NewDraftComponent {
   get availableDraftingBooks(): Book[] {
     return this.toBookList(
       this.logicHandler.availableDraftingScriptureRange$.getValue(),
-      this.bookNumbersOf(this.logicHandler.selectedDraftingScriptureRange$.getValue())
+      new Set(this.logicHandler.selectedDraftingScriptureRange$.getValue().books.keys())
     );
   }
 
@@ -648,14 +625,17 @@ export class NewDraftComponent {
       }));
   }
 
+  /** Drops chapter-input errors for books that are no longer offered for partial selection (so have no input). */
+  private pruneChapterErrors(errors: Map<string, ChapterInputError>, offeredBookIds: string[]): void {
+    for (const bookId of errors.keys()) {
+      if (!offeredBookIds.includes(bookId)) errors.delete(bookId);
+    }
+  }
+
   onDraftingBookSelect(books: number[]): void {
     const selectedBookIds = books.map(b => Canon.bookNumberToId(b));
     this.logicHandler.selectDraftingBooks(selectedBookIds);
-    for (const bookId of this.draftingChapterErrors.keys()) {
-      if (!this.logicHandler.booksOfferedForPartialDrafting$.getValue().includes(bookId)) {
-        this.draftingChapterErrors.delete(bookId);
-      }
-    }
+    this.pruneChapterErrors(this.draftingChapterErrors, this.logicHandler.booksOfferedForPartialDrafting$.getValue());
     this.clearStepErrorIfResolved();
   }
 
@@ -719,7 +699,7 @@ export class NewDraftComponent {
   get availableTargetTrainingBooks(): Book[] {
     return this.toBookList(
       this.logicHandler.availableTargetTrainingScriptureRange$.getValue(),
-      this.bookNumbersOf(this.logicHandler.selectedTargetTrainingScriptureRange$.getValue())
+      new Set(this.logicHandler.selectedTargetTrainingScriptureRange$.getValue().books.keys())
     );
   }
 
@@ -761,11 +741,10 @@ export class NewDraftComponent {
     const addedIds = [...newSelectedIds].filter(id => !previousSelectedTargetIds.has(id));
 
     this.logicHandler.selectTargetTrainingBooks([...newSelectedIds]);
-    for (const bookId of this.targetTrainingChapterErrors.keys()) {
-      if (!this.logicHandler.booksOfferedForPartialTargetTraining$.getValue().includes(bookId)) {
-        this.targetTrainingChapterErrors.delete(bookId);
-      }
-    }
+    this.pruneChapterErrors(
+      this.targetTrainingChapterErrors,
+      this.logicHandler.booksOfferedForPartialTargetTraining$.getValue()
+    );
 
     // Auto-select newly added target books in each training source; drop removed books
     for (const source of this.trainingSources) {
@@ -874,11 +853,8 @@ export class NewDraftComponent {
 
   /** Selected drafting book names without chapter detail, as a locale-aware conjunction list (for the page title). */
   get draftingBookNamesFormatted(): string {
-    const selectedRange = this.logicHandler.selectedDraftingScriptureRange$.getValue();
-    const names = Array.from(selectedRange.books.keys())
-      .sort((a, b) => Canon.bookIdToNumber(a) - Canon.bookIdToNumber(b))
-      .map(bookId => this.i18n.localizeBook(bookId));
-    return this.i18n.enumerateList(names);
+    // draftingItems is already canon-sorted, so reuse it rather than re-sorting the selected range here.
+    return this.i18n.enumerateList(this.draftingItems.map(item => this.i18n.localizeBook(item.bookId)));
   }
 
   /** One row per training source that has selected books, for the summary's training-books table. */

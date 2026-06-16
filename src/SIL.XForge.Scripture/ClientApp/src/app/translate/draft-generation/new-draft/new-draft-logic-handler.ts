@@ -607,8 +607,8 @@ export class NewDraftLogicHandler {
     const selectedTrainingSourceBooksByProjectId: { [key: string]: string[] } = {};
     for (const sourceScriptureRange of lastSelectedTrainingScriptureRanges) {
       if (sourceScriptureRange.projectId === targetProjectId) continue;
-      const previouslySelectedBooks = Array.from(
-        new VerboseScriptureRange(sourceScriptureRange.scriptureRange).books.keys()
+      const previouslySelectedBooks = scriptureRangeToBookListWithoutChapterDetail(
+        new VerboseScriptureRange(sourceScriptureRange.scriptureRange)
       );
       const booksAvailableForTraining =
         this.availableTrainingSourceBooks$.getValue()[sourceScriptureRange.projectId] ?? [];
@@ -627,7 +627,9 @@ export class NewDraftLogicHandler {
     );
     const previouslySelectedTargetBooks =
       savedTargetTrainingRange != null
-        ? Array.from(new VerboseScriptureRange(savedTargetTrainingRange.scriptureRange).books.keys())
+        ? scriptureRangeToBookListWithoutChapterDetail(
+            new VerboseScriptureRange(savedTargetTrainingRange.scriptureRange)
+          )
         : Array.from(new Set(Object.values(selectedTrainingSourceBooksByProjectId).flat()));
 
     // Run the books through the normal book-selection path so chapter defaults match a manual selection. Filter to
