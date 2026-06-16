@@ -1,3 +1,5 @@
+import { difference, intersection, union } from '../../../../xforge-common/util/set-util';
+
 /** Represents a potentially non-contiguous range of chapters, such as 1-3,7,10-12 */
 export class ChapterSet {
   static chapterRangeSeparator = ',';
@@ -68,19 +70,19 @@ export class ChapterSet {
 
   intersection(other: ChapterSet): ChapterSet {
     const result = new ChapterSet([]);
-    result.chapters = this.chapters.intersection(other.chapters);
+    result.chapters = intersection(this.chapters, other.chapters);
     return result;
   }
 
   union(other: ChapterSet): ChapterSet {
     const result = new ChapterSet([]);
-    result.chapters = this.chapters.union(other.chapters);
+    result.chapters = union(this.chapters, other.chapters);
     return result;
   }
 
   difference(other: ChapterSet): ChapterSet {
     const result = new ChapterSet([]);
-    result.chapters = this.chapters.difference(other.chapters);
+    result.chapters = difference(this.chapters, other.chapters);
     return result;
   }
 }
