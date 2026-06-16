@@ -33,6 +33,20 @@ export class EditorTabFactoryService implements TabFactoryService<EditorTabType,
           },
           tabOptions
         );
+      case 'blank-tab':
+        return Object.assign(
+          {
+            id,
+            type: 'blank-tab',
+            icon: 'tab',
+            headerText$: this.i18n.translate('editor_tab_factory.blank_tab_header'),
+            closeable: false,
+            movable: false,
+            persist: false,
+            unique: true
+          },
+          tabOptions
+        );
       case 'history':
         return Object.assign(
           {

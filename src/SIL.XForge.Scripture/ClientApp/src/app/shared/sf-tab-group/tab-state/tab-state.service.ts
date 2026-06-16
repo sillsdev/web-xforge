@@ -288,10 +288,12 @@ export class TabStateService<TGroupId extends string, T extends TabInfo<string>>
 
   /**
    * Restores tabs moved from last consolidation into their original groups.
+   *
+   * @returns `true` if the tabs were deconsolidated, `false ` if there was no need to.
    */
-  deconsolidateTabGroups(): void {
+  deconsolidateTabGroups(): boolean {
     if (this.tabsToDeconsolidate == null || this.lastConsolidationGroupId == null) {
-      return;
+      return false;
     }
 
     const groupFrom: TabGroup<TGroupId, T> | undefined = this.groups.get(this.lastConsolidationGroupId);
@@ -315,6 +317,7 @@ export class TabStateService<TGroupId extends string, T extends TabInfo<string>>
 
     this.tabsConsolidatedSource$.next(false);
     this.tabGroupsSource$.next(this.groups);
+    return true;
   }
 
   private flattenTabGroups(tabGroups: Map<TGroupId, TabGroup<TGroupId, T>>): FlatTabInfo<TGroupId, T>[] {

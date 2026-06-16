@@ -1228,17 +1228,6 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('user cannot edit a chapter source text visible', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setCurrentUser('user03');
-      env.setProjectUserConfig();
-      env.wait();
-      expect(env.bookName).toEqual('Matthew');
-      expect(env.component.canEdit).toBe(false);
-      expect(env.component.showSource).toBe(true);
-      env.dispose();
-    }));
-
     it('user cannot edit a chapter with permission', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setCurrentUser('user03');
@@ -3982,9 +3971,7 @@ describe('EditorComponent', () => {
   describe('tabs', () => {
     describe('tab group consolidation', () => {
       it('should call consolidateTabGroups for small screen widths once editor is loaded and tab state is initialized', fakeAsync(() => {
-        const env = new TestEnvironment(env => {
-          Object.defineProperty(env.component, 'showSource', { get: () => true });
-        });
+        const env = new TestEnvironment();
         const spyConsolidate = spyOn(env.component.tabState, 'consolidateTabGroups');
 
         expect(spyConsolidate).not.toHaveBeenCalled();
@@ -3999,9 +3986,7 @@ describe('EditorComponent', () => {
       }));
 
       it('should call deconsolidateTabGroups for large screen widths once editor is loaded and tab state is initialized', fakeAsync(() => {
-        const env = new TestEnvironment(env => {
-          Object.defineProperty(env.component, 'showSource', { get: () => true });
-        });
+        const env = new TestEnvironment();
         const spyDeconsolidate = spyOn(env.component.tabState, 'deconsolidateTabGroups');
         expect(spyDeconsolidate).not.toHaveBeenCalled();
         env.breakpointObserver.emitObserveValue(false);
@@ -4033,22 +4018,8 @@ describe('EditorComponent', () => {
         discardPeriodicTasks();
       }));
 
-      it('should not consolidate if showSource is false', fakeAsync(() => {
-        const env = new TestEnvironment(env => {
-          Object.defineProperty(env.component, 'showSource', { get: () => false });
-        });
-        const spyConsolidate = spyOn(env.component.tabState, 'consolidateTabGroups');
-
-        env.component['tabStateInitialized$'].next(true);
-        env.component['targetEditorLoaded$'].next();
-        expect(spyConsolidate).not.toHaveBeenCalled();
-        flush();
-      }));
-
       it('should not consolidate on second editor load', fakeAsync(() => {
-        const env = new TestEnvironment(env => {
-          Object.defineProperty(env.component, 'showSource', { get: () => true });
-        });
+        const env = new TestEnvironment();
 
         env.component['tabStateInitialized$'].next(true);
         env.component['targetEditorLoaded$'].next();
@@ -4164,10 +4135,8 @@ describe('EditorComponent', () => {
     });
 
     describe('updateDraftTabVisibility', () => {
-      it('should add the draft preview tab to source when available and "showSource" is true', fakeAsync(() => {
-        const env = new TestEnvironment(env => {
-          Object.defineProperty(env.component, 'showSource', { get: () => true });
-        });
+      it('should add the draft preview tab to source side', fakeAsync(() => {
+        const env = new TestEnvironment();
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         when(mockedSFProjectService.hasDraft(anything(), anything(), anything())).thenReturn(true);
         env.wait();
@@ -4183,29 +4152,8 @@ describe('EditorComponent', () => {
         env.dispose();
       }));
 
-      it('should add draft preview tab to target when available and "showSource" is false', fakeAsync(() => {
-        const env = new TestEnvironment(env => {
-          Object.defineProperty(env.component, 'showSource', { get: () => false });
-        });
-        when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
-        when(mockedSFProjectService.hasDraft(anything(), anything(), anything())).thenReturn(true);
-        env.wait();
-        env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
-        env.wait();
-
-        const targetTabGroup = env.component.tabState.getTabGroup('target');
-        expect(targetTabGroup?.tabs[1].type).toEqual('draft');
-
-        const sourceTabGroup = env.component.tabState.getTabGroup('source');
-        expect(sourceTabGroup?.tabs[1]).toBeUndefined();
-
-        env.dispose();
-      }));
-
       it('should not add draft preview tab when draft formatting (usfmConfig) is not set', fakeAsync(() => {
-        const env = new TestEnvironment(env => {
-          Object.defineProperty(env.component, 'showSource', { get: () => true });
-        });
+        const env = new TestEnvironment();
         env.setupProject({ translateConfig: { draftConfig: {} } });
         // Formatting options not selected, so draft tab should be blocked
         when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected(anything())).thenReturn(true);
@@ -4223,9 +4171,7 @@ describe('EditorComponent', () => {
       }));
 
       it('should hide source draft preview tab when switching to chapter with no draft', fakeAsync(() => {
-        const env = new TestEnvironment(env => {
-          Object.defineProperty(env.component, 'showSource', { get: () => true });
-        });
+        const env = new TestEnvironment();
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         when(mockedSFProjectService.hasDraft(anything(), anything(), anything())).thenReturn(true);
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
@@ -4246,9 +4192,7 @@ describe('EditorComponent', () => {
       }));
 
       it('should hide the draft preview tab when user is commenter', fakeAsync(() => {
-        const env = new TestEnvironment(env => {
-          Object.defineProperty(env.component, 'showSource', { get: () => true });
-        });
+        const env = new TestEnvironment();
         env.setCommenterUser();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
@@ -4261,23 +4205,21 @@ describe('EditorComponent', () => {
       }));
 
       it('should hide the target draft preview tab when switching to chapter with no draft', fakeAsync(() => {
-        const env = new TestEnvironment(env => {
-          Object.defineProperty(env.component, 'showSource', { get: () => false });
-        });
+        const env = new TestEnvironment();
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         when(mockedSFProjectService.hasDraft(anything(), anything(), anything())).thenReturn(true);
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
 
-        const targetTabGroup = env.component.tabState.getTabGroup('target');
-        expect(targetTabGroup?.tabs[1].type).toEqual('draft');
+        const sourceTabGroup = env.component.tabState.getTabGroup('source');
+        expect(sourceTabGroup?.tabs[1].type).toEqual('draft');
         expect(env.component.chapter).toBe(1);
 
         when(mockedSFProjectService.hasDraft(anything(), anything(), anything())).thenReturn(false);
         env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
         env.wait();
 
-        expect(targetTabGroup?.tabs[1]).toBeUndefined();
+        expect(sourceTabGroup?.tabs[1]).toBeUndefined();
         expect(env.component.chapter).toBe(2);
 
         env.dispose();
@@ -4342,10 +4284,8 @@ describe('EditorComponent', () => {
     });
 
     describe('updateBiblicalTermsTabVisibility', () => {
-      it('should add biblical terms tab to source when enabled and "showSource" is true', fakeAsync(() => {
-        const env = new TestEnvironment(env => {
-          Object.defineProperty(env.component, 'showSource', { get: () => true });
-        });
+      it('should add biblical terms tab to source when enabled', fakeAsync(() => {
+        const env = new TestEnvironment();
         env.setupProject({ biblicalTermsConfig: { biblicalTermsEnabled: true } });
         env.setProjectUserConfig({ biblicalTermsEnabled: true });
         env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '1' });
@@ -4360,28 +4300,8 @@ describe('EditorComponent', () => {
         env.dispose();
       }));
 
-      it('should add biblical terms tab to target when available and "showSource" is false', fakeAsync(() => {
-        const env = new TestEnvironment(env => {
-          Object.defineProperty(env.component, 'showSource', { get: () => false });
-        });
-        env.setupProject({ biblicalTermsConfig: { biblicalTermsEnabled: true } });
-        env.setProjectUserConfig({ biblicalTermsEnabled: true });
-        env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '1' });
-        env.wait();
-
-        const targetTabGroup = env.component.tabState.getTabGroup('target');
-        expect(targetTabGroup?.tabs[1].type).toEqual('biblical-terms');
-
-        const sourceTabGroup = env.component.tabState.getTabGroup('source');
-        expect(sourceTabGroup?.tabs[1]).toBeUndefined();
-
-        env.dispose();
-      }));
-
       it('should not add the biblical terms tab when opening project with biblical terms disabled', fakeAsync(() => {
-        const env = new TestEnvironment(env => {
-          Object.defineProperty(env.component, 'showSource', { get: () => true });
-        });
+        const env = new TestEnvironment();
         env.setupProject({ biblicalTermsConfig: { biblicalTermsEnabled: false } });
         env.setProjectUserConfig({ biblicalTermsEnabled: true });
         env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '1' });
@@ -4395,9 +4315,7 @@ describe('EditorComponent', () => {
       }));
 
       it('should not add the biblical terms tab if the user had biblical terms disabled', fakeAsync(() => {
-        const env = new TestEnvironment(env => {
-          Object.defineProperty(env.component, 'showSource', { get: () => true });
-        });
+        const env = new TestEnvironment();
         env.setupProject({ biblicalTermsConfig: { biblicalTermsEnabled: true } });
         env.setProjectUserConfig({ biblicalTermsEnabled: false });
         env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '1' });
@@ -4406,25 +4324,6 @@ describe('EditorComponent', () => {
         const sourceTabGroup = env.component.tabState.getTabGroup('source');
         expect(sourceTabGroup?.tabs[1]).toBeUndefined();
         expect(env.component.chapter).toBe(1);
-
-        env.dispose();
-      }));
-
-      it('should keep source pane open if biblical tab has been opened in it', fakeAsync(() => {
-        const env = new TestEnvironment(env => {
-          Object.defineProperty(env.component, 'showSource', { get: () => false });
-        });
-        env.setupProject({ biblicalTermsConfig: { biblicalTermsEnabled: true } });
-        env.setProjectUserConfig({
-          biblicalTermsEnabled: true,
-          editorTabsOpen: [{ tabType: 'biblical-terms', groupId: 'source' }]
-        });
-        env.routeWithParams({ projectId: 'project01', bookId: 'GEN', chapter: '1' });
-        env.wait();
-
-        expect(env.component.showSource).toBe(false);
-        expect(env.component.showPersistedTabsOnSource).toBe(true);
-        expect(env.fixture.debugElement.query(By.css('.biblical-terms'))).not.toBeNull();
 
         env.dispose();
       }));

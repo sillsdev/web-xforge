@@ -449,6 +449,7 @@
   "editor": {
     "add_comment": "Add Comment",
     "anonymous": "Anonymous",
+    "blank_tab_notice": "Click the Add button above and select Resource to open a Paratext Project or Resource beside your current project.",
     "browser_warning_banner": "The editor is not compatible with the current browser for the project language. We recommend editing this project in {{ firefoxLink }} or {{ safari }}.",
     "cancel": "Cancel",
     "cannot_edit_chapter_formatting_invalid": "This chapter cannot be edited because the formatting is invalid. Please fix the formatting in Paratext.",
@@ -493,6 +494,7 @@
     "project_resource_menu_item": "Resource..."
   },
   "editor_tab_factory": {
+    "blank_tab_header": "New Tab",
     "default_biblical_terms_tab_header": "Biblical Terms",
     "default_history_tab_header": "History",
     "default_project_tab_header": "Project",
