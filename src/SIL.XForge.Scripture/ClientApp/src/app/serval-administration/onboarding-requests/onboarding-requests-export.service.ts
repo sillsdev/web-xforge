@@ -81,7 +81,10 @@ export class OnboardingRequestsExportService {
       })
     );
 
-    return Papa.unparse({ fields: [...ONBOARDING_REQUESTS_EXPORT_HEADERS], data }, { delimiter });
+    return Papa.unparse(
+      { fields: [...ONBOARDING_REQUESTS_EXPORT_HEADERS], data },
+      { delimiter: delimiter, escapeFormulae: true }
+    );
   }
 
   /** Resolves the display name for each unique populated SF assignee user ID. */

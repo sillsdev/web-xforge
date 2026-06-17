@@ -301,7 +301,7 @@ export function formatDateForFilename(date: Date): string {
 }
 
 /**
- * Parses a value into a Date, returning undefined if the value is null, not a string/number, or not a valid date.
+ * Parses a Date, string, or number into a Date, if possible. Or returns undefined.
  */
 export function parseDate(value: unknown): Date | undefined {
   if (value instanceof Date) return value;
