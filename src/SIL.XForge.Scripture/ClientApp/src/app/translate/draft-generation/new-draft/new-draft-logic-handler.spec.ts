@@ -924,7 +924,7 @@ describe('NewDraftLogicHandler', () => {
       env.logicHandler.setInputMode('training_books');
       env.logicHandler.selectTrainingSourceBooks('training-source-1-id', ['MAT', 'MRK']);
 
-      expect(env.logicHandler.selectedTrainingSourceBooks$.getValue()['training-source-1-id']).toEqual(['MAT', 'MRK']);
+      expect(env.logicHandler.selectedTrainingSourceBooks['training-source-1-id']).toEqual(['MAT', 'MRK']);
     });
 
     it('throws when called in draft_books mode', async () => {
@@ -951,8 +951,8 @@ describe('NewDraftLogicHandler', () => {
       env.logicHandler.selectTrainingSourceBooks('training-source-1-id', ['MAT']);
       env.logicHandler.selectTrainingSourceBooks('training-source-2-id', ['LUK']);
 
-      expect(env.logicHandler.selectedTrainingSourceBooks$.getValue()['training-source-1-id']).toEqual(['MAT']);
-      expect(env.logicHandler.selectedTrainingSourceBooks$.getValue()['training-source-2-id']).toEqual(['LUK']);
+      expect(env.logicHandler.selectedTrainingSourceBooks['training-source-1-id']).toEqual(['MAT']);
+      expect(env.logicHandler.selectedTrainingSourceBooks['training-source-2-id']).toEqual(['LUK']);
     });
   });
 });
@@ -1113,7 +1113,7 @@ class TestEnvironment {
   }
 
   get selectedTrainingSourceBooks(): { [projectId: string]: string[] } {
-    return this.logicHandler.selectedTrainingSourceBooks$.getValue();
+    return this.logicHandler.selectedTrainingSourceBooks;
   }
 
   get availableTargetTrainingScriptureRange(): string {

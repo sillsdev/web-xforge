@@ -197,7 +197,7 @@ export class NewDraftLogicHandler {
   /** Books that exist in the training sources, by project ID */
   trainingSourceBooks: { [projectId: string]: string[] } = {};
   availableTrainingSourceBooks: { [projectId: string]: string[] } = {};
-  selectedTrainingSourceBooks$ = new BehaviorSubject<{ [projectId: string]: string[] }>({});
+  selectedTrainingSourceBooks: { [projectId: string]: string[] } = {};
 
   booksOfferedForPartialDrafting: string[] = [];
   booksOfferedForPartialTargetTraining: string[] = [];
@@ -379,7 +379,7 @@ export class NewDraftLogicHandler {
   private resetSelectionState(): void {
     this.selectedDraftingScriptureRange$.next(new VerboseScriptureRange(''));
     this.selectedTargetTrainingScriptureRange$.next(new VerboseScriptureRange(''));
-    this.selectedTrainingSourceBooks$.next({});
+    this.selectedTrainingSourceBooks = {};
     this.availableTrainingSourceBooks = {};
     this.targetTrainingBooksWithoutSource$.next([]);
     this.booksOfferedForPartialDrafting = [];
@@ -554,9 +554,9 @@ export class NewDraftLogicHandler {
         throw new Error(`Selected book ${bookId} is not available for training source project ${projectId}`);
       }
     }
-    const current = { ...this.selectedTrainingSourceBooks$.getValue() };
+    const current = { ...this.selectedTrainingSourceBooks };
     current[projectId] = bookIds;
-    this.selectedTrainingSourceBooks$.next(current);
+    this.selectedTrainingSourceBooks = current;
   }
 
   selectTargetTrainingBooks(books: string[]): void {
@@ -628,7 +628,7 @@ export class NewDraftLogicHandler {
         booksAvailableForTraining.includes(bookId)
       );
     }
-    this.selectedTrainingSourceBooks$.next(selectedTrainingSourceBooksByProjectId);
+    this.selectedTrainingSourceBooks = selectedTrainingSourceBooksByProjectId;
 
     // Determine the previously selected target training books. Prefer the target project's own saved entry (looked up
     // by project ID); its chapter detail is ignored so that chapter defaults are re-derived from current project
@@ -676,10 +676,8 @@ export class NewDraftLogicHandler {
     // component's per-book auto-pairing when a user selects a target book (otherwise the books would have no reference
     // pair and forward-validation would block).
     const autoSelected = new Set(booksToAutoSelect);
-    this.selectedTrainingSourceBooks$.next(
-      mapObject(this.availableTrainingSourceBooks, (_projectId, bookIds) =>
-        bookIds.filter(bookId => autoSelected.has(bookId))
-      )
+    this.selectedTrainingSourceBooks = mapObject(this.availableTrainingSourceBooks, (_projectId, bookIds) =>
+      bookIds.filter(bookId => autoSelected.has(bookId))
     );
 
     this.trainingBooksWereAutoSelected = booksToAutoSelect.length > 0;
@@ -733,10 +731,8 @@ export class NewDraftLogicHandler {
     this.availableTrainingSourceBooks = mapObject(this.trainingSourceBooks, (_projectId, bookIds) =>
       bookIds.filter(bookId => availableTargetRange.books.has(bookId))
     );
-    this.selectedTrainingSourceBooks$.next(
-      mapObject(this.selectedTrainingSourceBooks$.getValue(), (projectId, bookIds) =>
-        bookIds.filter(bookId => this.availableTrainingSourceBooks[projectId]?.includes(bookId))
-      )
+    this.selectedTrainingSourceBooks = mapObject(this.selectedTrainingSourceBooks, (projectId, bookIds) =>
+      bookIds.filter(bookId => this.availableTrainingSourceBooks[projectId]?.includes(bookId))
     );
   }
 }

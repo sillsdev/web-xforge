@@ -457,9 +457,7 @@ export class NewDraftComponent {
    */
   private get unpairedTargetTrainingBooks(): string[] {
     const targetBooks = Array.from(this.logicHandler.selectedTargetTrainingScriptureRange$.getValue().books.keys());
-    const selectedSourceBooks = new Set(
-      Object.values(this.logicHandler.selectedTrainingSourceBooks$.getValue()).flat()
-    );
+    const selectedSourceBooks = new Set(Object.values(this.logicHandler.selectedTrainingSourceBooks).flat());
     return targetBooks.filter(bookId => !selectedSourceBooks.has(bookId));
   }
 
@@ -470,7 +468,7 @@ export class NewDraftComponent {
     const hasTargetBooks = this.logicHandler.selectedTargetTrainingScriptureRange$.getValue().books.size > 0;
     if (!hasTargetBooks) return false;
     if (this.trainingSources.length === 0) return true;
-    const selected = this.logicHandler.selectedTrainingSourceBooks$.getValue();
+    const selected = this.logicHandler.selectedTrainingSourceBooks;
     return Object.values(selected).some(books => books.length > 0);
   }
 
@@ -522,7 +520,7 @@ export class NewDraftComponent {
       ];
 
       const trainingScriptureRanges: ProjectScriptureRange[] = [];
-      const selectedSrcBooks = this.logicHandler.selectedTrainingSourceBooks$.getValue();
+      const selectedSrcBooks = this.logicHandler.selectedTrainingSourceBooks;
       for (const source of this.logicHandler.sources?.trainingSources ?? []) {
         const bookIds = selectedSrcBooks[source.projectRef] ?? [];
         if (bookIds.length > 0) {
@@ -746,7 +744,7 @@ export class NewDraftComponent {
     // Auto-select newly added target books in each training source; drop removed books
     for (const source of this.trainingSources) {
       const available = this.logicHandler.availableTrainingSourceBooks[source.projectRef] ?? [];
-      const currentSelected = this.logicHandler.selectedTrainingSourceBooks$.getValue()[source.projectRef] ?? [];
+      const currentSelected = this.logicHandler.selectedTrainingSourceBooks[source.projectRef] ?? [];
       const stillValid = currentSelected.filter(id => newSelectedIds.has(id));
       const autoAdded = addedIds.filter(id => available.includes(id));
       this.logicHandler.selectTrainingSourceBooks(source.projectRef, [...new Set([...stillValid, ...autoAdded])]);
@@ -815,14 +813,14 @@ export class NewDraftComponent {
     const selectedTargetIds = new Set(
       scriptureRangeToBookListWithoutChapterDetail(this.logicHandler.selectedTargetTrainingScriptureRange$.getValue())
     );
-    const selectedIds = this.logicHandler.selectedTrainingSourceBooks$.getValue()[projectId] ?? [];
+    const selectedIds = this.logicHandler.selectedTrainingSourceBooks[projectId] ?? [];
     return bookIds
       .filter(id => selectedTargetIds.has(id))
       .map(id => ({ number: Canon.bookIdToNumber(id), selected: selectedIds.includes(id) }));
   }
 
   selectedTrainingSourceBooksForProject(projectId: string): Book[] {
-    const bookIds = this.logicHandler.selectedTrainingSourceBooks$.getValue()[projectId] ?? [];
+    const bookIds = this.logicHandler.selectedTrainingSourceBooks[projectId] ?? [];
     return bookIds.map(id => ({ number: Canon.bookIdToNumber(id), selected: true }));
   }
 
@@ -858,7 +856,7 @@ export class NewDraftComponent {
   get sourceTrainingSections(): { projectRef: string; shortName: string; bookNumbers: number[] }[] {
     return this.trainingSources
       .map(source => {
-        const bookIds = this.logicHandler.selectedTrainingSourceBooks$.getValue()[source.projectRef] ?? [];
+        const bookIds = this.logicHandler.selectedTrainingSourceBooks[source.projectRef] ?? [];
         return {
           projectRef: source.projectRef,
           shortName: source.shortName,
