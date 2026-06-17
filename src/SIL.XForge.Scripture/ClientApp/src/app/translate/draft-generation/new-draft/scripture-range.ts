@@ -1,4 +1,4 @@
-import { difference, intersection, union } from '../../../../xforge-common/util/set-util';
+import { difference, intersection, union } from 'xforge-common/util/set-util';
 
 /** Represents a potentially non-contiguous range of chapters, such as 1-3,7,10-12 */
 export class ChapterSet {

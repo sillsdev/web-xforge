@@ -1,8 +1,8 @@
 import { DestroyRef, Injectable } from '@angular/core';
 import { Canon } from '@sillsdev/scripture';
 import { BehaviorSubject, firstValueFrom, skip } from 'rxjs';
-import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
-import { filterNullish, quietTakeUntilDestroyed } from '../../../../xforge-common/util/rxjs-util';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import {
   bookAppearsCompleteForTrainingAutoSelection,
   ProgressService
