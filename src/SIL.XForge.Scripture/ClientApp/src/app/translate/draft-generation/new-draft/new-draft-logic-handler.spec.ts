@@ -806,6 +806,7 @@ describe('NewDraftLogicHandler', () => {
       ).once();
       // ...while the unsynced drafting source uses the default staleness (served from cache by the real service).
       verify(mockedDraftProgressService.getProgressForProject('draft-source-1-id', deepEqual({}))).once();
+      expect().nothing();
     });
 
     it('resets any selections the user had made', async () => {
