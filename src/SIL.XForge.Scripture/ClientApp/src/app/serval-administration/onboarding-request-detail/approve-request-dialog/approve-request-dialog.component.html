@@ -60,7 +60,9 @@
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-button type="button" mat-dialog-close id="cancel-button"><mat-icon>close</mat-icon> Cancel</button>
+  <button mat-button type="button" [mat-dialog-close]="undefined" id="cancel-button">
+    <mat-icon>close</mat-icon> Cancel
+  </button>
   <button mat-flat-button color="primary" type="button" (click)="approve()" id="approve-button">
     <mat-icon>check_circle</mat-icon> Approve
   </button>

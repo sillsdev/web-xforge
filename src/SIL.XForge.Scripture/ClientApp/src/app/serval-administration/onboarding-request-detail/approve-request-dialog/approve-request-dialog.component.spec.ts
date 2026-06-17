@@ -118,6 +118,13 @@ describe('ApproveRequestDialogComponent', () => {
     expect().nothing();
   });
 
+  it('cancel button closes with undefined', () => {
+    const env = new TestEnvironment();
+    env.cancelButton.click();
+    verify(env.mockedDialogRef.close(undefined)).once();
+    expect().nothing();
+  });
+
   it('approve() does not close when form is invalid', () => {
     const env = new TestEnvironment();
     env.component.trainingSources.setValue([]);
@@ -263,5 +270,9 @@ class TestEnvironment {
   /** The "enable drafting" checkbox in the back translation section, or null when that section is not rendered. */
   get backTranslationCheckbox(): HTMLElement | null {
     return this.fixture.nativeElement.querySelector('[data-test-id="enable-bt-drafting"]');
+  }
+
+  get cancelButton(): HTMLButtonElement {
+    return this.fixture.nativeElement.querySelector('#cancel-button');
   }
 }
