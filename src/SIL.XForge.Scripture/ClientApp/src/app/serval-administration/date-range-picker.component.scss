@@ -1,3 +1,9 @@
 .date-range-field {
   min-width: 260px;
 }
+
+:host ::ng-deep .date-range-field.date-range-field-active .mat-mdc-text-field-wrapper {
+  background-color: var(--sf-serval-builds-search-background-populated);
+  color: var(--sf-serval-builds-search-text-populated);
+  transition: background-color 150ms ease-in;
+}
