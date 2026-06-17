@@ -818,7 +818,7 @@ describe('NewDraftLogicHandler', () => {
       await env.logicHandler.reload(['testProjectId']);
 
       expect(env.selectedDraftingScriptureRange).toBe('');
-      expect(env.logicHandler.inputMode$.getValue()).toBe('draft_books');
+      expect(env.logicHandler.inputMode).toBe('draft_books');
     });
   });
 

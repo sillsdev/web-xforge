@@ -208,7 +208,7 @@ export class NewDraftLogicHandler {
    * draft, that book shouldn't be automatically removed from being used as training data. Tracking the input state
    * allows update rules to be enforced at the right point in time.
    */
-  inputMode$ = new BehaviorSubject<'draft_books' | 'training_books'>('draft_books');
+  inputMode: 'draft_books' | 'training_books' = 'draft_books';
 
   sources?: DraftSourcesAsArrays;
 
@@ -386,15 +386,15 @@ export class NewDraftLogicHandler {
     this.booksOfferedForPartialTargetTraining = [];
     this.trainingBooksWereAutoSelected = false;
     this.hasVisitedTrainingBooksInputMode = false;
-    this.inputMode$.next('draft_books');
+    this.inputMode = 'draft_books';
   }
 
   private hasVisitedTrainingBooksInputMode = false;
   setInputMode(newMode: 'draft_books' | 'training_books'): void {
-    const priorMode = this.inputMode$.getValue();
+    const priorMode = this.inputMode;
     // Switch the mode first so that loadPreviouslySelectedTrainingBooks() can use the normal training-book selection
     // path (e.g. selectTargetTrainingBooks), which requires being in training_books mode.
-    this.inputMode$.next(newMode);
+    this.inputMode = newMode;
     if (priorMode === 'draft_books' && newMode === 'training_books') {
       this.limitAvailableTrainingRangeBasedOnSelectedDraftingRange();
       if (!this.hasVisitedTrainingBooksInputMode) {
@@ -405,7 +405,7 @@ export class NewDraftLogicHandler {
   }
 
   selectDraftingBooks(books: string[]): void {
-    if (this.inputMode$.getValue() !== 'draft_books') {
+    if (this.inputMode !== 'draft_books') {
       throw new Error('Cannot update draft books when not in draft_books input mode');
     }
 
@@ -448,7 +448,7 @@ export class NewDraftLogicHandler {
   }
 
   selectDraftingChapters(bookId: string, chapters: string): void {
-    if (this.inputMode$.getValue() !== 'draft_books') {
+    if (this.inputMode !== 'draft_books') {
       throw new Error('Cannot update draft books when not in draft_books input mode');
     }
 
@@ -520,7 +520,7 @@ export class NewDraftLogicHandler {
   }
 
   selectTargetTrainingChapters(bookId: string, chapters: string): void {
-    if (this.inputMode$.getValue() !== 'training_books') {
+    if (this.inputMode !== 'training_books') {
       throw new Error('Cannot update training chapters when not in training_books input mode');
     }
 
@@ -545,7 +545,7 @@ export class NewDraftLogicHandler {
   }
 
   selectTrainingSourceBooks(projectId: string, bookIds: string[]): void {
-    if (this.inputMode$.getValue() !== 'training_books') {
+    if (this.inputMode !== 'training_books') {
       throw new Error('Cannot update training source books when not in training_books input mode');
     }
     const available = this.availableTrainingSourceBooks[projectId] ?? [];
@@ -560,7 +560,7 @@ export class NewDraftLogicHandler {
   }
 
   selectTargetTrainingBooks(books: string[]): void {
-    if (this.inputMode$.getValue() !== 'training_books') {
+    if (this.inputMode !== 'training_books') {
       throw new Error('Cannot update training books when not in training_books input mode');
     }
     const newTargetTrainingScriptureRange = new VerboseScriptureRange('');
