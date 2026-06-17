@@ -1137,7 +1137,7 @@ class TestEnvironment {
   }
 
   get selectedDraftingScriptureRange(): string {
-    return this.logicHandler.selectedDraftingScriptureRange$.getValue().toString();
+    return this.logicHandler.selectedDraftingScriptureRange.toString();
   }
 
   get booksOfferedForPartialDrafting(): string[] {

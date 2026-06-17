@@ -1128,7 +1128,7 @@ class TestEnvironment {
   }
 
   get selectedDraftingScriptureRange(): string {
-    return this.component.logicHandler.selectedDraftingScriptureRange$.getValue().toString();
+    return this.component.logicHandler.selectedDraftingScriptureRange.toString();
   }
 
   get selectedTargetTrainingScriptureRange(): string {

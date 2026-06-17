@@ -169,7 +169,7 @@ export class NewDraftLogicHandler {
   // A book can be present (in a project), available (logic rules do not forbit selecting it, and it is therefore
   // offered in the UI), and selected (user action, or default values selected the )
   availableDraftingScriptureRange: VerboseScriptureRange = new VerboseScriptureRange('');
-  selectedDraftingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange>(new VerboseScriptureRange(''));
+  selectedDraftingScriptureRange: VerboseScriptureRange = new VerboseScriptureRange('');
 
   /** Books left out of the drafting list, with the reason for each (see DraftingBookExclusionReason). */
   excludedDraftingBooks: ExcludedDraftingBook[] = [];
@@ -377,7 +377,7 @@ export class NewDraftLogicHandler {
 
   /** Returns all selection-derived state to its post-init baseline. */
   private resetSelectionState(): void {
-    this.selectedDraftingScriptureRange$.next(new VerboseScriptureRange(''));
+    this.selectedDraftingScriptureRange = new VerboseScriptureRange('');
     this.selectedTargetTrainingScriptureRange$.next(new VerboseScriptureRange(''));
     this.selectedTrainingSourceBooks = {};
     this.availableTrainingSourceBooks = {};
@@ -410,7 +410,7 @@ export class NewDraftLogicHandler {
     }
 
     const newDraftingScriptureRange = new VerboseScriptureRange('');
-    const newlySelectedBooks = books.filter(book => !this.selectedDraftingScriptureRange$.getValue().books.has(book));
+    const newlySelectedBooks = books.filter(book => !this.selectedDraftingScriptureRange.books.has(book));
 
     for (const book of books) {
       if (!this.availableDraftingScriptureRange.books.has(book)) {
@@ -436,12 +436,12 @@ export class NewDraftLogicHandler {
           newDraftingScriptureRange.books.set(book, chaptersInSource.clone());
         }
       } else {
-        const alreadySelectedChapters = this.selectedDraftingScriptureRange$.getValue().books.get(book);
+        const alreadySelectedChapters = this.selectedDraftingScriptureRange.books.get(book);
         if (alreadySelectedChapters == null) throw new Error('This should be unreachable');
         newDraftingScriptureRange.books.set(book, alreadySelectedChapters);
       }
     }
-    this.selectedDraftingScriptureRange$.next(newDraftingScriptureRange);
+    this.selectedDraftingScriptureRange = newDraftingScriptureRange;
 
     const partialBookDraftingBooks = books.filter(bookId => this.isBookEligibleForPartialDrafting(bookId));
     this.booksOfferedForPartialDrafting = partialBookDraftingBooks;
@@ -466,9 +466,9 @@ export class NewDraftLogicHandler {
       );
     }
 
-    const newDraftingScriptureRange = this.selectedDraftingScriptureRange$.getValue().clone();
+    const newDraftingScriptureRange = this.selectedDraftingScriptureRange.clone();
     newDraftingScriptureRange.books.set(bookId, selectedChapters);
-    this.selectedDraftingScriptureRange$.next(newDraftingScriptureRange);
+    this.selectedDraftingScriptureRange = newDraftingScriptureRange;
   }
 
   /**
@@ -665,7 +665,7 @@ export class NewDraftLogicHandler {
    */
   private autoSelectTrainingBooks(): void {
     const availableTargetTrainingRange = this.availableTargetTrainingScriptureRange$.getValue();
-    const draftedBooks = this.selectedDraftingScriptureRange$.getValue().books;
+    const draftedBooks = this.selectedDraftingScriptureRange.books;
     const booksToAutoSelect = Array.from(availableTargetTrainingRange.books.keys()).filter(
       bookId => this.completeTargetBookIds.has(bookId) && !draftedBooks.has(bookId)
     );
@@ -699,9 +699,7 @@ export class NewDraftLogicHandler {
     // that exist in at least one training source: a target book can only be used as training data if a source
     // provides the matching book to pair it with. Books with no such source are recorded
     // (targetTrainingBooksWithoutSource) so the UI can explain why they aren't offered.
-    const targetTrainingRange = this.targetProjectScriptureRange.difference(
-      this.selectedDraftingScriptureRange$.getValue()
-    );
+    const targetTrainingRange = this.targetProjectScriptureRange.difference(this.selectedDraftingScriptureRange);
     const booksInAnyTrainingSource = new Set(Object.values(this.trainingSourceBooks).flat());
 
     const availableTargetTrainingRange = new VerboseScriptureRange('');
@@ -716,7 +714,7 @@ export class NewDraftLogicHandler {
     this.availableTargetTrainingScriptureRange$.next(availableTargetTrainingRange);
     this.targetTrainingBooksWithoutSource = booksWithoutSource;
     this.selectedTargetTrainingScriptureRange$.next(
-      this.selectedTargetTrainingScriptureRange$.getValue().difference(this.selectedDraftingScriptureRange$.getValue())
+      this.selectedTargetTrainingScriptureRange$.getValue().difference(this.selectedDraftingScriptureRange)
     );
 
     // Re-derive the partial-training offering from the current selection: a book is only offered for partial target

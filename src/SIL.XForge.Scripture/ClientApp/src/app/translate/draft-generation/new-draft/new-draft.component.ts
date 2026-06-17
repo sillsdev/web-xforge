@@ -435,8 +435,7 @@ export class NewDraftComponent {
 
   private getForwardError(): I18nKeyForComponent<'new_draft'> | null {
     if (this.page === 'draft_books') {
-      if (this.logicHandler.selectedDraftingScriptureRange$.getValue().books.size === 0)
-        return 'no_drafting_books_selected';
+      if (this.logicHandler.selectedDraftingScriptureRange.books.size === 0) return 'no_drafting_books_selected';
       if (this.draftingChapterErrors.size > 0) return 'fix_chapter_errors';
     }
     if (this.page === 'training_books') {
@@ -515,7 +514,7 @@ export class NewDraftComponent {
       const translationScriptureRanges: ProjectScriptureRange[] = [
         {
           projectId: draftingSource.projectRef,
-          scriptureRange: this.logicHandler.selectedDraftingScriptureRange$.getValue().toString()
+          scriptureRange: this.logicHandler.selectedDraftingScriptureRange.toString()
         }
       ];
 
@@ -573,12 +572,12 @@ export class NewDraftComponent {
   get availableDraftingBooks(): Book[] {
     return this.toBookList(
       this.logicHandler.availableDraftingScriptureRange,
-      new Set(this.logicHandler.selectedDraftingScriptureRange$.getValue().books.keys())
+      new Set(this.logicHandler.selectedDraftingScriptureRange.books.keys())
     );
   }
 
   get selectedDraftingBooks(): Book[] {
-    return this.toBookList(this.logicHandler.selectedDraftingScriptureRange$.getValue());
+    return this.toBookList(this.logicHandler.selectedDraftingScriptureRange);
   }
 
   get booksOfferedForPartialDrafting(): string[] {
@@ -684,7 +683,7 @@ export class NewDraftComponent {
   }
 
   draftingRangeForBook(bookId: string): string {
-    const range = this.logicHandler.selectedDraftingScriptureRange$.getValue();
+    const range = this.logicHandler.selectedDraftingScriptureRange;
     return range.books.get(bookId)?.toString() ?? '';
   }
 
@@ -766,7 +765,7 @@ export class NewDraftComponent {
     const unavailable = available != null ? parsed.difference(available) : parsed;
 
     if (unavailable.count() > 0) {
-      const drafted = this.logicHandler.selectedDraftingScriptureRange$.getValue().books.get(bookId);
+      const drafted = this.logicHandler.selectedDraftingScriptureRange.books.get(bookId);
       const draftedUnavailable = drafted != null ? unavailable.intersection(drafted) : new ChapterSet([]);
       if (draftedUnavailable.count() > 0) {
         this.targetTrainingChapterErrors.set(bookId, {
@@ -827,7 +826,7 @@ export class NewDraftComponent {
   // Section: Summary (Step 4)
 
   get draftingItems(): { bookId: string; chapterRange: string | null }[] {
-    const selectedRange = this.logicHandler.selectedDraftingScriptureRange$.getValue();
+    const selectedRange = this.logicHandler.selectedDraftingScriptureRange;
     const availableRange = this.logicHandler.availableDraftingScriptureRange;
     return Array.from(selectedRange.books.entries())
       .sort(([a], [b]) => Canon.bookIdToNumber(a) - Canon.bookIdToNumber(b))
@@ -875,7 +874,7 @@ export class NewDraftComponent {
       bookNumbers,
       this.logicHandler.selectedTargetTrainingScriptureRange$.getValue(),
       this.logicHandler.availableTargetTrainingScriptureRange$.getValue(),
-      this.logicHandler.selectedDraftingScriptureRange$.getValue(),
+      this.logicHandler.selectedDraftingScriptureRange,
       this.i18n
     );
   }
