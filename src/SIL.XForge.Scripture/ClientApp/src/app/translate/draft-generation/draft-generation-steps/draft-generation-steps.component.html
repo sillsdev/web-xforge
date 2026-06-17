@@ -126,20 +126,22 @@
           {{ t("choose_books_for_training_header") }}
         </ng-template>
         <h1>{{ t("choose_books_for_training_title") }}</h1>
-        <h2>{{ t("translated_books") }}</h2>
-        @if (trainingBooksWereAutoSelected) {
-          <app-notice icon="info" mode="basic" type="info">{{
-            t("books_were_automatically_selected_for_training")
-          }}</app-notice>
+        @if (selectableTrainingBooksByProj(activatedProject.projectId).length > 0) {
+          <h2>{{ t("translated_books") }}</h2>
+          @if (trainingBooksWereAutoSelected) {
+            <app-notice icon="info" mode="basic" type="info">{{
+              t("books_were_automatically_selected_for_training")
+            }}</app-notice>
+          }
+          <app-book-multi-select
+            [availableBooks]="selectableTrainingBooksByProj(activatedProject.projectId)"
+            [selectedBooks]="selectedTrainingBooksByProj(activatedProject.projectId)"
+            [projectName]="targetProjectName"
+            [projectId]="activatedProject.projectId"
+            (bookSelect)="onTranslatedBookSelect($event)"
+            data-test-id="draft-stepper-training-books"
+          ></app-book-multi-select>
         }
-        <app-book-multi-select
-          [availableBooks]="selectableTrainingBooksByProj(activatedProject.projectId)"
-          [selectedBooks]="selectedTrainingBooksByProj(activatedProject.projectId)"
-          [projectName]="targetProjectName"
-          [projectId]="activatedProject.projectId"
-          (bookSelect)="onTranslatedBookSelect($event)"
-          data-test-id="draft-stepper-training-books"
-        ></app-book-multi-select>
         @if (unusableTrainingSourceBooks.length > 0 || trainingBooksExcludingTranslatedWithoutEnoughData.length > 0) {
           <app-notice icon="info" mode="basic" type="light" class="unusable-training-books">
             <div class="notice-container">
@@ -183,32 +185,38 @@
           </app-notice>
         }
         <h2>{{ t("reference_books") }}</h2>
-        @for (source of trainingSources; track source) {
-          <p class="reference-project-label">{{ projectLabel(source) }}</p>
-          @if (selectableTrainingBooksByProj(source.projectRef).length === 0) {
-            <app-notice mode="basic" type="light" class="books-appear-notice">{{
-              t("training_books_will_appear")
-            }}</app-notice>
-          } @else {
-            <app-book-multi-select
-              [availableBooks]="selectableTrainingBooksByProj(source.projectRef)"
-              [selectedBooks]="selectedTrainingBooksByProj(source.projectRef)"
-              [basicMode]="true"
-              (bookSelect)="onSourceTrainingBookSelect($event, source)"
-            ></app-book-multi-select>
+        @if (selectableTrainingBooksByProj(activatedProject.projectId).length > 0) {
+          @for (source of trainingSources; track source) {
+            <p class="reference-project-label">{{ projectLabel(source) }}</p>
+            @if (selectableTrainingBooksByProj(source.projectRef).length === 0) {
+              <app-notice mode="basic" type="light" class="books-appear-notice">{{
+                t("training_books_will_appear")
+              }}</app-notice>
+            } @else {
+              <app-book-multi-select
+                [availableBooks]="selectableTrainingBooksByProj(source.projectRef)"
+                [selectedBooks]="selectedTrainingBooksByProj(source.projectRef)"
+                [basicMode]="true"
+                (bookSelect)="onSourceTrainingBookSelect($event, source)"
+              ></app-book-multi-select>
+            }
           }
-        }
-        @if (!isTrainingOptional && selectableTrainingBooksByProj(activatedProject.projectId).length === 0) {
-          <app-notice class="error-no-translated-books" type="error">
+          @if (!translatedBooksSelectedInTrainingSources) {
+            <app-notice class="error-translated-books-unselected" type="error">
+              {{ t("translated_book_selected_no_training_pair") }}
+            </app-notice>
+          } @else if (showBookSelectionError) {
+            <app-notice class="error-choose-training-books" type="error">
+              {{ t("choose_books_for_training_error") }}
+            </app-notice>
+          }
+        } @else if (!isTrainingOptional) {
+          <app-notice class="error-no-translated-books" type="error" icon="error">
             {{ t("choose_books_for_training_no_books_error") }}
           </app-notice>
-        } @else if (!translatedBooksSelectedInTrainingSources) {
-          <app-notice class="error-translated-books-unselected" type="error">
-            {{ t("translated_book_selected_no_training_pair") }}
-          </app-notice>
-        } @else if (showBookSelectionError) {
-          <app-notice class="error-choose-training-books" type="error">
-            {{ t("choose_books_for_training_error") }}
+        } @else {
+          <app-notice class="info-no-translated-books" type="info" icon="info">
+            {{ t("choose_books_for_training_no_books_info") }}
           </app-notice>
         }
         <div class="button-strip">
