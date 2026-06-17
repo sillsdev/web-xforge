@@ -1132,6 +1132,6 @@ class TestEnvironment {
   }
 
   get selectedTargetTrainingScriptureRange(): string {
-    return this.component.logicHandler.selectedTargetTrainingScriptureRange$.getValue().toString();
+    return this.component.logicHandler.selectedTargetTrainingScriptureRange.toString();
   }
 }

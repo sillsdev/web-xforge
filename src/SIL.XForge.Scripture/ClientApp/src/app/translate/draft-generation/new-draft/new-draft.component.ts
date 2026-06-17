@@ -455,7 +455,7 @@ export class NewDraftComponent {
    * it in each such source — so this is only non-empty after the user manually deselects that book from the source(s).
    */
   private get unpairedTargetTrainingBooks(): string[] {
-    const targetBooks = Array.from(this.logicHandler.selectedTargetTrainingScriptureRange$.getValue().books.keys());
+    const targetBooks = Array.from(this.logicHandler.selectedTargetTrainingScriptureRange.books.keys());
     const selectedSourceBooks = new Set(Object.values(this.logicHandler.selectedTrainingSourceBooks).flat());
     return targetBooks.filter(bookId => !selectedSourceBooks.has(bookId));
   }
@@ -464,7 +464,7 @@ export class NewDraftComponent {
     // selectedTargetTrainingScriptureRange reflects the logic handler's view of what's actually available
     // for training (drafted chapters excluded), so it's the right thing to check — not just whether the
     // user clicked a book in the multi-select
-    const hasTargetBooks = this.logicHandler.selectedTargetTrainingScriptureRange$.getValue().books.size > 0;
+    const hasTargetBooks = this.logicHandler.selectedTargetTrainingScriptureRange.books.size > 0;
     if (!hasTargetBooks) return false;
     if (this.trainingSources.length === 0) return true;
     const selected = this.logicHandler.selectedTrainingSourceBooks;
@@ -529,7 +529,7 @@ export class NewDraftComponent {
       // Include target project entry at chapter-level: persists training selection and drives backend filter
       trainingScriptureRanges.push({
         projectId,
-        scriptureRange: this.logicHandler.selectedTargetTrainingScriptureRange$.getValue().toString()
+        scriptureRange: this.logicHandler.selectedTargetTrainingScriptureRange.toString()
       });
 
       // Report the files offered to the user (available) and the subset they chose (selected). Recording the
@@ -696,12 +696,12 @@ export class NewDraftComponent {
   get availableTargetTrainingBooks(): Book[] {
     return this.toBookList(
       this.logicHandler.availableTargetTrainingScriptureRange,
-      new Set(this.logicHandler.selectedTargetTrainingScriptureRange$.getValue().books.keys())
+      new Set(this.logicHandler.selectedTargetTrainingScriptureRange.books.keys())
     );
   }
 
   get selectedTargetTrainingBooks(): Book[] {
-    return this.toBookList(this.logicHandler.selectedTargetTrainingScriptureRange$.getValue());
+    return this.toBookList(this.logicHandler.selectedTargetTrainingScriptureRange);
   }
 
   get booksOfferedForPartialTargetTraining(): string[] {
@@ -732,7 +732,7 @@ export class NewDraftComponent {
 
   onTargetTrainingBookSelect(books: number[]): void {
     const previousSelectedTargetIds = new Set(
-      scriptureRangeToBookListWithoutChapterDetail(this.logicHandler.selectedTargetTrainingScriptureRange$.getValue())
+      scriptureRangeToBookListWithoutChapterDetail(this.logicHandler.selectedTargetTrainingScriptureRange)
     );
     const newSelectedIds = new Set(books.map(n => Canon.bookNumberToId(n)));
     const addedIds = [...newSelectedIds].filter(id => !previousSelectedTargetIds.has(id));
@@ -787,7 +787,7 @@ export class NewDraftComponent {
   }
 
   targetTrainingRangeForBook(bookId: string): string {
-    const range = this.logicHandler.selectedTargetTrainingScriptureRange$.getValue();
+    const range = this.logicHandler.selectedTargetTrainingScriptureRange;
     return range.books.get(bookId)?.toString() ?? '';
   }
 
@@ -810,7 +810,7 @@ export class NewDraftComponent {
   availableTrainingSourceBooksForProject(projectId: string): Book[] {
     const bookIds = this.logicHandler.availableTrainingSourceBooks[projectId] ?? [];
     const selectedTargetIds = new Set(
-      scriptureRangeToBookListWithoutChapterDetail(this.logicHandler.selectedTargetTrainingScriptureRange$.getValue())
+      scriptureRangeToBookListWithoutChapterDetail(this.logicHandler.selectedTargetTrainingScriptureRange)
     );
     const selectedIds = this.logicHandler.selectedTrainingSourceBooks[projectId] ?? [];
     return bookIds
@@ -872,7 +872,7 @@ export class NewDraftComponent {
   formatTrainingBooks(bookNumbers: number[]): string {
     return formatTrainingBooksSummary(
       bookNumbers,
-      this.logicHandler.selectedTargetTrainingScriptureRange$.getValue(),
+      this.logicHandler.selectedTargetTrainingScriptureRange,
       this.logicHandler.availableTargetTrainingScriptureRange,
       this.logicHandler.selectedDraftingScriptureRange,
       this.i18n

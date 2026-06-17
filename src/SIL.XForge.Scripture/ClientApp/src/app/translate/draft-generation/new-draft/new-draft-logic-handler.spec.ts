@@ -1121,7 +1121,7 @@ class TestEnvironment {
   }
 
   get selectedTargetTrainingScriptureRange(): string {
-    return this.logicHandler.selectedTargetTrainingScriptureRange$.getValue().toString();
+    return this.logicHandler.selectedTargetTrainingScriptureRange.toString();
   }
 
   get trainingBooksWereAutoSelected(): boolean {

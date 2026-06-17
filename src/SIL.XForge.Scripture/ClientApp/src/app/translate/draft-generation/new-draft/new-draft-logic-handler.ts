@@ -176,7 +176,7 @@ export class NewDraftLogicHandler {
 
   targetProjectScriptureRange = new VerboseScriptureRange('');
   availableTargetTrainingScriptureRange: VerboseScriptureRange = new VerboseScriptureRange('');
-  selectedTargetTrainingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange>(new VerboseScriptureRange(''));
+  selectedTargetTrainingScriptureRange: VerboseScriptureRange = new VerboseScriptureRange('');
 
   /**
    * Whether training books were automatically selected on this project's first draft (no previously saved training
@@ -378,7 +378,7 @@ export class NewDraftLogicHandler {
   /** Returns all selection-derived state to its post-init baseline. */
   private resetSelectionState(): void {
     this.selectedDraftingScriptureRange = new VerboseScriptureRange('');
-    this.selectedTargetTrainingScriptureRange$.next(new VerboseScriptureRange(''));
+    this.selectedTargetTrainingScriptureRange = new VerboseScriptureRange('');
     this.selectedTrainingSourceBooks = {};
     this.availableTrainingSourceBooks = {};
     this.targetTrainingBooksWithoutSource = [];
@@ -539,9 +539,9 @@ export class NewDraftLogicHandler {
       );
     }
 
-    const newTargetTrainingScriptureRange = this.selectedTargetTrainingScriptureRange$.getValue().clone();
+    const newTargetTrainingScriptureRange = this.selectedTargetTrainingScriptureRange.clone();
     newTargetTrainingScriptureRange.books.set(bookId, selectedChapters);
-    this.selectedTargetTrainingScriptureRange$.next(newTargetTrainingScriptureRange);
+    this.selectedTargetTrainingScriptureRange = newTargetTrainingScriptureRange;
   }
 
   selectTrainingSourceBooks(projectId: string, bookIds: string[]): void {
@@ -571,7 +571,7 @@ export class NewDraftLogicHandler {
       }
       newTargetTrainingScriptureRange.books.set(bookId, bookRange.clone());
     }
-    this.selectedTargetTrainingScriptureRange$.next(newTargetTrainingScriptureRange);
+    this.selectedTargetTrainingScriptureRange = newTargetTrainingScriptureRange;
 
     const partialBookTargetTrainingBooks = books.filter(bookId => this.isBookEligibleForPartialTargetTraining(bookId));
     this.booksOfferedForPartialTargetTraining = partialBookTargetTrainingBooks;
@@ -689,7 +689,7 @@ export class NewDraftLogicHandler {
    * auto-selected remains. Only ever clears the flag (a manual reselection doesn't re-arm it).
    */
   dismissAutoSelectNoticeIfSelectionEmpty(): void {
-    if (this.trainingBooksWereAutoSelected && this.selectedTargetTrainingScriptureRange$.getValue().books.size === 0) {
+    if (this.trainingBooksWereAutoSelected && this.selectedTargetTrainingScriptureRange.books.size === 0) {
       this.trainingBooksWereAutoSelected = false;
     }
   }
@@ -713,15 +713,15 @@ export class NewDraftLogicHandler {
     }
     this.availableTargetTrainingScriptureRange = availableTargetTrainingRange;
     this.targetTrainingBooksWithoutSource = booksWithoutSource;
-    this.selectedTargetTrainingScriptureRange$.next(
-      this.selectedTargetTrainingScriptureRange$.getValue().difference(this.selectedDraftingScriptureRange)
+    this.selectedTargetTrainingScriptureRange = this.selectedTargetTrainingScriptureRange.difference(
+      this.selectedDraftingScriptureRange
     );
 
     // Re-derive the partial-training offering from the current selection: a book is only offered for partial target
     // training while it is being drafted, so a book dropped from the drafting selection must drop out here too
     // (otherwise it would keep a stale per-chapter input when the user returns to the training step).
     this.booksOfferedForPartialTargetTraining = Array.from(
-      this.selectedTargetTrainingScriptureRange$.getValue().books.keys()
+      this.selectedTargetTrainingScriptureRange.books.keys()
     ).filter(bookId => this.isBookEligibleForPartialTargetTraining(bookId));
 
     // Limit available and selected training source books to not exceed available target training scripture range
