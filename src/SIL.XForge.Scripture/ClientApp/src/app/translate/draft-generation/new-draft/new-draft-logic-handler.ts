@@ -7,6 +7,7 @@ import {
   bookAppearsCompleteForTrainingAutoSelection,
   ProgressService
 } from '../../../shared/progress-service/progress.service';
+import { projectLabel } from '../../../shared/utils';
 import { DraftSourcesAsArrays } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
 import { ChapterSet, VerboseScriptureRange } from './scripture-range';
@@ -243,8 +244,8 @@ export class NewDraftLogicHandler {
       ].filter(source => source.noAccess);
       if (sourcesWithNoAccess.length > 0) {
         this.inaccessibleProjectNames = sourcesWithNoAccess
-          .map(source => source.name ?? source.shortName ?? '')
-          .filter(name => name !== '');
+          .map(source => projectLabel(source))
+          .filter(label => label !== '');
         this.abort('no_access');
         return;
       }

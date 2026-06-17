@@ -1,13 +1,19 @@
 <div class="wrapper" *transloco="let t; read: 'new_draft'">
   @if (page === "abort") {
     <div class="abort-screen">
-      <mat-icon class="abort-icon" color="warn">error_outline</mat-icon>
+      <mat-icon class="abort-icon" color="primary">info</mat-icon>
       @if (abortMode === "config_changed") {
         <p>{{ t("abort.config_changed") }}</p>
       } @else if (abortMode === "project_syncing") {
         <p>{{ t("abort.project_syncing") }}</p>
       } @else if (inaccessibleProjectNames.length > 0) {
-        <p>{{ t("abort.no_access_with_projects", { projects: inaccessibleProjectNames.join(", ") }) }}</p>
+        <p>{{ t("abort.no_access_list_heading") }}</p>
+        <ul class="inaccessible-projects">
+          @for (project of inaccessibleProjectNames; track project) {
+            <li>{{ project }}</li>
+          }
+        </ul>
+        <p>{{ t("abort.no_access_instruction") }}</p>
       } @else {
         <p>{{ t("abort.no_access") }}</p>
       }
@@ -81,11 +87,7 @@
       }
       @if (booksOfferedForPartialDrafting.length > 0) {
         <h3>{{ t("draft_books.which_chapters") }}</h3>
-        <p>
-          {{ t("draft_books.partial_explanation") }}
-          <!-- FIXME add url DO NOT MERGE -->
-          <a href="#">{{ t("draft_books.learn_more") }}</a>
-        </p>
+        <p>{{ t("draft_books.partial_explanation") }}</p>
         <div class="partial-book-drafting-table">
           @for (bookId of booksOfferedForPartialDrafting; track bookId) {
             <span class="book-name">{{ i18n.localizeBook(bookId) }}</span>
@@ -156,11 +158,7 @@
       }
       @if (booksOfferedForPartialTargetTraining.length > 0) {
         <h3>{{ t("training_books.which_chapters") }}</h3>
-        <p>
-          {{ t("training_books.partial_explanation") }}
-          <!-- FIXME add url DO NOT MERGE -->
-          <a href="#">{{ t("training_books.learn_more") }}</a>
-        </p>
+        <p>{{ t("training_books.partial_explanation") }}</p>
         <div class="partial-book-drafting-table">
           @for (bookId of booksOfferedForPartialTargetTraining; track bookId) {
             <span class="book-name">{{ i18n.localizeBook(bookId) }}</span>

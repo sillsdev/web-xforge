@@ -237,7 +237,8 @@
     "abort": {
       "config_changed": "The draft configuration has changed. Please go back and try again.",
       "project_syncing": "A project started syncing, which can change the available books and chapters. Please go back and try again.",
-      "no_access_with_projects": "The following projects could not be accessed: {{ projects }}. Check that you have access and try again.",
+      "no_access_list_heading": "The following projects could not be accessed:",
+      "no_access_instruction": "Check that you have access and try again.",
       "no_access": "Some projects could not be accessed. Check that you have access and try again.",
       "go_back": "Go back"
     },

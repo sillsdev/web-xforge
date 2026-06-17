@@ -164,7 +164,10 @@ function buildProjectProfile(args: StoryArgs): SFProjectProfile {
 function draftSources(args: StoryArgs): DraftSourcesAsArrays {
   if (args.noAccess) {
     return {
-      trainingSources: [{ noAccess: true, name: 'Inaccessible Source' } as unknown as DraftSource],
+      trainingSources: [
+        { noAccess: true, shortName: 'RP1', name: 'Reference Project' } as unknown as DraftSource,
+        { noAccess: true, shortName: 'DS1', name: 'Spanish Draft Source' } as unknown as DraftSource
+      ],
       trainingTargets: [],
       draftingSources: []
     };

@@ -33,6 +33,16 @@
     width: auto;
     height: auto;
   }
+
+  .inaccessible-projects {
+    margin: 0;
+    // Left-align the list text against the screen's centered layout so it reads as a list.
+    text-align: start;
+
+    li {
+      font-weight: 600;
+    }
+  }
 }
 
 .partial-book-drafting-table {

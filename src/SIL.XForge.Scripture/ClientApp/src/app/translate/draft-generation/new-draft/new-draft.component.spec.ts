@@ -672,7 +672,7 @@ describe('NewDraftComponent', () => {
       const env = new TestEnvironment(testState, { noAccessSources: true });
       tick();
 
-      expect(env.component.inaccessibleProjectNames).toEqual(['Inaccessible Source']);
+      expect(env.component.inaccessibleProjectNames).toEqual(['IS1 - Inaccessible Source']);
     }));
 
     it('navigates back to draft generation from the no_access abort screen', fakeAsync(() => {
@@ -1021,7 +1021,9 @@ class TestEnvironment {
     if (options.noAccessSources) {
       when(mockedDraftSourcesService.getDraftProjectSources()).thenReturn(
         of({
-          trainingSources: [{ noAccess: true, name: 'Inaccessible Source' } as unknown as DraftSource],
+          trainingSources: [
+            { noAccess: true, shortName: 'IS1', name: 'Inaccessible Source' } as unknown as DraftSource
+          ],
           trainingTargets: [],
           draftingSources: []
         })
