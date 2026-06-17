@@ -213,7 +213,7 @@ export class NewDraftComponent {
    * draft-generation page so the user isn't stranded on the loading spinner.
    */
   private handleAbort(): void {
-    const mode = this.logicHandler.abortMode$.getValue();
+    const mode = this.logicHandler.abortMode;
     if (mode === 'no_access' || mode === 'config_changed' || mode === 'project_syncing') {
       this.page = 'abort';
       return;
@@ -223,7 +223,7 @@ export class NewDraftComponent {
   }
 
   get abortMode(): NewDraftAbortMode {
-    return this.logicHandler.abortMode$.getValue();
+    return this.logicHandler.abortMode;
   }
 
   get inaccessibleProjectNames(): string[] {

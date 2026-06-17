@@ -69,7 +69,7 @@ describe('NewDraftLogicHandler', () => {
       await env.waitForAbort();
 
       expect(env.logicHandler.status$.getValue()).toBe('abort');
-      expect(env.logicHandler.abortMode$.getValue()).toBe('no_access');
+      expect(env.logicHandler.abortMode).toBe('no_access');
     });
 
     it('aborts with config_changed when sources change after initialization', async () => {
@@ -88,7 +88,7 @@ describe('NewDraftLogicHandler', () => {
       });
 
       expect(env.logicHandler.status$.getValue()).toBe('abort');
-      expect(env.logicHandler.abortMode$.getValue()).toBe('config_changed');
+      expect(env.logicHandler.abortMode).toBe('config_changed');
     });
 
     it('does not abort when sources re-emit without changing', async () => {

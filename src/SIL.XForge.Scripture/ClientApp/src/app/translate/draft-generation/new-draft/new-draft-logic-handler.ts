@@ -159,7 +159,7 @@ export class NewDraftLogicHandler {
   static allowDraftingBooksNotInTarget = ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET;
 
   status$ = new BehaviorSubject<'init' | 'input' | 'abort'>('init');
-  abortMode$ = new BehaviorSubject<NewDraftAbortMode>(null);
+  abortMode: NewDraftAbortMode = null;
 
   /** Names of the projects that could not be accessed, populated when aborting with mode 'no_access'. */
   inaccessibleProjectNames: string[] = [];
@@ -600,7 +600,7 @@ export class NewDraftLogicHandler {
   }
 
   abort(mode: NewDraftAbortMode): void {
-    this.abortMode$.next(mode);
+    this.abortMode = mode;
     this.status$.next('abort');
   }
 
