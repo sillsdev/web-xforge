@@ -18,6 +18,24 @@ import { ChapterSet, VerboseScriptureRange } from './scripture-range';
 const MIN_SOURCE_CHAPTERS_FOR_PARTIAL_DRAFTING = 12;
 
 /**
+ * Minimum fraction of a chapter's verse segments that must be non-blank for the chapter to count as having content.
+ * Chapters at or below this ratio are treated as untranslated, which drives three decisions off the same policy:
+ * whether a source chapter is offered as material to draft from, whether a target chapter counts toward existing
+ * content (and so is excluded from the default drafting selection), and whether a book is eligible for partial
+ * drafting. Kept in one place, behind `chapterHasContent`, so those uses can't drift apart.
+ */
+const MIN_CHAPTER_COMPLETION_RATIO_FOR_CONTENT = 0.1;
+
+/** Whether a chapter has enough non-blank verse segments to count as having content (see the constant above). */
+function chapterHasContent(chapter: { verseSegments: number; blankVerseSegments: number }): boolean {
+  if (chapter.verseSegments === 0) {
+    return false;
+  }
+  const completionRatio = (chapter.verseSegments - chapter.blankVerseSegments) / chapter.verseSegments;
+  return completionRatio > MIN_CHAPTER_COMPLETION_RATIO_FOR_CONTENT;
+}
+
+/**
  * When false (current behavior, matching the legacy stepper), a book is only offered for drafting if it also exists in
  * the target project's text list. This is a temporary restriction: the current UI doesn't handle drafting a book that
  * isn't already in the target. SF-3822 is intended to lift this soon, at which point this can be changed to true and
@@ -62,10 +80,7 @@ export class DraftProgressService {
       // Add the book to the scripture range
       scriptureRange.books.set(bookProgress.bookId, new ChapterSet([]));
       for (const chapterProgress of bookProgress.chapters) {
-        const nonBlankSegments = chapterProgress.verseSegments - chapterProgress.blankVerseSegments;
-        const completionRatio =
-          chapterProgress.verseSegments === 0 ? 0 : nonBlankSegments / chapterProgress.verseSegments;
-        if (completionRatio > 0.1) {
+        if (chapterHasContent(chapterProgress)) {
           scriptureRange.books.get(bookProgress.bookId)?.chapters.add(chapterProgress.chapterNumber);
         }
       }
