@@ -78,9 +78,11 @@ export class BookMultiSelectComponent implements OnChanges {
     // Only load progress if not in basic mode
     let progress: ProjectProgress | undefined;
     if (this.basicMode === false) {
+      // A projectId is required to load progress, but it may be bound asynchronously. Treat a null id as
+      // "not ready yet": show the loading state and recover on a later change once it arrives.
       if (this.projectId == null) {
-        this.basicMode = true;
-        throw new Error('app-book-multi-select requires a projectId input to initialize when not in basic mode');
+        this.loaded = false;
+        return;
       }
       // Reuse the cached progress unless the project changed (see cachedProgress above).
       if (this.projectId !== this.loadedProgressProjectId) {
