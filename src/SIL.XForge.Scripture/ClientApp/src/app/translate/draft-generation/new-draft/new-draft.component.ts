@@ -745,7 +745,7 @@ export class NewDraftComponent {
 
     // Auto-select newly added target books in each training source; drop removed books
     for (const source of this.trainingSources) {
-      const available = this.logicHandler.availableTrainingSourceBooks$.getValue()[source.projectRef] ?? [];
+      const available = this.logicHandler.availableTrainingSourceBooks[source.projectRef] ?? [];
       const currentSelected = this.logicHandler.selectedTrainingSourceBooks$.getValue()[source.projectRef] ?? [];
       const stillValid = currentSelected.filter(id => newSelectedIds.has(id));
       const autoAdded = addedIds.filter(id => available.includes(id));
@@ -811,7 +811,7 @@ export class NewDraftComponent {
   }
 
   availableTrainingSourceBooksForProject(projectId: string): Book[] {
-    const bookIds = this.logicHandler.availableTrainingSourceBooks$.getValue()[projectId] ?? [];
+    const bookIds = this.logicHandler.availableTrainingSourceBooks[projectId] ?? [];
     const selectedTargetIds = new Set(
       scriptureRangeToBookListWithoutChapterDetail(this.logicHandler.selectedTargetTrainingScriptureRange$.getValue())
     );

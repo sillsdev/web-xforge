@@ -1109,7 +1109,7 @@ class TestEnvironment {
   // Aliases
 
   get availableTrainingSourceBooks(): { [projectId: string]: string[] } {
-    return this.logicHandler.availableTrainingSourceBooks$.getValue();
+    return this.logicHandler.availableTrainingSourceBooks;
   }
 
   get selectedTrainingSourceBooks(): { [projectId: string]: string[] } {

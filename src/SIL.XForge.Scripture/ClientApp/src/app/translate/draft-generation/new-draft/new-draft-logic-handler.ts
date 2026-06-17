@@ -196,7 +196,7 @@ export class NewDraftLogicHandler {
 
   /** Books that exist in the training sources, by project ID */
   trainingSourceBooks: { [projectId: string]: string[] } = {};
-  availableTrainingSourceBooks$ = new BehaviorSubject<{ [projectId: string]: string[] }>({});
+  availableTrainingSourceBooks: { [projectId: string]: string[] } = {};
   selectedTrainingSourceBooks$ = new BehaviorSubject<{ [projectId: string]: string[] }>({});
 
   booksOfferedForPartialDrafting: string[] = [];
@@ -380,7 +380,7 @@ export class NewDraftLogicHandler {
     this.selectedDraftingScriptureRange$.next(new VerboseScriptureRange(''));
     this.selectedTargetTrainingScriptureRange$.next(new VerboseScriptureRange(''));
     this.selectedTrainingSourceBooks$.next({});
-    this.availableTrainingSourceBooks$.next({});
+    this.availableTrainingSourceBooks = {};
     this.targetTrainingBooksWithoutSource$.next([]);
     this.booksOfferedForPartialDrafting = [];
     this.booksOfferedForPartialTargetTraining = [];
@@ -548,7 +548,7 @@ export class NewDraftLogicHandler {
     if (this.inputMode$.getValue() !== 'training_books') {
       throw new Error('Cannot update training source books when not in training_books input mode');
     }
-    const available = this.availableTrainingSourceBooks$.getValue()[projectId] ?? [];
+    const available = this.availableTrainingSourceBooks[projectId] ?? [];
     for (const bookId of bookIds) {
       if (!available.includes(bookId)) {
         throw new Error(`Selected book ${bookId} is not available for training source project ${projectId}`);
@@ -623,8 +623,7 @@ export class NewDraftLogicHandler {
       const previouslySelectedBooks = scriptureRangeToBookListWithoutChapterDetail(
         new VerboseScriptureRange(sourceScriptureRange.scriptureRange)
       );
-      const booksAvailableForTraining =
-        this.availableTrainingSourceBooks$.getValue()[sourceScriptureRange.projectId] ?? [];
+      const booksAvailableForTraining = this.availableTrainingSourceBooks[sourceScriptureRange.projectId] ?? [];
       selectedTrainingSourceBooksByProjectId[sourceScriptureRange.projectId] = previouslySelectedBooks.filter(bookId =>
         booksAvailableForTraining.includes(bookId)
       );
@@ -678,7 +677,7 @@ export class NewDraftLogicHandler {
     // pair and forward-validation would block).
     const autoSelected = new Set(booksToAutoSelect);
     this.selectedTrainingSourceBooks$.next(
-      mapObject(this.availableTrainingSourceBooks$.getValue(), (_projectId, bookIds) =>
+      mapObject(this.availableTrainingSourceBooks, (_projectId, bookIds) =>
         bookIds.filter(bookId => autoSelected.has(bookId))
       )
     );
@@ -731,14 +730,12 @@ export class NewDraftLogicHandler {
 
     // Limit available and selected training source books to not exceed available target training scripture range
     const availableTargetRange = this.availableTargetTrainingScriptureRange$.getValue();
-    this.availableTrainingSourceBooks$.next(
-      mapObject(this.trainingSourceBooks, (_projectId, bookIds) =>
-        bookIds.filter(bookId => availableTargetRange.books.has(bookId))
-      )
+    this.availableTrainingSourceBooks = mapObject(this.trainingSourceBooks, (_projectId, bookIds) =>
+      bookIds.filter(bookId => availableTargetRange.books.has(bookId))
     );
     this.selectedTrainingSourceBooks$.next(
       mapObject(this.selectedTrainingSourceBooks$.getValue(), (projectId, bookIds) =>
-        bookIds.filter(bookId => this.availableTrainingSourceBooks$.getValue()[projectId]?.includes(bookId))
+        bookIds.filter(bookId => this.availableTrainingSourceBooks[projectId]?.includes(bookId))
       )
     );
   }
