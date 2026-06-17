@@ -168,7 +168,7 @@ export class NewDraftLogicHandler {
 
   // A book can be present (in a project), available (logic rules do not forbit selecting it, and it is therefore
   // offered in the UI), and selected (user action, or default values selected the )
-  availableDraftingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange>(new VerboseScriptureRange(''));
+  availableDraftingScriptureRange: VerboseScriptureRange = new VerboseScriptureRange('');
   selectedDraftingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange>(new VerboseScriptureRange(''));
 
   /** Books left out of the drafting list, with the reason for each (see DraftingBookExclusionReason). */
@@ -352,7 +352,7 @@ export class NewDraftLogicHandler {
 
     this.completeTargetBookIds = bundle.completeTargetBookIds;
     this.targetProjectScriptureRange = canonicalTargetProgress;
-    this.availableDraftingScriptureRange$.next(available);
+    this.availableDraftingScriptureRange = available;
     this.excludedDraftingBooks = excluded;
     this.availableTargetTrainingScriptureRange$.next(canonicalTargetProgress);
     this.trainingSourceBooks = Object.fromEntries(
@@ -413,12 +413,12 @@ export class NewDraftLogicHandler {
     const newlySelectedBooks = books.filter(book => !this.selectedDraftingScriptureRange$.getValue().books.has(book));
 
     for (const book of books) {
-      if (!this.availableDraftingScriptureRange$.getValue().books.has(book)) {
+      if (!this.availableDraftingScriptureRange.books.has(book)) {
         throw new Error(`Selected book ${book} not in available drafting scripture range`);
       }
       if (newlySelectedBooks.includes(book)) {
         const chaptersInTarget = this.targetProjectScriptureRange.books.get(book);
-        const chaptersInSource = this.availableDraftingScriptureRange$.getValue().books.get(book);
+        const chaptersInSource = this.availableDraftingScriptureRange.books.get(book);
         if (chaptersInSource == null)
           throw new Error(`Selected book ${book} not in available drafting scripture range`);
         // Only books eligible for partial drafting get a chapter input, so only they may default to a subset.
@@ -457,7 +457,7 @@ export class NewDraftLogicHandler {
     if (!this.booksOfferedForPartialDrafting.includes(bookId)) {
       throw new Error(`Book ${bookId} is not eligible for partial drafting`);
     }
-    const chaptersInSource = this.availableDraftingScriptureRange$.getValue().books.get(bookId);
+    const chaptersInSource = this.availableDraftingScriptureRange.books.get(bookId);
     if (chaptersInSource == null) throw new Error(`Book ${bookId} not in available drafting scripture range`);
     const selectedChaptersNotInSource = selectedChapters.difference(chaptersInSource);
     if (selectedChaptersNotInSource.count() > 0) {
@@ -508,7 +508,7 @@ export class NewDraftLogicHandler {
   }
 
   private isBookEligibleForPartialDrafting(bookId: string): boolean {
-    const sourceChapterCount = this.availableDraftingScriptureRange$.getValue().books.get(bookId)?.count();
+    const sourceChapterCount = this.availableDraftingScriptureRange.books.get(bookId)?.count();
     const targetChaptersWithContent = this.targetProjectScriptureRange.books.get(bookId)?.count();
 
     return (

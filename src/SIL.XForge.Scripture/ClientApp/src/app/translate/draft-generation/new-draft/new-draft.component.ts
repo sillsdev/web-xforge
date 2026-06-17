@@ -572,7 +572,7 @@ export class NewDraftComponent {
 
   get availableDraftingBooks(): Book[] {
     return this.toBookList(
-      this.logicHandler.availableDraftingScriptureRange$.getValue(),
+      this.logicHandler.availableDraftingScriptureRange,
       new Set(this.logicHandler.selectedDraftingScriptureRange$.getValue().books.keys())
     );
   }
@@ -666,7 +666,7 @@ export class NewDraftComponent {
     const parsed = this.parseChapterInput(bookId, value, this.draftingChapterErrors, 'chapter_input.empty_draft');
     if (parsed == null) return;
 
-    const available = this.logicHandler.availableDraftingScriptureRange$.getValue().books.get(bookId);
+    const available = this.logicHandler.availableDraftingScriptureRange.books.get(bookId);
     const badChapters = available != null ? parsed.difference(available) : parsed;
     if (badChapters.count() > 0) {
       this.draftingChapterErrors.set(bookId, {
@@ -689,7 +689,7 @@ export class NewDraftComponent {
   }
 
   draftingChapterHint(bookId: string): string {
-    return this.logicHandler.availableDraftingScriptureRange$.getValue().books.get(bookId)?.toString() ?? '';
+    return this.logicHandler.availableDraftingScriptureRange.books.get(bookId)?.toString() ?? '';
   }
 
   // Section: Target training books selection
@@ -828,7 +828,7 @@ export class NewDraftComponent {
 
   get draftingItems(): { bookId: string; chapterRange: string | null }[] {
     const selectedRange = this.logicHandler.selectedDraftingScriptureRange$.getValue();
-    const availableRange = this.logicHandler.availableDraftingScriptureRange$.getValue();
+    const availableRange = this.logicHandler.availableDraftingScriptureRange;
     return Array.from(selectedRange.books.entries())
       .sort(([a], [b]) => Canon.bookIdToNumber(a) - Canon.bookIdToNumber(b))
       .map(([bookId, selected]) => {
