@@ -175,7 +175,7 @@ export class NewDraftLogicHandler {
   excludedDraftingBooks: ExcludedDraftingBook[] = [];
 
   targetProjectScriptureRange = new VerboseScriptureRange('');
-  availableTargetTrainingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange>(new VerboseScriptureRange(''));
+  availableTargetTrainingScriptureRange: VerboseScriptureRange = new VerboseScriptureRange('');
   selectedTargetTrainingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange>(new VerboseScriptureRange(''));
 
   /**
@@ -354,7 +354,7 @@ export class NewDraftLogicHandler {
     this.targetProjectScriptureRange = canonicalTargetProgress;
     this.availableDraftingScriptureRange = available;
     this.excludedDraftingBooks = excluded;
-    this.availableTargetTrainingScriptureRange$.next(canonicalTargetProgress);
+    this.availableTargetTrainingScriptureRange = canonicalTargetProgress;
     this.trainingSourceBooks = Object.fromEntries(
       bundle.trainingSourcesProgress.map(source => [
         source.projectId,
@@ -529,7 +529,7 @@ export class NewDraftLogicHandler {
     if (!this.booksOfferedForPartialTargetTraining.includes(bookId)) {
       throw new Error(`Book ${bookId} is not eligible for partial target training`);
     }
-    const chaptersAvailableForTraining = this.availableTargetTrainingScriptureRange$.getValue().books.get(bookId);
+    const chaptersAvailableForTraining = this.availableTargetTrainingScriptureRange.books.get(bookId);
     if (chaptersAvailableForTraining == null)
       throw new Error(`Book ${bookId} not in available target training scripture range`);
     const selectedChaptersNotAvailable = selectedChapters.difference(chaptersAvailableForTraining);
@@ -565,7 +565,7 @@ export class NewDraftLogicHandler {
     }
     const newTargetTrainingScriptureRange = new VerboseScriptureRange('');
     for (const bookId of books) {
-      const bookRange = this.availableTargetTrainingScriptureRange$.getValue().books.get(bookId);
+      const bookRange = this.availableTargetTrainingScriptureRange.books.get(bookId);
       if (bookRange == null) {
         throw new Error(`Selected book ${bookId} not in available target training scripture range`);
       }
@@ -583,7 +583,7 @@ export class NewDraftLogicHandler {
     // excluded.
     if (!this.booksOfferedForPartialDrafting.includes(bookId)) return false;
 
-    const chaptersAvailableForTraining = this.availableTargetTrainingScriptureRange$.getValue().books.get(bookId);
+    const chaptersAvailableForTraining = this.availableTargetTrainingScriptureRange.books.get(bookId);
     return chaptersAvailableForTraining != null && chaptersAvailableForTraining.count() >= 1;
   }
 
@@ -646,7 +646,7 @@ export class NewDraftLogicHandler {
 
     // Run the books through the normal book-selection path so chapter defaults match a manual selection. Filter to
     // books still available for target training first, since selectTargetTrainingBooks requires available books.
-    const availableTargetTrainingScriptureRange = this.availableTargetTrainingScriptureRange$.getValue();
+    const availableTargetTrainingScriptureRange = this.availableTargetTrainingScriptureRange;
     const availableTargetBooks = previouslySelectedTargetBooks.filter(bookId =>
       availableTargetTrainingScriptureRange.books.has(bookId)
     );
@@ -664,7 +664,7 @@ export class NewDraftLogicHandler {
    * trainingBooksWereAutoSelected so the component can show the accompanying "review these" notice.
    */
   private autoSelectTrainingBooks(): void {
-    const availableTargetTrainingRange = this.availableTargetTrainingScriptureRange$.getValue();
+    const availableTargetTrainingRange = this.availableTargetTrainingScriptureRange;
     const draftedBooks = this.selectedDraftingScriptureRange.books;
     const booksToAutoSelect = Array.from(availableTargetTrainingRange.books.keys()).filter(
       bookId => this.completeTargetBookIds.has(bookId) && !draftedBooks.has(bookId)
@@ -711,7 +711,7 @@ export class NewDraftLogicHandler {
         booksWithoutSource.push(bookId);
       }
     }
-    this.availableTargetTrainingScriptureRange$.next(availableTargetTrainingRange);
+    this.availableTargetTrainingScriptureRange = availableTargetTrainingRange;
     this.targetTrainingBooksWithoutSource = booksWithoutSource;
     this.selectedTargetTrainingScriptureRange$.next(
       this.selectedTargetTrainingScriptureRange$.getValue().difference(this.selectedDraftingScriptureRange)
@@ -725,7 +725,7 @@ export class NewDraftLogicHandler {
     ).filter(bookId => this.isBookEligibleForPartialTargetTraining(bookId));
 
     // Limit available and selected training source books to not exceed available target training scripture range
-    const availableTargetRange = this.availableTargetTrainingScriptureRange$.getValue();
+    const availableTargetRange = this.availableTargetTrainingScriptureRange;
     this.availableTrainingSourceBooks = mapObject(this.trainingSourceBooks, (_projectId, bookIds) =>
       bookIds.filter(bookId => availableTargetRange.books.has(bookId))
     );

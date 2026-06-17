@@ -216,7 +216,7 @@ describe('NewDraftLogicHandler', () => {
       await env.waitForInit();
 
       // The glossary is offered neither as a target training book nor as a training-source book.
-      expect(env.logicHandler.availableTargetTrainingScriptureRange$.getValue().books.has('GLO')).toBe(false);
+      expect(env.logicHandler.availableTargetTrainingScriptureRange.books.has('GLO')).toBe(false);
       expect(env.logicHandler.trainingSourceBooks['training-source-1-id']).not.toContain('GLO');
     });
 
@@ -230,7 +230,7 @@ describe('NewDraftLogicHandler', () => {
       await env.waitForInit();
       env.logicHandler.setInputMode('training_books');
 
-      const availableTargetTraining = env.logicHandler.availableTargetTrainingScriptureRange$.getValue();
+      const availableTargetTraining = env.logicHandler.availableTargetTrainingScriptureRange;
       // Genesis and Matthew remain available; Luke is withheld because no training source contains it.
       expect(availableTargetTraining.books.has('GEN')).toBe(true);
       expect(availableTargetTraining.books.has('MAT')).toBe(true);
@@ -1117,7 +1117,7 @@ class TestEnvironment {
   }
 
   get availableTargetTrainingScriptureRange(): string {
-    return this.logicHandler.availableTargetTrainingScriptureRange$.getValue().toString();
+    return this.logicHandler.availableTargetTrainingScriptureRange.toString();
   }
 
   get selectedTargetTrainingScriptureRange(): string {

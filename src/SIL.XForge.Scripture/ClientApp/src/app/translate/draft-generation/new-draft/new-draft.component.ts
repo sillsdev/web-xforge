@@ -695,7 +695,7 @@ export class NewDraftComponent {
 
   get availableTargetTrainingBooks(): Book[] {
     return this.toBookList(
-      this.logicHandler.availableTargetTrainingScriptureRange$.getValue(),
+      this.logicHandler.availableTargetTrainingScriptureRange,
       new Set(this.logicHandler.selectedTargetTrainingScriptureRange$.getValue().books.keys())
     );
   }
@@ -761,7 +761,7 @@ export class NewDraftComponent {
     );
     if (parsed == null) return;
 
-    const available = this.logicHandler.availableTargetTrainingScriptureRange$.getValue().books.get(bookId);
+    const available = this.logicHandler.availableTargetTrainingScriptureRange.books.get(bookId);
     const unavailable = available != null ? parsed.difference(available) : parsed;
 
     if (unavailable.count() > 0) {
@@ -792,7 +792,7 @@ export class NewDraftComponent {
   }
 
   targetTrainingChapterHint(bookId: string): string {
-    return this.logicHandler.availableTargetTrainingScriptureRange$.getValue().books.get(bookId)?.toString() ?? '';
+    return this.logicHandler.availableTargetTrainingScriptureRange.books.get(bookId)?.toString() ?? '';
   }
 
   // Section: Training source book selection
@@ -873,7 +873,7 @@ export class NewDraftComponent {
     return formatTrainingBooksSummary(
       bookNumbers,
       this.logicHandler.selectedTargetTrainingScriptureRange$.getValue(),
-      this.logicHandler.availableTargetTrainingScriptureRange$.getValue(),
+      this.logicHandler.availableTargetTrainingScriptureRange,
       this.logicHandler.selectedDraftingScriptureRange,
       this.i18n
     );
