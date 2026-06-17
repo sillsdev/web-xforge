@@ -246,7 +246,7 @@ describe('NewDraftComponent', () => {
       expect(env.component.availableTargetTrainingBooks.map(book => book.number)).not.toContain(
         Canon.bookIdToNumber('GEN')
       );
-      expect(env.component.logicHandler.targetTrainingBooksWithoutSource$.getValue()).toContain('GEN');
+      expect(env.component.logicHandler.targetTrainingBooksWithoutSource).toContain('GEN');
     });
 
     it('removes a book from source when it is deselected in the target', async () => {
@@ -860,7 +860,7 @@ describe('NewDraftComponent', () => {
     it('counts target training books hidden for lacking a matching source', fakeAsync(() => {
       const env = new TestEnvironment(testState);
       tick();
-      env.component.logicHandler.targetTrainingBooksWithoutSource$.next(['LEV', 'NUM']);
+      env.component.logicHandler.targetTrainingBooksWithoutSource = ['LEV', 'NUM'];
 
       expect(env.component.targetTrainingHiddenBookCount).toBe(2);
       expect(env.component.hasTargetTrainingBooksWithoutSource).toBeTrue();

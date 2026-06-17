@@ -235,7 +235,7 @@ describe('NewDraftLogicHandler', () => {
       expect(availableTargetTraining.books.has('GEN')).toBe(true);
       expect(availableTargetTraining.books.has('MAT')).toBe(true);
       expect(availableTargetTraining.books.has('LUK')).toBe(false);
-      expect(env.logicHandler.targetTrainingBooksWithoutSource$.getValue()).toEqual(['LUK']);
+      expect(env.logicHandler.targetTrainingBooksWithoutSource).toEqual(['LUK']);
     });
   });
 

@@ -192,7 +192,7 @@ export class NewDraftLogicHandler {
    * the book (so it could never be paired with a source). Populated when the training step is entered; used to explain
    * why those books are missing from the target training list.
    */
-  targetTrainingBooksWithoutSource$ = new BehaviorSubject<string[]>([]);
+  targetTrainingBooksWithoutSource: string[] = [];
 
   /** Books that exist in the training sources, by project ID */
   trainingSourceBooks: { [projectId: string]: string[] } = {};
@@ -381,7 +381,7 @@ export class NewDraftLogicHandler {
     this.selectedTargetTrainingScriptureRange$.next(new VerboseScriptureRange(''));
     this.selectedTrainingSourceBooks = {};
     this.availableTrainingSourceBooks = {};
-    this.targetTrainingBooksWithoutSource$.next([]);
+    this.targetTrainingBooksWithoutSource = [];
     this.booksOfferedForPartialDrafting = [];
     this.booksOfferedForPartialTargetTraining = [];
     this.trainingBooksWereAutoSelected = false;
@@ -698,7 +698,7 @@ export class NewDraftLogicHandler {
     // Available target training books are the target's content minus what's being drafted, further limited to books
     // that exist in at least one training source: a target book can only be used as training data if a source
     // provides the matching book to pair it with. Books with no such source are recorded
-    // (targetTrainingBooksWithoutSource$) so the UI can explain why they aren't offered.
+    // (targetTrainingBooksWithoutSource) so the UI can explain why they aren't offered.
     const targetTrainingRange = this.targetProjectScriptureRange.difference(
       this.selectedDraftingScriptureRange$.getValue()
     );
@@ -714,7 +714,7 @@ export class NewDraftLogicHandler {
       }
     }
     this.availableTargetTrainingScriptureRange$.next(availableTargetTrainingRange);
-    this.targetTrainingBooksWithoutSource$.next(booksWithoutSource);
+    this.targetTrainingBooksWithoutSource = booksWithoutSource;
     this.selectedTargetTrainingScriptureRange$.next(
       this.selectedTargetTrainingScriptureRange$.getValue().difference(this.selectedDraftingScriptureRange$.getValue())
     );

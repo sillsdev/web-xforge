@@ -711,12 +711,12 @@ export class NewDraftComponent {
 
   /** Whether any target book is hidden from the training list for lacking a matching book in any training source. */
   get hasTargetTrainingBooksWithoutSource(): boolean {
-    return this.logicHandler.targetTrainingBooksWithoutSource$.getValue().length > 0;
+    return this.logicHandler.targetTrainingBooksWithoutSource.length > 0;
   }
 
   /** How many target books are hidden from the training list (used by the "N books are hidden" toggle). */
   get targetTrainingHiddenBookCount(): number {
-    return this.logicHandler.targetTrainingBooksWithoutSource$.getValue().length;
+    return this.logicHandler.targetTrainingBooksWithoutSource.length;
   }
 
   /** Whether training books were pre-selected on this project's first draft (shows the "review these" notice). */
@@ -727,7 +727,7 @@ export class NewDraftComponent {
   /** Localized, comma-joined names of the target books hidden from the training list for lacking a training source. */
   get targetTrainingBooksWithoutSourceNames(): string {
     return this.i18n.enumerateList(
-      this.logicHandler.targetTrainingBooksWithoutSource$.getValue().map(bookId => this.i18n.localizeBook(bookId))
+      this.logicHandler.targetTrainingBooksWithoutSource.map(bookId => this.i18n.localizeBook(bookId))
     );
   }
 
