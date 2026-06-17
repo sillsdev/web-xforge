@@ -439,7 +439,7 @@ export class NewDraftLogicHandler {
       throw new Error('Cannot update draft books when not in draft_books input mode');
     }
 
-    const selectedChapters = new ChapterSet(chapters);
+    const selectedChapters = ChapterSet.fromUserInput(chapters);
 
     if (!this.booksOfferedForPartialDrafting$.getValue().includes(bookId)) {
       throw new Error(`Book ${bookId} is not eligible for partial drafting`);
@@ -511,7 +511,7 @@ export class NewDraftLogicHandler {
       throw new Error('Cannot update training chapters when not in training_books input mode');
     }
 
-    const selectedChapters = new ChapterSet(chapters);
+    const selectedChapters = ChapterSet.fromUserInput(chapters);
 
     if (!this.booksOfferedForPartialTargetTraining$.getValue().includes(bookId)) {
       throw new Error(`Book ${bookId} is not eligible for partial target training`);

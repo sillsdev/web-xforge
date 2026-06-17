@@ -5,6 +5,23 @@ export class ChapterSet {
   static chapterRangeSeparator = ',';
   static chapterRangeStartEndSeparator = '-';
 
+  /**
+   * Code point of the digit "zero" for each decimal-digit script we accept from a keyboard. Each Unicode decimal-digit
+   * block is the ten consecutive code points 0-9, so a digit's value is its offset from the block's zero. Fullwidth
+   * digits are folded to ASCII by NFKC normalization, so they need no entry here. Extend this list to accept more
+   * scripts; an unrecognized digit script simply fails validation (a clear "invalid range" error, never silent).
+   */
+  private static readonly digitBlockZeros = [
+    0x0660, // Arabic-Indic (Arabic)
+    0x06f0, // Extended Arabic-Indic (Persian, Urdu)
+    0x0966, // Devanagari (Hindi, Nepali, ...)
+    0x09e6, // Bengali (Bangla, Assamese)
+    0x0e50 // Thai
+  ];
+
+  /** Non-Latin comma characters whose key on a native keyboard layout serves as the list separator. */
+  private static readonly commaVariants = ['、', '،']; // ideographic comma, Arabic comma
+
   chapters = new Set<number>();
 
   constructor(range: string | number[]) {
@@ -36,6 +53,50 @@ export class ChapterSet {
         this.chapters.add(chapter);
       }
     }
+  }
+
+  /**
+   * Parses chapter input typed by a user, accepting the looser styles a real keyboard produces rather than only the
+   * exact serialized form. Tolerated: surrounding/inner whitespace ("1 - 5", "1-5, 8"); the wide variants of the
+   * digits, comma, and hyphen that East Asian (Chinese/Japanese/Korean) input methods produce — Unicode calls these
+   * "fullwidth" forms, e.g. "１" for the digit one; the comma keys of non-Latin layouts (ideographic "、", Arabic
+   * "،"); and the digits of non-Latin keyboards (Arabic-Indic, Persian, Devanagari, Bengali, Thai — see
+   * digitBlockZeros); plus empty tokens from trailing/doubled commas. Everything is normalized to the ASCII form and
+   * handed to the strict constructor, so genuinely malformed input (non-digits, "1-3-5", start > end, a space inside
+   * a number) is still rejected with a clear error rather than silently accepted. Use this for user input; use the
+   * constructor for serialized ranges.
+   */
+  static fromUserInput(input: string): ChapterSet {
+    // NFKC normalization rewrites "compatibility" characters to their plain equivalents. Most relevant here: the wide
+    // "fullwidth" digits/comma/hyphen produced by East Asian input methods, and a non-breaking space, all become
+    // ordinary ASCII.
+    let normalized = input.normalize('NFKC');
+
+    // Accept comma keys from non-Latin layouts as the list separator.
+    for (const variant of ChapterSet.commaVariants) {
+      normalized = normalized.split(variant).join(ChapterSet.chapterRangeSeparator);
+    }
+
+    // Map decimal digits from non-Latin keyboards to ASCII so they validate and parse. An unrecognized digit script
+    // is left as-is and rejected by validation below.
+    normalized = normalized.replace(/\p{Nd}/gu, ch => {
+      const cp = ch.codePointAt(0)!;
+      if (cp >= 0x30 && cp <= 0x39) return ch; // already ASCII
+      for (const zero of ChapterSet.digitBlockZeros) {
+        if (cp >= zero && cp <= zero + 9) return String(cp - zero);
+      }
+      return ch;
+    });
+
+    // Tokenize leniently: trim each token, drop whitespace around the hyphen, and drop empty tokens left by a
+    // trailing or doubled comma. Whitespace *inside* a number is preserved so it fails validation (it is ambiguous).
+    normalized = normalized
+      .split(ChapterSet.chapterRangeSeparator)
+      .map(token => token.trim().replace(/\s*-\s*/g, ChapterSet.chapterRangeStartEndSeparator))
+      .filter(token => token.length > 0)
+      .join(ChapterSet.chapterRangeSeparator);
+
+    return new ChapterSet(normalized);
   }
 
   clone(): ChapterSet {

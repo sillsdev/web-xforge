@@ -657,7 +657,7 @@ export class NewDraftComponent {
       return null;
     }
     try {
-      return new ChapterSet(value);
+      return ChapterSet.fromUserInput(value);
     } catch {
       errors.set(bookId, { key: 'chapter_input.invalid_range' });
       return null;
