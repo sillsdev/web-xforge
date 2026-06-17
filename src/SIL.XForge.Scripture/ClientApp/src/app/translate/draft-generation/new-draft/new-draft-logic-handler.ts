@@ -172,7 +172,7 @@ export class NewDraftLogicHandler {
   selectedDraftingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange>(new VerboseScriptureRange(''));
 
   /** Books left out of the drafting list, with the reason for each (see DraftingBookExclusionReason). */
-  excludedDraftingBooks$ = new BehaviorSubject<ExcludedDraftingBook[]>([]);
+  excludedDraftingBooks: ExcludedDraftingBook[] = [];
 
   targetProjectScriptureRange = new VerboseScriptureRange('');
   availableTargetTrainingScriptureRange$ = new BehaviorSubject<VerboseScriptureRange>(new VerboseScriptureRange(''));
@@ -353,7 +353,7 @@ export class NewDraftLogicHandler {
     this.completeTargetBookIds = bundle.completeTargetBookIds;
     this.targetProjectScriptureRange = canonicalTargetProgress;
     this.availableDraftingScriptureRange$.next(available);
-    this.excludedDraftingBooks$.next(excluded);
+    this.excludedDraftingBooks = excluded;
     this.availableTargetTrainingScriptureRange$.next(canonicalTargetProgress);
     this.trainingSourceBooks$.next(
       Object.fromEntries(

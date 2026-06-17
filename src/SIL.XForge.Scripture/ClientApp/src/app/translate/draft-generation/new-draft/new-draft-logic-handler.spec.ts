@@ -1133,7 +1133,7 @@ class TestEnvironment {
   }
 
   get excludedDraftingBooks(): ExcludedDraftingBook[] {
-    return this.logicHandler.excludedDraftingBooks$.getValue();
+    return this.logicHandler.excludedDraftingBooks;
   }
 
   get selectedDraftingScriptureRange(): string {

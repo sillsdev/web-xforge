@@ -595,9 +595,9 @@ export class NewDraftComponent {
 
   /** How many books are hidden from the drafting list for a surfaced reason (used by the "N books are hidden" toggle). */
   get draftingHiddenBookCount(): number {
-    return this.logicHandler.excludedDraftingBooks$
-      .getValue()
-      .filter(book => this.surfacedDraftingExclusionReasons.includes(book.reason)).length;
+    return this.logicHandler.excludedDraftingBooks.filter(book =>
+      this.surfacedDraftingExclusionReasons.includes(book.reason)
+    ).length;
   }
 
   /**
@@ -606,7 +606,7 @@ export class NewDraftComponent {
    * reason and the parameters that message needs.
    */
   get draftingExclusionNotices(): { key: I18nKeyForComponent<'new_draft'>; params: Record<string, string> }[] {
-    const excluded = this.logicHandler.excludedDraftingBooks$.getValue();
+    const excluded = this.logicHandler.excludedDraftingBooks;
     return this.surfacedDraftingExclusionReasons
       .map(reason => {
         const bookNames = excluded

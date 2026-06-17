@@ -847,11 +847,11 @@ describe('NewDraftComponent', () => {
     it('counts only the surfaced drafting-exclusion reasons (not non-canonical)', fakeAsync(() => {
       const env = new TestEnvironment(testState);
       tick();
-      env.component.logicHandler.excludedDraftingBooks$.next([
+      env.component.logicHandler.excludedDraftingBooks = [
         { bookId: 'GEN', reason: 'no_source_content' },
         { bookId: 'EXO', reason: 'not_in_target' },
         { bookId: 'FRT', reason: 'non_canonical' } // tracked but never surfaced
-      ]);
+      ];
 
       expect(env.component.draftingHiddenBookCount).toBe(2);
       expect(env.component.draftingExclusionNotices.length).toBe(2);
