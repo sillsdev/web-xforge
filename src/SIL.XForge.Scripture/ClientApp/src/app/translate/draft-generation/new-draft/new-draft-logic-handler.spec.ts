@@ -1145,6 +1145,6 @@ class TestEnvironment {
   }
 
   get booksOfferedForPartialTargetTraining(): string[] {
-    return this.logicHandler.booksOfferedForPartialTargetTraining$.getValue();
+    return this.logicHandler.booksOfferedForPartialTargetTraining;
   }
 }

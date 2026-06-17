@@ -708,7 +708,7 @@ export class NewDraftComponent {
   }
 
   get booksOfferedForPartialTargetTraining(): string[] {
-    return this.logicHandler.booksOfferedForPartialTargetTraining$.getValue();
+    return this.logicHandler.booksOfferedForPartialTargetTraining;
   }
 
   /** Whether any target book is hidden from the training list for lacking a matching book in any training source. */
@@ -741,10 +741,7 @@ export class NewDraftComponent {
     const addedIds = [...newSelectedIds].filter(id => !previousSelectedTargetIds.has(id));
 
     this.logicHandler.selectTargetTrainingBooks([...newSelectedIds]);
-    this.pruneChapterErrors(
-      this.targetTrainingChapterErrors,
-      this.logicHandler.booksOfferedForPartialTargetTraining$.getValue()
-    );
+    this.pruneChapterErrors(this.targetTrainingChapterErrors, this.logicHandler.booksOfferedForPartialTargetTraining);
 
     // Auto-select newly added target books in each training source; drop removed books
     for (const source of this.trainingSources) {
