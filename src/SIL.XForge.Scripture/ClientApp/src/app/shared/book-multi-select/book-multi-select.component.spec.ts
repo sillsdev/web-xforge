@@ -95,6 +95,7 @@ describe('BookMultiSelectComponent', () => {
     await component.ngOnChanges();
 
     verify(mockedProgressService.getProgress('a-different-project-id', anything())).once();
+    expect().nothing();
   });
 
   it('should not crash when texts have not yet loaded', async () => {
