@@ -584,7 +584,7 @@ export class NewDraftComponent {
   }
 
   get booksOfferedForPartialDrafting(): string[] {
-    return this.logicHandler.booksOfferedForPartialDrafting$.getValue();
+    return this.logicHandler.booksOfferedForPartialDrafting;
   }
 
   /** Drafting-exclusion reasons shown to the user, in display order. Non-canonical exclusions are never surfaced. */
@@ -635,7 +635,7 @@ export class NewDraftComponent {
   onDraftingBookSelect(books: number[]): void {
     const selectedBookIds = books.map(b => Canon.bookNumberToId(b));
     this.logicHandler.selectDraftingBooks(selectedBookIds);
-    this.pruneChapterErrors(this.draftingChapterErrors, this.logicHandler.booksOfferedForPartialDrafting$.getValue());
+    this.pruneChapterErrors(this.draftingChapterErrors, this.logicHandler.booksOfferedForPartialDrafting);
     this.clearStepErrorIfResolved();
   }
 

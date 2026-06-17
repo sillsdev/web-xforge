@@ -199,7 +199,7 @@ export class NewDraftLogicHandler {
   availableTrainingSourceBooks$ = new BehaviorSubject<{ [projectId: string]: string[] }>({});
   selectedTrainingSourceBooks$ = new BehaviorSubject<{ [projectId: string]: string[] }>({});
 
-  booksOfferedForPartialDrafting$ = new BehaviorSubject<string[]>([]);
+  booksOfferedForPartialDrafting: string[] = [];
   booksOfferedForPartialTargetTraining$ = new BehaviorSubject<string[]>([]);
 
   /**
@@ -384,7 +384,7 @@ export class NewDraftLogicHandler {
     this.selectedTrainingSourceBooks$.next({});
     this.availableTrainingSourceBooks$.next({});
     this.targetTrainingBooksWithoutSource$.next([]);
-    this.booksOfferedForPartialDrafting$.next([]);
+    this.booksOfferedForPartialDrafting = [];
     this.booksOfferedForPartialTargetTraining$.next([]);
     this.trainingBooksWereAutoSelected = false;
     this.hasVisitedTrainingBooksInputMode = false;
@@ -446,7 +446,7 @@ export class NewDraftLogicHandler {
     this.selectedDraftingScriptureRange$.next(newDraftingScriptureRange);
 
     const partialBookDraftingBooks = books.filter(bookId => this.isBookEligibleForPartialDrafting(bookId));
-    this.booksOfferedForPartialDrafting$.next(partialBookDraftingBooks);
+    this.booksOfferedForPartialDrafting = partialBookDraftingBooks;
   }
 
   selectDraftingChapters(bookId: string, chapters: string): void {
@@ -456,7 +456,7 @@ export class NewDraftLogicHandler {
 
     const selectedChapters = ChapterSet.fromUserInput(chapters);
 
-    if (!this.booksOfferedForPartialDrafting$.getValue().includes(bookId)) {
+    if (!this.booksOfferedForPartialDrafting.includes(bookId)) {
       throw new Error(`Book ${bookId} is not eligible for partial drafting`);
     }
     const chaptersInSource = this.availableDraftingScriptureRange$.getValue().books.get(bookId);
@@ -583,7 +583,7 @@ export class NewDraftLogicHandler {
     // Only books offered for partial drafting can have their target training chapters selected individually.
     // Additionally, at least one target chapter must remain available for training after the drafted chapters are
     // excluded.
-    if (!this.booksOfferedForPartialDrafting$.getValue().includes(bookId)) return false;
+    if (!this.booksOfferedForPartialDrafting.includes(bookId)) return false;
 
     const chaptersAvailableForTraining = this.availableTargetTrainingScriptureRange$.getValue().books.get(bookId);
     return chaptersAvailableForTraining != null && chaptersAvailableForTraining.count() >= 1;

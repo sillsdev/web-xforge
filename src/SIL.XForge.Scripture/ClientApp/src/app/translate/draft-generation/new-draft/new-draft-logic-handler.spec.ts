@@ -1141,7 +1141,7 @@ class TestEnvironment {
   }
 
   get booksOfferedForPartialDrafting(): string[] {
-    return this.logicHandler.booksOfferedForPartialDrafting$.getValue();
+    return this.logicHandler.booksOfferedForPartialDrafting;
   }
 
   get booksOfferedForPartialTargetTraining(): string[] {
