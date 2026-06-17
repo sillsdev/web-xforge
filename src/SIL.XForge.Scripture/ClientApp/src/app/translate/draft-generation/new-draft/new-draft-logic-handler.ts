@@ -182,7 +182,7 @@ export class NewDraftLogicHandler {
    * Whether training books were automatically selected on this project's first draft (no previously saved training
    * selection). Used to show the "review the pre-selected books" notice on the training step.
    */
-  trainingBooksWereAutoSelected$ = new BehaviorSubject<boolean>(false);
+  trainingBooksWereAutoSelected: boolean = false;
 
   /** Target books that appear complete enough to auto-select as training data (see getCompleteBookIds). */
   private completeTargetBookIds = new Set<string>();
@@ -386,7 +386,7 @@ export class NewDraftLogicHandler {
     this.targetTrainingBooksWithoutSource$.next([]);
     this.booksOfferedForPartialDrafting$.next([]);
     this.booksOfferedForPartialTargetTraining$.next([]);
-    this.trainingBooksWereAutoSelected$.next(false);
+    this.trainingBooksWereAutoSelected = false;
     this.hasVisitedTrainingBooksInputMode = false;
     this.inputMode$.next('draft_books');
   }
@@ -664,7 +664,7 @@ export class NewDraftLogicHandler {
    * getCompleteBookIds), and is not itself being drafted — a book whose translation is still in progress (i.e. one the
    * user is drafting) is a lower-conviction case they should opt into deliberately. Each auto-selected target book is
    * also selected in every training source that contains it, mirroring a manual selection. Sets
-   * trainingBooksWereAutoSelected$ so the component can show the accompanying "review these" notice.
+   * trainingBooksWereAutoSelected so the component can show the accompanying "review these" notice.
    */
   private autoSelectTrainingBooks(): void {
     const availableTargetTrainingRange = this.availableTargetTrainingScriptureRange$.getValue();
@@ -685,7 +685,7 @@ export class NewDraftLogicHandler {
       )
     );
 
-    this.trainingBooksWereAutoSelected$.next(booksToAutoSelect.length > 0);
+    this.trainingBooksWereAutoSelected = booksToAutoSelect.length > 0;
   }
 
   /**
@@ -694,11 +694,8 @@ export class NewDraftLogicHandler {
    * auto-selected remains. Only ever clears the flag (a manual reselection doesn't re-arm it).
    */
   dismissAutoSelectNoticeIfSelectionEmpty(): void {
-    if (
-      this.trainingBooksWereAutoSelected$.getValue() &&
-      this.selectedTargetTrainingScriptureRange$.getValue().books.size === 0
-    ) {
-      this.trainingBooksWereAutoSelected$.next(false);
+    if (this.trainingBooksWereAutoSelected && this.selectedTargetTrainingScriptureRange$.getValue().books.size === 0) {
+      this.trainingBooksWereAutoSelected = false;
     }
   }
 

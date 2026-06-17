@@ -723,7 +723,7 @@ export class NewDraftComponent {
 
   /** Whether training books were pre-selected on this project's first draft (shows the "review these" notice). */
   get trainingBooksWereAutoSelected(): boolean {
-    return this.logicHandler.trainingBooksWereAutoSelected$.getValue();
+    return this.logicHandler.trainingBooksWereAutoSelected;
   }
 
   /** Localized, comma-joined names of the target books hidden from the training list for lacking a training source. */

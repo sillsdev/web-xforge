@@ -1125,7 +1125,7 @@ class TestEnvironment {
   }
 
   get trainingBooksWereAutoSelected(): boolean {
-    return this.logicHandler.trainingBooksWereAutoSelected$.getValue();
+    return this.logicHandler.trainingBooksWereAutoSelected;
   }
 
   get availableDraftingScriptureRange(): string {
