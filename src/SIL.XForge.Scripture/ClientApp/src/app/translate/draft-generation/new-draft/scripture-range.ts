@@ -131,6 +131,11 @@ export class ChapterSet {
     return ranges.join(ChapterSet.chapterRangeSeparator);
   }
 
+  /** Like {@link toString}, but with a space after each separator for readability ("1-3, 7" vs "1-3,7"). */
+  toStringForDisplay(): string {
+    return this.toString().replaceAll(ChapterSet.chapterRangeSeparator, `${ChapterSet.chapterRangeSeparator} `);
+  }
+
   count(): number {
     return this.chapters.size;
   }

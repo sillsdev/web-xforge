@@ -62,10 +62,6 @@ interface ChapterInputError {
   params?: object;
 }
 
-function formatChapterRange(range: string): string {
-  return range.replace(/,/g, ', ');
-}
-
 const PAGES_BY_ORDER = [
   { page: 'preface' },
   { page: 'draft_books', inputState: 'draft_books' },
@@ -833,7 +829,7 @@ export class NewDraftComponent {
       .map(([bookId, selected]) => {
         const available = availableRange.books.get(bookId);
         const isPartial = available != null && available.difference(selected).count() > 0;
-        return { bookId, chapterRange: isPartial ? formatChapterRange(selected.toString()) : null };
+        return { bookId, chapterRange: isPartial ? selected.toStringForDisplay() : null };
       });
   }
 

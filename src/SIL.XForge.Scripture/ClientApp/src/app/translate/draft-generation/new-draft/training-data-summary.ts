@@ -12,11 +12,6 @@ export type TrainingBookSegment =
 
 const EMPTY_CHAPTER_SET = new ChapterSet('');
 
-/** Adds a space after each comma so "1-3,7" reads as "1-3, 7". */
-function formatChapterRange(range: string): string {
-  return range.replace(/,/g, ', ');
-}
-
 /**
  * Splits a list of training book numbers into display segments.
  *
@@ -53,7 +48,7 @@ export function segmentTrainingBooks(
     const isPartial = selected != null && wholeBook.difference(selected).count() > 0;
     if (isPartial) {
       flushFullBooks();
-      segments.push({ kind: 'partial', bookId, chapterRange: formatChapterRange(selected!.toString()) });
+      segments.push({ kind: 'partial', bookId, chapterRange: selected!.toStringForDisplay() });
     } else {
       pendingFullBooks.push(bookNumber);
     }

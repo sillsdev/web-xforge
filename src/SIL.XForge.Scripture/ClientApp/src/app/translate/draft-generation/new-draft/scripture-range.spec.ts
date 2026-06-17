@@ -14,6 +14,12 @@ describe('ScriptureRange', () => {
       expect(cs.toString()).toBe('5');
     });
 
+    it('toStringForDisplay adds a space after each separator', () => {
+      expect(new ChapterSet('1-3,7,10-12').toStringForDisplay()).toBe('1-3, 7, 10-12');
+      expect(new ChapterSet('5').toStringForDisplay()).toBe('5');
+      expect(new ChapterSet('').toStringForDisplay()).toBe('');
+    });
+
     it('throws on invalid tokens', () => {
       expect(() => new ChapterSet('1-3,foo')).toThrowError(/Invalid chapter range/);
     });
