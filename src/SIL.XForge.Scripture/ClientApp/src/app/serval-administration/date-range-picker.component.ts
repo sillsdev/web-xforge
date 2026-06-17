@@ -8,6 +8,7 @@ import {
   ValidationErrors,
   ValidatorFn
 } from '@angular/forms';
+import { MatIconButton } from '@angular/material/button';
 import { DateAdapter } from '@angular/material/core';
 import {
   MatDatepickerToggle,
@@ -17,6 +18,7 @@ import {
   MatStartDate
 } from '@angular/material/datepicker';
 import { MatFormField, MatFormFieldModule, MatLabel } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
 import { MatInput } from '@angular/material/input';
 import { distinctUntilChanged, map } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -52,7 +54,9 @@ export interface NormalizedDateRange {
     MatEndDate,
     MatStartDate,
     MatInput,
-    MatLabel
+    MatLabel,
+    MatIcon,
+    MatIconButton
   ]
 })
 export class DateRangePickerComponent implements OnInit {
