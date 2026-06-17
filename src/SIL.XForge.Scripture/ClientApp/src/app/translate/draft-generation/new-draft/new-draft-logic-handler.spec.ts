@@ -217,7 +217,7 @@ describe('NewDraftLogicHandler', () => {
 
       // The glossary is offered neither as a target training book nor as a training-source book.
       expect(env.logicHandler.availableTargetTrainingScriptureRange$.getValue().books.has('GLO')).toBe(false);
-      expect(env.logicHandler.trainingSourceBooks$.getValue()['training-source-1-id']).not.toContain('GLO');
+      expect(env.logicHandler.trainingSourceBooks['training-source-1-id']).not.toContain('GLO');
     });
 
     it('excludes target books absent from every training source and tracks them for the notice', async () => {

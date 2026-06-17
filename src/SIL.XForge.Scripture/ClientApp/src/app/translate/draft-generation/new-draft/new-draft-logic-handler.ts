@@ -195,7 +195,7 @@ export class NewDraftLogicHandler {
   targetTrainingBooksWithoutSource$ = new BehaviorSubject<string[]>([]);
 
   /** Books that exist in the training sources, by project ID */
-  trainingSourceBooks$ = new BehaviorSubject<{ [projectId: string]: string[] }>({});
+  trainingSourceBooks: { [projectId: string]: string[] } = {};
   availableTrainingSourceBooks$ = new BehaviorSubject<{ [projectId: string]: string[] }>({});
   selectedTrainingSourceBooks$ = new BehaviorSubject<{ [projectId: string]: string[] }>({});
 
@@ -355,13 +355,11 @@ export class NewDraftLogicHandler {
     this.availableDraftingScriptureRange$.next(available);
     this.excludedDraftingBooks = excluded;
     this.availableTargetTrainingScriptureRange$.next(canonicalTargetProgress);
-    this.trainingSourceBooks$.next(
-      Object.fromEntries(
-        bundle.trainingSourcesProgress.map(source => [
-          source.projectId,
-          scriptureRangeToBookListWithoutChapterDetail(withoutExtraMaterialBooks(source.range))
-        ])
-      )
+    this.trainingSourceBooks = Object.fromEntries(
+      bundle.trainingSourcesProgress.map(source => [
+        source.projectId,
+        scriptureRangeToBookListWithoutChapterDetail(withoutExtraMaterialBooks(source.range))
+      ])
     );
   }
 
@@ -707,7 +705,7 @@ export class NewDraftLogicHandler {
     const targetTrainingRange = this.targetProjectScriptureRange.difference(
       this.selectedDraftingScriptureRange$.getValue()
     );
-    const booksInAnyTrainingSource = new Set(Object.values(this.trainingSourceBooks$.getValue()).flat());
+    const booksInAnyTrainingSource = new Set(Object.values(this.trainingSourceBooks).flat());
 
     const availableTargetTrainingRange = new VerboseScriptureRange('');
     const booksWithoutSource: string[] = [];
@@ -734,7 +732,7 @@ export class NewDraftLogicHandler {
     // Limit available and selected training source books to not exceed available target training scripture range
     const availableTargetRange = this.availableTargetTrainingScriptureRange$.getValue();
     this.availableTrainingSourceBooks$.next(
-      mapObject(this.trainingSourceBooks$.getValue(), (_projectId, bookIds) =>
+      mapObject(this.trainingSourceBooks, (_projectId, bookIds) =>
         bookIds.filter(bookId => availableTargetRange.books.has(bookId))
       )
     );
