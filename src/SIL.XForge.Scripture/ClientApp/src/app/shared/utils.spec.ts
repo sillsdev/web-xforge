@@ -9,6 +9,7 @@ import {
   getBookFileNameDigits,
   getUnsupportedTags,
   isBadDelta,
+  parseDate,
   projectLabel,
   XmlUtils
 } from './utils';
@@ -270,6 +271,38 @@ describe('shared utils', () => {
           insert: { note: { contents: { ops: [{ attributes: { 'invalid-inline': true, char: { style: 'bad' } } }] } } }
         })
       ).toEqual(['bad']);
+    });
+  });
+
+  describe('parseDate', () => {
+    it('returns the same Date instance when given a Date', () => {
+      const date = new Date('2026-06-15T12:00:00.000Z');
+      expect(parseDate(date)).toBe(date);
+    });
+
+    it('parses an ISO date string', () => {
+      const result = parseDate('2026-06-15T12:00:00.000Z');
+      expect(result).toEqual(new Date('2026-06-15T12:00:00.000Z'));
+    });
+
+    it('parses a numeric timestamp', () => {
+      const ms = Date.UTC(2026, 5, 15, 12, 0, 0);
+      expect(parseDate(ms)).toEqual(new Date(ms));
+    });
+
+    it('returns undefined for null or undefined', () => {
+      expect(parseDate(null)).toBeUndefined();
+      expect(parseDate(undefined)).toBeUndefined();
+    });
+
+    it('returns undefined for an invalid date string', () => {
+      expect(parseDate('not a date')).toBeUndefined();
+      expect(parseDate('')).toBeUndefined();
+    });
+
+    it('returns undefined for values that are not strings, numbers, or Dates', () => {
+      expect(parseDate({})).toBeUndefined();
+      expect(parseDate(true)).toBeUndefined();
     });
   });
 });
