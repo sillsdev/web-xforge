@@ -1,6 +1,11 @@
 @use 'src/variables' as sfColors;
 @use 'src/xforge-common/media-breakpoints/breakpoints' as *;
 
+app-notice {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
 .table-wrapper {
   overflow-x: auto;
   display: block;
