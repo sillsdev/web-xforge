@@ -226,7 +226,7 @@ public class Startup
         }
         else
         {
-            app.UseExceptionHandler(exceptionHandler.ReportExceptions);
+            app.UseExceptionHandler(exceptionHandler.ReportUnhandledExceptions);
         }
 
         app.UseStatusCodePagesWithReExecute("/Status/Error", "?code={0}");

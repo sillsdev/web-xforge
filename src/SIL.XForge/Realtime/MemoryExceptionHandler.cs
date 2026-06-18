@@ -10,6 +10,8 @@ public class MemoryExceptionHandler : IExceptionHandler
 {
     public void ReportException(Exception exception) { }
 
+    public void ReportUnhandledException(Exception exception) { }
+
     public async Task EnsureSuccessStatusCode(HttpResponseMessage response)
     {
         if (!response.IsSuccessStatusCode)
@@ -22,7 +24,7 @@ public class MemoryExceptionHandler : IExceptionHandler
         }
     }
 
-    public void ReportExceptions(IApplicationBuilder app) { }
+    public void ReportUnhandledExceptions(IApplicationBuilder app) { }
 
     public void RecordEndpointInfoForException(Dictionary<string, string> metadata) { }
 

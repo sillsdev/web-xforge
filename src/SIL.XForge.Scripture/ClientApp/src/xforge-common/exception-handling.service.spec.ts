@@ -257,7 +257,7 @@ class TestEnvironment {
 
     when(mockedPwaService.isRunningInstalledApp).thenReturn(false);
 
-    when(mockedErrorReportingService.notify(anything(), anything())).thenCall((error: NotifiableError) =>
+    when(mockedErrorReportingService.notify(anything(), anything(), anything())).thenCall((error: NotifiableError) =>
       this.errorReports.push({ error })
     );
 

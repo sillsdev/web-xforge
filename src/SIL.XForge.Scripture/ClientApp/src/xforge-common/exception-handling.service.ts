@@ -254,7 +254,7 @@ export class ExceptionHandlingService {
           isPwaInstalled: pwaService.isRunningInstalledApp,
           featureFlags: featureFlagService.getEnabledFlags().join(',')
         });
-        this.sendReport(errorReportingService, error);
+        this.sendReport(errorReportingService, error, !silently);
       }
     } finally {
       // Error logging occurs after error reporting so it won't show up as noise in Bugsnag's breadcrumbs
@@ -263,13 +263,17 @@ export class ExceptionHandlingService {
     }
   }
 
-  private sendReport(errorReportingService: ErrorReportingService, error: any): void {
-    errorReportingService.notify(error, err => {
-      if (err) {
-        this.console.error('Sending error report failed:');
-        this.console.error(err);
-      }
-    });
+  private sendReport(errorReportingService: ErrorReportingService, error: any, unhandled: boolean): void {
+    errorReportingService.notify(
+      error,
+      err => {
+        if (err) {
+          this.console.error('Sending error report failed:');
+          this.console.error(err);
+        }
+      },
+      unhandled
+    );
   }
 
   private async handleAlert(ngZone: NgZone, dialogService: DialogService, error: ErrorAlertData): Promise<void> {
