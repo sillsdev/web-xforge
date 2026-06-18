@@ -89,22 +89,3 @@ strong {
 .mat-column-details {
   word-break: break-word;
 }
-
-.new-formatting-options-notice {
-  margin-top: 7px;
-}
-
-.new-and-arrow-wrapper {
-  display: inline-flex;
-  align-items: baseline;
-}
-
-.new-arrow {
-  padding-right: 0.5rem;
-  align-self: end;
-}
-
-.new-label {
-  color: var(--draft-history-entry-new-label-color);
-  font-weight: 500;
-}
