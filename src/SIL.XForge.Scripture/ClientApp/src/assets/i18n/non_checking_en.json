@@ -229,6 +229,91 @@
     "warning_generation_faulted": "Last generation attempt failed. Click [em]\"{{ generateButtonText }}\"[/em] below to try again.",
     "click_book_to_preview": "Click a book below to preview the draft and add it to your project."
   },
+  "new_draft": {
+    "offline_message": "Draft generation is not available offline.",
+    "loading": "Loading…",
+    "step_indicator": "Step {{ step }} of {{ total }}",
+    "abort": {
+      "config_changed": "The draft configuration has changed. Please go back and try again.",
+      "project_syncing": "A project started syncing, which can change the available books and chapters. Please go back and try again.",
+      "no_access_list_heading": "The following projects could not be accessed:",
+      "no_access_instruction": "Check that you have access and try again.",
+      "no_access": "Some projects could not be accessed. Check that you have access and try again.",
+      "go_back": "Go back"
+    },
+    "chapter_input": {
+      "available": "Available chapters: {{ range }}",
+      "invalid_range": "Invalid chapter range.",
+      "empty_draft": "Enter the chapters to draft, or deselect this book if you don't want to draft it.",
+      "empty_training": "Enter the chapters to use for training, or deselect this book if you don't want to train on it.",
+      "chapters_not_in_source": "Chapters {{ chapters }} cannot be generated because they are not in the source project, {{ sourceName }}.",
+      "chapters_not_in_target": "Chapters {{ chapters }} cannot be used for training because they are not in the main project, {{ targetName }}.",
+      "chapters_will_be_translated": "Chapters {{ chapters }} cannot be used for training because they are going to be translated."
+    },
+    "change_source_configuration": "Change source configuration",
+    "books_hidden": {
+      "show_why": "{{ numBooks }} books are hidden. {{ underlineStart }}Show why{{ underlineEnd }}",
+      "hide": "{{ numBooks }} books are hidden. {{ underlineStart }}Hide explanation{{ underlineEnd }}"
+    },
+    "training_files": "Training data files",
+    "fix_chapter_errors": "Please fix the chapter range errors above before continuing.",
+    "no_drafting_books_selected": "Select at least one book to draft before continuing.",
+    "no_training_books_selected": "Select training books from your project and at least one source project before continuing.",
+    "no_training_pair_selected": "Some of the books you selected to train on don't have a matching reference book selected. Select a matching reference book for each.",
+    "reference_books": "Reference books",
+    "summary": {
+      "example_translations": "Language training data",
+      "no_training_books": "No training books selected.",
+      "custom_configurations_apply": "Custom draft configurations have been applied by an administrator.",
+      "settings": "Settings",
+      "choose_different_books": "Choose different books",
+      "choose_different_training_data": "Choose different training data",
+      "example_translations_subtitle": "Scripture Forge uses training data (example translations) to learn how to translate from {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} into {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}.",
+      "email_me": "Email me at {{ email }} when the draft is finished.",
+      "draft_title": "Draft {{ books }}",
+      "draft_books": "Draft books",
+      "training_books": "Training books",
+      "draft_books_subtitle": "The following books in {{ boldStart }}{{ source }}{{ boldEnd }} will be translated from {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} to {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}"
+    },
+    "pending_updates": {
+      "heading": "Sync before drafting",
+      "body": "These projects have changes in Paratext that aren't reflected here yet. Drafting without syncing may reduce draft quality.",
+      "sync": "Sync",
+      "sync_all": "Sync all",
+      "continue_anyway": "Continue anyway",
+      "synced": "Up to date",
+      "sync_failed": "Sync failed",
+      "retry": "Retry",
+      "cant_sync": "Has changes — ask a project admin to sync",
+      "wait_for_sync": "Wait for the sync to finish before continuing."
+    },
+    "draft_books": {
+      "title": "Select books to draft",
+      "subtitle": "Which books in {{ boldStart }}{{ project }}{{ boldEnd }} do you want to translate from {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} to {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}?",
+      "which_chapters": "Which chapters of each book do you want to draft?",
+      "partial_explanation": "Some of the chapters in the books you selected already have text.",
+      "learn_more": "Learn more about drafting part of a book.",
+      "excluded_no_source_content": "These books aren't available to draft because {{ source }} has no text for them: {{ books }}.",
+      "excluded_not_in_target": "These books aren't available to draft because they aren't in {{ project }} yet: {{ books }}.",
+      "no_available_books": "You have no books available for drafting."
+    },
+    "training_books": {
+      "title": "Select books to train on",
+      "subtitle": "Which books in {{ boldStart }}{{ project }}{{ boldEnd }} are good enough to use to train the model to translate from {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} to {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}?",
+      "which_chapters": "Which chapters of each book do you want to use to train the model?",
+      "partial_explanation": "Some of the chapters in the books you selected will be translated and cannot be used as training data.",
+      "learn_more": "Learn more about training on part of a book.",
+      "excluded_not_in_any_source": "These books aren't available to train on because they aren't in any of the reference projects: {{ books }}.",
+      "auto_selected": "Books that appear to be complete have been pre-selected. Please review and update the training data that should be included.",
+      "no_target_books": "No books from your project are available for training.",
+      "reference_books_will_appear": "Reference books will appear here as you select books from your project."
+    },
+    "navigation": {
+      "back": "Back",
+      "next": "Next",
+      "generate_draft": "Generate Draft"
+    }
+  },
   "draft_generation_steps": {
     "back": "Back",
     "books_are_hidden_hide_explanation": "{{ numBooks }} books are hidden. {{ underlineStart }}Hide explanation{{ underlineEnd }}",
