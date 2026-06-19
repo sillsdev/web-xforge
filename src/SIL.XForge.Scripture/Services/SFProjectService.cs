@@ -1257,6 +1257,66 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
     }
 
+    public async Task SetDraftSourcesAsync(
+        string curUserId,
+        string[] systemRoles,
+        string projectId,
+        IEnumerable<string> draftingSourcesParatextIds,
+        IEnumerable<string> trainingSourcesParatextIds
+    )
+    {
+        if (!systemRoles.Contains(SystemRole.ServalAdmin))
+            throw new ForbiddenException();
+
+        string[] draftingIds = [.. draftingSourcesParatextIds];
+        string[] trainingIds = [.. trainingSourcesParatextIds];
+        var allParatextIds = new HashSet<string>(draftingIds.Concat(trainingIds));
+
+        Dictionary<string, SFProject> sourceProjectMap = RealtimeService
+            .QuerySnapshots<SFProject>()
+            .Where(p => allParatextIds.Contains(p.ParatextId))
+            .ToDictionary(p => p.ParatextId);
+
+        TranslateSource BuildSource(string paratextId)
+        {
+            SFProject p =
+                sourceProjectMap.GetValueOrDefault(paratextId)
+                ?? throw new DataNotFoundException(
+                    $"Specified source Paratext project {paratextId} not found in Scripture Forge."
+                );
+            return new TranslateSource
+            {
+                IsRightToLeft = p.IsRightToLeft,
+                ParatextId = paratextId,
+                ProjectRef = p.Id,
+                Name = p.Name,
+                ShortName = p.ShortName,
+                WritingSystem = new WritingSystem
+                {
+                    Region = p.WritingSystem.Region,
+                    Script = p.WritingSystem.Script,
+                    Tag = p.WritingSystem.Tag,
+                },
+            };
+        }
+
+        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+
+        List<TranslateSource> draftingSources = [.. draftingIds.Select(BuildSource)];
+        List<TranslateSource> trainingSources = [.. trainingIds.Select(BuildSource)];
+        HashSet<string> allSourceRefs = [.. draftingSources.Concat(trainingSources).Select(s => s.ProjectRef)];
+
+        if (allSourceRefs.Contains(projectId))
+            throw new InvalidOperationException("A project cannot be its own source.");
+
+        await projectDoc.SubmitJson0OpAsync(op =>
+        {
+            op.Set(p => p.TranslateConfig.DraftConfig.DraftingSources, draftingSources);
+            op.Set(p => p.TranslateConfig.DraftConfig.TrainingSources, trainingSources);
+        });
+    }
+
     public Task<string> GetProjectIdFromParatextIdAsync(string[] systemRoles, string paratextId)
     {
         if (!(systemRoles.Contains(SystemRole.ServalAdmin) || systemRoles.Contains(SystemRole.SystemAdmin)))
@@ -2411,7 +2471,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         // If it is not a project, see if there is a matching resource
         sourcePTProject ??=
             resources.SingleOrDefault(r => r.ParatextId == paratextId)
-            ?? throw new DataNotFoundException("The source paratext project does not exist.");
+            ?? throw new DataNotFoundException(
+                $"Specified source Paratext project {paratextId} not found in Scripture Forge."
+            );
 
         // Get the users who will access this source resource or project
         IEnumerable<string> userIds = userRoles is not null ? userRoles.Keys : [curUserId];
