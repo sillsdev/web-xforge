@@ -21,6 +21,17 @@ public class BuildConfig
     public HashSet<string> TrainingDataFiles { get; set; } = [];
 
     /// <summary>
+    /// Gets or sets the DataIds of all the training data files that were available to choose from for this build.
+    /// </summary>
+    /// <value>The DataIds of the files that were offered to the user, of which <see cref="TrainingDataFiles" /> is the
+    /// selected subset. <c>null</c> if the client did not report the available files.</value>
+    /// <remarks>
+    /// When provided, this is persisted to <see cref="DraftConfig.LastAvailableTrainingDataFiles" /> so that a later
+    /// build can tell newly added files apart from files the user deliberately deselected.
+    /// </remarks>
+    public HashSet<string>? AvailableTrainingDataFiles { get; set; }
+
+    /// <summary>
     /// Gets or sets the per-project books and chapters to use for training.
     /// </summary>
     /// <value>
