@@ -238,6 +238,7 @@
     "choose_books_for_training_error": "Aucun livre sélectionné. Sélectionnez les livres de formation pour continuer.",
     "choose_books_for_training_header": "Formation",
     "choose_books_for_training_no_books_error": "Aucun livre n'est disponible pour la formation. Votre projet doit avoir au moins un livre traduit à utiliser pour la formation.",
+    "choose_books_for_training_no_books_info": "Aucun livre n'a assez de traductions pour la formation. Les livres de formation sont optionnels. Retournez en arrière et assurez-vous que les livres traduits ne sont pas sélectionnés pour être ébauchés si vous voulez les utiliser pour la formation.",
     "choose_books_for_training_title": "Sélectionner des livres pour s'entraîner",
     "choose_books_to_translate_error": "Aucun livre sélectionné. Sélectionnez les livres pour continuer à traduire.",
     "choose_books_to_translate_header": "Ébauche en cours",
@@ -296,8 +297,7 @@
     "formatting_options": "Options de formatage",
     "formatting": "Mise en forme",
     "hide_model_training_configuration": "Masquer la configuration de l'apprentissage du modèle",
-    "new": "NOUVEAU !",
-    "options_for_paragraph_breaks_and_quotation_marks": "Options pour les sauts de paragraphe et les guillemets pour faciliter l'édition",
+    "per_chapter_remarks_notice": "[b]Nouveau![/b] Un avis que l'ébauche est généré par l'IA est maintenant affiché sur chaque chapitre plutôt qu'au début du livre.",
     "requested_at": "Demandé {{ requestedAtTime }}.",
     "requested_by": "Demandé par {{ requestedByUserName }} à {{ requestedAtTime }}.",
     "select_formatting_options": "L'ébauche a été créée. Choisissez les options de formatage pour continuer.",
@@ -909,7 +909,7 @@
     "training_unavailable": "La formation est temporairement indisponible",
     "translate_overview": "Vue d'ensemble de la traduction",
     "translated_segments": "{{ translatedSegments }} segments sur {{ total }}",
-    "translation_suggestions_retirement_notice": "Votre projet semble utiliser la fonctionnalité des suggestions de traduction. Les suggestions de traduction seront bientôt retirées. Veuillez contacter {{ email }} pour discuter des méthodes alternatives de traduction à l'aide de Scripture Forge."
+    "translation_suggestions_will_be_removed": "Your project appears to be using the translation suggestions feature. Translation suggestions will be removed {{ date }}. Please contact {{ email }} to discuss alternative ways to translate using Scripture Forge."
   },
   "draft_signup": {
     "additional_comments_label": "Commentaires supplémentaires",

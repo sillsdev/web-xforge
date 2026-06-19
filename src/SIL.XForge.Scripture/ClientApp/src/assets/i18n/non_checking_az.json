@@ -238,6 +238,7 @@
     "choose_books_for_training_error": "No books selected. Select training books to continue.",
     "choose_books_for_training_header": "Təlim",
     "choose_books_for_training_no_books_error": "No books are available for training. Your project must have at least one translated book to use for training.",
+    "choose_books_for_training_no_books_info": "No books have enough translations for training. Training books are optional. Go back and ensure translated books are not selected to draft if you want to use them for training.",
     "choose_books_for_training_title": "Select books to train on",
     "choose_books_to_translate_error": "No books selected. Select books to translate to continue.",
     "choose_books_to_translate_header": "Drafting",
@@ -296,8 +297,7 @@
     "formatting_options": "Formatting options",
     "formatting": "Formatlaşdırma",
     "hide_model_training_configuration": "Hide model training configuration",
-    "new": "NEW!",
-    "options_for_paragraph_breaks_and_quotation_marks": "Options for paragraph breaks and quotation marks to make editing easier",
+    "per_chapter_remarks_notice": "[b]New![/b] A notice that the draft is AI-generated is now shown on every chapter instead of at the start of the book.",
     "requested_at": "Requested {{ requestedAtTime }}.",
     "requested_by": "Requested by {{ requestedByUserName }} at {{ requestedAtTime }}.",
     "select_formatting_options": "The draft has been created. Choose formatting options to continue.",
@@ -909,7 +909,7 @@
     "training_unavailable": "Training is temporarily unavailable",
     "translate_overview": "Tərcümə Xülasə",
     "translated_segments": "{{ total }} hissənin {{ translatedSegments }}",
-    "translation_suggestions_retirement_notice": "Your project appears to be using the translation suggestions feature. Translation suggestions will be retired soon. Please contact {{ email }} to discuss alternative ways to translate using Scripture Forge."
+    "translation_suggestions_will_be_removed": "Your project appears to be using the translation suggestions feature. Translation suggestions will be removed {{ date }}. Please contact {{ email }} to discuss alternative ways to translate using Scripture Forge."
   },
   "draft_signup": {
     "additional_comments_label": "Additional comments",
