@@ -327,7 +327,8 @@ export class I18nService {
     });
   }
 
-  formatDate(date: Date, options: { showTimeZone?: boolean } = {}): string {
+  formatDate(date: Date, options: { showTimeZone?: boolean; showTime?: boolean } = {}): string {
+    const showTime = 'showTime' in options ? options.showTime : true;
     // fall back to en in the event the language code isn't valid
     const format = I18nService.customDateFormats[this.localeCode] || {};
     return typeof format === 'function'
@@ -339,8 +340,7 @@ export class I18nService {
             month: 'numeric',
             year: 'numeric',
             day: 'numeric',
-            hour: 'numeric',
-            minute: 'numeric',
+            ...(showTime ? { hour: 'numeric', minute: 'numeric' } : {}),
             ...(options?.showTimeZone ? { timeZoneName: 'short' } : {}),
             ...format
           }

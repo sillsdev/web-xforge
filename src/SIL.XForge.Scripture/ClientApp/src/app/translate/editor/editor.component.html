@@ -1,8 +1,6 @@
 <ng-container *transloco="let t; read: 'editor'">
   @if (translationSuggestionsEnabled && userHasGeneralEditRight) {
-    <app-notice icon="warning" type="warning" mode="fill-dark">
-      {{ i18n.translateStatic("translate_overview.translation_suggestions_retirement_notice", { email: issueEmail }) }}
-    </app-notice>
+    <app-smt-retirement-notice></app-smt-retirement-notice>
   }
   <div
     class="content"

@@ -1,0 +1,17 @@
+<app-notice icon="error" type="error" mode="fill-dark">
+  @for (
+    line of i18n.interpolateVariables("translate_overview.translation_suggestions_will_be_removed", {
+      email: issueEmail,
+      date: i18n.formatDate(smtRetirementDate, { showTime: false })
+    });
+    track $index
+  ) {
+    @if (line.id === "email") {
+      <a href="mailto:{{ issueEmail }}" target="_blank" rel="noreferrer">{{ line.text }}</a>
+    }
+    <!-- prettier-ignore -->
+    @else if (line.id === "date") {<strong>{{ line.text }}</strong>}
+    <!-- prettier-ignore -->
+    @else {{{ line.text }}}
+  }
+</app-notice>
