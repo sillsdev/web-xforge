@@ -116,7 +116,7 @@ const verseCounts: Record<string, number> = {
 };
 
 /** The expected number of chapters per book, based primarily on the eng.vrs versification files. */
-const chapterCounts: Record<string, number> = {
+export const chapterCounts: Record<string, number> = {
   GEN: 50,
   EXO: 40,
   LEV: 27,
@@ -238,6 +238,14 @@ export interface BookProgress {
   blankVerseSegments: number;
 }
 
+export interface BookProgressWithChapterProgress extends BookProgress {
+  chapters: {
+    chapterNumber: number;
+    verseSegments: number;
+    blankVerseSegments: number;
+  }[];
+}
+
 export class ProjectProgress {
   verseSegments = this.books.reduce((acc, book) => acc + book.verseSegments, 0);
   blankVerseSegments = this.books.reduce((acc, book) => acc + book.blankVerseSegments, 0);
@@ -245,6 +253,12 @@ export class ProjectProgress {
   ratio = this.verseSegments === 0 ? 0 : this.translatedVerseSegments / this.verseSegments;
 
   constructor(readonly books: BookProgress[]) {}
+}
+
+export class ProjectProgressWithChapterProgress extends ProjectProgress {
+  constructor(readonly books: BookProgressWithChapterProgress[]) {
+    super(books);
+  }
 }
 
 /**
@@ -276,6 +290,30 @@ export function expectedBookChapters(bookId: string): number {
   return chapterCounts[bookId] ?? 1;
 }
 
+/**
+ * Minimum number of translated (non-blank) verse segments a book must have before it can be auto-selected as training
+ * data on a project's first draft. See {@link bookAppearsCompleteForTrainingAutoSelection}.
+ */
+const MIN_TRANSLATED_SEGMENTS_TO_AUTO_SELECT_BOOK = 10;
+
+/**
+ * Whether a book appears complete enough to be auto-selected as training data on a project's first draft (i.e. when the
+ * project has no previously saved training selection). The criteria are:
+ *   1. more than {@link MIN_TRANSLATED_SEGMENTS_TO_AUTO_SELECT_BOOK} translated (non-blank) verse segments, and
+ *   2. at least 99% of the book translated, or no more than 3 blank verse segments.
+ *
+ * Auto-selection is intentionally high-conviction: the selection is persisted and reused for later builds, so a wrong
+ * pick would silently degrade future drafts. This favors only books that look essentially fully translated. Shared by
+ * the legacy draft-generation stepper and the new draft wizard so both flows stay in lockstep.
+ */
+export function bookAppearsCompleteForTrainingAutoSelection(bookProgress: BookProgress): boolean {
+  const translatedSegments = bookProgress.verseSegments - bookProgress.blankVerseSegments;
+  return (
+    translatedSegments > MIN_TRANSLATED_SEGMENTS_TO_AUTO_SELECT_BOOK &&
+    (bookProgress.blankVerseSegments / bookProgress.verseSegments <= 0.01 || bookProgress.blankVerseSegments <= 3)
+  );
+}
+
 @Injectable({ providedIn: 'root' })
 export class ProgressService {
   constructor(
@@ -283,35 +321,56 @@ export class ProgressService {
     private readonly projectService: SFProjectService
   ) {}
 
-  private projectProgressCache = new Map<string, { timestampMs: number; progress: ProjectProgress }>();
-  private requestCache = new Map<string, Promise<ProjectProgress>>();
+  private projectProgressCache = new Map<
+    string,
+    { timestampMs: number; progress: ProjectProgressWithChapterProgress }
+  >();
+  private requestCache = new Map<
+    string,
+    { startedAtMs: number; promise: Promise<ProjectProgressWithChapterProgress> }
+  >();
 
-  async getProgress(projectId: string, options: { maxStalenessMs: number }): Promise<ProjectProgress> {
+  async getProgressWithChapterProgress(
+    projectId: string,
+    options: { maxStalenessMs: number }
+  ): Promise<ProjectProgressWithChapterProgress> {
     const cachedProgress = this.projectProgressCache.get(projectId);
     if (cachedProgress != null && Date.now() - cachedProgress.timestampMs < options.maxStalenessMs) {
       return cachedProgress.progress;
     }
+    // An in-flight request is a not-yet-settled cache entry: coalesce onto it only if it began recently enough to
+    // satisfy this caller's freshness window. A forced refresh (maxStalenessMs: 0) never qualifies, so it always
+    // starts its own fetch rather than reusing a request that may have begun before whatever prompted the refresh.
     const existingRequest = this.requestCache.get(projectId);
-    if (existingRequest) {
-      return existingRequest;
+    if (existingRequest != null && Date.now() - existingRequest.startedAtMs < options.maxStalenessMs) {
+      return existingRequest.promise;
     }
     const requestTimestamp = Date.now();
     const requestPromise = this.projectService
       .getProjectProgress(projectId)
       .then(bookProgressList => {
-        const sortedBookProgress = bookProgressList.sort((a, b) =>
-          Canon.bookIdToNumber(a.bookId) < Canon.bookIdToNumber(b.bookId) ? -1 : 1
+        const sortedBookProgress = bookProgressList.sort(
+          (a, b) => Canon.bookIdToNumber(a.bookId) - Canon.bookIdToNumber(b.bookId)
         );
-        const progress = new ProjectProgress(sortedBookProgress);
+        const progress = new ProjectProgressWithChapterProgress(sortedBookProgress);
         this.projectProgressCache.set(projectId, { timestampMs: requestTimestamp, progress });
-        this.requestCache.delete(projectId);
+        // Only clear the slot if it is still ours; a later forced refresh may have replaced this in-flight entry.
+        if (this.requestCache.get(projectId)?.promise === requestPromise) {
+          this.requestCache.delete(projectId);
+        }
         return progress;
       })
       .catch(error => {
-        this.requestCache.delete(projectId);
+        if (this.requestCache.get(projectId)?.promise === requestPromise) {
+          this.requestCache.delete(projectId);
+        }
         throw error;
       });
-    this.requestCache.set(projectId, requestPromise);
+    this.requestCache.set(projectId, { startedAtMs: requestTimestamp, promise: requestPromise });
     return requestPromise;
+  }
+
+  async getProgress(projectId: string, options: { maxStalenessMs: number }): Promise<ProjectProgress> {
+    return await this.getProgressWithChapterProgress(projectId, options);
   }
 }

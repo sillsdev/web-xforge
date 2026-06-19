@@ -6,6 +6,7 @@ import { editTranslation } from './workflows/edit-translation.ts';
 import { generateDraft } from './workflows/generate-draft.ts';
 import { localizedScreenshots } from './workflows/localized-screenshots.ts';
 import { onboardingFlow } from './workflows/onboarding-flow.ts';
+import { partialBookDrafting } from './workflows/partial-book-drafting.ts';
 import { runSmokeTests, traverseHomePageAndLoginPage } from './workflows/smoke-tests.mts';
 
 export const tests = {
@@ -23,6 +24,9 @@ export const tests = {
   },
   generate_draft: async (_engine: BrowserType, page: Page, screenshotContext: ScreenshotContext) => {
     await generateDraft(page, screenshotContext, secrets.users[0]);
+  },
+  partial_book_drafting: async (_engine: BrowserType, page: Page, screenshotContext: ScreenshotContext) => {
+    await partialBookDrafting(page, screenshotContext, secrets.users[0]);
   },
   onboarding_flow: async (engine: BrowserType, page: Page, screenshotContext: ScreenshotContext) => {
     await onboardingFlow(engine, page, screenshotContext, secrets.users[0]);
