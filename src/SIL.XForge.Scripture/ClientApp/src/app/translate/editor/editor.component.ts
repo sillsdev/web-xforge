@@ -164,6 +164,7 @@ import {
 import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.component';
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { DraftOptionsService } from '../draft-generation/draft-options.service';
+import { SmtRetirementNoticeComponent } from '../smt-retirement-notice/smt-retirement-notice.component';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { EditorDraftComponent } from './editor-draft/editor-draft.component';
 import { EditorHistoryComponent } from './editor-history/editor-history.component';
@@ -275,7 +276,8 @@ const UNSUPPORTED_LANGUAGE_CODES = [
     LynxInsightsPanelComponent,
     SuggestionsComponent,
     TextDocIdPipe,
-    TrainingProgressComponent
+    TrainingProgressComponent,
+    SmtRetirementNoticeComponent
   ]
 })
 export class EditorComponent extends DataLoadingComponent implements OnDestroy, OnInit, AfterViewInit {

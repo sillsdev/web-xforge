@@ -36,7 +36,6 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
-import { environment } from '../../../environments/environment';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
@@ -44,6 +43,7 @@ import { RemoteTranslationEngine } from '../../machine-api/remote-translation-en
 import { NoticeComponent } from '../../shared/notice/notice.component';
 import { BookProgress, ProgressService, ProjectProgress } from '../../shared/progress-service/progress.service';
 import { FontUnsupportedMessageComponent } from '../font-unsupported-message/font-unsupported-message.component';
+import { SmtRetirementNoticeComponent } from '../smt-retirement-notice/smt-retirement-notice.component';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 const ENGINE_QUALITY_STAR_COUNT = 3;
 const TEXT_PATH_TEMPLATE = obj<SFProject>().pathTemplate(p => p.texts[ANY_INDEX]);
@@ -74,6 +74,7 @@ const TEXT_PATH_TEMPLATE = obj<SFProject>().pathTemplate(p => p.texts[ANY_INDEX]
     MatCardActions,
     MatButton,
     TrainingProgressComponent,
+    SmtRetirementNoticeComponent,
     NoticeComponent,
     L10nNumberPipe,
     L10nPercentPipe
@@ -87,8 +88,6 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   engineConfidence: number = 0;
   trainedSegmentCount: number = 0;
   projectProgress?: ProjectProgress;
-  readonly issueEmail: string = environment.issueEmail;
-
   private trainingSub?: Subscription;
   private translationEngine?: RemoteTranslationEngine;
   private projectDoc?: SFProjectProfileDoc;

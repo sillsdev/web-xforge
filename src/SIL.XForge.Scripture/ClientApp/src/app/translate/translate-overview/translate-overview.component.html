@@ -6,9 +6,7 @@
   }
 
   @if (translationSuggestionsEnabled && canEditTexts) {
-    <app-notice icon="warning" type="warning" mode="fill-dark">{{
-      t("translation_suggestions_retirement_notice", { email: issueEmail })
-    }}</app-notice>
+    <app-smt-retirement-notice></app-smt-retirement-notice>
   }
 
   @if (isOnline) {
