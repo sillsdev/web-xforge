@@ -4662,6 +4662,32 @@ public class MachineApiServiceTests
         Assert.IsEmpty(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingScriptureRanges);
         Assert.IsEmpty(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingDataFiles);
         Assert.IsEmpty(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTranslationScriptureRanges);
+        // The client did not report the available files, so the record stays null (rather than an empty list)
+        Assert.IsNull(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastAvailableTrainingDataFiles);
+    }
+
+    [Test]
+    public async Task StartPreTranslationBuildAsync_RecordsAvailableTrainingDataFilesWhenReported()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string data02 = "data02";
+
+        // SUT
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig
+            {
+                ProjectId = Project01,
+                TrainingDataFiles = { Data01 },
+                AvailableTrainingDataFiles = [Data01, data02],
+            },
+            CancellationToken.None
+        );
+
+        DraftConfig draftConfig = env.Projects.Get(Project01).TranslateConfig.DraftConfig;
+        Assert.AreEqual(new[] { Data01 }, draftConfig.LastSelectedTrainingDataFiles);
+        Assert.AreEqual(new[] { Data01, data02 }, draftConfig.LastAvailableTrainingDataFiles);
     }
 
     [Test]

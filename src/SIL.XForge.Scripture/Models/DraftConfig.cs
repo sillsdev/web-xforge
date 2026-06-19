@@ -8,6 +8,13 @@ public class DraftConfig
     public IList<TranslateSource> TrainingSources { get; set; } = [];
     public IList<ProjectScriptureRange> LastSelectedTrainingScriptureRanges { get; set; } = [];
     public IList<string> LastSelectedTrainingDataFiles { get; set; } = [];
+
+    /// <summary>
+    /// The training data files that were available to choose from at the time of the last build. Used to distinguish
+    /// newly added files (which default to selected) from files the user deliberately deselected. <c>null</c> for
+    /// builds made before this was recorded (an empty list means a build recorded that zero files were available).
+    /// </summary>
+    public IList<string>? LastAvailableTrainingDataFiles { get; set; }
     public IList<ProjectScriptureRange> LastSelectedTranslationScriptureRanges { get; set; } = [];
     public bool? FastTraining { get; set; }
     public bool? UseEcho { get; set; }

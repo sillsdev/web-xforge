@@ -460,6 +460,7 @@ export class DraftGenerationService {
 
       const zip = new JSZip();
       const projectShortName: string = projectDoc.data.shortName;
+      const projectName: string = projectDoc.data.name;
       const usfmFiles: Promise<void>[] = [];
 
       // Build the list of book numbers, first checking the build, then the project document if that is null
@@ -491,6 +492,10 @@ export class DraftGenerationService {
         const usfmFile = firstValueFrom(this.getGeneratedDraftUsfm(projectDoc.id, bookNum, 0, dateGenerated)).then(
           usfm => {
             if (usfm != null) {
+              // USFM files must start with an \id marker; it is missing when the draft excludes chapter 1.
+              if (!/^\s*\\id /.test(usfm)) {
+                usfm = `\\id ${Canon.bookNumberToId(bookNum)} - ${projectName}\n${usfm}`;
+              }
               const fileName: string =
                 getBookFileNameDigits(bookNum) + Canon.bookNumberToId(bookNum) + projectShortName + '.SFM';
               zip.file(fileName, usfm);
