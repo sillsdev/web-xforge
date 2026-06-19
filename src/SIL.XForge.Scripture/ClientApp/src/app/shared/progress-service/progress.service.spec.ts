@@ -2,7 +2,14 @@ import { fakeAsync, flushMicrotasks } from '@angular/core/testing';
 import { instance, mock, reset, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SFProjectService } from '../../core/sf-project.service';
-import { BookProgress, estimatedActualBookProgress, ProgressService, ProjectProgress } from './progress.service';
+import {
+  BookProgress,
+  BookProgressWithChapterProgress,
+  estimatedActualBookProgress,
+  ProgressService,
+  ProjectProgress,
+  ProjectProgressWithChapterProgress
+} from './progress.service';
 
 const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
@@ -16,9 +23,9 @@ describe('ProgressService', () => {
   it('should get fresh progress data', fakeAsync(() => {
     const env = new TestEnvironment();
     const projectId = 'project1';
-    const expectedBooks: BookProgress[] = [
-      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20 },
-      { bookId: 'MAT', verseSegments: 50, blankVerseSegments: 10 }
+    const expectedBooks: BookProgressWithChapterProgress[] = [
+      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] },
+      { bookId: 'MAT', verseSegments: 50, blankVerseSegments: 10, chapters: [] }
     ];
     when(mockedProjectService.getProjectProgress(projectId)).thenResolve(expectedBooks);
 
@@ -38,7 +45,9 @@ describe('ProgressService', () => {
   it('should return cached data when fresh', fakeAsync(() => {
     const env = new TestEnvironment();
     const projectId = 'project1';
-    const expectedBooks: BookProgress[] = [{ bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20 }];
+    const expectedBooks: BookProgressWithChapterProgress[] = [
+      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }
+    ];
     when(mockedProjectService.getProjectProgress(projectId)).thenResolve(expectedBooks);
 
     let result1: ProjectProgress | undefined;
@@ -57,8 +66,12 @@ describe('ProgressService', () => {
   it('should fetch fresh data when cache is stale', fakeAsync(() => {
     const env = new TestEnvironment();
     const projectId = 'project1';
-    const firstBooks: BookProgress[] = [{ bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20 }];
-    const secondBooks: BookProgress[] = [{ bookId: 'GEN', verseSegments: 120, blankVerseSegments: 15 }];
+    const firstBooks: BookProgressWithChapterProgress[] = [
+      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }
+    ];
+    const secondBooks: BookProgressWithChapterProgress[] = [
+      { bookId: 'GEN', verseSegments: 120, blankVerseSegments: 15, chapters: [] }
+    ];
 
     when(mockedProjectService.getProjectProgress(projectId)).thenResolve(firstBooks).thenResolve(secondBooks);
 
@@ -77,15 +90,73 @@ describe('ProgressService', () => {
     verify(mockedProjectService.getProjectProgress(projectId)).twice();
   }));
 
+  it('always fetches fresh data when maxStalenessMs is 0, even with a warm cache', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const projectId = 'project1';
+    const firstBooks: BookProgressWithChapterProgress[] = [
+      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }
+    ];
+    const secondBooks: BookProgressWithChapterProgress[] = [
+      { bookId: 'GEN', verseSegments: 120, blankVerseSegments: 15, chapters: [] }
+    ];
+    when(mockedProjectService.getProjectProgress(projectId)).thenResolve(firstBooks).thenResolve(secondBooks);
+
+    let result1: ProjectProgress | undefined;
+    let result2: ProjectProgress | undefined;
+    env.service.getProgress(projectId, { maxStalenessMs: 0 }).then(r => (result1 = r));
+    flushMicrotasks();
+    env.service.getProgress(projectId, { maxStalenessMs: 0 }).then(r => (result2 = r));
+    flushMicrotasks();
+
+    expect(result1?.books).toEqual(firstBooks);
+    expect(result2?.books).toEqual(secondBooks);
+    verify(mockedProjectService.getProjectProgress(projectId)).twice();
+  }));
+
+  it('fetches fresh data for maxStalenessMs:0 even while a request is in flight', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const projectId = 'project1';
+    const staleBooks: BookProgressWithChapterProgress[] = [
+      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }
+    ];
+    const freshBooks: BookProgressWithChapterProgress[] = [
+      { bookId: 'GEN', verseSegments: 120, blankVerseSegments: 15, chapters: [] }
+    ];
+    let resolveStale: ((value: BookProgressWithChapterProgress[]) => void) | undefined;
+    let resolveFresh: ((value: BookProgressWithChapterProgress[]) => void) | undefined;
+    const stalePromise: Promise<BookProgressWithChapterProgress[]> = new Promise(resolve => (resolveStale = resolve));
+    const freshPromise: Promise<BookProgressWithChapterProgress[]> = new Promise(resolve => (resolveFresh = resolve));
+    when(mockedProjectService.getProjectProgress(projectId)).thenReturn(stalePromise).thenReturn(freshPromise);
+    // The first request starts and stays in flight (not yet resolved).
+    let result1: ProjectProgress | undefined;
+    env.service.getProgress(projectId, { maxStalenessMs: 1000 }).then(r => (result1 = r));
+
+    let result2: ProjectProgress | undefined;
+    // SUT
+    env.service.getProgress(projectId, { maxStalenessMs: 0 }).then(r => (result2 = r));
+
+    resolveStale!(staleBooks);
+    resolveFresh!(freshBooks);
+    flushMicrotasks();
+
+    expect(result1?.books).toEqual(staleBooks);
+    expect(result2?.books).toEqual(freshBooks);
+    verify(mockedProjectService.getProjectProgress(projectId)).twice();
+  }));
+
   it('should deduplicate concurrent requests for the same project', fakeAsync(() => {
     const env = new TestEnvironment();
     const projectId = 'project1';
-    const expectedBooks: BookProgress[] = [{ bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20 }];
+    const expectedBooks: BookProgressWithChapterProgress[] = [
+      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }
+    ];
 
-    let resolvePromise: ((value: BookProgress[]) => void) | undefined;
-    const delayedPromise: Promise<BookProgress[]> = new Promise<BookProgress[]>(resolve => {
-      resolvePromise = resolve;
-    });
+    let resolvePromise: ((value: BookProgressWithChapterProgress[]) => void) | undefined;
+    const delayedPromise: Promise<BookProgressWithChapterProgress[]> = new Promise<BookProgressWithChapterProgress[]>(
+      resolve => {
+        resolvePromise = resolve;
+      }
+    );
     when(mockedProjectService.getProjectProgress(projectId)).thenReturn(delayedPromise);
 
     let result1: ProjectProgress | undefined;
@@ -108,7 +179,7 @@ describe('ProgressService', () => {
     const error = new Error('Network error');
     when(mockedProjectService.getProjectProgress(projectId))
       .thenReject(error)
-      .thenResolve([{ bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20 }]);
+      .thenResolve([{ bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }]);
 
     let firstError: unknown;
     env.service.getProgress(projectId, { maxStalenessMs: 1000 }).catch(e => (firstError = e));
@@ -116,18 +187,22 @@ describe('ProgressService', () => {
 
     expect(firstError).toBe(error);
 
-    let result2: ProjectProgress | undefined;
-    env.service.getProgress(projectId, { maxStalenessMs: 1000 }).then(r => (result2 = r));
+    let result2: ProjectProgressWithChapterProgress | undefined;
+    env.service.getProgress(projectId, { maxStalenessMs: 1000 }).then(r => (result2 = r as any));
     flushMicrotasks();
 
-    expect(result2?.books).toEqual([{ bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20 }]);
+    expect(result2?.books).toEqual([{ bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }]);
     verify(mockedProjectService.getProjectProgress(projectId)).twice();
   }));
 
   it('should cache independently per project', fakeAsync(() => {
     const env = new TestEnvironment();
-    const project1Books: BookProgress[] = [{ bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20 }];
-    const project2Books: BookProgress[] = [{ bookId: 'MAT', verseSegments: 50, blankVerseSegments: 10 }];
+    const project1Books: BookProgressWithChapterProgress[] = [
+      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }
+    ];
+    const project2Books: BookProgressWithChapterProgress[] = [
+      { bookId: 'MAT', verseSegments: 50, blankVerseSegments: 10, chapters: [] }
+    ];
 
     when(mockedProjectService.getProjectProgress('project1')).thenResolve(project1Books);
     when(mockedProjectService.getProjectProgress('project2')).thenResolve(project2Books);
