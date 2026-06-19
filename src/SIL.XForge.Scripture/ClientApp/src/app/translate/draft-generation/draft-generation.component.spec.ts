@@ -947,9 +947,8 @@ describe('DraftGenerationComponent', () => {
 
       expect(env.component.currentPage).toBe('initial');
       expect(env.component['draftJob']).not.toBeNull();
-      // FIXME This assertion does nothing because it's misusing anything()
-      // expect(mockDraftGenerationService.startBuildOrGetActiveBuild).not.toHaveBeenCalledWith(anything());
-      expect(mockDialogService.message).toHaveBeenCalledTimes(1);
+      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledTimes(1);
+      expect(mockDialogService.message).toHaveBeenCalledOnceWith('draft_generation.draft_already_running');
     });
 
     it('should not attempt "cancel dialog" close for queued build', () => {

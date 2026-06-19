@@ -8,6 +8,12 @@ import { BuildStates } from '../../machine-api/build-states';
 export interface BuildConfig {
   projectId: string;
   trainingDataFiles: string[];
+  /**
+   * The DataIds of all training data files offered to the user for this build, of which `trainingDataFiles` is the
+   * selected subset. Persisted so a later build can tell newly added files from deliberately deselected ones. Omit
+   * if the available set is not being reported.
+   */
+  availableTrainingDataFiles?: string[];
   trainingScriptureRanges: ProjectScriptureRange[];
   translationScriptureRanges: ProjectScriptureRange[];
   fastTraining: boolean;

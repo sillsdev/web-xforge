@@ -76,6 +76,35 @@ describe('DraftPreviewBooks', () => {
       queryParams: { 'draft-active': true, 'draft-timestamp': undefined }
     });
   }));
+
+  it('shows the chapter range and navigates to the first drafted chapter for a partial book', fakeAsync(() => {
+    // GEN (book 1) has chapters 1-3 in the project, but only 2-3 were drafted, so this is a partial draft.
+    env = new TestEnvironment({
+      build: {
+        additionalInfo: { translationScriptureRanges: [{ projectId: 'project01', scriptureRange: 'GEN2-3' }] }
+      } as BuildDto
+    });
+
+    expect(env.getBookButtonAtIndex(0).textContent).toContain('2-3');
+
+    env.getBookButtonAtIndex(0).click();
+    tick();
+    env.fixture.detectChanges();
+
+    const [url] = capture(mockedRouter.navigate).first();
+    expect(url).toEqual(['/projects', 'project01', 'translate', 'GEN', '2']);
+  }));
+
+  it('does not show a chapter range when the whole book was drafted', fakeAsync(() => {
+    // Genesis has 50 chapters; all 50 were drafted, so it is a whole-book draft and no range is shown.
+    env = new TestEnvironment({
+      build: {
+        additionalInfo: { translationScriptureRanges: [{ projectId: 'project01', scriptureRange: 'GEN1-50' }] }
+      } as BuildDto
+    });
+
+    expect(env.getBookButtonAtIndex(0).textContent).not.toContain('(');
+  }));
 });
 
 class TestEnvironment {

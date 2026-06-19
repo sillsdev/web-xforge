@@ -2,6 +2,9 @@
   @for (book of booksWithDrafts$ | async; track book.bookId) {
     <button mat-stroked-button class="draft-book-button" (click)="navigate(book)">
       {{ "canon.book_names." + book.bookId | transloco }}
+      @if (book.draftedChapterRange != null) {
+        ({{ book.draftedChapterRange }})
+      }
     </button>
   } @empty {
     <strong>{{ t("no_books_have_drafts") }}</strong>

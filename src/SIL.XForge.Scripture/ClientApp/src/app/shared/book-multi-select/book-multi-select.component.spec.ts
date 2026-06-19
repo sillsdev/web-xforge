@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { anything, mock, when } from 'ts-mockito';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { ProgressService, ProjectProgress } from '../progress-service/progress.service';
@@ -74,6 +74,25 @@ describe('BookMultiSelectComponent', () => {
       { bookNum: 67, bookId: 'TOB', selected: false, progress: 0.8 },
       { bookNum: 70, bookId: 'WIS', selected: false, progress: 1 }
     ]);
+  });
+
+  it('fetches progress only once for a project, no matter how many times the inputs change reference', async () => {
+    for (let i = 0; i < 5; i++) {
+      component.availableBooks = [...mockBooks];
+      component.selectedBooks = [...mockSelectedBooks];
+      await component.ngOnChanges();
+    }
+
+    verify(mockedProgressService.getProgress('test-project-id', anything())).once();
+    expect(component.bookOptions.length).toBe(mockBooks.length);
+  });
+
+  it('re-fetches progress when the project changes', async () => {
+    component.projectId = 'a-different-project-id';
+    await component.ngOnChanges();
+
+    verify(mockedProgressService.getProgress('a-different-project-id', anything())).once();
+    expect().nothing();
   });
 
   it('should not crash when texts have not yet loaded', async () => {

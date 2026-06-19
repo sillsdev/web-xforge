@@ -26,5 +26,9 @@
   "onboarding_flow": {
     "success": 7,
     "failure": 0
+  },
+  "partial_book_drafting": {
+    "success": 7,
+    "failure": 0
   }
 }
