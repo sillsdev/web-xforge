@@ -74,6 +74,8 @@ export interface DraftConfig {
   draftingSources: TranslateSource[];
   trainingSources: TranslateSource[];
   lastSelectedTrainingDataFiles: string[];
+  /** Training data files available at the last build, to distinguish newly added files from deliberately deselected ones. */
+  lastAvailableTrainingDataFiles?: string[];
   lastSelectedTrainingScriptureRanges?: ProjectScriptureRange[];
   lastSelectedTranslationScriptureRanges?: ProjectScriptureRange[];
   fastTraining?: boolean;

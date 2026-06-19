@@ -169,7 +169,6 @@
                 [selectedBooks]="selectedSubmittedBooks"
                 (bookSelect)="onSubmittedBooksSelect($event)"
                 [basicMode]="true"
-                [projectName]="currentProjectDisplayName"
               ></app-book-multi-select>
               @if (showPlannedBooksRequiredError) {
                 <mat-error>{{ t("planned_books_required") }}</mat-error>

@@ -53,6 +53,7 @@ import { UserService } from 'xforge-common/user.service';
 import { isPopulatedString, isString, notNull } from '../../type-utils';
 import { InfoComponent } from '../shared/info/info.component';
 import { NoticeComponent } from '../shared/notice/notice.component';
+import { ChapterSet } from '../shared/scripture-range';
 import { BookConfidence, ChapterConfidence } from '../translate/draft-generation/build-confidences/build-confidences';
 import { DisplayConfidenceComponent } from '../translate/draft-generation/build-confidences/display-confidence.component';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
@@ -1036,24 +1037,9 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
       .join('; ');
   }
 
-  /** Formats a sorted array of numbers into compact range notation, e.g. [1,2,3,5,7,8,9] → "1-3, 5, 7-9". */
+  /** Formats numbers into compact range notation, e.g. [7, 1, 3, 2] → "1-3, 7" (sorted, de-duplicated). */
   static compactRangeNotation(nums: number[]): string {
-    if (nums.length === 0) return '';
-    const sortedUnique: number[] = [...new Set(nums)].sort((a, b) => a - b);
-    const ranges: string[] = [];
-    let rangeStart: number = sortedUnique[0];
-    let rangeEnd: number = sortedUnique[0];
-    for (let i = 1; i < sortedUnique.length; i++) {
-      if (sortedUnique[i] === rangeEnd + 1) {
-        rangeEnd = sortedUnique[i];
-      } else {
-        ranges.push(rangeStart === rangeEnd ? `${rangeStart}` : `${rangeStart}-${rangeEnd}`);
-        rangeStart = sortedUnique[i];
-        rangeEnd = sortedUnique[i];
-      }
-    }
-    ranges.push(rangeStart === rangeEnd ? `${rangeStart}` : `${rangeStart}-${rangeEnd}`);
-    return ranges.join(', ');
+    return new ChapterSet(nums).toStringForDisplay();
   }
 
   /** (The return type is string if the input is a type string (at compile time), or undefined

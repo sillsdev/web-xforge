@@ -41,6 +41,7 @@ import { BuildDto } from '../../../machine-api/build-dto';
 import { ProjectSelectComponent } from '../../../project-select/project-select.component';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
+import { ChapterSet, VerboseScriptureRange } from '../../../shared/scripture-range';
 import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
 import { SyncProgressComponent } from '../../../sync/sync-progress/sync-progress.component';
 import { DraftNotificationService } from '../draft-notification.service';
@@ -314,6 +315,10 @@ export class DraftImportWizardComponent implements OnInit {
     private readonly authService: AuthService,
     private readonly userService: UserService
   ) {
+    this.draftedScriptureRange = VerboseScriptureRange.fromCombinedRanges(
+      (this.data.additionalInfo?.translationScriptureRanges ?? []).map(range => range.scriptureRange)
+    );
+
     this.draftNotificationService.setNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
     destroyRef.onDestroy(async () => {
       // Stop the SignalR connection when the component is destroyed
@@ -330,6 +335,24 @@ export class DraftImportWizardComponent implements OnInit {
     const translationRanges = this.data.additionalInfo?.translationScriptureRanges ?? [];
     const bookNumbers = translationRanges.flatMap(range => booksFromScriptureRange(range.scriptureRange));
     return Array.from(new Set(bookNumbers));
+  }
+
+  /**
+   * The chapters that were actually drafted in this build, with chapter detail preserved, unioned across translation
+   * projects. For partial-book drafts this is e.g. `GEN30-32`; for a legacy whole-book draft (a book-level range) the
+   * book maps to an empty chapter set, which serializes back to a book-only range (`GEN`) meaning "all chapters".
+   * Computed once in the constructor; the build's translation ranges are fixed for the dialog's lifetime.
+   */
+  private readonly draftedScriptureRange: VerboseScriptureRange;
+
+  /**
+   * The chapter numbers drafted for the given book, or `null` when the whole book was drafted (no chapter detail, e.g.
+   * a legacy build or a book-level range). `null` means "do not scope to specific chapters".
+   */
+  private draftedChaptersForBook(bookNum: number): number[] | null {
+    const chapters = this.draftedScriptureRange.books.get(Canon.bookNumberToId(bookNum));
+    if (chapters == null || chapters.count() === 0) return null;
+    return [...chapters.chapters].sort((a, b) => a - b);
   }
 
   private _selectedBooks: BookForImport[] = [];
@@ -571,7 +594,13 @@ export class DraftImportWizardComponent implements OnInit {
     const booksToCheck: BookForImport[] = this.booksToImport;
 
     for (const book of booksToCheck) {
-      const chapterNumbersWithText: number[] = await this.getChaptersWithText(book.bookNum);
+      let chapterNumbersWithText: number[] = await this.getChaptersWithText(book.bookNum);
+      // Only warn about chapters we will actually overwrite: the drafted chapters that already have target text. For a
+      // whole-book draft (draftedChapters == null) every existing chapter is in scope, as before.
+      const draftedChapters = this.draftedChaptersForBook(book.bookNum);
+      if (draftedChapters != null) {
+        chapterNumbersWithText = chapterNumbersWithText.filter(chapterNum => draftedChapters.includes(chapterNum));
+      }
       if (chapterNumbersWithText.length > 0) {
         this.booksWithExistingText.push({
           bookNum: book.bookNum,
@@ -657,8 +686,15 @@ export class DraftImportWizardComponent implements OnInit {
     await this.draftNotificationService.start();
     await this.draftNotificationService.subscribeToProject(this.sourceProjectId);
 
-    // Build a scripture range and timestamp to import
-    const scriptureRange = books.map(b => b.bookId).join(';');
+    // Build a scripture range and timestamp to import. Scope to the chapters that were actually drafted for each
+    // selected book, so a partial-book draft imports only its chapters instead of attempting (and failing) every
+    // chapter in the book. Books with no chapter detail (legacy/whole-book drafts) serialize back to a book-only range.
+    const draftedRange = this.draftedScriptureRange;
+    const scopedRange = new VerboseScriptureRange();
+    for (const book of books) {
+      scopedRange.books.set(book.bookId, draftedRange.books.get(book.bookId) ?? new ChapterSet(''));
+    }
+    const scriptureRange = scopedRange.toString();
     const timestamp: Date =
       this.data.additionalInfo?.dateGenerated != null ? new Date(this.data.additionalInfo.dateGenerated) : new Date();
 

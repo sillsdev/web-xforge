@@ -124,6 +124,7 @@ export class I18nService {
   }
 
   private currentLocale$ = new BehaviorSubject<Locale>(defaultLocale);
+  private conjunctionListFormatter: Intl.ListFormat | undefined;
 
   constructor(
     locationService: LocationService,
@@ -204,6 +205,7 @@ export class I18nService {
     }
 
     this.currentLocale$.next(locale);
+    this.conjunctionListFormatter = undefined;
     this.transloco.setActiveLang(locale.canonicalTag);
     const date = new Date();
     date.setFullYear(date.getFullYear() + 1);
@@ -348,7 +350,16 @@ export class I18nService {
   }
 
   enumerateList(list: string[]): string {
-    return new (Intl as any).ListFormat(this.localeCode, { style: 'long', type: 'conjunction' }).format(list);
+    return this.getConjunctionListFormatter().format(list);
+  }
+
+  enumerateListParts(list: string[]): { type: 'element' | 'literal'; value: string }[] {
+    return this.getConjunctionListFormatter().formatToParts(list);
+  }
+
+  private getConjunctionListFormatter(): Intl.ListFormat {
+    this.conjunctionListFormatter ??= new Intl.ListFormat(this.localeCode, { style: 'long', type: 'conjunction' });
+    return this.conjunctionListFormatter;
   }
 
   translateTextAroundTemplateTags(key: I18nKey, params: object = {}): TextAroundTemplate | undefined {
