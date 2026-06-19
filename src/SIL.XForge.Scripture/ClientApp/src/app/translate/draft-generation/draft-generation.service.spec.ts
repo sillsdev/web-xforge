@@ -1051,5 +1051,74 @@ describe('DraftGenerationService', () => {
       req1jn.flush(usfm);
       tick();
     }));
+
+    it('should prepend an \\id marker when the draft does not include chapter 1', fakeAsync(() => {
+      const zipFileSpy = spyOn(JSZip.prototype, 'file').and.callThrough() as jasmine.Spy;
+      const projectDoc: SFProjectProfileDoc = {
+        id: projectId,
+        data: createTestProjectProfile({
+          name: 'My Project',
+          shortName: 'MP',
+          texts: []
+        })
+      } as SFProjectProfileDoc;
+      const lastCompletedBuild: BuildDto = {
+        additionalInfo: {
+          dateFinished: '2024-08-27T00:00:00.000Z',
+          translationScriptureRanges: [{ projectId, scriptureRange: '1JN' }]
+        }
+      } as BuildDto;
+
+      service.downloadGeneratedDraftZip(projectDoc, lastCompletedBuild).subscribe({
+        complete: () => {
+          expect(saveAs).toHaveBeenCalled();
+        }
+      });
+      tick();
+
+      // The draft starts at chapter 2, so there is no \id marker
+      const usfm = '\\c 2 \\v 1 Test';
+      const req1jn = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/62_0/usfm`
+      );
+      req1jn.flush(usfm);
+      tick();
+
+      expect(zipFileSpy).toHaveBeenCalledWith('631JNMP.SFM', '\\id 1JN - My Project\n\\c 2 \\v 1 Test');
+    }));
+
+    it('should not prepend an \\id marker when the draft already begins with one', fakeAsync(() => {
+      const zipFileSpy = spyOn(JSZip.prototype, 'file').and.callThrough() as jasmine.Spy;
+      const projectDoc: SFProjectProfileDoc = {
+        id: projectId,
+        data: createTestProjectProfile({
+          name: 'My Project',
+          shortName: 'MP',
+          texts: []
+        })
+      } as SFProjectProfileDoc;
+      const lastCompletedBuild: BuildDto = {
+        additionalInfo: {
+          dateFinished: '2024-08-27T00:00:00.000Z',
+          translationScriptureRanges: [{ projectId, scriptureRange: '1JN' }]
+        }
+      } as BuildDto;
+
+      service.downloadGeneratedDraftZip(projectDoc, lastCompletedBuild).subscribe({
+        complete: () => {
+          expect(saveAs).toHaveBeenCalled();
+        }
+      });
+      tick();
+
+      const usfm = '\\id 1JN \\c 1 \\v 1 Test';
+      const req1jn = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/62_0/usfm`
+      );
+      req1jn.flush(usfm);
+      tick();
+
+      expect(zipFileSpy).toHaveBeenCalledWith('631JNMP.SFM', usfm);
+    }));
   });
 });
