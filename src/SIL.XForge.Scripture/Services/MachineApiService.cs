@@ -2859,6 +2859,16 @@ public class MachineApiService(
                 [.. buildConfig.TrainingDataFiles],
                 _listStringComparer
             );
+            // Only record the available files when the client reported them, so that a null value continues to mean
+            // "no record" (i.e. a build made before this was tracked) rather than "zero files were available".
+            // No equality comparer here: the field starts null, and _listStringComparer cannot compare against null.
+            if (buildConfig.AvailableTrainingDataFiles is not null)
+            {
+                op.Set<IList<string>?>(
+                    p => p.TranslateConfig.DraftConfig.LastAvailableTrainingDataFiles,
+                    [.. buildConfig.AvailableTrainingDataFiles]
+                );
+            }
             op.Set(
                 p => p.TranslateConfig.DraftConfig.LastSelectedTrainingScriptureRanges,
                 [.. buildConfig.TrainingScriptureRanges],

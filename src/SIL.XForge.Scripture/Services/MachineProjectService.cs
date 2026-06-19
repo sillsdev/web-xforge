@@ -1160,6 +1160,16 @@ public class MachineProjectService(
             options["max_steps"] = 20;
         }
 
+        string? targetProjectId = corporaSyncInfo
+            .FirstOrDefault(s => !s.IsSource && s.ParallelCorpusId == servalData.ParallelCorpusIdForTrainOn)
+            ?.ProjectId;
+
+        // Only present when submitted by the new partial book drafting component, which includes the target
+        // project in TrainingScriptureRanges so that drafted chapters can be excluded from training.
+        string? explicitTargetRange = buildConfig
+            .TrainingScriptureRanges.FirstOrDefault(t => t.ProjectId == targetProjectId)
+            ?.ScriptureRange;
+
         // Create the build configuration
         var translationBuildConfig = new TranslationBuildConfig
         {
@@ -1211,50 +1221,43 @@ public class MachineProjectService(
                             .Select(s => new ParallelCorpusFilterConfig
                             {
                                 CorpusId = s.CorpusId,
-                                // NOTE: The scripture range will be set to match the matching source filter's scripture range below
+                                ScriptureRange = explicitTargetRange,
                             }),
                     ],
                 },
             ],
         };
 
-        // Set the training target filter scripture ranges to the same as the source filter scripture ranges
-        foreach (TrainingCorpusConfig trainingCorpusConfig in translationBuildConfig.TrainOn)
+        // The legacy draft UI does not specify an explicit target training range, so it is derived here from the
+        // union of the source training ranges. The new draft component always specifies a target training range,
+        // though it may be an empty string, which is NOT the same as not specifying one at all (an empty range means
+        // "train on no target books", so it must skip this fallback; hence `== null`, not IsNullOrEmpty). Once the
+        // legacy stepper is gone every build will specify a target range, so this fallback can be removed and the
+        // presence of a target range enforced instead.
+        if (explicitTargetRange == null)
         {
-            for (int j = 0; j < trainingCorpusConfig.SourceFilters?.Count; j++)
+            foreach (TrainingCorpusConfig trainingCorpusConfig in translationBuildConfig.TrainOn)
             {
-                if (trainingCorpusConfig.TargetFilters is not null)
-                {
-                    if (
-                        trainingCorpusConfig.TargetFilters.Count > j
-                        && trainingCorpusConfig.TargetFilters[j] is not null
-                    )
-                    {
-                        // Set the scripture range for the matching target filter
-                        trainingCorpusConfig.TargetFilters[j].ScriptureRange =
-                            trainingCorpusConfig.SourceFilters[j].ScriptureRange ?? string.Empty;
-                    }
-                    else if (trainingCorpusConfig.TargetFilters[0] is not null)
-                    {
-                        // There is no matching target filter, so update the first target filter.
-                        // Merge the two scripture ranges by getting the distinct book names.
-                        // This will also preserve any chapter ranges that are specified.
-                        trainingCorpusConfig.TargetFilters[0].ScriptureRange = string.Join(
-                            ';',
-                            string.Join(
-                                    ';',
-                                    trainingCorpusConfig.TargetFilters[0].ScriptureRange ?? string.Empty,
-                                    trainingCorpusConfig.SourceFilters[j].ScriptureRange ?? string.Empty
-                                )
-                                .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                                .Distinct()
-                        );
+                if (trainingCorpusConfig.TargetFilters is null || trainingCorpusConfig.SourceFilters is null)
+                    continue;
 
-                        // Ensure that the scripture range is empty if it is null, so that no books will be trained on
-                        if (string.IsNullOrWhiteSpace(trainingCorpusConfig.TargetFilters[0].ScriptureRange))
-                        {
-                            trainingCorpusConfig.TargetFilters[0].ScriptureRange = string.Empty;
-                        }
+                for (int j = 0; j < trainingCorpusConfig.SourceFilters.Count; j++)
+                {
+                    string sourceRange = trainingCorpusConfig.SourceFilters[j].ScriptureRange ?? string.Empty;
+
+                    if (j < trainingCorpusConfig.TargetFilters.Count)
+                    {
+                        trainingCorpusConfig.TargetFilters[j].ScriptureRange = sourceRange;
+                    }
+                    else
+                    {
+                        // There are more source filters than target filters; accumulate the overflow
+                        // source ranges into TargetFilters[0] by merging and deduplicating.
+                        string existingRange = trainingCorpusConfig.TargetFilters[0].ScriptureRange ?? string.Empty;
+                        IEnumerable<string> mergedEntries = $"{existingRange};{sourceRange}"
+                            .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                            .Distinct();
+                        trainingCorpusConfig.TargetFilters[0].ScriptureRange = string.Join(';', mergedEntries);
                     }
                 }
             }
