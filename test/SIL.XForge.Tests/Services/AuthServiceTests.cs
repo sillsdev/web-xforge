@@ -7,15 +7,13 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using SIL.XForge.Configuration;
+using Options = Microsoft.Extensions.Options.Options;
 
 namespace SIL.XForge.Services;
 
 [TestFixture]
 public class AuthServiceTests
 {
-    public const string ValidPassword = "password";
-    public const string ValidUsername = "username";
-
     [Test]
     public async Task GetParatextTokensAsync_NoParatextIdentity()
     {
@@ -128,43 +126,12 @@ public class AuthServiceTests
         Assert.IsNull(handler.LastInput);
     }
 
-    [TestCase(ValidUsername, "invalid_password")]
-    [TestCase("invalid_username", ValidPassword)]
-    [TestCase("invalid_username", "invalid_password")]
-    public void ValidateWebhookCredentials_Failure(string username, string password)
-    {
-        using var httpClient = new HttpClient();
-        var env = new TestEnvironment(httpClient);
-
-        // SUT
-        bool actual = env.Service.ValidateWebhookCredentials(username, password);
-        Assert.IsFalse(actual);
-    }
-
-    [Test]
-    public void ValidateWebhookCredentials_Success()
-    {
-        using var httpClient = new HttpClient();
-        var env = new TestEnvironment(httpClient);
-
-        // SUT
-        bool actual = env.Service.ValidateWebhookCredentials(ValidUsername, ValidPassword);
-        Assert.IsTrue(actual);
-    }
-
     private class TestEnvironment
     {
         public TestEnvironment(HttpClient httpClient)
         {
-            var authOptions = Substitute.For<IOptions<AuthOptions>>();
-            authOptions.Value.Returns(
-                new AuthOptions
-                {
-                    BackendClientSecret = "secret",
-                    Domain = "localhost",
-                    WebhookUsername = ValidUsername,
-                    WebhookPassword = ValidPassword,
-                }
+            IOptions<AuthOptions> authOptions = Options.Create(
+                new AuthOptions { BackendClientSecret = "secret", Domain = "localhost" }
             );
             ExceptionHandler = Substitute.For<IExceptionHandler>();
             var httpClientFactory = Substitute.For<IHttpClientFactory>();

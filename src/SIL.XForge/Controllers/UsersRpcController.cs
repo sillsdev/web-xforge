@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Text.Json;
 using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router.Abstractions;
-using idunno.Authentication.Basic;
-using Microsoft.AspNetCore.Authorization;
 using SIL.XForge.Services;
 
 namespace SIL.XForge.Controllers;
@@ -16,57 +13,29 @@ namespace SIL.XForge.Controllers;
 /// be the typical flow between frontend, backend .net app, and auth0:
 ///
 /// Frontend: User goes to auth0 and logs in.
-/// Auth0: Calls SF backend RPC pushAuthUserProfile and sends user back to SF site.
-/// Backend: UserService.UpdateUserFromProfileAsync()
+/// Auth0: Sends user back to SF site.
 /// Frontend: User is at SF and logged in.
+/// Frontend: auth.service handleOnlineAuth() calls SF backend RPC pullAuthUserProfile.
+/// Backend: UserService.UpdateUserFromProfileAsync()
 /// Frontend: User accesses Connect project, clicks "Log in with Paratext", and authenticates at PT Registry.
 /// Auth0: Decides not to immediately link original auth0 account and new PT auth0 account if they do not have the same,
 /// verified email address.
-/// Auth0: Calls SF backend RPC pushAuthUserProfile (which may not land quite yet?) and sends user back to SF site.
 /// Frontend: User is at SF and logged in with new PT auth0 account (if not already linked in auth0).
-/// Frontend: auth.service handleOnlineAuth() calls SF backend RPC linkParatextAccount if appropriate.
+/// Frontend: auth.service handleOnlineAuth() calls SF backend RPC linkParatextAccount if appropriate. (currently disabled)
 /// Backend: If the PT auth0 account is new, UserService.LinkParatextAccount asks auth0 to link accounts.
-/// Auth0: Links (merges) new PT auth0 account as an identity on original  auth0 account.
-/// Frontend: Reloads page. User is at SF and logged in with original  auth0 account.
+/// Auth0: Links (merges) new PT auth0 account as an identity on original auth0 account.
+/// Frontend: Reloads page. User is at SF and logged in with original auth0 account.
+/// Frontend: auth.service handleOnlineAuth() calls SF backend RPC pullAuthUserProfile.
 /// Backend: UserService.UpdateUserFromProfileAsync() applies updates from original auth0 account.
 /// </summary>
-public class UsersRpcController : RpcControllerBase
+public class UsersRpcController(
+    IUserAccessor userAccessor,
+    IUserService userService,
+    IAuthService authService,
+    IExceptionHandler exceptionHandler
+) : RpcControllerBase(userAccessor, exceptionHandler)
 {
-    private readonly IAuthService _authService;
-    private readonly IExceptionHandler _exceptionHandler;
-    private readonly IUserService _userService;
-
-    public UsersRpcController(
-        IUserAccessor userAccessor,
-        IUserService userService,
-        IAuthService authService,
-        IExceptionHandler exceptionHandler
-    )
-        : base(userAccessor, exceptionHandler)
-    {
-        _userService = userService;
-        _authService = authService;
-        _exceptionHandler = exceptionHandler;
-    }
-
-    /// <summary>
-    /// Updates the user entity from the specified Auth0 user profile. Auth0 calls this command from a rule.
-    /// </summary>
-    [Authorize(AuthenticationSchemes = BasicAuthenticationDefaults.AuthenticationScheme)]
-    public Task PushAuthUserProfile(string userId, JsonElement userProfile)
-    {
-        try
-        {
-            return _userService.UpdateUserFromProfileAsync(userId, userProfile.ToString());
-        }
-        catch (Exception)
-        {
-            _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string> { { "method", "PushAuthUserProfile" }, { "userId", userId } }
-            );
-            throw;
-        }
-    }
+    private readonly IExceptionHandler _exceptionHandler = exceptionHandler;
 
     /// <summary>
     /// Updates the current user's entity from the user's corresponding Auth0 profile. Called by the front end after
@@ -74,19 +43,25 @@ public class UsersRpcController : RpcControllerBase
     /// </summary>
     public async Task<IRpcMethodResult> PullAuthUserProfile()
     {
-        string userProfile = await _authService.GetUserAsync(AuthId);
-        await _userService.UpdateUserFromProfileAsync(UserId, userProfile);
+        string userProfile = await authService.GetUserAsync(AuthId);
+        await userService.UpdateUserFromProfileAsync(UserId, userProfile);
         return Ok();
     }
 
-    // Linking Paratext accounts is currently disabled
-    public async Task<IRpcMethodResult> LinkParatextAccount(string primaryId, string secondaryId) => ForbiddenError();
+    /// <summary>
+    /// Linking Paratext accounts is currently disabled.
+    /// </summary>
+    /// <param name="primaryId">The primary identifier.</param>
+    /// <param name="secondaryId">The secondary identifier.</param>
+    /// <returns>A forbidden error.</returns>
+    public Task<IRpcMethodResult> LinkParatextAccount(string primaryId, string secondaryId) =>
+        Task.FromResult(ForbiddenError());
 
     public async Task<IRpcMethodResult> UpdateAvatarFromDisplayName()
     {
         try
         {
-            await _userService.UpdateAvatarFromDisplayNameAsync(UserId, AuthId);
+            await userService.UpdateAvatarFromDisplayNameAsync(UserId, AuthId);
             return Ok();
         }
         catch (Exception)
@@ -102,7 +77,7 @@ public class UsersRpcController : RpcControllerBase
     {
         try
         {
-            await _userService.UpdateInterfaceLanguageAsync(UserId, AuthId, language);
+            await userService.UpdateInterfaceLanguageAsync(UserId, AuthId, language);
             return Ok();
         }
         catch (Exception)
@@ -118,7 +93,7 @@ public class UsersRpcController : RpcControllerBase
     {
         try
         {
-            await _userService.DeleteAsync(UserId, SystemRoles, userId);
+            await userService.DeleteAsync(UserId, SystemRoles, userId);
             return Ok();
         }
         catch (ForbiddenException)

@@ -40,12 +40,6 @@ public class AuthService : DisposableBase, IAuthService
         _httpClient.BaseAddress = new Uri($"https://{_authOptions.Value.Domain}");
     }
 
-    public bool ValidateWebhookCredentials(string username, string password)
-    {
-        AuthOptions authOptions = _authOptions.Value;
-        return authOptions.WebhookUsername == username && authOptions.WebhookPassword == password;
-    }
-
     public async Task<Tokens?> GetParatextTokensAsync(string authId, CancellationToken token)
     {
         string userProfileJson;
@@ -155,7 +149,7 @@ public class AuthService : DisposableBase, IAuthService
                 new JProperty("grant_type", "client_credentials"),
                 new JProperty("client_id", options.BackendClientId),
                 new JProperty("client_secret", options.BackendClientSecret),
-                new JProperty("audience", _authOptions.Value.ManagementAudience)
+                new JProperty("audience", options.ManagementAudience)
             );
             request.Content = new StringContent(requestObj.ToString(), Encoding.UTF8, "application/json");
             if (string.IsNullOrEmpty(options.BackendClientSecret))
