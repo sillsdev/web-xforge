@@ -123,7 +123,6 @@ jobs:
       paratext_client_id: ${{ secrets.paratext_client_id }}
       serval_client_id: ${{ secrets.serval_client_id }}
       auth_backend_secret: ${{ secrets.auth_backend_secret }}
-      auth_webhook_password: ${{ secrets.auth_webhook_password }}
       auth_health_check_api_key: ${{ secrets.auth_health_check_api_key }}
       paratext_api_token: ${{ secrets.paratext_api_token }}
       paratext_resource_password_base64: ${{ secrets.paratext_resource_password_base64 }}
