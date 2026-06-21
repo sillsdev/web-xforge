@@ -238,6 +238,7 @@
     "choose_books_for_training_error": "No hay libros seleccionados. Seleccione libros de formación para continuar.",
     "choose_books_for_training_header": "Entrenamiento",
     "choose_books_for_training_no_books_error": "No hay libros disponibles para la formación. Su proyecto debe tener al menos un libro traducido para utilizarlo en la formación.",
+    "choose_books_for_training_no_books_info": "Ningún libro tiene suficientes traducciones para el entrenamiento. Los libros de entrenamiento son opcionales. Vuelve atrás y asegúrate de que los libros traducidos no estén seleccionados para el borrador si quieres utilizarlos para el entrenamiento.",
     "choose_books_for_training_title": "Seleccione libros en los que entrenar",
     "choose_books_to_translate_error": "No hay libros seleccionados. Seleccione los libros a traducir para continuar.",
     "choose_books_to_translate_header": "Redacción",
@@ -296,8 +297,7 @@
     "formatting_options": "Opciones de formato",
     "formatting": "Formato",
     "hide_model_training_configuration": "Ocultar la configuración de entrenamiento del modelo",
-    "new": "¡NUEVO!",
-    "options_for_paragraph_breaks_and_quotation_marks": "Opciones de saltos de párrafo y comillas para facilitar la edición",
+    "per_chapter_remarks_notice": "[b]¡Novedad![/b] Ahora se muestra en cada capítulo un aviso indicando que el borrador ha sido generado por IA, en lugar de aparecer al principio del libro.",
     "requested_at": "Solicitado {{ requestedAtTime }}.",
     "requested_by": "Solicitado por {{ requestedByUserName }} en {{ requestedAtTime }}.",
     "select_formatting_options": "Se ha creado el borrador. Elija las opciones de formato para continuar.",
@@ -909,7 +909,7 @@
     "training_unavailable": "La formación no está disponible temporalmente",
     "translate_overview": "Resumen de la traducción",
     "translated_segments": "{{ translatedSegments }} de {{ total }} segmentos",
-    "translation_suggestions_retirement_notice": "Parece que su proyecto utiliza la función de sugerencias de traducción. Esta función dejará de estar disponible en breve. Póngase en contacto con {{ email }} para hablar sobre otras formas de traducir utilizando Scripture Forge."
+    "translation_suggestions_will_be_removed": "Your project appears to be using the translation suggestions feature. Translation suggestions will be removed {{ date }}. Please contact {{ email }} to discuss alternative ways to translate using Scripture Forge."
   },
   "draft_signup": {
     "additional_comments_label": "Comentarios adicionales",

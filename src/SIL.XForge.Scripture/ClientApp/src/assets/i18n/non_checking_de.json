@@ -238,6 +238,7 @@
     "choose_books_for_training_error": "Keine Bücher ausgewählt. Wähle Bücher für die Schulung aus, um fortzufahren.",
     "choose_books_for_training_header": "Schulung",
     "choose_books_for_training_no_books_error": "Für die Schulung sind keine Bücher verfügbar. Dein Projekt muss mindestens ein übersetztes Buch für die Schulung haben.",
+    "choose_books_for_training_no_books_info": "No books have enough translations for training. Training books are optional. Go back and ensure translated books are not selected to draft if you want to use them for training.",
     "choose_books_for_training_title": "Bücher für die Schulung auswählen",
     "choose_books_to_translate_error": "Keine Bücher ausgewählt. Wähle zu übersetzende Bücher aus, um fortzufahren.",
     "choose_books_to_translate_header": "Entwurf erstellen",
@@ -296,8 +297,7 @@
     "formatting_options": "Optionen für die Formatierung",
     "formatting": "Formatierung",
     "hide_model_training_configuration": "Modellschulungskonfiguration ausblenden",
-    "new": "NEU!",
-    "options_for_paragraph_breaks_and_quotation_marks": "Optionen für Absatzumbrüche und Anführungszeichen für erleichtertes Bearbeiten",
+    "per_chapter_remarks_notice": "[b]New![/b] A notice that the draft is AI-generated is now shown on every chapter instead of at the start of the book.",
     "requested_at": "Angefordert {{ requestedAtTime }}.",
     "requested_by": "Angefordert von {{ requestedByUserName }} um {{ requestedAtTime }}.",
     "select_formatting_options": "Der Entwurf wurde erstellt. Um fortzufahren, wähle Optionen für die Formatierung.",
@@ -909,7 +909,7 @@
     "training_unavailable": "Schulung ist vorübergehend nicht verfügbar",
     "translate_overview": "Übersicht übersetzen",
     "translated_segments": "{{ translatedSegments }} von {{ total }} Segmenten",
-    "translation_suggestions_retirement_notice": "Dein Projekt scheint die Funktion der Übersetzungsvorschläge zu verwenden. Die Übersetzungsvorschläge werden bald abgeschaltet. Bitte wende Dich an {{ email }} , um alternative Möglichkeiten zur Übersetzung mit Scripture Forge zu besprechen."
+    "translation_suggestions_will_be_removed": "Your project appears to be using the translation suggestions feature. Translation suggestions will be removed {{ date }}. Please contact {{ email }} to discuss alternative ways to translate using Scripture Forge."
   },
   "draft_signup": {
     "additional_comments_label": "Zusätzliche Anmerkungen",
