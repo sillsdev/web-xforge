@@ -1,11 +1,11 @@
 #!/usr/bin/env -S bash -c '"$(dirname "$0")"/node_modules/.bin/ts-node "$(dirname "$0")/$(basename "$0")" "$@"'
-// The above causes the local ts-node to be used even if run from another directory. Setup: npm ci
+// The above causes the local ts-node to be used even if run from another directory. Setup: pnpm ci
 //
 // Show project metadata and data
 //
 // Display data and metadata about projects.
 //
-// This script needs ts-node and must be run from the containing directory. Setup: npm ci
+// This script needs ts-node and must be run from the containing directory. Setup: pnpm ci
 // Usage info: ./show-projects.ts --help
 // Examples:
 //   Show a list of projects and their Ids: ./show-projects.ts

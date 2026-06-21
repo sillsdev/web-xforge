@@ -1,5 +1,5 @@
 #!/usr/bin/env -S bash -c '"$(dirname "$0")"/node_modules/.bin/ts-node "$(dirname "$0")/$(basename "$0")" "$@"'
-// The above causes the local ts-node to be used even if run from another directory. Setup: npm i
+// The above causes the local ts-node to be used even if run from another directory. Setup: pnpm i
 //
 // Manage DB
 //
