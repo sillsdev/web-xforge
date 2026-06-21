@@ -1,11 +1,11 @@
 #!/usr/bin/env -S bash -c '"$(dirname "$0")"/node_modules/.bin/ts-node "$(dirname "$0")/$(basename "$0")" "$@"'
-// The above causes the local ts-node to be used even if run from another directory. Setup: npm ci
+// The above causes the local ts-node to be used even if run from another directory. Setup: pnpm ci
 //
 // Parse Version
 //
 // Parses a version string to determine what feature flags are enabled.
 //
-// This script needs ts-node and must be run from the containing directory. Setup: npm ci
+// This script needs ts-node and must be run from the containing directory. Setup: pnpm ci
 // Usage info: ./parse-version.ts --help
 // Examples:
 //   Parse a version string: ./parse-version.ts v9.9.9-123

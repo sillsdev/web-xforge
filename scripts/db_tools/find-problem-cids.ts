@@ -4,7 +4,7 @@
 //
 // Find potentially problematic usages of character ids (cids) in op inserts in a text doc, which could indicate poor
 // handling of character styling.
-// This script needs ts-node and must be run from the containing directory. Setup: npm ci
+// This script needs ts-node and must be run from the containing directory. Setup: pnpm ci
 // Usage information: ./find-problem-cids.ts --help
 // Usage example: ./find-problem-cids.ts --server dev --no-color > output.txt
 // Potential problems are flagged with 'NOT EQUAL' and less significantly, 'more than one'.
