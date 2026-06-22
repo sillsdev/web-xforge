@@ -1,0 +1,12 @@
+allowBuilds:
+  "@compodoc/compodoc": true
+  "@parcel/watcher": true
+  "@swc/core": true
+  browser-tabs-lock: true
+  esbuild: true
+  lmdb: true
+  msgpackr-extract: true
+  unrs-resolver: true
+minimumReleaseAge: 10080 # 7 days
+patchedDependencies:
+  http-proxy@1.18.1: patches/http-proxy@1.18.1.patch
