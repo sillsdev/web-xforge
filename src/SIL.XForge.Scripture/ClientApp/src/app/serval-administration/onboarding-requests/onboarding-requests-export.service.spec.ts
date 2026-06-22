@@ -9,10 +9,7 @@ import {
   OnboardingRequestService
 } from '../../translate/draft-generation/onboarding-request.service';
 import { ServalAdministrationService } from '../serval-administration.service';
-import {
-  ONBOARDING_REQUESTS_EXPORT_HEADERS,
-  OnboardingRequestsExportService
-} from './onboarding-requests-export.service';
+import { OnboardingRequestsExportService } from './onboarding-requests-export.service';
 
 const mockedOnboardingRequestService = mock(OnboardingRequestService);
 const mockedUserService = mock(UserService);
@@ -32,8 +29,17 @@ describe('OnboardingRequestsExportService', () => {
 
     const tsv = await env.service.createTsv([]);
 
-    expect(env.lines(tsv)[0]).toEqual(ONBOARDING_REQUESTS_EXPORT_HEADERS.join('\t'));
-    expect(ONBOARDING_REQUESTS_EXPORT_HEADERS[0]).toEqual('request_date_utc');
+    expect(env.headers(tsv, '\t')).toEqual([
+      'request_date_utc',
+      'resolution',
+      'requester',
+      'language_code',
+      'project_shortname',
+      'language_name',
+      'assignee',
+      'request_id',
+      'sf_project_id'
+    ]);
   });
 
   it('maps a request to a tab-separated row in the correct column order', async () => {
@@ -64,7 +70,7 @@ describe('OnboardingRequestsExportService', () => {
     const tsv = await env.service.createTsv([request]);
 
     const cells = env.lines(tsv)[1].split('\t');
-    const index = ONBOARDING_REQUESTS_EXPORT_HEADERS.indexOf('request_date_utc');
+    const index = env.headerIndex(tsv, '\t', 'request_date_utc');
     expect(cells[index]).toEqual('');
   });
 
@@ -76,7 +82,7 @@ describe('OnboardingRequestsExportService', () => {
     const tsv = await env.service.createTsv([request]);
 
     const cells = env.lines(tsv)[1].split('\t');
-    const index = ONBOARDING_REQUESTS_EXPORT_HEADERS.indexOf('project_shortname');
+    const index = env.headerIndex(tsv, '\t', 'project_shortname');
     expect(cells[index]).toEqual(UNKNOWN_PROJECT_ID);
   });
 
@@ -86,7 +92,7 @@ describe('OnboardingRequestsExportService', () => {
     const tsv = await env.service.createTsv([env.createRequest({ assigneeId: '' })]);
 
     const cells = env.lines(tsv)[1].split('\t');
-    const index = ONBOARDING_REQUESTS_EXPORT_HEADERS.indexOf('assignee');
+    const index = env.headerIndex(tsv, '\t', 'assignee');
     expect(cells[index]).toEqual('');
   });
 
@@ -95,8 +101,19 @@ describe('OnboardingRequestsExportService', () => {
 
     const csv = await env.service.createCsv([env.createRequest()]);
 
-    expect(env.lines(csv)[0]).toEqual(ONBOARDING_REQUESTS_EXPORT_HEADERS.join(','));
-    expect(env.lines(csv)[1].split(',')[ONBOARDING_REQUESTS_EXPORT_HEADERS.indexOf('request_id')]).toEqual(REQUEST_ID);
+    expect(env.headers(csv, ',')).toEqual([
+      'request_date_utc',
+      'resolution',
+      'requester',
+      'language_code',
+      'project_shortname',
+      'language_name',
+      'assignee',
+      'request_id',
+      'sf_project_id'
+    ]);
+    const requestIdIndex = env.headerIndex(csv, ',', 'request_id');
+    expect(env.lines(csv)[1].split(',')[requestIdIndex]).toEqual(REQUEST_ID);
   });
 
   it('produces one data row per request', async () => {
@@ -177,5 +194,13 @@ class TestEnvironment {
 
   lines(content: string): string[] {
     return content.split('\n').map(line => line.replace(/\r$/, ''));
+  }
+
+  headers(content: string, delimiter: string): string[] {
+    return this.lines(content)[0].split(delimiter);
+  }
+
+  headerIndex(content: string, delimiter: string, header: string): number {
+    return this.headers(content, delimiter).indexOf(header);
   }
 }
