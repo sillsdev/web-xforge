@@ -21,6 +21,7 @@ jobs:
         dotnet_version: ["10.0.x"]
         node_version: ["22.13.0"]
         npm_version: ["11.11.0"]
+        pnpm_version: ["11.8.0"]
       # Continue building in other environments to see which are working.
       fail-fast: false
     runs-on: ${{matrix.os}}
@@ -36,14 +37,18 @@ jobs:
           dotnet-version: ${{matrix.dotnet_version}}
           cache: true
           cache-dependency-path: src/SIL.XForge.Scripture/packages.lock.json
+      - name: "Deps: pnpm"
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: ${{matrix.pnpm_version}}
       - name: "Deps: Node"
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: ${{matrix.node_version}}
-          cache: "npm"
+          cache: "pnpm"
           cache-dependency-path: |
-            src/SIL.XForge.Scripture/ClientApp/package-lock.json
-            src/RealtimeServer/package-lock.json
+            src/SIL.XForge.Scripture/ClientApp/pnpm-lock.yaml
+            src/RealtimeServer/pnpm-lock.yaml
       - name: "Deps: npm"
         env:
           NPM_VERSION: ${{matrix.npm_version}}
@@ -62,6 +67,8 @@ jobs:
           node --version
           which npm
           npm --version
+          which pnpm
+          pnpm --version
           which chromium-browser
           chromium-browser --version
       - name: "Ensure desired tool versions"
@@ -69,31 +76,33 @@ jobs:
         env:
           NODE_VERSION: ${{matrix.node_version}}
           NPM_VERSION: ${{matrix.npm_version}}
+          PNPM_VERSION: ${{matrix.pnpm_version}}
         run: |
           set -xueo pipefail
           [[ $(node --version) == v${NODE_VERSION} ]]
           [[ $(npm --version) == ${NPM_VERSION} ]]
+          [[ $(pnpm --version) == ${PNPM_VERSION} ]]
 
       - name: "Deps: reportgenerator tool"
         run: dotnet tool install --global dotnet-reportgenerator-globaltool
-      - name: "Deps: RealtimeServer npm"
-        run: cd src/RealtimeServer && (npm ci || (sleep 3m && npm ci))
+      - name: "Deps: RealtimeServer pnpm"
+        run: cd src/RealtimeServer && (pnpm ci || (sleep 3m && pnpm ci))
       - name: "Deps: Backend nuget"
         run: dotnet restore
-      - name: "Deps: Frontend npm"
-        run: cd src/SIL.XForge.Scripture/ClientApp && (npm ci || (sleep 3m && npm ci))
+      - name: "Deps: Frontend pnpm"
+        run: cd src/SIL.XForge.Scripture/ClientApp && (pnpm ci || (sleep 3m && pnpm ci))
 
       - name: "Build: Backend, RealtimeServer"
         run: dotnet build xForge.sln
       - name: "Build: Frontend"
-        run: cd src/SIL.XForge.Scripture/ClientApp && npm run build
+        run: cd src/SIL.XForge.Scripture/ClientApp && pnpm run build
 
       - name: "Test: Ensure tests not focused on a subset"
         # grep returns code 123 when no matches are found. The operator ! negates the exit code.
         run: |
           ! git ls-files | grep "\\.spec\\.ts" | xargs grep -P "^\s*(fdescribe|fit)\("
       - name: "Test: RealtimeServer"
-        run: cd src/RealtimeServer && npm run test:ci
+        run: cd src/RealtimeServer && pnpm run test:ci
       - name: "Test: Backend"
         run: |
           dotnet test \
@@ -107,7 +116,7 @@ jobs:
         run: |
           set -euo pipefail
           cd src/SIL.XForge.Scripture/ClientApp
-          npm run test:gha | tee test_output.log
+          pnpm run test:gha | tee test_output.log
           if grep --perl-regex '\bNG\d+\b|ERROR:|WARN:|LOG:|INFO:' test_output.log; then
             echo "Error: Disallowed token found in test run output, as shown above.";
             exit 1;
@@ -139,6 +148,7 @@ jobs:
         dotnet_version: ["10.0.x"]
         node_version: ["22.13.0"]
         npm_version: ["11.11.0"]
+        pnpm_version: ["11.8.0"]
       fail-fast: false
     runs-on: ${{matrix.os}}
     steps:
@@ -153,14 +163,18 @@ jobs:
           dotnet-version: ${{matrix.dotnet_version}}
           cache: true
           cache-dependency-path: src/SIL.XForge.Scripture/packages.lock.json
+      - name: "Deps: pnpm"
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: ${{matrix.pnpm_version}}
       - name: "Deps: Node"
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: ${{matrix.node_version}}
-          cache: "npm"
+          cache: "pnpm"
           cache-dependency-path: |
-            src/SIL.XForge.Scripture/ClientApp/package-lock.json
-            src/RealtimeServer/package-lock.json
+            src/SIL.XForge.Scripture/ClientApp/pnpm-lock.yaml
+            src/RealtimeServer/pnpm-lock.yaml
       - name: "Deps: npm"
         env:
           NPM_VERSION: ${{matrix.npm_version}}
@@ -179,16 +193,20 @@ jobs:
           node --version
           which npm
           npm --version
+          which pnpm
+          pnpm --version
           which chromium-browser
           chromium-browser --version
       - name: "Ensure desired tool versions"
         env:
           NODE_VERSION: ${{matrix.node_version}}
           NPM_VERSION: ${{matrix.npm_version}}
+          PNPM_VERSION: ${{matrix.pnpm_version}}
         run: |
           set -xueo pipefail
           [[ $(node --version) == v${NODE_VERSION} ]]
           [[ $(npm --version) == ${NPM_VERSION} ]]
+          [[ $(pnpm --version) == ${PNPM_VERSION} ]]
 
       - name: "Production build"
         run: scripts/build-production
@@ -196,6 +214,6 @@ jobs:
       - name: "Test: Backend"
         run: dotnet test xForge.sln
       - name: "Test: RealtimeServer"
-        run: cd src/RealtimeServer && npm run test:ci
+        run: cd src/RealtimeServer && pnpm run test:ci
       - name: "Test: Frontend"
-        run: cd src/SIL.XForge.Scripture/ClientApp && npm run test:gha
+        run: cd src/SIL.XForge.Scripture/ClientApp && pnpm run test:gha
