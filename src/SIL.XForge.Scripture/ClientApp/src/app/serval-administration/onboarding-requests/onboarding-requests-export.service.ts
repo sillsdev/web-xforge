@@ -9,8 +9,7 @@ import {
 } from '../../translate/draft-generation/onboarding-request.service';
 import { ServalAdministrationService } from '../serval-administration.service';
 
-/** Column headers for the onboarding requests export, in the order they appear in the exported file. */
-export const ONBOARDING_REQUESTS_EXPORT_HEADERS = [
+const ONBOARDING_REQUESTS_SPREADSHEET_HEADINGS = [
   'request_date_utc',
   'resolution',
   'requester',
@@ -21,6 +20,13 @@ export const ONBOARDING_REQUESTS_EXPORT_HEADERS = [
   'request_id',
   'sf_project_id'
 ] as const;
+
+type OnboardingRequestSpreadsheetHeading = (typeof ONBOARDING_REQUESTS_SPREADSHEET_HEADINGS)[number];
+
+/**
+ * Represents a single onboarding request row to be exported to a spreadsheet.
+ */
+type OnboardingRequestSpreadsheetRow = Record<OnboardingRequestSpreadsheetHeading, string>;
 
 /**
  * Builds spreadsheet exports of onboarding requests.
@@ -59,32 +65,46 @@ export class OnboardingRequestsExportService {
     return `onboarding-requests_${year}-${month}-${day}_${hours}${minutes}${seconds}Z.${extension}`;
   }
 
+  private transformSpreadsheetRowsForExport(rows: OnboardingRequestSpreadsheetRow[]): string[][] {
+    return rows.map(row => {
+      return ONBOARDING_REQUESTS_SPREADSHEET_HEADINGS.map(heading => row[heading] ?? '');
+    });
+  }
+
   private async createSeparatedValues(requests: OnboardingRequest[], delimiter: string): Promise<string> {
     const assigneeNames = await this.lookupAssigneeNames(requests);
 
-    const data: string[][] = await Promise.all(
-      requests.map(async request => {
-        const sfProjectId = request.submission.projectId;
-        const projectDoc = await this.servalAdministrationService.get(sfProjectId);
-        const projectShortName = projectDoc?.data?.shortName ?? sfProjectId;
-        return [
-          this.formatRequestDateUtc(request.submission.timestamp) ?? '',
-          this.onboardingRequestService.getResolution(request.resolution).label,
-          request.submission.formData.name,
-          request.submission.formData.translationLanguageIsoCode,
-          projectShortName,
-          request.submission.formData.translationLanguageName,
-          assigneeNames.get(request.assigneeId) ?? '',
-          request.id,
-          sfProjectId
-        ];
-      })
+    const spreadsheetRows: OnboardingRequestSpreadsheetRow[] = await Promise.all(
+      requests.map(async request => this.createSpreadsheetRow(request, assigneeNames))
     );
 
+    const dataRows: string[][] = this.transformSpreadsheetRowsForExport(spreadsheetRows);
+
     return Papa.unparse(
-      { fields: [...ONBOARDING_REQUESTS_EXPORT_HEADERS], data },
+      { fields: [...ONBOARDING_REQUESTS_SPREADSHEET_HEADINGS], data: dataRows },
       { delimiter: delimiter, escapeFormulae: true }
     );
+  }
+
+  private async createSpreadsheetRow(
+    request: OnboardingRequest,
+    assigneeNames: Map<string, string>
+  ): Promise<OnboardingRequestSpreadsheetRow> {
+    const sfProjectId = request.submission.projectId;
+    const projectDoc = await this.servalAdministrationService.get(sfProjectId);
+    const projectShortName = projectDoc?.data?.shortName ?? sfProjectId;
+
+    return {
+      request_date_utc: this.formatRequestDateUtc(request.submission.timestamp) ?? '',
+      resolution: this.onboardingRequestService.getResolution(request.resolution).label,
+      requester: request.submission.formData.name,
+      language_code: request.submission.formData.translationLanguageIsoCode,
+      project_shortname: projectShortName,
+      language_name: request.submission.formData.translationLanguageName,
+      assignee: assigneeNames.get(request.assigneeId) ?? '',
+      request_id: request.id,
+      sf_project_id: sfProjectId
+    };
   }
 
   /** Resolves the display name for each unique populated SF assignee user ID. */
