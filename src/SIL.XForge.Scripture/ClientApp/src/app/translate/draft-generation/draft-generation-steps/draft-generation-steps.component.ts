@@ -215,7 +215,7 @@ export class DraftGenerationStepsComponent implements OnInit {
           this.setProjectDisplayNames(trainingTargets[0], draftingSources[0]);
 
           // The null values will have been filtered above
-          const target = trainingTargets[0]!;
+          const target: DraftSource = trainingTargets[0]!;
           const draftingSource: DraftSource = draftingSources[0]!;
           // If both source and target project languages are in the NLLB,
           // training book selection is optional (and discouraged).
@@ -273,34 +273,41 @@ export class DraftGenerationStepsComponent implements OnInit {
           // Reset the field that toggles a notice that books were automatically selected
           this.trainingBooksWereAutoSelected = false;
 
-          // If book exists in both target and source, add to available books.
-          // Otherwise, add to unusable books.
-          // Ensure books are displayed in ascending canonical order.
-          const targetBooks = new Set<number>();
           const projectProgress = await this.progressService.getProgress(projectId, {
             maxStalenessMs: 30_000
           });
+
+          const sortedDraftingSourceBooks = Array.from(draftingSourceBooks).sort((a, b) => a - b);
+          // Iterate through books in the drafting source (sorted by book number)
+          // TODO: When implementing multiple drafting sources, this should be updated to handle multiple sources
+          for (const bookNum of sortedDraftingSourceBooks) {
+            // exclude non-canonical books
+            if (Canon.isExtraMaterial(bookNum)) {
+              continue;
+            }
+            // Translate books: Add all books with content from the source
+            const book: Book = { number: bookNum, selected: false };
+            this.allAvailableTranslateBooks.push(book);
+            if (this.bookHasVerseContent(draftingSource.projectRef, bookNum)) {
+              this.availableTranslateBooks[draftingSource.projectRef].push(book);
+            } else {
+              this.emptyTranslateSourceBooks.push(bookNum);
+            }
+          }
+          // Set books in target that do not exist in the drafting source
+          this.unusableTranslateSourceBooks = target.texts
+            .map(t => t.bookNum)
+            .filter(bookNum => !this.allAvailableTranslateBooks.some(b => b.number === bookNum));
+
+          const targetBooks = new Set<number>();
+          // Now handle training books - iterate through target books
           for (const text of target.texts.slice().sort((a, b) => a.bookNum - b.bookNum)) {
-            const bookNum = text.bookNum;
+            const bookNum: number = text.bookNum;
             targetBooks.add(bookNum);
 
             // Exclude non-canonical books
             if (Canon.isExtraMaterial(bookNum)) {
               continue;
-            }
-
-            // Translate books
-            // TODO: When implementing multiple drafting sources, this should be updated to handle multiple sources
-            if (draftingSourceBooks.has(bookNum)) {
-              const book: Book = { number: bookNum, selected: false };
-              this.allAvailableTranslateBooks.push(book);
-              if (this.bookHasVerseContent(draftingSource.projectRef, bookNum)) {
-                this.availableTranslateBooks[draftingSource.projectRef].push(book);
-              } else {
-                this.emptyTranslateSourceBooks.push(bookNum);
-              }
-            } else {
-              this.unusableTranslateSourceBooks.push(bookNum);
             }
 
             // See if there is an existing training scripture range
