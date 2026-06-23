@@ -2,6 +2,7 @@
 
 ARG ARCHITECTURE=amd64
 ARG DOTNET_VERSION=10.0
+ARG PNPM_VERSION=11.8
 ARG UBUNTU_NAME=noble # 24.04
 
 FROM mcr.microsoft.com/dotnet/aspnet:$DOTNET_VERSION-$UBUNTU_NAME-$ARCHITECTURE AS base
@@ -12,7 +13,7 @@ VOLUME /var/lib/xforge
 # Add Ubuntu Mirrors
 RUN sed -i 's#htt[p|ps]://archive.ubuntu.com/ubuntu/#mirror://mirrors.ubuntu.com/mirrors.txt#g' /etc/apt/sources.list
 # Install Node Repository
-RUN apt-get update && apt-get install -y \
+RUN apt-get update --fix-missing && apt-get install -y \
     ca-certificates \
     curl \
     && curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
@@ -22,6 +23,7 @@ RUN apt-get install -y \
     libc-dev \
     mercurial \
     nodejs \
+    && npm install --global pnpm@${PNPM_VERSION} \
     && rm -rf /var/lib/apt/lists/*
 # Setup Scripture Forge Paths
 RUN mkdir -p /var/lib/scriptureforge/sync \
@@ -49,14 +51,15 @@ RUN sed -i 's#htt[p|ps]://archive.ubuntu.com/ubuntu/#mirror://mirrors.ubuntu.com
 RUN update-ca-certificates \
     && curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 # Install NPM
-RUN apt-get install -y \
+RUN apt-get update && apt-get install -y \
     build-essential \
     nodejs \
+    && npm install --global pnpm@${PNPM_VERSION} \
     && rm -rf /var/lib/apt/lists/*
 # Build the Realtime Server files
 COPY src/RealtimeServer/ /src/RealtimeServer/
 WORKDIR /src/RealtimeServer
-RUN npm ci
+RUN pnpm ci
 # Get the Angular Frontend files
 COPY src/SIL.XForge.Scripture/locales.json /src/SIL.XForge.Scripture/locales.json
 COPY src/SIL.XForge.Scripture/version.json /src/SIL.XForge.Scripture/version.json
