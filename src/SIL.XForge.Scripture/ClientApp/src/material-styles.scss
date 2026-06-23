@@ -178,7 +178,7 @@
   @include mat.snack-bar-overrides(
     (
       /** See also styles.scss for custom snackbar colouring, such as for errors. */
-      container-color: var(--sf-snackbar-background-color)
+        container-color: var(--sf-snackbar-background-color)
     )
   );
 
