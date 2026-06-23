@@ -26,7 +26,7 @@ type OnboardingRequestSpreadsheetHeading = (typeof ONBOARDING_REQUESTS_SPREADSHE
 /**
  * Represents a single onboarding request row to be exported to a spreadsheet.
  */
-export type OnboardingRequestSpreadsheetRow = Record<OnboardingRequestSpreadsheetHeading, string>;
+type OnboardingRequestSpreadsheetRow = Record<OnboardingRequestSpreadsheetHeading, string>;
 
 /**
  * Builds spreadsheet exports of onboarding requests.
