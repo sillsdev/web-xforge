@@ -136,6 +136,7 @@ jobs:
       dotnet_version: "10.0.x"
       node_version: "22.13.0"
       npm_version: "11.11.0"
+      pnpm_version: "11.9.0"
       # When bumping OS version, the server will need to authorize the new default rsync args.
       os: "ubuntu-24.04"
 
