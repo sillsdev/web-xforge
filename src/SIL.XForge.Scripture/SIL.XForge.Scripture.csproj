@@ -159,28 +159,40 @@
       <Output TaskParameter="ExitCode" PropertyName="ErrorCode" />
     </Exec>
     <Error Condition="'$(ErrorCode)' != '0'" Text="Node.js is required to build and run this project. To continue, please install Node.js from https://nodejs.org/, and then restart your command prompt or IDE." />
+    <Exec Command="pnpm --version" ContinueOnError="true">
+      <Output TaskParameter="ExitCode" PropertyName="ErrorCode" />
+    </Exec>
+    <Error Condition="'$(ErrorCode)' != '0'" Text="pnpm is required to build and run this project. To continue, please install pnpm, and then restart your command prompt or IDE." />
   </Target>
   <Target Name="DebugEnsureNodeEnv" DependsOnTargets="EnsureNodeInstalled" BeforeTargets="Build" Condition="('$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules')) Or '$(NpmInstall)' == 'true'">
-    <Message Importance="high" Text="Restoring dependencies using 'npm'. This may take several minutes..." />
-    <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" />
+    <Message Importance="high" Text="Restoring dependencies using 'pnpm'. This may take several minutes..." />
+    <Exec WorkingDirectory="$(SpaRoot)" Command="pnpm install" />
   </Target>
-  <Target Name="BuildRealtimeServer" DependsOnTargets="EnsureNodeInstalled" BeforeTargets="AssignTargetPaths" Condition="'$(Configuration)' == 'Debug'">
+  <Target Name="BuildRealtimeServer" DependsOnTargets="EnsureNodeInstalled" BeforeTargets="AssignTargetPaths">
     <Message Importance="high" Text="Building real-time server..." />
-    <Exec WorkingDirectory="$(RealtimeServerRoot)" Command="npm install" Condition="!Exists('$(RealtimeServerRoot)node_modules') Or '$(NpmInstall)' == 'true'" />
-    <Exec WorkingDirectory="$(RealtimeServerRoot)" Command="npm run build" Condition="Exists('$(RealtimeServerRoot)node_modules') And '$(NpmInstall)' != 'true' " />
+    <Exec WorkingDirectory="$(RealtimeServerRoot)" Command="pnpm install" Condition="!Exists('$(RealtimeServerRoot)node_modules') Or '$(NpmInstall)' == 'true'" />
+    <Exec WorkingDirectory="$(RealtimeServerRoot)" Command="pnpm run build" Condition="Exists('$(RealtimeServerRoot)node_modules') And '$(NpmInstall)' != 'true' " />
     <ItemGroup>
-      <RealtimeFiles Include="$(RealtimeServerRoot)**\*" />
+      <RealtimeFiles Include="$(RealtimeServerRoot)**\*" Exclude="$(RealtimeServerRoot)node_modules\**" />
       <Content Include="@(RealtimeFiles)">
         <Link>RealtimeServer\%(RecursiveDir)%(Filename)%(Extension)</Link>
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
     </ItemGroup>
   </Target>
+  <Target Name="InstallRealtimeServerDependenciesBuild" AfterTargets="Build">
+    <!-- Fix the node_modules as MSBuild will not correctly copy the symlinks used by pnpm -->
+    <Exec WorkingDirectory="$(OutDir)RealtimeServer" Command="pnpm install --node-linker hoisted" Condition="!Exists('$(OutDir)RealtimeServer/node_modules') Or '$(NpmInstall)' == 'true'" />
+  </Target>
+  <Target Name="InstallRealtimeServerDependenciesPublish" AfterTargets="Publish">
+    <!-- Fix the node_modules as MSBuild will not correctly copy the symlinks used by pnpm -->
+    <Exec WorkingDirectory="$(PublishDir)RealtimeServer" Command="pnpm install --node-linker hoisted" Condition="!Exists('$(PublishDir)RealtimeServer/node_modules') Or '$(NpmInstall)' == 'true'" />
+  </Target>
   <Target Name="PublishRunWebpack" AfterTargets="ComputeFilesToPublish">
     <!-- As part of publishing, ensure the JS resources are freshly built in production mode -->
-    <Exec WorkingDirectory="$(RealtimeServerRoot)" Command="npm install" />
-    <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" />
-    <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build -- --configuration=$(AngularConfig)" />
+    <Exec WorkingDirectory="$(RealtimeServerRoot)" Command="pnpm install" />
+    <Exec WorkingDirectory="$(SpaRoot)" Command="pnpm install" />
+    <Exec WorkingDirectory="$(SpaRoot)" Command="pnpm run build --configuration=$(AngularConfig)" />
     <!-- Include the newly-built files in the publish output -->
     <ItemGroup>
       <DistRootFiles Include="$(SpaRoot)dist\*" Exclude="$(SpaRoot)dist\browser\**" />
@@ -194,12 +206,6 @@
 
       <ResolvedFileToPublish Include="@(DistBrowserFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
         <RelativePath>%(DistBrowserFiles.Identity)</RelativePath>
-        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      </ResolvedFileToPublish>
-
-      <RealtimeFiles Include="$(RealtimeServerRoot)**\*" />
-      <ResolvedFileToPublish Include="@(RealtimeFiles)" Exclude="@(ResolvedFileToPublish)">
-        <RelativePath>RealtimeServer\%(RecursiveDir)%(Filename)%(Extension)</RelativePath>
         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       </ResolvedFileToPublish>
     </ItemGroup>

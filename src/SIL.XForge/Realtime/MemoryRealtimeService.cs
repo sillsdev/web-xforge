@@ -25,7 +25,10 @@ public class MemoryRealtimeService : IRealtimeService
         var services = new ServiceCollection();
         services.AddNodeJS();
         services.Configure<NodeJSProcessOptions>(options =>
-            options.ProjectPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
+            options.ProjectPath = Path.Join(
+                Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? string.Empty,
+                "RealtimeServer"
+            )
         );
         // services.Configure<OutOfProcessNodeJSServiceOptions>(options => options.TimeoutMS = -1);
         services.AddSingleton<IExceptionHandler, MemoryExceptionHandler>();
