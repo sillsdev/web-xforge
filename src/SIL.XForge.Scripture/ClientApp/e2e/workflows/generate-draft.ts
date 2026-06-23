@@ -92,7 +92,7 @@ export async function generateDraft(
   await screenshot(page, { pageName: 'generate_draft_confirm_sources', ...context });
 
   await goToNextStepExpectingHeading('Select books to draft');
-  await expect(getStep().getByRole('option')).toHaveCount(3);
+  await expect(getStep().getByRole('option')).toHaveCount(66);
   const options = await getStep().getByRole('option').all();
 
   let previousBookWasSelected = false;
