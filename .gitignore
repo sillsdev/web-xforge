@@ -4,6 +4,7 @@
 .externalToolBuilders
 .idea/
 .nx
+.pnpm-store/
 .settings
 .vagrant/
 deploy/**/*.retry
