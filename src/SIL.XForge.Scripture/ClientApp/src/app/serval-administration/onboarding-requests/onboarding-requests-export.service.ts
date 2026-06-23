@@ -93,9 +93,13 @@ export class OnboardingRequestsExportService {
   ): Promise<OnboardingRequestSpreadsheetRow> {
     const sfProjectId = request.submission.projectId;
     const projectDocSubscription = new DocSubscription('OnboardingRequestsExportService.createSpreadsheetRow');
-    const projectDoc = await this.servalAdministrationService.subscribe(sfProjectId, projectDocSubscription);
-    projectDocSubscription.unsubscribe();
-    const projectShortName = projectDoc?.data?.shortName ?? sfProjectId;
+    let projectShortName: string;
+    try {
+      const projectDoc = await this.servalAdministrationService.subscribe(sfProjectId, projectDocSubscription);
+      projectShortName = projectDoc?.data?.shortName ?? sfProjectId;
+    } finally {
+      projectDocSubscription.unsubscribe();
+    }
 
     return {
       request_date_utc: this.formatRequestDateUtc(request.submission.timestamp) ?? '',
@@ -116,9 +120,14 @@ export class OnboardingRequestsExportService {
     const entries = await Promise.all(
       assigneeIds.map(async assigneeId => {
         const docSubscription = new DocSubscription('OnboardingRequestsExportService.lookupAssigneeNames');
-        const userDoc = await this.userService.get(assigneeId, docSubscription);
-        docSubscription.unsubscribe();
-        return [assigneeId, userDoc?.data?.displayName ?? ''] as const;
+        let displayName: string;
+        try {
+          const userDoc = await this.userService.get(assigneeId, docSubscription);
+          displayName = userDoc?.data?.displayName ?? '';
+        } finally {
+          docSubscription.unsubscribe();
+        }
+        return [assigneeId, displayName] as const;
       })
     );
     return new Map(entries);
