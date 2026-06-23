@@ -21,7 +21,10 @@ public static class RealtimeServiceCollectionExtensions
         {
             // Specify the port so NodeJS can be shared with other processes
             options.Port = 5002;
-            options.ProjectPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? string.Empty;
+            options.ProjectPath = Path.Join(
+                Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? string.Empty,
+                "RealtimeServer"
+            );
             if (!string.IsNullOrWhiteSpace(nodeOptions))
             {
                 options.NodeAndV8Options = nodeOptions;
