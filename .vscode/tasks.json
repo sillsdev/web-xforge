@@ -21,8 +21,8 @@
       "problemMatcher": "$msCompile"
     },
     {
-      "label": "npm start (SF)",
-      "command": "npm start",
+      "label": "pnpm start (SF)",
+      "command": "pnpm start",
       "type": "shell",
       "isBackground": true,
       "presentation": {
@@ -51,8 +51,8 @@
       }
     },
     {
-      "label": "npm start no reload (SF)",
-      "command": "npm run start:no-reload",
+      "label": "pnpm start no reload (SF)",
+      "command": "pnpm run start:no-reload",
       "type": "shell",
       "isBackground": true,
       "presentation": {
@@ -81,8 +81,8 @@
       }
     },
     {
-      "label": "npm test active spec (SF)",
-      "command": "npm test -- --browsers xForgeChromeHeadless --include=src/**/${fileBasename}",
+      "label": "pnpm test active spec (SF)",
+      "command": "pnpm test --browsers xForgeChromeHeadless --include=src/**/${fileBasename}",
       "type": "shell",
       "isBackground": true,
       "presentation": {
