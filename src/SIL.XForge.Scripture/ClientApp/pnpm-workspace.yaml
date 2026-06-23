@@ -8,5 +8,7 @@ allowBuilds:
   msgpackr-extract: true
   unrs-resolver: true
 minimumReleaseAge: 10080 # 7 days
+overrides:
+  "webpack": "5.105.0" # Fix for @storybook/builder-webpack5. Remove if updating Angular
 patchedDependencies:
   http-proxy@1.18.1: patches/http-proxy@1.18.1.patch
