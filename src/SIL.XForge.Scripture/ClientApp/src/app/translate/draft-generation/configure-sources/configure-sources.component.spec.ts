@@ -19,7 +19,6 @@ import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
-import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
@@ -631,10 +630,10 @@ describe('ConfigureSourcesComponent', () => {
 });
 
 class TestEnvironment {
-  readonly component: ConfigureSourcesComponent;
-  readonly fixture: ComponentFixture<ConfigureSourcesComponent>;
+  private _component: ConfigureSourcesComponent | undefined;
+  private _fixture: ComponentFixture<ConfigureSourcesComponent> | undefined;
   readonly realtimeService: TestRealtimeService;
-  readonly activatedProjectDoc: WithData<SFProjectDoc>;
+  private _activatedProjectDoc: WithData<SFProjectDoc> | undefined;
   readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
     OnlineStatusService
   ) as TestOnlineStatusService;
@@ -815,8 +814,8 @@ class TestEnvironment {
     when(mockTrainingDataService.getTrainingData(anything(), anything())).thenReturn(this.activeTrainingData$);
     this.activeTrainingData$.next([]);
 
-    this.fixture = TestBed.createComponent(ConfigureSourcesComponent);
-    this.component = this.fixture.componentInstance;
+    this._fixture = TestBed.createComponent(ConfigureSourcesComponent);
+    this._component = this.fixture.componentInstance;
     this.fixture.detectChanges();
     tick();
 
@@ -827,12 +826,12 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  get component(): DraftSourcesComponent {
+  get component(): ConfigureSourcesComponent {
     if (this._component == null) throw new Error('Uninitialized');
     return this._component;
   }
 
-  get fixture(): ComponentFixture<DraftSourcesComponent> {
+  get fixture(): ComponentFixture<ConfigureSourcesComponent> {
     if (this._fixture == null) throw new Error('Uninitialized');
     return this._fixture;
   }

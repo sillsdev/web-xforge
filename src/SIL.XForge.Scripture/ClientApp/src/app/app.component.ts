@@ -333,7 +333,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         }
         this.projectFont = this.fontService.getFontFamilyFromProject(this._selectedProjectDoc.data);
         void this.userService.setCurrentProjectId(this.currentUserDoc!, this._selectedProjectDoc.id);
-        this.projectUserConfigDoc = await this.projectService.getUserConfig(
+        await this.projectService.getUserConfig(
           this._selectedProjectDoc.id,
           this.currentUserDoc!.id,
           new DocSubscription('AppComponent', this.destroyRef)

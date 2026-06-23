@@ -141,12 +141,12 @@ class TestEnvironment {
     when(mockedOnboardingRequestService.getResolution(anything())).thenCall((key: OnboardingRequestResolutionKey) =>
       ONBOARDING_REQUEST_RESOLUTION_OPTIONS.find(option => option.key === key)
     );
-    when(mockedServalAdministrationService.get(PROJECT_ID)).thenResolve({
+    when(mockedServalAdministrationService.subscribe(PROJECT_ID, anything())).thenResolve({
       id: PROJECT_ID,
       data: { shortName: PROJECT_SHORT_NAME }
     } as any);
-    when(mockedServalAdministrationService.get(UNKNOWN_PROJECT_ID)).thenResolve(undefined as any);
-    when(mockedUserService.get(ASSIGNEE_ID)).thenResolve({
+    when(mockedServalAdministrationService.subscribe(UNKNOWN_PROJECT_ID, anything())).thenResolve(undefined as any);
+    when(mockedUserService.get(ASSIGNEE_ID, anything())).thenResolve({
       data: { displayName: ASSIGNEE_NAME }
     } as unknown as UserDoc);
 

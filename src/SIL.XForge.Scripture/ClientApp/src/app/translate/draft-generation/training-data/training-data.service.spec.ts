@@ -2,8 +2,6 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { getTrainingDataId, TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { CommandService } from 'xforge-common/command.service';
-import { DocSubscription } from 'xforge-common/models/realtime-doc';
-import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { noopDestroyRef } from 'xforge-common/realtime.service';
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
@@ -89,12 +87,36 @@ describe('TrainingDataService', () => {
     await trainingDataService.createTrainingDataAsync(newTrainingData);
     tick();
 
-    const trainingDataDoc = await realtimeService.get<TrainingDataDoc>(
+    const offlineData = await realtimeService.offlineStore.get<any>(
       TrainingDataDoc.COLLECTION,
-      getTrainingDataId('project01', 'data03'),
-      new DocSubscription('spec')
+      getTrainingDataId('project01', 'data03')
     );
-    expect(trainingDataDoc.data).toEqual(newTrainingData);
+    expect(offlineData?.data).toEqual(newTrainingData);
+  }));
+
+  it('should not keep the created training data doc subscribed after create completes', fakeAsync(async () => {
+    const newTrainingData: TrainingData = {
+      projectRef: 'project01',
+      dataId: 'data04',
+      fileUrl: 'project01/test4.csv',
+      mimeType: 'text/csv',
+      skipRows: 0,
+      title: 'test4.csv',
+      ownerRef: 'user01',
+      deleted: false
+    };
+
+    // SUT
+    await trainingDataService.createTrainingDataAsync(newTrainingData);
+    tick();
+
+    expect(realtimeService.totalDocCount).toEqual(0);
+
+    const offlineData = await realtimeService.offlineStore.get<any>(
+      TrainingDataDoc.COLLECTION,
+      getTrainingDataId('project01', 'data04')
+    );
+    expect(offlineData?.data).toEqual(newTrainingData);
   }));
 
   it('should request deletion via RPC', fakeAsync(async () => {

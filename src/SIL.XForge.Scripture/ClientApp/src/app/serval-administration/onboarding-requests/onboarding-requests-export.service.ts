@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import Papa from 'papaparse';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserService } from 'xforge-common/user.service';
 import { isPopulatedString } from '../../../type-utils';
 import { parseDate } from '../../shared/utils';
@@ -91,7 +92,9 @@ export class OnboardingRequestsExportService {
     assigneeNames: Map<string, string>
   ): Promise<OnboardingRequestSpreadsheetRow> {
     const sfProjectId = request.submission.projectId;
-    const projectDoc = await this.servalAdministrationService.get(sfProjectId);
+    const projectDocSubscription = new DocSubscription('OnboardingRequestsExportService.createSpreadsheetRow');
+    const projectDoc = await this.servalAdministrationService.subscribe(sfProjectId, projectDocSubscription);
+    projectDocSubscription.unsubscribe();
     const projectShortName = projectDoc?.data?.shortName ?? sfProjectId;
 
     return {
@@ -112,7 +115,9 @@ export class OnboardingRequestsExportService {
     const assigneeIds = [...new Set(requests.map(request => request.assigneeId).filter(isPopulatedString))];
     const entries = await Promise.all(
       assigneeIds.map(async assigneeId => {
-        const userDoc = await this.userService.get(assigneeId);
+        const docSubscription = new DocSubscription('OnboardingRequestsExportService.lookupAssigneeNames');
+        const userDoc = await this.userService.get(assigneeId, docSubscription);
+        docSubscription.unsubscribe();
         return [assigneeId, userDoc?.data?.displayName ?? ''] as const;
       })
     );

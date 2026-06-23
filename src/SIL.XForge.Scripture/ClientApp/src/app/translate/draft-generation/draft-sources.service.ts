@@ -1,4 +1,4 @@
-import { DestroyRef, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { asyncScheduler, combineLatest, defer, from, Observable } from 'rxjs';
@@ -26,8 +26,7 @@ export class DraftSourcesService {
   constructor(
     private readonly activatedProject: ActivatedProjectService,
     private readonly projectService: SFProjectService,
-    private readonly userService: UserService,
-    private readonly destroyRef: DestroyRef
+    private readonly userService: UserService
   ) {}
 
   /**
