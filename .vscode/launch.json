@@ -52,7 +52,7 @@
     {
       // Attach to Chromium and debug the running frontend tests
       // First you need to launch the test runner, such as by:
-      // cd ClientApp && npm test -- --include src/app/shared/text/text.component.spec.ts
+      // cd ClientApp && pnpm test --include src/app/shared/text/text.component.spec.ts
       "name": "Attach to frontend tests (via Karma in Chromium)",
       "port": 9988,
       "request": "attach",
@@ -135,7 +135,7 @@
       "name": "Launch Chrome and run and debug frontend",
       "type": "pwa-chrome",
       "request": "launch",
-      "preLaunchTask": "npm start (SF)",
+      "preLaunchTask": "pnpm start (SF)",
       "url": "http://localhost:5000",
       "webRoot": "${workspaceRoot}/src/SIL.XForge.Scripture/ClientApp",
       "linux": {
@@ -152,7 +152,7 @@
       "name": "Launch Chromium and run and debug current spec",
       "type": "chrome",
       "request": "launch",
-      "preLaunchTask": "npm test active spec (SF)",
+      "preLaunchTask": "pnpm test active spec (SF)",
       "url": "http://localhost:9876/debug.html",
       "port": 9988,
       "webRoot": "${workspaceFolder}/src/SIL.XForge.Scripture/ClientApp",
