@@ -1908,6 +1908,7 @@ describe('ServalBuildsComponent', () => {
       env.component['exportTsv']();
 
       verify(mockExportService.exportTsv(anything(), anything(), anything(), anything(), anything())).once();
+      expect().nothing();
     });
   });
 
