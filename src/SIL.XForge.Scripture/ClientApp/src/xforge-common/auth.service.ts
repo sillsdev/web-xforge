@@ -7,14 +7,12 @@ import {
   CacheKey,
   ConnectAccountRedirectResult,
   GetTokenSilentlyVerboseResponse,
-  IdToken,
   LogoutOptions,
   RedirectLoginOptions,
   RedirectLoginResult,
   WrappedCacheEntry
 } from '@auth0/auth0-spa-js';
 import jwtDecode from 'jwt-decode';
-import { clone } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { BehaviorSubject, firstValueFrom, Observable, of, Subscription, timer } from 'rxjs';
@@ -23,10 +21,9 @@ import { environment } from '../environments/environment';
 import { hasPropWithValue } from '../type-utils';
 import { Auth0Service, TransparentAuthenticationCookie } from './auth0.service';
 import { BugsnagService } from './bugsnag.service';
-import { CommandError, CommandService } from './command.service';
+import { CommandService } from './command.service';
 import { DialogService } from './dialog.service';
 import { ErrorReportingService } from './error-reporting.service';
-import { I18nService } from './i18n.service';
 import { LocalSettingsService } from './local-settings.service';
 import { LocationService } from './location.service';
 import { OfflineStore } from './offline-store';
@@ -52,12 +49,9 @@ export const ROLE_SETTING = 'role';
 
 export interface AuthState {
   returnUrl: string;
-  linking?: boolean;
-  currentSub?: string;
 }
 
 export interface AuthDetails {
-  idToken: IdToken | undefined;
   loginResult: RedirectLoginResult | ConnectAccountRedirectResult;
   token: GetTokenSilentlyVerboseResponse;
 }
@@ -86,7 +80,6 @@ interface xForgeAuth0Parameters extends AuthorizationParams {
   providedIn: 'root'
 })
 export class AuthService {
-  readonly ptLinkedToAnotherUserKey: string = 'paratext-linked-to-another-user';
   private _loggedInState$: BehaviorSubject<LoginResult | undefined> = new BehaviorSubject<LoginResult | undefined>(
     undefined
   );
@@ -117,8 +110,7 @@ export class AuthService {
     private readonly localSettings: LocalSettingsService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly dialogService: DialogService,
-    private readonly reportingService: ErrorReportingService,
-    private readonly i18n: I18nService
+    private readonly reportingService: ErrorReportingService
   ) {
     // Listen for changes to the auth state. If the user logs out in another tab/window, redirect to the home page.
     // When localStorage is cleared event.key is null. The logic below may be more specific than necessary, but we can't
@@ -269,21 +261,6 @@ export class AuthService {
     };
     this.unscheduleRenewal();
     await this.auth0.loginWithRedirect(authOptions);
-  }
-
-  async linkParatext(returnUrl: string): Promise<void> {
-    const idToken: IdToken | undefined = await this.auth0.getIdTokenClaims();
-    const state: AuthState = { returnUrl, linking: true, currentSub: idToken?.sub };
-    const language: string = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
-    const options: RedirectLoginOptions = {
-      authorizationParams: {
-        connection: 'paratext',
-        ui_locales: language,
-        login_hint: language
-      },
-      appState: JSON.stringify(state)
-    };
-    await this.auth0.loginWithRedirect(options);
   }
 
   async logOut(): Promise<void> {
@@ -469,8 +446,7 @@ export class AuthService {
         }
         const authDetails: AuthDetails = {
           loginResult,
-          token,
-          idToken: await this.auth0.getIdTokenClaims()
+          token
         };
         if (!(await this.handleOnlineAuth(authDetails))) {
           this.clearState();
@@ -501,57 +477,17 @@ export class AuthService {
       return false;
     }
 
-    let primaryId: string | undefined;
-    let secondaryId: string | undefined;
     const state: AuthState = JSON.parse(authDetails.loginResult.appState);
-    if (state.linking != null && state.linking) {
-      if (!(await this.isAuthenticated()) || authDetails.idToken == null) {
-        return false;
-      }
-      primaryId = state.currentSub;
-      secondaryId = authDetails.idToken.sub;
-    } else {
-      await this.localLogIn(authDetails.token.access_token, authDetails.token.id_token, authDetails.token.expires_in);
-    }
+    await this.localLogIn(authDetails.token.access_token, authDetails.token.id_token, authDetails.token.expires_in);
     await this.remoteStore.init(() => this.getAccessToken());
-    if (primaryId != null && secondaryId != null) {
-      try {
-        await this.commandService.onlineInvoke(USERS_URL, 'linkParatextAccount', { primaryId, secondaryId });
-        // Trigger a session check with auth0 so that tokens are reversed back to the primary account and not
-        // the Paratext account that was just merged into the primary - this causes a redirect back to auth0
-        await this.auth0.checkSession({ cacheMode: 'off' });
-      } catch (err) {
-        if (!(err instanceof CommandError) || !err.message.includes(this.ptLinkedToAnotherUserKey)) {
-          console.error(err);
-          return false;
-        }
-        void this.dialogService
-          .message(
-            this.i18n.translate('connect_project.paratext_account_linked_to_another_user', {
-              email: authDetails.idToken?.email
-            }),
-            'connect_project.proceed'
-          )
-          .then(async () => {
-            // Strip out the linking state so that we don't process linking again
-            const withoutLinkingState = clone(authDetails);
-            delete state.linking;
-            withoutLinkingState.loginResult.appState = JSON.stringify(state);
-            await this.handleOnlineAuth(withoutLinkingState);
-            // Reload the app for the new current user id to take effect
-            this.locationService.reload();
-          });
-      }
-    } else {
-      try {
-        await this.commandService.onlineInvoke(USERS_URL, 'pullAuthUserProfile');
-      } catch (err) {
-        // Display error dialog to pause login loop.
-        // Error details will be sent to Bugsnag and logged to the console.
-        await this.handleLoginError('handleOnlineAuth', err);
+    try {
+      await this.commandService.onlineInvoke(USERS_URL, 'pullAuthUserProfile');
+    } catch (err) {
+      // Display error dialog to pause login loop.
+      // Error details will be sent to Bugsnag and logged to the console.
+      await this.handleLoginError('handleOnlineAuth', err);
 
-        return false;
-      }
+      return false;
     }
     // Ensure the return URL is one we want to return the user to
     if (this.isValidReturnUrl(state.returnUrl)) {

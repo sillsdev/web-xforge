@@ -93,12 +93,6 @@ public class AuthService : DisposableBase, IAuthService
         return CallApiAsync(HttpMethod.Post, "users", content);
     }
 
-    public Task LinkAccounts(string primaryAuthId, string secondaryAuthId)
-    {
-        var content = new JObject(new JProperty("provider", "oauth2"), new JProperty("user_id", secondaryAuthId));
-        return CallApiAsync(HttpMethod.Post, $"users/{primaryAuthId}/identities", content);
-    }
-
     public Task UpdateAvatar(string authId, string url)
     {
         var content = new JObject(new JProperty("user_metadata", new JObject(new JProperty("picture", url))));

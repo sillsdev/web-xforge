@@ -41,6 +41,7 @@ import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { ProjectSelectComponent } from '../project-select/project-select.component';
 import { InfoComponent } from '../shared/info/info.component';
+import { ParatextAccountNoticeComponent } from '../shared/paratext-account-notice/paratext-account-notice.component';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
 
 /** Allows user to configure high-level settings of how SF will use their Paratext project. */
@@ -67,7 +68,8 @@ import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-pro
     MatRadioButton,
     TranslocoMarkupComponent,
     RouterLinkDirective,
-    MatCardActions
+    MatCardActions,
+    ParatextAccountNoticeComponent
   ]
 })
 export class SettingsComponent extends DataLoadingComponent implements OnInit {
@@ -270,15 +272,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
           this.updateFormEnabled();
         }
       });
-  }
-
-  logInWithParatext(): void {
-    if (this.projectDoc == null) {
-      return;
-    }
-
-    const url = '/projects/' + this.projectDoc.id + '/settings';
-    this.paratextService.linkParatext(url);
   }
 
   openDeleteProjectDialog(): void {

@@ -27,7 +27,7 @@ import {
 } from './auth.service';
 import { Auth0Service, TransparentAuthenticationCookie } from './auth0.service';
 import { BugsnagService } from './bugsnag.service';
-import { CommandError, CommandErrorCode, CommandService } from './command.service';
+import { CommandService } from './command.service';
 import { DialogService } from './dialog.service';
 import { ErrorReportingService } from './error-reporting.service';
 import { LocalSettingsService } from './local-settings.service';
@@ -215,7 +215,6 @@ describe('AuthService', () => {
           expires_in: 720,
           token_type: 'Bearer'
         },
-        idToken: { __raw: '1', sub: '7890', email: 'test@example.com' },
         loginResult: {
           appState: JSON.stringify({ returnUrl: '' }),
           response_type: ResponseType.Code
@@ -242,7 +241,6 @@ describe('AuthService', () => {
           expires_in: 720,
           token_type: 'Bearer'
         },
-        idToken: { __raw: '1', sub: '7890', email: 'test@example.com' },
         loginResult: {
           appState: JSON.stringify({ returnUrl: '' }),
           response_type: ResponseType.Code
@@ -269,7 +267,6 @@ describe('AuthService', () => {
           expires_in: 720,
           token_type: 'Bearer'
         },
-        idToken: { __raw: '1', sub: '7890', email: 'test@example.com' },
         loginResult: {
           appState: JSON.stringify({ returnUrl: '' }),
           response_type: ResponseType.Code
@@ -427,29 +424,6 @@ describe('AuthService', () => {
     expect(authOptions!.authorizationParams!.logo).not.toEqual(sfLogoUrl);
   }));
 
-  it('should link with Paratext', fakeAsync(() => {
-    const env = new TestEnvironment({ isOnline: true, isLoggedIn: true });
-    const returnUrl = 'test-returnUrl';
-
-    env.service.linkParatext(returnUrl);
-    tick();
-
-    verify(mockedWebAuth.loginWithRedirect(anything())).once();
-    const authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
-      mockedWebAuth.loginWithRedirect
-    ).last()[0];
-    expect(authOptions).toBeDefined();
-    if (authOptions != null) {
-      expect(authOptions.appState).toBeDefined();
-      const state = JSON.parse(authOptions.appState!);
-      expect(state.returnUrl).toEqual(returnUrl);
-      expect(state.linking).toBe(true);
-      expect(authOptions.authorizationParams!.ui_locales).toEqual(env.language);
-      expect(authOptions.authorizationParams!.login_hint).toEqual(env.language);
-    }
-    env.discardTokenExpiryTimer();
-  }));
-
   it('should update interface language if logged in', fakeAsync(() => {
     const env = new TestEnvironment({ isOnline: true, isLoggedIn: true });
     const interfaceLanguage = 'es';
@@ -544,41 +518,6 @@ describe('AuthService', () => {
     verify(mockedWebAuth.getTokenSilently(anything())).twice();
     verify(mockedDialogService.message(anything(), anything())).once();
     mockedConsole.verify();
-  }));
-
-  it('should link to paratext account on login', fakeAsync(() => {
-    const env = new TestEnvironment({
-      isOnline: true,
-      isNewlyLoggedIn: true,
-      loginState: {
-        returnUrl: '',
-        linking: true,
-        currentSub: 'user01'
-      }
-    });
-    expect(env.isAuthenticated).toBe(true);
-    expect(env.authLinkedId).toEqual(env.auth0Response!.idToken!.sub);
-    env.discardTokenExpiryTimer();
-  }));
-
-  it('should reload if an error occurred linking paratext user to another user', fakeAsync(() => {
-    const env = new TestEnvironment({
-      isOnline: true,
-      isNewlyLoggedIn: true,
-      loginState: {
-        returnUrl: '',
-        linking: true,
-        currentSub: 'user01'
-      },
-      accountLinkingResponse: new CommandError(CommandErrorCode.Other, 'paratext-linked-to-another-user')
-    });
-    expect(env.isAuthenticated).toBe(true);
-    verify(mockedLocationService.reload()).once();
-    verify(mockedDialogService.message(anything(), anything())).once();
-    // handleOnlineAuth gets called a second time after the dialog is closed
-    verify(mockedRouter.navigateByUrl('/projects', anything())).twice();
-
-    env.discardTokenExpiryTimer();
   }));
 
   it('should redirect to url after successful login', fakeAsync(() => {
@@ -795,7 +734,6 @@ interface TestEnvironmentConstructorArgs {
   isNewlyLoggedIn?: boolean;
   loginState?: AuthState;
   setTransparentAuthenticationCookie?: boolean;
-  accountLinkingResponse?: CommandError;
   auth0Response?: AuthDetails | undefined;
   callback?: (env: TestEnvironment) => void;
 }
@@ -816,7 +754,6 @@ interface LocalSettings {
 class TestEnvironment {
   static userId = 'user01';
   auth0Response: AuthDetails | undefined = {
-    idToken: undefined,
     loginResult: { appState: JSON.stringify({}), response_type: ResponseType.Code },
     token: { id_token: '', access_token: '', expires_in: 0, token_type: 'Bearer' }
   };
@@ -829,7 +766,6 @@ class TestEnvironment {
   private tokenExpiryTimer = 720; // 2 hours
   readonly localSettings = new Map<string, string[] | string | number>();
   private _localeSettingsRemoveChanges = new Subject<StorageEvent>();
-  private _loginLinkedAccountId: string | undefined;
   private readonly _authLoginState: string;
 
   static encodeAccessToken(token: Auth0AccessToken): string {
@@ -844,7 +780,6 @@ class TestEnvironment {
     isNewlyLoggedIn,
     loginState = { returnUrl: '' },
     setTransparentAuthenticationCookie,
-    accountLinkingResponse,
     auth0Response,
     callback
   }: TestEnvironmentConstructorArgs = {}) {
@@ -887,16 +822,6 @@ class TestEnvironment {
     when(mockedDialogService.message(anything(), anything())).thenResolve();
     when(mockedAuth0Service.init(anything())).thenReturn(instance(mockedWebAuth));
     when(mockedAuth0Service.changePassword(anything())).thenReturn(new Promise(r => r));
-    when(mockedCommandService.onlineInvoke(anything(), 'linkParatextAccount', anything())).thenCall(
-      (_url, _method, params) => {
-        if (accountLinkingResponse != null) {
-          throw accountLinkingResponse;
-        }
-        if (params?.secondaryId != null) {
-          this._loginLinkedAccountId = params.secondaryId;
-        }
-      }
-    );
     if (callback != null) {
       callback(this);
     }
@@ -913,10 +838,6 @@ class TestEnvironment {
     this.service.getAccessToken().then(token => (accessToken = token));
     tick();
     return accessToken;
-  }
-
-  get authLinkedId(): string | undefined {
-    return this._loginLinkedAccountId;
   }
 
   get isAuthenticated(): boolean {
@@ -996,7 +917,6 @@ class TestEnvironment {
   setLoginResponse(auth0Response?: AuthDetails | undefined): void {
     auth0Response ??= {
       token: this.validToken,
-      idToken: { __raw: '1', sub: '7890', email: 'test@example.com' },
       loginResult: {
         appState: this._authLoginState,
         response_type: ResponseType.Code
@@ -1005,7 +925,6 @@ class TestEnvironment {
     this.auth0Response = auth0Response;
     when(mockedWebAuth.getTokenSilently()).thenResolve(this.auth0Response!.token.access_token);
     when(mockedWebAuth.getTokenSilently(anything())).thenResolve(this.auth0Response!.token);
-    when(mockedWebAuth.getIdTokenClaims()).thenResolve(this.auth0Response!.idToken);
   }
 
   setLoginRequiredResponse(): void {

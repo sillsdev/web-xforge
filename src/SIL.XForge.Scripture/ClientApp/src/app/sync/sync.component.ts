@@ -22,6 +22,7 @@ import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { NoticeComponent } from '../shared/notice/notice.component';
+import { ParatextAccountNoticeComponent } from '../shared/paratext-account-notice/paratext-account-notice.component';
 import { SyncProgressComponent } from './sync-progress/sync-progress.component';
 /** Reports as to whether a given project is actively syncing right now. */
 export function isSFProjectSyncing(project: SFProjectProfile): boolean {
@@ -36,7 +37,17 @@ enum SyncErrorCodes {
   selector: 'app-sync',
   templateUrl: './sync.component.html',
   styleUrls: ['./sync.component.scss'],
-  imports: [TranslocoModule, NoticeComponent, MatCard, MatButton, MatIcon, SyncProgressComponent, MatHint, MatTooltip]
+  imports: [
+    TranslocoModule,
+    NoticeComponent,
+    ParatextAccountNoticeComponent,
+    MatCard,
+    MatButton,
+    MatIcon,
+    SyncProgressComponent,
+    MatHint,
+    MatTooltip
+  ]
 })
 export class SyncComponent extends DataLoadingComponent implements OnInit {
   isAppOnline: boolean = false;
@@ -188,14 +199,6 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
         }
       });
     });
-  }
-
-  logInWithParatext(): void {
-    if (this.projectDoc == null) {
-      return;
-    }
-    const url = '/projects/' + this.projectDoc.id + '/sync';
-    this.paratextService.linkParatext(url);
   }
 
   syncProject(): void {

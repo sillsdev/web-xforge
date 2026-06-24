@@ -16,7 +16,6 @@ public class UsersRpcControllerTests
     private static readonly string[] Roles = [SystemRole.User];
     private const string User01 = "user01";
     private const string User02 = "user02";
-    private const string AuthId01 = "auth0|user01";
 
     [Test]
     public async Task Delete_Forbidden()
@@ -57,7 +56,6 @@ public class UsersRpcControllerTests
         {
             var userAccessor = Substitute.For<IUserAccessor>();
             userAccessor.UserId.Returns(User01);
-            userAccessor.AuthId.Returns(AuthId01);
             userAccessor.SystemRoles.Returns(Roles);
             UserService = Substitute.For<IUserService>();
             var authService = Substitute.For<IAuthService>();

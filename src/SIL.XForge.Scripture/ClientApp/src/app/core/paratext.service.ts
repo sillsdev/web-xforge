@@ -2,7 +2,6 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { firstValueFrom, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { AuthService } from 'xforge-common/auth.service';
 import { TextSnapshot } from 'xforge-common/models/textsnapshot';
 import { PARATEXT_API_NAMESPACE } from 'xforge-common/url-constants';
 import { compareProjectsForSorting } from '../shared/utils';
@@ -62,14 +61,7 @@ export class ParatextService {
     return paratextId.length === RESOURCE_IDENTIFIER_LENGTH;
   }
 
-  constructor(
-    private readonly http: HttpClient,
-    private readonly authService: AuthService
-  ) {}
-
-  linkParatext(returnUrl: string): void {
-    void this.authService.linkParatext(returnUrl);
-  }
+  constructor(private readonly http: HttpClient) {}
 
   getParatextUsername(): Observable<string | undefined> {
     return this.http

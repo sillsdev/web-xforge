@@ -58,37 +58,27 @@ describe('SyncComponent', () => {
     ]
   }));
 
-  it('should display Log In to Paratext', fakeAsync(() => {
+  it('should display the Paratext account notice when not connected to Paratext', fakeAsync(() => {
     const env = new TestEnvironment({ isParatextAccountConnected: false });
     expect(env.title.textContent).toContain('Synchronize Sync Test Project with Paratext');
-    expect(env.logInButton.nativeElement.textContent).toContain('Log in to Paratext');
+    expect(env.paratextAccountNotice.nativeElement.textContent).toContain('Paratext');
     expect(env.syncButton).toBeNull();
     expect(env.lastSyncDate).toBeNull();
-    expect(env.logInButton.nativeElement.disabled).toBe(false);
     env.onlineStatus = false;
-    expect(env.logInButton).toBeNull();
-  }));
-
-  it('should redirect the user to Log In to Paratext', fakeAsync(() => {
-    const env = new TestEnvironment({ isParatextAccountConnected: false });
-
-    env.clickElement(env.logInButton);
-
-    verify(mockedParatextService.linkParatext(anything())).once();
-    expect().nothing();
+    expect(env.paratextAccountNotice).toBeNull();
   }));
 
   it('should display sync project', fakeAsync(() => {
     const env = new TestEnvironment();
     expect(env.title.textContent).toContain('Synchronize Sync Test Project with Paratext');
-    expect(env.logInButton).toBeNull();
+    expect(env.paratextAccountNotice).toBeNull();
     expect(env.syncButton.nativeElement.textContent).toContain('Sync with Paratext');
     expect(env.lastSyncDate.textContent).toContain('Last synced on');
   }));
 
   it('should disable button when offline', fakeAsync(() => {
     const env = new TestEnvironment({ isParatextAccountConnected: true, isInProgress: false, isOnline: false });
-    expect(env.logInButton).toBeNull();
+    expect(env.paratextAccountNotice).toBeNull();
     expect(env.syncButton.nativeElement.disabled).toBe(true);
     expect(env.lastSyncDate.textContent).toContain('Last synced on');
     expect(env.offlineMessage).not.toBeNull();
@@ -110,7 +100,7 @@ describe('SyncComponent', () => {
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).not.toBeNull();
     expect(env.cancelButton).not.toBeNull();
-    expect(env.logInButton).toBeNull();
+    expect(env.paratextAccountNotice).toBeNull();
     expect(env.syncButton).toBeNull();
     env.emitSyncComplete(true, env.projectId);
     expect(env.component.lastSyncDate!.getTime()).toBeGreaterThan(previousLastSyncDate!.getTime());
@@ -200,7 +190,7 @@ describe('SyncComponent', () => {
       isOnline: true,
       isSyncDisabled: true
     });
-    expect(env.logInButton).toBeNull();
+    expect(env.paratextAccountNotice).toBeNull();
     expect(env.syncButton.nativeElement.disabled).toBe(true);
     expect(env.lastSyncDate.textContent).toContain('Last synced on');
     expect(env.syncDisabledMessage).not.toBeNull();
@@ -319,8 +309,8 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  get logInButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#btn-log-in'));
+  get paratextAccountNotice(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#paratext-account-not-connected'));
   }
 
   get syncButton(): DebugElement {
