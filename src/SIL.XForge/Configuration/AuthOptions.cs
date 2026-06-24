@@ -9,6 +9,4 @@ public class AuthOptions : PublicAuthOptions
     public string BackendClientSecret { get; init; } = string.Empty;
     public string HealthCheckApiKey { get; init; } = string.Empty;
     public string ManagementAudience { get; init; } = string.Empty;
-    public string WebhookUsername { get; init; } = string.Empty;
-    public string WebhookPassword { get; init; } = string.Empty;
 }

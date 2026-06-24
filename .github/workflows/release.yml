@@ -79,8 +79,6 @@ on:
         required: true
       auth_backend_secret:
         required: true
-      auth_webhook_password:
-        required: true
       auth_health_check_api_key:
         required: true
       paratext_api_token:
@@ -174,7 +172,6 @@ jobs:
           PROJECT: ${{inputs.project}}
           SERVAL_CLIENT_ID: ${{secrets.serval_client_id}}
           AUTH_BACKEND_SECRET: ${{secrets.auth_backend_secret}}
-          AUTH_WEBHOOK_PASSWORD: ${{secrets.auth_webhook_password}}
           AUTH_HEALTH_CHECK_API_KEY: ${{secrets.auth_health_check_api_key}}
           PARATEXT_API_TOKEN: ${{secrets.paratext_api_token}}
           PARATEXT_RESOURCE_PASSWORD_BASE64: ${{secrets.paratext_resource_password_base64}}

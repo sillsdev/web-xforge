@@ -170,11 +170,6 @@
           "Microsoft.Extensions.Logging.Abstractions": "3.0.0"
         }
       },
-      "idunno.Authentication.Basic": {
-        "type": "Transitive",
-        "resolved": "2.4.0",
-        "contentHash": "h263h8GI/7xJrbz+ydEMhutpDmZ1EsLysPAqlaAqIf1D4xQBHTi94xeUlDQGD8R+Hl7a48bgD2bGCxQupfeCpg=="
-      },
       "Jering.Javascript.NodeJS": {
         "type": "Transitive",
         "resolved": "6.3.1",
@@ -619,8 +614,7 @@
           "Microsoft.AspNetCore.SpaServices.Extensions": "[10.0.8, )",
           "MongoDB.Driver": "[3.8.1, )",
           "SIL.Core": "[17.0.0, )",
-          "SharpCompress": "[0.48.0, )",
-          "idunno.Authentication.Basic": "[2.4.0, )"
+          "SharpCompress": "[0.48.0, )"
         }
       }
     }

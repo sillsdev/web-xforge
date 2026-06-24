@@ -99,12 +99,6 @@
           "MongoDB.Driver": "3.7.1"
         }
       },
-      "idunno.Authentication.Basic": {
-        "type": "Direct",
-        "requested": "[2.4.0, )",
-        "resolved": "2.4.0",
-        "contentHash": "h263h8GI/7xJrbz+ydEMhutpDmZ1EsLysPAqlaAqIf1D4xQBHTi94xeUlDQGD8R+Hl7a48bgD2bGCxQupfeCpg=="
-      },
       "Jering.Javascript.NodeJS": {
         "type": "Direct",
         "requested": "[6.3.1, 6.3.1]",

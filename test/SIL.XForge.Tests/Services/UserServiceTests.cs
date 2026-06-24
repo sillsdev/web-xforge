@@ -75,7 +75,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task PushAuthUserProfile_NewUser_NickNameExtracted()
+    public async Task UpdateUserFromProfileAsync_NewUser_NickNameExtracted()
     {
         var env = new TestEnvironment();
 
@@ -90,7 +90,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task PushAuthUserProfile_NewUser_NameExtracted()
+    public async Task UpdateUserFromProfileAsync_NewUser_NameExtracted()
     {
         var env = new TestEnvironment();
 
@@ -105,7 +105,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task PushAuthUserProfile_Metadata_AvatarSet()
+    public async Task UpdateUserFromProfileAsync_Metadata_AvatarSet()
     {
         var env = new TestEnvironment();
 
@@ -120,7 +120,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task PushAuthUserProfile_Metadata_AvatarNotSet()
+    public async Task UpdateUserFromProfileAsync_Metadata_AvatarNotSet()
     {
         var env = new TestEnvironment();
 
@@ -133,7 +133,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task PushAuthUserProfile_Metadata_NotSet()
+    public async Task UpdateUserFromProfileAsync_Metadata_NotSet()
     {
         var env = new TestEnvironment();
 
@@ -145,7 +145,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task PushAuthUserProfile_Metadata_RolesAreArray()
+    public async Task UpdateUserFromProfileAsync_Metadata_RolesAreArray()
     {
         var env = new TestEnvironment();
 
@@ -157,7 +157,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task PushAuthUserProfile_Metadata_RolesAreString()
+    public async Task UpdateUserFromProfileAsync_Metadata_RolesAreString()
     {
         var env = new TestEnvironment();
 
@@ -169,7 +169,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task PushAuthUserProfile_Metadata_RolesNotSet()
+    public async Task UpdateUserFromProfileAsync_Metadata_RolesNotSet()
     {
         var env = new TestEnvironment();
 
