@@ -12,6 +12,7 @@ import { ParagraphBreakFormat, QuoteFormat } from 'realtime-server/lib/esm/scrip
 import { BehaviorSubject, firstValueFrom, of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -38,6 +39,7 @@ import { EditorDraftComponent } from './editor-draft.component';
 
 const mockDraftGenerationService = mock(DraftGenerationService);
 const mockActivatedProjectService = mock(ActivatedProjectService);
+const mockAuthService = mock(AuthService);
 const mockDraftHandlingService = mock(DraftHandlingService);
 const mockI18nService = mock(I18nService);
 const mockDialogService = mock(DialogService);
@@ -68,6 +70,7 @@ describe('EditorDraftComponent', () => {
       provideTestOnlineStatus(),
       provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
+      { provide: AuthService, useMock: mockAuthService },
       { provide: DraftGenerationService, useMock: mockDraftGenerationService },
       { provide: DraftHandlingService, useMock: mockDraftHandlingService },
       { provide: I18nService, useMock: mockI18nService },
