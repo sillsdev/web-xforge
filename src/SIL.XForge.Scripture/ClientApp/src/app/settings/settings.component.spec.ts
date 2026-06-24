@@ -190,12 +190,12 @@ describe('SettingsComponent', () => {
     }));
 
     describe('Translation Suggestions options', () => {
-      it('should see login button when Paratext account not connected', fakeAsync(() => {
+      it('should show the Paratext account notice when Paratext account not connected', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({ translateConfig: { translationSuggestionsEnabled: true } });
         when(mockedParatextService.getParatextUsername()).thenReturn(of(undefined));
         env.wait();
-        expect(env.loginButton).not.toBeNull();
+        expect(env.paratextAccountNotice).not.toBeNull();
         expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(false);
         expect(env.basedOnSelect).not.toBeNull();
       }));
@@ -847,8 +847,8 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#based-on-status'));
   }
 
-  get loginButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#btn-log-in-settings'));
+  get paratextAccountNotice(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#paratext-account-not-connected'));
   }
 
   get checkingCheckbox(): DebugElement {

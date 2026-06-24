@@ -18,10 +18,7 @@
     <mat-card class="sync-card">
       <div class="card-content">
         @if (showParatextLogin && isAppOnline) {
-          <button mat-flat-button type="button" (click)="logInWithParatext()" id="btn-log-in">
-            <mat-icon><img src="/assets/images/logo-pt9.png" alt="Paratext Logo" class="paratext-logo" /></mat-icon>
-            {{ t("log_in_to_paratext") }}
-          </button>
+          <app-paratext-account-notice id="paratext-account-not-connected" />
         }
         @if (isLoggedIntoParatext || isLoadingData || !isAppOnline) {
           @if (!syncActive) {

@@ -12,24 +12,7 @@
             <mat-card-title>{{ t("translate") }}</mat-card-title>
             <div class="tool-setting">
               @if (!isLoadingData && !isLoggedInToParatext && isAppOnline) {
-                <div class="paratext-login-container">
-                  <button
-                    class="action-button"
-                    mat-flat-button
-                    type="button"
-                    (click)="logInWithParatext()"
-                    id="btn-log-in-settings"
-                  >
-                    <mat-icon>
-                      <img src="/assets/images/logo-pt9.png" alt="Paratext Logo" class="paratext-logo" />
-                    </mat-icon>
-                    {{ t("log_in_with_paratext") }}
-                  </button>
-                  <span
-                    class="more-options"
-                    [innerHTML]="i18n.translateAndInsertTags('settings.enable_translation_suggestions')"
-                  ></span>
-                </div>
+                <app-paratext-account-notice id="paratext-account-not-connected" />
               }
               @if (mainSettingsLoaded) {
                 <p class="helper-text">{{ t("select_project_or_resource") }}</p>
