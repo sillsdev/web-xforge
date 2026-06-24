@@ -49,6 +49,12 @@ module.exports = function (config) {
     },
     files: [],
     proxies: {
+      '/assets/audio/anAudioFile.mp3': '',
+      '/assets/audio/audio.mp3': '',
+      '/assets/audio/audioFile.mp3': '',
+      '/assets/audio/filename.mp3': '',
+      '/assets/audio/filename2.mp3': '',
+      '/assets/icons/TagIcons/asterisk01.png': '',
       '/assets/icons/TagIcons/circle01.png': '',
       '/assets/icons/TagIcons/defaultIcon.png': '',
       '/assets/icons/TagIcons/flag01.png': '',
