@@ -145,6 +145,11 @@ export class NewDraftComponent {
   }
 
   async init(): Promise<void> {
+    // Fetching the Paratext project list (for pending-update detection) doesn't depend on the project doc, so start it
+    // now to overlap with the init work below. The fetch is best-effort: offline (or any failure) resolves to
+    // undefined and detection is simply skipped.
+    const projectsPromise = this.fetchProjectsForPendingUpdates();
+
     const [, status] = await Promise.all([
       this.userService.getCurrentUser().then(doc => (this.currentUserDoc = doc)),
       firstValueFrom(this.logicHandler.status$.pipe(filter(status => status === 'input' || status === 'abort')))
@@ -163,11 +168,12 @@ export class NewDraftComponent {
     const targetTag = this.activatedProjectService.projectDoc?.data?.writingSystem.tag;
     const draftingSourceTag = sources?.draftingSources[0]?.writingSystem?.tag;
     if (targetTag != null && draftingSourceTag != null) {
-      this.isTrainingOptional =
-        (await this.nllbLanguageService.isNllbLanguageAsync(targetTag)) &&
-        (await this.nllbLanguageService.isNllbLanguageAsync(draftingSourceTag));
+      const [targetIsNllb, sourceIsNllb] = await Promise.all([
+        this.nllbLanguageService.isNllbLanguageAsync(targetTag),
+        this.nllbLanguageService.isNllbLanguageAsync(draftingSourceTag)
+      ]);
+      this.isTrainingOptional = targetIsNllb && sourceIsNllb;
     }
-
     const draftConfig = this.activatedProjectService.projectDoc?.data?.translateConfig?.draftConfig;
     this.sendEmailOnBuildFinished = draftConfig?.sendEmailOnBuildFinished ?? false;
     if (this.featureFlags.showDeveloperTools.enabled) {
@@ -175,16 +181,14 @@ export class NewDraftComponent {
       this.useEcho = draftConfig?.useEcho ?? false;
     }
 
-    if (this.onlineStatusService.isOnline) {
-      await this.detectPendingUpdates();
-    }
+    const projects = await projectsPromise;
+    if (projects != null) this.detectPendingUpdates(projects);
     if (this.pendingProjects.length > 0) {
       this.page = 'pending_updates';
     } else {
       this.page = 'preface';
       this.armSyncWatcher();
     }
-
     this.logicHandler.status$
       .pipe(
         filter(s => s === 'abort'),
@@ -272,7 +276,23 @@ export class NewDraftComponent {
     this.selectedTrainingDataFileIds = updated;
   }
 
-  private async detectPendingUpdates(): Promise<void> {
+  /**
+   * Fetches the user's Paratext projects for pending-update detection. Detection is advisory: on failure, log and
+   * resolve to undefined so the caller proceeds rather than stranding the user. The catch is attached here (at the
+   * call site) so kicking this off eagerly can never leave a rejection unhandled on an early-return path.
+   */
+  private fetchProjectsForPendingUpdates(): Promise<ParatextProject[] | undefined> {
+    if (!this.onlineStatusService.isOnline) return Promise.resolve(undefined);
+    return this.paratextService.getProjects().catch(error => {
+      this.errorReportingService.silentError(
+        'Failed to check for pending Paratext updates before drafting',
+        ErrorReportingService.normalizeError(error)
+      );
+      return undefined;
+    });
+  }
+
+  private detectPendingUpdates(projects: ParatextProject[]): void {
     const sources = this.logicHandler.sources;
     const projectId = this.initData!.projectId;
     const involvedIds = new Set([
@@ -280,19 +300,7 @@ export class NewDraftComponent {
       ...(sources?.draftingSources.map(s => s.projectRef) ?? []),
       ...(sources?.trainingSources.map(s => s.projectRef) ?? [])
     ]);
-
-    let projects: ParatextProject[] | undefined;
-    try {
-      projects = await this.paratextService.getProjects();
-    } catch (error) {
-      // Detection is advisory; if we can't reach Paratext, proceed rather than stranding the user.
-      this.errorReportingService.silentError(
-        'Failed to check for pending Paratext updates before drafting',
-        ErrorReportingService.normalizeError(error)
-      );
-      return;
-    }
-    this.pendingProjects = (projects ?? [])
+    this.pendingProjects = projects
       .filter(p => p.projectId != null && involvedIds.has(p.projectId) && p.isConnected && p.hasUpdate)
       .map(p => ({
         projectId: p.projectId!,
