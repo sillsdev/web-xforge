@@ -39,6 +39,7 @@ export const XF_ROLE_CLAIM = 'http://xforge.org/role';
 export const ID_TOKEN_SETTING = 'id_token';
 export const USER_ID_SETTING = 'user_id';
 export const ROLES_SETTING = 'roles';
+/** Key for local storage of when the token expires (Unix epoch) in milliseconds */
 export const EXPIRES_AT_SETTING = 'expires_at';
 export const AUTH0_SCOPE = `openid profile email ${environment.scope} offline_access`;
 
@@ -155,6 +156,7 @@ export class AuthService {
     return this.localSettings.get(ID_TOKEN_SETTING);
   }
 
+  /** When the token expires (Unix epoch), in milliseconds */
   get expiresAt(): number | undefined {
     return this.localSettings.get(EXPIRES_AT_SETTING);
   }
@@ -316,7 +318,7 @@ export class AuthService {
     };
     const cacheEntry: WrappedCacheEntry = {
       body: { ...cacheBody, ...authResponse },
-      expiresAt: Date.now() + authResponse.expires_in
+      expiresAt: Math.floor(Date.now() / 1000) + authResponse.expires_in
     };
     this.localSettings.set(cacheKey.toKey(), cacheEntry);
     await this.localLogIn(authResponse.access_token, authResponse.id_token, authResponse.expires_in);

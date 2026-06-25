@@ -2,18 +2,22 @@ import { discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/te
 import { provideRouter, Router } from '@angular/router';
 import {
   Auth0Client,
+  CacheKey,
   GenericError,
   GetTokenSilentlyVerboseResponse,
   RedirectLoginOptions,
   ResponseType,
-  TimeoutError
+  TimeoutError,
+  WrappedCacheEntry
 } from '@auth0/auth0-spa-js';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { Subject } from 'rxjs';
 import { anyString, anything, capture, instance, mock, resetCalls, spy, verify, when } from 'ts-mockito';
 import { MockConsole } from 'xforge-common/mock-console';
+import { environment } from '../environments/environment';
 import {
+  AUTH0_SCOPE,
   AuthDetails,
   AuthService,
   AuthState,
@@ -641,6 +645,18 @@ describe('AuthService', () => {
     verify(mockedWebAuth.getTokenSilently(anything())).never();
     verify(mockedWebAuth.loginWithRedirect(anything())).never();
     expect(env.isAuthenticated).toBeTrue();
+
+    // The auth0-spa-js cache entry seeded for transparent auth must store expiresAt as a Unix timestamp in seconds
+    const cacheKey = new CacheKey({
+      clientId: environment.authClientId,
+      audience: environment.audience,
+      scope: AUTH0_SCOPE
+    });
+    const cacheEntry = env.localSettings.get(cacheKey.toKey()) as unknown as WrappedCacheEntry;
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+    expect(cacheEntry.expiresAt).toBeGreaterThanOrEqual(nowInSeconds);
+    expect(cacheEntry.expiresAt).toBeLessThanOrEqual(nowInSeconds + env.validToken.expires_in! + 5);
+
     env.discardTokenExpiryTimer();
   }));
 
