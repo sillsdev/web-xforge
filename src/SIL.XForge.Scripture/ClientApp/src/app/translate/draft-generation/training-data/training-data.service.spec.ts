@@ -9,6 +9,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { TypeRegistry } from 'xforge-common/type-registry';
 import { PROJECTS_URL } from 'xforge-common/url-constants';
+import { DocSubscription } from '../../../../xforge-common/models/realtime-doc';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { TrainingDataService } from './training-data.service';
 
@@ -87,36 +88,12 @@ describe('TrainingDataService', () => {
     await trainingDataService.createTrainingDataAsync(newTrainingData);
     tick();
 
-    const offlineData = await realtimeService.offlineStore.get<any>(
+    const trainingDataDoc = await realtimeService.get<TrainingDataDoc>(
       TrainingDataDoc.COLLECTION,
-      getTrainingDataId('project01', 'data03')
+      getTrainingDataId('project01', 'data03'),
+      new DocSubscription('spec')
     );
-    expect(offlineData?.data).toEqual(newTrainingData);
-  }));
-
-  it('should not keep the created training data doc subscribed after create completes', fakeAsync(async () => {
-    const newTrainingData: TrainingData = {
-      projectRef: 'project01',
-      dataId: 'data04',
-      fileUrl: 'project01/test4.csv',
-      mimeType: 'text/csv',
-      skipRows: 0,
-      title: 'test4.csv',
-      ownerRef: 'user01',
-      deleted: false
-    };
-
-    // SUT
-    await trainingDataService.createTrainingDataAsync(newTrainingData);
-    tick();
-
-    expect(realtimeService.totalDocCount).toEqual(0);
-
-    const offlineData = await realtimeService.offlineStore.get<any>(
-      TrainingDataDoc.COLLECTION,
-      getTrainingDataId('project01', 'data04')
-    );
-    expect(offlineData?.data).toEqual(newTrainingData);
+    expect(trainingDataDoc.data).toEqual(newTrainingData);
   }));
 
   it('should request deletion via RPC', fakeAsync(async () => {

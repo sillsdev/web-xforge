@@ -16,22 +16,18 @@ import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 export class TrainingDataService {
   constructor(
     private readonly realtimeService: RealtimeService,
-    private readonly commandService: CommandService
+    private readonly commandService: CommandService,
+    private readonly destroyRef: DestroyRef
   ) {}
 
   async createTrainingDataAsync(trainingData: TrainingData): Promise<void> {
     const docId: string = getTrainingDataId(trainingData.projectRef, trainingData.dataId);
-    const docSubscription = new DocSubscription('TrainingDataService.createTrainingDataAsync');
-    try {
-      await this.realtimeService.create<TrainingDataDoc>(
-        TrainingDataDoc.COLLECTION,
-        docId,
-        trainingData,
-        docSubscription
-      );
-    } finally {
-      docSubscription.unsubscribe();
-    }
+    await this.realtimeService.create<TrainingDataDoc>(
+      TrainingDataDoc.COLLECTION,
+      docId,
+      trainingData,
+      new DocSubscription('TrainingDataService', this.destroyRef)
+    );
   }
 
   async deleteTrainingDataAsync(trainingData: TrainingData): Promise<void> {
