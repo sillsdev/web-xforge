@@ -102,9 +102,13 @@ export class BookMultiSelectComponent implements OnChanges {
         this.loaded = false;
         return;
       }
-      if (this.projectId !== this.loadedProgressProjectId) {
-        this.cachedProgress = await this.progressService.getProgress(this.projectId, { maxStalenessMs: 30_000 });
-        this.loadedProgressProjectId = this.projectId;
+      const projectId = this.projectId;
+      if (projectId !== this.loadedProgressProjectId) {
+        const fetchedProgress = await this.progressService.getProgress(projectId, { maxStalenessMs: 30_000 });
+        // Inputs may have changed while the fetch was in flight; drop stale results to avoid out-of-order writes.
+        if (projectId !== this.projectId) return;
+        this.cachedProgress = fetchedProgress;
+        this.loadedProgressProjectId = projectId;
       }
       progress = this.cachedProgress;
     }
