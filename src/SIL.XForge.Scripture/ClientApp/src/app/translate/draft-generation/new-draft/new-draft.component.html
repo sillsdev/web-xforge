@@ -344,9 +344,6 @@
         </button>
         @if (page === "suffix") {
           <div class="save-container">
-            @if (submitting) {
-              <div class="progress"><mat-spinner diameter="24"></mat-spinner></div>
-            }
             <button
               mat-flat-button
               color="primary"
@@ -355,6 +352,9 @@
             >
               <mat-icon>auto_awesome</mat-icon> {{ t("navigation.generate_draft") }}
             </button>
+            @if (submitting) {
+              <div class="progress"><mat-spinner diameter="24"></mat-spinner></div>
+            }
           </div>
         } @else {
           <button mat-flat-button color="primary" (click)="next()">
