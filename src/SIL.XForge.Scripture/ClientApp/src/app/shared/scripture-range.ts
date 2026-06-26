@@ -2,8 +2,8 @@ import { difference, intersection, union } from 'xforge-common/util/set-util';
 
 /** Represents a potentially non-contiguous range of chapters, such as 1-3,7,10-12 */
 export class ChapterSet {
-  static chapterRangeSeparator = ',';
-  static chapterRangeStartEndSeparator = '-';
+  static readonly chapterRangeSeparator = ',';
+  static readonly chapterRangeStartEndSeparator = '-';
 
   /**
    * Code point of the digit "zero" for each non-Latin decimal digit script. Within each block the ten code points
