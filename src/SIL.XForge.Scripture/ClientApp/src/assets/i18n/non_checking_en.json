@@ -293,7 +293,6 @@
       "partial_explanation": "Some of the chapters in the books you selected already have text.",
       "learn_more": "Learn more about drafting part of a book.",
       "excluded_no_source_content": "These books aren't available to draft because {{ source }} has no text for them: {{ books }}.",
-      "excluded_not_in_target": "These books aren't available to draft because they aren't in {{ project }} yet: {{ books }}.",
       "no_available_books": "You have no books available for drafting."
     },
     "training_books": {
