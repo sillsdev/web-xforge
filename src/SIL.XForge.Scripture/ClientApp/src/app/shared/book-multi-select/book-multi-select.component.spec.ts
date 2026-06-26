@@ -1,4 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
@@ -12,6 +15,7 @@ const mockedI18nService = mock(I18nService);
 describe('BookMultiSelectComponent', () => {
   let component: BookMultiSelectComponent;
   let fixture: ComponentFixture<BookMultiSelectComponent>;
+  let onlineStatus: TestOnlineStatusService;
 
   let mockBooks: Book[];
   let mockSelectedBooks: Book[];
@@ -19,6 +23,8 @@ describe('BookMultiSelectComponent', () => {
   configureTestingModule(() => ({
     imports: [getTestTranslocoModule()],
     providers: [
+      provideTestOnlineStatus(),
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: ProgressService, useMock: mockedProgressService },
       { provide: I18nService, useMock: mockedI18nService }
     ]
@@ -28,7 +34,14 @@ describe('BookMultiSelectComponent', () => {
     return { number: bookNum, selected: false };
   }
 
-  beforeEach(() => {
+  // Progress is fetched asynchronously; wait for the pipeline to settle and re-run change detection.
+  async function settle(): Promise<void> {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  beforeEach(async () => {
     mockBooks = [book(1), book(2), book(3), book(40), book(42), book(67), book(70)];
     mockSelectedBooks = [
       { number: 1, selected: true },
@@ -49,22 +62,26 @@ describe('BookMultiSelectComponent', () => {
 
     fixture = TestBed.createComponent(BookMultiSelectComponent);
     component = fixture.componentInstance;
+    onlineStatus = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
     component.availableBooks = mockBooks;
     component.selectedBooks = mockSelectedBooks;
     component.projectId = 'test-project-id';
-    fixture.detectChanges();
+    // Mirror the "full" usage: fetch/show progress and offer the testament select-all checkboxes.
+    component.showProgress = true;
+    component.bulkBookSelection = true;
+    // Inputs are set imperatively on the root fixture, so Angular won't call ngOnChanges for us; push them ourselves.
+    component.ngOnChanges();
+    await settle();
   });
 
   it('supports providing project name', async () => {
-    await component.ngOnChanges();
     expect(fixture.nativeElement.querySelector('.project-name')).toBeNull();
     component.projectName = 'Test Project';
-    fixture.detectChanges();
+    await settle();
     expect(fixture.nativeElement.querySelector('.project-name')).not.toBeNull();
   });
 
-  it('should initialize book options on ngOnChanges', async () => {
-    await component.ngOnChanges();
+  it('should initialize book options', () => {
     expect(component.bookOptions).toEqual([
       { bookNum: 1, bookId: 'GEN', selected: true, progress: 0.0 },
       { bookNum: 2, bookId: 'EXO', selected: false, progress: 0.15 },
@@ -80,7 +97,8 @@ describe('BookMultiSelectComponent', () => {
     for (let i = 0; i < 5; i++) {
       component.availableBooks = [...mockBooks];
       component.selectedBooks = [...mockSelectedBooks];
-      await component.ngOnChanges();
+      component.ngOnChanges();
+      await settle();
     }
 
     verify(mockedProgressService.getProgress('test-project-id', anything())).once();
@@ -89,15 +107,70 @@ describe('BookMultiSelectComponent', () => {
 
   it('re-fetches progress when the project changes', async () => {
     component.projectId = 'a-different-project-id';
-    await component.ngOnChanges();
+    component.ngOnChanges();
+    await settle();
 
     verify(mockedProgressService.getProgress('a-different-project-id', anything())).once();
     expect().nothing();
   });
 
+  it('does not fetch progress when showProgress is false', async () => {
+    fixture = TestBed.createComponent(BookMultiSelectComponent);
+    component = fixture.componentInstance;
+    component.availableBooks = mockBooks;
+    component.selectedBooks = mockSelectedBooks;
+    component.projectId = 'no-progress-project';
+    component.showProgress = false;
+    component.ngOnChanges();
+    await settle();
+
+    verify(mockedProgressService.getProgress('no-progress-project', anything())).never();
+    expect(component.bookOptions.length).toBe(mockBooks.length);
+    expect(component.bookOptions.every(b => b.progress == null)).toBe(true);
+  });
+
+  it('does not crash or fetch when offline, and still renders the books', async () => {
+    onlineStatus.setIsOnline(false);
+    component.projectId = 'offline-project';
+    component.ngOnChanges();
+    await settle();
+
+    verify(mockedProgressService.getProgress('offline-project', anything())).never();
+    expect(component.bookOptions.length).toBe(mockBooks.length);
+  });
+
+  it('fetches progress once the connection returns', async () => {
+    onlineStatus.setIsOnline(false);
+    component.projectId = 'reconnect-project';
+    component.ngOnChanges();
+    await settle();
+    verify(mockedProgressService.getProgress('reconnect-project', anything())).never();
+
+    onlineStatus.setIsOnline(true);
+    await settle();
+    verify(mockedProgressService.getProgress('reconnect-project', anything())).once();
+    expect().nothing();
+  });
+
+  it('does not re-fetch progress when the connection drops and returns after it has loaded', async () => {
+    // beforeEach already fetched progress for 'test-project-id' while online.
+    verify(mockedProgressService.getProgress('test-project-id', anything())).once();
+
+    onlineStatus.setIsOnline(false);
+    await settle();
+    onlineStatus.setIsOnline(true);
+    await settle();
+
+    // Online status is only a gate for the initial fetch; toggling it must not trigger another fetch.
+    verify(mockedProgressService.getProgress('test-project-id', anything())).once();
+    expect().nothing();
+  });
+
   it('should not crash when texts have not yet loaded', async () => {
     when(mockedProgressService.getProgress(anything(), anything())).thenResolve(new ProjectProgress([]));
-    await component.ngOnChanges();
+    component.projectId = 'empty-progress-project';
+    component.ngOnChanges();
+    await settle();
 
     expect(component.bookOptions).toEqual([
       { bookNum: 1, bookId: 'GEN', selected: true, progress: null },
@@ -110,73 +183,76 @@ describe('BookMultiSelectComponent', () => {
     ]);
   });
 
-  it('can select all OT books and clear all OT books', async () => {
+  it('can select all OT books and clear all OT books', () => {
     expect(component.selectedBooks.length).toEqual(2);
 
-    await component.select('OT', true);
+    component.select('OT', true);
     expect(component.selectedBooks.length).toEqual(3);
 
-    await component.select('OT', false);
+    component.select('OT', false);
     expect(component.selectedBooks.length).toEqual(0);
   });
 
-  it('can select all NT books and clear all NT books', async () => {
+  it('can select all NT books and clear all NT books', () => {
     expect(component.selectedBooks.length).toEqual(2);
 
-    await component.select('NT', true);
+    component.select('NT', true);
     expect(component.selectedBooks.length).toEqual(4);
 
-    await component.select('NT', false);
+    component.select('NT', false);
     expect(component.selectedBooks.length).toEqual(2);
   });
 
-  it('can select all DC books and clear all DC books', async () => {
+  it('can select all DC books and clear all DC books', () => {
     expect(component.selectedBooks.length).toEqual(2);
 
-    await component.select('DC', true);
+    component.select('DC', true);
     expect(component.selectedBooks.length).toEqual(4);
 
-    await component.select('DC', false);
+    component.select('DC', false);
     expect(component.selectedBooks.length).toEqual(2);
   });
 
   it('should show checkboxes for OT, NT, and DC as indeterminate when only some books from that category are selected', async () => {
-    await component.select('OT', false);
+    component.select('OT', false);
     component.selectedBooks = [{ number: 1, selected: true }];
-    await component.ngOnChanges();
-    fixture.detectChanges();
+    component.ngOnChanges();
+    await settle();
 
     expect(component.partialOT).toBe(true);
     expect(component.partialNT).toBe(false);
     expect(component.partialDC).toBe(false);
 
-    await component.select('OT', false);
+    component.select('OT', false);
     component.selectedBooks = [{ number: 40, selected: true }];
-    await component.ngOnChanges();
-    fixture.detectChanges();
+    component.ngOnChanges();
+    await settle();
 
     expect(component.partialOT).toBe(false);
     expect(component.partialNT).toBe(true);
     expect(component.partialDC).toBe(false);
 
-    await component.select('NT', false);
+    component.select('NT', false);
     component.selectedBooks = [{ number: 67, selected: true }];
-    await component.ngOnChanges();
-    fixture.detectChanges();
+    component.ngOnChanges();
+    await settle();
 
     expect(component.partialOT).toBe(false);
     expect(component.partialOT).toBe(false);
     expect(component.partialDC).toBe(true);
   });
 
-  it('can hide checkboxes and progress in basic mode', async () => {
-    await component.ngOnChanges();
-    fixture.detectChanges();
+  it('hides the progress bars when showProgress is false', async () => {
     expect(fixture.nativeElement.querySelector('.book-multi-select .border-fill')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('.scope-selection')).not.toBeNull();
-    component.basicMode = true;
-    fixture.detectChanges();
+    component.showProgress = false;
+    await settle();
     expect(fixture.nativeElement.querySelector('.book-multi-select .border-fill')).toBeNull();
+  });
+
+  it('hides the testament checkboxes when bulkBookSelection is false', async () => {
+    expect(fixture.nativeElement.querySelector('.scope-selection')).not.toBeNull();
+    component.bulkBookSelection = false;
+    await settle();
     expect(fixture.nativeElement.querySelector('.scope-selection')).toBeNull();
   });
 });
