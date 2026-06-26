@@ -53,7 +53,6 @@
           <app-book-multi-select
             [availableBooks]="selectableTranslateBooksByProj(source.projectRef)"
             [selectedBooks]="selectedTranslateBooksByProj(source.projectRef)"
-            [basicMode]="true"
             (bookSelect)="onTranslateBookSelect($event, source)"
             data-test-id="draft-stepper-translate-books"
           ></app-book-multi-select>
@@ -138,6 +137,8 @@
             [selectedBooks]="selectedTrainingBooksByProj(activatedProject.projectId)"
             [projectName]="targetProjectName"
             [projectId]="activatedProject.projectId"
+            [showProgress]="true"
+            [bulkBookSelection]="true"
             (bookSelect)="onTranslatedBookSelect($event)"
             data-test-id="draft-stepper-training-books"
           ></app-book-multi-select>
@@ -196,7 +197,6 @@
               <app-book-multi-select
                 [availableBooks]="selectableTrainingBooksByProj(source.projectRef)"
                 [selectedBooks]="selectedTrainingBooksByProj(source.projectRef)"
-                [basicMode]="true"
                 (bookSelect)="onSourceTrainingBookSelect($event, source)"
               ></app-book-multi-select>
             }
