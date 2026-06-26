@@ -60,7 +60,6 @@
         <app-book-multi-select
           [availableBooks]="availableDraftingBooks"
           [selectedBooks]="selectedDraftingBooks"
-          [basicMode]="true"
           (bookSelect)="onDraftingBookSelect($event)"
         ></app-book-multi-select>
       }
@@ -127,6 +126,8 @@
           [selectedBooks]="selectedTargetTrainingBooks"
           [projectId]="initData.projectId"
           [projectName]="targetProjectDisplayName"
+          [showProgress]="true"
+          [bulkBookSelection]="true"
           (bookSelect)="onTargetTrainingBookSelect($event)"
         ></app-book-multi-select>
       }
@@ -181,7 +182,6 @@
         @for (source of trainingSources; track source.projectRef) {
           @let availableSourceBooks = availableTrainingSourceBooksForProject(source.projectRef);
           <app-book-multi-select
-            [basicMode]="true"
             [projectName]="source.shortName"
             [availableBooks]="availableSourceBooks"
             [selectedBooks]="selectedTrainingSourceBooksForProject(source.projectRef)"
