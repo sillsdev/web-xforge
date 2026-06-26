@@ -247,6 +247,7 @@ describe('DraftGenerationStepsComponent', () => {
     const availableBooks = [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 5 }];
     const allBooks = [...availableBooks, { bookNum: 6 }, { bookNum: 7 }, { bookNum: 8 }];
     const sourceBooks = allBooks.filter(b => b.bookNum !== 6);
+    const emptyDraftSourceBooks = [5];
     const config: DraftSourcesAsArrays = {
       trainingSources: [
         {
@@ -305,7 +306,6 @@ describe('DraftGenerationStepsComponent', () => {
       const progress = new ProjectProgress(books);
       when(mockProgressService.getProgress('project01', anything())).thenResolve(progress);
 
-      const emptyBookNums = [5];
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
       when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
       when(mockActivatedProjectService.changes$).thenReturn(targetProjectDoc$);
@@ -313,7 +313,7 @@ describe('DraftGenerationStepsComponent', () => {
       setupProjectProfileMock(
         sourceProjectId,
         sourceBooks.map(b => b.bookNum),
-        emptyBookNums
+        emptyDraftSourceBooks
       );
       when(mockNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(true);
       when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
@@ -326,24 +326,24 @@ describe('DraftGenerationStepsComponent', () => {
     }));
 
     it('should set "allAvailableTranslateBooks" correctly', fakeAsync(() => {
-      expect(component.allAvailableTranslateBooks).toEqual([
-        { number: 1, selected: false },
-        { number: 2, selected: false },
-        { number: 3, selected: false },
-        { number: 5, selected: false },
-        { number: 8, selected: false }
-      ]);
+      expect(component.allAvailableTranslateBooks).toEqual(
+        sourceBooks.map(b => ({ number: b.bookNum, selected: false }))
+      );
     }));
 
     it('should set "availableTranslateBooks" correctly', fakeAsync(() => {
       expect(component.availableTranslateBooks).toEqual({
-        sourceProject: [
-          { number: 1, selected: false },
-          { number: 2, selected: false },
-          { number: 3, selected: false },
-          { number: 8, selected: false }
-        ]
+        sourceProject: sourceBooks
+          .map(b => ({ number: b.bookNum, selected: false }))
+          .filter(b => !emptyDraftSourceBooks.includes(b.number))
       });
+    }));
+
+    it('should set "selectableTranslateBooksByProj" correctly', fakeAsync(() => {
+      // all non-empty books in the drafting source are available
+      expect(component.selectableTranslateBooksByProj(config.draftingSources[0].projectRef).map(b => b.number)).toEqual(
+        sourceBooks.map(b => b.bookNum).filter(b => !emptyDraftSourceBooks.includes(b))
+      );
     }));
 
     it('should set "availableTrainingBooks" correctly', fakeAsync(() => {
