@@ -367,8 +367,9 @@ export class NewDraftComponent {
         const data = projectDoc.data;
         if (data == null) return;
         const syncing = isSFProjectSyncing(data);
-        // Abort only on the not-syncing → syncing edge; a project already syncing at arm time is the baseline.
-        if (syncing && !wasSyncing) this.logicHandler.abort('project_syncing');
+        // Abort only on the not-syncing → syncing edge; a project already syncing at arm time is the baseline. Once
+        // building, ignore syncs — starting a build triggers one itself (see `building`).
+        if (syncing && !wasSyncing && !this.building) this.logicHandler.abort('project_syncing');
         wasSyncing = syncing;
       });
     } catch (error) {
@@ -475,10 +476,17 @@ export class NewDraftComponent {
   }
 
   submitting = false;
+  /**
+   * Latched once the user commits to generating, never reset (unlike `submitting`, which the `finally` resets so the
+   * button re-enables on failure). Suppresses the sync watcher so the backend sync that starting a build triggers
+   * doesn't self-abort with 'project_syncing'.
+   */
+  private building = false;
   async generateDraftClicked(): Promise<void> {
     if (!this.onlineStatusService.isOnline || this.initData == null) return;
 
     this.submitting = true;
+    this.building = true;
 
     await Promise.resolve();
 
