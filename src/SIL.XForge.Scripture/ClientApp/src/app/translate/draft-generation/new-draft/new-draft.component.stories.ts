@@ -41,10 +41,10 @@ const TRAINING_SOURCE_ID = 'training-source-1-id';
 // Books available in each project. GEN is the interesting case: the source has all 50 chapters but the target only
 // has GEN1-5, so GEN6-50 is offered for drafting and GEN1-5 remains available for training (partial-book drafting).
 // PHM is in both the source and the target (1 chapter), so selecting it produces a clean whole-book selection with no
-// chapter table. JUD exists only in the source, so it is not offered for drafting and instead demonstrates the
-// "not in the project" exclusion notice (see the ExcludedBooks story).
-const TARGET_BOOKS = 'GEN1-5;MAT1-28;MRK1-16;LUK1-24;JHN1-21;PHM1';
-const DRAFT_SOURCE_BOOKS = 'GEN1-50;MAT1-28;MRK1-16;LUK1-24;JHN1-21;PHM1;JUD1';
+// chapter table. EXO is in the target but the source has no text for it, so it is excluded and demonstrates the
+// "no source content" exclusion notice (see the ExcludedBooks story).
+const TARGET_BOOKS = 'GEN1-5;EXO1-40;MAT1-28;MRK1-16;LUK1-24;JHN1-21;PHM1';
+const DRAFT_SOURCE_BOOKS = 'GEN1-50;MAT1-28;MRK1-16;LUK1-24;JHN1-21;PHM1';
 const TRAINING_SOURCE_BOOKS = 'GEN1-50;MAT1-28;MRK1-16;LUK1-24;JHN1-21;PHM1';
 
 const mockedActivatedProjectService = mock(ActivatedProjectService);
@@ -114,9 +114,8 @@ function buildProjectProfile(args: StoryArgs): SFProjectProfile {
     name: 'NTV - Nueva Traducción Viviente',
     shortName: 'TP1',
     writingSystem: { tag: 'en' },
-    // The target's text list (book membership) gates which source books are offered for drafting. Include the books
-    // the target contains; the drafting source's extra book (JUD) is intentionally absent so the story shows the
-    // "not in the project" notice.
+    // Books in the target's text list. EXO is included here but absent from the draft source, producing the
+    // "no source content" exclusion notice in the ExcludedBooks story.
     texts: Array.from(new VerboseScriptureRange(TARGET_BOOKS).books.keys()).map(bookId => ({
       bookNum: Canon.bookIdToNumber(bookId),
       hasSource: false,
@@ -421,7 +420,7 @@ export const SelectBooksToDraft: Story = {
   }
 };
 
-/** A source-only book (JUD) isn't offered for drafting; expanding the collapsed notice explains why it's hidden. */
+/** A target-only book (EXO) has no source content; expanding the collapsed notice explains why it's hidden. */
 export const ExcludedBooks: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -429,8 +428,8 @@ export const ExcludedBooks: Story = {
     await canvas.findByText('Select books to draft');
     // The exclusion notice starts collapsed; expand it to reveal which books were left out and why.
     await userEvent.click(await canvas.findByText(/books are hidden/i));
-    // JUD is in the source but not the target, so it is named in the "not in the project" notice.
-    await canvas.findByText(/Jude/);
+    // EXO is in the target but the source has no text for it, so it is named in the "no source content" notice.
+    await canvas.findByText(/Exodus/);
   }
 };
 

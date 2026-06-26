@@ -42,7 +42,7 @@ function chapterHasContent(chapter: { verseSegments: number; blankVerseSegments:
  * recorded with its reason so the UI can explain the omission. Not every reason is surfaced to the user: 'non_canonical'
  * books (front/back matter, glossaries, etc.) are excluded silently, since users don't expect them to be draftable.
  */
-export type DraftingBookExclusionReason = 'non_canonical' | 'no_source_content' | 'not_in_target';
+export type DraftingBookExclusionReason = 'non_canonical' | 'no_source_content';
 
 /**
  * Default freshness window for progress lookups. Progress data older than this is re-fetched. Callers that must have
@@ -140,16 +140,6 @@ function withoutExtraMaterialBooks(range: VerboseScriptureRange): VerboseScriptu
  *
  */
 export class NewDraftLogicHandler {
-  /**
-   * When false (current behavior, matching the legacy stepper), a book is only offered for drafting if it also exists
-   * in the target project's text list. This is a temporary restriction: the current UI doesn't handle drafting a book
-   * that isn't already in the target. SF-3822 is intended to lift this soon, at which point this can be changed to true
-   * (or deleted), and any canonical book with source content is offered regardless of target membership.
-   *
-   * Overridable on the class (NewDraftLogicHandler.ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET) so tests can exercise both branches.
-   */
-  static ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET = false;
-
   status$ = new BehaviorSubject<'init' | 'input' | 'abort'>('init');
   abortMode: NewDraftAbortMode = null;
 
@@ -468,13 +458,11 @@ export class NewDraftLogicHandler {
 
   /**
    * Determines which books from the drafting source are offered for drafting, and records why each book the user might
-   * expect to see was left out. A book is offered only if it is canonical, has content in the drafting source, and
-   * (unless allowDraftingBooksNotInTarget is set) exists in the target project's text list.
+   * expect to see was left out. A book is offered only if it is canonical and has content in the drafting source.
    *
    * The books considered are those with content in the drafting source plus those present in the target project. This
-   * lets the UI explain both books the target contains but the source has no text for ('no_source_content') and books
-   * the source has but the target lacks ('not_in_target'). Books that are excluded purely for being non-canonical are
-   * recorded as 'non_canonical' but are not surfaced to the user.
+   * lets the UI explain books the target contains but the source has no text for ('no_source_content'). Books that are
+   * excluded purely for being non-canonical are recorded as 'non_canonical' but are not surfaced to the user.
    */
   private computeOfferedDraftingBooks(
     draftSourceProgress: VerboseScriptureRange,
@@ -492,8 +480,6 @@ export class NewDraftLogicHandler {
         excluded.push({ bookId, reason: 'non_canonical' });
       } else if (!draftSourceProgress.books.has(bookId)) {
         excluded.push({ bookId, reason: 'no_source_content' });
-      } else if (!NewDraftLogicHandler.ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET && !targetTextBookIds.has(bookId)) {
-        excluded.push({ bookId, reason: 'not_in_target' });
       } else {
         available.books.set(bookId, draftSourceProgress.books.get(bookId)!.clone());
       }
