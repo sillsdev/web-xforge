@@ -831,6 +831,32 @@ describe('NewDraftComponent', () => {
       expect(env.component.page).toEqual('abort');
       expect(env.component.abortMode).toEqual('project_syncing');
     }));
+
+    it('does not abort for the sync that starting a build triggers', fakeAsync(() => {
+      // Starting a build syncs the involved projects on the backend; the watcher must not treat that as an edge.
+      const build$ = new Subject<undefined>();
+      when(mockedDraftGenerationService.startBuildOrGetActiveBuild(anything())).thenReturn(build$);
+      const env = new TestEnvironment(testState);
+      tick();
+      env.component.logicHandler.selectDraftingBooks(['GEN']);
+
+      env.component.generateDraftClicked();
+      tick();
+
+      // Build in flight: the backend-triggered sync of the target lands now.
+      env.startSyncFor('testProjectId');
+      tick();
+      expect(env.component.page).toEqual('preface');
+      expect(env.component.abortMode).toBeNull();
+
+      // Suppression persists past build completion (the latch is never reset, unlike `submitting`).
+      build$.next(undefined);
+      build$.complete();
+      tick();
+      env.startSyncFor('draft-source-1-id');
+      tick();
+      expect(env.component.abortMode).toBeNull();
+    }));
   });
 
   describe('empty states', () => {
