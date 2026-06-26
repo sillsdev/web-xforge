@@ -229,7 +229,7 @@ export class NewDraftLogicHandler {
 
   /**
    * Sets up the state by loading the project, checking for changes in Paratext that haven't synced to SF yet, loading
-   * progress data, and setting up subscripts that watch for changes that should result in bailing out (forcing the
+   * progress data, and setting up subscriptions that watch for changes that should result in bailing out (forcing the
    * user to restart the process). Automatically sets training books to most recently selected training books.
    */
   async init(): Promise<void> {
