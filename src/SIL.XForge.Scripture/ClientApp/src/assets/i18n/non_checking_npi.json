@@ -123,7 +123,6 @@
     "enable_community_checking": "Enable Community Checking",
     "engage_the_wider_community_to_check_scripture": "Engage the wider community to ensure that the translation is clear, accurate, and natural. Select verses, ask targeted questions, allow discussion of answers.",
     "error_fetching_resources": "There was an error fetching the Digital Bible Library resources. You will only be able to select projects.",
-    "paratext_account_linked_to_another_user": "You have logged into a Paratext account that is already linked to a user with the email {{ email }}. You will be logged out of your current account and proceed as the Paratext user.",
     "problem_already_connected": "The project is already connected. Maybe another project administrator connected the project at the same time. Please try again. If it continues to be a problem, please report the issue so we can get it fixed.",
     "proceed": "Proceed",
     "project_settings": "Project Settings",
@@ -684,6 +683,9 @@
     "previous_page": "Previous page",
     "range_label": "{{ startIndex }} - {{ endIndex }} of {{ length }}"
   },
+  "paratext_account_notice": {
+    "not_connected": "Your account isn't connected to Paratext. To continue, log out and sign in with your Paratext account."
+  },
   "project_select": {
     "please_select_valid_project_or_resource": "Please select a valid project or resource",
     "projects": "प्रोजेक्‍टहरू",
@@ -750,7 +752,6 @@
     "delete_this_project": "Delete this project",
     "email_invitations_only": "Email invitations only",
     "enable_community_checking": "Enable Community Checking",
-    "enable_translation_suggestions": "to enable {{ boldStart }}Translate Suggestions{{ boldEnd }} and see more options",
     "engage_the_wider_community": "Engage the wider community to ensure that the translation is clear, accurate, and natural. Select verses, ask questions, and discuss answers.",
     "error_fetching_projects_resources": "There was an error fetching projects and resources. You can't change what the project is based on.",
     "error_fetching_projects": "There was an error fetching projects. You will only be able to select resources from Digital Bible Library.",
@@ -760,7 +761,6 @@
     "export_marked_for_export": "जवाफहरू समीक्षाको लागि फ्‍ल्‍याग गरियो",
     "export_none": "जवाफ छैन",
     "exporting_answers": "Exporting Answers",
-    "log_in_with_paratext": "Log in to Paratext",
     "see_others_answers_and_comments": "Allow checkers to see each other's answers and comments",
     "select_project_or_resource": "Select the Paratext project or Digital Bible Library resource that your project is based on. If your project is based on a Paratext project, it's best to set it up as a daughter project in Paratext.",
     "settings": "सेटिङहरू",
@@ -831,7 +831,6 @@
     "connect_network_to_synchronize": "Please connect to the internet to synchronize this project",
     "initialize_sync": "Initializing sync...",
     "last_synced_time_stamp": "Last synced on {{ timeStamp }}",
-    "log_in_to_paratext": "Log in to Paratext",
     "never_been_synced": "Never been synced",
     "phase_0": "Connecting to project",
     "phase_0_percent": "Checking SF books and notes {{progressPercent}}%",

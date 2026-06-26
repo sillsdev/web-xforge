@@ -123,7 +123,6 @@
     "enable_community_checking": "Enable Community Checking",
     "engage_the_wider_community_to_check_scripture": "Implicați comunitatea mai largă pentru ca traducerea să fie clară, corectă și naturală. Selectați versete, puneți întrebări țintite, conduceți discuții despre răspunsuri.",
     "error_fetching_resources": "A apărut o eroare la preluarea resurselor din Digital Bible Library. Veți putea selecta doar proiecte.",
-    "paratext_account_linked_to_another_user": "V-ați conectat la un cont Paratext care este deja asociat cu un utilizator cu adresa e-mail {{ email }}. Veți fi deconectat de la contul dvs. curent și veți continua ca utilizator Paratext.",
     "problem_already_connected": "Proiectul este deja conectat. Poate un alt administrator a conectat proiectul în același timp. Vă rugăm să încercați din nou. Dacă problema persistă, vă rugăm să raportați problema pentru a o rezolva.",
     "proceed": "Continuă",
     "project_settings": "Project Settings",
@@ -684,6 +683,9 @@
     "previous_page": "Pagina anterioară",
     "range_label": "{{ startIndex }} - {{ endIndex }} din {{ length }}"
   },
+  "paratext_account_notice": {
+    "not_connected": "Your account isn't connected to Paratext. To continue, log out and sign in with your Paratext account."
+  },
   "project_select": {
     "please_select_valid_project_or_resource": "Vă rugăm selectați un proiect sau o resursă validă",
     "projects": "Proiecte",
@@ -750,7 +752,6 @@
     "delete_this_project": "Șterge proiectul",
     "email_invitations_only": "Email invitations only",
     "enable_community_checking": "Enable Community Checking",
-    "enable_translation_suggestions": "pentru a activa {{ boldStart }}sugestiile de traducere{{ boldEnd }} și a vedea mai multe opțiuni",
     "engage_the_wider_community": "Implicați comunitatea mai largă pentru ca traducerea să fie clară, corectă și naturală. Selectați versete, puneți întrebări țintite, conduceți discuții despre răspunsuri.",
     "error_fetching_projects_resources": "A apărut o eroare la preluarea proiectelor și a resurselor. Nu puteți schimba pe care text se bazează proiectul.",
     "error_fetching_projects": "A apărut o eroare la preluarea proiectelor. Veți putea selecta doar resurse din Digital Bible Library.",
@@ -760,7 +761,6 @@
     "export_marked_for_export": "Answers flagged for review",
     "export_none": "No answers",
     "exporting_answers": "Exporting Answers",
-    "log_in_with_paratext": "Autentificare în Paratext",
     "see_others_answers_and_comments": "Allow checkers to see each other's answers and comments",
     "select_project_or_resource": "Select the Paratext project or Digital Bible Library resource that your project is based on. If your project is based on a Paratext project, it's best to set it up as a daughter project in Paratext.",
     "settings": "Setări",
@@ -831,7 +831,6 @@
     "connect_network_to_synchronize": "Vă rugăm să vă conectați la internet pentru a sincroniza acest proiect",
     "initialize_sync": "Initializing sync...",
     "last_synced_time_stamp": "Ultima sincronizare pe {{ timeStamp }}",
-    "log_in_to_paratext": "Autentificare în Paratext",
     "never_been_synced": "Nu a fost sincronizat niciodată",
     "phase_0": "Connecting to project",
     "phase_0_percent": "Checking SF books and notes {{progressPercent}}%",

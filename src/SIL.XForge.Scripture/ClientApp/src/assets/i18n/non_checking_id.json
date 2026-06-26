@@ -123,7 +123,6 @@
     "enable_community_checking": "Mengaktifkan Pemeriksaan Masyarakat",
     "engage_the_wider_community_to_check_scripture": "Libatkan masyarakat yang lebih luas untuk memastikan bahwa terjemahannya jelas, tepat, dan wajar. Pilih ayat, ajukan pertanyaan yang ditargetkan, izinkan diskusi jawaban.",
     "error_fetching_resources": "Terjadi kesalahan saat mengambil sumber daya Perpustakaan Alkitab Digital. Anda hanya dapat memilih proyek.",
-    "paratext_account_linked_to_another_user": "Anda telah masuk ke akun Paratext yang telah ditautkan ke pengguna dengan email {{ email }}. Anda akan keluar dari akun Anda saat ini dan melanjutkan sebagai pengguna Paratext.",
     "problem_already_connected": "Proyek sudah terhubung. Mungkin administrator proyek lain sedang menghubungkan proyek tersebut pada saat yang bersamaan. Silakan coba lagi. Jika masih ada masalah, silakan laporkan masalahnya agar kami dapat memperbaikinya.",
     "proceed": "Dilanjutkan",
     "project_settings": "Pengaturan Proyek",
@@ -684,6 +683,9 @@
     "previous_page": "Halaman sebelumnya",
     "range_label": "{{ startIndex }} - {{ endIndex }} dari {{ length }}"
   },
+  "paratext_account_notice": {
+    "not_connected": "Your account isn't connected to Paratext. To continue, log out and sign in with your Paratext account."
+  },
   "project_select": {
     "please_select_valid_project_or_resource": "Pilih proyek atau sumber yang benar",
     "projects": "Proyek",
@@ -750,7 +752,6 @@
     "delete_this_project": "Menghapus Proyek ini",
     "email_invitations_only": "Hanya undangan email",
     "enable_community_checking": "Mengaktifkan Pemeriksaan Masyarakat",
-    "enable_translation_suggestions": "untuk mengaktifkan {{ boldStart }}Saran Terjemahan{{ boldEnd }}dan melihat pilihan lebih banyak",
     "engage_the_wider_community": "Libatkan masyarakat yang lebih luas untuk memastikan bahwa terjemahannya jelas, akurat, dan alami. Pilih ayat, ajukan pertanyaan yang ditargetkan, izinkan diskusi jawaban.",
     "error_fetching_projects_resources": "Terjadi kesalahan saat mengambil proyek dan sumber. Anda tidak dapat mengubah dasar proyek.",
     "error_fetching_projects": "Ada kesalahan dalam mengambil proyek. Anda hanya dapat memilih sumber dari Digital Bible Library.",
@@ -760,7 +761,6 @@
     "export_marked_for_export": "Jawaban yang ditandai untuk ditinjau",
     "export_none": "Tidak ada Jawaban",
     "exporting_answers": "Mengekspor Jawaban",
-    "log_in_with_paratext": "Masuk ke Paratext",
     "see_others_answers_and_comments": "Izinkan para pemeriksa untuk melihat jawaban dan komentar satu sama lain",
     "select_project_or_resource": "Pilih proyek Paratext atau sumber Perpustakaan Alkitab Digital yang menjadi dasar proyek Anda. Jika proyek Anda didasarkan pada proyek Paratext, yang terbaik adalah mengaturnya sebagai proyek anak di Paratext.",
     "settings": "Pengaturan",
@@ -831,7 +831,6 @@
     "connect_network_to_synchronize": "Harap hubungkan ke internet untuk menyinkronkan proyek ini",
     "initialize_sync": "Mulai sinkronisasi...",
     "last_synced_time_stamp": "Terakhir disinkronkan pada{{ timeStamp }}",
-    "log_in_to_paratext": "Masuk ke Paratext",
     "never_been_synced": "Belum pernah disinkronkan",
     "phase_0": "Menghubungkan ke proyek",
     "phase_0_percent": "Memeriksa kitab dan catatan SF {{progressPercent}}%",
