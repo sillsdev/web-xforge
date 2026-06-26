@@ -26,8 +26,6 @@ function allBooksExcept(excludedBooks: string[]): string {
 
 const FULL_CANON_SCRIPTURE_RANGE = allBooksExcept([]);
 
-const ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET_ORIGINAL_VALUE = NewDraftLogicHandler.ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET;
-
 describe('NewDraftLogicHandler', () => {
   const teamStartingToTranslateGenesis = {
     lastSelectedTranslationScriptureRanges: [{ projectId: 'draft-source-1-id', scriptureRange: 'GEN' }],
@@ -54,11 +52,6 @@ describe('NewDraftLogicHandler', () => {
       'training-source-2-id': FULL_CANON_SCRIPTURE_RANGE
     }
   } as const satisfies TestState;
-
-  // The gate is shared static state; reset it after each test so a gate test doesn't leak into other specs.
-  afterEach(() => {
-    NewDraftLogicHandler.ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET = ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET_ORIGINAL_VALUE;
-  });
 
   describe('initialization', () => {
     it('aborts when a source project is inaccessible', async () => {
@@ -157,38 +150,21 @@ describe('NewDraftLogicHandler', () => {
       );
     });
 
-    it('does not offer source books missing from the target when drafting books not in the target is disallowed', async () => {
+    it('offers source books missing from the target project', async () => {
       const env = new TestEnvironment({
         ...teamStartingToTranslateGenesis,
-        allowDraftingBooksNotInTarget: false,
         draftingSourceBooksChapters: 'GEN1-50;EXO1-40;MAT1-28',
         targetTextBooks: ['GEN', 'MAT']
       });
       await env.waitForInit();
 
-      // EXO has source content but isn't in the target's text list, so it isn't offered.
-      expect(env.availableDraftingScriptureRange).toBe('GEN1-50;MAT1-28');
-      expect(env.excludedDraftingBooks).toContain({ bookId: 'EXO', reason: 'not_in_target' });
-    });
-
-    it('offers source books missing from the target when drafting books not in the target is allowed', async () => {
-      const env = new TestEnvironment({
-        ...teamStartingToTranslateGenesis,
-        allowDraftingBooksNotInTarget: true,
-        draftingSourceBooksChapters: 'GEN1-50;EXO1-40;MAT1-28',
-        targetTextBooks: ['GEN', 'MAT']
-      });
-      await env.waitForInit();
-
-      // The same EXO book is now offered, since target membership is no longer required.
+      // EXO has source content and is offered even though it isn't in the target's text list.
       expect(env.availableDraftingScriptureRange).toBe('GEN1-50;EXO1-40;MAT1-28');
-      expect(env.excludedDraftingBooks).not.toContain({ bookId: 'EXO', reason: 'not_in_target' });
     });
 
     it('reports target books the drafting source has no content for', async () => {
       const env = new TestEnvironment({
         ...teamStartingToTranslateGenesis,
-        allowDraftingBooksNotInTarget: false,
         draftingSourceBooksChapters: 'GEN1-50',
         targetTextBooks: ['GEN', 'EXO']
       });
@@ -987,18 +963,8 @@ interface TestState {
    */
   completeTargetBooks?: string[];
 
-  /**
-   * The books that exist in the target project's text list (membership, independent of content). Only consulted when
-   * the target-membership gate is enforced (allowDraftingBooksNotInTarget === false). Defaults to undefined (no texts).
-   */
+  /** The books that exist in the target project's text list (membership, independent of content). Defaults to undefined (no texts). */
   targetTextBooks?: string[];
-
-  /**
-   * Whether to allow drafting books not present in the target project. Defaults to true in tests so that the
-   * target-membership gate doesn't interfere with tests that aren't exercising it; tests for the gate set it
-   * explicitly.
-   */
-  allowDraftingBooksNotInTarget?: boolean;
 }
 
 class TestEnvironment {
@@ -1010,10 +976,6 @@ class TestEnvironment {
   draftProgressService = instance(mockedDraftProgressService);
 
   constructor(state: TestState, sources$?: BehaviorSubject<DraftSourcesAsArrays>) {
-    // Default to allowing books not in the target so the membership gate stays out of the way of tests that aren't
-    // exercising it. Gate tests set this explicitly.
-    NewDraftLogicHandler.ALLOW_DRAFTING_BOOKS_NOT_IN_TARGET = state.allowDraftingBooksNotInTarget ?? true;
-
     const project = createTestProjectProfile({
       texts: (state.targetTextBooks ?? []).map(bookId => ({
         bookNum: Canon.bookIdToNumber(bookId),
