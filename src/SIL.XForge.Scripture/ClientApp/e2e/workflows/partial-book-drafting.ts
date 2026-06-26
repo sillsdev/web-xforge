@@ -153,7 +153,7 @@ async function selectPartialDraftBook(page: Page, user: UserEmulator, context: S
 
   await chapterInput.fill('23-21');
   await chapterInput.blur();
-  await expect(page.locator('.partial-book-drafting-table .chapter-error')).toBeVisible();
+  await expect(page.locator('.partial-book-drafting-table .chapter-error')).toHaveCount(1);
 
   await chapterInput.fill(DRAFT_CHAPTERS);
   await chapterInput.blur();
