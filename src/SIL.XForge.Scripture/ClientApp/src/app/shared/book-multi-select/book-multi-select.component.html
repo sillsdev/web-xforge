@@ -1,10 +1,10 @@
 <ng-container *transloco="let t; read: 'book_select'">
-  @if (!readonly && (projectName != null || (!basicMode && availableBooks.length > 0))) {
+  @if (!readonly && (projectName != null || (bulkBookSelection && availableBooks.length > 0))) {
     <div class="scope-selection-wrapper">
       @if (projectName != null) {
         <span class="project-name">{{ projectName }}</span>
       }
-      @if (!basicMode && availableBooks.length > 0) {
+      @if (bulkBookSelection && availableBooks.length > 0) {
         <div class="scope-selection">
           <mat-checkbox
             class="ot-checkbox"
@@ -51,7 +51,7 @@
         [disabled]="readonly"
         (change)="onChipListChange(book)"
       >
-        @if (book.progress != null && basicMode === false) {
+        @if (book.progress != null && showProgress) {
           <mat-chip-option
             [value]="book"
             [selected]="book.selected"
@@ -68,10 +68,4 @@
       </mat-chip-listbox>
     }
   </div>
-  @if (!loaded) {
-    <div class="loading-message">
-      <mat-spinner [diameter]="15"></mat-spinner>
-      {{ t("loading_message") }}
-    </div>
-  }
 </ng-container>
