@@ -123,7 +123,6 @@
     "enable_community_checking": "Überprüfung mit Zielgruppe aktivieren",
     "engage_the_wider_community_to_check_scripture": "Arbeite mit der weiteren Zielgruppe zusammen, um sicherzustellen, dass die Übersetzung klar, genau und natürlich ist. Wähle Verse aus, stelle gezielte Fragen und ermögliche eine Diskussion über die Antworten.",
     "error_fetching_resources": "Beim Abrufen der Ressourcen aus der digitalen Bibelbibliothek ist ein Fehler aufgetreten. Du kannst nur Projekte auswählen.",
-    "paratext_account_linked_to_another_user": "Du hast Dich in ein Paratext-Konto eingeloggt, das bereits mit einem Benutzer mit der E-Mail {{ email }} verknüpft ist. Du wirst von Deinem aktuellen Konto abgemeldet und fährst als Paratext-Benutzer fort.",
     "problem_already_connected": "Das Projekt ist bereits verbunden. Möglicherweise hat ein anderer Projektadministrator das Projekt zur gleichen Zeit verbunden. Bitte versuche es erneut. Wenn das Problem weiterhin besteht, melde bitte den Fehler, damit wir ihn beheben können.",
     "proceed": "Fortfahren",
     "project_settings": "Projekteinstellungen",
@@ -684,6 +683,9 @@
     "previous_page": "Vorherige Seite",
     "range_label": "{{ startIndex }} - {{ endIndex }} von {{ length }}"
   },
+  "paratext_account_notice": {
+    "not_connected": "Your account isn't connected to Paratext. To continue, log out and sign in with your Paratext account."
+  },
   "project_select": {
     "please_select_valid_project_or_resource": "Bitte wähle ein gültiges Projekt oder eine gültige Ressource aus",
     "projects": "Projekte",
@@ -750,7 +752,6 @@
     "delete_this_project": "Dieses Projekt löschen",
     "email_invitations_only": "Nur E-Mail-Einladungen",
     "enable_community_checking": "Überprüfung mit Zielgruppe aktivieren",
-    "enable_translation_suggestions": "um {{ boldStart }}Übersetzungsvorschläge{{ boldEnd }} zu aktivieren und weitere Optionen zu sehen",
     "engage_the_wider_community": "Arbeite mit der breiteren Zielgruppe zusammen, um sicherzustellen, dass die Übersetzung klar, genau und natürlich ist. Wähle Verse aus, stelle Fragen und diskutiere die Antworten.",
     "error_fetching_projects_resources": "Es ist ein Fehler beim Abrufen von Projekten und Ressourcen aufgetreten. Du kannst nicht ändern, worauf das Projekt basiert.",
     "error_fetching_projects": "Es ist ein Fehler beim Abrufen von Projekten aufgetreten. Du kannst nur Ressourcen aus der digitalen Bibelbibliothek auswählen.",
@@ -760,7 +761,6 @@
     "export_marked_for_export": "Zur Überprüfung markierte Antworten",
     "export_none": "Keine Antworten vorhanden",
     "exporting_answers": "Antworten exportieren",
-    "log_in_with_paratext": "Bei Paratext anmelden",
     "see_others_answers_and_comments": "Prüfern erlauben, die Antworten und Kommentare der anderen zu sehen",
     "select_project_or_resource": "Wähle das Paratext-Projekt oder die Ressource aus der digitalen Bibelbibliothek, auf der Dein Projekt basiert. Wenn Dein Projekt auf einem Paratext-Projekt basiert, ist es am besten, es als Tochterprojekt in Paratext einzurichten.",
     "settings": "Einstellungen",
@@ -831,7 +831,6 @@
     "connect_network_to_synchronize": "Bitte verbinde Dich mit dem Internet, um dieses Projekt zu synchronisieren",
     "initialize_sync": "Synchronisierung wird initialisiert...",
     "last_synced_time_stamp": "Zuletzt synchronisiert am {{ timeStamp }}",
-    "log_in_to_paratext": "Bei Paratext anmelden",
     "never_been_synced": "Wurde nie synchronisiert",
     "phase_0": "Wird mit Projekt verbunden",
     "phase_0_percent": "SF-Bücher und Notizen werden kontrolliert {{progressPercent}}%",

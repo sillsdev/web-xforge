@@ -123,7 +123,6 @@
     "enable_community_checking": "Ativar a Verificação da Comunidade",
     "engage_the_wider_community_to_check_scripture": "Envolva a comunidade em geral para garantir que a tradução seja clara, precisa e natural. Selecione versículos, faça perguntas específicas, permita a discussão das respostas.",
     "error_fetching_resources": "Ocorreu um erro na busca de recursos da Digital Bible Library. Você só poderá selecionar projetos.",
-    "paratext_account_linked_to_another_user": "Você fez login numa conta do Paratext que já está vinculada a um usuário com o e-mail {{ email }}. Você será desconectado da sua conta atual e continuará como o usuário do Paratext.",
     "problem_already_connected": "O projeto já está conectado. Talvez outro administrador de projeto tenha conectado o projeto ao mesmo tempo. Por favor, tente novamente. Se o problema persistir, por favor informe para que possamos corrigir o problema.",
     "proceed": "Continuar",
     "project_settings": "Configurações do Projeto",
@@ -684,6 +683,9 @@
     "previous_page": "Página anterior",
     "range_label": "{{ startIndex }} - {{ endIndex }} de {{ length }}"
   },
+  "paratext_account_notice": {
+    "not_connected": "Your account isn't connected to Paratext. To continue, log out and sign in with your Paratext account."
+  },
   "project_select": {
     "please_select_valid_project_or_resource": "Por favor, selecione um projeto ou recurso válido",
     "projects": "Projetos",
@@ -750,7 +752,6 @@
     "delete_this_project": "Excluir este projeto",
     "email_invitations_only": "Somente convites por e-mail",
     "enable_community_checking": "Ativar a Verificação da Comunidade",
-    "enable_translation_suggestions": "para habilitar {{ boldStart }}Traduzir Sugestões{{ boldEnd }} e ver mais opções",
     "engage_the_wider_community": "Envolva a comunidade em geral para garantir que a tradução seja clara, precisa e natural. Selecione versículos, faça perguntas específicas, permita a discussão das respostas.",
     "error_fetching_projects_resources": "Ocorreu um erro na busca de projetos e recursos. Você não pode alterar em qual texto o projeto se baseia.",
     "error_fetching_projects": "Ocorreu um erro na busca de projetos. Você só poderá selecionar recursos da Digital Bible Library.",
@@ -760,7 +761,6 @@
     "export_marked_for_export": "Answers flagged for review",
     "export_none": "No answers",
     "exporting_answers": "Exporting Answers",
-    "log_in_with_paratext": "Entrar no Paratext",
     "see_others_answers_and_comments": "Permitir que os verificadores vejam as respostas uns dos outros",
     "select_project_or_resource": "Selecione o projeto do Paratext ou o recurso da Digital Bible Library no qual seu projeto se baseia. Se o seu projeto se baseia num projeto do Paratext, é melhor configurá-lo como um projeto derivado no Paratext.",
     "settings": "Configurações",
@@ -831,7 +831,6 @@
     "connect_network_to_synchronize": "Por favor, conecte-se à internet para sincronizar este projeto",
     "initialize_sync": "Initializing sync...",
     "last_synced_time_stamp": "Última sincronização em {{ timeStamp }}",
-    "log_in_to_paratext": "Entrar no Paratext",
     "never_been_synced": "Nunca foi sincronizado",
     "phase_0": "Connecting to project",
     "phase_0_percent": "Checking SF books and notes {{progressPercent}}%",
