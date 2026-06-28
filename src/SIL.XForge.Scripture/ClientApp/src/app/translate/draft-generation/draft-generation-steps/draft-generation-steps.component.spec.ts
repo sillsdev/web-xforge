@@ -87,6 +87,7 @@ describe('DraftGenerationStepsComponent', () => {
       ])
     );
     when(mockOnlineStatusService.isOnline).thenReturn(true);
+    when(mockOnlineStatusService.onlineStatus$).thenReturn(of(true));
   }));
 
   describe('ngOnInit', () => {

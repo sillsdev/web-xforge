@@ -23,6 +23,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { L10nNumberPipe } from 'xforge-common/l10n-number.pipe';
 import { L10nPercentPipe } from 'xforge-common/l10n-percent.pipe';
@@ -159,6 +160,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     protected readonly urlService: ExternalUrlService,
     protected readonly draftOptionsService: DraftOptionsService,
     private readonly projectService: SFProjectService,
+    private readonly featureFlags: FeatureFlagService,
     private destroyRef: DestroyRef
   ) {
     super(noticeService, 'DraftGenerationComponent');
@@ -341,8 +343,14 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       return;
     }
 
-    // Display pre-generation steps
-    this.currentPage = 'steps';
+    if (this.featureFlags.partialBookDrafting.enabled) {
+      const projectId = this.activatedProject.projectId;
+      if (projectId != null) {
+        await this.router.navigate(['/projects', projectId, 'draft-generation', 'new-draft']);
+      }
+    } else {
+      this.currentPage = 'steps';
+    }
   }
 
   async cancel(): Promise<void> {
