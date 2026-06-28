@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
@@ -59,7 +60,9 @@ public class OnboardingRequestServiceTests
         var emailService = Substitute.For<IEmailService>();
         var emailSentTcs = new TaskCompletionSource();
         emailService
-            .When(e => e.SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()))
+            .When(e =>
+                e.SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            )
             .Do(_ => emailSentTcs.TrySetResult());
 
         var scopedOnboardingRequestService = Substitute.For<IOnboardingRequestService>();
@@ -105,6 +108,8 @@ public class OnboardingRequestServiceTests
             + "                ";
         // Subject uses ShortName as plain text (not HTML), so it is not encoded
         const string expectedSubject = "Onboarding request for <b>P01</b>";
-        await emailService.Received(1).SendEmailAsync(AdminEmail, expectedSubject, expectedBody);
+        await emailService
+            .Received(1)
+            .SendEmailAsync(AdminEmail, expectedSubject, expectedBody, CancellationToken.None);
     }
 }

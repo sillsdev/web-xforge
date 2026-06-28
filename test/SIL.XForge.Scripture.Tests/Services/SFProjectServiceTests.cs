@@ -70,7 +70,15 @@ public class SFProjectServiceTests
         const string role = SFProjectRole.CommunityChecker;
         env.EmailService.ValidateEmail(email).Returns(false);
         Assert.ThrowsAsync<InvalidOperationException>(() =>
-            env.Service.InviteAsync(User01, Project03, email, "en", role, TestEnvironment.WebsiteUrl)
+            env.Service.InviteAsync(
+                User01,
+                Project03,
+                email,
+                "en",
+                role,
+                TestEnvironment.WebsiteUrl,
+                CancellationToken.None
+            )
         );
     }
 
@@ -81,7 +89,15 @@ public class SFProjectServiceTests
         const string email = "newuser@example.com";
         const string role = SFProjectRole.CommunityChecker;
 
-        await env.Service.InviteAsync(User01, Project01, email, "en", role, TestEnvironment.WebsiteUrl);
+        await env.Service.InviteAsync(
+            User01,
+            Project01,
+            email,
+            "en",
+            role,
+            TestEnvironment.WebsiteUrl,
+            CancellationToken.None
+        );
         await env
             .EmailService.Received(1)
             .SendEmailAsync(
@@ -90,7 +106,8 @@ public class SFProjectServiceTests
                 Arg.Is<string>(body =>
                     body.Contains($"http://localhost/projects/{Project01}?sharing=true&shareKey=1234abc")
                     && body.Contains("The project invitation link expires in 14 days")
-                )
+                ),
+                CancellationToken.None
             );
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project01);
         Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).ProjectRole, Is.EqualTo(role));
@@ -103,7 +120,15 @@ public class SFProjectServiceTests
         const string email = "newuser@example.com";
         const string role = SFProjectRole.CommunityChecker;
 
-        await env.Service.InviteAsync(User01, Project03, email, "en", role, TestEnvironment.WebsiteUrl);
+        await env.Service.InviteAsync(
+            User01,
+            Project03,
+            email,
+            "en",
+            role,
+            TestEnvironment.WebsiteUrl,
+            CancellationToken.None
+        );
         await env
             .EmailService.Received(1)
             .SendEmailAsync(
@@ -112,7 +137,8 @@ public class SFProjectServiceTests
                 Arg.Is<string>(body =>
                     body.Contains($"http://localhost/projects/{Project03}?sharing=true&shareKey=1234abc")
                     && body.Contains("The project invitation link expires in 14 days")
-                )
+                ),
+                CancellationToken.None
             );
 
         // Code was recorded in database and email address was encoded in ShareKeys
@@ -134,7 +160,8 @@ public class SFProjectServiceTests
             observerEmail,
             "en",
             SFProjectRole.Viewer,
-            TestEnvironment.WebsiteUrl
+            TestEnvironment.WebsiteUrl,
+            CancellationToken.None
         );
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project04);
         Assert.That(
@@ -150,7 +177,8 @@ public class SFProjectServiceTests
                 Arg.Any<string>(),
                 Arg.Is<string>(body =>
                     body.Contains($"http://localhost/projects/{Project04}?sharing=true&shareKey={observerKey}")
-                )
+                ),
+                CancellationToken.None
             );
 
         const string reviewerEmail = "reviewer@example.com";
@@ -162,7 +190,8 @@ public class SFProjectServiceTests
             reviewerEmail,
             "en",
             SFProjectRole.Commenter,
-            TestEnvironment.WebsiteUrl
+            TestEnvironment.WebsiteUrl,
+            CancellationToken.None
         );
         projectSecret = env.ProjectSecrets.Get(Project04);
         Assert.That(
@@ -178,7 +207,8 @@ public class SFProjectServiceTests
                 Arg.Any<string>(),
                 Arg.Is<string>(body =>
                     body.Contains($"http://localhost/projects/{Project04}?sharing=true&shareKey={reviewerKey}")
-                )
+                ),
+                CancellationToken.None
             );
     }
 
@@ -206,7 +236,15 @@ public class SFProjectServiceTests
         );
         Assert.That(invitees[0].Role == initialRole);
 
-        await env.Service.InviteAsync(User01, Project03, email, "en", endingRole, TestEnvironment.WebsiteUrl);
+        await env.Service.InviteAsync(
+            User01,
+            Project03,
+            email,
+            "en",
+            endingRole,
+            TestEnvironment.WebsiteUrl,
+            CancellationToken.None
+        );
         // Invitation email was resent but with original code and updated time
         await env
             .EmailService.Received(1)
@@ -215,7 +253,8 @@ public class SFProjectServiceTests
                 Arg.Any<string>(),
                 Arg.Is<string>(body =>
                     body.Contains($"http://localhost/projects/{Project03}?sharing=true&shareKey=key1111")
-                )
+                ),
+                CancellationToken.None
             );
 
         projectSecret = env.ProjectSecrets.Get(Project03);
@@ -252,7 +291,15 @@ public class SFProjectServiceTests
         );
 
         env.SecurityService.GenerateKey().Returns("newkey");
-        await env.Service.InviteAsync(User01, Project03, email, "en", role, TestEnvironment.WebsiteUrl);
+        await env.Service.InviteAsync(
+            User01,
+            Project03,
+            email,
+            "en",
+            role,
+            TestEnvironment.WebsiteUrl,
+            CancellationToken.None
+        );
         // Invitation email was sent with a new code
         await env
             .EmailService.Received(1)
@@ -261,7 +308,8 @@ public class SFProjectServiceTests
                 Arg.Any<string>(),
                 Arg.Is<string>(body =>
                     body.Contains($"http://localhost/projects/{Project03}?sharing=true&shareKey=newkey")
-                )
+                ),
+                CancellationToken.None
             );
 
         projectSecret = env.ProjectSecrets.Get(Project03);
@@ -280,7 +328,15 @@ public class SFProjectServiceTests
         const string email = "newuser@example.com";
         const string role = SFProjectRole.CommunityChecker;
         // SUT
-        await env.Service.InviteAsync(User02, Project02, email, "en", role, TestEnvironment.WebsiteUrl);
+        await env.Service.InviteAsync(
+            User02,
+            Project02,
+            email,
+            "en",
+            role,
+            TestEnvironment.WebsiteUrl,
+            CancellationToken.None
+        );
         await env
             .EmailService.Received(1)
             .SendEmailAsync(
@@ -288,7 +344,8 @@ public class SFProjectServiceTests
                 Arg.Any<string>(),
                 Arg.Is<string>(body =>
                     body.Contains($"http://localhost/projects/{Project02}?sharing=true&shareKey=1234abc")
-                )
+                ),
+                CancellationToken.None
             );
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project02);
         Assert.That(projectSecret.ShareKeys.Single(sk => sk.Key == "1234abc").ProjectRole, Is.EqualTo(role));
@@ -322,7 +379,15 @@ public class SFProjectServiceTests
                 }
             );
 
-        await env.Service.InviteAsync(User01, Project03, email, "en", role, TestEnvironment.WebsiteUrl);
+        await env.Service.InviteAsync(
+            User01,
+            Project03,
+            email,
+            "en",
+            role,
+            TestEnvironment.WebsiteUrl,
+            CancellationToken.None
+        );
 
         const string url = "http://localhost/projects/project03?sharing=true&shareKey=1234abc&locale=en";
         const string expectedSubject = "You've been invited to the project project03 on xForge";
@@ -337,7 +402,7 @@ public class SFProjectServiceTests
             + "<li>Click <b>Sign up with Facebook</b> and follow the instructions to access xForge using an existing Facebook account, or</li>"
             + "<li>Enter your email address and a new password for your xForge account and click Sign up.</li></ul></p><p></p>"
             + "<p>Regards,<p>The xForge team</p>";
-        await env.EmailService.Received(1).SendEmailAsync(email, expectedSubject, expectedBody);
+        await env.EmailService.Received(1).SendEmailAsync(email, expectedSubject, expectedBody, CancellationToken.None);
     }
 
     [Test]
@@ -351,10 +416,13 @@ public class SFProjectServiceTests
                 "newuser@example.com",
                 "en",
                 SFProjectRole.CommunityChecker,
-                TestEnvironment.WebsiteUrl
+                TestEnvironment.WebsiteUrl,
+                CancellationToken.None
             )
         );
-        await env.EmailService.DidNotReceiveWithAnyArgs().SendEmailAsync(default, default, default);
+        await env
+            .EmailService.DidNotReceiveWithAnyArgs()
+            .SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
     }
 
     [Test]
@@ -368,7 +436,15 @@ public class SFProjectServiceTests
         Assert.That(userRole, Is.EqualTo(role), "setup - user should already be a project user");
 
         Assert.That(
-            await env.Service.InviteAsync(User01, Project03, email, "en", role, TestEnvironment.WebsiteUrl),
+            await env.Service.InviteAsync(
+                User01,
+                Project03,
+                email,
+                "en",
+                role,
+                TestEnvironment.WebsiteUrl,
+                CancellationToken.None
+            ),
             Is.False
         );
         project = env.GetProject(Project03);
@@ -382,7 +458,9 @@ public class SFProjectServiceTests
         );
 
         // Email should not have been sent
-        await env.EmailService.DidNotReceiveWithAnyArgs().SendEmailAsync(null, default, default);
+        await env
+            .EmailService.DidNotReceiveWithAnyArgs()
+            .SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
     }
 
     [Test]
@@ -392,10 +470,26 @@ public class SFProjectServiceTests
         const string email = "newuser@example.com";
         const string role = SFProjectRole.CommunityChecker;
         Assert.DoesNotThrowAsync(() =>
-            env.Service.InviteAsync(User02, Project03, email, "en", role, TestEnvironment.WebsiteUrl)
+            env.Service.InviteAsync(
+                User02,
+                Project03,
+                email,
+                "en",
+                role,
+                TestEnvironment.WebsiteUrl,
+                CancellationToken.None
+            )
         );
         Assert.ThrowsAsync<ForbiddenException>(() =>
-            env.Service.InviteAsync(User03, Project03, email, "en", role, TestEnvironment.WebsiteUrl)
+            env.Service.InviteAsync(
+                User03,
+                Project03,
+                email,
+                "en",
+                role,
+                TestEnvironment.WebsiteUrl,
+                CancellationToken.None
+            )
         );
     }
 
@@ -5880,6 +5974,7 @@ public class SFProjectServiceTests
                         },
                     ],
                 },
+                new SFProjectSecret { Id = SourceOnly },
             ]);
             Logger = new MockLogger<SFProjectService>();
             MachineProjectService = Substitute.For<IMachineProjectService>();

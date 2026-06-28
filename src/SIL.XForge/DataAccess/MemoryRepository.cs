@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -54,8 +53,7 @@ public class MemoryRepository<T> : IRepository<T>
         for (int i = 0; i < _uniqueKeySelectors.Length; i++)
         {
             object key = _uniqueKeySelectors[i](entity);
-            if (key != null)
-                _uniqueKeys[i].Add(key);
+            _uniqueKeys[i].Add(key);
         }
         _entities[entity.Id] = JsonConvert.SerializeObject(entity, Settings);
         EntitiesUpdated = true;
@@ -72,8 +70,7 @@ public class MemoryRepository<T> : IRepository<T>
         for (int i = 0; i < _uniqueKeySelectors.Length; i++)
         {
             object key = _uniqueKeySelectors[i](entity);
-            if (key != null)
-                _uniqueKeys[i].Remove(key);
+            _uniqueKeys[i].Remove(key);
         }
         _entities.TryRemove(entity.Id, out _);
         EntitiesUpdated = true;
@@ -81,7 +78,7 @@ public class MemoryRepository<T> : IRepository<T>
 
     public void Replace(T entity)
     {
-        if (_entities.TryGetValue(entity.Id, out string existingStr))
+        if (_entities.TryGetValue(entity.Id, out string? existingStr))
         {
             T existing = DeserializeEntity(entity.Id, existingStr);
             Remove(existing);
@@ -94,7 +91,7 @@ public class MemoryRepository<T> : IRepository<T>
 
     public T Get(string id) => DeserializeEntity(id, _entities[id]);
 
-    public Op[] GetOps(string id) => _entityOps.TryGetValue(id, out Op[] ops) ? ops : [];
+    public Op[] GetOps(string id) => _entityOps.TryGetValue(id, out Op[]? ops) ? ops : [];
 
     public void SetOps(string id, Op[] ops) => _entityOps[id] = ops;
 
@@ -136,7 +133,7 @@ public class MemoryRepository<T> : IRepository<T>
     )
     {
         Func<T, bool> filterFunc = filter.Compile();
-        T entity = Query()
+        T? entity = Query()
             .AsEnumerable()
             .FirstOrDefault(e =>
             {
@@ -151,11 +148,11 @@ public class MemoryRepository<T> : IRepository<T>
             });
         if (entity != null || upsert)
         {
-            T original = default;
+            T? original = default;
             bool isInsert = entity == null;
             if (isInsert)
             {
-                entity = (T)Activator.CreateInstance(typeof(T));
+                entity = Activator.CreateInstance<T>();
                 string id = ObjectId.GenerateNewId().ToString();
                 if (filter.Body is BinaryExpression binaryExpr)
                 {
@@ -163,27 +160,27 @@ public class MemoryRepository<T> : IRepository<T>
                     if (value is string stringValue)
                         id = stringValue;
                 }
-                entity!.Id = id;
+                entity.Id = id;
             }
             else
             {
                 original = Query().FirstOrDefault(filter);
             }
 
-            var builder = new MemoryUpdateBuilder<T>(entity, isInsert);
+            var builder = new MemoryUpdateBuilder<T>(entity!, isInsert);
             update(builder);
 
-            if (CheckDuplicateKeys(entity, original))
+            if (CheckDuplicateKeys(entity!, original))
                 throw new DuplicateKeyException();
 
-            Replace(entity);
+            Replace(entity!);
         }
-        return Task.FromResult(entity);
+        return Task.FromResult(entity!);
     }
 
-    public Task<T> DeleteAsync(Expression<Func<T, bool>> filter, CancellationToken _ = default)
+    public Task<T?> DeleteAsync(Expression<Func<T, bool>> filter, CancellationToken _ = default)
     {
-        T entity = Query().FirstOrDefault(filter);
+        T? entity = Query().FirstOrDefault(filter);
         if (entity != null)
             Remove(entity);
         return Task.FromResult(entity);
@@ -211,11 +208,7 @@ public class MemoryRepository<T> : IRepository<T>
         for (int i = 0; i < _uniqueKeySelectors.Length; i++)
         {
             object key = _uniqueKeySelectors[i](entity);
-            if (
-                key != null
-                && _uniqueKeys[i].Contains(key)
-                && (original == null || !key.Equals(_uniqueKeySelectors[i](original)))
-            )
+            if (_uniqueKeys[i].Contains(key) && (original == null || !key.Equals(_uniqueKeySelectors[i](original))))
                 return true;
         }
         return false;
@@ -223,7 +216,7 @@ public class MemoryRepository<T> : IRepository<T>
 
     private static T DeserializeEntity(string id, string json)
     {
-        var entity = JsonConvert.DeserializeObject<T>(json, Settings);
+        var entity = JsonConvert.DeserializeObject<T>(json, Settings)!;
         if (string.IsNullOrEmpty(entity.Id))
         {
             entity.Id = id;
@@ -284,9 +277,13 @@ public class MemoryRepository<T> : IRepository<T>
             return reader.Value is null ? BsonNull.Value : BsonValue.Create(reader.Value);
         }
 
-        public override void WriteJson(JsonWriter writer, BsonValue value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, BsonValue? value, JsonSerializer serializer)
         {
-            if (value.IsBsonArray)
+            if (value is null)
+            {
+                writer.WriteNull();
+            }
+            else if (value.IsBsonArray)
             {
                 // Convert a BsonArray into a JSON array
                 writer.WriteStartArray();

@@ -168,8 +168,9 @@ public class MachineProjectService(
                     curUserId,
                     buildConfig.ProjectId,
                     buildId: null,
-                    buildState: nameof(JobState.Canceled),
-                    websiteUrl: new Uri(siteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+                    buildState: JobState.Canceled,
+                    websiteUrl: siteOptions.Value.WebsiteUrl,
+                    cancellationToken
                 );
             }
         }
@@ -201,8 +202,9 @@ public class MachineProjectService(
                     curUserId,
                     buildConfig.ProjectId,
                     buildId: null,
-                    buildState: nameof(JobState.Canceled),
-                    websiteUrl: new Uri(siteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+                    buildState: JobState.Canceled,
+                    websiteUrl: siteOptions.Value.WebsiteUrl,
+                    cancellationToken
                 );
             }
         }
@@ -252,8 +254,9 @@ public class MachineProjectService(
                     curUserId,
                     buildConfig.ProjectId,
                     buildId: null,
-                    buildState: nameof(JobState.Faulted),
-                    websiteUrl: new Uri(siteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+                    buildState: JobState.Faulted,
+                    websiteUrl: siteOptions.Value.WebsiteUrl,
+                    cancellationToken
                 );
             }
         }
@@ -443,8 +446,9 @@ public class MachineProjectService(
         string curUserId,
         string sfProjectId,
         string? buildId,
-        string buildState,
-        Uri websiteUrl
+        JobState buildState,
+        Uri websiteUrl,
+        CancellationToken cancellationToken
     )
     {
         // Get the user who requested the build
@@ -458,21 +462,21 @@ public class MachineProjectService(
 
             // Build the email
             string resourceKeySubject =
-                buildState == nameof(JobState.Completed)
+                buildState == JobState.Completed
                     ? SharedResource.Keys.DraftGeneratedEmailSubject
                     : SharedResource.Keys.DraftNotGeneratedEmailSubject;
             string subject = localizer[resourceKeySubject, siteOptions.Value.Name];
             string resourceKeyBody = buildState switch
             {
-                nameof(JobState.Completed) => SharedResource.Keys.DraftGeneratedEmailBody,
-                nameof(JobState.Canceled) => SharedResource.Keys.DraftCanceledEmailBody,
+                JobState.Completed => SharedResource.Keys.DraftGeneratedEmailBody,
+                JobState.Canceled => SharedResource.Keys.DraftCanceledEmailBody,
                 _ => SharedResource.Keys.DraftFailedEmailBody,
             };
             string url = $"{websiteUrl.ToString().TrimEnd('/')}/projects/{sfProjectId}/draft-generation";
             string body =
                 $"<p>{localizer[resourceKeyBody, WebUtility.HtmlEncode(projectDoc.Data.ShortName)]}</p>"
                 + $"<p>{localizer[SharedResource.Keys.DraftEmailMoreInformation, url]}</p>";
-            await emailService.SendEmailAsync(userDoc.Data.Email, subject, body);
+            await emailService.SendEmailAsync(userDoc.Data.Email, subject, body, cancellationToken);
         }
         else
         {

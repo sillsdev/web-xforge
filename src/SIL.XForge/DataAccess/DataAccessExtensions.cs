@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,21 +30,21 @@ public static class DataAccessExtensions
     )
         where T : IIdentifiable => repo.UpdateAsync(entity.Id, update, upsert, cancellationToken);
 
-    public static Task<T> DeleteAsync<T>(
+    public static Task<T?> DeleteAsync<T>(
         this IRepository<T> repo,
         string id,
         CancellationToken cancellationToken = default
     )
         where T : IIdentifiable => repo.DeleteAsync(e => e.Id == id, cancellationToken);
 
-    public static async Task<T> GetAsync<T>(
+    public static async Task<T?> GetAsync<T>(
         this IRepository<T> repo,
         string id,
         CancellationToken cancellationToken = default
     )
         where T : IIdentifiable
     {
-        Attempt<T> attempt = await repo.TryGetAsync(id, cancellationToken);
+        Attempt<T?> attempt = await repo.TryGetAsync(id, cancellationToken);
         if (attempt.Success)
             return attempt.Result;
         return default;
@@ -57,18 +56,18 @@ public static class DataAccessExtensions
     )
         where T : IIdentifiable => await repo.Query().ToListAsync(cancellationToken);
 
-    public static async Task<Attempt<T>> TryGetAsync<T>(
+    public static async Task<Attempt<T?>> TryGetAsync<T>(
         this IRepository<T> repo,
         string id,
         CancellationToken cancellationToken = default
     )
         where T : IIdentifiable
     {
-        T entity = await repo.Query().Where(e => e.Id == id).FirstOrDefaultAsync(cancellationToken);
-        return new Attempt<T>(entity != null, entity);
+        T? entity = await repo.Query().Where(e => e.Id == id).FirstOrDefaultAsync(cancellationToken);
+        return new Attempt<T?>(entity != null, entity);
     }
 
-    public static async Task<T> FirstOrDefaultAsync<T>(
+    public static async Task<T?> FirstOrDefaultAsync<T>(
         this IQueryable<T> queryable,
         CancellationToken cancellationToken = default
     )
@@ -79,7 +78,7 @@ public static class DataAccessExtensions
             return queryable.FirstOrDefault();
     }
 
-    public static async Task<T> FirstOrDefaultAsync<T>(
+    public static async Task<T?> FirstOrDefaultAsync<T>(
         this IQueryable<T> queryable,
         Expression<Func<T, bool>> predicate,
         CancellationToken cancellationToken = default

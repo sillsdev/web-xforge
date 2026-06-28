@@ -646,7 +646,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         string email,
         string locale,
         string role,
-        Uri websiteUrl
+        Uri websiteUrl,
+        CancellationToken cancellationToken
     )
     {
         SFProject project = await GetProjectAsync(projectId);
@@ -656,7 +657,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (
             await RealtimeService
                 .QuerySnapshots<User>()
-                .AnyAsync(u => project.UserRoles.Keys.Contains(u.Id) && u.Email == email)
+                .AnyAsync(u => project.UserRoles.Keys.Contains(u.Id) && u.Email == email, cancellationToken)
         )
         {
             return false;
@@ -677,7 +678,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         // Remove the user sharekey if expired
         await ProjectSecrets.UpdateAsync(
             p => p.Id == projectId,
-            update => update.RemoveAll(p => p.ShareKeys, sk => sk.Email == email && sk.ExpirationTime < DateTime.UtcNow)
+            update =>
+                update.RemoveAll(p => p.ShareKeys, sk => sk.Email == email && sk.ExpirationTime < DateTime.UtcNow),
+            cancellationToken: cancellationToken
         );
         DateTime expTime = DateTime.UtcNow.AddDays(14);
 
@@ -696,11 +699,12 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                         ShareLinkType = ShareLinkType.Recipient,
                         CreatedByRole = userRole,
                     }
-                )
+                ),
+            cancellationToken: cancellationToken
         );
         if (projectSecret == null)
         {
-            projectSecret = await ProjectSecrets.GetAsync(projectId);
+            projectSecret = await ProjectSecrets.GetAsync(projectId, cancellationToken);
             int index = projectSecret.ShareKeys.FindIndex(sk => sk.Email == email);
 
             // Renew the expiration time of the valid key
@@ -709,14 +713,15 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 update =>
                     update
                         .Set(p => p.ShareKeys[index].ExpirationTime, expTime)
-                        .Set(p => p.ShareKeys[index].ProjectRole, role)
+                        .Set(p => p.ShareKeys[index].ProjectRole, role),
+                cancellationToken: cancellationToken
             );
         }
         string key = projectSecret.ShareKeys.Single(sk => sk.Email == email).Key;
         Uri url = new Uri(websiteUrl, $"projects/{projectId}?sharing=true&shareKey={key}&locale={locale}");
         string linkExpires = _localizer[SharedResource.Keys.InviteLinkExpires];
 
-        User inviter = await RealtimeService.GetSnapshotAsync<User>(curUserId);
+        User inviter = await RealtimeService.GetSnapshotAsync<User>(curUserId, cancellationToken);
         string subject = _localizer[SharedResource.Keys.InviteSubject, project.Name, siteOptions.Name];
         var greeting =
             $"<p>{_localizer[SharedResource.Keys.InviteGreeting, "<p>", WebUtility.HtmlEncode(inviter.Name), WebUtility.HtmlEncode(project.Name), siteOptions.Name, $"<a href=\"{url}\">{url}</a><p>"]}";
@@ -729,7 +734,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             $"<li>{_localizer[SharedResource.Keys.InviteEmailOption, siteOptions.Name]}</li></ul></p><p></p>";
         var signoff = $"<p>{_localizer[SharedResource.Keys.InviteSignature, "<p>", siteOptions.Name]}</p>";
         var emailBody = $"{greeting}{linkExpires}{instructions}{pt}{google}{facebook}{withemail}{signoff}";
-        await _emailService.SendEmailAsync(email, subject, emailBody);
+        await _emailService.SendEmailAsync(email, subject, emailBody, cancellationToken);
         return true;
     }
 

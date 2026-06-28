@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Serval.Client;
 using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services;
@@ -25,7 +26,8 @@ public interface IMachineProjectService
         string curUserId,
         string sfProjectId,
         string? buildId,
-        string buildState,
-        Uri websiteUrl
+        JobState buildState,
+        Uri websiteUrl,
+        CancellationToken cancellationToken
     );
 }

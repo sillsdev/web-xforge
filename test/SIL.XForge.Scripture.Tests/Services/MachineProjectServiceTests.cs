@@ -501,7 +501,9 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await env
+            .EmailService.Received()
+            .SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
     }
 
     [Test]
@@ -536,7 +538,9 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await env
+            .EmailService.Received()
+            .SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
     }
 
     [Test]
@@ -571,7 +575,9 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await env
+            .EmailService.Received()
+            .SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
     }
 
     [Test]
@@ -598,15 +604,18 @@ public class MachineProjectServiceTests
             User01,
             Project01,
             Build01,
-            nameof(JobState.Completed),
-            new Uri(env.SiteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+            JobState.Completed,
+            new Uri(env.SiteOptions.Value.Origin.Split(';').First(), UriKind.Absolute),
+            CancellationToken.None
         );
 
         const string expectedSubject = "Scripture Forge draft generated successfully";
         const string expectedBody =
             "<p>Your draft for P&lt;01&gt; was generated successfully.</p>"
             + "<p>For more information see https://localhost:5000/projects/project01/draft-generation</p>";
-        await env.EmailService.Received(1).SendEmailAsync("test@example.com", expectedSubject, expectedBody);
+        await env
+            .EmailService.Received(1)
+            .SendEmailAsync("test@example.com", expectedSubject, expectedBody, CancellationToken.None);
     }
 
     [Test]
@@ -2988,10 +2997,13 @@ public class MachineProjectServiceTests
             User01,
             Project01,
             Build01,
-            nameof(JobState.Completed),
-            new Uri(env.SiteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+            JobState.Completed,
+            env.SiteOptions.Value.WebsiteUrl,
+            CancellationToken.None
         );
-        await env.EmailService.DidNotReceive().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await env
+            .EmailService.DidNotReceive()
+            .SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
         env.MockLogger.AssertHasEvent(logEvent => logEvent.LogLevel == LogLevel.Error);
     }
 
@@ -3007,16 +3019,19 @@ public class MachineProjectServiceTests
             User01,
             Project01,
             Build01,
-            nameof(JobState.Completed),
-            new Uri(env.SiteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+            JobState.Completed,
+            env.SiteOptions.Value.WebsiteUrl,
+            CancellationToken.None
         );
-        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await env
+            .EmailService.Received()
+            .SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
     }
 
-    [TestCase(nameof(JobState.Canceled))]
-    [TestCase(nameof(JobState.Completed))]
-    [TestCase(nameof(JobState.Faulted))]
-    public async Task SendBuildCompletedEmailAsync_Success(string buildState)
+    [TestCase(JobState.Canceled)]
+    [TestCase(JobState.Completed)]
+    [TestCase(JobState.Faulted)]
+    public async Task SendBuildCompletedEmailAsync_Success(JobState buildState)
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -3035,9 +3050,12 @@ public class MachineProjectServiceTests
             Project01,
             Build01,
             buildState,
-            new Uri(env.SiteOptions.Value.Origin.Split(';').First(), UriKind.Absolute)
+            env.SiteOptions.Value.WebsiteUrl,
+            CancellationToken.None
         );
-        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await env
+            .EmailService.Received()
+            .SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
     }
 
     [Test]

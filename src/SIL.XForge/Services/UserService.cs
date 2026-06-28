@@ -209,17 +209,10 @@ public class UserService : IUserService
     /// <summary>
     /// Delete user with SF user id userId, as requested by SF user curUserId who has systemRole.
     /// </summary>
-    public async Task DeleteAsync(string curUserId, string[] systemRoles, string userId)
+    public async Task DeleteAsync(string? curUserId, string[] systemRoles, string? userId)
     {
-        if (curUserId is null)
-        {
-            throw new ArgumentNullException(nameof(curUserId));
-        }
-
-        if (userId is null)
-        {
-            throw new ArgumentNullException(nameof(userId));
-        }
+        ArgumentNullException.ThrowIfNull(curUserId);
+        ArgumentNullException.ThrowIfNull(userId);
 
         if (!systemRoles.Contains(SystemRole.SystemAdmin) && userId != curUserId)
         {

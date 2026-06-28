@@ -89,8 +89,6 @@ on:
         required: true
       serval_client_secret:
         required: true
-      serval_webhook_secret:
-        required: true
 
 jobs:
   deploy:
@@ -177,7 +175,6 @@ jobs:
           PARATEXT_RESOURCE_PASSWORD_BASE64: ${{secrets.paratext_resource_password_base64}}
           PARATEXT_RESOURCE_PASSWORD_HASH: ${{secrets.paratext_resource_password_hash}}
           SERVAL_CLIENT_SECRET: ${{secrets.serval_client_secret}}
-          SERVAL_WEBHOOK_SECRET: ${{secrets.serval_webhook_secret}}
       - name: Update release branch
         env:
           BUILD_COMMIT: ${{inputs.build_commit}}

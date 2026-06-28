@@ -21,7 +21,7 @@ public interface IRepository<T>
         bool upsert = false,
         CancellationToken cancellationToken = default
     );
-    Task<T> DeleteAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default);
+    Task<T?> DeleteAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default);
     Task<long> DeleteAllAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default);
     Task<long> CountDocumentsAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default);
 }

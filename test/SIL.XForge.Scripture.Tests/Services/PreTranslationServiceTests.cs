@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -46,7 +45,7 @@ public class PreTranslationServiceTests
         );
 
         // SUT
-        (string translationEngineId, string corpusId, string parallelCorpusId, bool useParatextVerseRef) =
+        (string translationEngineId, string? corpusId, string? parallelCorpusId, bool useParatextVerseRef) =
             await env.Service.GetPreTranslationParametersAsync(Project01);
         Assert.AreEqual(TranslationEngine01, translationEngineId);
         Assert.AreEqual(Corpus01, corpusId);
@@ -68,7 +67,7 @@ public class PreTranslationServiceTests
         );
 
         // SUT
-        (string translationEngineId, string corpusId, string parallelCorpusId, bool useParatextVerseRef) =
+        (string translationEngineId, string? corpusId, string? parallelCorpusId, bool useParatextVerseRef) =
             await env.Service.GetPreTranslationParametersAsync(Project01);
         Assert.AreEqual(TranslationEngine01, translationEngineId);
         Assert.IsNull(corpusId);
@@ -403,7 +402,7 @@ public class PreTranslationServiceTests
                     .Configure()
                     .GetPreTranslationParametersAsync(Project01)
                     .Returns(
-                        Task.FromResult<(string, string, string, bool)>(
+                        Task.FromResult<(string, string?, string?, bool)>(
                             (TranslationEngine01, Corpus01, null, options.UseParatextZipFile)
                         )
                     );
@@ -414,7 +413,7 @@ public class PreTranslationServiceTests
                     .Configure()
                     .GetPreTranslationParametersAsync(Project01)
                     .Returns(
-                        Task.FromResult<(string, string, string, bool)>(
+                        Task.FromResult<(string, string?, string?, bool)>(
                             (TranslationEngine01, null, ParallelCorpus01, options.UseParatextZipFile)
                         )
                     );
