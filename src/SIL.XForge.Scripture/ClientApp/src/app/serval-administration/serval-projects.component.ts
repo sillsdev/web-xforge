@@ -173,8 +173,8 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
   viewDraftJobs(projectId: string): void {
     void this.router.navigate(['/serval-administration'], {
       queryParams: {
-        projectId,
-        tab: 'draft-jobs'
+        tab: 'serval-builds',
+        q: projectId
       }
     });
   }
