@@ -15,6 +15,8 @@ using MongoDB.Bson;
 using Newtonsoft.Json;
 using Serval.Client;
 using SIL.Converters.Usj;
+using SIL.Machine.Corpora;
+using SIL.Machine.QualityEstimation;
 using SIL.ObjectModel;
 using SIL.Scripture;
 using SIL.XForge.Configuration;
@@ -41,6 +43,7 @@ namespace SIL.XForge.Scripture.Services;
 public class MachineApiService(
     IBackgroundJobClient backgroundJobClient,
     IDeltaUsxMapper deltaUsxMapper,
+    IRepository<DraftMetrics> draftMetrics,
     IEventMetricService eventMetricService,
     IExceptionHandler exceptionHandler,
     IHubContext<NotificationHub, INotifier> hubContext,
@@ -1079,6 +1082,32 @@ public class MachineApiService(
             .Values.GroupBy(entry => entry.sfProjectId)
             .ToDictionary(group => group.Key, group => group.First().sfProject);
 
+        // Build a list of project ids and build ids for the draft metric ids
+        // for all projects with quality estimation configured.
+        List<string> draftMetricIds = [];
+        foreach (TranslationBuild translationBuild in translationBuilds)
+        {
+            if (
+                engineToProject.TryGetValue(
+                    translationBuild.Engine.Id,
+                    out (string sfProjectId, SFProject? sfProject) project
+                ) && project.sfProject?.TranslateConfig.DraftConfig.QualityEstimationConfig is not null
+            )
+            {
+                draftMetricIds.Add($"{project.sfProjectId}:{translationBuild.Id}");
+            }
+        }
+
+        // Get the draft metrics for the specified projects/builds
+        List<DraftMetrics> draftMetricsForBuilds = [];
+        if (draftMetricIds.Count > 0)
+        {
+            draftMetricsForBuilds = await draftMetrics
+                .Query()
+                .Where(dm => draftMetricIds.Contains(dm.Id))
+                .ToListAsync(cancellationToken);
+        }
+
         // Build reports from Serval builds
         HashSet<string> matchedRequestIds = [];
         List<ServalBuildReportDto> reports = [];
@@ -1089,6 +1118,7 @@ public class MachineApiService(
                 engineToProject,
                 eventsByProject,
                 projectSnapshots,
+                draftMetricsForBuilds,
                 cancellationToken
             );
             if (report.DraftGenerationRequestId != null)
@@ -1118,6 +1148,61 @@ public class MachineApiService(
         reports.AddRange(eventsOnlyReports);
 
         return reports;
+    }
+
+    /// <summary>
+    /// Gets the confidence values for the specified project and build.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="buildId">The build identifier.</param>
+    /// <param name="isServalAdmin">If <c>true</c>, the current user is a Serval Administrator.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>
+    /// The confidence values for the books and chapters, and the quality estimation configuration used,
+    /// or <c>null</c> if the confidence data does not exist for the build.
+    /// </returns>
+    /// <exception cref="DataNotFoundException">The project does not exist.</exception>
+    public async Task<BuildConfidences?> GetBuildConfidencesAsync(
+        string curUserId,
+        string sfProjectId,
+        string buildId,
+        bool isServalAdmin,
+        CancellationToken cancellationToken
+    )
+    {
+        // Ensure that the user has permission
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin, cancellationToken);
+
+        // Retrieve the draft metrics, if they exist, or throw an error if they do not
+        Attempt<DraftMetrics> attempt = await draftMetrics.TryGetAsync(
+            DraftMetrics.GetDocId(sfProjectId, buildId),
+            cancellationToken
+        );
+        if (attempt.Success)
+        {
+            return MapBuildConfidences(attempt.Result);
+        }
+
+        return null;
+    }
+
+    private static BuildConfidences? MapBuildConfidences(DraftMetrics? draftMetrics)
+    {
+        if (draftMetrics is null)
+        {
+            return null;
+        }
+
+        string[] id = draftMetrics.Id.Split(':');
+        return new BuildConfidences
+        {
+            ProjectId = id[0],
+            BuildId = id[1],
+            BookConfidences = draftMetrics.BookConfidences,
+            ChapterConfidences = draftMetrics.ChapterConfidences,
+            LowestConfidence = draftMetrics.BookConfidences.OrderBy(b => b.Usability).FirstOrDefault(),
+        };
     }
 
     /// <summary>
@@ -1233,6 +1318,7 @@ public class MachineApiService(
         Dictionary<string, (string sfProjectId, SFProject? sfProject)> engineToProject,
         Dictionary<string, List<EventMetric>> eventsByProject,
         Dictionary<string, SFProject?> projectSnapshots,
+        List<DraftMetrics> draftMetricsForBuilds,
         CancellationToken cancellationToken
     )
     {
@@ -1276,6 +1362,12 @@ public class MachineApiService(
         // Identify problems
         List<BuildReportProblem> problems = ExtractProblems(translationBuild, projectEvents);
 
+        // Get the draft metrics for the build
+        DraftMetrics buildDraftMetrics =
+            sfProjectId != null
+                ? draftMetricsForBuilds.SingleOrDefault(dm => dm.Id == $"{sfProjectId}:{buildDto.Id}")
+                : null;
+
         return new ServalBuildReportDto
         {
             Build = buildDto,
@@ -1286,6 +1378,7 @@ public class MachineApiService(
             DraftGenerationRequestId = draftGenerationRequestId,
             RequesterSFUserId = requesterUserId,
             Status = ToDraftGenerationBuildStatus(translationBuild.State),
+            BuildConfidences = MapBuildConfidences(buildDraftMetrics),
         };
     }
 
@@ -2546,7 +2639,8 @@ public class MachineApiService(
                 );
 
                 // Update the pre-translation text documents
-                await UpdatePreTranslationTextDocumentsAsync(sfProjectId, cancellationToken);
+                string? buildId = translationBuild.Id;
+                await UpdatePreTranslationTextDocumentsAsync(sfProjectId, buildId, cancellationToken);
 
                 // Update the drafted scripture range to include the current scripture range
                 string draftedScriptureRange =
@@ -2568,7 +2662,6 @@ public class MachineApiService(
                 );
 
                 // Notify any SignalR clients subscribed to the project
-                string? buildId = translationBuild.Id;
                 await hubContext.NotifyBuildProgress(
                     sfProjectId,
                     new ServalBuildState { BuildId = buildId, State = nameof(ServalData.PreTranslationsRetrieved) }
@@ -2869,12 +2962,14 @@ public class MachineApiService(
     /// Updates the text documents locally with the latest pre-translation drafts.
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="buildId">The Serval build identifier.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>An asynchronous task.</returns>
     /// <exception cref="DataNotFoundException">Required data could not be found.</exception>
     /// <remarks>This can be mocked in unit tests.</remarks>
     protected internal virtual async Task UpdatePreTranslationTextDocumentsAsync(
         string sfProjectId,
+        string buildId,
         CancellationToken cancellationToken
     )
     {
@@ -2926,6 +3021,14 @@ public class MachineApiService(
             throw new ForbiddenException();
         }
 
+        // Only calculate quality estimation if the project is configured for it, and we have not calculated it already
+        bool calculateQualityEstimation = projectDoc.Data.TranslateConfig.DraftConfig.QualityEstimationConfig != null;
+
+        // Retrieve the pre-translation verse confidences from Serval
+        List<VerseConfidence> verseConfidences = calculateQualityEstimation
+            ? [.. await preTranslationService.GetVerseConfidencesAsync(sfProjectId, cancellationToken)]
+            : [];
+
         // For every text we have a draft applied to, get the pre-translation
         foreach (
             (string bookId, List<int> chapters) in ScriptureRangeParser.GetChapters(
@@ -2972,6 +3075,53 @@ public class MachineApiService(
                     await SaveTextDocumentAsync(textDocument, usj);
                 }
             }
+        }
+
+        // Generate the draft metrics containing the confidence scores
+        if (calculateQualityEstimation)
+        {
+            ChrF3QualityEstimator estimator = new ChrF3QualityEstimator(
+                projectDoc.Data.TranslateConfig.DraftConfig.QualityEstimationConfig.Slope,
+                projectDoc.Data.TranslateConfig.DraftConfig.QualityEstimationConfig.Intercept
+            );
+            (
+                List<ScriptureSegmentUsability> _, // We do not require segment level confidence values
+                List<ScriptureChapterUsability> usabilityChapters,
+                List<ScriptureBookUsability> usabilityBooks
+            ) = estimator.EstimateQuality(
+                verseConfidences.Select(vc => (new ScriptureRef(vc.ToVerseRef()), vc.Confidence))
+            );
+            var entity = new DraftMetrics
+            {
+                Id = DraftMetrics.GetDocId(sfProjectId, buildId),
+                BookConfidences =
+                [
+                    .. usabilityBooks.Select(b => new BookConfidence
+                    {
+                        BookNum = Canon.BookIdToNumber(b.Book),
+                        Confidence = b.Confidence,
+                        Label = b.Label.ToString(),
+                        ProjectedChrF3 = b.ProjectedChrF3,
+                        Usability = b.Usability,
+                    }),
+                ],
+                ChapterConfidences =
+                [
+                    .. usabilityChapters.Select(c => new ChapterConfidence
+                    {
+                        BookNum = Canon.BookIdToNumber(c.Book),
+                        ChapterNum = c.Chapter,
+                        Confidence = c.Confidence,
+                        Label = c.Label.ToString(),
+                        ProjectedChrF3 = c.ProjectedChrF3,
+                        Usability = c.Usability,
+                    }),
+                ],
+                QualityEstimationConfig = projectDoc.Data.TranslateConfig.DraftConfig.QualityEstimationConfig,
+                VerseConfidences = verseConfidences,
+                DateUpdated = DateTime.UtcNow,
+            };
+            await draftMetrics.ReplaceAsync(entity, upsert: true, cancellationToken);
         }
     }
 

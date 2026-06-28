@@ -1,0 +1,21 @@
+.confidence {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  &.green {
+    color: var(--sf-build-confidence-green-color);
+  }
+
+  &.yellow {
+    color: var(--sf-build-confidence-yellow-color);
+  }
+
+  &.red {
+    color: var(--sf-build-confidence-red-color);
+  }
+
+  &.grey {
+    color: var(--sf-build-confidence-grey-color);
+  }
+}

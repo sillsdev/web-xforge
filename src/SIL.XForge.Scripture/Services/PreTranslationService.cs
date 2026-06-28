@@ -1,4 +1,4 @@
-#nullable disable warnings
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -17,9 +17,72 @@ public class PreTranslationService(
     ITranslationEnginesClient translationEnginesClient
 ) : IPreTranslationService
 {
-    public static string GetTextId(int bookNum, int chapterNum) => $"{bookNum}_{chapterNum}";
+    private static string GetTextId(int bookNum) => Canon.BookNumberToId(bookNum);
 
-    public static string GetTextId(int bookNum) => Canon.BookNumberToId(bookNum);
+    /// <summary>
+    /// Get the verse confidences for the pre-translations.
+    /// </summary>
+    /// <param name="sfProjectId">The SF project identifier.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The verse confidences.</returns>
+    public async Task<IEnumerable<VerseConfidence>> GetVerseConfidencesAsync(
+        string sfProjectId,
+        CancellationToken cancellationToken
+    )
+    {
+        // Ensure we have the parameters to retrieve the pre-translation
+        (string translationEngineId, string? _, string? parallelCorpusId) = await GetPreTranslationParametersAsync(
+            sfProjectId
+        );
+
+        // If there is no parallel corpus id, there are no confidence values
+        if (parallelCorpusId is null)
+            return [];
+
+        // Iterate over every pre-translation confidence for the parallel corpus.
+        // Use a dictionary to stop duplication of verse references
+        Dictionary<VerseRef, double> confidences = [];
+        foreach (
+            PretranslationConfidence pretranslationConfidence in await translationEnginesClient.GetAllPretranslationConfidencesAsync(
+                translationEngineId,
+                parallelCorpusId,
+                cancellationToken
+            )
+        )
+        {
+            // Get the references - old builds will only have TargetRefs specified,
+            // newer builds will have TargetRefs and SourceRefs specified.
+            List<string> references = [.. pretranslationConfidence.SourceRefs, .. pretranslationConfidence.TargetRefs];
+
+            // A reference will be in the format: "MAT 1:2" or "MAT 1:2/1:p"
+            string? reference = references.FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(reference))
+            {
+                continue;
+            }
+
+            // If there is a forward slash, in the reference, the first half is the verse reference
+            if (reference.Contains('/', StringComparison.OrdinalIgnoreCase))
+            {
+                reference = reference.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+            }
+
+            // Ensure we have a valid verse reference and it is for this chapter
+            if (!VerseRef.TryParse(reference, out VerseRef verseRef))
+            {
+                continue;
+            }
+
+            // Add the confidence value. However, if the confidence value already exists, see if this pre-translation
+            // is for the verse content, and if so, set the confidence value.
+            if (!confidences.TryAdd(verseRef, pretranslationConfidence.Confidence) && !references.First().Contains('/'))
+            {
+                confidences[verseRef] = pretranslationConfidence.Confidence;
+            }
+        }
+
+        return confidences.Select(c => new VerseConfidence(c.Key.BookNum, c.Key.ChapterNum, c.Key.Verse, c.Value));
+    }
 
     /// <summary>
     /// Gets the pre-translations as USFM.
@@ -27,9 +90,9 @@ public class PreTranslationService(
     /// <param name="sfProjectId">The SF project identifier.</param>
     /// <param name="bookNum">The book number.</param>
     /// <param name="chapterNum">The chapter number. If 0, all chapters in the book are returned.</param>
-    /// <param name="config">The draft USFM configuration.</param>":
+    /// <param name="config">The draft USFM configuration.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns></returns>
+    /// <returns>The USFM.</returns>
     /// <exception cref="DataNotFoundException">
     /// The project secret or pre-translation configuration was not found.
     /// </exception>
@@ -42,7 +105,7 @@ public class PreTranslationService(
     )
     {
         // Ensure we have the parameters to retrieve the pre-translation
-        (string? translationEngineId, string? corpusId, string? parallelCorpusId, bool _) =
+        (string translationEngineId, string? corpusId, string? parallelCorpusId) =
             await GetPreTranslationParametersAsync(sfProjectId);
 
         // Generate the paragraph marker and quote normalization behaviors
@@ -61,7 +124,7 @@ public class PreTranslationService(
         };
 
         // Get the USFM
-        string usfm;
+        string usfm = string.Empty;
         if (parallelCorpusId is not null)
         {
             usfm = await translationEnginesClient.GetPretranslatedUsfmAsync(
@@ -77,7 +140,7 @@ public class PreTranslationService(
                 cancellationToken: cancellationToken
             );
         }
-        else
+        else if (corpusId is not null)
         {
             // Retrieve the USFM from a legacy corpus
 #pragma warning disable CS0612 // Type or member is obsolete
@@ -121,42 +184,37 @@ public class PreTranslationService(
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <returns>
-    /// The translation engine identifier, the corpus identifier, and whether to use Paratext verse references.
+    /// The translation engine identifier, the corpus identifier, and the parallel corpus identifier.
     /// </returns>
     /// <remarks>This can be mocked in unit tests.</remarks>
     /// <exception cref="DataNotFoundException">The pre-translation engine is not configured, or the project secret cannot be found.</exception>
     protected internal virtual async Task<(
         string translationEngineId,
         string? corpusId,
-        string? parallelCorpusId,
-        bool useParatextVerseRef
+        string? parallelCorpusId
     )> GetPreTranslationParametersAsync(string sfProjectId)
     {
         // Load the target project secrets, so we can get the translation engine ID and corpus ID
-        if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
+        if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret? projectSecret))
         {
             throw new DataNotFoundException("The project secret cannot be found.");
         }
 
-        string translationEngineId = projectSecret.ServalData?.PreTranslationEngineId;
+        string? translationEngineId = projectSecret?.ServalData?.PreTranslationEngineId;
         string? corpusId = null;
         string? parallelCorpusId = null;
-        bool useParatextVerseRef = false;
-        if (!string.IsNullOrWhiteSpace(projectSecret.ServalData?.ParallelCorpusIdForPreTranslate))
+        if (!string.IsNullOrWhiteSpace(projectSecret?.ServalData?.ParallelCorpusIdForPreTranslate))
         {
             parallelCorpusId = projectSecret.ServalData.ParallelCorpusIdForPreTranslate;
-            useParatextVerseRef = true;
         }
         else
         {
             // Legacy Serval Project
             corpusId = projectSecret
-                .ServalData?.Corpora?.FirstOrDefault(c => c.Value.PreTranslate && !c.Value.AlternateTrainingSource)
+                ?.ServalData?.Corpora?.FirstOrDefault(c =>
+                    c.Value is { PreTranslate: true, AlternateTrainingSource: false }
+                )
                 .Key;
-            if (!string.IsNullOrWhiteSpace(corpusId))
-            {
-                useParatextVerseRef = projectSecret.ServalData.Corpora[corpusId].UploadParatextZipFile;
-            }
         }
 
         if (
@@ -167,6 +225,6 @@ public class PreTranslationService(
             throw new DataNotFoundException("The pre-translation engine is not configured.");
         }
 
-        return (translationEngineId, corpusId, parallelCorpusId, useParatextVerseRef);
+        return (translationEngineId, corpusId, parallelCorpusId);
     }
 }

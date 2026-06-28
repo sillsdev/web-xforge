@@ -151,6 +151,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 4px;
 }
 
 /* Ensure the mat-cell for the status column centers its content. */
@@ -545,5 +546,16 @@ a {
 .details-dialog-button {
   mat-icon {
     margin-right: 8px;
+  }
+}
+
+.book-confidences {
+  max-height: 13em;
+  overflow-y: auto;
+  display: grid;
+  row-gap: 1em;
+  .book-confidence {
+    display: grid;
+    row-gap: 0;
   }
 }

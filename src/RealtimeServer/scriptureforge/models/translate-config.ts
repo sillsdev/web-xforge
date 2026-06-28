@@ -60,11 +60,14 @@ export interface DraftUsfmConfig {
 
 /**
  * The configuration used for Quality Estimation.
+ *
+ * NOTE: dateUpdated is nullable here but not in the C# backend, as it will not be in the model sent to the backend.
  */
 export interface QualityEstimationConfig {
   version: string;
   slope: number;
   intercept: number;
+  dateUpdated?: Date;
 }
 
 export interface DraftConfig {

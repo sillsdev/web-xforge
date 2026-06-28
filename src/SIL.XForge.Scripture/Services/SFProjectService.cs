@@ -1257,7 +1257,13 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         else
         {
             await projectDoc.SubmitJson0OpAsync(op =>
-                op.Set(p => p.TranslateConfig.DraftConfig.QualityEstimationConfig, qualityEstimationConfig)
+                op.Set(
+                    p => p.TranslateConfig.DraftConfig.QualityEstimationConfig,
+                    qualityEstimationConfig with
+                    {
+                        DateUpdated = DateTime.UtcNow,
+                    }
+                )
             );
         }
     }
