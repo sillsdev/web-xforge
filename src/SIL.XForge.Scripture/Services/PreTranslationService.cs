@@ -17,9 +17,7 @@ public class PreTranslationService(
     ITranslationEnginesClient translationEnginesClient
 ) : IPreTranslationService
 {
-    public static string GetTextId(int bookNum, int chapterNum) => $"{bookNum}_{chapterNum}";
-
-    public static string GetTextId(int bookNum) => Canon.BookNumberToId(bookNum);
+    private static string GetTextId(int bookNum) => Canon.BookNumberToId(bookNum);
 
     /// <summary>
     /// Get the verse confidences for the pre-translations.
@@ -197,15 +195,15 @@ public class PreTranslationService(
     )> GetPreTranslationParametersAsync(string sfProjectId)
     {
         // Load the target project secrets, so we can get the translation engine ID and corpus ID
-        if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
+        if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret? projectSecret))
         {
             throw new DataNotFoundException("The project secret cannot be found.");
         }
 
-        string? translationEngineId = projectSecret.ServalData?.PreTranslationEngineId;
+        string? translationEngineId = projectSecret?.ServalData?.PreTranslationEngineId;
         string? corpusId = null;
         string? parallelCorpusId = null;
-        if (!string.IsNullOrWhiteSpace(projectSecret.ServalData?.ParallelCorpusIdForPreTranslate))
+        if (!string.IsNullOrWhiteSpace(projectSecret?.ServalData?.ParallelCorpusIdForPreTranslate))
         {
             parallelCorpusId = projectSecret.ServalData.ParallelCorpusIdForPreTranslate;
         }
@@ -213,7 +211,9 @@ public class PreTranslationService(
         {
             // Legacy Serval Project
             corpusId = projectSecret
-                .ServalData?.Corpora?.FirstOrDefault(c => c.Value.PreTranslate && !c.Value.AlternateTrainingSource)
+                ?.ServalData?.Corpora?.FirstOrDefault(c =>
+                    c.Value is { PreTranslate: true, AlternateTrainingSource: false }
+                )
                 .Key;
         }
 

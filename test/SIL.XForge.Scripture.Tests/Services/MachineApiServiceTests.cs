@@ -2174,7 +2174,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        BuildConfidences actual = await env.Service.GetBuildConfidencesAsync(
+        BuildConfidences? actual = await env.Service.GetBuildConfidencesAsync(
             User01,
             Project01,
             ServalBuildId01,
@@ -2193,7 +2193,7 @@ public class MachineApiServiceTests
         await env.SetupDraftMetricsAsync(Project01, ServalBuildId01, QualityEstimationConfig);
 
         // SUT
-        BuildConfidences actual = await env.Service.GetBuildConfidencesAsync(
+        BuildConfidences? actual = await env.Service.GetBuildConfidencesAsync(
             User02,
             Project01,
             ServalBuildId01,
@@ -2203,11 +2203,11 @@ public class MachineApiServiceTests
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(actual.ProjectId, Is.EqualTo(Project01));
-            Assert.That(actual.BuildId, Is.EqualTo(ServalBuildId01));
-            Assert.That(actual.BookConfidences, Is.Not.Empty);
-            Assert.That(actual.ChapterConfidences, Is.Not.Empty);
-            Assert.That(actual.LowestConfidence, Is.Not.Null);
+            Assert.That(actual?.ProjectId, Is.EqualTo(Project01));
+            Assert.That(actual?.BuildId, Is.EqualTo(ServalBuildId01));
+            Assert.That(actual?.BookConfidences, Is.Not.Empty);
+            Assert.That(actual?.ChapterConfidences, Is.Not.Empty);
+            Assert.That(actual?.LowestConfidence, Is.Not.Null);
         }
     }
 
@@ -2219,7 +2219,7 @@ public class MachineApiServiceTests
         await env.SetupDraftMetricsAsync(Project01, ServalBuildId01, QualityEstimationConfig);
 
         // SUT
-        BuildConfidences actual = await env.Service.GetBuildConfidencesAsync(
+        BuildConfidences? actual = await env.Service.GetBuildConfidencesAsync(
             User01,
             Project01,
             ServalBuildId01,
@@ -2229,11 +2229,11 @@ public class MachineApiServiceTests
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(actual.ProjectId, Is.EqualTo(Project01));
-            Assert.That(actual.BuildId, Is.EqualTo(ServalBuildId01));
-            Assert.That(actual.BookConfidences, Is.Not.Empty);
-            Assert.That(actual.ChapterConfidences, Is.Not.Empty);
-            Assert.That(actual.LowestConfidence, Is.Not.Null);
+            Assert.That(actual?.ProjectId, Is.EqualTo(Project01));
+            Assert.That(actual?.BuildId, Is.EqualTo(ServalBuildId01));
+            Assert.That(actual?.BookConfidences, Is.Not.Empty);
+            Assert.That(actual?.ChapterConfidences, Is.Not.Empty);
+            Assert.That(actual?.LowestConfidence, Is.Not.Null);
         }
     }
 
