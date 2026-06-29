@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButton, MatIconButton, MatMiniFabButton } from '@angular/material/button';
 import { MatCard, MatCardContent } from '@angular/material/card';
@@ -23,12 +23,13 @@ import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { asyncScheduler, combineLatest, merge, Subscription } from 'rxjs';
 import { map, startWith, tap, throttleTime } from 'rxjs/operators';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { DonutChartComponent } from 'xforge-common/donut-chart/donut-chart.component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { L10nNumberPipe } from 'xforge-common/l10n-number.pipe';
-import { DocSubscription } from 'xforge-common/models/realtime-doc';
+import { DocSubscription, QuerySubscription } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -78,7 +79,7 @@ import { QuestionDialogService } from '../question-dialog/question-dialog.servic
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CheckingOverviewComponent extends DataLoadingComponent implements OnInit, OnDestroy {
+export class CheckingOverviewComponent extends DataLoadingComponent implements OnInit {
   texts: TextInfo[] = [];
   projectId?: string;
   questionsLoaded: boolean = false;
@@ -100,6 +101,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
     private readonly checkingQuestionsService: CheckingQuestionsService,
+    private readonly activatedProjectService: ActivatedProjectService,
     private readonly userService: UserService,
     private readonly questionDialogService: QuestionDialogService,
     private readonly permissions: PermissionsService,
@@ -236,11 +238,10 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
           this.userService.currentUserId,
           new DocSubscription('CheckingOverviewComponent', this.destroyRef)
         );
-        this.questionsQuery?.dispose();
         this.questionsQuery = await this.checkingQuestionsService.queryQuestions(
           projectId,
           { sort: true },
-          this.destroyRef
+          new QuerySubscription('checking-overview/main-questions', this.activatedProjectService.switched$)
         );
         this.initTexts();
       } finally {
@@ -285,10 +286,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
           this.changeDetector.markForCheck();
         });
     });
-  }
-
-  ngOnDestroy(): void {
-    this.questionsQuery?.dispose();
   }
 
   getRouterLink(bookId: string): string[] {

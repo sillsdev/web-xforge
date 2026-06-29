@@ -2,13 +2,15 @@ import { DestroyRef, Injectable, Optional } from '@angular/core';
 import { filter, lastValueFrom, race, Subject, take, timer } from 'rxjs';
 import { AppError } from 'xforge-common/exception-handling.service';
 import { FileService } from './file.service';
-import { DocSubscription, RealtimeDoc } from './models/realtime-doc';
+import { DocSubscription, QuerySubscription, RealtimeDoc } from './models/realtime-doc';
 import { RealtimeDocLifecycleMonitorService } from './models/realtime-doc-lifecycle-monitor';
 import { RealtimeQuery } from './models/realtime-query';
 import { OfflineStore } from './offline-store';
 import { QueryParameters } from './query-parameters';
 import { RealtimeRemoteStore } from './realtime-remote-store';
 import { TypeRegistry } from './type-registry';
+
+const QUERY_DISPOSE_TIMEOUT_MS = 5000;
 
 function getDocKey(collection: string, id: string): string {
   return `${collection}:${id}`;
@@ -202,12 +204,14 @@ export class RealtimeService {
     collection: string,
     name: string,
     parameters: QueryParameters,
-    destroyRef: DestroyRef
+    lifetimeIndicator: DestroyRef | QuerySubscription
   ): Promise<RealtimeQuery<T>> {
-    const query = this.createQuery<T>(collection, name, parameters);
+    const queryName =
+      lifetimeIndicator instanceof QuerySubscription ? `${lifetimeIndicator.callerContext}/${name}` : name;
+    const query = this.createQuery<T>(collection, queryName, parameters);
     return this.manageQuery(
       query.subscribe().then(() => query),
-      destroyRef
+      lifetimeIndicator
     );
   }
 
@@ -275,36 +279,51 @@ export class RealtimeService {
   }
 
   /**
-   * Ensures query is disposed when the component associated with DestroyRef is destroyed.
-   * This will handle the case where the component is destroyed before `queryPromise` resolves.
+   * Ensures query is disposed when the associated lifecycle owner signals unsubscribe/destroy. This will handle the
+   * case where lifecycle signal happens (such as the component being destroyed) before `queryPromise` resolves.
    * @param queryPromise The Promise for the RealtimeQuery.
-   * @param destroyRef The DestroyRef associated with the component.
+   * @param lifetimeIndicator The lifecycle owner of the query.
    * @returns The passed in `queryPromise`.
    */
   private manageQuery<T extends RealtimeDoc>(
     queryPromise: Promise<RealtimeQuery<T>>,
-    destroyRef: DestroyRef
+    lifetimeIndicator: DestroyRef | QuerySubscription
   ): Promise<RealtimeQuery<T>> {
+    if (lifetimeIndicator instanceof QuerySubscription) {
+      lifetimeIndicator.isUnsubscribed$
+        .pipe(
+          filter(isUnsubscribed => isUnsubscribed),
+          take(1)
+        )
+        .subscribe(() => {
+          this.disposeQueryWhenReadyOrTimeout(queryPromise);
+        });
+
+      return queryPromise;
+    }
+
     try {
-      destroyRef.onDestroy(() =>
-        queryPromise.then(query => {
-          // Call dispose when the query is ready or after 5 seconds (query will not emit 'ready' when offline)
-          race([
-            query.ready$.pipe(
-              filter(ready => ready),
-              take(1)
-            ),
-            timer(5000)
-          ])
-            .pipe(take(1))
-            .subscribe(() => query.dispose());
-        })
-      );
+      lifetimeIndicator.onDestroy(() => this.disposeQueryWhenReadyOrTimeout(queryPromise));
     } catch {
       // If 'onDestroy' callback registration fails (view already destroyed), dispose immediately
       void queryPromise.then(query => query.dispose());
     }
 
     return queryPromise;
+  }
+
+  private disposeQueryWhenReadyOrTimeout<T extends RealtimeDoc>(queryPromise: Promise<RealtimeQuery<T>>): void {
+    void queryPromise.then(query => {
+      // Call dispose when the query is ready or after timeout (query will not emit 'ready' when offline)
+      race([
+        query.ready$.pipe(
+          filter(ready => ready),
+          take(1)
+        ),
+        timer(QUERY_DISPOSE_TIMEOUT_MS)
+      ])
+        .pipe(take(1))
+        .subscribe(() => query.dispose());
+    });
   }
 }

@@ -67,6 +67,14 @@ export class DocSubscription {
 }
 
 /**
+ * Represents the lifecycle owner of one or more realtime queries.
+ *
+ * This extends DocSubscription, but another option could be to rename `DocSubscription` to `DocOrQuerySubscription` or
+ * just reuse `DocSubscription` for queries.
+ */
+export class QuerySubscription extends DocSubscription {}
+
+/**
  * This is the base class for all real-time data models. This class manages the interaction between offline storage of
  * the data and access to the real-time backend.
  *
