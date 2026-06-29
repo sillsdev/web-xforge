@@ -493,6 +493,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return SF_DEFAULT_TRANSLATE_SHARE_ROLE;
   }
 
+  get showSourceTab(): boolean {
+    return (
+      (this.hasSource && this.hasSourceViewRight) ||
+      this.isParatextUserRole ||
+      (this.tabState.getTabGroup('source')?.tabs.some(tab => tab.persist) ?? false)
+    );
+  }
+
   get hasEditRight(): boolean {
     return this.userHasGeneralEditRight && this.hasChapterEditPermission === true;
   }
@@ -835,7 +843,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         if (this.projectDoc.id !== prevProjectId) {
           this.setupTranslationEngine();
           this.projectDataChangesSub?.unsubscribe();
-          this.projectDataChangesSub = this.projectDoc.remoteChanges$.subscribe(() => {
+          this.projectDataChangesSub = this.projectDoc.remoteChanges$.subscribe(async () => {
             let sourceId: TextDocId | undefined;
             if (this.hasSource && this.chapter != null) {
               sourceId = new TextDocId(
@@ -856,6 +864,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             if (this.translationEngine == null || !this.translationSuggestionsProjectEnabled || !this.hasEditRight) {
               this.setupTranslationEngine();
             }
+
+            await this.addRemoveSourceTabAsync(this.projectDoc!);
           });
 
           if (this.metricsSession != null) {
@@ -1342,24 +1352,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       tap(async (persistedTabs: (EditorTabPersistData & { projectDoc?: SFProjectProfileDoc })[]) => {
         const sourceTabGroup = new TabGroup<EditorTabGroupType, EditorTabInfo>('source');
         const targetTabGroup = new TabGroup<EditorTabGroupType, EditorTabInfo>('target');
-        const projectSource: TranslateSource | undefined = projectDoc.data?.translateConfig.source;
-        let canViewSource = false;
-        if (projectSource != null) {
-          canViewSource =
-            (await this.permissionsService.isUserOnProject(projectSource?.projectRef)) ||
-            (await this.permissionsService.userHasParatextRoleOnProject(projectDoc.id));
-        }
-
-        if (projectSource != null && canViewSource) {
-          sourceTabGroup.addTab(
-            this.editorTabFactory.createTab('project-source', {
-              projectId: projectSource.projectRef,
-              headerText$: of(projectSource.shortName),
-              tooltip: projectSource.name
-            })
-          );
-        }
-
         targetTabGroup.addTab(
           this.editorTabFactory.createTab('project-target', {
             projectId: projectDoc.id,
@@ -1367,6 +1359,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             tooltip: projectDoc?.data?.name
           })
         );
+
+        await this.addRemoveSourceTabAsync(projectDoc, sourceTabGroup);
 
         for (const tabData of persistedTabs) {
           // Do not display the Biblical Terms tab if the user has lost permission
@@ -1459,6 +1453,38 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         // Remove the blank tab if the tab group has a non-blank tab
         this.tabState.removeTab(groupId, blankTab.index);
       }
+    }
+  }
+
+  private async addRemoveSourceTabAsync(
+    projectDoc: SFProjectProfileDoc,
+    sourceTabGroup?: TabGroup<EditorTabGroupType, EditorTabInfo>
+  ): Promise<void> {
+    const projectSource: TranslateSource | undefined = projectDoc.data?.translateConfig.source;
+    let canViewSource = false;
+    if (projectSource != null) {
+      canViewSource =
+        (await this.permissionsService.isUserOnProject(projectSource?.projectRef)) ||
+        (await this.permissionsService.userHasParatextRoleOnProject(projectDoc.id));
+    }
+
+    const existingSourceTab: { groupId: EditorTabGroupType; index: number } | undefined =
+      this.tabState.getFirstTabOfTypeIndex('project-source');
+    if (projectSource != null && canViewSource) {
+      if (sourceTabGroup != null || existingSourceTab == null) {
+        const tab = this.editorTabFactory.createTab('project-source', {
+          projectId: projectSource.projectRef,
+          headerText$: of(projectSource.shortName),
+          tooltip: projectSource.name
+        });
+        if (sourceTabGroup != null) {
+          sourceTabGroup?.addTab(tab);
+        } else if (existingSourceTab == null) {
+          this.tabState.addTab('source', tab);
+        }
+      }
+    } else if (existingSourceTab != null) {
+      this.tabState.removeTab('source', existingSourceTab.index);
     }
   }
 
