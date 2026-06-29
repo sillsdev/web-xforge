@@ -130,6 +130,7 @@ describe('EditorTabMenuService', () => {
     when(mockPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(false);
     env.setExistingTabs([]);
     service['canShowHistory'] = () => true;
+    service['canShowResource'] = () => false;
 
     const items = await firstValueFrom(service.getMenuItems());
     expect(items.map(i => i.type)).toEqual(['history']);
@@ -210,11 +211,13 @@ describe('EditorTabMenuService', () => {
   });
 
   describe('canShowResource', () => {
-    it('should call permissions service canSync', () => {
+    it('should return true only if the user is a paratext user', () => {
       const env = new TestEnvironment();
-      const spy = spyOn(service['permissionsService'], 'canSync');
-      service['canShowResource'](env.projectDoc);
-      expect(spy).toHaveBeenCalledTimes(1);
+
+      Object.values(SFProjectRole).forEach(role => {
+        env.setUserByRole(role);
+        expect(service['canShowResource'](env.projectDoc)).toBe(isParatextRole(role));
+      });
     });
   });
 

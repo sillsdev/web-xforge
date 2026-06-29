@@ -190,6 +190,8 @@ export class TabStateService<TGroupId extends string, T extends TabInfo<string>>
           toGroup.selectedIndex = toIndex;
         }
       }
+
+      this.tabGroupsSource$.next(this.groups);
     }
   }
 
