@@ -56,6 +56,7 @@ public class MachineApiService(
     ISFProjectRights projectRights,
     ISFProjectService projectService,
     IRealtimeService realtimeService,
+    IRepository<SiteConfig> siteConfigs,
     IOptions<SiteOptions> siteOptions,
     ISyncService syncService,
     ITranslationBuildsClient translationBuildsClient,
@@ -2792,6 +2793,32 @@ public class MachineApiService(
         if (!projectRights.HasRight(projectDoc.Data, curUserId, SFProjectDomain.Drafts, Operation.Create))
         {
             throw new ForbiddenException();
+        }
+
+        // See if there is a build limit enforced
+        SiteConfig? siteConfig = await siteConfigs
+            .Query()
+            .FirstOrDefaultAsync(s => s.Name == siteOptions.Value.Id, cancellationToken);
+        if (
+            siteConfig is not null
+            && siteConfig.BuildQuotaLimit > 0
+            && siteConfig.BuildQuotaPeriod > 0
+            && siteConfig.BuildQuotaPeriodUnit > QuotaPeriod.None
+        )
+        {
+            // Get all build events during the quota period
+            QueryResults<EventMetric> eventMetrics = await eventMetricService.GetEventMetricsAsync(
+                buildConfig.ProjectId,
+                scopes: [EventScope.Drafting],
+                eventTypes: [nameof(MachineProjectService.BuildProjectAsync)],
+                fromDate: DateTime.UtcNow.AddHours(
+                    0 - siteConfig.BuildQuotaPeriod * (double)siteConfig.BuildQuotaPeriodUnit
+                )
+            );
+            if (eventMetrics.UnpagedCount >= siteConfig.BuildQuotaLimit)
+            {
+                throw new LimitExceededException("Build quota exceeded.");
+            }
         }
 
         // Save the selected books

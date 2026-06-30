@@ -259,10 +259,28 @@ export class DraftGenerationService {
         }
 
         // Otherwise, start build and then poll
-        return this.startBuild(buildConfig).pipe(
-          // No errors means build successfully started, so start polling
-          switchMap(() => this.pollBuildProgress(buildConfig.projectId))
-        );
+        return this.httpClient
+          .post<void>(`translation/pretranslations`, buildConfig)
+          .pipe(
+            map(res => res.data),
+            catchError(err => {
+              if (err.status === 401 || err.status === 403 || err.status === 404) {
+                return of(undefined);
+              }
+
+              if (err.status === 429) {
+                this.noticeService.showError(this.i18n.translateStatic('draft_generation.quota_exceeded'));
+                return of(undefined);
+              }
+
+              this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
+              return of(undefined);
+            })
+          )
+          .pipe(
+            // No error means build successfully started, so start polling
+            switchMap(() => this.pollBuildProgress(buildConfig.projectId))
+          );
       })
     );
   }
@@ -524,14 +542,5 @@ export class DraftGenerationService {
         });
       });
     });
-  }
-
-  /**
-   * Calls the machine api to start a pre-translation build job.
-   * This should only be called if no build is currently active.
-   * @param buildConfig The build configuration.
-   */
-  private startBuild(buildConfig: BuildConfig): Observable<void> {
-    return this.httpClient.post<void>(`translation/pretranslations`, buildConfig).pipe(map(res => res.data));
   }
 }
