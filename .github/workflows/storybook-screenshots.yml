@@ -19,11 +19,30 @@ on:
 
 jobs:
   # ---------------------------------------------------------------------------
+  # Job 0 – check for pnpm lock files
+  # ---------------------------------------------------------------------------
+  check-lockfiles:
+    runs-on: ubuntu-24.04
+    outputs:
+      has-pnpm-lockfiles: ${{ steps.check.outputs.exists }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: check
+        shell: bash
+        run: |
+          if [[ -f src/SIL.XForge.Scripture/ClientApp/pnpm-lock.yaml || \
+                -f src/RealtimeServer/pnpm-lock.yaml ]]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+  # ---------------------------------------------------------------------------
   # Job 1 – screenshot the base/target-branch commit
   # ---------------------------------------------------------------------------
   screenshots-base:
     name: "Screenshots: Base"
-    if: ${{ hashFiles('src/SIL.XForge.Scripture/ClientApp/pnpm-lock.yaml', 'src/RealtimeServer/pnpm-lock.yaml') != '' }}
+    needs: check-lockfiles
+    if: needs.check-lockfiles.outputs.has-pnpm-lockfiles == 'true'
     strategy:
       matrix:
         os: ["ubuntu-24.04"]
@@ -120,8 +139,9 @@ jobs:
   # Job 1 (pre-pnpm base commits) – screenshot the base/target-branch commit
   # ---------------------------------------------------------------------------
   screenshots-base-npm:
-    if: ${{ hashFiles('src/SIL.XForge.Scripture/ClientApp/package-lock.json', 'src/RealtimeServer/package-lock.json') != '' }}
     name: "Screenshots: Base"
+    needs: check-lockfiles
+    if: needs.check-lockfiles.outputs.has-pnpm-lockfiles != 'true'
     strategy:
       matrix:
         os: ["ubuntu-24.04"]
@@ -290,7 +310,7 @@ jobs:
   # ---------------------------------------------------------------------------
   compare:
     name: "Compare Screenshots"
-    needs: [screenshots-base, screenshots-base-npm, screenshots-branch]
+    needs: [check-lockfiles, screenshots-base, screenshots-base-npm, screenshots-branch]
     if: |
       always() &&
       !cancelled() &&
