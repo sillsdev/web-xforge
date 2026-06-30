@@ -10,11 +10,11 @@ dotnet tool restore
 echo "=== Restoring .NET packages ==="
 dotnet restore
 
-echo "=== Installing RealtimeServer npm packages ==="
+echo "=== Installing RealtimeServer pnpm packages ==="
 cd src/RealtimeServer
 pnpm ci
 
-echo "=== Installing ClientApp npm packages ==="
+echo "=== Installing ClientApp pnpm packages ==="
 cd ../SIL.XForge.Scripture/ClientApp
 pnpm ci
 

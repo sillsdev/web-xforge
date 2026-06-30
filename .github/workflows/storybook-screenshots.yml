@@ -291,6 +291,11 @@ jobs:
   compare:
     name: "Compare Screenshots"
     needs: [screenshots-base, screenshots-base-npm, screenshots-branch]
+    if: |
+      always() &&
+      !cancelled() &&
+      needs.screenshots-branch.result == 'success' &&
+      (needs.screenshots-base.result == 'success' || needs.screenshots-base-npm.result == 'success')
     runs-on: ubuntu-24.04
     environment: screenshot_diff
     permissions:
