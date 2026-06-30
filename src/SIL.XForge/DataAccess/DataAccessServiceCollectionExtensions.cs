@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
+using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
@@ -64,7 +65,12 @@ public static class DataAccessServiceCollectionExtensions
         );
         services.AddMongoRepository<SiteConfig>(
             "site_configs",
-            cm => cm.MapIdProperty(sm => sm.Id),
+            cm =>
+            {
+                cm.MapIdProperty(sc => sc.Id);
+                cm.GetMemberMap(sc => sc.BuildQuotaPeriodUnit)
+                    .SetSerializer(new EnumSerializer<QuotaPeriod>(BsonType.Int32));
+            },
             im =>
                 im.CreateOne(new CreateIndexModel<SiteConfig>(Builders<SiteConfig>.IndexKeys.Ascending(sc => sc.Name)))
         );

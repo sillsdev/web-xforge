@@ -1038,6 +1038,7 @@ public class MachineApiController : ControllerBase
     /// <response code="401">Your Paratext tokens have expired, and you must log in again.</response>
     /// <response code="403">You do not have permission to build this project.</response>
     /// <response code="404">The project does not exist or is not configured on the ML server.</response>
+    /// <response code="429">The project's build quota has been exceeded.</response>
     /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
     /// <remarks>
     /// If a JSON string is passed in the format "project_id", then a default build configuration will be created for
@@ -1070,6 +1071,10 @@ public class MachineApiController : ControllerBase
         catch (ForbiddenException)
         {
             return Forbid();
+        }
+        catch (LimitExceededException e)
+        {
+            return StatusCode(StatusCodes.Status429TooManyRequests, e.Message);
         }
         catch (UnauthorizedAccessException)
         {

@@ -2574,6 +2574,28 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    public async Task StartPreTranslationBuildAsync_RateLimitExceeded()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.StartPreTranslationBuildAsync(
+                User01,
+                Arg.Is<BuildConfig>(p => p.ProjectId == Project01),
+                CancellationToken.None
+            )
+            .Throws(new LimitExceededException("Too many drafts"));
+
+        // SUT
+        ActionResult actual = await env.Controller.StartPreTranslationBuildAsync(
+            new BuildConfig { ProjectId = Project01 },
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<ObjectResult>(actual);
+        Assert.AreEqual(StatusCodes.Status429TooManyRequests, (actual as ObjectResult)?.StatusCode);
+    }
+
+    [Test]
     public async Task StartPreTranslationBuildAsync_Success()
     {
         // Set up test environment

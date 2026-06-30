@@ -221,6 +221,7 @@
     "preview_last_draft_button": "Preview last draft",
     "preview_last_draft_detail": "The last draft build did not complete, but you can still view the most recent successful draft.",
     "preview_last_draft_header": "Preview last draft",
+    "quota_exceeded": "Generating drafts is temporarily unavailable for this project as your quota has been exceeded.",
     "report_problem": "Report problem",
     "signup_already_submitted": "{{ name }} submitted a request to sign up for drafting on {{ date }}. A team member will contact you within {{ min }} to {{ max }} business days to discuss your project and next steps.",
     "sign_up_for_drafting": "Sign up for drafting",
