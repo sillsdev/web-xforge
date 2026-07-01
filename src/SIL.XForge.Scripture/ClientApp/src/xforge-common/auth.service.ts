@@ -327,7 +327,7 @@ export class AuthService {
     this.localSettings.set(cacheKey.toKey(), cacheEntry);
     await this.localLogIn(authResponse.access_token, authResponse.id_token, authResponse.expires_in);
     await this.remoteStore.init(() => this.getAccessToken());
-    await this.pullAuthUserProfile();
+    //await this.pullAuthUserProfile();
     this._loggedInState$.next({ loggedIn: true, newlyLoggedIn: true, anonymousUser: true });
     return true;
   }
@@ -487,7 +487,7 @@ export class AuthService {
     await this.localLogIn(authDetails.token.access_token, authDetails.token.id_token, authDetails.token.expires_in);
     await this.remoteStore.init(() => this.getAccessToken());
     try {
-      await this.pullAuthUserProfile();
+      //await this.pullAuthUserProfile();
     } catch (err) {
       // Display error dialog to pause login loop.
       // Error details will be sent to Bugsnag and logged to the console.
