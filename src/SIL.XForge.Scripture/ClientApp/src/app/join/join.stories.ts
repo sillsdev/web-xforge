@@ -31,6 +31,7 @@ enum ShareKeys {
   InvalidShareKey = 'invalid_share_key',
   KeyAlreadyUsed = 'key_already_used',
   MaxUsersReached = 'max_users_reached',
+  UserMissing = 'user_missing',
   Valid = 'valid'
 }
 
@@ -177,6 +178,13 @@ export const DialogInvalidShareKey: Story = {
 export const DialogKeyAlreadyUsed: Story = {
   args: {
     shareKey: ShareKeys.KeyAlreadyUsed,
+    loggedIn: true
+  }
+};
+
+export const DialogUserMissing: Story = {
+  args: {
+    shareKey: ShareKeys.UserMissing,
     loggedIn: true
   }
 };

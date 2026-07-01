@@ -53,7 +53,7 @@ export class SFUserProjectsService {
   /** Updates our provided set of SF project docs for the current user based on the userdoc's list of SF projects the
    * user is on. */
   private async updateProjectList(userDoc: UserDoc): Promise<void> {
-    const currentProjectIds = userDoc.data!.sites[environment.siteId].projects;
+    const currentProjectIds: string[] = userDoc.data?.sites[environment.siteId].projects ?? [];
 
     let removedProjectsCount = 0;
     for (const [id, projectDoc] of this._projectDocs) {
