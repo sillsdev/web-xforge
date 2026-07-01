@@ -474,9 +474,6 @@ public class SFProjectsRpcController(
         }
     }
 
-    [Obsolete("Only here for old clients that still call it. Removed 2023-04.")]
-    public async Task<IRpcMethodResult> CheckLinkSharing(string shareKey) => Ok(await JoinWithShareKey(shareKey));
-
     public async Task<IRpcMethodResult> JoinWithShareKey(string shareKey)
     {
         try
@@ -494,15 +491,11 @@ public class SFProjectsRpcController(
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string> { { "method", "CheckLinkSharing" }, { "shareKey", shareKey } }
+                new Dictionary<string, string> { { "method", "JoinWithShareKey" }, { "shareKey", shareKey } }
             );
             throw;
         }
     }
-
-    [Obsolete("New endpoints only require the share key. Old clients would still provide the projectId")]
-    public async Task<IRpcMethodResult> CheckLinkSharing(string projectId, string shareKey) =>
-        await CheckLinkSharing(shareKey);
 
     public IRpcMethodResult IsSourceProject(string projectId) => Ok(projectService.IsSourceProject(projectId));
 
