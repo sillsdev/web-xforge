@@ -255,6 +255,18 @@ describe('AppComponent', () => {
     verify(mockedAuthService.updateInterfaceLanguage(anything())).never();
   }));
 
+  it('pulls the user profile from Auth0 if the user is not present in the realtime service', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedAuthService.isNewlyLoggedIn).thenResolve(true);
+    env.setCurrentUser('missing_user_id');
+    env.navigate(['/projects', 'project01']);
+    env.init();
+
+    tick();
+    env.fixture.detectChanges();
+    verify(mockedAuthService.pullAuthUserProfile()).once();
+  }));
+
   it('sets user locale when stored locale does not match the browsing session', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedAuthService.isNewlyLoggedIn).thenResolve(true);

@@ -738,6 +738,13 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public void JoinWithShareKeyAsync_MissingUser()
+    {
+        var env = new TestEnvironment();
+        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.JoinWithShareKeyAsync("missing_user_id", "abcd"));
+    }
+
+    [Test]
     public void JoinWithShareKeyAsync_LinkSharingDisabledAndUserNotOnProject_Forbidden()
     {
         var env = new TestEnvironment();

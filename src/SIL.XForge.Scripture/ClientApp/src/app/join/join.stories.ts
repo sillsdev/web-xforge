@@ -31,6 +31,7 @@ enum ShareKeys {
   InvalidShareKey = 'invalid_share_key',
   KeyAlreadyUsed = 'key_already_used',
   MaxUsersReached = 'max_users_reached',
+  UserMissing = 'user_missing',
   Valid = 'valid'
 }
 
@@ -114,6 +115,9 @@ const meta: Meta = {
       when(mockedSFProjectService.onlineJoinWithShareKey(ShareKeys.InvalidShareKey)).thenThrow(
         new CommandError(CommandErrorCode.Forbidden, 'project_link_is_invalid')
       );
+      when(mockedSFProjectService.onlineJoinWithShareKey(ShareKeys.UserMissing)).thenThrow(
+        new CommandError(CommandErrorCode.NotFound, 'user_missing')
+      );
       if (context.args.shareKey === ShareKeys.Valid) {
         when(mockedAuthService.tryTransparentAuthentication()).thenCall(() => {
           when(mockedAuthService.isLoggedIn).thenResolve(true);
@@ -177,6 +181,13 @@ export const DialogInvalidShareKey: Story = {
 export const DialogKeyAlreadyUsed: Story = {
   args: {
     shareKey: ShareKeys.KeyAlreadyUsed,
+    loggedIn: true
+  }
+};
+
+export const DialogUserMissing: Story = {
+  args: {
+    shareKey: ShareKeys.UserMissing,
     loggedIn: true
   }
 };
