@@ -129,9 +129,9 @@
       },
       "SIL.Machine": {
         "type": "Direct",
-        "requested": "[3.8.4, )",
-        "resolved": "3.8.4",
-        "contentHash": "iyIGFWIneklLYaI856FuP7H097Gg8XsWgqaRrYTC6bd7YXjowrLzlK+oWqTiEQHdhWsA1M3A8wao800DDIrMVQ==",
+        "requested": "[3.9.0, )",
+        "resolved": "3.9.0",
+        "contentHash": "OdVAM9KLWZDcCS09XHmXG7LXW7388SRv0voZ+3ckrTL6e25+1g3GpTpDE3EbJG8hsOeLVRuadvBgFMsccvZM+w==",
         "dependencies": {
           "CaseExtensions": "1.1.0",
           "Newtonsoft.Json": "13.0.4",
