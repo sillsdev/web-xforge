@@ -103,12 +103,7 @@
           *matRowDef="let row; columns: columnsToDisplay"
           [class.expanded-row]="isRowExpanded(row)"
         ></tr>
-        <tr
-          mat-row
-          *matRowDef="let row; columns: ['expandedDetail']"
-          class="detail-row"
-          [class.detail-row-collapsed]="!isRowExpanded(row)"
-        ></tr>
+        <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="detail-row"></tr>
 
         <ng-container matColumnDef="status">
           <th mat-header-cell *matHeaderCellDef>Status</th>
@@ -251,532 +246,533 @@
 
         <ng-container matColumnDef="expandedDetail">
           <td mat-cell *matCellDef="let row" [attr.colspan]="columnsToDisplay.length">
-            <div
-              class="expanded-detail"
-              [class.expanded-detail-collapsed]="!isRowExpanded(row)"
-              [attr.aria-hidden]="!isRowExpanded(row)"
-            >
-              <div class="detail-grid">
-                <mat-card appearance="filled" class="detail-card">
-                  <mat-card-header>
-                    <mat-card-title-group>
-                      <mat-icon>emoji_people</mat-icon>
-                      <mat-card-title>Requesting user</mat-card-title>
-                    </mat-card-title-group>
-                  </mat-card-header>
-                  <mat-card-content class="detail-card-content">
-                    <span class="detail-area-stacked-keyvalues">
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">Name</span>
-                        @let requesterUserName = requesterName(row.report.requesterSFUserId) | async;
-                        <span class="detail-value">{{ requesterUserName ?? "-" }}</span>
-                      </div>
-
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">Display name</span>
-                        @let requesterDisplayNameValue = requesterDisplayName(row.report.requesterSFUserId) | async;
-                        <span class="detail-value">{{ requesterDisplayNameValue ?? "-" }}</span>
-                      </div>
-
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">Email address</span>
-                        @let requesterEmail = requesterEmailAddress(row.report.requesterSFUserId) | async;
-                        <span class="detail-value detail-value-with-copy code">
-                          @if (requesterEmail != null) {
-                            <a [href]="'mailto:' + requesterEmail">
-                              {{ requesterEmail }}
-                            </a>
-                            <app-copy [value]="requesterEmail"></app-copy>
-                          } @else {
-                            <span>-</span>
-                          }
-                        </span>
-                      </div>
-
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">SF user ID</span>
-                        <span class="detail-value detail-value-with-copy code">
-                          <span>{{ row.report.requesterSFUserId ?? "-" }}</span>
-                          @if (row.report.requesterSFUserId != null) {
-                            <app-copy [value]="row.report.requesterSFUserId"></app-copy>
-                          }
-                        </span>
-                      </div>
-                    </span>
-                  </mat-card-content>
-                </mat-card>
-
-                <mat-card appearance="filled" class="detail-card">
-                  <mat-card-header>
-                    <mat-card-title-group>
-                      <mat-icon>translate</mat-icon>
-                      <mat-card-title>Language info</mat-card-title>
-                    </mat-card-title-group>
-                  </mat-card-header>
-                  <mat-card-content class="detail-card-content">
-                    <span class="detail-area-stacked-keyvalues">
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">Source language</span>
-                        <span class="detail-value">{{
-                          formatLanguageWithName(row.report.build?.executionData?.sourceLanguageTag)
-                        }}</span>
-                      </div>
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">Target language</span>
-                        <span class="detail-value">{{
-                          formatLanguageWithName(row.report.build?.executionData?.targetLanguageTag)
-                        }}</span>
-                      </div>
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">Strings trained on</span>
-                        <span class="detail-value">{{ row.report.build?.executionData?.trainCount ?? "-" }}</span>
-                      </div>
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">Strings translated</span>
-                        <span class="detail-value">{{
-                          row.report.build?.executionData?.pretranslateCount ?? "-"
-                        }}</span>
-                      </div>
-                    </span>
-                  </mat-card-content>
-                </mat-card>
-
-                <mat-card appearance="filled" class="detail-card">
-                  <mat-card-header>
-                    <mat-card-title-group>
-                      <mat-icon>merge</mat-icon>
-                      <mat-card-title>Input</mat-card-title>
-                    </mat-card-title-group>
-                  </mat-card-header>
-                  <mat-card-content class="detail-card-content">
-                    <ng-template #projectBooksSection let-sectionLabel="sectionLabel" let-projectBooks="projectBooks">
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">{{ sectionLabel }}</span>
-                        <span class="detail-value">
-                          <div class="detail-books-list">
-                            @for (
-                              projectBook of projectBooks | transformWith: ServalBuildsComponent.determineBuildInputs;
-                              track projectBook.sfProjectId
-                            ) {
-                              <div class="detail-project-books-item">
-                                <div class="detail-project-books-meta detail-value-with-copy">
-                                  @if (projectBook.shortName != null) {
-                                    <span class="input-shortname">
-                                      <a
-                                        [href]="projectBook.projectLink"
-                                        target="_blank"
-                                        rel="noopener"
-                                        class="project-link"
-                                      >
-                                        {{ projectBook.shortName }}
-                                      </a>
-                                    </span>
-                                  }
-                                  <span class="detail-project-books-id">{{ projectBook.sfProjectId }}</span>
-                                  <app-copy [value]="projectBook.sfProjectId"></app-copy>
-                                </div>
-
-                                @if (projectBook.projectName != null) {
-                                  <a
-                                    [href]="projectBook.projectLink"
-                                    target="_blank"
-                                    rel="noopener"
-                                    class="project-link"
-                                  >
-                                    {{ projectBook.projectName }}
-                                  </a>
-                                }
-
-                                <div>{{ projectBook.booksDisplay }}</div>
-                              </div>
-                            } @empty {
-                              <span>None</span>
-                            }
-                          </div>
-                        </span>
-                      </div>
-                    </ng-template>
-
-                    <span class="detail-area-stacked-keyvalues">
-                      <ng-container
-                        [ngTemplateOutlet]="projectBooksSection"
-                        [ngTemplateOutletContext]="{ sectionLabel: 'Training books', projectBooks: row.trainingBooks }"
-                      ></ng-container>
-                      <ng-container
-                        [ngTemplateOutlet]="projectBooksSection"
-                        [ngTemplateOutletContext]="{
-                          sectionLabel: 'Translation books',
-                          projectBooks: row.translationBooks
-                        }"
-                      ></ng-container>
-                    </span>
-                  </mat-card-content>
-                </mat-card>
-
-                <mat-card appearance="filled" class="detail-card">
-                  <mat-card-header>
-                    <mat-card-title-group>
-                      <mat-icon>timer</mat-icon>
-                      <mat-card-title>Timing</mat-card-title>
-                    </mat-card-title-group>
-                  </mat-card-header>
-                  <mat-card-content class="detail-card-content">
-                    <div class="detail-area-stacked-keyvalues timing-grid">
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">User request</span>
-                        <span class="detail-value time-and-duration"
-                          >{{ formatDateTime(row.report.timeline.sfUserRequested) ?? "-" }} &nbsp;
-                          {{ durationUserRequestToCompletionAcknowledged(row.report) }}</span
-                        >
-                      </div>
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">SF build request</span>
-                        <span class="detail-value time-and-duration">{{
-                          formatDateTime(row.report.timeline.sfBuildProjectSubmitted) ?? "-"
-                        }}</span>
-                      </div>
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">Serval creation</span>
-                        <span class="detail-value time-and-duration"
-                          >{{ formatDateTime(row.report.timeline.servalCreated) ?? "-" }} &nbsp;
-                          {{ durationServalCreatedToFinish(row.report) }}</span
-                        >
-                      </div>
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">Train phase</span>
-                        <span class="detail-value time-and-duration"
-                          >{{ formatDateTime(getPhase(row.report, "Train")?.started) ?? "-" }} &nbsp;
-                          {{ durationPhaseTrain(row.report) }}</span
-                        >
-                      </div>
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">Inference phase</span>
-                        <span class="detail-value time-and-duration"
-                          >{{ formatDateTime(getPhase(row.report, "Inference")?.started) ?? "-" }} &nbsp;
-                          {{ durationPhaseInference(row.report) }}</span
-                        >
-                      </div>
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">Serval finish</span>
-                        <span class="detail-value time-and-duration">{{
-                          formatDateTime(row.report.timeline.servalFinished) ?? "-"
-                        }}</span>
-                      </div>
-                      @if (row.report.timeline.sfUserCancelled != null) {
+            @if (isRowExpanded(row)) {
+              <div class="expanded-detail">
+                <div class="detail-grid">
+                  <mat-card appearance="filled" class="detail-card">
+                    <mat-card-header>
+                      <mat-card-title-group>
+                        <mat-icon>emoji_people</mat-icon>
+                        <mat-card-title>Requesting user</mat-card-title>
+                      </mat-card-title-group>
+                    </mat-card-header>
+                    <mat-card-content class="detail-card-content">
+                      <span class="detail-area-stacked-keyvalues">
                         <div class="detail-keyvalue">
-                          <span class="detail-key">User cancel</span>
-                          <span class="detail-value time-and-duration">{{
-                            formatDateTime(row.report.timeline.sfUserCancelled)
+                          <span class="detail-key">Name</span>
+                          @let requesterUserName = requesterName(row.report.requesterSFUserId) | async;
+                          <span class="detail-value">{{ requesterUserName ?? "-" }}</span>
+                        </div>
+
+                        <div class="detail-keyvalue">
+                          <span class="detail-key">Display name</span>
+                          @let requesterDisplayNameValue = requesterDisplayName(row.report.requesterSFUserId) | async;
+                          <span class="detail-value">{{ requesterDisplayNameValue ?? "-" }}</span>
+                        </div>
+
+                        <div class="detail-keyvalue">
+                          <span class="detail-key">Email address</span>
+                          @let requesterEmail = requesterEmailAddress(row.report.requesterSFUserId) | async;
+                          <span class="detail-value detail-value-with-copy code">
+                            @if (requesterEmail != null) {
+                              <a [href]="'mailto:' + requesterEmail">
+                                {{ requesterEmail }}
+                              </a>
+                              <app-copy [value]="requesterEmail"></app-copy>
+                            } @else {
+                              <span>-</span>
+                            }
+                          </span>
+                        </div>
+
+                        <div class="detail-keyvalue">
+                          <span class="detail-key">SF user ID</span>
+                          <span class="detail-value detail-value-with-copy code">
+                            <span>{{ row.report.requesterSFUserId ?? "-" }}</span>
+                            @if (row.report.requesterSFUserId != null) {
+                              <app-copy [value]="row.report.requesterSFUserId"></app-copy>
+                            }
+                          </span>
+                        </div>
+                      </span>
+                    </mat-card-content>
+                  </mat-card>
+
+                  <mat-card appearance="filled" class="detail-card">
+                    <mat-card-header>
+                      <mat-card-title-group>
+                        <mat-icon>translate</mat-icon>
+                        <mat-card-title>Language info</mat-card-title>
+                      </mat-card-title-group>
+                    </mat-card-header>
+                    <mat-card-content class="detail-card-content">
+                      <span class="detail-area-stacked-keyvalues">
+                        <div class="detail-keyvalue">
+                          <span class="detail-key">Source language</span>
+                          <span class="detail-value">{{
+                            formatLanguageWithName(row.report.build?.executionData?.sourceLanguageTag)
                           }}</span>
                         </div>
-                      }
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">SF acknowledges Serval completion</span>
-                        <span class="detail-value time-and-duration">{{
-                          formatDateTime(row.report.timeline.sfAcknowledgedCompletion) ?? "-"
-                        }}</span>
-                      </div>
-                      @if (row.report.timeline.servalCreated != null && row.report.timeline.servalFinished != null) {
-                        <div
-                          class="timing-bar timing-bar-serval"
-                          [style.gridRow]="getTimingBarRowRange(row, 'serval')"
-                          aria-hidden="true"
-                        ></div>
-                      }
-                      @if (
-                        row.report.timeline.sfUserRequested != null &&
-                        row.report.timeline.sfAcknowledgedCompletion != null
-                      ) {
-                        <div
-                          class="timing-bar timing-bar-user"
-                          [style.gridRow]="getTimingBarRowRange(row, 'user')"
-                          aria-hidden="true"
-                        ></div>
-                      }
-                    </div>
-                  </mat-card-content>
-                </mat-card>
-
-                <mat-card appearance="filled" class="detail-card problems-card">
-                  <mat-card-header>
-                    <mat-card-title-group>
-                      <mat-icon>warning</mat-icon>
-                      <mat-card-title>Problems</mat-card-title>
-                    </mat-card-title-group>
-                  </mat-card-header>
-                  <mat-card-content class="detail-card-content">
-                    @let sfErrors = problems(row, "local", "error");
-                    @let sfWarnings = problems(row, "local", "warning");
-                    @let servalErrors = problems(row, "serval", "error");
-                    @let servalWarnings = problems(row, "serval", "warning");
-                    <div class="problems-sections">
-                      @if (!hasAnyProblems(row)) {
-                        <div class="problems-section">
-                          <span class="problems-none">No problems detected</span>
-                        </div>
-                      }
-                      @if (sfErrors.length > 0) {
-                        <div class="problems-section">
-                          <span class="problems-section-header">SF errors</span>
-                          <ul class="problems-list">
-                            @for (message of renderProblemMessagesForCard(sfErrors); track $index) {
-                              <li>
-                                <span class="problem-message">{{ message }}</span>
-                              </li>
-                            }
-                          </ul>
-                        </div>
-                      }
-                      @if (sfWarnings.length > 0) {
-                        <div class="problems-section">
-                          <span class="problems-section-header">SF warnings</span>
-                          <ul class="problems-list">
-                            @for (message of renderProblemMessagesForCard(sfWarnings); track $index) {
-                              <li>
-                                <span class="problem-message">{{ message }}</span>
-                              </li>
-                            }
-                          </ul>
-                        </div>
-                      }
-                      @if (servalErrors.length > 0) {
-                        <div class="problems-section">
-                          <span class="problems-section-header">Serval errors</span>
-                          <ul class="problems-list">
-                            @for (message of renderProblemMessagesForCard(servalErrors); track $index) {
-                              <li>
-                                <span class="problem-message">{{ message }}</span>
-                              </li>
-                            }
-                          </ul>
-                        </div>
-                      }
-                      @if (servalWarnings.length > 0) {
-                        <div class="problems-section">
-                          <span class="problems-section-header">Serval warnings</span>
-                          <ul class="problems-list">
-                            @for (message of renderProblemMessagesForCard(servalWarnings); track $index) {
-                              <li>
-                                <span class="problem-message">{{ message }}</span>
-                              </li>
-                            }
-                          </ul>
-                        </div>
-                      }
-                    </div>
-                    @if (hasAnyProblems(row)) {
-                      <div class="problems-actions">
-                        <button mat-button class="show-all-problems-button" (click)="showAllProblems(row)">
-                          <mat-icon>list</mat-icon>
-                          Show all
-                        </button>
-                      </div>
-                    }
-                  </mat-card-content>
-                </mat-card>
-
-                <mat-card appearance="filled" class="detail-card">
-                  <mat-card-header>
-                    <mat-card-title-group>
-                      <mat-icon>fingerprint</mat-icon>
-                      <mat-card-title>Identifiers</mat-card-title>
-                    </mat-card-title-group>
-                  </mat-card-header>
-                  <mat-card-content class="detail-card-content">
-                    <span class="detail-area-stacked-keyvalues">
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">Serval build ID</span>
-                        @let servalBuildId = row.report.build?.additionalInfo?.buildId;
-                        <span class="detail-value detail-value-with-copy code">
-                          <span>{{ servalBuildId ?? "Unknown" }}</span>
-                          @if (servalBuildId != null) {
-                            <app-copy [value]="servalBuildId"></app-copy>
-                          }
-                        </span>
-                      </div>
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">SF draft generation request ID</span>
-                        @let draftGenerationRequestId = row.report.draftGenerationRequestId;
-                        <span class="detail-value detail-value-with-copy code">
-                          <span>{{ draftGenerationRequestId ?? "-" }}</span>
-                          @if (draftGenerationRequestId != null) {
-                            <app-copy [value]="draftGenerationRequestId"></app-copy>
-                          }
-                        </span>
-                      </div>
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">SF project ID</span>
-                        <span class="detail-value detail-value-with-copy code">
-                          <span>{{ row.report.project?.sfProjectId ?? "-" }}</span>
-                          @if (row.report.project?.sfProjectId != null) {
-                            <app-copy [value]="row.report.project?.sfProjectId"></app-copy>
-                          }
-                        </span>
-                      </div>
-
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">Paratext project ID</span>
-                        @let ptProjectId = row.report.project?.ptProjectId;
-                        <span class="detail-value detail-value-with-copy code">
-                          <span class="pt-project-id">{{ ptProjectId ?? "-" }}</span>
-                          @if (ptProjectId != null) {
-                            <app-copy [value]="ptProjectId"></app-copy>
-                          }
-                        </span>
-                      </div>
-
-                      <div class="detail-keyvalue">
-                        <span class="detail-key">Serval version</span>
-                        <span class="detail-value">{{ row.report.build?.deploymentVersion ?? "Unknown" }}</span>
-                      </div>
-                    </span>
-                  </mat-card-content>
-                </mat-card>
-
-                <mat-card appearance="filled" class="detail-card">
-                  <mat-card-header>
-                    <mat-card-title-group>
-                      <mat-icon>traffic</mat-icon>
-                      <mat-card-title>Quality Estimation</mat-card-title>
-                    </mat-card-title-group>
-                  </mat-card-header>
-                  <mat-card-content class="detail-card-content">
-                    <span class="detail-area-stacked-keyvalues">
-                      @if (row.report.buildConfidences != null) {
-                        <div class="book-confidences">
-                          @for (
-                            bookConfidence of row.report.buildConfidences.bookConfidences;
-                            track bookConfidence.bookNum
-                          ) {
-                            <div class="book-confidence">
-                              <div class="detail-keyvalue">
-                                <span class="detail-key">
-                                  {{ "canon.book_names." + getBookId(bookConfidence) | transloco }}
-                                </span>
-                                <span class="detail-value">
-                                  <app-display-confidence [confidence]="bookConfidence"></app-display-confidence>
-                                </span>
-                              </div>
-                              <div class="detail-keyvalue">
-                                <span class="detail-key">
-                                  {{ "canon.book_names." + getBookId(bookConfidence) | transloco }} - Projected ChrF3
-                                </span>
-                                <span class="detail-value">{{ bookConfidence.projectedChrF3.toFixed(3) }}</span>
-                              </div>
-                              <div class="detail-keyvalue">
-                                <span class="detail-key">
-                                  {{ "canon.book_names." + getBookId(bookConfidence) | transloco }} - Confidence
-                                </span>
-                                <span class="detail-value">{{ bookConfidence.confidence.toFixed(3) }}</span>
-                              </div>
-                              <div class="detail-keyvalue">
-                                <span class="detail-key">
-                                  {{ "canon.book_names." + getBookId(bookConfidence) | transloco }} - Usability
-                                </span>
-                                <span class="detail-value">{{ bookConfidence.usability.toFixed(3) }}</span>
-                              </div>
-                            </div>
-                          }
-                        </div>
-                        <div class="export-button-group">
-                          <button
-                            mat-raised-button
-                            color="primary"
-                            class="export-csv-button"
-                            (click)="exportCsv(row.report.buildConfidences.bookConfidences)"
-                          >
-                            <mat-icon>download</mat-icon>
-                            <span class="export-item-label"> Export Book Usability CSV </span>
-                          </button>
-                          <button
-                            mat-raised-button
-                            color="primary"
-                            class="export-menu-button"
-                            [matMenuTriggerFor]="exportBookMenu"
-                          >
-                            <mat-icon>arrow_drop_down</mat-icon>
-                          </button>
-                        </div>
-                        <mat-menu #exportBookMenu="matMenu" xPosition="before">
-                          <button mat-menu-item (click)="exportTsv(row.report.buildConfidences.bookConfidences)">
-                            <mat-icon>download</mat-icon>
-                            <span class="export-item-label"> Export Book Usability TSV </span>
-                          </button>
-                          <button mat-menu-item (click)="exportRsv(row.report.buildConfidences.bookConfidences)">
-                            <mat-icon>download</mat-icon>
-                            <span class="export-item-label"> Export Book Usability RSV </span>
-                          </button>
-                        </mat-menu>
-                        <div class="export-button-group">
-                          <button
-                            mat-raised-button
-                            color="primary"
-                            class="export-csv-button"
-                            (click)="exportCsv(row.report.buildConfidences.chapterConfidences)"
-                          >
-                            <mat-icon>download</mat-icon>
-                            <span class="export-item-label"> Export Chapter Usability CSV </span>
-                          </button>
-                          <button
-                            mat-raised-button
-                            color="primary"
-                            class="export-menu-button"
-                            [matMenuTriggerFor]="exportChapterMenu"
-                          >
-                            <mat-icon>arrow_drop_down</mat-icon>
-                          </button>
-                        </div>
-                        <mat-menu #exportChapterMenu="matMenu" xPosition="before">
-                          <button mat-menu-item (click)="exportTsv(row.report.buildConfidences.chapterConfidences)">
-                            <mat-icon>download</mat-icon>
-                            <span class="export-item-label"> Export Chapter Usability TSV </span>
-                          </button>
-                          <button mat-menu-item (click)="exportRsv(row.report.buildConfidences.chapterConfidences)">
-                            <mat-icon>download</mat-icon>
-                            <span class="export-item-label"> Export Chapter Usability RSV </span>
-                          </button>
-                        </mat-menu>
-                      } @else {
                         <div class="detail-keyvalue">
-                          <span class="detail-key">Configured</span>
-                          <span class="detail-value">No</span>
+                          <span class="detail-key">Target language</span>
+                          <span class="detail-value">{{
+                            formatLanguageWithName(row.report.build?.executionData?.targetLanguageTag)
+                          }}</span>
+                        </div>
+                        <div class="detail-keyvalue">
+                          <span class="detail-key">Strings trained on</span>
+                          <span class="detail-value">{{ row.report.build?.executionData?.trainCount ?? "-" }}</span>
+                        </div>
+                        <div class="detail-keyvalue">
+                          <span class="detail-key">Strings translated</span>
+                          <span class="detail-value">{{
+                            row.report.build?.executionData?.pretranslateCount ?? "-"
+                          }}</span>
+                        </div>
+                      </span>
+                    </mat-card-content>
+                  </mat-card>
+
+                  <mat-card appearance="filled" class="detail-card">
+                    <mat-card-header>
+                      <mat-card-title-group>
+                        <mat-icon>merge</mat-icon>
+                        <mat-card-title>Input</mat-card-title>
+                      </mat-card-title-group>
+                    </mat-card-header>
+                    <mat-card-content class="detail-card-content">
+                      <ng-template #projectBooksSection let-sectionLabel="sectionLabel" let-projectBooks="projectBooks">
+                        <div class="detail-keyvalue">
+                          <span class="detail-key">{{ sectionLabel }}</span>
+                          <span class="detail-value">
+                            <div class="detail-books-list">
+                              @for (
+                                projectBook of projectBooks | transformWith: ServalBuildsComponent.determineBuildInputs;
+                                track projectBook.sfProjectId
+                              ) {
+                                <div class="detail-project-books-item">
+                                  <div class="detail-project-books-meta detail-value-with-copy">
+                                    @if (projectBook.shortName != null) {
+                                      <span class="input-shortname">
+                                        <a
+                                          [href]="projectBook.projectLink"
+                                          target="_blank"
+                                          rel="noopener"
+                                          class="project-link"
+                                        >
+                                          {{ projectBook.shortName }}
+                                        </a>
+                                      </span>
+                                    }
+                                    <span class="detail-project-books-id">{{ projectBook.sfProjectId }}</span>
+                                    <app-copy [value]="projectBook.sfProjectId"></app-copy>
+                                  </div>
+
+                                  @if (projectBook.projectName != null) {
+                                    <a
+                                      [href]="projectBook.projectLink"
+                                      target="_blank"
+                                      rel="noopener"
+                                      class="project-link"
+                                    >
+                                      {{ projectBook.projectName }}
+                                    </a>
+                                  }
+
+                                  <div>{{ projectBook.booksDisplay }}</div>
+                                </div>
+                              } @empty {
+                                <span>None</span>
+                              }
+                            </div>
+                          </span>
+                        </div>
+                      </ng-template>
+
+                      <span class="detail-area-stacked-keyvalues">
+                        <ng-container
+                          [ngTemplateOutlet]="projectBooksSection"
+                          [ngTemplateOutletContext]="{
+                            sectionLabel: 'Training books',
+                            projectBooks: row.trainingBooks
+                          }"
+                        ></ng-container>
+                        <ng-container
+                          [ngTemplateOutlet]="projectBooksSection"
+                          [ngTemplateOutletContext]="{
+                            sectionLabel: 'Translation books',
+                            projectBooks: row.translationBooks
+                          }"
+                        ></ng-container>
+                      </span>
+                    </mat-card-content>
+                  </mat-card>
+
+                  <mat-card appearance="filled" class="detail-card">
+                    <mat-card-header>
+                      <mat-card-title-group>
+                        <mat-icon>timer</mat-icon>
+                        <mat-card-title>Timing</mat-card-title>
+                      </mat-card-title-group>
+                    </mat-card-header>
+                    <mat-card-content class="detail-card-content">
+                      <div class="detail-area-stacked-keyvalues timing-grid">
+                        <div class="detail-keyvalue">
+                          <span class="detail-key">User request</span>
+                          <span class="detail-value time-and-duration"
+                            >{{ formatDateTime(row.report.timeline.sfUserRequested) ?? "-" }} &nbsp;
+                            {{ durationUserRequestToCompletionAcknowledged(row.report) }}</span
+                          >
+                        </div>
+                        <div class="detail-keyvalue">
+                          <span class="detail-key">SF build request</span>
+                          <span class="detail-value time-and-duration">{{
+                            formatDateTime(row.report.timeline.sfBuildProjectSubmitted) ?? "-"
+                          }}</span>
+                        </div>
+                        <div class="detail-keyvalue">
+                          <span class="detail-key">Serval creation</span>
+                          <span class="detail-value time-and-duration"
+                            >{{ formatDateTime(row.report.timeline.servalCreated) ?? "-" }} &nbsp;
+                            {{ durationServalCreatedToFinish(row.report) }}</span
+                          >
+                        </div>
+                        <div class="detail-keyvalue">
+                          <span class="detail-key">Train phase</span>
+                          <span class="detail-value time-and-duration"
+                            >{{ formatDateTime(getPhase(row.report, "Train")?.started) ?? "-" }} &nbsp;
+                            {{ durationPhaseTrain(row.report) }}</span
+                          >
+                        </div>
+                        <div class="detail-keyvalue">
+                          <span class="detail-key">Inference phase</span>
+                          <span class="detail-value time-and-duration"
+                            >{{ formatDateTime(getPhase(row.report, "Inference")?.started) ?? "-" }} &nbsp;
+                            {{ durationPhaseInference(row.report) }}</span
+                          >
+                        </div>
+                        <div class="detail-keyvalue">
+                          <span class="detail-key">Serval finish</span>
+                          <span class="detail-value time-and-duration">{{
+                            formatDateTime(row.report.timeline.servalFinished) ?? "-"
+                          }}</span>
+                        </div>
+                        @if (row.report.timeline.sfUserCancelled != null) {
+                          <div class="detail-keyvalue">
+                            <span class="detail-key">User cancel</span>
+                            <span class="detail-value time-and-duration">{{
+                              formatDateTime(row.report.timeline.sfUserCancelled)
+                            }}</span>
+                          </div>
+                        }
+                        <div class="detail-keyvalue">
+                          <span class="detail-key">SF acknowledges Serval completion</span>
+                          <span class="detail-value time-and-duration">{{
+                            formatDateTime(row.report.timeline.sfAcknowledgedCompletion) ?? "-"
+                          }}</span>
+                        </div>
+                        @if (row.report.timeline.servalCreated != null && row.report.timeline.servalFinished != null) {
+                          <div
+                            class="timing-bar timing-bar-serval"
+                            [style.gridRow]="getTimingBarRowRange(row, 'serval')"
+                            aria-hidden="true"
+                          ></div>
+                        }
+                        @if (
+                          row.report.timeline.sfUserRequested != null &&
+                          row.report.timeline.sfAcknowledgedCompletion != null
+                        ) {
+                          <div
+                            class="timing-bar timing-bar-user"
+                            [style.gridRow]="getTimingBarRowRange(row, 'user')"
+                            aria-hidden="true"
+                          ></div>
+                        }
+                      </div>
+                    </mat-card-content>
+                  </mat-card>
+
+                  <mat-card appearance="filled" class="detail-card problems-card">
+                    <mat-card-header>
+                      <mat-card-title-group>
+                        <mat-icon>warning</mat-icon>
+                        <mat-card-title>Problems</mat-card-title>
+                      </mat-card-title-group>
+                    </mat-card-header>
+                    <mat-card-content class="detail-card-content">
+                      @let sfErrors = problems(row, "local", "error");
+                      @let sfWarnings = problems(row, "local", "warning");
+                      @let servalErrors = problems(row, "serval", "error");
+                      @let servalWarnings = problems(row, "serval", "warning");
+                      <div class="problems-sections">
+                        @if (!hasAnyProblems(row)) {
+                          <div class="problems-section">
+                            <span class="problems-none">No problems detected</span>
+                          </div>
+                        }
+                        @if (sfErrors.length > 0) {
+                          <div class="problems-section">
+                            <span class="problems-section-header">SF errors</span>
+                            <ul class="problems-list">
+                              @for (message of renderProblemMessagesForCard(sfErrors); track $index) {
+                                <li>
+                                  <span class="problem-message">{{ message }}</span>
+                                </li>
+                              }
+                            </ul>
+                          </div>
+                        }
+                        @if (sfWarnings.length > 0) {
+                          <div class="problems-section">
+                            <span class="problems-section-header">SF warnings</span>
+                            <ul class="problems-list">
+                              @for (message of renderProblemMessagesForCard(sfWarnings); track $index) {
+                                <li>
+                                  <span class="problem-message">{{ message }}</span>
+                                </li>
+                              }
+                            </ul>
+                          </div>
+                        }
+                        @if (servalErrors.length > 0) {
+                          <div class="problems-section">
+                            <span class="problems-section-header">Serval errors</span>
+                            <ul class="problems-list">
+                              @for (message of renderProblemMessagesForCard(servalErrors); track $index) {
+                                <li>
+                                  <span class="problem-message">{{ message }}</span>
+                                </li>
+                              }
+                            </ul>
+                          </div>
+                        }
+                        @if (servalWarnings.length > 0) {
+                          <div class="problems-section">
+                            <span class="problems-section-header">Serval warnings</span>
+                            <ul class="problems-list">
+                              @for (message of renderProblemMessagesForCard(servalWarnings); track $index) {
+                                <li>
+                                  <span class="problem-message">{{ message }}</span>
+                                </li>
+                              }
+                            </ul>
+                          </div>
+                        }
+                      </div>
+                      @if (hasAnyProblems(row)) {
+                        <div class="problems-actions">
+                          <button mat-button class="show-all-problems-button" (click)="showAllProblems(row)">
+                            <mat-icon>list</mat-icon>
+                            Show all
+                          </button>
                         </div>
                       }
-                    </span>
-                  </mat-card-content>
-                </mat-card>
-              </div>
+                    </mat-card-content>
+                  </mat-card>
 
-              <div class="detail-actions">
-                @let id = row.report.build?.additionalInfo?.buildId;
-                @if (id != null) {
-                  <a
-                    mat-button
-                    class="details-dialog-button"
-                    href="{{ clearMLUrl(id) }}"
-                    target="_blank"
-                    rel="noopener"
-                  >
-                    <mat-icon>engineering</mat-icon>
-                    View in ClearML
-                  </a>
-                } @else {
-                  <button
-                    mat-button
-                    class="details-dialog-button"
-                    [disabled]="true"
-                    matTooltip="No Serval build ID available"
-                  >
-                    <mat-icon>engineering</mat-icon>
-                    View in ClearML
+                  <mat-card appearance="filled" class="detail-card">
+                    <mat-card-header>
+                      <mat-card-title-group>
+                        <mat-icon>fingerprint</mat-icon>
+                        <mat-card-title>Identifiers</mat-card-title>
+                      </mat-card-title-group>
+                    </mat-card-header>
+                    <mat-card-content class="detail-card-content">
+                      <span class="detail-area-stacked-keyvalues">
+                        <div class="detail-keyvalue">
+                          <span class="detail-key">Serval build ID</span>
+                          @let servalBuildId = row.report.build?.additionalInfo?.buildId;
+                          <span class="detail-value detail-value-with-copy code">
+                            <span>{{ servalBuildId ?? "Unknown" }}</span>
+                            @if (servalBuildId != null) {
+                              <app-copy [value]="servalBuildId"></app-copy>
+                            }
+                          </span>
+                        </div>
+                        <div class="detail-keyvalue">
+                          <span class="detail-key">SF draft generation request ID</span>
+                          @let draftGenerationRequestId = row.report.draftGenerationRequestId;
+                          <span class="detail-value detail-value-with-copy code">
+                            <span>{{ draftGenerationRequestId ?? "-" }}</span>
+                            @if (draftGenerationRequestId != null) {
+                              <app-copy [value]="draftGenerationRequestId"></app-copy>
+                            }
+                          </span>
+                        </div>
+                        <div class="detail-keyvalue">
+                          <span class="detail-key">SF project ID</span>
+                          <span class="detail-value detail-value-with-copy code">
+                            <span>{{ row.report.project?.sfProjectId ?? "-" }}</span>
+                            @if (row.report.project?.sfProjectId != null) {
+                              <app-copy [value]="row.report.project?.sfProjectId"></app-copy>
+                            }
+                          </span>
+                        </div>
+
+                        <div class="detail-keyvalue">
+                          <span class="detail-key">Paratext project ID</span>
+                          @let ptProjectId = row.report.project?.ptProjectId;
+                          <span class="detail-value detail-value-with-copy code">
+                            <span class="pt-project-id">{{ ptProjectId ?? "-" }}</span>
+                            @if (ptProjectId != null) {
+                              <app-copy [value]="ptProjectId"></app-copy>
+                            }
+                          </span>
+                        </div>
+
+                        <div class="detail-keyvalue">
+                          <span class="detail-key">Serval version</span>
+                          <span class="detail-value">{{ row.report.build?.deploymentVersion ?? "Unknown" }}</span>
+                        </div>
+                      </span>
+                    </mat-card-content>
+                  </mat-card>
+
+                  <mat-card appearance="filled" class="detail-card">
+                    <mat-card-header>
+                      <mat-card-title-group>
+                        <mat-icon>traffic</mat-icon>
+                        <mat-card-title>Quality Estimation</mat-card-title>
+                      </mat-card-title-group>
+                    </mat-card-header>
+                    <mat-card-content class="detail-card-content">
+                      <span class="detail-area-stacked-keyvalues">
+                        @if (row.report.buildConfidences != null) {
+                          <div class="book-confidences">
+                            @for (
+                              bookConfidence of row.report.buildConfidences.bookConfidences;
+                              track bookConfidence.bookNum
+                            ) {
+                              <div class="book-confidence">
+                                <div class="detail-keyvalue">
+                                  <span class="detail-key">
+                                    {{ "canon.book_names." + getBookId(bookConfidence) | transloco }}
+                                  </span>
+                                  <span class="detail-value">
+                                    <app-display-confidence [confidence]="bookConfidence"></app-display-confidence>
+                                  </span>
+                                </div>
+                                <div class="detail-keyvalue">
+                                  <span class="detail-key">
+                                    {{ "canon.book_names." + getBookId(bookConfidence) | transloco }} - Projected ChrF3
+                                  </span>
+                                  <span class="detail-value">{{ bookConfidence.projectedChrF3.toFixed(3) }}</span>
+                                </div>
+                                <div class="detail-keyvalue">
+                                  <span class="detail-key">
+                                    {{ "canon.book_names." + getBookId(bookConfidence) | transloco }} - Confidence
+                                  </span>
+                                  <span class="detail-value">{{ bookConfidence.confidence.toFixed(3) }}</span>
+                                </div>
+                                <div class="detail-keyvalue">
+                                  <span class="detail-key">
+                                    {{ "canon.book_names." + getBookId(bookConfidence) | transloco }} - Usability
+                                  </span>
+                                  <span class="detail-value">{{ bookConfidence.usability.toFixed(3) }}</span>
+                                </div>
+                              </div>
+                            }
+                          </div>
+                          <div class="export-button-group">
+                            <button
+                              mat-raised-button
+                              color="primary"
+                              class="export-csv-button"
+                              (click)="exportCsv(row.report.buildConfidences.bookConfidences)"
+                            >
+                              <mat-icon>download</mat-icon>
+                              <span class="export-item-label"> Export Book Usability CSV </span>
+                            </button>
+                            <button
+                              mat-raised-button
+                              color="primary"
+                              class="export-menu-button"
+                              [matMenuTriggerFor]="exportBookMenu"
+                            >
+                              <mat-icon>arrow_drop_down</mat-icon>
+                            </button>
+                          </div>
+                          <mat-menu #exportBookMenu="matMenu" xPosition="before">
+                            <button mat-menu-item (click)="exportTsv(row.report.buildConfidences.bookConfidences)">
+                              <mat-icon>download</mat-icon>
+                              <span class="export-item-label"> Export Book Usability TSV </span>
+                            </button>
+                            <button mat-menu-item (click)="exportRsv(row.report.buildConfidences.bookConfidences)">
+                              <mat-icon>download</mat-icon>
+                              <span class="export-item-label"> Export Book Usability RSV </span>
+                            </button>
+                          </mat-menu>
+                          <div class="export-button-group">
+                            <button
+                              mat-raised-button
+                              color="primary"
+                              class="export-csv-button"
+                              (click)="exportCsv(row.report.buildConfidences.chapterConfidences)"
+                            >
+                              <mat-icon>download</mat-icon>
+                              <span class="export-item-label"> Export Chapter Usability CSV </span>
+                            </button>
+                            <button
+                              mat-raised-button
+                              color="primary"
+                              class="export-menu-button"
+                              [matMenuTriggerFor]="exportChapterMenu"
+                            >
+                              <mat-icon>arrow_drop_down</mat-icon>
+                            </button>
+                          </div>
+                          <mat-menu #exportChapterMenu="matMenu" xPosition="before">
+                            <button mat-menu-item (click)="exportTsv(row.report.buildConfidences.chapterConfidences)">
+                              <mat-icon>download</mat-icon>
+                              <span class="export-item-label"> Export Chapter Usability TSV </span>
+                            </button>
+                            <button mat-menu-item (click)="exportRsv(row.report.buildConfidences.chapterConfidences)">
+                              <mat-icon>download</mat-icon>
+                              <span class="export-item-label"> Export Chapter Usability RSV </span>
+                            </button>
+                          </mat-menu>
+                        } @else {
+                          <div class="detail-keyvalue">
+                            <span class="detail-key">Configured</span>
+                            <span class="detail-value">No</span>
+                          </div>
+                        }
+                      </span>
+                    </mat-card-content>
+                  </mat-card>
+                </div>
+
+                <div class="detail-actions">
+                  @let id = row.report.build?.additionalInfo?.buildId;
+                  @if (id != null) {
+                    <a
+                      mat-button
+                      class="details-dialog-button"
+                      href="{{ clearMLUrl(id) }}"
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      <mat-icon>engineering</mat-icon>
+                      View in ClearML
+                    </a>
+                  } @else {
+                    <button
+                      mat-button
+                      class="details-dialog-button"
+                      [disabled]="true"
+                      matTooltip="No Serval build ID available"
+                    >
+                      <mat-icon>engineering</mat-icon>
+                      View in ClearML
+                    </button>
+                  }
+                  <button mat-button class="details-dialog-button" (click)="openBuildDetails(row)">
+                    <mat-icon>manage_search</mat-icon>
+                    View more details
                   </button>
-                }
-                <button mat-button class="details-dialog-button" (click)="openBuildDetails(row)">
-                  <mat-icon>manage_search</mat-icon>
-                  View more details
-                </button>
+                </div>
               </div>
-            </div>
+            }
           </td>
         </ng-container>
       </table>
