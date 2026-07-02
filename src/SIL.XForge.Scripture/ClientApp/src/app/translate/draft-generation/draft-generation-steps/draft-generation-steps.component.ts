@@ -136,7 +136,6 @@ export class DraftGenerationStepsComponent implements OnInit {
 
   // Unusable books do not exist in the target or corresponding drafting/training source project
   unusableTranslateSourceBooks: number[] = [];
-  unusableTranslateTargetBooks: number[] = [];
   emptyTranslateSourceBooks: number[] = [];
   trainingBooksExcludingTranslatedWithoutEnoughData: number[] = [];
   unusableTrainingSourceBooks: number[] = [];
@@ -376,9 +375,6 @@ export class DraftGenerationStepsComponent implements OnInit {
 
           // Store the books that are not in the target
           this.unusableTrainingTargetBooks = [...trainingSourceBooks].filter(
-            bookNum => !targetBooks.has(bookNum) && Canon.isCanonical(bookNum)
-          );
-          this.unusableTranslateTargetBooks = [...draftingSourceBooks].filter(
             bookNum => !targetBooks.has(bookNum) && Canon.isCanonical(bookNum)
           );
 
