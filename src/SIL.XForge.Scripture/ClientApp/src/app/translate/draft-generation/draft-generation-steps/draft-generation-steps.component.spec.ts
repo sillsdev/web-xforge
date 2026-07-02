@@ -396,8 +396,7 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.trainingBooksExcludingTranslatedWithoutEnoughData).toEqual([5]);
     }));
 
-    it('should set "unusableTranslateTargetBooks" and "unusableTrainingTargetBooks" correctly', fakeAsync(() => {
-      expect(component.unusableTranslateTargetBooks).toEqual([7]);
+    it('should set "unusableTrainingTargetBooks" correctly', fakeAsync(() => {
       expect(component.unusableTrainingTargetBooks).toEqual([7]);
     }));
 

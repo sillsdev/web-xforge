@@ -246,6 +246,7 @@
     "configure_advanced_settings_title": "Advanced settings",
     "confirm_codes_correct_to_continue": "Please confirm the language codes are correct before continuing",
     "custom_configurations_apply": "Custom draft configurations have been applied by an administrator.",
+    "draft_book_unavailable": "Can't find the book you're looking for? Be sure the book exists in your drafting source text ({{ sourceProjectName }}).",
     "email_me": "Email me at {{ email }} when the draft is finished.",
     "fast_training_warning": "Enabling this will save time but greatly reduce accuracy.",
     "fast_training": "Enable Fast Training",
@@ -276,7 +277,6 @@
     "training_files": "Training files",
     "translated_book_selected_no_training_pair": "Some of the training books you selected have no matching reference books selected. Please select matching reference books.",
     "translated_books": "Translated books",
-    "unusable_target_books": "Can't find the book you're looking for? Be sure the book is created in Paratext, then sync your project.",
     "use_echo_warning": "Enabling this will echo your source text instead of translating it.",
     "use_echo": "Use Echo Translation Engine"
   },
