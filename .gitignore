@@ -4,6 +4,7 @@
 .externalToolBuilders
 .idea/
 .nx
+.pnpm-store/
 .settings
 .vagrant/
 deploy/**/*.retry
@@ -37,3 +38,6 @@ appsettings.user.json
 # e2e tests
 /src/SIL.XForge.Scripture/ClientApp/e2e/secrets.json
 /src/SIL.XForge.Scripture/ClientApp/e2e/test_output/
+
+# Storybook screenshots
+/src/SIL.XForge.Scripture/ClientApp/screenshots/

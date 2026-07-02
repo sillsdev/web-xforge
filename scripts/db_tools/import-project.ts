@@ -2,7 +2,7 @@
 //
 // Import SF project from one mongodb into another
 //
-// This script needs ts-node and must be run from the containing directory. Setup: npm ci
+// This script needs ts-node and must be run from the containing directory. Setup: pnpm ci
 // Usage info: ./import-project.ts --help
 // Example: ./import-project.ts --originMachine qa --destinationMachine dev --originProjectSFId 54321
 //            --destinationUserSFId 12345 --newDestinationProjectPTId abc123
