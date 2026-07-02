@@ -4642,6 +4642,104 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task StartPreTranslationBuildAsync_RateLimitExceeded()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.EventMetricService.GetEventMetricsAsync(
+                Project01,
+                scopes: [EventScope.Drafting],
+                eventTypes: [nameof(MachineProjectService.BuildProjectAsync)]
+            )
+            .ReturnsForAnyArgs(Task.FromResult(new QueryResults<EventMetric> { Results = [], UnpagedCount = 75 }));
+        await env.SiteConfigs.UpdateAsync(
+            sc => sc.Name == env.SiteOptions.Value.Id,
+            u =>
+            {
+                u.Set(sc => sc.BuildQuotaLimit, 75);
+                u.Set(sc => sc.BuildQuotaPeriod, 1);
+                u.Set(sc => sc.BuildQuotaPeriodUnit, QuotaPeriod.Month);
+            }
+        );
+
+        // SUT
+        Assert.ThrowsAsync<LimitExceededException>(() =>
+            env.Service.StartPreTranslationBuildAsync(
+                User01,
+                new BuildConfig { ProjectId = Project01 },
+                CancellationToken.None
+            )
+        );
+    }
+
+    [Test]
+    public async Task StartPreTranslationBuildAsync_RateLimitNotConfigured()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.SiteConfigs.UpdateAsync(
+            sc => sc.Name == env.SiteOptions.Value.Id,
+            u => u.Set(sc => sc.BuildQuotaPeriodUnit, QuotaPeriod.None)
+        );
+
+        // SUT
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig { ProjectId = Project01 },
+            CancellationToken.None
+        );
+
+        await env
+            .EventMetricService.DidNotReceiveWithAnyArgs()
+            .GetEventMetricsAsync(
+                Project01,
+                scopes: [EventScope.Drafting],
+                eventTypes: [nameof(MachineProjectService.BuildProjectAsync)]
+            );
+        await env.ProjectService.Received(1).SyncAsync(User01, Project01);
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+    }
+
+    [Test]
+    public async Task StartPreTranslationBuildAsync_RateLimitNotExceeded()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.EventMetricService.GetEventMetricsAsync(
+                Project01,
+                scopes: [EventScope.Drafting],
+                eventTypes: [nameof(MachineProjectService.BuildProjectAsync)]
+            )
+            .ReturnsForAnyArgs(Task.FromResult(new QueryResults<EventMetric> { Results = [], UnpagedCount = 0 }));
+        await env.SiteConfigs.UpdateAsync(
+            sc => sc.Name == env.SiteOptions.Value.Id,
+            u =>
+            {
+                u.Set(sc => sc.BuildQuotaLimit, 75);
+                u.Set(sc => sc.BuildQuotaPeriod, 1);
+                u.Set(sc => sc.BuildQuotaPeriodUnit, QuotaPeriod.Week);
+            }
+        );
+
+        // SUT
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig { ProjectId = Project01 },
+            CancellationToken.None
+        );
+
+        await env
+            .EventMetricService.ReceivedWithAnyArgs()
+            .GetEventMetricsAsync(
+                Project01,
+                scopes: [EventScope.Drafting],
+                eventTypes: [nameof(MachineProjectService.BuildProjectAsync)]
+            );
+        await env.ProjectService.Received(1).SyncAsync(User01, Project01);
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+    }
+
+    [Test]
     public async Task StartPreTranslationBuildAsync_SuccessNoTrainingOrTranslationScriptureRanges()
     {
         // Set up test environment
@@ -5459,8 +5557,16 @@ public class MachineApiServiceTests
             RealtimeService.AddRepository("text_documents", OTType.Json0, TextDocuments);
             RealtimeService.AddRepository("texts", OTType.RichText, Texts);
             SiteOptions = Options.Create(
-                new SiteOptions { IssuesEmail = "help@scriptureforge.org", Origin = "https://scriptureforge.org" }
+                new SiteOptions
+                {
+                    Id = "SF",
+                    IssuesEmail = "help@scriptureforge.org",
+                    Origin = "https://scriptureforge.org",
+                }
             );
+            SiteConfigs = new MemoryRepository<SiteConfig>([
+                new SiteConfig { Id = ObjectId.GenerateNewId().ToString(), Name = SiteOptions.Value.Id },
+            ]);
             SyncService = Substitute.For<ISyncService>();
             SyncService.SyncAsync(Arg.Any<SyncConfig>()).Returns(Task.FromResult(HangfireJobId));
             TranslationBuildsClient = Substitute.For<ITranslationBuildsClient>();
@@ -5501,6 +5607,7 @@ public class MachineApiServiceTests
                 ProjectRights,
                 ProjectService,
                 RealtimeService,
+                SiteConfigs,
                 SiteOptions,
                 SyncService,
                 TranslationBuildsClient,
@@ -5521,6 +5628,7 @@ public class MachineApiServiceTests
         public MemoryRepository<DraftMetrics> DraftMetrics { get; }
         public MemoryRepository<SFProject> Projects { get; }
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
+        public MemoryRepository<SiteConfig> SiteConfigs { get; }
         public MemoryRepository<TextDocument> TextDocuments { get; }
         public MemoryRepository<TextData> Texts { get; }
         public ISFProjectRights ProjectRights { get; }
