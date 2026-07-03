@@ -32,7 +32,11 @@ export function createUser(spec: CreateUserSpec): MockUser {
     username: spec.username,
     password: spec.password,
     sfRole: spec.sfRole,
-    xfUserId: spec.xfUserId,
+    // The SF user id. In production an Auth0 Action assigns xf_user_id before the token reaches
+    // SF; the backend reads it from the http://xforge.org/userid claim and uses it as the user's
+    // realtime document id. Must always be present and non-empty — an empty id makes the ShareDB
+    // fetch hang. Generate one (24-hex, ObjectId-like) when the caller doesn't supply it.
+    xfUserId: spec.xfUserId ?? crypto.randomBytes(12).toString('hex'),
     picture: spec.picture ?? `https://cdn.auth0.com/avatars/${(spec.name[0] ?? 'u').toLowerCase()}.png`,
     userMetadata: {},
     paratext: spec.paratext
